@@ -5,18 +5,24 @@
 #
 
 
-"""Implementation of the 'version' routine."""
+"""
+This module implements the `version` routine.
+"""
 
 
-from .error import ScriptError
 from .routine import Routine
 
 
 class VersionRoutine(Routine):
+    """
+    Implementation of the `version` routine.
+
+    The routine displays the version of the :mod:`htsql` package.
+    """
 
     name = 'version'
-    hint = u"""display the version of the application"""
-    help = u"""
+    hint = """display the version of the application"""
+    help = """
     Run '%(executable)s version' to display the version of HTSQL.
     """
 

@@ -114,3 +114,11 @@ Text formatting
 .. autoclass:: DefaultRoutine
 
 
+:mod:`htsql.ctl.version`
+------------------------
+
+.. automodule:: htsql.ctl.version
+
+.. autoclass:: VersionRoutine
+
+
