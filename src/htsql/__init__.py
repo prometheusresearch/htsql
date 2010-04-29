@@ -4,5 +4,11 @@
 #          Kirill Simonov <xi@resolvent.net>
 #
 
+
+"""
+This package implements HTSQL, a query language for the accidental programmer.
+"""
+
+
 __version__ = '1.1.1-tip'
 
