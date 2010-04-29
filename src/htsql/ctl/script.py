@@ -68,19 +68,17 @@ class Script(object):
     do the following:
 
     1. Create a subclass of :class:`Script` overriding the class
-       attributes `routines`, `hint`, and `help`.
+       attributes `routines`, `hint`, `help`, and `copyright`.
 
     2. The attribute `routines` should be a list of
        :class:`htsql.ctl.routine.Routine` subclasses.  Each subclass
        implements an application routine.
 
-    3. The attribute `hint` should provide a short one-line description
-       of the application.  Is it displayed when the application is
+    3. The attributes  `hint`, `help`, and `copyright` should provide
+       a short one-line description of the application, a longer
+       description or the application, and a copyright notice
+       respectively.  They are displayed when the application is
        called without any parameters.
-
-    4. The attribute `help` should provide a long description of the
-       application.  It is displayed when the application is called
-       without any parameters.
 
     The constructor of :class:`Script` accepts the following arguments:
 
@@ -101,6 +99,8 @@ class Script(object):
     hint = None
     # Override to provide a long description of the application.
     help = None
+    # Override to provide a copyright notice.
+    copyright = None
     # Override to provide a list of supported routines.
     routines = []
 
@@ -258,6 +258,12 @@ class Script(object):
         Returns a long description of the application.
         """
         return trim_doc(self.help % substitutes)
+
+    def get_copyright(self):
+        """
+        Returns a copyright notice.
+        """
+        return self.copyright
 
     def parse_argv(self, argv):
         # Parses the command-line arguments; returns a triple:

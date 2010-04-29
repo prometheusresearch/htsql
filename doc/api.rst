@@ -76,7 +76,7 @@ Text formatting
 .. automodule:: htsql.ctl.script
 
 .. autoclass:: Script
-   :members: main, out, err, get_hint, get_help
+   :members: main, out, err, get_hint, get_help, get_copyright
 
 
 :mod:`htsql.ctl.error`
@@ -104,5 +104,13 @@ Text formatting
 
 .. autoclass:: Routine
    :members: run
+
+
+:mod:`htsql.ctl.default`
+------------------------
+
+.. automodule:: htsql.ctl.default
+
+.. autoclass:: DefaultRoutine
 
 
