@@ -93,6 +93,7 @@ Text formatting
 .. automodule:: htsql.ctl.option
 
 .. autoclass:: Option
+   :members: get_hint
 
 
 :mod:`htsql.ctl.routine`
@@ -100,10 +101,11 @@ Text formatting
 
 .. automodule:: htsql.ctl.routine
 
-.. autoclass:: Argument(attribute, validator, default=ARGUMENT_REQUIRED, is_list=False)
+.. autoclass:: Argument(attribute, validator, default=ARGUMENT_REQUIRED, is_list=False, hint=None)
+   :members: get_hint
 
 .. autoclass:: Routine
-   :members: run
+   :members: get_hint, get_help, run
 
 
 :mod:`htsql.ctl.default`
@@ -120,5 +122,13 @@ Text formatting
 .. automodule:: htsql.ctl.version
 
 .. autoclass:: VersionRoutine
+
+
+:mod:`htsql.ctl.help`
+---------------------
+
+.. automodule:: htsql.ctl.help
+
+.. autoclass:: HelpRoutine
 
 

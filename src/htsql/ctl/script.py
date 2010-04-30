@@ -257,6 +257,8 @@ class Script(object):
         """
         Returns a long description of the application.
         """
+        if self.help is None:
+            return None
         return trim_doc(self.help % substitutes)
 
     def get_copyright(self):

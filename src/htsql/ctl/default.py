@@ -25,10 +25,10 @@ class DefaultRoutine(Routine):
 
     def run(self):
         # Display the following information:
-        # <EXECUTABLE> - <hint>
-        # <copyright>
+        # {EXECUTABLE} - {hint}
+        # {copyright}
         #
-        # <help>
+        # {help}
         executable = os.path.basename(self.executable)
         hint = self.ctl.get_hint()
         if hint is not None:

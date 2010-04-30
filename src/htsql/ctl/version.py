@@ -15,7 +15,7 @@ from .routine import Routine
 
 class VersionRoutine(Routine):
     """
-    Implementation of the `version` routine.
+    Implements the `version` routine.
 
     The routine displays the version of the :mod:`htsql` package.
     """

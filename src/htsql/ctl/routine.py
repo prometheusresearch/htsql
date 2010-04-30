@@ -11,6 +11,9 @@ This module defines basic classes for implementing script routines.
 
 
 from .error import ScriptError
+from ..validator import Val
+from ..util import maybe, trim_doc
+import re
 
 
 # Indicates that the argument is required.
@@ -31,19 +34,38 @@ class Argument(object):
     `default`
         The default value of the argument.  If `default` is not
         provided, the argument value is always required.
+        The `is_required` attribute indicates if the default
+        value is omitted.
 
     `is_list` (Boolean)
         If set, the argument may accept more than one parameter.
         In this case, the argument value is a list of parameters.
+
+    `hint` (a string or ``None``)
+        A short one-line description of the argument.
     """
 
     def __init__(self, attribute, validator,
-                 default=ARGUMENT_REQUIRED, is_list=False):
+                 default=ARGUMENT_REQUIRED, is_list=False, hint=None):
+        # Sanity check on the arguments.
+        assert isinstance(attribute, str)
+        assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
+        assert isinstance(validator, Val)
+        assert isinstance(is_list, bool)
+        assert isinstance(hint, maybe(str))
+
         self.attribute = attribute
         self.validator = validator
         self.default = default
         self.is_required = (default is ARGUMENT_REQUIRED)
         self.is_list = is_list
+        self.hint = hint
+
+    def get_hint(self):
+        """
+        Returns a short one-line description of the option.
+        """
+        return self.hint
 
 
 class Routine(object):
@@ -97,6 +119,22 @@ class Routine(object):
     options = []
     hint = None
     help = None
+
+    @classmethod
+    def get_hint(cls):
+        """
+        Returns a short one-line description of the routine.
+        """
+        return cls.hint
+
+    @classmethod
+    def get_help(cls, **substitutes):
+        """
+        Returns a long description of the routine.
+        """
+        if cls.help is None:
+            return None
+        return trim_doc(cls.help % substitutes)
 
     def __init__(self, ctl, attributes):
         self.ctl = ctl

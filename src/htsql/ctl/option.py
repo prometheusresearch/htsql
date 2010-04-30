@@ -33,8 +33,8 @@ class Option(object):
     `with_value` (Boolean)
         If set, the option requires a parameter.
 
-    `value_hint` (a string or ``None``)
-        A very short description of the option parameter.
+    `value_name` (a string or ``None``)
+        The name of the option parameter.
 
     `validator` (:class:`htsql.validator.Val` or ``None``)
         The validator for the option parameter.
@@ -60,7 +60,7 @@ class Option(object):
 
     def __init__(self, attribute,
                  short_name=None, long_name=None,
-                 with_value=False, value_hint=None,
+                 with_value=False, value_name=None,
                  validator=None, default=None,
                  hint=None):
         # Sanity check on the arguments.
@@ -74,12 +74,12 @@ class Option(object):
             assert re.match(r'^--[0-9a-zA-Z][0-9a-zA-Z-]+$', long_name)
         assert short_name is not None or long_name is not None
         assert isinstance(with_value, bool)
-        assert isinstance(value_hint, maybe(str))
+        assert isinstance(value_name, maybe(str))
         assert isinstance(validator, maybe(Val))
         if with_value:
             assert validator is not None
         else:
-            assert value_hint is None
+            assert value_name is None
             assert validator is None
             assert default is None
         assert isinstance(hint, maybe(str))
@@ -88,10 +88,16 @@ class Option(object):
         self.short_name = short_name
         self.long_name = long_name
         self.with_value = with_value
-        self.value_hint = value_hint
+        self.value_name = value_name
         self.validator = validator
         self.default = default
         self.hint = hint
+
+    def get_hint(self):
+        """
+        Returns a short one-line description of the option.
+        """
+        return self.hint
 
 
 #
@@ -131,7 +137,7 @@ InputOption = Option(
         short_name='-i',
         long_name='--input',
         with_value=True,
-        value_hint="FILE",
+        value_name="file",
         validator=StrVal(),
         hint="""set input file to FILE""")
 
@@ -140,7 +146,7 @@ OutputOption = Option(
         short_name='-o',
         long_name='--output',
         with_value=True,
-        value_hint="FILE",
+        value_name="file",
         validator=StrVal(),
         hint="""set output file to FILE""")
 
@@ -163,7 +169,7 @@ RemoteUserOption = Option(
         attribute='remote_user',
         long_name='--remote-user',
         with_value=True,
-        value_hint="USER",
+        value_name="user",
         validator=StrVal(),
         hint="""set the remote user to USER""")
 
