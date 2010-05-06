@@ -32,6 +32,8 @@ Type checking helpers
 
 .. autoclass:: dictof
 
+.. autoclass:: filelike
+
 Text formatting
 ~~~~~~~~~~~~~~~
 
@@ -130,5 +132,25 @@ Text formatting
 .. automodule:: htsql.ctl.help
 
 .. autoclass:: HelpRoutine
+
+
+:mod:`htsql.ctl.server`
+-----------------------
+
+.. automodule:: htsql.ctl.server
+
+.. autoclass:: ServerRoutine
+
+
+:mod:`htsql.ctl.get_post`
+-------------------------
+
+.. automodule:: htsql.ctl.get_post
+
+.. autoclass:: GetPostBaseRoutine
+
+.. autoclass:: GetRoutine
+
+.. autoclass:: PostRoutine
 
 

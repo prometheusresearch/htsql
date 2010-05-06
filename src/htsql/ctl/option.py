@@ -173,4 +173,17 @@ RemoteUserOption = Option(
         validator=StrVal(),
         hint="""set the remote user to USER""")
 
+WithHeadersOption = Option(
+        attribute='with_headers',
+        long_name='--with-headers',
+        hint="""display HTTP status line and headers""")
+
+ContentTypeOption = Option(
+        attribute='content_type',
+        long_name='--content-type',
+        with_value=True,
+        value_name='type',
+        validator=StrVal(r"^[0-9a-z-]+/[0-9a-z-]+$"),
+        hint="""set the content type of the HTTP POST data""")
+
 

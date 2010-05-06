@@ -32,11 +32,11 @@ class HelpRoutine(Routine):
     ]
     hint = """describe the usage of the application and its routines"""
     help = """
-    Run '%(executable)s help' to describe the usage of the application
-    and get the list of available routines.
+    Run '%(executable)s help' to describe the usage of the application and
+    get the list of available routines.
 
-    Run '%(executable)s help <routine>' to describe the usage of
-    the specified routine.
+    Run '%(executable)s help <routine>' to describe the usage of the
+    specified routine.
     """
 
     def run(self):

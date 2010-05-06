@@ -69,7 +69,7 @@ class DB(object):
         ://
         (?: (?P<username> %(key_chars)s )?
             (?: : (?P<password> %(value_chars)s )? )? @ )?
-        (?: (P<host> %(key_chars)s )?
+        (?: (?P<host> %(key_chars)s )?
             (?: : (?P<port> %(key_chars)s )? )? )?
         /
         (?P<database> %(value_chars)s )
@@ -420,6 +420,25 @@ class dictof(object):
                 all(isinstance(key, self.key_type) and
                     isinstance(value[key], self.item_type)
                     for key in value))
+
+
+class filelike(object):
+    """
+    Checks if a value is a file or a file-like object.
+
+    Usage::
+    
+        isinstance(value, filelike())
+    """
+
+    # For Python 2.5, we can't use `__instancecheck__`; in this case,
+    # we let ``isinstance(filelike()) == isinstance(object)``.
+    if sys.version_info < (2, 6):
+        def __new__(cls, *args, **kwds):
+            return object
+
+    def __instancecheck__(self, value):
+        return (hasattr(value, 'read') or hasattr(value, 'write'))
 
 
 #

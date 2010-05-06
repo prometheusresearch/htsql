@@ -15,8 +15,9 @@ from .default import DefaultRoutine
 from .help import HelpRoutine
 from .version import VersionRoutine
 from .server import ServerRoutine
-from .get import GetRoutine
+from .get_post import GetRoutine, PostRoutine
 import sys
+
 
 class HTSQL_CTL(Script):
     """
@@ -34,6 +35,7 @@ class HTSQL_CTL(Script):
             VersionRoutine,
             ServerRoutine,
             GetRoutine,
+            PostRoutine,
     ]
     hint = """HTSQL command-line administrative application"""
     help = """
@@ -41,6 +43,7 @@ class HTSQL_CTL(Script):
     Run `%(executable)s help <routine>` for help on a specific routine.
     """
     copyright = """Copyright (c) 2006-2010, Prometheus Research, LLC"""
+
 
 def main():
     # This function is called when the `htsql-ctl` script is started.

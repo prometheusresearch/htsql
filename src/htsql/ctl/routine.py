@@ -16,7 +16,7 @@ from ..util import maybe, trim_doc
 import re
 
 
-# Indicates that the argument is required.
+# Indicates that the argument has no default value and thus cannot be omitted.
 ARGUMENT_REQUIRED = object()
 
 class Argument(object):
@@ -98,7 +98,8 @@ class Routine(object):
         A one-line description of the routine.
 
     `help` (a string or ``None``)
-        A long description of the routine.
+        A long description of the routine.  Keep the line width
+        at 72 characters.
 
     The constructor of :class:`Routine` accepts the following arguments:
 
