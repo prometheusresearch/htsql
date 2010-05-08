@@ -67,6 +67,15 @@ class Argument(object):
         """
         return self.hint
 
+    def get_signature(self):
+        """
+        Returns the argument signature.
+        """
+        signature = self.attribute.replace('_', '-').upper()
+        if self.is_list:
+            signature = "%s..." % signature
+        return signature
+
 
 class Routine(object):
     """
@@ -136,6 +145,27 @@ class Routine(object):
         if cls.help is None:
             return None
         return trim_doc(cls.help % substitutes)
+
+    @classmethod
+    def get_signature(cls):
+        """
+        Returns the routine signature.
+        """
+        # The routine signature has the form:
+        # {name} {arg}... [{arg} [...]]
+        signature = [cls.name]
+        bracket_depth = 0
+        for idx, argument in enumerate(cls.arguments):
+            argument_signature = argument.get_signature()
+            if not argument.is_required:
+                argument_signature = "[%s" % argument_signature
+                bracket_depth += 1
+            if idx == len(cls.arguments)-1 and bracket_depth != 0:
+                argument_signature = "%s%s" \
+                                     % (argument_signature, "]"*bracket_depth)
+            signature.append(argument_signature)
+        return " ".join(signature)
+
 
     def __init__(self, ctl, attributes):
         self.ctl = ctl

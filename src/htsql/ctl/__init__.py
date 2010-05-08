@@ -15,6 +15,7 @@ from .default import DefaultRoutine
 from .help import HelpRoutine
 from .version import VersionRoutine
 from .server import ServerRoutine
+from .shell import ShellRoutine
 from .get_post import GetRoutine, PostRoutine
 import sys
 
@@ -34,6 +35,7 @@ class HTSQL_CTL(Script):
             HelpRoutine,
             VersionRoutine,
             ServerRoutine,
+            ShellRoutine,
             GetRoutine,
             PostRoutine,
     ]

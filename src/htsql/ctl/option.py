@@ -99,6 +99,30 @@ class Option(object):
         """
         return self.hint
 
+    def get_signature(self):
+        """
+        Returns the signature of the option parameters.
+        """
+        # The option signature has one of the forms:
+        #   {short_name} {PARAMETER}
+        #   {long_name} {PARAMETER}
+        # or 
+        #   {short_name} [{long_name}] {PARAMETER}
+        if self.short_name is not None:
+            signature = self.short_name
+            if self.long_name is not None:
+                signature = "%s [%s]" % (signature, self.long_name)
+        else:
+            signature = self.long_name
+        if self.with_value:
+            if self.value_name is not None:
+                parameter = self.value_name
+            else:
+                parameter = self.attribute
+            parameter = parameter.replace('_', '-').upper()
+            signature = "%s %s" % (signature, parameter)
+        return signature
+
 
 #
 # Options used by ``htsql-ctl``.

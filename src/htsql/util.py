@@ -447,24 +447,27 @@ class filelike(object):
 
 def trim_doc(doc):
     """
-    Unindent and remove leading and trailing whitespaces.
+    Unindent and remove leading and trailing blank lines.
 
     Useful for stripping indentation from docstrings.
     """
     assert isinstance(doc, maybe(str))
     if doc is None:
         return None
-    doc = doc.strip()
     lines = doc.splitlines()
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop(-1)
     indent = None
-    for line in lines[1:]:
+    for line in lines:
         short_line = line.lstrip()
         if short_line:
             line_indent = len(line)-len(short_line)
             if indent is None or line_indent < indent:
                 indent = line_indent
     if indent:
-        lines = [lines[0]]+[line[indent:] for line in lines[1:]]
-    return '\n'.join(lines)
+        lines = [line[indent:] for line in lines]
+    return "\n".join(lines)
 
 

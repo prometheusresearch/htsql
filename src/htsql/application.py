@@ -14,7 +14,12 @@ class Application(object):
         self.db = DB.parse(db)
 
     def __call__(self, environ, start_response):
-        start_response("200 OK", [('Content-Type', 'text/plain')])
-        return ["Hello World!\n"]
+        path_info = environ['PATH_INFO']
+        if path_info == '/':
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return ["Hello World!\n"]
+        else:
+            start_response("404 Not Found", [('Content-Type', 'text/plain')])
+            return ["File not found: %s\n" % path_info]
 
 

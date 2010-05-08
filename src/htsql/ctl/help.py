@@ -59,7 +59,7 @@ class HelpRoutine(Routine):
         # {help}
         #
         # Available routines:
-        #   {routine} : {hint}
+        #   {routine.name(s)} : {routine.hint}
         #   ...
         #
         executable = os.path.basename(self.executable)
@@ -94,17 +94,17 @@ class HelpRoutine(Routine):
 
     def describe_routine(self, routine_class):
         # Display the following information:
-        # {ROUTINE} - {hint}
-        # Usage: {executable} {routine} {arguments}
+        # {NAME} - {hint}
+        # Usage: {executable} {signature}
         #
         # {help}
         #
         # Arguments:
-        #   {argument} : {hint}
+        #   {argument.signature} : {argument.hint}
         #   ...
         #
         # Valid options:
-        #   {option} : {hint}
+        #   {option.signature} : {option.hint}
         #   ...
         #
         executable = os.path.basename(self.executable)
@@ -113,19 +113,8 @@ class HelpRoutine(Routine):
             self.ctl.out(routine_class.name.upper(), "-", hint)
         else:
             self.ctl.out(routine_class.name.upper())
-        usage = [executable, routine_class.name]
-        bracket_depth = 0
-        for idx, argument in enumerate(routine_class.arguments):
-            name = argument.attribute.replace('_', '-').upper()
-            if argument.is_list:
-                name = "%s..." % name
-            if not argument.is_required:
-                name = "[%s" % name
-                bracket_depth += 1
-            if idx == len(routine_class.arguments)-1 and bracket_depth != 0:
-                name = "%s%s" % (name, "]"*bracket_depth)
-            usage.append(name)
-        self.ctl.out("Usage:", *usage)
+        signature = routine_class.get_signature()
+        self.ctl.out("Usage:", executable, signature)
         help = routine_class.get_help(executable=executable)
         if help is not None:
             self.ctl.out()
@@ -134,36 +123,24 @@ class HelpRoutine(Routine):
             self.ctl.out()
             self.ctl.out("Arguments:")
             for argument in routine_class.arguments:
-                name = argument.attribute.replace('_', '-').upper()
+                signature = argument.get_signature()
                 self.ctl.out("  ", end="")
                 hint = argument.get_hint()
                 if hint is not None:
-                    self.ctl.out("%-24s : %s" % (name, hint))
+                    self.ctl.out("%-24s : %s" % (signature, hint))
                 else:
-                    self.ctl.out(name)
+                    self.ctl.out(signature)
         if routine_class.options:
             self.ctl.out()
             self.ctl.out("Valid options:")
             for option in routine_class.options:
-                if option.short_name is not None:
-                    name = option.short_name
-                    if option.long_name is not None:
-                        name = "%s [%s]" % (name, option.long_name)
-                else:
-                    name = option.long_name
-                if option.with_value:
-                    if option.value_name is not None:
-                        parameter = option.value_name
-                    else:
-                        parameter = option.attribute
-                    parameter = parameter.replace('_', '-').upper()
-                    name = "%s %s" % (name, parameter)
+                signature = option.get_signature()
                 self.ctl.out("  ", end="")
                 hint = option.get_hint()
                 if hint is not None:
-                    self.ctl.out("%-24s : %s" % (name, hint))
+                    self.ctl.out("%-24s : %s" % (signature, hint))
                 else:
-                    self.ctl.out(name)
+                    self.ctl.out(signature)
         self.ctl.out()
 
 

@@ -95,7 +95,7 @@ Text formatting
 .. automodule:: htsql.ctl.option
 
 .. autoclass:: Option
-   :members: get_hint
+   :members: get_hint, get_signature
 
 
 :mod:`htsql.ctl.routine`
@@ -104,10 +104,10 @@ Text formatting
 .. automodule:: htsql.ctl.routine
 
 .. autoclass:: Argument(attribute, validator, default=ARGUMENT_REQUIRED, is_list=False, hint=None)
-   :members: get_hint
+   :members: get_hint, get_signature
 
 .. autoclass:: Routine
-   :members: get_hint, get_help, run
+   :members: get_hint, get_help, get_signature, run
 
 
 :mod:`htsql.ctl.default`
@@ -147,10 +147,46 @@ Text formatting
 
 .. automodule:: htsql.ctl.get_post
 
+.. autoclass:: Request
+   :members: prepare, execute
+
+.. autoclass:: Response
+   :members: set, complete, dump
+
 .. autoclass:: GetPostBaseRoutine
 
 .. autoclass:: GetRoutine
 
 .. autoclass:: PostRoutine
+
+
+:mod:`htsql.ctl.shell`
+----------------------
+
+.. automodule:: htsql.ctl.shell
+
+.. autoclass:: Cmd
+   :members: get_hint, get_help, get_signature, execute
+
+.. autoclass:: HelpCmd
+
+.. autoclass:: ExitCmd
+
+.. autoclass:: UserCmd
+
+.. autoclass:: HeadersCmd
+
+.. autoclass:: PagerCmd
+
+.. autoclass:: GetPostBaseCmd
+
+.. autoclass:: GetCmd
+
+.. autoclass:: PostCmd
+
+.. autoclass:: ShellState
+
+.. autoclass:: ShellRoutine
+   :members: get_help, get_intro, get_usage
 
 
