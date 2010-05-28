@@ -17,6 +17,7 @@ from .version import VersionRoutine
 from .server import ServerRoutine
 from .shell import ShellRoutine
 from .get_post import GetRoutine, PostRoutine
+from .regress import RegressRoutine
 import sys
 
 
@@ -38,6 +39,7 @@ class HTSQL_CTL(Script):
             ShellRoutine,
             GetRoutine,
             PostRoutine,
+            RegressRoutine,
     ]
     hint = """HTSQL command-line administrative application"""
     help = """

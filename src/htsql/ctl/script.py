@@ -137,7 +137,7 @@ class Script(object):
             has_optional_arguments = False
             for argument in routine_class.arguments:
                 if has_optional_arguments:
-                    assert not argument.is_required, \
+                    assert not argument.is_mandatory, \
                            "required argument %r follows an optional" \
                            " argument in routine %r" % (argument.name,
                                                         routine_class.name)
@@ -146,7 +146,7 @@ class Script(object):
                            " in routine %r" % (argument.name,
                                                routine_class.name)
                 if has_list_arguments:
-                    assert argument.is_required, \
+                    assert argument.is_mandatory, \
                            "optional argument %r follows a list argument" \
                            " in routine %r" % (argument.name,
                                                routine_class.name)
@@ -154,7 +154,7 @@ class Script(object):
                            "list argument %r follows another list argument" \
                            " in routine %r" % (argument.name,
                                                routine_class.name)
-                if not argument.is_required:
+                if not argument.is_mandatory:
                     has_optional_arguments = True
                 if argument.is_list:
                     has_list_arguments = True
@@ -414,7 +414,7 @@ class Script(object):
         min_bound = 0
         max_bound = 0
         for argument in routine_class.arguments:
-            if argument.is_required:
+            if argument.is_mandatory:
                 min_bound += 1
             if max_bound is not None:
                 max_bound += 1
@@ -444,7 +444,7 @@ class Script(object):
         # Go through the list of arguments, fetch their values and assign them
         # to the attributes.
         for argument in routine_class.arguments:
-            if argument.is_required:
+            if argument.is_mandatory:
                 reserved -= 1
             is_default = False
             if argument.is_list:
@@ -460,7 +460,7 @@ class Script(object):
                     value = values.pop(0)
                 else:
                     is_default = True
-            assert not argument.is_required or not is_default
+            assert not argument.is_mandatory or not is_default
             if is_default:
                 value = argument.default
             else:

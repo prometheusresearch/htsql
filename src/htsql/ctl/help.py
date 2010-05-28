@@ -29,6 +29,8 @@ class HelpRoutine(Routine):
     arguments = [
             Argument('routine', WordVal(), default=None,
                      hint="""the name of the routine to describe"""),
+            Argument('feature', WordVal(), default=None,
+                     hint="""the feature to describe""")
     ]
     hint = """describe the usage of the application and its routines"""
     help = """
@@ -37,18 +39,27 @@ class HelpRoutine(Routine):
 
     Run '%(executable)s help <routine>' to describe the usage of the
     specified routine.
+
+    Some routines may contain separate descriptions of some features.
+    Run '%(executable)s help <routine> <feature>' to describe a specific
+    feature.
     """
 
     def run(self):
         # If called without any parameters, describe the application;
-        # if called with a routine name, describe the routine.
+        # if called with a routine name, describe the routine; if called
+        # with a routine name and a section name, display the section.
         if self.routine is None:
             self.describe_script()
         else:
             if self.routine not in self.ctl.routine_by_name:
                 raise ScriptError("unknown routine %r" % self.routine)
             routine_class = self.ctl.routine_by_name[self.routine]
-            self.describe_routine(routine_class)
+            if self.feature is None:
+                self.describe_routine(routine_class)
+            else:
+                feature_class = routine_class.get_feature(self.feature)
+                self.describe_feature(feature_class)
 
     def describe_script(self):
         # Display the following information:
@@ -141,6 +152,23 @@ class HelpRoutine(Routine):
                     self.ctl.out("%-24s : %s" % (signature, hint))
                 else:
                     self.ctl.out(signature)
+        self.ctl.out()
+
+    def describe_feature(self, feature_class):
+        # Display the following information:
+        # {NAME} - {hint}
+        #
+        # {help}
+        name = feature_class.name.upper()
+        hint = feature_class.get_hint()
+        help = feature_class.get_help()
+        if hint is None:
+            self.ctl.out(name)
+        else:
+            self.ctl.out("%s - %s" % (name, hint))
+        if help is not None:
+            self.ctl.out()
+            self.ctl.out(help)
         self.ctl.out()
 
 

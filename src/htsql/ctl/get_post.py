@@ -84,7 +84,7 @@ class Request(object):
         # Split `query` into components.
         environ['SCRIPT_NAME'] = ''
         if '?' in query:
-            path_info, query_string = query.string('?', 1)
+            path_info, query_string = query.split('?', 1)
         else:
             path_info = query
             query_string = ''

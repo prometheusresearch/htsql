@@ -10,6 +10,7 @@ This module implements the `shell` routine.
 """
 
 
+from .error import ScriptError
 from .routine import Argument, Routine
 from .get_post import Request
 from ..validator import DBVal
@@ -577,13 +578,15 @@ class ShellRoutine(Routine):
         # The description of the shell routine has the form:
         # {help}
         #
-        # Shell commands:
+        # Shell commands: (run ... for more help)
         #   {command.signature} : {command.hint}
         #   ...
         help = super(ShellRoutine, cls).get_help(**substitutes)
         if cls.commands:
             lines = []
-            lines.append("Shell commands:")
+            lines.append("Shell commands:"
+                         " (run '%(executable)s help shell <command>'"
+                         " for more help)" % substitutes)
             for command_class in cls.commands:
                 signature = command_class.get_signature()
                 hint = command_class.get_hint()
@@ -597,6 +600,16 @@ class ShellRoutine(Routine):
             else:
                 help = "\n".join(lines)
         return help
+
+    @classmethod
+    def get_feature(cls, name):
+        """
+        Returns the shell command by name.
+        """
+        for command_class in cls.commands:
+            if name == command_class.name or name in command_class.aliases:
+                return command_class
+        raise ScriptError("unknown shell command %r" % name)
 
     def __init__(self, ctl, attributes):
         super(ShellRoutine, self).__init__(ctl, attributes)

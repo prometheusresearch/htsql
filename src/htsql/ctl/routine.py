@@ -17,7 +17,7 @@ import re
 
 
 # Indicates that the argument has no default value and thus cannot be omitted.
-ARGUMENT_REQUIRED = object()
+MANDATORY_ARGUMENT = object()
 
 class Argument(object):
     """
@@ -34,7 +34,7 @@ class Argument(object):
     `default`
         The default value of the argument.  If `default` is not
         provided, the argument value is always required.
-        The `is_required` attribute indicates if the default
+        The `is_mandatory` attribute indicates if the default
         value is omitted.
 
     `is_list` (Boolean)
@@ -46,7 +46,7 @@ class Argument(object):
     """
 
     def __init__(self, attribute, validator,
-                 default=ARGUMENT_REQUIRED, is_list=False, hint=None):
+                 default=MANDATORY_ARGUMENT, is_list=False, hint=None):
         # Sanity check on the arguments.
         assert isinstance(attribute, str)
         assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
@@ -57,7 +57,7 @@ class Argument(object):
         self.attribute = attribute
         self.validator = validator
         self.default = default
-        self.is_required = (default is ARGUMENT_REQUIRED)
+        self.is_mandatory = (default is MANDATORY_ARGUMENT)
         self.is_list = is_list
         self.hint = hint
 
@@ -157,7 +157,7 @@ class Routine(object):
         bracket_depth = 0
         for idx, argument in enumerate(cls.arguments):
             argument_signature = argument.get_signature()
-            if not argument.is_required:
+            if not argument.is_mandatory:
                 argument_signature = "[%s" % argument_signature
                 bracket_depth += 1
             if idx == len(cls.arguments)-1 and bracket_depth != 0:
@@ -166,6 +166,13 @@ class Routine(object):
             signature.append(argument_signature)
         return " ".join(signature)
 
+    @classmethod
+    def get_feature(cls, name):
+        """
+        Finds some routine feature by name.
+        """
+        raise ScriptError("routine %r does not support pluggable features"
+                          % (cls.name))
 
     def __init__(self, ctl, attributes):
         self.ctl = ctl
