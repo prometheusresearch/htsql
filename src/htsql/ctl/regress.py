@@ -14,7 +14,7 @@ from .error import ScriptError
 from .routine import Argument, Routine
 from .option import (InputOption, TrainOption, PurgeOption,
                      ForceOption, QuietOption)
-from .get_post import Request
+from .request import Request
 from ..validator import (Val, AnyVal, BoolVal, StrVal, WordVal, ChoiceVal,
                          IntVal, UFloatVal, DBVal, SeqVal, MapVal, ClassVal)
 from ..util import maybe, trim_doc

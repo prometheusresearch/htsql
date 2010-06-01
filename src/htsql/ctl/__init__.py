@@ -16,7 +16,7 @@ from .help import HelpRoutine
 from .version import VersionRoutine
 from .server import ServerRoutine
 from .shell import ShellRoutine
-from .get_post import GetRoutine, PostRoutine
+from .request import GetRoutine, PostRoutine
 from .regress import RegressRoutine
 import sys
 

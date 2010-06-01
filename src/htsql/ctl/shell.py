@@ -12,7 +12,7 @@ This module implements the `shell` routine.
 
 from .error import ScriptError
 from .routine import Argument, Routine
-from .get_post import Request
+from .request import Request
 from ..validator import DBVal
 from ..util import listof, trim_doc
 import traceback

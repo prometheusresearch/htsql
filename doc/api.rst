@@ -310,10 +310,10 @@ Concrete HTSQL Errors
 .. autoclass:: ServerRoutine
 
 
-:mod:`htsql.ctl.get_post`
+:mod:`htsql.ctl.request`
 -------------------------
 
-.. automodule:: htsql.ctl.get_post
+.. automodule:: htsql.ctl.request
 
 .. autoclass:: Request
    :members: prepare, execute
