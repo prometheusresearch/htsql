@@ -72,7 +72,7 @@ class HTTPError(Exception):
 
 
 #
-# HTTP Errors.
+# Generic HTTP Errors.
 #
 
 

@@ -112,7 +112,13 @@ class Parser(object):
 
         This function does not have to exhaust the token stream.
 
-        `tokens` (:class:`htsql.scanner.TokenStream`)
+        The ``<<`` operator could be used as a synonym for :meth:`process`;
+        the following expressions are equivalent::
+
+            Parser << tokens
+            Parser.process(tokens)
+
+        `tokens` (:class:`htsql.tr.scanner.TokenStream`)
             The stream of tokens to parse.
         """
         # Override in subclasses.

@@ -1799,6 +1799,9 @@ class WriteToFileTestCase(TestCase):
 
 
 class ReadFromFileTestCase(RunAndCompareTestCase):
+    """
+    Reads the file content.
+    """
 
     name = "read-from-file"
     hint = """read the content of a file"""
