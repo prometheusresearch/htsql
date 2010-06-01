@@ -63,7 +63,7 @@ class DB(object):
     # 'engine://username:password@host:port/database?options'.
     key_chars = r'''[%0-9a-zA-Z_.-]+'''
     value_chars = r'''[%0-9a-zA-Z`~!#$^*()_+\\|\[\]{};'",.<>/-]+'''
-    pattern = re.compile(r'''(?x)
+    pattern = r'''(?x)
         ^
         (?P<engine> %(key_chars)s )
         ://
@@ -78,7 +78,8 @@ class DB(object):
                 %(key_chars)s = (?: %(value_chars)s )?
                 (?: & %(key_chars)s = (?: %(value_chars)s )? )* )? )?
         $
-    ''' % vars())
+    ''' % vars()
+    regexp = re.compile(pattern)
 
     def __init__(self, engine, username, password, host, port, database,
                  options=None):
@@ -165,7 +166,7 @@ class DB(object):
 
         # If a string is given, assume it is a connection URI and parse it.
         if isinstance(value, str):
-            match = cls.pattern.search(value)
+            match = cls.regexp.search(value)
             if match is None:
                 raise ValueError("expected a connection URI of the form"
                                  " 'engine://username:password@host:port"
@@ -260,6 +261,8 @@ class DB(object):
 
     def __str__(self):
         """Generate a connection URI corresponding to the instance."""
+        # The generated URI should only contain ASCII characters because
+        # we want it to translate to Unicode without decoding errors.
         chunks = []
         chunks.append(self.engine)
         chunks.append('://')
@@ -292,8 +295,7 @@ class DB(object):
         return ''.join(chunks)
 
     def __repr__(self):
-        return "<%s.%s %s>" % (self.__class__.__module__,
-                               self.__class__.__name__, self)
+        return "<%s %s>" % (self.__class__.__name__, self)
 
 
 #

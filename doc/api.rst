@@ -103,7 +103,7 @@ Text formatting
 
 .. automodule:: htsql.ctl.routine
 
-.. autoclass:: Argument(attribute, validator, default=ARGUMENT_REQUIRED, is_list=False, hint=None)
+.. autoclass:: Argument(attribute, validator, default=MANDATORY_ARGUMENT, is_list=False, hint=None)
    :members: get_hint, get_signature
 
 .. autoclass:: Routine

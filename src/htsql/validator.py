@@ -447,6 +447,9 @@ class SeqVal(Val):
     `item_validator` (:class:`Val`)
         Validator for the sequence elements.
 
+    `length` (an integer or ``None``)
+        If set, check that the length of the sequence is equal to `length`.
+
     `is_nullable` (Boolean)
         If set, ``None`` values are permitted.
     """
@@ -462,12 +465,14 @@ class SeqVal(Val):
     """
     regexp = re.compile(pattern, re.X)
 
-    def __init__(self, item_validator, is_nullable=False):
+    def __init__(self, item_validator, length=None, is_nullable=False):
         # Sanity check on the arguments.
         assert isinstance(item_validator, Val)
+        assert isinstance(length, maybe(int))
         assert isinstance(is_nullable, bool)
 
         self.item_validator = item_validator
+        self.length = length
         self.is_nullable = is_nullable
 
     def get_hint(self):
@@ -543,7 +548,13 @@ class SeqVal(Val):
 
         # By this step, `value` must be converted to a proper list.
         if not isinstance(value, list):
-            raise ValueError("a list is required; got %r" % value)
+            raise ValueError("a list is expected; got %r" % value)
+
+        # Check the length is specified.
+        if self.length is not None:
+            if len(value) != self.length:
+                raise ValueError("a sequence of length %s is expected;"
+                                 " got %r" % (self.length, value))
 
         # Validate and normalize the list elements.
         items = []
