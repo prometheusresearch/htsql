@@ -61,11 +61,11 @@ There are also two special token types:
 """
 
 
-from token import (Token, SpaceToken, NameToken, StringToken, NumberToken,
-                   SymbolToken, EndToken)
-from mark import Mark
-from error import InvalidSyntaxError
-from util import maybe, listof
+from .token import (Token, SpaceToken, NameToken, StringToken, NumberToken,
+                    SymbolToken, EndToken)
+from ..mark import Mark
+from ..error import InvalidSyntaxError
+from ..util import maybe, listof
 import re
 
 

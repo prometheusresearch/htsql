@@ -10,8 +10,8 @@ This module defines syntax nodes for the HTSQL grammar.
 """
 
 
-from .mark import Mark
-from .util import maybe, listof
+from ..mark import Mark
+from ..util import maybe, listof
 import re
 
 

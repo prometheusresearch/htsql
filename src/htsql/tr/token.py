@@ -10,8 +10,8 @@ This module defines token types used by the HTSQL scanner.
 """
 
 
-from mark import Mark
-from util import maybe
+from ..mark import Mark
+from ..util import maybe
 
 
 class Token(object):

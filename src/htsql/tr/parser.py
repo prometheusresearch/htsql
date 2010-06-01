@@ -58,7 +58,7 @@ the postfix ``+`` and ``-`` operators.
 """
 
 
-from .mark import Mark
+from ..mark import Mark
 from .scanner import Scanner
 from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
 from .syntax import (QuerySyntax, SegmentSyntax, FormatSyntax, SelectorSyntax,

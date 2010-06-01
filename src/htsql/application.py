@@ -12,7 +12,7 @@ This module implements an HTSQL application.
 
 from .error import HTTPError
 from .util import DB
-from .parser import QueryParser
+from .tr.parser import QueryParser
 import urllib
 
 
