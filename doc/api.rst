@@ -32,12 +32,21 @@ Type checking helpers
 
 .. autoclass:: dictof
 
+.. autoclass:: subclassof
+
 .. autoclass:: filelike
+
+.. autofunction:: aresubclasses
 
 Text formatting
 ~~~~~~~~~~~~~~~
 
 .. autofunction:: trim_doc
+
+Topological sorting
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: toposort
 
 
 :mod:`htsql.validator`

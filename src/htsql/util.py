@@ -424,6 +424,28 @@ class dictof(object):
                     for key in value))
 
 
+class subclassof(object):
+    """
+    Check if a value is a subclass of the specified class.
+
+    Usage::
+
+        isinstance(value, subclassof(T))
+    """
+
+    # For Python 2.5, we can't use `__instancecheck__`; in this case,
+    # we let ``isinstance(subclassof(...)) == isinstance(type)``.
+    if sys.version_info < (2, 6):
+        def __new__(cls, *args, **kwds):
+            return type
+
+    def __init__(self, class_type):
+        self.class_type = class_type
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, type) and issubclass(value, self.class_type))
+
+
 class filelike(object):
     """
     Checks if a value is a file or a file-like object.
@@ -441,6 +463,24 @@ class filelike(object):
 
     def __instancecheck__(self, value):
         return (hasattr(value, 'read') or hasattr(value, 'write'))
+
+
+def aresubclasses(subclasses, superclasses):
+    """
+    Takes two lists; checks if each element of the first list is
+    a subclass of the corresponding element in the second list.
+
+    `subclasses` (a sequence of types)
+        A list of potential subclasses.
+
+    `superclasses` (a sequence of types)
+        A list of potential superclasses.
+
+    Returns ``True`` if the check succeeds; ``False`` otherwise.
+    """
+    return (len(subclasses) == len(superclasses) and
+            all(issubclass(subclass, superclass)
+                for subclass, superclass in zip(subclasses, superclasses)))
 
 
 #
@@ -471,5 +511,82 @@ def trim_doc(doc):
     if indent:
         lines = [line[indent:] for line in lines]
     return "\n".join(lines)
+
+
+#
+# Topological sorting.
+#
+
+
+def toposort(elements, preorder):
+    """
+    Implements topological sort.
+
+    Takes a list of elements and a preorder relation.  Returns
+    the elements reordered to satisfy the preorder.
+
+    A (finite) preorder relation is an acyclic directed graph.
+
+    `elements` (a list)
+        A list of elements.
+
+    `preorder` (a callable)
+        A function ``preorder(element) -> [list of elements]`` representing
+        the preorder relation.  For an element `x`, ``preorder(x)`` must
+        produce a list of elements less than `x`.
+    """
+    # For a description of the algorithm, see, for example,
+    #   http://en.wikipedia.org/wiki/Topological_sorting
+    # In short, we apply depth-first search to the DAG represented
+    # by the preorder.  As soon as the search finishes exploring
+    # some node, the node is added to the list.
+
+    # The sorted list.
+    ordered = []
+    # The set of nodes which the DFS has already processed.
+    visited = set()
+    # The set of nodes currently being processed by the DFS.
+    active = set()
+    # The path to the current node.  Note that `set(path) == active`.
+    path = []
+    # The mapping: node -> position of the node in the original list.
+    positions = dict((element, index)
+                     for index, element in enumerate(elements))
+
+    # Implements the depth-first search.
+    def dfs(node):
+        # Check if the node has already been processed.
+        if node in visited:
+            return
+
+        # Update the path; check for cycles.
+        path.append(node)
+        assert node not in active,  \
+                "loop detected in %s" % path[path.index(node):]
+        active.add(node)
+
+        # Get the list of adjacent nodes.
+        adjacents = preorder(node)
+        # Sort the adjacent elements according to their order in the
+        # original list.  It helps to keep the original order when possible.
+        adjacents = sorted(adjacents, key=(lambda i: positions[i]))
+
+        # Visit the adjacent nodes.
+        for adjacent in adjacents:
+            dfs(adjacent)
+
+        # Add the node to the sorted list.
+        ordered.append(node)
+
+        # Remove the node from the path; add it to the set of processed nodes.
+        path.pop()
+        active.remove(node)
+        visited.add(node)
+
+    # Apply the DFS to the whole DAG.
+    for element in elements:
+        dfs(element)
+
+    return ordered
 
 
