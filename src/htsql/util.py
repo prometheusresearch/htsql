@@ -487,6 +487,7 @@ def aresubclasses(subclasses, superclasses):
 # Text formatting.
 #
 
+
 def trim_doc(doc):
     """
     Unindent and remove leading and trailing blank lines.

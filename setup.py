@@ -56,6 +56,11 @@ PACKAGE_DIR = {'': os.path.join(root, 'src')}
 INCLUDE_PACKAGE_DATA = True
 ENTRY_POINTS = {
     'console_scripts': ['htsql-ctl = htsql.ctl:main'],
+    'htsql.addons': [
+        'htsql.core = htsql.export:HTSQL_CORE',
+        'engine.sqlite = htsql_sqlite.export:ENGINE_SQLITE',
+        'engine.pgsql = htsql_pgsql.export:ENGINE_PGSQL',
+    ],
 }
 INSTALL_REQUIRES = [
     'simplejson>=2.0',

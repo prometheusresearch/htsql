@@ -3,3 +3,10 @@
 # Authors: Clark C. Evans <cce@clarkevans.com>,
 #          Kirill Simonov <xi@resolvent.net>
 #
+
+
+"""
+This package provides HTSQL for PostgreSQL.
+"""
+
+

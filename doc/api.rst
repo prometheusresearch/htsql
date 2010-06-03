@@ -8,6 +8,14 @@ HTSQL API
 .. automodule:: htsql
 
 
+:mod:`htsql.export`
+-------------------
+
+.. automodule:: htsql.export
+
+.. autoclass:: HTSQL_CORE
+
+
 :mod:`htsql.util`
 -----------------
 
@@ -73,6 +81,56 @@ Topological sorting
 .. autoclass:: DBVal
 
 
+:mod:`htsql.application`
+------------------------
+
+.. automodule:: htsql.application
+
+.. autoclass:: Application
+   :members: __call__, __enter__, __exit__
+
+
+:mod:`htsql.context`
+--------------------
+
+.. automodule:: htsql.context
+
+.. autoclass:: ThreadContext
+   :members: switch, app
+
+
+:mod:`htsql.adapter`
+--------------------
+
+.. automodule:: htsql.adapter
+
+.. autoclass:: Adapter
+   :members: __new__, realize
+
+.. autoclass:: Utility
+
+.. autoclass:: AdapterRegistry
+   :members: specialize
+
+.. autofunction:: adapts
+
+.. autofunction:: dominates
+
+.. autofunction:: dominated_by
+
+.. autofunction:: weights
+
+.. autofunction:: find_adapters
+
+
+:mod:`htsql.addon`
+------------------
+
+.. automodule:: htsql.addon
+
+.. autoclass:: Addon
+
+
 :mod:`htsql.mark`
 -----------------
 
@@ -109,15 +167,6 @@ Concrete HTSQL Errors
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: InvalidSyntaxError
-
-
-:mod:`htsql.application`
-------------------------
-
-.. automodule:: htsql.application
-
-.. autoclass:: Application
-   :members: __call__
 
 
 :mod:`htsql.tr`
@@ -438,5 +487,33 @@ Concrete HTSQL Errors
 
 .. autoclass:: RegressRoutine
    :members: get_help, get_feature
+
+
+:mod:`htsql_sqlite`
+-------------------
+
+.. automodule:: htsql_sqlite
+
+
+:mod:`htsql_sqlite.export`
+--------------------------
+
+.. automodule:: htsql_sqlite.export
+
+.. autoclass:: ENGINE_SQLITE
+
+
+:mod:`htsql_pgsql`
+------------------
+
+.. automodule:: htsql_pgsql
+
+
+:mod:`htsql_pgsql.export`
+-------------------------
+
+.. automodule:: htsql_pgsql.export
+
+.. autoclass:: ENGINE_PGSQL
 
 
