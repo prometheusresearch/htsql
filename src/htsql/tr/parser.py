@@ -7,54 +7,6 @@
 
 """
 This module implements the HTSQL parser.
-
-The parser takes a stream of tokens from the scanner and produces
-a syntax tree.
-
-Here is the grammar of HTSQL::
-
-    stream          ::= query END
-
-    query           ::= '/'
-                      | '/' base format? filter?
-                      | '/' base? selector format? filter?
-    base            ::= identifier | group
-    format          ::= '.' identifier
-    filter          ::= '?' test
-
-    element         ::= test ( '+' | '-' )*
-    test            ::= and_test ( '|' and_test )*
-    and_test        ::= implies_test ( '&' implies_test )*
-    implies_test    ::= unary_test ( '->' unary_test )?
-    unary_test      ::= '!' unary_test | comparison
-
-    comparison      ::= expression ( ( '=~~' | '=~' | '^~~' | '^~' |
-                                       '$~~' | '$~' | '~~' | '~' |
-                                       '!=~~' | '!=~' | '!^~~' | '!^~' |
-                                       '!$~~' | '!$~' | '!~~' | '!~' |
-                                       '<=' | '<' | '>=' |  '>' |
-                                       '==' | '=' | '!==' | '!=' )
-                                     expression )?
-
-    expression      ::= term ( ( '+' | '-' ) term )*
-    term            ::= factor ( ( '*' | identifier ) factor )*
-    factor          ::= ( '+' | '-' ) factor | power
-    power           ::= sieve ( '^' power )?
-
-    sieve           ::= specifier selector? filter?
-    specifier       ::= atom ( '.' identifier call? )* ( '.' '*' )?
-    atom            ::= '*' | selector | group | identifier call? | literal
-
-    group           ::= '(' element ')'
-    call            ::= '(' elements? ')'
-    selector        ::= '{' elements? '}'
-    elements        ::= element ( ',' element )* ','?
-
-    identifier      ::= NAME
-    literal         ::= STRING | NUMBER
-
-Note that this grammar is almost LL(1); one notable exception is
-the postfix ``+`` and ``-`` operators.
 """
 
 
@@ -71,6 +23,9 @@ from .syntax import (QuerySyntax, SegmentSyntax, FormatSyntax, SelectorSyntax,
 class Parser(object):
     """
     Implements an HTSQL parser.
+
+    A parser takes a stream of tokens from the HTSQL scanner and
+    produces a syntax node.
 
     This is an abstract class; see subclasses of :class:`Parser` for
     implementations of various parts of the HTSQL grammar.
@@ -128,6 +83,51 @@ class Parser(object):
 class QueryParser(Parser):
     """
     Parses an HTSQL query.
+
+    Here is the grammar of HTSQL::
+
+        input           ::= query END
+
+        query           ::= '/'
+                          | '/' base format? filter?
+                          | '/' base? selector format? filter?
+        base            ::= identifier | group
+        format          ::= '.' identifier
+        filter          ::= '?' test
+
+        element         ::= test ( '+' | '-' )*
+        test            ::= and_test ( '|' and_test )*
+        and_test        ::= implies_test ( '&' implies_test )*
+        implies_test    ::= unary_test ( '->' unary_test )?
+        unary_test      ::= '!' unary_test | comparison
+
+        comparison      ::= expression ( ( '=~~' | '=~' | '^~~' | '^~' |
+                                           '$~~' | '$~' | '~~' | '~' |
+                                           '!=~~' | '!=~' | '!^~~' | '!^~' |
+                                           '!$~~' | '!$~' | '!~~' | '!~' |
+                                           '<=' | '<' | '>=' |  '>' |
+                                           '==' | '=' | '!==' | '!=' )
+                                         expression )?
+
+        expression      ::= term ( ( '+' | '-' ) term )*
+        term            ::= factor ( ( '*' | identifier ) factor )*
+        factor          ::= ( '+' | '-' ) factor | power
+        power           ::= sieve ( '^' power )?
+
+        sieve           ::= specifier selector? filter?
+        specifier       ::= atom ( '.' identifier call? )* ( '.' '*' )?
+        atom            ::= '*' | selector | group | identifier call? | literal
+
+        group           ::= '(' element ')'
+        call            ::= '(' elements? ')'
+        selector        ::= '{' elements? '}'
+        elements        ::= element ( ',' element )* ','?
+
+        identifier      ::= NAME
+        literal         ::= STRING | NUMBER
+
+    Note that this grammar is almost LL(1); one notable exception is
+    the postfix ``+`` and ``-`` operators.
     """
 
     @classmethod

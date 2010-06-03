@@ -7,57 +7,6 @@
 
 """
 This module implements the HTSQL scanner.
-
-The scanner tokenizes the input query and produces a stream of tokens.
-
-The first step of scanning is decoding ``%``-escape sequences.  Then
-the scanner splits the input query to a list of tokens.  The following
-token types are emitted:
-
-*NAME*
-    Represents an HTSQL identifier: a sequence of alphanumeric characters
-    that does not start with a digit.  Alphanumeric characters include
-    characters ``a``-``z``, ``A``-``Z``, ``0``-``9``, ``_``, and those
-    Unicode characters that are classified as alphanumeric.
-
-*NUMBER*
-    Represents a number literal: integer, float and scientific notations
-    are recognized.
-
-*STRING*
-    Represents a string literal enclosed in single quotes; any single
-    quote character should be doubled.
-
-*SYMBOL*
-    Represents a valid symbol in HTSQL grammar; one of the following
-    symbols:
-
-    *comparison operators*
-        ``=``, ``!=``, ``==``, ``!==``, ``~``, ``!~``,
-        ``~~``, ``!~~``, ``^~``, ``!^~``, ``^~~``, ``!^~~``,
-        ``$~``, ``!$~``, ``$~~``, ``!$~~``, ``=~``, ``!=~``,
-        ``=~~``, ``!=~~``. ``<``, ``<=``, ``>``, ``>=``.
-
-    *logical operators*
-        ``!``, ``&``, ``|``, ``->``, ``?``.
-
-    *arithmetic operators*
-        ``+``, ``-``, ``*``, ``^``.
-
-    *punctuation*
-        ``(``, ``)``, ``[``, ``]``, ``{``, ``}``,
-        ``.``, ``,``, ``/``.
-
-There are also two special token types:
-
-*WHITESPACE*
-    Represents a whitespace character, one of: space, tab, LF, CR, FF, VT,
-    and those Unicode characters that are classified as space.  The
-    whitespace token are immediately discarded by the scanner and never
-    emitted.
-
-*END*
-    Indicates the end of the query; it is always the last token emitted.
 """
 
 
@@ -202,6 +151,59 @@ class TokenStream(object):
 class Scanner(object):
     """
     Implements the HTSQL scanner.
+
+    The scanner tokenizes the input query and produces a stream of tokens.
+
+    The first step of scanning is decoding ``%``-escape sequences.  Then
+    the scanner splits the input query to a list of tokens.  The following
+    token types are emitted:
+
+    *NAME*
+        Represents an HTSQL identifier: a sequence of alphanumeric characters
+        that does not start with a digit.  Alphanumeric characters include
+        characters ``a``-``z``, ``A``-``Z``, ``0``-``9``, ``_``, and those
+        Unicode characters that are classified as alphanumeric.
+
+    *NUMBER*
+        Represents a number literal: integer, float and scientific notations
+        are recognized.
+
+    *STRING*
+        Represents a string literal enclosed in single quotes; any single
+        quote character should be doubled.
+
+    *SYMBOL*
+        Represents a valid symbol in HTSQL grammar; one of the following
+        symbols:
+
+        *comparison operators*
+            ``=``, ``!=``, ``==``, ``!==``, ``~``, ``!~``,
+            ``~~``, ``!~~``, ``^~``, ``!^~``, ``^~~``, ``!^~~``,
+            ``$~``, ``!$~``, ``$~~``, ``!$~~``, ``=~``, ``!=~``,
+            ``=~~``, ``!=~~``. ``<``, ``<=``, ``>``, ``>=``.
+
+        *logical operators*
+            ``!``, ``&``, ``|``, ``->``, ``?``.
+
+        *arithmetic operators*
+            ``+``, ``-``, ``*``, ``^``.
+
+        *punctuation*
+            ``(``, ``)``, ``[``, ``]``, ``{``, ``}``,
+            ``.``, ``,``, ``/``.
+
+    There are also two special token types:
+
+    *WHITESPACE*
+        Represents a whitespace character, one of: space, tab, LF, CR, FF, VT,
+        and those Unicode characters that are classified as space.  The
+        whitespace token are immediately discarded by the scanner and never
+        emitted.
+
+    *END*
+        Indicates the end of the query; it is always the last token emitted.
+
+    The :class:`Scanner` constructor takes the following argument:
 
     `input`
         An HTSQL query.
