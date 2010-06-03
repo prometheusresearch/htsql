@@ -114,6 +114,19 @@ Concrete HTSQL Errors
 .. autoclass:: WSGI
    :members: __call__
 
+:mod:`htsql.connect`
+--------------------
+.. automodule:: htsql.connect
+.. autoclass:: DBError
+.. autoclass:: ErrorGuard
+.. autoclass:: ConnectionProxy
+   :members: cursor, commit, rollback, close
+.. autoclass:: CursorProxy
+   :members: description, rowcount, execute, executemany,
+             fetchone, fetchmany, fetchall, __iter__, close
+.. autoclass:: Connect
+   :members: __call__, open_connection, translate_error
+
 :mod:`htsql.tr`
 ---------------
 .. automodule:: htsql.tr
@@ -313,6 +326,12 @@ Concrete HTSQL Errors
 .. automodule:: htsql_sqlite.export
 .. autoclass:: ENGINE_SQLITE
 
+:mod:`htsql_sqlite.connect`
+---------------------------
+.. automodule:: htsql_sqlite.connect
+.. autoclass:: SQLiteError
+.. autoclass:: SQLiteConnect
+
 :mod:`htsql_pgsql`
 ------------------
 .. automodule:: htsql_pgsql
@@ -321,5 +340,11 @@ Concrete HTSQL Errors
 -------------------------
 .. automodule:: htsql_pgsql.export
 .. autoclass:: ENGINE_PGSQL
+
+:mod:`htsql_pgsql.connect`
+---------------------------
+.. automodule:: htsql_pgsql.connect
+.. autoclass:: PGSQLError
+.. autoclass:: PGSQLConnect
 
 

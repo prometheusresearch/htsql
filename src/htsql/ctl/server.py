@@ -129,7 +129,7 @@ class ServerRoutine(Routine):
 
     def run(self):
         # Create the HTSQL application and the HTTP server.
-        from htsql import Application
+        from htsql.application import Application
         app = Application(self.db)
         httpd = HTSQLServer(self)
         httpd.set_app(app)

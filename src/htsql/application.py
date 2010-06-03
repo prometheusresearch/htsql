@@ -57,8 +57,6 @@ class Application(object):
         # TODO: these should be defined by the `htsql.core` addon.
         # Initialize the adapter registry.
         self.adapter_registry = AdapterRegistry(adapters)
-        #self.connection_pool = ConnectionPool()
-        #self.introspector = Introspector()
 
     def __enter__(self):
         """

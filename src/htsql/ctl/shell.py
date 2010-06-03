@@ -667,7 +667,7 @@ class ShellRoutine(Routine):
 
     def run(self):
         # Create the HTSQL application.
-        from htsql import Application
+        from htsql.application import Application
         app = Application(self.db)
 
         # Display the welcome notice; load the history.

@@ -231,9 +231,9 @@ class AdapterRegistry(object):
                     continue
                 # Indicates if `master` dominates `slave`.
                 is_dominated = False
-                # The interface adapter is always dominated by its
-                # implementations.
-                if slave is interface:
+                # A subclass always dominates its superclasses.  In particular,
+                # the interface adapter is dominated by all implementations.
+                if issubclass(master, slave):
                     is_dominated = True
                 # Check if dominance is specified explicitly.
                 if slave in master.dominated_adapters:

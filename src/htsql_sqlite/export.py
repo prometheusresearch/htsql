@@ -11,6 +11,7 @@ This module exports the `engine.sqlite` addon.
 
 
 from htsql.addon import Addon
+from .connect import connect_adapters
 
 
 class ENGINE_SQLITE(Addon):
@@ -18,6 +19,7 @@ class ENGINE_SQLITE(Addon):
     Declares the `engine.sqlite` addon.
     """
 
-    adapters = []
+    # List of adapters exported by the addon.
+    adapters = connect_adapters
 
 

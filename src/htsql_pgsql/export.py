@@ -11,6 +11,7 @@ This module exports the `engine.pgsql` addon.
 
 
 from htsql.addon import Addon
+from .connect import connect_adapters
 
 
 class ENGINE_PGSQL(Addon):
@@ -18,6 +19,7 @@ class ENGINE_PGSQL(Addon):
     Declares the `engine.pgsql` addon.
     """
 
-    adapters = []
+    # List of adapters exported by the addon.
+    adapters = connect_adapters
 
 

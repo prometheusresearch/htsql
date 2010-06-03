@@ -12,6 +12,7 @@ This module exports the `htsql.core` addon.
 
 from addon import Addon
 from wsgi import wsgi_adapters
+from connect import connect_adapters
 
 
 class HTSQL_CORE(Addon):
@@ -19,6 +20,7 @@ class HTSQL_CORE(Addon):
     Declares the `htsql.core` addon.
     """
 
-    adapters = wsgi_adapters
+    # List of adapters exported by the addon.
+    adapters = wsgi_adapters+connect_adapters
 
 

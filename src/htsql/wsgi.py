@@ -22,7 +22,14 @@ import urllib
 
 class WSGI(Utility):
     """
-    Handles WSGI requests.
+    Declares the WSGI interface.
+
+    The WSGI interface is a utility to handle WSGI requests.
+
+    Usage::
+
+        wsgi = WSGI()
+        body = wsgi(environ, start_response)
     """
 
     def __call__(self, environ, start_response):
