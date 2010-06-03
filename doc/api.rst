@@ -92,21 +92,21 @@ Topological sorting
 :mod:`htsql.error`
 ------------------
 .. automodule:: htsql.error
-.. autoclass:: HTTPError
+.. autoexception:: HTTPError
    :members: __call__
 
 Generic HTTP errors
 ~~~~~~~~~~~~~~~~~~~
-.. autoclass:: BadRequestError
-.. autoclass:: ForbiddenError
-.. autoclass:: NotFoundError
-.. autoclass:: ConflictError
-.. autoclass:: InternalServerError
-.. autoclass:: NotImplementedError
+.. autoexception:: BadRequestError
+.. autoexception:: ForbiddenError
+.. autoexception:: NotFoundError
+.. autoexception:: ConflictError
+.. autoexception:: InternalServerError
+.. autoexception:: NotImplementedError
 
 Concrete HTSQL Errors
 ~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: InvalidSyntaxError
+.. autoexception:: InvalidSyntaxError
 
 :mod:`htsql.wsgi`
 -----------------
@@ -117,7 +117,7 @@ Concrete HTSQL Errors
 :mod:`htsql.connect`
 --------------------
 .. automodule:: htsql.connect
-.. autoclass:: DBError
+.. autoexception:: DBError
 .. autoclass:: ErrorGuard
 .. autoclass:: ConnectionProxy
    :members: cursor, commit, rollback, close
@@ -209,7 +209,7 @@ Concrete HTSQL Errors
 :mod:`htsql.ctl.error`
 ----------------------
 .. automodule:: htsql.ctl.error
-.. autoclass:: ScriptError
+.. autoexception:: ScriptError
 
 :mod:`htsql.ctl.option`
 -----------------------
