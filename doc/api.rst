@@ -108,6 +108,12 @@ Concrete HTSQL Errors
 ~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: InvalidSyntaxError
 
+:mod:`htsql.wsgi`
+-----------------
+.. automodule:: htsql.wsgi
+.. autoclass:: WSGI
+   :members: __call__
+
 :mod:`htsql.tr`
 ---------------
 .. automodule:: htsql.tr

@@ -10,8 +10,9 @@ This module provides a mechanism for pluggable multiple dispatch.
 """
 
 
-from .util import aresubclasses, toposort
+from .util import listof, subclassof, aresubclasses, toposort
 from .context import context
+import sys
 
 
 class Adapter(object):
@@ -118,7 +119,7 @@ class Adapter(object):
         if cls.is_realized:
             return super(Adapter, cls).__new__(cls, *args, **kwds)
         # Extract polymorphic parameters.
-        assert cls.signature is not None and len(args) >= cls.signature
+        assert cls.signature is not None and len(args) >= len(cls.signature)
         objects = args[:len(cls.signature)]
         # Specialize the interface for the given parameters.
         realization = cls.realize(*objects)
@@ -156,7 +157,7 @@ class AdapterRegistry(object):
 
     def __init__(self, adapters):
         # Sanity check on the argument.
-        assert isinstance(adapters, listof(subclass(Adapter)))
+        assert isinstance(adapters, listof(subclassof(Adapter)))
         # List of active adapters.
         self.adapters = adapters
         # A mapping: interface -> (signature -> realization).
@@ -399,7 +400,7 @@ def find_adapters():
     for name in sorted(locals):
         obj = locals[name]
         if (isinstance(obj, type) and issubclass(obj, Adapter)
-                and obj.__name__ == module_name):
+                and obj.__module__ == module_name):
             adapters.append(obj)
     return adapters
 

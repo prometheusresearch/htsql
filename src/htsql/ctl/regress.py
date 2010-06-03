@@ -826,7 +826,7 @@ class AppTestCase(TestCase):
         # Create an application and update the testing state.  The created
         # application will be in effect for the subsequent tests in the
         # current suite and all the nested suites unless overriden.
-        from htsql import Application
+        from htsql.application import Application
         self.state.app = None
         try:
             self.state.app = Application(self.input.db)

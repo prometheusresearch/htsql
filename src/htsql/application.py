@@ -11,11 +11,12 @@ This module implements an HTSQL application.
 
 
 from __future__ import with_statement
-from .error import HTTPError
 from .context import context
+from .addon import Addon
+from .adapter import AdapterRegistry
 from .util import DB
-from .tr.parser import QueryParser
-import urllib
+from .wsgi import WSGI
+import pkg_resources
 
 
 class Application(object):
@@ -76,18 +77,7 @@ class Application(object):
         Implements the WSGI entry point.
         """
         with self:
-            # Parse and echo the query.
-            path_info = environ['PATH_INFO']
-            query_string = environ.get('QUERY_STRING')
-            uri = urllib.quote(path_info)
-            if query_string:
-                uri += '?'+query_string
-            parser = QueryParser(uri)
-            try:
-                syntax = parser.parse()
-            except HTTPError, exc:
-                return exc(environ, start_response)
-            start_response("200 OK", [('Content-Type', 'text/plain')])
-            return [str(syntax), "\n"]
+            wsgi = WSGI()
+            return wsgi(environ, start_response)
 
 
