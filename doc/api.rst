@@ -127,6 +127,13 @@ Concrete HTSQL Errors
 .. autoclass:: Connect
    :members: __call__, open_connection, translate_error
 
+:mod:`htsql.split_sql`
+----------------------
+.. automodule:: htsql.split_sql
+.. autoclass:: SQLToken
+.. autoclass:: SplitSQL
+   :members: __call__
+
 :mod:`htsql.tr`
 ---------------
 .. automodule:: htsql.tr
@@ -332,6 +339,11 @@ Concrete HTSQL Errors
 .. autoclass:: SQLiteError
 .. autoclass:: SQLiteConnect
 
+:mod:`htsql_sqlite.split_sql`
+-----------------------------
+.. automodule:: htsql_sqlite.split_sql
+.. autoclass:: SplitSQLite
+
 :mod:`htsql_pgsql`
 ------------------
 .. automodule:: htsql_pgsql
@@ -346,5 +358,10 @@ Concrete HTSQL Errors
 .. automodule:: htsql_pgsql.connect
 .. autoclass:: PGSQLError
 .. autoclass:: PGSQLConnect
+
+:mod:`htsql_pgsql.split_sql`
+----------------------------
+.. automodule:: htsql_pgsql.split_sql
+.. autoclass:: SplitPGSQL
 
 

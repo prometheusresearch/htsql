@@ -12,6 +12,7 @@ This module exports the `engine.pgsql` addon.
 
 from htsql.addon import Addon
 from .connect import connect_adapters
+from .split_sql import split_sql_adapters
 
 
 class ENGINE_PGSQL(Addon):
@@ -20,6 +21,7 @@ class ENGINE_PGSQL(Addon):
     """
 
     # List of adapters exported by the addon.
-    adapters = connect_adapters
+    adapters = (connect_adapters +
+                split_sql_adapters)
 
 
