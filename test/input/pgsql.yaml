@@ -1,0 +1,12 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: PostgreSQL regression tests
+id: pgsql
+output: test/output/pgsql.yaml
+tests: []
+# FIXME: need a regression schema and a set of tests.
+

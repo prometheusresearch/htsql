@@ -1,0 +1,54 @@
+#
+# This file contains expected test output data for regression tests.
+# It was generated automatically by the `regress` routine.
+#
+
+id: ctl
+tests:
+- ctl: []
+  stdout: |
+    HTSQL-CTL - HTSQL command-line administrative application
+    Copyright (c) 2006-2010, Prometheus Research, LLC
+
+    Run `htsql-ctl help` for general usage and list of routines.
+    Run `htsql-ctl help <routine>` for help on a specific routine.
+  exit: 0
+- ctl: [help]
+  stdout: |+
+    HTSQL-CTL - HTSQL command-line administrative application
+    Copyright (c) 2006-2010, Prometheus Research, LLC
+    Usage: htsql-ctl <routine> [options] [arguments]
+
+    Run `htsql-ctl help` for general usage and list of routines.
+    Run `htsql-ctl help <routine>` for help on a specific routine.
+
+    Available routines:
+      help (h, ?)              : describe the usage of the application and its routines
+      version                  : display the version of the application
+      server (serve, s)        : start an HTTP server handling HTSQL requests
+      shell (sh)               : start an HTSQL shell
+      get                      : execute and render an HTSQL query
+      post                     : execute and render an HTSQL query with POST data
+      regress (test)           : run regression tests
+
+  exit: 0
+- ctl: [help, help]
+  stdout: |+
+    HELP - describe the usage of the application and its routines
+    Usage: htsql-ctl help [ROUTINE [FEATURE]]
+
+    Run 'htsql-ctl help' to describe the usage of the application and
+    get the list of available routines.
+
+    Run 'htsql-ctl help <routine>' to describe the usage of the
+    specified routine.
+
+    Some routines may contain separate descriptions of some features.
+    Run 'htsql-ctl help <routine> <feature>' to describe a specific
+    feature.
+
+    Arguments:
+      ROUTINE                  : the name of the routine to describe
+      FEATURE                  : the feature to describe
+
+  exit: 0

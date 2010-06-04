@@ -1,0 +1,15 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: Regression tests for htsql-ctl routines
+id: ctl
+output: test/output/ctl.yaml
+tests:
+- ctl: []
+- ctl: [help]
+- ctl: [help, help]
+# FIXME: need comprehensive tests for each routine.
+
