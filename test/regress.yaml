@@ -1,0 +1,26 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+#
+# This file contains the input data for HTSQL regression tests.
+#
+# To start the tests, run:
+#   htsql-ctl regress -i test/regress.yaml
+# from the project directory.
+#
+# For more information on the input and output data format, run
+#   htsql-ctl help regress
+# and
+#   htsql-ctl help regress <case>
+#
+
+title: HTSQL regression tests
+id: all
+tests:
+- include: test/input/ctl.yaml
+- include: test/input/sqlite.yaml
+- include: test/input/pgsql.yaml
+
