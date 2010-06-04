@@ -309,6 +309,7 @@ Concrete HTSQL Errors
 .. autoclass:: EndCtlTestCase
 .. autoclass:: PythonCodeTestCase
 .. autoclass:: SQLTestCase
+   :members: load
 .. autoclass:: SQLIncludeTestCase
 .. autoclass:: WriteToFileTestCase
 .. autoclass:: ReadFromFileTestCase
@@ -316,7 +317,7 @@ Concrete HTSQL Errors
 .. autoclass:: MakeDirTestCase
 .. autoclass:: RemoveDirTestCase
 .. autoclass:: TestState
-   :members: clone, merge
+   :members: push, pull
 .. autoclass:: RegressYAMLLoader
    :members: load
 .. autoclass:: RegressYAMLDumper
