@@ -23,6 +23,7 @@ import traceback
 import StringIO
 import sys
 import os, os.path
+import shutil
 import re
 import difflib
 import yaml, yaml.constructor
@@ -2088,8 +2089,8 @@ class RemoveDirTestCase(TestCase):
         # Display the header.
         self.out_header()
         # Remove the directory with all its content (DANGEROUS!).
-        if os.path.exists(self.input.mkdir):
-            shutil.rmtree(self.input.mkdir)
+        if os.path.exists(self.input.rmdir):
+            shutil.rmtree(self.input.rmdir)
 
 
 class TestState(object):
@@ -2190,6 +2191,10 @@ class RegressYAMLLoader(BaseYAMLLoader):
     `stream` (a file or a file-like object)
         The YAML stream.
     """
+
+    # A pattern to match `!environ` nodes.
+    environ_pattern = r"""^ \$ \{ [a-zA-Z_][0-9a-zA-Z_.-]* \} $"""
+    environ_regexp = re.compile(environ_pattern, re.X)
 
     def __init__(self, routine, with_input, with_output, stream):
         super(RegressYAMLLoader, self).__init__(stream)
@@ -2369,14 +2374,43 @@ class RegressYAMLLoader(BaseYAMLLoader):
                     node.start_mark)
         return record
 
+    def construct_environ(self, node):
+        # Replace an `!environ` scalar with the value of the corresponding
+        # environment variable.
 
-# Register custom constructors for `!!str`` and `!!map``.
+        # Get the scalar value and check that it has the form ${...}.
+        value = self.construct_scalar(node)
+        value = value.encode('utf-8')
+        if not (value.startswith('${') and value.endswith('}')):
+            raise yaml.constructor.ConstructorError(None, None,
+                    "invalid environment variable", node.start_mark)
+
+        # The name of the environment variable.
+        name = value[2:-1]
+
+        # Return the value of the environment variables.  Blank values
+        # are returned as `None`.
+        value = os.environ.get(name, '')
+        if not value:
+            return None
+        return value
+
+
+# Register custom constructors for `!!str``, `!!map`` and ``!environ``.
 RegressYAMLLoader.add_constructor(
         u'tag:yaml.org,2002:str',
         RegressYAMLLoader.construct_yaml_str)
 RegressYAMLLoader.add_constructor(
         u'tag:yaml.org,2002:map',
         RegressYAMLLoader.construct_yaml_map)
+RegressYAMLLoader.add_constructor(
+        u'!environ',
+        RegressYAMLLoader.construct_environ)
+
+
+# Register a resolver for ``!environ``.
+RegressYAMLLoader.add_implicit_resolver(
+        u'!environ', RegressYAMLLoader.environ_regexp, [u'$'])
 
 
 class RegressYAMLDumper(BaseYAMLDumper):

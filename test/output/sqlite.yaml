@@ -1,0 +1,33 @@
+#
+# This file contains expected test output data for regression tests.
+# It was generated automatically by the `regress` routine.
+#
+
+id: sqlite
+tests:
+- id: queries-sqlite
+  tests:
+  - uri: /{2+2}
+    status: 200 OK
+    headers:
+    - [Content-Type, text/plain]
+    body: |
+      /{2+2}
+  - uri: /test
+    status: 200 OK
+    headers:
+    - [Content-Type, text/plain]
+    body: |
+      /test
+  - uri: /test{id}
+    status: 200 OK
+    headers:
+    - [Content-Type, text/plain]
+    body: |
+      /test{id}
+  - uri: /test{data}?id=1
+    status: 200 OK
+    headers:
+    - [Content-Type, text/plain]
+    body: |
+      /test{data}?id=1

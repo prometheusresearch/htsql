@@ -5,8 +5,14 @@
 	train train-ctl train-sqlite train-pgsql purge-test
 
 
+# Load configuration variables from `Makefile.env`.  There is a sample
+# file `Makefile.env.sample`; copy it to `Makefile.env` and edit it
+# to match your configuration.
+-include Makefile.env
+
+
 #
-# Help.
+# The default task.
 #
 
 # Display the list of available targets.
@@ -26,6 +32,13 @@ default:
 	@echo "  train-sqlite: to run SQLite-specific tests in the train mode"
 	@echo "  train-pgsql: to run PostgreSQL-specific tests in the train mode"
 	@echo "  purge-test: to purge state test output data"
+	@echo
+	@echo "  *** Shell and Server ***"
+	@echo "  shell-sqlite: to start an HTSQL shell on the SQLite test database"
+	@echo "  shell-pgsql: to start an HTSQL shell on the PostgreSQL test database"
+	@echo "  serve-sqlite: to start an HTTP server on the SQLite test database"
+	@echo "  serve-pgsql: to start an HTTP server on the PostgreSQL test database"
+	@echo
 
 
 #
@@ -76,5 +89,35 @@ train-pgsql:
 # Purge stale output records from HTSQL regression tests.
 purge-test:
 	htsql-ctl regress -i test/regress.yaml -q --train --purge
+
+
+#
+# Shell and server tasks.
+#
+
+# The connection URI for regression databases.
+SQLITE_REGRESS_DB?=sqlite:///build/regress/regress-sqlite/htsql_regress.sqlite
+PGSQL_ADDRESS?=${PGSQL_HOST}$(if ${PGSQL_PORT},:${PGSQL_PORT})
+PGSQL_REGRESS_DB?=pgsql://htsql_regress:secret@${PGSQL_ADDRESS}/htsql_regress
+
+# The HTTP server address.
+HTSQL_HOST?=localhost
+HTSQL_PORT?=8080
+
+# Start an HTSQL shell on the SQLite regression database.
+shell-sqlite:
+	htsql-ctl shell ${SQLITE_REGRESS_DB}
+
+# Start an HTSQL shell on the PostgreSQL regression database.
+shell-pgsql:
+	htsql-ctl shell ${PGSQL_REGRESS_DB}
+
+# Start an HTTP/HTSQL server on the SQLite regression database.
+serve-sqlite:
+	htsql-ctl serve ${SQLITE_REGRESS_DB} ${HTSQL_HOST} ${HTSQL_PORT}
+
+# Start an HTTP/HTSQL server on the PostgreSQL regression database.
+serve-pgsql:
+	htsql-ctl serve ${PGSQL_REGRESS_DB} ${HTSQL_HOST} ${HTSQL_PORT}
 
 

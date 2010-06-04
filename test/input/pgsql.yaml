@@ -7,6 +7,49 @@
 title: PostgreSQL regression tests
 id: pgsql
 output: test/output/pgsql.yaml
-tests: []
+tests:
 # FIXME: need a regression schema and a set of tests.
+
+- title: Remove any existing regression database
+  id: cleanup-pgsql
+  tests:
+  - connect: &admin-connect
+      engine: pgsql
+      database: postgres
+      username: ${PGSQL_ADMIN_USERNAME}
+      password: ${PGSQL_ADMIN_PASSWORD}
+      host: ${PGSQL_HOST}
+      port: ${PGSQL_PORT}
+    sql: |
+        DROP DATABASE IF EXISTS "htsql_regress";
+        DROP ROLE IF EXISTS "htsql_regress";
+    autocommit: true
+
+- title: Deploy the regression database
+  id: setup-pgsql
+  tests:
+  - connect: *admin-connect
+    sql: |
+        CREATE DATABASE "htsql_regress" WITH ENCODING = 'UTF-8';
+        CREATE ROLE "htsql_regress" WITH LOGIN PASSWORD 'secret';
+        ALTER DATABASE "htsql_regress" OWNER TO "htsql_regress";
+    autocommit: true
+  - connect: &connect
+      engine: pgsql
+      database: htsql_regress
+      username: htsql_regress
+      password: secret
+      host: ${PGSQL_HOST}
+      port: ${PGSQL_PORT}
+    sql-include: test/sql/regress-pgsql.sql
+
+- db: *connect
+
+- title: Queries
+  id: queries-pgsql
+  tests:
+  - uri: /{2+2}
+  - uri: /test
+  - uri: /test{id}
+  - uri: /test{data}?id=1
 

@@ -7,6 +7,30 @@
 title: SQLite regression tests
 id: sqlite
 output: test/output/sqlite.yaml
-tests: []
+tests:
 # FIXME: need a regression schema and a set of tests.
+
+- title: Remove any existing regression database
+  id: cleanup-sqlite
+  tests:
+  - rmdir: build/regress/regress-sqlite
+
+- title: Deploy the regression database
+  id: setup-sqlite
+  tests:
+  - mkdir: build/regress/regress-sqlite
+  - connect: &connect
+      engine: sqlite
+      database: build/regress/regress-sqlite/htsql_regress.sqlite
+    sql-include: test/sql/regress-sqlite.sql
+
+- db: *connect
+
+- title: Queries
+  id: queries-sqlite
+  tests:
+  - uri: /{2+2}
+  - uri: /test
+  - uri: /test{id}
+  - uri: /test{data}?id=1
 
