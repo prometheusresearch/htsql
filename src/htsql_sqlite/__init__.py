@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_sqlite`
+===================
+
 This package provides HTSQL for SQLite.
 """
 

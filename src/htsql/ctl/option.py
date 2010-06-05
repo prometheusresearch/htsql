@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.ctl.option`
+=======================
+
 This module defines script options.
 """
 

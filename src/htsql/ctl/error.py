@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.ctl.error`
+======================
+
 This module implements exceptions raised by command-line scripts.
 """
 

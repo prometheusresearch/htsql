@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_pgsql.split_sql`
+============================
+
 This module implements the SQL splitter for PostgreSQL.
 
 This module exports a global variable:

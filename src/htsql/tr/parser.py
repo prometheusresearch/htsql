@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.tr.parser`
+======================
+
 This module implements the HTSQL parser.
 """
 

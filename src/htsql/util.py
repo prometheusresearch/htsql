@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.util`
+=================
+
 This module provides various hard-to-categorize utilities.
 """
 

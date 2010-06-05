@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_pgsql`
+==================
+
 This package provides HTSQL for PostgreSQL.
 """
 

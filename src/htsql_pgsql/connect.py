@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_pgsql.connect`
+==========================
+
 This module implements the connection adapter for PostgreSQL.
 
 This module exports a global variable:

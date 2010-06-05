@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.error`
+==================
+
 This module implements HTSQL exceptions.
 """
 

@@ -6,6 +6,14 @@
 
 
 """
+:mod:`htsql`
+============
+
+:copyright: 2006-2010, Prometheus Research, LLC
+:authors: Clark C. Evans <cce@clarkevans.com>,
+          Kirill Simonov <xi@resolvent.net>
+:license: See ``LICENSE`` file in the source distribution
+
 This package provides HTSQL, a query language for the accidental programmer.
 
 HTSQL is implemented as a WSGI application.  To create an application, run::

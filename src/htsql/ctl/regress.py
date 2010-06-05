@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.ctl.regress`
+========================
+
 This module implements the `regress` routine.
 """
 

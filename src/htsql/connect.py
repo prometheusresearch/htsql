@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.connect`
+====================
+
 This module declares the database connection adapter.
 
 This module exports a global variable:

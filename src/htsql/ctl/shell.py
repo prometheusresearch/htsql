@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.ctl.shell`
+======================
+
 This module implements the `shell` routine.
 """
 

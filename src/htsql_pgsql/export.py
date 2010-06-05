@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_pgsql.export`
+=========================
+
 This module exports the `engine.pgsql` addon.
 """
 

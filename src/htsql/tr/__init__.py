@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.tr`
+===============
+
 This package implements the HTSQL-to-SQL translator.
 """
 

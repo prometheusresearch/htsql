@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.tr.syntax`
+======================
+
 This module defines syntax nodes for the HTSQL grammar.
 """
 

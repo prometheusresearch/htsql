@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.application`
+========================
+
 This module implements an HTSQL application.
 """
 

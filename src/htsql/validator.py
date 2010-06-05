@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.validator`
+======================
+
 This module provides utilities for data validation and conversion.
 """
 

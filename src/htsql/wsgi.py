@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.wsgi`
+=================
+
 This module provides a handler for WSGI requests.
 
 This module exports a global variable:

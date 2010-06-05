@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_sqlite.export`
+==========================
+
 This module exports the `engine.sqlite` addon.
 """
 

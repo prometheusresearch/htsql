@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.tr.token`
+=====================
+
 This module defines token types used by the HTSQL scanner.
 """
 

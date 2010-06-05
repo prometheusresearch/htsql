@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.split_sql`
+======================
+
 This module declares the SQL splitter adapter.
 
 This module exports a global variable:

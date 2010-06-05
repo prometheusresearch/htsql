@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.export`
+===================
+
 This module exports the `htsql.core` addon.
 """
 

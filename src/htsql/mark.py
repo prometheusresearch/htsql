@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.mark`
+=================
+
 This module implements a :class:`Mark` object.
 """
 

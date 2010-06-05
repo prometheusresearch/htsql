@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.ctl.script`
+=======================
+
 This module implements a command-line application with subcommands.
 """
 

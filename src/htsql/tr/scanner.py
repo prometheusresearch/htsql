@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.tr.scanner`
+=======================
+
 This module implements the HTSQL scanner.
 """
 

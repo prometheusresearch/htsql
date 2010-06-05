@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_sqlite.split_sql`
+=============================
+
 This module implements the SQL splitter for SQLite.
 
 This module exports a global variable:

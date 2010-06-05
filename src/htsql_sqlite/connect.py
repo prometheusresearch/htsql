@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql_sqlite.connect`
+===========================
+
 This module implements the connection adapter for SQLite.
 
 This module exports a global variable:

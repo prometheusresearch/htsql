@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.ctl.routine`
+========================
+
 This module defines basic classes for implementing script routines.
 """
 

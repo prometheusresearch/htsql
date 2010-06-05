@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.context`
+====================
+
 This module keeps the active HTSQL application in a thread-local variable.
 
 This module exports one global variable:

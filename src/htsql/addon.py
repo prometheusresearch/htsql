@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.addon`
+==================
+
 This module declares HTSQL addons.
 """
 

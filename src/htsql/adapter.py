@@ -6,6 +6,9 @@
 
 
 """
+:mod:`htsql.adapter`
+====================
+
 This module provides a mechanism for pluggable multiple dispatch.
 """
 
