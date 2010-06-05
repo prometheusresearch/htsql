@@ -165,7 +165,6 @@ Concrete HTSQL Errors
    :members: __str__
 .. autoclass:: QuerySyntax
 .. autoclass:: SegmentSyntax
-.. autoclass:: FormatSyntax
 .. autoclass:: SelectorSyntax
 .. autoclass:: SieveSyntax
 .. autoclass:: OperatorSyntax
@@ -185,6 +184,7 @@ Concrete HTSQL Errors
 .. autoclass:: Parser
    :members: parse, process
 .. autoclass:: QueryParser
+.. autoclass:: SegmentParser
 .. autoclass:: ElementParser
 .. autoclass:: TestParser
 .. autoclass:: AndTestParser

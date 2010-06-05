@@ -48,6 +48,7 @@ tests:
 - title: Queries
   id: queries-pgsql
   tests:
+  - uri: /
   - uri: /{2+2}
   - uri: /test
   - uri: /test{id}

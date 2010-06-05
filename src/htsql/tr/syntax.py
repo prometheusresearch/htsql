@@ -47,22 +47,17 @@ class QuerySyntax(Syntax):
     """
     Represents an HTSQL query.
 
-    An HTSQL query consists of a segment expression and a format identifier.
+    An HTSQL query consists of a segment expression.
 
     `segment` (:class:`SegmentSyntax` or ``None``)
         The segment expression.
-
-    `format` (:class:`FormatSyntax` or ``None``)
-        The query format.
     """
 
-    def __init__(self, segment, format, mark):
+    def __init__(self, segment, mark):
         assert isinstance(segment, maybe(SegmentSyntax))
-        assert isinstance(format, maybe(FormatSyntax))
 
         super(QuerySyntax, self).__init__(mark)
         self.segment = segment
-        self.format = format
 
     def __str__(self):
         # Generate an HTSQL query corresponding to the node.
@@ -72,16 +67,7 @@ class QuerySyntax(Syntax):
         chunks = []
         chunks.append('/')
         if self.segment is not None:
-            if self.segment.base is not None:
-                chunks.append(str(self.segment.base))
-            if self.segment.selector is not None:
-                chunks.append(str(self.segment.selector))
-            if self.format is not None:
-                chunks.append('.')
-                chunks.append(str(self.format))
-            if self.segment.filter is not None:
-                chunks.append('?')
-                chunks.append(str(self.segment.filter))
+            chunks.append(str(self.segment))
         return ''.join(chunks)
 
 
@@ -126,27 +112,6 @@ class SegmentSyntax(Syntax):
             chunks.append('?')
             chunks.append(str(self.filter))
         return ''.join(chunks)
-
-
-class FormatSyntax(Syntax):
-    """
-    Represents the format identifier.
-
-    `identifier`
-        The format identifier.
-    """
-    # Note that essentially `FormatSyntax` is a wrapper over
-    # `IdentifierSyntax`.  We wrap the format identifier into
-    # a separate node to enable adapting by the node type.
-
-    def __init__(self, identifier, mark):
-        assert isinstance(identifier, IdentifierSyntax)
-
-        super(FormatSyntax, self).__init__(mark)
-        self.identifier = identifier
-
-    def __str__(self):
-        return str(self.identifier)
 
 
 class SelectorSyntax(Syntax):

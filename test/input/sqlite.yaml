@@ -29,6 +29,7 @@ tests:
 - title: Queries
   id: queries-sqlite
   tests:
+  - uri: /
   - uri: /{2+2}
   - uri: /test
   - uri: /test{id}

@@ -1348,7 +1348,7 @@ class QueryTestCase(RunAndCompareTestCase):
 
         # Check if the response is valid.
         if response.exc_info is not None:
-            self.out_exc(respones_exc_info)
+            self.out_exception(response.exc_info)
             return self.out("*** an exception occured"
                             " while executing the query")
         if not response.complete():
@@ -1448,7 +1448,7 @@ class CtlTestCase(RunAndCompareTestCase):
             ctl = ctl_class(stdin, stdout, stderr)
             exit = ctl.main(command_line)
         except:
-            self.out_exc(sys.exc_info())
+            self.out_exception(sys.exc_info())
             return self.out("*** an exception occured"
                             " while running the application")
 
@@ -1761,7 +1761,7 @@ class PythonCodeTestCase(RunAndCompareTestCase):
         if exc_info is not None:
             # Display the output and the exception
             self.out_diff(self.output, new_output)
-            self.out_exc(exc_info)
+            self.out_exception(exc_info)
             exc_name = exc_info[0].__name__
             # The exception was unexpected: discard the output.
             if self.input.expect is None or self.input.expect != exc_name:

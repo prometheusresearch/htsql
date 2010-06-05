@@ -13,7 +13,7 @@ This module implements the HTSQL parser.
 from ..mark import Mark
 from .scanner import Scanner
 from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
-from .syntax import (QuerySyntax, SegmentSyntax, FormatSyntax, SelectorSyntax,
+from .syntax import (QuerySyntax, SegmentSyntax, SelectorSyntax,
                      SieveSyntax, OperatorSyntax, FunctionOperatorSyntax,
                      FunctionCallSyntax, GroupSyntax, SpecifierSyntax,
                      IdentifierSyntax, WildcardSyntax,
@@ -88,11 +88,8 @@ class QueryParser(Parser):
 
         input           ::= query END
 
-        query           ::= '/'
-                          | '/' base format? filter?
-                          | '/' base? selector format? filter?
-        base            ::= identifier | group
-        format          ::= '.' identifier
+        query           ::= '/' segment?
+        segment         ::= selector | specifier selector? filter?
         filter          ::= '?' test
 
         element         ::= test ( '+' | '-' )*
@@ -132,36 +129,41 @@ class QueryParser(Parser):
 
     @classmethod
     def process(cls, tokens):
-        # Parse the productions:
-        #   query           ::= '/'
-        #                     | '/' base format? filter?
-        #                     | '/' base? selector format? filter?
-        #   base            ::= identifier | group
-        #   format          ::= '.' identifier
-        #   filter          ::= '?' test
+        # Parse the production:
+        #   query           ::= '/' segment?
         head_token = tokens.pop(SymbolToken, ['/'])
+        segment = None
+        if not tokens.peek(EndToken):
+            segment = SegmentParser << tokens
+        mark = Mark.union(head_token, segment)
+        query = QuerySyntax(segment, mark)
+        return query
+
+
+class SegmentParser(Parser):
+    """
+    Parses a `segment` production.
+    """
+
+    @classmethod
+    def process(cls, tokens):
+        # Parses the productions:
+        #   segment         ::= selector | specifier selector? filter?
+        #   filter          ::= '?' test
         base = None
         selector = None
         filter = None
-        segment = None
-        format = None
-        if tokens.peek(NameToken):
-            base = IdentifierParser << tokens
-        elif tokens.peek(SymbolToken, ['(']):
-            base = GroupParser << tokens
         if tokens.peek(SymbolToken, ['{']):
             selector = SelectorParser << tokens
-        if base is not None or selector is not None:
-            if tokens.peek(SymbolToken, ['.'], do_pop=True):
-                identifier = IdentifierParser << tokens
-                format = FormatSyntax(identifier, identifier.mark)
+        else:
+            base = SpecifierParser << tokens
+            if tokens.peek(SymbolToken, ['{']):
+                selector = SelectorParser << tokens
             if tokens.peek(SymbolToken, ['?'], do_pop=True):
                 filter = TestParser << tokens
-            mark = Mark.union(base, selector, filter)
-            segment = SegmentSyntax(base, selector, filter, mark)
-        mark = Mark.union(head_token, segment, format)
-        query = QuerySyntax(segment, format, mark)
-        return query
+        mark = Mark.union(base, selector, filter)
+        segment = SegmentSyntax(base, selector, filter, mark)
+        return segment
 
 
 class ElementParser(Parser):

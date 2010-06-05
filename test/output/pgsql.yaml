@@ -7,6 +7,12 @@ id: pgsql
 tests:
 - id: queries-pgsql
   tests:
+  - uri: /
+    status: 200 OK
+    headers:
+    - [Content-Type, text/plain]
+    body: |
+      /
   - uri: /{2+2}
     status: 200 OK
     headers:
