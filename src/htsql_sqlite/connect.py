@@ -35,7 +35,7 @@ class SQLiteError(DBError):
     """
 
 
-class SQLiteConnect(Connect):
+class ConnectSQLite(Connect):
     """
     Implementation of the connection adapter for SQLite.
     """
@@ -52,7 +52,7 @@ class SQLiteConnect(Connect):
             connection = sqlite3.connect(db.database)
         return connection
 
-    def translate_error(self, exception):
+    def normalize_error(self, exception):
         # If we got a DBAPI exception, generate our error out of it.
         if isinstance(exception, sqlite3.Error):
             message = str(exception)
@@ -60,7 +60,7 @@ class SQLiteConnect(Connect):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(SQLiteConnect, self).translate_error(exception)
+        return super(SQLiteConnect, self).normalize_error(exception)
 
 
 connect_adapters = find_adapters()

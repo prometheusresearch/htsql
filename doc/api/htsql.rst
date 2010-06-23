@@ -28,4 +28,6 @@
    :members:
 .. automodule:: htsql.split_sql
    :members:
+.. automodule:: htsql.introspect
+   :members:
 

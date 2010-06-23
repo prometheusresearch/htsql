@@ -149,3 +149,13 @@ class InvalidSyntaxError(BadRequestError):
     kind = "invalid syntax"
 
 
+class InvalidArgumentError(BadRequestError):
+
+    kind = "invalid argument"
+
+
+class EngineError(ConflictError):
+
+    kind = "engine failure"
+
+

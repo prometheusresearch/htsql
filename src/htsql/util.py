@@ -594,3 +594,55 @@ def toposort(elements, preorder):
     return ordered
 
 
+#
+# A simple record type.
+#
+
+
+class Record(object):
+    """
+    Implements a simple record type.
+
+    The constructor of :class:`Record` expects keyword arguments,
+    which becomes the attributes of the instance.
+
+    `attributes`
+        Attributes of the record.
+    """
+
+    def __init__(self, **attributes):
+        for name in attributes:
+            setattr(self, name, attributes[name])
+
+
+#
+# A clonable node type.
+#
+
+
+class Node(object):
+
+    def clone(self, **replacements):
+        if not replacements:
+            return self
+        #init_code = self.__init__.__func__.__code__
+        init_code = self.__init__.im_func.func_code
+        names = init_code.co_varnames[1:init_code.co_argcount]
+        for key in sorted(replacements):
+            assert key in names, (key, names)
+        arguments = {}
+        is_modified = False
+        for name in names:
+            value = getattr(self, name)
+            if name in replacements and replacements[name] is not value:
+                value = replacements[name]
+                is_modified = True
+            arguments[name] = value
+        if not is_modified:
+            return self
+        clone = self.__class__(**arguments)
+        return clone
+
+
+
+

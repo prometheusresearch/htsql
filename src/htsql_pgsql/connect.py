@@ -30,7 +30,7 @@ class PGSQLError(DBError):
     """
 
 
-class PGSQLConnect(Connect):
+class ConnectPGSQL(Connect):
     """
     Implementation of the connection adapter for PostgreSQL.
     """
@@ -57,7 +57,7 @@ class PGSQLConnect(Connect):
 
         return connection
 
-    def translate_error(self, exception):
+    def normalize_error(self, exception):
         # If we got a DBAPI exception, generate our own error.
         if isinstance(exception, psycopg2.Error):
             message = str(exception)
@@ -65,7 +65,7 @@ class PGSQLConnect(Connect):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(PGSQLConnect, self).translate_error(exception)
+        return super(PGSQLConnect, self).normalize_error(exception)
 
 
 connect_adapters = find_adapters()

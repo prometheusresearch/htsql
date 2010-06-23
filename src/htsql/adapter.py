@@ -120,14 +120,14 @@ class Adapter(object):
         """
         # Bypass realizations.
         if cls.is_realized:
-            return super(Adapter, cls).__new__(cls, *args, **kwds)
+            return super(Adapter, cls).__new__(cls)
         # Extract polymorphic parameters.
         assert cls.signature is not None and len(args) >= len(cls.signature)
         objects = args[:len(cls.signature)]
         # Specialize the interface for the given parameters.
         realization = cls.realize(*objects)
         # Create an instance of the realization.
-        return super(Adapter, realization).__new__(realization, *args, **kwds)
+        return super(Adapter, realization).__new__(realization)
 
     @classmethod
     def realize(cls, *objects):

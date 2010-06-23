@@ -10,9 +10,9 @@ tests:
   - uri: /
     status: 200 OK
     headers:
-    - [Content-Type, text/plain]
+    - [Content-Type, text/plain; charset=UTF-8]
     body: |
-      /
+      (no data)
   - uri: /{2+2}
     status: 200 OK
     headers:
@@ -22,15 +22,19 @@ tests:
   - uri: /test
     status: 200 OK
     headers:
-    - [Content-Type, text/plain]
+    - [Content-Type, text/plain; charset=UTF-8]
     body: |
-      /test
+      1, one
+      2, two
+      3, three
   - uri: /test{id}
     status: 200 OK
     headers:
-    - [Content-Type, text/plain]
+    - [Content-Type, text/plain; charset=UTF-8]
     body: |
-      /test{id}
+      1
+      2
+      3
   - uri: /test{data}?id=1
     status: 200 OK
     headers:

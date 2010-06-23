@@ -18,7 +18,8 @@ This module exports a global variable:
 """
 
 
-from .adapter import Utility, weights, find_adapters
+from .adapter import Adapter, Utility, adapts, find_adapters
+from .domain import Domain
 
 
 class DBError(Exception):
@@ -96,7 +97,7 @@ class ErrorGuard(object):
             exception = exc_type(exc_value)
 
         # Ask the connection adapter to convert the exception.
-        error = self.connect.translate_error(exception)
+        error = self.connect.normalize_error(exception)
 
         # If we got a new exception, raise it.
         if error is not None:
@@ -289,9 +290,9 @@ class Connect(Utility):
         # Override when subclassing.
         raise NotImplementedError()
 
-    def translate_error(self, exception):
+    def normalize_error(self, exception):
         """
-        Translates a DBAPI exception.
+        Normalizes a DBAPI exception.
 
         When `exception` is a DBAPI exception, returns an instance of
         :exc:`DBError`; otherwise, returns ``None``.
@@ -301,6 +302,17 @@ class Connect(Utility):
         """
         # The default implementation.
         return None
+
+
+class Normalize(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    def __call__(self, value):
+        return value
 
 
 connect_adapters = find_adapters()

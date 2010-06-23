@@ -10,4 +10,6 @@
    :members:
 .. automodule:: htsql_pgsql.split_sql
    :members:
+.. automodule:: htsql_pgsql.introspect
+   :members:
 

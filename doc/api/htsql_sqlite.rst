@@ -10,4 +10,6 @@
    :members:
 .. automodule:: htsql_sqlite.split_sql
    :members:
+.. automodule:: htsql_sqlite.introspect
+   :members:
 
