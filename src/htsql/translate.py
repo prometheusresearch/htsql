@@ -23,7 +23,6 @@ from .tr.compiler import Compiler
 from .tr.serializer import Serializer
 
 
-
 class Translate(Utility):
 
     def __call__(self, uri):

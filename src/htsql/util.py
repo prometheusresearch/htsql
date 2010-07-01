@@ -374,6 +374,29 @@ class listof(object):
                 all(isinstance(item, self.item_type) for item in value))
 
 
+class setof(object):
+    """
+    Checks if a value is a set containing elements of the specified type.
+
+    Usage::
+    
+        isinstance(value, setof(T))
+    """
+
+    # For Python 2.5, we can't use `__instancecheck__`; in this case,
+    # we let ``isinstance(setof(...)) == isinstance(list)``.
+    if sys.version_info < (2, 6):
+        def __new__(cls, *args, **kwds):
+            return set
+
+    def __init__(self, item_type):
+        self.item_type = item_type
+
+    def __instancecheck__(self, value):
+        return (isinstance(value, set) and
+                all(isinstance(item, self.item_type) for item in value))
+
+
 class tupleof(object):
     """
     Checks if a value is a tuple with the fixed number of elements

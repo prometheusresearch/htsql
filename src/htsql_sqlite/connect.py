@@ -18,9 +18,10 @@ This module exports a global variable:
 """
 
 
-from htsql.connect import Connect, DBError
-from htsql.adapter import find_adapters
+from htsql.connect import Connect, Normalize, DBError
+from htsql.adapter import adapts, find_adapters
 from htsql.context import context
+from htsql.domain import StringDomain
 # In Python 2.6, the `sqlite3` module is built-in, but
 # for Python 2.5, we need to import a third-party module.
 try:
@@ -61,6 +62,16 @@ class ConnectSQLite(Connect):
 
         # Otherwise, let the superclass return `None`.
         return super(SQLiteConnect, self).normalize_error(exception)
+
+
+class NormalizeSQLiteString(Normalize):
+
+    adapts(StringDomain)
+
+    def __call__(self, value):
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+        return value
 
 
 connect_adapters = find_adapters()

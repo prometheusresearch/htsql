@@ -72,7 +72,7 @@ class Request(object):
         assert isinstance(remote_user, maybe(str))
         assert isinstance(content_type, maybe(str))
         assert isinstance(content_body, maybe(oneof(str, filelike())))
-        assert isinstance(extra_headers, maybe(listof(tupleof(str, str))))
+        assert isinstance(extra_headers, maybe(dictof(str, str)))
         if method == 'GET':
             assert content_type is None
             assert content_body is None

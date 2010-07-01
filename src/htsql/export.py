@@ -18,9 +18,7 @@ from wsgi import wsgi_adapters
 from connect import connect_adapters
 from split_sql import split_sql_adapters
 from introspect import introspect_adapters
-from translate import translate_adapters
-from produce import produce_adapters
-from render import render_adapters
+from request import request_adapters
 from tr.binder import bind_adapters
 from tr.lookup import lookup_adapters
 from tr.encoder import encode_adapters
@@ -28,6 +26,12 @@ from tr.assembler import assemble_adapters
 from tr.outliner import outline_adapters
 from tr.compiler import compile_adapters
 from tr.serializer import serialize_adapters
+from fmt import fmt_adapters
+from fmt.format import format_adapters
+from fmt.json import json_adapters
+from fmt.spreadsheet import spreadsheet_adapters
+from fmt.text import text_adapters
+from fmt.html import html_adapters
 
 
 class HTSQL_CORE(Addon):
@@ -47,8 +51,12 @@ class HTSQL_CORE(Addon):
                 outline_adapters +
                 compile_adapters +
                 serialize_adapters +
-                translate_adapters +
-                produce_adapters +
-                render_adapters)
+                request_adapters +
+                fmt_adapters +
+                format_adapters +
+                json_adapters +
+                spreadsheet_adapters +
+                text_adapters +
+                html_adapters)
 
 

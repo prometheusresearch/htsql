@@ -18,11 +18,8 @@ This module exports a global variable:
 """
 
 from .adapter import Utility, weights, find_adapters
+from .request import Request
 from .error import HTTPError
-from .translate import Translate
-from .produce import Produce
-from .render import Render
-import urllib
 
 
 class WSGI(Utility):
@@ -42,22 +39,21 @@ class WSGI(Utility):
         Implements the WSGI entry point.
         """
         # Process the query.
+        request = Request.build(environ)
+        try:
+            status, headers, body = request.render(environ)
+        except HTTPError, exc:
+            return exc(environ, start_response)
+        start_response(status, headers)
+        return body
+
+    def request(self, environ):
         path_info = environ['PATH_INFO']
         query_string = environ.get('QUERY_STRING')
         uri = urllib.quote(path_info)
         if query_string:
             uri += '?'+query_string
-        try:
-            translate = Translate()
-            plan = translate(uri)
-            produce = Produce()
-            product = produce(plan)
-            render = Render()
-            output = render(product, environ)
-        except HTTPError, exc:
-            return exc(environ, start_response)
-        start_response(output.status, output.headers)
-        return output.body
+        return uri
 
 
 wsgi_adapters = find_adapters()

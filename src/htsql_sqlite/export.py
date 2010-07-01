@@ -17,6 +17,7 @@ from htsql.addon import Addon
 from .connect import connect_adapters
 from .split_sql import split_sql_adapters
 from .introspect import introspect_adapters
+from .tr.serializer import serializer_adapters
 
 
 class ENGINE_SQLITE(Addon):
@@ -27,6 +28,7 @@ class ENGINE_SQLITE(Addon):
     # List of adapters exported by the addon.
     adapters = (connect_adapters +
                 split_sql_adapters +
-                introspect_adapters)
+                introspect_adapters +
+                serializer_adapters)
 
 

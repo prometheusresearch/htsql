@@ -55,4 +55,16 @@ tests:
   - uri: /test{id}
   - uri: /test{data}?id=1
     skip: true
+  - uri: /test
+    headers:
+      Accept: application/json
+  - uri: /test
+    headers:
+      Accept: text/csv
+  - uri: /test
+    headers:
+      Accept: text/plain
+  - uri: /test
+    headers:
+      Accept: text/html
 

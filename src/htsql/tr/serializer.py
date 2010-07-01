@@ -201,7 +201,9 @@ class SerializeLeaf(SerializeFrame):
     adapts(LeafFrame, Serializer)
 
     def serialize(self):
-        return self.format.name(self.frame.table.name)
+        parent = self.format.name(self.frame.table.schema_name)
+        child = self.format.name(self.frame.table.name)
+        return self.format.attr(parent, child)
 
     def call(self):
         return self.frame.table.name

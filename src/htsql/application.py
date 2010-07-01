@@ -79,6 +79,8 @@ class Application(object):
         """
         with self:
             wsgi = WSGI()
-            return wsgi(environ, start_response)
+            body = wsgi(environ, start_response)
+            for chunk in body:
+                yield chunk
 
 
