@@ -16,7 +16,8 @@ This module declares term nodes.
 from ..util import Node, listof, dictof, oneof, tupleof, maybe
 from ..mark import Mark
 from ..entity import TableEntity
-from .code import Space, Code, Unit, QueryCode
+from ..domain import BooleanDomain
+from .code import Space, Code, Unit, QueryCode, Expression
 
 
 LEFT = 0
@@ -107,7 +108,7 @@ class FilterTerm(UnaryTerm):
     def __init__(self, child, filter, space, baseline, routes, mark):
         assert isinstance(filter, Expression)
         assert isinstance(filter.domain, BooleanDomain)
-        super(FilterTerm, self).__init__(term, space, baseline,
+        super(FilterTerm, self).__init__(child, space, baseline,
                                          routes, mark)
         self.filter = filter
 
@@ -196,6 +197,7 @@ class ParallelTie(Tie):
     def __init__(self, space):
         assert isinstance(space, Space) and space.is_axis
         self.space = space
+        self.mark = space.mark
 
 
 class SeriesTie(Tie):
@@ -207,5 +209,6 @@ class SeriesTie(Tie):
         assert isinstance(is_reverse, bool)
         self.space = space
         self.is_reverse = is_reverse
+        self.mark = space.mark
 
 

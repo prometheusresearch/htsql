@@ -225,9 +225,9 @@ class ReverseJoin(Join):
         assert isinstance(foreign_key, ForeignKeyEntity)
         super(ReverseJoin, self).__init__(origin, target)
         self.foreign_key = foreign_key
-        self.origin_columns = [target.columns[name]
+        self.origin_columns = [origin.columns[name]
                                for name in foreign_key.target_column_names]
-        self.target_columns = [origin.columns[name]
+        self.target_columns = [target.columns[name]
                                for name in foreign_key.origin_column_names]
         self.is_expanding = False
         self.is_contracting = False

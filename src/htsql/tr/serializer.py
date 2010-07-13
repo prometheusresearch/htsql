@@ -18,9 +18,9 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, StringDomain,
                       DateDomain)
 from .frame import (Clause, Frame, LeafFrame, ScalarFrame,
                     BranchFrame, CorrelatedFrame, SegmentFrame,
-                    QueryFrame, Phrase, EqualityPhrase, ConjunctionPhrase,
-                    DisjunctionPhrase, NegationPhrase, LiteralPhrase,
-                    LeafReferencePhrase, BranchReferencePhrase,
+                    QueryFrame, Phrase, EqualityPhrase, InequalityPhrase,
+                    ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
+                    LiteralPhrase, LeafReferencePhrase, BranchReferencePhrase,
                     CorrelatedFramePhrase)
 from .plan import Plan
 import decimal
@@ -417,6 +417,16 @@ class SerializeEquality(SerializePhrase):
         return self.format.equal_op(left, right)
 
 
+class SerializeInequality(SerializePhrase):
+
+    adapts(InequalityPhrase, Serializer)
+
+    def serialize(self):
+        left = self.serializer.serialize(self.phrase.left)
+        right = self.serializer.serialize(self.phrase.right)
+        return self.format.equal_op(left, right, is_negative=True)
+
+
 class SerializeConjunction(SerializePhrase):
 
     adapts(ConjunctionPhrase, Serializer)
@@ -475,10 +485,10 @@ class SerializeBooleanConstant(SerializeConstant):
 
     def serialize(self, value):
         if value is None:
-            return self.format.none()
+            return self.format.null()
         if value is True:
             return self.format.true()
-        if value is false:
+        if value is False:
             return self.format.false()
 
 

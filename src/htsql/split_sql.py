@@ -153,9 +153,9 @@ class SplitSQL(Utility):
             # None of the tokens matched.
             else:
                 # Determine the current position and complain.
-                line = sql[:start].count('\n')
+                line = input[:start].count('\n')
                 if line:
-                    column = start-sql[:start].rindex('\n')-1
+                    column = start-input[:start].rindex('\n')-1
                 else:
                     column = start
                 raise ValueError("unable to parse an SQL statement"

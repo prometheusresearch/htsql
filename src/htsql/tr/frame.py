@@ -138,6 +138,18 @@ class EqualityPhrase(Phrase):
         self.right = right
 
 
+class InequalityPhrase(Phrase):
+
+    def __init__(self, left, right, mark):
+        assert isinstance(left, Phrase)
+        assert isinstance(right, Phrase)
+        domain = BooleanDomain()
+        is_nullable = (left.is_nullable or right.is_nullable)
+        super(InequalityPhrase, self).__init__(domain, is_nullable, mark)
+        self.left = left
+        self.right = right
+
+
 class ConjunctionPhrase(Phrase):
 
     def __init__(self, terms, mark):
@@ -171,7 +183,7 @@ class DisjunctionPhrase(Phrase):
         assert isinstance(terms, listof(Phrase))
         domain = BooleanDomain()
         is_nullable = any(term.is_nullable for term in terms)
-        super(ConjunctionPhrase, self).__init__(domain, is_nullable, mark)
+        super(DisjunctionPhrase, self).__init__(domain, is_nullable, mark)
         self.terms = terms
 
     def optimize(self):
@@ -209,6 +221,14 @@ class NegationPhrase(Phrase):
                 return LiteralPhrase(True, BooleanDomain(), self.mark)
             return self.term
         return self
+
+
+class CastPhrase(Phrase):
+
+    def __init__(self, term, domain, is_nullable, mark):
+        assert isinstance(term, Phrase)
+        super(CastPhrase, self).__init__(domain, is_nullable, mark)
+        self.term = term
 
 
 class LiteralPhrase(Phrase):

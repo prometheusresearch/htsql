@@ -26,6 +26,7 @@ from tr.assembler import assemble_adapters
 from tr.outliner import outline_adapters
 from tr.compiler import compile_adapters
 from tr.serializer import serialize_adapters
+from tr.fn.function import function_adapters
 from fmt import fmt_adapters
 from fmt.format import format_adapters
 from fmt.json import json_adapters
@@ -51,6 +52,7 @@ class HTSQL_CORE(Addon):
                 outline_adapters +
                 compile_adapters +
                 serialize_adapters +
+                function_adapters +
                 request_adapters +
                 fmt_adapters +
                 format_adapters +

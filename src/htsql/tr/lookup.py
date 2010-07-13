@@ -194,7 +194,7 @@ class LookupColumn(Lookup):
             joins = []
             for fk in foreign_keys:
                 origin_schema = catalog.schemas[fk.origin_schema_name]
-                origin = catalog.schemas[fk.origin_name]
+                origin = origin_schema.tables[fk.origin_name]
                 target_schema = catalog.schemas[fk.target_schema_name]
                 target = target_schema.tables[fk.target_name]
                 join = DirectJoin(origin, target, fk)

@@ -221,7 +221,7 @@ class AndTestParser(Parser):
             symbol_token = tokens.pop(SymbolToken, ['&'])
             symbol = symbol_token.value
             left = test
-            right = ImpliesParser << tokens
+            right = ImpliesTestParser << tokens
             mark = Mark.union(left, right)
             test = OperatorSyntax(symbol, left, right, mark)
         return test

@@ -21,11 +21,16 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      NumberSyntax)
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
-                      ColumnBinding, LiteralBinding, SieveBinding)
+                      ColumnBinding, LiteralBinding, SieveBinding,
+                      CastBinding)
 from .lookup import Lookup
+from .fn.function import FindFunction
 from ..introspect import Introspect
-from ..domain import UntypedStringDomain, UntypedNumberDomain
+from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
+                      FloatDomain, StringDomain, DateDomain,
+                      UntypedDomain, VoidDomain)
 from ..error import InvalidArgumentError
+import decimal
 
 
 class Binder(object):
@@ -45,6 +50,224 @@ class Binder(object):
             parent = RootBinding(catalog, syntax)
         bind = Bind(syntax, self)
         return bind.bind_one(parent)
+
+    def find_function(self, name):
+        find_function = FindFunction()
+        return find_function(name, self)
+
+    def cast(self, binding, domain, syntax=None, parent=None):
+        if syntax is None:
+            syntax = binding.syntax
+        if parent is None:
+            parent = binding.parent
+        cast = Cast(binding, binding.domain, domain, self)
+        return cast.cast(syntax, parent)
+
+    def coerce(self, left_domain, right_domain=None):
+        if right_domain is not None:
+            coerce = BinaryCoerce(left_domain, right_domain)
+            domain = coerce()
+            if domain is None:
+                coerce = BinaryCoerce(right_domain, left_domain)
+                domain = coerce()
+            return domain
+        else:
+            coerce = UnaryCoerce(left_domain)
+            return coerce()
+
+
+class UnaryCoerce(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    def __call__(self):
+        return self.domain
+
+
+class CoerceVoid(UnaryCoerce):
+
+    adapts(VoidDomain)
+
+    def __call__(self):
+        return None
+
+
+class CoerceUntyped(UnaryCoerce):
+
+    adapts(UntypedDomain)
+
+    def __call__(self):
+        return StringDomain()
+
+
+class BinaryCoerce(Adapter):
+
+    adapts(Domain, Domain)
+
+    def __init__(self, left_domain, right_domain):
+        self.left_domain = left_domain
+        self.right_domain = right_domain
+
+    def __call__(self):
+        return None
+
+
+class BinaryCoerceUntyped(BinaryCoerce):
+
+    adapts(Domain, UntypedDomain)
+
+    def __call__(self):
+        return self.left_domain
+
+
+class BinaryCoerceBoolean(BinaryCoerce):
+
+    adapts(BooleanDomain, BooleanDomain)
+
+    def __call__(self):
+        return BooleanDomain()
+
+
+class BinaryCoerceInteger(BinaryCoerce):
+
+    adapts(IntegerDomain, IntegerDomain)
+
+    def __call__(self):
+        return IntegerDomain()
+
+
+class BinaryCoerceFloat(BinaryCoerce):
+
+    adapts(FloatDomain, FloatDomain)
+
+    def __call__(self):
+        return FloatDomain()
+
+
+class BinaryCoerceDecimal(BinaryCoerce):
+
+    adapts(DecimalDomain, DecimalDomain)
+
+    def __call__(self):
+        return DecimalDomain()
+
+
+class BinaryCoerceString(BinaryCoerce):
+
+    adapts(StringDomain, StringDomain)
+
+    def __call__(self):
+        return StringDomain()
+
+
+class BinaryCoerceDate(BinaryCoerce):
+
+    adapts(DateDomain, DateDomain)
+
+    def __call__(self):
+        return DateDomain()
+
+
+class CoerceIntegerToDecimal(BinaryCoerce):
+
+    adapts(IntegerDomain, DecimalDomain)
+
+    def __call__(self):
+        return DecimalDomain()
+
+
+class CoerceIntegerToFloat(BinaryCoerce):
+
+    adapts(IntegerDomain, FloatDomain)
+
+    def __call__(self):
+        return FloatDomain()
+
+
+class CoerceDecimalToFloat(BinaryCoerce):
+
+    adapts(DecimalDomain, FloatDomain)
+
+    def __call__(self):
+        return FloatDomain()
+
+
+class Cast(Adapter):
+
+    adapts(Binding, Domain, Domain, Binder)
+
+    def __init__(self, binding, from_domain, to_domain, binder):
+        self.binding = binding
+        self.from_domain = from_domain
+        self.to_domain = to_domain
+        self.binder = binder
+
+    def cast(self, syntax, parent):
+        return CastBinding(parent, self.binding, self.to_domain, syntax)
+
+
+class CastBooleanToBoolean(Cast):
+
+    adapts(Binding, BooleanDomain, BooleanDomain, Binder)
+
+    def cast(self, syntax, parent):
+        return self.binding
+
+
+class CastStringToString(Cast):
+
+    adapts(Binding, StringDomain, StringDomain, Binder)
+
+    def cast(self, syntax, parent):
+        return self.binding
+
+
+class CastIntegerToInteger(Cast):
+
+    adapts(Binding, IntegerDomain, IntegerDomain, Binder)
+
+    def cast(self, syntax, parent):
+        return self.binding
+
+
+class CastDecimalToDecimal(Cast):
+
+    adapts(Binding, DecimalDomain, DecimalDomain, Binder)
+
+    def cast(self, syntax, parent):
+        return self.binding
+
+
+class CastFloatToFloat(Cast):
+
+    adapts(Binding, FloatDomain, FloatDomain, Binder)
+
+    def cast(self, syntax, parent):
+        return self.binding
+
+
+class CastDateToDate(Cast):
+
+    adapts(Binding, DateDomain, DateDomain, Binder)
+
+    def cast(self, syntax, parent):
+        return self.binding
+
+
+class CastLiteral(Cast):
+
+    adapts(LiteralBinding, UntypedDomain, Domain, Binder)
+
+    def cast(self, syntax, parent):
+        try:
+            value = self.to_domain.parse(self.binding.value)
+        except ValueError, exc:
+            raise InvalidArgumentError("cannot cast a value: %s" % exc,
+                                       syntax.mark)
+        return LiteralBinding(parent, value, self.to_domain, syntax)
 
 
 class Bind(Adapter):
@@ -96,10 +319,18 @@ class BindSegment(Bind):
             base_syntax = GroupSyntax(base_syntax, base.mark)
             base = SieveBinding(base, filter, base_syntax)
         if self.syntax.selector is not None:
-            elements = list(self.binder.bind(self.syntax.selector, base))
+            bare_elements = list(self.binder.bind(self.syntax.selector, base))
         else:
             lookup = Lookup(base)
-            elements = list(lookup.enumerate(base.syntax))
+            bare_elements = list(lookup.enumerate(base.syntax))
+        elements = []
+        for element in bare_elements:
+            domain = self.binder.coerce(element.domain)
+            if domain is None:
+                raise InvalidArgumentError("invalid type", element.mark)
+            if domain is not element.domain:
+                element = self.binder.cast(element, domain)
+            elements.append(element)
         yield SegmentBinding(parent, base, elements, self.syntax)
 
 
@@ -137,6 +368,42 @@ class BindSieve(Bind):
                 yield binding
         else:
             yield base
+
+
+class BindOperator(Bind):
+
+    adapts(OperatorSyntax, Binder)
+
+    def bind(self, parent):
+        name = self.syntax.symbol
+        if self.syntax.left is not None:
+            name = '_'+name
+        if self.syntax.right is not None:
+            name = name+'_'
+        function = self.binder.find_function(name)
+        return function.bind_operator(self.syntax, parent)
+
+
+class BindFunctionOperator(Bind):
+
+    adapts(FunctionOperatorSyntax, Binder)
+
+    def bind(self, parent):
+        name = self.syntax.identifier.value
+        function = self.binder.find_function(name)
+        return function.bind_function_operator(self.syntax, parent)
+
+
+class BindFunctionCall(Bind):
+
+    adapts(FunctionCallSyntax, Binder)
+
+    def bind(self, parent):
+        if self.syntax.base is not None:
+            parent = self.binder.bind_one(self.syntax.base)
+        name = self.syntax.identifier.value
+        function = self.binder.find_function(name)
+        return function.bind_function_call(self.syntax, parent)
 
 
 class BindGroup(Bind):
@@ -189,7 +456,7 @@ class BindString(Bind):
 
     def bind(self, parent):
         binding = LiteralBinding(parent, self.syntax.value,
-                                 UntypedStringDomain(),
+                                 UntypedDomain(),
                                  self.syntax)
         yield binding
 
@@ -199,9 +466,17 @@ class BindNumber(Bind):
     adapts(NumberSyntax, Binder)
 
     def bind(self, parent):
-        binding = LiteralBinding(parent, self.syntax.value,
-                                 UntypedNumberDomain(),
-                                 self.syntax)
+        value = self.syntax.value
+        if 'e' in value or 'E' in value:
+            domain = FloatDomain()
+            value = float(value)
+        elif '.' in value:
+            domain = DecimalDomain()
+            value = decimal.Decimal(value)
+        else:
+            domain = IntegerDomain()
+            value = int(value)
+        binding = LiteralBinding(parent, value, domain, self.syntax)
         yield binding
 
 

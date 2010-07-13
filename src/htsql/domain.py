@@ -224,11 +224,3 @@ class UntypedDomain(Domain):
     name = 'untyped'
 
 
-class UntypedNumberDomain(UntypedDomain):
-    pass
-
-
-class UntypedStringDomain(UntypedDomain):
-    pass
-
-

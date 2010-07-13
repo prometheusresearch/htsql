@@ -202,7 +202,8 @@ class AdapterRegistry(object):
 
         # Find implementations for the given interface among active adapters.
         implementations = [adapter for adapter in self.adapters
-                                   if issubclass(adapter, interface)]
+                                   if issubclass(adapter, interface)
+                                   and adapter.signature is not None]
 
         # Sanity check on the implementations.
         for adapter in implementations:
@@ -340,6 +341,20 @@ def adapts(*types):
     assert isinstance(list(types), listof(type))
     frame = sys._getframe(1)
     frame.f_locals['signature'] = types
+
+
+def adapts_none():
+    """
+    Indicates that the adapter has no signature.
+
+    Use it in the namespace of the adapter, for example::
+
+        class DoSmth(Adapter):
+
+            adapts_none()
+    """
+    frame = sys._getframe(1)
+    frame.f_locals['signature'] = None
 
 
 def dominates(*adapters):

@@ -14,7 +14,7 @@ This module declares binding nodes.
 
 
 from ..entity import CatalogEntity, TableEntity, ColumnEntity, Join
-from ..domain import Domain, VoidDomain
+from ..domain import Domain, VoidDomain, BooleanDomain
 from .syntax import Syntax
 from ..util import maybe, listof, Node
 
@@ -103,5 +103,70 @@ class SieveBinding(Binding):
         assert isinstance(filter, Binding)
         super(SieveBinding, self).__init__(parent, parent.domain, syntax)
         self.filter = filter
+
+
+class EqualityBinding(Binding):
+
+    def __init__(self, parent, left, right, syntax):
+        assert isinstance(left, Binding)
+        assert isinstance(right, Binding)
+        domain = BooleanDomain()
+        super(EqualityBinding, self).__init__(parent, domain, syntax)
+        self.left = left
+        self.right = right
+
+
+class InequalityBinding(Binding):
+
+    def __init__(self, parent, left, right, syntax):
+        assert isinstance(left, Binding)
+        assert isinstance(right, Binding)
+        domain = BooleanDomain()
+        super(InequalityBinding, self).__init__(parent, domain, syntax)
+        self.left = left
+        self.right = right
+
+
+class ConjunctionBinding(Binding):
+
+    def __init__(self, parent, terms, syntax):
+        assert isinstance(terms, listof(Binding))
+        domain = BooleanDomain()
+        super(ConjunctionBinding, self).__init__(parent, domain, syntax)
+        self.terms = terms
+
+
+class DisjunctionBinding(Binding):
+
+    def __init__(self, parent, terms, syntax):
+        assert isinstance(terms, listof(Binding))
+        domain = BooleanDomain()
+        super(DisjunctionBinding, self).__init__(parent, domain, syntax)
+        self.terms = terms
+
+
+class NegationBinding(Binding):
+
+    def __init__(self, parent, term, syntax):
+        assert isinstance(term, Binding)
+        domain = BooleanDomain()
+        super(NegationBinding, self).__init__(parent, domain, syntax)
+        self.term = term
+
+
+class CastBinding(Binding):
+
+    def __init__(self, parent, binding, domain, syntax):
+        super(CastBinding, self).__init__(parent, domain, syntax)
+        self.binding = binding
+
+
+class FunctionBinding(Binding):
+
+    def __init__(self, parent, domain, syntax, **arguments):
+        super(FunctionBinding, self).__init__(parent, domain, syntax)
+        self.arguments = arguments
+        for key in arguments:
+            setattr(self, key, arguments[key])
 
 

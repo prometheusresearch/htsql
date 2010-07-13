@@ -235,7 +235,7 @@ class AssembleJoinedTable(AssembleSpace):
             return term.clone(routes=routes)
         backbone = self.space.axes()
         term_backbone = term.space.axes()
-        if term_backbone.conclude(self.space):
+        if term_backbone.concludes(self.space):
             axis = term_backbone
             while axis.parent != self.space:
                 axis = axis.parent
@@ -290,7 +290,7 @@ class AssembleScreen(AssembleSpace):
     def assemble(self, baseline):
         child = self.assembler.assemble(self.space.parent, baseline)
         child = self.assembler.inject(self.space.filter, child)
-        assert self.space not in term.routes
+        assert self.space not in child.routes
         routes = {}
         for key in child.routes:
             routes[key] = [FORWARD] + child.routes[key]

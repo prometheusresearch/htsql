@@ -195,7 +195,7 @@ class Connection(Node):
     def get_demands(self):
         for appointment in [self.left, self.right]:
             for demand in appointment.get_demands():
-                yield demands
+                yield demand
 
 
 class Attachment(Node):

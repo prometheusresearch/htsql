@@ -16,10 +16,17 @@ This module implements the encoding adapter.
 from ..adapter import Adapter, adapts, find_adapters
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
-                      ColumnBinding, LiteralBinding, SieveBinding)
+                      ColumnBinding, LiteralBinding, SieveBinding,
+                      EqualityBinding, InequalityBinding,
+                      ConjunctionBinding, DisjunctionBinding,
+                      NegationBinding, CastBinding)
 from .code import (ScalarSpace, FreeTableSpace, JoinedTableSpace,
                    ScreenSpace, OrderedSpace, LiteralExpression, ColumnUnit,
-                   QueryCode, SegmentCode, ElementExpression)
+                   QueryCode, SegmentCode, ElementExpression,
+                   EqualityExpression, InequalityExpression,
+                   ConjunctionExpression, DisjunctionExpression,
+                   NegationExpression, CastExpression)
+from .lookup import Lookup
 from ..error import InvalidArgumentError
 
 
@@ -52,7 +59,7 @@ class Encode(Adapter):
 
     def encode_element(self):
         code = self.encode()
-        return ElementExpression(code, None)
+        return ElementExpression(code)
 
     def relate(self):
         raise InvalidArgumentError("unable to relate a node",
@@ -82,9 +89,6 @@ class EncodeSegment(Encode):
         for binding in self.binding.elements:
             element = self.encoder.encode_element(binding)
             elements.append(element.code)
-            if element.order is not None and element.code not in order_set:
-                order.append((element.code, element.order))
-                order_set.add(element.code)
         if space.table is not None and space.table.primary_key is not None:
             for column_name in space.table.primary_key.origin_column_names:
                 column = space.table.columns[column_name]
@@ -128,7 +132,8 @@ class EncodeColumn(Encode):
 
     def relate(self):
         space = self.encoder.relate(self.binding.parent)
-        binding = self.binding.as_table()
+        lookup = Lookup(self.binding)
+        binding = lookup.as_table()
         for join in binding.joins:
             space = JoinedTableSpace(space, join, binding.mark)
         return space
@@ -146,6 +151,62 @@ class EncodeSieve(Encode):
         space = self.encoder.relate(self.binding.parent)
         filter = self.encoder.encode(self.binding.filter)
         return ScreenSpace(space, filter, self.binding.mark)
+
+
+class EncodeLiteral(Encode):
+
+    adapts(LiteralBinding, Encoder)
+
+    def encode(self):
+        return LiteralExpression(self.binding.value, self.binding.domain,
+                                 self.binding.mark)
+
+
+class EncodeEquality(Encode):
+
+    adapts(EqualityBinding, Encoder)
+
+    def encode(self):
+        left = self.encoder.encode(self.binding.left)
+        right = self.encoder.encode(self.binding.right)
+        return EqualityExpression(left, right, self.binding.mark)
+
+
+class EncodeInequality(Encode):
+
+    adapts(InequalityBinding, Encoder)
+
+    def encode(self):
+        left = self.encoder.encode(self.binding.left)
+        right = self.encoder.encode(self.binding.right)
+        return InequalityExpression(left, right, self.binding.mark)
+
+
+class EncodeConjunction(Encode):
+
+    adapts(ConjunctionBinding, Encoder)
+
+    def encode(self):
+        terms = [self.encoder.encode(term) for term in self.binding.terms]
+        return ConjunctionExpression(terms, self.binding.mark)
+
+
+class EncodeDisjunction(Encode):
+
+    adapts(DisjunctionBinding, Encoder)
+
+    def encode(self):
+        terms = [self.encoder.encode(term) for term in self.binding.terms]
+        return DisjunctionExpression(terms, self.binding.mark)
+
+
+class EncodeNegation(Encode):
+
+    adapts(NegationBinding, Encoder)
+
+    def encode(self):
+        term = self.encoder.encode(term)
+        return NegationExpression(term, self.binding.mark)
 
 
 encode_adapters = find_adapters()

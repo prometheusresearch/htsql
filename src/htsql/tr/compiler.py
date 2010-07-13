@@ -15,13 +15,16 @@ This module implements the compile adapter.
 
 from ..util import listof
 from ..adapter import Adapter, adapts, find_adapters
-from .code import Expression, LiteralExpression, Unit
+from .code import (Expression, LiteralExpression, EqualityExpression,
+                   InequalityExpression, ConjunctionExpression,
+                   DisjunctionExpression, NegationExpression, Unit)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand,
                      LeafAppointment, BranchAppointment, FrameAppointment)
 from .frame import (LeafFrame, ScalarFrame, BranchFrame, CorrelatedFrame,
                     SegmentFrame, QueryFrame, Link, Phrase, EqualityPhrase,
-                    ConjunctionPhrase, LiteralPhrase,
+                    InequalityPhrase, ConjunctionPhrase, DisjunctionPhrase,
+                    NegationPhrase, LiteralPhrase,
                     LeafReferencePhrase, BranchReferencePhrase)
 
 
@@ -100,9 +103,7 @@ class CompileBranch(Compile):
     def compile(self, demands, BranchFrame=BranchFrame):
         assert isinstance(demands, listof(Demand))
         assert all((demand.sketch in self.sketch.absorbed or
-                    demand.sketch in self.sketch.descended) and
-                   isinstance(demand.appointment, (BranchAppointment,
-                                                   FrameAppointment))
+                    demand.sketch in self.sketch.descended)
                    for demand in demands)
 
         child_by_sketch = {}
@@ -124,7 +125,7 @@ class CompileBranch(Compile):
         for attachment in self.sketch.linkage:
             inner_demands.extend(attachment.get_demands())
         for appointment in self.sketch.filter:
-            inner_demands.exend(appointment.get_demands())
+            inner_demands.extend(appointment.get_demands())
         for appointment in self.sketch.group:
             inner_demands.extend(appointment.get_demands())
         for appointment in self.sketch.group_filter:
@@ -145,6 +146,7 @@ class CompileBranch(Compile):
             child = attachment.sketch
             child_demands = demands_by_child[child]
             child_supplies = self.compiler.compile(child, child_demands)
+            assert len(child_demands) == len(child_supplies), (child_demands, child_supplies)
             inner_supplies.update(child_supplies)
 
         branch_demands = reversed(demands_by_child[None])
@@ -240,10 +242,10 @@ class CompileBranch(Compile):
         for demand in demands:
             if demand.appointment.is_frame:
                 supplies[demand] = frame
-            if demand.appointment.is_branch:
+            else:
                 position = position_by_demand[demand]
                 if position in reference_by_position:
-                    phrase = reference_by_position
+                    phrase = reference_by_position[position]
                 else:
                     mark = select[position].mark
                     phrase = BranchReferencePhrase(frame,
@@ -322,6 +324,46 @@ class EvaluateLiteral(Evaluate):
         return LiteralPhrase(self.expression.value,
                              self.expression.domain,
                              self.expression.mark)
+
+
+class EvaluateEquality(Evaluate):
+
+    adapts(EqualityExpression, Compiler)
+
+    def evaluate(self, references):
+        left = self.compiler.evaluate(self.expression.left, references)
+        right = self.compiler.evaluate(self.expression.right, references)
+        return EqualityPhrase(left, right, self.expression.mark)
+
+
+class EvaluateInequality(Evaluate):
+
+    adapts(InequalityExpression, Compiler)
+
+    def evaluate(self, references):
+        left = self.compiler.evaluate(self.expression.left, references)
+        right = self.compiler.evaluate(self.expression.right, references)
+        return InequalityPhrase(left, right, self.expression.mark)
+
+
+class EvaluateConjunction(Evaluate):
+
+    adapts(ConjunctionExpression, Compiler)
+
+    def evaluate(self, references):
+        terms = [self.compiler.evaluate(term, references)
+                 for term in self.expression.terms]
+        return ConjunctionPhrase(terms, self.expression.mark)
+
+
+class EvaluateDisjunction(Evaluate):
+
+    adapts(DisjunctionExpression, Compiler)
+
+    def evaluate(self, references):
+        terms = [self.compiler.evaluate(term, references)
+                 for term in self.expression.terms]
+        return DisjunctionPhrase(terms, self.expression.mark)
 
 
 class EvaluateUnit(Evaluate):

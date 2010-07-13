@@ -70,6 +70,109 @@ class Space(Code):
                 space = component.clone(parent=space)
         return space
 
+    def inflate(self, other):
+        self_components = self.unfold()
+        other_components = other.unfold()
+        space = None
+        while self_components and other_components:
+            self_component = self_components[-1]
+            other_component = other_components[-1]
+            if self_component.resembles(other_component):
+                if self_component.is_axis:
+                    space = self_component.clone(parent=space)
+                self_components.pop()
+                other_components.pop()
+            elif not other_component.is_axis:
+                other_components.pop()
+            elif not self_component.is_axis:
+                space = self_component.clone(parent=space)
+                self_components.pop()
+            else:
+                break
+        while self_components:
+            component = self_components.pop()
+            space = component.clone(parent=space)
+        return space
+
+    def spans(self, other):
+        if self is other or self == other:
+            return True
+        self_axes = self.axes().unfold()
+        other_axes = other.axes().unfold()
+        while self_axes and other_axes:
+            if self_axes[-1].resembles(other_axes[-1]):
+                self_axes.pop()
+                other_axes.pop()
+            else:
+                break
+        for other_axis in other_axes:
+            if not other_axis.is_contracting:
+                return False
+        return True
+
+    def conforms(self, other):
+        if self is other or self == other:
+            return True
+        self_components = self.unfold()
+        other_components = other.unfold()
+        while self_components and other_components:
+            self_component = self_components[-1]
+            other_component = other_components[-1]
+            if self_component.resembles(other_component):
+                self_components.pop()
+                other_components.pop()
+            elif (self_component.is_contracting and
+                  self_component.is_expanding and
+                  not self_component.is_axis):
+                self_components.pop()
+            elif (other_component.is_contrating and
+                  other_component.is_expanding and
+                  not other_component.is_axis):
+                other_components.pop()
+            else:
+                break
+        for component in self_components + other_components:
+            if not (component.is_contracting and component.is_expanding):
+                return False
+        return True
+
+    def dominates(self, other):
+        if self is other or self == other:
+            return True
+        self_components = self.unfold()
+        other_components = other.unfold()
+        while self_components and other_components:
+            self_component = self_components[-1]
+            other_component = other_components[-1]
+            if self_component.resembles(other_component):
+                self_components.pop()
+                other_components.pop()
+            elif (other_component.is_contrating and
+                  not other_component.is_axis):
+                other_components.pop()
+            else:
+                break
+        for component in self_components:
+            if not component.is_expanding:
+                return False
+        for component in other_components:
+            if not component.is_contracting:
+                return False
+        return True
+
+    def concludes(self, other):
+        if self is other or self == other:
+            return True
+        space = self
+        while space is not None:
+            if space == other:
+                return True
+            space = space.parent
+        return False
+
+    def resembles(self, other):
+        return False
+
 
 class ScalarSpace(Space):
 
@@ -80,6 +183,9 @@ class ScalarSpace(Space):
         super(ScalarSpace, self).__init__(None, None, False, False, mark,
                                           hash=(self.__class__))
 
+    def resembles(self, other):
+        return isinstance(other, ScalarSpace)
+
 
 class FreeTableSpace(Space):
 
@@ -89,6 +195,9 @@ class FreeTableSpace(Space):
         super(FreeTableSpace, self).__init__(parent, table, True, True, mark,
                                              hash=(self.__class__,
                                                    parent.hash, table))
+
+    def resembles(self, other):
+        return isinstance(other, FreeTableSpace)
 
 
 class JoinedTableSpace(Space):
@@ -107,6 +216,10 @@ class JoinedTableSpace(Space):
                                                      join.foreign_key))
         self.join = join
 
+    def resembles(self, other):
+        return (isinstance(other, JoinedTableSpace) and
+                self.join is other.join)
+
 
 class ScreenSpace(Space):
 
@@ -119,6 +232,10 @@ class ScreenSpace(Space):
                                                 parent.hash,
                                                 filter.hash))
         self.filter = filter
+
+    def resembles(self, other):
+        return (isinstance(other, ScreenSpace) and
+                self.filter == other.filter)
 
 
 class OrderedSpace(Space):
@@ -137,6 +254,12 @@ class OrderedSpace(Space):
         self.order = order
         self.limit = limit
         self.offset = offset
+
+    def resembles(self, other):
+        return (isinstance(other, OrderedSpace) and
+                self.other == other.order and
+                self.limit == other.limit and
+                self.offset == other.offset)
 
 
 class Expression(Code):
@@ -159,17 +282,120 @@ class LiteralExpression(Expression):
         self.value = value
 
 
-class ElementExpression(Expression):
+class EqualityExpression(Expression):
 
-    def __init__(self, code, order):
-        assert isinstance(code, Code)
-        assert order is None or order in [+1, -1]
-        super(ElementExpression, self).__init__(code.domain, code.mark)
+    def __init__(self, left, right, mark):
+        assert isinstance(left, Expression)
+        assert isinstance(right, Expression)
+        domain = BooleanDomain()
+        super(EqualityExpression, self).__init__(domain, mark,
+                                                 hash=(self.__class__,
+                                                       left.hash,
+                                                       right.hash))
+        self.left = left
+        self.right = right
+
+    def get_units(self):
+        return self.left.get_units()+self.right.get_units()
+
+
+class InequalityExpression(Expression):
+
+    def __init__(self, left, right, mark):
+        assert isinstance(left, Expression)
+        assert isinstance(right, Expression)
+        domain = BooleanDomain()
+        super(InequalityExpression, self).__init__(domain, mark,
+                                                   hash=(self.__class__,
+                                                         left.hash,
+                                                         right.hash))
+        self.left = left
+        self.right = right
+
+    def get_units(self):
+        return self.left.get_units()+self.right.get_units()
+
+
+class ConjunctionExpression(Expression):
+
+    def __init__(self, terms, mark):
+        assert isinstance(terms, listof(Expression))
+        domain = BooleanDomain()
+        hash = (self.__class__, tuple(term.hash for term in terms))
+        super(ConjunctionExpression, self).__init__(domain, mark, hash=hash)
+        self.terms = terms
+
+    def get_units(self):
+        units = []
+        for term in self.terms:
+            units.extend(term.get_units())
+        return units
+
+
+class DisjunctionExpression(Expression):
+
+    def __init__(self, terms, mark):
+        assert isinstance(terms, listof(Expression))
+        domain = BooleanDomain()
+        hash = (self.__class__, tuple(term.hash for term in terms))
+        super(DisjunctionExpression, self).__init__(domain, mark, hash=hash)
+        self.terms = terms
+
+    def get_units(self):
+        units = []
+        for term in self.terms:
+            units.extend(term.get_units())
+        return units
+
+
+class NegationExpression(Expression):
+
+    def __init__(self, term, mark):
+        assert isinstance(term, Expression)
+        domain = BooleanDomain()
+        hash = (self.__class__, term.hash)
+        super(NegationExpression, self).__init__(domain, mark, hash=hash)
+        self.term = term
+
+    def get_units(self):
+        return self.term.get_units()
+
+
+class CastExpression(Expression):
+
+    def __init__(self, code, domain, mark):
+        super(CastExpression, self).__init__(domain, mark,
+                                             hash=(self.__class__, domain))
         self.code = code
-        self.order = order
 
     def get_units(self):
         return self.code.get_units()
+
+
+class ElementExpression(Expression):
+
+    def __init__(self, code):
+        assert isinstance(code, Code)
+        super(ElementExpression, self).__init__(code.domain, code.mark)
+        self.code = code
+
+    def get_units(self):
+        return self.code.get_units()
+
+
+class FunctionExpression(Expression):
+
+    def __init__(self, domain, mark, **arguments):
+        arguments_hash = []
+        for key in sorted(arguments):
+            value = arguments[key]
+            if isinstance(value, list):
+                value = tuple(item.hash for item in value)
+            elif value is not None:
+                value = value.hash
+            arguments_hash.append((key, value))
+        hash = (self.__class__, tuple(arguments_hash))
+        super(FunctionExpression, self).__init__(domain, mark, hash=hash)
 
 
 class Unit(Expression):
