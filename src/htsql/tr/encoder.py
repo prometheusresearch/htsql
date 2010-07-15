@@ -123,7 +123,10 @@ class EncodeJoinedTable(Encode):
     adapts(JoinedTableBinding, Encoder)
 
     def relate(self):
-        return self.encoder.relate(self.binding.parent)
+        space = self.encoder.relate(self.binding.parent)
+        for join in self.binding.joins:
+            space = JoinedTableSpace(space, join, self.binding.mark)
+        return space
 
 
 class EncodeColumn(Encode):
@@ -131,12 +134,7 @@ class EncodeColumn(Encode):
     adapts(ColumnBinding, Encoder)
 
     def relate(self):
-        space = self.encoder.relate(self.binding.parent)
-        lookup = Lookup(self.binding)
-        binding = lookup.as_table()
-        for join in binding.joins:
-            space = JoinedTableSpace(space, join, binding.mark)
-        return space
+        return self.encoder.relate(self.binding.parent)
 
     def encode(self):
         space = self.encoder.relate(self.binding.parent)

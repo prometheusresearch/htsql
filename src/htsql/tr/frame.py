@@ -239,6 +239,15 @@ class LiteralPhrase(Phrase):
         self.value = value
 
 
+class FunctionPhrase(Phrase):
+
+    def __init__(self, domain, is_nullable, mark, **arguments):
+        super(FunctionPhrase, self).__init__(domain, is_nullable, mark)
+        self.arguments = arguments
+        for key in arguments:
+            setattr(self, key, arguments[key])
+
+
 class LeafReferencePhrase(Phrase):
 
     def __init__(self, frame, is_inner, column, mark):

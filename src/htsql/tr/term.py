@@ -138,8 +138,9 @@ class CorrelationTerm(BinaryTerm):
 class ProjectionTerm(UnaryTerm):
 
     def __init__(self, child, ties, space, baseline, routes, mark):
-        assert isinstance(ties, listof(Ties))
-        super(ProjectionTerm).__init__(child, space, baseline, routes, mark)
+        assert isinstance(ties, listof(Tie))
+        super(ProjectionTerm, self).__init__(child, space, baseline,
+                                             routes, mark)
         self.ties = ties
 
 

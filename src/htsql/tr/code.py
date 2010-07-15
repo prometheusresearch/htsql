@@ -238,6 +238,22 @@ class ScreenSpace(Space):
                 self.filter == other.filter)
 
 
+class RelativeSpace(Space):
+
+    def __init__(self, parent, filter, mark):
+        assert isinstance(filter, Space)
+        super(RelativeSpace, self).__init__(parent, parent.table,
+                                            True, False, mark,
+                                            hash=(self.__class__,
+                                                  parent.hash,
+                                                  filter.hash))
+        self.filter = filter
+
+    def resembles(self, other):
+        return (isinstance(other, RelativeSpace) and
+                self.filter == other.filter)
+
+
 class OrderedSpace(Space):
 
     def __init__(self, parent, order, limit, offset, mark):
@@ -396,6 +412,20 @@ class FunctionExpression(Expression):
             arguments_hash.append((key, value))
         hash = (self.__class__, tuple(arguments_hash))
         super(FunctionExpression, self).__init__(domain, mark, hash=hash)
+        self.arguments = arguments
+        for key in arguments:
+            setattr(self, key, arguments[key])
+
+    def get_units(self):
+        units = []
+        for key in sorted(self.arguments):
+            value = self.arguments[key]
+            if isinstance(value, list):
+                for item in value:
+                    units.extend(item.get_units())
+            elif value is not None:
+                units.extend(value.get_units())
+        return units
 
 
 class Unit(Expression):

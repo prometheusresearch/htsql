@@ -15,7 +15,7 @@ This module implements the assemble adapter.
 
 from ..adapter import Adapter, adapts, find_adapters
 from .code import (Code, Space, ScalarSpace, FreeTableSpace, JoinedTableSpace,
-                   ScreenSpace, OrderedSpace, Expression, Unit,
+                   ScreenSpace, OrderedSpace, RelativeSpace, Expression, Unit,
                    ColumnUnit, AggregateUnit, SegmentCode, QueryCode)
 from .term import (TableTerm, ScalarTerm, FilterTerm, JoinTerm,
                    CorrelationTerm, ProjectionTerm, OrderingTerm, WrapperTerm,
@@ -220,7 +220,7 @@ class AssembleJoinedTable(AssembleSpace):
         routes[self.space] = [RIGHT]
         routes[backbone] = [RIGHT]
         tie = SeriesTie(self.space)
-        return JoinTerm(left, right, tie, True, self.space, baseline,
+        return JoinTerm(left, right, [tie], True, self.space, baseline,
                         routes, self.space.mark)
 
     def inject(self, term):
@@ -367,7 +367,7 @@ class AssembleAggregate(AssembleUnit):
     def inject(self, term):
         assert term.space.spans(self.code.space)
         assert not term.space.spans(self.code.plural_space)
-        assert not self.code.space.span(self.code.plural_space)
+        assert not self.code.space.spans(self.code.plural_space)
         assert self.code.plural_space.spans(self.code.space)
         with_base_term = (not self.code.space.dominates(term.space))
         if with_base_term:
@@ -382,17 +382,47 @@ class AssembleAggregate(AssembleUnit):
             baseline = baseline.parent
         baseline = baseline.axes()
         plural_term = self.assembler.assemble(plural_space, baseline)
+        plural_term = self.assembler.inject(self.code.expression, plural_term)
         ties = []
+        axes = []
         if (base_backbone.concludes(baseline)
                 or baseline.parent in plural_term.routes):
             axis = baseline
             while axis in plural_term.routes:
+                axes.append(axis)
                 tie = ParallelTie(axis)
                 ties.append(tie)
                 axis = axis.parent
         else:
-            tie = SeriesTie()
-
+            axes.append(baseline)
+            tie = SeriesTie(baseline)
+            ties.append(tie)
+        relative_space = RelativeSpace(baseline.parent,
+                                       plural_space, self.code.mark)
+        routes = {}
+        for axis in axes:
+            routes[axis] = [FORWARD] + plural_term.routes[axis]
+        routes[self.code] = []
+        projected_term = ProjectionTerm(plural_term, ties, relative_space,
+                                        baseline.parent, routes,
+                                        self.code.mark)
+        if with_base_term:
+            assert False
+        if (base_backbone.concludes(baseline)
+                or baseline.parent in plural_term.routes):
+            for axis in axes:
+                term = self.assembler.inject(axis, term)
+        else:
+            for axis in axes:
+                term = self.assembler.inject(axis.parent, term)
+        left = term
+        right = projected_term
+        routes = {}
+        for key in left.routes:
+            routes[key] = [LEFT] + left.routes[key]
+        routes[self.code] = [RIGHT]
+        return JoinTerm(left, right, ties, False,
+                        left.space, left.baseline, routes, left.mark)
 
 
 class AssembleSegment(Assemble):

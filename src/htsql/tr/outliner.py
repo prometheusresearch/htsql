@@ -30,14 +30,14 @@ class Outliner(object):
         outline = Outline(sketch, self)
         return outline.outline(*args, **kwds)
 
-    def delegate(self, unit, sketch, routes):
+    def delegate(self, unit, sketch, term):
         delegate = Delegate(unit, self)
-        return delegate.delegate(sketch, routes)
+        return delegate.delegate(sketch, term)
 
-    def appoint(self, expression, sketch, routes):
+    def appoint(self, expression, sketch, term):
         demand_by_unit = {}
         for unit in expression.get_units():
-            demand = self.delegate(unit, sketch, routes)
+            demand = self.delegate(unit, sketch, term)
             demand_by_unit[unit] = demand
         return BranchAppointment(expression, demand_by_unit)
 
@@ -90,7 +90,7 @@ class OutlineFilter(Outline):
         attachment = Attachment(child)
         linkage = [attachment]
         appointment = self.outliner.appoint(self.term.filter, child,
-                                            self.term.child.routes)
+                                            self.term.child)
         filter = [appointment]
         return BranchSketch(linkage=linkage,
                             filter=filter,
@@ -112,9 +112,9 @@ class OutlineJoin(Outline):
         for tie in self.term.ties:
             for left_unit, right_unit in self.outliner.connect(tie):
                 left_appointment = self.outliner.appoint(left_unit,
-                                    left_child, self.term.left_child.routes)
+                                    left_child, self.term.left_child)
                 right_appointment = self.outliner.appoint(right_unit,
-                                    right_child, self.term.right_child.routes)
+                                    right_child, self.term.right_child)
                 connection = Connection(left_appointment, right_appointment)
                 connections.append(connection)
         right_attachment = Attachment(right_child, connections)
@@ -139,9 +139,9 @@ class OutlineCorrelation(Outline):
         for tie in self.term.ties:
             for left_code, right_code in self.outliner.connect(tie):
                 left_appointment = self.outliner.appoint(left_code,
-                                    left_child, self.term.left_child.routes)
+                                    left_child, self.term.left_child)
                 right_appointment = self.outliner.appoint(right_code,
-                                    right_child, self.term.right_child.routes)
+                                    right_child, self.term.right_child)
                 connection = Connection(left_appointment, right_appointment)
                 connections.append(connection)
         right_attachment = Attachment(right_child, connections)
@@ -164,7 +164,7 @@ class OutlineProjection(Outline):
         for tie in self.term.ties:
             for left_code, right_code in self.outliner.connect(tie):
                 appointment = self.outliner.appoint(right_code, child,
-                                                    self.term.child.routes)
+                                                    self.term.child)
                 group.append(appointment)
         return BranchSketch(linkage=linkage,
                             group=group,
@@ -183,8 +183,7 @@ class OutlineOrdering(Outline):
         linkage = [attachment]
         order = []
         for code, dir in self.term.order:
-            appointment = self.outliner.appoint(code, child,
-                                                self.term.child.routes)
+            appointment = self.outliner.appoint(code, child, self.term.child)
             order.append((appointment, dir))
         return BranchSketch(linkage=linkage,
                             order=order,
@@ -219,8 +218,7 @@ class OutlineSegment(Outline):
         linkage = [attachment]
         select = []
         for code in self.term.select:
-            appointment = self.outliner.appoint(code, child,
-                                                self.term.child.routes)
+            appointment = self.outliner.appoint(code, child, self.term.child)
             select.append(appointment)
         return SegmentSketch(select=select,
                              linkage=linkage,
@@ -257,8 +255,8 @@ class DelegateColumn(Delegate):
 
     adapts(ColumnUnit, Outliner)
 
-    def delegate(self, sketch, routes):
-        route = routes[self.unit.space]
+    def delegate(self, sketch, term):
+        route = term.routes[self.unit.space]
         for idx in route:
             sketch = sketch.linkage[idx].sketch
         appointment = LeafAppointment(self.unit.column,
@@ -269,6 +267,16 @@ class DelegateColumn(Delegate):
 class DelegateAggregate(Delegate):
 
     adapts(AggregateUnit, Outliner)
+
+    def delegate(self, sketch, term):
+        route = term.routes[self.unit]
+        for idx in route:
+            sketch = sketch.linkage[idx].sketch
+            term = term.children[idx]
+        appointment = self.outliner.appoint(self.unit.expression,
+                                            sketch.linkage[0].sketch,
+                                            term.children[0])
+        return Demand(sketch, appointment)
 
 
 class Flatten(Adapter):
@@ -296,6 +304,9 @@ class FlattenBranch(Flatten):
             linkage.append(attachment)
         replaced = self.sketch.replaced[:]
         replaced.append(self.sketch)
+        if (len(linkage) > 1 and linkage[0].sketch.is_scalar
+                             and linkage[1].sketch.is_inner):
+            linkage = linkage[1:]
         sketch = self.sketch
         if linkage != self.sketch.linkage:
             sketch = self.sketch.clone(linkage=linkage, replaced=replaced)
@@ -307,8 +318,8 @@ class FlattenBranch(Flatten):
         if child.select or child.group or child.group_filter:
             return sketch
         if ((child.order or child.limit is not None or
-            child.offset is not None) and (len(sketch.linkage) > 1 or
-                sketch.order or sketch.limit is not None or
+            child.offset is not None) and (sketch.order or
+                sketch.limit is not None or
                 sketch.offset is not None)):
             return sketch
         select = sketch.select

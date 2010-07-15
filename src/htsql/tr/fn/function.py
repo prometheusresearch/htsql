@@ -20,6 +20,11 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
 from ..binding import (LiteralBinding, FunctionBinding,
                        EqualityBinding, InequalityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding)
+from ..encoder import Encoder, Encode
+from ..code import FunctionExpression, AggregateUnit
+from ..compiler import Compiler, Evaluate
+from ..frame import FunctionPhrase
+from ..serializer import Serializer, Format, Serialize
 
 
 class named(str):
@@ -248,21 +253,21 @@ class EqualityOperator(ProperFunction):
     adapts(named['_=_'])
 
     parameters = [
-            Parameter('left_argument'),
-            Parameter('right_argument'),
+            Parameter('left'),
+            Parameter('right'),
     ]
 
-    def correlate(self, left_argument, right_argument, syntax, parent):
-        domain = self.binder.coerce(left_argument.domain,
-                                    right_argument.domain)
+    def correlate(self, left, right, syntax, parent):
+        domain = self.binder.coerce(left.domain,
+                                    right.domain)
         if domain is None:
             raise InvalidArgumentError("invalid arguments", syntax.mark)
         domain = self.binder.coerce(domain)
         if domain is None:
             raise InvalidArgumentError("invalid arguments", syntax.mark)
-        left_argument = self.binder.cast(left_argument, domain)
-        right_argument = self.binder.cast(right_argument, domain)
-        yield EqualityBinding(parent, left_argument, right_argument, syntax)
+        left = self.binder.cast(left, domain)
+        right = self.binder.cast(right, domain)
+        yield EqualityBinding(parent, left, right, syntax)
 
 
 class InequalityOperator(ProperFunction):
@@ -270,21 +275,21 @@ class InequalityOperator(ProperFunction):
     adapts(named['_!=_'])
 
     parameters = [
-            Parameter('left_argument'),
-            Parameter('right_argument'),
+            Parameter('left'),
+            Parameter('right'),
     ]
 
-    def correlate(self, left_argument, right_argument, syntax, parent):
-        domain = self.binder.coerce(left_argument.domain,
-                                    right_argument.domain)
+    def correlate(self, left, right, syntax, parent):
+        domain = self.binder.coerce(left.domain,
+                                    right.domain)
         if domain is None:
             raise InvalidArgumentError("invalid arguments", syntax.mark)
         domain = self.binder.coerce(domain)
         if domain is None:
             raise InvalidArgumentError("invalid arguments", syntax.mark)
-        left_argument = self.binder.cast(left_argument, domain)
-        right_argument = self.binder.cast(right_argument, domain)
-        yield InequalityBinding(parent, left_argument, right_argument, syntax)
+        left = self.binder.cast(left, domain)
+        right = self.binder.cast(right, domain)
+        yield InequalityBinding(parent, left, right, syntax)
 
 
 class ConjunctionOperator(ProperFunction):
@@ -292,15 +297,14 @@ class ConjunctionOperator(ProperFunction):
     adapts(named['_&_'])
 
     parameters = [
-            Parameter('left_argument'),
-            Parameter('right_argument'),
+            Parameter('left'),
+            Parameter('right'),
     ]
 
-    def correlate(self, left_argument, right_argument, syntax, parent):
-        left_argument = self.binder.cast(left_argument, BooleanDomain())
-        right_argument = self.binder.cast(right_argument, BooleanDomain())
-        yield ConjunctionBinding(parent,
-                                 [left_argument, right_argument], syntax)
+    def correlate(self, left, right, syntax, parent):
+        left = self.binder.cast(left, BooleanDomain())
+        right = self.binder.cast(right, BooleanDomain())
+        yield ConjunctionBinding(parent, [left, right], syntax)
 
 
 class DisjunctionOperator(ProperFunction):
@@ -308,15 +312,14 @@ class DisjunctionOperator(ProperFunction):
     adapts(named['_|_'])
 
     parameters = [
-            Parameter('left_argument'),
-            Parameter('right_argument'),
+            Parameter('left'),
+            Parameter('right'),
     ]
 
-    def correlate(self, left_argument, right_argument, syntax, parent):
-        left_argument = self.binder.cast(left_argument, BooleanDomain())
-        right_argument = self.binder.cast(right_argument, BooleanDomain())
-        yield DisjunctionBinding(parent,
-                                 [left_argument, right_argument], syntax)
+    def correlate(self, left, right, syntax, parent):
+        left = self.binder.cast(left, BooleanDomain())
+        right = self.binder.cast(right, BooleanDomain())
+        yield DisjunctionBinding(parent, [left, right], syntax)
 
 
 class AdditionOperator(ProperFunction):
@@ -324,15 +327,13 @@ class AdditionOperator(ProperFunction):
     adapts(named['_+_'])
 
     parameters = [
-            Parameter('left_argument'),
-            Parameter('right_argument'),
+            Parameter('left'),
+            Parameter('right'),
     ]
 
-    def correlate(self, left_argument, right_argument, syntax, parent):
-        Implementation = Add.realize(left_argument.domain,
-                                     right_argument.domain)
-        addition = Implementation(left_argument, right_argument,
-                                  self.binder, syntax, parent)
+    def correlate(self, left, right, syntax, parent):
+        Implementation = Add.realize(left.domain, right.domain)
+        addition = Implementation(left, right, self.binder, syntax, parent)
         yield addition()
 
 
@@ -340,9 +341,9 @@ class Add(Adapter):
 
     adapts(Domain, Domain)
 
-    def __init__(self, left_argument, right_argument, binder, syntax, parent):
-        self.left_argument = left_argument
-        self.right_argument = right_argument
+    def __init__(self, left, right, binder, syntax, parent):
+        self.left = left
+        self.right = right
         self.binder = binder
         self.syntax = syntax
         self.parent = parent
@@ -352,12 +353,26 @@ class Add(Adapter):
                                    self.syntax.mark)
 
 
-class ConcatenateBinding(FunctionBinding):
+class ConcatenationBinding(FunctionBinding):
 
-    def __init__(self, parent, left_argument, right_argument, syntax):
-        super(ConcatenateBinding, self).__init__(parent, StringDomain(), syntax,
-                                                 left_argument=left_argument,
-                                                 right_argument=right_argument)
+    def __init__(self, parent, left, right, syntax):
+        super(ConcatenationBinding, self).__init__(parent, StringDomain(),
+                                                   syntax,
+                                                   left=left, right=right)
+
+
+class ConcatenationExpression(FunctionExpression):
+
+    def __init__(self, left, right, mark):
+        super(ConcatenationExpression, self).__init__(StringDomain(), mark,
+                                                      left=left, right=right)
+
+
+class ConcatenationPhrase(FunctionPhrase):
+
+    def __init__(self, left, right, mark):
+        super(ConcatenationPhrase, self).__init__(StringDomain(), False, mark,
+                                                  left=left, right=right)
 
 
 class Concatenate(Add):
@@ -365,12 +380,11 @@ class Concatenate(Add):
     adapts_none()
 
     def __call__(self):
-        left_argument = self.binder.cast(self.left_argument, StringDomain(),
-                                         parent=self.parent)
-        right_argument = self.binder.cast(self.right_argument, StringDomain(),
-                                          parent=self.parent)
-        return ConcatenateBinding(self.parent, left_argument, right_argument,
-                                  self.syntax)
+        left = self.binder.cast(self.left, StringDomain(),
+                                parent=self.parent)
+        right = self.binder.cast(self.right, StringDomain(),
+                                 parent=self.parent)
+        return ConcatenationBinding(self.parent, left, right, self.syntax)
 
 
 class ConcatenateStringToString(Concatenate):
@@ -391,6 +405,167 @@ class ConcatenateUntypedToString(Concatenate):
 class ConcatenateUntypedToUntyped(Concatenate):
 
     adapts(UntypedDomain, UntypedDomain)
+
+
+class EncodeConcatenation(Encode):
+
+    adapts(ConcatenationBinding, Encoder)
+
+    def encode(self):
+        left = self.encoder.encode(self.binding.left)
+        right = self.encoder.encode(self.binding.right)
+        return ConcatenationExpression(left, right, self.binding.mark)
+
+
+class EvaluateConcatenation(Evaluate):
+
+    adapts(ConcatenationExpression, Compiler)
+
+    def evaluate(self, references):
+        left = self.compiler.evaluate(self.expression.left, references)
+        right = self.compiler.evaluate(self.expression.right, references)
+        return ConcatenationPhrase(left, right, self.expression.mark)
+
+
+class FormatFunctions(Format):
+
+    def concat_op(self, left, right):
+        return "(%s || %s)" % (left, right)
+
+    def count_fn(self, condition):
+        return "COUNT(NULLIF(%s, FALSE))" % condition
+
+    def count_wrapper(self, aggregate):
+        return "COALESCE(%s, 0)" % aggregate
+
+
+class SerializeConcatenation(Serialize):
+
+    adapts(ConcatenationPhrase, Serializer)
+
+    def serialize(self):
+        left = self.serializer.serialize(self.phrase.left)
+        right = self.serializer.serialize(self.phrase.right)
+        return self.format.concat_op(left, right)
+
+
+class CountFunction(ProperFunction):
+
+    adapts(named['count'])
+
+    parameters = [
+            Parameter('condition'),
+    ]
+
+    def correlate(self, condition, syntax, parent):
+        condition = self.binder.cast(condition, BooleanDomain())
+        yield CountBinding(parent, condition, syntax)
+
+
+class CountBinding(FunctionBinding):
+
+    def __init__(self, parent, condition, syntax):
+        super(CountBinding, self).__init__(parent, IntegerDomain(), syntax,
+                                           condition=condition)
+
+
+class CountExpression(FunctionExpression):
+
+    def __init__(self, condition, mark):
+        super(CountExpression, self).__init__(IntegerDomain(), mark,
+                                              condition=condition)
+
+class CountWrapperExpression(FunctionExpression):
+
+    def __init__(self, aggregate, mark):
+        super(CountWrapperExpression, self).__init__(IntegerDomain(), mark,
+                                                     aggregate=aggregate)
+
+
+class CountPhrase(FunctionPhrase):
+
+    def __init__(self, condition, mark):
+        super(CountPhrase, self).__init__(IntegerDomain(), True, mark,
+                                          condition=condition)
+
+
+class CountWrapperPhrase(FunctionPhrase):
+
+    def __init__(self, aggregate, mark):
+        super(CountWrapperPhrase, self).__init__(IntegerDomain(), False, mark,
+                                                 aggregate=aggregate)
+
+
+class EncodeCount(Encode):
+
+    adapts(CountBinding, Encoder)
+
+    def encode(self):
+        condition = self.encoder.encode(self.binding.condition)
+        function = CountExpression(condition, self.binding.mark)
+        space = self.encoder.relate(self.binding.parent)
+        plural_units = [unit for unit in condition.get_units()
+                             if not space.spans(unit.space)]
+        if not plural_units:
+            raise InvalidArgumentError("a plural expression is required",
+                                       condition.mark)
+        plural_spaces = []
+        for unit in plural_units:
+            if any(plural_space.dominates(unit.space)
+                   for plural_space in plural_spaces):
+                continue
+            plural_spaces = [plural_space
+                             for plural_space in plural_spaces
+                             if not unit.space.dominates(plural_space)]
+            plural_spaces.append(unit.space)
+        if len(plural_spaces) > 1:
+            raise InvalidArgumentError("invalid plural expression",
+                                       condition.mark)
+        plural_space = plural_spaces[0]
+        if not plural_space.spans(space):
+            raise InvalidArgumentError("invalid plural expression",
+                                       condition.mark)
+        aggregate = AggregateUnit(function, plural_space, space, function.mark)
+        wrapper = CountWrapperExpression(aggregate, aggregate.mark)
+        return wrapper
+
+
+class EvaluateCount(Evaluate):
+
+    adapts(CountExpression, Compiler)
+
+    def evaluate(self, references):
+        condition = self.compiler.evaluate(self.expression.condition,
+                                           references)
+        return CountPhrase(condition, self.expression.mark)
+
+
+class EvaluateCountWrapper(Evaluate):
+
+    adapts(CountWrapperExpression, Compiler)
+
+    def evaluate(self, references):
+        aggregate = self.compiler.evaluate(self.expression.aggregate,
+                                           references)
+        return CountWrapperPhrase(aggregate, self.expression.mark)
+
+
+class SerializeCount(Serialize):
+
+    adapts(CountPhrase, Serializer)
+
+    def serialize(self):
+        condition = self.serializer.serialize(self.phrase.condition)
+        return self.format.count_fn(condition)
+
+
+class SerializeCountWrapper(Serialize):
+
+    adapts(CountWrapperPhrase, Serializer)
+
+    def serialize(self):
+        aggregate = self.serializer.serialize(self.phrase.aggregate)
+        return self.format.count_wrapper(aggregate)
 
 
 function_adapters = find_adapters()

@@ -175,8 +175,6 @@ class BranchAppointment(Appointment):
         for unit in self.expression.get_units():
             demand = self.demand_by_unit[unit]
             yield demand
-            for demand in demand.appointment.get_demands():
-                yield demand
 
 
 class FrameAppointment(Appointment):

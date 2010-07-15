@@ -532,6 +532,9 @@ class SerializeLeafReference(SerializePhrase):
         child = self.format.name(self.phrase.column.name)
         return self.format.attr(parent, child)
 
+    def call(self):
+        return self.phrase.column.name
+
 
 class SerializeBranchReference(SerializePhrase):
 
@@ -543,6 +546,9 @@ class SerializeBranchReference(SerializePhrase):
         child = self.serializer.get_alias(self.phrase.phrase)
         child = self.format.name(child)
         return self.format.attr(parent, child)
+
+    def call(self):
+        return self.serializer.call(self.phrase.phrase)
 
 
 class SerializeCorrelatedFrame(SerializePhrase):

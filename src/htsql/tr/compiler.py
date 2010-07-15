@@ -75,6 +75,8 @@ class CompileLeaf(Compile):
                 supplies[demand] = phrase_by_column[column]
             elif appointment.is_frame:
                 supplies[demand] = frame
+            else:
+                assert False
         return supplies
 
 
@@ -119,7 +121,8 @@ class CompileBranch(Compile):
         for demand in demands:
             if demand.sketch not in self.sketch.absorbed:
                 inner_demands.append(demand)
-            inner_demands.extend(demand.appointment.get_demands())
+            else:
+                inner_demands.extend(demand.get_demands())
         for appointment in self.sketch.select:
             inner_demands.extend(appointment.get_demands())
         for attachment in self.sketch.linkage:
@@ -132,6 +135,13 @@ class CompileBranch(Compile):
             inner_demands.extend(appointment.get_demands())
         for appointment, dir in self.sketch.order:
             inner_demands.extend(appointment.get_demands())
+
+        idx = 0
+        while idx < len(inner_demands):
+            demand = inner_demands[idx]
+            if demand.sketch in self.sketch.absorbed:
+                inner_demands.extend(demand.get_demands())
+            idx += 1
 
         demands_by_child = {}
         demands_by_child[None] = []
@@ -146,7 +156,6 @@ class CompileBranch(Compile):
             child = attachment.sketch
             child_demands = demands_by_child[child]
             child_supplies = self.compiler.compile(child, child_demands)
-            assert len(child_demands) == len(child_supplies), (child_demands, child_supplies)
             inner_supplies.update(child_supplies)
 
         branch_demands = reversed(demands_by_child[None])
@@ -196,7 +205,7 @@ class CompileBranch(Compile):
         if len(conditions) == 1:
             filter = conditions[0]
         elif len(conditions) > 1:
-            filter = Conjunction(conditions, self.sketch.mark)
+            filter = ConjunctionPhrase(conditions, self.sketch.mark)
 
         group = []
         for appointment in self.sketch.group:
@@ -214,7 +223,7 @@ class CompileBranch(Compile):
         if len(conditions) == 1:
             group_filter = conditions[0]
         elif len(conditions) > 1:
-            group_filter = Conjunction(conditions, self.sketch.mark)
+            group_filter = ConjunctionPhrase(conditions, self.sketch.mark)
 
         order = []
         for appointment, dir in self.sketch.order:
@@ -275,7 +284,7 @@ class CompileBranch(Compile):
         if len(conditions) == 1:
             condition = conditions[0]
         elif len(conditions) > 1:
-            condition = Conjunction(conditions, attachment.sketch.mark)
+            condition = ConjunctionPhrase(conditions, attachment.sketch.mark)
         is_inner = attachment.sketch.is_inner
         return Link(frame, condition, is_inner)
 
@@ -313,7 +322,7 @@ class Evaluate(Adapter):
         self.compiler = compiler
 
     def evaluate(self, references):
-        raise NotImplementedError()
+        raise NotImplementedError(self.expression)
 
 
 class EvaluateLiteral(Evaluate):

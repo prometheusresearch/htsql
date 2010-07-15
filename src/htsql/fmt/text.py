@@ -131,6 +131,7 @@ class TextRenderer(Renderer):
         yield "\n"
         yield " ----\n"
         yield " %s\n" % request_title
+        yield " %s\n" % product.profile.plan.sql
 
 
 class TextFormatter(Formatter):
