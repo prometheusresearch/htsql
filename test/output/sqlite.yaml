@@ -16,12 +16,6 @@ tests:
 
        ----
        /
-  - uri: /{2+2}
-    status: 200 OK
-    headers:
-    - [Content-Type, text/plain]
-    body: |
-      /{2+2}
   - uri: /test
     status: 200 OK
     headers:
@@ -38,6 +32,7 @@ tests:
 
        ----
        /test
+       SELECT "test"."id", "test"."data" FROM "test" AS "test" ORDER BY 1 ASC
   - uri: /test{id}
     status: 200 OK
     headers:
@@ -54,6 +49,7 @@ tests:
 
        ----
        /test{id}
+       SELECT "test"."id" FROM "test" AS "test" ORDER BY 1 ASC
   - uri: /test
     status: 200 OK
     headers:
@@ -85,6 +81,7 @@ tests:
 
        ----
        /test
+       SELECT "test"."id", "test"."data" FROM "test" AS "test" ORDER BY 1 ASC
   - uri: /test
     status: 200 OK
     headers:
@@ -135,9 +132,3 @@ tests:
       </table>
       </body>
       </html>
-  - uri: /test{data}?id=1
-    status: 200 OK
-    headers:
-    - [Content-Type, text/plain]
-    body: |
-      /test{data}?id=1

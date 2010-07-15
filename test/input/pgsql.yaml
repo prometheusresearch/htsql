@@ -48,23 +48,67 @@ tests:
 - title: Queries
   id: queries-pgsql
   tests:
-  - uri: /
-  - uri: /{2+2}
-    skip: true
-  - uri: /test
-  - uri: /test{id}
-  - uri: /test{data}?id=1
-    skip: true
-  - uri: /test
-    headers:
-      Accept: application/json
-  - uri: /test
-    headers:
-      Accept: text/csv
-  - uri: /test
-    headers:
-      Accept: text/plain
-  - uri: /test
-    headers:
-      Accept: text/html
+
+  # Display all tables in the regression schema.
+  - title: Regression schema
+    tests:
+    - uri: /school
+    - uri: /department
+    - uri: /program
+    - uri: /course
+    - uri: /instructor
+    - uri: /confidential
+    - uri: /appointment
+    - uri: /semester
+    - uri: /class
+    - uri: /student
+    - uri: /enrollment
+    - uri: /prerequisite
+    - uri: /classification
+    - uri: /course_classification
+    - uri: /program_requirement
+
+  # Empty and scalar queries.
+  - title: Scalar queries
+    tests:
+    - uri: /
+    - uri: /{'HT'+'SQL'}
+
+  # Simple (non-aggregate) filters.
+  - title: Simple filters
+    tests:
+    - uri: /school?code='ns'
+    - uri: /department?school.code='ns'
+    - uri: /program?school.code='ns'&code='uchem'
+    - uri: /course?credits=5
+
+  # Simple (non-aggregate) selectors.
+  - title: Simple selectors
+    tests:
+    - uri: /school{name}
+    - uri: /department{school.*,*}
+    - uri: /department{school.name+' - '+name}
+
+  # Plural links and aggregates.
+  - title: Aggregates
+    tests:
+    - uri: /department{code,count(course{credits=3})}
+    - uri: /school{code,count(department.course{credits=3})}
+    - uri: /school{code}?count(department.course{credits=3})=20
+
+  # Demonstrate selection of a formatter based on the `Accept` header.
+  - title: Formatters
+    tests:
+    - uri: /school
+      headers:
+        Accept: application/json
+    - uri: /school
+      headers:
+        Accept: text/csv
+    - uri: /school
+      headers:
+        Accept: text/plain
+    - uri: /school
+      headers:
+        Accept: text/html
 

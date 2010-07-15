@@ -270,7 +270,7 @@ class IntrospectPGSQL(Introspect):
                     scale = (att.atttypmod-4) & 0xFFFF
                 return PGDecimalDomain(schema_name, name,
                                        precision=precision, scale=scale)
-            if base_name == 'char':
+            if base_name == 'bpchar':
                 length = att.atttypmod-4 if att.atttypmod != -1 else None
                 return PGCharDomain(schema_name, name, length=length)
             if base_name == 'varchar':
