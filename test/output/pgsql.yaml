@@ -1841,7 +1841,7 @@ tests:
 
          ----
          /{'HT'+'SQL'}
-         SELECT ('HT' || 'SQL') FROM (SELECT 1) AS "!_2"
+         SELECT (COALESCE('HT', '') || COALESCE('SQL', '')) FROM (SELECT 1) AS "!_2"
   - id: simple-filters
     tests:
     - uri: /school?code='ns'
@@ -2048,7 +2048,7 @@ tests:
 
          ----
          /department{school.name+' - '+name}
-         SELECT (("school"."name" || ' - ') || "department"."name") FROM "ad"."department" AS "department" INNER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
+         SELECT (COALESCE((COALESCE("school"."name", '') || COALESCE(' - ', '')), '') || COALESCE("department"."name", '')) FROM "ad"."department" AS "department" INNER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
   - id: aggregates
     tests:
     - uri: /department{code,count(course{credits=3})}
@@ -2127,6 +2127,178 @@ tests:
          ----
          /school{code}?count(department.course{credits=3})=20
          SELECT "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT "department"."school", COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "!" FROM "ad"."department" AS "department" INNER JOIN "ad"."course" AS "course" ON (("department"."code" = "course"."department")) GROUP BY 1) AS "course" ON (("school"."code" = "course"."school")) WHERE (COALESCE("course"."!", 0) = 20) ORDER BY 1 ASC
+    - uri: /department?exists(course.credits=5)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (department?exists(course.credits=5)) |
+        -+---------------------------------------+-
+         | code      | name           | school   |
+        -+-----------+----------------+----------+-
+         | acc       | Accounting     | bus      |
+         | artstd    | Studio Art     | art      |
+         | mth       | Mathematics    | ns       |
+                                          (3 rows)
+
+         ----
+         /department?exists(course.credits=5)
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", BOOL_OR(("course"."credits" = 5) IS TRUE) AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) WHERE COALESCE("course"."!", FALSE) ORDER BY 1 ASC
+    - uri: /department?every(course.credits=5)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (department?every(course.credits=5)) |
+        -+--------------------------------------+-
+         | code    | name           | school    |
+        -+---------+----------------+-----------+-
+         | mth     | Mathematics    | ns        |
+         | pia     | Piano          | mus       |
+         | str     | Strings        | mus       |
+         | voc     | Vocals         | mus       |
+         | win     | Wind           | mus       |
+                                         (5 rows)
+
+         ----
+         /department?every(course.credits=5)
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", BOOL_AND(("course"."credits" = 5) IS TRUE) AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) WHERE COALESCE("course"."!", TRUE) ORDER BY 1 ASC
+    - uri: /department{code,min(course.credits),max(course.credits)}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | department                                         |
+        -+----------------------------------------------------+-
+         | code   | min(course.credits) | max(course.credits) |
+        -+--------+---------------------+---------------------+-
+         | acc    |                   2 |                   5 |
+         | arthis |                   3 |                   4 |
+         | artstd |                   0 |                   5 |
+         | astro  |                   1 |                   3 |
+         | be     |                   3 |                   8 |
+         | capmrk |                   3 |                   3 |
+         | chem   |                   2 |                   3 |
+         | comp   |                   3 |                   4 |
+         | corpfi |                   3 |                   3 |
+         | edpol  |                   3 |                   3 |
+         | ee     |                   3 |                   4 |
+         | eng    |                   2 |                   3 |
+         | hist   |                   3 |                   3 |
+         | lang   |                   2 |                   4 |
+         | me     |                   3 |                   4 |
+         | mth    |                   5 |                   5 |
+         | phys   |                   2 |                   3 |
+         | pia    |                     |                     |
+         | poli   |                   3 |                   4 |
+         | psych  |                   3 |                   4 |
+         | str    |                     |                     |
+         | tched  |                   3 |                   4 |
+         | voc    |                     |                     |
+         | win    |                     |                     |
+                                                      (24 rows)
+
+         ----
+         /department{code,min(course.credits),max(course.credits)}
+         SELECT "department"."code", "course_1"."!", "course_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "!", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course_1" ON (("department"."code" = "course_1"."department")) LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "!", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course_2" ON (("department"."code" = "course_2"."department")) ORDER BY 1 ASC
+    - uri: /department?exists(course)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (department?exists(course))              |
+        -+------------------------------------------+-
+         | code   | name                   | school |
+        -+--------+------------------------+--------+-
+         | acc    | Accounting             | bus    |
+         | arthis | Art History            | art    |
+         | artstd | Studio Art             | art    |
+         | astro  | Astronomy              | ns     |
+         | be     | Bioengineering         | egn    |
+         | capmrk | Capital Markets        | bus    |
+         | chem   | Chemistry              | ns     |
+         | comp   | Computer Science       | egn    |
+         | corpfi | Corporate Finance      | bus    |
+         | edpol  | Educational Policy     | edu    |
+         | ee     | Electrical Engineering | egn    |
+         | eng    | English                | la     |
+         | hist   | History                | la     |
+         | lang   | Foreign Languages      | la     |
+         | me     | Mechanical Engineering | egn    |
+         | mth    | Mathematics            | ns     |
+         | phys   | Physics                | ns     |
+         | poli   | Political Science      | la     |
+         | psych  | Psychology             | la     |
+         | tched  | Teacher Education      | edu    |
+                                            (20 rows)
+
+         ----
+         /department?exists(course)
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", BOOL_OR((("course"."department" IS NOT NULL) AND ("course"."number" IS NOT NULL)) IS TRUE) AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) WHERE COALESCE("course"."!", FALSE) ORDER BY 1 ASC
+    - uri: /school?!exists(department)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (school?!exists(department))        |
+        -+-------------------------------------+-
+         | code | name                         |
+        -+------+------------------------------+-
+         | mart | School of Modern Art         |
+         | sc   | School of Continuing Studies |
+                                        (2 rows)
+
+         ----
+         /school?!exists(department)
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT "department"."school", BOOL_OR((("department"."code" IS NOT NULL)) IS TRUE) AS "!" FROM "ad"."department" AS "department" GROUP BY 1) AS "department" ON (("school"."code" = "department"."school")) WHERE (NOT COALESCE("department"."!", FALSE)) ORDER BY 1 ASC
+    - uri: /school{*,count(department)}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                                      |
+        -+-------------------------------------------------------------+-
+         | code | name                             | count(department) |
+        -+------+----------------------------------+-------------------+-
+         | art  | School of Art and Design         |                 2 |
+         | bus  | School of Business               |                 3 |
+         | edu  | College of Education             |                 2 |
+         | egn  | School of Engineering            |                 4 |
+         | la   | School of Arts, Letters, and the |                 5 |
+         :      : Humanities                       :                   :
+         | mart | School of Modern Art             |                 0 |
+         | mus  | Musical School                   |                 4 |
+         | ns   | School of Natural Sciences       |                 4 |
+         | sc   | School of Continuing Studies     |                 0 |
+                                                                (9 rows)
+
+         ----
+         /school{*,count(department)}
+         SELECT "school"."code", "school"."name", COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF((("department"."code" IS NOT NULL)), FALSE)) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+    - uri: /school{*,count(department?exists(course))}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                                                     |
+        -+----------------------------------------------------------------------------+-
+         | code | name                             | count(department?exists(course)) |
+        -+------+----------------------------------+----------------------------------+-
+         | art  | School of Art and Design         |                                2 |
+         | bus  | School of Business               |                                3 |
+         | edu  | College of Education             |                                2 |
+         | egn  | School of Engineering            |                                4 |
+         | la   | School of Arts, Letters, and the |                                5 |
+         :      : Humanities                       :                                  :
+         | mart | School of Modern Art             |                                0 |
+         | mus  | Musical School                   |                                0 |
+         | ns   | School of Natural Sciences       |                                4 |
+         | sc   | School of Continuing Studies     |                                0 |
+                                                                               (9 rows)
+
+         ----
+         /school{*,count(department?exists(course))}
+         SELECT "school"."code", "school"."name", COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF((("department"."code" IS NOT NULL)), FALSE)) AS "!", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", BOOL_OR((("course"."department" IS NOT NULL) AND ("course"."number" IS NOT NULL)) IS TRUE) AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) WHERE COALESCE("course"."!", FALSE) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
   - id: formatters
     tests:
     - uri: /school

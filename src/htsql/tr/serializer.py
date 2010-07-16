@@ -21,7 +21,7 @@ from .frame import (Clause, Frame, LeafFrame, ScalarFrame,
                     QueryFrame, Phrase, EqualityPhrase, InequalityPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
                     LiteralPhrase, LeafReferencePhrase, BranchReferencePhrase,
-                    CorrelatedFramePhrase)
+                    CorrelatedFramePhrase, TuplePhrase)
 from .plan import Plan
 import decimal
 
@@ -121,6 +121,12 @@ class Format(Utility):
         if is_negative:
             op = "!="
         return self.binary_op(left, op, right)
+
+    def is_null(self, arg):
+        return "(%s IS NULL)" % arg
+
+    def is_not_null(self, arg):
+        return "(%s IS NOT NULL)" % arg
 
     def order(self, value, dir):
         if dir == +1:
@@ -454,6 +460,17 @@ class SerializeNegation(SerializePhrase):
     def serialize(self):
         value = self.serializer.serialize(self.phrase.term)
         return self.format.not_op(value)
+
+
+class SerializeTuple(SerializePhrase):
+
+    adapts(TuplePhrase, Serializer)
+
+    def serialize(self):
+        units = [self.serializer.serialize(unit)
+                 for unit in self.phrase.units]
+        conditions = [self.format.is_not_null(unit) for unit in units]
+        return self.format.and_op(conditions)
 
 
 class SerializeLiteral(SerializePhrase):

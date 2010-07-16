@@ -204,12 +204,12 @@ class FalseFunction(ProperFunction):
 class CastFunction(ProperFunction):
 
     parameters = [
-            Parameter('argument'),
+            Parameter('expression'),
     ]
     output_domain = None
 
-    def correlate(self, argument, syntax, parent):
-        yield self.binder.cast(argument, self.output_domain, syntax, parent)
+    def correlate(self, expression, syntax, parent):
+        yield self.binder.cast(expression, self.output_domain, syntax, parent)
 
 
 class BooleanCastFunction(CastFunction):
@@ -322,6 +322,19 @@ class DisjunctionOperator(ProperFunction):
         yield DisjunctionBinding(parent, [left, right], syntax)
 
 
+class NegationOperator(ProperFunction):
+
+    adapts(named['!_'])
+
+    parameters = [
+            Parameter('term'),
+    ]
+
+    def correlate(self, term, syntax, parent):
+        term = self.binder.cast(term, BooleanDomain())
+        yield NegationBinding(parent, term, syntax)
+
+
 class AdditionOperator(ProperFunction):
 
     adapts(named['_+_'])
@@ -353,26 +366,216 @@ class Add(Adapter):
                                    self.syntax.mark)
 
 
-class ConcatenationBinding(FunctionBinding):
+class GenericBinding(FunctionBinding):
 
-    def __init__(self, parent, left, right, syntax):
-        super(ConcatenationBinding, self).__init__(parent, StringDomain(),
-                                                   syntax,
-                                                   left=left, right=right)
+    function = None
 
-
-class ConcatenationExpression(FunctionExpression):
-
-    def __init__(self, left, right, mark):
-        super(ConcatenationExpression, self).__init__(StringDomain(), mark,
-                                                      left=left, right=right)
+    @classmethod
+    def factory(cls, function):
+        name = function.__name__ + 'Binding'
+        binding_class = type(name, (cls,), {'function': function})
+        return binding_class
 
 
-class ConcatenationPhrase(FunctionPhrase):
+class GenericExpression(FunctionExpression):
 
-    def __init__(self, left, right, mark):
-        super(ConcatenationPhrase, self).__init__(StringDomain(), False, mark,
-                                                  left=left, right=right)
+    function = None
+
+    @classmethod
+    def factory(cls, function):
+        name = function.__name__ + 'Expression'
+        expression_class = type(name, (cls,), {'function': function})
+        return expression_class
+
+
+class GenericPhrase(FunctionPhrase):
+
+    function = None
+
+    @classmethod
+    def factory(cls, function):
+        name = function.__name__ + 'Phrase'
+        phrase_class = type(name, (cls,), {'function': function})
+        return phrase_class
+
+
+class GenericEncode(Encode):
+
+    adapts_none()
+
+    function = None
+    binding_class = None
+    expression_class = None
+
+    @classmethod
+    def factory(cls, function, binding_class, expression_class):
+        name = 'Encode' + function.__name__
+        signature = (binding_class, Encoder)
+        encode_class = type(name, (cls,),
+                            {'function': function,
+                             'signature': signature,
+                             'binding_class': binding_class,
+                             'expression_class': expression_class})
+        return encode_class
+
+    def encode(self):
+        arguments = {}
+        for name in sorted(self.binding.arguments):
+            value = self.binding.arguments[name]
+            if isinstance(value, list):
+                value = [self.encoder.encode(item) for item in value]
+            elif value is not None:
+                value = self.encoder.encode(value)
+            arguments[name] = value
+        return self.expression_class(self.binding.domain, self.binding.mark,
+                                     **arguments)
+
+
+class GenericAggregateEncode(Encode):
+
+    adapts_none()
+
+    function = None
+    binding_class = None
+    expression_class = None
+    wrapper_class = None
+
+    @classmethod
+    def factory(cls, function, binding_class, expression_class, wrapper_class):
+        name = 'Encode' + function.__name__
+        signature = (binding_class, Encoder)
+        encode_class = type(name, (cls,),
+                            {'function': function,
+                             'signature': signature,
+                             'binding_class': binding_class,
+                             'expression_class': expression_class,
+                             'wrapper_class': wrapper_class})
+        return encode_class
+
+    def encode(self):
+        expression = self.encoder.encode(self.binding.expression)
+        expression = self.expression_class(self.binding.domain,
+                                           self.binding.mark,
+                                           expression=expression)
+        space = self.encoder.relate(self.binding.parent)
+        plural_units = [unit for unit in expression.get_units()
+                             if not space.spans(unit.space)]
+        if not plural_units:
+            raise InvalidArgumentError("a plural expression is required",
+                                       expression.mark)
+        plural_spaces = []
+        for unit in plural_units:
+            if any(plural_space.dominates(unit.space)
+                   for plural_space in plural_spaces):
+                continue
+            plural_spaces = [plural_space
+                             for plural_space in plural_spaces
+                             if not unit.space.dominates(plural_space)]
+            plural_spaces.append(unit.space)
+        if len(plural_spaces) > 1:
+            raise InvalidArgumentError("invalid plural expression",
+                                       expression.mark)
+        plural_space = plural_spaces[0]
+        if not plural_space.spans(space):
+            raise InvalidArgumentError("invalid plural expression",
+                                       expression.mark)
+        aggregate = AggregateUnit(expression, plural_space, space,
+                                  expression.mark)
+        wrapper = self.wrapper_class(self.binding.domain, self.binding.mark,
+                                     aggregate=aggregate)
+        return wrapper
+
+
+class GenericEvaluate(Evaluate):
+
+    adapts_none()
+
+    function = None
+    expression_class = None
+    phrase_class = None
+    is_null_regular = True
+    is_nullable = True
+
+    @classmethod
+    def factory(cls, function, expression_class, phrase_class,
+                is_null_regular=True, is_nullable=True):
+        name = 'Evaluate' + function.__name__
+        signature = (expression_class, Compiler)
+        evaluate_class = type(name, (cls,),
+                              {'function': function,
+                               'signature': signature,
+                               'expression_class': expression_class,
+                               'phrase_class': phrase_class,
+                               'is_null_regular': is_null_regular,
+                               'is_nullable': is_nullable})
+        return evaluate_class
+
+    def evaluate(self, references):
+        is_nullable = self.is_nullable
+        if self.is_null_regular:
+            is_nullable = False
+        arguments = {}
+        for name in sorted(self.expression.arguments):
+            value = self.expression.arguments[name]
+            if isinstance(value, list):
+                value = [self.compiler.evaluate(item, references)
+                         for item in value]
+                if self.is_null_regular:
+                    for item in value:
+                        is_nullable = is_nullable or item.is_nullable
+            elif value is not None:
+                value = self.compiler.evaluate(value, references)
+                if self.is_null_regular:
+                    is_nullable = is_nullable or value.is_nullable
+            arguments[name] = value
+        return self.phrase_class(self.expression.domain, is_nullable,
+                                 self.expression.mark, **arguments)
+
+
+class GenericSerialize(Serialize):
+
+    adapts_none()
+
+    function = None
+    phrase_class = None
+    template = None
+
+    @classmethod
+    def factory(cls, function, phrase_class, template):
+        name = 'Serialize' + function.__name__
+        signature = (phrase_class, Serializer)
+        serialize_class = type(name, (cls,),
+                               {'function': function,
+                                'signature': signature,
+                                'phrase_class': phrase_class,
+                                'template': template})
+        return serialize_class
+
+    def serialize(self):
+        arguments = {}
+        for name in sorted(self.phrase.arguments):
+            value = self.phrase.arguments[name]
+            if isinstance(value, list):
+                value = [self.serializer.serialize(item) for item in value]
+            elif value is not None:
+                value = self.serializer.serialize(value)
+            arguments[name] = value
+        return self.template % arguments
+
+
+ConcatenationBinding = GenericBinding.factory(AdditionOperator)
+ConcatenationExpression = GenericExpression.factory(AdditionOperator)
+ConcatenationPhrase = GenericPhrase.factory(AdditionOperator)
+
+
+EncodeConcatenation = GenericEncode.factory(AdditionOperator,
+        ConcatenationBinding, ConcatenationExpression)
+EvaluateConcatenation = GenericEvaluate.factory(AdditionOperator,
+        ConcatenationExpression, ConcatenationPhrase,
+        is_null_regular=False, is_nullable=False)
+SerializeConcatenation = GenericSerialize.factory(AdditionOperator,
+        ConcatenationPhrase,
+        "(COALESCE(%(left)s, '') || COALESCE(%(right)s, ''))")
 
 
 class Concatenate(Add):
@@ -384,7 +587,8 @@ class Concatenate(Add):
                                 parent=self.parent)
         right = self.binder.cast(self.right, StringDomain(),
                                  parent=self.parent)
-        return ConcatenationBinding(self.parent, left, right, self.syntax)
+        return ConcatenationBinding(self.parent, StringDomain(), self.syntax,
+                                    left=left, right=right)
 
 
 class ConcatenateStringToString(Concatenate):
@@ -407,26 +611,6 @@ class ConcatenateUntypedToUntyped(Concatenate):
     adapts(UntypedDomain, UntypedDomain)
 
 
-class EncodeConcatenation(Encode):
-
-    adapts(ConcatenationBinding, Encoder)
-
-    def encode(self):
-        left = self.encoder.encode(self.binding.left)
-        right = self.encoder.encode(self.binding.right)
-        return ConcatenationExpression(left, right, self.binding.mark)
-
-
-class EvaluateConcatenation(Evaluate):
-
-    adapts(ConcatenationExpression, Compiler)
-
-    def evaluate(self, references):
-        left = self.compiler.evaluate(self.expression.left, references)
-        right = self.compiler.evaluate(self.expression.right, references)
-        return ConcatenationPhrase(left, right, self.expression.mark)
-
-
 class FormatFunctions(Format):
 
     def concat_op(self, left, right):
@@ -439,16 +623,6 @@ class FormatFunctions(Format):
         return "COALESCE(%s, 0)" % aggregate
 
 
-class SerializeConcatenation(Serialize):
-
-    adapts(ConcatenationPhrase, Serializer)
-
-    def serialize(self):
-        left = self.serializer.serialize(self.phrase.left)
-        right = self.serializer.serialize(self.phrase.right)
-        return self.format.concat_op(left, right)
-
-
 class CountFunction(ProperFunction):
 
     adapts(named['count'])
@@ -458,114 +632,242 @@ class CountFunction(ProperFunction):
     ]
 
     def correlate(self, condition, syntax, parent):
-        condition = self.binder.cast(condition, BooleanDomain())
-        yield CountBinding(parent, condition, syntax)
+        expression = self.binder.cast(condition, BooleanDomain())
+        yield CountBinding(parent, IntegerDomain(), syntax,
+                           expression=expression)
 
 
-class CountBinding(FunctionBinding):
-
-    def __init__(self, parent, condition, syntax):
-        super(CountBinding, self).__init__(parent, IntegerDomain(), syntax,
-                                           condition=condition)
-
-
-class CountExpression(FunctionExpression):
-
-    def __init__(self, condition, mark):
-        super(CountExpression, self).__init__(IntegerDomain(), mark,
-                                              condition=condition)
-
-class CountWrapperExpression(FunctionExpression):
-
-    def __init__(self, aggregate, mark):
-        super(CountWrapperExpression, self).__init__(IntegerDomain(), mark,
-                                                     aggregate=aggregate)
+CountBinding = GenericBinding.factory(CountFunction)
+CountExpression = GenericExpression.factory(CountFunction)
+CountWrapperExpression = GenericExpression.factory(CountFunction)
+CountPhrase = GenericPhrase.factory(CountFunction)
+CountWrapperPhrase = GenericPhrase.factory(CountFunction)
 
 
-class CountPhrase(FunctionPhrase):
-
-    def __init__(self, condition, mark):
-        super(CountPhrase, self).__init__(IntegerDomain(), True, mark,
-                                          condition=condition)
-
-
-class CountWrapperPhrase(FunctionPhrase):
-
-    def __init__(self, aggregate, mark):
-        super(CountWrapperPhrase, self).__init__(IntegerDomain(), False, mark,
-                                                 aggregate=aggregate)
+EncodeCount = GenericAggregateEncode.factory(CountFunction,
+        CountBinding, CountExpression, CountWrapperExpression)
+EvaluateCount = GenericEvaluate.factory(CountFunction,
+        CountExpression, CountPhrase)
+EvaluateCountWrapper = GenericEvaluate.factory(CountFunction,
+        CountWrapperExpression, CountWrapperPhrase)
+SerializeCount = GenericSerialize.factory(CountFunction,
+        CountPhrase, "COUNT(NULLIF(%(expression)s, FALSE))")
+SerializeCountWrapper = GenericSerialize.factory(CountFunction,
+        CountWrapperPhrase, "COALESCE(%(aggregate)s, 0)")
 
 
-class EncodeCount(Encode):
+class ExistsFunction(ProperFunction):
 
-    adapts(CountBinding, Encoder)
+    adapts(named['exists'])
 
-    def encode(self):
-        condition = self.encoder.encode(self.binding.condition)
-        function = CountExpression(condition, self.binding.mark)
-        space = self.encoder.relate(self.binding.parent)
-        plural_units = [unit for unit in condition.get_units()
-                             if not space.spans(unit.space)]
-        if not plural_units:
-            raise InvalidArgumentError("a plural expression is required",
-                                       condition.mark)
-        plural_spaces = []
-        for unit in plural_units:
-            if any(plural_space.dominates(unit.space)
-                   for plural_space in plural_spaces):
-                continue
-            plural_spaces = [plural_space
-                             for plural_space in plural_spaces
-                             if not unit.space.dominates(plural_space)]
-            plural_spaces.append(unit.space)
-        if len(plural_spaces) > 1:
-            raise InvalidArgumentError("invalid plural expression",
-                                       condition.mark)
-        plural_space = plural_spaces[0]
-        if not plural_space.spans(space):
-            raise InvalidArgumentError("invalid plural expression",
-                                       condition.mark)
-        aggregate = AggregateUnit(function, plural_space, space, function.mark)
-        wrapper = CountWrapperExpression(aggregate, aggregate.mark)
-        return wrapper
+    parameters = [
+            Parameter('condition'),
+    ]
+
+    def correlate(self, condition, syntax, parent):
+        expression = self.binder.cast(condition, BooleanDomain())
+        yield ExistsBinding(parent, BooleanDomain(), syntax,
+                            expression=expression)
 
 
-class EvaluateCount(Evaluate):
-
-    adapts(CountExpression, Compiler)
-
-    def evaluate(self, references):
-        condition = self.compiler.evaluate(self.expression.condition,
-                                           references)
-        return CountPhrase(condition, self.expression.mark)
+ExistsBinding = GenericBinding.factory(ExistsFunction)
+ExistsExpression = GenericExpression.factory(ExistsFunction)
+ExistsWrapperExpression = GenericExpression.factory(ExistsFunction)
+ExistsPhrase = GenericPhrase.factory(ExistsFunction)
+ExistsWrapperPhrase = GenericPhrase.factory(ExistsFunction)
 
 
-class EvaluateCountWrapper(Evaluate):
-
-    adapts(CountWrapperExpression, Compiler)
-
-    def evaluate(self, references):
-        aggregate = self.compiler.evaluate(self.expression.aggregate,
-                                           references)
-        return CountWrapperPhrase(aggregate, self.expression.mark)
-
-
-class SerializeCount(Serialize):
-
-    adapts(CountPhrase, Serializer)
-
-    def serialize(self):
-        condition = self.serializer.serialize(self.phrase.condition)
-        return self.format.count_fn(condition)
+EncodeExists = GenericAggregateEncode.factory(ExistsFunction,
+        ExistsBinding, ExistsExpression, ExistsWrapperExpression)
+EvaluateExists = GenericEvaluate.factory(ExistsFunction,
+        ExistsExpression, ExistsPhrase)
+EvaluateExistsWrapper = GenericEvaluate.factory(ExistsFunction,
+        ExistsWrapperExpression, ExistsWrapperPhrase)
+SerializeExists = GenericSerialize.factory(ExistsFunction,
+        ExistsPhrase, "BOOL_OR(%(expression)s IS TRUE)")
+SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
+        ExistsWrapperPhrase, "COALESCE(%(aggregate)s, FALSE)")
 
 
-class SerializeCountWrapper(Serialize):
+class EveryFunction(ProperFunction):
 
-    adapts(CountWrapperPhrase, Serializer)
+    adapts(named['every'])
 
-    def serialize(self):
-        aggregate = self.serializer.serialize(self.phrase.aggregate)
-        return self.format.count_wrapper(aggregate)
+    parameters = [
+            Parameter('condition'),
+    ]
+
+    def correlate(self, condition, syntax, parent):
+        expression = self.binder.cast(condition, BooleanDomain())
+        yield EveryBinding(parent, BooleanDomain(), syntax,
+                           expression=expression)
+
+
+EveryBinding = GenericBinding.factory(EveryFunction)
+EveryExpression = GenericExpression.factory(EveryFunction)
+EveryWrapperExpression = GenericExpression.factory(EveryFunction)
+EveryPhrase = GenericPhrase.factory(EveryFunction)
+EveryWrapperPhrase = GenericPhrase.factory(EveryFunction)
+
+
+EncodeEvery = GenericAggregateEncode.factory(EveryFunction,
+        EveryBinding, EveryExpression, EveryWrapperExpression)
+EvaluateEvery = GenericEvaluate.factory(EveryFunction,
+        EveryExpression, EveryPhrase)
+EvaluateEveryWrapper = GenericEvaluate.factory(EveryFunction,
+        EveryWrapperExpression, EveryWrapperPhrase)
+SerializeEvery = GenericSerialize.factory(EveryFunction,
+        EveryPhrase, "BOOL_AND(%(expression)s IS TRUE)")
+SerializeEveryWrapper = GenericSerialize.factory(EveryFunction,
+        EveryWrapperPhrase, "COALESCE(%(aggregate)s, TRUE)")
+
+
+class MinFunction(ProperFunction):
+
+    adapts(named['min'])
+
+    parameters = [
+            Parameter('expression'),
+    ]
+
+    def correlate(self, expression, syntax, parent):
+        Implementation = Min.realize(expression.domain)
+        function = Implementation(expression, self.binder, syntax, parent)
+        yield function()
+
+
+class Min(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, expression, binder, syntax, parent):
+        self.expression = expression
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        expression = self.expression
+        return MinBinding(self.parent, expression.domain, self.syntax,
+                          expression=expression)
+
+
+class MinString(Min):
+
+    adapts(StringDomain)
+
+
+class MinInteger(Min):
+
+    adapts(IntegerDomain)
+
+
+class MinDecimal(Min):
+
+    adapts(DecimalDomain)
+
+
+class MinFloat(Min):
+
+    adapts(FloatDomain)
+
+
+class MinDate(Min):
+
+    adapts(DateDomain)
+
+
+MinBinding = GenericBinding.factory(MinFunction)
+MinExpression = GenericExpression.factory(MinFunction)
+MinWrapperExpression = GenericExpression.factory(MinFunction)
+MinPhrase = GenericPhrase.factory(MinFunction)
+MinWrapperPhrase = GenericPhrase.factory(MinFunction)
+
+
+EncodeMin = GenericAggregateEncode.factory(MinFunction,
+        MinBinding, MinExpression, MinWrapperExpression)
+EvaluateMin = GenericEvaluate.factory(MinFunction,
+        MinExpression, MinPhrase)
+EvaluateMinWrapper = GenericEvaluate.factory(MinFunction,
+        MinWrapperExpression, MinWrapperPhrase)
+SerializeMin = GenericSerialize.factory(MinFunction,
+        MinPhrase, "MIN(%(expression)s)")
+SerializeMinWrapper = GenericSerialize.factory(MinFunction,
+        MinWrapperPhrase, "%(aggregate)s")
+
+
+class MaxFunction(ProperFunction):
+
+    adapts(named['max'])
+
+    parameters = [
+            Parameter('expression'),
+    ]
+
+    def correlate(self, expression, syntax, parent):
+        Implementation = Max.realize(expression.domain)
+        function = Implementation(expression, self.binder, syntax, parent)
+        yield function()
+
+
+class Max(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, expression, binder, syntax, parent):
+        self.expression = expression
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        expression = self.expression
+        return MaxBinding(self.parent, expression.domain, self.syntax,
+                          expression=expression)
+
+
+class MaxString(Max):
+
+    adapts(StringDomain)
+
+
+class MaxInteger(Max):
+
+    adapts(IntegerDomain)
+
+
+class MaxDecimal(Max):
+
+    adapts(DecimalDomain)
+
+
+class MaxFloat(Max):
+
+    adapts(FloatDomain)
+
+
+class MaxDate(Max):
+
+    adapts(DateDomain)
+
+
+MaxBinding = GenericBinding.factory(MaxFunction)
+MaxExpression = GenericExpression.factory(MaxFunction)
+MaxWrapperExpression = GenericExpression.factory(MaxFunction)
+MaxPhrase = GenericPhrase.factory(MaxFunction)
+MaxWrapperPhrase = GenericPhrase.factory(MaxFunction)
+
+
+EncodeMax = GenericAggregateEncode.factory(MaxFunction,
+        MaxBinding, MaxExpression, MaxWrapperExpression)
+EvaluateMax = GenericEvaluate.factory(MaxFunction,
+        MaxExpression, MaxPhrase)
+EvaluateMaxWrapper = GenericEvaluate.factory(MaxFunction,
+        MaxWrapperExpression, MaxWrapperPhrase)
+SerializeMax = GenericSerialize.factory(MaxFunction,
+        MaxPhrase, "MAX(%(expression)s)")
+SerializeMaxWrapper = GenericSerialize.factory(MaxFunction,
+        MaxWrapperPhrase, "%(aggregate)s")
 
 
 function_adapters = find_adapters()

@@ -17,14 +17,15 @@ from ..util import listof
 from ..adapter import Adapter, adapts, find_adapters
 from .code import (Expression, LiteralExpression, EqualityExpression,
                    InequalityExpression, ConjunctionExpression,
-                   DisjunctionExpression, NegationExpression, Unit)
+                   DisjunctionExpression, NegationExpression,
+                   TupleExpression, Unit)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand,
                      LeafAppointment, BranchAppointment, FrameAppointment)
 from .frame import (LeafFrame, ScalarFrame, BranchFrame, CorrelatedFrame,
                     SegmentFrame, QueryFrame, Link, Phrase, EqualityPhrase,
                     InequalityPhrase, ConjunctionPhrase, DisjunctionPhrase,
-                    NegationPhrase, LiteralPhrase,
+                    NegationPhrase, LiteralPhrase, TuplePhrase,
                     LeafReferencePhrase, BranchReferencePhrase)
 
 
@@ -373,6 +374,25 @@ class EvaluateDisjunction(Evaluate):
         terms = [self.compiler.evaluate(term, references)
                  for term in self.expression.terms]
         return DisjunctionPhrase(terms, self.expression.mark)
+
+
+class EvaluateNegation(Evaluate):
+
+    adapts(NegationExpression, Compiler)
+
+    def evaluate(self, references):
+        term = self.compiler.evaluate(self.expression.term, references)
+        return NegationPhrase(term, self.expression.mark)
+
+
+class EvaluateTuple(Evaluate):
+
+    adapts(TupleExpression, Compiler)
+
+    def evaluate(self, references):
+        units = [self.compiler.evaluate(unit, references)
+                 for unit in self.expression.units]
+        return TuplePhrase(units, self.expression.mark)
 
 
 class EvaluateUnit(Evaluate):

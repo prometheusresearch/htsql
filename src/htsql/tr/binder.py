@@ -22,14 +22,15 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
-                      CastBinding)
+                      CastBinding, TupleBinding)
 from .lookup import Lookup
 from .fn.function import FindFunction
 from ..introspect import Introspect
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, StringDomain, DateDomain,
-                      UntypedDomain, VoidDomain)
+                      TupleDomain, UntypedDomain, VoidDomain)
 from ..error import InvalidArgumentError
+from ..context import context
 import decimal
 
 
@@ -37,16 +38,24 @@ class Binder(object):
 
     def bind(self, syntax, parent=None):
         if parent is None:
-            introspect = Introspect()
-            catalog = introspect()
+            app = context.app
+            if app.cached_catalog is None:
+                introspect = Introspect()
+                catalog = introspect()
+                app.cached_catalog = catalog
+            catalog = app.cached_catalog
             parent = RootBinding(catalog, syntax)
         bind = Bind(syntax, self)
         return bind.bind(parent)
 
     def bind_one(self, syntax, parent=None):
         if parent is None:
-            introspect = Introspect()
-            catalog = introspect()
+            app = context.app
+            if app.cached_catalog is None:
+                introspect = Introspect()
+                catalog = introspect()
+                app.cached_catalog = catalog
+            catalog = app.cached_catalog
             parent = RootBinding(catalog, syntax)
         bind = Bind(syntax, self)
         return bind.bind_one(parent)
@@ -90,6 +99,14 @@ class UnaryCoerce(Adapter):
 class CoerceVoid(UnaryCoerce):
 
     adapts(VoidDomain)
+
+    def __call__(self):
+        return None
+
+
+class CoerceTuple(UnaryCoerce):
+
+    adapts(TupleDomain)
 
     def __call__(self):
         return None
@@ -215,6 +232,14 @@ class CastBooleanToBoolean(Cast):
 
     def cast(self, syntax, parent):
         return self.binding
+
+
+class CastTupleToBoolean(Cast):
+
+    adapts(Binding, TupleDomain, BooleanDomain, Binder)
+
+    def cast(self, syntax, parent):
+        return TupleBinding(self.binding)
 
 
 class CastStringToString(Cast):

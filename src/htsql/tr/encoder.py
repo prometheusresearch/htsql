@@ -19,10 +19,10 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       EqualityBinding, InequalityBinding,
                       ConjunctionBinding, DisjunctionBinding,
-                      NegationBinding, CastBinding)
+                      NegationBinding, CastBinding, TupleBinding)
 from .code import (ScalarSpace, FreeTableSpace, JoinedTableSpace,
                    ScreenSpace, OrderedSpace, LiteralExpression, ColumnUnit,
-                   QueryCode, SegmentCode, ElementExpression,
+                   TupleExpression, QueryCode, SegmentCode, ElementExpression,
                    EqualityExpression, InequalityExpression,
                    ConjunctionExpression, DisjunctionExpression,
                    NegationExpression, CastExpression)
@@ -151,6 +151,15 @@ class EncodeSieve(Encode):
         return ScreenSpace(space, filter, self.binding.mark)
 
 
+class EncodeTuple(Encode):
+
+    adapts(TupleBinding, Encoder)
+
+    def encode(self):
+        space = self.encoder.relate(self.binding.binding)
+        return TupleExpression(space, self.binding.mark)
+
+
 class EncodeLiteral(Encode):
 
     adapts(LiteralBinding, Encoder)
@@ -203,7 +212,7 @@ class EncodeNegation(Encode):
     adapts(NegationBinding, Encoder)
 
     def encode(self):
-        term = self.encoder.encode(term)
+        term = self.encoder.encode(self.binding.term)
         return NegationExpression(term, self.binding.mark)
 
 

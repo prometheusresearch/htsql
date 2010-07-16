@@ -95,6 +95,13 @@ tests:
     - uri: /department{code,count(course{credits=3})}
     - uri: /school{code,count(department.course{credits=3})}
     - uri: /school{code}?count(department.course{credits=3})=20
+    - uri: /department?exists(course.credits=5)
+    - uri: /department?every(course.credits=5)
+    - uri: /department{code,min(course.credits),max(course.credits)}
+    - uri: /department?exists(course)
+    - uri: /school?!exists(department)
+    - uri: /school{*,count(department)}
+    - uri: /school{*,count(department?exists(course))}
 
   # Demonstrate selection of a formatter based on the `Accept` header.
   - title: Formatters

@@ -224,3 +224,8 @@ class UntypedDomain(Domain):
     name = 'untyped'
 
 
+class TupleDomain(Domain):
+
+    name = 'tuple'
+
+

@@ -377,6 +377,23 @@ class NegationExpression(Expression):
         return self.term.get_units()
 
 
+class TupleExpression(Expression):
+
+    def __init__(self, space, mark):
+        assert space.table is not None
+        assert space.table.primary_key is not None
+        super(TupleExpression, self).__init__(BooleanDomain(), mark,
+                                              hash=(self.__class__,
+                                                    space.hash))
+        self.space = space
+        columns = [space.table.columns[name]
+                   for name in space.table.primary_key.origin_column_names]
+        self.units = [ColumnUnit(column, space, mark) for column in columns]
+
+    def get_units(self):
+        return self.units
+
+
 class CastExpression(Expression):
 
     def __init__(self, code, domain, mark):

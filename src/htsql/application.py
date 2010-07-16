@@ -60,6 +60,7 @@ class Application(object):
         # TODO: these should be defined by the `htsql.core` addon.
         # Initialize the adapter registry.
         self.adapter_registry = AdapterRegistry(adapters)
+        self.cached_catalog = None
 
     def __enter__(self):
         """

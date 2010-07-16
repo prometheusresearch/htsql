@@ -247,7 +247,7 @@ class Delegate(Adapter):
         self.unit = unit
         self.outliner = outliner
 
-    def delegate(self):
+    def delegate(self, sketch, term):
         raise NotImplementedError()
 
 

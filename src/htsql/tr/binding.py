@@ -14,7 +14,7 @@ This module declares binding nodes.
 
 
 from ..entity import CatalogEntity, TableEntity, ColumnEntity, Join
-from ..domain import Domain, VoidDomain, BooleanDomain
+from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax
 from ..util import maybe, listof, Node
 
@@ -66,7 +66,7 @@ class TableBinding(Binding):
 
     def __init__(self, parent, table, syntax):
         assert isinstance(table, TableEntity)
-        super(TableBinding, self).__init__(parent, VoidDomain(), syntax)
+        super(TableBinding, self).__init__(parent, TupleDomain(), syntax)
         self.table = table
 
 
@@ -158,6 +158,14 @@ class CastBinding(Binding):
 
     def __init__(self, parent, binding, domain, syntax):
         super(CastBinding, self).__init__(parent, domain, syntax)
+        self.binding = binding
+
+
+class TupleBinding(Binding):
+
+    def __init__(self, binding):
+        super(TupleBinding, self).__init__(binding.parent, BooleanDomain(),
+                                           binding.syntax)
         self.binding = binding
 
 

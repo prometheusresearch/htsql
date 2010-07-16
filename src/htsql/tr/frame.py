@@ -223,6 +223,16 @@ class NegationPhrase(Phrase):
         return self
 
 
+class TuplePhrase(Phrase):
+
+    def __init__(self, units, mark):
+        assert isinstance(units, listof(Phrase))
+        domain = BooleanDomain()
+        is_nullable = False
+        super(TuplePhrase, self).__init__(domain, is_nullable, mark)
+        self.units = units
+
+
 class CastPhrase(Phrase):
 
     def __init__(self, term, domain, is_nullable, mark):
