@@ -41,7 +41,7 @@ class ConnectPGSQL(Connect):
         parameters = {}
         parameters['database'] = db.database
         if db.host is not None:
-            parameters['host'] = db.hosts
+            parameters['host'] = db.host
         if db.port is not None:
             parameters['port'] = db.port
         if db.username is not None:
@@ -65,7 +65,7 @@ class ConnectPGSQL(Connect):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(PGSQLConnect, self).normalize_error(exception)
+        return super(ConnectPGSQL, self).normalize_error(exception)
 
 
 connect_adapters = find_adapters()
