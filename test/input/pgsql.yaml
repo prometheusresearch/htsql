@@ -92,6 +92,8 @@ tests:
   # Plural links and aggregates.
   - title: Aggregates
     tests:
+    - uri: /{count(school),count(department),count(course)}
+    - uri: /{count(department),count(department?exists(course))}
     - uri: /department{code,count(course{credits=3})}
     - uri: /school{code,count(department.course{credits=3})}
     - uri: /school{code}?count(department.course{credits=3})=20
@@ -102,6 +104,7 @@ tests:
     - uri: /school?!exists(department)
     - uri: /school{*,count(department)}
     - uri: /school{*,count(department?exists(course))}
+    - uri: /school{*,count(department.exists(course))}
 
   # Demonstrate selection of a formatter based on the `Accept` header.
   - title: Formatters

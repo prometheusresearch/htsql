@@ -192,7 +192,7 @@ class FreeTableSpace(Space):
     is_axis = True
 
     def __init__(self, parent, table, mark):
-        super(FreeTableSpace, self).__init__(parent, table, True, True, mark,
+        super(FreeTableSpace, self).__init__(parent, table, False, False, mark,
                                              hash=(self.__class__,
                                                    parent.hash, table))
 

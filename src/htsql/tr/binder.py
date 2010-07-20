@@ -425,7 +425,7 @@ class BindFunctionCall(Bind):
 
     def bind(self, parent):
         if self.syntax.base is not None:
-            parent = self.binder.bind_one(self.syntax.base)
+            parent = self.binder.bind_one(self.syntax.base, parent)
         name = self.syntax.identifier.value
         function = self.binder.find_function(name)
         return function.bind_function_call(self.syntax, parent)
