@@ -235,10 +235,10 @@ class TuplePhrase(Phrase):
 
 class CastPhrase(Phrase):
 
-    def __init__(self, term, domain, is_nullable, mark):
-        assert isinstance(term, Phrase)
+    def __init__(self, phrase, domain, is_nullable, mark):
+        assert isinstance(phrase, Phrase)
         super(CastPhrase, self).__init__(domain, is_nullable, mark)
-        self.term = term
+        self.phrase = phrase
 
 
 class LiteralPhrase(Phrase):

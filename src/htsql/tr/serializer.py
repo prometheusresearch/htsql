@@ -14,14 +14,14 @@ This module implements the SQL serializer.
 
 
 from ..adapter import Adapter, Utility, adapts, find_adapters
-from ..domain import (Domain, BooleanDomain, NumberDomain, StringDomain,
-                      DateDomain)
+from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
+                      DecimalDomain, FloatDomain, StringDomain, DateDomain)
 from .frame import (Clause, Frame, LeafFrame, ScalarFrame,
                     BranchFrame, CorrelatedFrame, SegmentFrame,
                     QueryFrame, Phrase, EqualityPhrase, InequalityPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
-                    LiteralPhrase, LeafReferencePhrase, BranchReferencePhrase,
-                    CorrelatedFramePhrase, TuplePhrase)
+                    CastPhrase, LiteralPhrase, LeafReferencePhrase,
+                    BranchReferencePhrase, CorrelatedFramePhrase, TuplePhrase)
 from .plan import Plan
 import decimal
 
@@ -91,6 +91,15 @@ class Format(Utility):
         if isinstance(value, (long, decimal.Decimal)):
             return str(value)
 
+    def integer(self, value):
+        return str(value)
+
+    def decimal(self, value):
+        return str(value)
+
+    def float(self, value):
+        return repr(value)
+
     def string(self, value):
         return "'%s'" % value.replace("'", "''")
 
@@ -121,6 +130,12 @@ class Format(Utility):
         if is_negative:
             op = "!="
         return self.binary_op(left, op, right)
+
+    def to_boolean(self, value):
+        return "(%s IS NOT NULL)" % value
+
+    def to_boolean_from_string(self, value):
+        return "(NULLIF(%s, '') IS NOT NULL)" % value
 
     def is_null(self, arg):
         return "(%s IS NULL)" % arg
@@ -473,6 +488,46 @@ class SerializeTuple(SerializePhrase):
         return self.format.and_op(conditions)
 
 
+class SerializeCast(SerializePhrase):
+
+    adapts(CastPhrase, Serializer)
+
+    def serialize(self):
+        serialize_to = SerializeTo(self.phrase.domain,
+                                   self.phrase.phrase.domain,
+                                   self.serializer)
+        return serialize_to.serialize(self.phrase.phrase)
+
+
+class SerializeTo(Adapter):
+
+    adapts(Domain, Domain, Serializer)
+
+    def __init__(self, to_domain, from_domain, serializer):
+        self.to_domain = to_domain
+        self.from_domain = from_domain
+        self.serializer = serializer
+        self.format = serializer.format
+
+
+class SerializeToBooleanFromString(SerializeTo):
+
+    adapts(BooleanDomain, StringDomain, Serializer)
+
+    def serialize(self, phrase):
+        value = self.serializer.serialize(phrase)
+        return self.format.to_boolean_from_string(value)
+
+
+class SerializeToBooleanFromNumber(SerializeTo):
+
+    adapts(BooleanDomain, NumberDomain, Serializer)
+
+    def serialize(self, phrase):
+        value = self.serializer.serialize(phrase)
+        return self.format.to_boolean(value)
+
+
 class SerializeLiteral(SerializePhrase):
 
     adapts(LiteralPhrase, Serializer)
@@ -515,8 +570,38 @@ class SerializeNumberConstant(SerializeConstant):
 
     def serialize(self, value):
         if value is None:
-            return self.format.none()
+            return self.format.null()
         return self.format.number(value)
+
+
+class SerializeIntegerConstant(SerializeConstant):
+
+    adapts(IntegerDomain, Serializer)
+
+    def serialize(self, value):
+        if value is None:
+            return self.format.null()
+        return self.format.integer(value)
+
+
+class SerializeDecimalConstant(SerializeConstant):
+
+    adapts(DecimalDomain, Serializer)
+
+    def serialize(self, value):
+        if value is None:
+            return self.format.null()
+        return self.format.decimal(value)
+
+
+class SerializeFloatConstant(SerializeConstant):
+
+    adapts(FloatDomain, Serializer)
+
+    def serialize(self, value):
+        if value is None:
+            return self.format.null()
+        return self.format.float(value)
 
 
 class SerializeStringConstant(SerializeConstant):
@@ -525,7 +610,7 @@ class SerializeStringConstant(SerializeConstant):
 
     def serialize(self, value):
         if value is None:
-            return self.format.none()
+            return self.format.null()
         return self.format.string(value)
 
 
@@ -535,7 +620,7 @@ class SerializeDateConstant(SerializeConstant):
 
     def serialize(self, value):
         if value is None:
-            return self.format.none()
+            return self.format.null()
         return self.format.date(value)
 
 

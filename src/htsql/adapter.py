@@ -107,7 +107,7 @@ class Adapter(object):
 
     # Override in subclasses.
     signature = None
-    weights = 1
+    weight = 1
     dominated_adapters = []
     dominating_adapters = []
 
@@ -247,7 +247,7 @@ class AdapterRegistry(object):
                 # For implementations with identical signatures,
                 # dominance is determined by `weight`.
                 if master.signature == slave.signature:
-                    if master.weights > slave.weights:
+                    if master.weight > slave.weight:
                         is_dominated = True
                 # Otherwise, an adapter with a more specific signature
                 # dominates an adapter with a less specific signature.

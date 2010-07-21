@@ -398,7 +398,8 @@ class CastExpression(Expression):
 
     def __init__(self, code, domain, mark):
         super(CastExpression, self).__init__(domain, mark,
-                                             hash=(self.__class__, domain))
+                                             hash=(self.__class__,
+                                                   code.hash, domain))
         self.code = code
 
     def get_units(self):

@@ -14,10 +14,14 @@ This module implements the plain text renderer.
 
 
 from ..adapter import adapts, find_adapters
+from ..util import maybe, oneof
 from .format import Format, Formatter, Renderer
-from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain)
+from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
+                      DecimalDomain, FloatDomain, StringDomain, EnumDomain,
+                      DateDomain)
 import re
+import decimal
+import datetime
 
 
 class Layout(object):
@@ -162,7 +166,7 @@ class FormatDomain(Format):
         char = match.group()
         if char in self.escape_table:
             return self.escape_table[char]
-        return u"%%%02x" % ord(char)
+        return u"\\u%04x" % ord(char)
 
     def escape_string(self, value):
         if self.unescaped_regexp.match(value):
@@ -196,6 +200,7 @@ class FormatBoolean(Format):
             return 5
 
     def __call__(self, value, width):
+        assert isinstance(value, maybe(bool))
         if value is None:
             return self.format_null(width)
         if value is True:
@@ -217,6 +222,33 @@ class FormatNumber(Format):
         if value is None:
             return self.format_null(width)
         return ["%*s" % (width, value)]
+
+
+class FormatInteger(Format):
+
+    adapts(TextRenderer, IntegerDomain)
+
+    def __call__(self, value, width):
+        assert isinstance(value, maybe(oneof(int, long)))
+        return super(FormatInteger, self).__call__(value, width)
+
+
+class FormatDecimal(Format):
+
+    adapts(TextRenderer, DecimalDomain)
+
+    def __call__(self, value, width):
+        assert isinstance(value, maybe(decimal.Decimal))
+        return super(FormatDecimal, self).__call__(value, width)
+
+
+class FormatFloat(Format):
+
+    adapts(TextRenderer, FloatDomain)
+
+    def __call__(self, value, width):
+        assert isinstance(value, maybe(float))
+        return super(FormatFloat, self).__call__(value, width)
 
 
 class FormatString(Format):
@@ -257,6 +289,7 @@ class FormatString(Format):
         return max_length
 
     def __call__(self, value, width):
+        assert isinstance(value, maybe(str))
         if value is None:
             return self.format_null(width)
         value = value.decode('utf-8')
@@ -316,6 +349,7 @@ class FormatEnum(Format):
         return len(value)
 
     def __call__(self, value, width):
+        assert isinstance(value, maybe(str))
         if value is None:
             return self.format_null(width)
         value = value.decode('utf-8')
@@ -334,6 +368,7 @@ class FormatDate(Format):
         return 10
 
     def __call__(self, value, width):
+        assert isinstance(value, maybe(datetime.date))
         if value is None:
             return self.format_null(width)
         return ["%*s" % (-width, value)]

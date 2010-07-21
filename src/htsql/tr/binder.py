@@ -495,12 +495,18 @@ class BindNumber(Bind):
         if 'e' in value or 'E' in value:
             domain = FloatDomain()
             value = float(value)
+            if str(value) in ['inf', '-inf', 'nan']:
+                raise InvalidArgumentError("invalid float value",
+                                           self.syntax.mark)
         elif '.' in value:
             domain = DecimalDomain()
             value = decimal.Decimal(value)
         else:
             domain = IntegerDomain()
             value = int(value)
+            if not (-2**63 <= value < 2**63):
+                raise InvalidArgumentError("invalid integer value",
+                                           self.syntax.mark)
         binding = LiteralBinding(parent, value, domain, self.syntax)
         yield binding
 

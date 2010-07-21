@@ -216,6 +216,15 @@ class EncodeNegation(Encode):
         return NegationExpression(term, self.binding.mark)
 
 
+class EncodeCast(Encode):
+
+    adapts(CastBinding, Encoder)
+
+    def encode(self):
+        code = self.encoder.encode(self.binding.binding)
+        return CastExpression(code, self.binding.domain, self.binding.mark)
+
+
 encode_adapters = find_adapters()
 
 

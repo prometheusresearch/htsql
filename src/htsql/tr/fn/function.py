@@ -13,7 +13,8 @@ This module implements HTSQL functions.
 """
 
 
-from ...adapter import Adapter, Utility, adapts, adapts_none, find_adapters
+from ...adapter import (Adapter, Utility, adapts, adapts_none,
+                        find_adapters, weights)
 from ...error import InvalidArgumentError
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain, DateDomain)
@@ -612,6 +613,8 @@ class ConcatenateUntypedToUntyped(Concatenate):
 
 
 class FormatFunctions(Format):
+
+    weights(0)
 
     def concat_op(self, left, right):
         return "(%s || %s)" % (left, right)

@@ -18,14 +18,14 @@ from ..adapter import Adapter, adapts, find_adapters
 from .code import (Expression, LiteralExpression, EqualityExpression,
                    InequalityExpression, ConjunctionExpression,
                    DisjunctionExpression, NegationExpression,
-                   TupleExpression, Unit)
+                   CastExpression, TupleExpression, Unit)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand,
                      LeafAppointment, BranchAppointment, FrameAppointment)
 from .frame import (LeafFrame, ScalarFrame, BranchFrame, CorrelatedFrame,
                     SegmentFrame, QueryFrame, Link, Phrase, EqualityPhrase,
                     InequalityPhrase, ConjunctionPhrase, DisjunctionPhrase,
-                    NegationPhrase, LiteralPhrase, TuplePhrase,
+                    NegationPhrase, LiteralPhrase, CastPhrase, TuplePhrase,
                     LeafReferencePhrase, BranchReferencePhrase)
 
 
@@ -383,6 +383,16 @@ class EvaluateNegation(Evaluate):
     def evaluate(self, references):
         term = self.compiler.evaluate(self.expression.term, references)
         return NegationPhrase(term, self.expression.mark)
+
+
+class EvaluateCast(Evaluate):
+
+    adapts(CastExpression, Compiler)
+
+    def evaluate(self, references):
+        phrase = self.compiler.evaluate(self.expression.code, references)
+        return CastPhrase(phrase, self.expression.domain, phrase.is_nullable,
+                          self.expression.mark)
 
 
 class EvaluateTuple(Evaluate):

@@ -29,7 +29,7 @@ class Syntax(object):
     # The pattern to %-escape unsafe characters.
     escape_pattern = r"[\x00-\x1F%\x7F]"
     escape_regexp = re.compile(escape_pattern)
-    escape_replace = (lambda m: "%%%02X" % ord(m.group()))
+    escape_replace = (lambda s, m: "%%%02X" % ord(m.group()))
 
     def __init__(self, mark):
         assert isinstance(mark, Mark)

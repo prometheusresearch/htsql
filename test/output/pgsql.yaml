@@ -1841,7 +1841,302 @@ tests:
 
          ----
          /{'HT'+'SQL'}
-         SELECT (COALESCE('HT', '') || COALESCE('SQL', '')) FROM (SELECT 1) AS "!_2"
+         SELECT (COALESCE('HT', '') || COALESCE('SQL', ''))
+    - id: literals
+      tests:
+      - uri: "/{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2', '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F',
+          '%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'}"
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: " | /{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2','%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F','%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'}
+          \                                                                                |\n-+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-\n
+          | '' | 'HTSQL' | 'O''Reilly' | '\u03BB\u03CC\u03B3\u03BF\u03C2' | '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F'
+          \                         | '%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'
+          \                                                |\n-+----+---------+-------------+---------+--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------+-\n
+          | \"\" | HTSQL   | O'Reilly    | \u03BB\u03CC\u03B3\u03BF\u03C2   | \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\"
+          | \"\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\"
+          |\n                                                                                                                                                                                                                  (1
+          row)\n\n ----\n /{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2','%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F','%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'}\n
+          SELECT '', 'HTSQL', 'O''Reilly', '\u03BB\u03CC\u03B3\u03BF\u03C2', '\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F',
+          '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F'\n"
+      - uri: /{0,1,100,65536}
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |2
+           | /{0,1,100,65536}    |
+          -+---------------------+-
+           | 0 | 1 | 100 | 65536 |
+          -+---+---+-----+-------+-
+           | 0 | 1 | 100 | 65536 |
+                           (1 row)
+
+           ----
+           /{0,1,100,65536}
+           SELECT 0, 1, 100, 65536
+      - uri: /{115792089237316195423570985008687907853269984665640564039457584007913129639936}
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          invalid argument: invalid integer value:
+              /{115792089237316195423570985008687907853269984665640564039457584007913129639936}
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - uri: /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |2
+           | /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}      |
+          -+----------------------------------------------------------+-
+           | 0.0 | 1.0 | 3.14 | 0.00000000001 | 1234567890.0987654321 |
+          -+-----+-----+------+---------------+-----------------------+-
+           | 0.0 | 1.0 | 3.14 |         1E-11 | 1234567890.0987654321 |
+                                                                (1 row)
+
+           ----
+           /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}
+           SELECT 0.0, 1.0, 3.14, 1E-11, 1234567890.0987654321
+      - uri: /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1}
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |2
+           | /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1} |
+          -+------------------------------------------------------------------------------------------------------------+-
+           | 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1    |
+          -+------------------------------------------------------------------------------------------------------------+-
+           |    10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1 |
+                                                                                                                  (1 row)
+
+           ----
+           /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1}
+           SELECT 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1
+      - uri: /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}
+        status: 200 OK
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |2
+           | /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}     |
+          -+-----------------------------------------------------------+-
+           | 0e0 | 1e1  | 0.31415926535897931e1 | 2718281828459045e-16 |
+          -+-----+------+-----------------------+----------------------+-
+           | 0.0 | 10.0 |         3.14159265359 |       0.271828182846 |
+                                                                 (1 row)
+
+           ----
+           /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}
+           SELECT 0.0::float8, 10.0::float8, 3.14159265359::float8, 0.271828182846::float8
+      - uri: /{1e1024}
+        status: 400 Bad Request
+        headers:
+        - [Content-Type, text/plain; charset=UTF-8]
+        body: |
+          invalid argument: invalid float value:
+              /{1e1024}
+                ^^^^^^
+    - id: scalar-functions
+      tests:
+      - id: boolean-functions-and-operators
+        tests:
+        - uri: /{true(),false()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{true(),false()} |
+            -+-------------------+-
+             | true()  | false() |
+            -+---------+---------+-
+             | true    | false   |
+                           (1 row)
+
+             ----
+             /{true(),false()}
+             SELECT TRUE, FALSE
+        - uri: /{boolean(null()),boolean(true()),boolean(false())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{boolean(null()),boolean(true()),boolean(false())} |
+            -+-----------------------------------------------------+-
+             | boolean(null())       | true()       | false()      |
+            -+-----------------------+--------------+--------------+-
+             |                       | true         | false        |
+                                                             (1 row)
+
+             ----
+             /{boolean(null()),boolean(true()),boolean(false())}
+             SELECT NULL, TRUE, FALSE
+        - uri: /{boolean('true'),boolean('TRUE'),boolean('True'), boolean('false'),boolean('FALSE'),boolean('False')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{boolean('true'),boolean('TRUE'),boolean('True'),boolean('false'),boolean('FALSE'),boolean('False')}        |
+            -+--------------------------------------------------------------------------------------------------------------+-
+             | boolean('true') | boolean('TRUE') | boolean('True') | boolean('false') | boolean('FALSE') | boolean('False') |
+            -+-----------------+-----------------+-----------------+------------------+------------------+------------------+-
+             | true            | true            | true            | false            | false            | false            |
+                                                                                                                      (1 row)
+
+             ----
+             /{boolean('true'),boolean('TRUE'),boolean('True'),boolean('false'),boolean('FALSE'),boolean('False')}
+             SELECT TRUE, TRUE, TRUE, FALSE, FALSE, FALSE
+        - uri: /{boolean('')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: cannot cast a value: invalid Boolean literal: expected 'true' or 'false'; got '':
+                /{boolean('')}
+                  ^^^^^^^^^^^
+        - uri: /{boolean('X')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: cannot cast a value: invalid Boolean literal: expected 'true' or 'false'; got 'X':
+                /{boolean('X')}
+                  ^^^^^^^^^^^^
+        - uri: /{boolean(integer(null())),boolean(0),boolean(1), boolean(0.0),boolean(1.0),boolean(0e0),boolean(1e0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{boolean(integer(null())),boolean(0),boolean(1),boolean(0.0),boolean(1.0),boolean(0e0),boolean(1e0)}          |
+            -+----------------------------------------------------------------------------------------------------------------+-
+             | boolean(integer(null())) | boolean(0) | boolean(1) | boolean(0.0) | boolean(1.0) | boolean(0e0) | boolean(1e0) |
+            -+--------------------------+------------+------------+--------------+--------------+--------------+--------------+-
+             | false                    | true       | true       | true         | true         | true         | true         |
+                                                                                                                        (1 row)
+
+             ----
+             /{boolean(integer(null())),boolean(0),boolean(1),boolean(0.0),boolean(1.0),boolean(0e0),boolean(1e0)}
+             SELECT (NULL IS NOT NULL), (0 IS NOT NULL), (1 IS NOT NULL), (0.0 IS NOT NULL), (1.0 IS NOT NULL), (0.0::float8 IS NOT NULL), (1.0::float8 IS NOT NULL)
+        - uri: /{boolean(string(null())),boolean(string('')),boolean(string('X')),
+            boolean(string('true')),boolean(string('false'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{boolean(string(null())),boolean(string('')),boolean(string('X')),boolean(string('true')),boolean(string('false'))}      |
+            -+---------------------------------------------------------------------------------------------------------------------------+-
+             | boolean(string(null())) | boolean(string('')) | boolean(string('X')) | boolean(string('true')) | boolean(string('false')) |
+            -+-------------------------+---------------------+----------------------+-------------------------+--------------------------+-
+             | false                   | false               | true                 | true                    | true                     |
+                                                                                                                                   (1 row)
+
+             ----
+             /{boolean(string(null())),boolean(string('')),boolean(string('X')),boolean(string('true')),boolean(string('false'))}
+             SELECT (NULLIF(NULL, '') IS NOT NULL), (NULLIF('', '') IS NOT NULL), (NULLIF('X', '') IS NOT NULL), (NULLIF('true', '') IS NOT NULL), (NULLIF('false', '') IS NOT NULL)
+        - uri: /{false()&false(),false()&true(),true()&false(),true()&true(), null()&false(),null()&true(),null()&null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{false()&false(),false()&true(),true()&false(),true()&true(),null()&false(),null()&true(),null()&null()}          |
+            -+--------------------------------------------------------------------------------------------------------------------+-
+             | false()&false() | false()&true() | true()&false() | true()&true() | null()&false() | null()&true() | null()&null() |
+            -+-----------------+----------------+----------------+---------------+----------------+---------------+---------------+-
+             | false           | false          | false          | true          | false          |               |               |
+                                                                                                                            (1 row)
+
+             ----
+             /{false()&false(),false()&true(),true()&false(),true()&true(),null()&false(),null()&true(),null()&null()}
+             SELECT (FALSE AND FALSE), (FALSE AND TRUE), (TRUE AND FALSE), (TRUE AND TRUE), (NULL AND FALSE), (NULL AND TRUE), (NULL AND NULL)
+        - uri: /{string('')&string('X'),0&1}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{string('')&string('X'),0&1} |
+            -+-------------------------------+-
+             | string('')&string('X') | 0&1  |
+            -+------------------------+------+-
+             | false                  | true |
+                                       (1 row)
+
+             ----
+             /{string('')&string('X'),0&1}
+             SELECT ((NULLIF('', '') IS NOT NULL) AND (NULLIF('X', '') IS NOT NULL)), ((0 IS NOT NULL) AND (1 IS NOT NULL))
+        - uri: /{null()&null(),integer(null())&null(),integer(null())&integer(null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{null()&null(),integer(null())&null(),integer(null())&integer(null())}  |
+            -+--------------------------------------------------------------------------+-
+             | null()&null() | integer(null())&null() | integer(null())&integer(null()) |
+            -+---------------+------------------------+---------------------------------+-
+             |               | false                  | false                           |
+                                                                                  (1 row)
+
+             ----
+             /{null()&null(),integer(null())&null(),integer(null())&integer(null())}
+             SELECT (NULL AND NULL), ((NULL IS NOT NULL) AND NULL), ((NULL IS NOT NULL) AND (NULL IS NOT NULL))
+        - uri: /{false()|false(),false()|true(),true()|false(),true()|true(), null()|false(),null()|true(),null()|null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{false()|false(),false()|true(),true()|false(),true()|true(),null()|false(),null()|true(),null()|null()}          |
+            -+--------------------------------------------------------------------------------------------------------------------+-
+             | false()|false() | false()|true() | true()|false() | true()|true() | null()|false() | null()|true() | null()|null() |
+            -+-----------------+----------------+----------------+---------------+----------------+---------------+---------------+-
+             | false           | true           | true           | true          |                | true          |               |
+                                                                                                                            (1 row)
+
+             ----
+             /{false()|false(),false()|true(),true()|false(),true()|true(),null()|false(),null()|true(),null()|null()}
+             SELECT (FALSE OR FALSE), (FALSE OR TRUE), (TRUE OR FALSE), (TRUE OR TRUE), (NULL OR FALSE), (NULL OR TRUE), (NULL OR NULL)
+        - uri: /{string('')|string('X'),0|1,integer(null())|string(null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{string('')|string('X'),0|1,integer(null())|string(null())}   |
+            -+----------------------------------------------------------------+-
+             | string('')|string('X') | 0|1  | integer(null())|string(null()) |
+            -+------------------------+------+--------------------------------+-
+             | true                   | true | false                          |
+                                                                        (1 row)
+
+             ----
+             /{string('')|string('X'),0|1,integer(null())|string(null())}
+             SELECT ((NULLIF('', '') IS NOT NULL) OR (NULLIF('X', '') IS NOT NULL)), ((0 IS NOT NULL) OR (1 IS NOT NULL)), ((NULL IS NOT NULL) OR (NULLIF(NULL, '') IS NOT NULL))
+        - uri: /{!true(),!false(),!null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{!true(),!false(),!null()}  |
+            -+------------------------------+-
+             | !true() | !false() | !null() |
+            -+---------+----------+---------+-
+             | false   | true     |         |
+                                      (1 row)
+
+             ----
+             /{!true(),!false(),!null()}
+             SELECT (NOT TRUE), (NOT FALSE), (NOT NULL)
+        - uri: /{!string(''),!string('X'),!1,!integer(null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{!string(''),!string('X'),!1,!integer(null())}       |
+            -+-------------------------------------------------------+-
+             | !string('') | !string('X') | !1    | !integer(null()) |
+            -+-------------+--------------+-------+------------------+-
+             | true        | false        | false | true             |
+                                                               (1 row)
+
+             ----
+             /{!string(''),!string('X'),!1,!integer(null())}
+             SELECT (NOT (NULLIF('', '') IS NOT NULL)), (NOT (NULLIF('X', '') IS NOT NULL)), (NOT (1 IS NOT NULL)), (NOT (NULL IS NOT NULL))
   - id: simple-filters
     tests:
     - uri: /school?code='ns'
