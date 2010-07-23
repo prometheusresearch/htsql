@@ -16,7 +16,7 @@ This module declares binding nodes.
 from ..entity import CatalogEntity, TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax
-from ..util import maybe, listof, Node
+from ..util import maybe, listof, tupleof, Node
 
 
 class Binding(Node):
@@ -159,6 +159,18 @@ class CastBinding(Binding):
     def __init__(self, parent, binding, domain, syntax):
         super(CastBinding, self).__init__(parent, domain, syntax)
         self.binding = binding
+
+
+class OrderedBinding(Binding):
+
+    def __init__(self, parent, order, limit, offset, syntax):
+        assert isinstance(order, listof(tupleof(Binding, int)))
+        assert isinstance(limit, maybe(int))
+        assert isinstance(offset, maybe(int))
+        super(OrderedBinding, self).__init__(parent, parent.domain, syntax)
+        self.order = order
+        self.limit = limit
+        self.offset = offset
 
 
 class TupleBinding(Binding):

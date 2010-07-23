@@ -17,7 +17,7 @@ from ..adapter import Adapter, adapts, find_adapters
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
-                      EqualityBinding, InequalityBinding,
+                      OrderedBinding, EqualityBinding, InequalityBinding,
                       ConjunctionBinding, DisjunctionBinding,
                       NegationBinding, CastBinding, TupleBinding)
 from .code import (ScalarSpace, FreeTableSpace, JoinedTableSpace,
@@ -149,6 +149,19 @@ class EncodeSieve(Encode):
         space = self.encoder.relate(self.binding.parent)
         filter = self.encoder.encode(self.binding.filter)
         return ScreenSpace(space, filter, self.binding.mark)
+
+
+class EncodeOrdered(Encode):
+
+    adapts(OrderedBinding, Encoder)
+
+    def relate(self):
+        space = self.encoder.relate(self.binding.parent)
+        order = [self.encoder.encode(binding)
+                 for binding in self.binding.order]
+        limit = self.binding.limit
+        offset = self.binding.offset
+        return OrderedSpace(space, order, limit, offset, self.binding.mark)
 
 
 class EncodeTuple(Encode):

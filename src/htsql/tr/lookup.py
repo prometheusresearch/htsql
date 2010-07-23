@@ -16,7 +16,8 @@ This module implements name resolution adapters.
 from ..adapter import Adapter, adapts, find_adapters
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
-                      ColumnBinding, LiteralBinding, SieveBinding)
+                      ColumnBinding, LiteralBinding, SieveBinding,
+                      OrderedBinding)
 from .syntax import Syntax, IdentifierSyntax
 from ..error import InvalidArgumentError
 from ..entity import DirectJoin, ReverseJoin
@@ -231,6 +232,11 @@ class ProxyMixin(object):
 class LookupSieve(ProxyMixin, Lookup):
 
     adapts(SieveBinding)
+
+
+class LookupOrdered(ProxyMixin, Lookup):
+
+    adapts(OrderedBinding)
 
 
 lookup_adapters = find_adapters()

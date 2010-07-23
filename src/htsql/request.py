@@ -124,7 +124,8 @@ class Request(Utility):
                 rows = cursor.fetchall()
                 connection.close()
             except DBError, exc:
-                raise EngineError(str(exc), plan.mark)
+                raise EngineError("error while executing %r: %s"
+                                  % (plan.sql, exc), plan.mark)
             records = []
             select = plan.frame.segment.select
             normalizers = []

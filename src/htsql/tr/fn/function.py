@@ -18,7 +18,7 @@ from ...adapter import (Adapter, Utility, adapts, adapts_none,
 from ...error import InvalidArgumentError
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain, DateDomain)
-from ..binding import (LiteralBinding, FunctionBinding,
+from ..binding import (LiteralBinding, OrderedBinding, FunctionBinding,
                        EqualityBinding, InequalityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding)
 from ..encoder import Encoder, Encode
@@ -173,9 +173,35 @@ class ProperMethod(ProperFunction):
     adapts_none()
 
     def bind_arguments(self, arguments, parent, mark):
-        arguments = [parent] + [list(self.binder.bind(argument, parent))
-                                for argument in arguments]
+        arguments = [[parent]] + [list(self.binder.bind(argument, parent))
+                                  for argument in arguments]
         return self.check_arguments(arguments, mark)
+
+
+class LimitMethod(ProperMethod):
+
+    adapts(named['limit'])
+
+    parameters = [
+            Parameter('this'),
+            Parameter('limit', IntegerDomain),
+            Parameter('offset', IntegerDomain, is_mandatory=False),
+    ]
+
+    def correlate(self, this, limit, offset, syntax, parent):
+        if not (isinstance(limit, LiteralBinding) and
+                (limit.value is None or limit.value >= 0)):
+            raise InvalidArgumentError("expected a non-negative integer",
+                                       limit.mark)
+        if not (offset is None or
+                (isinstance(offset, LiteralBinding) and
+                 (offset.value is None or offset.value >= 0))):
+            raise InvalidArgumentError("expected a non-negative integer",
+                                       offset.mark)
+        limit = limit.value
+        if offset is not None:
+            offset = offset.value
+        yield OrderedBinding(parent, [], limit, offset, syntax)
 
 
 class NullFunction(ProperFunction):

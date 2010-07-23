@@ -352,6 +352,11 @@ class AssembleOrdered(AssembleSpace):
                             self.space, baseline, routes, self.space.mark)
 
 
+    def inject(self, term):
+        assert self.space in term.routes
+        return term
+
+
 class AssembleColumn(AssembleUnit):
 
     adapts(ColumnUnit, Assembler)
