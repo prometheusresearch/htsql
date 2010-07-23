@@ -1,19 +1,31 @@
-HTSQL - A Query Language for the Accidental Programmer
-======================================================
+=======================================================
+HTSQL -- A Query Language for the Accidental Programmer
+=======================================================
 
-HTSQL is a schema-driven URL-to-SQL translator that takes a request over
-HTTP, converts it to a SQL query, executes the query against a database,
-and returns the results in a format best suited for the user agent (CSV,
-HTML, etc.).  HTSQL requests are shorter and easier to read than their SQL
-equivalents.  They allow users to do many of the things they could do with
-SQL, but without the risks and complications of unrestricted database
-access.
+HTSQL ("Hyper Text Structured Query Language") is a schema-driven URI-to-SQL
+translator that takes a request over HTTP, converts it to a SQL query, executes
+the query against a database, and returns the results in a format best suited
+for the user agent (CSV, HTML, etc.).
 
-(more about it).
+HTSQL is copyright by Prometheus Research, LLC.  See the file ``LICENSE``
+for details.  HTSQL is written by Clark C. Evans <cce@clarkevans.com> and
+Kirill Simonov <xi@resolvent.net>.
 
-(short installation instructions and a reference to INSTALL).
+For installation instructions, see ``INSTALL``.  For list of new features
+in this release, see ``NEWS``.  HTSQL documentation is in the ``doc``
+directory.
 
-(short license note and a reference to LICENSE).
+Visit
 
-(links to the web site, documentation, bug tracking and other resources).
+    http://htsql.org/
+        The HTSQL homepage;
+
+    http://bitbucket.org/prometheus/htsql
+        HTSQL source code;
+
+    #htsql on freenode;
+        Our IRC channel;
+
+    http://lists.htsql.org/mailman/listinfo/htsql-users
+        The mailing list for users of HTSQL.
 

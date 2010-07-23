@@ -1,5 +1,248 @@
-HTSQL -- Installation Instructions
-==================================
+Installation Instructions
+=========================
 
-(detailed installation instructions).
+The following installation instructions were tested under a fresh installation
+of Ubuntu 10.04 Server, but they could be easily adapted to other Linux
+distributions and package managers.
+
+
+TL;DR version
+-------------
+
+1. Install Python and required Python modules::
+
+    # apt-get install python
+    # apt-get install python-setuptools python-simplejson python-pyyaml python-psycopg2
+
+2. Install Mercurial and download HTSQL source code::
+
+    # apt-get install mercurial
+    # hg clone http://bitbucket.org/prometheus/htsql
+
+3. Build and install HTSQL::
+
+    # cd htsql
+    # make build
+    # make install
+
+   This should create a ``htsql-ctl`` script.  Run::
+
+    $ htsql-ctl help
+
+   for general help and list of commands.  Run::
+
+    $ htsql-ctl server ENGINE://USERNAME:PASSWORD@HOST:PORT/DATABASE [HOST [PORT]]
+
+   to start an HTSQL server on the address `HOST:PORT` against the specified
+   database.  In particular, to run the HTSQL server against a PostgreSQL
+   database deployed on the same machine with credentials of the current
+   user, run::
+
+    $ htsql-ctl server pgsql:///DATABASE
+
+
+Installing prerequisites
+------------------------
+
+HTSQL requires Python 2.5 or newer, but does not support Python 3 yet.
+Python 2.6 is the recommended version.  In some distributions, Python is
+already installed; if not, you could install it by running::
+
+    # apt-get install python
+
+HTSQL depends on the following external Python packages:
+
+ * `setuptools` (0.6c9 or newer);
+ * `simplejson` (2.0 or newer);
+ * `PyYAML` (3.07 or newer, compiled with LibYAML bindings);
+ * `psycopg2` (2.0.10 or newer, earlier versions are known to segfault).
+
+To install the packages, run::
+
+    # apt-get install python-setuptools python-simplejson python-pyyaml python-psycopg2
+
+Alternatively, you could install these Python modules from sources using the
+`easy_install` script from `setuptools`.  To do that, you need to install
+header files for Python, PostgreSQL and LibYAML::
+
+    # apt-get install build-essential python-dev libpq-dev libyaml-dev
+    # apt-get install python-setuptools
+    # easy_install simplejson
+    # easy_install PyYAML
+    # easy_install psycopg2
+
+This method allows you to choose the directory where the external Python
+packages will be installed.  By default, `easy_install` installs packages
+under ``/usr/local`` directory.  To install Python packages under your home
+directory, create a file ``.pydistutils.cfg`` in your home directory with
+the following content::
+
+    [install]
+    user=true
+
+and set the environment variable ``PYTHONUSERBASE``::
+
+    export PYTHONUSERBASE=$HOME
+
+Then running `easy_install` will install Python libraries to
+``~/lib/python2.6/site-packages`` (when running under Python 2.6) and Python
+scripts to ``~/bin``.
+
+For more details on customizing the location of external Python modules, see
+`distutils` and `setuptools` documentation.
+
+
+Installing HTSQL
+----------------
+
+Once HTSQL is officially released, you will be able to install it using the
+`easy_install` script::
+
+    # easy_install HTSQL
+
+That will download, build and install the latest released version of HTSQL.
+
+Alternatively, you can install HTSQL from the Mercurial repository at
+BitBucket.  You need a Mercurial client::
+
+    # apt-get install mercurial
+
+Then download HTSQL sources::
+
+    # hg clone http://bitbucket.org/prometheus/htsql
+
+To build and install HTSQL, run::
+
+    # cd htsql
+    # make build
+    # make install
+
+To install HTSQL in the development mode, run::
+
+    # make develop
+
+When HTSQL is installed in the development mode, any changes in the source
+files are reflected immediately without having to reinstall it again.
+
+HTSQL comes with a comprehensive test suite.  Running the regression tests
+requires a PostgreSQL server instance.  By default, the regression tests
+assume that the database server is installed locally and the current user
+has administrative permissions.  To install a local PostgreSQL server, run::
+
+    # apt-get install postgresql
+
+To add a database user with the same name as your login name, run::
+
+    # su - postgres -c "createuser -s $USER"
+
+If the host is a single user machine, it is often convenient to allow
+any user on the system connect to the database under any database user
+name.  To do it, open the file ``/etc/postgresql/8.4/main/pg_hba.conf``
+(replace the version number with the actual version), find the lines::
+
+    # "local" is for Unix domain socket connections only
+    local   all         all                               ident
+
+and replace them with::
+
+    # "local" is for Unix domain socket connections only
+    local   all         all                               trust
+
+Reload the server configuration::
+
+    # service postgresql-8.4 reload
+
+Alternatively, if you already have a PostgreSQL server installed somewhere,
+you can specify the address and connection parameters explicitly.  Copy the
+file ``Makefile.env.sample`` to ``Makefile.env``, open the latter, and edit
+the values of variables: ``PGSQL_ADMIN_USERNAME``, ``PGSQL_ADMIN_PASSWORD``,
+``PGSQL_HOST``, ``PGSQL_PORT``.  They should contain the credentials of
+an administrative user and the address of the server respectively.
+
+To run HTSQL regression tests, run::
+
+    # make test
+
+Running regression tests creates a database user called ``htsql_regress``
+with the password ``secret``, and a database called ``htsql_regress``.  Feel
+free to use this database for playing with HTSQL.
+
+To remove any database users and databases deployed by the regression tests,
+run::
+
+    # make cleanup
+
+To build the documentation that comes with HTSQL, run
+
+    # make doc
+
+Note that this requires Sphinx 1.0, which is not yet released.
+
+
+Running HTSQL
+-------------
+
+If HTSQL is installed successfully, you should be able to run the
+`htsql-ctl` script::
+
+    $ htsql-ctl
+
+The script has a number of subcommands called *routines*.  In general, the
+command line has the form::
+
+    htsql-ctl <routine> [options] [arguments]
+
+where ``<routine>`` is the routine name, ``options`` is any routine options
+in short (``-X``) or long (``--option-name``) form, and ``arguments`` is the
+routine arguments.  Run::
+
+    $ htsql-ctl help
+
+to get a list of routines and::
+
+    $ htsql-ctl help <routine>
+
+to describe a specific routine.
+
+To start an HTSQL server, run
+
+    $ htsql-ctl server ENGINE://USERNAME:PASSWORD@HOST:PORT/DATABASE
+
+Here `ENGINE` is either ``pgsql`` or ``sqlite``; `USERNAME:PASSWORD` are
+used for authentication; `HOST:PORT` is the address of the database server;
+and `DATABASE` is the name of the database to connect.  All parameters
+except for `ENGINE` and `DATABASE` are optional.  For instance::
+
+    $ htsql-ctl server pgsql:///htsql_regress
+
+will start the HTSQL server against the HTSQL regression database (provided
+it is deployed by running the regression tests).
+
+By default the server is listening on ``localhost:8080``.  To specify a
+different address of the HTSQL server, use optional arguments `HOST` and
+`PORT`::
+
+    $ htsql-ctl server ENGINE://USERNAME:PASSWORD@HOST:PORT/DATABASE HOST PORT
+
+For more help on the ``server`` routine, run::
+
+    $ htsql-ctl help server
+
+The script also allows you to run HTSQL queries from the console using the
+``shell`` routine.  To start the shell, run::
+
+    $ htsql-ctl shell ENGINE://USERNAME:PASSWORD@HOST:PORT/DATABASE
+
+This will display the command prompt where you could type and execute HTSQL
+queries.  For more details, run
+
+    $ htsql-ctl help shell
+
+or type ``help`` in the shell.
+
+
+.. TODO: Installing on MS Windows
+
+
+Have fun and enjoy!
 

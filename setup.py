@@ -17,6 +17,7 @@ import os.path
 
 root = os.path.dirname(__file__)
 README = open(os.path.join(root, 'README')).read()
+INSTALL = open(os.path.join(root, 'INSTALL')).read()
 NEWS = open(os.path.join(root, 'NEWS')).read()
 
 # The distutils parameters are defined here.  Do not forget to update
@@ -26,7 +27,7 @@ NEWS = open(os.path.join(root, 'NEWS')).read()
 NAME = "HTSQL"
 VERSION = "1.1.1-tip"
 DESCRIPTION = "Query language for the accidental programmer"
-LONG_DESCRIPTION = "\n".join([README, NEWS])
+LONG_DESCRIPTION = "\n".join([README, INSTALL, NEWS])
 AUTHOR = "Clark C. Evans and Kirill Simonov; Prometheus Research, LLC"
 AUTHOR_EMAIL = "cce@clarkevans.com"
 LICENSE = "Free To Use But Restricted"
@@ -63,10 +64,10 @@ ENTRY_POINTS = {
     ],
 }
 INSTALL_REQUIRES = [
-    'simplejson>=2.0',
-    'psycopg2>=2.0.10',
-    'pyyaml>=3.07',
     'setuptools>=0.6c9',
+    'simplejson>=2.0',
+    'pyyaml>=3.07',
+    'psycopg2>=2.0.10',
 ]
 
 setup(name=NAME,

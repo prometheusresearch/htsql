@@ -1,8 +1,7 @@
 # This makefile provides various build, installation and testing tasks.
 
 .PHONY: default build install develop doc \
-	test test-ctl test-sqlite test-pgsql \
-	train train-ctl train-sqlite train-pgsql purge-test
+	test cleanup train train-ctl train-sqlite train-pgsql purge-test
 
 
 # Load configuration variables from `Makefile.env`.  There is a sample
@@ -27,6 +26,7 @@ default:
 	@echo
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
+	@echo "  cleanup: to drop users and databases deployed by regression tests"
 	@echo "  train: to run all HTSQL tests in the train mode"
 	@echo "  train-ctl: to run tests for htsql-ctl routines in the train mode"
 	@echo "  train-sqlite: to run SQLite-specific tests in the train mode"
@@ -69,6 +69,10 @@ doc:
 # Run HTSQL regression tests.
 test:
 	htsql-ctl regress -i test/regress.yaml -q
+
+# Drop any users and databases deployed by the regression tests.
+cleanup:
+	htsql-ctl regress -i test/regress.yaml -q cleanup-pgsql cleanup-sqlite
 
 # Run HTSQL regression tests in the train mode.
 train:
