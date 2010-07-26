@@ -781,6 +781,141 @@ class SerializeIfNull(Serialize):
         return self.format.coalesce_fn(arguments)
 
 
+class IfFunction(ProperFunction):
+
+    adapts(named['if'])
+
+    parameters = [
+            Parameter('conditions', is_list=True),
+            Parameter('values', is_list=True),
+    ]
+
+    def bind_arguments(self, arguments, parent, mark):
+        conditions = []
+        values = []
+        for index, argument in enumerate(arguments):
+            argument = self.binder.bind_one(argument, parent)
+            if (index % 2 == 0) and index < len(arguments)-1:
+                conditions.append(argument)
+            else:
+                values.append(argument)
+        arguments = [conditions, values]
+        return self.check_arguments(arguments, mark)
+
+    def correlate(self, conditions, values, syntax, parent):
+        conditions = [self.binder.cast(condition, BooleanDomain())
+                      for condition in conditions]
+        domain = values[0].domain
+        for value in values[1:]:
+            domain = self.binder.coerce(domain, value.domain)
+            if domain is None:
+                raise InvalidArgumentError("unexpected domain", value.mark)
+        domain = self.binder.coerce(domain)
+        if domain is None:
+            raise InvalidArgumentError("unexpected domain", syntax.mark)
+        values = [self.binder.cast(value, domain) for value in values]
+        yield IfBinding(parent, domain, syntax,
+                        conditions=conditions, values=values)
+
+
+IfBinding = GenericBinding.factory(IfFunction)
+IfExpression = GenericExpression.factory(IfFunction)
+IfPhrase = GenericPhrase.factory(IfFunction)
+
+
+EncodeIf = GenericEncode.factory(IfFunction,
+        IfBinding, IfExpression)
+EvaluateIf = GenericEvaluate.factory(IfFunction,
+        IfExpression, IfPhrase,
+        is_null_regular=False)
+
+
+class SerializeIf(Serialize):
+
+    adapts(IfPhrase, Serializer)
+
+    def serialize(self):
+        conditions = [self.serializer.serialize(condition)
+                      for condition in self.phrase.conditions]
+        values = [self.serializer.serialize(value)
+                  for value in self.phrase.values]
+        return self.format.if_fn(conditions, values)
+
+
+class SwitchFunction(ProperFunction):
+
+    adapts(named['switch'])
+
+    parameters = [
+            Parameter('token'),
+            Parameter('items', is_list=True),
+            Parameter('values', is_list=True),
+    ]
+
+    def bind_arguments(self, arguments, parent, mark):
+        if not arguments:
+            return self.check_arguments([], mark)
+        token = self.binder.bind_one(arguments[0], parent)
+        items = []
+        values = []
+        for index, argument in enumerate(arguments[1:]):
+            argument = self.binder.bind_one(argument, parent)
+            if (index % 2 == 0) and index < len(arguments)-2:
+                items.append(argument)
+            else:
+                values.append(argument)
+        arguments = [[token], items, values]
+        return self.check_arguments(arguments, mark)
+
+    def correlate(self, token, items, values, syntax, parent):
+        token_domain = token.domain
+        for item in items:
+            token_domain = self.binder.coerce(token_domain, item.domain)
+            if token_domain is None:
+                raise InvalidArgumentError("unexpected domain", item.mark)
+        token_domain = self.binder.coerce(token_domain)
+        if token_domain is None:
+            raise InvalidArgumentError("unexpected domain", token.mark)
+        token = self.binder.cast(token, token_domain)
+        items = [self.binder.cast(item, token_domain) for item in items]
+        domain = values[0].domain
+        for value in values[1:]:
+            domain = self.binder.coerce(domain, value.domain)
+            if domain is None:
+                raise InvalidArgumentError("unexpected domain", value.mark)
+        domain = self.binder.coerce(domain)
+        if domain is None:
+            raise InvalidArgumentError("unexpected domain", syntax.mark)
+        values = [self.binder.cast(value, domain) for value in values]
+        yield SwitchBinding(parent, domain, syntax,
+                            token=token, items=items, values=values)
+
+
+SwitchBinding = GenericBinding.factory(SwitchFunction)
+SwitchExpression = GenericExpression.factory(SwitchFunction)
+SwitchPhrase = GenericPhrase.factory(SwitchFunction)
+
+
+EncodeSwitch = GenericEncode.factory(SwitchFunction,
+        SwitchBinding, SwitchExpression)
+EvaluateSwitch = GenericEvaluate.factory(SwitchFunction,
+        SwitchExpression, SwitchPhrase,
+        is_null_regular=False)
+
+
+class SerializeSwitch(Serialize):
+
+    adapts(SwitchPhrase, Serializer)
+
+    def serialize(self):
+        token = self.serializer.serialize(self.phrase.token)
+        items = [self.serializer.serialize(item)
+                 for item in self.phrase.items]
+        values = [self.serializer.serialize(value)
+                  for value in self.phrase.values]
+        return self.format.switch_fn(token, items, values)
+
+
 class FormatFunctions(Format):
 
     weights(0)
@@ -802,6 +937,45 @@ class FormatFunctions(Format):
 
     def coalesce_fn(self, arguments):
         return "COALESCE(%s)" % ", ".join(arguments)
+
+    def if_fn(self, predicates, values):
+        assert len(predicates) >= 1
+        assert len(values)-1 <= len(predicates) <= len(values)
+        default = None
+        if len(predicates) == len(values)-1:
+            default = values.pop()
+        chunks = []
+        chunks.append('CASE')
+        for predicate, value in zip(predicates, values):
+            chunks.append('WHEN')
+            chunks.append(predicate)
+            chunks.append('THEN')
+            chunks.append(value)
+        if default is not None:
+            chunks.append('ELSE')
+            chunks.append(default)
+        chunks.append('END')
+        return "(%s)" % ' '.join(chunks)
+
+    def switch_fn(self, token, items, values):
+        assert len(items) >= 1
+        assert len(values)-1 <= len(items) <= len(values)
+        default = None
+        if len(items) == len(values)-1:
+            default = values.pop()
+        chunks = []
+        chunks.append('CASE')
+        chunks.append(token)
+        for item, value in zip(items, values):
+            chunks.append('WHEN')
+            chunks.append(item)
+            chunks.append('THEN')
+            chunks.append(value)
+        if default is not None:
+            chunks.append('ELSE')
+            chunks.append(default)
+        chunks.append('END')
+        return "(%s)" % ' '.join(chunks)
 
 
 class CountFunction(ProperFunction):

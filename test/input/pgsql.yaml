@@ -97,7 +97,7 @@ tests:
 
     - title: Scalar functions
       tests:
-      - title: Boolean functions and operators
+      - title: Boolean constants and logical operators
         tests:
         # Boolean constants.
         - uri: /{true(),false()}
@@ -134,6 +134,9 @@ tests:
         - uri: /{!true(),!false(),!null()}
         # Auto-cast of arguments (true,false,false,true).
         - uri: /{!string(''),!string('X'),!1,!integer(null())}
+
+      - title: Comparison functions and operators
+        tests:
         # Is NULL function (null => true, otherwise => false).
         - uri: /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
         # Null If method (`this` is equal to one of the arguments => null, otherwise => `this`).
@@ -145,6 +148,18 @@ tests:
                  null().if_null(null(),null(),null()),
                  null().if_null(null(),null(),0),
                  null().if_null(0,1,2,3,null())}
+        # If function (if(`cond1`,`then1`,[`cond2`,`then2`,...],[`else`])).
+        - uri: /{if(true(),1),if(false(),1),if(null(),1),
+                 if(true(),1,0),if(false(),1,0),if(null(),1,0),
+                 if(true(),1,true(),2),if(true(),1,false(),2),
+                 if(false(),1,true(),2),if(false(),1,false(),2),
+                 if(false(),1,false(),2,0)}
+        # Switch function (switch(`token`,`case1`,`then1`,[`case2`,`then2`,...],[`else`])).
+        - uri: /{switch('Y','X',1),switch('Y','Y',1),
+                 switch('Y','X',1,0),switch('Y','Y',1,0),
+                 switch(null(),null(),1,0),
+                 switch('Y','X',1,'Y',2,'Z',3),
+                 switch('Y','A',1,'B',2,'C',3,0)}
 
   # Simple (non-aggregate) filters.
   - title: Simple filters

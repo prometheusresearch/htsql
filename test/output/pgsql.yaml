@@ -1938,7 +1938,7 @@ tests:
                 ^^^^^^
     - id: scalar-functions
       tests:
-      - id: boolean-functions-and-operators
+      - id: boolean-constants-and-logical-operators
         tests:
         - uri: /{true(),false()}
           status: 200 OK
@@ -2137,6 +2137,8 @@ tests:
              ----
              /{!string(''),!string('X'),!1,!integer(null())}
              SELECT (NOT (NULLIF('', '') IS NOT NULL)), (NOT (NULLIF('X', '') IS NOT NULL)), (NOT (1 IS NOT NULL)), (NOT (NULL IS NOT NULL))
+      - id: comparison-functions-and-operators
+        tests:
         - uri: /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
           status: 200 OK
           headers:
@@ -2184,6 +2186,39 @@ tests:
              ----
              /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()),null().if_null(null(),null(),null()),null().if_null(null(),null(),0),null().if_null(0,1,2,3,null())}
              SELECT COALESCE('X', 'Y'), COALESCE(NULL, 'X'), COALESCE(NULL, NULL), COALESCE(NULL, NULL, NULL, NULL), COALESCE(NULL, NULL, NULL, 0), COALESCE(NULL, 0, 1, 2, 3, NULL)
+        - uri: /{if(true(),1),if(false(),1),if(null(),1), if(true(),1,0),if(false(),1,0),if(null(),1,0),
+            if(true(),1,true(),2),if(true(),1,false(),2), if(false(),1,true(),2),if(false(),1,false(),2),
+            if(false(),1,false(),2,0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{if(true(),1),if(false(),1),if(null(),1),if(true(),1,0),if(false(),1,0),if(null(),1,0),if(true(),1,true(),2),if(true(),1,false(),2),if(false(),1,true(),2),if(false(),1,false(),2),if(false(),1,false(),2,0)}                  |
+            -+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-
+             | if(true(),1) | if(false(),1) | if(null(),1) | if(true(),1,0) | if(false(),1,0) | if(null(),1,0) | if(true(),1,true(),2) | if(true(),1,false(),2) | if(false(),1,true(),2) | if(false(),1,false(),2) | if(false(),1,false(),2,0) |
+            -+--------------+---------------+--------------+----------------+-----------------+----------------+-----------------------+------------------------+------------------------+-------------------------+---------------------------+-
+             |            1 |               |              |              1 |               0 |              0 |                     1 |                      1 |                      2 |                         |                         0 |
+                                                                                                                                                                                                                                         (1 row)
+
+             ----
+             /{if(true(),1),if(false(),1),if(null(),1),if(true(),1,0),if(false(),1,0),if(null(),1,0),if(true(),1,true(),2),if(true(),1,false(),2),if(false(),1,true(),2),if(false(),1,false(),2),if(false(),1,false(),2,0)}
+             SELECT (CASE WHEN TRUE THEN 1 END), (CASE WHEN FALSE THEN 1 END), (CASE WHEN NULL THEN 1 END), (CASE WHEN TRUE THEN 1 ELSE 0 END), (CASE WHEN FALSE THEN 1 ELSE 0 END), (CASE WHEN NULL THEN 1 ELSE 0 END), (CASE WHEN TRUE THEN 1 WHEN TRUE THEN 2 END), (CASE WHEN TRUE THEN 1 WHEN FALSE THEN 2 END), (CASE WHEN FALSE THEN 1 WHEN TRUE THEN 2 END), (CASE WHEN FALSE THEN 1 WHEN FALSE THEN 2 END), (CASE WHEN FALSE THEN 1 WHEN FALSE THEN 2 ELSE 0 END)
+        - uri: /{switch('Y','X',1),switch('Y','Y',1), switch('Y','X',1,0),switch('Y','Y',1,0),
+            switch(null(),null(),1,0), switch('Y','X',1,'Y',2,'Z',3), switch('Y','A',1,'B',2,'C',3,0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{switch('Y','X',1),switch('Y','Y',1),switch('Y','X',1,0),switch('Y','Y',1,0),switch(null(),null(),1,0),switch('Y','X',1,'Y',2,'Z',3),switch('Y','A',1,'B',2,'C',3,0)}          |
+            -+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-
+             | switch('Y','X',1) | switch('Y','Y',1) | switch('Y','X',1,0) | switch('Y','Y',1,0) | switch(null(),null(),1,0) | switch('Y','X',1,'Y',2,'Z',3) | switch('Y','A',1,'B',2,'C',3,0) |
+            -+-------------------+-------------------+---------------------+---------------------+---------------------------+-------------------------------+---------------------------------+-
+             |                   |                 1 |                   0 |                   1 |                         0 |                             2 |                               0 |
+                                                                                                                                                                                         (1 row)
+
+             ----
+             /{switch('Y','X',1),switch('Y','Y',1),switch('Y','X',1,0),switch('Y','Y',1,0),switch(null(),null(),1,0),switch('Y','X',1,'Y',2,'Z',3),switch('Y','A',1,'B',2,'C',3,0)}
+             SELECT (CASE 'Y' WHEN 'X' THEN 1 END), (CASE 'Y' WHEN 'Y' THEN 1 END), (CASE 'Y' WHEN 'X' THEN 1 ELSE 0 END), (CASE 'Y' WHEN 'Y' THEN 1 ELSE 0 END), (CASE NULL WHEN NULL THEN 1 ELSE 0 END), (CASE 'Y' WHEN 'X' THEN 1 WHEN 'Y' THEN 2 WHEN 'Z' THEN 3 END), (CASE 'Y' WHEN 'A' THEN 1 WHEN 'B' THEN 2 WHEN 'C' THEN 3 ELSE 0 END)
   - id: simple-filters
     tests:
     - uri: /school?code='ns'
