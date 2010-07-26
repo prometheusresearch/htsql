@@ -123,7 +123,7 @@ tests:
                  null()&false(),null()&true(),null()&null()}
         # Auto-cast of arguments (false,true).
         - uri: /{string('')&string('X'),0&1}
-        # Auto-cast of NULL values (null,false,false)
+        # Auto-cast of NULL values (null,false,false).
         - uri: /{null()&null(),integer(null())&null(),integer(null())&integer(null())}
         # The OR operator.
         - uri: /{false()|false(),false()|true(),true()|false(),true()|true(),
@@ -134,6 +134,17 @@ tests:
         - uri: /{!true(),!false(),!null()}
         # Auto-cast of arguments (true,false,false,true).
         - uri: /{!string(''),!string('X'),!1,!integer(null())}
+        # Is NULL function (null => true, otherwise => false).
+        - uri: /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
+        # Null If method (`this` is equal to one of the arguments => null, otherwise => `this`).
+        - uri: /{'Y'.null_if('X'),'Y'.null_if('Y'),
+                 (5).null_if(1,2,3),(5).null_if(1,2,3,4,5,6,7,8,9,10),
+                 null().null_if(null()),null().null_if('X')}
+        # If Null method (`this` is null => the first non-null argument, otherwise => `this`).
+        - uri: /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()),
+                 null().if_null(null(),null(),null()),
+                 null().if_null(null(),null(),0),
+                 null().if_null(0,1,2,3,null())}
 
   # Simple (non-aggregate) filters.
   - title: Simple filters

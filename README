@@ -3,9 +3,9 @@ HTSQL -- A Query Language for the Accidental Programmer
 =======================================================
 
 HTSQL ("Hyper Text Structured Query Language") is a schema-driven URI-to-SQL
-translator that takes a request over HTTP, converts it to a SQL query, executes
-the query against a database, and returns the results in a format best suited
-for the user agent (CSV, HTML, etc.).
+translator that takes a request over HTTP, converts it to a SQL query,
+executes the query against a database, and returns the results in a format
+best suited for the user agent (CSV, HTML, etc.).
 
 HTSQL is copyright by Prometheus Research, LLC.  See the file ``LICENSE``
 for details.  HTSQL is written by Clark C. Evans <cce@clarkevans.com> and

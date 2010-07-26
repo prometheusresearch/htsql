@@ -600,9 +600,20 @@ EncodeConcatenation = GenericEncode.factory(AdditionOperator,
 EvaluateConcatenation = GenericEvaluate.factory(AdditionOperator,
         ConcatenationExpression, ConcatenationPhrase,
         is_null_regular=False, is_nullable=False)
-SerializeConcatenation = GenericSerialize.factory(AdditionOperator,
-        ConcatenationPhrase,
-        "(COALESCE(%(left)s, '') || COALESCE(%(right)s, ''))")
+
+
+class SerializeConcatenation(Serialize):
+
+    adapts(ConcatenationPhrase, Serializer)
+
+    def serialize(self):
+        left = self.serializer.serialize(self.phrase.left)
+        if self.phrase.left.is_nullable:
+            left = self.format.concat_wrapper(left)
+        right = self.serializer.serialize(self.phrase.right)
+        if self.phrase.right.is_nullable:
+            right = self.format.concat_wrapper(right)
+        return self.format.concat_op(left, right)
 
 
 class Concatenate(Add):
@@ -638,6 +649,138 @@ class ConcatenateUntypedToUntyped(Concatenate):
     adapts(UntypedDomain, UntypedDomain)
 
 
+class IsNullFunction(ProperFunction):
+
+    adapts(named['is_null'])
+
+    parameters = [
+            Parameter('expression'),
+    ]
+
+    def correlate(self, expression, syntax, parent):
+        domain = self.binder.coerce(expression.domain)
+        if domain is None:
+            raise InvalidArgumentError("unexpected domain",
+                                       expression.mark)
+        expression = self.binder.cast(expression, domain)
+        yield IsNullBinding(parent, BooleanDomain(), syntax,
+                            expression=expression)
+
+
+IsNullBinding = GenericBinding.factory(IsNullFunction)
+IsNullExpression = GenericExpression.factory(IsNullFunction)
+IsNullPhrase = GenericPhrase.factory(IsNullFunction)
+
+
+EncodeIsNull = GenericEncode.factory(IsNullFunction,
+        IsNullBinding, IsNullExpression)
+EvaluateIsNull = GenericEvaluate.factory(IsNullFunction,
+        IsNullExpression, IsNullPhrase,
+        is_null_regular=False, is_nullable=False)
+SerializeIsNull = GenericSerialize.factory(IsNullFunction,
+        IsNullPhrase, "(%(expression)s IS NULL)")
+
+
+class NullIfMethod(ProperMethod):
+
+    adapts(named['null_if'])
+
+    parameters = [
+            Parameter('this'),
+            Parameter('expressions', is_list=True),
+    ]
+
+    def correlate(self, this, expressions, syntax, parent):
+        domain = this.domain
+        for expression in expressions:
+            domain = self.binder.coerce(domain, expression.domain)
+            if domain is None:
+                raise InvalidArgumentError("unexpected domain",
+                                           expression.mark)
+        domain = self.binder.coerce(domain)
+        if domain is None:
+            raise InvalidArgumentError("inexpected domain",
+                                       this.mark)
+        this = self.binder.cast(this, domain)
+        expressions = [self.binder.cast(expression, domain)
+                       for expression in expressions]
+        yield NullIfBinding(parent, domain, syntax,
+                            this=this, expressions=expressions)
+
+
+NullIfBinding = GenericBinding.factory(NullIfMethod)
+NullIfExpression = GenericExpression.factory(NullIfMethod)
+NullIfPhrase = GenericPhrase.factory(NullIfMethod)
+
+
+EncodeNullIf = GenericEncode.factory(NullIfMethod,
+        NullIfBinding, NullIfExpression)
+EvaluateNullIf = GenericEvaluate.factory(NullIfMethod,
+        NullIfExpression, NullIfPhrase,
+        is_null_regular=False)
+
+
+class SerializeNullIf(Serialize):
+
+    adapts(NullIfPhrase, Serializer)
+
+    def serialize(self):
+        left = self.serializer.serialize(self.phrase.this)
+        for expression in self.phrase.expressions:
+            right = self.serializer.serialize(expression)
+            left = self.format.nullif_fn(left, right)
+        return left
+
+
+class IfNullMethod(ProperMethod):
+
+    adapts(named['if_null'])
+
+    parameters = [
+            Parameter('this'),
+            Parameter('expressions', is_list=True),
+    ]
+
+    def correlate(self, this, expressions, syntax, parent):
+        domain = this.domain
+        for expression in expressions:
+            domain = self.binder.coerce(domain, expression.domain)
+            if domain is None:
+                raise InvalidArgumentError("unexpected domain",
+                                           expression.mark)
+        domain = self.binder.coerce(domain)
+        if domain is None:
+            raise InvalidArgumentError("inexpected domain",
+                                       this.mark)
+        this = self.binder.cast(this, domain)
+        expressions = [self.binder.cast(expression, domain)
+                       for expression in expressions]
+        yield IfNullBinding(parent, domain, syntax,
+                            this=this, expressions=expressions)
+
+
+IfNullBinding = GenericBinding.factory(IfNullMethod)
+IfNullExpression = GenericExpression.factory(IfNullMethod)
+IfNullPhrase = GenericPhrase.factory(IfNullMethod)
+
+
+EncodeIfNull = GenericEncode.factory(IfNullMethod,
+        IfNullBinding, IfNullExpression)
+EvaluateIfNull = GenericEvaluate.factory(IfNullMethod,
+        IfNullExpression, IfNullPhrase)
+
+
+class SerializeIfNull(Serialize):
+
+    adapts(IfNullPhrase, Serializer)
+
+    def serialize(self):
+        arguments = [self.serializer.serialize(self.phrase.this)]
+        for expression in self.phrase.expressions:
+            arguments.append(self.serializer.serialize(expression))
+        return self.format.coalesce_fn(arguments)
+
+
 class FormatFunctions(Format):
 
     weights(0)
@@ -645,11 +788,20 @@ class FormatFunctions(Format):
     def concat_op(self, left, right):
         return "(%s || %s)" % (left, right)
 
+    def concat_wrapper(self, expr):
+        return "COALESCE(%s, '')"
+
     def count_fn(self, condition):
         return "COUNT(NULLIF(%s, FALSE))" % condition
 
     def count_wrapper(self, aggregate):
         return "COALESCE(%s, 0)" % aggregate
+
+    def nullif_fn(self, left, right):
+        return "NULLIF(%s, %s)" % (left, right)
+
+    def coalesce_fn(self, arguments):
+        return "COALESCE(%s)" % ", ".join(arguments)
 
 
 class CountFunction(ProperFunction):

@@ -1841,7 +1841,7 @@ tests:
 
          ----
          /{'HT'+'SQL'}
-         SELECT (COALESCE('HT', '') || COALESCE('SQL', ''))
+         SELECT ('HT' || 'SQL')
     - id: literals
       tests:
       - uri: "/{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2', '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F',
@@ -2137,6 +2137,53 @@ tests:
              ----
              /{!string(''),!string('X'),!1,!integer(null())}
              SELECT (NOT (NULLIF('', '') IS NOT NULL)), (NOT (NULLIF('X', '') IS NOT NULL)), (NOT (1 IS NOT NULL)), (NOT (NULL IS NOT NULL))
+        - uri: /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{is_null(null()),is_null(true()),is_null(''),is_null(0)}    |
+            -+--------------------------------------------------------------+-
+             | is_null(null()) | is_null(true()) | is_null('') | is_null(0) |
+            -+-----------------+-----------------+-------------+------------+-
+             | true            | false           | false       | false      |
+                                                                      (1 row)
+
+             ----
+             /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
+             SELECT (NULL IS NULL), (TRUE IS NULL), ('' IS NULL), (0 IS NULL)
+        - uri: /{'Y'.null_if('X'),'Y'.null_if('Y'), (5).null_if(1,2,3),(5).null_if(1,2,3,4,5,6,7,8,9,10),
+            null().null_if(null()),null().null_if('X')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{'Y'.null_if('X'),'Y'.null_if('Y'),(5).null_if(1,2,3),(5).null_if(1,2,3,4,5,6,7,8,9,10),null().null_if(null()),null().null_if('X')}        |
+            -+---------------------------------------------------------------------------------------------------------------------------------------------+-
+             | 'Y'.null_if('X') | 'Y'.null_if('Y') | (5).null_if(1,2,3) | (5).null_if(1,2,3,4,5,6,7,8,9,10) | null().null_if(null()) | null().null_if('X') |
+            -+------------------+------------------+--------------------+-----------------------------------+------------------------+---------------------+-
+             | Y                |                  |                  5 |                                   |                        |                     |
+                                                                                                                                                     (1 row)
+
+             ----
+             /{'Y'.null_if('X'),'Y'.null_if('Y'),(5).null_if(1,2,3),(5).null_if(1,2,3,4,5,6,7,8,9,10),null().null_if(null()),null().null_if('X')}
+             SELECT NULLIF('Y', 'X'), NULLIF('Y', 'Y'), NULLIF(NULLIF(NULLIF(5, 1), 2), 3), NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(5, 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), NULLIF(NULL, NULL), NULLIF(NULL, 'X')
+        - uri: /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()), null().if_null(null(),null(),null()),
+            null().if_null(null(),null(),0), null().if_null(0,1,2,3,null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()),null().if_null(null(),null(),null()),null().if_null(null(),null(),0),null().if_null(0,1,2,3,null())}        |
+            -+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-
+             | 'X'.if_null('Y') | null().if_null('X') | null().if_null(null()) | null().if_null(null(),null(),null()) | null().if_null(null(),null(),0) | null().if_null(0,1,2,3,null()) |
+            -+------------------+---------------------+------------------------+--------------------------------------+---------------------------------+--------------------------------+-
+             | X                | X                   |                        |                                      |                               0 |                              0 |
+                                                                                                                                                                                   (1 row)
+
+             ----
+             /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()),null().if_null(null(),null(),null()),null().if_null(null(),null(),0),null().if_null(0,1,2,3,null())}
+             SELECT COALESCE('X', 'Y'), COALESCE(NULL, 'X'), COALESCE(NULL, NULL), COALESCE(NULL, NULL, NULL, NULL), COALESCE(NULL, NULL, NULL, 0), COALESCE(NULL, 0, 1, 2, 3, NULL)
   - id: simple-filters
     tests:
     - uri: /school?code='ns'
@@ -2343,7 +2390,7 @@ tests:
 
          ----
          /department{school.name+' - '+name}
-         SELECT (COALESCE((COALESCE("school"."name", '') || COALESCE(' - ', '')), '') || COALESCE("department"."name", '')) FROM "ad"."department" AS "department" INNER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
+         SELECT (("school"."name" || ' - ') || "department"."name") FROM "ad"."department" AS "department" INNER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
   - id: aggregates
     tests:
     - uri: /{count(school),count(department),count(course)}
