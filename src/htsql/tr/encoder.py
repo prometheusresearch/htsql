@@ -18,12 +18,14 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       OrderedBinding, EqualityBinding, InequalityBinding,
+                      TotalEqualityBinding, TotalInequalityBinding,
                       ConjunctionBinding, DisjunctionBinding,
                       NegationBinding, CastBinding, TupleBinding)
 from .code import (ScalarSpace, FreeTableSpace, JoinedTableSpace,
                    ScreenSpace, OrderedSpace, LiteralExpression, ColumnUnit,
                    TupleExpression, QueryCode, SegmentCode, ElementExpression,
                    EqualityExpression, InequalityExpression,
+                   TotalEqualityExpression, TotalInequalityExpression,
                    ConjunctionExpression, DisjunctionExpression,
                    NegationExpression, CastExpression)
 from .lookup import Lookup
@@ -200,6 +202,26 @@ class EncodeInequality(Encode):
         left = self.encoder.encode(self.binding.left)
         right = self.encoder.encode(self.binding.right)
         return InequalityExpression(left, right, self.binding.mark)
+
+
+class EncodeTotalEquality(Encode):
+
+    adapts(TotalEqualityBinding, Encoder)
+
+    def encode(self):
+        left = self.encoder.encode(self.binding.left)
+        right = self.encoder.encode(self.binding.right)
+        return TotalEqualityExpression(left, right, self.binding.mark)
+
+
+class EncodeTotalInequality(Encode):
+
+    adapts(TotalInequalityBinding, Encoder)
+
+    def encode(self):
+        left = self.encoder.encode(self.binding.left)
+        right = self.encoder.encode(self.binding.right)
+        return TotalInequalityExpression(left, right, self.binding.mark)
 
 
 class EncodeConjunction(Encode):

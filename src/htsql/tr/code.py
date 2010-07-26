@@ -332,6 +332,36 @@ class InequalityExpression(Expression):
         return self.left.get_units()+self.right.get_units()
 
 
+class TotalEqualityExpression(Expression):
+
+    def __init__(self, left, right, mark):
+        assert isinstance(left, Expression)
+        assert isinstance(right, Expression)
+        domain = BooleanDomain()
+        super(TotalEqualityExpression, self).__init__(domain, mark,
+                                hash=(self.__class__, left.hash, right.hash))
+        self.left = left
+        self.right = right
+
+    def get_units(self):
+        return self.left.get_units()+self.right.get_units()
+
+
+class TotalInequalityExpression(Expression):
+
+    def __init__(self, left, right, mark):
+        assert isinstance(left, Expression)
+        assert isinstance(right, Expression)
+        domain = BooleanDomain()
+        super(TotalInequalityExpression, self).__init__(domain, mark,
+                                hash=(self.__class__, left.hash, right.hash))
+        self.left = left
+        self.right = right
+
+    def get_units(self):
+        return self.left.get_units()+self.right.get_units()
+
+
 class ConjunctionExpression(Expression):
 
     def __init__(self, terms, mark):

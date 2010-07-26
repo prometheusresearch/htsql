@@ -150,6 +150,28 @@ class InequalityPhrase(Phrase):
         self.right = right
 
 
+class TotalEqualityPhrase(Phrase):
+
+    def __init__(self, left, right, mark):
+        assert isinstance(left, Phrase)
+        assert isinstance(right, Phrase)
+        domain = BooleanDomain()
+        super(TotalEqualityPhrase, self).__init__(domain, False, mark)
+        self.left = left
+        self.right = right
+
+
+class TotalInequalityPhrase(Phrase):
+
+    def __init__(self, left, right, mark):
+        assert isinstance(left, Phrase)
+        assert isinstance(right, Phrase)
+        domain = BooleanDomain()
+        super(TotalInequalityPhrase, self).__init__(domain, False, mark)
+        self.left = left
+        self.right = right
+
+
 class ConjunctionPhrase(Phrase):
 
     def __init__(self, terms, mark):

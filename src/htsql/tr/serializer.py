@@ -14,11 +14,13 @@ This module implements the SQL serializer.
 
 
 from ..adapter import Adapter, Utility, adapts, find_adapters
+from ..error import InvalidArgumentError
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, DateDomain)
 from .frame import (Clause, Frame, LeafFrame, ScalarFrame,
                     BranchFrame, CorrelatedFrame, SegmentFrame,
                     QueryFrame, Phrase, EqualityPhrase, InequalityPhrase,
+                    TotalEqualityPhrase, TotalInequalityPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
                     CastPhrase, LiteralPhrase, LeafReferencePhrase,
                     BranchReferencePhrase, CorrelatedFramePhrase, TuplePhrase)
@@ -131,11 +133,26 @@ class Format(Utility):
             op = "!="
         return self.binary_op(left, op, right)
 
+    def total_equal_op(self, left, right, is_negative=False):
+        op = "IS NOT DISTINCT FROM"
+        if is_negative:
+            op = "IS DISTINCT FROM"
+        return self.binary_op(left, op, right)
+
     def to_boolean(self, value):
         return "(%s IS NOT NULL)" % value
 
     def to_boolean_from_string(self, value):
         return "(NULLIF(%s, '') IS NOT NULL)" % value
+
+    def to_integer(self, value):
+        return "CAST(%s AS INTEGER)" % value
+
+    def to_decimal(self, value):
+        return "CAST(%s AS NUMERIC)" % value
+
+    def to_float(self, value):
+        return "CAST(%s AS FLOAT)" % value
 
     def is_null(self, arg):
         return "(%s IS NULL)" % arg
@@ -448,6 +465,26 @@ class SerializeInequality(SerializePhrase):
         return self.format.equal_op(left, right, is_negative=True)
 
 
+class SerializeTotalEquality(SerializePhrase):
+
+    adapts(TotalEqualityPhrase, Serializer)
+
+    def serialize(self):
+        left = self.serializer.serialize(self.phrase.left)
+        right = self.serializer.serialize(self.phrase.right)
+        return self.format.total_equal_op(left, right)
+
+
+class SerializeTotalInequality(SerializePhrase):
+
+    adapts(TotalInequalityPhrase, Serializer)
+
+    def serialize(self):
+        left = self.serializer.serialize(self.phrase.left)
+        right = self.serializer.serialize(self.phrase.right)
+        return self.format.total_equal_op(left, right, is_negative=True)
+
+
 class SerializeConjunction(SerializePhrase):
 
     adapts(ConjunctionPhrase, Serializer)
@@ -509,6 +546,9 @@ class SerializeTo(Adapter):
         self.serializer = serializer
         self.format = serializer.format
 
+    def serialize(self, phrase):
+        raise InvalidArgumentError("unable to cast", phrase.mark)
+
 
 class SerializeToBooleanFromString(SerializeTo):
 
@@ -526,6 +566,33 @@ class SerializeToBooleanFromNumber(SerializeTo):
     def serialize(self, phrase):
         value = self.serializer.serialize(phrase)
         return self.format.to_boolean(value)
+
+
+class SerializeToInteger(SerializeTo):
+
+    adapts(IntegerDomain, Domain, Serializer)
+
+    def serialize(self, phrase):
+        value = self.serializer.serialize(phrase)
+        return self.format.to_integer(value)
+
+
+class SerializeToDecimal(SerializeTo):
+
+    adapts(DecimalDomain, Domain, Serializer)
+
+    def serialize(self, phrase):
+        value = self.serializer.serialize(phrase)
+        return self.format.to_decimal(value)
+
+
+class SerializeToFloat(SerializeTo):
+
+    adapts(FloatDomain, Domain, Serializer)
+
+    def serialize(self, phrase):
+        value = self.serializer.serialize(phrase)
+        return self.format.to_float(value)
 
 
 class SerializeLiteral(SerializePhrase):

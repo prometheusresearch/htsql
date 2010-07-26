@@ -20,6 +20,7 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain, DateDomain)
 from ..binding import (LiteralBinding, OrderedBinding, FunctionBinding,
                        EqualityBinding, InequalityBinding,
+                       TotalEqualityBinding, TotalInequalityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding)
 from ..encoder import Encoder, Encode
 from ..code import FunctionExpression, AggregateUnit
@@ -288,10 +289,12 @@ class EqualityOperator(ProperFunction):
         domain = self.binder.coerce(left.domain,
                                     right.domain)
         if domain is None:
-            raise InvalidArgumentError("invalid arguments", syntax.mark)
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
         domain = self.binder.coerce(domain)
         if domain is None:
-            raise InvalidArgumentError("invalid arguments", syntax.mark)
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
         left = self.binder.cast(left, domain)
         right = self.binder.cast(right, domain)
         yield EqualityBinding(parent, left, right, syntax)
@@ -310,13 +313,63 @@ class InequalityOperator(ProperFunction):
         domain = self.binder.coerce(left.domain,
                                     right.domain)
         if domain is None:
-            raise InvalidArgumentError("invalid arguments", syntax.mark)
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
         domain = self.binder.coerce(domain)
         if domain is None:
-            raise InvalidArgumentError("invalid arguments", syntax.mark)
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
         left = self.binder.cast(left, domain)
         right = self.binder.cast(right, domain)
         yield InequalityBinding(parent, left, right, syntax)
+
+
+class TotalEqualityOperator(ProperFunction):
+
+    adapts(named['_==_'])
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right, syntax, parent):
+        domain = self.binder.coerce(left.domain,
+                                    right.domain)
+        if domain is None:
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
+        domain = self.binder.coerce(domain)
+        if domain is None:
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
+        left = self.binder.cast(left, domain)
+        right = self.binder.cast(right, domain)
+        yield TotalEqualityBinding(parent, left, right, syntax)
+
+
+class TotalInequalityOperator(ProperFunction):
+
+    adapts(named['_!==_'])
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right, syntax, parent):
+        domain = self.binder.coerce(left.domain,
+                                    right.domain)
+        if domain is None:
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
+        domain = self.binder.coerce(domain)
+        if domain is None:
+            raise InvalidArgumentError("incompatible types",
+                                       syntax.mark)
+        left = self.binder.cast(left, domain)
+        right = self.binder.cast(right, domain)
+        yield TotalInequalityBinding(parent, left, right, syntax)
 
 
 class ConjunctionOperator(ProperFunction):

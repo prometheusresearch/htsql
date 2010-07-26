@@ -2219,6 +2219,45 @@ tests:
              ----
              /{switch('Y','X',1),switch('Y','Y',1),switch('Y','X',1,0),switch('Y','Y',1,0),switch(null(),null(),1,0),switch('Y','X',1,'Y',2,'Z',3),switch('Y','A',1,'B',2,'C',3,0)}
              SELECT (CASE 'Y' WHEN 'X' THEN 1 END), (CASE 'Y' WHEN 'Y' THEN 1 END), (CASE 'Y' WHEN 'X' THEN 1 ELSE 0 END), (CASE 'Y' WHEN 'Y' THEN 1 ELSE 0 END), (CASE NULL WHEN NULL THEN 1 ELSE 0 END), (CASE 'Y' WHEN 'X' THEN 1 WHEN 'Y' THEN 2 WHEN 'Z' THEN 3 END), (CASE 'Y' WHEN 'A' THEN 1 WHEN 'B' THEN 2 WHEN 'C' THEN 3 ELSE 0 END)
+        - uri: /{1=1,1=0,1=null(),null()=null(), 1!=1,1!=0,1!=null(),null()!=null(),
+            1==1,1==0,1==null(),null()==null(), 1!==1,1!==0,1!==null(),null()!==null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{1=1,1=0,1=null(),null()=null(),1!=1,1!=0,1!=null(),null()!=null(),1==1,1==0,1==null(),null()==null(),1!==1,1!==0,1!==null(),null()!==null()}                                 |
+            -+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-
+             | 1=1  | 1=0   | 1=null() | null()=null() | 1!=1  | 1!=0 | 1!=null() | null()!=null() | 1==1 | 1==0  | 1==null() | null()==null() | 1!==1 | 1!==0 | 1!==null() | null()!==null() |
+            -+------+-------+----------+---------------+-------+------+-----------+----------------+------+-------+-----------+----------------+-------+-------+------------+-----------------+-
+             | true | false |          |               | false | true |           |                | true | false | false     | true           | false | true  | true       | false           |
+                                                                                                                                                                                        (1 row)
+
+             ----
+             /{1=1,1=0,1=null(),null()=null(),1!=1,1!=0,1!=null(),null()!=null(),1==1,1==0,1==null(),null()==null(),1!==1,1!==0,1!==null(),null()!==null()}
+             SELECT (1 = 1), (1 = 0), (1 = NULL), (NULL = NULL), (1 != 1), (1 != 0), (1 != NULL), (NULL != NULL), (1 IS NOT DISTINCT FROM 1), (1 IS NOT DISTINCT FROM 0), (1 IS NOT DISTINCT FROM NULL), (NULL IS NOT DISTINCT FROM NULL), (1 IS DISTINCT FROM 1), (1 IS DISTINCT FROM 0), (1 IS DISTINCT FROM NULL), (NULL IS DISTINCT FROM NULL)
+        - uri: /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}      |
+            -+-------------------------------------------+-
+             | 'X'='X' | 1=1.0 | 1=1e0 | 1.0=1e0 | 1='1' |
+            -+---------+-------+-------+---------+-------+-
+             | true    | true  | true  | true    | true  |
+                                                   (1 row)
+
+             ----
+             /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
+             SELECT ('X' = 'X'), (CAST(1 AS NUMERIC) = 1.0), (CAST(1 AS FLOAT) = 1.0::float8), (CAST(1.0 AS FLOAT) = 1.0::float8), (1 = 1)
+        - uri: /{integer('1')=string('1')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: incompatible types:
+                /{integer('1')=string('1')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

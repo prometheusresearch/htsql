@@ -16,7 +16,8 @@ This module implements the compile adapter.
 from ..util import listof
 from ..adapter import Adapter, adapts, find_adapters
 from .code import (Expression, LiteralExpression, EqualityExpression,
-                   InequalityExpression, ConjunctionExpression,
+                   InequalityExpression, TotalEqualityExpression,
+                   TotalInequalityExpression, ConjunctionExpression,
                    DisjunctionExpression, NegationExpression,
                    CastExpression, TupleExpression, Unit)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
@@ -24,8 +25,10 @@ from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      LeafAppointment, BranchAppointment, FrameAppointment)
 from .frame import (LeafFrame, ScalarFrame, BranchFrame, CorrelatedFrame,
                     SegmentFrame, QueryFrame, Link, Phrase, EqualityPhrase,
-                    InequalityPhrase, ConjunctionPhrase, DisjunctionPhrase,
-                    NegationPhrase, LiteralPhrase, CastPhrase, TuplePhrase,
+                    InequalityPhrase, TotalEqualityPhrase,
+                    TotalInequalityPhrase, ConjunctionPhrase,
+                    DisjunctionPhrase, NegationPhrase, LiteralPhrase,
+                    CastPhrase, TuplePhrase,
                     LeafReferencePhrase, BranchReferencePhrase)
 
 
@@ -354,6 +357,26 @@ class EvaluateInequality(Evaluate):
         left = self.compiler.evaluate(self.expression.left, references)
         right = self.compiler.evaluate(self.expression.right, references)
         return InequalityPhrase(left, right, self.expression.mark)
+
+
+class EvaluateTotalEquality(Evaluate):
+
+    adapts(TotalEqualityExpression, Compiler)
+
+    def evaluate(self, references):
+        left = self.compiler.evaluate(self.expression.left, references)
+        right = self.compiler.evaluate(self.expression.right, references)
+        return TotalEqualityPhrase(left, right, self.expression.mark)
+
+
+class EvaluateTotalInequality(Evaluate):
+
+    adapts(TotalInequalityExpression, Compiler)
+
+    def evaluate(self, references):
+        left = self.compiler.evaluate(self.expression.left, references)
+        right = self.compiler.evaluate(self.expression.right, references)
+        return TotalInequalityPhrase(left, right, self.expression.mark)
 
 
 class EvaluateConjunction(Evaluate):

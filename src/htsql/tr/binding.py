@@ -127,6 +127,28 @@ class InequalityBinding(Binding):
         self.right = right
 
 
+class TotalEqualityBinding(Binding):
+
+    def __init__(self, parent, left, right, syntax):
+        assert isinstance(left, Binding)
+        assert isinstance(right, Binding)
+        domain = BooleanDomain()
+        super(TotalEqualityBinding, self).__init__(parent, domain, syntax)
+        self.left = left
+        self.right = right
+
+
+class TotalInequalityBinding(Binding):
+
+    def __init__(self, parent, left, right, syntax):
+        assert isinstance(left, Binding)
+        assert isinstance(right, Binding)
+        domain = BooleanDomain()
+        super(TotalInequalityBinding, self).__init__(parent, domain, syntax)
+        self.left = left
+        self.right = right
+
+
 class ConjunctionBinding(Binding):
 
     def __init__(self, parent, terms, syntax):
