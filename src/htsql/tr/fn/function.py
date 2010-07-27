@@ -17,7 +17,8 @@ from ...adapter import (Adapter, Utility, adapts, adapts_none,
                         find_adapters, weights)
 from ...error import InvalidArgumentError
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
-                       IntegerDomain, DecimalDomain, FloatDomain, DateDomain)
+                       NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
+                       DateDomain)
 from ..binding import (LiteralBinding, OrderedBinding, FunctionBinding,
                        EqualityBinding, InequalityBinding,
                        TotalEqualityBinding, TotalInequalityBinding,
@@ -415,6 +416,91 @@ class NegationOperator(ProperFunction):
         yield NegationBinding(parent, term, syntax)
 
 
+class ComparisonOperator(ProperFunction):
+
+    adapts_none()
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    direction = None
+
+    def correlate(self, left, right, syntax, parent):
+        domain = self.binder.coerce(left.domain, right.domain)
+        if domain is None:
+            raise InvalidArgumentError("incompatible types", syntax.mark)
+        domain = self.binder.coerce(domain)
+        if domain is None:
+            raise InvalidArgumentError("incompatible types", syntax.mark)
+        compare = Compare(domain, left, right, self.direction,
+                          self.binder, syntax, parent)
+        yield compare()
+
+
+class LessThanOperator(ComparisonOperator):
+
+    adapts(named['_<_'])
+    direction = '<'
+
+
+class LessThanOrEqualOperator(ComparisonOperator):
+
+    adapts(named['_<=_'])
+    direction = '<='
+
+
+class GreaterThanOperator(ComparisonOperator):
+
+    adapts(named['_>_'])
+    direction = '>'
+
+
+class GreaterThanOrEqualOperator(ComparisonOperator):
+
+    adapts(named['_>=_'])
+    direction = '>='
+
+
+class Compare(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, domain, left, right, direction, binder, syntax, parent):
+        self.domain = domain
+        self.left = binder.cast(left, domain)
+        self.right = binder.cast(right, domain)
+        self.direction = direction
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected argument types",
+                                   self.syntax.mark)
+
+
+class CompareStrings(Compare):
+
+    adapts(StringDomain)
+
+    def __call__(self):
+        return ComparisonBinding(self.parent, BooleanDomain(), self.syntax,
+                                 left=self.left, right=self.right,
+                                 direction=self.direction)
+
+
+class CompareNumbers(Compare):
+
+    adapts(NumberDomain)
+
+    def __call__(self):
+        return ComparisonBinding(self.parent, BooleanDomain(), self.syntax,
+                                 left=self.left, right=self.right,
+                                 direction=self.direction)
+
+
 class AdditionOperator(ProperFunction):
 
     adapts(named['_+_'])
@@ -500,13 +586,18 @@ class GenericEncode(Encode):
 
     def encode(self):
         arguments = {}
+        for parameter in self.function.parameters:
+            value = self.binding.arguments[parameter.name]
+            if not parameter.is_mandatory and value is None:
+                argument = None
+            elif parameter.is_list:
+                argument = [self.encoder.encode(item) for item in value]
+            else:
+                argument = self.encoder.encode(value)
+            arguments[parameter.name] = argument
         for name in sorted(self.binding.arguments):
-            value = self.binding.arguments[name]
-            if isinstance(value, list):
-                value = [self.encoder.encode(item) for item in value]
-            elif value is not None:
-                value = self.encoder.encode(value)
-            arguments[name] = value
+            if name not in arguments:
+                arguments[name] = self.binding.arguments[name]
         return self.expression_class(self.binding.domain, self.binding.mark,
                                      **arguments)
 
@@ -562,7 +653,7 @@ class GenericAggregateEncode(Encode):
         aggregate = AggregateUnit(expression, plural_space, space,
                                   expression.mark)
         wrapper = self.wrapper_class(self.binding.domain, self.binding.mark,
-                                     aggregate=aggregate)
+                                     expression=aggregate)
         return wrapper
 
 
@@ -595,19 +686,22 @@ class GenericEvaluate(Evaluate):
         if self.is_null_regular:
             is_nullable = False
         arguments = {}
+        for parameter in self.function.parameters:
+            value = self.expression.arguments[parameter.name]
+            if not parameter.is_mandatory and value is None:
+                argument = None
+            elif parameter.is_list:
+                argument = [self.compiler.evaluate(item, references)
+                            for item in value]
+                is_nullable = is_nullable or any(item.is_nullable
+                                                 for item in argument)
+            else:
+                argument = self.compiler.evaluate(value, references)
+                is_nullable = is_nullable or argument.is_nullable
+            arguments[parameter.name] = argument
         for name in sorted(self.expression.arguments):
-            value = self.expression.arguments[name]
-            if isinstance(value, list):
-                value = [self.compiler.evaluate(item, references)
-                         for item in value]
-                if self.is_null_regular:
-                    for item in value:
-                        is_nullable = is_nullable or item.is_nullable
-            elif value is not None:
-                value = self.compiler.evaluate(value, references)
-                if self.is_null_regular:
-                    is_nullable = is_nullable or value.is_nullable
-            arguments[name] = value
+            if name not in arguments:
+                arguments[name] = self.expression.arguments[name]
         return self.phrase_class(self.expression.domain, is_nullable,
                                  self.expression.mark, **arguments)
 
@@ -633,14 +727,32 @@ class GenericSerialize(Serialize):
 
     def serialize(self):
         arguments = {}
+        for parameter in self.function.parameters:
+            value = self.phrase.arguments[parameter.name]
+            if not parameter.is_mandatory and value is None:
+                argument = None
+            elif parameter.is_list:
+                argument = [self.serializer.serialize(item) for item in value]
+            else:
+                argument = self.serializer.serialize(value)
+            arguments[parameter.name] = argument
         for name in sorted(self.phrase.arguments):
-            value = self.phrase.arguments[name]
-            if isinstance(value, list):
-                value = [self.serializer.serialize(item) for item in value]
-            elif value is not None:
-                value = self.serializer.serialize(value)
-            arguments[name] = value
+            if name not in arguments:
+                arguments[name] = self.phrase.arguments[name]
         return self.template % arguments
+
+
+ComparisonBinding = GenericBinding.factory(ComparisonOperator)
+ComparisonExpression = GenericExpression.factory(ComparisonOperator)
+ComparisonPhrase = GenericPhrase.factory(ComparisonOperator)
+
+
+EncodeComparison = GenericEncode.factory(ComparisonOperator,
+        ComparisonBinding, ComparisonExpression)
+EvaluateComparison = GenericEvaluate.factory(ComparisonOperator,
+        ComparisonExpression, ComparisonPhrase)
+SerializeComparison = GenericSerialize.factory(ComparisonOperator,
+        ComparisonPhrase, "(%(left)s %(direction)s %(right)s)")
 
 
 ConcatenationBinding = GenericBinding.factory(AdditionOperator)
@@ -1036,11 +1148,11 @@ class CountFunction(ProperFunction):
     adapts(named['count'])
 
     parameters = [
-            Parameter('condition'),
+            Parameter('expression'),
     ]
 
-    def correlate(self, condition, syntax, parent):
-        expression = self.binder.cast(condition, BooleanDomain())
+    def correlate(self, expression, syntax, parent):
+        expression = self.binder.cast(expression, BooleanDomain())
         yield CountBinding(parent, IntegerDomain(), syntax,
                            expression=expression)
 
@@ -1061,7 +1173,7 @@ EvaluateCountWrapper = GenericEvaluate.factory(CountFunction,
 SerializeCount = GenericSerialize.factory(CountFunction,
         CountPhrase, "COUNT(NULLIF(%(expression)s, FALSE))")
 SerializeCountWrapper = GenericSerialize.factory(CountFunction,
-        CountWrapperPhrase, "COALESCE(%(aggregate)s, 0)")
+        CountWrapperPhrase, "COALESCE(%(expression)s, 0)")
 
 
 class ExistsFunction(ProperFunction):
@@ -1069,11 +1181,11 @@ class ExistsFunction(ProperFunction):
     adapts(named['exists'])
 
     parameters = [
-            Parameter('condition'),
+            Parameter('expression'),
     ]
 
-    def correlate(self, condition, syntax, parent):
-        expression = self.binder.cast(condition, BooleanDomain())
+    def correlate(self, expression, syntax, parent):
+        expression = self.binder.cast(expression, BooleanDomain())
         yield ExistsBinding(parent, BooleanDomain(), syntax,
                             expression=expression)
 
@@ -1094,7 +1206,7 @@ EvaluateExistsWrapper = GenericEvaluate.factory(ExistsFunction,
 SerializeExists = GenericSerialize.factory(ExistsFunction,
         ExistsPhrase, "BOOL_OR(%(expression)s IS TRUE)")
 SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
-        ExistsWrapperPhrase, "COALESCE(%(aggregate)s, FALSE)")
+        ExistsWrapperPhrase, "COALESCE(%(expression)s, FALSE)")
 
 
 class EveryFunction(ProperFunction):
@@ -1102,11 +1214,11 @@ class EveryFunction(ProperFunction):
     adapts(named['every'])
 
     parameters = [
-            Parameter('condition'),
+            Parameter('expression'),
     ]
 
-    def correlate(self, condition, syntax, parent):
-        expression = self.binder.cast(condition, BooleanDomain())
+    def correlate(self, expression, syntax, parent):
+        expression = self.binder.cast(expression, BooleanDomain())
         yield EveryBinding(parent, BooleanDomain(), syntax,
                            expression=expression)
 
@@ -1127,7 +1239,7 @@ EvaluateEveryWrapper = GenericEvaluate.factory(EveryFunction,
 SerializeEvery = GenericSerialize.factory(EveryFunction,
         EveryPhrase, "BOOL_AND(%(expression)s IS TRUE)")
 SerializeEveryWrapper = GenericSerialize.factory(EveryFunction,
-        EveryWrapperPhrase, "COALESCE(%(aggregate)s, TRUE)")
+        EveryWrapperPhrase, "COALESCE(%(expression)s, TRUE)")
 
 
 class MinFunction(ProperFunction):
@@ -1201,7 +1313,7 @@ EvaluateMinWrapper = GenericEvaluate.factory(MinFunction,
 SerializeMin = GenericSerialize.factory(MinFunction,
         MinPhrase, "MIN(%(expression)s)")
 SerializeMinWrapper = GenericSerialize.factory(MinFunction,
-        MinWrapperPhrase, "%(aggregate)s")
+        MinWrapperPhrase, "%(expression)s")
 
 
 class MaxFunction(ProperFunction):
@@ -1275,7 +1387,7 @@ EvaluateMaxWrapper = GenericEvaluate.factory(MaxFunction,
 SerializeMax = GenericSerialize.factory(MaxFunction,
         MaxPhrase, "MAX(%(expression)s)")
 SerializeMaxWrapper = GenericSerialize.factory(MaxFunction,
-        MaxWrapperPhrase, "%(aggregate)s")
+        MaxWrapperPhrase, "%(expression)s")
 
 
 function_adapters = find_adapters()

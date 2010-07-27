@@ -2258,6 +2258,44 @@ tests:
             invalid argument: incompatible types:
                 /{integer('1')=string('1')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y', 'X'<null(),'X'<=null(),'X'>null(),'X'>=null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y','X'<null(),'X'<=null(),'X'>null(),'X'>=null()}            |
+            -+-----------------------------------------------------------------------------------------------+-
+             | 'X'<'Y' | 'X'<='Y' | 'X'>'Y' | 'X'>='Y' | 'X'<null() | 'X'<=null() | 'X'>null() | 'X'>=null() |
+            -+---------+----------+---------+----------+------------+-------------+------------+-------------+-
+             | true    | true     | false   | false    |            |             |            |             |
+                                                                                                       (1 row)
+
+             ----
+             /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y','X'<null(),'X'<=null(),'X'>null(),'X'>=null()}
+             SELECT ('X' < 'Y'), ('X' <= 'Y'), ('X' > 'Y'), ('X' >= 'Y'), ('X' < NULL), ('X' <= NULL), ('X' > NULL), ('X' >= NULL)
+        - uri: /{1<2,1<=2,1>2,1>=2, 1<2.0,1<=2.0,1>2.0,1>=2.0, 1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{1<2,1<=2,1>2,1>=2,1<2.0,1<=2.0,1>2.0,1>=2.0,1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}                        |
+            -+--------------------------------------------------------------------------------------------------------+-
+             | 1<2  | 1<=2 | 1>2   | 1>=2  | 1<2.0 | 1<=2.0 | 1>2.0 | 1>=2.0 | 1e0<2.0 | 1e0<=2.0 | 1e0>2.0 | 1e0>2.0 |
+            -+------+------+-------+-------+-------+--------+-------+--------+---------+----------+---------+---------+-
+             | true | true | false | false | true  | true   | false | false  | true    | true     | false   | false   |
+                                                                                                                (1 row)
+
+             ----
+             /{1<2,1<=2,1>2,1>=2,1<2.0,1<=2.0,1>2.0,1>=2.0,1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}
+             SELECT (1 < 2), (1 <= 2), (1 > 2), (1 >= 2), (CAST(1 AS NUMERIC) < 2.0), (CAST(1 AS NUMERIC) <= 2.0), (CAST(1 AS NUMERIC) > 2.0), (CAST(1 AS NUMERIC) >= 2.0), (1.0::float8 < CAST(2.0 AS FLOAT)), (1.0::float8 <= CAST(2.0 AS FLOAT)), (1.0::float8 > CAST(2.0 AS FLOAT)), (1.0::float8 > CAST(2.0 AS FLOAT))
+        - uri: /{integer('1')<string('1')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: incompatible types:
+                /{integer('1')<string('1')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

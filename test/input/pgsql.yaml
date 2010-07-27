@@ -168,6 +168,14 @@ tests:
         - uri: /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
         - uri: /{integer('1')=string('1')}
           expect: 400
+        # Less Than/Greater Than
+        - uri: /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y',
+                 'X'<null(),'X'<=null(),'X'>null(),'X'>=null()}
+        - uri: /{1<2,1<=2,1>2,1>=2,
+                 1<2.0,1<=2.0,1>2.0,1>=2.0,
+                 1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}
+        - uri: /{integer('1')<string('1')}
+          expect: 400
 
   # Simple (non-aggregate) filters.
   - title: Simple filters

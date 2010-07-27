@@ -454,9 +454,16 @@ class FunctionExpression(Expression):
         for key in sorted(arguments):
             value = arguments[key]
             if isinstance(value, list):
-                value = tuple(item.hash for item in value)
-            elif value is not None:
-                value = value.hash
+                items = []
+                for item in value:
+                    if isinstance(item, Code):
+                        items.append(item.hash)
+                    else:
+                        items.append(item)
+                value = tuple(items)
+            else:
+                if isinstance(value, Code):
+                    value = value.hash
             arguments_hash.append((key, value))
         hash = (self.__class__, tuple(arguments_hash))
         super(FunctionExpression, self).__init__(domain, mark, hash=hash)
@@ -470,8 +477,9 @@ class FunctionExpression(Expression):
             value = self.arguments[key]
             if isinstance(value, list):
                 for item in value:
-                    units.extend(item.get_units())
-            elif value is not None:
+                    if isinstance(item, Expression):
+                        units.extend(item.get_units())
+            elif isinstance(value, Expression):
                 units.extend(value.get_units())
         return units
 
