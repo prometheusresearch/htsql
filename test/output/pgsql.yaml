@@ -2296,6 +2296,94 @@ tests:
             invalid argument: incompatible types:
                 /{integer('1')<string('1')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
+      - id: numeric-functions-and-operators
+        tests:
+        - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}        |
+            -+---------------------------------------------------+-
+             | 2+2 | 2+2.0 | 2+2e0 | 2.0+2.0 | 2.0+2e0 | 2e0+2e0 |
+            -+-----+-------+-------+---------+---------+---------+-
+             |   4 |   4.0 |   4.0 |     4.0 |     4.0 |     4.0 |
+                                                           (1 row)
+
+             ----
+             /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
+             SELECT (2 + 2), (CAST(2 AS NUMERIC) + 2.0), (CAST(2 AS FLOAT) + 2.0::float8), (2.0 + 2.0), (CAST(2.0 AS FLOAT) + 2.0::float8), (2.0::float8 + 2.0::float8)
+        - uri: /{2-1,2-1.0,2-1e0,2.0-1.0,2.0-1e0,2e0-1e0}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{2-1,2-1.0,2-1e0,2.0-1.0,2.0-1e0,2e0-1e0}        |
+            -+---------------------------------------------------+-
+             | 2-1 | 2-1.0 | 2-1e0 | 2.0-1.0 | 2.0-1e0 | 2e0-1e0 |
+            -+-----+-------+-------+---------+---------+---------+-
+             |   1 |   1.0 |   1.0 |     1.0 |     1.0 |     1.0 |
+                                                           (1 row)
+
+             ----
+             /{2-1,2-1.0,2-1e0,2.0-1.0,2.0-1e0,2e0-1e0}
+             SELECT (2 - 1), (CAST(2 AS NUMERIC) - 1.0), (CAST(2 AS FLOAT) - 1.0::float8), (2.0 - 1.0), (CAST(2.0 AS FLOAT) - 1.0::float8), (2.0::float8 - 1.0::float8)
+        - uri: /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}        |
+            -+---------------------------------------------------+-
+             | 5*5 | 5*5.0 | 5*5e0 | 5.0*5.0 | 5.0*5e0 | 5e0*5e0 |
+            -+-----+-------+-------+---------+---------+---------+-
+             |  25 |  25.0 |  25.0 |   25.00 |    25.0 |    25.0 |
+                                                           (1 row)
+
+             ----
+             /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}
+             SELECT (5 * 5), (CAST(5 AS NUMERIC) * 5.0), (CAST(5 AS FLOAT) * 5.0::float8), (5.0 * 5.0), (CAST(5.0 AS FLOAT) * 5.0::float8), (5.0::float8 * 5.0::float8)
+        - uri: /{1 div 2,1 div 2.0,1 div 2e0,1.0 div 2.0,1.0 div 2e0, 1e0 div 2e0}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{1 div 2,1 div 2.0,1 div 2e0,1.0 div 2.0,1.0 div 2e0,1e0 div 2e0}                                               |
+            -+------------------------------------------------------------------------------------------------------------------+-
+             | 1 div 2                | 1 div 2.0              | 1 div 2e0 | 1.0 div 2.0            | 1.0 div 2e0 | 1e0 div 2e0 |
+            -+------------------------+------------------------+-----------+------------------------+-------------+-------------+-
+             | 0.50000000000000000000 | 0.50000000000000000000 |       0.5 | 0.50000000000000000000 |         0.5 |         0.5 |
+                                                                                                                          (1 row)
+
+             ----
+             /{1 div 2,1 div 2.0,1 div 2e0,1.0 div 2.0,1.0 div 2e0,1e0 div 2e0}
+             SELECT (CAST(1 AS NUMERIC) / CAST(2 AS NUMERIC)), (CAST(1 AS NUMERIC) / 2.0), (CAST(1 AS FLOAT) / 2.0::float8), (1.0 / 2.0), (CAST(1.0 AS FLOAT) / 2.0::float8), (1.0::float8 / 2.0::float8)
+        - uri: /{1 div 0}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing 'SELECT (CAST(1 AS NUMERIC) / CAST(0 AS NUMERIC))': division by zero
+            :
+                /{1 div 0}
+                ^^^^^^^^^^
+        - uri: /{1+'1'}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: unexpected argument types:
+                /{1+'1'}
+                  ^^^^^
+        - uri: /{65536*65536}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing 'SELECT (65536 * 65536)': integer out of range
+            :
+                /{65536*65536}
+                ^^^^^^^^^^^^^^
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

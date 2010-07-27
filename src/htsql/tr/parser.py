@@ -348,8 +348,8 @@ class TermParser(Parser):
         while (tokens.peek(SymbolToken, ['*'])
                or tokens.peek(NameToken)):
             if tokens.peek(SymbolToken, ['*']):
-                symbol_token = token.pop(SymbolToken, ['*'])
-                symbol = token.value
+                symbol_token = tokens.pop(SymbolToken, ['*'])
+                symbol = symbol_token.value
                 left = expression
                 right = FactorParser << tokens
                 mark = Mark.union(left, right)

@@ -107,7 +107,7 @@ class ProperFunction(Function):
 
     def bind_function_operator(self, syntax, parent):
         arguments = [syntax.left, syntax.right]
-        keywords = self.bind_arguments(arguments, parent)
+        keywords = self.bind_arguments(arguments, parent, syntax.mark)
         return self.correlate(syntax=syntax, parent=parent, **keywords)
 
     def bind_function_call(self, syntax, parent):
@@ -512,11 +512,105 @@ class AdditionOperator(ProperFunction):
 
     def correlate(self, left, right, syntax, parent):
         Implementation = Add.realize(left.domain, right.domain)
-        addition = Implementation(left, right, self.binder, syntax, parent)
-        yield addition()
+        add = Implementation(left, right, self.binder, syntax, parent)
+        yield add()
+
+
+class SubtractionOperator(ProperFunction):
+
+    adapts(named['_-_'])
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right, syntax, parent):
+        Implementation = Subtract.realize(left.domain, right.domain)
+        subtract = Implementation(left, right, self.binder, syntax, parent)
+        yield subtract()
+
+
+class MultiplicationOperator(ProperFunction):
+
+    adapts(named['_*_'])
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right, syntax, parent):
+        Implementation = Multiply.realize(left.domain, right.domain)
+        multiply = Implementation(left, right, self.binder, syntax, parent)
+        yield multiply()
+
+
+class DivisionOperator(ProperFunction):
+
+    #adapts(named['_/_'])
+    adapts(named['div'])
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right, syntax, parent):
+        Implementation = Divide.realize(left.domain, right.domain)
+        divide = Implementation(left, right, self.binder, syntax, parent)
+        yield divide()
 
 
 class Add(Adapter):
+
+    adapts(Domain, Domain)
+
+    def __init__(self, left, right, binder, syntax, parent):
+        self.left = left
+        self.right = right
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected argument types",
+                                   self.syntax.mark)
+
+
+class Subtract(Adapter):
+
+    adapts(Domain, Domain)
+
+    def __init__(self, left, right, binder, syntax, parent):
+        self.left = left
+        self.right = right
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected argument types",
+                                   self.syntax.mark)
+
+
+class Multiply(Adapter):
+
+    adapts(Domain, Domain)
+
+    def __init__(self, left, right, binder, syntax, parent):
+        self.left = left
+        self.right = right
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected argument types",
+                                   self.syntax.mark)
+
+
+class Divide(Adapter):
 
     adapts(Domain, Domain)
 
@@ -812,6 +906,330 @@ class ConcatenateUntypedToString(Concatenate):
 class ConcatenateUntypedToUntyped(Concatenate):
 
     adapts(UntypedDomain, UntypedDomain)
+
+
+AdditionBinding = GenericBinding.factory(AdditionOperator)
+AdditionExpression = GenericExpression.factory(AdditionOperator)
+AdditionPhrase = GenericPhrase.factory(AdditionOperator)
+
+
+EncodeAddition = GenericEncode.factory(AdditionOperator,
+        AdditionBinding, AdditionExpression)
+EvaluateAddition = GenericEvaluate.factory(AdditionOperator,
+        AdditionExpression, AdditionPhrase)
+SerializeAddition = GenericSerialize.factory(AdditionOperator,
+        AdditionPhrase, "(%(left)s + %(right)s)")
+
+
+class AddNumbers(Add):
+
+    adapts_none()
+    domain = None
+
+    def __call__(self):
+        left = self.binder.cast(self.left, self.domain,
+                                parent=self.parent)
+        right = self.binder.cast(self.right, self.domain,
+                                 parent=self.parent)
+        return AdditionBinding(self.parent, self.domain, self.syntax,
+                               left=left, right=right)
+
+
+class AddIntegerToInteger(AddNumbers):
+
+    adapts(IntegerDomain, IntegerDomain)
+    domain = IntegerDomain()
+
+
+class AddIntegerToDecimal(AddNumbers):
+
+    adapts(IntegerDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class AddDecimalToInteger(AddNumbers):
+
+    adapts(DecimalDomain, IntegerDomain)
+    domain = DecimalDomain()
+
+
+class AddDecimalToDecimal(AddNumbers):
+
+    adapts(DecimalDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class AddIntegerToFloat(AddNumbers):
+
+    adapts(IntegerDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class AddDecimalToFloat(AddNumbers):
+
+    adapts(DecimalDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class AddFloatToInteger(AddNumbers):
+
+    adapts(FloatDomain, IntegerDomain)
+    domain = FloatDomain()
+
+
+class AddFloatToDecimal(AddNumbers):
+
+    adapts(FloatDomain, DecimalDomain)
+    domain = FloatDomain()
+
+
+class AddFloatToFloat(AddNumbers):
+
+    adapts(FloatDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+SubtractionBinding = GenericBinding.factory(SubtractionOperator)
+SubtractionExpression = GenericExpression.factory(SubtractionOperator)
+SubtractionPhrase = GenericPhrase.factory(SubtractionOperator)
+
+
+EncodeSubtraction = GenericEncode.factory(SubtractionOperator,
+        SubtractionBinding, SubtractionExpression)
+EvaluateSubtraction = GenericEvaluate.factory(SubtractionOperator,
+        SubtractionExpression, SubtractionPhrase)
+SerializeSubtraction = GenericSerialize.factory(SubtractionOperator,
+        SubtractionPhrase, "(%(left)s - %(right)s)")
+
+
+class SubtractNumbers(Subtract):
+
+    adapts_none()
+    domain = None
+
+    def __call__(self):
+        left = self.binder.cast(self.left, self.domain,
+                                parent=self.parent)
+        right = self.binder.cast(self.right, self.domain,
+                                 parent=self.parent)
+        return SubtractionBinding(self.parent, self.domain, self.syntax,
+                                  left=left, right=right)
+
+
+class SubtractIntegerFromInteger(SubtractNumbers):
+
+    adapts(IntegerDomain, IntegerDomain)
+    domain = IntegerDomain()
+
+
+class SubtractIntegerFromDecimal(SubtractNumbers):
+
+    adapts(DecimalDomain, IntegerDomain)
+    domain = DecimalDomain()
+
+
+class SubtractDecimalFromInteger(SubtractNumbers):
+
+    adapts(IntegerDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class SubtractDecimalToDecimal(SubtractNumbers):
+
+    adapts(DecimalDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class SubtractIntegerFromFloat(SubtractNumbers):
+
+    adapts(FloatDomain, IntegerDomain)
+    domain = FloatDomain()
+
+
+class SubtractDecimalFromFloat(SubtractNumbers):
+
+    adapts(FloatDomain, DecimalDomain)
+    domain = FloatDomain()
+
+
+class SubtractFloatFromInteger(SubtractNumbers):
+
+    adapts(IntegerDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class SubtractFloatFromDecimal(SubtractNumbers):
+
+    adapts(DecimalDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class SubtractFloatFromFloat(SubtractNumbers):
+
+    adapts(FloatDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+MultiplicationBinding = GenericBinding.factory(MultiplicationOperator)
+MultiplicationExpression = GenericExpression.factory(MultiplicationOperator)
+MultiplicationPhrase = GenericPhrase.factory(MultiplicationOperator)
+
+
+EncodeMultiplication = GenericEncode.factory(MultiplicationOperator,
+        MultiplicationBinding, MultiplicationExpression)
+EvaluateMultiplication = GenericEvaluate.factory(MultiplicationOperator,
+        MultiplicationExpression, MultiplicationPhrase)
+SerializeMultiplication = GenericSerialize.factory(MultiplicationOperator,
+        MultiplicationPhrase, "(%(left)s * %(right)s)")
+
+
+class MultiplyNumbers(Multiply):
+
+    adapts_none()
+    domain = None
+
+    def __call__(self):
+        left = self.binder.cast(self.left, self.domain,
+                                parent=self.parent)
+        right = self.binder.cast(self.right, self.domain,
+                                 parent=self.parent)
+        return MultiplicationBinding(self.parent, self.domain, self.syntax,
+                                     left=left, right=right)
+
+
+class MultiplyIntegerByInteger(MultiplyNumbers):
+
+    adapts(IntegerDomain, IntegerDomain)
+    domain = IntegerDomain()
+
+
+class MultiplyIntegerByDecimal(MultiplyNumbers):
+
+    adapts(IntegerDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class MultiplyDecimalByInteger(MultiplyNumbers):
+
+    adapts(DecimalDomain, IntegerDomain)
+    domain = DecimalDomain()
+
+
+class MultiplyDecimalByDecimal(MultiplyNumbers):
+
+    adapts(DecimalDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class MultiplyIntegerByFloat(MultiplyNumbers):
+
+    adapts(IntegerDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class MultiplyDecimalByFloat(MultiplyNumbers):
+
+    adapts(DecimalDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class MultiplyFloatByInteger(MultiplyNumbers):
+
+    adapts(FloatDomain, IntegerDomain)
+    domain = FloatDomain()
+
+
+class MultiplyFloatByDecimal(MultiplyNumbers):
+
+    adapts(FloatDomain, DecimalDomain)
+    domain = FloatDomain()
+
+
+class MultiplyFloatByFloat(MultiplyNumbers):
+
+    adapts(FloatDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+DivisionBinding = GenericBinding.factory(DivisionOperator)
+DivisionExpression = GenericExpression.factory(DivisionOperator)
+DivisionPhrase = GenericPhrase.factory(DivisionOperator)
+
+
+EncodeDivision = GenericEncode.factory(DivisionOperator,
+        DivisionBinding, DivisionExpression)
+EvaluateDivision = GenericEvaluate.factory(DivisionOperator,
+        DivisionExpression, DivisionPhrase)
+SerializeDivision = GenericSerialize.factory(DivisionOperator,
+        DivisionPhrase, "(%(left)s / %(right)s)")
+
+
+class DivideNumbers(Divide):
+
+    adapts_none()
+    domain = None
+
+    def __call__(self):
+        left = self.binder.cast(self.left, self.domain,
+                                parent=self.parent)
+        right = self.binder.cast(self.right, self.domain,
+                                 parent=self.parent)
+        return DivisionBinding(self.parent, self.domain, self.syntax,
+                               left=left, right=right)
+
+
+class DivideIntegerByInteger(DivideNumbers):
+
+    adapts(IntegerDomain, IntegerDomain)
+    domain = DecimalDomain()
+
+
+class DivideIntegerByDecimal(DivideNumbers):
+
+    adapts(IntegerDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class DivideDecimalByInteger(DivideNumbers):
+
+    adapts(DecimalDomain, IntegerDomain)
+    domain = DecimalDomain()
+
+
+class DivideDecimalByDecimal(DivideNumbers):
+
+    adapts(DecimalDomain, DecimalDomain)
+    domain = DecimalDomain()
+
+
+class DivideIntegerByFloat(DivideNumbers):
+
+    adapts(IntegerDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class DivideDecimalByFloat(DivideNumbers):
+
+    adapts(DecimalDomain, FloatDomain)
+    domain = FloatDomain()
+
+
+class DivideFloatByInteger(DivideNumbers):
+
+    adapts(FloatDomain, IntegerDomain)
+    domain = FloatDomain()
+
+
+class DivideFloatByDecimal(DivideNumbers):
+
+    adapts(FloatDomain, DecimalDomain)
+    domain = FloatDomain()
+
+
+class DivideFloatByFloat(DivideNumbers):
+
+    adapts(FloatDomain, FloatDomain)
+    domain = FloatDomain()
 
 
 class IsNullFunction(ProperFunction):

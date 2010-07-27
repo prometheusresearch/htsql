@@ -160,7 +160,7 @@ tests:
                  switch(null(),null(),1,0),
                  switch('Y','X',1,'Y',2,'Z',3),
                  switch('Y','A',1,'B',2,'C',3,0)}
-        # Equality/Inequality
+        # Equality/Inequality.
         - uri: /{1=1,1=0,1=null(),null()=null(),
                  1!=1,1!=0,1!=null(),null()!=null(),
                  1==1,1==0,1==null(),null()==null(),
@@ -168,7 +168,7 @@ tests:
         - uri: /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
         - uri: /{integer('1')=string('1')}
           expect: 400
-        # Less Than/Greater Than
+        # Less Than/Greater Than.
         - uri: /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y',
                  'X'<null(),'X'<=null(),'X'>null(),'X'>=null()}
         - uri: /{1<2,1<=2,1>2,1>=2,
@@ -176,6 +176,26 @@ tests:
                  1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}
         - uri: /{integer('1')<string('1')}
           expect: 400
+
+      - title: Numeric functions and operators
+        tests:
+        # Addition.
+        - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
+        # Subtraction.
+        - uri: /{2-1,2-1.0,2-1e0,2.0-1.0,2.0-1e0,2e0-1e0}
+        # Multiplication.
+        - uri: /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}
+        # Division.
+        - uri: /{1 div 2,1 div 2.0,1 div 2e0,1.0 div 2.0,1.0 div 2e0, 1e0 div 2e0}
+        # Division by zero.
+        - uri: /{1 div 0}
+          expect: 409
+        # Addition: invalid types.
+        - uri: /{1+'1'}
+          expect: 400
+        # Multiplication: overflow.
+        - uri: /{65536*65536}
+          expect: 409
 
   # Simple (non-aggregate) filters.
   - title: Simple filters
