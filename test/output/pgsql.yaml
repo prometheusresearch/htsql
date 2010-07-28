@@ -2298,6 +2298,186 @@ tests:
                   ^^^^^^^^^^^^^^^^^^^^^^^^
       - id: numeric-functions-and-operators
         tests:
+        - uri: /{integer('1'),integer(string('1')), integer(1),integer(1.0),integer(1e0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{integer('1'),integer(string('1')),integer(1),integer(1.0),integer(1e0)} |
+            -+---------------------------------------------------------------------------+-
+             | integer('1')  | integer(string('1'))  | 1  | integer(1.0)  | integer(1e0) |
+            -+---------------+-----------------------+----+---------------+--------------+-
+             |             1 |                     1 |  1 |             1 |            1 |
+                                                                                   (1 row)
+
+             ----
+             /{integer('1'),integer(string('1')),integer(1),integer(1.0),integer(1e0)}
+             SELECT 1, CAST('1' AS INTEGER), 1, CAST(1.0 AS INTEGER), CAST(1.0::float8 AS INTEGER)
+        - uri: /{integer(65536.0),integer(65.536),integer(655.36), integer(65536e0),integer(65536e-3),integer(65535e-2)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{integer(65536.0),integer(65.536),integer(655.36),integer(65536e0),integer(65536e-3),integer(65535e-2)}        |
+            -+-----------------------------------------------------------------------------------------------------------------+-
+             | integer(65536.0) | integer(65.536) | integer(655.36) | integer(65536e0) | integer(65536e-3) | integer(65535e-2) |
+            -+------------------+-----------------+-----------------+------------------+-------------------+-------------------+-
+             |            65536 |              66 |             655 |            65536 |                66 |               655 |
+                                                                                                                         (1 row)
+
+             ----
+             /{integer(65536.0),integer(65.536),integer(655.36),integer(65536e0),integer(65536e-3),integer(65535e-2)}
+             SELECT CAST(65536.0 AS INTEGER), CAST(65.536 AS INTEGER), CAST(655.36 AS INTEGER), CAST(65536.0::float8 AS INTEGER), CAST(65.536::float8 AS INTEGER), CAST(655.35::float8 AS INTEGER)
+        - uri: /{integer(100000000000000000000.0)}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing 'SELECT CAST(100000000000000000000.0 AS INTEGER)': integer out of range
+            :
+                /{integer(100000000000000000000.0)}
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{integer(1e100)}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing 'SELECT CAST(1e+100::float8 AS INTEGER)': integer out of range
+            :
+                /{integer(1e100)}
+                ^^^^^^^^^^^^^^^^^
+        - uri: /{integer('X')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: cannot cast a value: invalid integer literal: invalid literal for int() with base 10: 'X':
+                /{integer('X')}
+                  ^^^^^^^^^^^^
+        - uri: /{integer(string('X'))}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing "SELECT CAST('X' AS INTEGER)": invalid input syntax for integer: "X"
+            LINE 1: SELECT CAST('X' AS INTEGER)
+                                ^
+            :
+                /{integer(string('X'))}
+                ^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{decimal('1.5'),decimal(string('1.5')), decimal(15),decimal(1.5),decimal(15e-1)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{decimal('1.5'),decimal(string('1.5')),decimal(15),decimal(1.5),decimal(15e-1)} |
+            -+----------------------------------------------------------------------------------+-
+             | decimal('1.5')  | decimal(string('1.5'))  | decimal(15)  | 1.5  | decimal(15e-1) |
+            -+-----------------+-------------------------+--------------+------+----------------+-
+             |             1.5 |                     1.5 |           15 |  1.5 |            1.5 |
+                                                                                          (1 row)
+
+             ----
+             /{decimal('1.5'),decimal(string('1.5')),decimal(15),decimal(1.5),decimal(15e-1)}
+             SELECT 1.5, CAST('1.5' AS NUMERIC), CAST(15 AS NUMERIC), 1.5, CAST(1.5::float8 AS NUMERIC)
+        - uri: /{decimal(65535e0),decimal(65535e10),decimal(65535e-10)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{decimal(65535e0),decimal(65535e10),decimal(65535e-10)}  |
+            -+-----------------------------------------------------------+-
+             | decimal(65535e0) | decimal(65535e10) | decimal(65535e-10) |
+            -+------------------+-------------------+--------------------+-
+             |            65535 |   655350000000000 |       0.0000065535 |
+                                                                   (1 row)
+
+             ----
+             /{decimal(65535e0),decimal(65535e10),decimal(65535e-10)}
+             SELECT CAST(65535.0::float8 AS NUMERIC), CAST(6.5535e+14::float8 AS NUMERIC), CAST(6.5535e-06::float8 AS NUMERIC)
+        - uri: /{decimal(1e300),decimal(1e-300)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{decimal(1e300),decimal(1e-300)}                                                                                                                                                                                                                                                                                               |
+            -+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-
+             | decimal(1e300)                                                                                                                                                                                                                                                                                                | decimal(1e-300) |
+            -+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+-
+             | 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 |          1E-300 |
+                                                                                                                                                                                                                                                                                                                                         (1 row)
+
+             ----
+             /{decimal(1e300),decimal(1e-300)}
+             SELECT CAST(1e+300::float8 AS NUMERIC), CAST(1e-300::float8 AS NUMERIC)
+        - uri: /{decimal('X')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: cannot cast a value: invalid decimal literal: Invalid literal for Decimal: 'X':
+                /{decimal('X')}
+                  ^^^^^^^^^^^^
+        - uri: /{decimal(string('X'))}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing "SELECT CAST('X' AS NUMERIC)": invalid input syntax for type numeric: "X"
+            LINE 1: SELECT CAST('X' AS NUMERIC)
+                                ^
+            :
+                /{decimal(string('X'))}
+                ^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{float('1.5'),float(string('1.5')), float(15),float(1.5),float(15e-1)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{float('1.5'),float(string('1.5')),float(15),float(1.5),float(15e-1)} |
+            -+------------------------------------------------------------------------+-
+             | float('1.5')  | float(string('1.5'))  | float(15) | float(1.5) | 15e-1 |
+            -+---------------+-----------------------+-----------+------------+-------+-
+             |           1.5 |                   1.5 |      15.0 |        1.5 |   1.5 |
+                                                                                (1 row)
+
+             ----
+             /{float('1.5'),float(string('1.5')),float(15),float(1.5),float(15e-1)}
+             SELECT 1.5::float8, CAST('1.5' AS FLOAT), CAST(15 AS FLOAT), CAST(1.5 AS FLOAT), 1.5::float8
+        - uri: /{float(123456789.123456789)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{float(123456789.123456789)} |
+            -+-------------------------------+-
+             | float(123456789.123456789)    |
+            -+-------------------------------+-
+             |                 123456789.123 |
+                                       (1 row)
+
+             ----
+             /{float(123456789.123456789)}
+             SELECT CAST(123456789.123456789 AS FLOAT)
+        - uri: /{float('X')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: cannot cast a value: invalid float literal: invalid literal for float(): X:
+                /{float('X')}
+                  ^^^^^^^^^^
+        - uri: /{float(string('X'))}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing "SELECT CAST('X' AS FLOAT)": invalid input syntax for type double precision: "X"
+            LINE 1: SELECT CAST('X' AS FLOAT)
+                                ^
+            :
+                /{float(string('X'))}
+                ^^^^^^^^^^^^^^^^^^^^^
         - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
           status: 200 OK
           headers:

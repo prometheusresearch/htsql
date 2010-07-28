@@ -179,6 +179,48 @@ tests:
 
       - title: Numeric functions and operators
         tests:
+        # Integer cast (from untyped, string, integer, decimal and float).
+        - uri: /{integer('1'),integer(string('1')),
+                 integer(1),integer(1.0),integer(1e0)}
+        # Decimal->Integer and Float->Decimal casts.
+        - uri: /{integer(65536.0),integer(65.536),integer(655.36),
+                 integer(65536e0),integer(65536e-3),integer(65535e-2)}
+        # Decimal->Integer cast overflow.
+        - uri: /{integer(100000000000000000000.0)}
+          expect: 409
+        # Float->Integer cast overflow.
+        - uri: /{integer(1e100)}
+          expect: 409
+        # Invalid Untyped->Integer cast.
+        - uri: /{integer('X')}
+          expect: 400
+        # Invalid String->Integer cast.
+        - uri: /{integer(string('X'))}
+          expect: 409
+        # Decimal cast (from untyped, string, integer, decimal and float).
+        - uri: /{decimal('1.5'),decimal(string('1.5')),
+                 decimal(15),decimal(1.5),decimal(15e-1)}
+        # Float->Decimal cast.
+        - uri: /{decimal(65535e0),decimal(65535e10),decimal(65535e-10)}
+        # Float->Decimal cast with huge values.
+        - uri: /{decimal(1e300),decimal(1e-300)}
+        # Invalid Untyped->Decimal cast.
+        - uri: /{decimal('X')}
+          expect: 400
+        # Invalid String->Decimal cast.
+        - uri: /{decimal(string('X'))}
+          expect: 409
+        # Float cast (from untyped, string, integer, decimal and float).
+        - uri: /{float('1.5'),float(string('1.5')),
+                 float(15),float(1.5),float(15e-1)}
+        # Decimal->Float cast with truncation.
+        - uri: /{float(123456789.123456789)}
+        # Invalid Untyped->Float cast.
+        - uri: /{float('X')}
+          expect: 400
+        # Invalid String->Float cast.
+        - uri: /{float(string('X'))}
+          expect: 409
         # Addition.
         - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
         # Subtraction.

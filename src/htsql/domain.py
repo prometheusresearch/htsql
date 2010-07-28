@@ -15,6 +15,7 @@ This module defines abstract HTSQL domains.
 
 from .util import maybe, listof
 import re
+import decimal
 
 
 class Domain(object):
