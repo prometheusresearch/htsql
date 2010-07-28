@@ -110,7 +110,7 @@ class QueryParser(Parser):
                                          expression )?
 
         expression      ::= term ( ( '+' | '-' ) term )*
-        term            ::= factor ( ( '*' | identifier ) factor )*
+        term            ::= factor ( ( '*' | '/' | identifier ) factor )*
         factor          ::= ( '+' | '-' ) factor | power
         power           ::= sieve ( '^' power )?
 
@@ -343,12 +343,12 @@ class TermParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Parses the production:
-        #   term            ::= factor ( ( '*' | identifier ) factor )*
+        #   term            ::= factor ( ( '*' | '/' | identifier ) factor )*
         expression = FactorParser << tokens
-        while (tokens.peek(SymbolToken, ['*'])
+        while (tokens.peek(SymbolToken, ['*', '/'])
                or tokens.peek(NameToken)):
-            if tokens.peek(SymbolToken, ['*']):
-                symbol_token = tokens.pop(SymbolToken, ['*'])
+            if tokens.peek(SymbolToken, ['*', '/']):
+                symbol_token = tokens.pop(SymbolToken, ['*', '/'])
                 symbol = symbol_token.value
                 left = expression
                 right = FactorParser << tokens

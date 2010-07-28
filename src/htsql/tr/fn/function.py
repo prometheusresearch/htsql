@@ -548,8 +548,7 @@ class MultiplicationOperator(ProperFunction):
 
 class DivisionOperator(ProperFunction):
 
-    #adapts(named['_/_'])
-    adapts(named['div'])
+    adapts(named['_/_'])
 
     parameters = [
             Parameter('left'),

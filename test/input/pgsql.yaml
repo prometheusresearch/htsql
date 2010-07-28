@@ -186,9 +186,9 @@ tests:
         # Multiplication.
         - uri: /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}
         # Division.
-        - uri: /{1 div 2,1 div 2.0,1 div 2e0,1.0 div 2.0,1.0 div 2e0, 1e0 div 2e0}
+        - uri: /{1/2,1/2.0,1/2e0,1.0/2.0,1.0/2e0, 1e0/2e0}
         # Division by zero.
-        - uri: /{1 div 0}
+        - uri: /{1/0}
           expect: 409
         # Addition: invalid types.
         - uri: /{1+'1'}
