@@ -221,6 +221,8 @@ tests:
         # Invalid String->Float cast.
         - uri: /{float(string('X'))}
           expect: 409
+        # Unary plus and minus.
+        - uri: /{+2,+2.0,+2e0,-2,-2.0,-2e0,++1,+-1,-+1,--1}
         # Addition.
         - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
         # Subtraction.
@@ -238,6 +240,16 @@ tests:
         # Multiplication: overflow.
         - uri: /{65536*65536}
           expect: 409
+        # Round for decimal values.
+        - uri: /{round(65.536),round(65.536,0),
+                 round(65.536,1),round(65.536,-1)}
+        # Round with integer values (implicitly cast to decimal).
+        - uri: /{round(65535),round(65536,-3)}
+        # Round for float values.
+        - uri: /{round(35536e-3)}
+        # Invalid Round call with float values and digits indicator.
+        - uri: /{round(35536e-3,1)}
+          expect: 400
 
   # Simple (non-aggregate) filters.
   - title: Simple filters

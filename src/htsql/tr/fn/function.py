@@ -279,7 +279,7 @@ class DateCastFunction(CastFunction):
 
 class EqualityOperator(ProperFunction):
 
-    adapts(named['_=_'])
+    adapts(named['='])
 
     parameters = [
             Parameter('left'),
@@ -303,7 +303,7 @@ class EqualityOperator(ProperFunction):
 
 class InequalityOperator(ProperFunction):
 
-    adapts(named['_!=_'])
+    adapts(named['!='])
 
     parameters = [
             Parameter('left'),
@@ -327,7 +327,7 @@ class InequalityOperator(ProperFunction):
 
 class TotalEqualityOperator(ProperFunction):
 
-    adapts(named['_==_'])
+    adapts(named['=='])
 
     parameters = [
             Parameter('left'),
@@ -351,7 +351,7 @@ class TotalEqualityOperator(ProperFunction):
 
 class TotalInequalityOperator(ProperFunction):
 
-    adapts(named['_!==_'])
+    adapts(named['!=='])
 
     parameters = [
             Parameter('left'),
@@ -375,7 +375,7 @@ class TotalInequalityOperator(ProperFunction):
 
 class ConjunctionOperator(ProperFunction):
 
-    adapts(named['_&_'])
+    adapts(named['&'])
 
     parameters = [
             Parameter('left'),
@@ -390,7 +390,7 @@ class ConjunctionOperator(ProperFunction):
 
 class DisjunctionOperator(ProperFunction):
 
-    adapts(named['_|_'])
+    adapts(named['|'])
 
     parameters = [
             Parameter('left'),
@@ -441,25 +441,25 @@ class ComparisonOperator(ProperFunction):
 
 class LessThanOperator(ComparisonOperator):
 
-    adapts(named['_<_'])
+    adapts(named['<'])
     direction = '<'
 
 
 class LessThanOrEqualOperator(ComparisonOperator):
 
-    adapts(named['_<=_'])
+    adapts(named['<='])
     direction = '<='
 
 
 class GreaterThanOperator(ComparisonOperator):
 
-    adapts(named['_>_'])
+    adapts(named['>'])
     direction = '>'
 
 
 class GreaterThanOrEqualOperator(ComparisonOperator):
 
-    adapts(named['_>=_'])
+    adapts(named['>='])
     direction = '>='
 
 
@@ -501,9 +501,52 @@ class CompareNumbers(Compare):
                                  direction=self.direction)
 
 
+class UnaryPlusOperator(ProperFunction):
+
+    adapts(named['+_'])
+
+    parameters = [
+            Parameter('value'),
+    ]
+
+    def correlate(self, value, syntax, parent):
+        Implementation = UnaryPlus.realize(value.domain)
+        plus = Implementation(value, self.binder, syntax, parent)
+        yield plus()
+
+
+class UnaryMinusOperator(ProperFunction):
+
+    adapts(named['-_'])
+
+    parameters = [
+            Parameter('value'),
+    ]
+
+    def correlate(self, value, syntax, parent):
+        Implementation = UnaryMinus.realize(value.domain)
+        minus = Implementation(value, self.binder, syntax, parent)
+        yield minus()
+
+
+class SubtractionOperator(ProperFunction):
+
+    adapts(named['-'])
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right, syntax, parent):
+        Implementation = Subtract.realize(left.domain, right.domain)
+        subtract = Implementation(left, right, self.binder, syntax, parent)
+        yield subtract()
+
+
 class AdditionOperator(ProperFunction):
 
-    adapts(named['_+_'])
+    adapts(named['+'])
 
     parameters = [
             Parameter('left'),
@@ -518,7 +561,7 @@ class AdditionOperator(ProperFunction):
 
 class SubtractionOperator(ProperFunction):
 
-    adapts(named['_-_'])
+    adapts(named['-'])
 
     parameters = [
             Parameter('left'),
@@ -533,7 +576,7 @@ class SubtractionOperator(ProperFunction):
 
 class MultiplicationOperator(ProperFunction):
 
-    adapts(named['_*_'])
+    adapts(named['*'])
 
     parameters = [
             Parameter('left'),
@@ -548,7 +591,7 @@ class MultiplicationOperator(ProperFunction):
 
 class DivisionOperator(ProperFunction):
 
-    adapts(named['_/_'])
+    adapts(named['/'])
 
     parameters = [
             Parameter('left'),
@@ -559,6 +602,36 @@ class DivisionOperator(ProperFunction):
         Implementation = Divide.realize(left.domain, right.domain)
         divide = Implementation(left, right, self.binder, syntax, parent)
         yield divide()
+
+
+class UnaryPlus(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, value, binder, syntax, parent):
+        self.value = value
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected argument type",
+                                   self.syntax.mark)
+
+
+class UnaryMinus(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, value, binder, syntax, parent):
+        self.value = value
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected argument type",
+                                   self.syntax.mark)
 
 
 class Add(Adapter):
@@ -907,6 +980,50 @@ class ConcatenateUntypedToUntyped(Concatenate):
     adapts(UntypedDomain, UntypedDomain)
 
 
+UnaryPlusBinding = GenericBinding.factory(UnaryPlusOperator)
+UnaryPlusExpression = GenericExpression.factory(UnaryPlusOperator)
+UnaryPlusPhrase = GenericPhrase.factory(UnaryPlusOperator)
+
+
+EncodeUnaryPlus = GenericEncode.factory(UnaryPlusOperator,
+        UnaryPlusBinding, UnaryPlusExpression)
+EvaluateUnaryPlus = GenericEvaluate.factory(UnaryPlusOperator,
+        UnaryPlusExpression, UnaryPlusPhrase)
+SerializeUnaryPlus = GenericSerialize.factory(UnaryPlusOperator,
+        UnaryPlusPhrase, "(+ %(value)s)")
+
+
+class UnaryPlusForNumber(UnaryPlus):
+
+    adapts(NumberDomain)
+
+    def __call__(self):
+        return UnaryPlusBinding(self.parent, self.value.domain, self.syntax,
+                                value=self.value)
+
+
+UnaryMinusBinding = GenericBinding.factory(UnaryMinusOperator)
+UnaryMinusExpression = GenericExpression.factory(UnaryMinusOperator)
+UnaryMinusPhrase = GenericPhrase.factory(UnaryMinusOperator)
+
+
+EncodeUnaryMinus = GenericEncode.factory(UnaryMinusOperator,
+        UnaryMinusBinding, UnaryMinusExpression)
+EvaluateUnaryMinus = GenericEvaluate.factory(UnaryMinusOperator,
+        UnaryMinusExpression, UnaryMinusPhrase)
+SerializeUnaryMinus = GenericSerialize.factory(UnaryMinusOperator,
+        UnaryMinusPhrase, "(- %(value)s)")
+
+
+class UnaryMinusForNumber(UnaryMinus):
+
+    adapts(NumberDomain)
+
+    def __call__(self):
+        return UnaryMinusBinding(self.parent, self.value.domain, self.syntax,
+                                value=self.value)
+
+
 AdditionBinding = GenericBinding.factory(AdditionOperator)
 AdditionExpression = GenericExpression.factory(AdditionOperator)
 AdditionPhrase = GenericPhrase.factory(AdditionOperator)
@@ -1231,6 +1348,96 @@ class DivideFloatByFloat(DivideNumbers):
     domain = FloatDomain()
 
 
+class RoundFunction(ProperFunction):
+
+    adapts(named['round'])
+
+    parameters = [
+            Parameter('value'),
+            Parameter('digits', IntegerDomain, is_mandatory=False),
+    ]
+
+    def correlate(self, value, digits, syntax, parent):
+        Implementation = Round.realize(value.domain)
+        round = Implementation(value, digits, self.binder, syntax, parent)
+        yield round()
+
+
+class Round(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, value, digits, binder, syntax, parent):
+        self.value = value
+        self.digits = digits
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected argument types",
+                                   self.syntax.mark)
+
+
+class RoundDecimal(Round):
+
+    adapts_none()
+
+    def __call__(self):
+        value = self.binder.cast(self.value, DecimalDomain(),
+                                 parent=self.parent)
+        digits = self.digits
+        if digits is None:
+            digits = LiteralBinding(self.parent, 0, IntegerDomain(),
+                                    self.syntax)
+        return RoundBinding(self.parent, DecimalDomain(), self.syntax,
+                            value=value, digits=digits)
+
+
+class RoundDecimalFromInteger(RoundDecimal):
+
+    adapts(IntegerDomain)
+
+
+class RoundDecimalFromDecimal(RoundDecimal):
+
+    adapts(DecimalDomain)
+
+
+class RoundFloat(Round):
+
+    adapts(FloatDomain)
+
+    def __call__(self):
+        if self.digits is not None:
+            raise InvalidArgumentError("unexpected argument", self.digits.mark)
+        return RoundBinding(self.parent, FloatDomain(), self.syntax,
+                            value=self.value, digits=None)
+
+
+RoundBinding = GenericBinding.factory(RoundFunction)
+RoundExpression = GenericExpression.factory(RoundFunction)
+RoundPhrase = GenericPhrase.factory(RoundFunction)
+
+
+EncodeRound = GenericEncode.factory(RoundFunction,
+        RoundBinding, RoundExpression)
+EvaluateRound = GenericEvaluate.factory(RoundFunction,
+        RoundExpression, RoundPhrase)
+
+
+class SerializeRound(Serialize):
+
+    adapts(RoundPhrase, Serializer)
+
+    def serialize(self):
+        value = self.serializer.serialize(self.phrase.value)
+        digits = None
+        if self.phrase.digits is not None:
+            digits = self.serializer.serialize(self.phrase.digits)
+        return self.format.round_fn(value, digits)
+
+
 class IsNullFunction(ProperFunction):
 
     adapts(named['is_null'])
@@ -1519,6 +1726,12 @@ class FormatFunctions(Format):
 
     def coalesce_fn(self, arguments):
         return "COALESCE(%s)" % ", ".join(arguments)
+
+    def round_fn(self, value, digits=None):
+        if digits is None:
+            return "ROUND(%s)" % value
+        else:
+            return "ROUND(%s, %s)" % (value, digits)
 
     def if_fn(self, predicates, values):
         assert len(predicates) >= 1

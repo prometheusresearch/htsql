@@ -401,10 +401,10 @@ class BindOperator(Bind):
 
     def bind(self, parent):
         name = self.syntax.symbol
-        if self.syntax.left is not None:
-            name = '_'+name
-        if self.syntax.right is not None:
+        if self.syntax.left is None:
             name = name+'_'
+        if self.syntax.right is None:
+            name = '_'+name
         function = self.binder.find_function(name)
         return function.bind_operator(self.syntax, parent)
 

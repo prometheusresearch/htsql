@@ -2478,6 +2478,21 @@ tests:
             :
                 /{float(string('X'))}
                 ^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{+2,+2.0,+2e0,-2,-2.0,-2e0,++1,+-1,-+1,--1}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{+2,+2.0,+2e0,-2,-2.0,-2e0,++1,+-1,-+1,--1}                |
+            -+-------------------------------------------------------------+-
+             | +2 | +2.0 | +2e0 | -2 | -2.0 | -2e0 | ++1 | +-1 | -+1 | --1 |
+            -+----+------+------+----+------+------+-----+-----+-----+-----+-
+             |  2 |  2.0 |  2.0 | -2 | -2.0 | -2.0 |   1 |  -1 |  -1 |   1 |
+                                                                     (1 row)
+
+             ----
+             /{+2,+2.0,+2e0,-2,-2.0,-2e0,++1,+-1,-+1,--1}
+             SELECT (+ 2), (+ 2.0), (+ 2.0::float8), (- 2), (- 2.0), (- 2.0::float8), (+ (+ 1)), (+ (- 1)), (- (+ 1)), (- (- 1))
         - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
           status: 200 OK
           headers:
@@ -2564,6 +2579,59 @@ tests:
             :
                 /{65536*65536}
                 ^^^^^^^^^^^^^^
+        - uri: /{round(65.536),round(65.536,0), round(65.536,1),round(65.536,-1)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{round(65.536),round(65.536,0),round(65.536,1),round(65.536,-1)}    |
+            -+----------------------------------------------------------------------+-
+             | round(65.536) | round(65.536,0) | round(65.536,1) | round(65.536,-1) |
+            -+---------------+-----------------+-----------------+------------------+-
+             |            66 |              66 |            65.5 |               70 |
+                                                                              (1 row)
+
+             ----
+             /{round(65.536),round(65.536,0),round(65.536,1),round(65.536,-1)}
+             SELECT ROUND(65.536, 0), ROUND(65.536, 0), ROUND(65.536, 1), ROUND(65.536, (- 1))
+        - uri: /{round(65535),round(65536,-3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{round(65535),round(65536,-3)} |
+            -+---------------------------------+-
+             | round(65535)  | round(65536,-3) |
+            -+---------------+-----------------+-
+             |         65535 |           66000 |
+                                         (1 row)
+
+             ----
+             /{round(65535),round(65536,-3)}
+             SELECT ROUND(CAST(65535 AS NUMERIC), 0), ROUND(CAST(65536 AS NUMERIC), (- 3))
+        - uri: /{round(35536e-3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{round(35536e-3)} |
+            -+--------------------+-
+             | round(35536e-3)    |
+            -+--------------------+-
+             |               36.0 |
+                            (1 row)
+
+             ----
+             /{round(35536e-3)}
+             SELECT ROUND(35.536::float8)
+        - uri: /{round(35536e-3,1)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid argument: unexpected argument:
+                /{round(35536e-3,1)}
+                                 ^
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

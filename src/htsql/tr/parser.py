@@ -381,7 +381,7 @@ class FactorParser(Parser):
         while symbol_tokens:
             symbol_token = symbol_tokens.pop()
             symbol = symbol_token.value
-            mark = Mark.union(symbol_token, test)
+            mark = Mark.union(symbol_token, expression)
             expression = OperatorSyntax(symbol, None, expression, mark)
         return expression
 
