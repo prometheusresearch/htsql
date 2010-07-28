@@ -2649,6 +2649,36 @@ tests:
              ----
              /{string('X'),string(string('X')),string(1),string(1.0),string(1e0)}
              SELECT 'X', 'X', CAST(1 AS TEXT), CAST(1.0 AS TEXT), CAST(1.0::float8 AS TEXT)
+        - uri: /{'HTSQL'.length(),''.length(),null().length()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{'HTSQL'.length(),''.length(),null().length()}  |
+            -+--------------------------------------------------+-
+             | 'HTSQL'.length() | ''.length() | null().length() |
+            -+------------------+-------------+-----------------+-
+             |                5 |           0 |                 |
+                                                          (1 row)
+
+             ----
+             /{'HTSQL'.length(),''.length(),null().length()}
+             SELECT CHARACTER_LENGTH('HTSQL'), CHARACTER_LENGTH(''), CHARACTER_LENGTH(NULL)
+        - uri: /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'', 'HTSQL'~null(),null()~'HTSQL',null()~null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'','HTSQL'~null(),null()~'HTSQL',null()~null()}        |
+            -+-----------------------------------------------------------------------------------------------+-
+             | 'HTSQL'~'sql' | 'HTSQL'~'HTTP' | 'HTSQL'~'' | 'HTSQL'~null() | null()~'HTSQL' | null()~null() |
+            -+---------------+----------------+------------+----------------+----------------+---------------+-
+             | true          | false          | true       |                |                |               |
+                                                                                                       (1 row)
+
+             ----
+             /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'','HTSQL'~null(),null()~'HTSQL',null()~null()}
+             SELECT (POSITION(LOWER('sql') IN LOWER('HTSQL')) > 0), (POSITION(LOWER('HTTP') IN LOWER('HTSQL')) > 0), (POSITION(LOWER('') IN LOWER('HTSQL')) > 0), (POSITION(LOWER(NULL) IN LOWER('HTSQL')) > 0), (POSITION(LOWER('HTSQL') IN LOWER(NULL)) > 0), (POSITION(LOWER(NULL) IN LOWER(NULL)) > 0)
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

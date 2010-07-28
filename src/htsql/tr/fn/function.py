@@ -1705,6 +1705,143 @@ class SerializeSwitch(Serialize):
         return self.format.switch_fn(token, items, values)
 
 
+class LengthMethod(ProperMethod):
+
+    adapts(named['length'])
+
+    parameters = [
+            Parameter('this')
+    ]
+
+    def correlate(self, this, syntax, parent):
+        Implementation = Length.realize(this.domain)
+        length = Implementation(this, self.binder, syntax, parent)
+        yield length()
+
+
+class Length(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, this, binder, syntax, parent):
+        self.this = this
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected type", self.syntax.mark)
+
+
+class TextLength(Length):
+
+    adapts_none()
+
+    def __call__(self):
+        this = self.binder.cast(self.this, StringDomain())
+        return TextLengthBinding(self.parent, IntegerDomain(), self.syntax,
+                                 this=this)
+
+
+class TextLengthOfString(TextLength):
+
+    adapts(StringDomain)
+
+
+class TextLengthOfUntyped(TextLength):
+
+    adapts(UntypedDomain)
+
+
+TextLengthBinding = GenericBinding.factory(LengthMethod)
+TextLengthExpression = GenericExpression.factory(LengthMethod)
+TextLengthPhrase = GenericPhrase.factory(LengthMethod)
+
+
+EncodeTextLength = GenericEncode.factory(LengthMethod,
+        TextLengthBinding, TextLengthExpression)
+EvaluateTextLength = GenericEvaluate.factory(LengthMethod,
+        TextLengthExpression, TextLengthPhrase)
+SerializeTextLength = GenericSerialize.factory(LengthMethod,
+        TextLengthPhrase, "CHARACTER_LENGTH(%(this)s)")
+
+
+class ContainsOperator(ProperFunction):
+
+    adapts(named['~'])
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right, syntax, parent):
+        Implementation = Contains.realize(left.domain, right.domain)
+        length = Implementation(left, right, self.binder, syntax, parent)
+        yield length()
+
+
+class Contains(Adapter):
+
+    adapts(Domain, Domain)
+
+    def __init__(self, left, right, binder, syntax, parent):
+        self.left = left
+        self.right = right
+        self.binder = binder
+        self.syntax = syntax
+        self.parent = parent
+
+    def __call__(self):
+        raise InvalidArgumentError("unexpected types", self.syntax.mark)
+
+
+class ContainsStrings(Contains):
+
+    adapts_none()
+
+    def __call__(self):
+        left = self.binder.cast(self.left, StringDomain(),
+                                parent=self.parent)
+        right = self.binder.cast(self.right, StringDomain(),
+                                 parent=self.parent)
+        return ContainsBinding(self.parent, BooleanDomain(), self.syntax,
+                               left=left, right=right)
+
+
+class ContainsStringInString(ContainsStrings):
+
+    adapts(StringDomain, StringDomain)
+
+
+class ContainsUntypedInString(ContainsStrings):
+
+    adapts(StringDomain, UntypedDomain)
+
+
+class ContainsStringInUntyped(ContainsStrings):
+
+    adapts(UntypedDomain, StringDomain)
+
+
+class ContainsUntypedInUntyped(ContainsStrings):
+
+    adapts(UntypedDomain, UntypedDomain)
+
+
+ContainsBinding = GenericBinding.factory(ContainsOperator)
+ContainsExpression = GenericExpression.factory(ContainsOperator)
+ContainsPhrase = GenericPhrase.factory(ContainsOperator)
+
+
+EncodeContains = GenericEncode.factory(ContainsOperator,
+        ContainsBinding, ContainsExpression)
+EvaluateContains = GenericEvaluate.factory(ContainsOperator,
+        ContainsExpression, ContainsPhrase)
+SerializeContains = GenericSerialize.factory(ContainsOperator,
+        ContainsPhrase, "(POSITION(LOWER(%(right)s) IN LOWER(%(left)s)) > 0)")
+
+
 class FormatFunctions(Format):
 
     weights(0)

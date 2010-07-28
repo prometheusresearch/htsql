@@ -15,7 +15,16 @@ This module adapts the SQL serializer for SQLite.
 
 from htsql.adapter import adapts, find_adapters
 from htsql.tr.frame import LeafFrame
-from htsql.tr.serializer import Serializer, SerializeLeaf
+from htsql.tr.serializer import Serializer, Format, SerializeLeaf
+
+
+class SQLiteFormat(Format):
+
+    def true(self):
+        return "1"
+
+    def false(self):
+        return "0"
 
 
 class SQLiteSerializeLeaf(SerializeLeaf):

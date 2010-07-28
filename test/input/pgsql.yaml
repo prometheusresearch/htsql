@@ -255,6 +255,11 @@ tests:
         tests:
         # String cast (from untyped, string, integer, decimal, float).
         - uri: /{string('X'),string(string('X')), string(1), string(1.0), string(1e0)}
+        # The Length method.
+        - uri: /{'HTSQL'.length(),''.length(),null().length()}
+        # The Contains operator.
+        - uri: /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'',
+                 'HTSQL'~null(),null()~'HTSQL',null()~null()}
 
   # Simple (non-aggregate) filters.
   - title: Simple filters
