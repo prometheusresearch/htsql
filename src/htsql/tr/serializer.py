@@ -154,6 +154,9 @@ class Format(Utility):
     def to_float(self, value):
         return "CAST(%s AS FLOAT)" % value
 
+    def to_string(self, value):
+        return "CAST(%s AS TEXT)" % value
+
     def is_null(self, arg):
         return "(%s IS NULL)" % arg
 
@@ -593,6 +596,15 @@ class SerializeToFloat(SerializeTo):
     def serialize(self, phrase):
         value = self.serializer.serialize(phrase)
         return self.format.to_float(value)
+
+
+class SerializeToString(SerializeTo):
+
+    adapts(StringDomain, Domain, Serializer)
+
+    def serialize(self, phrase):
+        value = self.serializer.serialize(phrase)
+        return self.format.to_string(value)
 
 
 class SerializeLiteral(SerializePhrase):

@@ -2632,6 +2632,23 @@ tests:
             invalid argument: unexpected argument:
                 /{round(35536e-3,1)}
                                  ^
+      - id: string-functions-and-operators
+        tests:
+        - uri: /{string('X'),string(string('X')), string(1), string(1.0), string(1e0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | /{string('X'),string(string('X')),string(1),string(1.0),string(1e0)} |
+            -+----------------------------------------------------------------------+-
+             | string('X')  | string('X')  | string(1)  | string(1.0) | string(1e0) |
+            -+--------------+--------------+------------+-------------+-------------+-
+             | X            | X            | 1          | 1.0         | 1           |
+                                                                              (1 row)
+
+             ----
+             /{string('X'),string(string('X')),string(1),string(1.0),string(1e0)}
+             SELECT 'X', 'X', CAST(1 AS TEXT), CAST(1.0 AS TEXT), CAST(1.0::float8 AS TEXT)
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

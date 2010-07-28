@@ -251,6 +251,11 @@ tests:
         - uri: /{round(35536e-3,1)}
           expect: 400
 
+      - title: String functions and operators
+        tests:
+        # String cast (from untyped, string, integer, decimal, float).
+        - uri: /{string('X'),string(string('X')), string(1), string(1.0), string(1e0)}
+
   # Simple (non-aggregate) filters.
   - title: Simple filters
     tests:
