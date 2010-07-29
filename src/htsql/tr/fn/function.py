@@ -164,9 +164,11 @@ class ProperFunction(Function):
                     raise InvalidArgumentError("too many arguments",
                                                argument[1].mark)
             keywords[parameter.name] = value
-        if arguments:
-            raise InvalidArgumentError("unexpected argument",
-                                       arguments[0].mark)
+        while arguments:
+            argument = arguments.pop(0)
+            if argument:
+                raise InvalidArgumentError("unexpected argument",
+                                           argument[0].mark)
         return keywords
 
 
@@ -275,6 +277,27 @@ class DateCastFunction(CastFunction):
 
     adapts(named['date'])
     output_domain = DateDomain()
+
+    def bind_function_call(self, syntax, parent):
+        if len(syntax.arguments) > 1:
+            constructor = self.binder.find_function(self.name+'!')
+            return constructor.bind_function_call(syntax, parent)
+        return super(DateCastFunction, self).bind_function_call(syntax, parent)
+
+
+class DateConstructor(ProperFunction):
+
+    adapts(named['date!'])
+
+    parameters = [
+            Parameter('year', IntegerDomain),
+            Parameter('month', IntegerDomain),
+            Parameter('day', IntegerDomain),
+    ]
+
+    def correlate(self, year, month, day, syntax, parent):
+        yield DateConstructorBinding(parent, DateDomain(), syntax,
+                                     year=year, month=month, day=day)
 
 
 class EqualityOperator(ProperFunction):
@@ -908,6 +931,22 @@ class GenericSerialize(Serialize):
         return self.template % arguments
 
 
+DateConstructorBinding = GenericBinding.factory(DateConstructor)
+DateConstructorExpression = GenericExpression.factory(DateConstructor)
+DateConstructorPhrase = GenericPhrase.factory(DateConstructor)
+
+
+EncodeDateConstructor = GenericEncode.factory(DateConstructor,
+        DateConstructorBinding, DateConstructorExpression)
+EvaluateDateConstructor = GenericEvaluate.factory(DateConstructor,
+        DateConstructorExpression, DateConstructorPhrase)
+SerializeDateConstructor = GenericSerialize.factory(DateConstructor,
+        DateConstructorPhrase,
+        "CAST(LPAD(CAST(%(year)s AS TEXT), 4, '0') || '-' ||"
+        " LPAD(CAST(%(month)s AS TEXT), 2, '0') || '-' ||"
+        " LPAD(CAST(%(day)s AS TEXT), 2, '0') AS DATE)")
+
+
 ComparisonBinding = GenericBinding.factory(ComparisonOperator)
 ComparisonExpression = GenericExpression.factory(ComparisonOperator)
 ComparisonPhrase = GenericPhrase.factory(ComparisonOperator)
@@ -1105,6 +1144,16 @@ class AddFloatToFloat(AddNumbers):
     domain = FloatDomain()
 
 
+class AddDateToInteger(Add):
+
+    adapts(DateDomain, IntegerDomain)
+
+    def __call__(self):
+        return AdditionBinding(self.parent, DateDomain(), self.syntax,
+                               left=self.left, right=self.right)
+
+
+
 SubtractionBinding = GenericBinding.factory(SubtractionOperator)
 SubtractionExpression = GenericExpression.factory(SubtractionOperator)
 SubtractionPhrase = GenericPhrase.factory(SubtractionOperator)
@@ -1184,6 +1233,24 @@ class SubtractFloatFromFloat(SubtractNumbers):
 
     adapts(FloatDomain, FloatDomain)
     domain = FloatDomain()
+
+
+class SubtractIntegerFromDate(Subtract):
+
+    adapts(DateDomain, IntegerDomain)
+
+    def __call__(self):
+        return SubtractionBinding(self.parent, DateDomain(), self.syntax,
+                                  left=self.left, right=self.right)
+
+
+class SubtractDateFromDate(Subtract):
+
+    adapts(DateDomain, DateDomain)
+
+    def __call__(self):
+        return SubtractionBinding(self.parent, IntegerDomain(), self.syntax,
+                                  left=self.left, right=self.right)
 
 
 MultiplicationBinding = GenericBinding.factory(MultiplicationOperator)

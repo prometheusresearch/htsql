@@ -157,6 +157,9 @@ class Format(Utility):
     def to_string(self, value):
         return "CAST(%s AS TEXT)" % value
 
+    def to_date(self, value):
+        return "CAST(%s AS DATE)" % value
+
     def is_null(self, arg):
         return "(%s IS NULL)" % arg
 
@@ -605,6 +608,15 @@ class SerializeToString(SerializeTo):
     def serialize(self, phrase):
         value = self.serializer.serialize(phrase)
         return self.format.to_string(value)
+
+
+class SerializeToDateFromString(SerializeTo):
+
+    adapts(DateDomain, StringDomain, Serializer)
+
+    def serialize(self, phrase):
+        value = self.serializer.serialize(phrase)
+        return self.format.to_date(value)
 
 
 class SerializeLiteral(SerializePhrase):

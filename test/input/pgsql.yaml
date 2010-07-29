@@ -261,6 +261,28 @@ tests:
         - uri: /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'',
                  'HTSQL'~null(),null()~'HTSQL',null()~null()}
 
+      - title: Date functions and operators
+        tests:
+        # Date cast (from untyped, string).
+        - uri: /{date('2010-07-28'),date(string('2010-07-28'))}
+        # Date constructor.
+        - uri: /{date(2010,07,28)}
+        # Invalid untyped->date cast.
+        - uri: /{date('X')}
+          expect: 400
+        # Invalid string->date cast.
+        - uri: /{date(string('X'))}
+          expect: 409
+        # Invalid integer->date cast.
+        - uri: /{date(1)}
+          expect: 400
+        # Invalid date constructor.
+        - uri: /{date(0,0,0)}
+          expect: 409
+        # Date arithmetic operations.
+        - uri: /{date('2010-07-28')+1,date('2010-07-28')-1,
+                 date('2010-07-28')-date('2009-07-28')}
+
   # Simple (non-aggregate) filters.
   - title: Simple filters
     tests:
