@@ -266,7 +266,7 @@ INSERT INTO ad.course (department, number, title, credits, description) VALUES
 ('arthis', 340, 'Arts of Asia', 3, 'An introduction to the history and criticism of Far Eastern art, including the art of China and Japan, fine and decorative arts.'),
 ('arthis', 710, 'Methods in Art History', 3, 'This seminar focuses on basic types of art-historical method. Some meetings focus on a single author who exemplifies a particular approach.'),
 ('arthis', 809, 'Materials and Construction in European Art', 3, 'A scientific examination of the materials and manufacturing techniques employed in Europe over the last two centuries.'),
-('arthis', 623, 'Contemporary Latin American Art', 3, 'A survey of the last twenty years of Latin American art with a focus on the Caribbean and Central America.'), 
+('arthis', 623, 'Contemporary Latin American Art', 3, 'A survey of the last twenty years of Latin American art with a focus on the Caribbean and Central America.'),
 ('artstd', 714, 'Peer Portfolio Review', 0, 'An opportunity to practice giving and receiving constructive criticism.'),
 ('artstd', 411, 'Underwater Basket Weaving', 4, 'This course provides a novel perspective on the traditional art of basketry as it is experienced in reduced gravity and in the context of fluid dynamics. Requires instructor permission and a valid c-card.'),
 ('artstd', 512, 'Art in Therapy', 3, 'Surveys methods and results of using art and craft therapy with developmentally disabled adults.'),
