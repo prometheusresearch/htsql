@@ -173,6 +173,9 @@ class Space(Code):
     def resembles(self, other):
         return False
 
+    def ordering(self, with_strong=True, with_weak=True):
+        return self.parent.ordering(with_strong, with_weak)
+
 
 class ScalarSpace(Space):
 
@@ -186,6 +189,9 @@ class ScalarSpace(Space):
     def resembles(self, other):
         return isinstance(other, ScalarSpace)
 
+    def ordering(self, with_strong=True, with_weak=True):
+        return []
+
 
 class FreeTableSpace(Space):
 
@@ -198,6 +204,19 @@ class FreeTableSpace(Space):
 
     def resembles(self, other):
         return isinstance(other, FreeTableSpace)
+
+    def ordering(self, with_strong=True, with_weak=True):
+        order = []
+        if with_strong:
+            order += self.parent.ordering(with_strong=True, with_weak=False)
+        if with_weak:
+            order += self.parent.ordering(with_strong=False, with_weak=True)
+            if self.table.primary_key is not None:
+                for column_name in self.table.primary_key.origin_column_names:
+                    column = self.table.columns[column_name]
+                    code = ColumnUnit(column, self, self.mark)
+                    order.append((code, +1))
+        return order
 
 
 class JoinedTableSpace(Space):
@@ -219,6 +238,19 @@ class JoinedTableSpace(Space):
     def resembles(self, other):
         return (isinstance(other, JoinedTableSpace) and
                 self.join is other.join)
+
+    def ordering(self, with_strong=True, with_weak=True):
+        order = []
+        if with_strong:
+            order += self.parent.ordering(with_strong=True, with_weak=False)
+        if with_weak:
+            order += self.parent.ordering(with_strong=False, with_weak=True)
+            if not self.is_contracting and self.table.primary_key is not None:
+                for column_name in self.table.primary_key.origin_column_names:
+                    column = self.table.columns[column_name]
+                    code = ColumnUnit(column, self, self.mark)
+                    order.append((code, +1))
+        return order
 
 
 class ScreenSpace(Space):
@@ -273,9 +305,18 @@ class OrderedSpace(Space):
 
     def resembles(self, other):
         return (isinstance(other, OrderedSpace) and
-                self.other == other.order and
+                self.order == other.order and
                 self.limit == other.limit and
                 self.offset == other.offset)
+
+    def ordering(self, with_strong=True, with_weak=True):
+        order = []
+        if with_strong:
+            order += self.parent.ordering(with_strong=True, with_weak=False)
+            order += self.order
+        if with_weak:
+            order += self.parent.ordering(with_strong=False, with_weak=True)
+        return order
 
 
 class Expression(Code):

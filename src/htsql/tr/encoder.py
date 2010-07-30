@@ -85,21 +85,11 @@ class EncodeSegment(Encode):
 
     def encode(self):
         space = self.encoder.relate(self.binding.base)
+        space = OrderedSpace(space, [], None, None, space.mark)
         elements = []
-        order = []
-        order_set = set()
         for binding in self.binding.elements:
             element = self.encoder.encode_element(binding)
             elements.append(element.code)
-        if space.table is not None and space.table.primary_key is not None:
-            for column_name in space.table.primary_key.origin_column_names:
-                column = space.table.columns[column_name]
-                code = ColumnUnit(column, space, self.binding.mark)
-                if code not in order_set:
-                    order.append((code, +1))
-                    order_set.add(code)
-        if order:
-            space = OrderedSpace(space, order, None, None, space.mark)
         return SegmentCode(space, elements, self.binding.mark)
 
 
@@ -159,8 +149,8 @@ class EncodeOrdered(Encode):
 
     def relate(self):
         space = self.encoder.relate(self.binding.parent)
-        order = [self.encoder.encode(binding)
-                 for binding in self.binding.order]
+        order = [(self.encoder.encode(binding), dir)
+                 for binding, dir in self.binding.order]
         limit = self.binding.limit
         offset = self.binding.offset
         return OrderedSpace(space, order, limit, offset, self.binding.mark)

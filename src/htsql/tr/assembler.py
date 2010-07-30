@@ -340,14 +340,20 @@ class AssembleOrdered(AssembleSpace):
 
     def assemble(self, baseline):
         child = self.assembler.assemble(self.space.parent, baseline)
-        for code, dir in self.space.order:
+        order = []
+        codes = set()
+        for code, dir in self.space.ordering():
+            if code not in codes:
+                order.append((code, dir))
+                codes.add(code)
+        for code, dir in order:
             child = self.assembler.inject(code, child)
         assert self.space not in child.routes
         routes = {}
         for key in child.routes:
             routes[key] = [FORWARD] + child.routes[key]
         routes[self.space] = [FORWARD] + child.routes[self.space.parent]
-        return OrderingTerm(child, self.space.order,
+        return OrderingTerm(child, order,
                             self.space.limit, self.space.offset,
                             self.space, baseline, routes, self.space.mark)
 

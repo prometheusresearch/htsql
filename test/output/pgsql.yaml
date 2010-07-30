@@ -2762,6 +2762,169 @@ tests:
              ----
              /{date('2010-07-28')+1,date('2010-07-28')-1,date('2010-07-28')-date('2009-07-28')}
              SELECT (CAST('2010-07-28' AS DATE) + 1), (CAST('2010-07-28' AS DATE) - 1), (CAST('2010-07-28' AS DATE) - CAST('2009-07-28' AS DATE))
+  - id: sorting-and-paging.
+    tests:
+    - uri: /school
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                  |
+        -+-----------------------------------------+-
+         | code | name                             |
+        -+------+----------------------------------+-
+         | art  | School of Art and Design         |
+         | bus  | School of Business               |
+         | edu  | College of Education             |
+         | egn  | School of Engineering            |
+         | la   | School of Arts, Letters, and the |
+         :      : Humanities                       :
+         | mart | School of Modern Art             |
+         | mus  | Musical School                   |
+         | ns   | School of Natural Sciences       |
+         | sc   | School of Continuing Studies     |
+                                            (9 rows)
+
+         ----
+         /school
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+    - uri: /school.limit(1)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school.limit(1)                 |
+        -+---------------------------------+-
+         | code | name                     |
+        -+------+--------------------------+-
+         | art  | School of Art and Design |
+                                     (1 row)
+
+         ----
+         /school.limit(1)
+         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC LIMIT 1) AS "school" ORDER BY 1 ASC
+    - uri: /school.limit(2,5)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school.limit(2,5)           |
+        -+-----------------------------+-
+         | code | name                 |
+        -+------+----------------------+-
+         | mart | School of Modern Art |
+         | mus  | Musical School       |
+                                (2 rows)
+
+         ----
+         /school.limit(2,5)
+         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC LIMIT 2 OFFSET 5) AS "school" ORDER BY 1 ASC
+    - uri: /course?department='acc'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course?department='acc')                                                                     |
+        -+-----------------------------------------------------------------------------------------------+-
+         | department | number | title                      | credits | description                      |
+        -+------------+--------+----------------------------+---------+----------------------------------+-
+         | acc        |    100 | Practical Bookkeeping      |       2 | A introduction to business with  |
+         :            :        :                            :         : practical bookkeeping            :
+         :            :        :                            :         : application.                     :
+         | acc        |    200 | Principles of Accounting I |       3 | The initial course in the theory |
+         :            :        :                            :         : and practice of financial        :
+         :            :        :                            :         : accounting. Topics emphasized    :
+         :            :        :                            :         : include the preparation,         :
+         :            :        :                            :         : reporting, and analysis of       :
+         :            :        :                            :         : financial data.                  :
+         | acc        |    315 | Financial Accounting       |       5 | Integration of the conceptual    |
+         :            :        :                            :         : and computational aspects of     :
+         :            :        :                            :         : asset, liability and             :
+         :            :        :                            :         : stockholders equity accounting.  :
+         | acc        |    426 | Corporate Taxation         |       3 | Concepts and methods of          |
+         :            :        :                            :         : determining federal tax          :
+         :            :        :                            :         : liability of corporations.       :
+         | acc        |    527 | Advanced Accounting        |       3 | Theory and practical             |
+         :            :        :                            :         : applications of accounting for   :
+         :            :        :                            :         : consolidated entities and        :
+         :            :        :                            :         : partnerships; includes foreign   :
+         :            :        :                            :         : currency transactions, hedging   :
+         :            :        :                            :         : and derivatives.                 :
+         | acc        |    606 | Corporate Financial Law    |       3 | Law governing business           |
+         :            :        :                            :         : corporations; fiduciary duties   :
+         :            :        :                            :         : of managers and directors in     :
+         :            :        :                            :         : situations such as mergers,      :
+         :            :        :                            :         : acquisitions, securities         :
+         :            :        :                            :         : offerings, market domination,    :
+         :            :        :                            :         : litigation.                      :
+                                                                                                  (6 rows)
+
+         ----
+         /course?department='acc'
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 1 ASC, 2 ASC
+    - uri: /course.order(credits)?department='acc'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course.order(credits)?department='acc')                                                      |
+        -+-----------------------------------------------------------------------------------------------+-
+         | department | number | title                      | credits | description                      |
+        -+------------+--------+----------------------------+---------+----------------------------------+-
+         | acc        |    100 | Practical Bookkeeping      |       2 | A introduction to business with  |
+         :            :        :                            :         : practical bookkeeping            :
+         :            :        :                            :         : application.                     :
+         | acc        |    200 | Principles of Accounting I |       3 | The initial course in the theory |
+         :            :        :                            :         : and practice of financial        :
+         :            :        :                            :         : accounting. Topics emphasized    :
+         :            :        :                            :         : include the preparation,         :
+         :            :        :                            :         : reporting, and analysis of       :
+         :            :        :                            :         : financial data.                  :
+         | acc        |    426 | Corporate Taxation         |       3 | Concepts and methods of          |
+         :            :        :                            :         : determining federal tax          :
+         :            :        :                            :         : liability of corporations.       :
+         | acc        |    527 | Advanced Accounting        |       3 | Theory and practical             |
+         :            :        :                            :         : applications of accounting for   :
+         :            :        :                            :         : consolidated entities and        :
+         :            :        :                            :         : partnerships; includes foreign   :
+         :            :        :                            :         : currency transactions, hedging   :
+         :            :        :                            :         : and derivatives.                 :
+         | acc        |    606 | Corporate Financial Law    |       3 | Law governing business           |
+         :            :        :                            :         : corporations; fiduciary duties   :
+         :            :        :                            :         : of managers and directors in     :
+         :            :        :                            :         : situations such as mergers,      :
+         :            :        :                            :         : acquisitions, securities         :
+         :            :        :                            :         : offerings, market domination,    :
+         :            :        :                            :         : litigation.                      :
+         | acc        |    315 | Financial Accounting       |       5 | Integration of the conceptual    |
+         :            :        :                            :         : and computational aspects of     :
+         :            :        :                            :         : asset, liability and             :
+         :            :        :                            :         : stockholders equity accounting.  :
+                                                                                                  (6 rows)
+
+         ----
+         /course.order(credits)?department='acc'
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC) AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC
+    - uri: /course.order(credits).limit(1,1)?department='acc'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course.order(credits).limit(1,1)?department='acc')                                           |
+        -+-----------------------------------------------------------------------------------------------+-
+         | department | number | title                      | credits | description                      |
+        -+------------+--------+----------------------------+---------+----------------------------------+-
+         | acc        |    200 | Principles of Accounting I |       3 | The initial course in the theory |
+         :            :        :                            :         : and practice of financial        :
+         :            :        :                            :         : accounting. Topics emphasized    :
+         :            :        :                            :         : include the preparation,         :
+         :            :        :                            :         : reporting, and analysis of       :
+         :            :        :                            :         : financial data.                  :
+                                                                                                   (1 row)
+
+         ----
+         /course.order(credits).limit(1,1)?department='acc'
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC) AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC LIMIT 1 OFFSET 1) AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

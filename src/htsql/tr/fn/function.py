@@ -208,6 +208,28 @@ class LimitMethod(ProperMethod):
         yield OrderedBinding(parent, [], limit, offset, syntax)
 
 
+class OrderMethod(ProperMethod):
+
+    adapts(named['order'])
+
+    parameters = [
+            Parameter('this'),
+            Parameter('order', is_list=True),
+    ]
+
+    def correlate(self, this, order, syntax, parent):
+        bindings = order
+        order = []
+        for binding in bindings:
+            domain = self.binder.coerce(binding.domain)
+            if domain is None:
+                raise InvalidArgumentError("unexpected type",
+                                           binding.mark)
+            binding = self.binder.cast(binding, domain)
+            order.append((binding, +1))
+        yield OrderedBinding(parent, order, None, None, syntax)
+
+
 class NullFunction(ProperFunction):
 
     adapts(named['null'])
