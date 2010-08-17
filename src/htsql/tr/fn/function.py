@@ -24,7 +24,8 @@ from ..binding import (LiteralBinding, OrderedBinding, FunctionBinding,
                        TotalEqualityBinding, TotalInequalityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding)
 from ..encoder import Encoder, Encode
-from ..code import FunctionExpression, AggregateUnit
+from ..code import (FunctionExpression, NegationExpression, AggregateUnit,
+                    CorrelatedUnit, LiteralExpression, ScreenSpace)
 from ..compiler import Compiler, Evaluate
 from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
@@ -897,6 +898,7 @@ class GenericEvaluate(Evaluate):
         if self.is_null_regular:
             is_nullable = False
         arguments = {}
+        children = []
         for parameter in self.function.parameters:
             value = self.expression.arguments[parameter.name]
             if not parameter.is_mandatory and value is None:
@@ -904,17 +906,19 @@ class GenericEvaluate(Evaluate):
             elif parameter.is_list:
                 argument = [self.compiler.evaluate(item, references)
                             for item in value]
+                children.extend(argument)
                 is_nullable = is_nullable or any(item.is_nullable
                                                  for item in argument)
             else:
                 argument = self.compiler.evaluate(value, references)
+                children.append(argument)
                 is_nullable = is_nullable or argument.is_nullable
             arguments[parameter.name] = argument
         for name in sorted(self.expression.arguments):
             if name not in arguments:
                 arguments[name] = self.expression.arguments[name]
         return self.phrase_class(self.expression.domain, is_nullable,
-                                 self.expression.mark, **arguments)
+                                 children, self.expression.mark, **arguments)
 
 
 class GenericSerialize(Serialize):
@@ -2047,22 +2051,8 @@ class ExistsFunction(ProperFunction):
 
 
 ExistsBinding = GenericBinding.factory(ExistsFunction)
-ExistsExpression = GenericExpression.factory(ExistsFunction)
 ExistsWrapperExpression = GenericExpression.factory(ExistsFunction)
-ExistsPhrase = GenericPhrase.factory(ExistsFunction)
 ExistsWrapperPhrase = GenericPhrase.factory(ExistsFunction)
-
-
-EncodeExists = GenericAggregateEncode.factory(ExistsFunction,
-        ExistsBinding, ExistsExpression, ExistsWrapperExpression)
-EvaluateExists = GenericEvaluate.factory(ExistsFunction,
-        ExistsExpression, ExistsPhrase)
-EvaluateExistsWrapper = GenericEvaluate.factory(ExistsFunction,
-        ExistsWrapperExpression, ExistsWrapperPhrase)
-SerializeExists = GenericSerialize.factory(ExistsFunction,
-        ExistsPhrase, "BOOL_OR(%(expression)s IS TRUE)")
-SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
-        ExistsWrapperPhrase, "COALESCE(%(expression)s, FALSE)")
 
 
 class EveryFunction(ProperFunction):
@@ -2080,22 +2070,80 @@ class EveryFunction(ProperFunction):
 
 
 EveryBinding = GenericBinding.factory(EveryFunction)
-EveryExpression = GenericExpression.factory(EveryFunction)
 EveryWrapperExpression = GenericExpression.factory(EveryFunction)
-EveryPhrase = GenericPhrase.factory(EveryFunction)
 EveryWrapperPhrase = GenericPhrase.factory(EveryFunction)
 
 
-EncodeEvery = GenericAggregateEncode.factory(EveryFunction,
-        EveryBinding, EveryExpression, EveryWrapperExpression)
-EvaluateEvery = GenericEvaluate.factory(EveryFunction,
-        EveryExpression, EveryPhrase)
+class EncodeExistsEvery(Encode):
+
+    adapts_none()
+    is_exists = False
+    is_every = False
+
+    def encode(self):
+        expression = self.encoder.encode(self.binding.expression)
+        if self.is_every:
+            expression = NegationExpression(expression, expression.mark)
+        space = self.encoder.relate(self.binding.parent)
+        plural_units = [unit for unit in expression.get_units()
+                             if not space.spans(unit.space)]
+        if not plural_units:
+            raise InvalidArgumentError("a plural expression is required",
+                                       expression.mark)
+        plural_spaces = []
+        for unit in plural_units:
+            if any(plural_space.dominates(unit.space)
+                   for plural_space in plural_spaces):
+                continue
+            plural_spaces = [plural_space
+                             for plural_space in plural_spaces
+                             if not unit.space.dominates(plural_space)]
+            plural_spaces.append(unit.space)
+        if len(plural_spaces) > 1:
+            raise InvalidArgumentError("invalid plural expression",
+                                       expression.mark)
+        plural_space = plural_spaces[0]
+        if not plural_space.spans(space):
+            raise InvalidArgumentError("invalid plural expression",
+                                       expression.mark)
+        plural_space = ScreenSpace(plural_space, expression, self.binding.mark)
+        expression = LiteralExpression(True, BooleanDomain(),
+                                       self.binding.mark)
+        aggregate = CorrelatedUnit(expression, plural_space, space,
+                                   self.binding.mark)
+        if self.is_exists:
+            wrapper = ExistsWrapperExpression(self.binding.domain,
+                                              self.binding.mark,
+                                              expression=aggregate)
+        if self.is_every:
+            wrapper = EveryWrapperExpression(self.binding.domain,
+                                             self.binding.mark,
+                                             expression=aggregate)
+        return wrapper
+
+
+class EncodeExists(EncodeExistsEvery):
+
+    adapts(ExistsBinding, Encoder)
+    is_exists = True
+
+
+EvaluateExistsWrapper = GenericEvaluate.factory(ExistsFunction,
+        ExistsWrapperExpression, ExistsWrapperPhrase)
+SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
+        ExistsWrapperPhrase, "EXISTS(%(expression)s)")
+
+
+class EncodeEvery(EncodeExistsEvery):
+
+    adapts(EveryBinding, Encoder)
+    is_every = True
+
+
 EvaluateEveryWrapper = GenericEvaluate.factory(EveryFunction,
         EveryWrapperExpression, EveryWrapperPhrase)
-SerializeEvery = GenericSerialize.factory(EveryFunction,
-        EveryPhrase, "BOOL_AND(%(expression)s IS TRUE)")
 SerializeEveryWrapper = GenericSerialize.factory(EveryFunction,
-        EveryWrapperPhrase, "COALESCE(%(expression)s, TRUE)")
+        EveryWrapperPhrase, "NOT EXISTS(%(expression)s)")
 
 
 class MinFunction(ProperFunction):

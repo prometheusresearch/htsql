@@ -114,12 +114,14 @@ class Link(Clause):
 
 class Phrase(Clause):
 
-    def __init__(self, domain, is_nullable, mark):
+    def __init__(self, domain, is_nullable, children, mark):
         assert isinstance(domain, Domain)
         assert isinstance(is_nullable, bool)
+        assert isinstance(children, listof(Phrase))
         assert isinstance(mark, Mark)
         self.domain = domain
         self.is_nullable = is_nullable
+        self.children = children
         self.mark = mark
 
     def optimize(self):
@@ -133,7 +135,8 @@ class EqualityPhrase(Phrase):
         assert isinstance(right, Phrase)
         domain = BooleanDomain()
         is_nullable = (left.is_nullable or right.is_nullable)
-        super(EqualityPhrase, self).__init__(domain, is_nullable, mark)
+        super(EqualityPhrase, self).__init__(domain, is_nullable,
+                                             [left, right], mark)
         self.left = left
         self.right = right
 
@@ -145,7 +148,8 @@ class InequalityPhrase(Phrase):
         assert isinstance(right, Phrase)
         domain = BooleanDomain()
         is_nullable = (left.is_nullable or right.is_nullable)
-        super(InequalityPhrase, self).__init__(domain, is_nullable, mark)
+        super(InequalityPhrase, self).__init__(domain, is_nullable,
+                                               [left, right], mark)
         self.left = left
         self.right = right
 
@@ -156,7 +160,8 @@ class TotalEqualityPhrase(Phrase):
         assert isinstance(left, Phrase)
         assert isinstance(right, Phrase)
         domain = BooleanDomain()
-        super(TotalEqualityPhrase, self).__init__(domain, False, mark)
+        super(TotalEqualityPhrase, self).__init__(domain, False,
+                                                  [left, right], mark)
         self.left = left
         self.right = right
 
@@ -167,7 +172,8 @@ class TotalInequalityPhrase(Phrase):
         assert isinstance(left, Phrase)
         assert isinstance(right, Phrase)
         domain = BooleanDomain()
-        super(TotalInequalityPhrase, self).__init__(domain, False, mark)
+        super(TotalInequalityPhrase, self).__init__(domain, False,
+                                                    [left, right], mark)
         self.left = left
         self.right = right
 
@@ -178,7 +184,8 @@ class ConjunctionPhrase(Phrase):
         assert isinstance(terms, listof(Phrase))
         domain = BooleanDomain()
         is_nullable = any(term.is_nullable for term in terms)
-        super(ConjunctionPhrase, self).__init__(domain, is_nullable, mark)
+        super(ConjunctionPhrase, self).__init__(domain, is_nullable,
+                                                terms, mark)
         self.terms = terms
 
     def optimize(self):
@@ -205,7 +212,8 @@ class DisjunctionPhrase(Phrase):
         assert isinstance(terms, listof(Phrase))
         domain = BooleanDomain()
         is_nullable = any(term.is_nullable for term in terms)
-        super(DisjunctionPhrase, self).__init__(domain, is_nullable, mark)
+        super(DisjunctionPhrase, self).__init__(domain, is_nullable,
+                                                terms, mark)
         self.terms = terms
 
     def optimize(self):
@@ -232,7 +240,8 @@ class NegationPhrase(Phrase):
         assert isinstance(term, Phrase)
         domain = BooleanDomain()
         is_nullable = term.is_nullable
-        super(NegationPhrase, self).__init__(domain, is_nullable, mark)
+        super(NegationPhrase, self).__init__(domain, is_nullable,
+                                             [term], mark)
         self.term = term
 
     def optimize(self):
@@ -251,7 +260,7 @@ class TuplePhrase(Phrase):
         assert isinstance(units, listof(Phrase))
         domain = BooleanDomain()
         is_nullable = False
-        super(TuplePhrase, self).__init__(domain, is_nullable, mark)
+        super(TuplePhrase, self).__init__(domain, is_nullable, units, mark)
         self.units = units
 
 
@@ -259,7 +268,7 @@ class CastPhrase(Phrase):
 
     def __init__(self, phrase, domain, is_nullable, mark):
         assert isinstance(phrase, Phrase)
-        super(CastPhrase, self).__init__(domain, is_nullable, mark)
+        super(CastPhrase, self).__init__(domain, is_nullable, [phrase], mark)
         self.phrase = phrase
 
 
@@ -267,14 +276,15 @@ class LiteralPhrase(Phrase):
 
     def __init__(self, value, domain, mark):
         is_nullable = (value is None)
-        super(LiteralPhrase, self).__init__(domain, is_nullable, mark)
+        super(LiteralPhrase, self).__init__(domain, is_nullable, [], mark)
         self.value = value
 
 
 class FunctionPhrase(Phrase):
 
-    def __init__(self, domain, is_nullable, mark, **arguments):
-        super(FunctionPhrase, self).__init__(domain, is_nullable, mark)
+    def __init__(self, domain, is_nullable, children, mark, **arguments):
+        super(FunctionPhrase, self).__init__(domain, is_nullable,
+                                             children, mark)
         self.arguments = arguments
         for key in arguments:
             setattr(self, key, arguments[key])
@@ -288,7 +298,7 @@ class LeafReferencePhrase(Phrase):
         assert isinstance(column, ColumnEntity)
         is_nullable = (column.is_nullable or not is_inner)
         super(LeafReferencePhrase, self).__init__(column.domain,
-                                                  is_nullable, mark)
+                                                  is_nullable, [], mark)
         self.frame = frame
         self.is_inner = is_inner
         self.column = column
@@ -304,7 +314,8 @@ class BranchReferencePhrase(Phrase):
         phrase = frame.select[position]
         domain = phrase.domain
         is_nullable = (phrase.is_nullable or not is_inner)
-        super(BranchReferencePhrase, self).__init__(domain, is_nullable, mark)
+        super(BranchReferencePhrase, self).__init__(domain, is_nullable,
+                                                    [], mark)
         self.frame = frame
         self.is_inner = is_inner
         self.position = position
@@ -318,7 +329,7 @@ class CorrelatedFramePhrase(Phrase):
         assert isinstance(frame, CorrelatedFrame)
         assert len(frame.select) == 1
         domain = frame.select[0].domain
-        super(CorrelatedFramePhrase, self).__init__(domain, True, mark)
+        super(CorrelatedFramePhrase, self).__init__(domain, True, [], mark)
         self.frame = frame
 
 

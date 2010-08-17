@@ -16,9 +16,10 @@ This module implements the assemble adapter.
 from ..adapter import Adapter, adapts, find_adapters
 from .code import (Code, Space, ScalarSpace, FreeTableSpace, JoinedTableSpace,
                    ScreenSpace, OrderedSpace, RelativeSpace, Expression, Unit,
-                   ColumnUnit, AggregateUnit, SegmentCode, QueryCode)
+                   ColumnUnit, AggregateUnit, CorrelatedUnit,
+                   SegmentCode, QueryCode)
 from .term import (TableTerm, ScalarTerm, FilterTerm, JoinTerm,
-                   CorrelationTerm, ProjectionTerm, OrderingTerm, WrapperTerm,
+                   CorrelationTerm, ProjectionTerm, OrderingTerm, HangingTerm,
                    SegmentTerm, QueryTerm, ParallelTie, SeriesTie,
                    LEFT, RIGHT, FORWARD)
 
@@ -319,6 +320,7 @@ class AssembleScreen(AssembleSpace):
                 left = self.assembler.inject(axes, left)
                 tie = ParallelTie(axes)
                 ties.append(tie)
+                axes = axes.parent
         else:
             space = self.space
             while not space.is_axis:
@@ -376,6 +378,8 @@ class AssembleAggregate(AssembleUnit):
     adapts(AggregateUnit, Assembler)
 
     def inject(self, term):
+        if self.code in term.routes:
+            return term
         assert term.space.spans(self.code.space)
         assert not term.space.spans(self.code.plural_space)
         assert not self.code.space.spans(self.code.plural_space)
@@ -434,6 +438,70 @@ class AssembleAggregate(AssembleUnit):
         routes[self.code] = [RIGHT]
         return JoinTerm(left, right, ties, False,
                         left.space, left.baseline, routes, left.mark)
+
+
+class AssembleCorrelated(AssembleUnit):
+
+    adapts(CorrelatedUnit, Assembler)
+
+    def inject(self, term):
+        if self.code in term.routes:
+            return term
+        assert term.space.spans(self.code.space)
+        assert not term.space.spans(self.code.plural_space)
+        assert not self.code.space.spans(self.code.plural_space)
+        assert self.code.plural_space.spans(self.code.space)
+        with_base_term = (not self.code.space.dominates(term.space))
+        if with_base_term:
+            base_space = self.code.space
+        else:
+            base_space = term.space
+            left = term
+        base_backbone = base_space.axes()
+        plural_space = self.code.plural_space.inflate(base_space)
+        baseline = plural_space
+        while not base_space.concludes(baseline.parent):
+            baseline = baseline.parent
+        baseline = baseline.axes()
+        plural_term = self.assembler.assemble(plural_space, baseline)
+        plural_term = self.assembler.inject(self.code.expression, plural_term)
+        routes = {}
+        for key in plural_term.routes:
+            routes[key] = [FORWARD] + plural_term.routes[key]
+        plural_term = HangingTerm(plural_term,
+                                  plural_term.space, plural_term.baseline,
+                                  routes, plural_term.mark)
+        ties = []
+        axes = []
+        if (base_backbone.concludes(baseline)
+                or baseline.parent in plural_term.routes):
+            axis = baseline
+            while axis in plural_term.routes:
+                axes.append(axis)
+                tie = ParallelTie(axis)
+                ties.append(tie)
+                axis = axis.parent
+        else:
+            axes.append(baseline)
+            tie = SeriesTie(baseline)
+            ties.append(tie)
+        if with_base_term:
+            assert False
+        if (base_backbone.concludes(baseline)
+                or baseline.parent in plural_term.routes):
+            for axis in axes:
+                term = self.assembler.inject(axis, term)
+        else:
+            for axis in axes:
+                term = self.assembler.inject(axis.parent, term)
+        left = term
+        right = plural_term
+        routes = {}
+        for key in left.routes:
+            routes[key] = [LEFT] + left.routes[key]
+        routes[self.code] = [RIGHT]
+        return CorrelationTerm(left, right, ties,
+                               left.space, left.baseline, routes, left.mark)
 
 
 class AssembleSegment(Assemble):

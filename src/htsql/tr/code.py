@@ -335,7 +335,8 @@ class LiteralExpression(Expression):
     def __init__(self, value, domain, mark):
         super(LiteralExpression, self).__init__(domain, mark,
                                                 hash=(self.__class__,
-                                                      value, domain))
+                                                      value,
+                                                      domain.__class__))
         self.value = value
 
 
@@ -470,7 +471,8 @@ class CastExpression(Expression):
     def __init__(self, code, domain, mark):
         super(CastExpression, self).__init__(domain, mark,
                                              hash=(self.__class__,
-                                                   code.hash, domain))
+                                                   code.hash,
+                                                   domain.__class__))
         self.code = code
 
     def get_units(self):
@@ -556,6 +558,21 @@ class AggregateUnit(Unit):
                                                   expression.hash,
                                                   plural_space.hash,
                                                   space.hash))
+        self.expression = expression
+        self.plural_space = plural_space
+        self.space = space
+
+
+class CorrelatedUnit(Unit):
+
+    def __init__(self, expression, plural_space, space, mark):
+        assert isinstance(expression, Expression)
+        assert isinstance(plural_space, Space)
+        super(CorrelatedUnit, self).__init__(expression.domain, space, mark,
+                                             hash=(self.__class__,
+                                                   expression.hash,
+                                                   plural_space.hash,
+                                                   space.hash))
         self.expression = expression
         self.plural_space = plural_space
         self.space = space

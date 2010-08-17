@@ -377,6 +377,25 @@ class SerializeBranch(SerializeFrame):
             self.serializer.serialize_aliases(link.frame)
             collection.append(link.frame)
         self.serialize_alias_collection(collection, taken_aliases)
+        children = []
+        children.extend(self.frame.select)
+        for link in self.frame.linkage:
+            if link.condition is not None:
+                children.append(link.condition)
+        if self.frame.filter is not None:
+            children.append(self.frame.filter)
+        children.extend(self.frame.group)
+        if self.frame.group_filter is not None:
+            children.extend(self.frame.group_filter)
+        children.extend(phrase for phrase, dir in self.frame.order)
+        idx = 0
+        while idx < len(children):
+            children.extend(children[idx].children)
+            idx += 1
+        for child in children:
+            if isinstance(child, CorrelatedFramePhrase):
+                self.serializer.serialize_aliases(child.frame,
+                                                  parents+[self.frame])
 
     def serialize_alias_collection(self, collection, taken_aliases):
         clauses_by_name = {}
@@ -747,6 +766,12 @@ class SerializeBranchReference(SerializePhrase):
 class SerializeCorrelatedFrame(SerializePhrase):
 
     adapts(CorrelatedFramePhrase, Serializer)
+
+    def serialize(self):
+        return self.serializer.serialize(self.phrase.frame)
+
+    def call(self):
+        return self.serializer.call(self.phrase.frame)
 
 
 serialize_adapters = find_adapters()

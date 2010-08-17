@@ -15,10 +15,10 @@ This module implements outline adapters.
 
 from ..adapter import Adapter, adapts, find_adapters
 from .term import (Term, TableTerm, ScalarTerm, FilterTerm, JoinTerm,
-                   CorrelationTerm, ProjectionTerm, OrderingTerm, WrapperTerm,
+                   CorrelationTerm, ProjectionTerm, OrderingTerm, HangingTerm,
                    SegmentTerm, QueryTerm, Tie, ParallelTie, SeriesTie)
-from .code import (Unit, ColumnUnit, AggregateUnit, Space, ScalarSpace,
-                   FreeTableSpace, JoinedTableSpace)
+from .code import (Unit, ColumnUnit, AggregateUnit, CorrelatedUnit,
+                   Space, ScalarSpace, FreeTableSpace, JoinedTableSpace)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand, LeafAppointment,
                      BranchAppointment, Connection, Attachment)
@@ -194,9 +194,9 @@ class OutlineOrdering(Outline):
                             mark=self.term.mark)
 
 
-class OutlineWrapper(Outline):
+class OutlineHanging(Outline):
 
-    adapts(WrapperTerm, Outliner)
+    adapts(HangingTerm, Outliner)
 
     def outline(self, is_inner=True, is_proper=True):
         child = self.outliner.outline(self.term.child)
@@ -276,6 +276,20 @@ class DelegateAggregate(Delegate):
         appointment = self.outliner.appoint(self.unit.expression,
                                             sketch.linkage[0].sketch,
                                             term.children[0])
+        return Demand(sketch, appointment)
+
+
+class DelegateCorrelated(Delegate):
+
+    adapts(CorrelatedUnit, Outliner)
+
+    def delegate(self, sketch, term):
+        route = term.routes[self.unit]
+        for idx in route:
+            sketch = sketch.linkage[idx].sketch
+            term = term.children[idx]
+        appointment = self.outliner.appoint(self.unit.expression,
+                                            sketch, term)
         return Demand(sketch, appointment)
 
 
@@ -382,12 +396,12 @@ class ConnectFreeTable(Connect):
     adapts(FreeTableSpace, Outliner)
 
     def connect_parallel(self):
-        table = self.term.space.table
+        table = self.tie.space.table
         if table.primary_key is None:
             raise InvalidArgumentError()
         for name in table.primary_key.origin_column_names:
             column = table.columns[name]
-            code = ColumnUnit(column, self.term.space, self.term.mark)
+            code = ColumnUnit(column, self.tie.space, self.tie.mark)
             yield (code, code)
 
     def connect_series(self):

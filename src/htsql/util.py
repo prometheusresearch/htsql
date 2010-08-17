@@ -69,12 +69,14 @@ class DB(object):
     pattern = r'''(?x)
         ^
         (?P<engine> %(key_chars)s )
-        ://
-        (?: (?P<username> %(key_chars)s )?
-            (?: : (?P<password> %(value_chars)s )? )? @ )?
-        (?: (?P<host> %(key_chars)s )?
-            (?: : (?P<port> %(key_chars)s )? )? )?
-        /
+        :
+        (?: //
+            (?: (?P<username> %(key_chars)s )?
+                (?: : (?P<password> %(value_chars)s )? )? @ )?
+            (?: (?P<host> %(key_chars)s )?
+                (?: : (?P<port> %(key_chars)s )? )? )?
+            /
+        )?
         (?P<database> %(value_chars)s )
         (?: \?
             (?P<options>

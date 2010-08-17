@@ -158,7 +158,7 @@ class OrderingTerm(UnaryTerm):
         self.offset = offset
 
 
-class WrapperTerm(UnaryTerm):
+class HangingTerm(UnaryTerm):
     pass
 
 

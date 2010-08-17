@@ -202,13 +202,20 @@ class Attachment(Node):
         assert isinstance(sketch, Sketch)
         assert isinstance(connections, listof(Connection))
         self.sketch = sketch
+        self.is_inner = sketch.is_inner
+        self.is_proper = sketch.is_proper
         self.connections = connections
         self.demand = Demand(sketch, FrameAppointment(self.sketch.mark))
 
     def get_demands(self):
-        yield self.demand
-        for connection in self.connections:
-            for demand in connection.get_demands():
-                yield demand
+        if self.is_proper:
+            yield self.demand
+            for connection in self.connections:
+                for demand in connection.get_demands():
+                    yield demand
+        else:
+            for connection in self.connections:
+                for demand in connection.left.get_demands():
+                    yield demand
 
 

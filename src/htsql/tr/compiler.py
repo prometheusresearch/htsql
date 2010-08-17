@@ -29,13 +29,14 @@ from .frame import (LeafFrame, ScalarFrame, BranchFrame, CorrelatedFrame,
                     TotalInequalityPhrase, ConjunctionPhrase,
                     DisjunctionPhrase, NegationPhrase, LiteralPhrase,
                     CastPhrase, TuplePhrase,
-                    LeafReferencePhrase, BranchReferencePhrase)
+                    LeafReferencePhrase, BranchReferencePhrase,
+                    CorrelatedFramePhrase)
 
 
 class Compiler(object):
 
-    def compile(self, sketch, *args, **kwds):
-        compile = Compile(sketch, self)
+    def compile(self, sketch, attachment=None, *args, **kwds):
+        compile = Compile(sketch, self, attachment)
         return compile.compile(*args, **kwds)
 
     def evaluate(self, expression, references):
@@ -47,9 +48,10 @@ class Compile(Adapter):
 
     adapts(Sketch, Compiler)
 
-    def __init__(self, sketch, compiler):
+    def __init__(self, sketch, compiler, attachment=None):
         self.sketch = sketch
         self.compiler = compiler
+        self.attachment = attachment
 
     def compile(self, *args, **kwds):
         raise NotImplementedError()
@@ -106,7 +108,8 @@ class CompileBranch(Compile):
 
     adapts(BranchSketch, Compiler)
 
-    def compile(self, demands, BranchFrame=BranchFrame):
+    def compile(self, demands, BranchFrame=BranchFrame,
+                external_supplies=None):
         assert isinstance(demands, listof(Demand))
         assert all((demand.sketch in self.sketch.absorbed or
                     demand.sketch in self.sketch.descended)
@@ -140,6 +143,11 @@ class CompileBranch(Compile):
         for appointment, dir in self.sketch.order:
             inner_demands.extend(appointment.get_demands())
 
+        if not self.sketch.is_proper:
+            for connection in self.attachment.connections:
+                for demand in connection.right.get_demands():
+                    inner_demands.append(demand)
+
         idx = 0
         while idx < len(inner_demands):
             demand = inner_demands[idx]
@@ -159,7 +167,12 @@ class CompileBranch(Compile):
         for attachment in self.sketch.linkage:
             child = attachment.sketch
             child_demands = demands_by_child[child]
-            child_supplies = self.compiler.compile(child, child_demands)
+            if attachment.is_proper:
+                child_supplies = self.compiler.compile(child, attachment,
+                                                       child_demands)
+            else:
+                child_supplies = self.compiler.compile(child, attachment,
+                            child_demands, external_supplies=inner_supplies)
             inner_supplies.update(child_supplies)
 
         branch_demands = reversed(demands_by_child[None])
@@ -167,106 +180,166 @@ class CompileBranch(Compile):
             phrase = self.meet(demand.appointment, inner_supplies)
             inner_supplies[demand] = phrase
 
-        select = []
-        phrase_by_expression = {}
-        for appointment in self.sketch.select:
-            if appointment.expression not in phrase_by_expression:
+        if self.sketch.is_proper:
+
+            select = []
+            phrase_by_expression = {}
+            for appointment in self.sketch.select:
+                if appointment.expression not in phrase_by_expression:
+                    phrase = self.meet(appointment, inner_supplies)
+                    phrase_by_expression[appointment.expression] = phrase
+                phrase = phrase_by_expression[appointment.expression]
+                select.append(phrase)
+            position_by_demand = {}
+            position_by_phrase = {}
+            for demand in demands:
+                if demand.appointment.is_frame:
+                    continue
+                if demand.sketch in self.sketch.absorbed:
+                    appointment = demand.appointment
+                    if appointment.expression in phrase_by_expression:
+                        phrase = phrase_by_expression[appointment.expression]
+                    else:
+                        phrase = self.meet(appointment, inner_supplies)
+                        phrase_by_expression[appointment.expression] = phrase
+                else:
+                    phrase = inner_supplies[demand]
+                if phrase not in position_by_phrase:
+                    position_by_phrase[phrase] = len(select)
+                    select.append(phrase)
+                position_by_demand[demand] = position_by_phrase[phrase]
+
+            linkage = []
+            for attachment in self.sketch.linkage:
+                if not attachment.sketch.is_proper:
+                    continue
+                link = self.link(attachment, inner_supplies)
+                linkage.append(link)
+
+            filter = None
+            conditions = []
+            for appointment in self.sketch.filter:
                 phrase = self.meet(appointment, inner_supplies)
-                phrase_by_expression[appointment.expression] = phrase
-            phrase = phrase_by_expression[appointment.expression]
-            select.append(phrase)
-        position_by_demand = {}
-        position_by_phrase = {}
-        for demand in demands:
-            if demand.appointment.is_frame:
-                continue
-            if demand.sketch in self.sketch.absorbed:
-                appointment = demand.appointment
+                conditions.append(phrase)
+            if len(conditions) == 1:
+                filter = conditions[0]
+            elif len(conditions) > 1:
+                filter = ConjunctionPhrase(conditions, self.sketch.mark)
+
+            group = []
+            for appointment in self.sketch.group:
                 if appointment.expression in phrase_by_expression:
                     phrase = phrase_by_expression[appointment.expression]
                 else:
                     phrase = self.meet(appointment, inner_supplies)
-                    phrase_by_expression[appointment.expression] = phrase
-            else:
-                phrase = inner_supplies[demand]
-            if phrase not in position_by_phrase:
-                position_by_phrase[phrase] = len(select)
-                select.append(phrase)
-            position_by_demand[demand] = position_by_phrase[phrase]
+                group.append(phrase)
 
-        linkage = []
-        for attachment in self.sketch.linkage:
-            if not attachment.sketch.is_proper:
-                continue
-            link = self.link(attachment, inner_supplies)
-            linkage.append(link)
-
-        filter = None
-        conditions = []
-        for appointment in self.sketch.filter:
-            phrase = self.meet(appointment, inner_supplies)
-            conditions.append(phrase)
-        if len(conditions) == 1:
-            filter = conditions[0]
-        elif len(conditions) > 1:
-            filter = ConjunctionPhrase(conditions, self.sketch.mark)
-
-        group = []
-        for appointment in self.sketch.group:
-            if appointment.expression in phrase_by_expression:
-                phrase = phrase_by_expression[appointment.expression]
-            else:
+            group_filter = None
+            conditions = []
+            for appointment in self.sketch.group_filter:
                 phrase = self.meet(appointment, inner_supplies)
-            group.append(phrase)
+                conditions.append(phrase)
+            if len(conditions) == 1:
+                group_filter = conditions[0]
+            elif len(conditions) > 1:
+                group_filter = ConjunctionPhrase(conditions, self.sketch.mark)
 
-        group_filter = None
-        conditions = []
-        for appointment in self.sketch.group_filter:
-            phrase = self.meet(appointment, inner_supplies)
-            conditions.append(phrase)
-        if len(conditions) == 1:
-            group_filter = conditions[0]
-        elif len(conditions) > 1:
-            group_filter = ConjunctionPhrase(conditions, self.sketch.mark)
-
-        order = []
-        for appointment, dir in self.sketch.order:
-            if appointment.expression in phrase_by_expression:
-                phrase = phrase_by_expression[appointment.expression]
-            else:
-                phrase = self.meet(appointment, inner_supplies)
-            order.append((phrase, dir))
-
-        limit = self.sketch.limit
-        offset = self.sketch.offset
-
-        frame = BranchFrame(select=select,
-                            linkage=linkage,
-                            filter=filter,
-                            group=group,
-                            group_filter=group_filter,
-                            order=order,
-                            limit=limit,
-                            offset=offset,
-                            mark=self.sketch.mark)
-
-        supplies = {}
-        reference_by_position = {}
-        for demand in demands:
-            if demand.appointment.is_frame:
-                supplies[demand] = frame
-            else:
-                position = position_by_demand[demand]
-                if position in reference_by_position:
-                    phrase = reference_by_position[position]
+            order = []
+            for appointment, dir in self.sketch.order:
+                if appointment.expression in phrase_by_expression:
+                    phrase = phrase_by_expression[appointment.expression]
                 else:
-                    mark = select[position].mark
-                    phrase = BranchReferencePhrase(frame,
-                            self.sketch.is_inner, position, mark)
-                    reference_by_position[position] = phrase
+                    phrase = self.meet(appointment, inner_supplies)
+                order.append((phrase, dir))
+
+            limit = self.sketch.limit
+            offset = self.sketch.offset
+
+            frame = BranchFrame(select=select,
+                                linkage=linkage,
+                                filter=filter,
+                                group=group,
+                                group_filter=group_filter,
+                                order=order,
+                                limit=limit,
+                                offset=offset,
+                                mark=self.sketch.mark)
+
+            supplies = {}
+            reference_by_position = {}
+            for demand in demands:
+                if demand.appointment.is_frame:
+                    supplies[demand] = frame
+                else:
+                    position = position_by_demand[demand]
+                    if position in reference_by_position:
+                        phrase = reference_by_position[position]
+                    else:
+                        mark = select[position].mark
+                        phrase = BranchReferencePhrase(frame,
+                                self.sketch.is_inner, position, mark)
+                        reference_by_position[position] = phrase
+                    supplies[demand] = phrase
+
+            return supplies
+
+        else:
+
+            supplies = {}
+            for demand in demands:
+                assert demand.appointment.is_branch
+                if demand.sketch in self.sketch.absorbed:
+                    appointment = demand.appointment
+                    phrase = self.meet(appointment, inner_supplies)
+                else:
+                    phrase = inner_supplies[demand]
+                select = [phrase]
+
+                linkage = []
+                for attachment in self.sketch.linkage:
+                    if not attachment.sketch.is_proper:
+                        continue
+                    link = self.link(attachment, inner_supplies)
+                    linkage.append(link)
+
+                filter = None
+                conditions = []
+                for appointment in self.sketch.filter:
+                    phrase = self.meet(appointment, inner_supplies)
+                    conditions.append(phrase)
+                for connection in self.attachment.connections:
+                    left = self.meet(connection.left, external_supplies)
+                    right = self.meet(connection.right, inner_supplies)
+                    condition = EqualityPhrase(left, right,
+                                               self.sketch.mark)
+                    conditions.append(condition)
+                if len(conditions) == 1:
+                    filter = conditions[0]
+                elif len(conditions) > 1:
+                    filter = ConjunctionPhrase(conditions, self.sketch.mark)
+
+                assert not self.sketch.group
+                assert not self.sketch.group_filter
+
+                order = []
+                for appointment, dir in self.sketch.order:
+                    phrase = self.meet(appointment, inner_supplies)
+                    order.append((phrase, dir))
+
+                limit = self.sketch.limit
+                offset = self.sketch.offset
+
+                frame = CorrelatedFrame(select=select,
+                                        linkage=linkage,
+                                        filter=filter,
+                                        order=order,
+                                        limit=limit,
+                                        offset=offset,
+                                        mark=self.sketch.mark)
+                phrase = CorrelatedFramePhrase(frame, self.sketch.mark)
                 supplies[demand] = phrase
 
-        return supplies
+            return supplies
 
     def meet(self, appointment, inner_supplies):
         references = {}
