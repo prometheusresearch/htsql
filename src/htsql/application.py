@@ -16,7 +16,7 @@ This module implements an HTSQL application.
 from __future__ import with_statement
 from .context import context
 from .addon import Addon
-from .adapter import AdapterRegistry
+from .adapter import ComponentRegistry
 from .util import DB
 from .wsgi import WSGI
 import pkg_resources
@@ -28,6 +28,9 @@ class Application(object):
 
     `db`
         The connection URI.
+
+    `extensions`
+        List of addons activated with the application.
     """
 
     def __init__(self, db, *extensions):
@@ -39,7 +42,7 @@ class Application(object):
         addon_names.append('engine.%s' % self.db.engine)
         addon_names.extend(extensions)
         # Import addons from the entry point group `htsql.addons`.
-        addons = []
+        self.addons = []
         for name in addon_names:
             entry_points = list(pkg_resources.iter_entry_points('htsql.addons',
                                                                 name))
@@ -52,14 +55,12 @@ class Application(object):
             if not (isinstance(addon_class, type) and
                     issubclass(addon_class, Addon)):
                 raise ImportError("invalid entry point %r" % name)
-            addons.append(addon_class)
-        # Get adapters exported by addons.
-        adapters = []
-        for addon_class in addons:
-            adapters.extend(addon_class.adapters)
-        # TODO: these should be defined by the `htsql.core` addon.
+            self.addons.append(addon_class)
+        # TODO: the rest of the attributes should be defined
+        # in the `htsql.core` addon.
         # Initialize the adapter registry.
-        self.adapter_registry = AdapterRegistry(adapters)
+        self.component_registry = ComponentRegistry()
+        # A cached copy of the introspected catalog (FIXME: catalog_registry?).
         self.cached_catalog = None
 
     def __enter__(self):

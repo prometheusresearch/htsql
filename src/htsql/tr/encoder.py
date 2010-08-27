@@ -13,7 +13,7 @@ This module implements the encoding adapter.
 """
 
 
-from ..adapter import Adapter, adapts, find_adapters
+from ..adapter import Adapter, adapts
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
@@ -248,8 +248,5 @@ class EncodeCast(Encode):
     def encode(self):
         code = self.encoder.encode(self.binding.binding)
         return CastExpression(code, self.binding.domain, self.binding.mark)
-
-
-encode_adapters = find_adapters()
 
 

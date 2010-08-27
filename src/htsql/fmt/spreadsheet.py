@@ -13,7 +13,7 @@ This module implements the CSV renderer.
 """
 
 
-from ..adapter import adapts, find_adapters
+from ..adapter import adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain)
@@ -138,8 +138,5 @@ class FormatDate(Format):
         if value is None:
             return ""
         return str(value)
-
-
-spreadsheet_adapters = find_adapters()
 
 

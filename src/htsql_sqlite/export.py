@@ -14,21 +14,15 @@ This module exports the `engine.sqlite` addon.
 
 
 from htsql.addon import Addon
-from .connect import connect_adapters
-from .split_sql import split_sql_adapters
-from .introspect import introspect_adapters
-from .tr.serializer import serializer_adapters
+import htsql_sqlite.connect
+import htsql_sqlite.split_sql
+import htsql_sqlite.introspect
+import htsql_sqlite.tr.serializer
 
 
 class ENGINE_SQLITE(Addon):
     """
     Declares the `engine.sqlite` addon.
     """
-
-    # List of adapters exported by the addon.
-    adapters = (connect_adapters +
-                split_sql_adapters +
-                introspect_adapters +
-                serializer_adapters)
 
 

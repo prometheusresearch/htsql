@@ -13,7 +13,7 @@ This module implements the plain text renderer.
 """
 
 
-from ..adapter import adapts, find_adapters
+from ..adapter import adapts
 from ..util import maybe, oneof
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
@@ -372,8 +372,5 @@ class FormatDate(Format):
         if value is None:
             return self.format_null(width)
         return ["%*s" % (-width, value)]
-
-
-text_adapters = find_adapters()
 
 

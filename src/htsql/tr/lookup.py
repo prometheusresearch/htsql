@@ -13,7 +13,7 @@ This module implements name resolution adapters.
 """
 
 
-from ..adapter import Adapter, adapts, find_adapters
+from ..adapter import Adapter, adapts
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
@@ -237,8 +237,5 @@ class LookupSieve(ProxyMixin, Lookup):
 class LookupOrdered(ProxyMixin, Lookup):
 
     adapts(OrderedBinding)
-
-
-lookup_adapters = find_adapters()
 
 

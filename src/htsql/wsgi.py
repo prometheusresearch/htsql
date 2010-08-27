@@ -10,14 +10,9 @@
 =================
 
 This module provides a handler for WSGI requests.
-
-This module exports a global variable:
-
-`wsgi_adapters`
-    List of adapters declared in the module.
 """
 
-from .adapter import Utility, weights, find_adapters
+from .adapter import Utility
 from .request import Request
 from .error import HTTPError
 
@@ -54,8 +49,5 @@ class WSGI(Utility):
         if query_string:
             uri += '?'+query_string
         return uri
-
-
-wsgi_adapters = find_adapters()
 
 

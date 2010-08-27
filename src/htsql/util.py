@@ -547,27 +547,34 @@ def trim_doc(doc):
 #
 
 
-def toposort(elements, preorder):
+def toposort(elements, order, is_total=False):
     """
     Implements topological sort.
 
-    Takes a list of elements and a preorder relation.  Returns
-    the elements reordered to satisfy the preorder.
+    Takes a list of elements and a partial order relation.  Returns
+    the elements reordered to satisfy the given order.
 
-    A (finite) preorder relation is an acyclic directed graph.
+    A (finite) order relation is an acyclic directed graph.
 
     `elements` (a list)
         A list of elements.
 
-    `preorder` (a callable)
-        A function ``preorder(element) -> [list of elements]`` representing
-        the preorder relation.  For an element `x`, ``preorder(x)`` must
+    `order` (a callable)
+        A function ``order(element) -> [list of elements]`` representing
+        the partial order relation.  For an element `x`, ``order(x)`` must
         produce a list of elements less than `x`.
+
+    `is_total` (Boolean)
+        Ensures that the given partial order is, in fact, a total order.
+
+    This function raises :exc:`RuntimeError` if `order` is not a valid
+    partial order (contains loops) or if `is_total` is set and `order`
+    is not a valid total order.
     """
     # For a description of the algorithm, see, for example,
     #   http://en.wikipedia.org/wiki/Topological_sorting
     # In short, we apply depth-first search to the DAG represented
-    # by the preorder.  As soon as the search finishes exploring
+    # by the partial order.  As soon as the search finishes exploring
     # some node, the node is added to the list.
 
     # The sorted list.
@@ -590,12 +597,13 @@ def toposort(elements, preorder):
 
         # Update the path; check for cycles.
         path.append(node)
-        assert node not in active,  \
-                "loop detected in %s" % path[path.index(node):]
+        if node in active:
+            raise RuntimeError("order is not valid: loop detected",
+                               path[path.index(node):])
         active.add(node)
 
         # Get the list of adjacent nodes.
-        adjacents = preorder(node)
+        adjacents = order(node)
         # Sort the adjacent elements according to their order in the
         # original list.  It helps to keep the original order when possible.
         adjacents = sorted(adjacents, key=(lambda i: positions[i]))
@@ -603,6 +611,12 @@ def toposort(elements, preorder):
         # Visit the adjacent nodes.
         for adjacent in adjacents:
             dfs(adjacent)
+
+        # If requested, check that the order is total.
+        if is_total and ordered:
+            if ordered[-1] not in adjacents:
+                raise RuntimeError("order is not total",
+                                   [ordered[-1], node])
 
         # Add the node to the sorted list.
         ordered.append(node)

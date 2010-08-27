@@ -10,15 +10,10 @@
 ====================
 
 This module declares the database connection adapter.
-
-This module exports a global variable:
-
-`connect_adapters`
-    List of adapters declared in this module.
 """
 
 
-from .adapter import Adapter, Utility, adapts, find_adapters
+from .adapter import Adapter, Utility, adapts
 from .domain import Domain
 
 
@@ -313,8 +308,5 @@ class Normalize(Adapter):
 
     def __call__(self, value):
         return value
-
-
-connect_adapters = find_adapters()
 
 

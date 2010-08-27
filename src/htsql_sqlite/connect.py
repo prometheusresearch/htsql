@@ -10,16 +10,11 @@
 ===========================
 
 This module implements the connection adapter for SQLite.
-
-This module exports a global variable:
-
-`connect_adapters`
-    List of adapters declared in this module.
 """
 
 
 from htsql.connect import Connect, Normalize, DBError
-from htsql.adapter import adapts, find_adapters
+from htsql.adapter import adapts
 from htsql.context import context
 from htsql.domain import BooleanDomain, StringDomain
 # In Python 2.6, the `sqlite3` module is built-in, but
@@ -82,8 +77,5 @@ class NormalizeSQLiteString(Normalize):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
         return value
-
-
-connect_adapters = find_adapters()
 
 

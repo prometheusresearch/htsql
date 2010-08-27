@@ -13,7 +13,7 @@ This module implements the assemble adapter.
 """
 
 
-from ..adapter import Adapter, adapts, find_adapters
+from ..adapter import Adapter, adapts
 from .code import (Code, Space, ScalarSpace, FreeTableSpace, JoinedTableSpace,
                    ScreenSpace, OrderedSpace, RelativeSpace, Expression, Unit,
                    ColumnUnit, AggregateUnit, CorrelatedUnit,
@@ -534,8 +534,5 @@ class AssembleQuery(Assemble):
         if self.code.segment is not None:
             segment = self.assembler.assemble(self.code.segment)
         return QueryTerm(self.code, segment, self.code.mark)
-
-
-assemble_adapters = find_adapters()
 
 

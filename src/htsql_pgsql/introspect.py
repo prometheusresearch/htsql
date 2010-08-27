@@ -10,15 +10,9 @@
 =============================
 
 This module implements the introspection adapter for PostgreSQL.
-
-This module exports a global variable:
-
-`introspect_adapters`
-    List of adapters declared in this module.
 """
 
 
-from htsql.adapter import find_adapters
 from htsql.introspect import Introspect
 from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity, ViewEntity,
                           ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
@@ -281,8 +275,5 @@ class IntrospectPGSQL(Introspect):
             if base_name == 'date':
                 return PGDateDomain(schema_name, name)
         return PGOpaqueDomain(schema_name, name)
-
-
-introspect_adapters = find_adapters()
 
 

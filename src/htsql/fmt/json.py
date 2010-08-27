@@ -13,7 +13,7 @@ This module implements the JSON renderer.
 """
 
 
-from ..adapter import adapts, find_adapters
+from ..adapter import adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain)
@@ -165,8 +165,5 @@ class FormatDate(Format):
         if value is None:
             return "null"
         return str(value)
-
-
-json_adapters = find_adapters()
 
 

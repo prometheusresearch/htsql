@@ -13,7 +13,7 @@ This module implements the translate utility.
 """
 
 
-from .adapter import Utility, find_adapters
+from .adapter import Utility
 from .tr.parser import QueryParser
 from .tr.binder import Binder
 from .tr.encoder import Encoder
@@ -41,8 +41,5 @@ class Translate(Utility):
         serializer = Serializer()
         plan = serializer.serialize(frame)
         return plan
-
-
-translate_adapters = find_adapters()
 
 

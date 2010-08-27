@@ -10,16 +10,10 @@
 =============================
 
 This module implements the SQL splitter for SQLite.
-
-This module exports a global variable:
-
-`split_sql_adapters`
-    List of adapters declared in this module.
 """
 
 
 from htsql.split_sql import SQLToken, SplitSQL
-from htsql.adapter import find_adapters
 
 
 class SplitSQLite(SplitSQL):
@@ -86,8 +80,5 @@ class SplitSQLite(SplitSQL):
             # EOF outside the statement stops the splitter.
             SQLToken(r""" $ """, only_level=0, is_end=True),
     ]
-
-
-split_sql_adapters = find_adapters()
 
 

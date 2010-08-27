@@ -10,15 +10,10 @@
 =======================
 
 This module declares the database introspector adapter.
-
-This module exports a global variable:
-
-`introspect_adapters`
-    List of adapters declared in this module.
 """
 
 
-from .adapter import Utility, find_adapters
+from .adapter import Utility
 
 
 class Introspect(Utility):
@@ -46,8 +41,5 @@ class Introspect(Utility):
         """
         # Override in implementations.
         raise NotImplementedError()
-
-
-introspect_adapters = find_adapters()
 
 

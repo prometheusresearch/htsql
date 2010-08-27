@@ -13,7 +13,7 @@ This module adapts the SQL serializer for SQLite.
 """
 
 
-from htsql.adapter import adapts, find_adapters
+from htsql.adapter import adapts
 from htsql.tr.frame import LeafFrame
 from htsql.tr.serializer import Serializer, Format, SerializeLeaf
 
@@ -33,8 +33,5 @@ class SQLiteSerializeLeaf(SerializeLeaf):
 
     def serialize(self):
         return self.format.name(self.frame.table.name)
-
-
-serializer_adapters = find_adapters()
 
 

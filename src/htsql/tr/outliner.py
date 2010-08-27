@@ -13,7 +13,7 @@ This module implements outline adapters.
 """
 
 
-from ..adapter import Adapter, adapts, find_adapters
+from ..adapter import Adapter, adapts
 from .term import (Term, TableTerm, ScalarTerm, FilterTerm, JoinTerm,
                    CorrelationTerm, ProjectionTerm, OrderingTerm, HangingTerm,
                    SegmentTerm, QueryTerm, Tie, ParallelTie, SeriesTie)
@@ -434,8 +434,5 @@ class ConnectJoinedTable(Connect):
         if self.tie.is_reverse:
             left_codes, right_codes = right_codes, left_codes
         return zip(left_codes, right_codes)
-
-
-outline_adapters = find_adapters()
 
 

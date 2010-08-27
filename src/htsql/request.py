@@ -13,7 +13,7 @@ This module implements the request utility.
 """
 
 
-from .adapter import Utility, find_adapters
+from .adapter import Utility, Realization
 from .connect import DBError, Connect, Normalize
 from .error import EngineError
 from .tr.parser import QueryParser
@@ -81,8 +81,8 @@ class Request(Utility):
     @classmethod
     def build(cls, environ):
         # FIXME: override `classmethod` in `htsql.adapter`?
-        if not cls.is_realized:
-            cls = cls.realize()
+        if not issubclass(cls, Realization):
+            cls = cls.realize(())
             return cls.build(environ)
         path_info = environ['PATH_INFO']
         query_string = environ.get('QUERY_STRING')
@@ -157,8 +157,5 @@ class Request(Utility):
 
     def __call__(self, environ):
         return self.render(environ)
-
-
-request_adapters = find_adapters()
 
 

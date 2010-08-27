@@ -10,15 +10,10 @@
 ======================
 
 This module declares the SQL splitter adapter.
-
-This module exports a global variable:
-
-`sql_splitter_adapters`
-    List of adapters declared in this module.
 """
 
 
-from .adapter import Utility, find_adapters
+from .adapter import Utility
 from .util import maybe
 import re
 
@@ -164,8 +159,5 @@ class SplitSQL(Utility):
         # Some sanity checks.
         assert start == len(input)
         assert not values
-
-
-split_sql_adapters = find_adapters()
 
 

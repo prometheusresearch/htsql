@@ -9,343 +9,423 @@
 :mod:`htsql.adapter`
 ====================
 
-This module provides a mechanism for pluggable multiple dispatch.
+This module provides a mechanism for pluggable extensions.
 """
 
 
-from .util import listof, subclassof, aresubclasses, toposort
+from .util import listof, aresubclasses, toposort
 from .context import context
 import sys
 
 
-class Adapter(object):
+class Component(object):
     """
-    Implements a polymorphic class.
+    A unit of extension in the HTSQL component architecture.
 
-    Recall that a *polymorphic function* is a set of functions
-    with the same name and the number of arguments.  When a polymorphic
-    function is called, the implementation is chosen based on the
-    types of the arguments.
+    *HTSQL component architecture* allows you to:
 
-    :class:`Adapter` implements the concept of polymorphic functions.
+    - declare *interfaces* that provide various services;
 
-    A *signature* is a tuple which elements are Python classes or types.
-    The length of the tuple is called the signature *arity*.
+    - define *components* implementing the interfaces;
 
-    Given two signatures of the same arity, we say that the first
-    signature is more *specific* than the second signature if each
-    type in the first signature is a subclass of the corresponding
-    type in the second signature.  In this case, we may also say
-    that the second signature is *compatible* with the first signature.
-    
-    Note that specificity establishes a partial order relation on
-    the sets of signatures of the same arity.
+    - given an interface and a *dispatch key*, produce a component which
+      implements the interface for the given key.
 
-    An *adapter* is a class with an associated signature.
-    
-    An adapter must be a subclass of :class:`Adapter`.  The adapter
-    signature indicates the types of the constructor arguments.
-    
-    An utility is an adapter with an empty signature.  That is,
-    the utility signature has the arity equal to `0`.
-    
-    An utility should be a subclass of :class:`Utility`.
-
-    Suppose we defined a base adapter that declares some methods
-    and a group of its subclasses implementing the methods.  In this
-    case, the base adapter is called an *interface*, and its subclasses
-    are called *implementations* of the interface.  All implementation
-    signatures must have the same arity and the interface signature
-    must be equal to or less specific that the implementation signatures.
-
-    Note that the specificity relation on signatures induces
-    a partial order relation on interfaces.  Given two implementations,
-    we say that the first implementation dominates the second one if
-    the signature of the first implementation is more specific than
-    the signature of the second implementation.  However it is not
-    forbidden to have two or more implementations with the same signature.
-    In fact, all utilities have the same signature.  To handle the case
-    when signatures cannot establish dominancy, we permit specifying
-    dominancy relation explicitly.
-
-    Now assume that given an interface and a list of arguments,
-    we need to construct a class implementing the interface for the
-    given arguments.  Such class is called a *realization* of
-    the interface.  A realization is class that inherits from of all
-    implementations which signatures are compatible with the arguments.
-    The implementations are ordered according to dominancy relation.
-
-    :class:`Adapter` is an abstract class; to add a new interface
-    or an implementation, create a subclass of :class:`Adapter`
-    and override the following class attributes:
-
-    `signature` (a tuple of types)
-        The adapter signature.
-
-        You may also set the signature using the :func:`adapts` function.
-
-    `weight` (an integer or a float number)
-        The weight of the adapter.
-
-        The adapter weight establishes dominancy between implementations
-        with the same signature.  A "heavier" adapter dominates a "lighter"
-        adapter.
-
-        You may also set the weight using the :func:`weights` function.
-
-    `dominated_adapters` (a list of :class:`Adapter` subclasses)
-        The list of implementations dominated by the adapter.
-
-        You may also set this parameter using the :func:`dominates` function.
-
-    `dominating_adapters` (a list of :class:`Adapter` subclasses)
-        The list of implementations dominating the adapter.
-
-        You may also set this parameter using the :func:`dominated_by`
-        function.
+    Three types of interfaces are supported: *utilities*, *adapters* and
+    *protocols*; see :class:`Utility`, :class:`Adapter`, :class:`Protocol`
+    respectively.
     """
 
-    # Override in subclasses.
-    signature = None
-    weight = 1
-    dominated_adapters = []
-    dominating_adapters = []
-
-    # If set, indicates that the class was generated as a realization.
-    is_realized = False
-
-    def __new__(cls, *args, **kwds):
+    @staticmethod
+    def components():
         """
-        Adapts the interface for the given arguments.
+        Produce a list of all components of the active application.
         """
-        # Bypass realizations.
-        if cls.is_realized:
-            return super(Adapter, cls).__new__(cls)
-        # Extract polymorphic parameters.
-        assert cls.signature is not None and len(args) >= len(cls.signature)
-        objects = args[:len(cls.signature)]
-        # Specialize the interface for the given parameters.
-        realization = cls.realize(*objects)
-        # Create an instance of the realization.
-        return super(Adapter, realization).__new__(realization)
+        # Get the component registry of the active application.
+        registry = context.app.component_registry
+        # A shortcut: return cached components.
+        if registry.components is not None:
+            return registry.components
+        # All modules exported by the addons of the active application.
+        modules = set()
+        for addon in context.app.addons:
+            # An addon exports all modules defined in the same package.
+            package = addon.__module__
+            if '.' in package:
+                package = package.rsplit('.', 1)[0]
+            for module in sys.modules:
+                if module == package or module.startswith(package+'.'):
+                    modules.add(module)
+        # A list of `Component` subclasses defined in the `modules`.
+        components = [Component]
+        idx = 0
+        while idx < len(components):
+            for subclass in components[idx].__subclasses__():
+                # Skip realizations.
+                if issubclass(subclass, Realization):
+                    continue
+                if subclass.__module__ in modules:
+                    components.append(subclass)
+            idx += 1
+        # Cache and return the components.
+        registry.components = components
+        return components
 
     @classmethod
-    def realize(cls, *objects):
+    def implementations(interface):
         """
-        Builds a realization for the given polymorphic parameters.
+        Produces a list of all components implementing the interface.
         """
-        # Determine the signature.
-        signature = tuple(type(obj) for obj in objects)
-        # Get the active HTSQL application.
-        app = context.app
-        # Build the realization for the given signature.
-        return app.adapter_registry.specialize(cls, signature)
+        # Get the component registry of the active application.
+        registry = context.app.component_registry
+        # A shortcut: return cached implementations.
+        try:
+            return registry.implementations[interface]
+        except KeyError:
+            pass
+        # Get all active components.
+        components = interface.components()
+        # Leave only components implementing the interface.
+        implementations = [component
+                           for component in components
+                           if component.implements(interface)]
+        # Cache and return the implementations.
+        registry.implementations[interface] = implementations
+        return implementations
 
-
-class Utility(Adapter):
-    """
-    Implements an adapter with an empty signature.
-    """
-
-    signature = ()
-
-
-class AdapterRegistry(object):
-    """
-    Contains all adapters used by an HTSQL application.
-
-    `adapters` (a list of :class:`Adapter` subclasses)
-        List of active adapters.
-    """
-
-    def __init__(self, adapters):
-        # Sanity check on the argument.
-        assert isinstance(adapters, listof(subclassof(Adapter)))
-        # List of active adapters.
-        self.adapters = adapters
-        # A mapping: interface -> (signature -> realization).
-        # It is populated lazily by `specialize()`.
-        self.realizations = {}
-
-    def specialize(self, interface, signature):
+    @classmethod
+    def realize(interface, dispatch_key):
         """
-        Produces a realization of an interface for the given signature.
-
-        `interface` (a subclass of :class:`Adapter`)
-            The interface to adapt.
-
-        `signature` (a tuple of types)
-            The types of the polymorphic parameters.
+        Produces a realization of the interface for the given dispatch key.
         """
-        # Build the mapping signature -> realization for the given interface.
-        if interface not in self.realizations:
-            self.populate_interface(interface)
-        realization_by_signature = self.realizations[interface]
+        # Get the component registry of the active application.
+        registry = context.app.component_registry
 
-        # Find the best realization for the given signature.
-        if signature not in realization_by_signature:
-            self.populate_signature(interface, signature)
-        realization = realization_by_signature[signature]
+        # A shortcut: if the realization for the given interface and the
+        # dispatch key is already built, return it.
+        try:
+            return registry.realizations[interface, dispatch_key]
+        except KeyError:
+            pass
 
+        # Get the implementations of the interface.
+        implementations = interface.implementations()
+        # Leave only implementations matching the dispatch key.
+        implementations = [implementation
+                           for implementation in implementations
+                           if implementation.matches(dispatch_key)]
+        # Note: commented out since we force the interface component
+        # to match any dispatch keys.
+        ## Check that we have at least one matching implementation.
+        #if not implementations:
+        #    raise RuntimeError("when realizing interface %s.%s for key %r,"
+        #                       " unable to find matching implementations"
+        #                       % (interface.__module__, interface.__name__,
+        #                          dispatch_key))
+
+        # Generate a function:
+        # order(implementation) -> [dominated implementations].
+        order_graph = {}
+        for dominating in implementations:
+            order_graph[dominating] = []
+            for dominated in implementations:
+                if dominating is dominated:
+                    continue
+                if dominating.dominates(dominated):
+                    order_graph[dominating].append(dominated)
+        order = (lambda implementation: order_graph[implementation])
+
+        # Now we need to order the implementations unambiguously.
+        try:
+            implementations = toposort(implementations, order, is_total=True)
+        except RuntimeError, exc:
+            # We intercept exceptions to provide a nicer error message.
+            # `message` is an explanation we discard; `conflict` is a list
+            # of implementations which either form a domination loop or
+            # have no ordering relation between them.
+            message, conflict = exc
+            interface_name = "%s.%s" % (interface.__module__,
+                                        interface.__name__)
+            component_names = ", ".join("%s.%s" % (component.__module__,
+                                                   component.__name__)
+                                        for component in conflict)
+            if conflict[0] is conflict[-1]:
+                problem = "an ordering loop"
+            else:
+                problem = "ambiguous ordering"
+            # Report a problem.
+            raise RuntimeError("when realizing interface %s for key %r,"
+                               " detected %s in components: %s"
+                               % (interface_name, dispatch_key,
+                                  problem, component_names))
+
+        # We want the most specific implementations first.
+        implementations.reverse()
+
+        # Force the interface component to the list of implementations.
+        if interface not in implementations:
+            implementations.append(interface)
+
+        # Generate the name of the realization of the form:
+        #   interface[implementation1,implementation2,...]
+        module = interface.__module__
+        name = "%s[%s]" % (interface.__name__,
+                           ",".join("%s.%s" % (component.__module__,
+                                               component.__name__)
+                                    for component in implementations
+                                    if component is not interface))
+        # Get the list of bases for the realization.
+        bases = tuple([Realization] + implementations)
+        # Class attributes for the realization.
+        attributes = {
+                '__module__': module,
+                'interface': interface,
+                'dispatch_key': dispatch_key,
+        }
+        # Generate the realization.
+        realization = type(name, bases, attributes)
+
+        # Cache and return the realization.
+        registry.realizations[interface, dispatch_key] = realization
         return realization
 
-    def populate_interface(self, interface):
-        # For the given interface, build the mapping:
-        #   signature -> realization.
+    @classmethod
+    def implements(component, interface):
+        """
+        Tests if the component implements the interface.
+        """
+        return issubclass(component, interface)
 
-        # Sanity check on the interface.  Check if it is, indeed, an adapter.
-        assert isinstance(interface, subclassof(Adapter))
-        # Check if the interface is active in the current application.
-        assert interface in self.adapters
-        # Check that the adapter signature is defined.
-        assert interface.signature is not None
+    @classmethod
+    def dominates(component, other):
+        """
+        Tests if the component dominates another component.
+        """
+        # Refine in subclasses.
+        return issubclass(component, other)
 
-        # Find implementations for the given interface among active adapters.
-        implementations = [adapter for adapter in self.adapters
-                                   if issubclass(adapter, interface)
-                                   and adapter.signature is not None]
+    @classmethod
+    def matches(component, dispatch_key):
+        """
+        Tests if the component matches a dispatch key.
+        """
+        # Override in subclasses.
+        return False
 
-        # Sanity check on the implementations.
-        for adapter in implementations:
-            # Check if the signature is valid.
-            assert adapter.signature is not None
-            assert len(adapter.signature) == len(interface.signature)
-            assert aresubclasses(adapter.signature, interface.signature)
-            # Check if the dominated and dominating adapters are
-            # specified correctly.
-            assert all(dominated in implementations
-                       for dominated in adapter.dominated_adapters)
-            assert all(dominating in implementations
-                       for dominating in adapter.dominating_adapters)
+    @classmethod
+    def dispatch(interface, *args, **kwds):
+        """
+        Extract the dispatch key from the constructor arguments.
+        """
+        # Override in subclasses.
+        return None
 
-        # Build a mapping: master -> [slave, ...], where `master` dominates
-        # its `slave` adapters.  `dominates` establishes a partial preorder
-        # relation on the set of implementations.
-        dominates = {}
-        # A loop over potential masters.
-        for master in implementations:
-            # A list of adapters dominated by `master`.
-            dominates[master] = []
-            # The interface adapter never dominates its implementations.
-            if master is interface:
-                continue
-            # A loop over potential slaves.
-            for slave in implementations:
-                if master is slave:
-                    continue
-                # Indicates if `master` dominates `slave`.
-                is_dominated = False
-                # A subclass always dominates its superclasses.  In particular,
-                # the interface adapter is dominated by all implementations.
-                if issubclass(master, slave):
-                    is_dominated = True
-                # Check if dominance is specified explicitly.
-                if slave in master.dominated_adapters:
-                    is_dominated = True
-                if master in slave.dominating_adapters:
-                    is_dominated = True
-                # For implementations with identical signatures,
-                # dominance is determined by `weight`.
-                if master.signature == slave.signature:
-                    if master.weight > slave.weight:
-                        is_dominated = True
-                # Otherwise, an adapter with a more specific signature
-                # dominates an adapter with a less specific signature.
+    def __new__(interface, *args, **kwds):
+        # Extract polymorphic parameters.
+        dispatch_key = interface.dispatch(*args, **kwds)
+        # Realize the interface.
+        realization = interface.realize(dispatch_key)
+        # Create an instance of the realization.
+        return super(Component, realization).__new__(realization)
+
+
+class Realization(Component):
+    """
+    A realization of an interface for some dispatch key.
+    """
+
+    interface = None
+    dispatch_key = None
+
+    def __new__(cls, *args, **kwds):
+        # Bypass `Component.__new__`.
+        return object.__new__(cls)
+
+
+class Utility(Component):
+    """
+    Implements utility interfaces.
+
+    An utility is an interface with a single realization.
+
+    This is an abstract class; to declare an utility interface, create
+    a subclass of :class:`Utility`.  To add an implementation of the
+    interface, create a subclass of the interface class.
+
+    The following example declared an interface ``SayHello`` and provide
+    an implementation ``PrintHello`` that prints ``'Hello, World!`` to
+    the standard output::
+
+        class SayHello(Utility):
+            def __call__(self):
+                raise NotImplementedError("interface is not implemented")
+
+        class PrintHello(SayHello):
+            def __call__(self):
+                print "Hello, World!"
+
+        def hello():
+            hello = SayHello()
+            hello()
+
+        >>> hello()
+        Hello, World!
+    """
+
+    @classmethod
+    def matches(component, dispatch_key):
+        # For an utility, the dispatch key is always a 0-tuple.
+        assert dispatch_key == ()
+        return True
+
+    @classmethod
+    def dispatch(interface, *args, **kwds):
+        # The dispatch key is always a 0-tuple.
+        return ()
+
+
+class Adapter(Component):
+    """
+    Implements adapter interfaces.
+
+    An adapter interface provides mechanism for polymorphic dispatch
+    based on the types of the arguments.
+
+    This is an abstract class; to declare an adapter interface, create
+    a subclass of :class:`Adapter` and indicate the most generic type
+    signature of the polymorphic arguments using function :func:`adapts`.
+
+    To add an implementation of an adapter interface, create a subclass
+    of the interface class and indicate the matching type signatures
+    using functions :func:`adapts`, :func:`adapts_many`, or
+    :func:`adapts_none`.
+
+    Class attributes:
+
+    `signatures` (a list of signatures)
+        List of signatures that the component matches.
+    
+    `arity` (an integer)
+        Number of polymorphic arguments.
+
+    The following example declares an adapter interface ``Format``
+    and implements it for several data types::
+
+        class Format(Adapter):
+            adapts(object)
+            def __init__(self, value):
+                self.value = value
+            def __call__(self):
+                # The default implementation.
+                return str(self.value)
+
+        class FormatString(Format):
+            adapts(str)
+            def __call__(self):
+                # Display alphanumeric values unquoted, the others quoted.
+                if self.value.isalnum():
+                    return self.value
                 else:
-                    if aresubclasses(master.signature, slave.signature):
-                        is_dominated = True
-                # Update the list of adapters dominated by `master`.
-                if is_dominated:
-                    dominates[master].append(slave)
+                    return repr(self.value)
 
-        # A list of signatures for which we pre-build realizations.
-        signatures = []
-        # The list consists of signatures of all adapters.
-        for adapter in implementations:
-            if adapter.signature not in signatures:
-                signatures.append(adapter.signature)
+        class FormatList(Format):
+            adapts(list)
+            def __call__(self):
+                # Apply `format` to the list elements.
+                return "[%s]" % ",".join(format(item) for item in self.value)
 
-        # A mapping: signature -> realization.
-        realization_by_signature = {}
-        # For each signature, build a realization.
-        for signature in signatures:
-            # The realization inherits from all implementations with
-            # a compatible signature.
-            bases = [adapter for adapter in implementations
-                             if aresubclasses(signature, adapter.signature)]
-            # Now we need to determine the correct order of the bases.
-            # The order of the bases must conform the preorder established
-            # by the dominance relation.  Moreover, when restricted to
-            # the set of bases, the preorder relation must become total.
-            # Apply topological sort to order the base according to
-            # the dominance relation.  Note that `toposort` will complain
-            # if the dominance is not a proper preorder (there are cycles).
-            bases = toposort(bases, (lambda adapter: dominates[adapter]))
-            bases = tuple(reversed(bases))
-            # Check if the preorder is total.
-            for idx in range(1, len(bases)):
-                assert bases[idx] in dominates[bases[idx-1]]
-            # Build and save the realization.
-            name = bases[0].__name__
-            realization = type(name, bases, {'is_realized': True})
-            realization_by_signature[signature] = realization
+        def format(value):
+            format = Format(value)
+            return format()
 
-        # Set realizations for the given interface.
-        self.realizations[interface] = realization_by_signature
+        >>> print format(123)
+        123
+        >>> print format("ABC")
+        ABC
+        >>> print format("Hello, World!")
+        'Hello, World!'
+        >>> print format([123, "ABC", "Hello, World!"])
+        [123, ABC, 'Hello, World!']
+    """
 
-    def populate_signature(self, interface, signature):
-        # Find a suitable realization for the given signature.
+    signatures = []
+    arity = 0
 
-        # Sanity check on the arguments.
-        assert len(interface.signature) == len(signature)
-        assert aresubclasses(signature, interface.signature)
+    @classmethod
+    def dominates(component, other):
+        # A component implementing an adapter interface dominates
+        # over another component implementing the same interface
+        # if one of the two conditions hold:
+        
+        # (1) The component is a subclass of the other component.
+        if issubclass(component, other):
+            return True
 
-        # The mapping: signature -> realization.
-        realization_by_signature = self.realizations[interface]
-        # Contains compatible and most specific realization signatures.
-        candidates = []
-        # Loop over signatures of existing realizations.
-        for candidate in realization_by_signature:
-            # Skip incompatible signatures.
-            if not aresubclasses(signature, candidate):
-                continue
-            # Skip signatures less specific than current candidates.
-            if any(aresubclasses(other, candidate) for other in candidates):
-                continue
-            # We got a new candidate.  Now remove other candidates that
-            # are less specific than the one we found.
-            candidates = [other for other in candidates
-                                if not aresubclasses(candidate, other)]
-            # Add the candidate to the list.
-            candidates.append(candidate)
-        # Now `candidates` should contain the most specific realization
-        # among all realizations compatible with the given signature.
-        assert len(candidates) == 1
-        best_candidate = candidates[0]
+        # (2) The signature of the component is more specific than
+        #     the signature of the other component.
+        # Note: In case if the component has more than one signature,
+        # we require that each of the signatures is equal or more specific
+        # than some signature of the other component and at least one
+        # signature is strictly more specific than some signature
+        # of the other component.
+        is_greater = True
+        is_strict = False
+        for self_signature in component.signatures:
+            for other_signature in other.signatures:
+                if aresubclasses(self_signature, other_signature):
+                    if self_signature != other_signature:
+                        is_strict = True
+                    break
+            else:
+                is_greater = False
+        if is_greater and is_strict:
+            return True
 
-        # Remember the realization for the given signature.
-        realization = realization_by_signature[best_candidate]
-        realization_by_signature[signature] = realization
+        return False
+
+    @classmethod
+    def matches(component, dispatch_key):
+        # For an adapter interface, the dispatch key is a signature.
+        # A component matches the dispatch key the component signature
+        # is equal or less specific than the dispatch key.
+        # Note: if the component has more than one signature, it
+        # matches the dispatch key if at least one of its signatures
+        # is equal or less specific than the dispatch key.
+        assert isinstance(list(dispatch_key), listof(type))
+        return any(aresubclasses(dispatch_key, signature)
+                   for signature in component.signatures)
+
+    @classmethod
+    def dispatch(interface, *args, **kwds):
+        # The types of the leading arguments of the constructor
+        # form a dispatch key.
+        assert interface.arity <= len(args)
+        signature = tuple(type(arg) for arg in args[:interface.arity])
+        return signature
 
 
-def adapts(*types):
+def adapts(*signature):
     """
     Specifies the adapter signature.
 
-    Use it in the namespace of the adapter, for example::
+    The component matches the specified or any more specific
+    signature.
+
+    Use it in the namespace of the component, for example::
 
         class DoSmth(Adapter):
 
             adapts(T1, T2, ...)
     """
-    assert isinstance(list(types), listof(type))
+    assert isinstance(list(signature), listof(type))
     frame = sys._getframe(1)
-    frame.f_locals['signature'] = types
+    frame.f_locals['signatures'] = [signature]
+    frame.f_locals['arity'] = len(signature)
 
 
 def adapts_none():
     """
-    Indicates that the adapter has no signature.
+    Indicates that the adapter does not match any signatures.
 
     Use it in the namespace of the adapter, for example::
 
@@ -354,72 +434,123 @@ def adapts_none():
             adapts_none()
     """
     frame = sys._getframe(1)
-    frame.f_locals['signature'] = None
+    frame.f_locals['signatures'] = []
 
 
-def dominates(*adapters):
+def adapts_many(*signatures):
     """
-    Specifies the implementations dominated by the adapter.
+    Specifies signatures of the adapter.
+
+    The component matches any of the specified signatures as well
+    all more specific signatures.
 
     Use it in the namespace of the adapter, for example::
 
         class DoSmth(Adapter):
 
-            dominates(A1, A2, ...)
+            adapts_many((T11, T12, ...),
+                        (T21, T22, ...),
+                        ...)
     """
-    assert isinstance(list(adapters), listof(subclassof(Adapter)))
+    # Normalize the signatures.
+    signatures = [signature if isinstance(signature, tuple) else (signature,)
+                  for signature in signatures]
+    assert len(signatures) > 0
+    arity = len(signatures[0])
+    assert all(len(signature) == arity for signature in signatures)
     frame = sys._getframe(1)
-    frame.f_locals['dominated_adapters'] = adapters
+    frame.f_locals['signatures'] = signatures
+    frame.f_locals['arity'] = arity
 
 
-def dominated_by(*adapters):
+class Protocol(Component):
     """
-    Specifies the implementations that dominate the adapter.
+    Implements protocol interfaces.
 
-    Use it in the namespace of the adapter, for example::
+    A protocol interface provides mechanism for name-based dispatch.
 
-        class DoSmth(Adapter):
+    This is an abstract class; to declare a protocol interface, create
+    a subclass of :class:`Protocol`.
 
-            dominated_by(A1, A2, ...)
+    To add an implementation of a protocol interface, create a subclass
+    of the interface class and specify its name using function :func:`named`.
+
+    Class attributes:
+
+    `names` (a list of strings)
+        List of names that the component matches.
+
+    The following example declares a protocol interface ``Weigh``
+    and adds several implementations::
+
+        class Weigh(Protocol):
+            def __init__(self, name):
+                self.name = name
+            def __call__(self):
+                # The default implementation.
+                return -1
+
+        class WeighAlice(Weigh):
+            named("Alice")
+            def __call__(self):
+                return 150
+
+        class WeighBob(Weigh):
+            named("Bob")
+            def __call__(self):
+                return 160
+
+        def weigh(name):
+            weigh = Weigh(name)
+            return weigh()
+
+        >>> weigh("Alice")
+        150
+        >>> weigh("Bob")
+        160
+        >>> weigh("Clark")
+        -1
     """
-    assert isinstance(list(adapters), listof(subclassof(Adapter)))
+
+    names = []
+
+    @classmethod
+    def dispatch(interface, name, *args, **kwds):
+        # The first argument of the constructor is the protocol name.
+        return name
+
+    @classmethod
+    def matches(component, dispatch_key):
+        # The dispatch key is the protocol name.
+        assert isinstance(dispatch_key, str)
+        return (dispatch_key in component.names)
+
+
+def named(*names):
+    """
+    Specifies the names of the protocol.
+
+    Use it in the namespace of the protocol, for example::
+
+        class DoSmth(Protocol):
+
+            named("...")
+    """
     frame = sys._getframe(1)
-    frame.f_locals['dominating_adapters'] = adapters
+    frame.f_locals['names'] = list(names)
 
 
-def weights(value):
+class ComponentRegistry(object):
     """
-    Speficies the adapter weight.
-
-    Use it in the namespace of the adapter, for example::
-    
-        class DoSmth(Adapter):
-
-            weights(1)
+    Contains cached components and realizations.
     """
-    assert isinstance(value, (int, float))
-    frame = sys._getframe(1)
-    frame.f_locals['weight'] = value
 
-
-def find_adapters():
-    """
-    Returns a list of adapters defined in the current namespace.
-    """
-    # We assume `frame_adapters` is called in the context of a module.
-    frame = sys._getframe(1)
-    # The module namespace.
-    locals = frame.f_locals
-    # The name of the current module.
-    module_name = locals['__name__']
-    # The list of adapters.
-    adapters = []
-    # Find subclasses of `Adapter` defined in the current module.
-    for name in sorted(locals):
-        obj = locals[name]
-        if (isinstance(obj, type) and issubclass(obj, Adapter)
-                and obj.__module__ == module_name):
-            adapters.append(obj)
-    return adapters
+    def __init__(self):
+        # List of active components (lazily populated).
+        self.components = None
+        # A mapping: interface -> [components] (lazily populated).
+        self.implementations = {}
+        # A mapping: (interface, signature) -> realization (lazily populated).
+        self.realizations = {}
 
 

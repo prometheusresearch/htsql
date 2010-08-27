@@ -14,21 +14,15 @@ This module exports the `engine.pgsql` addon.
 
 
 from htsql.addon import Addon
-from .connect import connect_adapters
-from .split_sql import split_sql_adapters
-from .introspect import introspect_adapters
-from .tr.serializer import serializer_adapters
+import htsql_pgsql.connect
+import htsql_pgsql.split_sql
+import htsql_pgsql.introspect
+import htsql_pgsql.tr.serializer
 
 
 class ENGINE_PGSQL(Addon):
     """
     Declares the `engine.pgsql` addon.
     """
-
-    # List of adapters exported by the addon.
-    adapters = (connect_adapters +
-                split_sql_adapters +
-                introspect_adapters +
-                serializer_adapters)
 
 

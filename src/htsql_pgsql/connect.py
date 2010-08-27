@@ -10,16 +10,10 @@
 ==========================
 
 This module implements the connection adapter for PostgreSQL.
-
-This module exports a global variable:
-
-`connect_adapters`
-    List of adapters declared in this module.
 """
 
 
 from htsql.connect import Connect, DBError
-from htsql.adapter import find_adapters
 from htsql.context import context
 import psycopg2, psycopg2.extensions
 
@@ -66,8 +60,5 @@ class ConnectPGSQL(Connect):
 
         # Otherwise, let the superclass return `None`.
         return super(ConnectPGSQL, self).normalize_error(exception)
-
-
-connect_adapters = find_adapters()
 
 

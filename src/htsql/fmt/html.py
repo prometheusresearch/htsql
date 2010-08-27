@@ -13,7 +13,7 @@ This module implements the HTML renderer.
 """
 
 
-from ..adapter import adapts, find_adapters
+from ..adapter import adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain,
                       StringDomain, EnumDomain, DateDomain)
@@ -285,8 +285,5 @@ class FormatDate(Format):
         if value is None:
             return self.format_null()
         return cgi.escape(value)
-
-
-html_adapters = find_adapters()
 
 

@@ -14,7 +14,7 @@ This module implements the compile adapter.
 
 
 from ..util import listof
-from ..adapter import Adapter, adapts, find_adapters
+from ..adapter import Adapter, adapts
 from .code import (Expression, LiteralExpression, EqualityExpression,
                    InequalityExpression, TotalEqualityExpression,
                    TotalInequalityExpression, ConjunctionExpression,
@@ -507,8 +507,5 @@ class EvaluateUnit(Evaluate):
 
     def evaluate(self, references):
         return references[self.expression]
-
-
-compile_adapters = find_adapters()
 
 

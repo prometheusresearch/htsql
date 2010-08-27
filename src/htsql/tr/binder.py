@@ -13,7 +13,7 @@ This module implements binding adapters.
 """
 
 
-from ..adapter import Adapter, adapts, find_adapters
+from ..adapter import Adapter, adapts
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      SieveSyntax, OperatorSyntax, FunctionOperatorSyntax,
                      FunctionCallSyntax, GroupSyntax, SpecifierSyntax,
@@ -509,8 +509,5 @@ class BindNumber(Bind):
                                            self.syntax.mark)
         binding = LiteralBinding(parent, value, domain, self.syntax)
         yield binding
-
-
-bind_adapters = find_adapters()
 
 

@@ -14,7 +14,7 @@ This module implements the format adapter.
 
 
 from ..util import setof
-from ..adapter import Adapter, Utility, adapts, find_adapters
+from ..adapter import Adapter, Utility, adapts
 from ..domain import Domain
 
 
@@ -71,8 +71,5 @@ class FindRenderer(Utility):
                 if name in names:
                     return renderer_class
         return None
-
-
-format_adapters = find_adapters()
 
 

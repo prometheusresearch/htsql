@@ -13,7 +13,7 @@ This module adapts the SQL serializer for PostgreSQL.
 """
 
 
-from htsql.adapter import adapts, find_adapters
+from htsql.adapter import adapts
 from htsql.tr.serializer import Format, SerializeBranch
 
 
@@ -30,8 +30,5 @@ class PGSQLSerializeBranch(SerializeBranch):
             self.frame.linkage[0].frame.is_scalar):
             return None
         return super(PGSQLSerializeBranch, self).serialize_from_clause()
-
-
-serializer_adapters = find_adapters()
 
 

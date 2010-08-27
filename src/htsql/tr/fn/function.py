@@ -13,8 +13,8 @@ This module implements HTSQL functions.
 """
 
 
-from ...adapter import (Adapter, Utility, adapts, adapts_none,
-                        find_adapters, weights)
+from ...adapter import (Adapter, Utility, Protocol, adapts, adapts_none,
+                        adapts_many, named)
 from ...error import InvalidArgumentError
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
@@ -31,37 +31,17 @@ from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
 
 
-class named(str):
-
-    name_registry = {}
-
-    class __metaclass__(type):
-
-        def __getitem__(cls, key):
-            if key in cls.name_registry:
-                return cls.name_registry[key]
-            key_type = type(key, (cls,), {})
-            cls.name_registry.setdefault(key, key_type)
-            return cls.name_registry[key]
-
-    def __new__(cls):
-        return super(named, cls).__new__(cls, cls.__name__)
-
-
 class FindFunction(Utility):
 
     def __call__(self, name, binder):
-        name = named[name]()
         function = Function(name, binder)
         return function
 
 
-class Function(Adapter):
-
-    adapts(str)
+class Function(Protocol):
 
     def __init__(self, name, binder):
-        self.name = str(name)
+        self.name = name
         self.binder = binder
 
     def bind_operator(self, syntax, parent):
@@ -92,8 +72,6 @@ class Parameter(object):
 
 
 class ProperFunction(Function):
-
-    adapts_none()
 
     parameters = []
 
@@ -175,8 +153,6 @@ class ProperFunction(Function):
 
 class ProperMethod(ProperFunction):
 
-    adapts_none()
-
     def bind_arguments(self, arguments, parent, mark):
         arguments = [[parent]] + [list(self.binder.bind(argument, parent))
                                   for argument in arguments]
@@ -185,7 +161,7 @@ class ProperMethod(ProperFunction):
 
 class LimitMethod(ProperMethod):
 
-    adapts(named['limit'])
+    named('limit')
 
     parameters = [
             Parameter('this'),
@@ -211,7 +187,7 @@ class LimitMethod(ProperMethod):
 
 class OrderMethod(ProperMethod):
 
-    adapts(named['order'])
+    named('order')
 
     parameters = [
             Parameter('this'),
@@ -233,7 +209,7 @@ class OrderMethod(ProperMethod):
 
 class NullFunction(ProperFunction):
 
-    adapts(named['null'])
+    named('null')
 
     def correlate(self, syntax, parent):
         yield LiteralBinding(parent, None, UntypedDomain(), syntax)
@@ -241,7 +217,7 @@ class NullFunction(ProperFunction):
 
 class TrueFunction(ProperFunction):
 
-    adapts(named['true'])
+    named('true')
 
     def correlate(self, syntax, parent):
         yield LiteralBinding(parent, True, BooleanDomain(), syntax)
@@ -249,7 +225,7 @@ class TrueFunction(ProperFunction):
 
 class FalseFunction(ProperFunction):
 
-    adapts(named['false'])
+    named('false')
 
     def correlate(self, syntax, parent):
         yield LiteralBinding(parent, False, BooleanDomain(), syntax)
@@ -268,37 +244,37 @@ class CastFunction(ProperFunction):
 
 class BooleanCastFunction(CastFunction):
 
-    adapts(named['boolean'])
+    named('boolean')
     output_domain = BooleanDomain()
 
 
 class StringCastFunction(CastFunction):
 
-    adapts(named['string'])
+    named('string')
     output_domain = StringDomain()
 
 
 class IntegerCastFunction(CastFunction):
 
-    adapts(named['integer'])
+    named('integer')
     output_domain = IntegerDomain()
 
 
 class DecimalCastFunction(CastFunction):
 
-    adapts(named['decimal'])
+    named('decimal')
     output_domain = DecimalDomain()
 
 
 class FloatCastFunction(CastFunction):
 
-    adapts(named['float'])
+    named('float')
     output_domain = FloatDomain()
 
 
 class DateCastFunction(CastFunction):
 
-    adapts(named['date'])
+    named('date')
     output_domain = DateDomain()
 
     def bind_function_call(self, syntax, parent):
@@ -310,7 +286,7 @@ class DateCastFunction(CastFunction):
 
 class DateConstructor(ProperFunction):
 
-    adapts(named['date!'])
+    named('date!')
 
     parameters = [
             Parameter('year', IntegerDomain),
@@ -325,7 +301,7 @@ class DateConstructor(ProperFunction):
 
 class EqualityOperator(ProperFunction):
 
-    adapts(named['='])
+    named('=')
 
     parameters = [
             Parameter('left'),
@@ -349,7 +325,7 @@ class EqualityOperator(ProperFunction):
 
 class InequalityOperator(ProperFunction):
 
-    adapts(named['!='])
+    named('!=')
 
     parameters = [
             Parameter('left'),
@@ -373,7 +349,7 @@ class InequalityOperator(ProperFunction):
 
 class TotalEqualityOperator(ProperFunction):
 
-    adapts(named['=='])
+    named('==')
 
     parameters = [
             Parameter('left'),
@@ -397,7 +373,7 @@ class TotalEqualityOperator(ProperFunction):
 
 class TotalInequalityOperator(ProperFunction):
 
-    adapts(named['!=='])
+    named('!==')
 
     parameters = [
             Parameter('left'),
@@ -421,7 +397,7 @@ class TotalInequalityOperator(ProperFunction):
 
 class ConjunctionOperator(ProperFunction):
 
-    adapts(named['&'])
+    named('&')
 
     parameters = [
             Parameter('left'),
@@ -436,7 +412,7 @@ class ConjunctionOperator(ProperFunction):
 
 class DisjunctionOperator(ProperFunction):
 
-    adapts(named['|'])
+    named('|')
 
     parameters = [
             Parameter('left'),
@@ -451,7 +427,7 @@ class DisjunctionOperator(ProperFunction):
 
 class NegationOperator(ProperFunction):
 
-    adapts(named['!_'])
+    named('!_')
 
     parameters = [
             Parameter('term'),
@@ -463,8 +439,6 @@ class NegationOperator(ProperFunction):
 
 
 class ComparisonOperator(ProperFunction):
-
-    adapts_none()
 
     parameters = [
             Parameter('left'),
@@ -487,25 +461,25 @@ class ComparisonOperator(ProperFunction):
 
 class LessThanOperator(ComparisonOperator):
 
-    adapts(named['<'])
+    named('<')
     direction = '<'
 
 
 class LessThanOrEqualOperator(ComparisonOperator):
 
-    adapts(named['<='])
+    named('<=')
     direction = '<='
 
 
 class GreaterThanOperator(ComparisonOperator):
 
-    adapts(named['>'])
+    named('>')
     direction = '>'
 
 
 class GreaterThanOrEqualOperator(ComparisonOperator):
 
-    adapts(named['>='])
+    named('>=')
     direction = '>='
 
 
@@ -549,35 +523,35 @@ class CompareNumbers(Compare):
 
 class UnaryPlusOperator(ProperFunction):
 
-    adapts(named['+_'])
+    named('+_')
 
     parameters = [
             Parameter('value'),
     ]
 
     def correlate(self, value, syntax, parent):
-        Implementation = UnaryPlus.realize(value.domain)
+        Implementation = UnaryPlus.realize((type(value.domain),))
         plus = Implementation(value, self.binder, syntax, parent)
         yield plus()
 
 
 class UnaryMinusOperator(ProperFunction):
 
-    adapts(named['-_'])
+    named('-_')
 
     parameters = [
             Parameter('value'),
     ]
 
     def correlate(self, value, syntax, parent):
-        Implementation = UnaryMinus.realize(value.domain)
+        Implementation = UnaryMinus.realize((type(value.domain),))
         minus = Implementation(value, self.binder, syntax, parent)
         yield minus()
 
 
 class SubtractionOperator(ProperFunction):
 
-    adapts(named['-'])
+    named('-')
 
     parameters = [
             Parameter('left'),
@@ -585,14 +559,15 @@ class SubtractionOperator(ProperFunction):
     ]
 
     def correlate(self, left, right, syntax, parent):
-        Implementation = Subtract.realize(left.domain, right.domain)
+        signature = (type(left.domain), type(right.domain))
+        Implementation = Subtract.realize(signature)
         subtract = Implementation(left, right, self.binder, syntax, parent)
         yield subtract()
 
 
 class AdditionOperator(ProperFunction):
 
-    adapts(named['+'])
+    named('+')
 
     parameters = [
             Parameter('left'),
@@ -600,14 +575,15 @@ class AdditionOperator(ProperFunction):
     ]
 
     def correlate(self, left, right, syntax, parent):
-        Implementation = Add.realize(left.domain, right.domain)
+        signature = (type(left.domain), type(right.domain))
+        Implementation = Add.realize(signature)
         add = Implementation(left, right, self.binder, syntax, parent)
         yield add()
 
 
 class SubtractionOperator(ProperFunction):
 
-    adapts(named['-'])
+    named('-')
 
     parameters = [
             Parameter('left'),
@@ -615,14 +591,15 @@ class SubtractionOperator(ProperFunction):
     ]
 
     def correlate(self, left, right, syntax, parent):
-        Implementation = Subtract.realize(left.domain, right.domain)
+        signature = (type(left.domain), type(right.domain))
+        Implementation = Subtract.realize(signature)
         subtract = Implementation(left, right, self.binder, syntax, parent)
         yield subtract()
 
 
 class MultiplicationOperator(ProperFunction):
 
-    adapts(named['*'])
+    named('*')
 
     parameters = [
             Parameter('left'),
@@ -630,14 +607,15 @@ class MultiplicationOperator(ProperFunction):
     ]
 
     def correlate(self, left, right, syntax, parent):
-        Implementation = Multiply.realize(left.domain, right.domain)
+        signature = (type(left.domain), type(right.domain))
+        Implementation = Multiply.realize(signature)
         multiply = Implementation(left, right, self.binder, syntax, parent)
         yield multiply()
 
 
 class DivisionOperator(ProperFunction):
 
-    adapts(named['/'])
+    named('/')
 
     parameters = [
             Parameter('left'),
@@ -645,7 +623,8 @@ class DivisionOperator(ProperFunction):
     ]
 
     def correlate(self, left, right, syntax, parent):
-        Implementation = Divide.realize(left.domain, right.domain)
+        signature = (type(left.domain), type(right.domain))
+        Implementation = Divide.realize(signature)
         divide = Implementation(left, right, self.binder, syntax, parent)
         yield divide()
 
@@ -791,7 +770,7 @@ class GenericEncode(Encode):
         signature = (binding_class, Encoder)
         encode_class = type(name, (cls,),
                             {'function': function,
-                             'signature': signature,
+                             'signatures': [signature],
                              'binding_class': binding_class,
                              'expression_class': expression_class})
         return encode_class
@@ -829,7 +808,7 @@ class GenericAggregateEncode(Encode):
         signature = (binding_class, Encoder)
         encode_class = type(name, (cls,),
                             {'function': function,
-                             'signature': signature,
+                             'signatures': [signature],
                              'binding_class': binding_class,
                              'expression_class': expression_class,
                              'wrapper_class': wrapper_class})
@@ -886,7 +865,7 @@ class GenericEvaluate(Evaluate):
         signature = (expression_class, Compiler)
         evaluate_class = type(name, (cls,),
                               {'function': function,
-                               'signature': signature,
+                               'signatures': [signature],
                                'expression_class': expression_class,
                                'phrase_class': phrase_class,
                                'is_null_regular': is_null_regular,
@@ -935,7 +914,7 @@ class GenericSerialize(Serialize):
         signature = (phrase_class, Serializer)
         serialize_class = type(name, (cls,),
                                {'function': function,
-                                'signature': signature,
+                                'signatures': [signature],
                                 'phrase_class': phrase_class,
                                 'template': template})
         return serialize_class
@@ -1014,7 +993,10 @@ class SerializeConcatenation(Serialize):
 
 class Concatenate(Add):
 
-    adapts_none()
+    adapts_many((StringDomain, StringDomain),
+                (StringDomain, UntypedDomain),
+                (UntypedDomain, StringDomain),
+                (UntypedDomain, UntypedDomain))
 
     def __call__(self):
         left = self.binder.cast(self.left, StringDomain(),
@@ -1023,26 +1005,6 @@ class Concatenate(Add):
                                  parent=self.parent)
         return ConcatenationBinding(self.parent, StringDomain(), self.syntax,
                                     left=left, right=right)
-
-
-class ConcatenateStringToString(Concatenate):
-
-    adapts(StringDomain, StringDomain)
-
-
-class ConcatenateStringToUntyped(Concatenate):
-
-    adapts(StringDomain, UntypedDomain)
-
-
-class ConcatenateUntypedToString(Concatenate):
-
-    adapts(UntypedDomain, StringDomain)
-
-
-class ConcatenateUntypedToUntyped(Concatenate):
-
-    adapts(UntypedDomain, UntypedDomain)
 
 
 UnaryPlusBinding = GenericBinding.factory(UnaryPlusOperator)
@@ -1116,57 +1078,27 @@ class AddNumbers(Add):
                                left=left, right=right)
 
 
-class AddIntegerToInteger(AddNumbers):
+class AddInteger(AddNumbers):
 
     adapts(IntegerDomain, IntegerDomain)
     domain = IntegerDomain()
 
 
-class AddIntegerToDecimal(AddNumbers):
+class AddDecimal(AddNumbers):
 
-    adapts(IntegerDomain, DecimalDomain)
+    adapts_many((DecimalDomain, DecimalDomain),
+                (DecimalDomain, IntegerDomain),
+                (IntegerDomain, DecimalDomain))
     domain = DecimalDomain()
 
 
-class AddDecimalToInteger(AddNumbers):
+class AddFloat(AddNumbers):
 
-    adapts(DecimalDomain, IntegerDomain)
-    domain = DecimalDomain()
-
-
-class AddDecimalToDecimal(AddNumbers):
-
-    adapts(DecimalDomain, DecimalDomain)
-    domain = DecimalDomain()
-
-
-class AddIntegerToFloat(AddNumbers):
-
-    adapts(IntegerDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class AddDecimalToFloat(AddNumbers):
-
-    adapts(DecimalDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class AddFloatToInteger(AddNumbers):
-
-    adapts(FloatDomain, IntegerDomain)
-    domain = FloatDomain()
-
-
-class AddFloatToDecimal(AddNumbers):
-
-    adapts(FloatDomain, DecimalDomain)
-    domain = FloatDomain()
-
-
-class AddFloatToFloat(AddNumbers):
-
-    adapts(FloatDomain, FloatDomain)
+    adapts_many((FloatDomain, FloatDomain),
+                (FloatDomain, DecimalDomain),
+                (FloatDomain, IntegerDomain),
+                (DecimalDomain, FloatDomain),
+                (IntegerDomain, FloatDomain))
     domain = FloatDomain()
 
 
@@ -1207,57 +1139,27 @@ class SubtractNumbers(Subtract):
                                   left=left, right=right)
 
 
-class SubtractIntegerFromInteger(SubtractNumbers):
+class SubtractInteger(SubtractNumbers):
 
     adapts(IntegerDomain, IntegerDomain)
     domain = IntegerDomain()
 
 
-class SubtractIntegerFromDecimal(SubtractNumbers):
+class SubtractDecimal(SubtractNumbers):
 
-    adapts(DecimalDomain, IntegerDomain)
+    adapts_many((DecimalDomain, DecimalDomain),
+                (DecimalDomain, IntegerDomain),
+                (IntegerDomain, DecimalDomain))
     domain = DecimalDomain()
 
 
-class SubtractDecimalFromInteger(SubtractNumbers):
+class SubtractFloat(SubtractNumbers):
 
-    adapts(IntegerDomain, DecimalDomain)
-    domain = DecimalDomain()
-
-
-class SubtractDecimalToDecimal(SubtractNumbers):
-
-    adapts(DecimalDomain, DecimalDomain)
-    domain = DecimalDomain()
-
-
-class SubtractIntegerFromFloat(SubtractNumbers):
-
-    adapts(FloatDomain, IntegerDomain)
-    domain = FloatDomain()
-
-
-class SubtractDecimalFromFloat(SubtractNumbers):
-
-    adapts(FloatDomain, DecimalDomain)
-    domain = FloatDomain()
-
-
-class SubtractFloatFromInteger(SubtractNumbers):
-
-    adapts(IntegerDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class SubtractFloatFromDecimal(SubtractNumbers):
-
-    adapts(DecimalDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class SubtractFloatFromFloat(SubtractNumbers):
-
-    adapts(FloatDomain, FloatDomain)
+    adapts_many((FloatDomain, FloatDomain),
+                (FloatDomain, DecimalDomain),
+                (FloatDomain, IntegerDomain),
+                (DecimalDomain, FloatDomain),
+                (IntegerDomain, FloatDomain))
     domain = FloatDomain()
 
 
@@ -1306,57 +1208,27 @@ class MultiplyNumbers(Multiply):
                                      left=left, right=right)
 
 
-class MultiplyIntegerByInteger(MultiplyNumbers):
+class MultiplyInteger(MultiplyNumbers):
 
     adapts(IntegerDomain, IntegerDomain)
     domain = IntegerDomain()
 
 
-class MultiplyIntegerByDecimal(MultiplyNumbers):
+class MultiplyDecimal(MultiplyNumbers):
 
-    adapts(IntegerDomain, DecimalDomain)
+    adapts_many((DecimalDomain, DecimalDomain),
+                (DecimalDomain, IntegerDomain),
+                (IntegerDomain, DecimalDomain))
     domain = DecimalDomain()
 
 
-class MultiplyDecimalByInteger(MultiplyNumbers):
+class MultiplyFloat(MultiplyNumbers):
 
-    adapts(DecimalDomain, IntegerDomain)
-    domain = DecimalDomain()
-
-
-class MultiplyDecimalByDecimal(MultiplyNumbers):
-
-    adapts(DecimalDomain, DecimalDomain)
-    domain = DecimalDomain()
-
-
-class MultiplyIntegerByFloat(MultiplyNumbers):
-
-    adapts(IntegerDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class MultiplyDecimalByFloat(MultiplyNumbers):
-
-    adapts(DecimalDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class MultiplyFloatByInteger(MultiplyNumbers):
-
-    adapts(FloatDomain, IntegerDomain)
-    domain = FloatDomain()
-
-
-class MultiplyFloatByDecimal(MultiplyNumbers):
-
-    adapts(FloatDomain, DecimalDomain)
-    domain = FloatDomain()
-
-
-class MultiplyFloatByFloat(MultiplyNumbers):
-
-    adapts(FloatDomain, FloatDomain)
+    adapts_many((FloatDomain, FloatDomain),
+                (FloatDomain, DecimalDomain),
+                (FloatDomain, IntegerDomain),
+                (DecimalDomain, FloatDomain),
+                (IntegerDomain, FloatDomain))
     domain = FloatDomain()
 
 
@@ -1387,63 +1259,28 @@ class DivideNumbers(Divide):
                                left=left, right=right)
 
 
-class DivideIntegerByInteger(DivideNumbers):
+class DivideDecimal(DivideNumbers):
 
-    adapts(IntegerDomain, IntegerDomain)
+    adapts_many((DecimalDomain, DecimalDomain),
+                (DecimalDomain, IntegerDomain),
+                (IntegerDomain, DecimalDomain),
+                (IntegerDomain, IntegerDomain))
     domain = DecimalDomain()
 
 
-class DivideIntegerByDecimal(DivideNumbers):
+class DivideFloat(DivideNumbers):
 
-    adapts(IntegerDomain, DecimalDomain)
-    domain = DecimalDomain()
-
-
-class DivideDecimalByInteger(DivideNumbers):
-
-    adapts(DecimalDomain, IntegerDomain)
-    domain = DecimalDomain()
-
-
-class DivideDecimalByDecimal(DivideNumbers):
-
-    adapts(DecimalDomain, DecimalDomain)
-    domain = DecimalDomain()
-
-
-class DivideIntegerByFloat(DivideNumbers):
-
-    adapts(IntegerDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class DivideDecimalByFloat(DivideNumbers):
-
-    adapts(DecimalDomain, FloatDomain)
-    domain = FloatDomain()
-
-
-class DivideFloatByInteger(DivideNumbers):
-
-    adapts(FloatDomain, IntegerDomain)
-    domain = FloatDomain()
-
-
-class DivideFloatByDecimal(DivideNumbers):
-
-    adapts(FloatDomain, DecimalDomain)
-    domain = FloatDomain()
-
-
-class DivideFloatByFloat(DivideNumbers):
-
-    adapts(FloatDomain, FloatDomain)
+    adapts_many((FloatDomain, FloatDomain),
+                (FloatDomain, DecimalDomain),
+                (FloatDomain, IntegerDomain),
+                (DecimalDomain, FloatDomain),
+                (IntegerDomain, FloatDomain))
     domain = FloatDomain()
 
 
 class RoundFunction(ProperFunction):
 
-    adapts(named['round'])
+    named('round')
 
     parameters = [
             Parameter('value'),
@@ -1451,7 +1288,7 @@ class RoundFunction(ProperFunction):
     ]
 
     def correlate(self, value, digits, syntax, parent):
-        Implementation = Round.realize(value.domain)
+        Implementation = Round.realize((type(value.domain),))
         round = Implementation(value, digits, self.binder, syntax, parent)
         yield round()
 
@@ -1474,7 +1311,8 @@ class Round(Adapter):
 
 class RoundDecimal(Round):
 
-    adapts_none()
+    adapts_many((IntegerDomain,),
+                (DecimalDomain,))
 
     def __call__(self):
         value = self.binder.cast(self.value, DecimalDomain(),
@@ -1485,16 +1323,6 @@ class RoundDecimal(Round):
                                     self.syntax)
         return RoundBinding(self.parent, DecimalDomain(), self.syntax,
                             value=value, digits=digits)
-
-
-class RoundDecimalFromInteger(RoundDecimal):
-
-    adapts(IntegerDomain)
-
-
-class RoundDecimalFromDecimal(RoundDecimal):
-
-    adapts(DecimalDomain)
 
 
 class RoundFloat(Round):
@@ -1533,7 +1361,7 @@ class SerializeRound(Serialize):
 
 class IsNullFunction(ProperFunction):
 
-    adapts(named['is_null'])
+    named('is_null')
 
     parameters = [
             Parameter('expression'),
@@ -1565,7 +1393,7 @@ SerializeIsNull = GenericSerialize.factory(IsNullFunction,
 
 class NullIfMethod(ProperMethod):
 
-    adapts(named['null_if'])
+    named('null_if')
 
     parameters = [
             Parameter('this'),
@@ -1616,7 +1444,7 @@ class SerializeNullIf(Serialize):
 
 class IfNullMethod(ProperMethod):
 
-    adapts(named['if_null'])
+    named('if_null')
 
     parameters = [
             Parameter('this'),
@@ -1665,7 +1493,7 @@ class SerializeIfNull(Serialize):
 
 class IfFunction(ProperFunction):
 
-    adapts(named['if'])
+    named('if')
 
     parameters = [
             Parameter('conditions', is_list=True),
@@ -1726,7 +1554,7 @@ class SerializeIf(Serialize):
 
 class SwitchFunction(ProperFunction):
 
-    adapts(named['switch'])
+    named('switch')
 
     parameters = [
             Parameter('token'),
@@ -1800,14 +1628,14 @@ class SerializeSwitch(Serialize):
 
 class LengthMethod(ProperMethod):
 
-    adapts(named['length'])
+    named('length')
 
     parameters = [
             Parameter('this')
     ]
 
     def correlate(self, this, syntax, parent):
-        Implementation = Length.realize(this.domain)
+        Implementation = Length.realize((type(this.domain),))
         length = Implementation(this, self.binder, syntax, parent)
         yield length()
 
@@ -1828,22 +1656,13 @@ class Length(Adapter):
 
 class TextLength(Length):
 
-    adapts_none()
+    adapts_many((StringDomain,),
+                (UntypedDomain,))
 
     def __call__(self):
         this = self.binder.cast(self.this, StringDomain())
         return TextLengthBinding(self.parent, IntegerDomain(), self.syntax,
                                  this=this)
-
-
-class TextLengthOfString(TextLength):
-
-    adapts(StringDomain)
-
-
-class TextLengthOfUntyped(TextLength):
-
-    adapts(UntypedDomain)
 
 
 TextLengthBinding = GenericBinding.factory(LengthMethod)
@@ -1861,7 +1680,7 @@ SerializeTextLength = GenericSerialize.factory(LengthMethod,
 
 class ContainsOperator(ProperFunction):
 
-    adapts(named['~'])
+    named('~')
 
     parameters = [
             Parameter('left'),
@@ -1869,7 +1688,8 @@ class ContainsOperator(ProperFunction):
     ]
 
     def correlate(self, left, right, syntax, parent):
-        Implementation = Contains.realize(left.domain, right.domain)
+        signature = (type(left.domain), type(right.domain))
+        Implementation = Contains.realize(signature)
         length = Implementation(left, right, self.binder, syntax, parent)
         yield length()
 
@@ -1891,7 +1711,10 @@ class Contains(Adapter):
 
 class ContainsStrings(Contains):
 
-    adapts_none()
+    adapts_many((StringDomain, StringDomain),
+                (StringDomain, UntypedDomain),
+                (UntypedDomain, StringDomain),
+                (UntypedDomain, UntypedDomain))
 
     def __call__(self):
         left = self.binder.cast(self.left, StringDomain(),
@@ -1900,26 +1723,6 @@ class ContainsStrings(Contains):
                                  parent=self.parent)
         return ContainsBinding(self.parent, BooleanDomain(), self.syntax,
                                left=left, right=right)
-
-
-class ContainsStringInString(ContainsStrings):
-
-    adapts(StringDomain, StringDomain)
-
-
-class ContainsUntypedInString(ContainsStrings):
-
-    adapts(StringDomain, UntypedDomain)
-
-
-class ContainsStringInUntyped(ContainsStrings):
-
-    adapts(UntypedDomain, StringDomain)
-
-
-class ContainsUntypedInUntyped(ContainsStrings):
-
-    adapts(UntypedDomain, UntypedDomain)
 
 
 ContainsBinding = GenericBinding.factory(ContainsOperator)
@@ -1937,7 +1740,9 @@ SerializeContains = GenericSerialize.factory(ContainsOperator,
 
 class FormatFunctions(Format):
 
-    weights(0)
+    @classmethod
+    def dominates(cls, component):
+        return True
 
     def concat_op(self, left, right):
         return "(%s || %s)" % (left, right)
@@ -2005,7 +1810,7 @@ class FormatFunctions(Format):
 
 class CountFunction(ProperFunction):
 
-    adapts(named['count'])
+    named('count')
 
     parameters = [
             Parameter('expression'),
@@ -2038,7 +1843,7 @@ SerializeCountWrapper = GenericSerialize.factory(CountFunction,
 
 class ExistsFunction(ProperFunction):
 
-    adapts(named['exists'])
+    named('exists')
 
     parameters = [
             Parameter('expression'),
@@ -2057,7 +1862,7 @@ ExistsWrapperPhrase = GenericPhrase.factory(ExistsFunction)
 
 class EveryFunction(ProperFunction):
 
-    adapts(named['every'])
+    named('every')
 
     parameters = [
             Parameter('expression'),
@@ -2148,14 +1953,14 @@ SerializeEveryWrapper = GenericSerialize.factory(EveryFunction,
 
 class MinFunction(ProperFunction):
 
-    adapts(named['min'])
+    named('min')
 
     parameters = [
             Parameter('expression'),
     ]
 
     def correlate(self, expression, syntax, parent):
-        Implementation = Min.realize(expression.domain)
+        Implementation = Min.realize((type(expression.domain),))
         function = Implementation(expression, self.binder, syntax, parent)
         yield function()
 
@@ -2222,14 +2027,14 @@ SerializeMinWrapper = GenericSerialize.factory(MinFunction,
 
 class MaxFunction(ProperFunction):
 
-    adapts(named['max'])
+    named('max')
 
     parameters = [
             Parameter('expression'),
     ]
 
     def correlate(self, expression, syntax, parent):
-        Implementation = Max.realize(expression.domain)
+        Implementation = Max.realize((type(expression.domain),))
         function = Implementation(expression, self.binder, syntax, parent)
         yield function()
 
@@ -2292,8 +2097,5 @@ SerializeMax = GenericSerialize.factory(MaxFunction,
         MaxPhrase, "MAX(%(expression)s)")
 SerializeMaxWrapper = GenericSerialize.factory(MaxFunction,
         MaxWrapperPhrase, "%(expression)s")
-
-
-function_adapters = find_adapters()
 
 

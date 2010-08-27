@@ -13,7 +13,7 @@ This module implements the SQL serializer.
 """
 
 
-from ..adapter import Adapter, Utility, adapts, find_adapters
+from ..adapter import Adapter, Utility, adapts
 from ..error import InvalidArgumentError
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, DateDomain)
@@ -772,8 +772,5 @@ class SerializeCorrelatedFrame(SerializePhrase):
 
     def call(self):
         return self.serializer.call(self.phrase.frame)
-
-
-serialize_adapters = find_adapters()
 
 
