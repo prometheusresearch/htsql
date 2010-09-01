@@ -14,7 +14,7 @@ This module implements the introspection adapter for PostgreSQL.
 
 
 from htsql.introspect import Introspect
-from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity, ViewEntity,
+from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
                           ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
                           ForeignKeyEntity)
 from .domain import (PGBooleanDomain, PGIntegerDomain, PGFloatDomain,
@@ -136,12 +136,8 @@ class IntrospectPGSQL(Introspect):
             columns = self.introspect_columns(oid)
             unique_keys = self.introspect_unique_keys(oid)
             foreign_keys = self.introspect_foreign_keys(oid)
-            if rel.relkind == 'r':
-                table = TableEntity(schema_name, name,
-                                    columns, unique_keys, foreign_keys)
-            else:
-                table = ViewEntity(schema_name, name,
-                                   columns, unique_keys, foreign_keys)
+            table = TableEntity(schema_name, name,
+                                columns, unique_keys, foreign_keys)
             tables.append(table)
         tables.sort(key=(lambda t: t.name))
         return tables

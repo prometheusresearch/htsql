@@ -18,6 +18,10 @@
    :members:
 .. automodule:: htsql.addon
    :members:
+.. automodule:: htsql.entity
+   :members:
+.. automodule:: htsql.domain
+   :members:
 .. automodule:: htsql.mark
    :members:
 .. automodule:: htsql.error

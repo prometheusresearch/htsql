@@ -14,7 +14,7 @@ This module implements the introspection adapter for SQLite.
 
 
 from htsql.introspect import Introspect
-from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity, ViewEntity,
+from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
                           ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
                           ForeignKeyEntity)
 from .domain import (SQLiteBooleanDomain, SQLiteIntegerDomain,
