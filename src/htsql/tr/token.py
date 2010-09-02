@@ -123,6 +123,7 @@ class StringToken(Token):
     """
 
     name = 'string'
+    # Note: we do not permit `NUL` characters in a string literal.
     pattern = r""" ' (?: [^'\0] | '')* ' """
 
     @classmethod

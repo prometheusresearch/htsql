@@ -16,7 +16,7 @@ This module implements the request utility.
 from .adapter import Utility, Realization
 from .connect import DBError, Connect, Normalize
 from .error import EngineError
-from .tr.parser import QueryParser
+from .tr.parse import parse
 from .tr.binder import Binder
 from .tr.encoder import Encoder
 from .tr.assembler import Assembler
@@ -95,8 +95,7 @@ class Request(Utility):
         self.uri = uri
 
     def translate(self):
-        parser = QueryParser(self.uri)
-        syntax = parser.parse()
+        syntax = parse(self.uri)
         binder = Binder()
         binding = binder.bind_one(syntax)
         encoder = Encoder()

@@ -14,7 +14,7 @@ This module implements the HTSQL parser.
 
 
 from ..mark import Mark
-from .scanner import Scanner
+from .scan import scan
 from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
 from .syntax import (QuerySyntax, SegmentSyntax, SelectorSyntax,
                      SieveSyntax, OperatorSyntax, FunctionOperatorSyntax,
@@ -55,8 +55,7 @@ class Parser(object):
         Parses the input expression; returns the corresponding syntax node.
         """
         # Tokenize the input query.
-        scanner = Scanner(self.input)
-        tokens = scanner.scan()
+        tokens = scan(self.input)
         # Parse the input query.
         syntax = self.process(tokens)
         # Ensure that we reached the end of the token stream.
@@ -579,5 +578,23 @@ class IdentifierParser(Parser):
         name_token = tokens.pop(NameToken)
         identifier = IdentifierSyntax(name_token.value, name_token.mark)
         return identifier
+
+
+def parse(input, Parser=QueryParser):
+    """
+    Parses the input HTSQL query; returns the corresponding syntax node.
+
+    In case of syntax errors, may raise :exc:`htsql.tr.error.ScanError`
+    or :exc:`htsql.tr.error.ParseError`.
+
+    `input` (a string)
+        An HTSQL query or an HTSQL expression.
+
+    `Parser` (a subclass of :class:`Parser`)
+        The parser to use for parsing the input expression.  By default,
+        `input` is treated as a complete HTSQL query.
+    """
+    parser = Parser(input)
+    return parser.parse()
 
 

@@ -70,7 +70,7 @@ class SQLiteDateDomain(SQLiteDomain, DateDomain):
     """
     Represents a pseudo-date type for SQLite.
 
-    In SQL, values of the ``DATE`` type are represented as ``TEXT`` values
+    In SQL, date values are expressed as ``TEXT`` values
     of the form ``YYYY-MM-DD``.
     """
 

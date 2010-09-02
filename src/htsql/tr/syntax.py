@@ -64,9 +64,6 @@ class QuerySyntax(Syntax):
 
     def __str__(self):
         # Generate an HTSQL query corresponding to the node.
-        # Note that since the format identifier could split the segment
-        # expression between the selector and the filter, we have to
-        # serialize parts of the segment expression separately.
         chunks = []
         chunks.append('/')
         if self.segment is not None:
@@ -373,8 +370,8 @@ class IdentifierSyntax(Syntax):
 
     def __init__(self, value, mark):
         assert isinstance(value, str)
-        super(IdentifierSyntax, self).__init__(mark)
 
+        super(IdentifierSyntax, self).__init__(mark)
         self.value = value
 
     def __str__(self):

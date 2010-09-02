@@ -15,8 +15,8 @@ This module implements the HTSQL scanner.
 
 from .token import (Token, SpaceToken, NameToken, StringToken, NumberToken,
                     SymbolToken, EndToken)
+from .error import ScanError, ParseError
 from ..mark import Mark
-from ..error import InvalidSyntaxError
 from ..util import maybe, listof
 import re
 
@@ -28,7 +28,7 @@ class TokenStream(object):
     :class:`TokenStream` wraps a list of tokens with a convenient interface
     for consumption and look-ahead.
 
-    `tokens` (a list of :`class:htsql.token.Token` objects)
+    `tokens` (a list of :`class:htsql.tr.token.Token` objects)
         A list of tokens.
     """
 
@@ -52,9 +52,8 @@ class TokenStream(object):
         instance of the given class.  When `values` is set, the method
         checks if the token value belongs to the given list of values.
         If any of the checks fail, the method either raises
-        :exc:`htsql.error.InvaludSyntaxError` or
-        returns ``None`` depending on the value of the `do_force`
-        parameter.
+        :exc:`htsql.error.tr.ParseError` or returns ``None`` depending
+        on the value of the `do_force` parameter.
 
         This method advances the active pointer to the next token if
         `do_pop` is enabled.
@@ -76,7 +75,7 @@ class TokenStream(object):
         `do_force` (Boolean)
             This flag affects the method behavior when any of the token
             checks fail.  If set, the method will raise
-            :exc:`htsql.error.InvaludSyntaxError`; otherwise it will return
+            :exc:`htsql.error.tr.ParseError`; otherwise it will return
             ``None``.
         """
         # Sanity check on the arguments.
@@ -121,8 +120,8 @@ class TokenStream(object):
                                             ", ".join(repr(value)
                                                       for value in values))
             got = "%s %r" % (token.name.upper(), token.value)
-            raise InvalidSyntaxError("expected %s; got %s" % (expected, got),
-                                     token.mark)
+            raise ParseError("expected %s; got %s" % (expected, got),
+                             token.mark)
         # Advance the pointer.
         if do_pop:
             self.idx += ahead+1
@@ -137,7 +136,7 @@ class TokenStream(object):
         instance of the given class.  When `values` is set, the method
         checks if the token value belongs to the given list of values.
         If any of the checks fail, the method raises
-        :exc:`htsql.error.InvaludSyntaxError`.
+        :exc:`htsql.error.tr.ParseError`.
 
         `token_class` (a subclass of :class:`htsql.token.Token` or ``None``)
             If not ``None``, the method checks that the active token
@@ -263,7 +262,7 @@ class Scanner(object):
             # Complain if we get `%` not followed by two hexdecimal digits.
             if not code:
                 mark = Mark(match.string, match.begin(), match.end())
-                raise InvalidSyntaxError("invalid escape sequence", mark)
+                raise ScanError("invalid escape sequence", mark)
             # Return the character corresponding to the escape sequence.
             return chr(int(code, 16))
 
@@ -275,7 +274,7 @@ class Scanner(object):
         """
         Tokenizes the query; returns a :class:`TokenStream` instance.
 
-        In case of syntax errors, raises :exc:`htsql.error.InvalidSyntaxError`.
+        In case of syntax errors, raises :exc:`htsql.error.tr.ScanError`.
         """
         # Decode %-escape sequences.
         unquoted_input = self.unquote(self.input)
@@ -286,8 +285,8 @@ class Scanner(object):
             decoded_input = unquoted_input.decode('utf-8')
         except UnicodeDecodeError, exc:
             mark = Mark(unquoted_input, exc.start, exc.end)
-            raise InvalidSyntaxError("cannot decode an UTF-8 character: %s"
-                                     % exc.reason, mark)
+            raise ScanError("cannot decode an UTF-8 character: %s"
+                            % exc.reason, mark)
 
         # The beginning of the next token.
         start = 0
@@ -307,9 +306,8 @@ class Scanner(object):
             match = self.regexp.match(decoded_input, start)
             if match is None:
                 mark = Mark(unquoted_input, mark_start, mark_start+1)
-                raise InvalidSyntaxError("unexpected character %r" %
-                                         decoded_input[start].encode('utf-8'),
-                                         mark)
+                raise ScanError("unexpected character %r"
+                                % decoded_input[start].encode('utf-8'), mark)
 
             # Find the token class that matched the token.
             for token_class in self.tokens:
@@ -342,5 +340,17 @@ class Scanner(object):
             mark_start = mark_end
 
         return TokenStream(tokens)
+
+
+def scan(input):
+    """
+    Tokenizes the input HTSQL query or expression.
+    
+    Returns a stream of tokens (a :class:`TokenStream` instance).
+
+    In case of syntax errors, raises :exc:`htsql.error.tr.ScanError`.
+    """
+    scanner = Scanner(input)
+    return scanner.scan()
 
 

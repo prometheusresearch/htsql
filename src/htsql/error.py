@@ -9,7 +9,7 @@
 :mod:`htsql.error`
 ==================
 
-This module implements HTSQL exceptions.
+This module implements generic HTSQL exceptions.
 """
 
 
