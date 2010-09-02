@@ -19,8 +19,24 @@ from htsql.domain import (Domain, BooleanDomain, IntegerDomain, FloatDomain,
 
 
 class PGDomain(Domain):
+    """
+    Represents a PostgreSQL data type.
+
+    This is an abstract mixin class; see subclasses for concrete data types.
+
+    `schema_name` (a string)
+        The name of the type schema.
+
+    `name` (a string)
+        The name of the type.
+    """
 
     def __init__(self, schema_name, name, **attributes):
+        # Sanity check on the arguments.
+        assert isinstance(schema_name, str)
+        assert isinstance(name, str)
+
+        # Pass the attributes to the concrete domain constructor.
         super(PGDomain, self).__init__(**attributes)
         self.schema_name = schema_name
         self.name = name
@@ -30,42 +46,62 @@ class PGDomain(Domain):
 
 
 class PGBooleanDomain(PGDomain, BooleanDomain):
-    pass
+    """
+    Represents the ``BOOLEAN`` data type.
+    """
 
 
 class PGIntegerDomain(PGDomain, IntegerDomain):
-    pass
+    """
+    Represents the ``SMALLINT``, ``INTEGER`` and ``BIGINT`` data types.
+    """
 
 
 class PGFloatDomain(PGDomain, FloatDomain):
-    pass
+    """
+    Represents the ``REAL`` and ``DOUBLE PRECISION`` data types.
+    """
 
 
 class PGDecimalDomain(PGDomain, DecimalDomain):
-    pass
+    """
+    Represents the ``NUMERIC`` data type.
+    """
 
 
 class PGCharDomain(PGDomain, StringDomain):
-    pass
+    """
+    Represents the ``CHAR`` data type.
+    """
 
 
 class PGVarCharDomain(PGDomain, StringDomain):
-    pass
+    """
+    Represents the ``VARCHAR`` data type.
+    """
 
 
 class PGTextDomain(PGDomain, StringDomain):
-    pass
+    """
+    Represents the ``TEXT`` data type.
+    """
 
 
 class PGEnumDomain(PGDomain, EnumDomain):
-    pass
+    """
+    Represents the ``ENUM`` data types.
+    """
 
 
 class PGDateDomain(PGDomain, DateDomain):
-    pass
+    """
+    Represents the ``DATE`` data type.
+    """
 
 
 class PGOpaqueDomain(PGDomain, OpaqueDomain):
-    pass
+    """
+    Represents an unsupported PostgreSQL data type.
+    """
 
 

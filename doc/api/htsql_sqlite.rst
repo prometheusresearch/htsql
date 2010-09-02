@@ -6,6 +6,8 @@
    :members:
 .. automodule:: htsql_sqlite.export
    :members:
+.. automodule:: htsql_sqlite.domain
+   :members:
 .. automodule:: htsql_sqlite.connect
    :members:
 .. automodule:: htsql_sqlite.split_sql

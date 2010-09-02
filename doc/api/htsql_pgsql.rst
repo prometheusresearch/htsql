@@ -6,6 +6,8 @@
    :members:
 .. automodule:: htsql_pgsql.export
    :members:
+.. automodule:: htsql_pgsql.domain
+   :members:
 .. automodule:: htsql_pgsql.connect
    :members:
 .. automodule:: htsql_pgsql.split_sql

@@ -7,7 +7,7 @@
 
 """
 :mod:`htsql_sqlite.domain`
-=========================
+==========================
 
 This module defines SQLite-specific data types.
 """
@@ -18,8 +18,20 @@ from htsql.domain import (Domain, BooleanDomain, IntegerDomain, FloatDomain,
 
 
 class SQLiteDomain(Domain):
+    """
+    Represents an SQLite data type.
+
+    This is an abstract mixin class; see subclasses for concrete data types.
+
+    `name` (a string)
+        The name of the type.
+    """
 
     def __init__(self, name, **attributes):
+        # Sanity check on the arguments.
+        assert isinstance(name, str)
+
+        # Pass the attributes to the concrete domain constructor.
         super(SQLiteDomain, self).__init__(**attributes)
         self.name = name
 
@@ -28,26 +40,44 @@ class SQLiteDomain(Domain):
 
 
 class SQLiteBooleanDomain(SQLiteDomain, BooleanDomain):
-    pass
+    """
+    Represents a pseudo-Boolean type for SQLite.
+
+    In SQL, Boolean values are expressed as integers; ``0`` is the FALSE value,
+    any non-zero integer is a TRUE value.
+    """
 
 
 class SQLiteIntegerDomain(SQLiteDomain, IntegerDomain):
-    pass
+    """
+    Represents an SQLite ``INTEGER`` data type.
+    """
 
 
 class SQLiteFloatDomain(SQLiteDomain, FloatDomain):
-    pass
+    """
+    Represents an SQLite ``REAL`` data type.
+    """
 
 
 class SQLiteTextDomain(SQLiteDomain, StringDomain):
-    pass
+    """
+    Represents an SQLite ``TEXT`` data type.
+    """
 
 
 class SQLiteDateDomain(SQLiteDomain, DateDomain):
-    pass
+    """
+    Represents a pseudo-date type for SQLite.
+
+    In SQL, values of the ``DATE`` type are represented as ``TEXT`` values
+    of the form ``YYYY-MM-DD``.
+    """
 
 
 class SQLiteOpaqueDomain(SQLiteDomain, OpaqueDomain):
-    pass
+    """
+    Represents an unsupported SQLite data type.
+    """
 
 
