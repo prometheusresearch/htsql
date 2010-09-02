@@ -1970,21 +1970,21 @@ tests:
              ----
              /{boolean(null()),boolean(true()),boolean(false())}
              SELECT NULL, TRUE, FALSE
-        - uri: /{boolean('true'),boolean('TRUE'),boolean('True'), boolean('false'),boolean('FALSE'),boolean('False')}
+        - uri: /{boolean('true'),boolean('false')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | /{boolean('true'),boolean('TRUE'),boolean('True'),boolean('false'),boolean('FALSE'),boolean('False')}        |
-            -+--------------------------------------------------------------------------------------------------------------+-
-             | boolean('true') | boolean('TRUE') | boolean('True') | boolean('false') | boolean('FALSE') | boolean('False') |
-            -+-----------------+-----------------+-----------------+------------------+------------------+------------------+-
-             | true            | true            | true            | false            | false            | false            |
-                                                                                                                      (1 row)
+             | /{boolean('true'),boolean('false')} |
+            -+-------------------------------------+-
+             | boolean('true')  | boolean('false') |
+            -+------------------+------------------+-
+             | true             | false            |
+                                             (1 row)
 
              ----
-             /{boolean('true'),boolean('TRUE'),boolean('True'),boolean('false'),boolean('FALSE'),boolean('False')}
-             SELECT TRUE, TRUE, TRUE, FALSE, FALSE, FALSE
+             /{boolean('true'),boolean('false')}
+             SELECT TRUE, FALSE
         - uri: /{boolean('')}
           status: 400 Bad Request
           headers:
@@ -2351,7 +2351,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid integer literal: invalid literal for int() with base 10: 'X':
+            invalid argument: cannot cast a value: invalid integer literal: expected an integer in a decimal format; got 'X':
                 /{integer('X')}
                   ^^^^^^^^^^^^
         - uri: /{integer(string('X'))}
@@ -2716,7 +2716,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid date literal: expected 'YYYY-MM-DD'; got 'X':
+            invalid argument: cannot cast a value: invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got 'X':
                 /{date('X')}
                   ^^^^^^^^^
         - uri: /{date(string('X'))}

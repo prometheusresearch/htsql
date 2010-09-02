@@ -104,8 +104,7 @@ tests:
         # Boolean->Boolean cast (identity).
         - uri: /{boolean(null()),boolean(true()),boolean(false())}
         # Untyped boolean values.
-        - uri: /{boolean('true'),boolean('TRUE'),boolean('True'),
-                 boolean('false'),boolean('FALSE'),boolean('False')}
+        - uri: /{boolean('true'),boolean('false')}
         # Invalid untyped boolean values.
         - uri: /{boolean('')}
           expect: 400

@@ -9,54 +9,133 @@
 :mod:`htsql.domain`
 ===================
 
-This module defines abstract HTSQL domains.
+This module defines HTSQL domains.
 """
 
 
-from .util import maybe, listof
+from .util import maybe, oneof, listof
 import re
 import decimal
 import datetime
 
 
 class Domain(object):
+    """
+    Represents an HTSQL domain (data type).
 
-    name = None
+    A domain indicates the type of an object.  Most HTSQL domains correspond
+    to SQL data types; some domains are special and used when the actual
+    SQL data type is unknown or nonsensical.
+
+    A value of a specific domain could be represented in two forms:
+
+    - as an HTSQL literal;
+
+    - as a native Python object.
+
+    Methods :meth:`parse` and :meth:`dump` translate values from one form
+    to the other.
+    """
 
     def parse(self, data):
+        """
+        Converts an HTSQL literal to a native Python object.
+
+        Raises :exc:`ValueError` if the literal is not in a valid format.
+
+        `data` (a string or ``None``)
+            An HTSQL literal representing a value of the given domain.
+
+        Returns a native Python object representing the same value.
+        """
+        # Sanity check on the argument.
         assert isinstance(data, maybe(str))
+
+        # `None` values are passed through.
         if data is None:
             return None
+        # By default, we do not accept any literals; subclasses should
+        # override this method.
         raise ValueError("invalid literal")
 
     def dump(self, value):
+        """
+        Converts a native Python object to an HTSQL literal.
+
+        `value` (acceptable types depend on the domain)
+            A native Python object representing a value of the given domain.
+
+        Returns an HTSQL literal representing the same value.
+        """
+        # Sanity check on the argument.
         assert value is None
+        # By default, only accept `None`; subclasses should override
+        # this method.
         return None
 
     def __str__(self):
-        return self.name
+        # Domains corresponding to concrete SQL data types may override
+        # this method to return the name of the type.
+        return self.__class__.__name__.lower()
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self)
 
 
-class BooleanDomain(Domain):
+class VoidDomain(Domain):
+    """
+    Represents a domain without any valid values.
 
-    name = 'boolean'
+    This domain is assigned to objects when the domain is structurally
+    required, but does not have any semantics.
+    """
+
+
+class UntypedDomain(Domain):
+    """
+    Represents an unknown type.
+
+    This domain is assigned to HTSQL literals temporarily until the actual
+    domain could be derived from the context.
+    """
+
+
+class TupleDomain(Domain):
+    """
+    Represents a table domain.
+
+    This domain is assigned to table expressions.
+    """
+
+
+class BooleanDomain(Domain):
+    """
+    Represents Boolean data type.
+
+    Valid literal values: ``true``, ``false``.
+
+    Valid native values: `bool` objects.
+    """
 
     def parse(self, data):
+        # Sanity check on the argument.
         assert isinstance(data, maybe(str))
+
+        # Convert: `None` -> `None`, `'true'` -> `True`, `'false'` -> `False`.
         if data is None:
             return None
-        if data.lower() == 'true':
+        if data == 'true':
             return True
-        if data.lower() == 'false':
+        if data == 'false':
             return False
         raise ValueError("invalid Boolean literal: expected 'true' or 'false';"
                          " got %r" % data)
 
     def dump(self, value):
+        # Sanity check on the argument.
         assert isinstance(value, maybe(bool))
+
+        # Convert `None` -> `None`, `True` -> `'true'`, `False` -> `'false'`.
         if value is None:
             return None
         if value is True:
@@ -66,47 +145,99 @@ class BooleanDomain(Domain):
 
 
 class NumberDomain(Domain):
+    """
+    Represents a numeric data type.
+
+    This is an abstract data type, see :class:`IntegerDomain`,
+    :class:`FloatDomain`, :class:`DecimalDomain` for concrete subtypes.
+
+    Class attributes:
+
+    `is_exact` (Boolean)
+        Indicates whether the domain represents exact values.
+
+    `radix` (``2`` or ``10``)
+        Indicates whether the values are stored in binary or decimal form.
+    """
+
+    is_exact = None
+    radix = None
+
+
+class IntegerDomain(NumberDomain):
+    """
+    Represents a binary integer data type.
+
+    Valid literal values: integers (in base 10) with an optional sign.
+
+    Valid native values: `int` or `long` objects.
+
+    `size` (an integer or ``None``)
+        Number of bits used to store a value; ``None`` if not known.
+    """
 
     is_exact = True
     radix = 2
 
-
-class IntegerDomain(NumberDomain):
-
-    name = 'integer'
-
     def __init__(self, size=None):
+        # Sanity check on the arguments.
+        assert isinstance(size, maybe(int))
         self.size = size
 
     def parse(self, data):
+        # Sanity check on the arguments.
         assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
+        # Expect an integer value in base 10.
         try:
-            value = int(data)
-        except ValueError, exc:
-            raise ValueError("invalid integer literal: %s" % exc)
+            value = int(data, 10)
+        except ValueError:
+            raise ValueError("invalid integer literal: expected an integer"
+                             " in a decimal format; got %r" % data)
         return value
 
     def dump(self, value):
-        assert isinstance(value, maybe(int))
+        # Sanity check on the arguments.
+        assert isinstance(value, maybe(oneof(int, long)))
+        # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
+        # Represent an integer value as a decimal number.
         return str(value)
 
 
 class FloatDomain(NumberDomain):
+    """
+    Represents an IEEE 754 float data type.
 
-    name = 'float'
+    Valid literal values: floating-point numbers in decimal or scientific
+    format, `[+-]inf`, or `nan`.
+
+    Valid native values: `float` objects.
+
+    `size` (an integer or ``None``)
+        Number of bits used to store a value; ``None`` if not known.
+    """
+
+
     is_exact = False
+    radix = 2
 
     def __init__(self, size=None):
+        # Sanity check on the arguments.
+        assert isinstance(size, maybe(int))
         self.size = size
 
     def parse(self, data):
+        # Sanity check on the argument.
         assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
+        # Parse the numeric value.
+        # FIXME: `float('inf')` and `float('nan')` breaks under Python 2.5.
         try:
             value = float(data)
         except ValueError, exc:
@@ -114,27 +245,49 @@ class FloatDomain(NumberDomain):
         return value
 
     def dump(self, value):
+        # Sanity check on the argument.
         assert isinstance(value, maybe(float))
+        # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
-        return str(value)
+        # Use `repr` to avoid loss of precision.
+        return repr(value)
 
 
 class DecimalDomain(NumberDomain):
+    """
+    Represents an exact decimal data type.
 
-    name = 'decimal'
+    Valid literal values: floating-point numbers in decimal or scientific
+    format, `[+-]inf`, or `nan`.
+
+    Valid native values: `decimal.Decimal` objects.
+
+    `precision` (an integer or ``None``)
+        Number of significant digits; ``None`` if infinite or not known.
+
+    `scale` (an integer or ``None``)
+        Number of significant digits in the fractional part; zero for
+        integers, ``None`` if infinite or not known.
+    """
+
+    is_exact = True
     radix = 10
 
     def __init__(self, precision=None, scale=None):
+        # Sanity check on the arguments.
         assert isinstance(precision, maybe(int))
         assert isinstance(scale, maybe(int))
         self.precision = precision
         self.scale = scale
 
     def parse(self, data):
+        # Sanity check on the arguments.
         assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
+        # Parse the literal (NB: it handles `inf` and `nan` values too).
         try:
             value = decimal.Decimal(data)
         except decimal.InvalidOperation, exc:
@@ -142,62 +295,136 @@ class DecimalDomain(NumberDomain):
         return value
 
     def dump(self, value):
+        # Sanity check on the argument.
         assert isinstance(value, maybe(decimal.Decimal))
+        # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
+        # Handle `inf` and `nan` values.
+        if value.is_nan():
+            return 'nan'
+        elif value.is_infinite() and value > 0:
+            return 'inf'
+        elif value.is_infinite() and value < 0:
+            return '-inf'
+        # Produce a decimal representation of the number.
         return str(value)
 
 
 class StringDomain(Domain):
+    """
+    Represents a string data type.
 
-    name = 'string'
+    Valid literal values: all literal values.
+
+    Valid native values: `str` objects in UTF-8 encoding;
+    the `NUL` character is not allowed.
+
+    `length` (an integer or ``None``)
+        The maximum length of the value; ``None`` if infinite or not known.
+
+    `is_varying` (Boolean)
+        Indicates whether values are fixed-length or variable-length.
+    """
+
 
     def __init__(self, length=None, is_varying=True):
+        # Sanity check on the arguments.
         assert isinstance(length, maybe(int))
         assert isinstance(is_varying, bool)
         self.length = length
         self.is_varying = is_varying
 
     def parse(self, data):
+        # Sanity check on the argument.
         assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
+        # No conversion is required for string values.
         return data
 
     def dump(self, value):
+        # Sanity check on the argument.
         assert isinstance(value, maybe(str))
+        if value is not None:
+            assert '\0' not in value
+            assert value.decode('utf-8', 'ignore').encode('utf-8') == value
+        # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
+        # No conversion is required for string values.
         return value
 
 
 class EnumDomain(Domain):
+    """
+    Represents an enumeration data type.
 
-    name = 'enum'
+    An enumeration domain has a predefined set of valid string values.
 
-    def __init__(self, labels=None):
-        assert isinstance(labels, maybe(listof(str)))
+    `labels` (a list of strings)
+        List of valid values.
+    """
+
+    def __init__(self, labels):
+        assert isinstance(labels, listof(str))
         self.labels = labels
+
+    def parse(self, data):
+        # Sanity check on the argument.
+        assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
+        if data is None:
+            return None
+        # Check if the value belongs to the fixed list of valid values.
+        if data not in self.labels:
+            raise ValueError("invalid enum literal: expected one of %s; got %r"
+                             % (", ".join(repr(label)
+                                          for label in self.labels), data))
+        # No conversion is required.
+        return data
+
+    def dump(self, value):
+        # Sanity check on the argument.
+        assert isinstance(value, maybe(str))
+        if value is not None:
+            assert value in self.labels
+        # `None` represents `NULL` both in literal and native format.
+        if value is None:
+            return None
+        # No conversion is required.
+        return value
 
 
 class DateDomain(Domain):
+    """
+    Represents a date data type.
 
-    name = 'date'
+    Valid literal values: valid date values in the form `YYYY-MM-DD`.
 
+    Valid native values: `datetime.date` objects.
+    """
+
+    # Regular expression to match YYYY-MM-DD.
     pattern = r'^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})$'
     regexp = re.compile(pattern)
 
     def parse(self, data):
+        # Sanity check on the argument.
         assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
+        # Parse `data` as YYYY-MM-DD.
         match = self.regexp.match(data)
         if match is None:
-            raise ValueError("invalid date literal: expected 'YYYY-MM-DD';"
-                             " got %r" % data)
+            raise ValueError("invalid date literal: expected a valid date"
+                             " in a 'YYYY-MM-DD' format; got %r" % data)
         year = int(match.group('year'))
         month = int(match.group('month'))
         day = int(match.group('day'))
+        # Generate a `datetime.date` value; may fail if the date is not valid.
         try:
             value = datetime.date(year, month, day)
         except ValueError, exc:
@@ -205,29 +432,21 @@ class DateDomain(Domain):
         return value
 
     def dump(self, value):
+        # Sanity check on the argument.
         assert isinstance(value, maybe(datetime.date))
+        # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
+        # `str` on `datetime.date` gives us the date in YYYY-MM-DD format.
         return str(value)
 
 
-class VoidDomain(Domain):
-
-    name = 'void'
-
-
 class OpaqueDomain(Domain):
-
-    name = 'opaque'
-
-
-class UntypedDomain(Domain):
-
-    name = 'untyped'
-
-
-class TupleDomain(Domain):
-
-    name = 'tuple'
+    """
+    Represents an unsupported SQL data type.
+    
+    Note: this is the only SQL domain with values that cannot be serialized
+    using :meth:`dump`.
+    """
 
 
