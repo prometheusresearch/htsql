@@ -16,7 +16,13 @@ This module implements HTSQL translation errors.
 from ..error import BadRequestError
 
 
-class ScanError(BadRequestError):
+class TranslateError(BadRequestError):
+    """
+    Represents a translation error.
+    """
+
+
+class ScanError(TranslateError):
     """
     Represents a scanner error.
 
@@ -26,7 +32,7 @@ class ScanError(BadRequestError):
     kind = "scan error"
 
 
-class ParseError(BadRequestError):
+class ParseError(TranslateError):
     """
     Represents a parser error.
 
@@ -35,5 +41,15 @@ class ParseError(BadRequestError):
     """
 
     kind = "parse error"
+
+
+class BindError(TranslateError):
+    """
+    Represents a binder error.
+
+    This error is raised when the binder is unable to bind a syntax node.
+    """
+
+    kind = "bind error"
 
 

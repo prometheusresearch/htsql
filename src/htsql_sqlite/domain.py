@@ -38,6 +38,14 @@ class SQLiteDomain(Domain):
     def __str__(self):
         return self.name
 
+    def __eq__(self, other):
+        # The generic domain comparison checks if the types of the domains
+        # and all their attributes are equal.  Since SQLite domains grow
+        # an extra attribute `name`, we need to update the comparison
+        # implementation.
+        return (super(SQLiteDomain, self).__eq__(other) and
+                self.name == other.name)
+
 
 class SQLiteBooleanDomain(SQLiteDomain, BooleanDomain):
     """

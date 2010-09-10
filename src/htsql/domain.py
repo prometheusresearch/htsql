@@ -81,6 +81,15 @@ class Domain(object):
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self)
 
+    def __eq__(self, other):
+        # Used when comparing some of the code objects.  The generic
+        # implementations check that the classes are identical and
+        # all attributes are equal; concrete SQL domains may override
+        # this method to provide engine-specific type equality.
+        if not isinstance(other, Domain):
+            return False
+        return (self.__class__ == other.__class__)
+
 
 class VoidDomain(Domain):
     """
@@ -207,6 +216,11 @@ class IntegerDomain(NumberDomain):
         # Represent an integer value as a decimal number.
         return str(value)
 
+    def __eq__(self, other):
+        if not isinstance(other, Domain):
+            return False
+        return (self.__class__ == other.__class__ and self.size == other.size)
+
 
 class FloatDomain(NumberDomain):
     """
@@ -220,7 +234,6 @@ class FloatDomain(NumberDomain):
     `size` (an integer or ``None``)
         Number of bits used to store a value; ``None`` if not known.
     """
-
 
     is_exact = False
     radix = 2
@@ -252,6 +265,11 @@ class FloatDomain(NumberDomain):
             return None
         # Use `repr` to avoid loss of precision.
         return repr(value)
+
+    def __eq__(self, other):
+        if not isinstance(other, Domain):
+            return False
+        return (self.__class__ == other.__class__ and self.size == other.size)
 
 
 class DecimalDomain(NumberDomain):
@@ -310,6 +328,13 @@ class DecimalDomain(NumberDomain):
         # Produce a decimal representation of the number.
         return str(value)
 
+    def __eq__(self, other):
+        if not isinstance(other, Domain):
+            return False
+        return (self.__class__ == other.__class__ and
+                self.precision == other.precision and
+                self.scale == other.scale)
+
 
 class StringDomain(Domain):
     """
@@ -356,6 +381,13 @@ class StringDomain(Domain):
         # No conversion is required for string values.
         return value
 
+    def __eq__(self, other):
+        if not isinstance(other, Domain):
+            return False
+        return (self.__class__ == other.__class__ and
+                self.length == other.length and
+                self.is_varying == other.is_varying)
+
 
 class EnumDomain(Domain):
     """
@@ -395,6 +427,15 @@ class EnumDomain(Domain):
             return None
         # No conversion is required.
         return value
+
+    def __eq__(self, other):
+        if not isinstance(other, Domain):
+            return False
+        # Here we check equality by comparing the labels.  Concrete SQL enum
+        # types should probably override this method to provide engine-specific
+        # comparison.
+        return (self.__class__ == other.__class__ and
+                self.labels == other.labels)
 
 
 class DateDomain(Domain):

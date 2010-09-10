@@ -182,95 +182,142 @@ class SieveSyntax(Syntax):
         return ''.join(chunks)
 
 
-class OperatorSyntax(Syntax):
+class CallSyntax(Syntax):
+    """
+    Represents a function or an operator call.
+
+    This is an abstract class with three concrete subclasses
+    corresponding to operators, functional operators, and
+    function or method calls.
+
+    `name` (a string)
+        The name of the function or the operator.
+
+    `arguments` (a list of :class:`Syntax`)
+        The list of argument.
+    """
+
+    def __init__(self, name, arguments, mark):
+        assert isinstance(arguments, listof(Syntax))
+        super(CallSyntax, self).__init__(mark)
+        self.name = name
+        self.arguments = arguments
+
+
+class OperatorSyntax(CallSyntax):
     """
     Represents an operator expression.
 
     An operator expression has one of the following forms::
 
-        left <symbol> right
-        left <symbol>
-        <symbol> right
+        larg <symbol> rarg
+        larg <symbol>
+        <symbol> rarg
+
+    Note that for a binary operator, the name coincides with the `<symbol>`,
+    for a prefix operator, the name has the form `<symbol>_`, for a postfix
+    operator, the name has the form `_<symbol>`.
 
     `symbol` (a string)
         The operator.
 
-    `left` (:class:`Syntax` or ``None``)
+    `left_argument` (:class:`Syntax` or ``None``)
         The left argument.
 
-    `right` (:class:`Syntax` or ``None``)
+    `right_argument` (:class:`Syntax` or ``None``)
         The right argument.
     """
 
-    def __init__(self, symbol, left, right, mark):
+    def __init__(self, symbol, left_argument, right_argument, mark):
         assert isinstance(symbol, str)
-        assert isinstance(left, maybe(Syntax))
-        assert isinstance(right, maybe(Syntax))
-        assert left is not None or right is not None
-        super(OperatorSyntax, self).__init__(mark)
+        assert isinstance(left_argument, maybe(Syntax))
+        assert isinstance(right_argument, maybe(Syntax))
+        assert left_argument is not None or right_argument is not None
+        # For a binary operator, the name is equal to `<symbol>`, for a prefix
+        # operator, the name is equal to `<symbol>_`, for a postfix operator,
+        # the name is equal to `_<symbol>`.  Thus `a+b`, `+b`, and `a+` are
+        # operators with the names `+`, `+_` and `_+` respectively.
+        name = symbol
+        if left_argument is None:
+            name = name+'_'
+        if right_argument is None:
+            name = '_'+name
+        # Gather the arguments.  Both prefix and postfix operators have
+        # one argument; since they have different names even when the
+        # operator symbol is the same, we don't have to mark the argument
+        # as left one or right one.
+        arguments = []
+        if left_argument is not None:
+            arguments.append(left_argument)
+        if right_argument is not None:
+            arguments.append(right_argument)
+        super(OperatorSyntax, self).__init__(name, arguments, mark)
         self.symbol = symbol
-        self.left = left
-        self.right = right
+        self.left_argument = left_argument
+        self.right_argument = right_argument
 
     def __str__(self):
         # Generate an expression of the form:
-        #   left<symbol>right
+        #   larg<symbol>rarg
         chunks = []
-        if self.left is not None:
-            chunks.append(str(self.left))
+        if self.left_argument is not None:
+            chunks.append(str(self.left_argument))
         chunks.append(self.symbol)
-        if self.right is not None:
-            chunks.append(str(self.right))
+        if self.right_argument is not None:
+            chunks.append(str(self.right_argument))
         return ''.join(chunks)
 
 
-class FunctionOperatorSyntax(Syntax):
+class FunctionOperatorSyntax(CallSyntax):
     """
     Represents a binary function call in the operator form.
 
     This expression has the form::
 
-        left identifier right
+        larg identifier rarg
 
     and is equivalent to the expression::
 
-        identifier(left, right)
+        identifier(larg, rarg)
 
     `identifier` (:class:`IdentifierSyntax`)
         The function name.
 
-    `left` (:class:`Syntax`)
+    `left_argument` (:class:`Syntax`)
         The first argument.
 
-    `right` (:class:`Syntax`)
+    `right_argument` (:class:`Syntax`)
         The second argument.
     """
 
-    def __init__(self, identifier, left, right, mark):
+    def __init__(self, identifier, left_argument, right_argument, mark):
         assert isinstance(identifier, IdentifierSyntax)
-        assert isinstance(left, Syntax)
-        assert isinstance(right, Syntax)
+        # Note: the grammar may be changed to make the right argument optional.
+        assert isinstance(left_argument, Syntax)
+        assert isinstance(right_argument, Syntax)
 
-        super(FunctionOperatorSyntax, self).__init__(mark)
+        name = identifier.value
+        arguments = [left_argument, right_argument]
+        super(FunctionOperatorSyntax, self).__init__(name, arguments, mark)
         self.identifier = identifier
-        self.left = left
-        self.right = right
+        self.left_argument = left_argument
+        self.right_argument = right_argument
 
     def __str__(self):
         # Generate an expression of the form:
-        #   left identifier right
+        #   larg identifier rarg
         chunks = []
-        if self.left is not None:
-            chunks.append(str(self.left))
+        if self.left_argument is not None:
+            chunks.append(str(self.left_argument))
             chunks.append(' ')
         chunks.append(str(self.identifier))
-        if self.right is not None:
+        if self.right_argument is not None:
             chunks.append(' ')
-            chunks.append(str(self.right))
+            chunks.append(str(self.right_argument))
         return ''.join(chunks)
 
 
-class FunctionCallSyntax(Syntax):
+class FunctionCallSyntax(CallSyntax):
     """
     Represents a function or a method call.
 
@@ -294,10 +341,10 @@ class FunctionCallSyntax(Syntax):
         assert isinstance(identifier, IdentifierSyntax)
         assert isinstance(arguments, listof(Syntax))
 
-        super(FunctionCallSyntax, self).__init__(mark)
+        name = identifier.value
+        super(FunctionCallSyntax, self).__init__(name, arguments, mark)
         self.base = base
         self.identifier = identifier
-        self.arguments = arguments
 
     def __str__(self):
         # Generate an expression of the form:

@@ -644,7 +644,8 @@ class SerializeLiteral(SerializePhrase):
 
     def serialize(self):
         serialize_constant = SerializeConstant(self.phrase.domain,
-                                               self.serializer)
+                                               self.serializer,
+                                               self.phrase)
         return serialize_constant.serialize(self.phrase.value)
 
 
@@ -652,10 +653,11 @@ class SerializeConstant(Adapter):
 
     adapts(Domain, Serializer)
 
-    def __init__(self, domain, serializer):
+    def __init__(self, domain, serializer, phrase):
         self.domain = domain
         self.serializer = serializer
         self.format = serializer.format
+        self.phrase = phrase
 
     def serialize(self, value):
         raise NotImplementedError()
@@ -691,6 +693,9 @@ class SerializeIntegerConstant(SerializeConstant):
     def serialize(self, value):
         if value is None:
             return self.format.null()
+        if not (-2**63 <= value < 2**63):
+            raise InvalidArgumentError("invalid integer value",
+                                       self.phrase.mark)
         return self.format.integer(value)
 
 
@@ -711,6 +716,9 @@ class SerializeFloatConstant(SerializeConstant):
     def serialize(self, value):
         if value is None:
             return self.format.null()
+        if str(value) in ['inf', '-inf', 'nan']:
+            raise InvalidArgumentError("invalid float value",
+                                       self.phrase.mark)
         return self.format.float(value)
 
 

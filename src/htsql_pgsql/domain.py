@@ -44,6 +44,14 @@ class PGDomain(Domain):
     def __str__(self):
         return "%s.%s" % (self.schema_name, self.name)
 
+    def __eq__(self, other):
+        # The generic domain comparison checks if the types of the domains
+        # and all their attributes are equal.  For PostgreSQL domains,
+        # we add an extra check to verify that their names are equal too.
+        return (super(PGDomain, self).__eq__(other) and
+                self.schema_name == other.schema_name and
+                self.name == other.name)
+
 
 class PGBooleanDomain(PGDomain, BooleanDomain):
     """

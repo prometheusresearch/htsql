@@ -1960,12 +1960,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | /{boolean(null()),boolean(true()),boolean(false())} |
-            -+-----------------------------------------------------+-
-             | boolean(null())       | true()       | false()      |
-            -+-----------------------+--------------+--------------+-
-             |                       | true         | false        |
-                                                             (1 row)
+             | /{boolean(null()),boolean(true()),boolean(false())}  |
+            -+------------------------------------------------------+-
+             | boolean(null()) | boolean(true()) | boolean(false()) |
+            -+-----------------+-----------------+------------------+-
+             |                 | true            | false            |
+                                                              (1 row)
 
              ----
              /{boolean(null()),boolean(true()),boolean(false())}
@@ -1990,17 +1990,17 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid Boolean literal: expected 'true' or 'false'; got '':
+            invalid argument: invalid Boolean literal: expected 'true' or 'false'; got '':
                 /{boolean('')}
-                  ^^^^^^^^^^^
+                          ^^
         - uri: /{boolean('X')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid Boolean literal: expected 'true' or 'false'; got 'X':
+            invalid argument: invalid Boolean literal: expected 'true' or 'false'; got 'X':
                 /{boolean('X')}
-                  ^^^^^^^^^^^^
+                          ^^^
         - uri: /{boolean(integer(null())),boolean(0),boolean(1), boolean(0.0),boolean(1.0),boolean(0e0),boolean(1e0)}
           status: 200 OK
           headers:
@@ -2303,12 +2303,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | /{integer('1'),integer(string('1')),integer(1),integer(1.0),integer(1e0)} |
-            -+---------------------------------------------------------------------------+-
-             | integer('1')  | integer(string('1'))  | 1  | integer(1.0)  | integer(1e0) |
-            -+---------------+-----------------------+----+---------------+--------------+-
-             |             1 |                     1 |  1 |             1 |            1 |
-                                                                                   (1 row)
+             | /{integer('1'),integer(string('1')),integer(1),integer(1.0),integer(1e0)}      |
+            -+--------------------------------------------------------------------------------+-
+             | integer('1') | integer(string('1')) | integer(1) | integer(1.0) | integer(1e0) |
+            -+--------------+----------------------+------------+--------------+--------------+-
+             |            1 |                    1 |          1 |            1 |            1 |
+                                                                                        (1 row)
 
              ----
              /{integer('1'),integer(string('1')),integer(1),integer(1.0),integer(1e0)}
@@ -2351,9 +2351,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid integer literal: expected an integer in a decimal format; got 'X':
+            invalid argument: invalid integer literal: expected an integer in a decimal format; got 'X':
                 /{integer('X')}
-                  ^^^^^^^^^^^^
+                          ^^^
         - uri: /{integer(string('X'))}
           status: 409 Conflict
           headers:
@@ -2370,12 +2370,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | /{decimal('1.5'),decimal(string('1.5')),decimal(15),decimal(1.5),decimal(15e-1)} |
-            -+----------------------------------------------------------------------------------+-
-             | decimal('1.5')  | decimal(string('1.5'))  | decimal(15)  | 1.5  | decimal(15e-1) |
-            -+-----------------+-------------------------+--------------+------+----------------+-
-             |             1.5 |                     1.5 |           15 |  1.5 |            1.5 |
-                                                                                          (1 row)
+             | /{decimal('1.5'),decimal(string('1.5')),decimal(15),decimal(1.5),decimal(15e-1)}      |
+            -+---------------------------------------------------------------------------------------+-
+             | decimal('1.5') | decimal(string('1.5')) | decimal(15) | decimal(1.5) | decimal(15e-1) |
+            -+----------------+------------------------+-------------+--------------+----------------+-
+             |            1.5 |                    1.5 |          15 |          1.5 |            1.5 |
+                                                                                               (1 row)
 
              ----
              /{decimal('1.5'),decimal(string('1.5')),decimal(15),decimal(1.5),decimal(15e-1)}
@@ -2415,9 +2415,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid decimal literal: Invalid literal for Decimal: 'X':
+            invalid argument: invalid decimal literal: Invalid literal for Decimal: 'X':
                 /{decimal('X')}
-                  ^^^^^^^^^^^^
+                          ^^^
         - uri: /{decimal(string('X'))}
           status: 409 Conflict
           headers:
@@ -2434,12 +2434,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | /{float('1.5'),float(string('1.5')),float(15),float(1.5),float(15e-1)} |
-            -+------------------------------------------------------------------------+-
-             | float('1.5')  | float(string('1.5'))  | float(15) | float(1.5) | 15e-1 |
-            -+---------------+-----------------------+-----------+------------+-------+-
-             |           1.5 |                   1.5 |      15.0 |        1.5 |   1.5 |
-                                                                                (1 row)
+             | /{float('1.5'),float(string('1.5')),float(15),float(1.5),float(15e-1)}      |
+            -+-----------------------------------------------------------------------------+-
+             | float('1.5') | float(string('1.5')) | float(15) | float(1.5) | float(15e-1) |
+            -+--------------+----------------------+-----------+------------+--------------+-
+             |          1.5 |                  1.5 |      15.0 |        1.5 |          1.5 |
+                                                                                     (1 row)
 
              ----
              /{float('1.5'),float(string('1.5')),float(15),float(1.5),float(15e-1)}
@@ -2464,9 +2464,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid float literal: invalid literal for float(): X:
+            invalid argument: invalid float literal: invalid literal for float(): X:
                 /{float('X')}
-                  ^^^^^^^^^^
+                        ^^^
         - uri: /{float(string('X'))}
           status: 409 Conflict
           headers:
@@ -2639,12 +2639,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | /{string('X'),string(string('X')),string(1),string(1.0),string(1e0)} |
-            -+----------------------------------------------------------------------+-
-             | string('X')  | string('X')  | string(1)  | string(1.0) | string(1e0) |
-            -+--------------+--------------+------------+-------------+-------------+-
-             | X            | X            | 1          | 1.0         | 1           |
-                                                                              (1 row)
+             | /{string('X'),string(string('X')),string(1),string(1.0),string(1e0)}      |
+            -+---------------------------------------------------------------------------+-
+             | string('X') | string(string('X')) | string(1) | string(1.0) | string(1e0) |
+            -+-------------+---------------------+-----------+-------------+-------------+-
+             | X           | X                   | 1         | 1.0         | 1           |
+                                                                                   (1 row)
 
              ----
              /{string('X'),string(string('X')),string(1),string(1.0),string(1e0)}
@@ -2716,9 +2716,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: cannot cast a value: invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got 'X':
+            invalid argument: invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got 'X':
                 /{date('X')}
-                  ^^^^^^^^^
+                       ^^^
         - uri: /{date(string('X'))}
           status: 409 Conflict
           headers:

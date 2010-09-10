@@ -176,7 +176,7 @@ To build the documentation that comes with HTSQL, run
 
     # make doc
 
-Note that this requires Sphinx 1.0, which is not yet released.
+Note that this requires Sphinx 1.0+.
 
 
 Running HTSQL

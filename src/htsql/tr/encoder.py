@@ -14,13 +14,14 @@ This module implements the encoding adapter.
 
 
 from ..adapter import Adapter, adapts
+from ..domain import UntypedDomain, TupleDomain
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, JoinedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
-                      OrderedBinding, EqualityBinding, InequalityBinding,
+                      SortBinding, EqualityBinding, InequalityBinding,
                       TotalEqualityBinding, TotalInequalityBinding,
                       ConjunctionBinding, DisjunctionBinding,
-                      NegationBinding, CastBinding, TupleBinding)
+                      NegationBinding, CastBinding, WrapperBinding)
 from .code import (ScalarSpace, FreeTableSpace, JoinedTableSpace,
                    ScreenSpace, OrderedSpace, LiteralExpression, ColumnUnit,
                    TupleExpression, QueryCode, SegmentCode, ElementExpression,
@@ -106,7 +107,7 @@ class EncodeFreeTable(Encode):
     adapts(FreeTableBinding, Encoder)
 
     def relate(self):
-        parent = self.encoder.relate(self.binding.parent)
+        parent = self.encoder.relate(self.binding.base)
         return FreeTableSpace(parent, self.binding.table, self.binding.mark)
 
 
@@ -115,7 +116,7 @@ class EncodeJoinedTable(Encode):
     adapts(JoinedTableBinding, Encoder)
 
     def relate(self):
-        space = self.encoder.relate(self.binding.parent)
+        space = self.encoder.relate(self.binding.base)
         for join in self.binding.joins:
             space = JoinedTableSpace(space, join, self.binding.mark)
         return space
@@ -126,10 +127,12 @@ class EncodeColumn(Encode):
     adapts(ColumnBinding, Encoder)
 
     def relate(self):
-        return self.encoder.relate(self.binding.parent)
+        if self.binding.link is not None:
+            return self.encoder.relate(self.binding.link)
+        return super(EncodeColumn, self).relate()
 
     def encode(self):
-        space = self.encoder.relate(self.binding.parent)
+        space = self.encoder.relate(self.binding.base)
         return ColumnUnit(self.binding.column, space, self.binding.mark)
 
 
@@ -138,31 +141,31 @@ class EncodeSieve(Encode):
     adapts(SieveBinding, Encoder)
 
     def relate(self):
-        space = self.encoder.relate(self.binding.parent)
+        space = self.encoder.relate(self.binding.base)
         filter = self.encoder.encode(self.binding.filter)
         return ScreenSpace(space, filter, self.binding.mark)
 
 
-class EncodeOrdered(Encode):
+class EncodeSort(Encode):
 
-    adapts(OrderedBinding, Encoder)
+    adapts(SortBinding, Encoder)
 
     def relate(self):
-        space = self.encoder.relate(self.binding.parent)
-        order = [(self.encoder.encode(binding), dir)
-                 for binding, dir in self.binding.order]
+        space = self.encoder.relate(self.binding.base)
+        order = [(self.encoder.encode(binding), +1)
+                 for binding in self.binding.order]
         limit = self.binding.limit
         offset = self.binding.offset
         return OrderedSpace(space, order, limit, offset, self.binding.mark)
 
 
-class EncodeTuple(Encode):
-
-    adapts(TupleBinding, Encoder)
-
-    def encode(self):
-        space = self.encoder.relate(self.binding.binding)
-        return TupleExpression(space, self.binding.mark)
+#class EncodeTuple(Encode):
+#
+#    adapts(TupleBinding, Encoder)
+#
+#    def encode(self):
+#        space = self.encoder.relate(self.binding.binding)
+#        return TupleExpression(space, self.binding.mark)
 
 
 class EncodeLiteral(Encode):
@@ -179,8 +182,8 @@ class EncodeEquality(Encode):
     adapts(EqualityBinding, Encoder)
 
     def encode(self):
-        left = self.encoder.encode(self.binding.left)
-        right = self.encoder.encode(self.binding.right)
+        left = self.encoder.encode(self.binding.lop)
+        right = self.encoder.encode(self.binding.rop)
         return EqualityExpression(left, right, self.binding.mark)
 
 
@@ -189,8 +192,8 @@ class EncodeInequality(Encode):
     adapts(InequalityBinding, Encoder)
 
     def encode(self):
-        left = self.encoder.encode(self.binding.left)
-        right = self.encoder.encode(self.binding.right)
+        left = self.encoder.encode(self.binding.lop)
+        right = self.encoder.encode(self.binding.rop)
         return InequalityExpression(left, right, self.binding.mark)
 
 
@@ -199,8 +202,8 @@ class EncodeTotalEquality(Encode):
     adapts(TotalEqualityBinding, Encoder)
 
     def encode(self):
-        left = self.encoder.encode(self.binding.left)
-        right = self.encoder.encode(self.binding.right)
+        left = self.encoder.encode(self.binding.lop)
+        right = self.encoder.encode(self.binding.rop)
         return TotalEqualityExpression(left, right, self.binding.mark)
 
 
@@ -209,8 +212,8 @@ class EncodeTotalInequality(Encode):
     adapts(TotalInequalityBinding, Encoder)
 
     def encode(self):
-        left = self.encoder.encode(self.binding.left)
-        right = self.encoder.encode(self.binding.right)
+        left = self.encoder.encode(self.binding.lop)
+        right = self.encoder.encode(self.binding.rop)
         return TotalInequalityExpression(left, right, self.binding.mark)
 
 
@@ -219,7 +222,7 @@ class EncodeConjunction(Encode):
     adapts(ConjunctionBinding, Encoder)
 
     def encode(self):
-        terms = [self.encoder.encode(term) for term in self.binding.terms]
+        terms = [self.encoder.encode(op) for op in self.binding.ops]
         return ConjunctionExpression(terms, self.binding.mark)
 
 
@@ -228,7 +231,7 @@ class EncodeDisjunction(Encode):
     adapts(DisjunctionBinding, Encoder)
 
     def encode(self):
-        terms = [self.encoder.encode(term) for term in self.binding.terms]
+        terms = [self.encoder.encode(op) for op in self.binding.ops]
         return DisjunctionExpression(terms, self.binding.mark)
 
 
@@ -237,7 +240,7 @@ class EncodeNegation(Encode):
     adapts(NegationBinding, Encoder)
 
     def encode(self):
-        term = self.encoder.encode(self.binding.term)
+        term = self.encoder.encode(self.binding.op)
         return NegationExpression(term, self.binding.mark)
 
 
@@ -246,7 +249,30 @@ class EncodeCast(Encode):
     adapts(CastBinding, Encoder)
 
     def encode(self):
-        code = self.encoder.encode(self.binding.binding)
+        if isinstance(self.binding.op.domain, TupleDomain):
+            space = self.encoder.relate(self.binding.op)
+            return TupleExpression(space, self.binding.mark)
+        code = self.encoder.encode(self.binding.op)
+        if isinstance(code.domain, self.binding.domain.__class__):
+            return code
+        if isinstance(code.domain, UntypedDomain):
+            try:
+                value = self.binding.domain.parse(code.value)
+            except ValueError, exc:
+                raise InvalidArgumentError(str(exc), code.mark)
+            return LiteralExpression(value, self.binding.domain,
+                                     self.binding.mark)
         return CastExpression(code, self.binding.domain, self.binding.mark)
+
+
+class EncodeWrapper(Encode):
+
+    adapts(WrapperBinding, Encoder)
+
+    def encode(self):
+        return self.encoder.encode(self.binding.base)
+
+    def relate(self):
+        return self.encoder.relate(self.binding.base)
 
 

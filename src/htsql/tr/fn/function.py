@@ -19,42 +19,35 @@ from ...error import InvalidArgumentError
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain)
-from ..binding import (LiteralBinding, OrderedBinding, FunctionBinding,
+from ..syntax import NumberSyntax
+from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
                        EqualityBinding, InequalityBinding,
                        TotalEqualityBinding, TotalInequalityBinding,
-                       ConjunctionBinding, DisjunctionBinding, NegationBinding)
+                       ConjunctionBinding, DisjunctionBinding, NegationBinding,
+                       CastBinding)
 from ..encoder import Encoder, Encode
 from ..code import (FunctionExpression, NegationExpression, AggregateUnit,
                     CorrelatedUnit, LiteralExpression, ScreenSpace)
 from ..compiler import Compiler, Evaluate
 from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
-
-
-class FindFunction(Utility):
-
-    def __call__(self, name, binder):
-        function = Function(name, binder)
-        return function
+from ..coerce import coerce
 
 
 class Function(Protocol):
 
-    def __init__(self, name, binder):
-        self.name = name
-        self.binder = binder
+    def __init__(self, syntax, state):
+        self.syntax = syntax
+        self.state = state
+        self.mark = syntax.mark
 
-    def bind_operator(self, syntax, parent):
-        raise InvalidArgumentError("unknown operator %s" % self.name,
-                                   syntax.mark)
+    @classmethod
+    def dispatch(self, syntax, *args, **kwds):
+        return syntax.name
 
-    def bind_function_operator(self, syntax, parent):
-        raise InvalidArgumentError("unknown function %s" % self.name,
-                                   syntax.identifier.mark)
-
-    def bind_function_call(self, syntax, parent):
-        raise InvalidArgumentError("unknown function %s" % self.name,
-                                   syntax.identifier.mark)
+    def __call__(self):
+        raise InvalidArgumentError("unknown function or operator %s"
+                                   % self.syntax.name, self.mark)
 
 
 class Parameter(object):
@@ -75,31 +68,16 @@ class ProperFunction(Function):
 
     parameters = []
 
-    def bind_operator(self, syntax, parent):
-        arguments = []
-        if syntax.left is not None:
-            arguments.append(syntax.left)
-        if syntax.right is not None:
-            arguments.append(syntax.right)
-        keywords = self.bind_arguments(arguments, parent, syntax.mark)
-        return self.correlate(syntax=syntax, parent=parent, **keywords)
+    def __call__(self):
+        keywords = self.bind_arguments()
+        return self.correlate(**keywords)
 
-    def bind_function_operator(self, syntax, parent):
-        arguments = [syntax.left, syntax.right]
-        keywords = self.bind_arguments(arguments, parent, syntax.mark)
-        return self.correlate(syntax=syntax, parent=parent, **keywords)
+    def bind_arguments(self):
+        arguments = [list(self.state.bind_all(argument))
+                     for argument in self.syntax.arguments]
+        return self.check_arguments(arguments)
 
-    def bind_function_call(self, syntax, parent):
-        arguments = syntax.arguments
-        keywords = self.bind_arguments(arguments, parent, syntax.mark)
-        return self.correlate(syntax=syntax, parent=parent, **keywords)
-
-    def bind_arguments(self, arguments, parent, mark):
-        arguments = [list(self.binder.bind(argument, parent))
-                     for argument in arguments]
-        return self.check_arguments(arguments, mark)
-
-    def check_arguments(self, arguments, mark):
+    def check_arguments(self, arguments):
         arguments = arguments[:]
         keywords = {}
         for idx, parameter in enumerate(self.parameters):
@@ -107,7 +85,7 @@ class ProperFunction(Function):
             if not arguments:
                 if parameter.is_mandatory:
                     raise InvalidArgumentError("missing argument %s"
-                                               % parameter.name, mark)
+                                               % parameter.name, self.mark)
             elif parameter.is_list:
                 value = []
                 if len(arguments) > 1 and idx == len(self.parameters)-1:
@@ -115,13 +93,15 @@ class ProperFunction(Function):
                         argument = arguments.pop(0)
                         if len(argument) != 1:
                             raise InvalidArgumentError("invalid argument %s"
-                                                       % parameter.name, mark)
+                                                       % parameter.name,
+                                                       self.mark)
                         value.append(argument[0])
                 else:
                     argument = arguments.pop(0)
                     if parameter.is_mandatory and not argument:
                         raise InvalidArgumentError("missing argument %s"
-                                                   % parameter.name, mark)
+                                                   % parameter.name,
+                                                   self.mark)
                     value = argument[:]
                 for argument in value:
                     if not isinstance(argument.domain, parameter.domain_class):
@@ -132,7 +112,8 @@ class ProperFunction(Function):
                 if len(argument) == 0:
                     if parameter.is_mandatory:
                         raise InvalidArgumentError("missing argument %s"
-                                                   % parameter.name, mark)
+                                                   % parameter.name,
+                                                   self.mark)
                     value = None
                 elif len(argument) == 1:
                     value = argument[0]
@@ -153,10 +134,11 @@ class ProperFunction(Function):
 
 class ProperMethod(ProperFunction):
 
-    def bind_arguments(self, arguments, parent, mark):
-        arguments = [[parent]] + [list(self.binder.bind(argument, parent))
-                                  for argument in arguments]
-        return self.check_arguments(arguments, mark)
+    def bind_arguments(self):
+        arguments = ([[self.state.base]] +
+                     [list(self.state.bind_all(argument))
+                      for argument in self.syntax.arguments])
+        return self.check_arguments(arguments)
 
 
 class LimitMethod(ProperMethod):
@@ -169,20 +151,33 @@ class LimitMethod(ProperMethod):
             Parameter('offset', IntegerDomain, is_mandatory=False),
     ]
 
-    def correlate(self, this, limit, offset, syntax, parent):
-        if not (isinstance(limit, LiteralBinding) and
-                (limit.value is None or limit.value >= 0)):
-            raise InvalidArgumentError("expected a non-negative integer",
-                                       limit.mark)
-        if not (offset is None or
-                (isinstance(offset, LiteralBinding) and
-                 (offset.value is None or offset.value >= 0))):
-            raise InvalidArgumentError("expected a non-negative integer",
-                                       offset.mark)
-        limit = limit.value
-        if offset is not None:
-            offset = offset.value
-        yield OrderedBinding(parent, [], limit, offset, syntax)
+    def bind_arguments(self):
+        if not (1 <= len(self.syntax.arguments) <= 2):
+            raise InvalidArgumentError("expected one or two arguments",
+                                       self.syntax.mark)
+        values = []
+        for argument in self.syntax.arguments:
+            if not isinstance(argument, NumberSyntax):
+                raise InvalidArgumentError("expected a non-negative integer",
+                                           argument.mark)
+            try:
+                value = int(argument.value)
+            except ValueError:
+                raise InvalidArgumentError("expected a non-negative integer",
+                                           argument.mark)
+            if not (value >= 0):
+                raise InvalidArgumentError("expected a non-negative integer",
+                                           argument.mark)
+            values.append(value)
+        if len(values) == 1:
+            limit = values[0]
+            offset = None
+        else:
+            limit, offset = values
+        return {'this': self.state.base, 'limit': limit, 'offset': offset}
+
+    def correlate(self, this, limit, offset):
+        yield SortBinding(this, [], limit, offset, self.syntax)
 
 
 class OrderMethod(ProperMethod):
@@ -194,41 +189,41 @@ class OrderMethod(ProperMethod):
             Parameter('order', is_list=True),
     ]
 
-    def correlate(self, this, order, syntax, parent):
+    def correlate(self, this, order):
         bindings = order
         order = []
         for binding in bindings:
-            domain = self.binder.coerce(binding.domain)
+            domain = coerce(binding.domain)
             if domain is None:
                 raise InvalidArgumentError("unexpected type",
                                            binding.mark)
-            binding = self.binder.cast(binding, domain)
-            order.append((binding, +1))
-        yield OrderedBinding(parent, order, None, None, syntax)
+            binding = CastBinding(binding, domain, binding.syntax)
+            order.append(binding)
+        yield SortBinding(this, order, None, None, self.syntax)
 
 
 class NullFunction(ProperFunction):
 
     named('null')
 
-    def correlate(self, syntax, parent):
-        yield LiteralBinding(parent, None, UntypedDomain(), syntax)
+    def correlate(self):
+        yield LiteralBinding(None, UntypedDomain(), self.syntax)
 
 
 class TrueFunction(ProperFunction):
 
     named('true')
 
-    def correlate(self, syntax, parent):
-        yield LiteralBinding(parent, True, BooleanDomain(), syntax)
+    def correlate(self):
+        yield LiteralBinding(True, coerce(BooleanDomain()), self.syntax)
 
 
 class FalseFunction(ProperFunction):
 
     named('false')
 
-    def correlate(self, syntax, parent):
-        yield LiteralBinding(parent, False, BooleanDomain(), syntax)
+    def correlate(self):
+        yield LiteralBinding(False, coerce(BooleanDomain()), self.syntax)
 
 
 class CastFunction(ProperFunction):
@@ -238,8 +233,9 @@ class CastFunction(ProperFunction):
     ]
     output_domain = None
 
-    def correlate(self, expression, syntax, parent):
-        yield self.binder.cast(expression, self.output_domain, syntax, parent)
+    def correlate(self, expression):
+        domain = coerce(self.output_domain)
+        yield CastBinding(expression, domain, self.syntax)
 
 
 class BooleanCastFunction(CastFunction):
@@ -277,11 +273,11 @@ class DateCastFunction(CastFunction):
     named('date')
     output_domain = DateDomain()
 
-    def bind_function_call(self, syntax, parent):
-        if len(syntax.arguments) > 1:
-            constructor = self.binder.find_function(self.name+'!')
-            return constructor.bind_function_call(syntax, parent)
-        return super(DateCastFunction, self).bind_function_call(syntax, parent)
+    def __call__(self):
+        if len(self.syntax.arguments) > 1:
+            constructor = DateConstructor(self.syntax, self.state)
+            return constructor()
+        return super(DateCastFunction, self).__call__()
 
 
 class DateConstructor(ProperFunction):
@@ -294,8 +290,8 @@ class DateConstructor(ProperFunction):
             Parameter('day', IntegerDomain),
     ]
 
-    def correlate(self, year, month, day, syntax, parent):
-        yield DateConstructorBinding(parent, DateDomain(), syntax,
+    def correlate(self, year, month, day):
+        yield DateConstructorBinding(coerce(DateDomain()), self.syntax,
                                      year=year, month=month, day=day)
 
 
@@ -308,19 +304,14 @@ class EqualityOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
-        domain = self.binder.coerce(left.domain,
-                                    right.domain)
+    def correlate(self, left, right):
+        domain = coerce(left.domain, right.domain)
         if domain is None:
             raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        domain = self.binder.coerce(domain)
-        if domain is None:
-            raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        left = self.binder.cast(left, domain)
-        right = self.binder.cast(right, domain)
-        yield EqualityBinding(parent, left, right, syntax)
+                                       self.syntax.mark)
+        left = CastBinding(left, domain, left.syntax)
+        right = CastBinding(right, domain, right.syntax)
+        yield EqualityBinding(left, right, self.syntax)
 
 
 class InequalityOperator(ProperFunction):
@@ -332,19 +323,14 @@ class InequalityOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
-        domain = self.binder.coerce(left.domain,
-                                    right.domain)
+    def correlate(self, left, right):
+        domain = coerce(left.domain, right.domain)
         if domain is None:
             raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        domain = self.binder.coerce(domain)
-        if domain is None:
-            raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        left = self.binder.cast(left, domain)
-        right = self.binder.cast(right, domain)
-        yield InequalityBinding(parent, left, right, syntax)
+                                       self.syntax.mark)
+        left = CastBinding(left, domain, left.syntax)
+        right = CastBinding(right, domain, right.syntax)
+        yield InequalityBinding(left, right, self.syntax)
 
 
 class TotalEqualityOperator(ProperFunction):
@@ -356,19 +342,14 @@ class TotalEqualityOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
-        domain = self.binder.coerce(left.domain,
-                                    right.domain)
+    def correlate(self, left, right):
+        domain = coerce(left.domain, right.domain)
         if domain is None:
             raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        domain = self.binder.coerce(domain)
-        if domain is None:
-            raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        left = self.binder.cast(left, domain)
-        right = self.binder.cast(right, domain)
-        yield TotalEqualityBinding(parent, left, right, syntax)
+                                       self.syntax.mark)
+        left = CastBinding(left, domain, left.syntax)
+        right = CastBinding(right, domain, right.syntax)
+        yield TotalEqualityBinding(left, right, self.syntax)
 
 
 class TotalInequalityOperator(ProperFunction):
@@ -380,19 +361,14 @@ class TotalInequalityOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
-        domain = self.binder.coerce(left.domain,
-                                    right.domain)
+    def correlate(self, left, right):
+        domain = coerce(left.domain, right.domain)
         if domain is None:
             raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        domain = self.binder.coerce(domain)
-        if domain is None:
-            raise InvalidArgumentError("incompatible types",
-                                       syntax.mark)
-        left = self.binder.cast(left, domain)
-        right = self.binder.cast(right, domain)
-        yield TotalInequalityBinding(parent, left, right, syntax)
+                                       self.syntax.mark)
+        left = CastBinding(left, domain, left.syntax)
+        right = CastBinding(right, domain, right.syntax)
+        yield TotalInequalityBinding(left, right, self.syntax)
 
 
 class ConjunctionOperator(ProperFunction):
@@ -404,10 +380,10 @@ class ConjunctionOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
-        left = self.binder.cast(left, BooleanDomain())
-        right = self.binder.cast(right, BooleanDomain())
-        yield ConjunctionBinding(parent, [left, right], syntax)
+    def correlate(self, left, right):
+        left = CastBinding(left, coerce(BooleanDomain()), left.syntax)
+        right = CastBinding(right, coerce(BooleanDomain()), right.syntax)
+        yield ConjunctionBinding([left, right], self.syntax)
 
 
 class DisjunctionOperator(ProperFunction):
@@ -419,10 +395,10 @@ class DisjunctionOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
-        left = self.binder.cast(left, BooleanDomain())
-        right = self.binder.cast(right, BooleanDomain())
-        yield DisjunctionBinding(parent, [left, right], syntax)
+    def correlate(self, left, right):
+        left = CastBinding(left, coerce(BooleanDomain()), left.syntax)
+        right = CastBinding(right, coerce(BooleanDomain()), right.syntax)
+        yield DisjunctionBinding([left, right], self.syntax)
 
 
 class NegationOperator(ProperFunction):
@@ -433,9 +409,9 @@ class NegationOperator(ProperFunction):
             Parameter('term'),
     ]
 
-    def correlate(self, term, syntax, parent):
-        term = self.binder.cast(term, BooleanDomain())
-        yield NegationBinding(parent, term, syntax)
+    def correlate(self, term):
+        term = CastBinding(term, coerce(BooleanDomain()), term.syntax)
+        yield NegationBinding(term, self.syntax)
 
 
 class ComparisonOperator(ProperFunction):
@@ -447,15 +423,12 @@ class ComparisonOperator(ProperFunction):
 
     direction = None
 
-    def correlate(self, left, right, syntax, parent):
-        domain = self.binder.coerce(left.domain, right.domain)
+    def correlate(self, left, right):
+        domain = coerce(left.domain, right.domain)
         if domain is None:
-            raise InvalidArgumentError("incompatible types", syntax.mark)
-        domain = self.binder.coerce(domain)
-        if domain is None:
-            raise InvalidArgumentError("incompatible types", syntax.mark)
+            raise InvalidArgumentError("incompatible types", self.syntax.mark)
         compare = Compare(domain, left, right, self.direction,
-                          self.binder, syntax, parent)
+                          self.state, self.syntax)
         yield compare()
 
 
@@ -487,14 +460,13 @@ class Compare(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, domain, left, right, direction, binder, syntax, parent):
+    def __init__(self, domain, left, right, direction, state, syntax):
         self.domain = domain
-        self.left = binder.cast(left, domain)
-        self.right = binder.cast(right, domain)
+        self.left = CastBinding(left, domain, left.syntax)
+        self.right = CastBinding(right, domain, right.syntax)
         self.direction = direction
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument types",
@@ -506,7 +478,7 @@ class CompareStrings(Compare):
     adapts(StringDomain)
 
     def __call__(self):
-        return ComparisonBinding(self.parent, BooleanDomain(), self.syntax,
+        return ComparisonBinding(coerce(BooleanDomain()), self.syntax,
                                  left=self.left, right=self.right,
                                  direction=self.direction)
 
@@ -516,7 +488,7 @@ class CompareNumbers(Compare):
     adapts(NumberDomain)
 
     def __call__(self):
-        return ComparisonBinding(self.parent, BooleanDomain(), self.syntax,
+        return ComparisonBinding(coerce(BooleanDomain()), self.syntax,
                                  left=self.left, right=self.right,
                                  direction=self.direction)
 
@@ -529,9 +501,9 @@ class UnaryPlusOperator(ProperFunction):
             Parameter('value'),
     ]
 
-    def correlate(self, value, syntax, parent):
+    def correlate(self, value):
         Implementation = UnaryPlus.realize((type(value.domain),))
-        plus = Implementation(value, self.binder, syntax, parent)
+        plus = Implementation(value, self.state, self.syntax)
         yield plus()
 
 
@@ -543,9 +515,9 @@ class UnaryMinusOperator(ProperFunction):
             Parameter('value'),
     ]
 
-    def correlate(self, value, syntax, parent):
+    def correlate(self, value):
         Implementation = UnaryMinus.realize((type(value.domain),))
-        minus = Implementation(value, self.binder, syntax, parent)
+        minus = Implementation(value, self.state, self.syntax)
         yield minus()
 
 
@@ -558,10 +530,10 @@ class SubtractionOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
+    def correlate(self, left, right):
         signature = (type(left.domain), type(right.domain))
         Implementation = Subtract.realize(signature)
-        subtract = Implementation(left, right, self.binder, syntax, parent)
+        subtract = Implementation(left, right, self.state, self.syntax)
         yield subtract()
 
 
@@ -574,10 +546,10 @@ class AdditionOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
+    def correlate(self, left, right):
         signature = (type(left.domain), type(right.domain))
         Implementation = Add.realize(signature)
-        add = Implementation(left, right, self.binder, syntax, parent)
+        add = Implementation(left, right, self.state, self.syntax)
         yield add()
 
 
@@ -590,10 +562,10 @@ class SubtractionOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
+    def correlate(self, left, right):
         signature = (type(left.domain), type(right.domain))
         Implementation = Subtract.realize(signature)
-        subtract = Implementation(left, right, self.binder, syntax, parent)
+        subtract = Implementation(left, right, self.state, self.syntax)
         yield subtract()
 
 
@@ -606,10 +578,10 @@ class MultiplicationOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
+    def correlate(self, left, right):
         signature = (type(left.domain), type(right.domain))
         Implementation = Multiply.realize(signature)
-        multiply = Implementation(left, right, self.binder, syntax, parent)
+        multiply = Implementation(left, right, self.state, self.syntax)
         yield multiply()
 
 
@@ -622,10 +594,10 @@ class DivisionOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
+    def correlate(self, left, right):
         signature = (type(left.domain), type(right.domain))
         Implementation = Divide.realize(signature)
-        divide = Implementation(left, right, self.binder, syntax, parent)
+        divide = Implementation(left, right, self.state, self.syntax)
         yield divide()
 
 
@@ -633,11 +605,10 @@ class UnaryPlus(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, value, binder, syntax, parent):
+    def __init__(self, value, state, syntax):
         self.value = value
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument type",
@@ -648,11 +619,10 @@ class UnaryMinus(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, value, binder, syntax, parent):
+    def __init__(self, value, state, syntax):
         self.value = value
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument type",
@@ -663,12 +633,11 @@ class Add(Adapter):
 
     adapts(Domain, Domain)
 
-    def __init__(self, left, right, binder, syntax, parent):
+    def __init__(self, left, right, state, syntax):
         self.left = left
         self.right = right
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument types",
@@ -679,12 +648,11 @@ class Subtract(Adapter):
 
     adapts(Domain, Domain)
 
-    def __init__(self, left, right, binder, syntax, parent):
+    def __init__(self, left, right, state, syntax):
         self.left = left
         self.right = right
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument types",
@@ -695,12 +663,11 @@ class Multiply(Adapter):
 
     adapts(Domain, Domain)
 
-    def __init__(self, left, right, binder, syntax, parent):
+    def __init__(self, left, right, state, syntax):
         self.left = left
         self.right = right
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument types",
@@ -711,12 +678,11 @@ class Divide(Adapter):
 
     adapts(Domain, Domain)
 
-    def __init__(self, left, right, binder, syntax, parent):
+    def __init__(self, left, right, state, syntax):
         self.left = left
         self.right = right
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument types",
@@ -819,7 +785,7 @@ class GenericAggregateEncode(Encode):
         expression = self.expression_class(self.binding.domain,
                                            self.binding.mark,
                                            expression=expression)
-        space = self.encoder.relate(self.binding.parent)
+        space = self.encoder.relate(self.binding.base)
         plural_units = [unit for unit in expression.get_units()
                              if not space.spans(unit.space)]
         if not plural_units:
@@ -999,11 +965,11 @@ class Concatenate(Add):
                 (UntypedDomain, UntypedDomain))
 
     def __call__(self):
-        left = self.binder.cast(self.left, StringDomain(),
-                                parent=self.parent)
-        right = self.binder.cast(self.right, StringDomain(),
-                                 parent=self.parent)
-        return ConcatenationBinding(self.parent, StringDomain(), self.syntax,
+        left = CastBinding(self.left, coerce(StringDomain()),
+                           self.left.syntax)
+        right = CastBinding(self.right, coerce(StringDomain()),
+                            self.right.syntax)
+        return ConcatenationBinding(coerce(StringDomain()), self.syntax,
                                     left=left, right=right)
 
 
@@ -1025,7 +991,7 @@ class UnaryPlusForNumber(UnaryPlus):
     adapts(NumberDomain)
 
     def __call__(self):
-        return UnaryPlusBinding(self.parent, self.value.domain, self.syntax,
+        return UnaryPlusBinding(self.value.domain, self.syntax,
                                 value=self.value)
 
 
@@ -1047,7 +1013,7 @@ class UnaryMinusForNumber(UnaryMinus):
     adapts(NumberDomain)
 
     def __call__(self):
-        return UnaryMinusBinding(self.parent, self.value.domain, self.syntax,
+        return UnaryMinusBinding(self.value.domain, self.syntax,
                                 value=self.value)
 
 
@@ -1070,12 +1036,10 @@ class AddNumbers(Add):
     domain = None
 
     def __call__(self):
-        left = self.binder.cast(self.left, self.domain,
-                                parent=self.parent)
-        right = self.binder.cast(self.right, self.domain,
-                                 parent=self.parent)
-        return AdditionBinding(self.parent, self.domain, self.syntax,
-                               left=left, right=right)
+        domain = coerce(self.domain)
+        left = CastBinding(self.left, domain, self.left.syntax)
+        right = CastBinding(self.right, domain, self.right.syntax)
+        return AdditionBinding(domain, self.syntax, left=left, right=right)
 
 
 class AddInteger(AddNumbers):
@@ -1107,7 +1071,7 @@ class AddDateToInteger(Add):
     adapts(DateDomain, IntegerDomain)
 
     def __call__(self):
-        return AdditionBinding(self.parent, DateDomain(), self.syntax,
+        return AdditionBinding(coerce(DateDomain()), self.syntax,
                                left=self.left, right=self.right)
 
 
@@ -1131,11 +1095,9 @@ class SubtractNumbers(Subtract):
     domain = None
 
     def __call__(self):
-        left = self.binder.cast(self.left, self.domain,
-                                parent=self.parent)
-        right = self.binder.cast(self.right, self.domain,
-                                 parent=self.parent)
-        return SubtractionBinding(self.parent, self.domain, self.syntax,
+        left = CastBinding(self.left, self.domain, self.syntax)
+        right = CastBinding(self.right, self.domain, self.syntax)
+        return SubtractionBinding(self.domain, self.syntax,
                                   left=left, right=right)
 
 
@@ -1168,7 +1130,7 @@ class SubtractIntegerFromDate(Subtract):
     adapts(DateDomain, IntegerDomain)
 
     def __call__(self):
-        return SubtractionBinding(self.parent, DateDomain(), self.syntax,
+        return SubtractionBinding(coerce(DateDomain()), self.syntax,
                                   left=self.left, right=self.right)
 
 
@@ -1177,7 +1139,7 @@ class SubtractDateFromDate(Subtract):
     adapts(DateDomain, DateDomain)
 
     def __call__(self):
-        return SubtractionBinding(self.parent, IntegerDomain(), self.syntax,
+        return SubtractionBinding(coerce(IntegerDomain()), self.syntax,
                                   left=self.left, right=self.right)
 
 
@@ -1200,11 +1162,9 @@ class MultiplyNumbers(Multiply):
     domain = None
 
     def __call__(self):
-        left = self.binder.cast(self.left, self.domain,
-                                parent=self.parent)
-        right = self.binder.cast(self.right, self.domain,
-                                 parent=self.parent)
-        return MultiplicationBinding(self.parent, self.domain, self.syntax,
+        left = CastBinding(self.left, self.domain, self.syntax)
+        right = CastBinding(self.right, self.domain, self.syntax)
+        return MultiplicationBinding(coerce(self.domain), self.syntax,
                                      left=left, right=right)
 
 
@@ -1251,11 +1211,9 @@ class DivideNumbers(Divide):
     domain = None
 
     def __call__(self):
-        left = self.binder.cast(self.left, self.domain,
-                                parent=self.parent)
-        right = self.binder.cast(self.right, self.domain,
-                                 parent=self.parent)
-        return DivisionBinding(self.parent, self.domain, self.syntax,
+        left = CastBinding(self.left, self.domain, self.syntax)
+        right = CastBinding(self.right, self.domain, self.syntax)
+        return DivisionBinding(coerce(self.domain), self.syntax,
                                left=left, right=right)
 
 
@@ -1287,9 +1245,9 @@ class RoundFunction(ProperFunction):
             Parameter('digits', IntegerDomain, is_mandatory=False),
     ]
 
-    def correlate(self, value, digits, syntax, parent):
+    def correlate(self, value, digits):
         Implementation = Round.realize((type(value.domain),))
-        round = Implementation(value, digits, self.binder, syntax, parent)
+        round = Implementation(value, digits, self.state, self.syntax)
         yield round()
 
 
@@ -1297,12 +1255,11 @@ class Round(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, value, digits, binder, syntax, parent):
+    def __init__(self, value, digits, state, syntax):
         self.value = value
         self.digits = digits
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected argument types",
@@ -1315,13 +1272,12 @@ class RoundDecimal(Round):
                 (DecimalDomain,))
 
     def __call__(self):
-        value = self.binder.cast(self.value, DecimalDomain(),
-                                 parent=self.parent)
+        value = CastBinding(self.value, coerce(DecimalDomain()), self.syntax)
         digits = self.digits
         if digits is None:
-            digits = LiteralBinding(self.parent, 0, IntegerDomain(),
+            digits = LiteralBinding(0, coerce(IntegerDomain()),
                                     self.syntax)
-        return RoundBinding(self.parent, DecimalDomain(), self.syntax,
+        return RoundBinding(coerce(DecimalDomain()), self.syntax,
                             value=value, digits=digits)
 
 
@@ -1332,7 +1288,7 @@ class RoundFloat(Round):
     def __call__(self):
         if self.digits is not None:
             raise InvalidArgumentError("unexpected argument", self.digits.mark)
-        return RoundBinding(self.parent, FloatDomain(), self.syntax,
+        return RoundBinding(coerce(FloatDomain()), self.syntax,
                             value=self.value, digits=None)
 
 
@@ -1367,13 +1323,13 @@ class IsNullFunction(ProperFunction):
             Parameter('expression'),
     ]
 
-    def correlate(self, expression, syntax, parent):
-        domain = self.binder.coerce(expression.domain)
+    def correlate(self, expression):
+        domain = coerce(expression.domain)
         if domain is None:
             raise InvalidArgumentError("unexpected domain",
                                        expression.mark)
-        expression = self.binder.cast(expression, domain)
-        yield IsNullBinding(parent, BooleanDomain(), syntax,
+        expression = CastBinding(expression, domain, self.syntax)
+        yield IsNullBinding(coerce(BooleanDomain()), self.syntax,
                             expression=expression)
 
 
@@ -1400,21 +1356,16 @@ class NullIfMethod(ProperMethod):
             Parameter('expressions', is_list=True),
     ]
 
-    def correlate(self, this, expressions, syntax, parent):
-        domain = this.domain
-        for expression in expressions:
-            domain = self.binder.coerce(domain, expression.domain)
-            if domain is None:
-                raise InvalidArgumentError("unexpected domain",
-                                           expression.mark)
-        domain = self.binder.coerce(domain)
+    def correlate(self, this, expressions):
+        domain = coerce(this.domain,
+                        *(expression.domain for expression in expressions))
         if domain is None:
-            raise InvalidArgumentError("inexpected domain",
-                                       this.mark)
-        this = self.binder.cast(this, domain)
-        expressions = [self.binder.cast(expression, domain)
+            raise InvalidArgumentError("unexpected domain",
+                                       expression.mark)
+        this = CastBinding(this, domain, this.syntax)
+        expressions = [CastBinding(expression, domain, expression.syntax)
                        for expression in expressions]
-        yield NullIfBinding(parent, domain, syntax,
+        yield NullIfBinding(domain, self.syntax,
                             this=this, expressions=expressions)
 
 
@@ -1451,21 +1402,16 @@ class IfNullMethod(ProperMethod):
             Parameter('expressions', is_list=True),
     ]
 
-    def correlate(self, this, expressions, syntax, parent):
-        domain = this.domain
-        for expression in expressions:
-            domain = self.binder.coerce(domain, expression.domain)
-            if domain is None:
-                raise InvalidArgumentError("unexpected domain",
-                                           expression.mark)
-        domain = self.binder.coerce(domain)
+    def correlate(self, this, expressions):
+        domain = coerce(this.domain,
+                        *(expression.domain for expression in expressions))
         if domain is None:
-            raise InvalidArgumentError("inexpected domain",
-                                       this.mark)
-        this = self.binder.cast(this, domain)
-        expressions = [self.binder.cast(expression, domain)
+            raise InvalidArgumentError("unexpected domain",
+                                       expression.mark)
+        this = CastBinding(this, domain, this.syntax)
+        expressions = [CastBinding(expression, domain, expression.syntax)
                        for expression in expressions]
-        yield IfNullBinding(parent, domain, syntax,
+        yield IfNullBinding(domain, self.syntax,
                             this=this, expressions=expressions)
 
 
@@ -1500,31 +1446,28 @@ class IfFunction(ProperFunction):
             Parameter('values', is_list=True),
     ]
 
-    def bind_arguments(self, arguments, parent, mark):
+    def bind_arguments(self):
         conditions = []
         values = []
-        for index, argument in enumerate(arguments):
-            argument = self.binder.bind_one(argument, parent)
-            if (index % 2 == 0) and index < len(arguments)-1:
+        for index, argument in enumerate(self.syntax.arguments):
+            argument = self.state.bind(argument)
+            if (index % 2 == 0) and index < len(self.syntax.arguments)-1:
                 conditions.append(argument)
             else:
                 values.append(argument)
         arguments = [conditions, values]
-        return self.check_arguments(arguments, mark)
+        return self.check_arguments(arguments)
 
-    def correlate(self, conditions, values, syntax, parent):
-        conditions = [self.binder.cast(condition, BooleanDomain())
+    def correlate(self, conditions, values):
+        conditions = [CastBinding(condition, coerce(BooleanDomain()),
+                                  condition.syntax)
                       for condition in conditions]
-        domain = values[0].domain
-        for value in values[1:]:
-            domain = self.binder.coerce(domain, value.domain)
-            if domain is None:
-                raise InvalidArgumentError("unexpected domain", value.mark)
-        domain = self.binder.coerce(domain)
+        domain = coerce(*(value.domain for value in values))
         if domain is None:
             raise InvalidArgumentError("unexpected domain", syntax.mark)
-        values = [self.binder.cast(value, domain) for value in values]
-        yield IfBinding(parent, domain, syntax,
+        values = [CastBinding(value, domain, value.syntax)
+                  for value in values]
+        yield IfBinding(domain, self.syntax,
                         conditions=conditions, values=values)
 
 
@@ -1562,42 +1505,33 @@ class SwitchFunction(ProperFunction):
             Parameter('values', is_list=True),
     ]
 
-    def bind_arguments(self, arguments, parent, mark):
-        if not arguments:
-            return self.check_arguments([], mark)
-        token = self.binder.bind_one(arguments[0], parent)
+    def bind_arguments(self):
+        if not self.syntax.arguments:
+            return self.check_arguments([])
+        token = self.state.bind(self.syntax.arguments[0])
         items = []
         values = []
-        for index, argument in enumerate(arguments[1:]):
-            argument = self.binder.bind_one(argument, parent)
-            if (index % 2 == 0) and index < len(arguments)-2:
+        for index, argument in enumerate(self.syntax.arguments[1:]):
+            argument = self.state.bind(argument)
+            if (index % 2 == 0) and index < len(self.syntax.arguments)-2:
                 items.append(argument)
             else:
                 values.append(argument)
         arguments = [[token], items, values]
-        return self.check_arguments(arguments, mark)
+        return self.check_arguments(arguments)
 
-    def correlate(self, token, items, values, syntax, parent):
-        token_domain = token.domain
-        for item in items:
-            token_domain = self.binder.coerce(token_domain, item.domain)
-            if token_domain is None:
-                raise InvalidArgumentError("unexpected domain", item.mark)
-        token_domain = self.binder.coerce(token_domain)
+    def correlate(self, token, items, values):
+        token_domain = coerce(token.domain, *(item.domain for item in items))
         if token_domain is None:
             raise InvalidArgumentError("unexpected domain", token.mark)
-        token = self.binder.cast(token, token_domain)
-        items = [self.binder.cast(item, token_domain) for item in items]
-        domain = values[0].domain
-        for value in values[1:]:
-            domain = self.binder.coerce(domain, value.domain)
-            if domain is None:
-                raise InvalidArgumentError("unexpected domain", value.mark)
-        domain = self.binder.coerce(domain)
+        token = CastBinding(token, token_domain, token.syntax)
+        items = [CastBinding(item, token_domain, item.syntax)
+                 for item in items]
+        domain = coerce(*(value.domain for value in values))
         if domain is None:
-            raise InvalidArgumentError("unexpected domain", syntax.mark)
-        values = [self.binder.cast(value, domain) for value in values]
-        yield SwitchBinding(parent, domain, syntax,
+            raise InvalidArgumentError("unexpected domain", self.syntax.mark)
+        values = [CastBinding(value, domain, value.syntax) for value in values]
+        yield SwitchBinding(domain, self.syntax,
                             token=token, items=items, values=values)
 
 
@@ -1634,9 +1568,9 @@ class LengthMethod(ProperMethod):
             Parameter('this')
     ]
 
-    def correlate(self, this, syntax, parent):
+    def correlate(self, this):
         Implementation = Length.realize((type(this.domain),))
-        length = Implementation(this, self.binder, syntax, parent)
+        length = Implementation(this, self.state, self.syntax)
         yield length()
 
 
@@ -1644,11 +1578,10 @@ class Length(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, this, binder, syntax, parent):
+    def __init__(self, this, state, syntax):
         self.this = this
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected type", self.syntax.mark)
@@ -1660,8 +1593,8 @@ class TextLength(Length):
                 (UntypedDomain,))
 
     def __call__(self):
-        this = self.binder.cast(self.this, StringDomain())
-        return TextLengthBinding(self.parent, IntegerDomain(), self.syntax,
+        this = CastBinding(self.this, coerce(StringDomain()), self.this.syntax)
+        return TextLengthBinding(coerce(IntegerDomain()), self.syntax,
                                  this=this)
 
 
@@ -1687,10 +1620,10 @@ class ContainsOperator(ProperFunction):
             Parameter('right'),
     ]
 
-    def correlate(self, left, right, syntax, parent):
+    def correlate(self, left, right):
         signature = (type(left.domain), type(right.domain))
         Implementation = Contains.realize(signature)
-        length = Implementation(left, right, self.binder, syntax, parent)
+        length = Implementation(left, right, self.state, self.syntax)
         yield length()
 
 
@@ -1698,12 +1631,11 @@ class Contains(Adapter):
 
     adapts(Domain, Domain)
 
-    def __init__(self, left, right, binder, syntax, parent):
+    def __init__(self, left, right, state, syntax):
         self.left = left
         self.right = right
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         raise InvalidArgumentError("unexpected types", self.syntax.mark)
@@ -1717,11 +1649,11 @@ class ContainsStrings(Contains):
                 (UntypedDomain, UntypedDomain))
 
     def __call__(self):
-        left = self.binder.cast(self.left, StringDomain(),
-                                parent=self.parent)
-        right = self.binder.cast(self.right, StringDomain(),
-                                 parent=self.parent)
-        return ContainsBinding(self.parent, BooleanDomain(), self.syntax,
+        left = CastBinding(self.left, coerce(StringDomain()),
+                           self.left.syntax)
+        right = CastBinding(self.right, coerce(StringDomain()),
+                            self.right.syntax)
+        return ContainsBinding(coerce(BooleanDomain()), self.syntax,
                                left=left, right=right)
 
 
@@ -1816,10 +1748,11 @@ class CountFunction(ProperFunction):
             Parameter('expression'),
     ]
 
-    def correlate(self, expression, syntax, parent):
-        expression = self.binder.cast(expression, BooleanDomain())
-        yield CountBinding(parent, IntegerDomain(), syntax,
-                           expression=expression)
+    def correlate(self, expression):
+        expression = CastBinding(expression, coerce(BooleanDomain()),
+                                 expression.syntax)
+        yield CountBinding(coerce(IntegerDomain()), self.syntax,
+                           base=self.state.base, expression=expression)
 
 
 CountBinding = GenericBinding.factory(CountFunction)
@@ -1849,10 +1782,11 @@ class ExistsFunction(ProperFunction):
             Parameter('expression'),
     ]
 
-    def correlate(self, expression, syntax, parent):
-        expression = self.binder.cast(expression, BooleanDomain())
-        yield ExistsBinding(parent, BooleanDomain(), syntax,
-                            expression=expression)
+    def correlate(self, expression):
+        expression = CastBinding(expression, coerce(BooleanDomain()),
+                                 expression.syntax)
+        yield ExistsBinding(coerce(BooleanDomain()), self.syntax,
+                            base=self.state.base, expression=expression)
 
 
 ExistsBinding = GenericBinding.factory(ExistsFunction)
@@ -1868,10 +1802,11 @@ class EveryFunction(ProperFunction):
             Parameter('expression'),
     ]
 
-    def correlate(self, expression, syntax, parent):
-        expression = self.binder.cast(expression, BooleanDomain())
-        yield EveryBinding(parent, BooleanDomain(), syntax,
-                           expression=expression)
+    def correlate(self, expression):
+        expression = CastBinding(expression, coerce(BooleanDomain()),
+                                 expression.syntax)
+        yield EveryBinding(coerce(BooleanDomain()), self.syntax,
+                           base=self.state.base, expression=expression)
 
 
 EveryBinding = GenericBinding.factory(EveryFunction)
@@ -1889,7 +1824,7 @@ class EncodeExistsEvery(Encode):
         expression = self.encoder.encode(self.binding.expression)
         if self.is_every:
             expression = NegationExpression(expression, expression.mark)
-        space = self.encoder.relate(self.binding.parent)
+        space = self.encoder.relate(self.binding.base)
         plural_units = [unit for unit in expression.get_units()
                              if not space.spans(unit.space)]
         if not plural_units:
@@ -1959,9 +1894,9 @@ class MinFunction(ProperFunction):
             Parameter('expression'),
     ]
 
-    def correlate(self, expression, syntax, parent):
+    def correlate(self, expression):
         Implementation = Min.realize((type(expression.domain),))
-        function = Implementation(expression, self.binder, syntax, parent)
+        function = Implementation(expression, self.state, self.syntax)
         yield function()
 
 
@@ -1969,16 +1904,15 @@ class Min(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, expression, binder, syntax, parent):
+    def __init__(self, expression, state, syntax):
         self.expression = expression
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         expression = self.expression
-        return MinBinding(self.parent, expression.domain, self.syntax,
-                          expression=expression)
+        return MinBinding(expression.domain, self.syntax,
+                          base=self.state.base, expression=expression)
 
 
 class MinString(Min):
@@ -2033,9 +1967,9 @@ class MaxFunction(ProperFunction):
             Parameter('expression'),
     ]
 
-    def correlate(self, expression, syntax, parent):
+    def correlate(self, expression):
         Implementation = Max.realize((type(expression.domain),))
-        function = Implementation(expression, self.binder, syntax, parent)
+        function = Implementation(expression, self.state, self.syntax)
         yield function()
 
 
@@ -2043,16 +1977,15 @@ class Max(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, expression, binder, syntax, parent):
+    def __init__(self, expression, state, syntax):
         self.expression = expression
-        self.binder = binder
+        self.state = state
         self.syntax = syntax
-        self.parent = parent
 
     def __call__(self):
         expression = self.expression
-        return MaxBinding(self.parent, expression.domain, self.syntax,
-                          expression=expression)
+        return MaxBinding(expression.domain, self.syntax,
+                          base=self.state.base, expression=expression)
 
 
 class MaxString(Max):
@@ -2097,5 +2030,15 @@ SerializeMax = GenericSerialize.factory(MaxFunction,
         MaxPhrase, "MAX(%(expression)s)")
 SerializeMaxWrapper = GenericSerialize.factory(MaxFunction,
         MaxWrapperPhrase, "%(expression)s")
+
+
+def call(syntax, state, base=None):
+    if base is not None:
+        state.push_base(base)
+    function = Function(syntax, state)
+    bindings = list(function())
+    if base is not None:
+        state.pop_base()
+    return bindings
 
 
