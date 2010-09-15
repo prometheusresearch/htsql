@@ -21,13 +21,12 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        DateDomain)
 from ..syntax import NumberSyntax
 from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
-                       EqualityBinding, InequalityBinding,
-                       TotalEqualityBinding, TotalInequalityBinding,
+                       EqualityBinding, TotalEqualityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
                        CastBinding)
 from ..encoder import Encoder, Encode
-from ..code import (FunctionExpression, NegationExpression, AggregateUnit,
-                    CorrelatedUnit, LiteralExpression, ScreenSpace)
+from ..code import (FunctionCode, NegationCode, AggregateUnit,
+                    CorrelatedUnit, LiteralCode, FilteredSpace)
 from ..compiler import Compiler, Evaluate
 from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
@@ -330,7 +329,8 @@ class InequalityOperator(ProperFunction):
                                        self.syntax.mark)
         left = CastBinding(left, domain, left.syntax)
         right = CastBinding(right, domain, right.syntax)
-        yield InequalityBinding(left, right, self.syntax)
+        yield NegationBinding(EqualityBinding(left, right, self.syntax),
+                              self.syntax)
 
 
 class TotalEqualityOperator(ProperFunction):
@@ -368,7 +368,8 @@ class TotalInequalityOperator(ProperFunction):
                                        self.syntax.mark)
         left = CastBinding(left, domain, left.syntax)
         right = CastBinding(right, domain, right.syntax)
-        yield TotalInequalityBinding(left, right, self.syntax)
+        yield NegationBinding(TotalEqualityBinding(left, right, self.syntax),
+                              self.syntax)
 
 
 class ConjunctionOperator(ProperFunction):
@@ -700,7 +701,7 @@ class GenericBinding(FunctionBinding):
         return binding_class
 
 
-class GenericExpression(FunctionExpression):
+class GenericExpression(FunctionCode):
 
     function = None
 
@@ -755,7 +756,7 @@ class GenericEncode(Encode):
         for name in sorted(self.binding.arguments):
             if name not in arguments:
                 arguments[name] = self.binding.arguments[name]
-        return self.expression_class(self.binding.domain, self.binding.mark,
+        return self.expression_class(self.binding.domain, self.binding,
                                      **arguments)
 
 
@@ -783,10 +784,10 @@ class GenericAggregateEncode(Encode):
     def encode(self):
         expression = self.encoder.encode(self.binding.expression)
         expression = self.expression_class(self.binding.domain,
-                                           self.binding.mark,
+                                           self.binding,
                                            expression=expression)
         space = self.encoder.relate(self.binding.base)
-        plural_units = [unit for unit in expression.get_units()
+        plural_units = [unit for unit in expression.units
                              if not space.spans(unit.space)]
         if not plural_units:
             raise InvalidArgumentError("a plural expression is required",
@@ -808,8 +809,8 @@ class GenericAggregateEncode(Encode):
             raise InvalidArgumentError("invalid plural expression",
                                        expression.mark)
         aggregate = AggregateUnit(expression, plural_space, space,
-                                  expression.mark)
-        wrapper = self.wrapper_class(self.binding.domain, self.binding.mark,
+                                  self.binding)
+        wrapper = self.wrapper_class(self.binding.domain, self.binding,
                                      expression=aggregate)
         return wrapper
 
@@ -1823,9 +1824,9 @@ class EncodeExistsEvery(Encode):
     def encode(self):
         expression = self.encoder.encode(self.binding.expression)
         if self.is_every:
-            expression = NegationExpression(expression, expression.mark)
+            expression = NegationCode(expression, self.binding)
         space = self.encoder.relate(self.binding.base)
-        plural_units = [unit for unit in expression.get_units()
+        plural_units = [unit for unit in expression.units
                              if not space.spans(unit.space)]
         if not plural_units:
             raise InvalidArgumentError("a plural expression is required",
@@ -1846,18 +1847,17 @@ class EncodeExistsEvery(Encode):
         if not plural_space.spans(space):
             raise InvalidArgumentError("invalid plural expression",
                                        expression.mark)
-        plural_space = ScreenSpace(plural_space, expression, self.binding.mark)
-        expression = LiteralExpression(True, BooleanDomain(),
-                                       self.binding.mark)
+        plural_space = FilteredSpace(plural_space, expression, self.binding)
+        expression = LiteralCode(True, BooleanDomain(), self.binding)
         aggregate = CorrelatedUnit(expression, plural_space, space,
-                                   self.binding.mark)
+                                   self.binding)
         if self.is_exists:
             wrapper = ExistsWrapperExpression(self.binding.domain,
-                                              self.binding.mark,
+                                              self.binding,
                                               expression=aggregate)
         if self.is_every:
             wrapper = EveryWrapperExpression(self.binding.domain,
-                                             self.binding.mark,
+                                             self.binding,
                                              expression=aggregate)
         return wrapper
 

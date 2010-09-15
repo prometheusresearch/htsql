@@ -546,11 +546,13 @@ class ComponentRegistry(object):
     """
 
     def __init__(self):
-        # List of active components (lazily populated).
+        # List of active components (populated by `Component.component()`).
         self.components = None
-        # A mapping: interface -> [components] (lazily populated).
+        # A mapping: interface -> [components]  (populated by
+        # `Component.implementations()`).
         self.implementations = {}
-        # A mapping: (interface, signature) -> realization (lazily populated).
+        # A mapping: (interface, dispatch_key) -> realization (populated by
+        # `Component.realize()`).
         self.realizations = {}
 
 

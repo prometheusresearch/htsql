@@ -18,7 +18,7 @@ from .term import (Term, TableTerm, ScalarTerm, FilterTerm, JoinTerm,
                    CorrelationTerm, ProjectionTerm, OrderingTerm, HangingTerm,
                    SegmentTerm, QueryTerm, Tie, ParallelTie, SeriesTie)
 from .code import (Unit, ColumnUnit, AggregateUnit, CorrelatedUnit,
-                   Space, ScalarSpace, FreeTableSpace, JoinedTableSpace)
+                   Space, ScalarSpace, CrossProductSpace, JoinProductSpace)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand, LeafAppointment,
                      BranchAppointment, Connection, Attachment)
@@ -36,7 +36,7 @@ class Outliner(object):
 
     def appoint(self, expression, sketch, term):
         demand_by_unit = {}
-        for unit in expression.get_units():
+        for unit in expression.units:
             demand = self.delegate(unit, sketch, term)
             demand_by_unit[unit] = demand
         return BranchAppointment(expression, demand_by_unit)
@@ -273,7 +273,7 @@ class DelegateAggregate(Delegate):
         for idx in route:
             sketch = sketch.linkage[idx].sketch
             term = term.children[idx]
-        appointment = self.outliner.appoint(self.unit.expression,
+        appointment = self.outliner.appoint(self.unit.composite,
                                             sketch.linkage[0].sketch,
                                             term.children[0])
         return Demand(sketch, appointment)
@@ -288,7 +288,7 @@ class DelegateCorrelated(Delegate):
         for idx in route:
             sketch = sketch.linkage[idx].sketch
             term = term.children[idx]
-        appointment = self.outliner.appoint(self.unit.expression,
+        appointment = self.outliner.appoint(self.unit.composite,
                                             sketch, term)
         return Demand(sketch, appointment)
 
@@ -393,7 +393,7 @@ class ConnectScalar(Connect):
 
 class ConnectFreeTable(Connect):
 
-    adapts(FreeTableSpace, Outliner)
+    adapts(CrossProductSpace, Outliner)
 
     def connect_parallel(self):
         table = self.tie.space.table
@@ -401,7 +401,8 @@ class ConnectFreeTable(Connect):
             raise InvalidArgumentError()
         for name in table.primary_key.origin_column_names:
             column = table.columns[name]
-            code = ColumnUnit(column, self.tie.space, self.tie.mark)
+            code = ColumnUnit(column, self.tie.space,
+                              self.tie.space.binding)
             yield (code, code)
 
     def connect_series(self):
@@ -410,7 +411,7 @@ class ConnectFreeTable(Connect):
 
 class ConnectJoinedTable(Connect):
 
-    adapts(JoinedTableSpace, Outliner)
+    adapts(JoinProductSpace, Outliner)
 
     def connect_parallel(self):
         table = self.tie.space.join.target
@@ -418,7 +419,7 @@ class ConnectJoinedTable(Connect):
             raise InvalidArgumentError()
         for name in table.primary_key.origin_column_names:
             column = table.columns[name]
-            code = ColumnUnit(column, self.tie.space, self.tie.mark)
+            code = ColumnUnit(column, self.tie.space, self.tie.space.binding)
             yield (code, code)
 
     def connect_series(self):
@@ -426,10 +427,12 @@ class ConnectJoinedTable(Connect):
         left_codes = []
         right_codes = []
         for column in join.origin_columns:
-            code = ColumnUnit(column, self.tie.space.parent, self.tie.mark)
+            code = ColumnUnit(column, self.tie.space.base,
+                              self.tie.space.binding)
             left_codes.append(code)
         for column in join.target_columns:
-            code = ColumnUnit(column, self.tie.space, self.tie.mark)
+            code = ColumnUnit(column, self.tie.space,
+                              self.tie.space.binding)
             right_codes.append(code)
         if self.tie.is_reverse:
             left_codes, right_codes = right_codes, left_codes

@@ -8,6 +8,8 @@
    :members:
 .. automodule:: htsql.tr.binding
    :members:
+.. automodule:: htsql.tr.code
+   :members:
 .. automodule:: htsql.tr.coerce
    :members:
 .. automodule:: htsql.tr.error

@@ -15,11 +15,9 @@ This module implements the compile adapter.
 
 from ..util import listof
 from ..adapter import Adapter, adapts
-from .code import (Expression, LiteralExpression, EqualityExpression,
-                   InequalityExpression, TotalEqualityExpression,
-                   TotalInequalityExpression, ConjunctionExpression,
-                   DisjunctionExpression, NegationExpression,
-                   CastExpression, TupleExpression, Unit)
+from .code import (Code, LiteralCode, EqualityCode, TotalEqualityCode,
+                   ConjunctionCode, DisjunctionCode, NegationCode,
+                   CastCode, Unit)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand,
                      LeafAppointment, BranchAppointment, FrameAppointment)
@@ -343,7 +341,7 @@ class CompileBranch(Compile):
 
     def meet(self, appointment, inner_supplies):
         references = {}
-        for unit in appointment.expression.get_units():
+        for unit in appointment.expression.units:
             demand = appointment.demand_by_unit[unit]
             phrase = inner_supplies[demand]
             references[unit] = phrase
@@ -392,7 +390,7 @@ class CompileQuery(Compile):
 
 class Evaluate(Adapter):
 
-    adapts(Expression, Compiler)
+    adapts(Code, Compiler)
 
     def __init__(self, expression, compiler):
         self.expression = expression
@@ -404,7 +402,7 @@ class Evaluate(Adapter):
 
 class EvaluateLiteral(Evaluate):
 
-    adapts(LiteralExpression, Compiler)
+    adapts(LiteralCode, Compiler)
 
     def evaluate(self, references):
         return LiteralPhrase(self.expression.value,
@@ -414,91 +412,61 @@ class EvaluateLiteral(Evaluate):
 
 class EvaluateEquality(Evaluate):
 
-    adapts(EqualityExpression, Compiler)
+    adapts(EqualityCode, Compiler)
 
     def evaluate(self, references):
-        left = self.compiler.evaluate(self.expression.left, references)
-        right = self.compiler.evaluate(self.expression.right, references)
+        left = self.compiler.evaluate(self.expression.lop, references)
+        right = self.compiler.evaluate(self.expression.rop, references)
         return EqualityPhrase(left, right, self.expression.mark)
-
-
-class EvaluateInequality(Evaluate):
-
-    adapts(InequalityExpression, Compiler)
-
-    def evaluate(self, references):
-        left = self.compiler.evaluate(self.expression.left, references)
-        right = self.compiler.evaluate(self.expression.right, references)
-        return InequalityPhrase(left, right, self.expression.mark)
 
 
 class EvaluateTotalEquality(Evaluate):
 
-    adapts(TotalEqualityExpression, Compiler)
+    adapts(TotalEqualityCode, Compiler)
 
     def evaluate(self, references):
-        left = self.compiler.evaluate(self.expression.left, references)
-        right = self.compiler.evaluate(self.expression.right, references)
+        left = self.compiler.evaluate(self.expression.lop, references)
+        right = self.compiler.evaluate(self.expression.rop, references)
         return TotalEqualityPhrase(left, right, self.expression.mark)
-
-
-class EvaluateTotalInequality(Evaluate):
-
-    adapts(TotalInequalityExpression, Compiler)
-
-    def evaluate(self, references):
-        left = self.compiler.evaluate(self.expression.left, references)
-        right = self.compiler.evaluate(self.expression.right, references)
-        return TotalInequalityPhrase(left, right, self.expression.mark)
 
 
 class EvaluateConjunction(Evaluate):
 
-    adapts(ConjunctionExpression, Compiler)
+    adapts(ConjunctionCode, Compiler)
 
     def evaluate(self, references):
         terms = [self.compiler.evaluate(term, references)
-                 for term in self.expression.terms]
+                 for term in self.expression.ops]
         return ConjunctionPhrase(terms, self.expression.mark)
 
 
 class EvaluateDisjunction(Evaluate):
 
-    adapts(DisjunctionExpression, Compiler)
+    adapts(DisjunctionCode, Compiler)
 
     def evaluate(self, references):
         terms = [self.compiler.evaluate(term, references)
-                 for term in self.expression.terms]
+                 for term in self.expression.ops]
         return DisjunctionPhrase(terms, self.expression.mark)
 
 
 class EvaluateNegation(Evaluate):
 
-    adapts(NegationExpression, Compiler)
+    adapts(NegationCode, Compiler)
 
     def evaluate(self, references):
-        term = self.compiler.evaluate(self.expression.term, references)
+        term = self.compiler.evaluate(self.expression.op, references)
         return NegationPhrase(term, self.expression.mark)
 
 
 class EvaluateCast(Evaluate):
 
-    adapts(CastExpression, Compiler)
+    adapts(CastCode, Compiler)
 
     def evaluate(self, references):
-        phrase = self.compiler.evaluate(self.expression.code, references)
+        phrase = self.compiler.evaluate(self.expression.op, references)
         return CastPhrase(phrase, self.expression.domain, phrase.is_nullable,
                           self.expression.mark)
-
-
-class EvaluateTuple(Evaluate):
-
-    adapts(TupleExpression, Compiler)
-
-    def evaluate(self, references):
-        units = [self.compiler.evaluate(unit, references)
-                 for unit in self.expression.units]
-        return TuplePhrase(units, self.expression.mark)
 
 
 class EvaluateUnit(Evaluate):

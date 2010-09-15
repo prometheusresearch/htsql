@@ -400,6 +400,26 @@ class Join(object):
         self.is_expanding = is_expanding
         self.is_contracting = is_contracting
 
+    def __str__(self):
+        # Generate a string of the form:
+        #   schema.table -> schema.table
+        return "%s -> %s" % (self.origin, self.table)
+
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self)
+
+    def __hash__(self):
+        # Since joins are used in comparison operations of code and space
+        # objects, we need to override hash and equality operators to
+        # provide comparison by value.  Override in subclasses.
+        raise NotImplementedError()
+
+    def __eq__(self):
+        # Since joins are used in comparison operations of code and space
+        # objects, we need to override hash and equality operators to
+        # provide comparison by value.  Override in subclasses.
+        raise NotImplementedError()
+
 
 class DirectJoin(Join):
     """
@@ -446,6 +466,15 @@ class DirectJoin(Join):
         super(DirectJoin, self).__init__(origin, target,
                                          is_expanding, is_contracting)
         self.foreign_key = foreign_key
+
+    def __hash__(self):
+        # Provide comparison by value.
+        return hash(self.foreign_key)
+
+    def __eq__(self, other):
+        # Provide comparison by value.
+        return (isinstance(other, DirectJoin) and
+                self.foreign_key == other.foreign_key)
 
 
 class ReverseJoin(Join):
@@ -498,5 +527,14 @@ class ReverseJoin(Join):
         super(ReverseJoin, self).__init__(origin, target,
                                           is_expanding, is_contracting)
         self.foreign_key = foreign_key
+
+    def __hash__(self):
+        # Provide comparison by value.
+        return hash(self.foreign_key)
+
+    def __eq__(self, other):
+        # Provide comparison by value.
+        return (isinstance(other, DirectJoin) and
+                self.foreign_key == other.foreign_key)
 
 

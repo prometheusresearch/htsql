@@ -261,6 +261,9 @@ def coerce(*domains):
     Returns the most specialized domain covering the given domains;
     ``None`` if the common domain could not be determined.
     """
+    # FIXME: maybe overriding a builtin function is not a great idea?
+    # It is deprecated though.
+
     # Sanity check on the argument.
     assert isinstance(list(domains), listof(Domain))
 

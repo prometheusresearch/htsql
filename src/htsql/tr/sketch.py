@@ -172,7 +172,7 @@ class BranchAppointment(Appointment):
         self.demand_by_unit = demand_by_unit
 
     def get_demands(self):
-        for unit in self.expression.get_units():
+        for unit in self.expression.units:
             demand = self.demand_by_unit[unit]
             yield demand
 

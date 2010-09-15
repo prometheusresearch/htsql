@@ -14,10 +14,10 @@ This module implements the assemble adapter.
 
 
 from ..adapter import Adapter, adapts
-from .code import (Code, Space, ScalarSpace, FreeTableSpace, JoinedTableSpace,
-                   ScreenSpace, OrderedSpace, RelativeSpace, Expression, Unit,
-                   ColumnUnit, AggregateUnit, CorrelatedUnit,
-                   SegmentCode, QueryCode)
+from .code import (Expression, Code, Space, ScalarSpace, CrossProductSpace,
+                   JoinProductSpace, FilteredSpace, OrderedSpace,
+                   ConvergedSpace, Unit, ColumnUnit, AggregateUnit,
+                   CorrelatedUnit, QueryExpression, SegmentExpression)
 from .term import (TableTerm, ScalarTerm, FilterTerm, JoinTerm,
                    CorrelationTerm, ProjectionTerm, OrderingTerm, HangingTerm,
                    SegmentTerm, QueryTerm, ParallelTie, SeriesTie,
@@ -37,7 +37,7 @@ class Assembler(object):
 
 class Assemble(Adapter):
 
-    adapts(Code, Assembler)
+    adapts(Expression, Assembler)
 
     def __init__(self, code, assembler):
         self.code = code
@@ -62,17 +62,17 @@ class AssembleSpace(Assemble):
         raise NotImplementedError()
 
 
-class AssembleExpression(Assemble):
+class AssembleCode(Assemble):
 
-    adapts(Expression, Assembler)
+    adapts(Code, Assembler)
 
     def inject(self, term):
-        for unit in self.code.get_units():
+        for unit in self.code.units:
             term = self.assembler.inject(unit, term)
         return term
 
 
-class AssembleUnit(AssembleExpression):
+class AssembleUnit(AssembleCode):
 
     adapts(Unit, Assembler)
 
@@ -94,8 +94,8 @@ class AssembleScalar(AssembleSpace):
         if self.space in term.routes:
             return term
         axis = term.baseline
-        while axis.parent != self.space:
-            axis = axis.parent
+        while axis.base != self.space:
+            axis = axis.base
         term = self.assembler.inject(axis, term)
         assert self.space not in term.routes
         left = term
@@ -114,17 +114,17 @@ class AssembleScalar(AssembleSpace):
 
 class AssembleFreeTable(AssembleSpace):
 
-    adapts(FreeTableSpace, Assembler)
+    adapts(CrossProductSpace, Assembler)
 
     def assemble(self, baseline):
-        backbone = self.space.axes()
+        backbone = self.space.inflate()
         if baseline == backbone:
             routes = {}
             routes[self.space] = []
             routes[backbone] = []
             return TableTerm(self.space.table, self.space, baseline,
                              routes, self.space.mark)
-        left = self.assembler.assemble(self.space.parent, baseline)
+        left = self.assembler.assemble(self.space.base, baseline)
         right_routes = {}
         right_routes[self.space] = []
         right_routes[backbone] = []
@@ -143,19 +143,19 @@ class AssembleFreeTable(AssembleSpace):
         if self.space in term.routes:
             return term
         assert term.space.spans(self.space)
-        space = self.space.inflate(term.space)
+        space = self.space.prune(term.space)
         if self.space != space:
             term = self.assembler.inject(space, term)
             routes = term.routes.copy()
             routes[self.space] = routes[space]
             return term.clone(routes=routes)
-        backbone = self.space.axes()
-        term_backbone = term.space.axes()
+        backbone = self.space.inflate()
+        term_backbone = term.space.inflate()
         assert term_backbone.concludes(backbone)
         if self.space == backbone:
             axis = term_backbone
-            while axis.parent != self.space:
-                axis = axis.parent
+            while axis.base != self.space:
+                axis = axis.base
             left = self.assembler.inject(axis, term)
             assert self.space not in left.routes
             right_routes = {}
@@ -170,7 +170,7 @@ class AssembleFreeTable(AssembleSpace):
             return JoinTerm(left, right, [tie], True, left.space,
                             left.baseline, routes, left.mark)
         left = term
-        left = self.assembler.inject(self.space.parent, left)
+        left = self.assembler.inject(self.space.base, left)
         left = self.assembler.inject(backbone, left)
         assert self.space not in left.routes
         right_routes = {}
@@ -179,28 +179,28 @@ class AssembleFreeTable(AssembleSpace):
         right = TableTerm(self.space.table, self.space, backbone,
                           right_routes, self.space.mark)
         backbone_tie = ParallelTie(backbone)
-        parent_tie = SeriesTie(self.space)
+        base_tie = SeriesTie(self.space)
         routes = {}
         for key in left.routes:
             routes[key] = [LEFT] + left.routes[key]
         routes[self.space] = [RIGHT]
-        return JoinTerm(left, right, [backbone_tie, parent_tie], False,
+        return JoinTerm(left, right, [backbone_tie, base_tie], False,
                         left.space, left.baseline, routes, left.mark)
 
 
 class AssembleJoinedTable(AssembleSpace):
 
-    adapts(JoinedTableSpace, Assembler)
+    adapts(JoinProductSpace, Assembler)
 
     def assemble(self, baseline):
-        backbone = self.space.axes()
+        backbone = self.space.inflate()
         if baseline == backbone:
             routes = {}
             routes[self.space] = []
             routes[backbone] = []
             return TableTerm(self.space.table, self.space, baseline,
                              routes, self.space.mark)
-        term = self.assembler.assemble(self.space.parent, baseline)
+        term = self.assembler.assemble(self.space.base, baseline)
         assert self.space not in term.routes
         if backbone in term.routes:
             if term.space.conforms(self.space):
@@ -228,18 +228,18 @@ class AssembleJoinedTable(AssembleSpace):
         if self.space in term.routes:
             return term
         assert term.space.spans(self.space)
-        space = self.space.inflate(term.space)
+        space = self.space.prune(term.space)
         if self.space != space:
             term = self.assembler.inject(space, term)
             routes = term.routes.copy()
             routes[self.space] = routes[space]
             return term.clone(routes=routes)
-        backbone = self.space.axes()
-        term_backbone = term.space.axes()
+        backbone = self.space.inflate()
+        term_backbone = term.space.inflate()
         if term_backbone.concludes(self.space):
             axis = term_backbone
-            while axis.parent != self.space:
-                axis = axis.parent
+            while axis.base != self.space:
+                axis = axis.base
             left = self.assembler.inject(axis, term)
             assert self.space not in left.routes
             right_routes = {}
@@ -254,7 +254,7 @@ class AssembleJoinedTable(AssembleSpace):
             return JoinTerm(left, right, [tie], True, left.space,
                             left.baseline, routes, left.mark)
         left = term
-        left = self.assembler.inject(self.space.parent, left)
+        left = self.assembler.inject(self.space.base, left)
         if not self.space.is_contracting:
             left = self.assembler.inject(backbone, left)
         assert self.space not in left.routes
@@ -267,15 +267,15 @@ class AssembleJoinedTable(AssembleSpace):
         if not self.space.is_contracting:
             backbone_tie = ParallelTie(backbone)
             ties.append(backbone_tie)
-        parent_tie = SeriesTie(self.space)
-        ties.append(parent_tie)
+        base_tie = SeriesTie(self.space)
+        ties.append(base_tie)
         is_inner = True
         space = self.space
         while not term_backbone.concludes(space):
             if not space.is_expanding:
                 is_inner = False
                 break
-            space = space.parent
+            space = space.base
         routes = {}
         for key in left.routes:
             routes[key] = [LEFT] + left.routes[key]
@@ -286,16 +286,16 @@ class AssembleJoinedTable(AssembleSpace):
 
 class AssembleScreen(AssembleSpace):
 
-    adapts(ScreenSpace, Assembler)
+    adapts(FilteredSpace, Assembler)
 
     def assemble(self, baseline):
-        child = self.assembler.assemble(self.space.parent, baseline)
+        child = self.assembler.assemble(self.space.base, baseline)
         child = self.assembler.inject(self.space.filter, child)
         assert self.space not in child.routes
         routes = {}
         for key in child.routes:
             routes[key] = [FORWARD] + child.routes[key]
-        routes[self.space] = [FORWARD] + child.routes[self.space.parent]
+        routes[self.space] = [FORWARD] + child.routes[self.space.base]
         return FilterTerm(child, self.space.filter, self.space, baseline,
                           routes, self.space.mark)
 
@@ -303,30 +303,30 @@ class AssembleScreen(AssembleSpace):
         if self.space in term.routes:
             return term
         assert term.space.spans(self.space)
-        space = self.space.inflate(term.space)
+        space = self.space.prune(term.space)
         if self.space != space:
             term = self.assembler.inject(space, term)
             routes = term.routes.copy()
             routes[self.space] = routes[space]
             return term.clone(routes=routes)
         left = term
-        term_backbone = term.space.axes()
-        baseline = self.space.axes()
+        term_backbone = term.space.inflate()
+        baseline = self.space.inflate()
         right = self.assembler.assemble(self.space, baseline)
         ties = []
-        if term_backbone.concludes(baseline) or baseline.parent in left.routes:
-            axes = baseline
-            while axes in right.routes:
-                left = self.assembler.inject(axes, left)
-                tie = ParallelTie(axes)
+        if term_backbone.concludes(baseline) or baseline.base in left.routes:
+            inflate = baseline
+            while inflate in right.routes:
+                left = self.assembler.inject(inflate, left)
+                tie = ParallelTie(inflate)
                 ties.append(tie)
-                axes = axes.parent
+                inflate = inflate.base
         else:
             space = self.space
             while not space.is_axis:
-                space = space.parent
+                space = space.base
             assert space in right.routes
-            left = self.assembler.inject(space.parent, left)
+            left = self.assembler.inject(space.base, left)
             tie = SeriesTie(space)
         routes = {}
         for key in left.routes:
@@ -341,7 +341,8 @@ class AssembleOrdered(AssembleSpace):
     adapts(OrderedSpace, Assembler)
 
     def assemble(self, baseline):
-        child = self.assembler.assemble(self.space.parent, baseline)
+        child = self.assembler.assemble(self.space.base, baseline)
+        assert self.space not in child.routes
         order = []
         codes = set()
         for code, dir in self.space.ordering():
@@ -350,13 +351,11 @@ class AssembleOrdered(AssembleSpace):
                 codes.add(code)
         for code, dir in order:
             child = self.assembler.inject(code, child)
-        assert self.space not in child.routes
         routes = {}
         for key in child.routes:
             routes[key] = [FORWARD] + child.routes[key]
-        routes[self.space] = [FORWARD] + child.routes[self.space.parent]
-        return OrderingTerm(child, order,
-                            self.space.limit, self.space.offset,
+        routes[self.space] = [FORWARD] + child.routes[self.space.base]
+        return OrderingTerm(child, order, self.space.limit, self.space.offset,
                             self.space, baseline, routes, self.space.mark)
 
 
@@ -390,46 +389,46 @@ class AssembleAggregate(AssembleUnit):
         else:
             base_space = term.space
             left = term
-        base_backbone = base_space.axes()
-        plural_space = self.code.plural_space.inflate(base_space)
+        base_backbone = base_space.inflate()
+        plural_space = self.code.plural_space.prune(base_space)
         baseline = plural_space
-        while not base_space.concludes(baseline.parent):
-            baseline = baseline.parent
-        baseline = baseline.axes()
+        while not base_space.concludes(baseline.base):
+            baseline = baseline.base
+        baseline = baseline.inflate()
         plural_term = self.assembler.assemble(plural_space, baseline)
-        plural_term = self.assembler.inject(self.code.expression, plural_term)
+        plural_term = self.assembler.inject(self.code.composite, plural_term)
         ties = []
-        axes = []
+        inflate = []
         if (base_backbone.concludes(baseline)
-                or baseline.parent in plural_term.routes):
+                or baseline.base in plural_term.routes):
             axis = baseline
             while axis in plural_term.routes:
-                axes.append(axis)
+                inflate.append(axis)
                 tie = ParallelTie(axis)
                 ties.append(tie)
-                axis = axis.parent
+                axis = axis.base
         else:
-            axes.append(baseline)
+            inflate.append(baseline)
             tie = SeriesTie(baseline)
             ties.append(tie)
-        relative_space = RelativeSpace(baseline.parent,
-                                       plural_space, self.code.mark)
+        relative_space = ConvergedSpace(baseline.base,
+                                       plural_space, self.code.binding)
         routes = {}
-        for axis in axes:
+        for axis in inflate:
             routes[axis] = [FORWARD] + plural_term.routes[axis]
         routes[self.code] = []
         projected_term = ProjectionTerm(plural_term, ties, relative_space,
-                                        baseline.parent, routes,
+                                        baseline.base, routes,
                                         self.code.mark)
         if with_base_term:
             assert False
         if (base_backbone.concludes(baseline)
-                or baseline.parent in plural_term.routes):
-            for axis in axes:
+                or baseline.base in plural_term.routes):
+            for axis in inflate:
                 term = self.assembler.inject(axis, term)
         else:
-            for axis in axes:
-                term = self.assembler.inject(axis.parent, term)
+            for axis in inflate:
+                term = self.assembler.inject(axis.base, term)
         left = term
         right = projected_term
         routes = {}
@@ -457,14 +456,14 @@ class AssembleCorrelated(AssembleUnit):
         else:
             base_space = term.space
             left = term
-        base_backbone = base_space.axes()
-        plural_space = self.code.plural_space.inflate(base_space)
+        base_backbone = base_space.inflate()
+        plural_space = self.code.plural_space.prune(base_space)
         baseline = plural_space
-        while not base_space.concludes(baseline.parent):
-            baseline = baseline.parent
-        baseline = baseline.axes()
+        while not base_space.concludes(baseline.base):
+            baseline = baseline.base
+        baseline = baseline.inflate()
         plural_term = self.assembler.assemble(plural_space, baseline)
-        plural_term = self.assembler.inject(self.code.expression, plural_term)
+        plural_term = self.assembler.inject(self.code.composite, plural_term)
         routes = {}
         for key in plural_term.routes:
             routes[key] = [FORWARD] + plural_term.routes[key]
@@ -472,28 +471,28 @@ class AssembleCorrelated(AssembleUnit):
                                   plural_term.space, plural_term.baseline,
                                   routes, plural_term.mark)
         ties = []
-        axes = []
+        inflate = []
         if (base_backbone.concludes(baseline)
-                or baseline.parent in plural_term.routes):
+                or baseline.base in plural_term.routes):
             axis = baseline
             while axis in plural_term.routes:
-                axes.append(axis)
+                inflate.append(axis)
                 tie = ParallelTie(axis)
                 ties.append(tie)
-                axis = axis.parent
+                axis = axis.base
         else:
-            axes.append(baseline)
+            inflate.append(baseline)
             tie = SeriesTie(baseline)
             ties.append(tie)
         if with_base_term:
             assert False
         if (base_backbone.concludes(baseline)
-                or baseline.parent in plural_term.routes):
-            for axis in axes:
+                or baseline.base in plural_term.routes):
+            for axis in inflate:
                 term = self.assembler.inject(axis, term)
         else:
-            for axis in axes:
-                term = self.assembler.inject(axis.parent, term)
+            for axis in inflate:
+                term = self.assembler.inject(axis.base, term)
         left = term
         right = plural_term
         routes = {}
@@ -506,10 +505,13 @@ class AssembleCorrelated(AssembleUnit):
 
 class AssembleSegment(Assemble):
 
-    adapts(SegmentCode, Assembler)
+    adapts(SegmentExpression, Assembler)
 
     def assemble(self):
-        child = self.assembler.assemble(self.code.space, self.code.space.scalar)
+        scalar = self.code.space
+        while scalar.base is not None:
+            scalar = scalar.base
+        child = self.assembler.assemble(self.code.space, scalar)
         child = self.assembler.inject(self.code, child)
         select = self.code.elements
         routes = {}
@@ -520,14 +522,14 @@ class AssembleSegment(Assemble):
 
     def inject(self, term):
         for element in self.code.elements:
-            for unit in element.get_units():
+            for unit in element.units:
                 term = self.assembler.inject(unit, term)
         return term
 
 
 class AssembleQuery(Assemble):
 
-    adapts(QueryCode, Assembler)
+    adapts(QueryExpression, Assembler)
 
     def assemble(self):
         segment = None

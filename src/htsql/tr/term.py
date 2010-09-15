@@ -17,7 +17,7 @@ from ..util import Node, listof, dictof, oneof, tupleof, maybe
 from ..mark import Mark
 from ..entity import TableEntity
 from ..domain import BooleanDomain
-from .code import Space, Code, Unit, QueryCode, Expression
+from .code import Expression, Space, Code, Unit, QueryExpression
 
 
 LEFT = 0
@@ -44,7 +44,7 @@ class NullaryTerm(Term):
 
     def __init__(self, space, baseline, routes, mark):
         assert isinstance(space, Space)
-        assert isinstance(baseline, Space) and baseline.axes() == baseline
+        assert isinstance(baseline, Space) and baseline.is_inflated
         assert isinstance(routes, dictof(oneof(Space, Unit), listof(int)))
         super(NullaryTerm, self).__init__([], mark)
         self.space = space
@@ -59,7 +59,7 @@ class UnaryTerm(Term):
     def __init__(self, child, space, baseline, routes, mark):
         assert isinstance(child, Term)
         assert isinstance(space, Space)
-        assert isinstance(baseline, Space) and baseline.axes() == baseline
+        assert isinstance(baseline, Space) and baseline.is_inflated
         assert isinstance(routes, dictof(oneof(Space, Unit), listof(object)))
         super(UnaryTerm, self).__init__([child], mark)
         self.child = child
@@ -77,7 +77,7 @@ class BinaryTerm(Term):
         assert isinstance(left_child, Term)
         assert isinstance(right_child, Term)
         assert isinstance(space, Space)
-        assert isinstance(baseline, Space) and baseline.axes() == baseline
+        assert isinstance(baseline, Space) and baseline.is_inflated
         assert isinstance(routes, dictof(oneof(Space, Unit), listof(object)))
         super(BinaryTerm, self).__init__([left_child, right_child], mark)
         self.left_child = left_child
@@ -173,7 +173,7 @@ class SegmentTerm(UnaryTerm):
 class QueryTerm(Term):
 
     def __init__(self, code, segment, mark):
-        assert isinstance(code, QueryCode)
+        assert isinstance(code, QueryExpression)
         assert isinstance(segment, maybe(SegmentTerm))
         children = []
         if segment is not None:

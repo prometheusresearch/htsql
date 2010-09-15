@@ -660,28 +660,62 @@ class Record(object):
 
 
 class Node(object):
+    """
+    Implements an immutable clonable object.
+    """
+
+    def __init__(self):
+        # Subclasses must define the `__init__` method.  Moreover, the
+        # arguments of `__init__` must be assigned to respective object
+        # attributes unchanged (or if changed, must still be in the form
+        # acceptable by the constructor).
+        raise NotImplementedError()
 
     def clone(self, **replacements):
+        """
+        Clones the node assigning new values to selected attributes.
+
+        Returns a new object of the same type keeping original attributes
+        except those for which new values are specified.
+
+        `replacements` (a dictionary)
+            A mapping: attribute -> value containing new attribute values.
+        """
+        # If there are no replacements, we could reuse the same object.
         if not replacements:
             return self
-        #init_code = self.__init__.__func__.__code__
+        # Get the list of constructor arguments.  Note that we assume
+        # for each constructor argument, a node object has an attribute
+        # with the same name.
         init_code = self.__init__.im_func.func_code
         names = init_code.co_varnames[1:init_code.co_argcount]
-        for key in sorted(replacements):
-            assert key in names, (key, names)
+        # Check that all replacements are, indeed, constructor parameters.
+        assert all(key in names for key in sorted(replacements))
+        # Arguments of a constructor call to generate a clone.
         arguments = {}
+        # Indicates if at least one argument has changed.
         is_modified = False
+        # For each argument, either extract the current value, or
+        # get a replacement.
         for name in names:
             value = getattr(self, name)
             if name in replacements and replacements[name] is not value:
                 value = replacements[name]
                 is_modified = True
             arguments[name] = value
+        # Even though we have some replacements, in fact they all coincide
+        # with the object attributes, so we could reuse the same object.
         if not is_modified:
             return self
+        # Call the node constructor and return a new object.
         clone = self.__class__(**arguments)
         return clone
 
+    def __str__(self):
+        # Default implementation; override in subclasses.
+        return self.__class__.__name__.lower()
 
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self)
 
 

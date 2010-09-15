@@ -75,6 +75,11 @@ class Binding(Node):
         self.syntax = syntax
         self.mark = syntax.mark
 
+    def __str__(self):
+        # Display an HTSQL expression (approximately) corresponding
+        # to the binding node.
+        return str(self.syntax)
+
 
 class ChainBinding(Binding):
     """
@@ -304,19 +309,7 @@ class EqualityBindingBase(Binding):
     """
     Represents an equality operator.
 
-    This is an abstract class for the ``=``, ``==``, ``!=`` and ``!==``
-    operators.
-
-    Class attributes:
-
-    `is_negative` (Boolean)
-        If set, the class represents a "not equal" operator.
-
-    `is_total` (Boolean)
-        If set, the class represents "total equality" operator, which
-        consider ``NULL`` as a regular value.
-
-    Constructor arguments:
+    This is an abstract class for the ``=`` and ``==`` operators.
 
     `lop` (:class:`Binding`)
         The left operand.
@@ -324,9 +317,6 @@ class EqualityBindingBase(Binding):
     `rop` (:class:`Binding`)
         The right operand.
     """
-
-    is_negative = None
-    is_total = None
 
     def __init__(self, lop, rop, syntax):
         assert isinstance(lop, Binding)
@@ -343,73 +333,51 @@ class EqualityBindingBase(Binding):
 class EqualityBinding(EqualityBindingBase):
     """
     Represents the "equality" (``=``) operator.
+
+    The regular "equality" operator treats ``NULL`` as a special value:
+    if any of the arguments is ``NULL``, the result is also ``NULL``.
     """
-
-    is_negative = False
-    is_total = False
-
-
-class InequalityBinding(EqualityBindingBase):
-    """
-    Represents the "inequality" (``!=``) operator.
-    """
-
-    is_negative = True
-    is_total = False
 
 
 class TotalEqualityBinding(EqualityBindingBase):
     """
     Represents the "total equality" (``==``) operator.
+
+    The "total equality" operator treats ``NULL`` as a regular value.
     """
 
-    is_negative = False
-    is_total = True
 
-
-class TotalInequalityBinding(EqualityBindingBase):
+class ConnectiveBindingBase(Binding):
     """
-    Represents the "total inequality" (``!==``) operator.
+    Represents an N-ary logical connective.
+
+    This is an abstract class for "AND" (``&``) and "OR" (``|``) operators.
+
+    `ops` (a list of :class:`Binding`)
+        The operands.
     """
 
-    is_negative = True
-    is_total = True
+    def __init__(self, ops, syntax):
+        assert isinstance(ops, listof(Binding))
+        # Use the engine-specific Boolean type, which, we assume,
+        # must always exist.
+        domain = coerce(BooleanDomain())
+        assert domain is not None
+        super(ConnectiveBindingBase, self).__init__(domain, syntax)
+        self.ops = ops
 
 
-class ConjunctionBinding(Binding):
+
+class ConjunctionBinding(ConnectiveBindingBase):
     """
     Represents the logical "AND" (``&``) operator.
-
-    `ops` (a list of :class:`Binding`)
-        The operands.
     """
 
-    def __init__(self, ops, syntax):
-        assert isinstance(ops, listof(Binding))
-        # Use the engine-specific Boolean type, which, we assume,
-        # must always exist.
-        domain = coerce(BooleanDomain())
-        assert domain is not None
-        super(ConjunctionBinding, self).__init__(domain, syntax)
-        self.ops = ops
 
-
-class DisjunctionBinding(Binding):
+class DisjunctionBinding(ConnectiveBindingBase):
     """
     Represents the logical "OR" (``|``) operator.
-
-    `ops` (a list of :class:`Binding`)
-        The operands.
     """
-
-    def __init__(self, ops, syntax):
-        assert isinstance(ops, listof(Binding))
-        # Use the engine-specific Boolean type, which, we assume,
-        # must always exist.
-        domain = coerce(BooleanDomain())
-        assert domain is not None
-        super(DisjunctionBinding, self).__init__(domain, syntax)
-        self.ops = ops
 
 
 class NegationBinding(Binding):
@@ -437,7 +405,7 @@ class CastBinding(Binding):
     `op` (:class:`Binding`)
         The operand to convert.
 
-    `domain` (:class:`Domain`)
+    `domain` (:class:`htsql.domain.Domain`)
         The target domain.
     """
 

@@ -90,6 +90,12 @@ class Domain(object):
             return False
         return (self.__class__ == other.__class__)
 
+    def __hash__(self):
+        # Have to override it since we override `__eq__`.  We use a rough hash
+        # which may generate false positives, but relieves us from the need
+        # to override `__hash__` for every subclass.
+        return hash(self.__class__)
+
 
 class VoidDomain(Domain):
     """
