@@ -23,7 +23,7 @@ from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
                        EqualityBinding, TotalEqualityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
-                       CastBinding, TitleBinding)
+                       CastBinding, TitleBinding, OrderBinding)
 from ..encoder import Encoder, Encode
 from ..code import (FunctionCode, NegationCode, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
@@ -163,6 +163,30 @@ class AsFunction(ProperFunction):
 
     def correlate(self, base, title):
         yield TitleBinding(base, title, self.syntax)
+
+
+class AscOrderFunction(ProperFunction):
+
+    named('_+')
+
+    parameters = [
+            Parameter('base', is_mandatory=False),
+    ]
+
+    def correlate(self, base):
+        yield OrderBinding(base, +1, self.syntax)
+
+
+class DescOrderFunction(ProperFunction):
+
+    named('_-')
+
+    parameters = [
+            Parameter('base', is_mandatory=False),
+    ]
+
+    def correlate(self, base):
+        yield OrderBinding(base, -1, self.syntax)
 
 
 class LimitMethod(ProperMethod):

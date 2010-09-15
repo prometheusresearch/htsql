@@ -312,6 +312,23 @@ tests:
     - uri: /school{code as school.code}
       expect: 400
 
+  # The order modifiers: `+` and `-`.
+  - title: Order modifiers
+    tests:
+    # Ascending order (default for this table).
+    - uri: /school{code+,name}
+    # Descending order.
+    - uri: /school{code-,name}
+    # Combinations of several order modifiers.
+    - uri: /school{code--,name}
+    # Combined with `as`.
+    - uri: /school{name as Title+}
+    - uri: /school{name+ as Title}
+      expect: 400
+    - uri: /school{(name+) as Title}
+    # Non-unique explicit ordering is complemented with the default ordering.
+    - uri: /course{department+,title,credits-}?number<200
+
   # Simple (non-aggregate) filters.
   - title: Simple filters
     tests:

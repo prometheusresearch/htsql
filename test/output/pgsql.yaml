@@ -3026,6 +3026,176 @@ tests:
         invalid argument: expected a string literal or an identifier:
             /school{code as school.code}
                             ^^^^^^^^^^^
+  - id: order-modifiers
+    tests:
+    - uri: /school{code+,name}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                   |
+        -+------------------------------------------+-
+         | code+ | name                             |
+        -+-------+----------------------------------+-
+         | art   | School of Art and Design         |
+         | bus   | School of Business               |
+         | edu   | College of Education             |
+         | egn   | School of Engineering            |
+         | la    | School of Arts, Letters, and the |
+         :       : Humanities                       :
+         | mart  | School of Modern Art             |
+         | mus   | Musical School                   |
+         | ns    | School of Natural Sciences       |
+         | sc    | School of Continuing Studies     |
+                                             (9 rows)
+
+         ----
+         /school{code+,name}
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+    - uri: /school{code-,name}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                   |
+        -+------------------------------------------+-
+         | code- | name                             |
+        -+-------+----------------------------------+-
+         | sc    | School of Continuing Studies     |
+         | ns    | School of Natural Sciences       |
+         | mus   | Musical School                   |
+         | mart  | School of Modern Art             |
+         | la    | School of Arts, Letters, and the |
+         :       : Humanities                       :
+         | egn   | School of Engineering            |
+         | edu   | College of Education             |
+         | bus   | School of Business               |
+         | art   | School of Art and Design         |
+                                             (9 rows)
+
+         ----
+         /school{code-,name}
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 DESC
+    - uri: /school{code--,name}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                    |
+        -+-------------------------------------------+-
+         | code-- | name                             |
+        -+--------+----------------------------------+-
+         | art    | School of Art and Design         |
+         | bus    | School of Business               |
+         | edu    | College of Education             |
+         | egn    | School of Engineering            |
+         | la     | School of Arts, Letters, and the |
+         :        : Humanities                       :
+         | mart   | School of Modern Art             |
+         | mus    | Musical School                   |
+         | ns     | School of Natural Sciences       |
+         | sc     | School of Continuing Studies     |
+                                              (9 rows)
+
+         ----
+         /school{code--,name}
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+    - uri: /school{name as Title+}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                           |
+        -+----------------------------------+-
+         | Title                            |
+        -+----------------------------------+-
+         | College of Education             |
+         | Musical School                   |
+         | School of Art and Design         |
+         | School of Arts, Letters, and the |
+         : Humanities                       :
+         | School of Business               |
+         | School of Continuing Studies     |
+         | School of Engineering            |
+         | School of Modern Art             |
+         | School of Natural Sciences       |
+                                     (9 rows)
+
+         ----
+         /school{name as Title+}
+         SELECT "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, "school"."code" ASC
+    - uri: /school{name+ as Title}
+      status: 400 Bad Request
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |
+        parse error: expected NAME; got SYMBOL '}':
+            /school{name+ as Title}
+                                  ^
+    - uri: /school{(name+) as Title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                           |
+        -+----------------------------------+-
+         | Title                            |
+        -+----------------------------------+-
+         | College of Education             |
+         | Musical School                   |
+         | School of Art and Design         |
+         | School of Arts, Letters, and the |
+         : Humanities                       :
+         | School of Business               |
+         | School of Continuing Studies     |
+         | School of Engineering            |
+         | School of Modern Art             |
+         | School of Natural Sciences       |
+                                     (9 rows)
+
+         ----
+         /school{(name+) as Title}
+         SELECT "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, "school"."code" ASC
+    - uri: /course{department+,title,credits-}?number<200
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course?number<200)                                       |
+        -+-----------------------------------------------------------+-
+         | department+ | title                            | credits- |
+        -+-------------+----------------------------------+----------+-
+         | acc         | Practical Bookkeeping            |        2 |
+         | artstd      | Spring Basket Weaving Workshop   |          |
+         | astro       | The Solar System                 |        3 |
+         | astro       | Solar System Lab                 |        2 |
+         | astro       | Telescope Workshop               |        1 |
+         | be          | Introduction to Biomedical       |        3 |
+         :             : Engineering                      :          :
+         | chem        | Principles of Chemistry          |        3 |
+         | chem        | Organic Chemistry I              |        3 |
+         | chem        | Organic Chemistry Laboratory I   |        2 |
+         | comp        | Introduction to Computer Science |        3 |
+         | ee          | Exploration of Electrical        |        3 |
+         :             : Engineering                      :          :
+         | eng         | Introduction to Composition      |        3 |
+         | eng         | College Newspaper                |        2 |
+         | hist        | The United States in World       |        3 |
+         :             : History                          :          :
+         | me          | Introduction to Mechanical       |        3 |
+         :             : Engineering                      :          :
+         | mth         | College Algebra                  |        5 |
+         | poli        | American Government and Politics |        3 |
+         | psych       | General Psychology               |        3 |
+         | tched       | Theory and Practice of Early     |        3 |
+         :             : Childhood Education              :          :
+         | tched       | Methods of Early Science         |        3 |
+         :             : Education                        :          :
+                                                             (20 rows)
+
+         ----
+         /course{department+,title,credits-}?number<200
+         SELECT "course"."department", "course"."title", "course"."credits" FROM "ad"."course" AS "course" WHERE ("course"."number" < 200) ORDER BY 1 ASC, 3 DESC, 1 ASC, "course"."number" ASC
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

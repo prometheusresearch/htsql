@@ -20,7 +20,8 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       SortBinding, EqualityBinding, TotalEqualityBinding,
                       ConjunctionBinding, DisjunctionBinding,
-                      NegationBinding, CastBinding, WrapperBinding)
+                      NegationBinding, CastBinding, WrapperBinding,
+                      OrderBinding)
 from .code import (ScalarSpace, CrossProductSpace, JoinProductSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpression, SegmentExpression, LiteralCode,
@@ -40,6 +41,10 @@ class Encoder(object):
         encode = Encode(binding, self)
         return encode.relate()
 
+    def order(self, binding):
+        encode = Encode(binding, self)
+        return encode.order()
+
 
 class Encode(Adapter):
 
@@ -56,6 +61,9 @@ class Encode(Adapter):
     def relate(self):
         raise InvalidArgumentError("unable to relate a node",
                                    self.binding.mark)
+
+    def order(self):
+        return None
 
 
 class EncodeQuery(Encode):
@@ -75,11 +83,15 @@ class EncodeSegment(Encode):
 
     def encode(self):
         space = self.encoder.relate(self.binding.base)
-        space = OrderedSpace(space, [], None, None, self.binding)
         elements = []
+        order = []
         for binding in self.binding.elements:
             element = self.encoder.encode(binding)
+            direction = self.encoder.order(binding)
+            if direction is not None:
+                order.append((element, direction))
             elements.append(element)
+        space = OrderedSpace(space, order, None, None, self.binding)
         return SegmentExpression(space, elements, self.binding)
 
 
@@ -133,6 +145,9 @@ class EncodeSieve(Encode):
         space = self.encoder.relate(self.binding.base)
         filter = self.encoder.encode(self.binding.filter)
         return FilteredSpace(space, filter, self.binding)
+
+    def order(self):
+        return self.encoder.order(self.binding.base)
 
 
 class EncodeSort(Encode):
@@ -230,6 +245,9 @@ class EncodeCast(Encode):
             return LiteralCode(value, self.binding.domain, self.binding)
         return CastCode(code, self.binding.domain, self.binding)
 
+    def order(self):
+        return self.encoder.order(self.binding.op)
+
 
 class EncodeWrapper(Encode):
 
@@ -240,5 +258,20 @@ class EncodeWrapper(Encode):
 
     def relate(self):
         return self.encoder.relate(self.binding.base)
+
+    def order(self):
+        return self.encoder.order(self.binding.base)
+
+
+class EncodeOrder(Encode):
+
+    adapts(OrderBinding, Encoder)
+
+    def order(self):
+        dir = self.binding.dir
+        base_dir = self.encoder.order(self.binding.base)
+        if base_dir is not None:
+            dir *= base_dir
+        return dir
 
 
