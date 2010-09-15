@@ -230,7 +230,7 @@ class LimitMethod(ProperMethod):
 
 class OrderMethod(ProperMethod):
 
-    named('order')
+    named('sort')
 
     parameters = [
             Parameter('this'),

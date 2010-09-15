@@ -156,8 +156,13 @@ class EncodeSort(Encode):
 
     def relate(self):
         space = self.encoder.relate(self.binding.base)
-        order = [(self.encoder.encode(binding), +1)
-                 for binding in self.binding.order]
+        order = []
+        for binding in self.binding.order:
+            code = self.encoder.encode(binding)
+            direction = self.encoder.order(binding)
+            if direction is None:
+                direction = +1
+            order.append((code, direction))
         limit = self.binding.limit
         offset = self.binding.offset
         return OrderedSpace(space, order, limit, offset, self.binding)
