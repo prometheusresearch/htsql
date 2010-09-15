@@ -367,7 +367,6 @@ class ConnectiveBindingBase(Binding):
         self.ops = ops
 
 
-
 class ConjunctionBinding(ConnectiveBindingBase):
     """
     Represents the logical "AND" (``&``) operator.

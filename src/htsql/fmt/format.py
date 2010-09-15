@@ -6,8 +6,8 @@
 
 
 """
-:mod:`htsql.format`
-===================
+:mod:`htsql.fmt.format`
+=======================
 
 This module implements the format adapter.
 """

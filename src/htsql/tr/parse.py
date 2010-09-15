@@ -445,12 +445,11 @@ class SpecifierParser(Parser):
         #   call            ::= '(' elements? ')'
         #   elements        ::= element ( ',' element )* ','?
         expression = AtomParser << tokens
-        while tokens.peek(SymbolToken, ['.']):
-            head_token = tokens.pop(SymbolToken, ['.'])
+        while tokens.peek(SymbolToken, ['.'], do_pop=True):
             if tokens.peek(SymbolToken, ['*']):
                 symbol_token = tokens.pop(SymbolToken, ['*'])
                 wildcard = WildcardSyntax(symbol_token.mark)
-                mark = Mark.union(head_token, wildcard)
+                mark = Mark.union(expression, wildcard)
                 expression = SpecifierSyntax(expression, wildcard, mark)
                 break
             else:
@@ -464,11 +463,11 @@ class SpecifierParser(Parser):
                         if not tokens.peek(SymbolToken, [')']):
                             tokens.pop(SymbolToken, [',', ')'])
                     tail_token = tokens.pop(SymbolToken, [')'])
-                    mark = Mark.union(head_token, tail_token)
+                    mark = Mark.union(expression, tail_token)
                     expression = FunctionCallSyntax(expression, identifier,
                                                     arguments, mark)
                 else:
-                    mark = Mark.union(head_token, identifier)
+                    mark = Mark.union(expression, identifier)
                     expression = SpecifierSyntax(expression, identifier, mark)
         return expression
 

@@ -15,6 +15,7 @@ This module implements the HTML renderer.
 
 from ..adapter import adapts
 from .format import Format, Formatter, Renderer
+from .entitle import entitle
 from ..domain import (Domain, BooleanDomain, NumberDomain,
                       StringDomain, EnumDomain, DateDomain)
 import cgi
@@ -38,8 +39,8 @@ class HTMLRenderer(Renderer):
 
     def calculate_layout(self, product, formats):
         segment = product.profile.binding.segment
-        caption = str(segment.base.syntax).decode('utf-8')
-        headers = [str(element.syntax).decode('utf-8')
+        caption = entitle(segment.base).decode('utf-8')
+        headers = [entitle(element).decode('utf-8')
                    for element in segment.elements]
         column_widths = [len(header) for header in headers]
         total = 0
@@ -164,8 +165,8 @@ class HTMLRenderer(Renderer):
         yield "</table>\n"
 
     def serialize_content(self, product):
-        caption = str(product.profile.segment.binding.base.syntax)
-        headers = [str(element.syntax)
+        caption = entitle(product.profile.segment.binding.base)
+        headers = [entitle(element)
                    for element in product.profile.segment.elements]
         width = len(product.profile.segment.elements)
         domains = [element.domain

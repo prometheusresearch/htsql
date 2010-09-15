@@ -19,11 +19,11 @@ from ...error import InvalidArgumentError
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain)
-from ..syntax import NumberSyntax
+from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
                        EqualityBinding, TotalEqualityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
-                       CastBinding)
+                       CastBinding, TitleBinding)
 from ..encoder import Encoder, Encode
 from ..code import (FunctionCode, NegationCode, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
@@ -138,6 +138,31 @@ class ProperMethod(ProperFunction):
                      [list(self.state.bind_all(argument))
                       for argument in self.syntax.arguments])
         return self.check_arguments(arguments)
+
+
+class AsFunction(ProperFunction):
+
+    named('as')
+
+    parameters = [
+            Parameter('base'),
+            Parameter('title', StringDomain),
+    ]
+
+    def bind_arguments(self):
+        if len(self.syntax.arguments) != 2:
+            raise InvalidArgumentError("expected two arguments",
+                                       self.syntax.mark)
+        base = self.state.bind(self.syntax.arguments[0])
+        title_syntax = self.syntax.arguments[1]
+        if not isinstance(title_syntax, (StringSyntax, IdentifierSyntax)):
+            raise InvalidArgumentError("expected a string literal"
+                                       " or an identifier",
+                                       title_syntax.mark)
+        return {'base': base, 'title': title_syntax.value}
+
+    def correlate(self, base, title):
+        yield TitleBinding(base, title, self.syntax)
 
 
 class LimitMethod(ProperMethod):

@@ -283,7 +283,7 @@ tests:
                  date('2010-07-28')-date('2009-07-28')}
 
   # Order and Limit functions.
-  - title: Sorting and paging.
+  - title: Sorting and paging
     tests:
     - uri: /school
     - uri: /school.limit(1)
@@ -292,6 +292,25 @@ tests:
     - uri: /course.order(credits)?department='acc'
     - uri: /course.order(credits).limit(1,1)?department='acc'
 
+  # The `as` operator.
+  - title: Title decorator
+    tests:
+    # Identifiers and string literals are accepted.
+    - uri: /{null() as Title, null() as 'Title with whitespaces'}
+    # The outer `as` overrides any others.
+    - uri: /{null() as 'Hidden title' as 'Visible title'}
+    # `as` in expressions is no-op.
+    - uri: /{('HT' as HT)+('SQL' as SQL)}
+    # Using `as` to decorate the segment base.
+    - uri: /(school as Schools)
+    # Also works over selectors and filters.
+    - uri: /(school as Schools){name as Title}?code='art'
+    # Expects a non-wildcard argument.
+    - uri: /school{* as Columns}
+      expect: 400
+    # Expects a string literal or an identifier.
+    - uri: /school{code as school.code}
+      expect: 400
 
   # Simple (non-aggregate) filters.
   - title: Simple filters

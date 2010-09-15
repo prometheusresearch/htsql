@@ -16,6 +16,7 @@ This module implements the plain text renderer.
 from ..adapter import adapts
 from ..util import maybe, oneof
 from .format import Format, Formatter, Renderer
+from .entitle import entitle
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
                       DateDomain)
@@ -53,8 +54,8 @@ class TextRenderer(Renderer):
 
     def calculate_layout(self, product, formats):
         segment = product.profile.binding.segment
-        caption = str(segment.base.syntax).decode('utf-8')
-        headers = [str(element.syntax).decode('utf-8')
+        caption = entitle(segment.base).decode('utf-8')
+        headers = [entitle(element).decode('utf-8')
                    for element in segment.elements]
         column_widths = [len(header) for header in headers]
         total = 0
