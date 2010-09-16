@@ -121,6 +121,14 @@ class TupleDomain(Domain):
 
     This domain is assigned to table expressions.
     """
+    # FIXME: add a reference to the underlying `TableEntity`.  This may
+    # require importing `TableEntity` from `htsql.entity`, which creates
+    # a circular module dependency.  To break it, we will have to split
+    # `htsql.domain` into two modules: `htsql.type`, containing `Domain`
+    # and all its subclasses representing real database types, and
+    # `htsql.domain`, which imports all types from `htsql.type` and
+    # adds special domains like `VoidDomain`, `TupleDomain` and
+    # `UntypedDomain`.
 
 
 class BooleanDomain(Domain):

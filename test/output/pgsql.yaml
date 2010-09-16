@@ -1989,17 +1989,17 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: invalid Boolean literal: expected 'true' or 'false'; got '':
+            encode error: invalid Boolean literal: expected 'true' or 'false'; got '':
                 /{boolean('')}
-                          ^^
+                  ^^^^^^^^^^^
         - uri: /{boolean('X')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: invalid Boolean literal: expected 'true' or 'false'; got 'X':
+            encode error: invalid Boolean literal: expected 'true' or 'false'; got 'X':
                 /{boolean('X')}
-                          ^^^
+                  ^^^^^^^^^^^^
         - uri: /{boolean(integer(null())),boolean(0),boolean(1), boolean(0.0),boolean(1.0),boolean(0e0),boolean(1e0)}
           status: 200 OK
           headers:
@@ -2350,9 +2350,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: invalid integer literal: expected an integer in a decimal format; got 'X':
+            encode error: invalid integer literal: expected an integer in a decimal format; got 'X':
                 /{integer('X')}
-                          ^^^
+                  ^^^^^^^^^^^^
         - uri: /{integer(string('X'))}
           status: 409 Conflict
           headers:
@@ -2414,9 +2414,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: invalid decimal literal: Invalid literal for Decimal: 'X':
+            encode error: invalid decimal literal: Invalid literal for Decimal: 'X':
                 /{decimal('X')}
-                          ^^^
+                  ^^^^^^^^^^^^
         - uri: /{decimal(string('X'))}
           status: 409 Conflict
           headers:
@@ -2463,9 +2463,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: invalid float literal: invalid literal for float(): X:
+            encode error: invalid float literal: invalid literal for float(): X:
                 /{float('X')}
-                        ^^^
+                  ^^^^^^^^^^
         - uri: /{float(string('X'))}
           status: 409 Conflict
           headers:
@@ -2715,9 +2715,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got 'X':
+            encode error: invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got 'X':
                 /{date('X')}
-                       ^^^
+                  ^^^^^^^^^
         - uri: /{date(string('X'))}
           status: 409 Conflict
           headers:

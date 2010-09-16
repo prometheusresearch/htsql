@@ -81,6 +81,44 @@ class Binding(Node):
         return str(self.syntax)
 
 
+class QueryBinding(Binding):
+    """
+    Represents the whole HTSQL query.
+
+    `root` (:class:`RootBinding`)
+        The root binding associated with the query.
+
+    `segment` (:class:`SegmentBinding` or ``None``)
+        The query segment.
+    """
+
+    def __init__(self, root, segment, syntax):
+        assert isinstance(root, RootBinding)
+        assert isinstance(segment, maybe(SegmentBinding))
+        super(QueryBinding, self).__init__(VoidDomain(), syntax)
+        self.root = root
+        self.segment = segment
+
+
+class SegmentBinding(Binding):
+    """
+    Represents a segment of an HTSQL query.
+
+    `base` (:class:`Binding`)
+        The base of the segment.
+
+    `elements` (a list of :class:`Binding`)
+        The segment elements.
+    """
+
+    def __init__(self, base, elements, syntax):
+        assert isinstance(base, Binding)
+        assert isinstance(elements, listof(Binding))
+        super(SegmentBinding, self).__init__(VoidDomain(), syntax)
+        self.base = base
+        self.elements = elements
+
+
 class ChainBinding(Binding):
     """
     Represents a link binding node.
@@ -249,44 +287,6 @@ class ColumnBinding(ChainBinding):
         self.link = link
 
 
-class QueryBinding(Binding):
-    """
-    Represents the whole HTSQL query.
-
-    `root` (:class:`RootBinding`)
-        The root binding associated with the query.
-
-    `segment` (:class:`SegmentBinding` or ``None``)
-        The query segment.
-    """
-
-    def __init__(self, root, segment, syntax):
-        assert isinstance(root, RootBinding)
-        assert isinstance(segment, maybe(SegmentBinding))
-        super(QueryBinding, self).__init__(VoidDomain(), syntax)
-        self.root = root
-        self.segment = segment
-
-
-class SegmentBinding(Binding):
-    """
-    Represents a segment of an HTSQL query.
-
-    `base` (:class:`Binding`)
-        The base of the segment.
-
-    `elements` (a list of :class:`Binding`)
-        The segment elements.
-    """
-
-    def __init__(self, base, elements, syntax):
-        assert isinstance(base, Binding)
-        assert isinstance(elements, listof(Binding))
-        super(SegmentBinding, self).__init__(VoidDomain(), syntax)
-        self.base = base
-        self.elements = elements
-
-
 class LiteralBinding(Binding):
     """
     Represents a literal value.
@@ -401,16 +401,16 @@ class CastBinding(Binding):
     """
     Represents a type conversion operator.
 
-    `op` (:class:`Binding`)
-        The operand to convert.
+    `base` (:class:`Binding`)
+        The expression to convert.
 
     `domain` (:class:`htsql.domain.Domain`)
         The target domain.
     """
 
-    def __init__(self, op, domain, syntax):
+    def __init__(self, base, domain, syntax):
         super(CastBinding, self).__init__(domain, syntax)
-        self.op = op
+        self.base = base
 
 
 class FunctionBinding(Binding):
@@ -426,6 +426,9 @@ class FunctionBinding(Binding):
     `arguments` (a dictionary)
         A mapping from argument names to values.
     """
+
+    # FIXME: should logical operators (`EqualityBinding`, etc) inherit
+    # from `FunctionBinding`?
 
     def __init__(self, domain, syntax, **arguments):
         super(FunctionBinding, self).__init__(domain, syntax)
@@ -453,21 +456,21 @@ class WrapperBinding(Binding):
         self.base = base
 
 
-class OrderBinding(WrapperBinding):
+class DirectionBinding(WrapperBinding):
     """
-    Represents an order decorator (postfix ``+`` and ``-`` operators).
+    Represents a direction decorator (postfix ``+`` and ``-`` operators).
 
     `base` (:class:`Binding`)
         The decorated binding.
 
-    `dir` (``+1`` or ``-1``).
+    `direction` (``+1`` or ``-1``).
         Indicates the direction; ``+1`` for ascending, ``-1`` for descending.
     """
 
-    def __init__(self, base, dir, syntax):
-        assert dir in [-1, +1]
-        super(OrderBinding, self).__init__(base, syntax)
-        self.dir = dir
+    def __init__(self, base, direction, syntax):
+        assert direction in [-1, +1]
+        super(DirectionBinding, self).__init__(base, syntax)
+        self.direction = direction
 
 
 class TitleBinding(WrapperBinding):

@@ -36,7 +36,7 @@ class Entitle(Adapter):
 
 class EntitleWrapper(Entitle):
 
-    adapts_many(SieveBinding, SortBinding, WrapperBinding)
+    adapts_many(SieveBinding, SortBinding, WrapperBinding, CastBinding)
 
     def __call__(self):
         if self.with_strong:
@@ -44,18 +44,6 @@ class EntitleWrapper(Entitle):
             if title is not None:
                 return title
         return super(EntitleWrapper, self).__call__()
-
-
-class EntitleCast(Entitle):
-
-    adapts(CastBinding)
-
-    def __call__(self):
-        if self.with_strong:
-            title = entitle(self.binding.op, with_weak=False)
-            if title is not None:
-                return title
-        return super(EntitleCast, self).__call__()
 
 
 class EntitleTitle(Entitle):

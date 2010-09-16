@@ -464,7 +464,9 @@ class EvaluateCast(Evaluate):
     adapts(CastCode, Compiler)
 
     def evaluate(self, references):
-        phrase = self.compiler.evaluate(self.expression.op, references)
+        phrase = self.compiler.evaluate(self.expression.base, references)
+        if isinstance(phrase.domain, self.expression.domain.__class__):
+            return phrase
         return CastPhrase(phrase, self.expression.domain, phrase.is_nullable,
                           self.expression.mark)
 

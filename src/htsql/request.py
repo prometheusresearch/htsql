@@ -18,7 +18,7 @@ from .connect import DBError, Connect, Normalize
 from .error import EngineError
 from .tr.parse import parse
 from .tr.bind import bind
-from .tr.encoder import Encoder
+from .tr.encode import encode
 from .tr.assembler import Assembler
 from .tr.outliner import Outliner
 from .tr.compiler import Compiler
@@ -97,8 +97,7 @@ class Request(Utility):
     def translate(self):
         syntax = parse(self.uri)
         binding = bind(syntax)
-        encoder = Encoder()
-        code = encoder.encode(binding)
+        code = encode(binding)
         assembler = Assembler()
         term = assembler.assemble(code)
         outliner = Outliner()

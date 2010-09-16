@@ -1193,20 +1193,20 @@ class CastCode(Code):
     """
     Represents a type conversion operator.
 
-    `op` (:class:`Code`)
-        The operand to convert.
+    `base` (:class:`Code`)
+        The expression to convert.
 
     `domain` (:class:`htsql.domain.Domain`)
         The target domain.
     """
 
-    def __init__(self, op, domain, binding):
+    def __init__(self, base, domain, binding):
         super(CastCode, self).__init__(
                     domain=domain,
-                    units=op.units,
+                    units=base.units,
                     binding=binding,
-                    equality_vector=(op, domain))
-        self.op = op
+                    equality_vector=(base, domain))
+        self.base = base
 
 
 class FunctionCode(Code):

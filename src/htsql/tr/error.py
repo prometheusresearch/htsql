@@ -53,3 +53,14 @@ class BindError(TranslateError):
     kind = "bind error"
 
 
+class EncodeError(TranslateError):
+    """
+    Represents an encoder error.
+
+    This error is raised when the encoder is unable to encode or relate
+    a binding node.
+    """
+
+    kind = "encode error"
+
+

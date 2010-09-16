@@ -23,8 +23,8 @@ from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
                        EqualityBinding, TotalEqualityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
-                       CastBinding, TitleBinding, OrderBinding)
-from ..encoder import Encoder, Encode
+                       CastBinding, TitleBinding, DirectionBinding)
+from ..encode import Encode
 from ..code import (FunctionCode, NegationCode, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
 from ..compiler import Compiler, Evaluate
@@ -174,7 +174,7 @@ class AscOrderFunction(ProperFunction):
     ]
 
     def correlate(self, base):
-        yield OrderBinding(base, +1, self.syntax)
+        yield DirectionBinding(base, +1, self.syntax)
 
 
 class DescOrderFunction(ProperFunction):
@@ -186,7 +186,7 @@ class DescOrderFunction(ProperFunction):
     ]
 
     def correlate(self, base):
-        yield OrderBinding(base, -1, self.syntax)
+        yield DirectionBinding(base, -1, self.syntax)
 
 
 class LimitMethod(ProperMethod):
@@ -783,7 +783,7 @@ class GenericEncode(Encode):
     @classmethod
     def factory(cls, function, binding_class, expression_class):
         name = 'Encode' + function.__name__
-        signature = (binding_class, Encoder)
+        signature = (binding_class,)
         encode_class = type(name, (cls,),
                             {'function': function,
                              'signatures': [signature],
@@ -791,16 +791,16 @@ class GenericEncode(Encode):
                              'expression_class': expression_class})
         return encode_class
 
-    def encode(self):
+    def __call__(self):
         arguments = {}
         for parameter in self.function.parameters:
             value = self.binding.arguments[parameter.name]
             if not parameter.is_mandatory and value is None:
                 argument = None
             elif parameter.is_list:
-                argument = [self.encoder.encode(item) for item in value]
+                argument = [self.state.encode(item) for item in value]
             else:
-                argument = self.encoder.encode(value)
+                argument = self.state.encode(value)
             arguments[parameter.name] = argument
         for name in sorted(self.binding.arguments):
             if name not in arguments:
@@ -821,7 +821,7 @@ class GenericAggregateEncode(Encode):
     @classmethod
     def factory(cls, function, binding_class, expression_class, wrapper_class):
         name = 'Encode' + function.__name__
-        signature = (binding_class, Encoder)
+        signature = (binding_class,)
         encode_class = type(name, (cls,),
                             {'function': function,
                              'signatures': [signature],
@@ -830,12 +830,12 @@ class GenericAggregateEncode(Encode):
                              'wrapper_class': wrapper_class})
         return encode_class
 
-    def encode(self):
-        expression = self.encoder.encode(self.binding.expression)
+    def __call__(self):
+        expression = self.state.encode(self.binding.expression)
         expression = self.expression_class(self.binding.domain,
                                            self.binding,
                                            expression=expression)
-        space = self.encoder.relate(self.binding.base)
+        space = self.state.relate(self.binding.base)
         plural_units = [unit for unit in expression.units
                              if not space.spans(unit.space)]
         if not plural_units:
@@ -1870,11 +1870,11 @@ class EncodeExistsEvery(Encode):
     is_exists = False
     is_every = False
 
-    def encode(self):
-        expression = self.encoder.encode(self.binding.expression)
+    def __call__(self):
+        expression = self.state.encode(self.binding.expression)
         if self.is_every:
             expression = NegationCode(expression, self.binding)
-        space = self.encoder.relate(self.binding.base)
+        space = self.state.relate(self.binding.base)
         plural_units = [unit for unit in expression.units
                              if not space.spans(unit.space)]
         if not plural_units:
@@ -1913,7 +1913,7 @@ class EncodeExistsEvery(Encode):
 
 class EncodeExists(EncodeExistsEvery):
 
-    adapts(ExistsBinding, Encoder)
+    adapts(ExistsBinding)
     is_exists = True
 
 
@@ -1925,7 +1925,7 @@ SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
 
 class EncodeEvery(EncodeExistsEvery):
 
-    adapts(EveryBinding, Encoder)
+    adapts(EveryBinding)
     is_every = True
 
 
