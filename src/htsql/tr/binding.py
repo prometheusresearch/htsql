@@ -171,7 +171,7 @@ class TableBinding(ChainBinding):
     Represents a table link binding.
 
     This is an abstract class; see :class:`FreeTableBinding` and
-    :class:`JoinedTableBinding` for concrete subclasses.
+    :class:`AttachedTableBinding` for concrete subclasses.
 
     A table binding represents a table context; `Lookup` over a table
     binding looks for columns and links; `Relate` over a table binding
@@ -198,11 +198,11 @@ class FreeTableBinding(TableBinding):
     """
 
 
-class JoinedTableBinding(TableBinding):
+class AttachedTableBinding(TableBinding):
     """
-    Represents a joined table binding.
+    Represents an attached table binding.
 
-    A joined table is attached to its base using a sequence of joins.
+    An attached table is attached to its base using a sequence of joins.
 
     `joins` (a list of :class:`htsql.entity.Join`)
         A sequence of joins that attach the table to its base.
@@ -210,7 +210,7 @@ class JoinedTableBinding(TableBinding):
 
     def __init__(self, base, table, joins, syntax):
         assert isinstance(joins, listof(Join)) and len(joins) > 0
-        super(JoinedTableBinding, self).__init__(base, table, syntax)
+        super(AttachedTableBinding, self).__init__(base, table, syntax)
         self.joins = joins
 
 
@@ -267,7 +267,7 @@ class ColumnBinding(ChainBinding):
     `column` (:class:`htsql.entity.ColumnEntity`)
         The column entity.
 
-    `link` (:class:`JoinedTableBinding` or ``None``)
+    `link` (:class:`AttachedTableBinding` or ``None``)
         If set, indicates that the binding could also represent a link
         to another table.  Any `Lookup` or `Relate` requests applied
         to the column binding are delegated to `link`.
@@ -275,7 +275,7 @@ class ColumnBinding(ChainBinding):
 
     def __init__(self, base, column, link, syntax):
         assert isinstance(column, ColumnEntity)
-        assert isinstance(link, maybe(JoinedTableBinding))
+        assert isinstance(link, maybe(AttachedTableBinding))
         super(ColumnBinding, self).__init__(base, column.domain, syntax)
         self.column = column
         # FIXME: this is a hack to permit reparenting of a column binding.

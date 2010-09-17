@@ -12,6 +12,8 @@
    :members:
 .. automodule:: htsql.tr.coerce
    :members:
+.. automodule:: htsql.tr.encode
+   :members:
 .. automodule:: htsql.tr.error
    :members:
 .. automodule:: htsql.tr.lookup

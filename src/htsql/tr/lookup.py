@@ -19,7 +19,7 @@ from ..introspect import Introspect
 from ..entity import DirectJoin, ReverseJoin
 from .syntax import Syntax, IdentifierSyntax
 from .binding import (Binding, RootBinding, ChainBinding,
-                      TableBinding, FreeTableBinding, JoinedTableBinding,
+                      TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, SieveBinding, WrapperBinding, SortBinding)
 import re
 import unicodedata
@@ -273,7 +273,7 @@ class LookupItemizeTableMixin(object):
                 join = DirectJoin(origin, target, fk)
                 joins.append(join)
             # Build and return the link binding.
-            return JoinedTableBinding(self.binding, target, joins, syntax)
+            return AttachedTableBinding(self.binding, target, joins, syntax)
 
 
 class LookupTable(Lookup, LookupItemizeTableMixin):
@@ -291,7 +291,7 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
       context table.
 
     Column members give rise to :class:`ColumnBinding` instances
-    while table members give rise to :class:`JoinedTableBinding` instances.
+    while table members give rise to :class:`AttachedTableBinding` instances.
     """
 
     adapts(TableBinding)
@@ -354,8 +354,8 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
             target_schema = self.catalog.schemas[foreign_key.target_schema_name]
             target = target_schema.tables[foreign_key.target_name]
             join = DirectJoin(origin, target, foreign_key)
-            return JoinedTableBinding(self.binding, target, [join],
-                                      self.identifier)
+            return AttachedTableBinding(self.binding, target, [join],
+                                        self.identifier)
 
     def lookup_reverse_join(self):
         # Finds a table with the given name that possesses a foreign key
@@ -385,8 +385,8 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
             target_schema = self.catalog.schemas[foreign_key.origin_schema_name]
             target = target_schema.tables[foreign_key.origin_name]
             join = ReverseJoin(origin, target, foreign_key)
-            return JoinedTableBinding(self.binding, target, [join],
-                                      self.identifier)
+            return AttachedTableBinding(self.binding, target, [join],
+                                        self.identifier)
 
 
 class ItemizeTable(Itemize, LookupItemizeTableMixin):
