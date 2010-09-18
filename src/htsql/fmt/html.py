@@ -165,12 +165,11 @@ class HTMLRenderer(Renderer):
         yield "</table>\n"
 
     def serialize_content(self, product):
-        caption = entitle(product.profile.segment.binding.base)
-        headers = [entitle(element)
-                   for element in product.profile.segment.elements]
-        width = len(product.profile.segment.elements)
-        domains = [element.domain
-                   for element in product.profile.segment.elements]
+        segment = product.profile.binding.segment
+        caption = entitle(segment.base)
+        headers = [entitle(element) for element in segment.elements]
+        width = len(segment.elements)
+        domains = [element.domain for element in segment.elements]
         tool = HTMLFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         colspan = " colspan=\"%s\"" % width if width > 1 else ""

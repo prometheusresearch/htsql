@@ -17,6 +17,7 @@ from ..adapter import adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain)
+from .entitle import entitle
 import csv
 import cStringIO
 
@@ -41,7 +42,7 @@ class CSVRenderer(Renderer):
     def generate_body(self, product):
         if not product:
             return
-        titles = [str(element.syntax)
+        titles = [entitle(element.binding)
                   for element in product.profile.segment.elements]
         domains = [element.domain
                    for element in product.profile.segment.elements]

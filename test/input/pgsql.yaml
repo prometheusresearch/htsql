@@ -378,4 +378,17 @@ tests:
     - uri: /school
       headers:
         Accept: text/html
+    # Test how `as` interact with various formatters.
+    - uri: /(school as 'School Record'){code as 'Code name',
+                                        name as 'Long name'}
+      headers:
+        Accept: text/csv
+    - uri: /(school as 'School Record'){code as 'Code name',
+                                        name as 'Long name'}
+      headers:
+        Accept: text/plain
+    - uri: /(school as 'School Record'){code as 'Code name',
+                                        name as 'Long name'}
+      headers:
+        Accept: text/html
 
