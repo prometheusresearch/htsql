@@ -58,10 +58,6 @@ class DB(object):
     ignored by the SQLite engine.
     """
 
-    # List of supported and soon-to-be-supported engines.
-    valid_engines = ['pgsql', 'sqlite', 'mysql',
-                     'oracle', 'mssql', 'db2']
-
     # Regular expression for parsing a connection URI of the form:
     # 'engine://username:password@host:port/database?options'.
     key_chars = r'''[%0-9a-zA-Z_.-]+'''
@@ -89,7 +85,7 @@ class DB(object):
     def __init__(self, engine, username, password, host, port, database,
                  options=None):
         # Sanity checking on the arguments.
-        assert isinstance(engine, str) and engine in self.valid_engines
+        assert isinstance(engine, str)
         assert isinstance(username, maybe(str))
         assert isinstance(password, maybe(str))
         assert isinstance(host, maybe(str))
@@ -256,10 +252,6 @@ class DB(object):
             if not isinstance(options, maybe(dictof(str, str))):
                 raise ValueError("options must be a dictionary with"
                                  " string keys and values; got %r" % options)
-
-        # Check if the engine is valid.
-        if engine not in cls.valid_engines:
-            raise ValueError("invalid engine: %r" % engine)
 
         # We are done, produce an instance.
         return cls(engine, username, password, host, port, database, options)
