@@ -25,7 +25,7 @@ import cStringIO
 class CSVRenderer(Renderer):
 
     name = 'text/csv'
-    aliases = []
+    aliases = ['csv']
 
     def render(self, product):
         status = self.generate_status(product)

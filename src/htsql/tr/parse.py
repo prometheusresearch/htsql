@@ -90,9 +90,10 @@ class QueryParser(Parser):
 
         input           ::= query END
 
-        query           ::= '/' segment?
+        query           ::= '/' segment? format?
         segment         ::= selector | specifier selector? filter?
         filter          ::= '?' test
+        format          ::= '/' ':' identifier
 
         element         ::= test ( '+' | '-' )*
         test            ::= and_test ( '|' and_test )*
@@ -131,14 +132,20 @@ class QueryParser(Parser):
 
     @classmethod
     def process(cls, tokens):
-        # Parse the production:
-        #   query           ::= '/' segment?
+        # Parse the productions:
+        #   query           ::= '/' segment? format?
+        #   format          ::= '/' ':' identifier
         head_token = tokens.pop(SymbolToken, ['/'])
         segment = None
+        format = None
         if not tokens.peek(EndToken):
             segment = SegmentParser << tokens
-        mark = Mark.union(head_token, segment)
-        query = QuerySyntax(segment, mark)
+        if tokens.peek(SymbolToken, ['/']):
+            tokens.pop(SymbolToken, ['/'])
+            tokens.pop(SymbolToken, [':'])
+            format = IdentifierParser << tokens
+        mark = Mark.union(head_token, segment, format)
+        query = QuerySyntax(segment, format, mark)
         return query
 
 
@@ -344,7 +351,9 @@ class TermParser(Parser):
         # Parses the production:
         #   term            ::= factor ( ( '*' | '/' | identifier ) factor )*
         expression = FactorParser << tokens
-        while (tokens.peek(SymbolToken, ['*', '/'])
+        while (tokens.peek(SymbolToken, ['*'])
+               or (tokens.peek(SymbolToken, ['/'], ahead=0)
+                   and not tokens.peek(SymbolToken, [':'], ahead=1))
                or tokens.peek(NameToken)):
             if tokens.peek(SymbolToken, ['*', '/']):
                 symbol_token = tokens.pop(SymbolToken, ['*', '/'])

@@ -393,4 +393,11 @@ tests:
                                         name as 'Long name'}
       headers:
         Accept: text/html
+    # Explicit format indicators.
+    - uri: /school/:json
+    - uri: /school/:csv
+    - uri: /school/:txt
+    - uri: /school/:html
+    - uri: /school/:unknown
+      expect: 400
 

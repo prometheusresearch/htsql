@@ -38,7 +38,7 @@ class Layout(object):
 class TextRenderer(Renderer):
 
     name = 'text/plain'
-    aliases = ['']
+    aliases = ['txt', '']
 
     def render(self, product):
         status = self.generate_status(product)

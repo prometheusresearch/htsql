@@ -24,7 +24,7 @@ class JSONRenderer(Renderer):
 
     # Note: see `http://www.ietf.org/rfc/rfc4627.txt`.
     name = 'application/json'
-    aliases = []
+    aliases = ['json']
 
     def render(self, product):
         status = self.generate_status(product)

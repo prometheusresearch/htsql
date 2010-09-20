@@ -24,6 +24,7 @@ import cgi
 class HTMLRenderer(Renderer):
 
     name = 'text/html'
+    aliases = ['html']
 
     def render(self, product):
         status = self.generate_status(product)

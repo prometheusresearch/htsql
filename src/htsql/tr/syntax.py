@@ -51,13 +51,18 @@ class QuerySyntax(Syntax):
 
     `segment` (:class:`SegmentSyntax` or ``None``)
         The segment expression.
+
+    `format` (:class:`IdentifierSyntax` or ``None``)
+        The format indicator.
     """
 
-    def __init__(self, segment, mark):
+    def __init__(self, segment, format, mark):
         assert isinstance(segment, maybe(SegmentSyntax))
+        assert isinstance(format, maybe(IdentifierSyntax))
 
         super(QuerySyntax, self).__init__(mark)
         self.segment = segment
+        self.format = format
 
     def __str__(self):
         # Generate an HTSQL query corresponding to the node.
@@ -65,6 +70,10 @@ class QuerySyntax(Syntax):
         chunks.append('/')
         if self.segment is not None:
             chunks.append(str(self.segment))
+        if self.format is not None:
+            chunks.append('/')
+            chunks.append(':')
+            chunks.append(str(self.format))
         return ''.join(chunks)
 
 

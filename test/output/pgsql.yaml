@@ -3979,3 +3979,115 @@ tests:
         </table>
         </body>
         </html>
+    - uri: /school/:json
+      status: 200 OK
+      headers:
+      - [Content-Type, application/json]
+      body: |
+        [
+          ["art", "School of Art and Design"],
+          ["bus", "School of Business"],
+          ["edu", "College of Education"],
+          ["egn", "School of Engineering"],
+          ["la", "School of Arts, Letters, and the Humanities"],
+          ["mart", "School of Modern Art"],
+          ["mus", "Musical School"],
+          ["ns", "School of Natural Sciences"],
+          ["sc", "School of Continuing Studies"]
+        ]
+    - uri: /school/:csv
+      status: 200 OK
+      headers:
+      - [Content-Type, text/csv; charset=UTF-8]
+      body: "code,name\r\nart,School of Art and Design\r\nbus,School of Business\r\nedu,College
+        of Education\r\negn,School of Engineering\r\nla,\"School of Arts, Letters,
+        and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical School\r\nns,School
+        of Natural Sciences\r\nsc,School of Continuing Studies\r\n"
+    - uri: /school/:txt
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                  |
+        -+-----------------------------------------+-
+         | code | name                             |
+        -+------+----------------------------------+-
+         | art  | School of Art and Design         |
+         | bus  | School of Business               |
+         | edu  | College of Education             |
+         | egn  | School of Engineering            |
+         | la   | School of Arts, Letters, and the |
+         :      : Humanities                       :
+         | mart | School of Modern Art             |
+         | mus  | Musical School                   |
+         | ns   | School of Natural Sciences       |
+         | sc   | School of Continuing Studies     |
+                                            (9 rows)
+
+         ----
+         /school/:txt
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+    - uri: /school/:html
+      status: 200 OK
+      headers:
+      - [Content-Type, text/html; charset=UTF-8]
+      body: |
+        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+        <html>
+        <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>/school/:html</title>
+        <style type="text/css">
+        body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
+        a:link, a:visited { color: #1f4884; text-decoration: none }
+        a:hover { text-decoration: underline }
+        table { border-collapse: collapse; margin: 0.5em auto; width: 100% }
+        table, tr { border-style: solid; border-width: 0 }
+        td, th { padding: 0.2em 0.5em; vertical-align: top; text-align: left }
+        div.tab { position: relative; left: -1px; margin-right: 60%; padding: 0.2em 0.5em; background: #ffffff; border-style: solid; border-width: 5px 1px 0; border-top-left-radius: 10px; border-top-right-radius: 10px; -moz-border-radius-topleft: 10px; -moz-border-radius-topright: 10px; -webkit-border-top-left-radius: 10px; -webkit-border-top-right-radius: 10px }
+        table.page { border: 0; padding: 1em; width: auto }
+        tr.content { padding: 1em 1em 0.5em }
+        tr.footer { padding: 0 1em 1em; text-align: left; font-style: italic }
+        table.chart .number { text-align: right }
+        tr.caption { font-size: 105%; background: transparent }
+        tr.caption th { padding: 0 }
+        div.tab { border-color: #6f9ad3 #c3c3c3 }
+        tr.header { background: #dae3ea; border-color: #c3c3c3; border-width: 1px 1px 0 }
+        tr.odd { background: #ffffff; border-color: #c3c3c3; border-width: 0 1px }
+        tr.even { background: #f2f2f2; border-color: #c3c3c3; border-width: 0 1px }
+        tr.odd:hover, tr.even:hover { background: #ffe3bd }
+        tr.total { background: transparent;border-color: #c3c3c3; border-width: 1px 0 0 }
+        tr.total td { text-align: right; font-size: 75%; font-style: italic; padding: 0.3em 0.5em 0 }
+        table.void { text-align: center; border-color: #c3c3c3; border-width: 1px 0 }
+        </style>
+        </head>
+        <body>
+        <table class="page" summary="/school/:html">
+        <tr>
+        <td class="content">
+        <table class="chart" summary="school">
+        <tr class="caption"><th colspan="2"><div class="tab">school</div></th></tr>
+        <tr class="header"><th>code</th><th>name</th></tr>
+        <tr class="odd"><td>art</td><td>School of Art and Design</td></tr>
+        <tr class="even"><td>bus</td><td>School of Business</td></tr>
+        <tr class="odd"><td>edu</td><td>College of Education</td></tr>
+        <tr class="even"><td>egn</td><td>School of Engineering</td></tr>
+        <tr class="odd"><td>la</td><td>School of Arts, Letters, and the Humanities</td></tr>
+        <tr class="even"><td>mart</td><td>School of Modern Art</td></tr>
+        <tr class="odd"><td>mus</td><td>Musical School</td></tr>
+        <tr class="even"><td>ns</td><td>School of Natural Sciences</td></tr>
+        <tr class="odd"><td>sc</td><td>School of Continuing Studies</td></tr>
+        <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
+        </tr>
+        <tr><td class="footer">/school/:html</td></tr>
+        </table>
+        </body>
+        </html>
+    - uri: /school/:unknown
+      status: 400 Bad Request
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |
+        invalid argument: unknown format:
+            /school/:unknown
+                     ^^^^^^^

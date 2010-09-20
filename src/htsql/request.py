@@ -15,7 +15,7 @@ This module implements the request utility.
 
 from .adapter import Utility, Realization
 from .connect import DBError, Connect, Normalize
-from .error import EngineError
+from .error import EngineError, InvalidArgumentError
 from .tr.parse import parse
 from .tr.bind import bind
 from .tr.encode import encode
@@ -138,18 +138,25 @@ class Request(Utility):
         return Product(profile, records)
 
     def render(self, environ):
-        accept = set([''])
-        if 'HTTP_ACCEPT' in environ:
-            for name in environ['HTTP_ACCEPT'].split(','):
-                if ';' in name:
-                    name = name.split(';', 1)[0]
-                name = name.strip()
-                accept.add(name)
-        find_renderer = FindRenderer()
-        renderer_class = find_renderer(accept)
-        assert renderer_class is not None
-        renderer = renderer_class()
         product = self.produce()
+        find_renderer = FindRenderer()
+        format = product.profile.syntax.format
+        if format is not None:
+            accept = set([format.value])
+            renderer_class = find_renderer(accept)
+            if renderer_class is None:
+                raise InvalidArgumentError("unknown format", format.mark)
+        else:
+            accept = set([''])
+            if 'HTTP_ACCEPT' in environ:
+                for name in environ['HTTP_ACCEPT'].split(','):
+                    if ';' in name:
+                        name = name.split(';', 1)[0]
+                    name = name.strip()
+                    accept.add(name)
+            renderer_class = find_renderer(accept)
+            assert renderer_class is not None
+        renderer = renderer_class()
         return renderer.render(product)
 
     def __call__(self, environ):
