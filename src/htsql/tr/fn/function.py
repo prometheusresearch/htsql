@@ -2081,6 +2081,134 @@ SerializeMaxWrapper = GenericSerialize.factory(MaxFunction,
         MaxWrapperPhrase, "%(expression)s")
 
 
+class SumFunction(ProperFunction):
+
+    named('sum')
+
+    parameters = [
+            Parameter('expression'),
+    ]
+
+    def correlate(self, expression):
+        Implementation = Sum.realize((type(expression.domain),))
+        function = Implementation(expression, self.state, self.syntax)
+        yield function()
+
+
+class Sum(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, expression, state, syntax):
+        self.expression = expression
+        self.state = state
+        self.syntax = syntax
+
+    def __call__(self):
+        expression = self.expression
+        return SumBinding(expression.domain, self.syntax,
+                          base=self.state.base, expression=expression)
+
+
+class SumInteger(Sum):
+
+    adapts(IntegerDomain)
+
+
+class SumDecimal(Sum):
+
+    adapts(DecimalDomain)
+
+
+class SumFloat(Sum):
+
+    adapts(FloatDomain)
+
+
+SumBinding = GenericBinding.factory(SumFunction)
+SumExpression = GenericExpression.factory(SumFunction)
+SumWrapperExpression = GenericExpression.factory(SumFunction)
+SumPhrase = GenericPhrase.factory(SumFunction)
+SumWrapperPhrase = GenericPhrase.factory(SumFunction)
+
+
+EncodeSum = GenericAggregateEncode.factory(SumFunction,
+        SumBinding, SumExpression, SumWrapperExpression)
+EvaluateSum = GenericEvaluate.factory(SumFunction,
+        SumExpression, SumPhrase)
+EvaluateSumWrapper = GenericEvaluate.factory(SumFunction,
+        SumWrapperExpression, SumWrapperPhrase)
+SerializeSum = GenericSerialize.factory(SumFunction,
+        SumPhrase, "SUM(%(expression)s)")
+SerializeSumWrapper = GenericSerialize.factory(SumFunction,
+        SumWrapperPhrase, "%(expression)s")
+
+
+class AvgFunction(ProperFunction):
+
+    named('avg')
+
+    parameters = [
+            Parameter('expression'),
+    ]
+
+    def correlate(self, expression):
+        Implementation = Avg.realize((type(expression.domain),))
+        function = Implementation(expression, self.state, self.syntax)
+        yield function()
+
+
+class Avg(Adapter):
+
+    adapts(Domain)
+
+    domain = None
+
+    def __init__(self, expression, state, syntax):
+        self.expression = expression
+        self.state = state
+        self.syntax = syntax
+
+    def __call__(self):
+        expression = CastBinding(self.expression, self.domain,
+                                 self.expression.syntax)
+        return AvgBinding(expression.domain, self.syntax,
+                          base=self.state.base, expression=expression)
+
+
+class AvgDecimal(Avg):
+
+    adapts_many(IntegerDomain, DecimalDomain)
+
+    domain = DecimalDomain()
+
+
+class AvgFloat(Avg):
+
+    adapts(FloatDomain)
+
+    domain = FloatDomain()
+
+
+AvgBinding = GenericBinding.factory(AvgFunction)
+AvgExpression = GenericExpression.factory(AvgFunction)
+AvgWrapperExpression = GenericExpression.factory(AvgFunction)
+AvgPhrase = GenericPhrase.factory(AvgFunction)
+AvgWrapperPhrase = GenericPhrase.factory(AvgFunction)
+
+
+EncodeAvg = GenericAggregateEncode.factory(AvgFunction,
+        AvgBinding, AvgExpression, AvgWrapperExpression)
+EvaluateAvg = GenericEvaluate.factory(AvgFunction,
+        AvgExpression, AvgPhrase)
+EvaluateAvgWrapper = GenericEvaluate.factory(AvgFunction,
+        AvgWrapperExpression, AvgWrapperPhrase)
+SerializeAvg = GenericSerialize.factory(AvgFunction,
+        AvgPhrase, "AVG(%(expression)s)")
+SerializeAvgWrapper = GenericSerialize.factory(AvgFunction,
+        AvgWrapperPhrase, "%(expression)s")
+
+
 def call(syntax, state, base=None):
     if base is not None:
         state.push_base(base)

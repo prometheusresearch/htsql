@@ -357,6 +357,8 @@ tests:
     - uri: /department?exists(course.credits=5)
     - uri: /department?every(course.credits=5)
     - uri: /department{code,min(course.credits),max(course.credits)}
+    - uri: /department{code,avg(course.credits),
+                            sum(course.credits)/count(course.credits)}
     - uri: /department?exists(course)
     - uri: /school?!exists(department)
     - uri: /school{*,count(department)}
