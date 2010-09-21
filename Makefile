@@ -23,8 +23,8 @@ default:
 	@echo "  install: to install the HTSQL packages"
 	@echo "  develop: to install the HTSQL packages in the development mode"
 	@echo "  doc: to build the HTSQL documentation"
-	@echo "  dist: to build a source distribution"
-	@echo "  pypi: to register the package with PyPI"
+	@echo "  dist: to build a source and an EGG distribution"
+	@echo "  pypi: to register and upload the package to PyPI"
 	@echo
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
@@ -63,13 +63,18 @@ develop:
 doc:
 	sphinx-build -b html doc build/doc
 
-# Build a source distribution.
+# Build a source and an EGG distributions.
+# FIXME: include HTML documentation.
 dist:
+	rm -rf build
 	python setup.py sdist --formats=zip,gztar -d build/dist
+	python setup.py bdist_egg -d build/dist
 
-# Register the package with PyPI.
+# Register and upload the package to PyPI.
+# FIXME: include HTML documentation.
 pypi:
-	python setup.py register
+	rm -rf build
+	python setup.py register sdist -d build/dist bdist_egg -d build/dist upload
 
 #
 # Regression testing tasks.
