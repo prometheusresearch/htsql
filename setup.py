@@ -33,7 +33,6 @@ AUTHOR_EMAIL = "cce@clarkevans.com"
 LICENSE = "Free To Use But Restricted"
 PLATFORMS = "Any"
 URL = "http://htsql.org/"
-DOWNLOAD_URL = "http://htsql.org/download/%s-%s.tar.gz" % (NAME, VERSION)
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -79,7 +78,6 @@ setup(name=NAME,
       license=LICENSE,
       platforms=PLATFORMS,
       url=URL,
-      download_url=DOWNLOAD_URL,
       classifiers=CLASSIFIERS,
       keywords=KEYWORDS,
       packages=PACKAGES,
