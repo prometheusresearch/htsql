@@ -2,30 +2,43 @@
 HTSQL -- A Query Language for the Accidental Programmer
 =======================================================
 
-HTSQL ("Hyper Text Structured Query Language") is a schema-driven URI-to-SQL
-translator that takes a request over HTTP, converts it to a SQL query,
-executes the query against a database, and returns the results in a format
-best suited for the user agent (CSV, HTML, etc.).
+HTSQL ("Hyper Text Structured Query Language") is a schema-driven
+URI-to-SQL translator that takes a request over HTTP, converts it to a
+SQL query, executes the query against a database, and returns the
+results in a format best suited for the user agent (CSV, HTML, etc.).
 
-HTSQL is copyright by Prometheus Research, LLC.  See the file ``LICENSE``
-for details.  HTSQL is written by Clark C. Evans <cce@clarkevans.com> and
-Kirill Simonov <xi@resolvent.net>.
+Use of HTSQL with open source databases (PostgreSQL, MySQL, SQLite) is
+royalty free under BSD-style conditions.  Usage of HTSQL with
+proprietary database systems (Oracle, Microsoft SQL) requires a
+commercial license.  See ``LICENSE`` for details.
 
-For installation instructions, see ``INSTALL``.  For list of new features
-in this release, see ``NEWS``.  HTSQL documentation is in the ``doc``
-directory.
+For installation instructions, see ``INSTALL``.  For list of new
+features in this release, see ``NEWS``.  HTSQL documentation is in the
+``doc`` directory.  
 
 Visit
 
     http://htsql.org/
         The HTSQL homepage;
 
+    http://htsql.org/tutorial.html
+        The HTSQL tutorial;
+
     http://bitbucket.org/prometheus/htsql
         HTSQL source code;
 
-    #htsql on freenode;
-        Our IRC channel;
+    irc://irc.freenode.net#test
+        IRC chat in #htsql on freenode;
 
     http://lists.htsql.org/mailman/listinfo/htsql-users
         The mailing list for users of HTSQL.
 
+Generous support for HTSQL was provided by Prometheus Research, LLC and
+The Simons Foundation. This material is also based upon work supported
+by the National Science Foundation under Grant #0944460. Any opinions,
+findings, and conclusions or recommendations expressed in this material
+are those of the author(s) and do not necessarily reflect the views of
+the National Science Foundation. 
+
+HTSQL is copyright by Prometheus Research, LLC.  HTSQL is written by
+Clark C. Evans <cce@clarkevans.com> and Kirill Simonov <xi@resolvent.net>.
