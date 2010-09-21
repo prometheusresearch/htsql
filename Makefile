@@ -1,6 +1,6 @@
 # This makefile provides various build, installation and testing tasks.
 
-.PHONY: default build install develop doc \
+.PHONY: default build install develop doc dist windist pypi \
 	test cleanup train train-ctl train-sqlite train-pgsql purge-test
 
 
@@ -23,6 +23,8 @@ default:
 	@echo "  install: to install the HTSQL packages"
 	@echo "  develop: to install the HTSQL packages in the development mode"
 	@echo "  doc: to build the HTSQL documentation"
+	@echo "  dist: to build a source distribution"
+	@echo "  pypi: to register the package with PyPI"
 	@echo
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
@@ -61,6 +63,13 @@ develop:
 doc:
 	sphinx-build -b html doc build/doc
 
+# Build a source distribution.
+dist:
+	python setup.py sdist --formats=zip,gztar -d build/dist
+
+# Register the package with PyPI.
+pypi:
+	python setup.py register
 
 #
 # Regression testing tasks.

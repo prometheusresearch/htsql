@@ -1,0 +1,14 @@
+# This file specifies non-source code files that should be
+# included to the source distribution.
+
+# README files.
+include README INSTALL NEWS LICENSE Makefile Makefile.env.sample
+
+# Regression tests.
+recursive-include test *.yaml *.sql
+
+# Documentation (source)
+recursive-include doc *.py *.rst
+
+# FIXME: how to include the HTML documentation?
+
