@@ -27,7 +27,7 @@ There are two top-level tables, ``department`` and ``school`` having a
 single-column primary key ``code`` and a unique ``name``.  In this
 schema, we associate departments with exactly one school, although the
 ``code`` for the department must be unique across schools.  Non-acedemic
-departments are modeled with a ``NULL`` value for their ``school``.
+departments are modeled with a ``NULL`` for their ``school``.
 
 Two second-tier tables, ``course`` and ``program`` have compound primary
 keys, consisting of a parent table and a second column.  For ``course``
@@ -157,13 +157,9 @@ INSERT INTO ad.department (code, name, school) VALUES
 ('win', 'Wind', 'mus'),
 ('str', 'Strings', 'mus'),
 -- Non-Academic Departments
-('alumni','Alumni, Parents and Friends',NULL),
+('alumni','Alumni & Parents',NULL),
 ('bursar','Bursar''s Office',NULL),
-('career','Career Development and Placement',NULL),
-('health','Student Health Services',NULL),
-('finaid','Office of Financial Aid',NULL),
-('imedia','Instructional Media & Technology',NULL),
-('unisrv','University Facilities & Services',NULL)
+('career','Career Development',NULL)
 ;
 
 INSERT INTO ad.program (school, code, title, degree) VALUES
