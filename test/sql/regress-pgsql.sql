@@ -26,7 +26,8 @@ integer) as well as simple primary and foreign key relationships.
 There are two top-level tables, ``department`` and ``school`` having a
 single-column primary key ``code`` and a unique ``name``.  In this
 schema, we associate departments with exactly one school, although the
-``code`` for the department must be unique across schools.
+``code`` for the department must be unique across schools.  Non-acedemic
+departments are modeled with a ``NULL`` value for their ``school``.
 
 Two second-tier tables, ``course`` and ``program`` have compound primary
 keys, consisting of a parent table and a second column.  For ``course``
@@ -43,13 +44,13 @@ which do not offer a degree.
   | DEPARTMENT         |              | SCHOOL              |     
   +--------------------+              +---------------------+     
   | code            PK |--\       /---| code             PK |----\
-  | school_code  NN,FK |>-|------/    | name          NN,UK |    |
+  | school          FK |>-|------/    | name          NN,UK |    |
   | name         NN,UK |  |    .      +---------------------+    |
   +--------------------+  |     .                              . |
                         . |  departments                      .  |
        a department    .  |  belong to                       .   |
-       offers one     .   |  exactly one       a school          |
-       or more course     |  school            administers one   |
+       offers zero or .   |  at most one       a school          |
+       more courses       |  school            administers zero  |
                           |                    or more programs  |
   +--------------------+  |                                      |
   | COURSE             |  |           +---------------------+    |
@@ -77,7 +78,7 @@ CREATE TABLE ad.school (
 CREATE TABLE ad.department (
     code        VARCHAR(16) NOT NULL,
     name        VARCHAR(64) NOT NULL,
-    school      VARCHAR(16) NOT NULL,
+    school      VARCHAR(16),
     CONSTRAINT department_pk
       PRIMARY KEY (code),
     CONSTRAINT department_name_uk
@@ -154,7 +155,15 @@ INSERT INTO ad.department (code, name, school) VALUES
 ('voc', 'Vocals', 'mus'),
 ('pia', 'Piano', 'mus'),
 ('win', 'Wind', 'mus'),
-('str', 'Strings', 'mus')
+('str', 'Strings', 'mus'),
+-- Non-Academic Departments
+('alumni','Alumni, Parents and Friends',NULL),
+('bursar','Bursar''s Office',NULL),
+('career','Career Development and Placement',NULL),
+('health','Student Health Services',NULL),
+('finaid','Office of Financial Aid',NULL),
+('imedia','Instructional Media & Technology',NULL),
+('unisrv','University Facilities & Services',NULL)
 ;
 
 INSERT INTO ad.program (school, code, title, degree) VALUES

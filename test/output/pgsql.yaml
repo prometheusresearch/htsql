@@ -38,35 +38,42 @@ tests:
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |2
-         | department                               |
-        -+------------------------------------------+-
-         | code   | name                   | school |
-        -+--------+------------------------+--------+-
-         | acc    | Accounting             | bus    |
-         | arthis | Art History            | art    |
-         | artstd | Studio Art             | art    |
-         | astro  | Astronomy              | ns     |
-         | be     | Bioengineering         | egn    |
-         | capmrk | Capital Markets        | bus    |
-         | chem   | Chemistry              | ns     |
-         | comp   | Computer Science       | egn    |
-         | corpfi | Corporate Finance      | bus    |
-         | edpol  | Educational Policy     | edu    |
-         | ee     | Electrical Engineering | egn    |
-         | eng    | English                | la     |
-         | hist   | History                | la     |
-         | lang   | Foreign Languages      | la     |
-         | me     | Mechanical Engineering | egn    |
-         | mth    | Mathematics            | ns     |
-         | phys   | Physics                | ns     |
-         | pia    | Piano                  | mus    |
-         | poli   | Political Science      | la     |
-         | psych  | Psychology             | la     |
-         | str    | Strings                | mus    |
-         | tched  | Teacher Education      | edu    |
-         | voc    | Vocals                 | mus    |
-         | win    | Wind                   | mus    |
-                                            (24 rows)
+         | department                                         |
+        -+----------------------------------------------------+-
+         | code   | name                             | school |
+        -+--------+----------------------------------+--------+-
+         | acc    | Accounting                       | bus    |
+         | alumni | Alumni, Parents and Friends      |        |
+         | arthis | Art History                      | art    |
+         | artstd | Studio Art                       | art    |
+         | astro  | Astronomy                        | ns     |
+         | be     | Bioengineering                   | egn    |
+         | bursar | Bursar's Office                  |        |
+         | capmrk | Capital Markets                  | bus    |
+         | career | Career Development and Placement |        |
+         | chem   | Chemistry                        | ns     |
+         | comp   | Computer Science                 | egn    |
+         | corpfi | Corporate Finance                | bus    |
+         | edpol  | Educational Policy               | edu    |
+         | ee     | Electrical Engineering           | egn    |
+         | eng    | English                          | la     |
+         | finaid | Office of Financial Aid          |        |
+         | health | Student Health Services          |        |
+         | hist   | History                          | la     |
+         | imedia | Instructional Media & Technology |        |
+         | lang   | Foreign Languages                | la     |
+         | me     | Mechanical Engineering           | egn    |
+         | mth    | Mathematics                      | ns     |
+         | phys   | Physics                          | ns     |
+         | pia    | Piano                            | mus    |
+         | poli   | Political Science                | la     |
+         | psych  | Psychology                       | la     |
+         | str    | Strings                          | mus    |
+         | tched  | Teacher Education                | edu    |
+         | unisrv | University Facilities & Services |        |
+         | voc    | Vocals                           | mus    |
+         | win    | Wind                             | mus    |
+                                                      (31 rows)
 
          ----
          /department
@@ -3270,7 +3277,7 @@ tests:
 
          ----
          /department?school.code='ns'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
     - uri: /program?school.code='ns'&code='uchem'
       status: 200 OK
       headers:
@@ -3348,44 +3355,51 @@ tests:
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |2
-         | department                                                                                |
-        -+-------------------------------------------------------------------------------------------+-
-         | school.code | school.name                      | code   | name                   | school |
-        -+-------------+----------------------------------+--------+------------------------+--------+-
-         | bus         | School of Business               | acc    | Accounting             | bus    |
-         | art         | School of Art and Design         | arthis | Art History            | art    |
-         | art         | School of Art and Design         | artstd | Studio Art             | art    |
-         | ns          | School of Natural Sciences       | astro  | Astronomy              | ns     |
-         | egn         | School of Engineering            | be     | Bioengineering         | egn    |
-         | bus         | School of Business               | capmrk | Capital Markets        | bus    |
-         | ns          | School of Natural Sciences       | chem   | Chemistry              | ns     |
-         | egn         | School of Engineering            | comp   | Computer Science       | egn    |
-         | bus         | School of Business               | corpfi | Corporate Finance      | bus    |
-         | edu         | College of Education             | edpol  | Educational Policy     | edu    |
-         | egn         | School of Engineering            | ee     | Electrical Engineering | egn    |
-         | la          | School of Arts, Letters, and the | eng    | English                | la     |
-         :             : Humanities                       :        :                        :        :
-         | la          | School of Arts, Letters, and the | hist   | History                | la     |
-         :             : Humanities                       :        :                        :        :
-         | la          | School of Arts, Letters, and the | lang   | Foreign Languages      | la     |
-         :             : Humanities                       :        :                        :        :
-         | egn         | School of Engineering            | me     | Mechanical Engineering | egn    |
-         | ns          | School of Natural Sciences       | mth    | Mathematics            | ns     |
-         | ns          | School of Natural Sciences       | phys   | Physics                | ns     |
-         | mus         | Musical School                   | pia    | Piano                  | mus    |
-         | la          | School of Arts, Letters, and the | poli   | Political Science      | la     |
-         :             : Humanities                       :        :                        :        :
-         | la          | School of Arts, Letters, and the | psych  | Psychology             | la     |
-         :             : Humanities                       :        :                        :        :
-         | mus         | Musical School                   | str    | Strings                | mus    |
-         | edu         | College of Education             | tched  | Teacher Education      | edu    |
-         | mus         | Musical School                   | voc    | Vocals                 | mus    |
-         | mus         | Musical School                   | win    | Wind                   | mus    |
-                                                                                             (24 rows)
+         | department                                                                                          |
+        -+-----------------------------------------------------------------------------------------------------+-
+         | school.code | school.name                      | code   | name                             | school |
+        -+-------------+----------------------------------+--------+----------------------------------+--------+-
+         | bus         | School of Business               | acc    | Accounting                       | bus    |
+         |             |                                  | alumni | Alumni, Parents and Friends      |        |
+         | art         | School of Art and Design         | arthis | Art History                      | art    |
+         | art         | School of Art and Design         | artstd | Studio Art                       | art    |
+         | ns          | School of Natural Sciences       | astro  | Astronomy                        | ns     |
+         | egn         | School of Engineering            | be     | Bioengineering                   | egn    |
+         |             |                                  | bursar | Bursar's Office                  |        |
+         | bus         | School of Business               | capmrk | Capital Markets                  | bus    |
+         |             |                                  | career | Career Development and Placement |        |
+         | ns          | School of Natural Sciences       | chem   | Chemistry                        | ns     |
+         | egn         | School of Engineering            | comp   | Computer Science                 | egn    |
+         | bus         | School of Business               | corpfi | Corporate Finance                | bus    |
+         | edu         | College of Education             | edpol  | Educational Policy               | edu    |
+         | egn         | School of Engineering            | ee     | Electrical Engineering           | egn    |
+         | la          | School of Arts, Letters, and the | eng    | English                          | la     |
+         :             : Humanities                       :        :                                  :        :
+         |             |                                  | finaid | Office of Financial Aid          |        |
+         |             |                                  | health | Student Health Services          |        |
+         | la          | School of Arts, Letters, and the | hist   | History                          | la     |
+         :             : Humanities                       :        :                                  :        :
+         |             |                                  | imedia | Instructional Media & Technology |        |
+         | la          | School of Arts, Letters, and the | lang   | Foreign Languages                | la     |
+         :             : Humanities                       :        :                                  :        :
+         | egn         | School of Engineering            | me     | Mechanical Engineering           | egn    |
+         | ns          | School of Natural Sciences       | mth    | Mathematics                      | ns     |
+         | ns          | School of Natural Sciences       | phys   | Physics                          | ns     |
+         | mus         | Musical School                   | pia    | Piano                            | mus    |
+         | la          | School of Arts, Letters, and the | poli   | Political Science                | la     |
+         :             : Humanities                       :        :                                  :        :
+         | la          | School of Arts, Letters, and the | psych  | Psychology                       | la     |
+         :             : Humanities                       :        :                                  :        :
+         | mus         | Musical School                   | str    | Strings                          | mus    |
+         | edu         | College of Education             | tched  | Teacher Education                | edu    |
+         |             |                                  | unisrv | University Facilities & Services |        |
+         | mus         | Musical School                   | voc    | Vocals                           | mus    |
+         | mus         | Musical School                   | win    | Wind                             | mus    |
+                                                                                                       (31 rows)
 
          ----
          /department{school.*,*}
-         SELECT "school_2"."code", "school_2"."name", "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 3 ASC
+         SELECT "school_2"."code", "school_2"."name", "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 3 ASC
     - uri: /department{school.name+' - '+name}
       status: 200 OK
       headers:
@@ -3454,7 +3468,7 @@ tests:
         -+---------------------------------------------------+-
          | count(school) | count(department) | count(course) |
         -+---------------+-------------------+---------------+-
-         |             9 |                24 |           100 |
+         |             9 |                31 |           100 |
                                                        (1 row)
 
          ----
@@ -3469,7 +3483,7 @@ tests:
         -+------------------------------------------------------+-
          | count(department) | count(department?exists(course)) |
         -+-------------------+----------------------------------+-
-         |                24 |                               20 |
+         |                31 |                               20 |
                                                           (1 row)
 
          ----
@@ -3485,18 +3499,24 @@ tests:
          | code   | count(course{credits=3}) |
         -+--------+--------------------------+-
          | acc    |                        4 |
+         | alumni |                        0 |
          | arthis |                        5 |
          | artstd |                        2 |
          | astro  |                        2 |
          | be     |                        3 |
+         | bursar |                        0 |
          | capmrk |                        4 |
+         | career |                        0 |
          | chem   |                        4 |
          | comp   |                        6 |
          | corpfi |                        3 |
          | edpol  |                        4 |
          | ee     |                        4 |
          | eng    |                        4 |
+         | finaid |                        0 |
+         | health |                        0 |
          | hist   |                        5 |
+         | imedia |                        0 |
          | lang   |                        3 |
          | me     |                        3 |
          | mth    |                        0 |
@@ -3506,9 +3526,10 @@ tests:
          | psych  |                        3 |
          | str    |                        0 |
          | tched  |                        4 |
+         | unisrv |                        0 |
          | voc    |                        0 |
          | win    |                        0 |
-                                     (24 rows)
+                                     (31 rows)
 
          ----
          /department{code,count(course{credits=3})}
@@ -3573,16 +3594,23 @@ tests:
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |2
-         | (department?every(course.credits=5)) |
-        -+--------------------------------------+-
-         | code    | name           | school    |
-        -+---------+----------------+-----------+-
-         | mth     | Mathematics    | ns        |
-         | pia     | Piano          | mus       |
-         | str     | Strings        | mus       |
-         | voc     | Vocals         | mus       |
-         | win     | Wind           | mus       |
-                                         (5 rows)
+         | (department?every(course.credits=5))               |
+        -+----------------------------------------------------+-
+         | code   | name                             | school |
+        -+--------+----------------------------------+--------+-
+         | alumni | Alumni, Parents and Friends      |        |
+         | bursar | Bursar's Office                  |        |
+         | career | Career Development and Placement |        |
+         | finaid | Office of Financial Aid          |        |
+         | health | Student Health Services          |        |
+         | imedia | Instructional Media & Technology |        |
+         | mth    | Mathematics                      | ns     |
+         | pia    | Piano                            | mus    |
+         | str    | Strings                          | mus    |
+         | unisrv | University Facilities & Services |        |
+         | voc    | Vocals                           | mus    |
+         | win    | Wind                             | mus    |
+                                                      (12 rows)
 
          ----
          /department?every(course.credits=5)
@@ -3597,18 +3625,24 @@ tests:
          | code   | min(course.credits) | max(course.credits) |
         -+--------+---------------------+---------------------+-
          | acc    |                   2 |                   5 |
+         | alumni |                     |                     |
          | arthis |                   3 |                   4 |
          | artstd |                   0 |                   5 |
          | astro  |                   1 |                   3 |
          | be     |                   3 |                   8 |
+         | bursar |                     |                     |
          | capmrk |                   3 |                   3 |
+         | career |                     |                     |
          | chem   |                   2 |                   3 |
          | comp   |                   3 |                   4 |
          | corpfi |                   3 |                   3 |
          | edpol  |                   3 |                   3 |
          | ee     |                   3 |                   4 |
          | eng    |                   2 |                   3 |
+         | finaid |                     |                     |
+         | health |                     |                     |
          | hist   |                   3 |                   3 |
+         | imedia |                     |                     |
          | lang   |                   2 |                   4 |
          | me     |                   3 |                   4 |
          | mth    |                   5 |                   5 |
@@ -3618,9 +3652,10 @@ tests:
          | psych  |                   3 |                   4 |
          | str    |                     |                     |
          | tched  |                   3 |                   4 |
+         | unisrv |                     |                     |
          | voc    |                     |                     |
          | win    |                     |                     |
-                                                      (24 rows)
+                                                      (31 rows)
 
          ----
          /department{code,min(course.credits),max(course.credits)}
@@ -3635,18 +3670,24 @@ tests:
          | code   | avg(course.credits) | sum(course.credits)/count(course.credits) |
         -+--------+---------------------+-------------------------------------------+-
          | acc    |  3.1666666666666667 |                        3.1666666666666667 |
+         | alumni |                     |                                           |
          | arthis |  3.1666666666666667 |                        3.1666666666666667 |
          | artstd |  3.1666666666666667 |                        3.1666666666666667 |
          | astro  |  2.2500000000000000 |                        2.2500000000000000 |
          | be     |  4.2500000000000000 |                        4.2500000000000000 |
+         | bursar |                     |                                           |
          | capmrk |  3.0000000000000000 |                        3.0000000000000000 |
+         | career |                     |                                           |
          | chem   |  2.8000000000000000 |                        2.8000000000000000 |
          | comp   |  3.1428571428571429 |                        3.1428571428571429 |
          | corpfi |  3.0000000000000000 |                        3.0000000000000000 |
          | edpol  |  3.0000000000000000 |                        3.0000000000000000 |
          | ee     |  3.2000000000000000 |                        3.2000000000000000 |
          | eng    |  2.6666666666666667 |                        2.6666666666666667 |
+         | finaid |                     |                                           |
+         | health |                     |                                           |
          | hist   |  3.0000000000000000 |                        3.0000000000000000 |
+         | imedia |                     |                                           |
          | lang   |  3.0000000000000000 |                        3.0000000000000000 |
          | me     |  3.4000000000000000 |                        3.4000000000000000 |
          | mth    |  5.0000000000000000 |                        5.0000000000000000 |
@@ -3656,9 +3697,10 @@ tests:
          | psych  |  3.4000000000000000 |                        3.4000000000000000 |
          | str    |                     |                                           |
          | tched  |  3.2000000000000000 |                        3.2000000000000000 |
+         | unisrv |                     |                                           |
          | voc    |                     |                                           |
          | win    |                     |                                           |
-                                                                            (24 rows)
+                                                                            (31 rows)
 
          ----
          /department{code,avg(course.credits),sum(course.credits)/count(course.credits)}
