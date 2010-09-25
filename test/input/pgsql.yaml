@@ -364,6 +364,13 @@ tests:
     - uri: /school{*,count(department)}
     - uri: /school{*,count(department?exists(course))}
     - uri: /school{*,count(department.exists(course))}
+    # Aggregates with non-native spaces (still broken!).
+    - uri: /department{code,school.code,
+                       count(school.program),school.count(program)}
+      skip: true
+    - uri: /department{code,school.code,
+                       exists(school.program),school.exists(program)}
+      skip: true
 
   # Demonstrate selection of a formatter based on the `Accept` header.
   - title: Formatters

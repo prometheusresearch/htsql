@@ -333,7 +333,6 @@ class InjectAggregate(Inject):
             ground_term = self.term
         else:
             baseline = self.space.prune(self.term.space)
-            baseline = unmasked_space
             while not baseline.is_inflated:
                 baseline = baseline.base
             ground_term = self.state.assemble(self.space,
@@ -429,7 +428,6 @@ class InjectCorrelated(Inject):
             ground_term = self.term
         else:
             baseline = self.space.prune(self.term.space)
-            baseline = unmasked_space
             while not baseline.is_inflated:
                 baseline = baseline.base
             ground_term = self.state.assemble(self.space,
