@@ -1044,10 +1044,10 @@ class Code(Expression):
     see its subclasses for concrete types of expressions.
 
     Among all code expressions, we distinguish *unit expressions*:
-    elementary functions on spaces.  There are two kinds of units:
-    columns and aggregate functions (see :class:`Unit` for more detail).
-    Every non-unit code could be expressed as a composition of a scalar
-    function and one or several units:
+    elementary functions on spaces.  There are several kinds of units:
+    among them are columns and aggregate functions (see :class:`Unit`
+    for more detail).  Every non-unit code could be expressed as
+    a composition of a scalar function and one or several units:
 
         `f = F(u(a),v(b),...)`,
 
@@ -1275,8 +1275,8 @@ class Unit(Code):
     """
     Represents a unit expression.
 
-    A unit is an elementary function on a space.  There are two kinds
-    of units: columns and aggregates; see subclasses :class:`ColumnUnit`,
+    A unit is an elementary function on a space.  There are several kinds
+    of units; see subclasses :class:`ColumnUnit`, :class:`ScalarUnit`,
     :class:`AggregateUnit`, and :class:`CorrelatedUnit` for more detail.
 
     Note that it is easy to *trasfer* a unit code from one space to another.
@@ -1342,6 +1342,29 @@ class ColumnUnit(Unit):
                     binding=binding,
                     equality_vector=(column, space))
         self.column = column
+
+
+class ScalarUnit(Unit):
+    """
+    Represents a scalar unit.
+
+    A scalar unit is a scalar function evaluated in the specified space.
+
+    `expression` (:class:`Code`)
+        The expression to evaluate.
+
+    `space` (:class:`Space`)
+        The space on which the unit is defined.
+    """
+
+    def __init__(self, expression, space, binding):
+        assert isinstance(expression, Code)
+        super(ScalarUnit, self).__init__(
+                    space=space,
+                    domain=expression.domain,
+                    binding=binding,
+                    equality_vector=(expression, space))
+        self.expression = expression
 
 
 class AggregateUnitBase(Unit):

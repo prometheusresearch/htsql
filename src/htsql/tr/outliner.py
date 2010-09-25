@@ -18,7 +18,7 @@ from .term import (Term, RoutingTerm, TableTerm, ScalarTerm, FilterTerm,
                    JoinTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, SegmentTerm, QueryTerm,
                    Tie, ParallelTie, SeriesTie)
-from .code import (Unit, ColumnUnit, AggregateUnit, CorrelatedUnit,
+from .code import (Unit, ColumnUnit, ScalarUnit, AggregateUnit, CorrelatedUnit,
                    Space, ScalarSpace, CrossProductSpace, JoinProductSpace)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand, LeafAppointment,
@@ -269,6 +269,18 @@ class DelegateColumn(Delegate):
         sketch = self.outliner.sketch_by_term_id[term_id]
         appointment = LeafAppointment(self.unit.column,
                                       self.unit.mark)
+        return Demand(sketch, appointment)
+
+
+class DelegateScalar(Delegate):
+
+    adapts(ScalarUnit, Outliner)
+
+    def delegate(self, term):
+        term_id = term.routes[self.unit]
+        sketch = self.outliner.sketch_by_term_id[term_id]
+        term = self.outliner.term_by_term_id[term_id]
+        appointment = self.outliner.appoint(self.unit.expression, term)
         return Demand(sketch, appointment)
 
 

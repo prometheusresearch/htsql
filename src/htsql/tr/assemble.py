@@ -16,7 +16,7 @@ This module implements the assemble adapter.
 from ..adapter import Adapter, adapts
 from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
                    FilteredSpace, OrderedSpace, MaskedSpace,
-                   Unit, ColumnUnit, AggregateUnit, CorrelatedUnit,
+                   Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    QueryExpression, SegmentExpression,
                    GroupExpression, AggregateGroupExpression)
 from .term import (RoutingTerm, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
@@ -318,6 +318,54 @@ class InjectColumn(Inject):
         return self.state.inject(self.term, [self.unit.space])
 
 
+class InjectScalar(Inject):
+
+    adapts(ScalarUnit)
+
+    def __call__(self):
+        if not self.unit.singular(self.term.space):
+            raise AssembleError("expected a singular expression",
+                                self.unit.mark)
+        if self.unit in self.term.routes:
+            return self.term
+        if self.space.dominates(self.term.space):
+            term = self.state.inject(self.term, [self.unit.expression])
+            if term.is_nullary:
+                term = WrapperTerm(self.state.make_id(), term,
+                                   term.space, term.routes.copy())
+            routes = term.routes.copy()
+            routes[self.unit] = term.id
+            return term.clone(routes=routes)
+        lkid = self.term
+        baseline = self.space.prune(self.term.space)
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        rkid = self.state.assemble(self.space,
+                                   baseline=baseline,
+                                   mask=self.term.space)
+        rkid = self.state.inject(rkid, [self.unit.expression])
+        if rkid.is_nullary:
+            rkid = WrapperTerm(self.state.make_id(), rkid,
+                               rkid.space, rkid.routes.copy())
+        id = self.state.make_id()
+        ties = []
+        if lkid.backbone.concludes(rkid.baseline):
+            lkid = self.state.inject(lkid, [rkid.baseline])
+            axis = lkid.backbone
+            while rkid.baseline.base != axis:
+                if axis in rkid.routes:
+                    tie = ParallelTie(axis)
+                    ties.append(tie)
+            ties.reverse()
+        else:
+            lkid = self.state.inject(lkid, [rkid.baseline.base])
+            tie = SeriesTie(rkid.baseline)
+            ties.append(tie)
+        routes = lkid.routes.copy()
+        routes[self.unit] = rkid.id
+        return JoinTerm(id, lkid, rkid, ties, False, lkid.space, routes)
+
+
 class InjectAggregate(Inject):
 
     adapts(AggregateUnit)
@@ -443,8 +491,10 @@ class InjectCorrelated(Inject):
                                           baseline=baseline,
                                           mask=ground_term.space)
         plural_term = self.state.inject(plural_term, [self.unit.composite])
-        plural_term = WrapperTerm(self.state.make_id(), plural_term,
-                                  plural_term.space, plural_term.routes.copy())
+        if plural_term.is_nullary:
+            plural_term = WrapperTerm(self.state.make_id(), plural_term,
+                                      plural_term.space,
+                                      plural_term.routes.copy())
         ties = []
         axes = []
         if ground_term.backbone.concludes(plural_term.baseline):

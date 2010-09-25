@@ -25,7 +25,7 @@ from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
                        CastBinding, TitleBinding, DirectionBinding)
 from ..encode import Encode
-from ..code import (FunctionCode, NegationCode, AggregateUnit,
+from ..code import (FunctionCode, NegationCode, ScalarUnit, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
 from ..compiler import Compiler, Evaluate
 from ..frame import FunctionPhrase
@@ -861,6 +861,7 @@ class GenericAggregateEncode(Encode):
                                   self.binding)
         wrapper = self.wrapper_class(self.binding.domain, self.binding,
                                      expression=aggregate)
+        wrapper = ScalarUnit(wrapper, space, self.binding)
         return wrapper
 
 
@@ -1908,6 +1909,7 @@ class EncodeExistsEvery(Encode):
             wrapper = EveryWrapperExpression(self.binding.domain,
                                              self.binding,
                                              expression=aggregate)
+        wrapper = ScalarUnit(wrapper, space, self.binding)
         return wrapper
 
 
