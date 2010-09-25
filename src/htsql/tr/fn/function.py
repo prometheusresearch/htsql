@@ -1730,7 +1730,7 @@ class FormatFunctions(Format):
         return "(%s || %s)" % (left, right)
 
     def concat_wrapper(self, expr):
-        return "COALESCE(%s, '')"
+        return "COALESCE(%s, '')" % expr
 
     def count_fn(self, condition):
         return "COUNT(NULLIF(%s, FALSE))" % condition
