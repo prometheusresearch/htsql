@@ -14,174 +14,161 @@ This module declares term nodes.
 
 
 from ..util import Node, listof, dictof, oneof, tupleof, maybe
-from ..mark import Mark
-from ..entity import TableEntity
 from ..domain import BooleanDomain
 from .code import Expression, Space, Code, Unit, QueryExpression
 
 
-LEFT = 0
-RIGHT = 1
-FORWARD = 0
-
-
 class Term(Node):
+
+    def __init__(self, expression):
+        assert isinstance(expression, Expression)
+        self.expression = expression
+        self.binding = expression.binding
+        self.syntax = expression.syntax
+        self.mark = expression.mark
+
+    def __str__(self):
+        return str(self.expression)
+
+
+class RoutingTerm(Term):
 
     is_nullary = False
     is_unary = False
     is_binary = False
 
-    def __init__(self, children, mark):
-        assert isinstance(children, listof(Term))
-        assert isinstance(mark, Mark)
-        self.children = children
-        self.mark = mark
+    def __init__(self, id, kids, space, routes):
+        assert isinstance(id, int)
+        assert isinstance(kids, listof(RoutingTerm))
+        assert isinstance(space, Space)
+        assert isinstance(routes, dictof(oneof(Space, Unit), int))
+        assert space in routes
+        backbone = space.inflate()
+        assert backbone in routes
+        baseline = backbone
+        while baseline.base in routes:
+            baseline = baseline.base
+        super(RoutingTerm, self).__init__(space)
+        self.id = id
+        self.kids = kids
+        self.space = space
+        self.routes = routes
+        self.backbone = backbone
+        self.baseline = baseline
+
+    def __str__(self):
+        # Display:
+        #   <baseline> -> <space>
+        return "%s -> %s" % (self.baseline, self.space)
 
 
-class NullaryTerm(Term):
+class NullaryTerm(RoutingTerm):
 
     is_nullary = True
 
-    def __init__(self, space, baseline, routes, mark):
-        assert isinstance(space, Space)
-        assert isinstance(baseline, Space) and baseline.is_inflated
-        assert isinstance(routes, dictof(oneof(Space, Unit), listof(int)))
-        super(NullaryTerm, self).__init__([], mark)
-        self.space = space
-        self.baseline = baseline
-        self.routes =  routes
+    def __init__(self, id, space, routes):
+        super(NullaryTerm, self).__init__(id, [], space, routes)
 
 
-class UnaryTerm(Term):
+class UnaryTerm(RoutingTerm):
 
     is_unary = True
 
-    def __init__(self, child, space, baseline, routes, mark):
-        assert isinstance(child, Term)
-        assert isinstance(space, Space)
-        assert isinstance(baseline, Space) and baseline.is_inflated
-        assert isinstance(routes, dictof(oneof(Space, Unit), listof(object)))
-        super(UnaryTerm, self).__init__([child], mark)
-        self.child = child
-        self.space = space
-        self.baseline = baseline
-        self.routes = routes
+    def __init__(self, id, kid, space, routes):
+        super(UnaryTerm, self).__init__(id, [kid], space, routes)
+        self.kid = kid
 
 
-class BinaryTerm(Term):
+class BinaryTerm(RoutingTerm):
 
     is_binary = True
 
-    def __init__(self, left_child, right_child,
-                 space, baseline, routes, mark):
-        assert isinstance(left_child, Term)
-        assert isinstance(right_child, Term)
-        assert isinstance(space, Space)
-        assert isinstance(baseline, Space) and baseline.is_inflated
-        assert isinstance(routes, dictof(oneof(Space, Unit), listof(object)))
-        super(BinaryTerm, self).__init__([left_child, right_child], mark)
-        self.left_child = left_child
-        self.right_child = right_child
-        self.space = space
-        self.baseline = baseline
-        self.routes = routes
-
-
-class TableTerm(NullaryTerm):
-
-    def __init__(self, table, space, baseline, routes, mark):
-        assert isinstance(table, TableEntity)
-        assert space.table is table
-        super(TableTerm, self).__init__(space, baseline, routes, mark)
-        self.table = table
+    def __init__(self, id, lkid, rkid, space, routes):
+        super(BinaryTerm, self).__init__(id, [lkid, rkid], space, routes)
+        self.lkid = lkid
+        self.rkid = rkid
 
 
 class ScalarTerm(NullaryTerm):
 
-    def __init__(self, space, baseline, routes, mark):
+    def __init__(self, id, space, routes):
         assert space.table is None
-        super(ScalarTerm, self).__init__(space, baseline, routes, mark)
+        super(ScalarTerm, self).__init__(id, space, routes)
+
+
+class TableTerm(NullaryTerm):
+
+    def __init__(self, id, space, routes):
+        assert space.table is not None
+        super(TableTerm, self).__init__(id, space, routes)
+        self.table = space.table
 
 
 class FilterTerm(UnaryTerm):
 
-    def __init__(self, child, filter, space, baseline, routes, mark):
-        assert isinstance(filter, Expression)
-        assert isinstance(filter.domain, BooleanDomain)
-        super(FilterTerm, self).__init__(child, space, baseline,
-                                         routes, mark)
+    def __init__(self, id, kid, filter, space, routes):
+        assert (isinstance(filter, Code) and
+                isinstance(filter.domain, BooleanDomain))
+        super(FilterTerm, self).__init__(id, kid, space, routes)
         self.filter = filter
 
 
 class JoinTerm(BinaryTerm):
 
-    def __init__(self, left_child, right_child, ties, is_inner,
-                 space, baseline, routes, mark):
+    def __init__(self, id, lkid, rkid, ties, is_inner, space, routes):
         assert isinstance(ties, listof(Tie))
         assert isinstance(is_inner, bool)
-        super(JoinTerm, self).__init__(left_child, right_child,
-                                       space, baseline, routes, mark)
+        super(JoinTerm, self).__init__(id, lkid, rkid, space, routes)
         self.ties = ties
         self.is_inner = is_inner
 
 
 class CorrelationTerm(BinaryTerm):
 
-    def __init__(self, left_child, right_child, ties,
-                 space, baseline, routes, mark):
+    def __init__(self, id, lkid, rkid, ties, space, routes):
         assert isinstance(ties, listof(Tie))
-        super(CorrelationTerm, self).__init__(left_child, right_child,
-                                              space, baseline, routes, mark)
+        super(CorrelationTerm, self).__init__(id, lkid, rkid, space, routes)
         self.ties = ties
 
 
 class ProjectionTerm(UnaryTerm):
 
-    def __init__(self, child, ties, space, baseline, routes, mark):
+    def __init__(self, id, kid, ties, space, routes):
         assert isinstance(ties, listof(Tie))
-        super(ProjectionTerm, self).__init__(child, space, baseline,
-                                             routes, mark)
+        super(ProjectionTerm, self).__init__(id, kid, space, routes)
         self.ties = ties
 
 
-class OrderingTerm(UnaryTerm):
+class OrderTerm(UnaryTerm):
 
-    def __init__(self, child, order, limit, offset,
-                 space, baseline, routes, mark):
+    def __init__(self, id, kid, order, limit, offset, space, routes):
         assert isinstance(order, listof(tupleof(Code, int)))
         assert isinstance(limit, maybe(int))
         assert isinstance(offset, maybe(int))
-        super(OrderingTerm, self).__init__(child, space, baseline,
-                                           routes, mark)
+        super(OrderTerm, self).__init__(id, kid, space, routes)
         self.order = order
         self.limit = limit
         self.offset = offset
 
 
-class HangingTerm(UnaryTerm):
+class WrapperTerm(UnaryTerm):
     pass
 
 
 class SegmentTerm(UnaryTerm):
 
-    def __init__(self, child, select, space, baseline, routes, mark):
-        assert isinstance(select, listof(Code))
-        super(SegmentTerm, self).__init__(child, space, baseline, routes, mark)
-        self.select = select
+    def __init__(self, id, kid, elements, space, routes):
+        assert isinstance(elements, listof(Code))
+        super(SegmentTerm, self).__init__(id, kid, space, routes)
+        self.elements = elements
 
 
 class QueryTerm(Term):
 
-    def __init__(self, code, segment, mark):
-        assert isinstance(code, QueryExpression)
+    def __init__(self, segment, expression):
         assert isinstance(segment, maybe(SegmentTerm))
-        children = []
-        if segment is not None:
-            children.append(segment)
-        super(QueryTerm, self).__init__(children, mark)
-        self.code = code
-        self.binding = code.binding
-        self.syntax = code.syntax
+        assert isinstance(expression, QueryExpression)
+        super(QueryTerm, self).__init__(expression)
         self.segment = segment
 
 
@@ -198,18 +185,16 @@ class ParallelTie(Tie):
     def __init__(self, space):
         assert isinstance(space, Space) and space.is_axis
         self.space = space
-        self.mark = space.mark
 
 
 class SeriesTie(Tie):
 
     is_series = True
 
-    def __init__(self, space, is_reverse=False):
+    def __init__(self, space, is_backward=False):
         assert isinstance(space, Space) and space.is_axis
-        assert isinstance(is_reverse, bool)
+        assert isinstance(is_backward, bool)
         self.space = space
-        self.is_reverse = is_reverse
-        self.mark = space.mark
+        self.is_reverse = is_backward
 
 

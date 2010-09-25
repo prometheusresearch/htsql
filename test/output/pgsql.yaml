@@ -2903,7 +2903,7 @@ tests:
 
          ----
          /course.sort(credits)?department='acc'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC) AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC
     - uri: /course.sort(credits).limit(1,1)?department='acc'
       status: 200 OK
       headers:
@@ -2923,7 +2923,7 @@ tests:
 
          ----
          /course.sort(credits).limit(1,1)?department='acc'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC) AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC LIMIT 1 OFFSET 1) AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC LIMIT 1 OFFSET 1) AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC
   - id: title-decorator
     tests:
     - uri: /{null() as Title, null() as 'Title with whitespaces'}
@@ -3051,7 +3051,7 @@ tests:
 
          ----
          /school{code+,name}
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, 1 ASC
     - uri: /school{code-,name}
       status: 200 OK
       headers:
@@ -3075,7 +3075,7 @@ tests:
 
          ----
          /school{code-,name}
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 DESC
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 DESC, 1 ASC
     - uri: /school{code--,name}
       status: 200 OK
       headers:
@@ -3099,7 +3099,7 @@ tests:
 
          ----
          /school{code--,name}
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, 1 ASC
     - uri: /school{name as Title+}
       status: 200 OK
       headers:
@@ -3235,7 +3235,7 @@ tests:
 
          ----
          /course.sort(department+,credits-){department,title,credits}?number<200
-         SELECT "course"."department", "course"."title", "course"."credits" FROM (SELECT "course"."department", "course"."title", "course"."credits", "course"."number" FROM "ad"."course" AS "course" WHERE ("course"."number" < 200) ORDER BY 1 ASC, 3 DESC, 4 ASC) AS "course" ORDER BY 1 ASC, 3 DESC, "course"."number" ASC
+         SELECT "course"."department", "course"."title", "course"."credits" FROM "ad"."course" AS "course" WHERE ("course"."number" < 200) ORDER BY 1 ASC, 3 DESC, 1 ASC, "course"."number" ASC
   - id: simple-filters
     tests:
     - uri: /school?code='ns'

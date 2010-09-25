@@ -392,6 +392,9 @@ class Space(Expression):
         Indicates whether the space is an axis space, that is, the shape
         of the space rows differs from the shape of its base.
 
+    `is_scalar` (Boolean)
+        Indicates if the space is the scalar space.
+
     The constructor arguments:
 
     `base` (:class:`Space` or ``None``)
@@ -412,9 +415,13 @@ class Space(Expression):
     `is_inflated` (Boolean)
         Indicates if the space is an inflation, that is, the space itself
         and all its prefixes are axis spaces.
+
+    `scalar` (:class:`ScalarSpace`)
+        The root scalar space.
     """
 
     is_axis = False
+    is_scalar = False
 
     def __init__(self, base, table, is_contracting, is_expanding,
                  binding, equality_vector=None):
@@ -430,6 +437,9 @@ class Space(Expression):
         # Indicates that the space itself and all its prefixes are axes.
         self.is_inflated = (base is None or
                             (base.is_inflated and self.is_axis))
+        # Extract the root scalar space from the base; if there is no base,
+        # `self` must be the root itself.
+        self.scalar = (base.scalar if base is not None else self)
 
     def ordering(self, with_strong=True, with_weak=True):
         """
@@ -666,12 +676,11 @@ class Space(Expression):
                 # proceed to the next pair of prefixes.
                 my_prefixes.pop()
                 their_prefixes.pop()
-            elif their_prefix.is_contrating and not their_prefix.is_axis:
+            elif their_prefix.is_contracting and not their_prefix.is_axis:
                 # We got prefixes representing different operations; however
                 # the dominated prefix represents a non-axis operation that
                 # does not increase the cardinality of its base.  Therefore
                 # we could ignore this prefix and proceed further.
-                # operation.
                 their_prefixes.pop()
             else:
                 # The prefixes start to diverge; break from the loop.
@@ -724,6 +733,7 @@ class ScalarSpace(Space):
 
     # Scalar space is an axis space.
     is_axis = True
+    is_scalar = True
 
     def __init__(self, base, binding):
         # We keep `base` among constructor arguments despite it being
@@ -917,29 +927,34 @@ class FilteredSpace(Space):
         return "(%s ? %s)" % (self.base, self.filter)
 
 
-class ConvergedSpace(Space):
+class MaskedSpace(Space):
     """
-    Represents a converged space.
+    Represents a masked space.
 
-    A converged space `A ^ B`, where `A` and `B` are spaces, consists of
+    A masked space `A ^ B`, where `A` and `B` are spaces, consists of
     rows from `A` that have at least one convergent row from `B`.
+
+    This is an auxiliary space node used internally by the assembler.
     """
 
-    def __init__(self, base, filter, binding):
-        assert isinstance(filter, Space)
-        super(ConvergedSpace, self).__init__(
+    def __init__(self, base, mask, binding):
+        assert isinstance(mask, Space)
+        # FIXME: explain!
+        #is_expanding = base.is_scalar
+        is_expanding = False
+        super(MaskedSpace, self).__init__(
                     base=base,
                     table=base.table,
                     is_contracting=True,
-                    is_expanding=False,
+                    is_expanding=is_expanding,
                     binding=binding,
-                    equality_vector=(base, filter))
-        self.filter = filter
+                    equality_vector=(base, mask))
+        self.mask = mask
 
     def __str__(self):
         # Display:
-        #   (<base> ^ <filter>)
-        return "(%s ^ %s)" % (self.base, self.filter)
+        #   (<base> ^ <mask>)
+        return "(%s ^ %s)" % (self.base, self.mask)
 
 
 class OrderedSpace(Space):
@@ -1391,5 +1406,64 @@ class CorrelatedUnit(AggregateUnitBase):
     A correlated aggregate unit is expressed in SQL using a correlated
     subquery.
     """
+
+
+class GroupExpression(Expression):
+    """
+    Represents a collection of code nodes.
+
+    This is an auxiliary expression node used internally by the assembler.
+
+    `codes` (a list of :class:`Code`)
+        A collection of code nodes.
+    """
+
+    def __init__(self, codes, binding):
+        assert isinstance(codes, listof(Code))
+        super(GroupExpression, self).__init__(binding)
+        self.codes = codes
+
+    def __str__(self):
+        # Display the collection:
+        #   <code>, <code>, ...
+        return ", ".join(str(code) for code in self.codes)
+
+
+class AggregateGroupExpression(Expression):
+    """
+    Represents a collection of aggregate units sharing the same base and
+    plural spaces.
+
+    This is an auxiliary expression node used internally by the assembler.
+
+    `plural_space` (:class:`Space`)
+        The plural space of the aggregates.
+
+    `space` (:class:`Space`)
+        The base space of the aggregates.
+
+    `aggregates` (a list of :class:`AggregateUnit`)
+        A collection of aggregate units.  All units must have the same
+        base and plural spaces.
+    """
+
+    def __init__(self, plural_space, space, aggregates, binding):
+        assert isinstance(plural_space, Space)
+        assert isinstance(space, Space)
+        assert isinstance(aggregates, listof(AggregateUnit))
+        assert all(plural_space == aggregate.plural_space and
+                   space == aggregate.space
+                   for aggregate in aggregates)
+        super(AggregateGroupExpression, self).__init__(binding)
+        self.plural_space = plural_space
+        self.space = space
+        self.aggregates = aggregates
+
+    def __str__(self):
+        # Display the collection:
+        #   <aggregate>, <aggregate>, ...: <plural_space> -> <space>
+        return ("%s: %s -> %s"
+                % (", ".join(str(aggregate) for aggregate in self.aggregates),
+                   self.plural_space, self.space))
 
 
