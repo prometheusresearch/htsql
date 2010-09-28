@@ -3916,6 +3916,7 @@ tests:
       status: 200 OK
       headers:
       - [Content-Type, application/json]
+      - [Content-Disposition, attachment; filename="(school).json"]
       body: |
         [
           ["art", "School of Art and Design"],
@@ -3932,6 +3933,7 @@ tests:
       status: 200 OK
       headers:
       - [Content-Type, text/csv; charset=UTF-8]
+      - [Content-Disposition, attachment; filename="(school).csv"]
       body: "code,name\r\nart,School of Art and Design\r\nbus,School of Business\r\nedu,College
         of Education\r\negn,School of Engineering\r\nla,\"School of Arts, Letters,
         and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical School\r\nns,School
@@ -4020,6 +4022,8 @@ tests:
       status: 200 OK
       headers:
       - [Content-Type, text/csv; charset=UTF-8]
+      - [Content-Disposition, 'attachment; filename="((school as ''School Record''){code
+          as ''Code name'',name as ''Long name''}).csv"']
       body: "Code name,Long name\r\nart,School of Art and Design\r\nbus,School of
         Business\r\nedu,College of Education\r\negn,School of Engineering\r\nla,\"School
         of Arts, Letters, and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical
@@ -4108,6 +4112,7 @@ tests:
       status: 200 OK
       headers:
       - [Content-Type, application/json]
+      - [Content-Disposition, attachment; filename="(school).json"]
       body: |
         [
           ["art", "School of Art and Design"],
@@ -4124,6 +4129,7 @@ tests:
       status: 200 OK
       headers:
       - [Content-Type, text/csv; charset=UTF-8]
+      - [Content-Disposition, attachment; filename="(school).csv"]
       body: "code,name\r\nart,School of Art and Design\r\nbus,School of Business\r\nedu,College
         of Education\r\negn,School of Engineering\r\nla,\"School of Arts, Letters,
         and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical School\r\nns,School
@@ -4216,3 +4222,9 @@ tests:
         invalid argument: unknown format:
             /school/:unknown
                      ^^^^^^^
+    - uri: /{'%01%02...%1F%7F\"'}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/csv; charset=UTF-8]
+      - [Content-Disposition, 'attachment; filename="({''%01%02...%1F%7F\\\"''}).csv"']
+      body: "\"'%01%02...%1F%7F\\\"\"'\"\r\n\"\x01\x02...\x1F\x7F\\\"\"\"\r\n"

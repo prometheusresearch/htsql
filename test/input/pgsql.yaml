@@ -422,4 +422,9 @@ tests:
     - uri: /school/:html
     - uri: /school/:unknown
       expect: 400
+    # Verify that the filename in `Content-Disposition` field
+    # is properly escaped.
+    - uri: /{'%01%02...%1F%7F\"'}
+      headers:
+        Accept: text/csv
 
