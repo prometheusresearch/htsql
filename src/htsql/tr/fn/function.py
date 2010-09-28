@@ -23,7 +23,8 @@ from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
                        EqualityBinding, TotalEqualityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
-                       CastBinding, TitleBinding, DirectionBinding)
+                       CastBinding, WrapperBinding, TitleBinding,
+                       DirectionBinding)
 from ..encode import Encode
 from ..code import (FunctionCode, NegationCode, ScalarUnit, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
@@ -31,6 +32,7 @@ from ..compiler import Compiler, Evaluate
 from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
 from ..coerce import coerce
+from ..lookup import lookup
 
 
 class Function(Protocol):
@@ -138,6 +140,51 @@ class ProperMethod(ProperFunction):
                      [list(self.state.bind_all(argument))
                       for argument in self.syntax.arguments])
         return self.check_arguments(arguments)
+
+
+class RootFunction(Function):
+
+    named('root')
+
+    def __call__(self):
+        if len(self.syntax.arguments) != 0:
+            raise InvalidArgumentError("unexpected arguments",
+                                       self.syntax.mark)
+        yield WrapperBinding(self.state.root, self.syntax)
+
+
+class ThisFunction(Function):
+
+    named('this')
+
+    def __call__(self):
+        if len(self.syntax.arguments) != 0:
+            raise InvalidArgumentError("unexpected arguments",
+                                       self.syntax.mark)
+        yield WrapperBinding(self.state.base, self.syntax)
+
+
+class CrossFunction(Function):
+
+    named('cross')
+
+    def __call__(self):
+        if len(self.syntax.arguments) < 1:
+            raise InvalidArgumentError("an argument expected",
+                                       self.syntax.mark)
+        elif len(self.syntax.arguments) > 1:
+            raise InvalidArgumentError("unexpected arguments",
+                                       self.syntax.mark)
+        argument = self.syntax.arguments[0]
+        if not isinstance(argument, IdentifierSyntax):
+            raise InvalidArgumentError("an identifier expected",
+                                       argument.mark)
+        binding = lookup(self.state.root, argument)
+        if binding is None:
+            raise InvalidArgumentError("unknown identifier",
+                                       argument.mark)
+        binding = binding.clone(base=self.state.base)
+        yield WrapperBinding(binding, self.syntax)
 
 
 class AsFunction(ProperFunction):
@@ -1674,8 +1721,24 @@ class ContainsOperator(ProperFunction):
     def correlate(self, left, right):
         signature = (type(left.domain), type(right.domain))
         Implementation = Contains.realize(signature)
-        length = Implementation(left, right, self.state, self.syntax)
-        yield length()
+        contains = Implementation(left, right, self.state, self.syntax)
+        yield contains()
+
+
+class NotContainsOperator(ProperFunction):
+
+    named('!~')
+
+    parameters = [
+            Parameter('left'),
+            Parameter('right'),
+    ]
+
+    def correlate(self, left, right):
+        signature = (type(left.domain), type(right.domain))
+        Implementation = Contains.realize(signature)
+        contains = Implementation(left, right, self.state, self.syntax)
+        yield NegationBinding(contains(), self.syntax)
 
 
 class Contains(Adapter):

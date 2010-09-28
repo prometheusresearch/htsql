@@ -9,7 +9,7 @@
 :mod:`htsql.tr.assemble`
 ========================
 
-This module implements the assemble adapter.
+This module implements the assembling process.
 """
 
 
@@ -197,6 +197,7 @@ class InjectSpace(Inject):
                 if axis in rkid.routes:
                     tie = ParallelTie(axis)
                     ties.append(tie)
+                axis = axis.base
             ties.reverse()
         else:
             lkid = self.state.inject(lkid, [rkid.baseline.base])
@@ -356,6 +357,7 @@ class InjectScalar(Inject):
                 if axis in rkid.routes:
                     tie = ParallelTie(axis)
                     ties.append(tie)
+                axis = axis.base
             ties.reverse()
         else:
             lkid = self.state.inject(lkid, [rkid.baseline.base])
@@ -450,6 +452,7 @@ class InjectAggregate(Inject):
                 if axis in rkid.routes:
                     tie = ParallelTie(axis)
                     ties.append(tie)
+                axis = axis.base
             ties.reverse()
         else:
             lkid = self.state.inject(lkid, [rkid.baseline.base])
@@ -534,6 +537,7 @@ class InjectCorrelated(Inject):
                 if axis in rkid.routes:
                     tie = ParallelTie(axis)
                     ties.append(tie)
+                axis = axis.base
             ties.reverse()
         else:
             lkid = self.state.inject(lkid, [rkid.baseline.base])

@@ -38,15 +38,48 @@ class BindingState(object):
 
     State attributes:
 
+    `root` (:class:`htsql.tr.binding.RootBinding`)
+
     `base` (:class:`htsql.tr.binding.Binding`)
         The current lookup context.
     """
 
     def __init__(self):
+        # The root lookup context.
+        self.root = None
         # The current lookup context.
         self.base = None
         # The stack of previous lookup contexts.
         self.base_stack = []
+
+    def set_root(self, root):
+        """
+        Sets the root lookup context.
+
+        This function initializes the lookup context stack and must be
+        called before any calls of :meth:`push_base` and :meth:`pop_base`.
+
+        `root` (:class:`htsql.tr.binding.RootBinding`)
+            The root lookup context.
+        """
+        # Check that the lookup stack is not initialized.
+        assert self.root is None
+        assert self.base is None
+        assert isinstance(root, RootBinding)
+        self.root = root
+        self.base = root
+
+    def unset_root(self):
+        """
+        Removes the root lookup context.
+        """
+        # We expect the lookup context stack being empty and the current
+        # context to coincide with the root context.
+        assert self.root is not None
+        assert not self.base_stack
+        assert self.root is self.base
+        self.root = None
+        self.base = None
 
     def push_base(self, base):
         """
@@ -62,6 +95,8 @@ class BindingState(object):
         """
         # Sanity check on the argument.
         assert isinstance(base, Binding)
+        # Ensure that the root context was set.
+        assert self.root is not None
         # Save the current lookup context.
         self.base_stack.append(self.base)
         # Assign the new lookup context.
@@ -173,16 +208,17 @@ class BindQuery(Bind):
     adapts(QuerySyntax)
 
     def __call__(self):
-        # Set the root lookup context: `RootBinding` represents a scalar
-        # context with `lookup` implemented as table lookup.
+        # Initialize the lookup context stack with a root context, which
+        # represents a scalar context with `lookup` implemented as table
+        # lookup.
         root = RootBinding(self.syntax)
-        self.state.push_base(root)
+        self.state.set_root(root)
         # Bind the segment node if it is available.
         segment = None
         if self.syntax.segment is not None:
             segment = self.state.bind(self.syntax.segment)
-        # Restore the original lookup context.
-        self.state.pop_base()
+        # Shut down the lookup context stack.
+        self.state.unset_root()
         # Construct and return the top-level binding node.
         yield QueryBinding(root, segment, self.syntax)
 

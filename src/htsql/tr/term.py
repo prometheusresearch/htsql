@@ -98,7 +98,7 @@ class RoutingTerm(Term):
     the rows of the space.  Note that taken alone, the term does not
     necessarily generates the rows of the space: some of the operations
     that comprise the space may be missing from the term.  Thus the term
-    space represents a promice: once the term is tied with some other
+    space represents a promise: once the term is tied with some other
     appropriate term, it will generate the rows of the space.
 
     Each term maintains a table of units it is capable to produce.
@@ -375,10 +375,10 @@ class CorrelationTerm(BinaryTerm):
     but is serialized to SQL as a correlated sub-SELECT clause.
 
     `lkid` (:class:`RoutingTerm`)
-        The left operand of the correlated join.
+        The main term.
 
     `rkid` (:class:`RoutingTerm`)
-        The right operand of the correlated join.
+        The correlated term.
 
     `ties` (a list of :class:`Tie`)
         The ties that establish the join condition.
@@ -599,7 +599,7 @@ class ParallelTie(Tie):
     is_parallel = True
 
     def __init__(self, space):
-        assert isinstace(space, Space) and space.is_axis
+        assert isinstance(space, Space) and space.is_axis
         # Technically, non-inflated axis spaces could be permitted, but
         # since the assembler only generates ties for inflated spaces,
         # we add a respective check here.

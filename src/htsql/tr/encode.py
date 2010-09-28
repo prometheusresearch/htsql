@@ -275,7 +275,7 @@ class EncodeSegment(Encode):
             if direction is not None:
                 order.append((element, direction))
         # If any direction modifiers are found, augment the segment space
-        # by adding explicit ordering node.
+        # by adding an explicit ordering node.
         if order:
             space = OrderedSpace(space, order, None, None, self.binding)
         # Construct the expression node.
