@@ -274,11 +274,10 @@ class EncodeSegment(Encode):
             direction = self.state.direct(binding)
             if direction is not None:
                 order.append((element, direction))
-        # Augment the segment space by adding explicit ordering node.
-        # FIXME: we add `OrderedSpace` on top even when `order` is empty
-        # because otherwise `ORDER BY` terms will not be assembled.
-        # Fix the assembler?
-        space = OrderedSpace(space, order, None, None, self.binding)
+        # If any direction modifiers are found, augment the segment space
+        # by adding explicit ordering node.
+        if order:
+            space = OrderedSpace(space, order, None, None, self.binding)
         # Construct the expression node.
         return SegmentExpression(space, elements, self.binding)
 

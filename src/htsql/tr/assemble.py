@@ -27,16 +27,16 @@ from .term import (RoutingTerm, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
 class AssemblingState(object):
 
     def __init__(self):
-        self.next_id = 1
+        self.next_tag = 1
         self.baseline_stack = []
         self.baseline = None
         self.mask_stack = []
         self.mask = None
 
-    def make_id(self):
-        id = self.next_id
-        self.next_id += 1
-        return id
+    def make_tag(self):
+        tag = self.next_tag
+        self.next_tag += 1
+        return tag
 
     def push_baseline(self, baseline):
         assert isinstance(baseline, Space) and baseline.is_inflated
@@ -108,7 +108,7 @@ class AssembleQuery(Assemble):
         segment = None
         if self.expression.segment is not None:
             segment = self.state.assemble(self.expression.segment)
-        return QueryTerm(segment, self.expression)
+        return QueryTerm(self.state.make_tag(), segment, self.expression)
 
 
 class AssembleSegment(Assemble):
@@ -122,9 +122,9 @@ class AssembleSegment(Assemble):
         order = self.expression.space.ordering()
         codes = self.expression.elements + [code for code, direction in order]
         kid = self.state.inject(kid, codes)
-        kid = OrderTerm(self.state.make_id(), kid, order, None, None,
+        kid = OrderTerm(self.state.make_tag(), kid, order, None, None,
                         kid.space, kid.routes.copy())
-        return SegmentTerm(self.state.make_id(), kid, self.expression.elements,
+        return SegmentTerm(self.state.make_tag(), kid, self.expression.elements,
                            kid.space, kid.routes.copy())
 
 
@@ -166,7 +166,7 @@ class InjectSpace(Inject):
             routes[self.space] = routes[unmasked_space]
             return self.term.clone(routes=routes)
         if self.term.backbone.concludes(unmasked_space):
-            id = self.state.make_id()
+            tag = self.state.make_tag()
             next_axis = self.term.baseline
             while next_axis.base != unmasked_space:
                 next_axis = next_axis.base
@@ -180,8 +180,8 @@ class InjectSpace(Inject):
             routes = lkid.routes.copy()
             routes[unmasked_space] = rkid[unmasked_space]
             routes[self.space] = rkid[unmasked_space]
-            return JoinTerm(id, lkid, rkid, [tie], True, lkid.space, routes)
-        id = self.state.make_id()
+            return JoinTerm(tag, lkid, rkid, [tie], True, lkid.space, routes)
+        tag = self.state.make_tag()
         baseline = unmasked_space
         while not baseline.is_inflated:
             baseline = baseline.base
@@ -206,7 +206,7 @@ class InjectSpace(Inject):
         routes = lkid.routes.copy()
         routes[self.space] = rkid.routes[self.space]
         routes[unmasked_space] = rkid.routes[self.space]
-        return JoinTerm(id, lkid, rkid, ties, is_inner, lkid.space, routes)
+        return JoinTerm(tag, lkid, rkid, ties, is_inner, lkid.space, routes)
 
 
 class AssembleScalar(AssembleSpace):
@@ -214,9 +214,9 @@ class AssembleScalar(AssembleSpace):
     adapts(ScalarSpace)
 
     def __call__(self):
-        id = self.state.make_id()
-        routes = { self.space: id }
-        return ScalarTerm(id, self.space, routes)
+        tag = self.state.make_tag()
+        routes = { self.space: tag }
+        return ScalarTerm(tag, self.space, routes)
 
 
 class AssembleProduct(AssembleSpace):
@@ -225,22 +225,22 @@ class AssembleProduct(AssembleSpace):
 
     def __call__(self):
         if self.backbone == self.baseline:
-            id = self.state.make_id()
-            routes = { self.space: id, self.backbone: id }
-            return TableTerm(id, self.space, routes)
+            tag = self.state.make_tag()
+            routes = { self.space: tag, self.backbone: tag }
+            return TableTerm(tag, self.space, routes)
         term = self.state.assemble(self.space.base)
         if self.backbone in term.routes and self.space.conforms(term.space):
             routes = term.routes.copy()
             routes[self.space] = routes[self.backbone]
             return term.clone(routes=routes)
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         lkid = term
         rkid = self.state.assemble(self.space, baseline=self.backbone)
         routes = lkid.routes.copy()
         routes[self.space] = rkid.routes[self.space]
         routes[self.backbone] = rkid.routes[self.backbone]
         tie = SeriesTie(self.space)
-        return JoinTerm(id, lkid, rkid, [tie], True, self.space, routes)
+        return JoinTerm(tag, lkid, rkid, [tie], True, self.space, routes)
 
 
 class AssembleFiltered(AssembleSpace):
@@ -253,11 +253,11 @@ class AssembleFiltered(AssembleSpace):
             routes = term.routes.copy()
             routes[self.space] = routes[self.backbone]
             return term.clone(space=self.space, routes=routes)
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         kid = self.state.inject(term, [self.space.filter])
         routes = kid.routes.copy()
         routes[self.space] = routes[self.backbone]
-        return FilterTerm(id, kid, self.space.filter, self.space, routes)
+        return FilterTerm(tag, kid, self.space.filter, self.space, routes)
 
 
 class AssembleOrdered(AssembleSpace):
@@ -271,7 +271,7 @@ class AssembleOrdered(AssembleSpace):
             routes = term.routes.copy()
             routes[self.space] = routes[self.backbone]
             return term.clone(space=self.space, routes=routes)
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         kid = self.state.assemble(self.space.base,
                                   baseline=self.space.scalar,
                                   mask=self.space.scalar)
@@ -280,7 +280,7 @@ class AssembleOrdered(AssembleSpace):
         kid = self.state.inject(kid, codes)
         routes = kid.routes.copy()
         routes[self.space] = routes[self.backbone]
-        return OrderTerm(id, kid, order, self.space.limit, self.space.offset,
+        return OrderTerm(tag, kid, order, self.space.limit, self.space.offset,
                          self.space, routes)
 
 
@@ -329,12 +329,12 @@ class InjectScalar(Inject):
         if self.unit in self.term.routes:
             return self.term
         if self.space.dominates(self.term.space):
-            term = self.state.inject(self.term, [self.unit.expression])
+            term = self.state.inject(self.term, [self.unit.code])
             if term.is_nullary:
-                term = WrapperTerm(self.state.make_id(), term,
+                term = WrapperTerm(self.state.make_tag(), term,
                                    term.space, term.routes.copy())
             routes = term.routes.copy()
-            routes[self.unit] = term.id
+            routes[self.unit] = term.tag
             return term.clone(routes=routes)
         lkid = self.term
         baseline = self.space.prune(self.term.space)
@@ -343,11 +343,11 @@ class InjectScalar(Inject):
         rkid = self.state.assemble(self.space,
                                    baseline=baseline,
                                    mask=self.term.space)
-        rkid = self.state.inject(rkid, [self.unit.expression])
+        rkid = self.state.inject(rkid, [self.unit.code])
         if rkid.is_nullary:
-            rkid = WrapperTerm(self.state.make_id(), rkid,
+            rkid = WrapperTerm(self.state.make_tag(), rkid,
                                rkid.space, rkid.routes.copy())
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         ties = []
         if lkid.backbone.concludes(rkid.baseline):
             lkid = self.state.inject(lkid, [rkid.baseline])
@@ -362,8 +362,8 @@ class InjectScalar(Inject):
             tie = SeriesTie(rkid.baseline)
             ties.append(tie)
         routes = lkid.routes.copy()
-        routes[self.unit] = rkid.id
-        return JoinTerm(id, lkid, rkid, ties, False, lkid.space, routes)
+        routes[self.unit] = rkid.tag
+        return JoinTerm(tag, lkid, rkid, ties, False, lkid.space, routes)
 
 
 class InjectAggregate(Inject):
@@ -395,7 +395,7 @@ class InjectAggregate(Inject):
         plural_term = self.state.assemble(self.unit.plural_space,
                                           baseline=baseline,
                                           mask=ground_term.space)
-        plural_term = self.state.inject(plural_term, [self.unit.composite])
+        plural_term = self.state.inject(plural_term, [self.unit.code])
         projected_space = None
         ties = []
         axes = []
@@ -422,24 +422,24 @@ class InjectAggregate(Inject):
             tie = SeriesTie(axis)
             ties.append(tie)
             axes.append(axis)
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         routes = {}
         for axis in axes:
             routes[axis] = plural_term.routes[axis]
         routes[projected_space] = routes[axes[-1]]
         routes[projected_space.inflate()] = routes[axes[-1]]
-        projected_term = ProjectionTerm(id, plural_term, ties,
+        projected_term = ProjectionTerm(tag, plural_term, ties,
                                         projected_space, routes)
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         lkid = ground_term
         rkid = projected_term
         is_inner = projected_term.space.dominates(ground_term.space)
         routes = lkid.routes.copy()
-        routes[self.unit] = projected_term.id
-        term = JoinTerm(id, lkid, rkid, ties, is_inner, lkid.space, routes)
+        routes[self.unit] = projected_term.tag
+        term = JoinTerm(tag, lkid, rkid, ties, is_inner, lkid.space, routes)
         if is_native:
             return term
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         lkid = self.term
         rkid = term
         ties = []
@@ -457,8 +457,8 @@ class InjectAggregate(Inject):
             ties.append(tie)
         is_inner = rkid.space.dominates(lkid.space)
         routes = lkid.routes.copy()
-        routes[self.unit] = projected_term.id
-        return JoinTerm(id, lkid, rkid, ties, is_inner, lkid.space, routes)
+        routes[self.unit] = projected_term.tag
+        return JoinTerm(tag, lkid, rkid, ties, is_inner, lkid.space, routes)
 
 
 class InjectCorrelated(Inject):
@@ -490,9 +490,9 @@ class InjectCorrelated(Inject):
         plural_term = self.state.assemble(self.unit.plural_space,
                                           baseline=baseline,
                                           mask=ground_term.space)
-        plural_term = self.state.inject(plural_term, [self.unit.composite])
+        plural_term = self.state.inject(plural_term, [self.unit.code])
         if plural_term.is_nullary:
-            plural_term = WrapperTerm(self.state.make_id(), plural_term,
+            plural_term = WrapperTerm(self.state.make_tag(), plural_term,
                                       plural_term.space,
                                       plural_term.routes.copy())
         ties = []
@@ -515,15 +515,15 @@ class InjectCorrelated(Inject):
             tie = SeriesTie(axis)
             ties.append(tie)
             axes.append(axis)
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         lkid = ground_term
         rkid = plural_term
         routes = lkid.routes.copy()
-        routes[self.unit] = plural_term.id
-        term = CorrelationTerm(id, lkid, rkid, ties, lkid.space, routes)
+        routes[self.unit] = plural_term.tag
+        term = CorrelationTerm(tag, lkid, rkid, ties, lkid.space, routes)
         if is_native:
             return term
-        id = self.state.make_id()
+        tag = self.state.make_tag()
         lkid = self.term
         rkid = term
         ties = []
@@ -541,8 +541,8 @@ class InjectCorrelated(Inject):
             ties.append(tie)
         is_inner = rkid.space.dominates(lkid.space)
         routes = lkid.routes.copy()
-        routes[self.unit] = plural_term.id
-        return JoinTerm(id, lkid, rkid, ties, is_inner, lkid.space, routes)
+        routes[self.unit] = plural_term.tag
+        return JoinTerm(tag, lkid, rkid, ties, is_inner, lkid.space, routes)
 
 
 class InjectGroup(Inject):

@@ -28,16 +28,14 @@ from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
 class Outliner(object):
 
     def __init__(self):
-        self.sketch_by_term_id = {}
-        self.term_by_term_id = {}
+        self.sketch_by_tag = {}
+        self.term_by_tag = {}
 
     def outline(self, term, *args, **kwds):
-        if isinstance(term, RoutingTerm):
-            self.term_by_term_id[term.id] = term
+        self.term_by_tag[term.tag] = term
         outline = Outline(term, self)
         sketch = outline.outline(*args, **kwds)
-        if isinstance(term, RoutingTerm):
-            self.sketch_by_term_id[term.id] = sketch
+        self.sketch_by_tag[term.tag] = sketch
         return sketch
 
     def delegate(self, unit, term):
@@ -265,8 +263,8 @@ class DelegateColumn(Delegate):
     adapts(ColumnUnit, Outliner)
 
     def delegate(self, term):
-        term_id = term.routes[self.unit.space]
-        sketch = self.outliner.sketch_by_term_id[term_id]
+        tag = term.routes[self.unit.space]
+        sketch = self.outliner.sketch_by_tag[tag]
         appointment = LeafAppointment(self.unit.column,
                                       self.unit.mark)
         return Demand(sketch, appointment)
@@ -277,10 +275,10 @@ class DelegateScalar(Delegate):
     adapts(ScalarUnit, Outliner)
 
     def delegate(self, term):
-        term_id = term.routes[self.unit]
-        sketch = self.outliner.sketch_by_term_id[term_id]
-        term = self.outliner.term_by_term_id[term_id]
-        appointment = self.outliner.appoint(self.unit.expression, term)
+        tag = term.routes[self.unit]
+        sketch = self.outliner.sketch_by_tag[tag]
+        term = self.outliner.term_by_tag[tag]
+        appointment = self.outliner.appoint(self.unit.code, term)
         return Demand(sketch, appointment)
 
 
@@ -289,10 +287,10 @@ class DelegateAggregate(Delegate):
     adapts(AggregateUnit, Outliner)
 
     def delegate(self, term):
-        term_id = term.routes[self.unit]
-        sketch = self.outliner.sketch_by_term_id[term_id]
-        term = self.outliner.term_by_term_id[term_id]
-        appointment = self.outliner.appoint(self.unit.composite, term.kids[0])
+        tag = term.routes[self.unit]
+        sketch = self.outliner.sketch_by_tag[tag]
+        term = self.outliner.term_by_tag[tag]
+        appointment = self.outliner.appoint(self.unit.code, term.kids[0])
         return Demand(sketch, appointment)
 
 
@@ -301,10 +299,10 @@ class DelegateCorrelated(Delegate):
     adapts(CorrelatedUnit, Outliner)
 
     def delegate(self, term):
-        term_id = term.routes[self.unit]
-        sketch = self.outliner.sketch_by_term_id[term_id]
-        term = self.outliner.term_by_term_id[term_id]
-        appointment = self.outliner.appoint(self.unit.composite, term)
+        tag = term.routes[self.unit]
+        sketch = self.outliner.sketch_by_tag[tag]
+        term = self.outliner.term_by_tag[tag]
+        appointment = self.outliner.appoint(self.unit.code, term)
         return Demand(sketch, appointment)
 
 
@@ -449,7 +447,7 @@ class ConnectJoinedTable(Connect):
             code = ColumnUnit(column, self.tie.space,
                               self.tie.space.binding)
             right_codes.append(code)
-        if self.tie.is_reverse:
+        if self.tie.is_backward:
             left_codes, right_codes = right_codes, left_codes
         return zip(left_codes, right_codes)
 

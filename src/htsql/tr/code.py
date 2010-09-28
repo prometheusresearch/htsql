@@ -17,6 +17,7 @@ from ..util import maybe, oneof, listof, tupleof, Node
 from ..mark import Mark
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain
+from .syntax import IdentifierSyntax
 from .binding import Binding, QueryBinding, SegmentBinding
 from .coerce import coerce
 
@@ -32,7 +33,7 @@ class Expression(Node):
 
     An expression tree (a DAG) is an intermediate stage of the HTSQL
     translator.  An expression tree is translated from a binding tree by
-    the *encoding* process.  It is then translated to a clause structure
+    the *encoding* process.  It is then translated to a frame structure
     by the *compiling* process.
 
     The following adapters are associated with the encoding process and
@@ -44,8 +45,8 @@ class Expression(Node):
     See :class:`htsql.tr.encode.Encode` and :class:`htsql.tr.encode.Relate`
     for more detail.
 
-    The compiling process works as follows.  Space nodes (and selected code
-    nodes) are translated to frame nodes via several intermediate steps::
+    The compiling process works as follows.  Space nodes (and also unit nodes)
+    are translated to frame nodes via several intermediate steps::
 
         Assemble: (Space, AssembleState) -> Term
         Outline: (Term, OutlineState) -> Sketch
@@ -65,8 +66,8 @@ class Expression(Node):
     (essential) attributes are equal.  Some attributes may be considered
     not essential and do not participate in comparison.  To facilitate
     expression comparison, :class:`htsql.domain.Domain` objects also support
-    equality by value.  Expression nodes could also be used as dictionary
-    keys.
+    equality by value.  By-value semantics is respected when expression nodes
+    are used as dictionary keys.
 
     The constructor arguments:
 
@@ -101,7 +102,7 @@ class Expression(Node):
         assert isinstance(binding, Binding)
         assert isinstance(equality_vector, maybe(oneof(tuple, int, long)))
         # When `equality_vector` is not set, equality by identity
-        # is assumed.  Node that `A is B` <=> `id(A) == id(B)`.
+        # is assumed.  Note that `A is B` <=> `id(A) == id(B)`.
         if equality_vector is None:
             equality_vector = id(self)
         self.binding = binding
@@ -115,14 +116,14 @@ class Expression(Node):
 
     def __eq__(self, other):
         # Two nodes are equal if they are of the same type and
-        # their equality vectors are equal.  We compare hashes
-        # before comparing equality vectors to make it work
-        # faster (hopefully) in the more common "not equal"
-        # case.
-        return (isinstance(other, Expression) and
-                self.__class__ is other.__class__ and
-                self.hash == other.hash and
-                self.equality_vector == other.equality_vector)
+        # their equality vectors are equal.  To avoid costly
+        # comparison of equality vectors in the more common
+        # "not equal" case, we compare hashes first.
+        return ((self is other) or
+                (isinstance(other, Expression) and
+                 self.__class__ is other.__class__ and
+                 self.hash == other.hash and
+                 self.equality_vector == other.equality_vector))
 
     def __str__(self):
         # Display the syntex node that gave rise to the expression.
@@ -168,7 +169,7 @@ class Space(Expression):
     """
     Represents a space node.
 
-    A space is an expression that represents an (ordered) set of rows.
+    A space is an expression that represents an (ordered multi-) set of rows.
     Among others, we consider the following kinds of spaces:
 
     *The scalar space* `I`
@@ -214,7 +215,7 @@ class Space(Expression):
     to a base space.  We could classify the operations (and therefore
     :class:`Space` subclasses) into two groups: those which keep the row
     shape of the base space and those which expand it.  The latter are
-    called *axis spaces*.  We also consider the scalar space an axis space.
+    called *axis spaces*.  We also regard the scalar space as an axis space.
 
     Take an arbitrary space `A` and consider it as a sequence of
     operations applied to the scalar space.  If we then reapply only
@@ -435,11 +436,10 @@ class Space(Expression):
         self.is_contracting = is_contracting
         self.is_expanding = is_expanding
         # Indicates that the space itself and all its prefixes are axes.
-        self.is_inflated = (base is None or
+        self.is_inflated = (self.is_scalar or
                             (base.is_inflated and self.is_axis))
-        # Extract the root scalar space from the base; if there is no base,
-        # `self` must be the root itself.
-        self.scalar = (base.scalar if base is not None else self)
+        # Extract the root scalar space from the base.
+        self.scalar = (base.scalar if not self.is_scalar else self)
 
     def ordering(self, with_strong=True, with_weak=True):
         """
@@ -487,7 +487,8 @@ class Space(Expression):
         """
         # We rely upon an assumption that the equality vector of a space node
         # is a tuple of all its essential attributes and the first element
-        # of the tuple is the space base.
+        # of the tuple is the space base.  So we skip the base space and
+        # compare the remaining attributes.
         return (isinstance(other, self.__class__) and
                 self.equality_vector[1:] == other.equality_vector[1:])
 
@@ -565,7 +566,7 @@ class Space(Expression):
                 my_prefixes.pop()
             else:
                 # The prefixes are both axes and differ from each other.
-                # At this point, The prefixes diverge and are not
+                # At this point, the prefixes diverge and are not
                 # comparable anymore.  Break from the loop.
                 break
         # Reapply the unprocessed prefixes.
@@ -582,7 +583,7 @@ class Space(Expression):
         # Sanity check on the argument.
         assert isinstance(other, Space)
         # Shortcut: any space spans itself.
-        if self is other or self == other:
+        if self == other:
             return True
         # Extract axis prefixes from both spaces.
         my_axes = [prefix for prefix in self.unfold() if prefix.is_axis]
@@ -613,7 +614,7 @@ class Space(Expression):
         # Sanity check on the argument.
         assert isinstance(other, Space)
         # Shortcut: any space conforms itself.
-        if self is other or self == other:
+        if self == other:
             return True
         # Unfold the spaces into individual operations.
         my_prefixes = self.unfold()
@@ -660,7 +661,7 @@ class Space(Expression):
         # Sanity check on the argument.
         assert isinstance(other, Space)
         # Shortcut: any space dominates itself.
-        if self is other or self == other:
+        if self == other:
             return True
         # Unfold the spaces into individual operations.
         my_prefixes = self.unfold()
@@ -704,10 +705,6 @@ class Space(Expression):
         """
         # Sanity check on the argument.
         assert isinstance(other, Space)
-        # Shortcut: any space is its own prefix.  We compare by identity
-        # first because `==` is a costly operation (premature optimization?).
-        if self is other or self == other:
-            return True
         # Iterate over all prefixes of the space comparing them with
         # the given other space.
         space = self
@@ -736,10 +733,10 @@ class ScalarSpace(Space):
     is_scalar = True
 
     def __init__(self, base, binding):
-        # We keep `base` among constructor arguments despite it being
-        # always equal to `None` to make
+        # We keep `base` among constructor arguments despite it always being
+        # equal to `None` to make
         #   space = space.clone(base=new_base)
-        # work even for scalar spaces.
+        # work for all types of spaces.
         assert base is None
         # Note that we must satisfy the assumption that the first element
         # of the equality vector is the space base (used by `Space.resembles`).
@@ -820,9 +817,19 @@ class ProductSpace(Space):
                 # of the table.
                 if not columns:
                     columns = list(self.table.columns)
+                # We assign the column units to the inflated space: it makes
+                # it easier to find and eliminate duplicates.
+                space = self.inflate()
                 # Add weak table ordering.
                 for column in columns:
-                    code = ColumnUnit(column, self, self.binding)
+                    # We need to associate the newly generated column unit
+                    # with some binding node.  We use the binding of the space,
+                    # but in order to produce a better string representation,
+                    # we replace the associated syntax node with a new
+                    # identifier named after the column.
+                    identifier = IdentifierSyntax(column.name, self.mark)
+                    binding = self.binding.clone(syntax=identifier)
+                    code = ColumnUnit(column, space, binding)
                     order.append((code, +1))
 
         return order
@@ -939,14 +946,11 @@ class MaskedSpace(Space):
 
     def __init__(self, base, mask, binding):
         assert isinstance(mask, Space)
-        # FIXME: explain!
-        #is_expanding = base.is_scalar
-        is_expanding = False
         super(MaskedSpace, self).__init__(
                     base=base,
                     table=base.table,
                     is_contracting=True,
-                    is_expanding=is_expanding,
+                    is_expanding=False,
                     binding=binding,
                     equality_vector=(base, mask))
         self.mask = mask
@@ -970,7 +974,7 @@ class OrderedSpace(Space):
     `order` (a list of pairs `(code, direction)`)
         Expressions to sort the space by.
 
-        Here `code` is an :class:`Code` instance, `direction` is either
+        Here `code` is a :class:`Code` instance, `direction` is either
         ``+1`` (indicates ascending order) or ``-1`` (indicates descending
         order).
 
@@ -1005,6 +1009,8 @@ class OrderedSpace(Space):
         self.offset = offset
 
     def ordering(self, with_strong=True, with_weak=True):
+        # Note: explicit ordering is applied after the strong ordering of
+        # the base and before the weak ordering of the base.
         order = []
         if with_strong:
             order += self.base.ordering(with_strong=True, with_weak=False)
@@ -1046,17 +1052,22 @@ class Code(Expression):
     Among all code expressions, we distinguish *unit expressions*:
     elementary functions on spaces.  There are several kinds of units:
     among them are columns and aggregate functions (see :class:`Unit`
-    for more detail).  Every non-unit code could be expressed as
+    for more detail).  A non-unit code could be expressed as
     a composition of a scalar function and one or several units:
 
         `f = F(u(a),v(b),...)`,
 
     where
-    
+
     - `f` is a code expression;
     - `F` is a scalar function;
     - `a`, `b`, ... are elements of spaces `A`, `B`, ...;
     - `u`, `v`, ... are unit expressions on `A`, `B`, ....
+
+    Note: special forms like `COUNT` or `EXISTS` are also expressed
+    as code nodes.  Since they are not regular functions, special care
+    must be taken to properly wrap them with appropriate
+    :class:`ScalarUnit` and/or :class:`AggregateUnit` instances.
 
     `domain` (:class:`htsql.domain.Domain`)
         The co-domain of the code expression.
@@ -1119,7 +1130,7 @@ class EqualityCodeBase(Code):
                     # always exists.
                     domain=coerce(BooleanDomain()),
                     # Units of a complex expression are usually a composition
-                    # of argument units.  Note that duplicates are allowed.
+                    # of argument units.  Note that duplicates are possible.
                     units=(lop.units+rop.units),
                     binding=binding,
                     equality_vector=(lop, rop))
@@ -1279,7 +1290,7 @@ class Unit(Code):
     of units; see subclasses :class:`ColumnUnit`, :class:`ScalarUnit`,
     :class:`AggregateUnit`, and :class:`CorrelatedUnit` for more detail.
 
-    Note that it is easy to *trasfer* a unit code from one space to another.
+    Note that it is easy to *lift* a unit code from one space to another.
     Specifically, suppose a unit `u` is defined on a space `A` and `B`
     is another space such that `B` spans `A`.  Then for each row `b`
     from `B` there is no more than one row `a` from `A` such that `a <-> b`.
@@ -1290,8 +1301,9 @@ class Unit(Code):
 
     When a space `B` spans the space `A` of a unit `u`, we say that
     `u` is *singular* on `B`.  By the previous argument, `u` could be
-    transferred to `B`.  Thus any unit is well-defined not only on its
-    own space, but also on any space where it is singular.
+    lifted to `B`.  Thus any unit is well-defined not only on the
+    space where it is originally defined, but also on any space where
+    it is singular.
 
     `space` (:class:`Space`)
         The space on which the unit is defined.
@@ -1348,23 +1360,41 @@ class ScalarUnit(Unit):
     """
     Represents a scalar unit.
 
-    A scalar unit is a scalar function evaluated in the specified space.
+    A scalar unit is an expression evaluated in the specified space.
 
-    `expression` (:class:`Code`)
+    Recall that any expression has the following form:
+
+        `F(u(a),v(b),...)`,
+
+    where
+
+    - `F` is a scalar function;
+    - `a`, `b`, ... are elements of spaces `A`, `B`, ...;
+    - `u`, `v`, ... are unit expressions on `A`, `B`, ....
+
+    We require that the units of the expression are singular on the given
+    space.  If so, the expression units `u`, `v`, ... could be lifted to
+    the given slace (see :class:`Unit`).  The scalar unit is defined as
+
+        `F(u(x),v(x),...)`,
+
+    where `x` is a row of the space where the scalar unit is defined.
+
+    `code` (:class:`Code`)
         The expression to evaluate.
 
     `space` (:class:`Space`)
         The space on which the unit is defined.
     """
 
-    def __init__(self, expression, space, binding):
-        assert isinstance(expression, Code)
+    def __init__(self, code, space, binding):
+        assert isinstance(code, Code)
         super(ScalarUnit, self).__init__(
                     space=space,
-                    domain=expression.domain,
+                    domain=code.domain,
                     binding=binding,
-                    equality_vector=(expression, space))
-        self.expression = expression
+                    equality_vector=(code, space))
+        self.code = code
 
 
 class AggregateUnitBase(Unit):
@@ -1385,7 +1415,7 @@ class AggregateUnitBase(Unit):
     space* of an aggregate unit, and `g` is called *the composite expression*
     of an aggregate unit.
 
-    `composite` (:class:`Code`)
+    `code` (:class:`Code`)
         The composite expression of the aggregate unit.
 
     `plural_space` (:class:`Space`)
@@ -1396,8 +1426,8 @@ class AggregateUnitBase(Unit):
         The space on which the unit is defined.
     """
 
-    def __init__(self, composite, plural_space, space, binding):
-        assert isinstance(composite, Code)
+    def __init__(self, code, plural_space, space, binding):
+        assert isinstance(code, Code)
         assert isinstance(plural_space, Space)
         # FIXME: consider lifting the requirement that the plural
         # space spans the unit space.  Is it really necessary?
@@ -1405,10 +1435,10 @@ class AggregateUnitBase(Unit):
         assert not space.spans(plural_space)
         super(AggregateUnitBase, self).__init__(
                     space=space,
-                    domain=composite.domain,
+                    domain=code.domain,
                     binding=binding,
-                    equality_vector=(composite, plural_space, space))
-        self.composite = composite
+                    equality_vector=(code, plural_space, space))
+        self.code = code
         self.plural_space = plural_space
         self.space = space
 
@@ -1452,6 +1482,35 @@ class GroupExpression(Expression):
         return ", ".join(str(code) for code in self.codes)
 
 
+class ScalarGroupExpression(Expression):
+    """
+    Represents a collection of sclar units sharing the same base space.
+
+    This is an auxiliary expression node used internally by the assembler.
+
+    `space` (:class:`Space`)
+        The base space of the scalar units.
+
+    `units` (a list of :class:`ScalarUnit`)
+        A collection of scalar units.  All units must have the same base
+        space.
+    """
+
+    def __init__(self, space, units, binding):
+        assert isinstance(space, Space)
+        assert isinstance(units, listof(ScalarUnit))
+        assert all(space == unit.space for unit in units)
+        super(ScalarGroupExpression, self).__init__(binding)
+        self.space = space
+        self.units = units
+
+    def __str__(self):
+        # Display the collection:
+        #   <unit>, <unit>, ...: <space>
+        return ("%s: %s"
+                % (", ".join(str(unit) for unit in self.units), self.space))
+
+
 class AggregateGroupExpression(Expression):
     """
     Represents a collection of aggregate units sharing the same base and
@@ -1465,28 +1524,27 @@ class AggregateGroupExpression(Expression):
     `space` (:class:`Space`)
         The base space of the aggregates.
 
-    `aggregates` (a list of :class:`AggregateUnit`)
+    `units` (a list of :class:`AggregateUnit`)
         A collection of aggregate units.  All units must have the same
         base and plural spaces.
     """
 
-    def __init__(self, plural_space, space, aggregates, binding):
+    def __init__(self, plural_space, space, units, binding):
         assert isinstance(plural_space, Space)
         assert isinstance(space, Space)
-        assert isinstance(aggregates, listof(AggregateUnit))
-        assert all(plural_space == aggregate.plural_space and
-                   space == aggregate.space
-                   for aggregate in aggregates)
+        assert isinstance(units, listof(AggregateUnit))
+        assert all(plural_space == unit.plural_space and space == unit.space
+                   for unit in units)
         super(AggregateGroupExpression, self).__init__(binding)
         self.plural_space = plural_space
         self.space = space
-        self.aggregates = aggregates
+        self.units = units
 
     def __str__(self):
         # Display the collection:
-        #   <aggregate>, <aggregate>, ...: <plural_space> -> <space>
+        #   <unit>, <unit>, ...: <plural_space> -> <space>
         return ("%s: %s -> %s"
-                % (", ".join(str(aggregate) for aggregate in self.aggregates),
+                % (", ".join(str(unit) for unit in self.units),
                    self.plural_space, self.space))
 
 
