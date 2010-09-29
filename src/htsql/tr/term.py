@@ -162,7 +162,7 @@ class RoutingTerm(Term):
         assert isinstance(kids, listof(RoutingTerm))
         assert isinstance(space, Space)
         assert isinstance(routes, dictof(oneof(Space, Unit), int))
-        # The iflation of the term space.
+        # The inflation of the term space.
         backbone = space.inflate()
         # The lestmost axis exported by the term.
         baseline = backbone

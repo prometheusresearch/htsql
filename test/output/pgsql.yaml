@@ -3642,7 +3642,7 @@ tests:
 
          ----
          /department{code,min(course.credits),max(course.credits)}
-         SELECT "department"."code", "course_1"."!", "course_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", MIN("course"."credits") AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course_1" ON (("department"."code" = "course_1"."department")) LEFT OUTER JOIN (SELECT "course"."department", MAX("course"."credits") AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course_2" ON (("department"."code" = "course_2"."department")) ORDER BY 1 ASC
+         SELECT "department"."code", "course"."!_1", "course"."!_2" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", MIN("course"."credits") AS "!_1", MAX("course"."credits") AS "!_2" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /department{code,avg(course.credits), sum(course.credits)/count(course.credits)}
       status: 200 OK
       headers:
@@ -3683,7 +3683,7 @@ tests:
 
          ----
          /department{code,avg(course.credits),sum(course.credits)/count(course.credits)}
-         SELECT "department"."code", "course_1"."!", (CAST("course_2"."!" AS NUMERIC) / CAST(COALESCE("course_3"."!", 0) AS NUMERIC)) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", AVG(CAST("course"."credits" AS NUMERIC)) AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course_1" ON (("department"."code" = "course_1"."department")) LEFT OUTER JOIN (SELECT "course"."department", SUM("course"."credits") AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course_2" ON (("department"."code" = "course_2"."department")) LEFT OUTER JOIN (SELECT "course"."department", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course_3" ON (("department"."code" = "course_3"."department")) ORDER BY 1 ASC
+         SELECT "department"."code", "course"."!_1", (CAST("course"."!_2" AS NUMERIC) / CAST(COALESCE("course"."!_3", 0) AS NUMERIC)) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", AVG(CAST("course"."credits" AS NUMERIC)) AS "!_1", SUM("course"."credits") AS "!_2", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "!_3" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /department?exists(course)
       status: 200 OK
       headers:
@@ -3806,6 +3806,40 @@ tests:
          ----
          /school{*,count(department.exists(course))}
          SELECT "school"."code", "school"."name", COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT "department"."school", COUNT(NULLIF(EXISTS((SELECT TRUE FROM "ad"."course" AS "course" WHERE ((NOT (TRUE IS NOT DISTINCT FROM NULL)) AND ("department"."code" = "course"."department")))), FALSE)) AS "!" FROM "ad"."department" AS "department" GROUP BY 1) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+    - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (department?exists(course))                                       |
+        -+-------------------------------------------------------------------+-
+         | sum(course.credits) | count(course.credits) | avg(course.credits) |
+        -+---------------------+-----------------------+---------------------+-
+         |                  19 |                     6 |  3.1666666666666667 |
+         |                  19 |                     6 |  3.1666666666666667 |
+         |                  19 |                     6 |  3.1666666666666667 |
+         |                   9 |                     4 |  2.2500000000000000 |
+         |                  17 |                     4 |  4.2500000000000000 |
+         |                  12 |                     4 |  3.0000000000000000 |
+         |                  14 |                     5 |  2.8000000000000000 |
+         |                  22 |                     7 |  3.1428571428571429 |
+         |                   9 |                     3 |  3.0000000000000000 |
+         |                  12 |                     4 |  3.0000000000000000 |
+         |                  16 |                     5 |  3.2000000000000000 |
+         |                  16 |                     6 |  2.6666666666666667 |
+         |                  15 |                     5 |  3.0000000000000000 |
+         |                  15 |                     5 |  3.0000000000000000 |
+         |                  17 |                     5 |  3.4000000000000000 |
+         |                   5 |                     1 |  5.0000000000000000 |
+         |                  17 |                     6 |  2.8333333333333333 |
+         |                  19 |                     6 |  3.1666666666666667 |
+         |                  17 |                     5 |  3.4000000000000000 |
+         |                  16 |                     5 |  3.2000000000000000 |
+                                                                     (20 rows)
+
+         ----
+         /department{sum(course.credits),count(course.credits),avg(course.credits)}?exists(course)
+         SELECT "course"."!_1", COALESCE("course"."!_2", 0), "course"."!_3" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", SUM("course"."credits") AS "!_1", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "!_2", AVG(CAST("course"."credits" AS NUMERIC)) AS "!_3" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) WHERE EXISTS((SELECT TRUE FROM "ad"."course" AS "course_2" WHERE ((NOT (TRUE IS NOT DISTINCT FROM NULL)) AND ("department"."code" = "course_2"."department")))) ORDER BY "department"."code" ASC
   - id: root,-this-and-join-functions
     tests:
     - uri: /{count(school)*count(department),count(school.cross(department))}

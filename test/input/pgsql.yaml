@@ -364,6 +364,9 @@ tests:
     - uri: /school{*,count(department)}
     - uri: /school{*,count(department?exists(course))}
     - uri: /school{*,count(department.exists(course))}
+    # Aggregates sharing the same spaces.
+    - uri: /department{sum(course.credits),count(course.credits),
+                       avg(course.credits)}?exists(course)
     # Aggregates with non-native spaces.
     # Triggers a bug in the Postgresql optimizer
     # (see http://archives.postgresql.org/pgsql-bugs/2010-09/msg00265.php).

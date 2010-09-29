@@ -125,6 +125,13 @@ class Expression(Node):
                  self.hash == other.hash and
                  self.equality_vector == other.equality_vector))
 
+    def __ne__(self, other):
+        # Since we override `==`, we also need to override `!=`.
+        return (not isinstance(other, Expression) or
+                self.__class__ is not other.__class__ or
+                self.hash != other.hash and
+                self.equality_vector != other.equality_vector)
+
     def __str__(self):
         # Display the syntex node that gave rise to the expression.
         return str(self.syntax)
@@ -990,6 +997,7 @@ class OrderedSpace(Space):
 
     # FIXME: Non-commutativity of the ordered space may affect `prune`
     # and other functions.  Add class attribute `is_commutative`?
+    # Or override `resembles` to return `True` only for equal nodes?
 
     def __init__(self, base, order, limit, offset, binding):
         assert isinstance(order, listof(tupleof(Code, int)))
@@ -1467,19 +1475,19 @@ class GroupExpression(Expression):
 
     This is an auxiliary expression node used internally by the assembler.
 
-    `codes` (a list of :class:`Code`)
-        A collection of code nodes.
+    `expressions` (a list of :class:`Expression`)
+        A collection of expression nodes.
     """
 
-    def __init__(self, codes, binding):
-        assert isinstance(codes, listof(Code))
+    def __init__(self, expressions, binding):
+        assert isinstance(expressions, listof(Expression))
         super(GroupExpression, self).__init__(binding)
-        self.codes = codes
+        self.expressions = expressions
 
     def __str__(self):
         # Display the collection:
-        #   <code>, <code>, ...
-        return ", ".join(str(code) for code in self.codes)
+        #   <expression>, <expression>, ...
+        return ", ".join(str(expression) for expression in self.expressions)
 
 
 class ScalarGroupExpression(Expression):
