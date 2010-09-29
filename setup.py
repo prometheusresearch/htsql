@@ -21,8 +21,9 @@ INSTALL = open(os.path.join(root, 'INSTALL')).read()
 NEWS = open(os.path.join(root, 'NEWS')).read()
 
 # The distutils parameters are defined here.  Do not forget to update
-# the `__version__` attribute in `src/htsql/__init__.py` whenever the
-# `VERSION` parameter is updated here.
+# the `__version__` attribute in `src/htsql/__init__.py` and `version`
+# and `release` attributes in `doc/conf.py` any time the `VERSION`
+# parameter is updated here.
 
 NAME = "HTSQL"
 VERSION = "2.0.0b1"

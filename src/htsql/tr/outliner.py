@@ -14,10 +14,11 @@ This module implements outline adapters.
 
 
 from ..adapter import Adapter, adapts
-from .term import (Term, TableTerm, ScalarTerm, FilterTerm, JoinTerm,
-                   CorrelationTerm, ProjectionTerm, OrderingTerm, HangingTerm,
-                   SegmentTerm, QueryTerm, Tie, ParallelTie, SeriesTie)
-from .code import (Unit, ColumnUnit, AggregateUnit, CorrelatedUnit,
+from .term import (Term, RoutingTerm, TableTerm, ScalarTerm, FilterTerm,
+                   JoinTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
+                   WrapperTerm, SegmentTerm, QueryTerm,
+                   Tie, ParallelTie, SeriesTie)
+from .code import (Unit, ColumnUnit, ScalarUnit, AggregateUnit, CorrelatedUnit,
                    Space, ScalarSpace, CrossProductSpace, JoinProductSpace)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
                      SegmentSketch, QuerySketch, Demand, LeafAppointment,
@@ -26,18 +27,25 @@ from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
 
 class Outliner(object):
 
-    def outline(self, sketch, *args, **kwds):
-        outline = Outline(sketch, self)
-        return outline.outline(*args, **kwds)
+    def __init__(self):
+        self.sketch_by_tag = {}
+        self.term_by_tag = {}
 
-    def delegate(self, unit, sketch, term):
+    def outline(self, term, *args, **kwds):
+        self.term_by_tag[term.tag] = term
+        outline = Outline(term, self)
+        sketch = outline.outline(*args, **kwds)
+        self.sketch_by_tag[term.tag] = sketch
+        return sketch
+
+    def delegate(self, unit, term):
         delegate = Delegate(unit, self)
-        return delegate.delegate(sketch, term)
+        return delegate.delegate(term)
 
-    def appoint(self, expression, sketch, term):
+    def appoint(self, expression, term):
         demand_by_unit = {}
         for unit in expression.units:
-            demand = self.delegate(unit, sketch, term)
+            demand = self.delegate(unit, term)
             demand_by_unit[unit] = demand
         return BranchAppointment(expression, demand_by_unit)
 
@@ -86,11 +94,11 @@ class OutlineFilter(Outline):
     adapts(FilterTerm, Outliner)
 
     def outline(self, is_inner=True, is_proper=True):
-        child = self.outliner.outline(self.term.child)
+        child = self.outliner.outline(self.term.kid)
         attachment = Attachment(child)
         linkage = [attachment]
-        appointment = self.outliner.appoint(self.term.filter, child,
-                                            self.term.child)
+        appointment = self.outliner.appoint(self.term.filter,
+                                            self.term.kid)
         filter = [appointment]
         return BranchSketch(linkage=linkage,
                             filter=filter,
@@ -104,17 +112,17 @@ class OutlineJoin(Outline):
     adapts(JoinTerm, Outliner)
 
     def outline(self, is_inner=True, is_proper=True):
-        left_child = self.outliner.outline(self.term.left_child)
+        left_child = self.outliner.outline(self.term.lkid)
         left_attachment = Attachment(left_child)
-        right_child = self.outliner.outline(self.term.right_child,
+        right_child = self.outliner.outline(self.term.rkid,
                                             is_inner=self.term.is_inner)
         connections = []
         for tie in self.term.ties:
             for left_unit, right_unit in self.outliner.connect(tie):
                 left_appointment = self.outliner.appoint(left_unit,
-                                    left_child, self.term.left_child)
+                                                         self.term.lkid)
                 right_appointment = self.outliner.appoint(right_unit,
-                                    right_child, self.term.right_child)
+                                                          self.term.rkid)
                 connection = Connection(left_appointment, right_appointment)
                 connections.append(connection)
         right_attachment = Attachment(right_child, connections)
@@ -130,18 +138,18 @@ class OutlineCorrelation(Outline):
     adapts(CorrelationTerm, Outliner)
 
     def outline(self, is_inner=True, is_proper=True):
-        left_child = self.outliner.outline(self.term.left_child)
+        left_child = self.outliner.outline(self.term.lkid)
         left_attachment = Attachment(left_child)
-        right_child = self.outliner.outline(self.term.right_child,
+        right_child = self.outliner.outline(self.term.rkid,
                                             is_inner=False,
                                             is_proper=False)
         connections = []
         for tie in self.term.ties:
             for left_code, right_code in self.outliner.connect(tie):
                 left_appointment = self.outliner.appoint(left_code,
-                                    left_child, self.term.left_child)
+                                                         self.term.lkid)
                 right_appointment = self.outliner.appoint(right_code,
-                                    right_child, self.term.right_child)
+                                                          self.term.rkid)
                 connection = Connection(left_appointment, right_appointment)
                 connections.append(connection)
         right_attachment = Attachment(right_child, connections)
@@ -157,14 +165,13 @@ class OutlineProjection(Outline):
     adapts(ProjectionTerm, Outliner)
 
     def outline(self, is_inner=True, is_proper=True):
-        child = self.outliner.outline(self.term.child)
+        child = self.outliner.outline(self.term.kid)
         attachment = Attachment(child)
         linkage = [attachment]
         group = []
         for tie in self.term.ties:
             for left_code, right_code in self.outliner.connect(tie):
-                appointment = self.outliner.appoint(right_code, child,
-                                                    self.term.child)
+                appointment = self.outliner.appoint(right_code, self.term.kid)
                 group.append(appointment)
         return BranchSketch(linkage=linkage,
                             group=group,
@@ -173,17 +180,17 @@ class OutlineProjection(Outline):
                             mark=self.term.mark)
 
 
-class OutlineOrdering(Outline):
+class OutlineOrder(Outline):
 
-    adapts(OrderingTerm, Outliner)
+    adapts(OrderTerm, Outliner)
 
     def outline(self, is_inner=True, is_proper=True):
-        child = self.outliner.outline(self.term.child)
+        child = self.outliner.outline(self.term.kid)
         attachment = Attachment(child)
         linkage = [attachment]
         order = []
         for code, dir in self.term.order:
-            appointment = self.outliner.appoint(code, child, self.term.child)
+            appointment = self.outliner.appoint(code, self.term.kid)
             order.append((appointment, dir))
         return BranchSketch(linkage=linkage,
                             order=order,
@@ -194,12 +201,12 @@ class OutlineOrdering(Outline):
                             mark=self.term.mark)
 
 
-class OutlineHanging(Outline):
+class OutlineWrapper(Outline):
 
-    adapts(HangingTerm, Outliner)
+    adapts(WrapperTerm, Outliner)
 
     def outline(self, is_inner=True, is_proper=True):
-        child = self.outliner.outline(self.term.child)
+        child = self.outliner.outline(self.term.kid)
         attachment = Attachment(child)
         linkage = [attachment]
         return BranchSketch(linkage=linkage,
@@ -213,12 +220,12 @@ class OutlineSegment(Outline):
     adapts(SegmentTerm, Outliner)
 
     def outline(self):
-        child = self.outliner.outline(self.term.child)
+        child = self.outliner.outline(self.term.kid)
         attachment = Attachment(child)
         linkage = [attachment]
         select = []
-        for code in self.term.select:
-            appointment = self.outliner.appoint(code, child, self.term.child)
+        for code in self.term.elements:
+            appointment = self.outliner.appoint(code, self.term.kid)
             select.append(appointment)
         return SegmentSketch(select=select,
                              linkage=linkage,
@@ -247,7 +254,7 @@ class Delegate(Adapter):
         self.unit = unit
         self.outliner = outliner
 
-    def delegate(self, sketch, term):
+    def delegate(self, term):
         raise NotImplementedError()
 
 
@@ -255,12 +262,23 @@ class DelegateColumn(Delegate):
 
     adapts(ColumnUnit, Outliner)
 
-    def delegate(self, sketch, term):
-        route = term.routes[self.unit.space]
-        for idx in route:
-            sketch = sketch.linkage[idx].sketch
+    def delegate(self, term):
+        tag = term.routes[self.unit.space]
+        sketch = self.outliner.sketch_by_tag[tag]
         appointment = LeafAppointment(self.unit.column,
                                       self.unit.mark)
+        return Demand(sketch, appointment)
+
+
+class DelegateScalar(Delegate):
+
+    adapts(ScalarUnit, Outliner)
+
+    def delegate(self, term):
+        tag = term.routes[self.unit]
+        sketch = self.outliner.sketch_by_tag[tag]
+        term = self.outliner.term_by_tag[tag]
+        appointment = self.outliner.appoint(self.unit.code, term)
         return Demand(sketch, appointment)
 
 
@@ -268,14 +286,11 @@ class DelegateAggregate(Delegate):
 
     adapts(AggregateUnit, Outliner)
 
-    def delegate(self, sketch, term):
-        route = term.routes[self.unit]
-        for idx in route:
-            sketch = sketch.linkage[idx].sketch
-            term = term.children[idx]
-        appointment = self.outliner.appoint(self.unit.composite,
-                                            sketch.linkage[0].sketch,
-                                            term.children[0])
+    def delegate(self, term):
+        tag = term.routes[self.unit]
+        sketch = self.outliner.sketch_by_tag[tag]
+        term = self.outliner.term_by_tag[tag]
+        appointment = self.outliner.appoint(self.unit.code, term.kids[0])
         return Demand(sketch, appointment)
 
 
@@ -283,13 +298,11 @@ class DelegateCorrelated(Delegate):
 
     adapts(CorrelatedUnit, Outliner)
 
-    def delegate(self, sketch, term):
-        route = term.routes[self.unit]
-        for idx in route:
-            sketch = sketch.linkage[idx].sketch
-            term = term.children[idx]
-        appointment = self.outliner.appoint(self.unit.composite,
-                                            sketch, term)
+    def delegate(self, term):
+        tag = term.routes[self.unit]
+        sketch = self.outliner.sketch_by_tag[tag]
+        term = self.outliner.term_by_tag[tag]
+        appointment = self.outliner.appoint(self.unit.code, term)
         return Demand(sketch, appointment)
 
 
@@ -434,7 +447,7 @@ class ConnectJoinedTable(Connect):
             code = ColumnUnit(column, self.tie.space,
                               self.tie.space.binding)
             right_codes.append(code)
-        if self.tie.is_reverse:
+        if self.tie.is_backward:
             left_codes, right_codes = right_codes, left_codes
         return zip(left_codes, right_codes)
 

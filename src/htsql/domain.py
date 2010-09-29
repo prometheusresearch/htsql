@@ -90,6 +90,10 @@ class Domain(object):
             return False
         return (self.__class__ == other.__class__)
 
+    def __ne__(self, other):
+        # Have to override it since we override `__eq__`.
+        return not (self == other)
+
     def __hash__(self):
         # Have to override it since we override `__eq__`.  We use a rough hash
         # which may generate false positives, but relieves us from the need

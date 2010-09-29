@@ -157,9 +157,9 @@ INSERT INTO ad.department (code, name, school) VALUES
 ('win', 'Wind', 'mus'),
 ('str', 'Strings', 'mus'),
 -- Non-Academic Departments
-('alumni','Alumni & Parents',NULL),
-('bursar','Bursar''s Office',NULL),
-('career','Career Development',NULL)
+('alumni', 'Alumni & Parents', NULL),
+('bursar', 'Bursar''s Office', NULL),
+('career', 'Career Development', NULL)
 ;
 
 INSERT INTO ad.program (school, code, title, degree) VALUES

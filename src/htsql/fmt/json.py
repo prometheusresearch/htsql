@@ -36,7 +36,11 @@ class JSONRenderer(Renderer):
         return "200 OK"
 
     def generate_headers(self, product):
-        return [('Content-Type', 'application/json')]
+        filename = str(product.profile.segment.syntax)
+        filename = filename.replace('\\', '\\\\').replace('"', '\\"')
+        return [('Content-Type', 'application/json'),
+                ('Content-Disposition',
+                 'attachment; filename="(%s).json"' % filename)]
 
     def generate_body(self, product):
         if not product:

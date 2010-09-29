@@ -37,7 +37,11 @@ class CSVRenderer(Renderer):
         return "200 OK"
 
     def generate_headers(self, product):
-        return [('Content-Type', 'text/csv; charset=UTF-8')]
+        filename = str(product.profile.segment.syntax)
+        filename = filename.replace('\\', '\\\\').replace('"', '\\"')
+        return [('Content-Type', 'text/csv; charset=UTF-8'),
+                ('Content-Disposition',
+                 'attachment; filename="(%s).csv"' % filename)]
 
     def generate_body(self, product):
         if not product:

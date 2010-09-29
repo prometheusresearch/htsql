@@ -27,7 +27,7 @@ Visit
     http://bitbucket.org/prometheus/htsql
         HTSQL source code;
 
-    irc://irc.freenode.net#test
+    irc://irc.freenode.net#htsql
         IRC chat in #htsql on freenode;
 
     http://lists.htsql.org/mailman/listinfo/htsql-users
@@ -42,3 +42,4 @@ the National Science Foundation.
 
 HTSQL is copyright by Prometheus Research, LLC.  HTSQL is written by
 Clark C. Evans <cce@clarkevans.com> and Kirill Simonov <xi@resolvent.net>.
+

@@ -117,7 +117,7 @@ class QuerySketch(Sketch):
         assert isinstance(segment, maybe(SegmentSketch))
         super(QuerySketch, self).__init__(mark)
         self.term = term
-        self.code = term.code
+        self.code = term.expression
         self.binding = term.binding
         self.syntax = term.syntax
         self.segment = segment

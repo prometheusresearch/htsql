@@ -19,7 +19,7 @@ from .error import EngineError, InvalidArgumentError
 from .tr.parse import parse
 from .tr.bind import bind
 from .tr.encode import encode
-from .tr.assembler import Assembler
+from .tr.assemble import assemble
 from .tr.outliner import Outliner
 from .tr.compiler import Compiler
 from .tr.serializer import Serializer
@@ -97,9 +97,8 @@ class Request(Utility):
     def translate(self):
         syntax = parse(self.uri)
         binding = bind(syntax)
-        code = encode(binding)
-        assembler = Assembler()
-        term = assembler.assemble(code)
+        expression = encode(binding)
+        term = assemble(expression)
         outliner = Outliner()
         sketch = outliner.outline(term)
         compiler = Compiler()

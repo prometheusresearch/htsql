@@ -64,17 +64,19 @@ doc:
 	sphinx-build -b html doc build/doc
 
 # Build a source and an EGG distributions.
-# FIXME: include HTML documentation.
+# FIXME: include HTML documentation; `dist_dir` is broken for `--bdist-deb`.
+# Note that `bdist_deb` requires `stdeb` package.
 dist:
 	rm -rf build
-	python setup.py sdist --formats=zip,gztar -d build/dist
-	python setup.py bdist_egg -d build/dist
+	python setup.py sdist
+	python setup.py bdist_egg
+	#python setup.py --command-packages=stdeb.command bdist_deb 
 
 # Register and upload the package to PyPI.
 # FIXME: include HTML documentation.
 pypi:
 	rm -rf build
-	python setup.py register sdist -d build/dist bdist_egg -d build/dist upload
+	python setup.py register sdist bdist_egg upload
 
 #
 # Regression testing tasks.

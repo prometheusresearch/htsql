@@ -403,7 +403,7 @@ class Join(object):
     def __str__(self):
         # Generate a string of the form:
         #   schema.table -> schema.table
-        return "%s -> %s" % (self.origin, self.table)
+        return "%s -> %s" % (self.origin, self.target)
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self)
@@ -414,11 +414,15 @@ class Join(object):
         # provide comparison by value.  Override in subclasses.
         raise NotImplementedError()
 
-    def __eq__(self):
+    def __eq__(self, other):
         # Since joins are used in comparison operations of code and space
         # objects, we need to override hash and equality operators to
         # provide comparison by value.  Override in subclasses.
         raise NotImplementedError()
+
+    def __ne__(self, other):
+        # Since we override `==`, we also need to override `!=`.
+        return not (self == other)
 
 
 class DirectJoin(Join):
@@ -534,7 +538,7 @@ class ReverseJoin(Join):
 
     def __eq__(self, other):
         # Provide comparison by value.
-        return (isinstance(other, DirectJoin) and
+        return (isinstance(other, ReverseJoin) and
                 self.foreign_key == other.foreign_key)
 
 

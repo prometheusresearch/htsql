@@ -364,6 +364,31 @@ tests:
     - uri: /school{*,count(department)}
     - uri: /school{*,count(department?exists(course))}
     - uri: /school{*,count(department.exists(course))}
+    # Aggregates sharing the same spaces.
+    - uri: /department{sum(course.credits),count(course.credits),
+                       avg(course.credits)}?exists(course)
+    # Aggregates with non-native spaces.
+    # Triggers a bug in the Postgresql optimizer
+    # (see http://archives.postgresql.org/pgsql-bugs/2010-09/msg00265.php).
+    - uri: /department{code,school.code,
+                       count(school.program),school.count(program)}
+      skip: true
+    - uri: /department{code,school.code,
+                       exists(school.program),school.exists(program)}
+      skip: true
+
+  - title: Root, This and Join functions
+    tests:
+    # Cross joins.
+    - uri: /{count(school)*count(department),count(school.cross(department))}
+    # Custom joins.
+    - uri: /{count(school.department),
+             count(school.cross(department)?school=root().school.code)}
+    # Lifting a unit to a dominating space.
+    - uri: /school{code,name,this(){code}?name!~'art',
+                   root().school{code}?name!~'art'}
+    - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
+    - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
 
   # Demonstrate selection of a formatter based on the `Accept` header.
   - title: Formatters
@@ -400,4 +425,9 @@ tests:
     - uri: /school/:html
     - uri: /school/:unknown
       expect: 400
+    # Verify that the filename in `Content-Disposition` field
+    # is properly escaped.
+    - uri: /{'%01%02...%1F%7F\"'}
+      headers:
+        Accept: text/csv
 

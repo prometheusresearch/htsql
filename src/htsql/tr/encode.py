@@ -16,6 +16,7 @@ This module implements the encoding process.
 from ..adapter import Adapter, adapts
 from ..domain import Domain, UntypedDomain, TupleDomain, BooleanDomain
 from .error import EncodeError
+from .coerce import coerce
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
@@ -28,7 +29,7 @@ from .code import (ScalarSpace, CrossProductSpace, JoinProductSpace,
                    QueryExpression, SegmentExpression, LiteralCode,
                    EqualityCode, TotalEqualityCode,
                    ConjunctionCode, DisjunctionCode, NegationCode,
-                   CastCode, ColumnUnit)
+                   CastCode, ColumnUnit, ScalarUnit)
 
 
 class EncodingState(object):
@@ -273,11 +274,10 @@ class EncodeSegment(Encode):
             direction = self.state.direct(binding)
             if direction is not None:
                 order.append((element, direction))
-        # Augment the segment space by adding explicit ordering node.
-        # FIXME: we add `OrderedSpace` on top even when `order` is empty
-        # because otherwise `ORDER BY` terms will not be assembled.
-        # Fix the assembler?
-        space = OrderedSpace(space, order, None, None, self.binding)
+        # If any direction modifiers are found, augment the segment space
+        # by adding an explicit ordering node.
+        if order:
+            space = OrderedSpace(space, order, None, None, self.binding)
         # Construct the expression node.
         return SegmentExpression(space, elements, self.binding)
 
@@ -634,30 +634,18 @@ class ConvertTupleToBoolean(Convert):
         # represents some space.  In this case, Boolean cast produces
         # an expression which is `FALSE` when the space is empty and
         # `TRUE` otherwise.  The actual expression is:
-        #   `!(column==null())`,
-        # where `column` is some non-nullable column of the prominent
-        # table of the space.
+        #   `!(unit==null())`,
+        # where `unit` is some non-nullable function on the space.
 
         # Translate the operand to a space node.
         space = self.state.relate(self.base)
-        # Now the space may lack the prominent table; however this case
-        # is hardly useful and difficult to handle, so we generate an
-        # error here.
-        if space.table is None:
-            raise EncodeError("expected a space with a prominent table",
-                              self.binding.mark)
-        # Find a non-nullable column; if all columns are nullable,
-        # our only option is to raise an error.
-        for column in space.table.columns:
-            if not column.is_nullable:
-                break
-        else:
-            raise EncodeError("expected a table with at least one"
-                              " non-nullable column", self.binding.mark)
-        # Generate and return the expression: `!(column==null())`.
-        unit = ColumnUnit(column, space, self.binding)
-        literal = LiteralCode(None, column.domain, self.binding)
-        return NegationCode(TotalEqualityCode(unit, literal, self.binding),
+        # `TRUE` and `NULL` literals.
+        true_literal = LiteralCode(True, coerce(BooleanDomain()), self.binding)
+        null_literal = LiteralCode(None, coerce(BooleanDomain()), self.binding)
+        # A `TRUE` constant as a function on the space.
+        unit = ScalarUnit(true_literal, space, self.binding)
+        # Return `!(unit==null())`.
+        return NegationCode(TotalEqualityCode(unit, null_literal, self.binding),
                             self.binding)
 
 
