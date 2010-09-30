@@ -1469,28 +1469,29 @@ class CorrelatedUnit(AggregateUnitBase):
     """
 
 
-class GroupExpression(Expression):
+class BatchExpression(Expression):
     """
-    Represents a collection of code nodes.
+    Represents a collection of expression nodes.
 
     This is an auxiliary expression node used internally by the assembler.
 
-    `expressions` (a list of :class:`Expression`)
+    `collection` (a list of :class:`Expression`)
         A collection of expression nodes.
     """
 
-    def __init__(self, expressions, binding):
-        assert isinstance(expressions, listof(Expression))
-        super(GroupExpression, self).__init__(binding)
-        self.expressions = expressions
+    def __init__(self, collection, binding):
+        assert isinstance(collection, listof(Expression))
+        super(BatchExpression, self).__init__(binding)
+        self.collection = collection
 
     def __str__(self):
         # Display the collection:
-        #   <expression>, <expression>, ...
-        return ", ".join(str(expression) for expression in self.expressions)
+        #   (<expression>, <expression>, ...)
+        return "(%s)" % ", ".join(str(expression)
+                                  for expression in self.collection)
 
 
-class ScalarGroupExpression(Expression):
+class ScalarBatchExpression(BatchExpression):
     """
     Represents a collection of sclar units sharing the same base space.
 
@@ -1499,27 +1500,20 @@ class ScalarGroupExpression(Expression):
     `space` (:class:`Space`)
         The base space of the scalar units.
 
-    `units` (a list of :class:`ScalarUnit`)
+    `collection` (a list of :class:`ScalarUnit`)
         A collection of scalar units.  All units must have the same base
         space.
     """
 
-    def __init__(self, space, units, binding):
+    def __init__(self, space, collection, binding):
         assert isinstance(space, Space)
-        assert isinstance(units, listof(ScalarUnit))
-        assert all(space == unit.space for unit in units)
-        super(ScalarGroupExpression, self).__init__(binding)
+        assert isinstance(collection, listof(ScalarUnit))
+        assert all(space == unit.space for unit in collection)
+        super(ScalarBatchExpression, self).__init__(collection, binding)
         self.space = space
-        self.units = units
-
-    def __str__(self):
-        # Display the collection:
-        #   <unit>, <unit>, ...: <space>
-        return ("%s: %s"
-                % (", ".join(str(unit) for unit in self.units), self.space))
 
 
-class AggregateGroupExpression(Expression):
+class AggregateBatchExpression(BatchExpression):
     """
     Represents a collection of aggregate units sharing the same base and
     plural spaces.
@@ -1532,27 +1526,19 @@ class AggregateGroupExpression(Expression):
     `space` (:class:`Space`)
         The base space of the aggregates.
 
-    `units` (a list of :class:`AggregateUnit`)
+    `collection` (a list of :class:`AggregateUnit`)
         A collection of aggregate units.  All units must have the same
         base and plural spaces.
     """
 
-    def __init__(self, plural_space, space, units, binding):
+    def __init__(self, plural_space, space, collection, binding):
         assert isinstance(plural_space, Space)
         assert isinstance(space, Space)
-        assert isinstance(units, listof(AggregateUnit))
+        assert isinstance(collection, listof(AggregateUnit))
         assert all(plural_space == unit.plural_space and space == unit.space
-                   for unit in units)
-        super(AggregateGroupExpression, self).__init__(binding)
+                   for unit in collection)
+        super(AggregateBatchExpression, self).__init__(collection, binding)
         self.plural_space = plural_space
         self.space = space
-        self.units = units
-
-    def __str__(self):
-        # Display the collection:
-        #   <unit>, <unit>, ...: <plural_space> -> <space>
-        return ("%s: %s -> %s"
-                % (", ".join(str(unit) for unit in self.units),
-                   self.plural_space, self.space))
 
 

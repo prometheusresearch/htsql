@@ -498,7 +498,7 @@ class OrderTerm(UnaryTerm):
 
 class WrapperTerm(UnaryTerm):
     """
-    Represents a no-op expression.
+    Represents a no-op operation.
 
     A wrapper term represents exactly the same rows as its operand.  It is
     used by the assembler to wrap nullary terms when SQL syntax requires

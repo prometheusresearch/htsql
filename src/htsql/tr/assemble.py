@@ -13,18 +13,18 @@ This module implements the assembling process.
 """
 
 
-from ..util import listof
+from ..util import maybe, listof
 from ..adapter import Adapter, adapts
 from .error import AssembleError
 from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
                    FilteredSpace, OrderedSpace, MaskedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    QueryExpression, SegmentExpression,
-                   GroupExpression, ScalarGroupExpression,
-                   AggregateGroupExpression)
+                   BatchExpression, ScalarBatchExpression,
+                   AggregateBatchExpression)
 from .term import (RoutingTerm, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    CorrelationTerm, ProjectionTerm, OrderTerm, WrapperTerm,
-                   SegmentTerm, QueryTerm, ParallelTie, SeriesTie)
+                   SegmentTerm, QueryTerm, Tie, ParallelTie, SeriesTie)
 
 
 class AssemblingState(object):
@@ -43,11 +43,11 @@ class AssemblingState(object):
 
     `mask` (:class:`htsql.tr.code.Space`)
         When assembling a new term, indicates that the term is going to be
-        attached to a term that represents the `mask` space.
+        tie_termsed to a term that represents the `mask` space.
     """
 
     def __init__(self):
-        # The next term tag to be produced by `make_tag`.
+        # The next term tag to be produced by `tag`.
         self.next_tag = 1
         # The scalar space.
         self.scalar = None
@@ -60,7 +60,7 @@ class AssemblingState(object):
         # The current mask space.
         self.mask = None
 
-    def make_tag(self):
+    def tag(self):
         """
         Generates and returns a new unique term tag.
         """
@@ -165,7 +165,7 @@ class AssemblingState(object):
             a new term is assembled.  When not set, the current mask space
             of the state is used.
 
-            A mask indicates that the new term is going to be attached
+            A mask indicates that the new term is going to be tie_termsed
             to a term that represent the mask space.  Therefore the
             assembler could ignore any non-axis operations that are
             already enforced by the mask space.
@@ -214,12 +214,12 @@ class AssemblingState(object):
         # term tree when it processes all units sharing the same
         # form simultaneously.  To handle this case, we collect
         # all expressions into an auxiliary expression node
-        # `GroupExpression`.  When injected, the group expression
+        # `BatchExpression`.  When injected, the group expression
         # applies the multi-unit optimizations.
         if len(expressions) == 1:
             expression = expressions[0]
         else:
-            expression = GroupExpression(expressions, term.binding)
+            expression = BatchExpression(expressions, term.binding)
         # Realize and apply the `Inject` adapter.
         inject = Inject(expression, term, self)
         return inject()
@@ -315,6 +315,239 @@ class Inject(Adapter):
         raise NotImplementedError("the inject adapter is not implemented"
                                   " for a %r node" % self.expression)
 
+    # Utility functions used by implementations.
+
+    def assemble_shoot(self, space, trunk_term, codes=None):
+        """
+        Assembles a term corresponding to the given space.
+
+        The assembled term is called *a shoot term* (relatively to
+        the given *trunk term*).
+
+        `space` (:class:`htsql.tr.code.Space`)
+            A space node, for which the we assemble a term.
+
+        `trunk_term` (:class:`htsql.tr.term.RoutingTerm`)
+           Expresses a promise that the assembled term will be
+           (eventually) joined to `trunk_term` (see :meth:`join_terms`).
+
+        `codes` (a list of :class:`htsql.tr.code.Expression` or ``None``)
+           If provided, a list of expressions to be injected
+           into the assembled term.
+        """
+
+        # Sanity check on the arguments.
+        assert isinstance(space, Space)
+        assert isinstance(trunk_term, RoutingTerm)
+        assert isinstance(codes, maybe(listof(Expression)))
+
+        # Determine the longest prefix of the space that either
+        # contains no non-axis operations or has all its non-axis
+        # operations enforced by the trunk space.  This prefix will
+        # be used as the baseline of the assembled term (that is,
+        # we ask the assembler not to generate any axes under
+        # the baseline).
+
+        # Start with removing any filters enforced by the trunk space.
+        baseline = space.prune(trunk_term.space)
+        # Now find the longest prefix that does not contain any
+        # non-axis operations.
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        # Handle the case when the given space is not spanned by the
+        # trunk space -- it happens when we construct a plural term
+        # for an aggregate unit.  In this case, before joining it
+        # to the trunk term, the shoot term will be projected to some
+        # singular prefix of the given space.  To enable such projection,
+        # at least the base of the shoot baseline must be spanned by
+        # the trunk space (then, we can project on the columns of
+        # a foreign key that attaches the baseline to its base).
+        if not trunk_term.space.spans(baseline):
+            while not trunk_term.space.spans(baseline.base):
+                baseline = baseline.base
+
+        # Assemble the term, use the found baseline and the trunk space
+        # as the mask.
+        term = self.state.assemble(space,
+                                   baseline=baseline,
+                                   mask=trunk_term.space)
+
+        # If provided, inject the given expressions.
+        if codes is not None:
+            term = self.state.inject(term, codes)
+
+        # SQL syntax does not permit us evaluating scalar or aggregate
+        # expressions in terminal terms.  So when generating terms for
+        # scalar or aggregate units, we need to cover terminal terms
+        # with a no-op wrapper.  It may generate an unnecessary
+        # wrapper if the term is used for other purposes, but we rely
+        # on the outliner to flatten any unused wrappers.
+        if term.is_nullary:
+            term = WrapperTerm(self.state.tag(), term,
+                               term.space, term.routes.copy())
+
+        # Return the assembled shoot term.
+        return term
+
+    def tie_terms(self, trunk_term, shoot_term):
+        """
+        Returns ties to attach the shoot term to the trunk term.
+
+        `trunk_term` (:class:`htsql.tr.term.RoutingTerm`)
+            The left (trunk) operand of the join.
+
+        `shoot_term` (:class:`htsql.tr.term.RoutingTerm`)
+            The right (shoot) operand of the join.
+
+        Note that the trunk term may not export all the units necessary
+        to generate tie conditions.  Apply :meth:`inject_ties` on the trunk
+        before using the ties to join the trunk and the shoot.
+        """
+        # Sanity check on the arguments.
+        assert isinstance(trunk_term, RoutingTerm)
+        assert isinstance(shoot_term, RoutingTerm)
+        # Verify that it is possible to join the terms without
+        # changing the cardinality of the trunk.
+        assert (shoot_term.baseline.is_scalar or
+                trunk_term.space.spans(shoot_term.baseline.base))
+
+        # There are two ways the ties are generated:
+        #
+        # - when the shoot baseline is an axis of the trunk space,
+        #   in this case we join the terms using parallel ties on
+        #   the common axes;
+        # - otherwise, join the terms using a series tie between
+        #   the shoot baseline and its base.
+
+        # Ties to attach the shoot to the trunk.
+        ties = []
+        # Check if the shoot baseline is an axis of the trunk space.
+        if trunk_term.backbone.concludes(shoot_term.baseline):
+            # In this case, we join the terms by all axes of the trunk
+            # space that are exported by the shoot term.
+            # Find the first inflated axis of the trunk exported
+            # by the shoot.
+            axis = trunk_term.backbone
+            while axis not in shoot_term.routes:
+                axis = axis.base
+            # Now the axes between `axis` and `baseline` are common axes
+            # of the trunk space and the shoot term.  For each of them,
+            # generate a parallel tie.  Note that we do not verify
+            # (and, in general, it is not required) that these axes
+            # are exported by the trunk term.  Apply `inject_ties()` on
+            # the trunk term before using the ties to join the terms.
+            while axis != shoot_term.baseline.base:
+                assert axis in shoot_term.routes
+                # Skip non-expanding axes (but always include the baseline).
+                if axis.is_expanding or axis == shoot_term.baseline:
+                    tie = ParallelTie(axis)
+                    ties.append(tie)
+                axis = axis.base
+            # We prefer (for no particular reason) the ties to go
+            # from inner to outer axes.
+            ties.reverse()
+        else:
+            # When shoot does not touch the trunk space, we attach it
+            # using a series tie between the shoot baseline and its base.
+            # Note that we do not verify (and it is not required) that
+            # the trunk term export the base space.  Apply `inject_ties()`
+            # on the trunk term to inject any necessary spaces before
+            # joining the terms using the ties.
+            tie = SeriesTie(shoot_term.baseline)
+            ties.append(tie)
+
+        # Return the generated ties.
+        return ties
+
+    def inject_ties(self, term, ties):
+        """
+        Augments the term to ensure it can export all units required
+        to generate tie conditions.
+
+        `term` (:class:`htsql.tr.term.RoutingTerm`)
+            The term to update.
+
+            It is assumed that `term` was the argument `trunk_term` of
+            :meth:`tie_terms` when the ties were generated.
+
+        `ties` (a list of :class:`htsql.tr.term.Tie`)
+            The ties to inject.
+
+            It is assumed the ties were generated by :meth:`tie_terms`.
+        """
+        # Sanity check on the arguments.
+        assert isinstance(term, RoutingTerm)
+        assert isinstance(ties, listof(Tie))
+
+        # Accumulate the axes we need to inject.
+        axes = []
+        # Iterate over the ties.
+        for tie in ties:
+            # For a parallel tie, we inject the tie space.
+            if tie.is_parallel:
+                axes.append(tie.space)
+            # For a series tie, we inject the base of the tie space
+            # (the tie space itself goes to the shoot term).
+            if tie.is_series:
+                if tie.is_backward:
+                    # Not really reachable since we never generate backward
+                    # ties in `tie_term()`.  It is here for completeness.
+                    axes.append(tie.space)
+                else:
+                    axes.append(tie.space.base)
+
+        # Inject the required spaces and return the updated term.
+        return self.state.inject(term, axes)
+
+    def join_terms(self, trunk_term, shoot_term, extra_routes):
+        """
+        Attaches a shoot term to a trunk term.
+
+        The produced join term uses the space and the routing
+        table of the trunk term, but also includes the given
+        extra routes.
+
+        `trunk_term` (:class:`htsql.tr.term.RoutingTerm`)
+            The left (trunk) operand of the join.
+
+        `shoot_term` (:class:`htsql.tr.term.RoutingTerm`)
+            The right (shoot) operand of the term.
+
+            The shoot term must be singular relatively to the trunk term.
+
+        `extra_routes` (a mapping from a unit/space to a term tag)
+            Any extra routes provided by the join.
+        """
+        # Sanity check on the arguments.
+        assert isinstance(trunk_term, RoutingTerm)
+        assert isinstance(shoot_term, RoutingTerm)
+        # FIXME: Unfortunately, we cannot properly verify that the trunk
+        # space spans the shoot space since the term space is generated
+        # incorrectly for projection terms.
+        #assert trunk_term.space.dominates(shoot_term.space)
+        assert isinstance(extra_routes, dict)
+
+        # Ties to attach the terms.
+        ties = self.tie_terms(trunk_term, shoot_term)
+        # Make sure the trunk term could export tie conditions.
+        trunk_term = self.inject_ties(trunk_term, ties)
+        # Determine if we could use an inner join to attach the shoot
+        # to the trunk.  We could do it if the inner join does not
+        # decrease cardinality of the trunk.
+        # FIXME: The condition that the shoot space dominates the
+        # trunk space is sufficient, but not really necessary.
+        # In general, we can use the inner join if the shoot space
+        # dominates the prefix of the trunk space cut at the longest
+        # common axis of trunk and the shoot spaces.
+        is_inner = shoot_term.space.dominates(trunk_term.space)
+        # Use the routing table of the trunk term, but also add
+        # the given extra routes.
+        routes = trunk_term.routes.copy()
+        routes.update(extra_routes)
+        # Generate and return a join term.
+        return JoinTerm(self.state.tag(), trunk_term, shoot_term,
+                        ties, is_inner, trunk_term.space, routes)
+
 
 class AssembleQuery(Assemble):
     """
@@ -329,7 +562,7 @@ class AssembleQuery(Assemble):
         if self.expression.segment is not None:
             segment = self.state.assemble(self.expression.segment)
         # Construct a query term.
-        return QueryTerm(self.state.make_tag(), segment, self.expression)
+        return QueryTerm(self.state.tag(), segment, self.expression)
 
 
 class AssembleSegment(Assemble):
@@ -354,12 +587,12 @@ class AssembleSegment(Assemble):
         # the space ordering, so it is our responsitibity to wrap the term
         # with an order node.
         if order:
-            kid = OrderTerm(self.state.make_tag(), kid, order, None, None,
+            kid = OrderTerm(self.state.tag(), kid, order, None, None,
                             kid.space, kid.routes.copy())
         # Shut down the state spaces.
         self.state.unset_scalar()
         # Construct a segment term.
-        return SegmentTerm(self.state.make_tag(), kid, self.expression.elements,
+        return SegmentTerm(self.state.tag(), kid, self.expression.elements,
                            kid.space, kid.routes.copy())
 
 
@@ -379,7 +612,7 @@ class AssembleSpace(Assemble):
     When assembling terms, the following optimizations are applied:
 
     Removing unnecessary non-axis operations.  The current `mask` space
-    expresses a promise that the generated term will be attached to
+    expresses a promise that the generated term will be tie_termsed to
     a term representing the mask space.  Therefore the assembler
     could skip any non-axis filters that are already enforced by
     the mask space.
@@ -451,7 +684,6 @@ class InjectSpace(Inject):
             routes[self.space] = routes[unmasked_space]
             return self.term.clone(routes=routes)
         if self.term.backbone.concludes(unmasked_space):
-            tag = self.state.make_tag()
             next_axis = self.term.baseline
             while next_axis.base != unmasked_space:
                 next_axis = next_axis.base
@@ -465,34 +697,13 @@ class InjectSpace(Inject):
             routes = lkid.routes.copy()
             routes[unmasked_space] = rkid[unmasked_space]
             routes[self.space] = rkid[unmasked_space]
-            return JoinTerm(tag, lkid, rkid, [tie], True, lkid.space, routes)
-        tag = self.state.make_tag()
-        baseline = unmasked_space
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        lkid = self.term
-        rkid = self.state.assemble(self.space,
-                                   baseline=baseline,
-                                   mask=self.term.space)
-        ties = []
-        if lkid.backbone.concludes(rkid.baseline):
-            lkid = self.state.inject(lkid, [rkid.baseline])
-            axis = lkid.backbone
-            while rkid.baseline.base != axis:
-                if axis in rkid.routes:
-                    tie = ParallelTie(axis)
-                    ties.append(tie)
-                axis = axis.base
-            ties.reverse()
-        else:
-            lkid = self.state.inject(lkid, [rkid.baseline.base])
-            tie = SeriesTie(rkid.baseline)
-            ties.append(tie)
-        is_inner = rkid.space.dominates(lkid.space)
-        routes = lkid.routes.copy()
-        routes[self.space] = rkid.routes[self.space]
-        routes[unmasked_space] = rkid.routes[self.space]
-        return JoinTerm(tag, lkid, rkid, ties, is_inner, lkid.space, routes)
+            return JoinTerm(self.state.tag(), lkid, rkid, [tie], True,
+                            lkid.space, routes)
+        space_term = self.assemble_shoot(self.space, self.term)
+        extra_routes = {}
+        extra_routes[self.space] = space_term.routes[self.space]
+        extra_routes[unmasked_space] = space_term.routes[self.space]
+        return self.join_terms(self.term, space_term, extra_routes)
 
 
 class AssembleScalar(AssembleSpace):
@@ -504,7 +715,7 @@ class AssembleScalar(AssembleSpace):
 
     def __call__(self):
         # Generate a `ScalarTerm` instance.
-        tag = self.state.make_tag()
+        tag = self.state.tag()
         routes = { self.space: tag }
         return ScalarTerm(tag, self.space, routes)
 
@@ -529,7 +740,7 @@ class AssembleProduct(AssembleSpace):
         if self.backbone == self.baseline:
             # Generate a table term that exports rows from the prominent
             # table.
-            tag = self.state.make_tag()
+            tag = self.state.tag()
             # The routing table must always include the term space, and also,
             # for any space it includes, the inflation of the space.
             # In this case, `self.space` is the term space, `self.backbone`
@@ -568,7 +779,7 @@ class AssembleProduct(AssembleSpace):
         # on the same space, but with a different baseline, so that it
         # will hit the first special case and produce a table term.
         rkid = self.state.assemble(self.space, baseline=self.backbone)
-        # The tie attaching the space to its base.
+        # The tie tie_termsing the space to its base.
         tie = SeriesTie(self.backbone)
         is_inner = True
         # We use the routing table of the base term with extra routes
@@ -578,7 +789,7 @@ class AssembleProduct(AssembleSpace):
         routes[self.space] = rkid.routes[self.space]
         routes[self.backbone] = rkid.routes[self.backbone]
         # Generate a join term node.
-        return JoinTerm(self.state.make_tag(), lkid, rkid, [tie], is_inner,
+        return JoinTerm(self.state.tag(), lkid, rkid, [tie], is_inner,
                         self.space, routes)
 
 
@@ -622,7 +833,7 @@ class AssembleFiltered(AssembleSpace):
         routes = kid.routes.copy()
         routes[self.space] = routes[self.backbone]
         # Generate a filter term node.
-        return FilterTerm(self.state.make_tag(), kid, self.space.filter,
+        return FilterTerm(self.state.tag(), kid, self.space.filter,
                           self.space, routes)
 
 
@@ -672,7 +883,7 @@ class AssembleOrdered(AssembleSpace):
         routes = kid.routes.copy()
         routes[self.space] = routes[self.backbone]
         # Generate an order term.
-        return OrderTerm(self.state.make_tag(), kid, order,
+        return OrderTerm(self.state.tag(), kid, order,
                          self.space.limit, self.space.offset,
                          self.space, routes)
 
@@ -718,7 +929,7 @@ class InjectScalar(Inject):
     def __call__(self):
         if self.unit in self.term.routes:
             return self.term
-        group = ScalarGroupExpression(self.unit.space, [self.unit],
+        group = ScalarBatchExpression(self.unit.space, [self.unit],
                                       self.unit.binding)
         return self.state.inject(self.term, [group])
 
@@ -730,7 +941,7 @@ class InjectAggregate(Inject):
     def __call__(self):
         if self.unit in self.term.routes:
             return self.term
-        group = AggregateGroupExpression(self.unit.plural_space,
+        group = AggregateBatchExpression(self.unit.plural_space,
                                          self.unit.space, [self.unit],
                                          self.unit.binding)
         return self.state.inject(self.term, [group])
@@ -748,250 +959,116 @@ class InjectCorrelated(Inject):
             return self.term
         is_native = self.space.dominates(self.term.space)
         if is_native:
-            ground_term = self.term
+            trunk_term = self.term
         else:
-            baseline = self.space.prune(self.term.space)
-            while not baseline.is_inflated:
-                baseline = baseline.base
-            ground_term = self.state.assemble(self.space,
-                                              baseline=baseline,
-                                              mask=self.term.space)
-        baseline = self.unit.plural_space.prune(ground_term.space)
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        if not ground_term.space.spans(baseline):
-            while not ground_term.space.spans(baseline.base):
-                baseline = baseline.base
-        plural_term = self.state.assemble(self.unit.plural_space,
-                                          baseline=baseline,
-                                          mask=ground_term.space)
-        plural_term = self.state.inject(plural_term, [self.unit.code])
-        if plural_term.is_nullary:
-            plural_term = WrapperTerm(self.state.make_tag(), plural_term,
-                                      plural_term.space,
-                                      plural_term.routes.copy())
-        ties = []
-        axes = []
-        if ground_term.backbone.concludes(plural_term.baseline):
-            ground_term = self.state.inject(ground_term,
-                                            [plural_term.baseline])
-            axis = ground_term.backbone
-            while axis not in plural_term.routes:
-                axis = axis.baseline
-            while axis in plural_term.routes:
-                tie = ParallelTie(axis)
-                ties.append(tie)
-                axes.append(axis)
-                axis = axis.base
-            ties.reverse()
-        else:
-            axis = plural_term.baseline
-            ground_term = self.state.inject(ground_term, [axis.base])
-            tie = SeriesTie(axis)
-            ties.append(tie)
-            axes.append(axis)
-        tag = self.state.make_tag()
-        lkid = ground_term
+            trunk_term = self.assemble_shoot(self.space, self.term)
+        plural_term = self.assemble_shoot(self.unit.plural_space,
+                                          trunk_term, [self.unit.code])
+        ties = self.tie_terms(trunk_term, plural_term)
+        trunk_term = self.inject_ties(trunk_term, ties)
+        lkid = trunk_term
         rkid = plural_term
         routes = lkid.routes.copy()
         routes[self.unit] = plural_term.tag
-        term = CorrelationTerm(tag, lkid, rkid, ties, lkid.space, routes)
+        unit_term = CorrelationTerm(self.state.tag(), lkid, rkid, ties,
+                                    lkid.space, routes)
         if is_native:
-            return term
-        tag = self.state.make_tag()
-        lkid = self.term
-        rkid = term
-        ties = []
-        if lkid.backbone.concludes(rkid.baseline):
-            lkid = self.state.inject(lkid, [rkid.baseline])
-            axis = lkid.backbone
-            while rkid.baseline.base != axis:
-                if axis in rkid.routes:
-                    tie = ParallelTie(axis)
-                    ties.append(tie)
-                axis = axis.base
-            ties.reverse()
-        else:
-            lkid = self.state.inject(lkid, [rkid.baseline.base])
-            tie = SeriesTie(rkid.baseline)
-            ties.append(tie)
-        is_inner = rkid.space.dominates(lkid.space)
-        routes = lkid.routes.copy()
-        routes[self.unit] = plural_term.tag
-        return JoinTerm(tag, lkid, rkid, ties, is_inner, lkid.space, routes)
+            return unit_term
+        extra_routes = { self.unit: plural_term.tag }
+        return self.join_terms(self.term, unit_term, extra_routes)
 
 
-class InjectScalarGroup(Inject):
+class InjectScalarBatch(Inject):
 
-    adapts(ScalarGroupExpression)
+    adapts(ScalarBatchExpression)
+
+    def __init__(self, expression, term, state):
+        super(InjectScalarBatch, self).__init__(expression, term, state)
+        self.space = expression.space
 
     def __call__(self):
-        space = self.expression.space
-        units = self.expression.units
-        term = self.term
-        units = [unit for unit in units if unit not in term.routes]
+        units = [unit for unit in self.collection
+                      if unit not in self.term.routes]
         if not units:
-            return term
-        codes = [unit.code for unit in units]
-        if not term.space.spans(space):
+            return self.term
+        if not self.term.space.spans(self.space):
             raise AssembleError("expected a singular expression",
                                 units[0].mark)
-        if space.dominates(term.space):
-            term = self.state.inject(term, codes)
+        codes = [unit.code for unit in units]
+        if self.space.dominates(self.term.space):
+            term = self.state.inject(self.term, codes)
             if term.is_nullary:
-                term = WrapperTerm(self.state.make_tag(), term,
+                term = WrapperTerm(self.state.tag(), term,
                                    term.space, term.routes)
             routes = term.routes.copy()
             for unit in units:
                 routes[unit] = term.tag
             return term.clone(routes=routes)
-        lkid = term
-        baseline = space.prune(term.space)
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        rkid = self.state.assemble(space,
-                                   baseline=baseline,
-                                   mask=term.space)
-        rkid = self.state.inject(rkid, codes)
-        if rkid.is_nullary:
-            rkid = WrapperTerm(self.state.make_tag(), rkid,
-                               rkid.space, rkid.routes.copy())
-        ties = []
-        if lkid.backbone.concludes(rkid.baseline):
-            lkid = self.state.inject(lkid, [rkid.baseline])
-            axis = lkid.backbone
-            while rkid.baseline.base != axis:
-                if axis in rkid.routes:
-                    tie = ParallelTie(axis)
-                    ties.append(tie)
-                axis = axis.base
-            ties.reverse()
-        else:
-            lkid = self.state.inject(lkid, [rkid.baseline.base])
-            tie = SeriesTie(rkid.baseline)
-            ties.append(tie)
-        routes = lkid.routes.copy()
-        for unit in units:
-            routes[unit] = rkid.tag
-        return JoinTerm(self.state.make_tag(), lkid, rkid, ties, False,
-                        lkid.space, routes)
+        unit_term = self.assemble_shoot(self.space, self.term, codes)
+        extra_routes = dict((unit, unit_term.tag) for unit in units)
+        return self.join_terms(self.term, unit_term, extra_routes)
 
 
-class InjectAggregateGroup(Inject):
+class InjectAggregateBatch(Inject):
 
-    adapts(AggregateGroupExpression)
+    adapts(AggregateBatchExpression)
+
+    def __init__(self, expression, term, state):
+        super(InjectAggregateBatch, self).__init__(expression, term, state)
+        self.plural_space = expression.plural_space
+        self.space = expression.space
 
     def __call__(self):
-        space = self.expression.space
-        plural_space = self.expression.plural_space
-        units = self.expression.units
-        term = self.term
-        units = [unit for unit in units if unit not in term.routes]
+        units = [unit for unit in self.collection
+                      if unit not in self.term.routes]
         if not units:
-            return term
-        codes = [unit.code for unit in units]
-        if not term.space.spans(space):
+            return self.term
+        if not self.term.space.spans(self.space):
             raise AssembleError("expected a singular expression",
                                 units[0].mark)
-        is_native = space.dominates(term.space)
+        codes = [unit.code for unit in units]
+        is_native = self.space.dominates(self.term.space)
         if is_native:
-            ground_term = term
+            trunk_term = self.term
         else:
-            baseline = space.prune(term.space)
-            while not baseline.is_inflated:
-                baseline = baseline.base
-            ground_term = self.state.assemble(space,
-                                              baseline=baseline,
-                                              mask=term.space)
-        baseline = plural_space.prune(ground_term.space)
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        if not ground_term.space.spans(baseline):
-            while not ground_term.space.spans(baseline.base):
-                baseline = baseline.base
-        plural_term = self.state.assemble(plural_space,
-                                          baseline=baseline,
-                                          mask=ground_term.space)
-        plural_term = self.state.inject(plural_term, codes)
-        projected_space = None
-        ties = []
-        axes = []
-        if ground_term.backbone.concludes(plural_term.baseline):
-            ground_term = self.state.inject(ground_term,
-                                            [plural_term.baseline])
-            axis = ground_term.backbone
-            while axis not in plural_term.routes:
-                axis = axis.baseline
-            projected_space = MaskedSpace(axis, ground_term.space,
-                                          self.expression.binding)
-            while axis in plural_term.routes:
-                tie = ParallelTie(axis)
-                ties.append(tie)
-                axes.append(axis)
-                axis = axis.base
-            ties.reverse()
-            axes.reverse()
-        else:
-            axis = plural_term.baseline
-            ground_term = self.state.inject(ground_term, [axis.base])
-            projected_space = MaskedSpace(axis.base, ground_term.space,
-                                          self.expression.binding)
-            tie = SeriesTie(axis)
-            ties.append(tie)
-            axes.append(axis)
+            trunk_term = self.assemble_shoot(self.space, self.term)
+        plural_term = self.assemble_shoot(self.plural_space,
+                                          trunk_term, codes)
+        ties = self.tie_terms(trunk_term, plural_term)
+        trunk_term = self.inject_ties(trunk_term, ties)
+        projected_space = MaskedSpace(ties[-1].space, trunk_term.space,
+                                      self.expression.binding)
         routes = {}
-        for axis in axes:
-            routes[axis] = plural_term.routes[axis]
-        routes[projected_space] = routes[axes[-1]]
-        routes[projected_space.inflate()] = routes[axes[-1]]
-        projected_term = ProjectionTerm(self.state.make_tag(), plural_term,
+        for tie in ties:
+            routes[tie.space] = plural_term.routes[tie.space]
+        routes[projected_space] = routes[projected_space.base]
+        projected_term = ProjectionTerm(self.state.tag(), plural_term,
                                         ties, projected_space, routes)
-        lkid = ground_term
-        rkid = projected_term
-        is_inner = projected_term.space.dominates(ground_term.space)
-        routes = lkid.routes.copy()
-        for unit in units:
-            routes[unit] = projected_term.tag
-        term = JoinTerm(self.state.make_tag(), lkid, rkid, ties, is_inner,
-                        lkid.space, routes)
+        extra_routes = dict((unit, projected_term.tag) for unit in units)
+        unit_term = self.join_terms(trunk_term, projected_term, extra_routes)
         if is_native:
-            return term
-        lkid = self.term
-        rkid = term
-        ties = []
-        if lkid.backbone.concludes(rkid.baseline):
-            lkid = self.state.inject(lkid, [rkid.baseline])
-            axis = lkid.backbone
-            while rkid.baseline.base != axis:
-                if axis in rkid.routes:
-                    tie = ParallelTie(axis)
-                    ties.append(tie)
-                axis = axis.base
-            ties.reverse()
-        else:
-            lkid = self.state.inject(lkid, [rkid.baseline.base])
-            tie = SeriesTie(rkid.baseline)
-            ties.append(tie)
-        is_inner = rkid.space.dominates(lkid.space)
-        routes = lkid.routes.copy()
-        for unit in units:
-            routes[unit] = projected_term.tag
-        return JoinTerm(self.state.make_tag(), lkid, rkid, ties, is_inner,
-                        lkid.space, routes)
+            return unit_term
+        return self.join_terms(self.term, unit_term, extra_routes)
 
 
-class InjectGroup(Inject):
+class InjectBatch(Inject):
 
-    adapts(GroupExpression)
+    adapts(BatchExpression)
+
+    def __init__(self, expression, term, state):
+        super(InjectBatch, self).__init__(expression, term, state)
+        self.collection = expression.collection
 
     def __call__(self):
         term = self.term
+
         units = []
-        for expression in self.expression.expressions:
+        for expression in self.collection:
             if isinstance(expression, Code):
                 for unit in expression.units:
                     if unit not in term.routes:
                         units.append(unit)
+
         scalar_spaces = []
         scalar_space_to_units = {}
         for unit in units:
@@ -1003,9 +1080,10 @@ class InjectGroup(Inject):
                 scalar_space_to_units[space].append(unit)
         for space in scalar_spaces:
             group_units = scalar_space_to_units[space]
-            group = ScalarGroupExpression(space, group_units,
+            group = ScalarBatchExpression(space, group_units,
                                           self.term.binding)
             term = self.state.inject(term, [group])
+
         aggregate_space_pairs = []
         aggregate_space_pair_to_units = {}
         for unit in units:
@@ -1018,10 +1096,11 @@ class InjectGroup(Inject):
         for pair in aggregate_space_pairs:
             plural_space, space = pair
             group_units = aggregate_space_pair_to_units[pair]
-            group = AggregateGroupExpression(plural_space, space, group_units,
+            group = AggregateBatchExpression(plural_space, space, group_units,
                                              self.term.binding)
             term = self.state.inject(term, [group])
-        for expression in self.expression.expressions:
+
+        for expression in self.collection:
             term = self.state.inject(term, [expression])
         return term
 

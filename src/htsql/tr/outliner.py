@@ -324,13 +324,26 @@ class FlattenBranch(Flatten):
 
     def flatten(self):
         linkage = []
+        replaced = self.sketch.replaced[:]
+        replaced.append(self.sketch)
         for attachment in self.sketch.linkage:
             replacement = self.outliner.flatten(attachment.sketch)
+            #while (replacement.is_branch and not replacement.select and
+            #       len(replacement.linkage) == 1 and not replacement.filter and
+            #       not replacement.group and not replacement.group_filter and
+            #       not replacement.order and
+            #       replacement.limit is None and replacement.offset is None and
+            #       replacement.is_proper):
+            #    replaced.append(replacement)
+            #    replaced.extend(replacement.replaced)
+            #    replacement = replacement.linkage[0].sketch
+            #    assert replacement.is_inner and replacement.is_proper
+            #    replacement = replacement.clone(is_inner=attachment.is_inner,
+            #                                    replaced=replacement.replaced
+            #                                             +[replacement])
             if replacement is not attachment.sketch:
                 attachment = attachment.clone(sketch=replacement)
             linkage.append(attachment)
-        replaced = self.sketch.replaced[:]
-        replaced.append(self.sketch)
         if (len(linkage) > 1 and linkage[0].sketch.is_scalar
                              and linkage[1].sketch.is_inner):
             linkage = linkage[1:]
