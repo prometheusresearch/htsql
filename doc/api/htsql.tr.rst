@@ -4,6 +4,8 @@
 
 .. automodule:: htsql.tr
    :members:
+.. automodule:: htsql.tr.assemble
+   :members:
 .. automodule:: htsql.tr.bind
    :members:
 .. automodule:: htsql.tr.binding
@@ -23,6 +25,8 @@
 .. automodule:: htsql.tr.scan
    :members:
 .. automodule:: htsql.tr.syntax
+   :members:
+.. automodule:: htsql.tr.term
    :members:
 .. automodule:: htsql.tr.token
    :members:

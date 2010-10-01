@@ -410,11 +410,8 @@ class ProjectionTerm(UnaryTerm):
 
         (SELECT ... FROM <kid> GROUP BY <ties>)
 
-    `lkid` (:class:`RoutingTerm`)
-        The left operand of the correlated join.
-
-    `rkid` (:class:`RoutingTerm`)
-        The right operand of the correlated join.
+    `kid` (:class:`RoutingTerm`)
+        The operand of the projection.
 
     `ties` (a list of :class:`Tie`)
         The ties that establish the quotient space.
