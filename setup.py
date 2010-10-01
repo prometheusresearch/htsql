@@ -17,7 +17,6 @@ import os.path
 
 root = os.path.dirname(__file__)
 README = open(os.path.join(root, 'README')).read()
-INSTALL = open(os.path.join(root, 'INSTALL')).read()
 NEWS = open(os.path.join(root, 'NEWS')).read()
 
 # The distutils parameters are defined here.  Do not forget to update
@@ -28,7 +27,7 @@ NEWS = open(os.path.join(root, 'NEWS')).read()
 NAME = "HTSQL"
 VERSION = "2.0.0b1"
 DESCRIPTION = "Query language for the accidental programmer"
-LONG_DESCRIPTION = "\n".join([README, INSTALL, NEWS])
+LONG_DESCRIPTION = "\n".join([README, NEWS])
 AUTHOR = "Clark C. Evans and Kirill Simonov; Prometheus Research, LLC"
 AUTHOR_EMAIL = "cce@clarkevans.com"
 LICENSE = "Free To Use But Restricted"

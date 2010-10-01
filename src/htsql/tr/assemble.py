@@ -1032,7 +1032,7 @@ class InjectColumn(Inject):
         if self.space in self.term.routes:
             return self.term
         # Verify that the unit is singular on the term space.
-        if not self.term.spans(self.space):
+        if not self.term.space.spans(self.space):
             raise AssembleError("expected a singular expression",
                                 self.unit.mark)
         # Inject the unit space into the term.
@@ -1104,7 +1104,7 @@ class InjectCorrelated(Inject):
         if self.unit in self.term.routes:
             return self.term
         # Verify that the unit is singular on the term space.
-        if not self.term.spans(self.space):
+        if not self.term.space.spans(self.space):
             raise AssembleError("expected a singular expression",
                                 self.unit.mark)
 
@@ -1143,7 +1143,7 @@ class InjectCorrelated(Inject):
         routes = unit_term.routes.copy()
         routes[self.unit] = plural_term.tag
         unit_term = CorrelationTerm(self.state.tag(), unit_term, plural_term,
-                                    ties, lkid.space, routes)
+                                    ties, unit_term.space, routes)
         # If we attached the unit directly to the main term, we are done.
         if is_native:
             return unit_term

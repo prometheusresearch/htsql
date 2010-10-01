@@ -2,9 +2,24 @@ List of Changes
 ===============
 
 
-2.0.0 (2010-09-XX)
-------------------
+2.0.0 beta 2 (2010-10-01)
+-------------------------
 
-* Initial release.
-* (list of the basic features supported in this release).
+* Refactored the translator from the expression graph to the term tree.
+* Added `Content-Disposition` header to `:json` and `:csv` renderers.
+* Merged the tutorial to the repository.
+
+
+2.0.0 beta 1 (2010-09-31)
+-------------------------
+
+* Initial beta release.
+* PostgreSQL and SQLite backends are (mostly) supported, the former
+  more than the latter.
+* The SQL translator needs more work, in particular, the term tree,
+  the frame structure and the serializer.
+* Lots of functions are either not implemented or missing a proper
+  serializer, especially in the SQLite backend.
+* Other areas which need more work before the final release: rendering,
+  introspection, regression tests and documentation.
 
