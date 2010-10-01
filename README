@@ -2,10 +2,15 @@
 HTSQL -- A Query Language for the Accidental Programmer
 =======================================================
 
-HTSQL ("Hyper Text Structured Query Language") is a schema-driven
-URI-to-SQL translator that takes a request over HTTP, converts it to a
-SQL query, executes the query against a database, and returns the
-results in a format best suited for the user agent (CSV, HTML, etc.).
+HTSQL ("Hyper Text Structured Query Language") is a high-level query
+language for relational databases.   The target audience for HTSQL is
+the accidental programmer -- one who is not a SQL expert, yet needs a
+usable, comprehensive query tool for data access and reporting.  
+
+HTSQL is also a web service which takes a request via HTTP, translates
+it into a SQL query, executes the query against a relational database,
+and returns the results in a format requested by the user agent (JSON,
+CSV, HTML, etc.).
 
 Use of HTSQL with open source databases (PostgreSQL, MySQL, SQLite) is
 royalty free under BSD-style conditions.  Usage of HTSQL with
@@ -14,24 +19,22 @@ commercial license.  See ``LICENSE`` for details.
 
 For installation instructions, see ``INSTALL``.  For list of new
 features in this release, see ``NEWS``.  HTSQL documentation is in the
-``doc`` directory.  
-
-Visit
+``doc`` directory. 
 
     http://htsql.org/
-        The HTSQL homepage;
+        The HTSQL homepage
 
     http://htsql.org/tutorial.html
-        The HTSQL tutorial;
+        The HTSQL tutorial
 
     http://bitbucket.org/prometheus/htsql
-        HTSQL source code;
+        HTSQL source code
 
     irc://irc.freenode.net#htsql
-        IRC chat in #htsql on freenode;
+        IRC chat in #htsql on freenode
 
     http://lists.htsql.org/mailman/listinfo/htsql-users
-        The mailing list for users of HTSQL.
+        The mailing list for users of HTSQL
 
 Generous support for HTSQL was provided by Prometheus Research, LLC and
 The Simons Foundation. This material is also based upon work supported
