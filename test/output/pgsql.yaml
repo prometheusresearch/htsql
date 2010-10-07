@@ -3840,6 +3840,88 @@ tests:
          ----
          /department{sum(course.credits),count(course.credits),avg(course.credits)}?exists(course)
          SELECT "course"."!_1", COALESCE("course"."!_2", 0), "course"."!_3" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", SUM("course"."credits") AS "!_1", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "!_2", AVG(CAST("course"."credits" AS NUMERIC)) AS "!_3" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) WHERE EXISTS((SELECT TRUE FROM "ad"."course" AS "course_2" WHERE ((NOT (TRUE IS NOT DISTINCT FROM NULL)) AND ("department"."code" = "course_2"."department")))) ORDER BY "department"."code" ASC
+    - uri: /department{code,school.code, count(school.program),school.count(program)}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | department                                                           |
+        -+----------------------------------------------------------------------+-
+         | code   | school.code | count(school.program) | school.count(program) |
+        -+--------+-------------+-----------------------+-----------------------+-
+         | acc    | bus         |                     5 |                     5 |
+         | alumni |             |                     0 |                       |
+         | arthis | art         |                     3 |                     3 |
+         | artstd | art         |                     3 |                     3 |
+         | astro  | ns          |                     3 |                     3 |
+         | be     | egn         |                     8 |                     8 |
+         | bursar |             |                     0 |                       |
+         | capmrk | bus         |                     5 |                     5 |
+         | career |             |                     0 |                       |
+         | chem   | ns          |                     3 |                     3 |
+         | comp   | egn         |                     8 |                     8 |
+         | corpfi | bus         |                     5 |                     5 |
+         | edpol  | edu         |                     7 |                     7 |
+         | ee     | egn         |                     8 |                     8 |
+         | eng    | la          |                     9 |                     9 |
+         | hist   | la          |                     9 |                     9 |
+         | lang   | la          |                     9 |                     9 |
+         | me     | egn         |                     8 |                     8 |
+         | mth    | ns          |                     3 |                     3 |
+         | phys   | ns          |                     3 |                     3 |
+         | pia    | mus         |                     0 |                     0 |
+         | poli   | la          |                     9 |                     9 |
+         | psych  | la          |                     9 |                     9 |
+         | str    | mus         |                     0 |                     0 |
+         | tched  | edu         |                     7 |                     7 |
+         | voc    | mus         |                     0 |                     0 |
+         | win    | mus         |                     0 |                     0 |
+                                                                        (27 rows)
+
+         ----
+         /department{code,school.code,count(school.program),school.count(program)}
+         SELECT "department"."code", "school_1"."code", COALESCE("program"."!", 0), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school") AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT "program"."school", COUNT(NULLIF((NOT (TRUE IS NOT DISTINCT FROM NULL)), FALSE)) AS "!" FROM "ad"."program" AS "program" GROUP BY 1) AS "program" ON (("school_1"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COALESCE("program"."!", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF((NOT (TRUE IS NOT DISTINCT FROM NULL)), FALSE)) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school"))) AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+    - uri: /department{code,school.code, exists(school.program),school.exists(program)}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | department                                                             |
+        -+------------------------------------------------------------------------+-
+         | code   | school.code | exists(school.program) | school.exists(program) |
+        -+--------+-------------+------------------------+------------------------+-
+         | acc    | bus         | true                   | true                   |
+         | alumni |             | false                  |                        |
+         | arthis | art         | true                   | true                   |
+         | artstd | art         | true                   | true                   |
+         | astro  | ns          | true                   | true                   |
+         | be     | egn         | true                   | true                   |
+         | bursar |             | false                  |                        |
+         | capmrk | bus         | true                   | true                   |
+         | career |             | false                  |                        |
+         | chem   | ns          | true                   | true                   |
+         | comp   | egn         | true                   | true                   |
+         | corpfi | bus         | true                   | true                   |
+         | edpol  | edu         | true                   | true                   |
+         | ee     | egn         | true                   | true                   |
+         | eng    | la          | true                   | true                   |
+         | hist   | la          | true                   | true                   |
+         | lang   | la          | true                   | true                   |
+         | me     | egn         | true                   | true                   |
+         | mth    | ns          | true                   | true                   |
+         | phys   | ns          | true                   | true                   |
+         | pia    | mus         | false                  | false                  |
+         | poli   | la          | true                   | true                   |
+         | psych  | la          | true                   | true                   |
+         | str    | mus         | false                  | false                  |
+         | tched  | edu         | true                   | true                   |
+         | voc    | mus         | false                  | false                  |
+         | win    | mus         | false                  | false                  |
+                                                                          (27 rows)
+
+         ----
+         /department{code,school.code,exists(school.program),school.exists(program)}
+         SELECT "department"."code", "school_1"."code", EXISTS((SELECT TRUE FROM "ad"."program" AS "program" WHERE ((NOT (TRUE IS NOT DISTINCT FROM NULL)) AND ("school_1"."code" = "program"."school")))), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school") AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE FROM "ad"."program" AS "program" WHERE ((NOT (TRUE IS NOT DISTINCT FROM NULL)) AND ("school"."code" = "program"."school")))) AS "!", "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
   - id: root,-this-and-join-functions
     tests:
     - uri: /{count(school)*count(department),count(school.cross(department))}

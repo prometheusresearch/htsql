@@ -372,10 +372,8 @@ tests:
     # (see http://archives.postgresql.org/pgsql-bugs/2010-09/msg00265.php).
     - uri: /department{code,school.code,
                        count(school.program),school.count(program)}
-      skip: true
     - uri: /department{code,school.code,
                        exists(school.program),school.exists(program)}
-      skip: true
 
   - title: Root, This and Join functions
     tests:
