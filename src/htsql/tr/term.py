@@ -316,7 +316,7 @@ class JoinTerm(BinaryTerm):
     Represents a join term.
 
     A join term takes two operands and produces a set of pairs satisfying
-    the given ties.
+    the given join conditions.
 
     Two types of joins are supported by a join term.  When the join is
     *inner*, given the operands `A` and `B`, the term produces a set of
@@ -326,11 +326,11 @@ class JoinTerm(BinaryTerm):
     A *left outer joins* produces the same rows as the inner join, but
     also includes rows of the form `(a, NULL)` for each `a` from `A`
     such that there are no rows `b` from `B` such that `(a, b)` satisfies
-    the given ties.
+    the given conditions.
 
     A join term generates the following SQL clause::
 
-        (SELECT ... FROM <lkid> (INNER | LEFT OUTER) JOIN <rkid> ON (<ties>))
+        (SELECT ... FROM <lkid> (INNER | LEFT OUTER) JOIN <rkid> ON (<joints>))
 
     `lkid` (:class:`RoutingTerm`)
         The left operand of the join.
@@ -338,26 +338,27 @@ class JoinTerm(BinaryTerm):
     `rkid` (:class:`RoutingTerm`)
         The right operand of the join.
 
-    `ties` (a list of :class:`Tie`)
-        The ties that establish the join condition.
+    `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
+        A list of pairs `(lcode, rcode)` that establish join conditions
+        of the form `lcode = rcode`.
 
     `is_inner` (Boolean)
         Indicates whether the join is inner or left outer.
     """
 
-    def __init__(self, tag, lkid, rkid, ties, is_inner, space, routes):
-        assert isinstance(ties, listof(Tie))
+    def __init__(self, tag, lkid, rkid, joints, is_inner, space, routes):
+        assert isinstance(joints, listof(tupleof(Code, Code)))
         assert isinstance(is_inner, bool)
         super(JoinTerm, self).__init__(tag, lkid, rkid, space, routes)
-        self.ties = ties
+        self.joints = joints
         self.is_inner = is_inner
 
     def __str__(self):
         # Display, for inner join:
-        #   (<lkid> ++ <rkid> | <tie>, <tie>, ...)
+        #   (<lkid> ++ <rkid> | <lcode>=<rcode>, ...)
         # or, for left outer join:
-        #   (<lkid> +* <rkid> | <tie>, <tie>, ...)
-        conditions = ", ".join(str(tie) for tie in self.ties)
+        #   (<lkid> +* <rkid> | <lcode>=<rcode>, ...)
+        conditions = ", ".join("%s=%s" for lcode, rcode in self.joints)
         if conditions:
             conditions = " | %s" % conditions
         if self.is_inner:
@@ -380,19 +381,20 @@ class CorrelationTerm(BinaryTerm):
     `rkid` (:class:`RoutingTerm`)
         The correlated term.
 
-    `ties` (a list of :class:`Tie`)
-        The ties that establish the join condition.
+    `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
+        A list of pairs `(lcode, rcode)` that establish join conditions
+        of the form `lcode = rcode`.
     """
 
-    def __init__(self, tag, lkid, rkid, ties, space, routes):
-        assert isinstance(ties, listof(Tie))
+    def __init__(self, tag, lkid, rkid, joints, space, routes):
+        assert isinstance(joints, listof(tupleof(Code, Code)))
         super(CorrelationTerm, self).__init__(tag, lkid, rkid, space, routes)
-        self.ties = ties
+        self.joints = joints
 
     def __str__(self):
         # Display:
-        #   (<lkid> // <rkid> | <tie>, <tie>, ...)
-        conditions = ", ".join(str(tie) for tie in self.ties)
+        #   (<lkid> // <rkid> | <lcode>=<rcode>, ...)
+        conditions = ", ".join("%s=%s" for lcode, rcode in self.joints)
         if conditions:
             conditions = " | %s" % conditions
         return "(%s // %s%s)" % (self.lkid, self.rkid, conditions)
@@ -402,33 +404,35 @@ class ProjectionTerm(UnaryTerm):
     """
     Represents a projection term.
 
-    Given an operand term and tie conditions, the ties naturally establish
-    an equivalence relation on the operand.  A projection term produces
-    rows of the quotient set corresponding to the equivalence relation.
+    Given an operand term and a function on it (called the *kernel*), the
+    kernel naturally establishes an equivalence relation on the operand.
+    That is, two rows from the operand are equivalent if their images under
+    the kernel are equal to each other.  A projection term produces rows
+    of the quotient set corresponding to the equivalence relation.
 
     A projection term generates the following SQL clause::
 
-        (SELECT ... FROM <kid> GROUP BY <ties>)
+        (SELECT ... FROM <kid> GROUP BY <kernel>)
 
     `kid` (:class:`RoutingTerm`)
         The operand of the projection.
 
-    `ties` (a list of :class:`Tie`)
-        The ties that establish the quotient space.
+    `kernel` (a list of :class:`htsql.tr.code.Code`)
+        The equivalence kernel.
     """
 
-    def __init__(self, tag, kid, ties, space, routes):
-        assert isinstance(ties, listof(Tie))
+    def __init__(self, tag, kid, kernel, space, routes):
+        assert isinstance(kernel, listof(Code))
         super(ProjectionTerm, self).__init__(tag, kid, space, routes)
-        self.ties = ties
+        self.kernel = kernel
 
     def __str__(self):
         # Display:
-        #   (<kid> ^ <tie>, <tie>, ...)
-        if not self.ties:
+        #   (<kid> ^ <code>, <code>, ...)
+        if not self.kernel:
             return "(%s ^)" % self.kid
         return "(%s ^ %s)" % (self.kid,
-                              ", ".join(str(tie) for tie in self.ties))
+                              ", ".join(str(code) for code in self.kernel))
 
 
 class OrderTerm(UnaryTerm):
@@ -550,100 +554,5 @@ class QueryTerm(Term):
         assert isinstance(expression, QueryExpression)
         super(QueryTerm, self).__init__(tag, expression)
         self.segment = segment
-
-
-class Tie(Node):
-    """
-    Represents a connection between two axes.
-
-    An axis space could be naturally connected with:
-
-    - an identical axis space;
-    - or its base space.
-
-    These two types of connections are called *parallel* and *series*
-    ties respectively.  Typically, a parallel tie is implemented using
-    a primary key constraint while a series tie is implemented using
-    a foreign key constraint, but, in general, it depends on the type
-    of the axis.
-
-    :class:`Tie` is an abstract case class with exactly two subclasses:
-    :class:`ParallelTie` and :class:`SeriesTie`.
-
-    Class attributes:
-
-    `is_parallel` (Boolean)
-        Denotes a parallel tie.
-
-    `is_series` (Boolean)
-        Denotes a series tie.
-    """
-
-    is_parallel = False
-    is_series = False
-
-
-class ParallelTie(Tie):
-    """
-    Represents a parallel tie.
-
-    A parallel tie is a connection of an axis with itself.
-
-    `space` (:class:`htsql.tr.code.Space`)
-        An axis space.
-    """
-
-    is_parallel = True
-
-    def __init__(self, space):
-        assert isinstance(space, Space) and space.is_axis
-        # Technically, non-inflated axis spaces could be permitted, but
-        # since the assembler only generates ties for inflated spaces,
-        # we add a respective check here.
-        assert space.is_inflated
-        self.space = space
-
-    def __str__(self):
-        # Display:
-        #   ==<space>
-        return "==%s" % self.space
-
-
-class SeriesTie(Tie):
-    """
-    Represents a series tie.
-
-    A series tie is a connection between an axis and its base.  Note that
-    a series tie is assimetric, that is, depending on the order of the
-    operands, it could connect either an axis to its base, or the base
-    to the axis.
-
-    `space` (:class:`htsql.tr.code.Space`)
-        An axis space.
-
-    `is_backward` (Boolean)
-        If set, indicates that the tie connects the axis base to the axis
-        (i.e. the operands are switched).
-    """
-
-    is_series = True
-
-    def __init__(self, space, is_backward=False):
-        assert isinstance(space, Space) and space.is_axis
-        # Technically, non-inflated axis spaces could be permitted, but
-        # since the assembler only generates ties for inflated spaces,
-        # we add a respective check here.
-        assert space.is_inflated
-        assert isinstance(is_backward, bool)
-        self.space = space
-        self.is_backward = is_backward
-
-    def __str__(self):
-        # Depending on the direction, display
-        #   =><space>  or  <=<space>
-        if self.is_backward:
-            return "<=%s" % self.space
-        else:
-            return "=>%s" % self.space
 
 

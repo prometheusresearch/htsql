@@ -16,8 +16,7 @@ This module implements outline adapters.
 from ..adapter import Adapter, adapts
 from .term import (Term, RoutingTerm, TableTerm, ScalarTerm, FilterTerm,
                    JoinTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
-                   WrapperTerm, SegmentTerm, QueryTerm,
-                   Tie, ParallelTie, SeriesTie)
+                   WrapperTerm, SegmentTerm, QueryTerm)
 from .code import (Unit, ColumnUnit, ScalarUnit, AggregateUnit, CorrelatedUnit,
                    Space, ScalarSpace, CrossProductSpace, JoinProductSpace)
 from .sketch import (Sketch, LeafSketch, ScalarSketch, BranchSketch,
@@ -48,10 +47,6 @@ class Outliner(object):
             demand = self.delegate(unit, term)
             demand_by_unit[unit] = demand
         return BranchAppointment(expression, demand_by_unit)
-
-    def connect(self, tie):
-        connect = Connect(tie.space, self, tie)
-        return connect.connect()
 
     def flatten(self, sketch):
         flatten = Flatten(sketch, self)
@@ -117,14 +112,13 @@ class OutlineJoin(Outline):
         right_child = self.outliner.outline(self.term.rkid,
                                             is_inner=self.term.is_inner)
         connections = []
-        for tie in self.term.ties:
-            for left_unit, right_unit in self.outliner.connect(tie):
-                left_appointment = self.outliner.appoint(left_unit,
-                                                         self.term.lkid)
-                right_appointment = self.outliner.appoint(right_unit,
-                                                          self.term.rkid)
-                connection = Connection(left_appointment, right_appointment)
-                connections.append(connection)
+        for left_unit, right_unit in self.term.joints:
+            left_appointment = self.outliner.appoint(left_unit,
+                                                     self.term.lkid)
+            right_appointment = self.outliner.appoint(right_unit,
+                                                      self.term.rkid)
+            connection = Connection(left_appointment, right_appointment)
+            connections.append(connection)
         right_attachment = Attachment(right_child, connections)
         linkage = [left_attachment, right_attachment]
         return BranchSketch(linkage=linkage,
@@ -144,14 +138,13 @@ class OutlineCorrelation(Outline):
                                             is_inner=False,
                                             is_proper=False)
         connections = []
-        for tie in self.term.ties:
-            for left_code, right_code in self.outliner.connect(tie):
-                left_appointment = self.outliner.appoint(left_code,
-                                                         self.term.lkid)
-                right_appointment = self.outliner.appoint(right_code,
-                                                          self.term.rkid)
-                connection = Connection(left_appointment, right_appointment)
-                connections.append(connection)
+        for left_code, right_code in self.term.joints:
+            left_appointment = self.outliner.appoint(left_code,
+                                                     self.term.lkid)
+            right_appointment = self.outliner.appoint(right_code,
+                                                      self.term.rkid)
+            connection = Connection(left_appointment, right_appointment)
+            connections.append(connection)
         right_attachment = Attachment(right_child, connections)
         linkage = [left_attachment, right_attachment]
         return BranchSketch(linkage=linkage,
@@ -169,10 +162,9 @@ class OutlineProjection(Outline):
         attachment = Attachment(child)
         linkage = [attachment]
         group = []
-        for tie in self.term.ties:
-            for left_code, right_code in self.outliner.connect(tie):
-                appointment = self.outliner.appoint(right_code, self.term.kid)
-                group.append(appointment)
+        for code in self.term.kernel:
+            appointment = self.outliner.appoint(code, self.term.kid)
+            group.append(appointment)
         return BranchSketch(linkage=linkage,
                             group=group,
                             is_inner=is_inner,
@@ -385,83 +377,5 @@ class FlattenBranch(Flatten):
                             limit=limit,
                             offset=offset,
                             replaced=replaced)
-
-
-class Connect(Adapter):
-
-    adapts(Space, Outliner)
-
-    def __init__(self, space, outliner, tie):
-        self.space = space
-        self.outliner = outliner
-        self.tie = tie
-
-    def connect(self):
-        if self.tie.is_parallel:
-            return self.connect_parallel()
-        if self.tie.is_series:
-            return self.connect_series()
-
-    def connect_parallel(self):
-        raise NotImplementedError()
-
-    def connect_series(self):
-        raise NotImplementedError()
-
-
-class ConnectScalar(Connect):
-
-    adapts(ScalarSpace, Outliner)
-
-    def connect_parallel(self):
-        return []
-
-
-class ConnectFreeTable(Connect):
-
-    adapts(CrossProductSpace, Outliner)
-
-    def connect_parallel(self):
-        table = self.tie.space.table
-        if table.primary_key is None:
-            raise InvalidArgumentError()
-        for name in table.primary_key.origin_column_names:
-            column = table.columns[name]
-            code = ColumnUnit(column, self.tie.space,
-                              self.tie.space.binding)
-            yield (code, code)
-
-    def connect_series(self):
-        return []
-
-
-class ConnectJoinedTable(Connect):
-
-    adapts(JoinProductSpace, Outliner)
-
-    def connect_parallel(self):
-        table = self.tie.space.join.target
-        if table.primary_key is None:
-            raise InvalidArgumentError()
-        for name in table.primary_key.origin_column_names:
-            column = table.columns[name]
-            code = ColumnUnit(column, self.tie.space, self.tie.space.binding)
-            yield (code, code)
-
-    def connect_series(self):
-        join = self.tie.space.join
-        left_codes = []
-        right_codes = []
-        for column in join.origin_columns:
-            code = ColumnUnit(column, self.tie.space.base,
-                              self.tie.space.binding)
-            left_codes.append(code)
-        for column in join.target_columns:
-            code = ColumnUnit(column, self.tie.space,
-                              self.tie.space.binding)
-            right_codes.append(code)
-        if self.tie.is_backward:
-            left_codes, right_codes = right_codes, left_codes
-        return zip(left_codes, right_codes)
 
 

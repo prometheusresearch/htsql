@@ -1542,3 +1542,79 @@ class AggregateBatchExpression(BatchExpression):
         self.space = space
 
 
+class Tie(Node):
+    """
+    Represents a connection between two axes.
+
+    This is an auxiliary class used internally by the assembler.
+
+    An axis space could be naturally connected with:
+
+    - an identical axis space;
+    - or its base space.
+
+    These two types of connections are called *parallel* and *serial*
+    ties respectively.  Typically, a parallel tie is implemented using
+    a primary key constraint while a serial tie is implemented using
+    a foreign key constraint, but, in general, it depends on the type
+    of the axis space.
+
+    :class:`Tie` is an abstract case class with exactly two subclasses:
+    :class:`ParallelTie` and :class:`SerialTie`.
+
+    Class attributes:
+
+    `is_parallel` (Boolean)
+        Denotes a parallel tie.
+
+    `is_serial` (Boolean)
+        Denotes a serial tie.
+
+    Attributes:
+
+    `space` (:class:`Space`)
+        An axis space.
+    """
+
+    is_parallel = False
+    is_serial = False
+
+    def __init__(self, space):
+        assert isinstance(space, Space) and space.is_axis
+        # Technically, non-inflated axis spaces could be permitted, but
+        # since the assembler only generates ties for inflated spaces,
+        # we add a respective check here.
+        assert space.is_inflated
+        self.space = space
+
+    def __str__(self):
+        # Display, depending on the tie direction,
+        #   ||<space> or ==<space>
+        indicator = None
+        if self.is_parallel:
+            indicator = "||"
+        if self.is_serial:
+            indicator = "=="
+        return "%s%s" % (indicator, self.space)
+
+
+class ParallelTie(Tie):
+    """
+    Represents a parallel tie.
+
+    A parallel tie is a connection of an axis space with itself.
+    """
+
+    is_parallel = True
+
+
+class SerialTie(Tie):
+    """
+    Represents a serial tie.
+
+    A serial tie is a connection between an axis space and its base.
+    """
+
+    is_serial = True
+
+
