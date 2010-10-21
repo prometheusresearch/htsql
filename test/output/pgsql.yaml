@@ -4050,6 +4050,7 @@ tests:
       - [Content-Disposition, attachment; filename="(school).json"]
       body: |
         [
+          ["code", "name"],
           ["art", "School of Art and Design"],
           ["bus", "School of Business"],
           ["edu", "College of Education"],
@@ -4246,6 +4247,7 @@ tests:
       - [Content-Disposition, attachment; filename="(school).json"]
       body: |
         [
+          ["code", "name"],
           ["art", "School of Art and Design"],
           ["bus", "School of Business"],
           ["edu", "College of Education"],

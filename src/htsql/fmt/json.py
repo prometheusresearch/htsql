@@ -17,6 +17,7 @@ from ..adapter import adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain)
+from .entitle import entitle
 import re
 
 
@@ -43,29 +44,20 @@ class JSONRenderer(Renderer):
                  'attachment; filename="(%s).json"' % filename)]
 
     def generate_body(self, product):
-        if not product:
-            yield "[]\n"
-            return
+        titles = [escape(entitle(element.binding))
+                  for element in product.profile.segment.elements]
         domains = [element.domain
                    for element in product.profile.segment.elements]
         tool = JSONFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
-        record = None
-        for next_record in product:
-            if record is not None:
-                items = [format(value)
-                         for format, value in zip(formats, record)]
-                yield "  [%s],\n" % ", ".join(items)
-            else:
-                yield "[\n"
-            record = next_record
-        if record is not None:
+        yield "[\n"
+        items = titles
+        for record in product:
+            yield "  [%s],\n" % ", ".join(items)
             items = [format(value)
                      for format, value in zip(formats, record)]
-            yield "  [%s]\n" % ", ".join(items)
-            yield "]\n"
-        else:
-            yield "[]\n"
+        yield "  [%s]\n" % ", ".join(items)
+        yield "]\n"
 
 
 class JSONFormatter(Formatter):
@@ -76,31 +68,6 @@ class JSONFormatter(Formatter):
 class FormatDomain(Format):
 
     adapts(JSONRenderer, Domain)
-
-    escape_pattern = r"""[\x00-\x1F\\/"]"""
-    escape_regexp = re.compile(escape_pattern)
-    escape_table = {
-            '"': '"',
-            '\\': '\\',
-            '/': '/',
-            '\x08': 'b',
-            '\x0C': 'f',
-            '\x0A': 'n',
-            '\x0D': 'r',
-            '\x09': 't',
-    }
-
-    def replace(self, match):
-        char = match.group()
-        if char in self.escape_table:
-            return '\\'+self.escape_table[char]
-        return '\\u%04X' % ord(char)
-
-    def escape(self, value):
-        value = value.decode('utf-8')
-        value = self.escape_regexp.sub(self.replace, value)
-        value = value.encode('utf-8')
-        return '"%s"' % value
 
     def __call__(self, value):
         if value is None:
@@ -148,7 +115,7 @@ class FormatString(Format):
     def __call__(self, value):
         if value is None:
             return "null"
-        return self.escape(value)
+        return escape(value)
 
 
 class FormatEnum(Format):
@@ -158,7 +125,7 @@ class FormatEnum(Format):
     def __call__(self, value):
         if value is None:
             return "null"
-        return self.escape(value)
+        return escape(value)
 
 
 class FormatDate(Format):
@@ -169,5 +136,38 @@ class FormatDate(Format):
         if value is None:
             return "null"
         return str(value)
+
+
+class Escape(object):
+
+    escape_pattern = r"""[\x00-\x1F\\/"]"""
+    escape_regexp = re.compile(escape_pattern)
+    escape_table = {
+            '"': '"',
+            '\\': '\\',
+            '/': '/',
+            '\x08': 'b',
+            '\x0C': 'f',
+            '\x0A': 'n',
+            '\x0D': 'r',
+            '\x09': 't',
+    }
+
+    @classmethod
+    def replace(cls, match):
+        char = match.group()
+        if char in cls.escape_table:
+            return '\\'+cls.escape_table[char]
+        return '\\u%04X' % ord(char)
+
+    @classmethod
+    def escape(cls, value):
+        value = value.decode('utf-8')
+        value = cls.escape_regexp.sub(cls.replace, value)
+        value = value.encode('utf-8')
+        return '"%s"' % value
+
+
+escape = Escape.escape
 
 
