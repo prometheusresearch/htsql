@@ -3850,14 +3850,14 @@ tests:
          | code   | school.code | count(school.program) | school.count(program) |
         -+--------+-------------+-----------------------+-----------------------+-
          | acc    | bus         |                     5 |                     5 |
-         | alumni |             |                     0 |                       |
+         | alumni |             |                     0 |                     0 |
          | arthis | art         |                     3 |                     3 |
          | artstd | art         |                     3 |                     3 |
          | astro  | ns          |                     3 |                     3 |
          | be     | egn         |                     8 |                     8 |
-         | bursar |             |                     0 |                       |
+         | bursar |             |                     0 |                     0 |
          | capmrk | bus         |                     5 |                     5 |
-         | career |             |                     0 |                       |
+         | career |             |                     0 |                     0 |
          | chem   | ns          |                     3 |                     3 |
          | comp   | egn         |                     8 |                     8 |
          | corpfi | bus         |                     5 |                     5 |
