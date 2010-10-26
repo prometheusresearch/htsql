@@ -138,6 +138,8 @@ htraf.widgets = {
     render: function() {
         this.list.map(function(widget) {
             $(widget.selector).each(function() {
+                if($(this).data('htraf'))
+                    return;
                 widget.render(this);
                 var self = this;
                 $(this).htraf('getLinked').change(function() {
@@ -163,7 +165,6 @@ htraf.widgets = {
         linked.filter('button,input[type=button]').click(function() {
             $(this).trigger('change');        
         });
-
 
 
         // load all those which don't have dependencies
