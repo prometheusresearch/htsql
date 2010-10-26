@@ -18,6 +18,10 @@ htraf.quote = function(s) {
     return "'" + s.replace(/'/g, "''") + "'";
 };
 
+htraf.convertNull = function(value) {
+    return value === null ? '':value;
+}
+
 htraf.iterVars = function(s, callback) {
     var reStr = /^'[^']*'/, reNonStr = /^[^']+('|$)/, reVar = /\$\w+/g,
         ret = '';
@@ -102,7 +106,7 @@ htraf.widgets = {
                 $(el).htraf({
                     getValue: function() {
                         return $(this).find('tr.row-selected td:eq(0)').text()
-                               || '';
+                               || null;
                     },
                     
                     render: function(data) {
@@ -124,9 +128,16 @@ htraf.widgets = {
                                     $(self).trigger('change');
                                 }).appendTo(self);
                             row.map(function(text) {
-                                $('<td/>').text(text).appendTo(tr);
+                                $('<td/>').text(htraf.convertNull(text))
+                                          .appendTo(tr);
                             });
                         });
+
+                        var hide = ($(this).attr('data-hide-first-column') 
+                                    || '').toLowerCase();
+                        if(hide == 'yes' || hide == 'true') {
+                            $('tr', this).find('td:eq(0),th:eq(0)').hide();
+                        }
                     }
                 }) 
             }
@@ -140,7 +151,8 @@ htraf.widgets = {
                         var titleIndex = data[0].length > 1 ? 1:0;
                         for(var i = 1, l = data.length; i < l; i++) 
                             this.options[i - 1] = 
-                                new Option(data[i][titleIndex], data[i][0]);
+                            new Option(htraf.convertNull(data[i][titleIndex]),
+                                       htraf.convertNull(data[i][0]));
                         $(this).trigger('change');
                     }        
                 });
@@ -155,8 +167,30 @@ htraf.widgets = {
         },
 
         {
+            selector: 'input[data-source],textarea[data-source]',
+            render: function(el) {
+                $(el).htraf({
+                    render: function(data) {
+                        var text = (data[1] || [''])[0] || '';
+                        $(this).val(htraf.convertNull(text));
+                    }
+                });
+            }
+        },
+
+        {
             selector: '[data-source]',
             render: function(el) {
+                $(el).htraf({
+                    render: function(data) {
+                        var text = (data[1] || [''])[0] || '';
+                        $(this).text(htraf.convertNull(text));
+                    },
+
+                    getValue: function() {
+                        return $(this).text() || null;
+                    }
+                });
             
             }
         }
@@ -191,7 +225,7 @@ htraf.widgets = {
 
         // configure buttons, so that they produce 'change' event on click
         linked.filter('button,input[type=button]').click(function() {
-            $(this).trigger('change');        
+            $(this).trigger('change');
         });
 
 
@@ -247,7 +281,9 @@ $.fn.extend({
                 },
 
                 clear: opts.clear || function() {
+                    $(this).text('');
                     $(this).children().remove();
+                    $(this).trigger('change');
                 }, 
 
                 render: opts.render || function(data) {

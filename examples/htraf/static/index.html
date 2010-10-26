@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title> Demo 1 </title>
+    <title> HTRAF Demo </title>
     <script type="text/javascript">
         var HTSQL_PREFIX = '/@htsql_regress',
             HTRAF_PREFIX = 'htraf';
@@ -10,8 +10,22 @@
 <body>
     <h3>Select School</h3>
     <select id="school" data-source="/school{code, name}"></select>
-    <h3>Select Department</h3>
+    <h3>Departments</h3>
+    <p>Filter By Name <input id="department_name"/></p>
+    <table id="department" data-hide-first-column="yes" 
+        data-source="/department{code, name, school.name}
+                     ?school=$school&name~$department_name">
+    </table>
+    <p>
+        Selected Department: 
+        <em data-source="/department{name}?code=$department"></em> <br/>
+        Count of Courses in Selected Department: 
+        <input data-source="/department{count(course)}?code=$department">
+    </p>
+    <h3>Courses</h3>
     <table id="department" 
-        data-source="/department{code, name, school.name}?school=$school"></table>
+        data-source="/course{*}?department=$department">
+    </table>
+
 </body>
 </html>
