@@ -1,13 +1,17 @@
 <html>
 <head>
-    <title>HTRAF demos</title>
+    <title> Demo 1 </title>
+    <script type="text/javascript">
+        var HTSQL_PREFIX = '/@htsql_regress',
+            HTRAF_PREFIX = 'htraf';
+    </script>
+    <script type="text/javascript" src="htraf/htraf.js"></script>
 </head>
 <body>
-    <h1>HTRAF demos</h1>
-    <ul>
-        <li>
-            <a href="demo1.html">Simple demo of all components</a>
-        </li>
-    </ul>
+    <h3>Select School</h3>
+    <select id="school" data-source="/school{code, name}"></select>
+    <h3>Select Department</h3>
+    <select id="department" 
+        data-source="/department{code, name + ' (' + school.name + ')'}?school=$school"></select>
 </body>
 </html>

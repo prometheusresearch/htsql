@@ -112,6 +112,7 @@ htraf.widgets = {
                         for(var i = 1, l = data.length; i < l; i++) 
                             this.options[i - 1] = 
                                 new Option(data[i][titleIndex], data[i][0]);
+                        $(this).trigger('change');
                     }        
                 });
             }
@@ -199,7 +200,17 @@ $.fn.extend({
                     var url = $(this).attr('data-source') || null;
                     if(!url)
                         return;
-                    // TODO: substitute variables
+                    
+                    var vars = {};
+                    $(this).htraf('getLinked').each(function() {
+                        var id = $(this).attr('id'),
+                            value = $(this).htraf('getValue') || $(this).val();
+                        if(!id || value === null || value === '')
+                            return;
+                        vars[id] = value;
+                    });
+                    url = htraf.subVars(url, vars);
+
                     var self = this;
                     htraf.load(url, function(data) {
                         $(self).htraf('render', data);    
@@ -226,9 +237,9 @@ $.fn.extend({
                                 return '#' + v;   
                             }).join(',');
                     if(selectorAttr)
-                        ret.add(selectorAttr);
+                        ret = ret.add(selectorAttr);
                     if(selectorVars)
-                        ret.add(selectorVars);
+                        ret = ret.add(selectorVars);
                     return ret;
                 }
             });
