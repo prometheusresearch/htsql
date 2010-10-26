@@ -99,7 +99,36 @@ htraf.widgets = {
         {
             selector: 'table[data-source]',
             render: function(el) {
-             
+                $(el).htraf({
+                    getValue: function() {
+                        return $(this).find('tr.row-selected td:eq(0)').text()
+                               || '';
+                    },
+                    
+                    render: function(data) {
+                        var tr = $('<tr/>').appendTo(this), self = this;
+                        data[0].map(function(text) {
+                            $('<th/>').text(text).appendTo(tr);
+                        });
+                        data.slice(1, data.length).map(function(row) {
+                            var tr = $('<tr/>')
+                                .mouseover(function() {
+                                    $(this).addClass('row-hover');
+                                }) 
+                                .mouseout(function() {
+                                    $(this).removeClass('row-hover');
+                                })
+                                .click(function() {
+                                    $('tr', self).removeClass('row-selected');
+                                    $(this).addClass('row-selected');
+                                    $(self).trigger('change');
+                                }).appendTo(self);
+                            row.map(function(text) {
+                                $('<td/>').text(text).appendTo(tr);
+                            });
+                        });
+                    }
+                }) 
             }
         },
 
@@ -144,8 +173,7 @@ htraf.widgets = {
                 var self = this;
                 $(this).htraf('getLinked').change(function() {
                     var value = $(this).htraf('getValue') || $(this).val();
-                    if(typeof value == 'undefined' || value == '' 
-                    || value == null)
+                    if(typeof value == 'undefined' || value == null)
                         $(self).htraf('clear');
                     else {
                         $(self).htraf('clear').htraf('load');
@@ -206,7 +234,7 @@ $.fn.extend({
                     $(this).htraf('getLinked').each(function() {
                         var id = $(this).attr('id'),
                             value = $(this).htraf('getValue') || $(this).val();
-                        if(!id || value === null || value === '')
+                        if(!id || value === null)
                             return;
                         vars[id] = value;
                     });

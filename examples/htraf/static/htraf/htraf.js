@@ -7,4 +7,6 @@ if(!window.$) {
 if(!window.htraf) {
     document.write('<script type="text/javascript" '
         + 'src="' + prefix + '/js/_htraf.js"></script>\n');
+    document.write('<link rel="stylesheet" type="text/css"'
+                   +'href="' + prefix + '/css/htraf.css">');
 }

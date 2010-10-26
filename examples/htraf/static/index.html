@@ -11,7 +11,7 @@
     <h3>Select School</h3>
     <select id="school" data-source="/school{code, name}"></select>
     <h3>Select Department</h3>
-    <select id="department" 
-        data-source="/department{code, name + ' (' + school.name + ')'}?school=$school"></select>
+    <table id="department" 
+        data-source="/department{code, name, school.name}?school=$school"></table>
 </body>
 </html>
