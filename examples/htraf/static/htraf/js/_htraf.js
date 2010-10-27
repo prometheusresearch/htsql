@@ -14,6 +14,15 @@ if(!Array.prototype.map) {
 
 htraf = {};
 
+htraf.Error = function(message) {
+    alert('[Error]:' + message);
+};
+
+htraf._autoId = 0;
+htraf.autoId = function() {
+    return 'htraf' + (++htraf._autoId);
+};
+
 htraf.quote = function(s) {
     return "'" + s.replace(/'/g, "''") + "'";
 };
@@ -69,11 +78,23 @@ htraf.subVars = function(s, vars) {
         vars[key] = htraf.quote(vars[key]);
     return htraf.iterVars(s, function(fragment) {
         for(var key in vars) {
-            var re = eval('(/\\$' + key + '/)')
+            var re = eval('(/\\$' + key + '/g)')
             fragment = fragment.replace(re, vars[key]);
         }
         return fragment;
     });
+};
+
+htraf.gatherVars = function(node) {
+    var vars = {};
+    $(node).htraf('getLinked').each(function() {
+        var id = $(this).attr('id'),
+            value = $(this).htraf('getValue') || $(this).val();
+        if(!id || value === null)
+            return;
+        vars[id] = value;
+    });
+    return vars;
 };
 
 htraf.load = function(url, success) {
@@ -154,7 +175,7 @@ htraf.widgets = {
                             new Option(htraf.convertNull(data[i][titleIndex]),
                                        htraf.convertNull(data[i][0]));
                         $(this).trigger('change');
-                    }        
+                    } 
                 });
             }
         },
@@ -162,7 +183,44 @@ htraf.widgets = {
         {
             selector: 'div[data-source][data-display=chart]',
             render: function(el) {
-                
+                var chartType = $(el).attr('data-chart-type') || 'pie';
+                var chart = {
+                    pie: {
+                        prepare: function(data) {
+                            return data.slice(1, data.length)
+                             .map(function(row) {
+
+                                if(row.length != 2)
+                                    throw new htraf.Error('Pie chart assumes '
+                                                          + 'exactly 2 '
+                                                          + 'columns dataset');
+                                return row;
+                            });
+                        },
+                        renderer: $.jqplot.PieRenderer
+                    }
+                }[chartType];
+                if(!chart)
+                    throw new htraf.Error('Unsupported chart type: ' 
+                                          + chartType); 
+                $(el).htraf({
+                    render: function(data) {
+                        var data = chart.prepare(data);
+                        if(!$(this).attr('id'))
+                            $(this).attr('id', htraf.autoId());
+                        var title = htraf.subVars($(this).attr('data-source'),
+                                                  htraf.gatherVars(this));
+                        $.jqplot($(this).attr('id'), [data], {
+                            title: title,
+                            seriesDefaults: {
+                                renderer: chart.renderer
+                            },
+                            legend: {
+                                show: true
+                            }
+                        });
+                    } 
+                }); 
             }
         },
 
@@ -264,15 +322,7 @@ $.fn.extend({
                     if(!url)
                         return;
                     
-                    var vars = {};
-                    $(this).htraf('getLinked').each(function() {
-                        var id = $(this).attr('id'),
-                            value = $(this).htraf('getValue') || $(this).val();
-                        if(!id || value === null)
-                            return;
-                        vars[id] = value;
-                    });
-                    url = htraf.subVars(url, vars);
+                    url = htraf.subVars(url, htraf.gatherVars(this));
 
                     var self = this;
                     htraf.load(url, function(data) {

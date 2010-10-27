@@ -6,6 +6,7 @@
             HTRAF_PREFIX = 'htraf';
     </script>
     <script type="text/javascript" src="htraf/htraf.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/custom.css"/>
 </head>
 <body>
     <h3>Select School</h3>
@@ -20,12 +21,16 @@
         Selected Department: 
         <em data-source="/department{name}?code=$department"></em> <br/>
         Count of Courses in Selected Department: 
-        <input data-source="/department{count(course)}?code=$department">
+        <strong data-source="/department{count(course)}?code=$department">
+        </strong>
     </p>
+    <div class="chart"
+        data-source="/program{title, count(student)}
+                    ?school=$school&count(student)>0" 
+                    data-display="chart"></div>
     <h3>Courses</h3>
     <table id="department" 
-        data-source="/course{*}?department=$department">
+        data-source="/course?department=$department">
     </table>
-
 </body>
 </html>
