@@ -184,6 +184,7 @@ htraf.widgets = {
             selector: 'div[data-source][data-display=chart]',
             render: function(el) {
                 var chartType = $(el).attr('data-chart-type') || 'pie';
+                var title = $(el).attr('data-chart-title') || '';
                 var chart = {
                     pie: {
                         prepare: function(data) {
@@ -208,8 +209,6 @@ htraf.widgets = {
                         var data = chart.prepare(data);
                         if(!$(this).attr('id'))
                             $(this).attr('id', htraf.autoId());
-                        var title = htraf.subVars($(this).attr('data-source'),
-                                                  htraf.gatherVars(this));
                         $.jqplot($(this).attr('id'), [data], {
                             title: title,
                             seriesDefaults: {

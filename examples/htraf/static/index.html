@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <title> HTRAF Demo </title>
@@ -11,6 +12,11 @@
 <body>
     <h3>Select School</h3>
     <select id="school" data-source="/school{code, name}"></select>
+    <div class="chart"
+        data-source="/program{title, count(student)}
+                    ?school=$school&count(student)>0" 
+        data-display="chart"
+        data-chart-title="Percent of Students by Program"></div>
     <h3>Departments</h3>
     <p>Filter By Name <input id="department_name"/></p>
     <table id="department" data-hide-first-column="yes" 
@@ -24,10 +30,6 @@
         <strong data-source="/department{count(course)}?code=$department">
         </strong>
     </p>
-    <div class="chart"
-        data-source="/program{title, count(student)}
-                    ?school=$school&count(student)>0" 
-                    data-display="chart"></div>
     <h3>Courses</h3>
     <table id="department" 
         data-source="/course?department=$department">
