@@ -43,9 +43,7 @@ tests:
          | code   | name                   | school |
         -+--------+------------------------+--------+-
          | acc    | Accounting             | bus    |
-         | alumni | Alumni & Parents       |        |
          | arthis | Art History            | art    |
-         | artstd | Studio Art             | art    |
          | astro  | Astronomy              | ns     |
          | be     | Bioengineering         | egn    |
          | bursar | Bursar's Office        |        |
@@ -54,6 +52,7 @@ tests:
          | chem   | Chemistry              | ns     |
          | comp   | Computer Science       | egn    |
          | corpfi | Corporate Finance      | bus    |
+         | donars | Alumni & Parents       |        |
          | edpol  | Educational Policy     | edu    |
          | ee     | Electrical Engineering | egn    |
          | eng    | English                | la     |
@@ -65,6 +64,7 @@ tests:
          | pia    | Piano                  | mus    |
          | poli   | Political Science      | la     |
          | psych  | Psychology             | la     |
+         | stdart | Studio Art             | art    |
          | str    | Strings                | mus    |
          | tched  | Teacher Education      | edu    |
          | voc    | Vocals                 | mus    |
@@ -209,37 +209,6 @@ tests:
          :            :        : European Art                     :         : materials and manufacturing      :
          :            :        :                                  :         : techniques employed in Europe    :
          :            :        :                                  :         : over the last two centuries.     :
-         | artstd     |    119 | Spring Basket Weaving Workshop   |         | A just-for-fun chance to learn   |
-         :            :        :                                  :         : the basics of basket weaving.    :
-         | artstd     |    333 | Drawing                          |       3 | Exploration of the structure and |
-         :            :        :                                  :         : interrelationships of visual     :
-         :            :        :                                  :         : form in drawing, painting, and   :
-         :            :        :                                  :         : sculpture. Principal historical  :
-         :            :        :                                  :         : modes of drawing are examined.   :
-         | artstd     |    411 | Underwater Basket Weaving        |       4 | This course provides a novel     |
-         :            :        :                                  :         : perspective on the traditional   :
-         :            :        :                                  :         : art of basketry as it is         :
-         :            :        :                                  :         : experienced in reduced gravity   :
-         :            :        :                                  :         : and in the context of fluid      :
-         :            :        :                                  :         : dynamics. Requires instructor    :
-         :            :        :                                  :         : permission and a valid c-card.   :
-         | artstd     |    509 | Twentieth Century Printmaking    |       4 | Development of personalized      |
-         :            :        :                                  :         : concepts and individual          :
-         :            :        :                                  :         : aesthetic expression in          :
-         :            :        :                                  :         : printmaking with reference to    :
-         :            :        :                                  :         : various styles and trends in     :
-         :            :        :                                  :         : Twentieth Century printmaking.   :
-         | artstd     |    512 | Art in Therapy                   |       3 | Surveys methods and results of   |
-         :            :        :                                  :         : using art and craft therapy with :
-         :            :        :                                  :         : developmentally disabled adults. :
-         | artstd     |    614 | Drawing Master Class             |       5 | For fine arts majors only, an    |
-         :            :        :                                  :         : intensive studio study including :
-         :            :        :                                  :         : field trips to local parks and   :
-         :            :        :                                  :         : museums and a final group art    :
-         :            :        :                                  :         : show.                            :
-         | artstd     |    714 | Peer Portfolio Review            |       0 | An opportunity to practice       |
-         :            :        :                                  :         : giving and receiving             :
-         :            :        :                                  :         : constructive criticism.          :
          | astro      |    137 | The Solar System                 |       3 | Introductory survey of the solar |
          :            :        :                                  :         : system, including structure and  :
          :            :        :                                  :         : motion of the planets,           :
@@ -663,6 +632,37 @@ tests:
          :            :        :                                  :         : group, and family) will be       :
          :            :        :                                  :         : reviewed along with research on  :
          :            :        :                                  :         : their efficacy.                  :
+         | stdart     |    119 | Spring Basket Weaving Workshop   |         | A just-for-fun chance to learn   |
+         :            :        :                                  :         : the basics of basket weaving.    :
+         | stdart     |    333 | Drawing                          |       3 | Exploration of the structure and |
+         :            :        :                                  :         : interrelationships of visual     :
+         :            :        :                                  :         : form in drawing, painting, and   :
+         :            :        :                                  :         : sculpture. Principal historical  :
+         :            :        :                                  :         : modes of drawing are examined.   :
+         | stdart     |    411 | Underwater Basket Weaving        |       4 | This course provides a novel     |
+         :            :        :                                  :         : perspective on the traditional   :
+         :            :        :                                  :         : art of basketry as it is         :
+         :            :        :                                  :         : experienced in reduced gravity   :
+         :            :        :                                  :         : and in the context of fluid      :
+         :            :        :                                  :         : dynamics. Requires instructor    :
+         :            :        :                                  :         : permission and a valid c-card.   :
+         | stdart     |    509 | Twentieth Century Printmaking    |       4 | Development of personalized      |
+         :            :        :                                  :         : concepts and individual          :
+         :            :        :                                  :         : aesthetic expression in          :
+         :            :        :                                  :         : printmaking with reference to    :
+         :            :        :                                  :         : various styles and trends in     :
+         :            :        :                                  :         : Twentieth Century printmaking.   :
+         | stdart     |    512 | Art in Therapy                   |       3 | Surveys methods and results of   |
+         :            :        :                                  :         : using art and craft therapy with :
+         :            :        :                                  :         : developmentally disabled adults. :
+         | stdart     |    614 | Drawing Master Class             |       5 | For fine arts majors only, an    |
+         :            :        :                                  :         : intensive studio study including :
+         :            :        :                                  :         : field trips to local parks and   :
+         :            :        :                                  :         : museums and a final group art    :
+         :            :        :                                  :         : show.                            :
+         | stdart     |    714 | Peer Portfolio Review            |       0 | An opportunity to practice       |
+         :            :        :                                  :         : giving and receiving             :
+         :            :        :                                  :         : constructive criticism.          :
          | tched      |    122 | Theory and Practice of Early     |       3 | Emphasis on the skills and       |
          :            :        : Childhood Education              :         : processes needed for the design  :
          :            :        :                                  :         : and implementation of optimal    :
@@ -815,8 +815,6 @@ tests:
          | acc        | dfallon23    |    1.00 |
          | arthis     | emurphy55    |    0.50 |
          | arthis     | icampbell12  |    1.00 |
-         | artstd     | acaspar      |    1.00 |
-         | artstd     | egasner      |    1.00 |
          | astro      | asacco       |         |
          | astro      | cfergus12    |    0.50 |
          | astro      | kmaas11      |         |
@@ -848,6 +846,8 @@ tests:
          | poli       | sbyrne202    |    1.00 |
          | psych      | kmurray44    |    1.00 |
          | psych      | srandrews    |    1.00 |
+         | stdart     | acaspar      |    1.00 |
+         | stdart     | egasner      |    1.00 |
          | tched      | dbundt31     |    0.50 |
          | tched      | elhill4      |    1.00 |
                                        (38 rows)
@@ -901,11 +901,6 @@ tests:
          | arthis     |    710 | 2011 | spring | 001     | emurphy55    |     10066 |
          | arthis     |    712 | 2011 | fall   | 001     | icampbell12  |     10064 |
          | arthis     |    809 | 2011 | summer | 001     | emurphy55    |     10067 |
-         | artstd     |    333 | 2010 | spring | 001     | acaspar      |     10073 |
-         | artstd     |    411 | 2009 | spring | 002     | acaspar      |     10069 |
-         | artstd     |    509 | 2012 | summer | 001     | acaspar      |     10072 |
-         | artstd     |    512 | 2010 | fall   | 001     | egasner      |     10070 |
-         | artstd     |    614 | 2009 | summer | 003     | egasner      |     10071 |
          | astro      |    137 | 2009 | fall   | 001     | egasner      |     10001 |
          | astro      |    142 | 2009 | spring | 001     | asacco       |     10002 |
          | astro      |    155 | 2010 | fall   | 001     | cfergus12    |     10003 |
@@ -979,6 +974,11 @@ tests:
          | psych      |    450 | 2011 | spring | 001     | srandrews    |     10034 |
          | psych      |    560 | 2012 | fall   | 001     | kmurray44    |     10035 |
          | psych      |    610 | 2011 | summer | 002     | kmurray44    |     10036 |
+         | stdart     |    333 | 2010 | spring | 001     | acaspar      |     10073 |
+         | stdart     |    411 | 2009 | spring | 002     | acaspar      |     10069 |
+         | stdart     |    509 | 2012 | summer | 001     | acaspar      |     10072 |
+         | stdart     |    512 | 2010 | fall   | 001     | egasner      |     10070 |
+         | stdart     |    614 | 2009 | summer | 003     | egasner      |     10071 |
          | tched      |    122 | 2010 | summer | 001     | dbundt31     |     10074 |
          | tched      |    155 | 2011 | fall   | 001     | elhill4      |     10075 |
          | tched      |    367 | 2011 | fall   | 002     | elhill4      |     10076 |
@@ -1100,7 +1100,6 @@ tests:
         -+---------------+-----------+---------------+-----------+-
          | acc           |       527 | acc           |       200 |
          | arthis        |       710 | arthis        |       202 |
-         | artstd        |       614 | artstd        |       333 |
          | astro         |       142 | astro         |       137 |
          | be            |       415 | be            |       112 |
          | capmrk        |       818 | acc           |       315 |
@@ -1118,6 +1117,7 @@ tests:
          | phys          |       303 | phys          |       211 |
          | phys          |       713 | phys          |       512 |
          | poli          |       402 | poli          |       113 |
+         | stdart        |       614 | stdart        |       333 |
          | tched         |       609 | tched         |       122 |
                                                          (21 rows)
 
@@ -1287,14 +1287,6 @@ tests:
          | arthis     |    712 | artbus         |
          | arthis     |    712 | management     |
          | arthis     |    809 | modern         |
-         | artstd     |    119 | sculpture      |
-         | artstd     |    333 | drawing        |
-         | artstd     |    411 | physlab        |
-         | artstd     |    411 | sculpture      |
-         | artstd     |    509 | printmaking    |
-         | artstd     |    512 | society        |
-         | artstd     |    614 | drawing        |
-         | artstd     |    714 | drawing        |
          | astro      |    137 | astronomy      |
          | astro      |    142 | astrolab       |
          | astro      |    155 | observation    |
@@ -1380,6 +1372,14 @@ tests:
          | psych      |    610 | chipsych       |
          | psych      |    610 | earlyed        |
          | psych      |    610 | research       |
+         | stdart     |    119 | sculpture      |
+         | stdart     |    333 | drawing        |
+         | stdart     |    411 | physlab        |
+         | stdart     |    411 | sculpture      |
+         | stdart     |    509 | printmaking    |
+         | stdart     |    512 | society        |
+         | stdart     |    614 | drawing        |
+         | stdart     |    714 | drawing        |
          | tched      |    122 | earlyed        |
          | tched      |    155 | methods        |
          | tched      |    367 | edmanagement   |
@@ -3169,7 +3169,6 @@ tests:
          | department+ | title                            | credits- |
         -+-------------+----------------------------------+----------+-
          | acc         | Practical Bookkeeping            |        2 |
-         | artstd      | Spring Basket Weaving Workshop   |          |
          | astro       | The Solar System                 |        3 |
          | astro       | Solar System Lab                 |        2 |
          | astro       | Telescope Workshop               |        1 |
@@ -3190,6 +3189,7 @@ tests:
          | mth         | College Algebra                  |        5 |
          | poli        | American Government and Politics |        3 |
          | psych       | General Psychology               |        3 |
+         | stdart      | Spring Basket Weaving Workshop   |          |
          | tched       | Theory and Practice of Early     |        3 |
          :             : Childhood Education              :          :
          | tched       | Methods of Early Science         |        3 |
@@ -3209,7 +3209,6 @@ tests:
          | department | title                            | credits |
         -+------------+----------------------------------+---------+-
          | acc        | Practical Bookkeeping            |       2 |
-         | artstd     | Spring Basket Weaving Workshop   |         |
          | astro      | The Solar System                 |       3 |
          | astro      | Solar System Lab                 |       2 |
          | astro      | Telescope Workshop               |       1 |
@@ -3230,6 +3229,7 @@ tests:
          | mth        | College Algebra                  |       5 |
          | poli       | American Government and Politics |       3 |
          | psych      | General Psychology               |       3 |
+         | stdart     | Spring Basket Weaving Workshop   |         |
          | tched      | Theory and Practice of Early     |       3 |
          :            : Childhood Education              :         :
          | tched      | Methods of Early Science         |       3 |
@@ -3302,11 +3302,6 @@ tests:
          :            :        :                      :         : and computational aspects of     :
          :            :        :                      :         : asset, liability and             :
          :            :        :                      :         : stockholders equity accounting.  :
-         | artstd     |    614 | Drawing Master Class |       5 | For fine arts majors only, an    |
-         :            :        :                      :         : intensive studio study including :
-         :            :        :                      :         : field trips to local parks and   :
-         :            :        :                      :         : museums and a final group art    :
-         :            :        :                      :         : show.                            :
          | mth        |    101 | College Algebra      |       5 | This course, taken mostly by     |
          :            :        :                      :         : members from the School of       :
          :            :        :                      :         : Business is a primary graduate   :
@@ -3315,6 +3310,11 @@ tests:
          :            :        :                      :         : Mathematics.  This is a 1000     :
          :            :        :                      :         : person lecture reviews basic     :
          :            :        :                      :         : concepts taught in high school.  :
+         | stdart     |    614 | Drawing Master Class |       5 | For fine arts majors only, an    |
+         :            :        :                      :         : intensive studio study including :
+         :            :        :                      :         : field trips to local parks and   :
+         :            :        :                      :         : museums and a final group art    :
+         :            :        :                      :         : show.                            :
                                                                                             (3 rows)
 
          ----
@@ -3356,9 +3356,7 @@ tests:
          | school.code | school.name                      | code   | name                   | school |
         -+-------------+----------------------------------+--------+------------------------+--------+-
          | bus         | School of Business               | acc    | Accounting             | bus    |
-         |             |                                  | alumni | Alumni & Parents       |        |
          | art         | School of Art and Design         | arthis | Art History            | art    |
-         | art         | School of Art and Design         | artstd | Studio Art             | art    |
          | ns          | School of Natural Sciences       | astro  | Astronomy              | ns     |
          | egn         | School of Engineering            | be     | Bioengineering         | egn    |
          |             |                                  | bursar | Bursar's Office        |        |
@@ -3367,6 +3365,7 @@ tests:
          | ns          | School of Natural Sciences       | chem   | Chemistry              | ns     |
          | egn         | School of Engineering            | comp   | Computer Science       | egn    |
          | bus         | School of Business               | corpfi | Corporate Finance      | bus    |
+         |             |                                  | donars | Alumni & Parents       |        |
          | edu         | College of Education             | edpol  | Educational Policy     | edu    |
          | egn         | School of Engineering            | ee     | Electrical Engineering | egn    |
          | la          | School of Arts, Letters, and the | eng    | English                | la     |
@@ -3383,6 +3382,7 @@ tests:
          :             : Humanities                       :        :                        :        :
          | la          | School of Arts, Letters, and the | psych  | Psychology             | la     |
          :             : Humanities                       :        :                        :        :
+         | art         | School of Art and Design         | stdart | Studio Art             | art    |
          | mus         | Musical School                   | str    | Strings                | mus    |
          | edu         | College of Education             | tched  | Teacher Education      | edu    |
          | mus         | Musical School                   | voc    | Vocals                 | mus    |
@@ -3402,11 +3402,8 @@ tests:
          | school.name+' - '+name           |
         -+----------------------------------+-
          | School of Business - Accounting  |
-         | " - Alumni & Parents"            |
          | School of Art and Design - Art   |
          : History                          :
-         | School of Art and Design -       |
-         : Studio Art                       :
          | School of Natural Sciences -     |
          : Astronomy                        :
          | School of Engineering -          |
@@ -3421,6 +3418,7 @@ tests:
          : Science                          :
          | School of Business - Corporate   |
          : Finance                          :
+         | " - Alumni & Parents"            |
          | College of Education -           |
          : Educational Policy               :
          | School of Engineering -          |
@@ -3442,6 +3440,8 @@ tests:
          : Humanities - Political Science   :
          | School of Arts, Letters, and the |
          : Humanities - Psychology          :
+         | School of Art and Design -       |
+         : Studio Art                       :
          | Musical School - Strings         |
          | College of Education - Teacher   |
          : Education                        :
@@ -3494,9 +3494,7 @@ tests:
          | code   | count(course{credits=3}) |
         -+--------+--------------------------+-
          | acc    |                        4 |
-         | alumni |                        0 |
          | arthis |                        5 |
-         | artstd |                        2 |
          | astro  |                        2 |
          | be     |                        3 |
          | bursar |                        0 |
@@ -3505,6 +3503,7 @@ tests:
          | chem   |                        4 |
          | comp   |                        6 |
          | corpfi |                        3 |
+         | donars |                        0 |
          | edpol  |                        4 |
          | ee     |                        4 |
          | eng    |                        4 |
@@ -3516,6 +3515,7 @@ tests:
          | pia    |                        0 |
          | poli   |                        5 |
          | psych  |                        3 |
+         | stdart |                        2 |
          | str    |                        0 |
          | tched  |                        4 |
          | voc    |                        0 |
@@ -3573,8 +3573,8 @@ tests:
          | code      | name           | school   |
         -+-----------+----------------+----------+-
          | acc       | Accounting     | bus      |
-         | artstd    | Studio Art     | art      |
          | mth       | Mathematics    | ns       |
+         | stdart    | Studio Art     | art      |
                                           (3 rows)
 
          ----
@@ -3589,9 +3589,9 @@ tests:
         -+--------------------------------------+-
          | code   | name               | school |
         -+--------+--------------------+--------+-
-         | alumni | Alumni & Parents   |        |
          | bursar | Bursar's Office    |        |
          | career | Career Development |        |
+         | donars | Alumni & Parents   |        |
          | mth    | Mathematics        | ns     |
          | pia    | Piano              | mus    |
          | str    | Strings            | mus    |
@@ -3612,9 +3612,7 @@ tests:
          | code   | min(course.credits) | max(course.credits) |
         -+--------+---------------------+---------------------+-
          | acc    |                   2 |                   5 |
-         | alumni |                     |                     |
          | arthis |                   3 |                   4 |
-         | artstd |                   0 |                   5 |
          | astro  |                   1 |                   3 |
          | be     |                   3 |                   8 |
          | bursar |                     |                     |
@@ -3623,6 +3621,7 @@ tests:
          | chem   |                   2 |                   3 |
          | comp   |                   3 |                   4 |
          | corpfi |                   3 |                   3 |
+         | donars |                     |                     |
          | edpol  |                   3 |                   3 |
          | ee     |                   3 |                   4 |
          | eng    |                   2 |                   3 |
@@ -3634,6 +3633,7 @@ tests:
          | pia    |                     |                     |
          | poli   |                   3 |                   4 |
          | psych  |                   3 |                   4 |
+         | stdart |                   0 |                   5 |
          | str    |                     |                     |
          | tched  |                   3 |                   4 |
          | voc    |                     |                     |
@@ -3653,9 +3653,7 @@ tests:
          | code   | avg(course.credits) | sum(course.credits)/count(course.credits) |
         -+--------+---------------------+-------------------------------------------+-
          | acc    |  3.1666666666666667 |                        3.1666666666666667 |
-         | alumni |                     |                                           |
          | arthis |  3.1666666666666667 |                        3.1666666666666667 |
-         | artstd |  3.1666666666666667 |                        3.1666666666666667 |
          | astro  |  2.2500000000000000 |                        2.2500000000000000 |
          | be     |  4.2500000000000000 |                        4.2500000000000000 |
          | bursar |                     |                                           |
@@ -3664,6 +3662,7 @@ tests:
          | chem   |  2.8000000000000000 |                        2.8000000000000000 |
          | comp   |  3.1428571428571429 |                        3.1428571428571429 |
          | corpfi |  3.0000000000000000 |                        3.0000000000000000 |
+         | donars |                     |                                           |
          | edpol  |  3.0000000000000000 |                        3.0000000000000000 |
          | ee     |  3.2000000000000000 |                        3.2000000000000000 |
          | eng    |  2.6666666666666667 |                        2.6666666666666667 |
@@ -3675,6 +3674,7 @@ tests:
          | pia    |                     |                                           |
          | poli   |  3.1666666666666667 |                        3.1666666666666667 |
          | psych  |  3.4000000000000000 |                        3.4000000000000000 |
+         | stdart |  3.1666666666666667 |                        3.1666666666666667 |
          | str    |                     |                                           |
          | tched  |  3.2000000000000000 |                        3.2000000000000000 |
          | voc    |                     |                                           |
@@ -3695,7 +3695,6 @@ tests:
         -+--------+------------------------+--------+-
          | acc    | Accounting             | bus    |
          | arthis | Art History            | art    |
-         | artstd | Studio Art             | art    |
          | astro  | Astronomy              | ns     |
          | be     | Bioengineering         | egn    |
          | capmrk | Capital Markets        | bus    |
@@ -3712,6 +3711,7 @@ tests:
          | phys   | Physics                | ns     |
          | poli   | Political Science      | la     |
          | psych  | Psychology             | la     |
+         | stdart | Studio Art             | art    |
          | tched  | Teacher Education      | edu    |
                                             (20 rows)
 
@@ -3817,7 +3817,6 @@ tests:
         -+---------------------+-----------------------+---------------------+-
          |                  19 |                     6 |  3.1666666666666667 |
          |                  19 |                     6 |  3.1666666666666667 |
-         |                  19 |                     6 |  3.1666666666666667 |
          |                   9 |                     4 |  2.2500000000000000 |
          |                  17 |                     4 |  4.2500000000000000 |
          |                  12 |                     4 |  3.0000000000000000 |
@@ -3834,6 +3833,7 @@ tests:
          |                  17 |                     6 |  2.8333333333333333 |
          |                  19 |                     6 |  3.1666666666666667 |
          |                  17 |                     5 |  3.4000000000000000 |
+         |                  19 |                     6 |  3.1666666666666667 |
          |                  16 |                     5 |  3.2000000000000000 |
                                                                      (20 rows)
 
@@ -3850,9 +3850,7 @@ tests:
          | code   | school.code | count(school.program) | school.count(program) |
         -+--------+-------------+-----------------------+-----------------------+-
          | acc    | bus         |                     5 |                     5 |
-         | alumni |             |                     0 |                     0 |
          | arthis | art         |                     3 |                     3 |
-         | artstd | art         |                     3 |                     3 |
          | astro  | ns          |                     3 |                     3 |
          | be     | egn         |                     8 |                     8 |
          | bursar |             |                     0 |                     0 |
@@ -3861,6 +3859,7 @@ tests:
          | chem   | ns          |                     3 |                     3 |
          | comp   | egn         |                     8 |                     8 |
          | corpfi | bus         |                     5 |                     5 |
+         | donars |             |                     0 |                     0 |
          | edpol  | edu         |                     7 |                     7 |
          | ee     | egn         |                     8 |                     8 |
          | eng    | la          |                     9 |                     9 |
@@ -3872,6 +3871,7 @@ tests:
          | pia    | mus         |                     0 |                     0 |
          | poli   | la          |                     9 |                     9 |
          | psych  | la          |                     9 |                     9 |
+         | stdart | art         |                     3 |                     3 |
          | str    | mus         |                     0 |                     0 |
          | tched  | edu         |                     7 |                     7 |
          | voc    | mus         |                     0 |                     0 |
@@ -3891,9 +3891,7 @@ tests:
          | code   | school.code | exists(school.program) | school.exists(program) |
         -+--------+-------------+------------------------+------------------------+-
          | acc    | bus         | true                   | true                   |
-         | alumni |             | false                  |                        |
          | arthis | art         | true                   | true                   |
-         | artstd | art         | true                   | true                   |
          | astro  | ns          | true                   | true                   |
          | be     | egn         | true                   | true                   |
          | bursar |             | false                  |                        |
@@ -3902,6 +3900,7 @@ tests:
          | chem   | ns          | true                   | true                   |
          | comp   | egn         | true                   | true                   |
          | corpfi | bus         | true                   | true                   |
+         | donars |             | false                  |                        |
          | edpol  | edu         | true                   | true                   |
          | ee     | egn         | true                   | true                   |
          | eng    | la          | true                   | true                   |
@@ -3913,6 +3912,7 @@ tests:
          | pia    | mus         | false                  | false                  |
          | poli   | la          | true                   | true                   |
          | psych  | la          | true                   | true                   |
+         | stdart | art         | true                   | true                   |
          | str    | mus         | false                  | false                  |
          | tched  | edu         | true                   | true                   |
          | voc    | mus         | false                  | false                  |
@@ -4360,4 +4360,4 @@ tests:
       headers:
       - [Content-Type, text/csv; charset=UTF-8]
       - [Content-Disposition, 'attachment; filename="({''%01%02...%1F%7F\\\"''}).csv"']
-      body: "\"'%01%02...%1F%7F\\\"\"'\"\r\n\"\x01\x02...\x1F\x7F\\\"\"\"\r\n"
+      body: "\"'%01%02...%1F%7F\\\"\"'\"\r\n\"\x01\x02...\x1F\x7F\"\"\"\r\n"
