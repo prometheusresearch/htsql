@@ -3525,6 +3525,47 @@ tests:
          ----
          /department{code,count(course{credits=3})}
          SELECT "department"."code", COALESCE("course"."!", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+    - uri: /department{code,count(course?credits=3)}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | department                       |
+        -+----------------------------------+-
+         | code   | count(course?credits=3) |
+        -+--------+-------------------------+-
+         | acc    |                       4 |
+         | arthis |                       5 |
+         | astro  |                       2 |
+         | be     |                       3 |
+         | bursar |                       0 |
+         | capmrk |                       4 |
+         | career |                       0 |
+         | chem   |                       4 |
+         | comp   |                       6 |
+         | corpfi |                       3 |
+         | donars |                       0 |
+         | edpol  |                       4 |
+         | ee     |                       4 |
+         | eng    |                       4 |
+         | hist   |                       5 |
+         | lang   |                       3 |
+         | me     |                       3 |
+         | mth    |                       0 |
+         | phys   |                       5 |
+         | pia    |                       0 |
+         | poli   |                       5 |
+         | psych  |                       3 |
+         | stdart |                       2 |
+         | str    |                       0 |
+         | tched  |                       4 |
+         | voc    |                       0 |
+         | win    |                       0 |
+                                    (27 rows)
+
+         ----
+         /department{code,count(course?credits=3)}
+         SELECT "department"."code", COALESCE("course"."!", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", COUNT(NULLIF((NOT (TRUE IS NOT DISTINCT FROM NULL)), FALSE)) AS "!" FROM "ad"."course" AS "course" WHERE ("course"."credits" = 3) GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /school{code,count(department.course{credits=3})}
       status: 200 OK
       headers:
@@ -4361,3 +4402,965 @@ tests:
       - [Content-Type, text/csv; charset=UTF-8]
       - [Content-Disposition, 'attachment; filename="({''%01%02...%1F%7F\\\"''}).csv"']
       body: "\"'%01%02...%1F%7F\\\"\"'\"\r\n\"\x01\x02...\x1F\x7F\"\"\"\r\n"
+  - id: tutorial-tests
+    tests:
+    - uri: /school
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school                                  |
+        -+-----------------------------------------+-
+         | code | name                             |
+        -+------+----------------------------------+-
+         | art  | School of Art and Design         |
+         | bus  | School of Business               |
+         | edu  | College of Education             |
+         | egn  | School of Engineering            |
+         | la   | School of Arts, Letters, and the |
+         :      : Humanities                       :
+         | mart | School of Modern Art             |
+         | mus  | Musical School                   |
+         | ns   | School of Natural Sciences       |
+         | sc   | School of Continuing Studies     |
+                                            (9 rows)
+
+         ----
+         /school
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+    - uri: /program{school, code, title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | program                                              |
+        -+------------------------------------------------------+-
+         | school | code     | title                            |
+        -+--------+----------+----------------------------------+-
+         | art    | gart     | Post Baccalaureate in Art        |
+         :        :          : History                          :
+         | art    | uhist    | Bachelor of Arts in Art History  |
+         | art    | ustudio  | Bachelor of Arts in Studio Art   |
+         | bus    | pacc     | Graduate Certificate in          |
+         :        :          : Accounting                       :
+         | bus    | pcap     | Certificate in Capital Markets   |
+         | bus    | uacct    | Bachelor of Science in           |
+         :        :          : Accounting                       :
+         | bus    | ubusad   | Bachelor of Science in Business  |
+         :        :          : Administration                   :
+         | bus    | ucorpfi  | Bachelor of Science in Corporate |
+         :        :          : Finance                          :
+         | edu    | gedlead  | Master of Arts in Educational    |
+         :        :          : Leadership                       :
+         | edu    | gedu     | Master of Science in Education   |
+         | edu    | glited   | Master of Arts in Literacy       |
+         :        :          : Education                        :
+         | edu    | gtch     | Master of Arts in Teaching       |
+         | edu    | psci     | Certificate in Science Teaching  |
+         | edu    | umath    | Bachelor of Arts in Math         |
+         :        :          : Education                        :
+         | edu    | usci     | Bachelor of Arts in Science      |
+         :        :          : Education                        :
+         | egn    | gbe      | Master of Science in             |
+         :        :          : Bioengineering                   :
+         | egn    | gbuseng  | Master of Science in Business    |
+         :        :          : and Engineering                  :
+         | egn    | gee      | Master of Science in Electrical  |
+         :        :          : Engineering                      :
+         | egn    | gme      | Master of Science in Mechanical  |
+         :        :          : Engineering                      :
+         | egn    | ubio     | Bachelor of Science in           |
+         :        :          : Bioengineering                   :
+         | egn    | ucompsci | Bachelor of Science in Computer  |
+         :        :          : Science                          :
+         | egn    | uelec    | Bachelor of Science in           |
+         :        :          : Electrical Engineering           :
+         | egn    | umech    | Bachelor of Science in           |
+         :        :          : Mechanical Engineering           :
+         | la     | gengl    | Master of Arts in English        |
+         | la     | glang    | Master of Arts in Modern         |
+         :        :          : Languages                        :
+         | la     | gscitch  | Master of Arts in Science        |
+         :        :          : Teaching                         :
+         | la     | psciwri  | Science Writing                  |
+         | la     | uengl    | Bachelor of Arts in English      |
+         | la     | uhist    | Bachelor of Arts in History      |
+         | la     | upolisci | Bachelor of Arts in Political    |
+         :        :          : Science                          :
+         | la     | upsych   | Bachelor of Arts in Psychology   |
+         | la     | uspan    | Bachelor of Arts in Spanish      |
+         | mart   | bmart    | Bachelor of Modern Art           |
+         | ns     | uastro   | Bachelor of Science in Astronomy |
+         | ns     | uchem    | Bachelor of Science in Chemistry |
+         | ns     | uphys    | Bachelor of Science in Physics   |
+                                                        (36 rows)
+
+         ----
+         /program{school,code,title}
+         SELECT "program"."school", "program"."code", "program"."title" FROM "ad"."program" AS "program" ORDER BY 1 ASC, 2 ASC
+    - uri: /department{name-, school}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | department                      |
+        -+---------------------------------+-
+         | name-                  | school |
+        -+------------------------+--------+-
+         | Wind                   | mus    |
+         | Vocals                 | mus    |
+         | Teacher Education      | edu    |
+         | Studio Art             | art    |
+         | Strings                | mus    |
+         | Psychology             | la     |
+         | Political Science      | la     |
+         | Piano                  | mus    |
+         | Physics                | ns     |
+         | Mechanical Engineering | egn    |
+         | Mathematics            | ns     |
+         | History                | la     |
+         | Foreign Languages      | la     |
+         | English                | la     |
+         | Electrical Engineering | egn    |
+         | Educational Policy     | edu    |
+         | Corporate Finance      | bus    |
+         | Computer Science       | egn    |
+         | Chemistry              | ns     |
+         | Career Development     |        |
+         | Capital Markets        | bus    |
+         | Bursar's Office        |        |
+         | Bioengineering         | egn    |
+         | Astronomy              | ns     |
+         | Art History            | art    |
+         | Alumni & Parents       |        |
+         | Accounting             | bus    |
+                                   (27 rows)
+
+         ----
+         /department{name-,school}
+         SELECT "department"."name", "department"."school" FROM "ad"."department" AS "department" ORDER BY 1 DESC, "department"."code" ASC
+    - uri: /course{department+, number, credits-, title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | course                                                             |
+        -+--------------------------------------------------------------------+-
+         | department+ | number | credits- | title                            |
+        -+-------------+--------+----------+----------------------------------+-
+         | acc         |    315 |        5 | Financial Accounting             |
+         | acc         |    200 |        3 | Principles of Accounting I       |
+         | acc         |    426 |        3 | Corporate Taxation               |
+         | acc         |    527 |        3 | Advanced Accounting              |
+         | acc         |    606 |        3 | Corporate Financial Law          |
+         | acc         |    100 |        2 | Practical Bookkeeping            |
+         | arthis      |    712 |        4 | Museum and Gallery Management    |
+         | arthis      |    202 |        3 | History of Art Criticism         |
+         | arthis      |    340 |        3 | Arts of Asia                     |
+         | arthis      |    623 |        3 | Contemporary Latin American Art  |
+         | arthis      |    710 |        3 | Methods in Art History           |
+         | arthis      |    809 |        3 | Materials and Construction in    |
+         :             :        :          : European Art                     :
+         | astro       |    137 |        3 | The Solar System                 |
+         | astro       |    254 |        3 | Life in the Universe             |
+         | astro       |    142 |        2 | Solar System Lab                 |
+         | astro       |    155 |        1 | Telescope Workshop               |
+         | be          |    415 |        8 | Internship in Biomedical         |
+         :             :        :          : Engineering                      :
+         | be          |    112 |        3 | Introduction to Biomedical       |
+         :             :        :          : Engineering                      :
+         | be          |    308 |        3 | Fundamentals of Biochemistry     |
+         | be          |    509 |        3 | Systems of Drug Delivery         |
+         | capmrk      |    712 |        3 | International Financial Markets  |
+         | capmrk      |    756 |        3 | Capital Risk Management          |
+         | capmrk      |    808 |        3 | Principles of Portfolio          |
+         :             :        :          : Management                       :
+         | capmrk      |    818 |        3 | Financial Statement Analysis     |
+         | chem        |    100 |        3 | Principles of Chemistry          |
+         | chem        |    110 |        3 | Organic Chemistry I              |
+         | chem        |    314 |        3 | Laboratory Chemistry             |
+         | chem        |    655 |        3 | Protein Folding Problem          |
+         | chem        |    115 |        2 | Organic Chemistry Laboratory I   |
+         | comp        |    710 |        4 | Laboratory in Computer Science   |
+         | comp        |    102 |        3 | Introduction to Computer Science |
+         | comp        |    230 |        3 | History of Computing             |
+         | comp        |    350 |        3 | Introduction to Signal           |
+         :             :        :          : Processing                       :
+         | comp        |    615 |        3 | Introduction to Automata         |
+         | comp        |    810 |        3 | Thesis Research                  |
+         | comp        |    819 |        3 | Advanced Algorithms in           |
+         :             :        :          : Bioinformatics                   :
+         | corpfi      |    234 |        3 | Accounting Information Systems   |
+         | corpfi      |    404 |        3 | Corporate Financial Management   |
+         | corpfi      |    601 |        3 | Case Studies in Corporate        |
+         :             :        :          : Finance                          :
+         | edpol       |    551 |          | Classroom Visit                  |
+         | edpol       |    202 |        3 | Technology in the Classroom      |
+         | edpol       |    313 |        3 | Technology, Society and Schools  |
+         | edpol       |    505 |        3 | Qualitative Research for         |
+         :             :        :          : Educators                        :
+         | edpol       |    617 |        3 | Educational Policy Analysis      |
+         | ee          |    412 |        4 | Laboratory in Electrical         |
+         :             :        :          : Engineering                      :
+         | ee          |    107 |        3 | Exploration of Electrical        |
+         :             :        :          : Engineering                      :
+         | ee          |    202 |        3 | Engineering Electromagnetics     |
+         | ee          |    505 |        3 | Information Theory               |
+         | ee          |    615 |        3 | Learning and Adaptive Systems    |
+         | eng         |    101 |        3 | Introduction to Composition      |
+         | eng         |    247 |        3 | Boccaccio's Decameron            |
+         | eng         |    276 |        3 | Introduction to Science Writing  |
+         | eng         |    311 |        3 | Writing Styles                   |
+         | eng         |    175 |        2 | College Newspaper                |
+         | eng         |    412 |        2 | Ecology Writing Workshop         |
+         | hist        |    112 |        3 | The United States in World       |
+         :             :        :          : History                          :
+         | hist        |    212 |        3 | Historical Perspective on the    |
+         :             :        :          : Constitution                     :
+         | hist        |    333 |        3 | History of American Education    |
+         | hist        |    415 |        3 | History of the Family in Global  |
+         :             :        :          : Perspective                      :
+         | hist        |    505 |        3 | Science and History              |
+         | lang        |    201 |        4 | Introduction to Spanish          |
+         | lang        |    203 |        3 | Intermediate Spanish             |
+         | lang        |    207 |        3 | Child Second Language            |
+         :             :        :          : Development                      :
+         | lang        |    305 |        3 | Second Language Syntax           |
+         | lang        |    304 |        2 | Spanish Conversation Group       |
+         | me          |    344 |        4 | Undergraduate Research           |
+         | me          |    627 |        4 | Advanced Heating and Air         |
+         :             :        :          : Conditioning                     :
+         | me          |    111 |        3 | Introduction to Mechanical       |
+         :             :        :          : Engineering                      :
+         | me          |    501 |        3 | Advanced Welding                 |
+         | me          |    712 |        3 | Graphic Communication and Design |
+         | mth         |    101 |        5 | College Algebra                  |
+         | phys        |    211 |        3 | General Physics I                |
+         | phys        |    303 |        3 | Relativity & Cosmology           |
+         | phys        |    512 |        3 | Quantum Field Theory             |
+         | phys        |    713 |        3 | Quarks, Nuclei, and Cosmology    |
+         | phys        |    819 |        3 | Superconductivity                |
+         | phys        |    388 |        2 | Experimental Physics I           |
+         | poli        |    402 |        4 | Government Internship: Semester  |
+         :             :        :          : in Washington                    :
+         | poli        |    113 |        3 | American Government and Politics |
+         | poli        |    347 |        3 | American Foreign Policy          |
+         | poli        |    431 |        3 | American Government and          |
+         :             :        :          : Corporate Interests              :
+         | poli        |    644 |        3 | Research Seminar in Middle       |
+         :             :        :          : Eastern Affairs                  :
+         | poli        |    715 |        3 | #5 is the 50% Solution           |
+         | psych       |    450 |        4 | Laboratory in Applied Behavioral |
+         :             :        :          : Science                          :
+         | psych       |    560 |        4 | Examination of Real-Time         |
+         :             :        :          : Language Processing              :
+         | psych       |    102 |        3 | General Psychology               |
+         | psych       |    304 |        3 | Introduction to Cognitive        |
+         :             :        :          : Psychology                       :
+         | psych       |    610 |        3 | Applied Child Psychology         |
+         | stdart      |    119 |          | Spring Basket Weaving Workshop   |
+         | stdart      |    614 |        5 | Drawing Master Class             |
+         | stdart      |    411 |        4 | Underwater Basket Weaving        |
+         | stdart      |    509 |        4 | Twentieth Century Printmaking    |
+         | stdart      |    333 |        3 | Drawing                          |
+         | stdart      |    512 |        3 | Art in Therapy                   |
+         | stdart      |    714 |        0 | Peer Portfolio Review            |
+         | tched       |    609 |        4 | Supervised Internship in         |
+         :             :        :          : Education                        :
+         | tched       |    122 |        3 | Theory and Practice of Early     |
+         :             :        :          : Childhood Education              :
+         | tched       |    155 |        3 | Methods of Early Science         |
+         :             :        :          : Education                        :
+         | tched       |    367 |        3 | Problems in Education Management |
+         | tched       |    501 |        3 | Challenges of Teaching the       |
+         :             :        :          : Gifted and Talented              :
+                                                                     (100 rows)
+
+         ----
+         /course{department+,number,credits-,title}
+         SELECT "course"."department", "course"."number", "course"."credits", "course"."title" FROM "ad"."course" AS "course" ORDER BY 1 ASC, 3 DESC, 1 ASC, 2 ASC
+    - uri: /course{department as 'Dept Code'+, number as 'No.', credits-, title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | course                                                        |
+        -+---------------------------------------------------------------+-
+         | Dept Code | No. | credits- | title                            |
+        -+-----------+-----+----------+----------------------------------+-
+         | acc       | 315 |        5 | Financial Accounting             |
+         | acc       | 200 |        3 | Principles of Accounting I       |
+         | acc       | 426 |        3 | Corporate Taxation               |
+         | acc       | 527 |        3 | Advanced Accounting              |
+         | acc       | 606 |        3 | Corporate Financial Law          |
+         | acc       | 100 |        2 | Practical Bookkeeping            |
+         | arthis    | 712 |        4 | Museum and Gallery Management    |
+         | arthis    | 202 |        3 | History of Art Criticism         |
+         | arthis    | 340 |        3 | Arts of Asia                     |
+         | arthis    | 623 |        3 | Contemporary Latin American Art  |
+         | arthis    | 710 |        3 | Methods in Art History           |
+         | arthis    | 809 |        3 | Materials and Construction in    |
+         :           :     :          : European Art                     :
+         | astro     | 137 |        3 | The Solar System                 |
+         | astro     | 254 |        3 | Life in the Universe             |
+         | astro     | 142 |        2 | Solar System Lab                 |
+         | astro     | 155 |        1 | Telescope Workshop               |
+         | be        | 415 |        8 | Internship in Biomedical         |
+         :           :     :          : Engineering                      :
+         | be        | 112 |        3 | Introduction to Biomedical       |
+         :           :     :          : Engineering                      :
+         | be        | 308 |        3 | Fundamentals of Biochemistry     |
+         | be        | 509 |        3 | Systems of Drug Delivery         |
+         | capmrk    | 712 |        3 | International Financial Markets  |
+         | capmrk    | 756 |        3 | Capital Risk Management          |
+         | capmrk    | 808 |        3 | Principles of Portfolio          |
+         :           :     :          : Management                       :
+         | capmrk    | 818 |        3 | Financial Statement Analysis     |
+         | chem      | 100 |        3 | Principles of Chemistry          |
+         | chem      | 110 |        3 | Organic Chemistry I              |
+         | chem      | 314 |        3 | Laboratory Chemistry             |
+         | chem      | 655 |        3 | Protein Folding Problem          |
+         | chem      | 115 |        2 | Organic Chemistry Laboratory I   |
+         | comp      | 710 |        4 | Laboratory in Computer Science   |
+         | comp      | 102 |        3 | Introduction to Computer Science |
+         | comp      | 230 |        3 | History of Computing             |
+         | comp      | 350 |        3 | Introduction to Signal           |
+         :           :     :          : Processing                       :
+         | comp      | 615 |        3 | Introduction to Automata         |
+         | comp      | 810 |        3 | Thesis Research                  |
+         | comp      | 819 |        3 | Advanced Algorithms in           |
+         :           :     :          : Bioinformatics                   :
+         | corpfi    | 234 |        3 | Accounting Information Systems   |
+         | corpfi    | 404 |        3 | Corporate Financial Management   |
+         | corpfi    | 601 |        3 | Case Studies in Corporate        |
+         :           :     :          : Finance                          :
+         | edpol     | 551 |          | Classroom Visit                  |
+         | edpol     | 202 |        3 | Technology in the Classroom      |
+         | edpol     | 313 |        3 | Technology, Society and Schools  |
+         | edpol     | 505 |        3 | Qualitative Research for         |
+         :           :     :          : Educators                        :
+         | edpol     | 617 |        3 | Educational Policy Analysis      |
+         | ee        | 412 |        4 | Laboratory in Electrical         |
+         :           :     :          : Engineering                      :
+         | ee        | 107 |        3 | Exploration of Electrical        |
+         :           :     :          : Engineering                      :
+         | ee        | 202 |        3 | Engineering Electromagnetics     |
+         | ee        | 505 |        3 | Information Theory               |
+         | ee        | 615 |        3 | Learning and Adaptive Systems    |
+         | eng       | 101 |        3 | Introduction to Composition      |
+         | eng       | 247 |        3 | Boccaccio's Decameron            |
+         | eng       | 276 |        3 | Introduction to Science Writing  |
+         | eng       | 311 |        3 | Writing Styles                   |
+         | eng       | 175 |        2 | College Newspaper                |
+         | eng       | 412 |        2 | Ecology Writing Workshop         |
+         | hist      | 112 |        3 | The United States in World       |
+         :           :     :          : History                          :
+         | hist      | 212 |        3 | Historical Perspective on the    |
+         :           :     :          : Constitution                     :
+         | hist      | 333 |        3 | History of American Education    |
+         | hist      | 415 |        3 | History of the Family in Global  |
+         :           :     :          : Perspective                      :
+         | hist      | 505 |        3 | Science and History              |
+         | lang      | 201 |        4 | Introduction to Spanish          |
+         | lang      | 203 |        3 | Intermediate Spanish             |
+         | lang      | 207 |        3 | Child Second Language            |
+         :           :     :          : Development                      :
+         | lang      | 305 |        3 | Second Language Syntax           |
+         | lang      | 304 |        2 | Spanish Conversation Group       |
+         | me        | 344 |        4 | Undergraduate Research           |
+         | me        | 627 |        4 | Advanced Heating and Air         |
+         :           :     :          : Conditioning                     :
+         | me        | 111 |        3 | Introduction to Mechanical       |
+         :           :     :          : Engineering                      :
+         | me        | 501 |        3 | Advanced Welding                 |
+         | me        | 712 |        3 | Graphic Communication and Design |
+         | mth       | 101 |        5 | College Algebra                  |
+         | phys      | 211 |        3 | General Physics I                |
+         | phys      | 303 |        3 | Relativity & Cosmology           |
+         | phys      | 512 |        3 | Quantum Field Theory             |
+         | phys      | 713 |        3 | Quarks, Nuclei, and Cosmology    |
+         | phys      | 819 |        3 | Superconductivity                |
+         | phys      | 388 |        2 | Experimental Physics I           |
+         | poli      | 402 |        4 | Government Internship: Semester  |
+         :           :     :          : in Washington                    :
+         | poli      | 113 |        3 | American Government and Politics |
+         | poli      | 347 |        3 | American Foreign Policy          |
+         | poli      | 431 |        3 | American Government and          |
+         :           :     :          : Corporate Interests              :
+         | poli      | 644 |        3 | Research Seminar in Middle       |
+         :           :     :          : Eastern Affairs                  :
+         | poli      | 715 |        3 | #5 is the 50% Solution           |
+         | psych     | 450 |        4 | Laboratory in Applied Behavioral |
+         :           :     :          : Science                          :
+         | psych     | 560 |        4 | Examination of Real-Time         |
+         :           :     :          : Language Processing              :
+         | psych     | 102 |        3 | General Psychology               |
+         | psych     | 304 |        3 | Introduction to Cognitive        |
+         :           :     :          : Psychology                       :
+         | psych     | 610 |        3 | Applied Child Psychology         |
+         | stdart    | 119 |          | Spring Basket Weaving Workshop   |
+         | stdart    | 614 |        5 | Drawing Master Class             |
+         | stdart    | 411 |        4 | Underwater Basket Weaving        |
+         | stdart    | 509 |        4 | Twentieth Century Printmaking    |
+         | stdart    | 333 |        3 | Drawing                          |
+         | stdart    | 512 |        3 | Art in Therapy                   |
+         | stdart    | 714 |        0 | Peer Portfolio Review            |
+         | tched     | 609 |        4 | Supervised Internship in         |
+         :           :     :          : Education                        :
+         | tched     | 122 |        3 | Theory and Practice of Early     |
+         :           :     :          : Childhood Education              :
+         | tched     | 155 |        3 | Methods of Early Science         |
+         :           :     :          : Education                        :
+         | tched     | 367 |        3 | Problems in Education Management |
+         | tched     | 501 |        3 | Challenges of Teaching the       |
+         :           :     :          : Gifted and Talented              :
+                                                                (100 rows)
+
+         ----
+         /course{department as 'Dept Code'+,number as 'No.',credits-,title}
+         SELECT "course"."department", "course"."number", "course"."credits", "course"."title" FROM "ad"."course" AS "course" ORDER BY 1 ASC, 3 DESC, 1 ASC, 2 ASC
+    - uri: /program{school.name, title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | program                                                             |
+        -+---------------------------------------------------------------------+-
+         | school.name                      | title                            |
+        -+----------------------------------+----------------------------------+-
+         | School of Art and Design         | Post Baccalaureate in Art        |
+         :                                  : History                          :
+         | School of Art and Design         | Bachelor of Arts in Art History  |
+         | School of Art and Design         | Bachelor of Arts in Studio Art   |
+         | School of Business               | Graduate Certificate in          |
+         :                                  : Accounting                       :
+         | School of Business               | Certificate in Capital Markets   |
+         | School of Business               | Bachelor of Science in           |
+         :                                  : Accounting                       :
+         | School of Business               | Bachelor of Science in Business  |
+         :                                  : Administration                   :
+         | School of Business               | Bachelor of Science in Corporate |
+         :                                  : Finance                          :
+         | College of Education             | Master of Arts in Educational    |
+         :                                  : Leadership                       :
+         | College of Education             | Master of Science in Education   |
+         | College of Education             | Master of Arts in Literacy       |
+         :                                  : Education                        :
+         | College of Education             | Master of Arts in Teaching       |
+         | College of Education             | Certificate in Science Teaching  |
+         | College of Education             | Bachelor of Arts in Math         |
+         :                                  : Education                        :
+         | College of Education             | Bachelor of Arts in Science      |
+         :                                  : Education                        :
+         | School of Engineering            | Master of Science in             |
+         :                                  : Bioengineering                   :
+         | School of Engineering            | Master of Science in Business    |
+         :                                  : and Engineering                  :
+         | School of Engineering            | Master of Science in Electrical  |
+         :                                  : Engineering                      :
+         | School of Engineering            | Master of Science in Mechanical  |
+         :                                  : Engineering                      :
+         | School of Engineering            | Bachelor of Science in           |
+         :                                  : Bioengineering                   :
+         | School of Engineering            | Bachelor of Science in Computer  |
+         :                                  : Science                          :
+         | School of Engineering            | Bachelor of Science in           |
+         :                                  : Electrical Engineering           :
+         | School of Engineering            | Bachelor of Science in           |
+         :                                  : Mechanical Engineering           :
+         | School of Arts, Letters, and the | Master of Arts in English        |
+         : Humanities                       :                                  :
+         | School of Arts, Letters, and the | Master of Arts in Modern         |
+         : Humanities                       : Languages                        :
+         | School of Arts, Letters, and the | Master of Arts in Science        |
+         : Humanities                       : Teaching                         :
+         | School of Arts, Letters, and the | Science Writing                  |
+         : Humanities                       :                                  :
+         | School of Arts, Letters, and the | Bachelor of Arts in English      |
+         : Humanities                       :                                  :
+         | School of Arts, Letters, and the | Bachelor of Arts in History      |
+         : Humanities                       :                                  :
+         | School of Arts, Letters, and the | Bachelor of Arts in Political    |
+         : Humanities                       : Science                          :
+         | School of Arts, Letters, and the | Bachelor of Arts in Psychology   |
+         : Humanities                       :                                  :
+         | School of Arts, Letters, and the | Bachelor of Arts in Spanish      |
+         : Humanities                       :                                  :
+         | School of Modern Art             | Bachelor of Modern Art           |
+         | School of Natural Sciences       | Bachelor of Science in Astronomy |
+         | School of Natural Sciences       | Bachelor of Science in Chemistry |
+         | School of Natural Sciences       | Bachelor of Science in Physics   |
+                                                                       (36 rows)
+
+         ----
+         /program{school.name,title}
+         SELECT "school"."name", "program"."title" FROM "ad"."program" AS "program" INNER JOIN (SELECT "school"."name", "school"."code" FROM "ad"."school" AS "school") AS "school" ON (("program"."school" = "school"."code")) ORDER BY "program"."school" ASC, "program"."code" ASC
+    - uri: /course{department.school.name, department.name, title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | course                                                                                       |
+        -+----------------------------------------------------------------------------------------------+-
+         | department.school.name           | department.name        | title                            |
+        -+----------------------------------+------------------------+----------------------------------+-
+         | School of Business               | Accounting             | Practical Bookkeeping            |
+         | School of Business               | Accounting             | Principles of Accounting I       |
+         | School of Business               | Accounting             | Financial Accounting             |
+         | School of Business               | Accounting             | Corporate Taxation               |
+         | School of Business               | Accounting             | Advanced Accounting              |
+         | School of Business               | Accounting             | Corporate Financial Law          |
+         | School of Art and Design         | Art History            | History of Art Criticism         |
+         | School of Art and Design         | Art History            | Arts of Asia                     |
+         | School of Art and Design         | Art History            | Contemporary Latin American Art  |
+         | School of Art and Design         | Art History            | Methods in Art History           |
+         | School of Art and Design         | Art History            | Museum and Gallery Management    |
+         | School of Art and Design         | Art History            | Materials and Construction in    |
+         :                                  :                        : European Art                     :
+         | School of Natural Sciences       | Astronomy              | The Solar System                 |
+         | School of Natural Sciences       | Astronomy              | Solar System Lab                 |
+         | School of Natural Sciences       | Astronomy              | Telescope Workshop               |
+         | School of Natural Sciences       | Astronomy              | Life in the Universe             |
+         | School of Engineering            | Bioengineering         | Introduction to Biomedical       |
+         :                                  :                        : Engineering                      :
+         | School of Engineering            | Bioengineering         | Fundamentals of Biochemistry     |
+         | School of Engineering            | Bioengineering         | Internship in Biomedical         |
+         :                                  :                        : Engineering                      :
+         | School of Engineering            | Bioengineering         | Systems of Drug Delivery         |
+         | School of Business               | Capital Markets        | International Financial Markets  |
+         | School of Business               | Capital Markets        | Capital Risk Management          |
+         | School of Business               | Capital Markets        | Principles of Portfolio          |
+         :                                  :                        : Management                       :
+         | School of Business               | Capital Markets        | Financial Statement Analysis     |
+         | School of Natural Sciences       | Chemistry              | Principles of Chemistry          |
+         | School of Natural Sciences       | Chemistry              | Organic Chemistry I              |
+         | School of Natural Sciences       | Chemistry              | Organic Chemistry Laboratory I   |
+         | School of Natural Sciences       | Chemistry              | Laboratory Chemistry             |
+         | School of Natural Sciences       | Chemistry              | Protein Folding Problem          |
+         | School of Engineering            | Computer Science       | Introduction to Computer Science |
+         | School of Engineering            | Computer Science       | History of Computing             |
+         | School of Engineering            | Computer Science       | Introduction to Signal           |
+         :                                  :                        : Processing                       :
+         | School of Engineering            | Computer Science       | Introduction to Automata         |
+         | School of Engineering            | Computer Science       | Laboratory in Computer Science   |
+         | School of Engineering            | Computer Science       | Thesis Research                  |
+         | School of Engineering            | Computer Science       | Advanced Algorithms in           |
+         :                                  :                        : Bioinformatics                   :
+         | School of Business               | Corporate Finance      | Accounting Information Systems   |
+         | School of Business               | Corporate Finance      | Corporate Financial Management   |
+         | School of Business               | Corporate Finance      | Case Studies in Corporate        |
+         :                                  :                        : Finance                          :
+         | College of Education             | Educational Policy     | Technology in the Classroom      |
+         | College of Education             | Educational Policy     | Technology, Society and Schools  |
+         | College of Education             | Educational Policy     | Qualitative Research for         |
+         :                                  :                        : Educators                        :
+         | College of Education             | Educational Policy     | Classroom Visit                  |
+         | College of Education             | Educational Policy     | Educational Policy Analysis      |
+         | School of Engineering            | Electrical Engineering | Exploration of Electrical        |
+         :                                  :                        : Engineering                      :
+         | School of Engineering            | Electrical Engineering | Engineering Electromagnetics     |
+         | School of Engineering            | Electrical Engineering | Laboratory in Electrical         |
+         :                                  :                        : Engineering                      :
+         | School of Engineering            | Electrical Engineering | Information Theory               |
+         | School of Engineering            | Electrical Engineering | Learning and Adaptive Systems    |
+         | School of Arts, Letters, and the | English                | Introduction to Composition      |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | English                | College Newspaper                |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | English                | Boccaccio's Decameron            |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | English                | Introduction to Science Writing  |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | English                | Writing Styles                   |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | English                | Ecology Writing Workshop         |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | History                | The United States in World       |
+         : Humanities                       :                        : History                          :
+         | School of Arts, Letters, and the | History                | Historical Perspective on the    |
+         : Humanities                       :                        : Constitution                     :
+         | School of Arts, Letters, and the | History                | History of American Education    |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | History                | History of the Family in Global  |
+         : Humanities                       :                        : Perspective                      :
+         | School of Arts, Letters, and the | History                | Science and History              |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Foreign Languages      | Introduction to Spanish          |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Foreign Languages      | Intermediate Spanish             |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Foreign Languages      | Child Second Language            |
+         : Humanities                       :                        : Development                      :
+         | School of Arts, Letters, and the | Foreign Languages      | Spanish Conversation Group       |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Foreign Languages      | Second Language Syntax           |
+         : Humanities                       :                        :                                  :
+         | School of Engineering            | Mechanical Engineering | Introduction to Mechanical       |
+         :                                  :                        : Engineering                      :
+         | School of Engineering            | Mechanical Engineering | Undergraduate Research           |
+         | School of Engineering            | Mechanical Engineering | Advanced Welding                 |
+         | School of Engineering            | Mechanical Engineering | Advanced Heating and Air         |
+         :                                  :                        : Conditioning                     :
+         | School of Engineering            | Mechanical Engineering | Graphic Communication and Design |
+         | School of Natural Sciences       | Mathematics            | College Algebra                  |
+         | School of Natural Sciences       | Physics                | General Physics I                |
+         | School of Natural Sciences       | Physics                | Relativity & Cosmology           |
+         | School of Natural Sciences       | Physics                | Experimental Physics I           |
+         | School of Natural Sciences       | Physics                | Quantum Field Theory             |
+         | School of Natural Sciences       | Physics                | Quarks, Nuclei, and Cosmology    |
+         | School of Natural Sciences       | Physics                | Superconductivity                |
+         | School of Arts, Letters, and the | Political Science      | American Government and Politics |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Political Science      | American Foreign Policy          |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Political Science      | Government Internship: Semester  |
+         : Humanities                       :                        : in Washington                    :
+         | School of Arts, Letters, and the | Political Science      | American Government and          |
+         : Humanities                       :                        : Corporate Interests              :
+         | School of Arts, Letters, and the | Political Science      | Research Seminar in Middle       |
+         : Humanities                       :                        : Eastern Affairs                  :
+         | School of Arts, Letters, and the | Political Science      | #5 is the 50% Solution           |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Psychology             | General Psychology               |
+         : Humanities                       :                        :                                  :
+         | School of Arts, Letters, and the | Psychology             | Introduction to Cognitive        |
+         : Humanities                       :                        : Psychology                       :
+         | School of Arts, Letters, and the | Psychology             | Laboratory in Applied Behavioral |
+         : Humanities                       :                        : Science                          :
+         | School of Arts, Letters, and the | Psychology             | Examination of Real-Time         |
+         : Humanities                       :                        : Language Processing              :
+         | School of Arts, Letters, and the | Psychology             | Applied Child Psychology         |
+         : Humanities                       :                        :                                  :
+         | School of Art and Design         | Studio Art             | Spring Basket Weaving Workshop   |
+         | School of Art and Design         | Studio Art             | Drawing                          |
+         | School of Art and Design         | Studio Art             | Underwater Basket Weaving        |
+         | School of Art and Design         | Studio Art             | Twentieth Century Printmaking    |
+         | School of Art and Design         | Studio Art             | Art in Therapy                   |
+         | School of Art and Design         | Studio Art             | Drawing Master Class             |
+         | School of Art and Design         | Studio Art             | Peer Portfolio Review            |
+         | College of Education             | Teacher Education      | Theory and Practice of Early     |
+         :                                  :                        : Childhood Education              :
+         | College of Education             | Teacher Education      | Methods of Early Science         |
+         :                                  :                        : Education                        :
+         | College of Education             | Teacher Education      | Problems in Education Management |
+         | College of Education             | Teacher Education      | Challenges of Teaching the       |
+         :                                  :                        : Gifted and Talented              :
+         | College of Education             | Teacher Education      | Supervised Internship in         |
+         :                                  :                        : Education                        :
+                                                                                               (100 rows)
+
+         ----
+         /course{department.school.name,department.name,title}
+         SELECT "school"."name", "department"."name", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."name", "department"."code", "department"."school" FROM "ad"."department" AS "department") AS "department" ON (("course"."department" = "department"."code")) LEFT OUTER JOIN (SELECT "school"."name", "school"."code" FROM "ad"."school" AS "school") AS "school" ON (("department"."school" = "school"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
+    - uri: /department{*,school.*}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | department                                                                                |
+        -+-------------------------------------------------------------------------------------------+-
+         | code   | name                   | school | school.code | school.name                      |
+        -+--------+------------------------+--------+-------------+----------------------------------+-
+         | acc    | Accounting             | bus    | bus         | School of Business               |
+         | arthis | Art History            | art    | art         | School of Art and Design         |
+         | astro  | Astronomy              | ns     | ns          | School of Natural Sciences       |
+         | be     | Bioengineering         | egn    | egn         | School of Engineering            |
+         | bursar | Bursar's Office        |        |             |                                  |
+         | capmrk | Capital Markets        | bus    | bus         | School of Business               |
+         | career | Career Development     |        |             |                                  |
+         | chem   | Chemistry              | ns     | ns          | School of Natural Sciences       |
+         | comp   | Computer Science       | egn    | egn         | School of Engineering            |
+         | corpfi | Corporate Finance      | bus    | bus         | School of Business               |
+         | donars | Alumni & Parents       |        |             |                                  |
+         | edpol  | Educational Policy     | edu    | edu         | College of Education             |
+         | ee     | Electrical Engineering | egn    | egn         | School of Engineering            |
+         | eng    | English                | la     | la          | School of Arts, Letters, and the |
+         :        :                        :        :             : Humanities                       :
+         | hist   | History                | la     | la          | School of Arts, Letters, and the |
+         :        :                        :        :             : Humanities                       :
+         | lang   | Foreign Languages      | la     | la          | School of Arts, Letters, and the |
+         :        :                        :        :             : Humanities                       :
+         | me     | Mechanical Engineering | egn    | egn         | School of Engineering            |
+         | mth    | Mathematics            | ns     | ns          | School of Natural Sciences       |
+         | phys   | Physics                | ns     | ns          | School of Natural Sciences       |
+         | pia    | Piano                  | mus    | mus         | Musical School                   |
+         | poli   | Political Science      | la     | la          | School of Arts, Letters, and the |
+         :        :                        :        :             : Humanities                       :
+         | psych  | Psychology             | la     | la          | School of Arts, Letters, and the |
+         :        :                        :        :             : Humanities                       :
+         | stdart | Studio Art             | art    | art         | School of Art and Design         |
+         | str    | Strings                | mus    | mus         | Musical School                   |
+         | tched  | Teacher Education      | edu    | edu         | College of Education             |
+         | voc    | Vocals                 | mus    | mus         | Musical School                   |
+         | win    | Wind                   | mus    | mus         | Musical School                   |
+                                                                                             (27 rows)
+
+         ----
+         /department{*,school.*}
+         SELECT "department"."code", "department"."name", "department"."school", "school_2"."code", "school_2"."name" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+    - uri: /department?school='egn'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (department?school='egn')              |
+        -+----------------------------------------+-
+         | code | name                   | school |
+        -+------+------------------------+--------+-
+         | be   | Bioengineering         | egn    |
+         | comp | Computer Science       | egn    |
+         | ee   | Electrical Engineering | egn    |
+         | me   | Mechanical Engineering | egn    |
+                                           (4 rows)
+
+         ----
+         /department?school='egn'
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE ("department"."school" = 'egn') ORDER BY 1 ASC
+    - uri: /program?school='bus'&degree!='bs'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (program?school='bus'&degree!='bs')                     |
+        -+---------------------------------------------------------+-
+         | school | code | title                          | degree |
+        -+--------+------+--------------------------------+--------+-
+         | bus    | pacc | Graduate Certificate in        | ct     |
+         :        :      : Accounting                     :        :
+         | bus    | pcap | Certificate in Capital Markets | ct     |
+                                                            (2 rows)
+
+         ----
+         /program?school='bus'&degree!='bs'
+         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" WHERE (("program"."school" = 'bus') AND (NOT ("program"."degree" = 'bs'))) ORDER BY 1 ASC, 2 ASC
+    - uri: /course{department, number, title}?credits<3&department.school='ns'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course?credits<3&department.school='ns')            |
+        -+------------------------------------------------------+-
+         | department | number | title                          |
+        -+------------+--------+--------------------------------+-
+         | astro      |    142 | Solar System Lab               |
+         | astro      |    155 | Telescope Workshop             |
+         | chem       |    115 | Organic Chemistry Laboratory I |
+         | phys       |    388 | Experimental Physics I         |
+                                                         (4 rows)
+
+         ----
+         /course{department,number,title}?credits<3&department.school='ns'
+         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."code", "department"."school" FROM "ad"."department" AS "department") AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
+    - uri: /(course?credits<3&department.school='ns'){department, number, title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course?credits<3&department.school='ns')            |
+        -+------------------------------------------------------+-
+         | department | number | title                          |
+        -+------------+--------+--------------------------------+-
+         | astro      |    142 | Solar System Lab               |
+         | astro      |    155 | Telescope Workshop             |
+         | chem       |    115 | Organic Chemistry Laboratory I |
+         | phys       |    388 | Experimental Physics I         |
+                                                         (4 rows)
+
+         ----
+         /(course?credits<3&department.school='ns'){department,number,title}
+         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."code", "department"."school" FROM "ad"."department" AS "department") AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
+    - uri: /school/:json
+      status: 200 OK
+      headers:
+      - [Content-Type, application/json]
+      - [Content-Disposition, attachment; filename="(school).json"]
+      body: |
+        [
+          ["code", "name"],
+          ["art", "School of Art and Design"],
+          ["bus", "School of Business"],
+          ["edu", "College of Education"],
+          ["egn", "School of Engineering"],
+          ["la", "School of Arts, Letters, and the Humanities"],
+          ["mart", "School of Modern Art"],
+          ["mus", "Musical School"],
+          ["ns", "School of Natural Sciences"],
+          ["sc", "School of Continuing Studies"]
+        ]
+    - uri: /course{department{code,name},number,title+}?department.school='bus'/:csv
+      status: 200 OK
+      headers:
+      - [Content-Type, text/csv; charset=UTF-8]
+      - [Content-Disposition, 'attachment; filename="(course{department{code,name},number,title+}?department.school=''bus'').csv"']
+      body: "department{code},department{name},number,title+\r\ncorpfi,Corporate Finance,234,Accounting
+        Information Systems\r\nacc,Accounting,527,Advanced Accounting\r\ncapmrk,Capital
+        Markets,756,Capital Risk Management\r\ncorpfi,Corporate Finance,601,Case Studies
+        in Corporate Finance\r\nacc,Accounting,606,Corporate Financial Law\r\ncorpfi,Corporate
+        Finance,404,Corporate Financial Management\r\nacc,Accounting,426,Corporate
+        Taxation\r\nacc,Accounting,315,Financial Accounting\r\ncapmrk,Capital Markets,818,Financial
+        Statement Analysis\r\ncapmrk,Capital Markets,712,International Financial Markets\r\nacc,Accounting,100,Practical
+        Bookkeeping\r\nacc,Accounting,200,Principles of Accounting I\r\ncapmrk,Capital
+        Markets,808,Principles of Portfolio Management\r\n"
+    - uri: /course{department.name, credits}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | course                           |
+        -+----------------------------------+-
+         | department.name        | credits |
+        -+------------------------+---------+-
+         | Accounting             |       2 |
+         | Accounting             |       3 |
+         | Accounting             |       5 |
+         | Accounting             |       3 |
+         | Accounting             |       3 |
+         | Accounting             |       3 |
+         | Art History            |       3 |
+         | Art History            |       3 |
+         | Art History            |       3 |
+         | Art History            |       3 |
+         | Art History            |       4 |
+         | Art History            |       3 |
+         | Astronomy              |       3 |
+         | Astronomy              |       2 |
+         | Astronomy              |       1 |
+         | Astronomy              |       3 |
+         | Bioengineering         |       3 |
+         | Bioengineering         |       3 |
+         | Bioengineering         |       8 |
+         | Bioengineering         |       3 |
+         | Capital Markets        |       3 |
+         | Capital Markets        |       3 |
+         | Capital Markets        |       3 |
+         | Capital Markets        |       3 |
+         | Chemistry              |       3 |
+         | Chemistry              |       3 |
+         | Chemistry              |       2 |
+         | Chemistry              |       3 |
+         | Chemistry              |       3 |
+         | Computer Science       |       3 |
+         | Computer Science       |       3 |
+         | Computer Science       |       3 |
+         | Computer Science       |       3 |
+         | Computer Science       |       4 |
+         | Computer Science       |       3 |
+         | Computer Science       |       3 |
+         | Corporate Finance      |       3 |
+         | Corporate Finance      |       3 |
+         | Corporate Finance      |       3 |
+         | Educational Policy     |       3 |
+         | Educational Policy     |       3 |
+         | Educational Policy     |       3 |
+         | Educational Policy     |         |
+         | Educational Policy     |       3 |
+         | Electrical Engineering |       3 |
+         | Electrical Engineering |       3 |
+         | Electrical Engineering |       4 |
+         | Electrical Engineering |       3 |
+         | Electrical Engineering |       3 |
+         | English                |       3 |
+         | English                |       2 |
+         | English                |       3 |
+         | English                |       3 |
+         | English                |       3 |
+         | English                |       2 |
+         | History                |       3 |
+         | History                |       3 |
+         | History                |       3 |
+         | History                |       3 |
+         | History                |       3 |
+         | Foreign Languages      |       4 |
+         | Foreign Languages      |       3 |
+         | Foreign Languages      |       3 |
+         | Foreign Languages      |       2 |
+         | Foreign Languages      |       3 |
+         | Mechanical Engineering |       3 |
+         | Mechanical Engineering |       4 |
+         | Mechanical Engineering |       3 |
+         | Mechanical Engineering |       4 |
+         | Mechanical Engineering |       3 |
+         | Mathematics            |       5 |
+         | Physics                |       3 |
+         | Physics                |       3 |
+         | Physics                |       2 |
+         | Physics                |       3 |
+         | Physics                |       3 |
+         | Physics                |       3 |
+         | Political Science      |       3 |
+         | Political Science      |       3 |
+         | Political Science      |       4 |
+         | Political Science      |       3 |
+         | Political Science      |       3 |
+         | Political Science      |       3 |
+         | Psychology             |       3 |
+         | Psychology             |       3 |
+         | Psychology             |       4 |
+         | Psychology             |       4 |
+         | Psychology             |       3 |
+         | Studio Art             |         |
+         | Studio Art             |       3 |
+         | Studio Art             |       4 |
+         | Studio Art             |       4 |
+         | Studio Art             |       3 |
+         | Studio Art             |       5 |
+         | Studio Art             |       0 |
+         | Teacher Education      |       3 |
+         | Teacher Education      |       3 |
+         | Teacher Education      |       3 |
+         | Teacher Education      |       3 |
+         | Teacher Education      |       4 |
+                                   (100 rows)
+
+         ----
+         /course{department.name,credits}
+         SELECT "department"."name", "course"."credits" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."name", "department"."code" FROM "ad"."department" AS "department") AS "department" ON (("course"."department" = "department"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
+    - uri: /department{name, course.credits}
+      status: 400 Bad Request
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |
+        assemble error: expected a singular expression:
+            /department{name, course.credits}
+                                     ^^^^^^^
+    - uri: /department{name, max(course.credits)}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | department                                   |
+        -+----------------------------------------------+-
+         | name                   | max(course.credits) |
+        -+------------------------+---------------------+-
+         | Accounting             |                   5 |
+         | Art History            |                   4 |
+         | Astronomy              |                   3 |
+         | Bioengineering         |                   8 |
+         | Bursar's Office        |                     |
+         | Capital Markets        |                   3 |
+         | Career Development     |                     |
+         | Chemistry              |                   3 |
+         | Computer Science       |                   4 |
+         | Corporate Finance      |                   3 |
+         | Alumni & Parents       |                     |
+         | Educational Policy     |                   3 |
+         | Electrical Engineering |                   4 |
+         | English                |                   3 |
+         | History                |                   3 |
+         | Foreign Languages      |                   4 |
+         | Mechanical Engineering |                   4 |
+         | Mathematics            |                   5 |
+         | Physics                |                   3 |
+         | Piano                  |                     |
+         | Political Science      |                   4 |
+         | Psychology             |                   4 |
+         | Studio Art             |                   5 |
+         | Strings                |                     |
+         | Teacher Education      |                   4 |
+         | Vocals                 |                     |
+         | Wind                   |                     |
+                                                (27 rows)
+
+         ----
+         /department{name,max(course.credits)}
+         SELECT "department"."name", "course"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "course"."department", MAX("course"."credits") AS "!" FROM "ad"."course" AS "course" GROUP BY 1) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC

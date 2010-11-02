@@ -352,6 +352,7 @@ tests:
     - uri: /{count(school),count(department),count(course)}
     - uri: /{count(department),count(department?exists(course))}
     - uri: /department{code,count(course{credits=3})}
+    - uri: /department{code,count(course?credits=3)}
     - uri: /school{code,count(department.course{credits=3})}
     - uri: /school{code}?count(department.course{credits=3})=20
     - uri: /department?exists(course.credits=5)
@@ -429,4 +430,27 @@ tests:
     - uri: /{'%01%02...%1F%7F\"'}
       headers:
         Accept: text/csv
+
+  - title: Tutorial Tests
+    tests:
+    # Getting Started
+    - uri: /school
+    - uri: /program{school, code, title}
+    - uri: /department{name-, school}
+    - uri: /course{department+, number, credits-, title}
+    - uri: /course{department as 'Dept Code'+, number as 'No.', credits-, title}
+    - uri: /program{school.name, title}
+    - uri: /course{department.school.name, department.name, title}
+    - uri: /department{*,school.*}
+    - uri: /department?school='egn'  
+    - uri: /program?school='bus'&degree!='bs' 
+    - uri: /course{department, number, title}?credits<3&department.school='ns'
+    - uri: /(course?credits<3&department.school='ns'){department, number, title}
+    - uri: /school/:json
+    - uri: /course{department{code,name},number,title+}?department.school='bus'/:csv
+    # Relating and Aggregating Data
+    - uri: /course{department.name, credits} # singular join
+    - uri: /department{name, course.credits} # invalid plural join
+      expect: 400
+    - uri: /department{name, max(course.credits)} 
 

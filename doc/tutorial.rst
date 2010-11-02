@@ -385,6 +385,7 @@ command, such as ``/:json``.  For example, results in JSON format (RFC
     /school/:json
 
     [
+      ["code", "name"],
       ["art", "School of Art and Design"],
       ["bus", "School of Business"],
       ["edu", "College of Education"],
@@ -401,7 +402,7 @@ command, such as ``/:json``.  For example, results in JSON format (RFC
     /school/:json
 
 Other formats include ``/:txt`` for plain-text formatting, ``/:html`` for
-display in web browsers, and ``/:csv`` for data exchange.
+display in web browsers, and ``/:csv`` for data exchange. 
 
 Putting it All Together
 -----------------------
@@ -430,3 +431,90 @@ HTSQL requests are powerful without being complex.  They are easy to
 read and modify.  They adapt to changes in the database.  These
 qualities increase the usability of databases by all types of users and
 reduce the likelihood of costly errors.
+
+
+Relating and Aggregating Data
+=============================
+
+HTSQL distinguishes between *singular* and *plural* relationships to
+simplify query construction.  By a *singular* relationship we mean for
+every row in one table, there is at most one row in a linked table; by
+*plural* we mean there is perhaps more than one correlated record.  To
+select a *plural* expression in a result set, an *aggregate* function,
+such as ``sum``, ``count``, or ``exists`` must be used.  In this way,
+what would be many values is converted into a single data cell and
+integrated into a coherent result set.  Since arbitrary projections
+cannot be created accidentally, the combined result set is always
+consistent and understandable. 
+
+HTSQL reduces query construction time and errors.  By assuming the most
+common join semantics and requiring aggregates for plural links, HTSQL
+queries are easier to understand than raw SQL.  By having a consistent
+grammar, HTSQL lacks the ceilings that most visual query tools impose.
+While it's possible to do cross products or construct arbitrary
+relations, this isn't the default operation.  Consequently, the easy
+stuff is easy; the hard stuff is possible. 
+
+One to Many Links
+-----------------
+
+One-to-many relationships are the primary building block of relational
+structures.  In our schema, each ``course`` is offered by a
+``department`` with a mandatory foreign key.  For each course, there is
+exactly one corresponding department.  In this case, the relationship is
+singular in one direction and plural in the other.
+
+If each row in your result set represents a ``course``, it is easy to
+get correlated information for each course's department (RA1_)::
+
+    /course{department.name, title}
+
+    course                                              
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department.name        | title                      
+    -----------------------+----------------------------
+    Accounting             | Practical Bookkeeping      
+    Accounting             | Principles of Accounting I 
+    Accounting             | Financial Accounting       
+    ...
+
+.. _RA1:
+    http://demo.htsql.org
+    /course{department.name,title}
+
+It's possible to join *up* a hierarchy in this way, but not down. If
+each row in your result set is a ``department``, then it is an error to
+request ``course``'s ``credits`` since there could be many courses in a
+given department (RA2_)::
+
+    /department{name, course.credits}
+    
+    400 Bad Request
+
+    a singular expression is required at the position 26:
+    /department{name, course.credits}
+                             ^------
+
+.. _RA2:
+    http://demo.htsql.org
+    /department{name,course.credits}
+
+In cases like this, an aggregate function, such as ``count`` is needed
+to convert a plural expression into a singular value.  The following
+example shows the maximum course credits by department (RA3_)::
+
+    /department{name, max(course.credits)}
+
+    department                          
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    name           | max(course.credits)
+    ---------------+--------------------
+    Accounting     |                   5
+    Art History    |                   4
+    Astronomy      |                   3
+    Bioengineering |                   8
+    ...
+
+.. _RA3:
+    http://demo.htsql.org
+    /department{name,max(course.credits)}

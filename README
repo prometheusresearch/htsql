@@ -13,9 +13,9 @@ and returns the results in a format requested by the user agent (JSON,
 CSV, HTML, etc.).
 
 Use of HTSQL with open source databases (PostgreSQL, MySQL, SQLite) is
-royalty free under BSD-style conditions.  Usage of HTSQL with
-proprietary database systems (Oracle, Microsoft SQL) requires a
-commercial license.  See ``LICENSE`` for details.
+royalty free under BSD-style conditions.  Use of HTSQL with proprietary
+database systems (Oracle, Microsoft SQL) requires a commercial license.
+See ``LICENSE`` for details.
 
 For installation instructions, see ``INSTALL``.  For list of new
 features in this release, see ``NEWS``.  HTSQL documentation is in the
