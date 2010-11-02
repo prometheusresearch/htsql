@@ -14,8 +14,8 @@ This module adapts the SQL serializer for SQLite.
 
 
 from htsql.adapter import adapts
-from htsql.tr.frame import LeafFrame
-from htsql.tr.serializer import Serializer, Format, SerializeLeaf
+from htsql.tr.frame import TableFrame
+from htsql.tr.serializer import Serializer, Format, SerializeTable
 
 
 class SQLiteFormat(Format):
@@ -27,9 +27,9 @@ class SQLiteFormat(Format):
         return "0"
 
 
-class SQLiteSerializeLeaf(SerializeLeaf):
+class SQLiteSerializeTable(SerializeTable):
 
-    adapts(LeafFrame, Serializer)
+    adapts(TableFrame, Serializer)
 
     def serialize(self):
         return self.format.name(self.frame.table.name)

@@ -13,20 +13,95 @@ This module implements the assembling process.
 """
 
 
-from ..util import maybe, listof
+from ..util import maybe, listof, Node
 from ..adapter import Adapter, adapts
 from .error import AssembleError
 from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
-                   CrossProductSpace, JoinProductSpace,
+                   DirectProductSpace, FiberProductSpace,
                    FilteredSpace, OrderedSpace, MaskedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    QueryExpression, SegmentExpression,
                    BatchExpression, ScalarBatchExpression,
-                   AggregateBatchExpression,
-                   Tie, ParallelTie, SerialTie)
+                   AggregateBatchExpression)
 from .term import (RoutingTerm, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
-                   CorrelationTerm, ProjectionTerm, OrderTerm, WrapperTerm,
-                   SegmentTerm, QueryTerm)
+                   EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
+                   WrapperTerm, SegmentTerm, QueryTerm)
+
+
+class Tie(Node):
+    """
+    Represents a connection between two axes.
+
+    This is an auxiliary class used internally by the assembler.
+
+    An axis space could be naturally connected with:
+
+    - an identical axis space;
+    - or its base space.
+
+    These two types of connections are called *parallel* and *serial*
+    ties respectively.  Typically, a parallel tie is implemented using
+    a primary key constraint while a serial tie is implemented using
+    a foreign key constraint, but, in general, it depends on the type
+    of the axis space.
+
+    :class:`Tie` is an abstract case class with exactly two subclasses:
+    :class:`ParallelTie` and :class:`SerialTie`.
+
+    Class attributes:
+
+    `is_parallel` (Boolean)
+        Denotes a parallel tie.
+
+    `is_serial` (Boolean)
+        Denotes a serial tie.
+
+    Attributes:
+
+    `space` (:class:`htsql.tr.code.Space`)
+        An axis space.
+    """
+
+    is_parallel = False
+    is_serial = False
+
+    def __init__(self, space):
+        assert isinstance(space, Space) and space.is_axis
+        # Technically, non-inflated axis spaces could be permitted, but
+        # since the assembler only generates ties for inflated spaces,
+        # we add a respective check here.
+        assert space.is_inflated
+        self.space = space
+
+    def __str__(self):
+        # Display, depending on the tie direction,
+        #   ||<space> or ==<space>
+        indicator = None
+        if self.is_parallel:
+            indicator = "||"
+        if self.is_serial:
+            indicator = "=="
+        return "%s%s" % (indicator, self.space)
+
+
+class ParallelTie(Tie):
+    """
+    Represents a parallel tie.
+
+    A parallel tie is a connection of an axis space with itself.
+    """
+
+    is_parallel = True
+
+
+class SerialTie(Tie):
+    """
+    Represents a serial tie.
+
+    A serial tie is a connection between an axis space and its base.
+    """
+
+    is_serial = True
 
 
 class AssemblingState(object):
@@ -231,15 +306,15 @@ class AssemblingState(object):
         Produces a list of joints corresponding to the given ties.
 
         Ties represent a connection between two term nodes (see
-        :class:`htsql.tr.code.Tie` for more details).  A connection
-        is expressed as a series of conditions of the form:
+        :class:`Tie` for more details).  A connection is expressed
+        as a series of conditions of the form:
 
-            `lcode = rcode`,
+            `lop = rop`,
 
-        where `lcode` and `rcode` are evaluated in the respective
-        terms.  The pair `(lcode, rcode)` is called a *joint*.
+        where `lop` and `rop` are evaluated in the respective
+        terms.  The pair `(lop, rop)` is called a *joint*.
 
-        `ties` (a list of :class:`htsql.tr.code.Tie`)
+        `ties` (a list of :class:`Tie`)
             A list of ties (connecting two term nodes).
         """
         # The `Connect` adapter converts a single tie to a list of joints.
@@ -262,16 +337,16 @@ class AssemblingState(object):
         A serial tie indicates that the kernel must include the base of the
         tie axis.
 
-        `ties` (a list of :class:`htsql.tr.code.Tie`)
+        `ties` (a list of :class:`Tie`)
             A list of ties indicating the quotient space.
         """
         # Generate joints corresponding to the ties and take the second
         # expression from each pair.
-        # Note that for a parallel tie, `lcode` and `rcode` are identical,
-        # but for a serial tie, `lcode` is defined on the base of the tie
-        # space while `rcode` is defined on the tie space itself.  Since
-        # we need the expressions to act on the tie space, we take `rcode`.
-        return [rcode for lcode, rcode in self.connect(ties)]
+        # Note that for a parallel tie, `lop` and `rop` are identical,
+        # but for a serial tie, `lop` is defined on the base of the tie
+        # space while `rop` is defined on the tie space itself.  Since
+        # we need the expressions to act on the tie space, we take `rop`.
+        return [rop for lop, rop in self.connect(ties)]
 
 
 class Assemble(Adapter):
@@ -519,7 +594,7 @@ class Inject(Adapter):
             It is assumed that `term` was the argument `trunk_term` of
             :meth:`tie_terms` when the ties were generated.
 
-        `ties` (a list of :class:`htsql.tr.code.Tie`)
+        `ties` (a list of :class:`Tie`)
             The ties to inject.
 
             It is assumed the ties were generated by :meth:`tie_terms`.
@@ -585,14 +660,15 @@ class Inject(Adapter):
         # In general, we can use the inner join if the shoot space
         # dominates the prefix of the trunk space cut at the longest
         # common axis of trunk and the shoot spaces.
-        is_inner = shoot_term.space.dominates(trunk_term.space)
+        is_left = (not shoot_term.space.dominates(trunk_term.space))
+        is_right = False
         # Use the routing table of the trunk term, but also add
         # the given extra routes.
         routes = trunk_term.routes.copy()
         routes.update(extra_routes)
         # Generate and return a join term.
         return JoinTerm(self.state.tag(), trunk_term, shoot_term,
-                        joints, is_inner, trunk_term.space, routes)
+                        joints, is_left, is_right, trunk_term.space, routes)
 
 
 class AssembleQuery(Assemble):
@@ -799,14 +875,15 @@ class InjectSpace(Inject):
             joints = self.state.connect([tie])
             # Since we are expanding the term baseline, the join is always
             # inner.
-            is_inner = True
+            is_left = False
+            is_right = False
             # Re-use the old routing table, but add the new axis.
             routes = rkid.routes.copy()
             routes[unmasked_space] = lkid[unmasked_space]
             routes[self.space] = lkid[unmasked_space]
             # Assemble and return a join term.
-            return JoinTerm(self.state.tag(), lkid, rkid, joints, is_inner,
-                            rkid.space, routes)
+            return JoinTerm(self.state.tag(), lkid, rkid, joints,
+                            is_left, is_right, rkid.space, routes)
 
         # None of the special cases apply, so we use a general method:
         # - grow a shoot term for the given space;
@@ -838,7 +915,7 @@ class AssembleScalar(AssembleSpace):
 
 class AssembleProduct(AssembleSpace):
     """
-    Assembles a term corresponding to a (cross or join) product space.
+    Assembles a term corresponding to a (direct or fiber) product space.
     """
 
     adapts(ProductSpace)
@@ -898,7 +975,8 @@ class AssembleProduct(AssembleSpace):
         # The connections between the space to its base.
         tie = SerialTie(self.backbone)
         joints = self.state.connect([tie])
-        is_inner = True
+        is_left = False
+        is_right = False
         # We use the routing table of the base term with extra routes
         # corresponding to the given space and its inflation which we
         # export from the table term.
@@ -906,8 +984,8 @@ class AssembleProduct(AssembleSpace):
         routes[self.space] = rkid.routes[self.space]
         routes[self.backbone] = rkid.routes[self.backbone]
         # Generate a join term node.
-        return JoinTerm(self.state.tag(), lkid, rkid, joints, is_inner,
-                        self.space, routes)
+        return JoinTerm(self.state.tag(), lkid, rkid, joints,
+                        is_left, is_right, self.space, routes)
 
 
 class AssembleFiltered(AssembleSpace):
@@ -1135,11 +1213,9 @@ class InjectCorrelated(Inject):
 
     def __call__(self):
         # In the term tree, correlated subqueries are represented using
-        # a correlated term node.  A correlated term is a binary node with
-        # the left operand representing the main query and the right operand
-        # representing the correlated subquery.  Conditions that attach
-        # the correlated subquery to the main query are expressed as
-        # a list of basis expressions.
+        # a pair of correlation and embedding term nodes.  A correlation
+        # term connects its operand to an external *link* term.  An embedding
+        # term implants the correlation term into the term tree.
 
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
@@ -1182,11 +1258,15 @@ class InjectCorrelated(Inject):
         joints = self.state.connect(ties)
         # Make sure that the unit term could export tie conditions.
         unit_term = self.inject_ties(unit_term, ties)
-        # Generate a correlation term.
+        # Connect the plural term to the unit term.
+        plural_term = CorrelationTerm(self.state.tag(), plural_term,
+                                      unit_term, joints, plural_term.space,
+                                      plural_term.routes)
+        # Implant the correlation term into the term tree.
         routes = unit_term.routes.copy()
         routes[self.unit] = plural_term.tag
-        unit_term = CorrelationTerm(self.state.tag(), unit_term, plural_term,
-                                    joints, unit_term.space, routes)
+        unit_term = EmbeddingTerm(self.state.tag(), unit_term, plural_term,
+                                  unit_term.space, routes)
         # If we attached the unit directly to the main term, we are done.
         if is_native:
             return unit_term
@@ -1484,9 +1564,9 @@ class Connect(Adapter):
     The :class:`Connect` adapter converts the given tie to a series
     of equality conditions:
 
-        `lcode = rcode`.
+        `lop = rop`.
 
-    A pair `(lcode, rcode)` is called a joint.
+    A pair `(lop, rop)` is called a joint.
 
     The :class:`Connect` adapter has the following signature::
 
@@ -1494,7 +1574,7 @@ class Connect(Adapter):
 
     The adapter is polymorphic on the tie and the tie space.
 
-    `tie` (:class:`htsql.tr.code.Tie`)
+    `tie` (:class:`Tie`)
         A tie representing a connection between two terms.
     """
 
@@ -1580,24 +1660,24 @@ class ConnectProductInParallel(Connect):
         return joints
 
 
-class ConnectCrossProductInSeries(Connect):
+class ConnectDirectProductInSeries(Connect):
     """
-    Connects a cross product axis to its base.
+    Connects a direct product axis to its base.
     """
 
-    adapts(SerialTie, CrossProductSpace)
+    adapts(SerialTie, DirectProductSpace)
 
     def __call__(self):
-        # A cross product imposes no join conditions.
+        # A direct product imposes no join conditions.
         return []
 
 
-class ConnectJoinProductInSeries(Connect):
+class ConnectFiberProductInSeries(Connect):
     """
-    Connects a join product axis to its base.
+    Connects a fiber product axis to its base.
     """
 
-    adapts(SerialTie, JoinProductSpace)
+    adapts(SerialTie, FiberProductSpace)
 
     def __call__(self):
         # Generate a list of joints corresponding to a connection by

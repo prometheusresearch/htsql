@@ -711,3 +711,58 @@ class Node(object):
         return "<%s %s>" % (self.__class__.__name__, self)
 
 
+#
+# By-value comparison.
+#
+
+
+class Comparable(object):
+    """
+    Implements an object with by-value comparison semantics.
+
+    The constructor arguments:
+
+    `equality_vector` (an immutable tuple or ``None``)
+        Encapsulates all essential attributes of an object.  Two instances
+        of :class:`Comparable` are considered equal if they are of the
+        same type and their equality vectors are equal.  If ``None``, the
+        object is to be compared by identity.
+
+    Other attributes:
+
+    `hash` (an integer)
+        The hash of the equality vector; if two objects are equal, their
+        hashes are also equal.
+    """
+
+    def __init__(self, equality_vector=None):
+        assert isinstance(equality_vector, maybe(oneof(tuple, int, long)))
+        # When `equality_vector` is not set, equality by identity
+        # is assumed.  Note that `A is B` <=> `id(A) == id(B)`.
+        if equality_vector is None:
+            equality_vector = id(self)
+        self.equality_vector = equality_vector
+        self.hash = hash(equality_vector)
+
+    def __hash__(self):
+        return self.hash
+
+    def __eq__(self, other):
+        # Two nodes are equal if they are of the same type and
+        # their equality vectors are equal.  To avoid costly
+        # comparison of equality vectors in the more common
+        # "not equal" case, we compare hashes first.
+        return ((self is other) or
+                (isinstance(other, Comparable) and
+                 self.__class__ is other.__class__ and
+                 self.hash == other.hash and
+                 self.equality_vector == other.equality_vector))
+
+    def __ne__(self, other):
+        # Since we override `==`, we also need to override `!=`.
+        return (not isinstance(other, Comparable) or
+                self.__class__ is not other.__class__ or
+                self.hash != other.hash and
+                self.equality_vector != other.equality_vector)
+
+

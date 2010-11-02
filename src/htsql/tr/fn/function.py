@@ -28,7 +28,7 @@ from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
 from ..encode import Encode
 from ..code import (FunctionCode, NegationCode, ScalarUnit, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
-from ..compiler import Compiler, Evaluate
+from ..compile import Evaluate
 from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
 from ..coerce import coerce
@@ -324,13 +324,13 @@ class FalseFunction(ProperFunction):
 class CastFunction(ProperFunction):
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
     output_domain = None
 
-    def correlate(self, expression):
+    def correlate(self, op):
         domain = coerce(self.output_domain)
-        yield CastBinding(expression, domain, self.syntax)
+        yield CastBinding(op, domain, self.syntax)
 
 
 class BooleanCastFunction(CastFunction):
@@ -878,16 +878,14 @@ class GenericAggregateEncode(Encode):
         return encode_class
 
     def __call__(self):
-        expression = self.state.encode(self.binding.expression)
-        expression = self.expression_class(self.binding.domain,
-                                           self.binding,
-                                           expression=expression)
+        op = self.state.encode(self.binding.op)
+        op = self.expression_class(self.binding.domain,
+                                   self.binding, op=op)
         space = self.state.relate(self.binding.base)
-        plural_units = [unit for unit in expression.units
+        plural_units = [unit for unit in op.units
                              if not space.spans(unit.space)]
         if not plural_units:
-            raise InvalidArgumentError("a plural expression is required",
-                                       expression.mark)
+            raise InvalidArgumentError("a plural operand is required", op.mark)
         plural_spaces = []
         for unit in plural_units:
             if any(plural_space.dominates(unit.space)
@@ -898,16 +896,13 @@ class GenericAggregateEncode(Encode):
                              if not unit.space.dominates(plural_space)]
             plural_spaces.append(unit.space)
         if len(plural_spaces) > 1:
-            raise InvalidArgumentError("invalid plural expression",
-                                       expression.mark)
+            raise InvalidArgumentError("invalid plural operand", op.mark)
         plural_space = plural_spaces[0]
         if not plural_space.spans(space):
-            raise InvalidArgumentError("invalid plural expression",
-                                       expression.mark)
-        aggregate = AggregateUnit(expression, plural_space, space,
-                                  self.binding)
+            raise InvalidArgumentError("invalid plural operand", op.mark)
+        aggregate = AggregateUnit(op, plural_space, space, self.binding)
         wrapper = self.wrapper_class(self.binding.domain, self.binding,
-                                     expression=aggregate)
+                                     op=aggregate)
         wrapper = ScalarUnit(wrapper, space, self.binding)
         return wrapper
 
@@ -926,7 +921,7 @@ class GenericEvaluate(Evaluate):
     def factory(cls, function, expression_class, phrase_class,
                 is_null_regular=True, is_nullable=True):
         name = 'Evaluate' + function.__name__
-        signature = (expression_class, Compiler)
+        signature = (expression_class,)
         evaluate_class = type(name, (cls,),
                               {'function': function,
                                'signatures': [signature],
@@ -936,32 +931,32 @@ class GenericEvaluate(Evaluate):
                                'is_nullable': is_nullable})
         return evaluate_class
 
-    def evaluate(self, references):
+    def __call__(self):
         is_nullable = self.is_nullable
         if self.is_null_regular:
             is_nullable = False
         arguments = {}
         children = []
         for parameter in self.function.parameters:
-            value = self.expression.arguments[parameter.name]
+            value = self.code.arguments[parameter.name]
             if not parameter.is_mandatory and value is None:
                 argument = None
             elif parameter.is_list:
-                argument = [self.compiler.evaluate(item, references)
+                argument = [self.state.evaluate(item)
                             for item in value]
                 children.extend(argument)
                 is_nullable = is_nullable or any(item.is_nullable
                                                  for item in argument)
             else:
-                argument = self.compiler.evaluate(value, references)
+                argument = self.state.evaluate(value)
                 children.append(argument)
                 is_nullable = is_nullable or argument.is_nullable
             arguments[parameter.name] = argument
-        for name in sorted(self.expression.arguments):
+        for name in sorted(self.code.arguments):
             if name not in arguments:
-                arguments[name] = self.expression.arguments[name]
-        return self.phrase_class(self.expression.domain, is_nullable,
-                                 children, self.expression.mark, **arguments)
+                arguments[name] = self.code.arguments[name]
+        return self.phrase_class(self.code.domain, is_nullable,
+                                 self.code, **arguments)
 
 
 class GenericSerialize(Serialize):
@@ -1418,17 +1413,16 @@ class IsNullFunction(ProperFunction):
     named('is_null')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        domain = coerce(expression.domain)
+    def correlate(self, op):
+        domain = coerce(op.domain)
         if domain is None:
             raise InvalidArgumentError("unexpected domain",
-                                       expression.mark)
-        expression = CastBinding(expression, domain, self.syntax)
-        yield IsNullBinding(coerce(BooleanDomain()), self.syntax,
-                            expression=expression)
+                                       op.mark)
+        op = CastBinding(op, domain, self.syntax)
+        yield IsNullBinding(coerce(BooleanDomain()), self.syntax, op=op)
 
 
 IsNullBinding = GenericBinding.factory(IsNullFunction)
@@ -1442,7 +1436,7 @@ EvaluateIsNull = GenericEvaluate.factory(IsNullFunction,
         IsNullExpression, IsNullPhrase,
         is_null_regular=False, is_nullable=False)
 SerializeIsNull = GenericSerialize.factory(IsNullFunction,
-        IsNullPhrase, "(%(expression)s IS NULL)")
+        IsNullPhrase, "(%(op)s IS NULL)")
 
 
 class NullIfMethod(ProperMethod):
@@ -1451,20 +1445,16 @@ class NullIfMethod(ProperMethod):
 
     parameters = [
             Parameter('this'),
-            Parameter('expressions', is_list=True),
+            Parameter('ops', is_list=True),
     ]
 
-    def correlate(self, this, expressions):
-        domain = coerce(this.domain,
-                        *(expression.domain for expression in expressions))
+    def correlate(self, this, ops):
+        domain = coerce(this.domain, *(op.domain for op in ops))
         if domain is None:
-            raise InvalidArgumentError("unexpected domain",
-                                       expression.mark)
+            raise InvalidArgumentError("unexpected domain", op.mark)
         this = CastBinding(this, domain, this.syntax)
-        expressions = [CastBinding(expression, domain, expression.syntax)
-                       for expression in expressions]
-        yield NullIfBinding(domain, self.syntax,
-                            this=this, expressions=expressions)
+        ops = [CastBinding(op, domain, op.syntax) for op in ops]
+        yield NullIfBinding(domain, self.syntax, this=this, ops=ops)
 
 
 NullIfBinding = GenericBinding.factory(NullIfMethod)
@@ -1485,8 +1475,8 @@ class SerializeNullIf(Serialize):
 
     def serialize(self):
         left = self.serializer.serialize(self.phrase.this)
-        for expression in self.phrase.expressions:
-            right = self.serializer.serialize(expression)
+        for op in self.phrase.ops:
+            right = self.serializer.serialize(op)
             left = self.format.nullif_fn(left, right)
         return left
 
@@ -1497,20 +1487,16 @@ class IfNullMethod(ProperMethod):
 
     parameters = [
             Parameter('this'),
-            Parameter('expressions', is_list=True),
+            Parameter('ops', is_list=True),
     ]
 
-    def correlate(self, this, expressions):
-        domain = coerce(this.domain,
-                        *(expression.domain for expression in expressions))
+    def correlate(self, this, ops):
+        domain = coerce(this.domain, *(op.domain for op in ops))
         if domain is None:
-            raise InvalidArgumentError("unexpected domain",
-                                       expression.mark)
+            raise InvalidArgumentError("unexpected domain", op.mark)
         this = CastBinding(this, domain, this.syntax)
-        expressions = [CastBinding(expression, domain, expression.syntax)
-                       for expression in expressions]
-        yield IfNullBinding(domain, self.syntax,
-                            this=this, expressions=expressions)
+        ops = [CastBinding(op, domain, op.syntax) for op in ops]
+        yield IfNullBinding(domain, self.syntax, this=this, ops=ops)
 
 
 IfNullBinding = GenericBinding.factory(IfNullMethod)
@@ -1530,8 +1516,8 @@ class SerializeIfNull(Serialize):
 
     def serialize(self):
         arguments = [self.serializer.serialize(self.phrase.this)]
-        for expression in self.phrase.expressions:
-            arguments.append(self.serializer.serialize(expression))
+        for op in self.phrase.ops:
+            arguments.append(self.serializer.serialize(op))
         return self.format.coalesce_fn(arguments)
 
 
@@ -1859,14 +1845,13 @@ class CountFunction(ProperFunction):
     named('count')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        expression = CastBinding(expression, coerce(BooleanDomain()),
-                                 expression.syntax)
+    def correlate(self, op):
+        op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         yield CountBinding(coerce(IntegerDomain()), self.syntax,
-                           base=self.state.base, expression=expression)
+                           base=self.state.base, op=op)
 
 
 CountBinding = GenericBinding.factory(CountFunction)
@@ -1883,9 +1868,9 @@ EvaluateCount = GenericEvaluate.factory(CountFunction,
 EvaluateCountWrapper = GenericEvaluate.factory(CountFunction,
         CountWrapperExpression, CountWrapperPhrase)
 SerializeCount = GenericSerialize.factory(CountFunction,
-        CountPhrase, "COUNT(NULLIF(%(expression)s, FALSE))")
+        CountPhrase, "COUNT(NULLIF(%(op)s, FALSE))")
 SerializeCountWrapper = GenericSerialize.factory(CountFunction,
-        CountWrapperPhrase, "COALESCE(%(expression)s, 0)")
+        CountWrapperPhrase, "COALESCE(%(op)s, 0)")
 
 
 class ExistsFunction(ProperFunction):
@@ -1893,14 +1878,13 @@ class ExistsFunction(ProperFunction):
     named('exists')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        expression = CastBinding(expression, coerce(BooleanDomain()),
-                                 expression.syntax)
+    def correlate(self, op):
+        op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         yield ExistsBinding(coerce(BooleanDomain()), self.syntax,
-                            base=self.state.base, expression=expression)
+                            base=self.state.base, op=op)
 
 
 ExistsBinding = GenericBinding.factory(ExistsFunction)
@@ -1913,14 +1897,13 @@ class EveryFunction(ProperFunction):
     named('every')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        expression = CastBinding(expression, coerce(BooleanDomain()),
-                                 expression.syntax)
+    def correlate(self, op):
+        op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         yield EveryBinding(coerce(BooleanDomain()), self.syntax,
-                           base=self.state.base, expression=expression)
+                           base=self.state.base, op=op)
 
 
 EveryBinding = GenericBinding.factory(EveryFunction)
@@ -1935,15 +1918,14 @@ class EncodeExistsEvery(Encode):
     is_every = False
 
     def __call__(self):
-        expression = self.state.encode(self.binding.expression)
+        op = self.state.encode(self.binding.op)
         if self.is_every:
-            expression = NegationCode(expression, self.binding)
+            op = NegationCode(op, self.binding)
         space = self.state.relate(self.binding.base)
-        plural_units = [unit for unit in expression.units
+        plural_units = [unit for unit in op.units
                              if not space.spans(unit.space)]
         if not plural_units:
-            raise InvalidArgumentError("a plural expression is required",
-                                       expression.mark)
+            raise InvalidArgumentError("a plural operand is required", op.mark)
         plural_spaces = []
         for unit in plural_units:
             if any(plural_space.dominates(unit.space)
@@ -1954,24 +1936,22 @@ class EncodeExistsEvery(Encode):
                              if not unit.space.dominates(plural_space)]
             plural_spaces.append(unit.space)
         if len(plural_spaces) > 1:
-            raise InvalidArgumentError("invalid plural expression",
-                                       expression.mark)
+            raise InvalidArgumentError("invalid plural operand", op.mark)
         plural_space = plural_spaces[0]
         if not plural_space.spans(space):
-            raise InvalidArgumentError("invalid plural expression",
-                                       expression.mark)
-        plural_space = FilteredSpace(plural_space, expression, self.binding)
-        expression = LiteralCode(True, BooleanDomain(), self.binding)
-        aggregate = CorrelatedUnit(expression, plural_space, space,
+            raise InvalidArgumentError("invalid plural operand", op.mark)
+        plural_space = FilteredSpace(plural_space, op, self.binding)
+        op = LiteralCode(True, BooleanDomain(), self.binding)
+        aggregate = CorrelatedUnit(op, plural_space, space,
                                    self.binding)
         if self.is_exists:
             wrapper = ExistsWrapperExpression(self.binding.domain,
                                               self.binding,
-                                              expression=aggregate)
+                                              op=aggregate)
         if self.is_every:
             wrapper = EveryWrapperExpression(self.binding.domain,
                                              self.binding,
-                                             expression=aggregate)
+                                             op=aggregate)
         wrapper = ScalarUnit(wrapper, space, self.binding)
         return wrapper
 
@@ -1985,7 +1965,7 @@ class EncodeExists(EncodeExistsEvery):
 EvaluateExistsWrapper = GenericEvaluate.factory(ExistsFunction,
         ExistsWrapperExpression, ExistsWrapperPhrase)
 SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
-        ExistsWrapperPhrase, "EXISTS(%(expression)s)")
+        ExistsWrapperPhrase, "EXISTS(%(op)s)")
 
 
 class EncodeEvery(EncodeExistsEvery):
@@ -1997,7 +1977,7 @@ class EncodeEvery(EncodeExistsEvery):
 EvaluateEveryWrapper = GenericEvaluate.factory(EveryFunction,
         EveryWrapperExpression, EveryWrapperPhrase)
 SerializeEveryWrapper = GenericSerialize.factory(EveryFunction,
-        EveryWrapperPhrase, "NOT EXISTS(%(expression)s)")
+        EveryWrapperPhrase, "NOT EXISTS(%(op)s)")
 
 
 class MinFunction(ProperFunction):
@@ -2005,12 +1985,12 @@ class MinFunction(ProperFunction):
     named('min')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        Implementation = Min.realize((type(expression.domain),))
-        function = Implementation(expression, self.state, self.syntax)
+    def correlate(self, op):
+        Implementation = Min.realize((type(op.domain),))
+        function = Implementation(op, self.state, self.syntax)
         yield function()
 
 
@@ -2018,15 +1998,15 @@ class Min(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, expression, state, syntax):
-        self.expression = expression
+    def __init__(self, op, state, syntax):
+        self.op = op
         self.state = state
         self.syntax = syntax
 
     def __call__(self):
-        expression = self.expression
-        return MinBinding(expression.domain, self.syntax,
-                          base=self.state.base, expression=expression)
+        op = self.op
+        return MinBinding(op.domain, self.syntax,
+                          base=self.state.base, op=op)
 
 
 class MinString(Min):
@@ -2068,9 +2048,9 @@ EvaluateMin = GenericEvaluate.factory(MinFunction,
 EvaluateMinWrapper = GenericEvaluate.factory(MinFunction,
         MinWrapperExpression, MinWrapperPhrase)
 SerializeMin = GenericSerialize.factory(MinFunction,
-        MinPhrase, "MIN(%(expression)s)")
+        MinPhrase, "MIN(%(op)s)")
 SerializeMinWrapper = GenericSerialize.factory(MinFunction,
-        MinWrapperPhrase, "%(expression)s")
+        MinWrapperPhrase, "%(op)s")
 
 
 class MaxFunction(ProperFunction):
@@ -2078,12 +2058,12 @@ class MaxFunction(ProperFunction):
     named('max')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        Implementation = Max.realize((type(expression.domain),))
-        function = Implementation(expression, self.state, self.syntax)
+    def correlate(self, op):
+        Implementation = Max.realize((type(op.domain),))
+        function = Implementation(op, self.state, self.syntax)
         yield function()
 
 
@@ -2091,15 +2071,15 @@ class Max(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, expression, state, syntax):
-        self.expression = expression
+    def __init__(self, op, state, syntax):
+        self.op = op
         self.state = state
         self.syntax = syntax
 
     def __call__(self):
-        expression = self.expression
-        return MaxBinding(expression.domain, self.syntax,
-                          base=self.state.base, expression=expression)
+        op = self.op
+        return MaxBinding(op.domain, self.syntax,
+                          base=self.state.base, op=op)
 
 
 class MaxString(Max):
@@ -2141,9 +2121,9 @@ EvaluateMax = GenericEvaluate.factory(MaxFunction,
 EvaluateMaxWrapper = GenericEvaluate.factory(MaxFunction,
         MaxWrapperExpression, MaxWrapperPhrase)
 SerializeMax = GenericSerialize.factory(MaxFunction,
-        MaxPhrase, "MAX(%(expression)s)")
+        MaxPhrase, "MAX(%(op)s)")
 SerializeMaxWrapper = GenericSerialize.factory(MaxFunction,
-        MaxWrapperPhrase, "%(expression)s")
+        MaxWrapperPhrase, "%(op)s")
 
 
 class SumFunction(ProperFunction):
@@ -2151,12 +2131,12 @@ class SumFunction(ProperFunction):
     named('sum')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        Implementation = Sum.realize((type(expression.domain),))
-        function = Implementation(expression, self.state, self.syntax)
+    def correlate(self, op):
+        Implementation = Sum.realize((type(op.domain),))
+        function = Implementation(op, self.state, self.syntax)
         yield function()
 
 
@@ -2164,15 +2144,15 @@ class Sum(Adapter):
 
     adapts(Domain)
 
-    def __init__(self, expression, state, syntax):
-        self.expression = expression
+    def __init__(self, op, state, syntax):
+        self.op = op
         self.state = state
         self.syntax = syntax
 
     def __call__(self):
-        expression = self.expression
-        return SumBinding(expression.domain, self.syntax,
-                          base=self.state.base, expression=expression)
+        op = self.op
+        return SumBinding(op.domain, self.syntax,
+                          base=self.state.base, op=op)
 
 
 class SumInteger(Sum):
@@ -2204,9 +2184,9 @@ EvaluateSum = GenericEvaluate.factory(SumFunction,
 EvaluateSumWrapper = GenericEvaluate.factory(SumFunction,
         SumWrapperExpression, SumWrapperPhrase)
 SerializeSum = GenericSerialize.factory(SumFunction,
-        SumPhrase, "SUM(%(expression)s)")
+        SumPhrase, "SUM(%(op)s)")
 SerializeSumWrapper = GenericSerialize.factory(SumFunction,
-        SumWrapperPhrase, "%(expression)s")
+        SumWrapperPhrase, "%(op)s")
 
 
 class AvgFunction(ProperFunction):
@@ -2214,12 +2194,12 @@ class AvgFunction(ProperFunction):
     named('avg')
 
     parameters = [
-            Parameter('expression'),
+            Parameter('op'),
     ]
 
-    def correlate(self, expression):
-        Implementation = Avg.realize((type(expression.domain),))
-        function = Implementation(expression, self.state, self.syntax)
+    def correlate(self, op):
+        Implementation = Avg.realize((type(op.domain),))
+        function = Implementation(op, self.state, self.syntax)
         yield function()
 
 
@@ -2229,16 +2209,16 @@ class Avg(Adapter):
 
     domain = None
 
-    def __init__(self, expression, state, syntax):
-        self.expression = expression
+    def __init__(self, op, state, syntax):
+        self.op = op
         self.state = state
         self.syntax = syntax
 
     def __call__(self):
-        expression = CastBinding(self.expression, self.domain,
-                                 self.expression.syntax)
-        return AvgBinding(expression.domain, self.syntax,
-                          base=self.state.base, expression=expression)
+        op = CastBinding(self.op, self.domain,
+                                 self.op.syntax)
+        return AvgBinding(op.domain, self.syntax,
+                          base=self.state.base, op=op)
 
 
 class AvgDecimal(Avg):
@@ -2269,9 +2249,9 @@ EvaluateAvg = GenericEvaluate.factory(AvgFunction,
 EvaluateAvgWrapper = GenericEvaluate.factory(AvgFunction,
         AvgWrapperExpression, AvgWrapperPhrase)
 SerializeAvg = GenericSerialize.factory(AvgFunction,
-        AvgPhrase, "AVG(%(expression)s)")
+        AvgPhrase, "AVG(%(op)s)")
 SerializeAvgWrapper = GenericSerialize.factory(AvgFunction,
-        AvgWrapperPhrase, "%(expression)s")
+        AvgWrapperPhrase, "%(op)s")
 
 
 def call(syntax, state, base=None):

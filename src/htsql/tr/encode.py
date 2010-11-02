@@ -24,7 +24,7 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       ConjunctionBinding, DisjunctionBinding,
                       NegationBinding, CastBinding, WrapperBinding,
                       DirectionBinding)
-from .code import (ScalarSpace, CrossProductSpace, JoinProductSpace,
+from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpression, SegmentExpression, LiteralCode,
                    EqualityCode, TotalEqualityCode,
@@ -300,7 +300,7 @@ class RelateFreeTable(Relate):
     """
     Translates a free table binding to a space node.
 
-    Returns a cross product node :class:`htsql.tr.code.CrossProductSpace`.
+    Returns a direct product node :class:`htsql.tr.code.DirectProductSpace`.
     """
 
     adapts(FreeTableBinding)
@@ -308,16 +308,16 @@ class RelateFreeTable(Relate):
     def __call__(self):
         # Generate a space node corresponding to the binding base.
         base = self.state.relate(self.binding.base)
-        # Produce a cross product space between the base space and
+        # Produce a direct product space between the base space and
         # the binding table: `base * table`.
-        return CrossProductSpace(base, self.binding.table, self.binding)
+        return DirectProductSpace(base, self.binding.table, self.binding)
 
 
 class RelateAttachedTable(Relate):
     """
     Translates an attached table binding to a space node.
 
-    Returns a join product node :class:`htsql.tr.code.JoinProductSpace`.
+    Returns a fiber product node :class:`htsql.tr.code.FiberProductSpace`.
     """
 
     adapts(AttachedTableBinding)
@@ -326,10 +326,10 @@ class RelateAttachedTable(Relate):
         # Generate a space node corresponding to the binding base.
         space = self.state.relate(self.binding.base)
         # The binding is attached to its base by a series of joins.
-        # For each join, we produce a join product space:
+        # For each join, we produce a fiber product space:
         #   `base . target1 . target2 . ...`.
         for join in self.binding.joins:
-            space = JoinProductSpace(space, join, self.binding)
+            space = FiberProductSpace(space, join, self.binding)
         return space
 
 
@@ -419,7 +419,7 @@ class RelateColumn(Relate):
     """
     Translates a column binding to a space node.
 
-    Returns a join product node :class:`htsql.tr.code.JoinProductSpace` or
+    Returns a fiber product node :class:`htsql.tr.code.FiberProductSpace` or
     raises an error.
     """
 

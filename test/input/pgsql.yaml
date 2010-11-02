@@ -290,6 +290,7 @@ tests:
     - uri: /school.limit(2,5)
     - uri: /course?department='acc'
     - uri: /course.sort(credits)?department='acc'
+    - uri: /(course.sort(credits)?department='acc').limit(1,1)
     - uri: /course.sort(credits).limit(1,1)?department='acc'
 
   # The `as` operator.
@@ -365,6 +366,9 @@ tests:
     - uri: /school{*,count(department)}
     - uri: /school{*,count(department?exists(course))}
     - uri: /school{*,count(department.exists(course))}
+    - uri: /school{code,count(department),count(program)}
+    - uri: /school{code,exists(department),exists(program)}
+      skip: true # broken until `reduce` is implemented
     # Aggregates sharing the same spaces.
     - uri: /department{sum(course.credits),count(course.credits),
                        avg(course.credits)}?exists(course)

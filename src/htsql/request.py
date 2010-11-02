@@ -20,11 +20,10 @@ from .tr.parse import parse
 from .tr.bind import bind
 from .tr.encode import encode
 from .tr.assemble import assemble
-from .tr.outliner import Outliner
-from .tr.compiler import Compiler
+from .tr.compile import compile
+#from .tr.reduce import reduce
+#from .tr.serialize import serialize
 from .tr.serializer import Serializer
-#from .fmt.text import TextRenderer
-#from .fmt.spreadsheet import CSVRenderer
 from .fmt.format import FindRenderer
 import urllib
 
@@ -99,10 +98,9 @@ class Request(Utility):
         binding = bind(syntax)
         expression = encode(binding)
         term = assemble(expression)
-        outliner = Outliner()
-        sketch = outliner.outline(term)
-        compiler = Compiler()
-        frame = compiler.compile(sketch)
+        frame = compile(term)
+        #frame = reduce(frame)
+        #plan = serialize(frame)
         serializer = Serializer()
         plan = serializer.serialize(frame)
         return plan

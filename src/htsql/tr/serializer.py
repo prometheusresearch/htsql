@@ -17,13 +17,13 @@ from ..adapter import Adapter, Utility, adapts
 from ..error import InvalidArgumentError
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, DateDomain)
-from .frame import (Clause, Frame, LeafFrame, ScalarFrame,
-                    BranchFrame, CorrelatedFrame, SegmentFrame,
-                    QueryFrame, Phrase, EqualityPhrase, InequalityPhrase,
+from .frame import (Clause, Frame, LeafFrame, ScalarFrame, TableFrame,
+                    BranchFrame, NestedFrame, SegmentFrame, QueryFrame,
+                    Phrase, EqualityPhrase, InequalityPhrase,
                     TotalEqualityPhrase, TotalInequalityPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
-                    CastPhrase, LiteralPhrase, LeafReferencePhrase,
-                    BranchReferencePhrase, CorrelatedFramePhrase, TuplePhrase)
+                    CastPhrase, LiteralPhrase, ColumnLink, ReferenceLink,
+                    EmbeddingLink)
 from .plan import Plan
 import decimal
 
@@ -33,6 +33,20 @@ class Serializer(object):
     def __init__(self):
         self.format = Format()
         self.alias_by_clause = {}
+        self.frame_by_tag = {}
+
+    def set_tree(self, frame):
+        self.aliase_by_clause = {}
+        self.frame_by_tag = {}
+        queue = [frame]
+        while queue:
+            frame = queue.pop(0)
+            self.frame_by_tag[frame.tag] = frame
+            queue.extend(frame.kids)
+
+    def unset_tree(self):
+        self.aliase_by_clause = {}
+        self.frame_by_tag = {}
 
     def add_alias(self, clause, alias):
         self.alias_by_clause[clause] = alias
@@ -240,9 +254,9 @@ class SerializeFrame(Serialize):
         pass
 
 
-class SerializeLeaf(SerializeFrame):
+class SerializeTable(SerializeFrame):
 
-    adapts(LeafFrame, Serializer)
+    adapts(TableFrame, Serializer)
 
     def serialize(self):
         parent = self.format.name(self.frame.table.schema_name)
@@ -268,10 +282,6 @@ class SerializeBranch(SerializeFrame):
     with_aliases = True
 
     def serialize(self):
-        select = self.serialize_select()
-        return self.format.parens(select)
-
-    def serialize_select(self):
         select_clause = self.serialize_select_clause()
         from_clause = self.serialize_from_clause()
         where_clause = self.serialize_where_clause()
@@ -296,10 +306,13 @@ class SerializeBranch(SerializeFrame):
             if self.with_aliases:
                 alias = self.serializer.get_alias(phrase)
                 inherited_alias = None
-                if isinstance(phrase, LeafReferencePhrase):
+                if isinstance(phrase, ColumnLink):
                     inherited_alias = phrase.column.name
-                elif isinstance(phrase, BranchReferencePhrase):
-                    inherited_alias = self.serializer.get_alias(phrase.phrase)
+                elif isinstance(phrase, ReferenceLink):
+                    inherited_frame = self.serializer.frame_by_tag[phrase.tag]
+                    inherited_phrase = inherited_frame.select[phrase.index]
+                    inherited_alias = self.serializer.get_alias(
+                                                            inherited_phrase)
                 if alias != inherited_alias:
                     alias = self.format.name(alias)
                     value = self.format.as_op(value, alias)
@@ -308,22 +321,24 @@ class SerializeBranch(SerializeFrame):
 
     def serialize_from_clause(self):
         from_clause = None
-        for link in self.frame.linkage:
-            target = self.serializer.serialize(link.frame)
-            alias = self.serializer.get_alias(link.frame)
+        for anchor in self.frame.include:
+            target = self.serializer.serialize(anchor.frame)
+            if anchor.frame.is_branch:
+                target = self.format.parens(target)
+            alias = self.serializer.get_alias(anchor.frame)
             alias = self.format.name(alias)
             target = self.format.as_op(target, alias)
             condition = None
-            if link.condition is not None:
-                condition = self.serializer.serialize(link.condition)
+            if anchor.condition is not None:
+                condition = self.serializer.serialize(anchor.condition)
             from_clause = self.format.join(from_clause, target,
-                                           condition, link.is_inner)
+                                           condition, not anchor.is_left)
         return from_clause
 
     def serialize_where_clause(self):
         where_clause = None
-        if self.frame.filter is not None:
-            where_clause = self.serializer.serialize(self.frame.filter)
+        if self.frame.where is not None:
+            where_clause = self.serializer.serialize(self.frame.where)
         return where_clause
 
     def serialize_group_clause(self):
@@ -344,8 +359,8 @@ class SerializeBranch(SerializeFrame):
 
     def serialize_having_clause(self):
         having_clause = None
-        if self.frame.group_filter is not None:
-            having_clause = self.serializer.serialize(self.frame.group_filter)
+        if self.frame.having is not None:
+            having_clause = self.serializer.serialize(self.frame.having)
         return having_clause
 
     def serialize_order_clause(self):
@@ -368,34 +383,17 @@ class SerializeBranch(SerializeFrame):
     def serialize_aliases(self, parents):
         taken_aliases = set()
         for parent in parents:
-            for link in parent.linkage:
-                alias = self.serializer.get_alias(link.frame)
+            for anchor in parent.include:
+                alias = self.serializer.get_alias(anchor.frame)
                 taken_aliases.add(alias)
         self.serialize_alias_collection(self.frame.select, taken_aliases)
         collection = []
-        for link in self.frame.linkage:
-            self.serializer.serialize_aliases(link.frame)
-            collection.append(link.frame)
+        for anchor in self.frame.include:
+            self.serializer.serialize_aliases(anchor.frame)
+            collection.append(anchor.frame)
         self.serialize_alias_collection(collection, taken_aliases)
-        children = []
-        children.extend(self.frame.select)
-        for link in self.frame.linkage:
-            if link.condition is not None:
-                children.append(link.condition)
-        if self.frame.filter is not None:
-            children.append(self.frame.filter)
-        children.extend(self.frame.group)
-        if self.frame.group_filter is not None:
-            children.extend(self.frame.group_filter)
-        children.extend(phrase for phrase, dir in self.frame.order)
-        idx = 0
-        while idx < len(children):
-            children.extend(children[idx].children)
-            idx += 1
-        for child in children:
-            if isinstance(child, CorrelatedFramePhrase):
-                self.serializer.serialize_aliases(child.frame,
-                                                  parents+[self.frame])
+        for frame in self.frame.embed:
+            self.serializer.serialize_aliases(frame, parents+[self.frame])
 
     def serialize_alias_collection(self, collection, taken_aliases):
         clauses_by_name = {}
@@ -420,20 +418,13 @@ class SerializeBranch(SerializeFrame):
                 taken_aliases.add(alias)
 
     def call(self):
-        if self.frame.linkage:
+        if self.frame.include:
             child = None
-            for link in self.frame.linkage:
-                if link.is_inner:
-                    child = link.frame
+            for anchor in self.frame.include:
+                if not anchor.is_left:
+                    child = anchor.frame
             return self.serializer.call(child)
         return super(SerializeBranch, self).call()
-
-
-class SerializeCorrelated(SerializeFrame):
-
-    adapts(CorrelatedFrame, Serializer)
-
-    with_aliases = False
 
 
 class SerializeSegment(SerializeFrame):
@@ -443,9 +434,11 @@ class SerializeSegment(SerializeFrame):
     with_aliases = False
 
     def serialize(self):
+        self.serializer.set_tree(self.frame)
         self.serializer.serialize_aliases(self.frame)
-        select = self.serialize_select()
+        select = super(SerializeSegment, self).serialize()
         self.serializer.clear_aliases()
+        self.serializer.unset_tree()
         return select
 
 
@@ -475,8 +468,8 @@ class SerializeEquality(SerializePhrase):
     adapts(EqualityPhrase, Serializer)
 
     def serialize(self):
-        left = self.serializer.serialize(self.phrase.left)
-        right = self.serializer.serialize(self.phrase.right)
+        left = self.serializer.serialize(self.phrase.lop)
+        right = self.serializer.serialize(self.phrase.rop)
         return self.format.equal_op(left, right)
 
 
@@ -485,8 +478,8 @@ class SerializeInequality(SerializePhrase):
     adapts(InequalityPhrase, Serializer)
 
     def serialize(self):
-        left = self.serializer.serialize(self.phrase.left)
-        right = self.serializer.serialize(self.phrase.right)
+        left = self.serializer.serialize(self.phrase.lop)
+        right = self.serializer.serialize(self.phrase.rop)
         return self.format.equal_op(left, right, is_negative=True)
 
 
@@ -495,8 +488,8 @@ class SerializeTotalEquality(SerializePhrase):
     adapts(TotalEqualityPhrase, Serializer)
 
     def serialize(self):
-        left = self.serializer.serialize(self.phrase.left)
-        right = self.serializer.serialize(self.phrase.right)
+        left = self.serializer.serialize(self.phrase.lop)
+        right = self.serializer.serialize(self.phrase.rop)
         return self.format.total_equal_op(left, right)
 
 
@@ -505,8 +498,8 @@ class SerializeTotalInequality(SerializePhrase):
     adapts(TotalInequalityPhrase, Serializer)
 
     def serialize(self):
-        left = self.serializer.serialize(self.phrase.left)
-        right = self.serializer.serialize(self.phrase.right)
+        left = self.serializer.serialize(self.phrase.lop)
+        right = self.serializer.serialize(self.phrase.rop)
         return self.format.total_equal_op(left, right, is_negative=True)
 
 
@@ -516,7 +509,7 @@ class SerializeConjunction(SerializePhrase):
 
     def serialize(self):
         values = [self.serializer.serialize(term)
-                  for term in self.phrase.terms]
+                  for term in self.phrase.ops]
         return self.format.and_op(values)
 
 
@@ -526,7 +519,7 @@ class SerializeDisjunction(SerializePhrase):
 
     def serialize(self):
         values = [self.serializer.serialize(term)
-                  for term in self.phrase.terms]
+                  for term in self.phrase.ops]
         return self.format.or_op(values)
 
 
@@ -535,19 +528,8 @@ class SerializeNegation(SerializePhrase):
     adapts(NegationPhrase, Serializer)
 
     def serialize(self):
-        value = self.serializer.serialize(self.phrase.term)
+        value = self.serializer.serialize(self.phrase.op)
         return self.format.not_op(value)
-
-
-class SerializeTuple(SerializePhrase):
-
-    adapts(TuplePhrase, Serializer)
-
-    def serialize(self):
-        units = [self.serializer.serialize(unit)
-                 for unit in self.phrase.units]
-        conditions = [self.format.is_not_null(unit) for unit in units]
-        return self.format.and_op(conditions)
 
 
 class SerializeCast(SerializePhrase):
@@ -556,9 +538,9 @@ class SerializeCast(SerializePhrase):
 
     def serialize(self):
         serialize_to = SerializeTo(self.phrase.domain,
-                                   self.phrase.phrase.domain,
+                                   self.phrase.base.domain,
                                    self.serializer)
-        return serialize_to.serialize(self.phrase.phrase)
+        return serialize_to.serialize(self.phrase.base)
 
 
 class SerializeTo(Adapter):
@@ -742,12 +724,13 @@ class SerializeDateConstant(SerializeConstant):
         return self.format.date(value)
 
 
-class SerializeLeafReference(SerializePhrase):
+class SerializeColumn(SerializePhrase):
 
-    adapts(LeafReferencePhrase, Serializer)
+    adapts(ColumnLink, Serializer)
 
     def serialize(self):
-        parent = self.serializer.get_alias(self.phrase.frame)
+        frame = self.serializer.frame_by_tag[self.phrase.tag]
+        parent = self.serializer.get_alias(frame)
         parent = self.format.name(parent)
         child = self.format.name(self.phrase.column.name)
         return self.format.attr(parent, child)
@@ -756,29 +739,34 @@ class SerializeLeafReference(SerializePhrase):
         return self.phrase.column.name
 
 
-class SerializeBranchReference(SerializePhrase):
+class SerializeReference(SerializePhrase):
 
-    adapts(BranchReferencePhrase, Serializer)
+    adapts(ReferenceLink, Serializer)
 
     def serialize(self):
-        parent = self.serializer.get_alias(self.phrase.frame)
+        frame = self.serializer.frame_by_tag[self.phrase.tag]
+        parent = self.serializer.get_alias(frame)
         parent = self.format.name(parent)
-        child = self.serializer.get_alias(self.phrase.phrase)
+        child = self.serializer.get_alias(frame.select[self.phrase.index])
         child = self.format.name(child)
         return self.format.attr(parent, child)
 
     def call(self):
-        return self.serializer.call(self.phrase.phrase)
+        frame = self.serializer.frame_by_tag[self.phrase.tag]
+        phrase = frame.select[self.phrase.index]
+        return self.serializer.call(phrase)
 
 
-class SerializeCorrelatedFrame(SerializePhrase):
+class SerializeEmbedding(SerializePhrase):
 
-    adapts(CorrelatedFramePhrase, Serializer)
+    adapts(EmbeddingLink, Serializer)
 
     def serialize(self):
-        return self.serializer.serialize(self.phrase.frame)
+        frame = self.serializer.frame_by_tag[self.phrase.tag]
+        return self.format.parens(self.serializer.serialize(frame))
 
     def call(self):
-        return self.serializer.call(self.phrase.frame)
+        frame = self.serializer.frame_by_tag[self.phrase.tag]
+        return self.serializer.call(frame)
 
 

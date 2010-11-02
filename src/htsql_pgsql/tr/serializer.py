@@ -26,8 +26,8 @@ class PGSQLFormat(Format):
 class PGSQLSerializeBranch(SerializeBranch):
 
     def serialize_from_clause(self):
-        if (len(self.frame.linkage) == 1 and
-            self.frame.linkage[0].frame.is_scalar):
+        if (len(self.frame.include) == 1 and
+            self.frame.include[0].frame.is_scalar):
             return None
         return super(PGSQLSerializeBranch, self).serialize_from_clause()
 

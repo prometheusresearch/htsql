@@ -25,9 +25,8 @@ class Plan(Node):
         assert isinstance(sql, maybe(str))
         assert isinstance(mark, Mark)
         self.frame = frame
-        self.sketch = frame.sketch
         self.term = frame.term
-        self.code = frame.code
+        self.code = frame.expression
         self.binding = frame.binding
         self.syntax = frame.syntax
         self.sql = sql

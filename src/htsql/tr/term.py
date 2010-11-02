@@ -152,6 +152,10 @@ class RoutingTerm(Term):
     `baseline` (:class:`htsql.tr.code.Space`)
         The leftmost axis of the term space that the term is capable
         to produce.
+
+    `offsprings` (a dictionary `tag -> RoutingTerm`)
+        Maps the tag of a descendant term to the immediate child
+        whose subtree contains the term.
     """
 
     is_nullary = False
@@ -181,12 +185,20 @@ class RoutingTerm(Term):
         while axis is not None:
             assert axis not in routes
             axis = axis.base
+        # For each descendant term, determine the immediate child whose
+        # subtree contain the descendant.
+        offsprings = {}
+        for kid in kids:
+            offsprings[kid.tag] = kid
+            for offspring_tag in kid.offsprings:
+                offsprings[offspring_tag] = kid
         super(RoutingTerm, self).__init__(tag, space)
         self.kids = kids
         self.space = space
         self.routes = routes
         self.backbone = backbone
         self.baseline = baseline
+        self.offsprings = offsprings
 
 
 class NullaryTerm(RoutingTerm):
@@ -323,10 +335,12 @@ class JoinTerm(BinaryTerm):
     pairs `(a, b)`, where `a` is from `A`, `b` is from `B` and the pair
     satisfies the given tie conditions.
 
-    A *left outer joins* produces the same rows as the inner join, but
+    A *left outer join* produces the same rows as the inner join, but
     also includes rows of the form `(a, NULL)` for each `a` from `A`
     such that there are no rows `b` from `B` such that `(a, b)` satisfies
-    the given conditions.
+    the given conditions.  Similarly, a *right outer join* includes rows
+    of the form `(NULL, b)` for each `b` from `B` such that there are no
+    corresponding rows `a` from `A`.
 
     A join term generates the following SQL clause::
 
@@ -339,65 +353,118 @@ class JoinTerm(BinaryTerm):
         The right operand of the join.
 
     `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
-        A list of pairs `(lcode, rcode)` that establish join conditions
-        of the form `lcode = rcode`.
+        A list of pairs `(lop, rop)` that establish join conditions
+        of the form `lop = rop`.
 
-    `is_inner` (Boolean)
-        Indicates whether the join is inner or left outer.
+    `is_left` (Boolean)
+        Indicates that the join is left outer.
+
+    `is_right` (Boolean)
+        Indicates that the join is right outer.
     """
 
-    def __init__(self, tag, lkid, rkid, joints, is_inner, space, routes):
+    def __init__(self, tag, lkid, rkid, joints,
+                 is_left, is_right, space, routes):
         assert isinstance(joints, listof(tupleof(Code, Code)))
-        assert isinstance(is_inner, bool)
+        assert isinstance(is_left, bool) and isinstance(is_right, bool)
+        # Note: currently we never generate right outer joins.
+        assert is_right is False
         super(JoinTerm, self).__init__(tag, lkid, rkid, space, routes)
         self.joints = joints
-        self.is_inner = is_inner
+        self.is_left = is_left
+        self.is_right = is_right
 
     def __str__(self):
         # Display, for inner join:
-        #   (<lkid> ++ <rkid> | <lcode>=<rcode>, ...)
+        #   (<lkid> ++ <rkid> | <lop>=<rop>, ...)
         # or, for left outer join:
-        #   (<lkid> +* <rkid> | <lcode>=<rcode>, ...)
-        conditions = ", ".join("%s=%s" for lcode, rcode in self.joints)
+        #   (<lkid> +* <rkid> | <lop>=<rop>, ...)
+        conditions = ", ".join("%s=%s" % joint for joint in self.joints)
         if conditions:
             conditions = " | %s" % conditions
-        if self.is_inner:
-            op = "++"
-        else:
-            op = "+*"
-        return "(%s %s %s%s)" % (self.lkid, op, self.rkid, conditions)
+        symbol = ""
+        for is_outer in [self.is_right, self.is_left]:
+            if is_outer:
+                symbol += "*"
+            else:
+                symbol += "+"
+        return "(%s %s %s%s)" % (self.lkid, symbol, self.rkid, conditions)
 
 
-class CorrelationTerm(BinaryTerm):
+class EmbeddingTerm(BinaryTerm):
     """
-    Represents a correlation term.
+    Represents an embedding term.
 
-    A correlation term has a semantics similar to a left outer join term,
-    but is serialized to SQL as a correlated sub-SELECT clause.
+    An embedding term implants a correlated term into a term tree.
+
+    An embedding term has two children: the left child is a regular term
+    and the right child is a correlation term.
+
+    The joint condition of the correlation term connects it to the left
+    child.  That is, the left child serves as the *link* term for the right
+    child.
+
+    An embedding term generates the following SQL clause::
+
+        (SELECT ... (SELECT ... FROM <rkid>) ... FROM <lkid>)
 
     `lkid` (:class:`RoutingTerm`)
         The main term.
 
-    `rkid` (:class:`RoutingTerm`)
+    `rkid` (:class:`CorrelationTerm`)
         The correlated term.
 
-    `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
-        A list of pairs `(lcode, rcode)` that establish join conditions
-        of the form `lcode = rcode`.
     """
 
-    def __init__(self, tag, lkid, rkid, joints, space, routes):
+    def __init__(self, tag, lkid, rkid, space, routes):
+        # Verify that the right child is a correlation term and the left
+        # child is its link term.
+        assert isinstance(rkid, CorrelationTerm) and rkid.link is lkid
+        super(EmbeddingTerm, self).__init__(tag, lkid, rkid, space, routes)
+
+    def __str__(self):
+        # Display:
+        #   (<lkid> // <rkid>)
+        return "(%s // %s)" % (self.lkid, self.rkid)
+
+
+class CorrelationTerm(UnaryTerm):
+    """
+    Represents a correlation term.
+
+    A correlation term connects the child term with a *link* term using
+    the given joint condition.  Note that the link term is not a part
+    of the sub-tree under the correlation term.
+
+    A correlation term must always be embedded into the term tree with
+    a :class:`EmbeddingTerm` instance.  The left child of the embedding
+    term must coincide with the link term.
+
+    `kid` (:class:`RoutingTerm`)
+        The operand of the correlation condition.
+
+    `link` (:class:`RoutingTerm`)
+        The term to link to.
+
+    `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
+        A list of pairs `(lop, rop)` that establish join conditions
+        of the form `lop = rop`.
+    """
+
+    def __init__(self, tag, kid, link, joints, space, routes):
+        assert isinstance(link, RoutingTerm)
         assert isinstance(joints, listof(tupleof(Code, Code)))
-        super(CorrelationTerm, self).__init__(tag, lkid, rkid, space, routes)
+        super(CorrelationTerm, self).__init__(tag, kid, space, routes)
+        self.link = link
         self.joints = joints
 
     def __str__(self):
         # Display:
-        #   (<lkid> // <rkid> | <lcode>=<rcode>, ...)
-        conditions = ", ".join("%s=%s" for lcode, rcode in self.joints)
+        #   (<kid> | <lop>=<rop>, ...)
+        conditions = ", ".join("%s=%s" % joint for joint in self.joints)
         if conditions:
             conditions = " | %s" % conditions
-        return "(%s // %s%s)" % (self.lkid, self.rkid, conditions)
+        return "(%s%s)" % (self.kid, conditions)
 
 
 class ProjectionTerm(UnaryTerm):

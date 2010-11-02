@@ -13,7 +13,7 @@ This module declares space and code nodes.
 """
 
 
-from ..util import maybe, oneof, listof, tupleof, Node
+from ..util import maybe, oneof, listof, tupleof, Node, Comparable
 from ..mark import Mark
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain
@@ -22,7 +22,7 @@ from .binding import Binding, QueryBinding, SegmentBinding
 from .coerce import coerce
 
 
-class Expression(Node):
+class Expression(Comparable, Node):
     """
     Represents an expression node.
 
@@ -63,11 +63,11 @@ class Expression(Node):
     Expression nodes support equality by value (as opposed to to equality
     by identity, which is the default for class instances).  That is, two
     expression nodes are equal if they are of the same type and all their
-    (essential) attributes are equal.  Some attributes may be considered
-    not essential and do not participate in comparison.  To facilitate
-    expression comparison, :class:`htsql.domain.Domain` objects also support
-    equality by value.  By-value semantics is respected when expression nodes
-    are used as dictionary keys.
+    (essential) attributes are equal.  Some attributes (e.g. `binding) may
+    be considered not essential and do not participate in comparison.  To
+    facilitate expression comparison, :class:`htsql.domain.Domain` objects
+    also support equality by value.  By-value semantics is respected when
+    expression nodes are used as dictionary keys.
 
     The constructor arguments:
 
@@ -100,37 +100,10 @@ class Expression(Node):
 
     def __init__(self, binding, equality_vector=None):
         assert isinstance(binding, Binding)
-        assert isinstance(equality_vector, maybe(oneof(tuple, int, long)))
-        # When `equality_vector` is not set, equality by identity
-        # is assumed.  Note that `A is B` <=> `id(A) == id(B)`.
-        if equality_vector is None:
-            equality_vector = id(self)
+        super(Expression, self).__init__(equality_vector)
         self.binding = binding
         self.syntax = binding.syntax
         self.mark = binding.syntax.mark
-        self.equality_vector = equality_vector
-        self.hash = hash(equality_vector)
-
-    def __hash__(self):
-        return self.hash
-
-    def __eq__(self, other):
-        # Two nodes are equal if they are of the same type and
-        # their equality vectors are equal.  To avoid costly
-        # comparison of equality vectors in the more common
-        # "not equal" case, we compare hashes first.
-        return ((self is other) or
-                (isinstance(other, Expression) and
-                 self.__class__ is other.__class__ and
-                 self.hash == other.hash and
-                 self.equality_vector == other.equality_vector))
-
-    def __ne__(self, other):
-        # Since we override `==`, we also need to override `!=`.
-        return (not isinstance(other, Expression) or
-                self.__class__ is not other.__class__ or
-                self.hash != other.hash and
-                self.equality_vector != other.equality_vector)
 
     def __str__(self):
         # Display the syntex node that gave rise to the expression.
@@ -185,19 +158,19 @@ class Space(Expression):
     *A table space* `T`
         Given a table `T`, the space consists of all rows of the table.
 
-    *A cross product space* `A * T`
-        Given a table `T` and another space `A`, the cross product space
+    *A direct product space* `A * T`
+        Given a table `T` and another space `A`, the direct product space
         consists of pairs `(a, t)` where `a` runs over rows of `A` and
         `t` runs over rows of `T`.
 
-        Note that a table space is a special case of a cross product space:
+        Note that a table space is a special case of a direct product space:
         `T` is equivalent to `I * T`.
 
         Table `T` in `A * T` is called *the prominent table* of the space.
 
-    *A join product space* `A . T` or `A .j T`
+    *A fiber product space* `A . T` or `A .j T`
         Given a space `A` with the prominent table `S`, another table `T`
-        and a join condition `j` between tables `S` and `T`, the join
+        and a join condition `j` between tables `S` and `T`, the fiber
         product space consists of pairs `(a, t)` from `A * T` satisfying
         the join condition `j`.
 
@@ -364,7 +337,7 @@ class Space(Expression):
         Note that it is possible that a space `A` both contracts and
         expands its base `B`, and also that `A` neither contracts
         nor expands `B`.  The former means that `A` conforms `B`.
-        The latter holds, in particular, for the cross product space
+        The latter holds, in particular, for the direct product space
         `A * T`.  `A * T` violates the contraction condition when
         `T` contains more than one row and violates the expansion
         condition when `T` has no rows.
@@ -770,7 +743,7 @@ class ProductSpace(Space):
 
     A product space is a subset of a Cartesian product between the base
     space and a table.  This is an abstract class, see concrete subclasses
-    :class:`CrossProductSpace` and :class:`JoinProductSpace`.
+    :class:`DirectProductSpace` and :class:`FiberProductSpace`.
 
     `table` (:class:`htsql.entity.TableEntity`)
         The prominent table of the product.
@@ -842,11 +815,11 @@ class ProductSpace(Space):
         return order
 
 
-class CrossProductSpace(ProductSpace):
+class DirectProductSpace(ProductSpace):
     """
-    Represents a cross product space.
+    Represents a direct product space.
 
-    A cross product space `A * T` consists of all pairs `(a, t)` where
+    A direct product space `A * T` consists of all pairs `(a, t)` where
     `a` is a row of the base space `A` and `t` is a row of the table `T`.
 
     `base` (:class:`Space`)
@@ -857,7 +830,7 @@ class CrossProductSpace(ProductSpace):
     """
 
     def __init__(self, base, table, binding):
-        super(CrossProductSpace, self).__init__(
+        super(DirectProductSpace, self).__init__(
                     base=base,
                     table=table,
                     is_contracting=False,
@@ -871,12 +844,12 @@ class CrossProductSpace(ProductSpace):
         return "(%s * %s)" % (self.base, self.table)
 
 
-class JoinProductSpace(ProductSpace):
+class FiberProductSpace(ProductSpace):
     """
-    Represents a join product space.
+    Represents a fiber product space.
 
     Let `A` be a space with the prominent table `S`, `j` be a join
-    condition between tables `S` and `T`.  A join product space `A .j T`
+    condition between tables `S` and `T`.  A fiber product space `A .j T`
     (or `A . T` when the join condition is implied) of the space `A`
     and the table `T` consists of all pairs `(a, t)`, where `a` is a row
     from `A` of the form `a = (..., s)` and `t` is a row from `T` such
@@ -893,7 +866,7 @@ class JoinProductSpace(ProductSpace):
         assert isinstance(join, Join)
         # Check that the join origin is the prominent table of the base.
         assert isinstance(base, Space) and base.table is join.origin
-        super(JoinProductSpace, self).__init__(
+        super(FiberProductSpace, self).__init__(
                     base=base,
                     table=join.target,
                     is_contracting=join.is_contracting,
@@ -1298,6 +1271,18 @@ class Unit(Code):
     of units; see subclasses :class:`ColumnUnit`, :class:`ScalarUnit`,
     :class:`AggregateUnit`, and :class:`CorrelatedUnit` for more detail.
 
+    Units are divided into two categories: *primitive* and *compound*.
+
+    A primitive unit is an intrinsic function of its space; no additional
+    calculations are required to generate a primitive unit.  Currently,
+    the only example of a primitive unit is :class:`ColumnUnit`.
+
+    A compound unit requires calculating some non-intrinsic function
+    on the target space.  There are three types of compound units:
+    :class:`ScalarUnit`, :class:`AggregateUnit` and :class:`CorrelatedUnit`.
+    They correspond respectively to a scalar function and two kinds of
+    an aggregate function.
+
     Note that it is easy to *lift* a unit code from one space to another.
     Specifically, suppose a unit `u` is defined on a space `A` and `B`
     is another space such that `B` spans `A`.  Then for each row `b`
@@ -1313,12 +1298,25 @@ class Unit(Code):
     space where it is originally defined, but also on any space where
     it is singular.
 
+    Attributes:
+
     `space` (:class:`Space`)
         The space on which the unit is defined.
 
     `domain` (:class:`htsql.domain.Domain`)
         The unit co-domain.
+
+    Class attributes:
+
+    `is_primitive` (Boolean)
+        If set, indicates that the unit is primitive.
+
+    `is_compound` (Boolean)
+        If set, indicates that the unit is compound.
     """
+
+    is_primitive = False
+    is_compound = False
 
     def __init__(self, space, domain, binding, equality_vector=None):
         assert isinstance(space, Space)
@@ -1336,7 +1334,45 @@ class Unit(Code):
         return space.spans(self.space)
 
 
-class ColumnUnit(Unit):
+class PrimitiveUnit(Unit):
+    """
+    Represents a primitive unit.
+
+    A primitive unit is a intrinsic function on a space.
+
+    This is an abstract class; for the (only) concrete subclass, see
+    :class:`ColumnUnit`.
+    """
+
+    is_primitive = True
+
+
+class CompoundUnit(Unit):
+    """
+    Represents a compound unit.
+
+    A compound unit is some non-intrinsic function on a space.
+
+    This is an abstract class; for concrete subclasses, see
+    :class:`ScalarUnit`, :class:`AggregateUnit`, :class:`CorrelatedUnit`.
+
+    `code` (:class:`Code`)
+        The expression to evaluate on the unit space.
+    """
+
+    is_compound = True
+
+    def __init__(self, code, space, domain, binding, equality_vector=None):
+        assert isinstance(code, Code)
+        super(CompoundUnit, self).__init__(
+                    space=space,
+                    domain=domain,
+                    binding=binding,
+                    equality_vector=equality_vector)
+        self.code = code
+
+
+class ColumnUnit(PrimitiveUnit):
     """
     Represents a column unit.
 
@@ -1364,7 +1400,7 @@ class ColumnUnit(Unit):
         self.column = column
 
 
-class ScalarUnit(Unit):
+class ScalarUnit(CompoundUnit):
     """
     Represents a scalar unit.
 
@@ -1396,16 +1432,15 @@ class ScalarUnit(Unit):
     """
 
     def __init__(self, code, space, binding):
-        assert isinstance(code, Code)
         super(ScalarUnit, self).__init__(
+                    code=code,
                     space=space,
                     domain=code.domain,
                     binding=binding,
                     equality_vector=(code, space))
-        self.code = code
 
 
-class AggregateUnitBase(Unit):
+class AggregateUnitBase(CompoundUnit):
     """
     Represents an aggregate unit.
 
@@ -1442,13 +1477,12 @@ class AggregateUnitBase(Unit):
         assert plural_space.spans(space)
         assert not space.spans(plural_space)
         super(AggregateUnitBase, self).__init__(
+                    code=code,
                     space=space,
                     domain=code.domain,
                     binding=binding,
                     equality_vector=(code, plural_space, space))
-        self.code = code
         self.plural_space = plural_space
-        self.space = space
 
 
 class AggregateUnit(AggregateUnitBase):
@@ -1540,81 +1574,5 @@ class AggregateBatchExpression(BatchExpression):
         super(AggregateBatchExpression, self).__init__(collection, binding)
         self.plural_space = plural_space
         self.space = space
-
-
-class Tie(Node):
-    """
-    Represents a connection between two axes.
-
-    This is an auxiliary class used internally by the assembler.
-
-    An axis space could be naturally connected with:
-
-    - an identical axis space;
-    - or its base space.
-
-    These two types of connections are called *parallel* and *serial*
-    ties respectively.  Typically, a parallel tie is implemented using
-    a primary key constraint while a serial tie is implemented using
-    a foreign key constraint, but, in general, it depends on the type
-    of the axis space.
-
-    :class:`Tie` is an abstract case class with exactly two subclasses:
-    :class:`ParallelTie` and :class:`SerialTie`.
-
-    Class attributes:
-
-    `is_parallel` (Boolean)
-        Denotes a parallel tie.
-
-    `is_serial` (Boolean)
-        Denotes a serial tie.
-
-    Attributes:
-
-    `space` (:class:`Space`)
-        An axis space.
-    """
-
-    is_parallel = False
-    is_serial = False
-
-    def __init__(self, space):
-        assert isinstance(space, Space) and space.is_axis
-        # Technically, non-inflated axis spaces could be permitted, but
-        # since the assembler only generates ties for inflated spaces,
-        # we add a respective check here.
-        assert space.is_inflated
-        self.space = space
-
-    def __str__(self):
-        # Display, depending on the tie direction,
-        #   ||<space> or ==<space>
-        indicator = None
-        if self.is_parallel:
-            indicator = "||"
-        if self.is_serial:
-            indicator = "=="
-        return "%s%s" % (indicator, self.space)
-
-
-class ParallelTie(Tie):
-    """
-    Represents a parallel tie.
-
-    A parallel tie is a connection of an axis space with itself.
-    """
-
-    is_parallel = True
-
-
-class SerialTie(Tie):
-    """
-    Represents a serial tie.
-
-    A serial tie is a connection between an axis space and its base.
-    """
-
-    is_serial = True
 
 
