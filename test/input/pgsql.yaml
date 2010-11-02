@@ -339,6 +339,8 @@ tests:
     - uri: /department?school.code='ns'
     - uri: /program?school.code='ns'&code='uchem'
     - uri: /course?credits=5
+    # ENUM literal.
+    - uri: /semester?season='fall'
 
   # Simple (non-aggregate) selectors.
   - title: Simple selectors

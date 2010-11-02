@@ -16,7 +16,8 @@ This module implements the SQL serializer.
 from ..adapter import Adapter, Utility, adapts
 from ..error import InvalidArgumentError
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
-                      DecimalDomain, FloatDomain, StringDomain, DateDomain)
+                      DecimalDomain, FloatDomain, StringDomain, EnumDomain,
+                      DateDomain)
 from .frame import (Clause, Frame, LeafFrame, ScalarFrame, TableFrame,
                     BranchFrame, NestedFrame, SegmentFrame, QueryFrame,
                     Phrase, EqualityPhrase, InequalityPhrase,
@@ -707,6 +708,16 @@ class SerializeFloatConstant(SerializeConstant):
 class SerializeStringConstant(SerializeConstant):
 
     adapts(StringDomain, Serializer)
+
+    def serialize(self, value):
+        if value is None:
+            return self.format.null()
+        return self.format.string(value)
+
+
+class SerializeEnumConstant(SerializeConstant):
+
+    adapts(EnumDomain, Serializer)
 
     def serialize(self, value):
         if value is None:
