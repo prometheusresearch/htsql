@@ -285,6 +285,6 @@ class FormatDate(Format):
     def __call__(self, value):
         if value is None:
             return self.format_null()
-        return cgi.escape(value)
+        return str(value)
 
 
