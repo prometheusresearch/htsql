@@ -29,6 +29,7 @@ from ..encode import Encode
 from ..code import (FunctionCode, NegationCode, ScalarUnit, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
 from ..assemble import Evaluate
+from ..reduce import Reduce
 from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
 from ..coerce import coerce
@@ -959,6 +960,42 @@ class GenericEvaluate(Evaluate):
                                  self.code, **arguments)
 
 
+class GenericReduce(Reduce):
+
+    adapts_none()
+
+    function = None
+    phrase_class = None
+
+    @classmethod
+    def factory(cls, function, phrase_class):
+        name = 'Reduce' + function.__name__
+        signature = (phrase_class,)
+        reduce_class = type(name, (cls,),
+                            {'function': function,
+                             'signatures': [signature],
+                             'phrase_class': phrase_class})
+        return reduce_class
+
+    def __call__(self):
+        arguments = {}
+        for parameter in self.function.parameters:
+            value = self.phrase.arguments[parameter.name]
+            if not parameter.is_mandatory and value is None:
+                argument = None
+            elif parameter.is_list:
+                argument = [self.state.reduce(item)
+                            for item in value]
+            else:
+                argument = self.state.reduce(value)
+            arguments[parameter.name] = argument
+        for name in sorted(self.phrase.arguments):
+            if name not in arguments:
+                arguments[name] = self.phrase.arguments[name]
+        return self.phrase_class(self.phrase.domain, self.phrase.is_nullable,
+                                 self.phrase.expression, **arguments)
+
+
 class GenericSerialize(Serialize):
 
     adapts_none()
@@ -1004,6 +1041,8 @@ EncodeDateConstructor = GenericEncode.factory(DateConstructor,
         DateConstructorBinding, DateConstructorExpression)
 EvaluateDateConstructor = GenericEvaluate.factory(DateConstructor,
         DateConstructorExpression, DateConstructorPhrase)
+ReduceDateConstructor = GenericReduce.factory(DateConstructor,
+        DateConstructorPhrase)
 SerializeDateConstructor = GenericSerialize.factory(DateConstructor,
         DateConstructorPhrase,
         "CAST(LPAD(CAST(%(year)s AS TEXT), 4, '0') || '-' ||"
@@ -1020,6 +1059,8 @@ EncodeComparison = GenericEncode.factory(ComparisonOperator,
         ComparisonBinding, ComparisonExpression)
 EvaluateComparison = GenericEvaluate.factory(ComparisonOperator,
         ComparisonExpression, ComparisonPhrase)
+ReduceComparison = GenericReduce.factory(ComparisonOperator,
+        ComparisonPhrase)
 SerializeComparison = GenericSerialize.factory(ComparisonOperator,
         ComparisonPhrase, "(%(left)s %(direction)s %(right)s)")
 
@@ -1034,6 +1075,8 @@ EncodeConcatenation = GenericEncode.factory(AdditionOperator,
 EvaluateConcatenation = GenericEvaluate.factory(AdditionOperator,
         ConcatenationExpression, ConcatenationPhrase,
         is_null_regular=False, is_nullable=False)
+ReduceConcatenation = GenericReduce.factory(AdditionOperator,
+        ConcatenationPhrase)
 
 
 class SerializeConcatenation(Serialize):
@@ -1075,6 +1118,8 @@ EncodeUnaryPlus = GenericEncode.factory(UnaryPlusOperator,
         UnaryPlusBinding, UnaryPlusExpression)
 EvaluateUnaryPlus = GenericEvaluate.factory(UnaryPlusOperator,
         UnaryPlusExpression, UnaryPlusPhrase)
+ReduceUnaryPlus = GenericReduce.factory(UnaryPlusOperator,
+        UnaryPlusPhrase)
 SerializeUnaryPlus = GenericSerialize.factory(UnaryPlusOperator,
         UnaryPlusPhrase, "(+ %(value)s)")
 
@@ -1097,6 +1142,8 @@ EncodeUnaryMinus = GenericEncode.factory(UnaryMinusOperator,
         UnaryMinusBinding, UnaryMinusExpression)
 EvaluateUnaryMinus = GenericEvaluate.factory(UnaryMinusOperator,
         UnaryMinusExpression, UnaryMinusPhrase)
+ReduceUnaryMinus = GenericReduce.factory(UnaryMinusOperator,
+        UnaryMinusPhrase)
 SerializeUnaryMinus = GenericSerialize.factory(UnaryMinusOperator,
         UnaryMinusPhrase, "(- %(value)s)")
 
@@ -1119,6 +1166,8 @@ EncodeAddition = GenericEncode.factory(AdditionOperator,
         AdditionBinding, AdditionExpression)
 EvaluateAddition = GenericEvaluate.factory(AdditionOperator,
         AdditionExpression, AdditionPhrase)
+ReduceAddition = GenericReduce.factory(AdditionOperator,
+        AdditionPhrase)
 SerializeAddition = GenericSerialize.factory(AdditionOperator,
         AdditionPhrase, "(%(left)s + %(right)s)")
 
@@ -1178,6 +1227,8 @@ EncodeSubtraction = GenericEncode.factory(SubtractionOperator,
         SubtractionBinding, SubtractionExpression)
 EvaluateSubtraction = GenericEvaluate.factory(SubtractionOperator,
         SubtractionExpression, SubtractionPhrase)
+ReduceSubtraction = GenericReduce.factory(SubtractionOperator,
+        SubtractionPhrase)
 SerializeSubtraction = GenericSerialize.factory(SubtractionOperator,
         SubtractionPhrase, "(%(left)s - %(right)s)")
 
@@ -1245,6 +1296,8 @@ EncodeMultiplication = GenericEncode.factory(MultiplicationOperator,
         MultiplicationBinding, MultiplicationExpression)
 EvaluateMultiplication = GenericEvaluate.factory(MultiplicationOperator,
         MultiplicationExpression, MultiplicationPhrase)
+ReduceMultiplication = GenericReduce.factory(MultiplicationOperator,
+        MultiplicationPhrase)
 SerializeMultiplication = GenericSerialize.factory(MultiplicationOperator,
         MultiplicationPhrase, "(%(left)s * %(right)s)")
 
@@ -1294,6 +1347,8 @@ EncodeDivision = GenericEncode.factory(DivisionOperator,
         DivisionBinding, DivisionExpression)
 EvaluateDivision = GenericEvaluate.factory(DivisionOperator,
         DivisionExpression, DivisionPhrase)
+ReduceDivision = GenericReduce.factory(DivisionOperator,
+        DivisionPhrase)
 SerializeDivision = GenericSerialize.factory(DivisionOperator,
         DivisionPhrase, "(%(left)s / %(right)s)")
 
@@ -1394,6 +1449,8 @@ EncodeRound = GenericEncode.factory(RoundFunction,
         RoundBinding, RoundExpression)
 EvaluateRound = GenericEvaluate.factory(RoundFunction,
         RoundExpression, RoundPhrase)
+ReduceRound = GenericReduce.factory(RoundFunction,
+        RoundPhrase)
 
 
 class SerializeRound(Serialize):
@@ -1435,6 +1492,8 @@ EncodeIsNull = GenericEncode.factory(IsNullFunction,
 EvaluateIsNull = GenericEvaluate.factory(IsNullFunction,
         IsNullExpression, IsNullPhrase,
         is_null_regular=False, is_nullable=False)
+ReduceIsNull = GenericReduce.factory(IsNullFunction,
+        IsNullPhrase)
 SerializeIsNull = GenericSerialize.factory(IsNullFunction,
         IsNullPhrase, "(%(op)s IS NULL)")
 
@@ -1467,6 +1526,8 @@ EncodeNullIf = GenericEncode.factory(NullIfMethod,
 EvaluateNullIf = GenericEvaluate.factory(NullIfMethod,
         NullIfExpression, NullIfPhrase,
         is_null_regular=False)
+ReduceNullIf = GenericReduce.factory(NullIfMethod,
+        NullIfPhrase)
 
 
 class SerializeNullIf(Serialize):
@@ -1508,6 +1569,8 @@ EncodeIfNull = GenericEncode.factory(IfNullMethod,
         IfNullBinding, IfNullExpression)
 EvaluateIfNull = GenericEvaluate.factory(IfNullMethod,
         IfNullExpression, IfNullPhrase)
+ReduceIfNull = GenericReduce.factory(IfNullMethod,
+        IfNullPhrase)
 
 
 class SerializeIfNull(Serialize):
@@ -1565,6 +1628,7 @@ EncodeIf = GenericEncode.factory(IfFunction,
 EvaluateIf = GenericEvaluate.factory(IfFunction,
         IfExpression, IfPhrase,
         is_null_regular=False)
+ReduceIf = GenericReduce.factory(IfFunction, IfPhrase)
 
 
 class SerializeIf(Serialize):
@@ -1629,6 +1693,8 @@ EncodeSwitch = GenericEncode.factory(SwitchFunction,
 EvaluateSwitch = GenericEvaluate.factory(SwitchFunction,
         SwitchExpression, SwitchPhrase,
         is_null_regular=False)
+ReduceSwitch = GenericReduce.factory(SwitchFunction,
+        SwitchPhrase)
 
 
 class SerializeSwitch(Serialize):
@@ -1691,6 +1757,8 @@ EncodeTextLength = GenericEncode.factory(LengthMethod,
         TextLengthBinding, TextLengthExpression)
 EvaluateTextLength = GenericEvaluate.factory(LengthMethod,
         TextLengthExpression, TextLengthPhrase)
+ReduceTextLength = GenericReduce.factory(LengthMethod,
+        TextLengthPhrase)
 SerializeTextLength = GenericSerialize.factory(LengthMethod,
         TextLengthPhrase, "CHARACTER_LENGTH(%(this)s)")
 
@@ -1766,6 +1834,8 @@ EncodeContains = GenericEncode.factory(ContainsOperator,
         ContainsBinding, ContainsExpression)
 EvaluateContains = GenericEvaluate.factory(ContainsOperator,
         ContainsExpression, ContainsPhrase)
+ReduceContains = GenericReduce.factory(ContainsOperator,
+        ContainsPhrase)
 SerializeContains = GenericSerialize.factory(ContainsOperator,
         ContainsPhrase, "(POSITION(LOWER(%(right)s) IN LOWER(%(left)s)) > 0)")
 
@@ -1865,8 +1935,12 @@ EncodeCount = GenericAggregateEncode.factory(CountFunction,
         CountBinding, CountExpression, CountWrapperExpression)
 EvaluateCount = GenericEvaluate.factory(CountFunction,
         CountExpression, CountPhrase)
+ReduceCount = GenericReduce.factory(CountFunction,
+        CountPhrase)
 EvaluateCountWrapper = GenericEvaluate.factory(CountFunction,
         CountWrapperExpression, CountWrapperPhrase)
+ReduceCountWrapper = GenericReduce.factory(CountFunction,
+        CountWrapperPhrase)
 SerializeCount = GenericSerialize.factory(CountFunction,
         CountPhrase, "COUNT(NULLIF(%(op)s, FALSE))")
 SerializeCountWrapper = GenericSerialize.factory(CountFunction,
@@ -1964,6 +2038,8 @@ class EncodeExists(EncodeExistsEvery):
 
 EvaluateExistsWrapper = GenericEvaluate.factory(ExistsFunction,
         ExistsWrapperExpression, ExistsWrapperPhrase)
+ReduceExistsWrapper = GenericReduce.factory(ExistsFunction,
+        ExistsWrapperPhrase)
 SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
         ExistsWrapperPhrase, "EXISTS(%(op)s)")
 
@@ -1976,6 +2052,8 @@ class EncodeEvery(EncodeExistsEvery):
 
 EvaluateEveryWrapper = GenericEvaluate.factory(EveryFunction,
         EveryWrapperExpression, EveryWrapperPhrase)
+ReduceEveryWrapper = GenericReduce.factory(EveryFunction,
+        EveryWrapperPhrase)
 SerializeEveryWrapper = GenericSerialize.factory(EveryFunction,
         EveryWrapperPhrase, "NOT EXISTS(%(op)s)")
 
@@ -2045,8 +2123,12 @@ EncodeMin = GenericAggregateEncode.factory(MinFunction,
         MinBinding, MinExpression, MinWrapperExpression)
 EvaluateMin = GenericEvaluate.factory(MinFunction,
         MinExpression, MinPhrase)
+ReduceMin = GenericReduce.factory(MinFunction,
+        MinPhrase)
 EvaluateMinWrapper = GenericEvaluate.factory(MinFunction,
         MinWrapperExpression, MinWrapperPhrase)
+ReduceMinWrapper = GenericReduce.factory(MinFunction,
+        MinWrapperPhrase)
 SerializeMin = GenericSerialize.factory(MinFunction,
         MinPhrase, "MIN(%(op)s)")
 SerializeMinWrapper = GenericSerialize.factory(MinFunction,
@@ -2118,8 +2200,12 @@ EncodeMax = GenericAggregateEncode.factory(MaxFunction,
         MaxBinding, MaxExpression, MaxWrapperExpression)
 EvaluateMax = GenericEvaluate.factory(MaxFunction,
         MaxExpression, MaxPhrase)
+ReduceMax = GenericReduce.factory(MaxFunction,
+        MaxPhrase)
 EvaluateMaxWrapper = GenericEvaluate.factory(MaxFunction,
         MaxWrapperExpression, MaxWrapperPhrase)
+ReduceMaxWrapper = GenericReduce.factory(MaxFunction,
+        MaxWrapperPhrase)
 SerializeMax = GenericSerialize.factory(MaxFunction,
         MaxPhrase, "MAX(%(op)s)")
 SerializeMaxWrapper = GenericSerialize.factory(MaxFunction,
@@ -2181,8 +2267,12 @@ EncodeSum = GenericAggregateEncode.factory(SumFunction,
         SumBinding, SumExpression, SumWrapperExpression)
 EvaluateSum = GenericEvaluate.factory(SumFunction,
         SumExpression, SumPhrase)
+ReduceSum = GenericReduce.factory(SumFunction,
+        SumPhrase)
 EvaluateSumWrapper = GenericEvaluate.factory(SumFunction,
         SumWrapperExpression, SumWrapperPhrase)
+ReduceSumWrapper = GenericReduce.factory(SumFunction,
+        SumWrapperPhrase)
 SerializeSum = GenericSerialize.factory(SumFunction,
         SumPhrase, "SUM(%(op)s)")
 SerializeSumWrapper = GenericSerialize.factory(SumFunction,
@@ -2246,8 +2336,12 @@ EncodeAvg = GenericAggregateEncode.factory(AvgFunction,
         AvgBinding, AvgExpression, AvgWrapperExpression)
 EvaluateAvg = GenericEvaluate.factory(AvgFunction,
         AvgExpression, AvgPhrase)
+ReduceAvg = GenericReduce.factory(AvgFunction,
+        AvgPhrase)
 EvaluateAvgWrapper = GenericEvaluate.factory(AvgFunction,
         AvgWrapperExpression, AvgWrapperPhrase)
+ReduceAvgWrapper = GenericReduce.factory(AvgFunction,
+        AvgWrapperPhrase)
 SerializeAvg = GenericSerialize.factory(AvgFunction,
         AvgPhrase, "AVG(%(op)s)")
 SerializeAvgWrapper = GenericSerialize.factory(AvgFunction,

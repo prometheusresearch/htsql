@@ -32,7 +32,7 @@ tests:
 
          ----
          /school
-         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT 1) AS "!" CROSS JOIN "school" AS "school") AS "school" ORDER BY 1 ASC) AS "school"
+         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "school" AS "school") AS "school" ORDER BY 1 ASC) AS "school"
     - uri: /department
       status: 200 OK
       headers:
@@ -70,7 +70,7 @@ tests:
 
          ----
          /department
-         SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT 1) AS "!" CROSS JOIN "department" AS "department") AS "department" ORDER BY 1 ASC) AS "department"
+         SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "department" AS "department") AS "department" ORDER BY 1 ASC) AS "department"
     - uri: /program
       status: 200 OK
       headers:
@@ -140,7 +140,7 @@ tests:
 
          ----
          /program
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT 1) AS "!" CROSS JOIN "program" AS "program") AS "program" ORDER BY 1 ASC, 2 ASC) AS "program"
+         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "program" AS "program") AS "program" ORDER BY 1 ASC, 2 ASC) AS "program"
     - uri: /course
       status: 200 OK
       headers:
@@ -696,7 +696,7 @@ tests:
 
          ----
          /course
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT 1) AS "!" CROSS JOIN "course" AS "course") AS "course" ORDER BY 1 ASC, 2 ASC) AS "course"
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "course" AS "course") AS "course" ORDER BY 1 ASC, 2 ASC) AS "course"
   - id: scalar-queries
     tests:
     - uri: /
@@ -722,7 +722,7 @@ tests:
 
          ----
          /{2+2}
-         SELECT (2 + 2) FROM (SELECT 1) AS "!_2"
+         SELECT (2 + 2) FROM (SELECT 1 AS "!") AS "!_2"
     - uri: /{'HT'+'SQL'}
       status: 200 OK
       headers:
@@ -737,7 +737,7 @@ tests:
 
          ----
          /{'HT'+'SQL'}
-         SELECT ('HT' || 'SQL') FROM (SELECT 1) AS "!_2"
+         SELECT ('HT' || 'SQL') FROM (SELECT 1 AS "!") AS "!_2"
   - id: simple-filters
     tests:
     - uri: /school?code='ns'
@@ -754,7 +754,7 @@ tests:
 
          ----
          /school?code='ns'
-         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT 1) AS "!" CROSS JOIN "school" AS "school") AS "school" WHERE (CAST("school"."code" AS TEXT) = 'ns')) AS "school" ORDER BY 1 ASC) AS "school"
+         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "school" AS "school") AS "school" WHERE (CAST("school"."code" AS TEXT) = 'ns')) AS "school" ORDER BY 1 ASC) AS "school"
     - uri: /department?school.code='ns'
       status: 200 OK
       headers:
@@ -772,7 +772,7 @@ tests:
 
          ----
          /department?school.code='ns'
-         SELECT "school_2"."code", "school_2"."name", "school_2"."school" FROM (SELECT "school_2"."code", "school_2"."name", "school_2"."school" FROM (SELECT "school_2"."code_1" AS "code", "school_2"."name", "school_2"."school" FROM (SELECT "department"."code" AS "code_1", "department"."name", "department"."school", "school_2"."code" AS "code_2" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT 1) AS "!" CROSS JOIN "department" AS "department") AS "department" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON ((("department"."school" = "school_2"."code")))) AS "school_2" WHERE (CAST("school_2"."code_2" AS TEXT) = 'ns')) AS "school_2" ORDER BY 1 ASC) AS "school_2"
+         SELECT "school_2"."code", "school_2"."name", "school_2"."school" FROM (SELECT "school_2"."code", "school_2"."name", "school_2"."school" FROM (SELECT "school_2"."code_1" AS "code", "school_2"."name", "school_2"."school" FROM (SELECT "department"."code" AS "code_1", "department"."name", "department"."school", "school_2"."code" AS "code_2" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "department" AS "department") AS "department" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code"))) AS "school_2" WHERE (CAST("school_2"."code_2" AS TEXT) = 'ns')) AS "school_2" ORDER BY 1 ASC) AS "school_2"
     - uri: /program?school.code='ns'&code='uchem'
       status: 200 OK
       headers:
@@ -787,7 +787,7 @@ tests:
 
          ----
          /program?school.code='ns'&code='uchem'
-         SELECT "school_2"."school", "school_2"."code", "school_2"."title", "school_2"."degree" FROM (SELECT "school_2"."school", "school_2"."code", "school_2"."title", "school_2"."degree" FROM (SELECT "school_2"."school", "school_2"."code_1" AS "code", "school_2"."title", "school_2"."degree" FROM (SELECT "program"."school", "program"."code" AS "code_1", "program"."title", "program"."degree", "school_2"."code" AS "code_2" FROM (SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT 1) AS "!" CROSS JOIN "program" AS "program") AS "program" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON ((("program"."school" = "school_2"."code")))) AS "school_2" WHERE ((CAST("school_2"."code_2" AS TEXT) = 'ns') AND (CAST("school_2"."code_1" AS TEXT) = 'uchem'))) AS "school_2" ORDER BY 1 ASC, 2 ASC) AS "school_2"
+         SELECT "school_2"."school", "school_2"."code", "school_2"."title", "school_2"."degree" FROM (SELECT "school_2"."school", "school_2"."code", "school_2"."title", "school_2"."degree" FROM (SELECT "school_2"."school", "school_2"."code_1" AS "code", "school_2"."title", "school_2"."degree" FROM (SELECT "program"."school", "program"."code" AS "code_1", "program"."title", "program"."degree", "school_2"."code" AS "code_2" FROM (SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "program" AS "program") AS "program" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON (("program"."school" = "school_2"."code"))) AS "school_2" WHERE ((CAST("school_2"."code_2" AS TEXT) = 'ns') AND (CAST("school_2"."code_1" AS TEXT) = 'uchem'))) AS "school_2" ORDER BY 1 ASC, 2 ASC) AS "school_2"
     - uri: /course?credits=5
       status: 200 OK
       headers:
@@ -818,7 +818,7 @@ tests:
 
          ----
          /course?credits=5
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT 1) AS "!" CROSS JOIN "course" AS "course") AS "course" WHERE (CAST("course"."credits" AS INTEGER) = 5)) AS "course" ORDER BY 1 ASC, 2 ASC) AS "course"
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "course" AS "course") AS "course" WHERE (CAST("course"."credits" AS INTEGER) = 5)) AS "course" ORDER BY 1 ASC, 2 ASC) AS "course"
   - id: simple-selectors
     tests:
     - uri: /school{name}
@@ -844,7 +844,7 @@ tests:
 
          ----
          /school{name}
-         SELECT "school"."name" FROM (SELECT "school"."name" FROM (SELECT "school"."name", "school"."code" FROM (SELECT 1) AS "!" CROSS JOIN "school" AS "school") AS "school" ORDER BY "school"."code" ASC) AS "school"
+         SELECT "school"."name" FROM (SELECT "school"."name" FROM (SELECT "school"."name", "school"."code" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "school" AS "school") AS "school" ORDER BY "school"."code" ASC) AS "school"
     - uri: /department{school.*,*}
       status: 200 OK
       headers:
@@ -887,7 +887,7 @@ tests:
 
          ----
          /department{school.*,*}
-         SELECT "school_2"."code_1", "school_2"."name_1", "school_2"."code_2", "school_2"."name_2", "school_2"."school" FROM (SELECT "school_2"."code_1", "school_2"."name_1", "school_2"."code_2", "school_2"."name_2", "school_2"."school" FROM (SELECT "school_2"."code" AS "code_1", "school_2"."name" AS "name_1", "department"."code" AS "code_2", "department"."name" AS "name_2", "department"."school" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT 1) AS "!" CROSS JOIN "department" AS "department") AS "department" INNER JOIN (SELECT "school"."code", "school"."name" FROM "school" AS "school") AS "school_2" ON ((("department"."school" = "school_2"."code")))) AS "school_2" ORDER BY 3 ASC) AS "school_2"
+         SELECT "school_2"."code_1", "school_2"."name_1", "school_2"."code_2", "school_2"."name_2", "school_2"."school" FROM (SELECT "school_2"."code_1", "school_2"."name_1", "school_2"."code_2", "school_2"."name_2", "school_2"."school" FROM (SELECT "school_2"."code" AS "code_1", "school_2"."name" AS "name_1", "department"."code" AS "code_2", "department"."name" AS "name_2", "department"."school" FROM (SELECT "department"."code", "department"."name", "department"."school" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "department" AS "department") AS "department" INNER JOIN (SELECT "school"."code", "school"."name" FROM "school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code"))) AS "school_2" ORDER BY 3 ASC) AS "school_2"
     - uri: /department{school.name+' - '+name}
       status: 200 OK
       headers:
@@ -944,4 +944,4 @@ tests:
 
          ----
          /department{school.name+' - '+name}
-         SELECT ((CAST("school"."name_1" AS TEXT) || ' - ') || CAST("school"."name_2" AS TEXT)) FROM (SELECT "school"."name_1", "school"."name_2" FROM (SELECT "school"."name" AS "name_1", "department"."name" AS "name_2", "department"."code" FROM (SELECT "department"."name", "department"."code", "department"."school" FROM (SELECT 1) AS "!" CROSS JOIN "department" AS "department") AS "department" INNER JOIN (SELECT "school"."name", "school"."code" FROM "school" AS "school") AS "school" ON ((("department"."school" = "school"."code")))) AS "school" ORDER BY "school"."code" ASC) AS "school"
+         SELECT ((CAST("school"."name_1" AS TEXT) || ' - ') || CAST("school"."name_2" AS TEXT)) FROM (SELECT "school"."name_1", "school"."name_2" FROM (SELECT "school"."name" AS "name_1", "department"."name" AS "name_2", "department"."code" FROM (SELECT "department"."name", "department"."code", "department"."school" FROM (SELECT 1 AS "!") AS "!" CROSS JOIN "department" AS "department") AS "department" INNER JOIN (SELECT "school"."name", "school"."code" FROM "school" AS "school") AS "school" ON (("department"."school" = "school"."code"))) AS "school" ORDER BY "school"."code" ASC) AS "school"

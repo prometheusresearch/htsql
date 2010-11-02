@@ -21,7 +21,7 @@ from .tr.bind import bind
 from .tr.encode import encode
 from .tr.compile import compile
 from .tr.assemble import assemble
-#from .tr.reduce import reduce
+from .tr.reduce import reduce
 #from .tr.serialize import serialize
 from .tr.serializer import Serializer
 from .fmt.format import FindRenderer
@@ -99,7 +99,7 @@ class Request(Utility):
         expression = encode(binding)
         term = compile(expression)
         frame = assemble(term)
-        #frame = reduce(frame)
+        frame = reduce(frame)
         #plan = serialize(frame)
         serializer = Serializer()
         plan = serializer.serialize(frame)
