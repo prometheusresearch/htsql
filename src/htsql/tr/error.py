@@ -64,14 +64,13 @@ class EncodeError(TranslateError):
     kind = "encode error"
 
 
-class AssembleError(TranslateError):
+class CompileError(TranslateError):
     """
-    Represents an assembler error.
+    Represents an compiler error.
 
-    This error is raised when the assembler is unable to generate
-    a term node.
+    This error is raised when the compiler is unable to generate a term node.
     """
 
-    kind = "assemble error"
+    kind = "compile error"
 
 

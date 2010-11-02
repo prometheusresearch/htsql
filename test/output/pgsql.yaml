@@ -5380,7 +5380,7 @@ tests:
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |
-        assemble error: expected a singular expression:
+        compile error: expected a singular expression:
             /department{name, course.credits}
                                      ^^^^^^^
     - uri: /department{name, max(course.credits)}

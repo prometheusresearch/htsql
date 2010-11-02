@@ -34,7 +34,7 @@ class Binding(Node):
     The following adapters are associated with the binding process and generate
     new binding nodes::
 
-        Bind: (Syntax, BindState) -> Binding, ...
+        Bind: (Syntax, BindingState) -> Binding, ...
         Lookup: (Binding, IdentifierSyntax) -> Binding
 
     See :class:`htsql.tr.bind.Bind` and :class:`htsql.tr.lookup.Lookup` for
@@ -43,8 +43,8 @@ class Binding(Node):
     The following adapters are associated with the encoding process and
     convert binding nodes to code and space nodes::
 
-        Encode: (Binding, EncodeState) -> Code
-        Relate: (Binding, EncodeState) -> Space
+        Encode: (Binding, EncodingState) -> Code
+        Relate: (Binding, EncodingState) -> Space
 
     See :class:`htsql.tr.encode.Encode` and :class:`htsql.tr.encode.Relate`
     for more details.

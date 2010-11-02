@@ -30,20 +30,20 @@ class Term(Node):
     tree is translated from the expression graph by the *assembling* process.
     It is then translated to the sketch tree by the *outline* process.
 
-    The following adapters are associated with the assembling process and
+    The following adapters are associated with the compiling process and
     generate new term nodes::
 
-        Assemble: (Space, AssemblingState) -> Term
-        Inject: (Unit, Term, AssemblingState) -> Term
+        Compile: (Space, CompilingState) -> Term
+        Inject: (Unit, Term, CompilingState) -> Term
 
-    See :class:`htsql.tr.assemble.Assemble` and
-    :class:`htsql.tr.assemble.Inject` for more detail.
+    See :class:`htsql.tr.compile.Compile` and
+    :class:`htsql.tr.compile.Inject` for more detail.
 
-    The following adapter implements the outline process::
+    The following adapter implements the assembling process::
 
-        Outline: (Term, OutliningState) -> Sketch
+        Assemble: (Term, AssemblingState) -> Frame
 
-    See :class:`htsql.tr.outline.Outline` for more detail.
+    See :class:`htsql.tr.assemble.Assemble` for more detail.
 
     Each term node has a unique (in the context of the term tree) identifier,
     called the term *tag*.  Tags are used to refer to term objects indirectly.

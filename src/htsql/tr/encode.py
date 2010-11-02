@@ -156,7 +156,7 @@ class Encode(EncodeBase):
 
     The :class:`Encode` adapter has the following signature::
 
-        Encode: (Binding, State) -> Code or Expression
+        Encode: (Binding, EncodingState) -> Code or Expression
 
     The adapter is polymorphic on the `Binding` argument.
 
@@ -182,7 +182,7 @@ class Relate(EncodeBase):
 
     The :class:`Relate` adapter has the following signature::
 
-        Relate: (Binding, State) -> Space
+        Relate: (Binding, EncodingState) -> Space
 
     The adapter is polymorphic on the `Binding` argument.
 
@@ -214,7 +214,7 @@ class Direct(EncodeBase):
 
     The :class:`Direct` adapter has the following signature::
 
-        Direct: (Binding, State) -> +1 or -1 or None
+        Direct: (Binding, EncodingState) -> +1 or -1 or None
 
     The adapter is polymorphic on the `Binding` argument.
 

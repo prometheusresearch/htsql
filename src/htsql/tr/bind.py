@@ -173,7 +173,7 @@ class Bind(Adapter):
 
     The :class:`Bind` adapter has the following signature::
 
-        Bind: (Syntax, State) -> (Binding ...)
+        Bind: (Syntax, BindingState) -> (Binding ...)
 
     The adapter is polymorphic on the `Syntax` argument.
 

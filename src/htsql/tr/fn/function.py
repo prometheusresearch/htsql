@@ -28,7 +28,7 @@ from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
 from ..encode import Encode
 from ..code import (FunctionCode, NegationCode, ScalarUnit, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
-from ..compile import Evaluate
+from ..assemble import Evaluate
 from ..frame import FunctionPhrase
 from ..serializer import Serializer, Format, Serialize
 from ..coerce import coerce

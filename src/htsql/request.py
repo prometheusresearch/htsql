@@ -19,8 +19,8 @@ from .error import EngineError, InvalidArgumentError
 from .tr.parse import parse
 from .tr.bind import bind
 from .tr.encode import encode
-from .tr.assemble import assemble
 from .tr.compile import compile
+from .tr.assemble import assemble
 #from .tr.reduce import reduce
 #from .tr.serialize import serialize
 from .tr.serializer import Serializer
@@ -97,8 +97,8 @@ class Request(Utility):
         syntax = parse(self.uri)
         binding = bind(syntax)
         expression = encode(binding)
-        term = assemble(expression)
-        frame = compile(term)
+        term = compile(expression)
+        frame = assemble(term)
         #frame = reduce(frame)
         #plan = serialize(frame)
         serializer = Serializer()

@@ -34,13 +34,13 @@ class Expression(Comparable, Node):
     An expression tree (a DAG) is an intermediate stage of the HTSQL
     translator.  An expression tree is translated from a binding tree by
     the *encoding* process.  It is then translated to a frame structure
-    by the *compiling* process.
+    by the *compiling* and *assembling* processes.
 
     The following adapters are associated with the encoding process and
     generate new code and space nodes::
 
-        Encode: (Binding, EncodeState) -> Code
-        Relate: (Binding, EncodeState) -> Space
+        Encode: (Binding, EncodingState) -> Code
+        Relate: (Binding, EncodingState) -> Space
 
     See :class:`htsql.tr.encode.Encode` and :class:`htsql.tr.encode.Relate`
     for more detail.
@@ -48,17 +48,15 @@ class Expression(Comparable, Node):
     The compiling process works as follows.  Space nodes (and also unit nodes)
     are translated to frame nodes via several intermediate steps::
 
-        Assemble: (Space, AssembleState) -> Term
-        Outline: (Term, OutlineState) -> Sketch
-        Compile: (Sketch, CompileState) -> Frame
+        Compile: (Space, CompilingState) -> Term
+        Assemble: (Term, AssemblingState) -> Frame
 
     Code nodes are directly translated to phrase nodes::
 
-        Evaluate: (Code, CompileState) -> Phrase
+        Evaluate: (Code, AssemblingState) -> Phrase
 
-    See :class:`htsql.tr.assemble.Assemble`, :class:`htsql.tr.outline.Outline`,
-    :class:`htsql.tr.compile.Compile`, :class:`htsql.tr.compile.Evaluate`
-    for more detail.
+    See :class:`htsql.tr.compile.Compile, :class:`htsql.tr.assemble.Assemble`,
+    :class:`htsql.tr.assemble.Evaluate` for more detail.
 
     Expression nodes support equality by value (as opposed to to equality
     by identity, which is the default for class instances).  That is, two
@@ -921,7 +919,7 @@ class MaskedSpace(Space):
     A masked space `A ^ B`, where `A` and `B` are spaces, consists of
     rows from `A` that have at least one convergent row from `B`.
 
-    This is an auxiliary space node used internally by the assembler.
+    This is an auxiliary space node used internally by the compiler.
     """
 
     def __init__(self, base, mask, binding):
@@ -1507,7 +1505,7 @@ class BatchExpression(Expression):
     """
     Represents a collection of expression nodes.
 
-    This is an auxiliary expression node used internally by the assembler.
+    This is an auxiliary expression node used internally by the compiler.
 
     `collection` (a list of :class:`Expression`)
         A collection of expression nodes.
@@ -1529,7 +1527,7 @@ class ScalarBatchExpression(BatchExpression):
     """
     Represents a collection of sclar units sharing the same base space.
 
-    This is an auxiliary expression node used internally by the assembler.
+    This is an auxiliary expression node used internally by the compiler.
 
     `space` (:class:`Space`)
         The base space of the scalar units.
@@ -1552,7 +1550,7 @@ class AggregateBatchExpression(BatchExpression):
     Represents a collection of aggregate units sharing the same base and
     plural spaces.
 
-    This is an auxiliary expression node used internally by the assembler.
+    This is an auxiliary expression node used internally by the compiler.
 
     `plural_space` (:class:`Space`)
         The plural space of the aggregates.
