@@ -354,6 +354,15 @@ tests:
   # Plural links and aggregates.
   - title: Aggregates
     tests:
+    - uri: /exists(school)
+    - uri: /count(school)
+    - uri: /exists(school?exists(department))
+    - uri: /count(school?exists(department))
+    - uri: /{exists(school?!exists(department)),
+             count(school?!exists(department))}
+    - uri: /{count(course),min(course.credits),
+                           max(course.credits),
+                           avg(course.credits)}
     - uri: /{count(school),count(department),count(course)}
     - uri: /{count(department),count(department?exists(course))}
     - uri: /department{code,count(course{credits=3})}

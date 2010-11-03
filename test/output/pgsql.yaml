@@ -3509,6 +3509,96 @@ tests:
          SELECT (COALESCE((COALESCE("school"."name", '') || ' - '), '') || "department"."name") FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."name", "school"."code" FROM "ad"."school" AS "school") AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
   - id: aggregates
     tests:
+    - uri: /exists(school)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |                |
+        -+----------------+-
+         | exists(school) |
+        -+----------------+-
+         | true           |
+                    (1 row)
+
+         ----
+         /exists(school)
+         SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."school" AS "school"))
+    - uri: /count(school)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |               |
+        -+---------------+-
+         | count(school) |
+        -+---------------+-
+         |             9 |
+                   (1 row)
+
+         ----
+         /count(school)
+         SELECT COUNT(TRUE) FROM "ad"."school" AS "school"
+    - uri: /exists(school?exists(department))
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |                                   |
+        -+-----------------------------------+-
+         | exists(school?exists(department)) |
+        -+-----------------------------------+-
+         | true                              |
+                                       (1 row)
+
+         ----
+         /exists(school?exists(department))
+         SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."school" AS "school" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school")))))
+    - uri: /count(school?exists(department))
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |                                  |
+        -+----------------------------------+-
+         | count(school?exists(department)) |
+        -+----------------------------------+-
+         |                                7 |
+                                      (1 row)
+
+         ----
+         /count(school?exists(department))
+         SELECT COUNT(TRUE) FROM "ad"."school" AS "school" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school")))
+    - uri: /{exists(school?!exists(department)), count(school?!exists(department))}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |                                                                        |
+        -+------------------------------------------------------------------------+-
+         | exists(school?!exists(department)) | count(school?!exists(department)) |
+        -+------------------------------------+-----------------------------------+-
+         | true                               |                                 2 |
+                                                                            (1 row)
+
+         ----
+         /{exists(school?!exists(department)),count(school?!exists(department))}
+         SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."school" AS "school_2" WHERE (NOT EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school_2"."code" = "department"."school")))))), COUNT(TRUE) FROM "ad"."school" AS "school" WHERE (NOT EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school"))))
+    - uri: /{count(course),min(course.credits), max(course.credits), avg(course.credits)}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |                                                                                 |
+        -+---------------------------------------------------------------------------------+-
+         | count(course) | min(course.credits) | max(course.credits) | avg(course.credits) |
+        -+---------------+---------------------+---------------------+---------------------+-
+         |           100 |                   0 |                   8 |  3.1122448979591837 |
+                                                                                     (1 row)
+
+         ----
+         /{count(course),min(course.credits),max(course.credits),avg(course.credits)}
+         SELECT COUNT(TRUE), MIN("course"."credits"), MAX("course"."credits"), AVG(CAST("course"."credits" AS NUMERIC)) FROM "ad"."course" AS "course"
     - uri: /{count(school),count(department),count(course)}
       status: 200 OK
       headers:

@@ -107,11 +107,23 @@ class CollapseBranch(Collapse):
         if not head.is_nested:
             return frame
         head = self.prune_scalars(head)
-        head = self.collapse(head)
         if not head.include:
-            return frame
+            if tail and not tail[0].is_cross:
+                return frame
         if head.group:
-            return frame
+            if tail:
+                return frame
+            if not all(isinstance(phrase, LiteralPhrase)
+                       for phrase in head.group):
+                return frame
+            if frame.where is not None or frame.group or frame.order:
+                return frame
+            if frame.limit is not None or frame.offset is not None:
+                return frame
+            if head.having is not None or head.order:
+                return frame
+            if head.limit is not None or head.offset is not None:
+                return frame
         assert head.having is None
         if head.limit is not None or head.offset is not None:
             if frame.limit is not None or frame.offset is not None:
@@ -146,7 +158,10 @@ class CollapseBranch(Collapse):
 
     def reduce_include(self, frame):
         frame = self.prune_scalars(frame)
-        frame = self.collapse(frame)
+        old_frame = None
+        while frame != old_frame:
+            old_frame = frame
+            frame = self.collapse(frame)
         if not frame.include:
             return frame
         include = [self.state.reduce(anchor)
