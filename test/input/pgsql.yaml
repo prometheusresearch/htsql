@@ -288,6 +288,8 @@ tests:
     - uri: /school
     - uri: /school.limit(1)
     - uri: /school.limit(2,5)
+    - uri: /school.sort(name).limit(1)
+    - uri: /school.limit(1).sort(name)
     - uri: /course?department='acc'
     - uri: /course.sort(credits)?department='acc'
     - uri: /(course.sort(credits)?department='acc').limit(1,1)

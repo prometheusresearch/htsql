@@ -2821,6 +2821,36 @@ tests:
          ----
          /school.limit(2,5)
          SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC LIMIT 2 OFFSET 5
+    - uri: /school.sort(name).limit(1)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school.sort(name).limit(1)  |
+        -+-----------------------------+-
+         | code | name                 |
+        -+------+----------------------+-
+         | edu  | College of Education |
+                                 (1 row)
+
+         ----
+         /school.sort(name).limit(1)
+         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 2 ASC, 1 ASC LIMIT 1
+    - uri: /school.limit(1).sort(name)
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | school.limit(1).sort(name)      |
+        -+---------------------------------+-
+         | code | name                     |
+        -+------+--------------------------+-
+         | art  | School of Art and Design |
+                                     (1 row)
+
+         ----
+         /school.limit(1).sort(name)
+         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC LIMIT 1) AS "school" ORDER BY 2 ASC, 1 ASC
     - uri: /course?department='acc'
       status: 200 OK
       headers:
