@@ -153,9 +153,7 @@ tests:
         -+-----------------------------------------------------------------------------------------------------+-
          | department | number | title                            | credits | description                      |
         -+------------+--------+----------------------------------+---------+----------------------------------+-
-         | acc        |    100 | Practical Bookkeeping            |       2 | A introduction to business with  |
-         :            :        :                                  :         : practical bookkeeping            :
-         :            :        :                                  :         : application.                     :
+         | acc        |    100 | Practical Bookkeeping            |       2 |                                  |
          | acc        |    200 | Principles of Accounting I       |       3 | The initial course in the theory |
          :            :        :                                  :         : and practice of financial        :
          :            :        :                                  :         : accounting. Topics emphasized    :
@@ -516,9 +514,8 @@ tests:
          :            :        :                                  :         : multi-axis machining set-up, gas :
          :            :        :                                  :         : tungsten arc welding, and gas    :
          :            :        :                                  :         : metal arch welding.              :
-         | me         |    627 | Advanced Heating and Air         |       4 | Open to juniors and seniors.     |
-         :            :        : Conditioning                     :         : Requires permission of           :
-         :            :        :                                  :         : instructor.                      :
+         | me         |    627 | Advanced Heating and Air         |       4 | ""                               |
+         :            :        : Conditioning                     :         :                                  :
          | me         |    712 | Graphic Communication and Design |       3 | Sketching and orthographic       |
          :            :        :                                  :         : projection. Covers detail and    :
          :            :        :                                  :         : assembly working drawings,       :
@@ -2860,9 +2857,7 @@ tests:
         -+-----------------------------------------------------------------------------------------------+-
          | department | number | title                      | credits | description                      |
         -+------------+--------+----------------------------+---------+----------------------------------+-
-         | acc        |    100 | Practical Bookkeeping      |       2 | A introduction to business with  |
-         :            :        :                            :         : practical bookkeeping            :
-         :            :        :                            :         : application.                     :
+         | acc        |    100 | Practical Bookkeeping      |       2 |                                  |
          | acc        |    200 | Principles of Accounting I |       3 | The initial course in the theory |
          :            :        :                            :         : and practice of financial        :
          :            :        :                            :         : accounting. Topics emphasized    :
@@ -2903,9 +2898,7 @@ tests:
         -+-----------------------------------------------------------------------------------------------+-
          | department | number | title                      | credits | description                      |
         -+------------+--------+----------------------------+---------+----------------------------------+-
-         | acc        |    100 | Practical Bookkeeping      |       2 | A introduction to business with  |
-         :            :        :                            :         : practical bookkeeping            :
-         :            :        :                            :         : application.                     :
+         | acc        |    100 | Practical Bookkeeping      |       2 |                                  |
          | acc        |    200 | Principles of Accounting I |       3 | The initial course in the theory |
          :            :        :                            :         : and practice of financial        :
          :            :        :                            :         : accounting. Topics emphasized    :
