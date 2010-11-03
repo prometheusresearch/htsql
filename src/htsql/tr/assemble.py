@@ -26,7 +26,8 @@ from .term import (Term, RoutingTerm, UnaryTerm, BinaryTerm, TableTerm,
                    QueryTerm)
 from .frame import (LeafFrame, ScalarFrame, TableFrame, BranchFrame,
                     NestedFrame, SegmentFrame, QueryFrame,
-                    Phrase, LiteralPhrase, EqualityPhrase, TotalEqualityPhrase,
+                    Phrase, LiteralPhrase, NullPhrase, TruePhrase, FalsePhrase,
+                    EqualityPhrase, TotalEqualityPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
                     CastPhrase, ColumnLink, ReferenceLink, EmbeddingLink,
                     Anchor)
@@ -236,9 +237,7 @@ class AssembleBranch(Assemble):
                                  claim.unit)
             self.state.supply(claim, link)
         if not select:
-            phrase = LiteralPhrase(True, coerce(BooleanDomain()),
-                                   self.term.expression)
-            select.append(phrase)
+            select = [TruePhrase(self.term.expression)]
         return select
 
     def assemble_where(self):

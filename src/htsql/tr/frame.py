@@ -93,9 +93,7 @@ class BranchFrame(Frame):
                  order, limit, offset, term):
         assert isinstance(include, listof(Anchor))
         if include:
-            first_anchor = include[0]
-            assert not (first_anchor.is_left or first_anchor.is_right or
-                        first_anchor.condition)
+            assert include[0].is_cross
         assert isinstance(embed, listof(NestedFrame))
         assert isinstance(select, listof(Phrase)) and len(select) > 0
         assert isinstance(where, maybe(Phrase))
@@ -156,6 +154,26 @@ class LiteralPhrase(Phrase):
         super(LiteralPhrase, self).__init__(domain, is_nullable, expression,
                                             equality_vector)
         self.value = value
+
+
+class NullPhrase(LiteralPhrase):
+
+    def __init__(self, domain, expression):
+        super(NullPhrase, self).__init__(None, domain, expression)
+
+
+class TruePhrase(LiteralPhrase):
+
+    def __init__(self, expression):
+        domain = coerce(BooleanDomain())
+        super(TruePhrase, self).__init__(True, domain, expression)
+
+
+class FalsePhrase(LiteralPhrase):
+
+    def __init__(self, expression):
+        domain = coerce(BooleanDomain())
+        super(FalsePhrase, self).__init__(False, domain, expression)
 
 
 class EqualityPhraseBase(Phrase):
@@ -372,5 +390,7 @@ class Anchor(Phrase):
         self.condition = condition
         self.is_left = is_left
         self.is_right = is_right
+        self.is_inner = (not is_left and not is_right)
+        self.is_cross = (self.is_inner and condition is None)
 
 

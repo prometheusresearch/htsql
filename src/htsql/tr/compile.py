@@ -835,7 +835,8 @@ class InjectSpace(Inject):
         if unmasked_space in self.term.routes:
             routes = self.term.routes.copy()
             routes[self.space] = routes[unmasked_space]
-            return self.term.clone(routes=routes)
+            return WrapperTerm(self.state.tag(), self.term, self.term.space,
+                               routes)
 
         # A special case when the given space is an axis prefix of the term
         # space.  The fact that the space is not exported by the term means
@@ -958,7 +959,7 @@ class CompileProduct(CompileSpace):
             # replace the term space.
             routes = term.routes.copy()
             routes[self.space] = routes[self.backbone]
-            return term.clone(space=self.space, routes=routes)
+            return WrapperTerm(self.state.tag(), term, term.space, routes)
 
         # Now the general case.  We take two terms:
         # - the term compiled for the space base
@@ -1018,7 +1019,7 @@ class CompileFiltered(CompileSpace):
             # (`backbone`), therefore the backbone must be in the routing
             # table.
             routes[self.space] = routes[self.backbone]
-            return term.clone(space=self.space, routes=routes)
+            return WrapperTerm(self.state.tag(), term, self.space, routes)
 
         # Now wrap the base term with a filter term node.
         # Make sure the base term is able to produce the filter expression.
@@ -1058,7 +1059,7 @@ class CompileOrdered(CompileSpace):
             # return the node.
             routes = term.routes.copy()
             routes[self.space] = routes[self.backbone]
-            return term.clone(space=self.space, routes=routes)
+            return WrapperTerm(self.state.tag(), term, self.space, routes)
 
         # Applying limit/offset requires special care.  Since slicing
         # relies on precise row numbering, the base term must produce
@@ -1406,18 +1407,16 @@ class InjectScalarBatch(Inject):
         if self.space.dominates(self.term.space):
             # Make sure the term could export all the units.
             term = self.state.inject(self.term, codes)
-            # SQL does not allow evaluating expressions in a terminal
-            # (table or scalar) terms.  If we got a terminal term,
-            # cover it with a no-op wrapper.
-            if term.is_nullary:
-                term = WrapperTerm(self.state.tag(), term,
-                                   term.space, term.routes)
-            # Update the routing table to add all the units and
-            # return the term.
+            # Add all the units to the routing table.  Note that we point
+            # the units to the wrapper because the given term could be
+            # terminal (i.e., a table) and SQL syntax does not permit
+            # exporting arbitrary expressions from tables.
+            tag = self.state.tag()
             routes = term.routes.copy()
             for unit in units:
-                routes[unit] = term.tag
-            return term.clone(routes=routes)
+                routes[unit] = tag
+            # Wrap the term with the updated routing table.
+            return WrapperTerm(tag, term, term.space, routes)
 
         # The general case: compile a term for the unit space.
         unit_term = self.compile_shoot(self.space, self.term, codes)
