@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="demo.css" type="text/css">
+    <title>An HTSQL demonstration</title>
+  </head>
+
+  <body>
+
+    <div id="leftbar">
+      <iframe id="output" name="output" src="/@/"></iframe>
+    </div>
+
+    <div id="rightbar">
+
+      <div id="navigation">
+
+        <h1>Regular HTSQL queries</h1>
+        <ul>
+          <li>
+            <a href="/@/school" target="output"><tt>/school</tt></a>
+            <p>A list of schools</p>
+          </li>
+          <li>
+            <a href="/@/department{code,name}?school.code='art'" target="output"><tt>/department{code,name}?school.code='art'</tt></a>
+            <p>Departments in the selected school</p>
+          </li>
+          <li>
+            <a href="/@/department{name,max(course.credits)}" target="output"><tt>/department{name,max(course.credits)}</tt></a>
+            <p>Maximum number of credits per departmetn</p>
+          </li>
+        </ul>
+
+        <h1>HTSQL queries using <tt>.htsql</tt></h1>
+        <ul>
+          <li>
+            <a href="/all-schools.htsql" target="output"><tt>/all-schools.htsql</tt></a>
+            <p>A list of schools</p>
+          </li>
+          <li>
+            <a href="/departments-by-school.htsql?school=art" target="output"><tt>/departments-by-school.htsql?school=art</tt></a>
+            <p>Departments in the selected school</p>
+          </li>
+        </ul>
+
+      </div>
+
+    </div>
+
+  </body>
+
+</html>
+

@@ -1,0 +1,2 @@
+/department{code,name}
+    ?school.code=$school
