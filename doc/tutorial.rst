@@ -455,8 +455,8 @@ While it's possible to do cross products or construct arbitrary
 relations, this isn't the default operation.  Consequently, the easy
 stuff is easy; the hard stuff is possible. 
 
-One to Many Links
------------------
+Basic Linking
+-------------
 
 One-to-many relationships are the primary building block of relational
 structures.  In our schema, each ``course`` is offered by a
@@ -499,8 +499,8 @@ given department (RA2_)::
     http://demo.htsql.org
     /department{name,course.credits}
 
-In cases like this, an aggregate function, such as ``count`` is needed
-to convert a plural expression into a singular value.  The following
+In cases like this, an aggregate function, such as ``max`` is needed to
+convert a plural expression into a singular value.  The following
 example shows the maximum course credits by department (RA3_)::
 
     /department{name, max(course.credits)}
@@ -518,3 +518,168 @@ example shows the maximum course credits by department (RA3_)::
 .. _RA3:
     http://demo.htsql.org
     /department{name,max(course.credits)}
+
+Aggregate Expressions
+---------------------
+
+Since ``school`` table has a *plural* (one to many) relationship 
+with ``program`` and ``department``, we can count them (RB1_)::
+
+    /school{name, count(program), count(department)}
+
+    school
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    name                     | count(program) | count(department)
+    -------------------------+----------------+------------------
+    School of Art and Design | 3              | 2                
+    School of Business       | 5              | 3                
+    College of Education     | 7              | 2                
+    School of Engineering    | 8              | 4                
+    ...
+
+.. _RB1: 
+    http://demo.htsql.org
+    /school{name,count(program),count(department)}
+
+Filters may be used within an aggregate expression.  For example, the 
+following returns the number of courses, by department, that are at
+the 400 level or above (RB2_)::
+
+    /department{name, count(course?number>=400)}
+
+    department
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    name           | count(course?number>=400)
+    ---------------+--------------------------
+    Accounting     |                         3
+    Art History    |                         4
+    Astronomy      |                         0
+    Bioengineering |                         2
+    ...
+
+.. _RB2:
+    http://demo.htsql.org
+    /department{name, count(course?number>=400)}
+
+It's possible to nest aggregate expressions.  This request returns the 
+average number of courses each department offers (RB3_)::
+
+    /school{name, avg(department.count(course))}
+
+    school                                                  
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    name                     | avg(department.count(course))
+    -------------------------+------------------------------
+    School of Art and Design |            6.5000000000000000
+    School of Business       |            4.3333333333333333
+    College of Education     |            5.0000000000000000
+    School of Engineering    |            5.2500000000000000
+    ...
+
+.. _RB3:
+    http://demo.htsql.org
+    /school{name, avg(department.count(course))}
+
+Filters and nested aggregates can be combined.  He we count departments
+offering 4 or more credits (RB4_)::
+
+    /school{name, count(department?exists(course?credits>3))}
+
+    school                                                               
+    ---------------------------------------------------------------------
+    name                     | count(department?exists(course?credits>3))
+    -------------------------+-------------------------------------------
+    School of Art and Design |                                          2
+    School of Business       |                                          1
+    College of Education     |                                          1
+    School of Engineering    |                                          4
+    ...
+
+.. _RB4:
+    http://demo.htsql.org
+    /school{name, count(department?exists(course?credits>3))}
+
+Filtering can be done on one column, with aggregation on another.  Here
+we have the average credits for high-level courses (RB5_)::
+    
+    /department{name, avg(course{credits}?number>=400)}
+
+    department                                       
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    name           | avg(course{credits}?number>=400)
+    ---------------+---------------------------------
+    Accounting     |               3.0000000000000000
+    Art History    |               3.2500000000000000
+    Astronomy      |                                 
+    Bioengineering |               5.5000000000000000
+
+.. _RB5:
+    http://demo.htsql.org
+    /department{name, avg(course{credits}?number>=400)}
+
+
+Aggregate Survey
+----------------
+
+The simplest aggregate is ``exists`` which can be used to test if a
+plural link has correlated records.  For example, we can return
+``school`` records which lack a corresponding ``department`` (RC1_)::
+
+    /school? !exists(department)
+
+    school
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code | name                        
+    -----+-----------------------------
+    mart | School of Modern Art        
+    sc   | School of Continuing Studies
+                                (2 rows)
+
+.. _RC1:
+    http://demo.htsql.org
+    /school? !exists(department)
+
+Numerical aggregates are supported.  This request computes some useful
+``course.credit`` statistics (RC2_)::
+
+    /department{code, min(course.credits), max(course.credits), 
+                      avg(course.credits)}
+
+    department                                                              
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code   | min(course.credits) | max(course.credits) | avg(course.credits)
+    -------+---------------------+---------------------+--------------------
+    acc    |                   2 |                   5 |  3.1666666666666667
+    arthis |                   3 |                   4 |  3.1666666666666667
+    astro  |                   1 |                   3 |  2.2500000000000000
+    be     |                   3 |                   8 |  4.2500000000000000
+    ...
+
+.. _RC2:
+    http://demo.htsql.org
+    /department{code, min(course.credits), max(course.credits), 
+                      avg(course.credits)}
+
+The ``every`` aggregate tests that a predicate is true for every row in
+the correlated set.  This example returns ``department`` records that
+either lack correlated ``course`` records, such as the "``Bursar's
+Office``", or where every one of those ``course`` records have exactly
+``3`` credits (RC3_)::
+
+    /department{name, avg(course.credits), count(course)} 
+      ?every(course.credits=3)
+
+    department
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    name               | avg(course.credits) | count(course)
+    -------------------+---------------------+--------------
+    Bursar's Office    |                     |             0
+    Capital Markets    |  3.0000000000000000 |             4
+    Career Development |                     |             0
+    Corporate Finance  |  3.0000000000000000 |             3
+    ...
+
+.. _RC3:
+    http://demo.htsql.org
+    /department{name, avg(course.credits), count(course)} 
+      ?every(course.credits=3)

@@ -4167,6 +4167,24 @@ tests:
          ----
          /school{name,exists(department),this(){exists(department)}?name!~'art'}
          SELECT "school_1"."name", EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE (("school_1"."code" = "department"."school") AND (NOT (TRUE IS NOT DISTINCT FROM NULL))))), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE (("school"."code" = "department"."school") AND (NOT (TRUE IS NOT DISTINCT FROM NULL))))) AS "!", "school"."code" FROM "ad"."school" AS "school" WHERE (NOT (POSITION(LOWER('art') IN LOWER(CAST("school"."name" AS TEXT))) > 0))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
+  - id: table-expressions
+    tests:
+    - uri: /(school?code='art').department
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (school?code='art').department |
+        -+--------------------------------+-
+         | code    | name        | school |
+        -+---------+-------------+--------+-
+         | arthis  | Art History | art    |
+         | stdart  | Studio Art  | art    |
+                                   (2 rows)
+
+         ----
+         /(school?code='art').department
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."school" AS "school_2" INNER JOIN "ad"."department" AS "department" ON (("school_2"."code" = "department"."school")) WHERE (CAST("school_2"."code" AS TEXT) = 'art') ORDER BY "school_2"."code" ASC, 1 ASC
   - id: formatters
     tests:
     - uri: /school
@@ -5218,6 +5236,42 @@ tests:
          ----
          /program?school='bus'&degree!='bs'
          SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" WHERE ((CAST("program"."school" AS TEXT) = 'bus') AND (NOT (CAST("program"."degree" AS TEXT) = 'bs'))) ORDER BY 1 ASC, 2 ASC
+    - uri: /course{department, number, title}? credits<3&department.school='ns'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course?credits<3&department.school='ns')            |
+        -+------------------------------------------------------+-
+         | department | number | title                          |
+        -+------------+--------+--------------------------------+-
+         | astro      |    142 | Solar System Lab               |
+         | astro      |    155 | Telescope Workshop             |
+         | chem       |    115 | Organic Chemistry Laboratory I |
+         | phys       |    388 | Experimental Physics I         |
+                                                         (4 rows)
+
+         ----
+         /course{department,number,title}?credits<3&department.school='ns'
+         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."school", "department"."code" FROM "ad"."department" AS "department") AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE ((CAST("course"."credits" AS INTEGER) < 3) AND (CAST("department_2"."school" AS TEXT) = 'ns')) ORDER BY 1 ASC, 2 ASC
+    - uri: /(course?credits<3&department.school='ns') {department, number, title}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (course?credits<3&department.school='ns')            |
+        -+------------------------------------------------------+-
+         | department | number | title                          |
+        -+------------+--------+--------------------------------+-
+         | astro      |    142 | Solar System Lab               |
+         | astro      |    155 | Telescope Workshop             |
+         | chem       |    115 | Organic Chemistry Laboratory I |
+         | phys       |    388 | Experimental Physics I         |
+                                                         (4 rows)
+
+         ----
+         /(course?credits<3&department.school='ns'){department,number,title}
+         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."school", "department"."code" FROM "ad"."department" AS "department") AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE ((CAST("course"."credits" AS INTEGER) < 3) AND (CAST("department_2"."school" AS TEXT) = 'ns')) ORDER BY 1 ASC, 2 ASC
     - uri: /course{department, number, title}?credits<3&department.school='ns'
       status: 200 OK
       headers:
@@ -5272,6 +5326,20 @@ tests:
           ["ns", "School of Natural Sciences"],
           ["sc", "School of Continuing Studies"]
         ]
+    - uri: /course{department{code,name},number,title+}? department.school='bus'/:csv
+      status: 200 OK
+      headers:
+      - [Content-Type, text/csv; charset=UTF-8]
+      - [Content-Disposition, 'attachment; filename="(course{department{code,name},number,title+}?department.school=''bus'').csv"']
+      body: "department{code},department{name},number,title+\r\ncorpfi,Corporate Finance,234,Accounting
+        Information Systems\r\nacc,Accounting,527,Advanced Accounting\r\ncapmrk,Capital
+        Markets,756,Capital Risk Management\r\ncorpfi,Corporate Finance,601,Case Studies
+        in Corporate Finance\r\nacc,Accounting,606,Corporate Financial Law\r\ncorpfi,Corporate
+        Finance,404,Corporate Financial Management\r\nacc,Accounting,426,Corporate
+        Taxation\r\nacc,Accounting,315,Financial Accounting\r\ncapmrk,Capital Markets,818,Financial
+        Statement Analysis\r\ncapmrk,Capital Markets,712,International Financial Markets\r\nacc,Accounting,100,Practical
+        Bookkeeping\r\nacc,Accounting,200,Principles of Accounting I\r\ncapmrk,Capital
+        Markets,808,Principles of Portfolio Management\r\n"
     - uri: /course{department{code,name},number,title+}?department.school='bus'/:csv
       status: 200 OK
       headers:
