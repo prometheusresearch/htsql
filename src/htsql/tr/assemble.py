@@ -363,6 +363,8 @@ class AssembleProjection(Assemble):
                 continue
             group.append(phrase)
             used_phrases.add(phrase)
+        if not group:
+            group = [TruePhrase(self.term.expression)]
         return group
 
 

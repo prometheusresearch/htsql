@@ -754,7 +754,7 @@ tests:
 
          ----
          /school?code='ns'
-         SELECT "school"."code", "school"."name" FROM "school" AS "school" WHERE (CAST("school"."code" AS TEXT) = 'ns') ORDER BY 1 ASC
+         SELECT "school"."code", "school"."name" FROM "school" AS "school" WHERE ("school"."code" = 'ns') ORDER BY 1 ASC
     - uri: /department?school.code='ns'
       status: 200 OK
       headers:
@@ -772,7 +772,7 @@ tests:
 
          ----
          /department?school.code='ns'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "department" AS "department" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE (CAST("school_2"."code" AS TEXT) = 'ns') ORDER BY 1 ASC
+         SELECT "department"."code", "department"."name", "department"."school" FROM "department" AS "department" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
     - uri: /program?school.code='ns'&code='uchem'
       status: 200 OK
       headers:
@@ -787,7 +787,7 @@ tests:
 
          ----
          /program?school.code='ns'&code='uchem'
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "program" AS "program" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON (("program"."school" = "school_2"."code")) WHERE ((CAST("school_2"."code" AS TEXT) = 'ns') AND (CAST("program"."code" AS TEXT) = 'uchem')) ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "program" AS "program" INNER JOIN (SELECT "school"."code" FROM "school" AS "school") AS "school_2" ON (("program"."school" = "school_2"."code")) WHERE (("school_2"."code" = 'ns') AND ("program"."code" = 'uchem')) ORDER BY 1 ASC, 2 ASC
     - uri: /course?credits=5
       status: 200 OK
       headers:
@@ -818,7 +818,7 @@ tests:
 
          ----
          /course?credits=5
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "course" AS "course" WHERE (CAST("course"."credits" AS INTEGER) = 5) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "course" AS "course" WHERE ("course"."credits" = 5) ORDER BY 1 ASC, 2 ASC
   - id: simple-selectors
     tests:
     - uri: /school{name}
@@ -944,4 +944,4 @@ tests:
 
          ----
          /department{school.name+' - '+name}
-         SELECT ((CAST("school"."name" AS TEXT) || ' - ') || CAST("department"."name" AS TEXT)) FROM "department" AS "department" INNER JOIN (SELECT "school"."name", "school"."code" FROM "school" AS "school") AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
+         SELECT (("school"."name" || ' - ') || "department"."name") FROM "department" AS "department" INNER JOIN (SELECT "school"."name", "school"."code" FROM "school" AS "school") AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC

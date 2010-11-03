@@ -13,15 +13,19 @@ This module implements the reducing process.
 """
 
 
-from ..adapter import Adapter, adapts
-from ..domain import BooleanDomain
+from ..adapter import Adapter, adapts, adapts_many
+from ..domain import (Domain, BooleanDomain, IntegerDomain, FloatDomain,
+                      DecimalDomain, StringDomain, EnumDomain, DateDomain)
 from .coerce import coerce
 from .frame import (Clause, Frame, ScalarFrame, TableFrame, BranchFrame,
                     NestedFrame, QueryFrame, Phrase, LiteralPhrase,
                     NullPhrase, TruePhrase, FalsePhrase,
-                    EqualityPhraseBase, ConnectivePhraseBase,
-                    ConjunctionPhrase, NegationPhrase,
-                    CastPhrase, Link, ReferenceLink, Anchor)
+                    EqualityPhraseBase, EqualityPhrase, InequalityPhrase,
+                    TotalEqualityPhrase, TotalInequalityPhrase,
+                    ConnectivePhraseBase, ConjunctionPhrase, NegationPhrase,
+                    IsNullPhraseBase, IsNullPhrase, IsNotNullPhrase,
+                    IfNullPhrase, NullIfPhrase, CastPhrase,
+                    Link, ReferenceLink, Anchor)
 
 
 class ReducingState(object):
@@ -174,6 +178,8 @@ class CollapseBranch(Collapse):
             return frame
         group = [self.state.reduce(phrase)
                  for phrase in frame.group]
+        group = [phrase for phrase in group
+                        if not isinstance(phrase, LiteralPhrase)]
         return frame.clone(group=group)
 
     def reduce_having(self, frame):
@@ -189,6 +195,9 @@ class CollapseBranch(Collapse):
             return frame
         order = [(self.state.reduce(phrase), direction)
                  for phrase, direction in frame.order]
+        order = [(phrase, direction)
+                 for phrase, direction in order
+                 if not isinstance(phrase, LiteralPhrase)]
         return frame.clone(order=order)
 
     def __call__(self):
@@ -245,6 +254,43 @@ class ReduceEquality(Reduce):
     def __call__(self):
         lop = self.state.reduce(self.phrase.lop)
         rop = self.state.reduce(self.phrase.rop)
+        if isinstance(lop, NullPhrase) and isinstance(rop, NullPhrase):
+            if self.phrase.is_total:
+                if self.phrase.is_positive:
+                    return TruePhrase(self.phrase.expression)
+                if self.phrase.is_negative:
+                    return FalsePhrase(self.phrase.expression)
+            else:
+                return NullPhrase(self.phrase.domain, self.phrase.expression)
+        if isinstance(lop, NullPhrase):
+            lop, rop = rop, lop
+        if isinstance(rop, NullPhrase):
+            if self.phrase.is_total:
+                if not lop.is_nullable:
+                    if self.phrase.is_positive:
+                        return FalsePhrase(self.phrase.expression)
+                    if self.phrase.is_negative:
+                        return TruePhrase(self.phrase.expression)
+                if self.phrase.is_positive:
+                    return IsNullPhrase(lop, self.phrase.expression)
+                if self.phrase.is_negative:
+                    return IsNotNullPhrase(rop, self.phrase.expression)
+            else:
+                return NullPhrase(self.phrase.domain, self.phrase.expression)
+        if (isinstance(lop, LiteralPhrase) and isinstance(rop, LiteralPhrase)
+                and isinstance(lop.domain, BooleanDomain)
+                and isinstance(rop.domain, BooleanDomain)):
+            if ((self.phrase.is_positive and lop.value == rop.value)
+                    or (self.phrase.is_negative and lop.value != rop.value)):
+                return TruePhrase(self.phrase.expression)
+            if ((self.phrase.is_positive and lop.value != rop.value)
+                    or (self.phrase.is_negative and lop.value == rop.value)):
+                return FalsePhrase(self.phrase.expression)
+        if self.phrase.is_total and not (lop.is_nullable or rop.is_nullable):
+            if self.phrase.is_positive:
+                return EqualityPhrase(lop, rop, self.phrase.expression)
+            if self.phrase.is_negative:
+                return InequalityPhrase(lop, rop, self.phrase.expression)
         return self.phrase.clone(lop=lop, rop=rop)
 
 
@@ -254,6 +300,28 @@ class ReduceConnective(Reduce):
 
     def __call__(self):
         ops = [self.state.reduce(op) for op in self.phrase.ops]
+        duplicates = set()
+        orig_ops = ops
+        ops = []
+        for op in orig_ops:
+            if op in duplicates:
+                continue
+            if self.phrase.is_conjunction and isinstance(op, TruePhrase):
+                continue
+            if self.phrase.is_disjunction and isinstance(op, FalsePhrase):
+                continue
+            ops.append(op)
+            duplicates.add(op)
+        if self.phrase.is_conjunction:
+            if not ops:
+                return TruePhrase(self.phrase.expression)
+            if any(isinstance(op, FalsePhrase) for op in ops):
+                return FalsePhrase(self.phrase.expression)
+        if self.phrase.is_disjunction:
+            if not ops:
+                return FalsePhrase(self.phrase.expression)
+            if any(isinstance(op, TruePhrase) for op in ops):
+                return TruePhrase(self.phrase.expression)
         if len(ops) == 1:
             return ops[0]
         return self.phrase.clone(ops=ops)
@@ -265,7 +333,72 @@ class ReduceNegation(Reduce):
 
     def __call__(self):
         op = self.state.reduce(self.phrase.op)
+        if isinstance(op, NullPhrase):
+            return NullPhrase(self.phrase.domain, self.phrase.expression)
+        if isinstance(op, TruePhrase):
+            return FalsePhrase(self.phrase.expression)
+        if isinstance(op, FalsePhrase):
+            return TruePhrase(self.phrase.expression)
+        if isinstance(op, EqualityPhrase):
+            return InequalityPhrase(op.lop, op.rop, self.phrase.expression)
+        if isinstance(op, InequalityPhrase):
+            return EqualityPhrase(op.lop, op.rop, self.phrase.expression)
+        if isinstance(op, TotalEqualityPhrase):
+            return TotalInequalityPhrase(op.lop, op.rop,
+                                         self.phrase.expression)
+        if isinstance(op, TotalInequalityPhrase):
+            return TotalEqualityPhrase(op.lop, op.rop, self.phrase.expression)
         return self.phrase.clone(op=op)
+
+
+class ReduceIsNull(Reduce):
+
+    adapts(IsNullPhraseBase)
+
+    def __call__(self):
+        op = self.state.reduce(self.phrase.op)
+        if isinstance(op, NullPhrase):
+            if self.phrase.is_positive:
+                return TruePhrase(self.phrase.expression)
+            if self.phrase.is_negative:
+                return FalsePhrase(self.phrase.expression)
+        if not op.is_nullable:
+            if self.phrase.is_positive:
+                return FalsePhrase(self.phrase.expression)
+            if self.phrase.is_negative:
+                return TruePhrase(self.phrase.expression)
+        return self.phrase.clone(op=op)
+
+
+class ReduceIfNull(Reduce):
+
+    adapts(IfNullPhrase)
+
+    def __call__(self):
+        lop = self.state.reduce(self.phrase.lop)
+        rop = self.state.reduce(self.phrase.rop)
+        if not lop.is_nullable or isinstance(rop, NullPhrase):
+            return lop
+        if isinstance(lop, NullPhrase):
+            return rop
+        return self.phrase.clone(lop=lop, rop=rop)
+
+
+class ReduceNullIf(Reduce):
+
+    adapts(NullIfPhrase)
+
+    def __call__(self):
+        lop = self.state.reduce(self.phrase.lop)
+        rop = self.state.reduce(self.phrase.rop)
+        if isinstance(lop, NullPhrase) or isinstance(rop, NullPhrase):
+            return lop
+        if isinstance(lop, LiteralPhrase) and isinstance(rop, LiteralPhrase):
+            if lop.value == rop.value:
+                return NullPhrase(self.phrase.domain, self.phrase.expression)
+            elif isinstance(self.phrase.domain, BooleanDomain):
+                return lop
+        return self.phrase.clone(lop=lop, rop=rop)
 
 
 class ReduceCast(Reduce):
@@ -273,8 +406,72 @@ class ReduceCast(Reduce):
     adapts(CastPhrase)
 
     def __call__(self):
-        base = self.state.reduce(self.phrase.base)
+        convert = Convert(self.phrase, self.state)
+        return convert()
+
+
+class Convert(Adapter):
+
+    adapts(Domain, Domain)
+
+    @classmethod
+    def dispatch(interface, phrase, *args, **kwds):
+        return (type(phrase.base.domain), type(phrase.domain))
+
+    def __init__(self, phrase, state):
+        self.phrase = phrase
+        self.base = phrase.base
+        self.domain = phrase.domain
+        self.state = state
+
+    def __call__(self):
+        base = self.state.reduce(self.base)
         return self.phrase.clone(base=base)
+
+
+class ConvertToBoolean(Convert):
+
+    adapts(Domain, BooleanDomain)
+
+    def __call__(self):
+        phrase = IsNotNullPhrase(self.base, self.phrase.expression)
+        return self.state.reduce(phrase)
+
+
+class ConvertStringToBoolean(Convert):
+
+    adapts(StringDomain, BooleanDomain)
+
+    def __call__(self):
+        if isinstance(self.base, LiteralPhrase):
+            if self.base.value is None or self.base.value == '':
+                return FalsePhrase(self.phrase.expression)
+            else:
+                return TruePhrase(self.phrase.expression)
+        empty = LiteralPhrase("", coerce(StringDomain()),
+                              self.phrase.expression)
+        if not self.base.is_nullable:
+            phrase = InequalityPhrase(self.base, empty,
+                                      self.phrase.expression)
+        else:
+            phrase = NullIfPhrase(self.base, empty,
+                                  self.phrase.expression)
+            phrase = IsNotNullPhrase(phrase, self.phrase.expression)
+        return self.state.reduce(phrase)
+
+
+class ConvertDomainToItself(Convert):
+
+    adapts_many((BooleanDomain, BooleanDomain),
+                (IntegerDomain, IntegerDomain),
+                (FloatDomain, FloatDomain),
+                (DecimalDomain, DecimalDomain),
+                (StringDomain, StringDomain),
+                (EnumDomain, EnumDomain),
+                (DateDomain, DateDomain))
+
+    def __call__(self):
+        return self.state.reduce(self.base)
 
 
 class ReduceLink(Reduce):

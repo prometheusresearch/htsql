@@ -30,7 +30,8 @@ from ..code import (FunctionCode, NegationCode, ScalarUnit, AggregateUnit,
                     CorrelatedUnit, LiteralCode, FilteredSpace)
 from ..assemble import Evaluate
 from ..reduce import Reduce
-from ..frame import FunctionPhrase
+from ..frame import (FunctionPhrase, IsNullPhrase, NullIfPhrase, IfNullPhrase,
+                     LiteralPhrase, TruePhrase, FalsePhrase)
 from ..serializer import Serializer, Format, Serialize
 from ..coerce import coerce
 from ..lookup import lookup
@@ -1484,18 +1485,19 @@ class IsNullFunction(ProperFunction):
 
 IsNullBinding = GenericBinding.factory(IsNullFunction)
 IsNullExpression = GenericExpression.factory(IsNullFunction)
-IsNullPhrase = GenericPhrase.factory(IsNullFunction)
 
 
 EncodeIsNull = GenericEncode.factory(IsNullFunction,
         IsNullBinding, IsNullExpression)
-EvaluateIsNull = GenericEvaluate.factory(IsNullFunction,
-        IsNullExpression, IsNullPhrase,
-        is_null_regular=False, is_nullable=False)
-ReduceIsNull = GenericReduce.factory(IsNullFunction,
-        IsNullPhrase)
-SerializeIsNull = GenericSerialize.factory(IsNullFunction,
-        IsNullPhrase, "(%(op)s IS NULL)")
+
+
+class EvaluateIsNull(Evaluate):
+
+    adapts(IsNullExpression)
+
+    def __call__(self):
+        op = self.state.evaluate(self.code.op)
+        return IsNullPhrase(op, self.code)
 
 
 class NullIfMethod(ProperMethod):
@@ -1518,28 +1520,24 @@ class NullIfMethod(ProperMethod):
 
 NullIfBinding = GenericBinding.factory(NullIfMethod)
 NullIfExpression = GenericExpression.factory(NullIfMethod)
-NullIfPhrase = GenericPhrase.factory(NullIfMethod)
 
 
 EncodeNullIf = GenericEncode.factory(NullIfMethod,
         NullIfBinding, NullIfExpression)
-EvaluateNullIf = GenericEvaluate.factory(NullIfMethod,
-        NullIfExpression, NullIfPhrase,
-        is_null_regular=False)
-ReduceNullIf = GenericReduce.factory(NullIfMethod,
-        NullIfPhrase)
 
 
-class SerializeNullIf(Serialize):
+class EvaluateNullIf(Evaluate):
 
-    adapts(NullIfPhrase, Serializer)
+    adapts(NullIfExpression)
 
-    def serialize(self):
-        left = self.serializer.serialize(self.phrase.this)
-        for op in self.phrase.ops:
-            right = self.serializer.serialize(op)
-            left = self.format.nullif_fn(left, right)
-        return left
+    def __call__(self):
+        phrase = self.state.evaluate(self.code.this)
+        ops = [self.state.evaluate(op) for op in self.code.ops]
+        while ops:
+            lop = phrase
+            rop = ops.pop(0)
+            phrase = NullIfPhrase(lop, rop, lop.domain, self.code)
+        return phrase
 
 
 class IfNullMethod(ProperMethod):
@@ -1562,20 +1560,20 @@ class IfNullMethod(ProperMethod):
 
 IfNullBinding = GenericBinding.factory(IfNullMethod)
 IfNullExpression = GenericExpression.factory(IfNullMethod)
-IfNullPhrase = GenericPhrase.factory(IfNullMethod)
+CoalescePhrase = GenericPhrase.factory(IfNullMethod)
 
 
 EncodeIfNull = GenericEncode.factory(IfNullMethod,
         IfNullBinding, IfNullExpression)
 EvaluateIfNull = GenericEvaluate.factory(IfNullMethod,
-        IfNullExpression, IfNullPhrase)
+        IfNullExpression, CoalescePhrase)
 ReduceIfNull = GenericReduce.factory(IfNullMethod,
-        IfNullPhrase)
+        CoalescePhrase)
 
 
-class SerializeIfNull(Serialize):
+class SerializeCoalesce(Serialize):
 
-    adapts(IfNullPhrase, Serializer)
+    adapts(CoalescePhrase, Serializer)
 
     def serialize(self):
         arguments = [self.serializer.serialize(self.phrase.this)]
@@ -1853,7 +1851,7 @@ class FormatFunctions(Format):
         return "COALESCE(%s, '')" % expr
 
     def count_fn(self, condition):
-        return "COUNT(NULLIF(%s, FALSE))" % condition
+        return "COUNT(%s)" % condition
 
     def count_wrapper(self, aggregate):
         return "COALESCE(%s, 0)" % aggregate
@@ -1928,23 +1926,39 @@ CountBinding = GenericBinding.factory(CountFunction)
 CountExpression = GenericExpression.factory(CountFunction)
 CountWrapperExpression = GenericExpression.factory(CountFunction)
 CountPhrase = GenericPhrase.factory(CountFunction)
-CountWrapperPhrase = GenericPhrase.factory(CountFunction)
 
 
 EncodeCount = GenericAggregateEncode.factory(CountFunction,
         CountBinding, CountExpression, CountWrapperExpression)
-EvaluateCount = GenericEvaluate.factory(CountFunction,
-        CountExpression, CountPhrase)
+
+
+class EvaluateCount(Evaluate):
+
+    adapts(CountExpression)
+
+    def __call__(self):
+        op = self.state.evaluate(self.code.op)
+        false = FalsePhrase(self.code)
+        op = NullIfPhrase(op, false, op.domain, self.code)
+        phrase = CountPhrase(self.code.domain, False, self.code, op=op)
+        return phrase
+
+
+class EvaluateCountWrapper(Evaluate):
+
+    adapts(CountWrapperExpression)
+
+    def __call__(self):
+        op = self.state.evaluate(self.code.op)
+        zero = LiteralPhrase(0, self.code.domain, self.code)
+        phrase = IfNullPhrase(op, zero, self.code.domain, self.code)
+        return phrase
+
+
 ReduceCount = GenericReduce.factory(CountFunction,
         CountPhrase)
-EvaluateCountWrapper = GenericEvaluate.factory(CountFunction,
-        CountWrapperExpression, CountWrapperPhrase)
-ReduceCountWrapper = GenericReduce.factory(CountFunction,
-        CountWrapperPhrase)
 SerializeCount = GenericSerialize.factory(CountFunction,
-        CountPhrase, "COUNT(NULLIF(%(op)s, FALSE))")
-SerializeCountWrapper = GenericSerialize.factory(CountFunction,
-        CountWrapperPhrase, "COALESCE(%(op)s, 0)")
+        CountPhrase, "COUNT(%(op)s)")
 
 
 class ExistsFunction(ProperFunction):

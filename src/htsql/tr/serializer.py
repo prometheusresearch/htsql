@@ -23,6 +23,7 @@ from .frame import (Clause, Frame, LeafFrame, ScalarFrame, TableFrame,
                     Phrase, EqualityPhrase, InequalityPhrase,
                     TotalEqualityPhrase, TotalInequalityPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
+                    IsNullPhrase, IsNotNullPhrase, IfNullPhrase, NullIfPhrase,
                     CastPhrase, LiteralPhrase, ColumnLink, ReferenceLink,
                     EmbeddingLink)
 from .plan import Plan
@@ -180,6 +181,12 @@ class Format(Utility):
 
     def is_not_null(self, arg):
         return "(%s IS NOT NULL)" % arg
+
+    def if_null(self, lop, rop):
+        return "COALESCE(%s, %s)" % (lop, rop)
+
+    def null_if(self, lop, rop):
+        return "NULLIF(%s, %s)" % (lop, rop)
 
     def order(self, value, dir):
         if dir == +1:
@@ -531,6 +538,44 @@ class SerializeNegation(SerializePhrase):
     def serialize(self):
         value = self.serializer.serialize(self.phrase.op)
         return self.format.not_op(value)
+
+
+class SerializeIsNull(SerializePhrase):
+
+    adapts(IsNullPhrase, Serializer)
+
+    def serialize(self):
+        value = self.serializer.serialize(self.phrase.op)
+        return self.format.is_null(value)
+
+
+class SerializeIsNotNull(SerializePhrase):
+
+    adapts(IsNotNullPhrase, Serializer)
+
+    def serialize(self):
+        value = self.serializer.serialize(self.phrase.op)
+        return self.format.is_not_null(value)
+
+
+class SerializeIfNull(SerializePhrase):
+
+    adapts(IfNullPhrase, Serializer)
+
+    def serialize(self):
+        lop = self.serializer.serialize(self.phrase.lop)
+        rop = self.serializer.serialize(self.phrase.rop)
+        return self.format.if_null(lop, rop)
+
+
+class SerializeNullIf(SerializePhrase):
+
+    adapts(NullIfPhrase, Serializer)
+
+    def serialize(self):
+        lop = self.serializer.serialize(self.phrase.lop)
+        rop = self.serializer.serialize(self.phrase.rop)
+        return self.format.null_if(lop, rop)
 
 
 class SerializeCast(SerializePhrase):

@@ -221,6 +221,9 @@ class TotalInequalityPhrase(EqualityPhraseBase):
 
 class ConnectivePhraseBase(Phrase):
 
+    is_conjunction = False
+    is_disjunction = False
+
     def __init__(self, ops, expression):
         assert isinstance(ops, listof(Phrase))
         assert all(isinstance(op.domain, BooleanDomain) for op in ops)
@@ -233,11 +236,13 @@ class ConnectivePhraseBase(Phrase):
 
 
 class ConjunctionPhrase(ConnectivePhraseBase):
-    pass
+
+    is_conjunction = True
 
 
 class DisjunctionPhrase(ConnectivePhraseBase):
-    pass
+
+    is_disjunction = True
 
 
 class NegationPhrase(Phrase):

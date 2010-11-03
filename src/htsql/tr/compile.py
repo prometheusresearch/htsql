@@ -1522,11 +1522,13 @@ class InjectAggregateBatch(Inject):
         # the term cannot export any values from this space.  Currently,
         # we maintain an assumption that the term is always able to
         # export its own space.  Perhaps we need to lift it?
-        # FIXME: when the unit space is the scalar space, the projected
-        # space should not be masked (this is one of the peculiarities of
-        # the SQL semantics).
         projected_space = MaskedSpace(ties[-1].space, self.plural_space,
                                       self.expression.binding)
+        # When the unit space is the scalar space, the projected space
+        # should not be masked (this is one of the peculiarities of
+        # the SQL semantics).
+        if self.space.is_scalar:
+            projected_space = self.space
         # The routing table of the projected term.
         # FIXME: the projected term should be able to export the tie
         # conditions, so we add the tie spaces to the routing table.
@@ -1538,9 +1540,9 @@ class InjectAggregateBatch(Inject):
         routes = {}
         for tie in ties:
             routes[tie.space] = plural_term.routes[tie.space]
-        # The term space must always be in the routing table.  Here,
-        # `projected_space.base` is `ties[-1].space`.
-        routes[projected_space] = routes[projected_space.base]
+        # The term space must always be in the routing table.  The actual
+        # route does not matter since it should never be used.
+        routes[projected_space] = plural_term.tag
         # Project the plural term onto the basis of the unit space.
         projected_term = ProjectionTerm(self.state.tag(), plural_term,
                                         basis, projected_space, routes)
