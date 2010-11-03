@@ -774,10 +774,20 @@ operands is ``true()``.  For example, we could list courses having
 anomolous number of credits (PA5_)::
 
     /course?credits>4|credits<3
+  
+   course
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   department | number | title                          | credits
+   -----------+--------+--------------------------------+--------
+   acc        |    100 | Practical Bookkeeping          |       2
+   acc        |    315 | Financial Accounting           |       5
+   astro      |    142 | Solar System Lab               |       2
+   astro      |    155 | Telescope Workshop             |       1
+   ...
 
 .. _PA5:
     http://demo.htsql.org
-    /course?department='acc'|department='astro'
+    /course?credits>4|credits<3
 
 
 Compound Expressions
