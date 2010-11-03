@@ -159,7 +159,7 @@ INSERT INTO ad.department (code, name, school) VALUES
 -- Non-Academic Departments
 ('bursar', 'Bursar''s Office', NULL),
 ('career', 'Career Development', NULL),
-('donars', 'Alumni & Parents', NULL)
+('parent', 'Parents & Alumni', NULL)
 ;
 
 INSERT INTO ad.program (school, code, title, degree) VALUES
@@ -260,7 +260,7 @@ INSERT INTO ad.course (department, number, title, credits, description) VALUES
 ('me', 111, 'Introduction to Mechanical Engineering', 3, 'Topics include an overview of career opportunities, problem solving processes, an introduction to the basic engineering design process, professionalism, professional registration, and ethics.'),
 ('me', 344, 'Undergraduate Research', 4, 'Undergraduates will conduct independent research activities under the direction of their major adviser.'),
 ('me', 501, 'Advanced Welding', 3, 'Advanced applications of welding and machine tool technology. Computer numerical control, multi-axis machining set-up, gas tungsten arc welding, and gas metal arch welding.'),
-('me', 627, 'Advanced Heating and Air Conditioning', 4, 'Open to juniors and seniors. Requires permission of instructor.'),
+('me', 627, 'Advanced Heating and Air Conditioning', 4, ''),
 ('me', 712, 'Graphic Communication and Design', 3, 'Sketching and orthographic projection. Covers detail and assembly working drawings, dimensioning, tolerance specification, and design projects.'),
 ('be', 112, 'Introduction to Biomedical Engineering', 3, 'This course covers topics in multiple formats ranging from lectures by faculty or guest speakers to presentations by participating students.'),
 ('be', 308, 'Fundamentals of Biochemistry', 3, 'Fundamental aspects of human biochemistry are introduced in this course for students in the bioinstrumentation/biosensors, biomechanics, and medical-imaging tracks.'),
@@ -292,7 +292,7 @@ INSERT INTO ad.course (department, number, title, credits, description) VALUES
 ('corpfi', 234, 'Accounting Information Systems', 3, 'This course bridges the gap between two disciplines critical to business operations.  This course of study teaches students to design and deploy information technology to improve the accounting systems of an organization.'),
 ('corpfi', 404, 'Corporate Financial Management', 3, 'This course covers advanced topics in corporate financial management, including its role in corporate governance.'),
 ('corpfi', 601, 'Case Studies in Corporate Finance', 3, 'A course designed to use case studies and financial analysis to further knowledge and ability to make financial management decisions.'),
-('acc', 100, 'Practical Bookkeeping', 2, 'A introduction to business with practical bookkeeping application.'),
+('acc', 100, 'Practical Bookkeeping', 2, NULL),
 ('acc', 200, 'Principles of Accounting I', 3, 'The initial course in the theory and practice of financial accounting. Topics emphasized include the preparation, reporting, and analysis of financial data.'),
 ('acc', 315, 'Financial Accounting', 5, 'Integration of the conceptual and computational aspects of asset, liability and stockholders equity accounting.'),
 ('acc', 426, 'Corporate Taxation', 3, 'Concepts and methods of determining federal tax liability of corporations.'),

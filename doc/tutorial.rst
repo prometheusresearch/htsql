@@ -339,8 +339,8 @@ Filters can be combined with selectors and links.  The following request
 returns courses, listing only department number and title, having less
 than 3 credits in the school of natural science (C3_)::
 
-    /course{department, number, title}?
-       credits<3&department.school='ns'
+    /course{department, number, title}
+      ?credits<3&department.school='ns'
 
     course                                              
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -354,8 +354,8 @@ than 3 credits in the school of natural science (C3_)::
 
 .. _C3: 
     http://demo.htsql.org
-    /course{department, number, title}?
-       credits<3&department.school='ns'
+    /course{department, number, title}
+       ?credits<3&department.school='ns'
 
 It is sometimes desirable to specify the filter before the selector.
 Using a *table expression*, denoted by parenthesis, the previous request
@@ -443,17 +443,13 @@ every row in one table, there is at most one row in a linked table; by
 select a *plural* expression in a result set, an *aggregate* function,
 such as ``sum``, ``count``, or ``exists`` must be used.  In this way,
 what would be many values is converted into a single data cell and
-integrated into a coherent result set.  Since arbitrary projections
-cannot be created accidentally, the combined result set is always
-consistent and understandable. 
+integrated into a coherent result set. 
 
-HTSQL reduces query construction time and errors.  By assuming the most
-common join semantics and requiring aggregates for plural links, HTSQL
-queries are easier to understand than raw SQL.  By having a consistent
-grammar, HTSQL lacks the ceilings that most visual query tools impose.
-While it's possible to do cross products or construct arbitrary
-relations, this isn't the default operation.  Consequently, the easy
-stuff is easy; the hard stuff is possible. 
+By requiring aggregates for plural expressions, HTSQL reduces query
+construction time and reduces errors.  When a query starts with a table,
+rows returned will be directly correlated to records in this table.
+Since cross products or projections cannot be created accidentally, the
+combined result set is always consistent and understandable. 
 
 Basic Linking
 -------------
@@ -491,7 +487,7 @@ given department (RA2_)::
     
     400 Bad Request
 
-    a singular expression is required at the position 26:
+    a singular expression is required at position 26:
     /department{name, course.credits}
                              ^------
 
@@ -506,18 +502,49 @@ example shows the maximum course credits by department (RA3_)::
     /department{name, max(course.credits)}
 
     department                          
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    name           | max(course.credits)
-    ---------------+--------------------
-    Accounting     |                   5
-    Art History    |                   4
-    Astronomy      |                   3
-    Bioengineering |                   8
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    name             | max(course.credits)
+    -----------------+--------------------
+    Accounting       |                   5
+    Alumni & Parents |                   4
+    Art History      |                   4
     ...
 
 .. _RA3:
     http://demo.htsql.org
     /department{name,max(course.credits)}
+
+Conversely, you cannot use aggregates with singular expressions.  For
+example, since ``school`` is singular relative to ``department``, it is
+an error to count them (RA4_)::
+
+    /department{name, count(school)}
+    
+    400 Bad Request
+
+    a plural expression is required at position 25:
+    /department{name, count(school)}
+                            ^-----
+
+.. _RA4:
+    http://demo.htsql.org
+    /department{name, count(school)}
+
+For single row or *scalar* expressions, aggregates are always needed
+when referencing a table.  The query below returns maximum number of
+course credits across all departments (RA5_)::
+
+    /max(course.credits)
+
+    max(course.credits)                                                    
+    -------------------                                                    
+                      8                                                    
+                (1 row)    
+
+.. _RA5:
+    http://demo.htsql.org
+    /max(course.credits)
+
 
 Aggregate Expressions
 ---------------------
@@ -561,7 +588,7 @@ the 400 level or above (RB2_)::
     http://demo.htsql.org
     /department{name, count(course?number>=400)}
 
-It's possible to nest aggregate expressions.  This request returns the 
+It's possible to nest aggregate expressions.  This request returns the
 average number of courses each department offers (RB3_)::
 
     /school{name, avg(department.count(course))}
@@ -580,8 +607,8 @@ average number of courses each department offers (RB3_)::
     http://demo.htsql.org
     /school{name, avg(department.count(course))}
 
-Filters and nested aggregates can be combined.  He we count departments
-offering 4 or more credits (RB4_)::
+Filters and nested aggregates can be combined.  Here we count
+departments offering 4 or more credits (RB4_)::
 
     /school{name, count(department?exists(course?credits>3))}
 
@@ -599,9 +626,9 @@ offering 4 or more credits (RB4_)::
     http://demo.htsql.org
     /school{name, count(department?exists(course?credits>3))}
 
-Filtering can be done on one column, with aggregation on another.  Here
-we have the average credits for high-level courses (RB5_)::
-    
+Filtering can be done on one column, with aggregation on another.  This
+example shows average credits from only high-level courses (RB5_)::
+
     /department{name, avg(course{credits}?number>=400)}
 
     department                                       
@@ -617,30 +644,8 @@ we have the average credits for high-level courses (RB5_)::
     http://demo.htsql.org
     /department{name, avg(course{credits}?number>=400)}
 
-
-Aggregate Survey
-----------------
-
-The simplest aggregate is ``exists`` which can be used to test if a
-plural link has correlated records.  For example, we can return
-``school`` records which lack a corresponding ``department`` (RC1_)::
-
-    /school? !exists(department)
-
-    school
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    code | name                        
-    -----+-----------------------------
-    mart | School of Modern Art        
-    sc   | School of Continuing Studies
-                                (2 rows)
-
-.. _RC1:
-    http://demo.htsql.org
-    /school? !exists(department)
-
 Numerical aggregates are supported.  This request computes some useful
-``course.credit`` statistics (RC2_)::
+``course.credit`` statistics (RB6_)::
 
     /department{code, min(course.credits), max(course.credits), 
                       avg(course.credits)}
@@ -655,16 +660,15 @@ Numerical aggregates are supported.  This request computes some useful
     be     |                   3 |                   8 |  4.2500000000000000
     ...
 
-.. _RC2:
+.. _RB6:
     http://demo.htsql.org
     /department{code, min(course.credits), max(course.credits), 
                       avg(course.credits)}
 
 The ``every`` aggregate tests that a predicate is true for every row in
 the correlated set.  This example returns ``department`` records that
-either lack correlated ``course`` records, such as the "``Bursar's
-Office``", or where every one of those ``course`` records have exactly
-``3`` credits (RC3_)::
+either lack correlated ``course`` records or where every one of those
+``course`` records have exactly ``3`` credits (RB7_)::
 
     /department{name, avg(course.credits), count(course)} 
       ?every(course.credits=3)
@@ -679,7 +683,364 @@ Office``", or where every one of those ``course`` records have exactly
     Corporate Finance  |  3.0000000000000000 |             3
     ...
 
-.. _RC3:
+.. _RB7:
     http://demo.htsql.org
     /department{name, avg(course.credits), count(course)} 
       ?every(course.credits=3)
+
+
+Predicate Expressions
+=====================
+
+A *filter* refines results by including or excluding data by specific
+criteria.  This section reviews boolean expressions, comparison
+operators, and ``NULL`` handling.
+
+Boolean Expressions
+-------------------
+
+HTSQL uses function notation for constants such as ``true()``,
+``false()`` and ``null()``.  For the text formatter, a ``NULL`` value is
+shown as a blank value, while the empty string is presented as a
+double-quoted pair (PA1_)::
+
+    /{true(), false(), null(), ''}
+
+                            
+    true() | false() | null() | '' 
+    -------+---------+--------+---
+    true   | false   |        | ""
+
+.. _PA1:
+    http://demo.htsql.org
+    /{true(), false(), null()}
+
+The *is_null* function returns ``true()`` if it's operand is ``null()``.
+In our schema, non-academic ``department`` records have a ``NULL``
+``school``, so they can be listed (PA2_)::
+
+    /department{code, name}?is_null(school)
+
+    department
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code    | name              
+    --------+-------------------
+    bursar  | Bursar's Office   
+    career  | Career Development
+    parent  | Parents & Alumni  
+                        (3 rows)
+
+.. _PA2:
+    http://demo.htsql.org
+    /department{code, name}?is_null(school)
+
+The *negation* operator (``!``) is ``true()`` when it's operand is
+``false()``.   To skip non-academic ``department`` records (PA3_)::
+
+    /department{code, name}?!is_null(school)
+
+    department
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    code   | name          
+    -------+---------------
+    acc    | Accounting          
+    arthis | Art History         
+    astro  | Astronomy           
+    be     | Bioengineering      
+    ...
+
+.. _PA3:
+    http://demo.htsql.org
+    /department{code, name}?!is_null(school)
+
+The *conjunction* (``&``) operator is ``true()`` only if both of its
+operands are ``true()``.   This example asks for courses in the
+``'Accounting'`` department having less than 3 credits (PA4_)::
+
+    /course?department='acc'&credits<3
+
+    course
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number    | title                | credits
+    -----------+-----------+----------------------+--------
+    acc        | 100       | Practical Bookkeeping | 2
+
+.. _PA4:
+    http://demo.htsql.org
+    /course?department='acc'&credits<3
+
+The *alternation* (``|``) operator is ``true()`` if either of its
+operands is ``true()``.  For example, we could list courses having
+anomolous number of credits (PA5_)::
+
+    /course?credits>4|credits<3
+  
+   course
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   department | number | title                          | credits
+   -----------+--------+--------------------------------+--------
+   acc        |    100 | Practical Bookkeeping          |       2
+   acc        |    315 | Financial Accounting           |       5
+   astro      |    142 | Solar System Lab               |       2
+   astro      |    155 | Telescope Workshop             |       1
+   ...
+
+.. _PA5:
+    http://demo.htsql.org
+    /course?credits>4|credits<3
+
+
+Compound Expressions
+--------------------
+
+The precedence rules for boolean operators follow typical programming
+convention, negation binds more tightly than conjunction, which binds
+more tightly than alternation.  Parenthesis can be used to override this
+default grouping rule or to better clarify intent (PB1_)::
+
+    /{ true() | false()&false() , (true()|false()) & false() }
+
+   -------------------------------------------------
+   true()|false()&false() | (true()|false())&false()
+   -----------------------+-------------------------
+   true                   | false                   
+                                             (1 row)
+
+.. _PB1:
+    http://demo.htsql.org
+    /{true()|false()&false(),(true()|false())&false()}
+
+Hence, the following request shows courses that are in ``'Art History'``
+or ``'Studio Art'`` having more than three credits (PB2_)::
+
+    /course?(department='arthis'|department='stdart')&credits>3
+
+    course                                                       
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+    department | number | title                         | credits
+    -----------+--------+-------------------------------+-------- 
+    arthis     | 712    | Museum and Gallery Management | 4       
+    stdart     | 411    | Underwater Basket Weaving     | 4       
+    stdart     | 509    | Twentieth Century Printmaking | 4       
+    stdart     | 614    | Drawing Master Class          | 5       
+    ...
+
+.. _PB2:
+    http://demo.htsql.org
+    /course?(department='arthis'|department='stdart')&credits>3
+
+Without the parenthesis, the expression above would show all
+courses from ``'arthis'`` regardless of credits (PB3_)::
+
+    /course?department='arthis'|department='stdart'&credits>3
+
+    course
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number | title                           | credits
+    -----------+--------+---------------------------------+--------
+    arthis     | 202    | History of Art Criticism        | 3        
+    arthis     | 340    | Arts of Asia                    | 3        
+    arthis     | 623    | Contemporary Latin American Art | 3        
+    ...       
+
+.. _PB3:
+    http://demo.htsql.org
+    /course?department='arthis'|department='stdart'&credits>3
+
+Negation (``!``) lets you find all courses that are NOT in either 
+``'Art History'`` or ``'Studio Art'`` (PB4_)::
+
+    /course?!(department='arthis'|department='stdart')
+
+.. _PB4:
+    http://demo.htsql.org
+    /course?!(department='arthis'|department='stdart')
+
+To ensure a string value is neither ``NULL`` nor empty, a verbose
+compound filter, ``?(!is_null(col)&col!='')``, could be used.  For this
+tedious and common case, the column itself can be tested.  The example
+below returns only ``course`` records having a ``description`` (PB5_)::
+
+    /course?description
+    
+.. _PB5:
+    http://demo.htsql.org
+    /course?description
+
+The negated variant of this shortcut is more illustrative (PB6_)::
+
+    /course{department,number,description}? !description
+
+    course
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number | description
+    -----------+--------+------------
+    acc        |    100 |            
+    me         |    627 | ""         
+                             (2 rows)
+
+.. _PB6:
+    http://demo.htsql.org
+    /course{department,number,description}? !description
+
+
+Matching Strings
+----------------
+
+The ``course`` table contains the university's academic offerings.
+Course titles are *strings*, or sequences of letters.  To search for a
+particular string, first decide what type of matching you need.
+
+To exactly match a course title (PS1_), use the equals sign (``=``)::
+
+    /course?title='Drawing'
+
+    course
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number    | title   | credits 
+    -----------+-----------+---------+---------
+    stdart     | 333       | Drawing | 3         
+
+.. _PS1:
+    http://demo.htsql.org
+    /course?title='Drawing'
+
+Be sure to put the string you're looking for in single quotes, so HTSQL
+will interpret it literally.  Exact matches are just that--they're case
+sensitive and have to match perfectly, or nothing will be returned.
+
+If you're not sure of the course title, use the case-insensitive
+*contains* operator (``~``) to match any course that contains a word
+like ``'physics'`` (PS2_):: 
+
+    /course?title~'physics'
+
+    course
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number    | title                  | credits 
+    -----------+-----------+------------------------+---------
+    phys       | 211       | General Physics I      | 3        
+    phys       | 388       | Experimental Physics I | 2        
+    ...
+
+.. _PS2:
+    http://demo.htsql.org
+    /course?title~'physics'
+
+This request returns all courses that have ``physics`` anywhere in the
+title, regardless of case.
+
+Use the *not-contains* operator (``!~``) to exclude all courses with
+physics in the title (PS3_)::
+
+    /course?title!~'physics'
+
+.. _PS3:
+    http://demo.htsql.org
+    /course?title!~'physics'
+
+To exclude a specific class, use the *not-equals* operator (PS4_)::
+
+    /course?title!='General Physics I'
+
+.. _PS4:
+    http://demo.htsql.org
+    /course?title!='General Physics I'
+
+To find entries that match a string at the beginning (PS5_), use the
+*starts-with* operator (``^~``)::
+
+    /school?name^~'school'
+
+    school                                    
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code | name                    
+    -----+-------------------------
+    art  | School of Art and Design
+    eng  | School of Engineering   
+    ...      
+
+.. _PS5:
+    http://demo.htsql.com
+    /school?name^~'school'
+
+The *ends-with* operator (``$~``) does the same thing, but from the end
+of the entry (PS6_)::
+     
+    /department?name$~'engineering'
+
+    department                             
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code | name                   | school |
+    -----+------------------------+--------+
+    be   | Bioengineering         | eng    |
+    ee   | Electrical Engineering | eng    |
+    ...
+
+.. _PS6:
+    http://demo.htsql.com
+    /department?name$~'engineering'
+
+Comparison Operators
+--------------------
+
+The *equality* (``=``) and *inequality* (``!=``) operators are
+straightforward when used with numbers (PC1_)::
+
+    /course{department,number,title}?number=367
+
+    course                                                 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number | title                           
+    -----------+--------+---------------------------------
+    tched      | 367    | Problems in Education Management
+
+.. _PC1:
+    http://demo.htsql.org
+    /course{department,number,title}?number=367
+
+Use the *greater-than* (``>``) operator to request courses with more
+than 3 credits (PC2_):: 
+
+     /course?credits>3
+
+     course
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     department | number    | title                     | credits
+     -----------+-----------+---------------------------+--------
+     arthis     | 712       | Museum and Gallery Mgmt   | 4        
+     stdart     | 411       | Underwater Basket Weaving | 4         
+     .
+
+.. _PC2:
+    http://demo.htsql.org
+    /course?credits>3
+
+Use the *greater-than-or-equal-to* operator request courses that have
+three credits or more (PC3_)::
+
+    /course?credits>=3
+
+.. _PC3:
+    http://demo.htsql.org
+    /course?credits>=3
+
+Using comparison operators with strings tells HTSQL to compare them
+alphabetically.  The *greater-than* operator is used to request
+departments that follow ``me`` in the alphabet (PC4_)::
+
+    /department?code>'me'
+
+    department                         
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code  | name              | school
+    ------+-------------------+-------
+    mth   | Mathematics       | ns    
+    phys  | Physics           | ns    
+    pia   | Piano             | mus   
+    poli  | Political Science | la    
+    ...
+
+.. _PC4:
+    http://demo.htsql.org
+    /department?code>'me'

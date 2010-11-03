@@ -52,7 +52,6 @@ tests:
          | chem   | Chemistry              | ns     |
          | comp   | Computer Science       | egn    |
          | corpfi | Corporate Finance      | bus    |
-         | donars | Alumni & Parents       |        |
          | edpol  | Educational Policy     | edu    |
          | ee     | Electrical Engineering | egn    |
          | eng    | English                | la     |
@@ -60,6 +59,7 @@ tests:
          | lang   | Foreign Languages      | la     |
          | me     | Mechanical Engineering | egn    |
          | mth    | Mathematics            | ns     |
+         | parent | Parents & Alumni       |        |
          | phys   | Physics                | ns     |
          | pia    | Piano                  | mus    |
          | poli   | Political Science      | la     |
@@ -153,9 +153,7 @@ tests:
         -+-----------------------------------------------------------------------------------------------------+-
          | department | number | title                            | credits | description                      |
         -+------------+--------+----------------------------------+---------+----------------------------------+-
-         | acc        |    100 | Practical Bookkeeping            |       2 | A introduction to business with  |
-         :            :        :                                  :         : practical bookkeeping            :
-         :            :        :                                  :         : application.                     :
+         | acc        |    100 | Practical Bookkeeping            |       2 |                                  |
          | acc        |    200 | Principles of Accounting I       |       3 | The initial course in the theory |
          :            :        :                                  :         : and practice of financial        :
          :            :        :                                  :         : accounting. Topics emphasized    :
@@ -516,9 +514,8 @@ tests:
          :            :        :                                  :         : multi-axis machining set-up, gas :
          :            :        :                                  :         : tungsten arc welding, and gas    :
          :            :        :                                  :         : metal arch welding.              :
-         | me         |    627 | Advanced Heating and Air         |       4 | Open to juniors and seniors.     |
-         :            :        : Conditioning                     :         : Requires permission of           :
-         :            :        :                                  :         : instructor.                      :
+         | me         |    627 | Advanced Heating and Air         |       4 | ""                               |
+         :            :        : Conditioning                     :         :                                  :
          | me         |    712 | Graphic Communication and Design |       3 | Sketching and orthographic       |
          :            :        :                                  :         : projection. Covers detail and    :
          :            :        :                                  :         : assembly working drawings,       :
@@ -2860,9 +2857,7 @@ tests:
         -+-----------------------------------------------------------------------------------------------+-
          | department | number | title                      | credits | description                      |
         -+------------+--------+----------------------------+---------+----------------------------------+-
-         | acc        |    100 | Practical Bookkeeping      |       2 | A introduction to business with  |
-         :            :        :                            :         : practical bookkeeping            :
-         :            :        :                            :         : application.                     :
+         | acc        |    100 | Practical Bookkeeping      |       2 |                                  |
          | acc        |    200 | Principles of Accounting I |       3 | The initial course in the theory |
          :            :        :                            :         : and practice of financial        :
          :            :        :                            :         : accounting. Topics emphasized    :
@@ -2903,9 +2898,7 @@ tests:
         -+-----------------------------------------------------------------------------------------------+-
          | department | number | title                      | credits | description                      |
         -+------------+--------+----------------------------+---------+----------------------------------+-
-         | acc        |    100 | Practical Bookkeeping      |       2 | A introduction to business with  |
-         :            :        :                            :         : practical bookkeeping            :
-         :            :        :                            :         : application.                     :
+         | acc        |    100 | Practical Bookkeeping      |       2 |                                  |
          | acc        |    200 | Principles of Accounting I |       3 | The initial course in the theory |
          :            :        :                            :         : and practice of financial        :
          :            :        :                            :         : accounting. Topics emphasized    :
@@ -3427,7 +3420,6 @@ tests:
          | ns          | School of Natural Sciences       | chem   | Chemistry              | ns     |
          | egn         | School of Engineering            | comp   | Computer Science       | egn    |
          | bus         | School of Business               | corpfi | Corporate Finance      | bus    |
-         |             |                                  | donars | Alumni & Parents       |        |
          | edu         | College of Education             | edpol  | Educational Policy     | edu    |
          | egn         | School of Engineering            | ee     | Electrical Engineering | egn    |
          | la          | School of Arts, Letters, and the | eng    | English                | la     |
@@ -3438,6 +3430,7 @@ tests:
          :             : Humanities                       :        :                        :        :
          | egn         | School of Engineering            | me     | Mechanical Engineering | egn    |
          | ns          | School of Natural Sciences       | mth    | Mathematics            | ns     |
+         |             |                                  | parent | Parents & Alumni       |        |
          | ns          | School of Natural Sciences       | phys   | Physics                | ns     |
          | mus         | Musical School                   | pia    | Piano                  | mus    |
          | la          | School of Arts, Letters, and the | poli   | Political Science      | la     |
@@ -3480,7 +3473,6 @@ tests:
          : Science                          :
          | School of Business - Corporate   |
          : Finance                          :
-         | " - Alumni & Parents"            |
          | College of Education -           |
          : Educational Policy               :
          | School of Engineering -          |
@@ -3495,6 +3487,7 @@ tests:
          : Mechanical Engineering           :
          | School of Natural Sciences -     |
          : Mathematics                      :
+         | " - Parents & Alumni"            |
          | School of Natural Sciences -     |
          : Physics                          :
          | Musical School - Piano           |
@@ -3565,7 +3558,6 @@ tests:
          | chem   |                        4 |
          | comp   |                        6 |
          | corpfi |                        3 |
-         | donars |                        0 |
          | edpol  |                        4 |
          | ee     |                        4 |
          | eng    |                        4 |
@@ -3573,6 +3565,7 @@ tests:
          | lang   |                        3 |
          | me     |                        3 |
          | mth    |                        0 |
+         | parent |                        0 |
          | phys   |                        5 |
          | pia    |                        0 |
          | poli   |                        5 |
@@ -3606,7 +3599,6 @@ tests:
          | chem   |                       4 |
          | comp   |                       6 |
          | corpfi |                       3 |
-         | donars |                       0 |
          | edpol  |                       4 |
          | ee     |                       4 |
          | eng    |                       4 |
@@ -3614,6 +3606,7 @@ tests:
          | lang   |                       3 |
          | me     |                       3 |
          | mth    |                       0 |
+         | parent |                       0 |
          | phys   |                       5 |
          | pia    |                       0 |
          | poli   |                       5 |
@@ -3694,8 +3687,8 @@ tests:
         -+--------+--------------------+--------+-
          | bursar | Bursar's Office    |        |
          | career | Career Development |        |
-         | donars | Alumni & Parents   |        |
          | mth    | Mathematics        | ns     |
+         | parent | Parents & Alumni   |        |
          | pia    | Piano              | mus    |
          | str    | Strings            | mus    |
          | voc    | Vocals             | mus    |
@@ -3724,7 +3717,6 @@ tests:
          | chem   |                   2 |                   3 |
          | comp   |                   3 |                   4 |
          | corpfi |                   3 |                   3 |
-         | donars |                     |                     |
          | edpol  |                   3 |                   3 |
          | ee     |                   3 |                   4 |
          | eng    |                   2 |                   3 |
@@ -3732,6 +3724,7 @@ tests:
          | lang   |                   2 |                   4 |
          | me     |                   3 |                   4 |
          | mth    |                   5 |                   5 |
+         | parent |                     |                     |
          | phys   |                   2 |                   3 |
          | pia    |                     |                     |
          | poli   |                   3 |                   4 |
@@ -3765,7 +3758,6 @@ tests:
          | chem   |  2.8000000000000000 |                        2.8000000000000000 |
          | comp   |  3.1428571428571429 |                        3.1428571428571429 |
          | corpfi |  3.0000000000000000 |                        3.0000000000000000 |
-         | donars |                     |                                           |
          | edpol  |  3.0000000000000000 |                        3.0000000000000000 |
          | ee     |  3.2000000000000000 |                        3.2000000000000000 |
          | eng    |  2.6666666666666667 |                        2.6666666666666667 |
@@ -3773,6 +3765,7 @@ tests:
          | lang   |  3.0000000000000000 |                        3.0000000000000000 |
          | me     |  3.4000000000000000 |                        3.4000000000000000 |
          | mth    |  5.0000000000000000 |                        5.0000000000000000 |
+         | parent |                     |                                           |
          | phys   |  2.8333333333333333 |                        2.8333333333333333 |
          | pia    |                     |                                           |
          | poli   |  3.1666666666666667 |                        3.1666666666666667 |
@@ -3985,7 +3978,6 @@ tests:
          | chem   | ns          |                     3 |                     3 |
          | comp   | egn         |                     8 |                     8 |
          | corpfi | bus         |                     5 |                     5 |
-         | donars |             |                     0 |                       |
          | edpol  | edu         |                     7 |                     7 |
          | ee     | egn         |                     8 |                     8 |
          | eng    | la          |                     9 |                     9 |
@@ -3993,6 +3985,7 @@ tests:
          | lang   | la          |                     9 |                     9 |
          | me     | egn         |                     8 |                     8 |
          | mth    | ns          |                     3 |                     3 |
+         | parent |             |                     0 |                       |
          | phys   | ns          |                     3 |                     3 |
          | pia    | mus         |                     0 |                     0 |
          | poli   | la          |                     9 |                     9 |
@@ -4026,7 +4019,6 @@ tests:
          | chem   | ns          | true                   | true                   |
          | comp   | egn         | true                   | true                   |
          | corpfi | bus         | true                   | true                   |
-         | donars |             | false                  |                        |
          | edpol  | edu         | true                   | true                   |
          | ee     | egn         | true                   | true                   |
          | eng    | la          | true                   | true                   |
@@ -4034,6 +4026,7 @@ tests:
          | lang   | la          | true                   | true                   |
          | me     | egn         | true                   | true                   |
          | mth    | ns          | true                   | true                   |
+         | parent |             | false                  |                        |
          | phys   | ns          | true                   | true                   |
          | pia    | mus         | false                  | false                  |
          | poli   | la          | true                   | true                   |
@@ -4619,6 +4612,7 @@ tests:
          | Political Science      | la     |
          | Piano                  | mus    |
          | Physics                | ns     |
+         | Parents & Alumni       |        |
          | Mechanical Engineering | egn    |
          | Mathematics            | ns     |
          | History                | la     |
@@ -4635,7 +4629,6 @@ tests:
          | Bioengineering         | egn    |
          | Astronomy              | ns     |
          | Art History            | art    |
-         | Alumni & Parents       |        |
          | Accounting             | bus    |
                                    (27 rows)
 
@@ -5174,7 +5167,6 @@ tests:
          | chem   | Chemistry              | ns     | ns          | School of Natural Sciences       |
          | comp   | Computer Science       | egn    | egn         | School of Engineering            |
          | corpfi | Corporate Finance      | bus    | bus         | School of Business               |
-         | donars | Alumni & Parents       |        |             |                                  |
          | edpol  | Educational Policy     | edu    | edu         | College of Education             |
          | ee     | Electrical Engineering | egn    | egn         | School of Engineering            |
          | eng    | English                | la     | la          | School of Arts, Letters, and the |
@@ -5185,6 +5177,7 @@ tests:
          :        :                        :        :             : Humanities                       :
          | me     | Mechanical Engineering | egn    | egn         | School of Engineering            |
          | mth    | Mathematics            | ns     | ns          | School of Natural Sciences       |
+         | parent | Parents & Alumni       |        |             |                                  |
          | phys   | Physics                | ns     | ns          | School of Natural Sciences       |
          | pia    | Piano                  | mus    | mus         | Musical School                   |
          | poli   | Political Science      | la     | la          | School of Arts, Letters, and the |
@@ -5495,7 +5488,6 @@ tests:
          | Chemistry              |                   3 |
          | Computer Science       |                   4 |
          | Corporate Finance      |                   3 |
-         | Alumni & Parents       |                     |
          | Educational Policy     |                   3 |
          | Electrical Engineering |                   4 |
          | English                |                   3 |
@@ -5503,6 +5495,7 @@ tests:
          | Foreign Languages      |                   4 |
          | Mechanical Engineering |                   4 |
          | Mathematics            |                   5 |
+         | Parents & Alumni       |                     |
          | Physics                |                   3 |
          | Piano                  |                     |
          | Political Science      |                   4 |
