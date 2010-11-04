@@ -3310,7 +3310,7 @@ tests:
 
          ----
          /department?school.code='ns'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
     - uri: /program?school.code='ns'&code='uchem'
       status: 200 OK
       headers:
@@ -3325,7 +3325,7 @@ tests:
 
          ----
          /program?school.code='ns'&code='uchem'
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" INNER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("program"."school" = "school_2"."code")) WHERE (("school_2"."code" = 'ns') AND ("program"."code" = 'uchem')) ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" INNER JOIN "ad"."school" AS "school_2" ON (("program"."school" = "school_2"."code")) WHERE (("school_2"."code" = 'ns') AND ("program"."code" = 'uchem')) ORDER BY 1 ASC, 2 ASC
     - uri: /course?credits=5
       status: 200 OK
       headers:
@@ -3375,6 +3375,24 @@ tests:
          ----
          /semester?season='fall'
          SELECT "semester"."year", "semester"."season", "semester"."begin_date", "semester"."end_date" FROM "cd"."semester" AS "semester" WHERE ("semester"."season" = 'fall') ORDER BY 1 ASC, 2 ASC
+    - uri: /program{school.name,title}?school.code='art'
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (program?school.code='art')                                |
+        -+------------------------------------------------------------+-
+         | school.name              | title                           |
+        -+--------------------------+---------------------------------+-
+         | School of Art and Design | Post Baccalaureate in Art       |
+         :                          : History                         :
+         | School of Art and Design | Bachelor of Arts in Art History |
+         | School of Art and Design | Bachelor of Arts in Studio Art  |
+                                                               (3 rows)
+
+         ----
+         /program{school.name,title}?school.code='art'
+         SELECT "school"."name", "program"."title" FROM "ad"."program" AS "program" INNER JOIN "ad"."school" AS "school" ON (("program"."school" = "school"."code")) WHERE ("school"."code" = 'art') ORDER BY "program"."school" ASC, "program"."code" ASC
   - id: simple-selectors
     tests:
     - uri: /school{name}
@@ -3446,7 +3464,7 @@ tests:
 
          ----
          /department{school.*,*}
-         SELECT "school_2"."code", "school_2"."name", "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 3 ASC
+         SELECT "school_2"."code", "school_2"."name", "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 3 ASC
     - uri: /department{school.name+' - '+name}
       status: 200 OK
       headers:
@@ -3506,7 +3524,7 @@ tests:
 
          ----
          /department{school.name+' - '+name}
-         SELECT (COALESCE((COALESCE("school"."name", '') || ' - '), '') || "department"."name") FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."name", "school"."code" FROM "ad"."school" AS "school") AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
+         SELECT (COALESCE((COALESCE("school"."name", '') || ' - '), '') || "department"."name") FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
   - id: aggregates
     tests:
     - uri: /exists(school)
@@ -4089,7 +4107,7 @@ tests:
 
          ----
          /department{code,school.code,count(school.program),school.count(program)}
-         SELECT "department"."code", "school_1"."code", COALESCE("program"."!", 0), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school") AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school_1"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COALESCE("program"."!", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school"))) AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code", "school_1"."code", COALESCE("program"."!", 0), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school_1"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COALESCE("program"."!", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school"))) AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
     - uri: /department{code,school.code, exists(school.program),school.exists(program)}
       status: 200 OK
       headers:
@@ -4130,7 +4148,7 @@ tests:
 
          ----
          /department{code,school.code,exists(school.program),school.exists(program)}
-         SELECT "department"."code", "school_1"."code", EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school_1"."code" = "program"."school"))), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school") AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school"."code" = "program"."school"))) AS "!", "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code", "school_1"."code", EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school_1"."code" = "program"."school"))), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school"."code" = "program"."school"))) AS "!", "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
   - id: root,-this-and-join-functions
     tests:
     - uri: /{count(school)*count(department),count(school.cross(department))}
@@ -5080,7 +5098,7 @@ tests:
 
          ----
          /program{school.name,title}
-         SELECT "school"."name", "program"."title" FROM "ad"."program" AS "program" INNER JOIN (SELECT "school"."name", "school"."code" FROM "ad"."school" AS "school") AS "school" ON (("program"."school" = "school"."code")) ORDER BY "program"."school" ASC, "program"."code" ASC
+         SELECT "school"."name", "program"."title" FROM "ad"."program" AS "program" INNER JOIN "ad"."school" AS "school" ON (("program"."school" = "school"."code")) ORDER BY "program"."school" ASC, "program"."code" ASC
     - uri: /course{department.school.name, department.name, title}
       status: 200 OK
       headers:
@@ -5237,7 +5255,7 @@ tests:
 
          ----
          /course{department.school.name,department.name,title}
-         SELECT "school"."name", "department"."name", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."name", "department"."school", "department"."code" FROM "ad"."department" AS "department") AS "department" ON (("course"."department" = "department"."code")) LEFT OUTER JOIN (SELECT "school"."name", "school"."code" FROM "ad"."school" AS "school") AS "school" ON (("department"."school" = "school"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
+         SELECT "school"."name", "department"."name", "course"."title" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department" ON (("course"."department" = "department"."code")) LEFT OUTER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
     - uri: /department{*,school.*}
       status: 200 OK
       headers:
@@ -5283,7 +5301,7 @@ tests:
 
          ----
          /department{*,school.*}
-         SELECT "department"."code", "department"."name", "department"."school", "school_2"."code", "school_2"."name" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code", "department"."name", "department"."school", "school_2"."code", "school_2"."name" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
     - uri: /department?school='egn'
       status: 200 OK
       headers:
@@ -5336,7 +5354,7 @@ tests:
 
          ----
          /course{department,number,title}?credits<3&department.school='ns'
-         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."school", "department"."code" FROM "ad"."department" AS "department") AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
     - uri: /(course?credits<3&department.school='ns') {department, number, title}
       status: 200 OK
       headers:
@@ -5354,7 +5372,7 @@ tests:
 
          ----
          /(course?credits<3&department.school='ns'){department,number,title}
-         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."school", "department"."code" FROM "ad"."department" AS "department") AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
     - uri: /course{department, number, title}?credits<3&department.school='ns'
       status: 200 OK
       headers:
@@ -5550,7 +5568,7 @@ tests:
 
          ----
          /course{department.name,credits}
-         SELECT "department"."name", "course"."credits" FROM "ad"."course" AS "course" INNER JOIN (SELECT "department"."name", "department"."code" FROM "ad"."department" AS "department") AS "department" ON (("course"."department" = "department"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
+         SELECT "department"."name", "course"."credits" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department" ON (("course"."department" = "department"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
     - uri: /department{name, course.credits}
       status: 400 Bad Request
       headers:

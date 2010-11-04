@@ -500,16 +500,6 @@ class Inject(Adapter):
         if codes is not None:
             term = self.state.inject(term, codes)
 
-        # SQL syntax does not permit us evaluating scalar or aggregate
-        # expressions in terminal terms.  So when generating terms for
-        # scalar or aggregate units, we need to cover terminal terms
-        # with a no-op wrapper.  It may generate an unnecessary
-        # wrapper if the term is used for other purposes, but we rely
-        # on the outliner to flatten any unused wrappers.
-        if term.is_nullary:
-            term = WrapperTerm(self.state.tag(), term,
-                               term.space, term.routes.copy())
-
         # Return the compiled shoot term.
         return term
 
@@ -1420,6 +1410,12 @@ class InjectScalarBatch(Inject):
 
         # The general case: compile a term for the unit space.
         unit_term = self.compile_shoot(self.space, self.term, codes)
+        # SQL syntax does not permit us evaluating arbitrary
+        # expressions in terminal terms, so we wrap such terms with
+        # a no-op wrapper.
+        if unit_term.is_nullary:
+            unit_term = WrapperTerm(self.state.tag(), unit_term,
+                                    unit_term.space, unit_term.routes.copy())
         # And join it to the main term.
         extra_routes = dict((unit, unit_term.tag) for unit in units)
         return self.join_terms(self.term, unit_term, extra_routes)

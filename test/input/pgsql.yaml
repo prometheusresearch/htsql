@@ -343,6 +343,8 @@ tests:
     - uri: /course?credits=5
     # ENUM literal.
     - uri: /semester?season='fall'
+    # Using the same term for a filter and a selector
+    - uri: /program{school.name,title}?school.code='art'
 
   # Simple (non-aggregate) selectors.
   - title: Simple selectors
