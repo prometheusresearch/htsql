@@ -13,15 +13,15 @@ This module declares frame and phrase nodes.
 """
 
 
-from ..util import listof, tupleof, maybe, Node, Comparable
+from ..util import listof, tupleof, maybe, Clonable, Comparable, Printable
 from ..entity import TableEntity, ColumnEntity
 from ..domain import Domain, BooleanDomain
 from .coerce import coerce
 from .code import Expression
-from .term import Term, RoutingTerm
+from .term import Term, QueryTerm
 
 
-class Clause(Comparable, Node):
+class Clause(Comparable, Clonable, Printable):
 
     def __init__(self, expression, equality_vector=None):
         assert isinstance(expression, Expression)
@@ -43,20 +43,16 @@ class Frame(Clause):
     is_branch = False
     is_nested = False
     is_segment = False
-    is_query = False
 
     def __init__(self, kids, term):
         assert isinstance(kids, listof(Frame))
         assert isinstance(term, Term)
-        if self.is_leaf or self.is_branch:
-            assert isinstance(term, RoutingTerm)
         super(Frame, self).__init__(term.expression)
         self.kids = kids
         self.term = term
         self.tag = term.tag
-        if self.is_leaf or self.is_branch:
-            self.space = term.space
-            self.baseline = term.baseline
+        self.space = term.space
+        self.baseline = term.baseline
 
     def __str__(self):
         return str(self.term)
@@ -102,7 +98,6 @@ class BranchFrame(Frame):
         assert isinstance(order, listof(tupleof(Phrase, int)))
         assert isinstance(limit, maybe(int))
         assert isinstance(offset, maybe(int))
-        assert isinstance(term, RoutingTerm)
         kids = [anchor.frame for anchor in include] + embed
         super(BranchFrame, self).__init__(kids, term)
         self.include = include
@@ -126,14 +121,14 @@ class SegmentFrame(BranchFrame):
     is_segment = True
 
 
-class QueryFrame(Frame):
-
-    is_query = True
+class QueryFrame(Clause):
 
     def __init__(self, segment, term):
         assert isinstance(segment, maybe(SegmentFrame))
-        super(QueryFrame, self).__init__([], term)
+        assert isinstance(term, QueryTerm)
+        super(QueryFrame, self).__init__(term.expression)
         self.segment = segment
+        self.term = term
 
 
 class Phrase(Clause):

@@ -13,7 +13,8 @@ This module declares space and code nodes.
 """
 
 
-from ..util import maybe, oneof, listof, tupleof, Node, Comparable
+from ..util import (maybe, oneof, listof, tupleof,
+                    Clonable, Comparable, Printable)
 from ..mark import Mark
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, BooleanDomain
@@ -22,7 +23,7 @@ from .binding import Binding, QueryBinding, SegmentBinding
 from .coerce import coerce
 
 
-class Expression(Comparable, Node):
+class Expression(Comparable, Clonable, Printable):
     """
     Represents an expression node.
 

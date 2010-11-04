@@ -13,14 +13,14 @@ This module implements the assembling process.
 """
 
 
-from ..util import listof, Node, Comparable
+from ..util import listof, Printable, Comparable
 from ..adapter import Adapter, adapts, adapts_many
 from ..domain import BooleanDomain
 from .coerce import coerce
 from .code import (Code, LiteralCode, EqualityCode, TotalEqualityCode,
                    ConjunctionCode, DisjunctionCode, NegationCode,
                    CastCode, Unit, ColumnUnit)
-from .term import (Term, RoutingTerm, UnaryTerm, BinaryTerm, TableTerm,
+from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
                    QueryTerm)
@@ -33,7 +33,7 @@ from .frame import (LeafFrame, ScalarFrame, TableFrame, BranchFrame,
                     Anchor)
 
 
-class Claim(Comparable, Node):
+class Claim(Comparable, Printable):
 
     def __init__(self, unit, broker, target):
         assert isinstance(unit, Unit)
@@ -49,15 +49,19 @@ class Claim(Comparable, Node):
         return "(%s)->%s->%s" % (self.unit, self.broker, self.target)
 
 
-class Gate(object):
+class Gate(Printable):
 
     def __init__(self, term, is_inner, routes):
-        assert isinstance(term, RoutingTerm)
+        assert isinstance(term, Term)
         assert isinstance(is_inner, bool)
         assert isinstance(routes, dict)
         self.term = term
         self.is_inner = is_inner
         self.routes = routes
+
+    def __str__(self):
+        flag = "?" if not self.is_inner else ""
+        return "(%s-> %s)" % (flag, self.term.tag)
 
 
 class AssemblingState(object):
@@ -148,7 +152,7 @@ class AssemblingState(object):
 
 class Assemble(Adapter):
 
-    adapts(Term)
+    adapts(PreTerm)
 
     def __init__(self, term, state):
         self.term = term
@@ -158,12 +162,12 @@ class Assemble(Adapter):
         raise NotImplementedError()
 
 
-class AssembleRouting(Assemble):
+class AssembleTerm(Assemble):
 
-    adapts(RoutingTerm)
+    adapts(Term)
 
     def __init__(self, term, state):
-        super(AssembleRouting, self).__init__(term, state)
+        super(AssembleTerm, self).__init__(term, state)
         self.claims = state.claims_by_broker[term.tag]
 
 

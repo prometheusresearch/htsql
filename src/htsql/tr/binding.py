@@ -13,14 +13,14 @@ This module declares binding nodes.
 """
 
 
-from ..util import maybe, listof, Node
+from ..util import maybe, listof, Clonable, Printable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax
 from .coerce import coerce
 
 
-class Binding(Node):
+class Binding(Clonable, Printable):
     """
     Represents a binding node.
 

@@ -13,16 +13,17 @@ This module declares term nodes.
 """
 
 
-from ..util import Node, listof, dictof, oneof, tupleof, maybe
+from ..util import (listof, dictof, oneof, tupleof, maybe,
+                    Clonable, Printable)
 from ..domain import BooleanDomain
 from .code import Expression, Space, Code, Unit, QueryExpression
 
 
-class Term(Node):
+class PreTerm(Clonable, Printable):
     """
     Represents a term node.
 
-    A term represents a relational algebraic expression.  :class:`Term`
+    A term represents a relational algebraic expression.  :class:`PreTerm`
     is an abstract class, each its subclass represents a specific relational
     operation.
 
@@ -45,13 +46,7 @@ class Term(Node):
 
     See :class:`htsql.tr.assemble.Assemble` for more detail.
 
-    Each term node has a unique (in the context of the term tree) identifier,
-    called the term *tag*.  Tags are used to refer to term objects indirectly.
-
     Arguments:
-
-    `tag` (an integer)
-        A unique identifier of the node.
 
     `expression` (:class:`htsql.tr.code.Expression`)
         The expression node which gave rise to the term node; used only for
@@ -69,10 +64,8 @@ class Term(Node):
         The location of the node in the original query; for error reporting.
     """
 
-    def __init__(self, tag, expression):
-        assert isinstance(tag, int)
+    def __init__(self, expression):
         assert isinstance(expression, Expression)
-        self.tag = tag
         self.expression = expression
         self.binding = expression.binding
         self.syntax = expression.syntax
@@ -82,7 +75,7 @@ class Term(Node):
         return str(self.expression)
 
 
-class RoutingTerm(Term):
+class Term(PreTerm):
     """
     Represents a relational algebraic expression.
 
@@ -100,6 +93,9 @@ class RoutingTerm(Term):
     that comprise the space may be missing from the term.  Thus the term
     space represents a promise: once the term is tied with some other
     appropriate term, it will generate the rows of the space.
+
+    Each term node has a unique (in the context of the term tree) identifier,
+    called the term *tag*.  Tags are used to refer to term objects indirectly.
 
     Each term maintains a table of units it is capable to produce.
     For each unit, the table contains a reference to a node directly
@@ -121,7 +117,7 @@ class RoutingTerm(Term):
     `tag` (an integer)
         A unique identifier of the node.
 
-    `kids` (a list of zero, one or two :class:`RoutingTerm` objects)
+    `kids` (a list of zero, one or two :class:`Term` objects)
         The operands of the relational expression.
 
     `space` (:class:`htsql.tr.code.Space`)
@@ -153,7 +149,7 @@ class RoutingTerm(Term):
         The leftmost axis of the term space that the term is capable
         to produce.
 
-    `offsprings` (a dictionary `tag -> RoutingTerm`)
+    `offsprings` (a dictionary `tag -> Term`)
         Maps the tag of a descendant term to the immediate child
         whose subtree contains the term.
     """
@@ -163,7 +159,8 @@ class RoutingTerm(Term):
     is_binary = False
 
     def __init__(self, tag, kids, space, routes):
-        assert isinstance(kids, listof(RoutingTerm))
+        assert isinstance(tag, int)
+        assert isinstance(kids, listof(Term))
         assert isinstance(space, Space)
         assert isinstance(routes, dictof(oneof(Space, Unit), int))
         # The inflation of the term space.
@@ -192,7 +189,8 @@ class RoutingTerm(Term):
             offsprings[kid.tag] = kid
             for offspring_tag in kid.offsprings:
                 offsprings[offspring_tag] = kid
-        super(RoutingTerm, self).__init__(tag, space)
+        super(Term, self).__init__(space)
+        self.tag = tag
         self.kids = kids
         self.space = space
         self.routes = routes
@@ -201,7 +199,7 @@ class RoutingTerm(Term):
         self.offsprings = offsprings
 
 
-class NullaryTerm(RoutingTerm):
+class NullaryTerm(Term):
     """
     Represents a terminal relational algebraic expression.
     """
@@ -212,11 +210,11 @@ class NullaryTerm(RoutingTerm):
         super(NullaryTerm, self).__init__(tag, [], space, routes)
 
 
-class UnaryTerm(RoutingTerm):
+class UnaryTerm(Term):
     """
     Represents a unary relational algebraic expression.
 
-    `kid` (:class:`RoutingTerm`)
+    `kid` (:class:`Term`)
         The operand of the expression.
     """
 
@@ -227,14 +225,14 @@ class UnaryTerm(RoutingTerm):
         self.kid = kid
 
 
-class BinaryTerm(RoutingTerm):
+class BinaryTerm(Term):
     """
     Represents a binary relational algebraic expression.
 
-    `lkid` (:class:`RoutingTerm`)
+    `lkid` (:class:`Term`)
         The left operand of the expression.
 
-    `rkid` (:class:`RoutingTerm`)
+    `rkid` (:class:`Term`)
         The right operand of the expression.
     """
 
@@ -304,7 +302,7 @@ class FilterTerm(UnaryTerm):
 
         (SELECT ... FROM <kid> WHERE <filter>)
 
-    `kid` (:class:`RoutingTerm`)
+    `kid` (:class:`Term`)
         The operand of the filter expression.
 
     `filter` (:class:`htsql.tr.code.Code`)
@@ -346,10 +344,10 @@ class JoinTerm(BinaryTerm):
 
         (SELECT ... FROM <lkid> (INNER | LEFT OUTER) JOIN <rkid> ON (<joints>))
 
-    `lkid` (:class:`RoutingTerm`)
+    `lkid` (:class:`Term`)
         The left operand of the join.
 
-    `rkid` (:class:`RoutingTerm`)
+    `rkid` (:class:`Term`)
         The right operand of the join.
 
     `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
@@ -408,7 +406,7 @@ class EmbeddingTerm(BinaryTerm):
 
         (SELECT ... (SELECT ... FROM <rkid>) ... FROM <lkid>)
 
-    `lkid` (:class:`RoutingTerm`)
+    `lkid` (:class:`Term`)
         The main term.
 
     `rkid` (:class:`CorrelationTerm`)
@@ -440,10 +438,10 @@ class CorrelationTerm(UnaryTerm):
     a :class:`EmbeddingTerm` instance.  The left child of the embedding
     term must coincide with the link term.
 
-    `kid` (:class:`RoutingTerm`)
+    `kid` (:class:`Term`)
         The operand of the correlation condition.
 
-    `link` (:class:`RoutingTerm`)
+    `link` (:class:`Term`)
         The term to link to.
 
     `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
@@ -452,7 +450,7 @@ class CorrelationTerm(UnaryTerm):
     """
 
     def __init__(self, tag, kid, link, joints, space, routes):
-        assert isinstance(link, RoutingTerm)
+        assert isinstance(link, Term)
         assert isinstance(joints, listof(tupleof(Code, Code)))
         super(CorrelationTerm, self).__init__(tag, kid, space, routes)
         self.link = link
@@ -481,7 +479,7 @@ class ProjectionTerm(UnaryTerm):
 
         (SELECT ... FROM <kid> GROUP BY <kernel>)
 
-    `kid` (:class:`RoutingTerm`)
+    `kid` (:class:`Term`)
         The operand of the projection.
 
     `kernel` (a list of :class:`htsql.tr.code.Code`)
@@ -513,7 +511,7 @@ class OrderTerm(UnaryTerm):
 
         (SELECT ... FROM <kid> ORDER BY <order> LIMIT <limit> OFFSET <offset>)
 
-    `kid` (:class:`RoutingTerm`)
+    `kid` (:class:`Term`)
         The operand.
 
     `order` (a list of pairs `(code, direction)`)
@@ -589,7 +587,7 @@ class SegmentTerm(UnaryTerm):
 
         (SELECT <elements> FROM <kid>)
 
-    `kid` (:class:`RoutingTerm`)
+    `kid` (:class:`Term`)
         The operand.
 
     `elements` (a list of :class:`htsql.tr.code.Code`)
@@ -608,7 +606,7 @@ class SegmentTerm(UnaryTerm):
                                                for element in self.elements))
 
 
-class QueryTerm(Term):
+class QueryTerm(PreTerm):
     """
     Represents a whole HTSQL query.
 
@@ -616,10 +614,10 @@ class QueryTerm(Term):
         The query segment.
     """
 
-    def __init__(self, tag, segment, expression):
+    def __init__(self, segment, expression):
         assert isinstance(segment, maybe(SegmentTerm))
         assert isinstance(expression, QueryExpression)
-        super(QueryTerm, self).__init__(tag, expression)
+        super(QueryTerm, self).__init__(expression)
         self.segment = segment
 
 

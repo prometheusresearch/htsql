@@ -13,12 +13,12 @@ This module implements a plan node.
 """
 
 
-from ..util import maybe, Node
+from ..util import maybe, Printable
 from ..mark import Mark
 from .frame import QueryFrame
 
 
-class Plan(Node):
+class Plan(Printable):
 
     def __init__(self, frame, sql, mark):
         assert isinstance(frame, QueryFrame)
@@ -31,5 +31,8 @@ class Plan(Node):
         self.syntax = frame.syntax
         self.sql = sql
         self.mark = mark
+
+    def __str__(self):
+        return ("<%s>" % self.sql if self.sql is not None else "<>")
 
 

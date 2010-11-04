@@ -626,7 +626,7 @@ def toposort(elements, order, is_total=False):
 
 
 #
-# A simple record type.
+# Node types with special behavior.
 #
 
 
@@ -645,13 +645,28 @@ class Record(object):
         for name in attributes:
             setattr(self, name, attributes[name])
 
+    def __repr__(self):
+        # Display:
+        #   Record(name=value, ...)
+        return "%s(%s)" % (self.__class__.__name__,
+                           ", ".join("%s=%r" % (name, getattr(self, name))
+                                     for name in sorted(vars(self))))
 
-#
-# A clonable node type.
-#
+
+class Printable(object):
+    """
+    Implements default string representation.
+    """
+
+    def __str__(self):
+        # Default implementation; override in subclasses.
+        return "[%s]" % id(self)
+
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self)
 
 
-class Node(object):
+class Clonable(object):
     """
     Implements an immutable clonable object.
     """
@@ -703,18 +718,6 @@ class Node(object):
         clone = self.__class__(**arguments)
         return clone
 
-    def __str__(self):
-        # Default implementation; override in subclasses.
-        return self.__class__.__name__.lower()
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
-
-
-#
-# By-value comparison.
-#
-
 
 class Comparable(object):
     """
@@ -736,6 +739,10 @@ class Comparable(object):
     """
 
     def __init__(self, equality_vector=None):
+        # We assume that `Comparable` is the last constructor in the
+        # inheritance tree and therefore do not call the super constructor.
+        # However when using together with `Clonable`, the latter should be
+        # behind `Comparable`.
         assert isinstance(equality_vector, maybe(oneof(tuple, int, long)))
         # When `equality_vector` is not set, equality by identity
         # is assumed.  Note that `A is B` <=> `id(A) == id(B)`.
