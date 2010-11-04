@@ -25,7 +25,7 @@ from .frame import (Clause, Frame, ScalarFrame, TableFrame, BranchFrame,
                     ConnectivePhraseBase, ConjunctionPhrase, NegationPhrase,
                     IsNullPhraseBase, IsNullPhrase, IsNotNullPhrase,
                     IfNullPhrase, NullIfPhrase, CastPhrase,
-                    Link, ReferenceLink, Anchor)
+                    ExportPhrase, ReferencePhrase, Anchor)
 
 
 class ReducingState(object):
@@ -363,6 +363,10 @@ class ReduceNegation(Reduce):
                                          self.phrase.expression)
         if isinstance(op, TotalInequalityPhrase):
             return TotalEqualityPhrase(op.lop, op.rop, self.phrase.expression)
+        if isinstance(op, IsNullPhrase):
+            return IsNotNullPhrase(op.op, self.phrase.expression)
+        if isinstance(op, IsNotNullPhrase):
+            return IsNullPhrase(op.op, self.phrase.expression)
         return self.phrase.clone(op=op)
 
 
@@ -489,27 +493,23 @@ class ConvertDomainToItself(Convert):
         return self.state.reduce(self.base)
 
 
-class ReduceLink(Reduce):
+class ReduceExport(Reduce):
 
-    adapts(Link)
-
-    def __init__(self, clause, state):
-        super(ReduceLink, self).__init__(clause, state)
-        self.link = clause
+    adapts(ExportPhrase)
 
     def __call__(self):
-        return self.link
+        return self.clause
 
 
 class ReduceReference(Reduce):
 
-    adapts(ReferenceLink)
+    adapts(ReferencePhrase)
 
     def __call__(self):
-        key = (self.link.tag, self.link.index)
+        key = (self.clause.tag, self.clause.index)
         if key in self.state.substitutes:
             return self.state.reduce(self.state.substitutes[key])
-        return self.link
+        return self.clause
 
 
 class ReduceAnchor(Reduce):

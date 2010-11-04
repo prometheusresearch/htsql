@@ -18,6 +18,8 @@
    :members:
 .. automodule:: htsql.tr.error
    :members:
+.. automodule:: htsql.tr.frame
+   :members:
 .. automodule:: htsql.tr.lookup
    :members:
 .. automodule:: htsql.tr.parse

@@ -27,9 +27,9 @@ from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
 from .frame import (LeafFrame, ScalarFrame, TableFrame, BranchFrame,
                     NestedFrame, SegmentFrame, QueryFrame,
                     Phrase, LiteralPhrase, NullPhrase, TruePhrase, FalsePhrase,
-                    EqualityPhrase, TotalEqualityPhrase,
+                    EqualityPhrase, TotalEqualityPhrase, CastPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
-                    CastPhrase, ColumnLink, ReferenceLink, EmbeddingLink,
+                    ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
                     Anchor)
 
 
@@ -195,8 +195,9 @@ class AssembleTable(Assemble):
             assert (column.schema_name == table.schema_name and
                     column.table_name == table.name)
             is_nullable = (column.is_nullable or not self.state.gate.is_inner)
-            link = ColumnLink(self.term.tag, column, is_nullable, claim.unit)
-            self.state.supply(claim, link)
+            export = ColumnPhrase(self.term.tag, column, is_nullable,
+                                  claim.unit)
+            self.state.supply(claim, export)
         return TableFrame(table, self.term)
 
 
@@ -237,9 +238,9 @@ class AssembleBranch(Assemble):
             index = index_by_phrase[phrase]
             domain = phrase.domain
             is_nullable = (phrase.is_nullable or not self.state.gate.is_inner)
-            link = ReferenceLink(self.term.tag, index, domain, is_nullable,
-                                 claim.unit)
-            self.state.supply(claim, link)
+            export = ReferencePhrase(self.term.tag, index, domain, is_nullable,
+                                     claim.unit)
+            self.state.supply(claim, export)
         if not select:
             select = [TruePhrase(self.term.expression)]
         return select
@@ -290,7 +291,7 @@ class AssembleUnary(AssembleBranch):
         include = []
         self.state.push_gate(self.term.kid, is_inner=True)
         frame = self.state.assemble(self.term.kid)
-        anchor = Anchor(frame, None, False, False, self.term.kid.expression)
+        anchor = Anchor(frame, None, False, False)
         include.append(anchor)
         self.state.pop_gate()
         return include
@@ -385,7 +386,7 @@ class AssembleJoin(Assemble):
     def assemble_include(self):
         self.state.push_gate(self.term.lkid, is_inner=(not self.term.is_right))
         lframe = self.state.assemble(self.term.lkid)
-        lanchor = Anchor(lframe, None, False, False, self.term.lkid.expression)
+        lanchor = Anchor(lframe, None, False, False)
         self.state.pop_gate()
         self.state.push_gate(self.term.rkid, is_inner=(not self.term.is_left))
         rframe = self.state.assemble(self.term.rkid)
@@ -400,9 +401,7 @@ class AssembleJoin(Assemble):
         if equalities:
             condition = ConjunctionPhrase(equalities, self.term.expression)
         ranchor = Anchor(rframe, condition,
-                         self.term.is_left,
-                         self.term.is_right,
-                         self.term.expression)
+                         self.term.is_left, self.term.is_right)
         return [lanchor, ranchor]
 
 
@@ -422,7 +421,7 @@ class AssembleEmbedding(Assemble):
     def assemble_include(self):
         self.state.push_gate(self.term.lkid, is_inner=True)
         frame = self.state.assemble(self.term.lkid)
-        anchor = Anchor(frame, None, False, False, self.term.lkid.expression)
+        anchor = Anchor(frame, None, False, False)
         self.state.pop_gate()
         return [anchor]
 
@@ -449,8 +448,8 @@ class AssembleCorrelation(Assemble):
         phrase = self.state.evaluate(claim.unit.code)
         domain = phrase.domain
         is_nullable = True
-        link = EmbeddingLink(self.term.tag, domain, is_nullable, claim.unit)
-        self.state.supply(claim, link)
+        export = EmbeddingPhrase(self.term.tag, domain, is_nullable, claim.unit)
+        self.state.supply(claim, export)
         return [phrase]
 
     def assemble_where(self):

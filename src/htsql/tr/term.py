@@ -28,8 +28,8 @@ class PreTerm(Clonable, Printable):
     operation.
 
     The term tree is an intermediate stage of the HTSQL translator. A term
-    tree is translated from the expression graph by the *assembling* process.
-    It is then translated to the sketch tree by the *outline* process.
+    tree is translated from the expression graph by the *compiling* process.
+    It is then translated to the frame tree by the *assembling* process.
 
     The following adapters are associated with the compiling process and
     generate new term nodes::

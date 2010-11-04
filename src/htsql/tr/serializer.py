@@ -24,8 +24,8 @@ from .frame import (Clause, Frame, LeafFrame, ScalarFrame, TableFrame,
                     TotalEqualityPhrase, TotalInequalityPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
                     IsNullPhrase, IsNotNullPhrase, IfNullPhrase, NullIfPhrase,
-                    CastPhrase, LiteralPhrase, ColumnLink, ReferenceLink,
-                    EmbeddingLink)
+                    CastPhrase, LiteralPhrase, ColumnPhrase, ReferencePhrase,
+                    EmbeddingPhrase)
 from .plan import Plan
 import decimal
 
@@ -314,9 +314,9 @@ class SerializeBranch(SerializeFrame):
             if self.with_aliases:
                 alias = self.serializer.get_alias(phrase)
                 inherited_alias = None
-                if isinstance(phrase, ColumnLink):
+                if isinstance(phrase, ColumnPhrase):
                     inherited_alias = phrase.column.name
-                elif isinstance(phrase, ReferenceLink):
+                elif isinstance(phrase, ReferencePhrase):
                     inherited_frame = self.serializer.frame_by_tag[phrase.tag]
                     inherited_phrase = inherited_frame.select[phrase.index]
                     inherited_alias = self.serializer.get_alias(
@@ -782,7 +782,7 @@ class SerializeDateConstant(SerializeConstant):
 
 class SerializeColumn(SerializePhrase):
 
-    adapts(ColumnLink, Serializer)
+    adapts(ColumnPhrase, Serializer)
 
     def serialize(self):
         frame = self.serializer.frame_by_tag[self.phrase.tag]
@@ -797,7 +797,7 @@ class SerializeColumn(SerializePhrase):
 
 class SerializeReference(SerializePhrase):
 
-    adapts(ReferenceLink, Serializer)
+    adapts(ReferencePhrase, Serializer)
 
     def serialize(self):
         frame = self.serializer.frame_by_tag[self.phrase.tag]
@@ -815,7 +815,7 @@ class SerializeReference(SerializePhrase):
 
 class SerializeEmbedding(SerializePhrase):
 
-    adapts(EmbeddingLink, Serializer)
+    adapts(EmbeddingPhrase, Serializer)
 
     def serialize(self):
         frame = self.serializer.frame_by_tag[self.phrase.tag]
