@@ -398,13 +398,14 @@ tests:
     - uri: /department{code,school.code,
                        exists(school.program),school.exists(program)}
 
-  - title: Root, This and Join functions
+  - title: Root, This, Direct and Fiber functions
     tests:
     # Cross joins.
-    - uri: /{count(school)*count(department),count(school.cross(department))}
+    - uri: /{count(school)*count(department),count(school.direct(department))}
     # Custom joins.
     - uri: /{count(school.department),
-             count(school.cross(department)?school=root().school.code)}
+             count(school.direct(department)?school=root().school.code),
+             count(school.fiber(department,code,school.code))}
     # Lifting a unit to a dominating space.
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
     - uri: /school{code,name,this(){code}?name!~'art',

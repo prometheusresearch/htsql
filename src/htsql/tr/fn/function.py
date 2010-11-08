@@ -20,8 +20,8 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain)
 from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
-from ..binding import (LiteralBinding, SortBinding, FunctionBinding,
-                       EqualityBinding, TotalEqualityBinding,
+from ..binding import (LiteralBinding, SortBinding, SieveBinding,
+                       FunctionBinding, EqualityBinding, TotalEqualityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
                        CastBinding, WrapperBinding, TitleBinding,
                        DirectionBinding)
@@ -166,9 +166,9 @@ class ThisFunction(Function):
         yield WrapperBinding(self.state.base, self.syntax)
 
 
-class CrossFunction(Function):
+class DirectFunction(Function):
 
-    named('cross')
+    named('direct')
 
     def __call__(self):
         if len(self.syntax.arguments) < 1:
@@ -187,6 +187,35 @@ class CrossFunction(Function):
                                        argument.mark)
         binding = binding.clone(base=self.state.base)
         yield WrapperBinding(binding, self.syntax)
+
+
+class FiberFunction(Function):
+
+    named('fiber')
+
+    def __call__(self):
+        if len(self.syntax.arguments) != 3:
+            raise InvalidArgumentError("three arguments expected",
+                                       self.syntax.mark)
+        identifier = self.syntax.arguments[0]
+        if not isinstance(identifier, IdentifierSyntax):
+            raise InvalidArgumentError("an identifier expected",
+                                       identifier.mark)
+        binding = lookup(self.state.root, identifier)
+        if binding is None:
+            raise InvalidArgumentError("unknown identifier",
+                                       argument.mark)
+        binding = binding.clone(base=self.state.base)
+        parent = self.state.bind(self.syntax.arguments[1])
+        child = self.state.bind(self.syntax.arguments[2], base=binding)
+        domain = coerce(parent.domain, child.domain)
+        if domain is None:
+            raise InvalidArgumentError("incompatible types",
+                                       self.syntax.mark)
+        parent = CastBinding(parent, domain, parent.syntax)
+        child = CastBinding(child, domain, child.syntax)
+        condition = EqualityBinding(parent, child, self.syntax)
+        yield SieveBinding(binding, condition, self.syntax)
 
 
 class AsFunction(ProperFunction):
