@@ -4,6 +4,8 @@
 
 .. automodule:: htsql.tr
    :members:
+.. automodule:: htsql.tr.assemble
+   :members:
 .. automodule:: htsql.tr.bind
    :members:
 .. automodule:: htsql.tr.binding

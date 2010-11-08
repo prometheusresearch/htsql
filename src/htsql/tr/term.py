@@ -149,9 +149,9 @@ class Term(PreTerm):
         The leftmost axis of the term space that the term is capable
         to produce.
 
-    `offsprings` (a dictionary `tag -> Term`)
-        Maps the tag of a descendant term to the immediate child
-        whose subtree contains the term.
+    `offsprings` (a dictionary `tag -> tag`)
+        Maps a descendant term to the immediate child whose subtree
+        contains the term.
     """
 
     is_nullary = False
@@ -186,9 +186,9 @@ class Term(PreTerm):
         # subtree contain the descendant.
         offsprings = {}
         for kid in kids:
-            offsprings[kid.tag] = kid
-            for offspring_tag in kid.offsprings:
-                offsprings[offspring_tag] = kid
+            offsprings[kid.tag] = kid.tag
+            for offspring in kid.offsprings:
+                offsprings[offspring] = kid.tag
         super(Term, self).__init__(space)
         self.tag = tag
         self.kids = kids

@@ -1532,7 +1532,12 @@ class InjectAggregateBatch(Inject):
         # those that form the tie condition -- it will generate invalid
         # SQL.  It is not clear how to fix this, perhaps the routing
         # table should contain entries for each of the columns, or
-        # a special entry for just tie conditions?
+        # a special entry for just the tie conditions?
+        # FIXME: alternatively, convert the kernel into a scalar unit
+        # and export only the aggregate and the kernel units from
+        # the projected term.  This seems to be the most correct approach,
+        # but then what to do with the requirement that each term exports
+        # its own space and backbone?
         routes = {}
         for tie in ties:
             routes[tie.space] = plural_term.routes[tie.space]

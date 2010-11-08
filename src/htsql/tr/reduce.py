@@ -106,6 +106,8 @@ class CollapseBranch(Collapse):
         tail = frame.include[1:]
         if not head.is_nested:
             return frame
+        if any(anchor.is_right for anchor in tail):
+            return frame
         head = self.prune_scalars(head)
         if not head.include:
             if tail and not tail[0].is_cross:
@@ -191,10 +193,16 @@ class CollapseBranch(Collapse):
     def reduce_group(self, frame):
         if not frame.group:
             return frame
-        group = [self.state.reduce(phrase)
-                 for phrase in frame.group]
-        group = [phrase for phrase in group
-                        if not isinstance(phrase, LiteralPhrase)]
+        group = []
+        duplicates = set()
+        for phrase in frame.group:
+            phrase = self.state.reduce(phrase)
+            if isinstance(phrase, LiteralPhrase):
+                continue
+            if phrase in duplicates:
+                continue
+            group.append(phrase)
+            duplicates.add(phrase)
         return frame.clone(group=group)
 
     def reduce_having(self, frame):
@@ -208,11 +216,16 @@ class CollapseBranch(Collapse):
     def reduce_order(self, frame):
         if not frame.order:
             return frame
-        order = [(self.state.reduce(phrase), direction)
-                 for phrase, direction in frame.order]
-        order = [(phrase, direction)
-                 for phrase, direction in order
-                 if not isinstance(phrase, LiteralPhrase)]
+        order = []
+        duplicates = set()
+        for phrase, direction in frame.order:
+            phrase = self.state.reduce(phrase)
+            if isinstance(phrase, LiteralPhrase):
+                continue
+            if phrase in duplicates:
+                continue
+            order.append((phrase, direction))
+            duplicates.add(phrase)
         return frame.clone(order=order)
 
     def __call__(self):
