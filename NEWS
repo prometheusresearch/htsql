@@ -2,6 +2,19 @@ List of Changes
 ===============
 
 
+2.0.0 beta 3 (2010-11-XX)
+-------------------------
+
+* Refactored the translator from the term tree to the frame tree;
+  added a new translation step to collapse nested frames and reduce
+  SQL expressions.
+* Added the HTRAF demo: use HTSQL with client-side javascript
+  to define complex dashboards.
+* Added the SSI demo: using HTSQL for web without giving direct access
+  to the database.
+* Updated the tutorial, minor bugfixes, regression test updates, etc.
+
+
 2.0.0 beta 2 (2010-10-01)
 -------------------------
 
