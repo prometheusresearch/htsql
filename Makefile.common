@@ -1,0 +1,18 @@
+# Common variables used by all makefiles.
+
+
+# Load configuration variables from `Makefile.env`.  There is a sample
+# file `Makefile.env.sample`; copy it to `Makefile.env` and edit it
+# to match your configuration.
+-include Makefile.env
+
+# The connection URI for regression databases.
+SQLITE_REGRESS_DB?=sqlite:///build/regress/regress-sqlite/htsql_regress.sqlite
+PGSQL_ADDRESS?=${PGSQL_HOST}$(if ${PGSQL_PORT},:${PGSQL_PORT})
+PGSQL_REGRESS_DB?=pgsql://htsql_regress:secret@${PGSQL_ADDRESS}/htsql_regress
+
+# The HTTP server address.
+HTSQL_HOST?=localhost
+HTSQL_PORT?=8080
+
+

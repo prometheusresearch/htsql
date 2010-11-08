@@ -88,7 +88,7 @@ class Application(object):
         port = int(port)
         htsql = HTSQL(db)
         app = cls(htsql)
-        print >>sys.stderr, "Starting an HTTL server on %s:%s over %s" \
+        print >>sys.stderr, "Starting an HTTP server on %s:%s over %s" \
                             % (host, port, db)
         httpd = wsgiref.simple_server.make_server(host, port, app)
         httpd.serve_forever()
