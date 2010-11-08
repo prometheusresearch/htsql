@@ -397,18 +397,22 @@ class EqualityOperator(ProperFunction):
     named('=')
 
     parameters = [
-            Parameter('left'),
-            Parameter('right'),
+            Parameter('lop'),
+            Parameter('rops', is_list=True),
     ]
 
-    def correlate(self, left, right):
-        domain = coerce(left.domain, right.domain)
+    def correlate(self, lop, rops):
+        domain = coerce(lop.domain, *(rop.domain for rop in rops))
         if domain is None:
             raise InvalidArgumentError("incompatible types",
                                        self.syntax.mark)
-        left = CastBinding(left, domain, left.syntax)
-        right = CastBinding(right, domain, right.syntax)
-        yield EqualityBinding(left, right, self.syntax)
+        lop = CastBinding(lop, domain, lop.syntax)
+        rops = [CastBinding(rop, domain, rop.syntax) for rop in rops]
+        if len(rops) == 1:
+            yield EqualityBinding(lop, rops[0], self.syntax)
+        else:
+            yield AmongBinding(coerce(BooleanDomain()), self.syntax,
+                               lop=lop, rops=rops)
 
 
 class InequalityOperator(ProperFunction):
@@ -416,19 +420,23 @@ class InequalityOperator(ProperFunction):
     named('!=')
 
     parameters = [
-            Parameter('left'),
-            Parameter('right'),
+            Parameter('lop'),
+            Parameter('rops', is_list=True),
     ]
 
-    def correlate(self, left, right):
-        domain = coerce(left.domain, right.domain)
+    def correlate(self, lop, rops):
+        domain = coerce(lop.domain, *(rop.domain for rop in rops))
         if domain is None:
             raise InvalidArgumentError("incompatible types",
                                        self.syntax.mark)
-        left = CastBinding(left, domain, left.syntax)
-        right = CastBinding(right, domain, right.syntax)
-        yield NegationBinding(EqualityBinding(left, right, self.syntax),
-                              self.syntax)
+        lop = CastBinding(lop, domain, lop.syntax)
+        rops = [CastBinding(rop, domain, rop.syntax) for rop in rops]
+        if len(rops) == 1:
+            yield NegationBinding(EqualityBinding(lop, rops[0], self.syntax),
+                                  self.syntax)
+        else:
+            yield NotAmongBinding(coerce(BooleanDomain()), self.syntax,
+                                  lop=lop, rops=rops)
 
 
 class TotalEqualityOperator(ProperFunction):
@@ -1049,6 +1057,52 @@ SerializeDateConstructor = GenericSerialize.factory(DateConstructor,
         "CAST(LPAD(CAST(%(year)s AS TEXT), 4, '0') || '-' ||"
         " LPAD(CAST(%(month)s AS TEXT), 2, '0') || '-' ||"
         " LPAD(CAST(%(day)s AS TEXT), 2, '0') AS DATE)")
+
+
+AmongBinding = GenericBinding.factory(EqualityOperator)
+AmongExpression = GenericExpression.factory(EqualityOperator)
+AmongPhrase = GenericPhrase.factory(EqualityOperator)
+
+
+EncodeAmong = GenericEncode.factory(EqualityOperator,
+        AmongBinding, AmongExpression)
+EvaluateAmong = GenericEvaluate.factory(EqualityOperator,
+        AmongExpression, AmongPhrase)
+ReduceAmong = GenericReduce.factory(EqualityOperator,
+        AmongPhrase)
+
+
+class SerializeAmong(Serialize):
+
+    adapts(AmongPhrase, Serializer)
+
+    def serialize(self):
+        lop = self.serializer.serialize(self.phrase.lop)
+        rops = [self.serializer.serialize(rop) for rop in self.phrase.rops]
+        return self.format.among(lop, rops)
+
+
+NotAmongBinding = GenericBinding.factory(InequalityOperator)
+NotAmongExpression = GenericExpression.factory(InequalityOperator)
+NotAmongPhrase = GenericPhrase.factory(InequalityOperator)
+
+
+EncodeNotAmong = GenericEncode.factory(InequalityOperator,
+        NotAmongBinding, NotAmongExpression)
+EvaluateNotAmong = GenericEvaluate.factory(InequalityOperator,
+        NotAmongExpression, NotAmongPhrase)
+ReduceNotAmong = GenericReduce.factory(InequalityOperator,
+        NotAmongPhrase)
+
+
+class SerializeNotAmong(Serialize):
+
+    adapts(NotAmongPhrase, Serializer)
+
+    def serialize(self):
+        lop = self.serializer.serialize(self.phrase.lop)
+        rops = [self.serializer.serialize(rop) for rop in self.phrase.rops]
+        return self.format.not_among(lop, rops)
 
 
 ComparisonBinding = GenericBinding.factory(ComparisonOperator)
@@ -1861,6 +1915,12 @@ class FormatFunctions(Format):
 
     def coalesce_fn(self, arguments):
         return "COALESCE(%s)" % ", ".join(arguments)
+
+    def among(self, lop, rops):
+        return "(%s IN (%s))" % (lop, ", ".join(rops))
+
+    def not_among(self, lop, rops):
+        return "(%s NOT IN (%s))" % (lop, ", ".join(rops))
 
     def round_fn(self, value, digits=None):
         if digits is None:

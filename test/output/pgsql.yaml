@@ -2249,6 +2249,36 @@ tests:
              ----
              /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
              SELECT ('X' = 'X'), (CAST(1 AS NUMERIC) = 1.0), (CAST(1 AS FLOAT) = 1.0::float8), (CAST(1.0 AS FLOAT) = 1.0::float8), (1 = 1)
+        - uri: /{0={1,2,3},2={1,2,3},0!={1,2,3},2!={1,2,3}}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                 |
+            -+-------------------------------------------------+-
+             | 0={1,2,3} | 2={1,2,3} | 0!={1,2,3} | 2!={1,2,3} |
+            -+-----------+-----------+------------+------------+-
+             | false     | true      | true       | false      |
+                                                         (1 row)
+
+             ----
+             /{0={1,2,3},2={1,2,3},0!={1,2,3},2!={1,2,3}}
+             SELECT (0 IN (1, 2, 3)), (2 IN (1, 2, 3)), (0 NOT IN (1, 2, 3)), (2 NOT IN (1, 2, 3))
+        - uri: /{'X'!={'A','B','C'},1.0={0,1,2}}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                  |
+            -+----------------------------------+-
+             | 'X'!={'A','B','C'} | 1.0={0,1,2} |
+            -+--------------------+-------------+-
+             | true               | true        |
+                                          (1 row)
+
+             ----
+             /{'X'!={'A','B','C'},1.0={0,1,2}}
+             SELECT ('X' NOT IN ('A', 'B', 'C')), (1.0 IN (CAST(0 AS NUMERIC), CAST(1 AS NUMERIC), CAST(2 AS NUMERIC)))
         - uri: /{integer('1')=string('1')}
           status: 400 Bad Request
           headers:
@@ -3311,6 +3341,27 @@ tests:
          ----
          /department?school.code='ns'
          SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
+    - uri: /department?school.code={'art','la'}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (department?school.code={'art','la'}) |
+        -+---------------------------------------+-
+         | code    | name               | school |
+        -+---------+--------------------+--------+-
+         | arthis  | Art History        | art    |
+         | eng     | English            | la     |
+         | hist    | History            | la     |
+         | lang    | Foreign Languages  | la     |
+         | poli    | Political Science  | la     |
+         | psych   | Psychology         | la     |
+         | stdart  | Studio Art         | art    |
+                                          (7 rows)
+
+         ----
+         /department?school.code={'art','la'}
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" IN ('art', 'la')) ORDER BY 1 ASC
     - uri: /program?school.code='ns'&code='uchem'
       status: 200 OK
       headers:
