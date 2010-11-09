@@ -708,8 +708,8 @@ either lack correlated ``course`` records or where every one of those
       ?every(course.credits=3)
 
 
-Predicate Expressions
-=====================
+Logical Expressions
+===================
 
 A *filter* refines results by including or excluding data by specific
 criteria.  This section reviews comparison operators, boolean
@@ -790,8 +790,18 @@ straightforward when used with numbers (PC5_)::
     http://demo.htsql.org
     /course{department,number,title}?number=101
 
+The *in* operator (``={}``) can be thought of as equality over a set.
+This example, we return courses that are in neither the "Art History"
+nor the "Studio Art" department (PC6_)::
+
+    /course?department!={'arthis','stdart'}
+
+.. _PC6:
+    http://demo.htsql.org
+    /course?department!={'arthis','stdart'}
+
 Use the *greater-than* (``>``) operator to request courses with more
-than 3 credits (PC6_):: 
+than 3 credits (PC7_):: 
 
      /course?credits>3
 
@@ -803,23 +813,23 @@ than 3 credits (PC6_)::
      stdart     | 411       | Underwater Basket Weaving | 4         
      .
 
-.. _PC6:
+.. _PC7:
     http://demo.htsql.org
     /course?credits>3
 
 Use the *greater-than-or-equal-to* (``>=``) operator request courses
-that have three credits or more (PC7_)::
+that have three credits or more (PC8_)::
 
     /course?credits>=3
 
-.. _PC7:
+.. _PC8:
     http://demo.htsql.org
     /course?credits>=3
 
 Using comparison operators with strings tells HTSQL to compare them
 alphabetically (once again, dependent upon database's collation).  For
 example, the *greater-than* (``>``) operator can be used to request
-departments whose ``code`` follows ``'me'`` in the alphabet (PC8_)::
+departments whose ``code`` follows ``'me'`` in the alphabet (PC9_)::
 
     /department?code>'me'
 
@@ -833,7 +843,7 @@ departments whose ``code`` follows ``'me'`` in the alphabet (PC8_)::
     poli  | Political Science | la    
     ...
 
-.. _PC8:
+.. _PC9:
     http://demo.htsql.org
     /department?code>'me'
 
@@ -930,29 +940,12 @@ anomalous number of credits (PA5_)::
     http://demo.htsql.org
     /course?credits>4|credits<3
 
-
-Compound Expressions
---------------------
-
 The precedence rules for boolean operators follow typical programming
 convention, negation binds more tightly than conjunction, which binds
 more tightly than alternation.  Parenthesis can be used to override this
-default grouping rule or to better clarify intent (PB1_)::
-
-    /{ true() | false()&false() , (true()|false()) & false() }
-
-   -------------------------------------------------
-   true()|false()&false() | (true()|false())&false()
-   -----------------------+-------------------------
-   true                   | false                   
-                                             (1 row)
-
-.. _PB1:
-    http://demo.htsql.org
-    /{true()|false()&false(),(true()|false())&false()}
-
-Hence, the following request shows courses that are in "Art History"
-or "Studio Art" having more than three credits (PB2_)::
+default grouping rule or to better clarify intent.  The next example
+returns that are in "Art History" or "Studio Art" having more than three
+credits (PA6_)::
 
     /course?(department='arthis'|department='stdart')&credits>3
 
@@ -966,12 +959,12 @@ or "Studio Art" having more than three credits (PB2_)::
     stdart     | 614    | Drawing Master Class          | 5       
     ...
 
-.. _PB2:
+.. _PA6:
     http://demo.htsql.org
     /course?(department='arthis'|department='stdart')&credits>3
 
-Without the parenthesis, the expression above would show all
-courses from ``'arthis'`` regardless of credits (PB3_)::
+Without the parenthesis, the expression above would show all courses
+from ``'arthis'`` regardless of credits (PA7_)::
 
     /course?department='arthis'|department='stdart'&credits>3
 
@@ -984,44 +977,28 @@ courses from ``'arthis'`` regardless of credits (PB3_)::
     arthis     | 623    | Contemporary Latin American Art | 3        
     ...       
 
-.. _PB3:
+.. _PA7:
     http://demo.htsql.org
     /course?department='arthis'|department='stdart'&credits>3
 
-Negation (``!``) lets you find all courses that are NOT in either 
-"Art History" or "Studio Art" (PB4_)::
+When a non-boolean is used in a logical expression, it is implicitly
+cast as a *boolean*.  As part of this cast, tri-value logic is
+flattened, ``null()`` is converted into ``false()``.  For strings, the
+empty string (``''``) is also treated as ``false()``.  This conversion
+rule shortens URLs and makes them more readable.
 
-    /course?!(department='arthis'|department='stdart')
-
-.. _PB4:
-    http://demo.htsql.org
-    /course?!(department='arthis'|department='stdart')
-
-Equivalently, using ``={}`` list notation (PB5_)::
-
-    /course?department!={'arthis','stdart'}
-
-.. _PB5:
-    http://demo.htsql.org
-    /course?department!={'arthis','stdart'}
-
-Empty Strings and NULLs
------------------------
-
-HTSQL supports tri-value logic with ``NULL`` carefully.  To match
-typical expectations, an implicit predicate treats ``NULL`` and the
-empty string ``''`` as ``false()``.  For example, the following request
-returns only ``course`` records having a ``description`` (PN1_)::
+For example, this query returns only ``course`` records having a
+``description`` (PA8_)::
     
     /course?description
     
-.. _PN1:
+.. _PA8:
     http://demo.htsql.org
     /course?description
 
 The predicate ``?description`` is treated as a short-hand for
 ``?(!is_null(description)&description!='')``.  The negated variant of
-this shortcut is more illustrative (PN2_)::
+this shortcut is more illustrative (PA9_)::
 
     /course{department,number,description}? !description
 
@@ -1033,26 +1010,43 @@ this shortcut is more illustrative (PN2_)::
     me         |    627 | ""         
                              (2 rows)
 
-.. _PN2:
+.. _PA9:
     http://demo.htsql.org
     /course{department,number,description}? !description
 
-That said, HTSQL's equality operator (``=``) is null-regular, that is,
-if either operand is ``null()`` the result is ``null()``. This can cause
-frustration when trying to check for equality.  Consider the following
-query template where ``$school`` is a parameter::
+
+Types and Functions
+===================
+
+HTSQL supports *boolean*, *date*, *numeric*, and *text* data types, as
+well as variants.  The pluggable type system can be used to augment the
+core types provided. 
+
+Working with NULLs
+------------------
+
+HTSQL provides a rich function set for handling ``NULL`` expressions;
+however, careful attention must be paid.  For starters, the standard
+equality operator (``=``) is null-regular, that is, if either operand is
+``null()`` the result is ``null()``.  The following request always
+returns 0 rows (WN1_)::
   
-   /department?school=$school
+   /department?school=null()
 
-This query works as expected, returning departments in a given school,
-unless ``$school`` is ``null()``.  In this case, the predicate
-expression ``school=null()`` is evaluated as ``null()`` and, by the rule
-above, is treated as ``false()``.   Hence, if ``$school`` is ``null()``,
-no rows are returned, omitting records with a ``NULL`` ``school``.  
+    department
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code    | name              
+    --------+-------------------
+                          0 rows
 
-The *is not distinct from* operator , (``==``), is roughly equivalent to
-``(is_null($school)&is_null(school)) | $school=school``, and can be used
-for these sorts of tests (PN3_)::
+.. _WN1:
+    http://demo.htsql.org
+    /department?school=null()
+
+While you wouldn't directly write that query, it could be the final
+result after parameter substitution for a templatized query such as
+``/department?school=$var``.  For cases like this, use *total equality*
+operator (``==``) which treats ``NULL`` values as equivalent (WN2_)::
 
     /department?school==null()
 
@@ -1065,12 +1059,12 @@ for these sorts of tests (PN3_)::
     parent  | Parents & Alumni  
                         (3 rows)
 
-.. _PN3:
+.. _WN2:
     http://demo.htsql.org
     /department?school==null()
 
-The ``!==`` operator lists the *complement*, including records with a
- ``NULL`` for the field tested (PN4_)::
+The ``!==`` operator lists the complement, including records with a
+``NULL`` for the field tested (WN3_)::
 
     /department?school!=='art'
 
@@ -1085,7 +1079,23 @@ The ``!==`` operator lists the *complement*, including records with a
     capmrk | Capital Markets        | bus   
     ...
 
-.. _PN4:
+.. _WN3:
     http://demo.htsql.org
     /department?school!=='art'
+
+
+
+Odds & Ends
+===========
+
+There are a few more items that are important to know about, but for
+which we don't document yet (but will before release candidate).
+
+* untyped literals, ``/{1='1'}``
+* single-quote escaping, ``/{'Bursar''s Office'}``
+* percent-encoding, ``/{'%25'}``
+* functions vs methods
+* sort expression, ``/course.sort(credits)``
+* limit/offset, ``/course.limit(5,20)``
+
 
