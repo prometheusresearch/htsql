@@ -1635,7 +1635,7 @@ class IfNullMethod(ProperMethod):
     def correlate(self, this, ops):
         domain = coerce(this.domain, *(op.domain for op in ops))
         if domain is None:
-            raise InvalidArgumentError("unexpected domain", op.mark)
+            raise InvalidArgumentError("unexpected domain", self.syntax.mark)
         this = CastBinding(this, domain, this.syntax)
         ops = [CastBinding(op, domain, op.syntax) for op in ops]
         yield IfNullBinding(domain, self.syntax, this=this, ops=ops)
