@@ -107,12 +107,28 @@ SQL::
     ORDER BY 1;
 
 
+The number of schools with programs
+-----------------------------------
+
+HTSQL::
+
+    /count(school?exists(program))
+
+SQL::
+
+    SELECT COUNT(TRUE)
+    FROM ad.school AS s
+    WHERE EXISTS(SELECT TRUE
+                 FROM ad.program AS p
+                 WHERE (s.code = p.school));
+
+
 For each school, the number of programs and the number of departments
 ---------------------------------------------------------------------
 
 HTSQL::
 
-    /school{name,count(program),count(department)}
+    /school{name, count(program), count(department)}
 
 SQL::
 
@@ -127,26 +143,6 @@ SQL::
           FROM ad.department AS d
           GROUP BY 2) AS d ON (s.code = d.school)
     ORDER BY s.code;
-
-
-For the astronomy department, the number of courses from 100 to 300
--------------------------------------------------------------------
-
-HTSQL::
-
-    /department{name, count(course?number>=100&number<300)}?code='astro'
-
-SQL::
-
-    SELECT d.name, COALESCE(c.cnt, 0)
-    FROM ad.department AS d
-    LEFT OUTER JOIN
-         (SELECT COUNT(TRUE) AS cnt, c.department
-          FROM ad.course AS c
-          WHERE (c.number >= 100) AND (c.number < 300)
-          GROUP BY 2) AS c ON (d.code = c.department)
-    WHERE d.code = 'astro'
-    ORDER BY d.code;
 
 
 For each school, the average number of courses offered by the departments
