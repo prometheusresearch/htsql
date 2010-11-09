@@ -77,6 +77,19 @@ SQL::
     ORDER BY 1;
 
 
+The number of schools
+---------------------
+
+HTSQL::
+
+    /count(school)
+
+SQL::
+
+    SELECT COUNT(TRUE)
+    FROM ad.school;
+
+
 Schools with programs
 ---------------------
 
