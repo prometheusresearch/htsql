@@ -315,10 +315,29 @@ The request above returns all rows in the ``department`` table where the
 column ``school`` is equal to ``'eng'``.   In HTSQL, *literal* values are
 single quoted, in this way we know ``'eng'`` isn't the name of a column.
 
+Often times we want to compare a scalar value against values from a list.
+The next example returns rows from the ``program`` table for the "Bachelors
+of Arts" (``'ba'``) or "Bachelors of Science" (``'bs'``) degrees (C2_)::
+
+    /program?degree={'ba','bs'}
+
+    program                                                    
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    school | code     | title                             | degree
+    -------+----------+-----------------------------------+-------
+    art    | uhist    | Bachelor of Arts in Art History   | ba
+    art    | ustudio  | Bachelor of Arts in Studio Art    | ba
+    bus    | uacct    | Bachelor of Science in Accounting | bs
+    ...
+
+.. _C2: 
+    http://demo.htsql.org
+    /program?degree={'ba','bs'}
+
 Complex filters can be created using boolean connectors, such as the
 conjunction (``&``) and alternation (``|``) operators .  The following
 request returns programs in the 'School of Business' that do not
-grant a 'Bachelor of Science' degree (C2_)::
+grant a 'Bachelor of Science' degree (C3_)::
 
     /program?school='bus'&degree!='bs'
 
@@ -331,13 +350,13 @@ grant a 'Bachelor of Science' degree (C2_)::
     bus    | pcap | Certificate in Capital Markets     | ct
     ...
 
-.. _C2: 
+.. _C3: 
     http://demo.htsql.org
     /program?school='bus'&degree!='bs'
 
 Filters can be combined with selectors and links.  The following request
 returns courses, listing only department number and title, having less
-than 3 credits in the school of natural science (C3_)::
+than 3 credits in the school of natural science (C4_)::
 
     /course{department, number, title}
       ?credits<3&department.school='ns'
@@ -352,19 +371,19 @@ than 3 credits in the school of natural science (C3_)::
     astro      | 155    | Telescope Workshop            
     ...
 
-.. _C3: 
+.. _C4: 
     http://demo.htsql.org
     /course{department, number, title}
        ?credits<3&department.school='ns'
 
 It is sometimes desirable to specify the filter before the selector.
 Using a *table expression*, denoted by parenthesis, the previous request
-is equivalent to (C4_)::
+is equivalent to (C5_)::
 
     /(course?credits<3&department.school='ns')
       {department, number, title}
 
-.. _C4: 
+.. _C5: 
     http://demo.htsql.org
     /(course?credits<3&department.school='ns')
       {department, number, title}
@@ -629,11 +648,11 @@ departments offering 4 or more credits (RB4_)::
 Filtering can be done on one column, with aggregation on another.  This
 example shows average credits from only high-level courses (RB5_)::
 
-    /department{name, avg(course{credits}?number>=400)}
+    /department{name, avg((course?number>400).credits)}
 
     department                                       
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    name           | avg(course{credits}?number>=400)
+    name           | avg((course?number>400).credits)
     ---------------+---------------------------------
     Accounting     |               3.0000000000000000
     Art History    |               3.2500000000000000
@@ -642,7 +661,7 @@ example shows average credits from only high-level courses (RB5_)::
 
 .. _RB5:
     http://demo.htsql.org
-    /department{name, avg(course{credits}?number>=400)}
+    /department{name, avg((course?number>400).credits)}
 
 Numerical aggregates are supported.  This request computes some useful
 ``course.credit`` statistics (RB6_)::
