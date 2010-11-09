@@ -777,40 +777,6 @@ To exclude a specific class, use the *not-equals* operator (PS4_)::
     http://demo.htsql.org
     /course?title!='Organic Chemistry Laboratory I'
 
-To find entries that match a string at the beginning (PS5_), use the
-*starts-with* operator (``^~``)::
-
-    /school?name^~'school'
-
-    school                                    
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    code | name                    
-    -----+-------------------------
-    art  | School of Art and Design
-    eng  | School of Engineering   
-    ...      
-
-.. _PS5:
-    http://demo.htsql.com
-    /school?name^~'school'
-
-The *ends-with* operator (``$~``) does the same thing, but from the end
-of the entry (PS6_)::
-     
-    /department?name$~'engineering'
-
-    department                             
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    code | name                   | school |
-    -----+------------------------+--------+
-    be   | Bioengineering         | eng    |
-    ee   | Electrical Engineering | eng    |
-    ...
-
-.. _PS6:
-    http://demo.htsql.com
-    /department?name$~'engineering'
-
 
 Comparison Operators
 --------------------
@@ -818,17 +784,19 @@ Comparison Operators
 The *equality* (``=``) and *inequality* (``!=``) operators are
 straightforward when used with numbers (PC1_)::
 
-    /course{department,number,title}?number=367
-
+    /course{department,number,title}?number=101 
+ 
     course                                                 
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    department | number | title                           
-    -----------+--------+---------------------------------
-    tched      | 367    | Problems in Education Management
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number | title                      
+    -----------+--------+----------------------------
+    eng        |    101 | Introduction to Composition
+    mth        |    101 | College Algebra            
+    ...
 
 .. _PC1:
     http://demo.htsql.org
-    /course{department,number,title}?number=367
+    /course{department,number,title}?number=101
 
 Use the *greater-than* (``>``) operator to request courses with more
 than 3 credits (PC2_):: 
@@ -1036,6 +1004,13 @@ Negation (``!``) lets you find all courses that are NOT in either
     http://demo.htsql.org
     /course?!(department='arthis'|department='stdart')
 
+Equivalently, using ``={}`` list notation (PB5_)::
+
+    /course?department!={'arthis','stdart'}
+
+.. _PB4:
+    http://demo.htsql.org
+    /course?department!={'arthis','stdart'}
 
 Empty Strings and NULLs
 -----------------------
@@ -1100,4 +1075,24 @@ for these sorts of tests (PN3_)::
 .. _PN3:
     http://demo.htsql.org
     /department?school==null()
+
+The ``!==`` operator lists the *complement*, including records with a
+ ``NULL`` for the field tested (PN4_)::
+
+    /department?school!=='art'
+
+    department
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code   | name                   | school
+    -------+------------------------+-------
+    acc    | Accounting             | bus   
+    astro  | Astronomy              | ns    
+    be     | Bioengineering         | egn   
+    bursar | Bursar's Office        |       
+    capmrk | Capital Markets        | bus   
+    ...
+
+.. _PN4:
+    http://demo.htsql.org
+    /department?school!=='art'
 
