@@ -3,7 +3,7 @@ Examples
 
 HTSQL provides outstanding clarity without sacrificing rigor.  Not only
 is working with HTSQL more productive than SQL, but things are possible
-that would have otherwise exceeded a user's mental capacity.
+that may have otherwise exceeded a user's mental capacity. 
 
 Let's assume we have a data model, with schools, departments, programs
 and courses.  Here it is::
@@ -169,13 +169,4 @@ SQL::
                GROUP BY 2) AS c ON (d.code = c.department)
           GROUP BY 2) AS d ON (s.code = d.school)
     ORDER BY s.code;
-
-
-HTSQL transforms development processes by actively engaging data
-managers and business analysts in software construction.  In traditional
-development models, a requirement document, sample data, and a wireframe
-are given to a developer.  In this model, the data analyst also provides
-a HTSQL query.
-
-By having a query, there is less guesswork.  Less round trips.
 
