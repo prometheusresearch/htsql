@@ -344,6 +344,7 @@ tests:
     - uri: /department?school.code={'art','la'}
     - uri: /program?school.code='ns'&code='uchem'
     - uri: /course?credits=5
+    - uri: /department?school
     # ENUM literal.
     - uri: /semester?season='fall'
     # Using the same term for a filter and a selector

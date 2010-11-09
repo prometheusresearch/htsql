@@ -3408,6 +3408,44 @@ tests:
          ----
          /course?credits=5
          SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."credits" = 5) ORDER BY 1 ASC, 2 ASC
+    - uri: /department?school
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (department?school)                      |
+        -+------------------------------------------+-
+         | code   | name                   | school |
+        -+--------+------------------------+--------+-
+         | acc    | Accounting             | bus    |
+         | arthis | Art History            | art    |
+         | astro  | Astronomy              | ns     |
+         | be     | Bioengineering         | egn    |
+         | capmrk | Capital Markets        | bus    |
+         | chem   | Chemistry              | ns     |
+         | comp   | Computer Science       | egn    |
+         | corpfi | Corporate Finance      | bus    |
+         | edpol  | Educational Policy     | edu    |
+         | ee     | Electrical Engineering | egn    |
+         | eng    | English                | la     |
+         | hist   | History                | la     |
+         | lang   | Foreign Languages      | la     |
+         | me     | Mechanical Engineering | egn    |
+         | mth    | Mathematics            | ns     |
+         | phys   | Physics                | ns     |
+         | pia    | Piano                  | mus    |
+         | poli   | Political Science      | la     |
+         | psych  | Psychology             | la     |
+         | stdart | Studio Art             | art    |
+         | str    | Strings                | mus    |
+         | tched  | Teacher Education      | edu    |
+         | voc    | Vocals                 | mus    |
+         | win    | Wind                   | mus    |
+                                            (24 rows)
+
+         ----
+         /department?school
+         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE (NULLIF("department"."school", '') IS NOT NULL) ORDER BY 1 ASC
     - uri: /semester?season='fall'
       status: 200 OK
       headers:

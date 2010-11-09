@@ -486,7 +486,7 @@ class ConvertStringToBoolean(Convert):
             phrase = InequalityPhrase(self.base, empty,
                                       self.phrase.expression)
         else:
-            phrase = NullIfPhrase(self.base, empty,
+            phrase = NullIfPhrase(self.base, empty, self.base.domain,
                                   self.phrase.expression)
             phrase = IsNotNullPhrase(phrase, self.phrase.expression)
         return self.state.reduce(phrase)
