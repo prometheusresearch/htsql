@@ -712,16 +712,177 @@ Predicate Expressions
 =====================
 
 A *filter* refines results by including or excluding data by specific
-criteria.  This section reviews boolean expressions, comparison
-operators, and ``NULL`` handling.
+criteria.  This section reviews comparison operators, boolean
+expressions, and ``NULL`` handling.
+
+Matching Strings
+----------------
+
+The ``course`` table contains the university's academic offerings.
+Course titles are *strings*, or sequences of letters.  To search for a
+particular string, first decide what type of matching you need.
+
+To exactly match a course title (PS1_), use the equals sign (``=``)::
+
+    /course?title='Drawing'
+
+    course
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number    | title   | credits 
+    -----------+-----------+---------+---------
+    stdart     | 333       | Drawing | 3         
+
+.. _PS1:
+    http://demo.htsql.org
+    /course?title='Drawing'
+
+Be sure to put the string you're looking for in single quotes, so HTSQL
+will interpret it literally.  Exact matches are just that--they're case
+sensitive and have to match perfectly, or nothing will be returned.
+
+If you're not sure of the course title, use the case-insensitive
+*contains* operator (``~``).  The example below returns all ``course``
+records that contain the substring ``'lab'`` (PS2_)::
+
+    /course?title~'lab'
+
+    course
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number | title                          | credits
+    -----------+--------+--------------------------------+--------
+    astro      |    142 | Solar System Lab               |       2
+    chem       |    115 | Organic Chemistry Laboratory I |       2
+    chem       |    314 | Laboratory Chemistry           |       3
+    comp       |    710 | Laboratory in Computer Science |       4
+    ...
+
+.. _PS2:
+    http://demo.htsql.org
+    /course?title~'lab'
+
+Use the *not-contains* operator (``!~``) to exclude all courses with
+physics in the title (PS3_)::
+
+    /course?title!~'lab'
+
+.. _PS3:
+    http://demo.htsql.org
+    /course?title!~'lab'
+
+To exclude a specific class, use the *not-equals* operator (PS4_)::
+
+    /course?title!='Organic Chemistry Laboratory I'
+
+.. _PS4:
+    http://demo.htsql.org
+    /course?title!='Organic Chemistry Laboratory I'
+
+To find entries that match a string at the beginning (PS5_), use the
+*starts-with* operator (``^~``)::
+
+    /school?name^~'school'
+
+    school                                    
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code | name                    
+    -----+-------------------------
+    art  | School of Art and Design
+    eng  | School of Engineering   
+    ...      
+
+.. _PS5:
+    http://demo.htsql.com
+    /school?name^~'school'
+
+The *ends-with* operator (``$~``) does the same thing, but from the end
+of the entry (PS6_)::
+     
+    /department?name$~'engineering'
+
+    department                             
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code | name                   | school |
+    -----+------------------------+--------+
+    be   | Bioengineering         | eng    |
+    ee   | Electrical Engineering | eng    |
+    ...
+
+.. _PS6:
+    http://demo.htsql.com
+    /department?name$~'engineering'
+
+
+Comparison Operators
+--------------------
+
+The *equality* (``=``) and *inequality* (``!=``) operators are
+straightforward when used with numbers (PC1_)::
+
+    /course{department,number,title}?number=367
+
+    course                                                 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    department | number | title                           
+    -----------+--------+---------------------------------
+    tched      | 367    | Problems in Education Management
+
+.. _PC1:
+    http://demo.htsql.org
+    /course{department,number,title}?number=367
+
+Use the *greater-than* (``>``) operator to request courses with more
+than 3 credits (PC2_):: 
+
+     /course?credits>3
+
+     course
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     department | number    | title                     | credits
+     -----------+-----------+---------------------------+--------
+     arthis     | 712       | Museum and Gallery Mgmt   | 4        
+     stdart     | 411       | Underwater Basket Weaving | 4         
+     .
+
+.. _PC2:
+    http://demo.htsql.org
+    /course?credits>3
+
+Use the *greater-than-or-equal-to* operator request courses that have
+three credits or more (PC3_)::
+
+    /course?credits>=3
+
+.. _PC3:
+    http://demo.htsql.org
+    /course?credits>=3
+
+Using comparison operators with strings tells HTSQL to compare them
+alphabetically.  For example, the *greater-than* operator can be used to
+request departments that follow ``'me'`` in the alphabet (PC4_)::
+
+    /department?code>'me'
+
+    department                         
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code  | name              | school
+    ------+-------------------+-------
+    mth   | Mathematics       | ns    
+    phys  | Physics           | ns    
+    pia   | Piano             | mus   
+    poli  | Political Science | la    
+    ...
+
+.. _PC4:
+    http://demo.htsql.org
+    /department?code>'me'
+
 
 Boolean Expressions
 -------------------
 
-HTSQL uses function notation for constants such as ``true()``,
-``false()`` and ``null()``.  For the text formatter, a ``NULL`` value is
-shown as a blank value, while the empty string is presented as a
-double-quoted pair (PA1_)::
+HTSQL uses function notation for constants such as ``true()``, ``false()``
+and ``null()``.  For the text formatter, a ``NULL`` is shown as a blank,
+while the empty string is presented as a double-quoted pair (PA1_)::
 
     /{true(), false(), null(), ''}
 
@@ -734,9 +895,9 @@ double-quoted pair (PA1_)::
     http://demo.htsql.org
     /{true(), false(), null()}
 
-The *is_null* function returns ``true()`` if it's operand is ``null()``.
-In our schema, non-academic ``department`` records have a ``NULL``
-``school``, so they can be listed (PA2_)::
+The *is_null* function returns ``true()`` if it's operand is ``null()``. In
+our schema, non-academic ``department`` records that have a ``NULL``
+``school`` can be listed (PA2_)::
 
     /department{code, name}?is_null(school)
 
@@ -790,7 +951,7 @@ operands are ``true()``.   This example asks for courses in the
 
 The *alternation* (``|``) operator is ``true()`` if either of its
 operands is ``true()``.  For example, we could list courses having
-anomolous number of credits (PA5_)::
+anomalous number of credits (PA5_)::
 
     /course?credits>4|credits<3
   
@@ -875,18 +1036,24 @@ Negation (``!``) lets you find all courses that are NOT in either
     http://demo.htsql.org
     /course?!(department='arthis'|department='stdart')
 
-To ensure a string value is neither ``NULL`` nor empty, a verbose
-compound filter, ``?(!is_null(col)&col!='')``, could be used.  For this
-tedious and common case, the column itself can be tested.  The example
-below returns only ``course`` records having a ``description`` (PB5_)::
 
+Empty Strings and NULLs
+-----------------------
+
+HTSQL supports tri-value logic with ``NULL`` carefully.  To match
+typical expectations, an implicit predicate treats ``NULL`` and the
+empty string ``''`` as ``false()``.  For example, the following request
+returns only ``course`` records having a ``description`` (PN1_)::
+    
     /course?description
     
-.. _PB5:
+.. _PN1:
     http://demo.htsql.org
     /course?description
 
-The negated variant of this shortcut is more illustrative (PB6_)::
+The predicate ``?description`` is treated as a short-hand for
+``?(!is_null(description)&description!='')``.  The negated variant of
+this shortcut is more illustrative (PN2_)::
 
     /course{department,number,description}? !description
 
@@ -898,168 +1065,39 @@ The negated variant of this shortcut is more illustrative (PB6_)::
     me         |    627 | ""         
                              (2 rows)
 
-.. _PB6:
+.. _PN2:
     http://demo.htsql.org
     /course{department,number,description}? !description
 
+That said, HTSQL's equality operator (``=``) is null-regular, that is,
+if either operand is ``null()`` the result is ``null()``. This can cause
+frustration when trying to check for equality.  Consider the following
+query template where ``$school`` is a parameter::
+  
+   /department?school=$school
 
-Matching Strings
-----------------
+This query works as expected, returning departments in a given school,
+unless ``$school`` is ``null()``.  In this case, the predicate
+expression ``school=null()`` is evaluated as ``null()`` and, by the rule
+above, is treated as ``false()``.   Hence, if ``$school`` is ``null()``,
+no rows are returned, omitting records with a ``NULL`` ``school``.  
 
-The ``course`` table contains the university's academic offerings.
-Course titles are *strings*, or sequences of letters.  To search for a
-particular string, first decide what type of matching you need.
+The *is not distinct from* operator , (``==``), is roughly equivalent to
+``(is_null($school)&is_null(school)) | $school=school``, and can be used
+for these sorts of tests (PN3_)::
 
-To exactly match a course title (PS1_), use the equals sign (``=``)::
+    /department?school==null()
 
-    /course?title='Drawing'
+    department
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    code    | name              
+    --------+-------------------
+    bursar  | Bursar's Office   
+    career  | Career Development
+    parent  | Parents & Alumni  
+                        (3 rows)
 
-    course
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    department | number    | title   | credits 
-    -----------+-----------+---------+---------
-    stdart     | 333       | Drawing | 3         
-
-.. _PS1:
+.. _PN3:
     http://demo.htsql.org
-    /course?title='Drawing'
+    /department?school==null()
 
-Be sure to put the string you're looking for in single quotes, so HTSQL
-will interpret it literally.  Exact matches are just that--they're case
-sensitive and have to match perfectly, or nothing will be returned.
-
-If you're not sure of the course title, use the case-insensitive
-*contains* operator (``~``) to match any course that contains a word
-like ``'physics'`` (PS2_):: 
-
-    /course?title~'physics'
-
-    course
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    department | number    | title                  | credits 
-    -----------+-----------+------------------------+---------
-    phys       | 211       | General Physics I      | 3        
-    phys       | 388       | Experimental Physics I | 2        
-    ...
-
-.. _PS2:
-    http://demo.htsql.org
-    /course?title~'physics'
-
-This request returns all courses that have ``physics`` anywhere in the
-title, regardless of case.
-
-Use the *not-contains* operator (``!~``) to exclude all courses with
-physics in the title (PS3_)::
-
-    /course?title!~'physics'
-
-.. _PS3:
-    http://demo.htsql.org
-    /course?title!~'physics'
-
-To exclude a specific class, use the *not-equals* operator (PS4_)::
-
-    /course?title!='General Physics I'
-
-.. _PS4:
-    http://demo.htsql.org
-    /course?title!='General Physics I'
-
-To find entries that match a string at the beginning (PS5_), use the
-*starts-with* operator (``^~``)::
-
-    /school?name^~'school'
-
-    school                                    
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    code | name                    
-    -----+-------------------------
-    art  | School of Art and Design
-    eng  | School of Engineering   
-    ...      
-
-.. _PS5:
-    http://demo.htsql.com
-    /school?name^~'school'
-
-The *ends-with* operator (``$~``) does the same thing, but from the end
-of the entry (PS6_)::
-     
-    /department?name$~'engineering'
-
-    department                             
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    code | name                   | school |
-    -----+------------------------+--------+
-    be   | Bioengineering         | eng    |
-    ee   | Electrical Engineering | eng    |
-    ...
-
-.. _PS6:
-    http://demo.htsql.com
-    /department?name$~'engineering'
-
-Comparison Operators
---------------------
-
-The *equality* (``=``) and *inequality* (``!=``) operators are
-straightforward when used with numbers (PC1_)::
-
-    /course{department,number,title}?number=367
-
-    course                                                 
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    department | number | title                           
-    -----------+--------+---------------------------------
-    tched      | 367    | Problems in Education Management
-
-.. _PC1:
-    http://demo.htsql.org
-    /course{department,number,title}?number=367
-
-Use the *greater-than* (``>``) operator to request courses with more
-than 3 credits (PC2_):: 
-
-     /course?credits>3
-
-     course
-     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     department | number    | title                     | credits
-     -----------+-----------+---------------------------+--------
-     arthis     | 712       | Museum and Gallery Mgmt   | 4        
-     stdart     | 411       | Underwater Basket Weaving | 4         
-     .
-
-.. _PC2:
-    http://demo.htsql.org
-    /course?credits>3
-
-Use the *greater-than-or-equal-to* operator request courses that have
-three credits or more (PC3_)::
-
-    /course?credits>=3
-
-.. _PC3:
-    http://demo.htsql.org
-    /course?credits>=3
-
-Using comparison operators with strings tells HTSQL to compare them
-alphabetically.  The *greater-than* operator is used to request
-departments that follow ``me`` in the alphabet (PC4_)::
-
-    /department?code>'me'
-
-    department                         
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    code  | name              | school
-    ------+-------------------+-------
-    mth   | Mathematics       | ns    
-    phys  | Physics           | ns    
-    pia   | Piano             | mus   
-    poli  | Political Science | la    
-    ...
-
-.. _PC4:
-    http://demo.htsql.org
-    /department?code>'me'
