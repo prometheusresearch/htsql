@@ -1,8 +1,12 @@
 Examples
 ========
 
-Let's assume we have a data model, with schools, departments, programs and
-courses.  Here it is::
+HTSQL provides outstanding clarity without sacrificing rigor.  Not only
+is working with HTSQL more productive than SQL, but things are possible
+that would have otherwise exceeded a user's mental capacity.
+
+Let's assume we have a data model, with schools, departments, programs
+and courses.  Here it is::
 
          +-------------+       +--------+
     /---m| DEPARTMENT  |>-----o| SCHOOL |m----\
@@ -60,8 +64,8 @@ SQL::
     ORDER BY 1, 2;
 
 
-Departments that belong to any school with "art" in its name
-------------------------------------------------------------
+Departments in schools having "art" in its name
+-----------------------------------------------
 
 HTSQL::
 
@@ -123,8 +127,8 @@ SQL::
                  WHERE (s.code = p.school));
 
 
-For each school, the number of programs and the number of departments
----------------------------------------------------------------------
+Number of programs and departments per school
+---------------------------------------------
 
 HTSQL::
 
@@ -145,8 +149,8 @@ SQL::
     ORDER BY s.code;
 
 
-For each school, the average number of courses offered by the departments
--------------------------------------------------------------------------
+Average number of courses offered by departments in each school
+---------------------------------------------------------------
 
 HTSQL::
 
@@ -166,4 +170,12 @@ SQL::
           GROUP BY 2) AS d ON (s.code = d.school)
     ORDER BY s.code;
 
+
+HTSQL transforms development processes by actively engaging data
+managers and business analysts in software construction.  In traditional
+development models, a requirement document, sample data, and a wireframe
+are given to a developer.  In this model, the data analyst also provides
+a HTSQL query.
+
+By having a query, there is less guesswork.  Less round trips.
 
