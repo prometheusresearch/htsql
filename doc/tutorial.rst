@@ -1008,7 +1008,7 @@ Equivalently, using ``={}`` list notation (PB5_)::
 
     /course?department!={'arthis','stdart'}
 
-.. _PB4:
+.. _PB5:
     http://demo.htsql.org
     /course?department!={'arthis','stdart'}
 
