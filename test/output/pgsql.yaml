@@ -2707,7 +2707,7 @@ tests:
 
              ----
              /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'','HTSQL'~null(),null()~'HTSQL',null()~null()}
-             SELECT (POSITION(LOWER('sql') IN LOWER('HTSQL')) > 0), (POSITION(LOWER('HTTP') IN LOWER('HTSQL')) > 0), (POSITION(LOWER('') IN LOWER('HTSQL')) > 0), (POSITION(LOWER(NULL) IN LOWER('HTSQL')) > 0), (POSITION(LOWER('HTSQL') IN LOWER(NULL)) > 0), (POSITION(LOWER(NULL) IN LOWER(NULL)) > 0)
+             SELECT ('HTSQL' ILIKE '%sql%'), ('HTSQL' ILIKE '%HTTP%'), ('HTSQL' ILIKE '%%'), NULL, (NULL ILIKE '%HTSQL%'), NULL
       - id: date-functions-and-operators
         tests:
         - uri: /{date('2010-07-28'),date(string('2010-07-28'))}
@@ -4309,7 +4309,7 @@ tests:
 
          ----
          /school{code,name,this(){code}?name!~'art',root().school{code}?name!~'art'}
-         SELECT "school_1"."code", "school_1"."name", "school_2"."code", "school_2"."code" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school" WHERE (NOT (POSITION(LOWER('art') IN LOWER("school"."name")) > 0))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "school_1"."code", "school_1"."name", "school_2"."code", "school_2"."code" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school" WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY 1 ASC
     - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
       status: 200 OK
       headers:
@@ -4333,7 +4333,7 @@ tests:
 
          ----
          /school{name,count(department),this(){count(department)}?name!~'art'}
-         SELECT "school_1"."name", COALESCE("department"."!", 0), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school_1"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COALESCE("department"."!", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) WHERE (NOT (POSITION(LOWER('art') IN LOWER("school"."name")) > 0))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
+         SELECT "school_1"."name", COALESCE("department"."!", 0), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school_1"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COALESCE("department"."!", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
     - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
       status: 200 OK
       headers:
@@ -4357,7 +4357,7 @@ tests:
 
          ----
          /school{name,exists(department),this(){exists(department)}?name!~'art'}
-         SELECT "school_1"."name", EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school_1"."code" = "department"."school"))), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school"))) AS "!", "school"."code" FROM "ad"."school" AS "school" WHERE (NOT (POSITION(LOWER('art') IN LOWER("school"."name")) > 0))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
+         SELECT "school_1"."name", EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school_1"."code" = "department"."school"))), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school"))) AS "!", "school"."code" FROM "ad"."school" AS "school" WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
   - id: table-expressions
     tests:
     - uri: /(school?code='art').department
@@ -6004,7 +6004,7 @@ tests:
 
          ----
          /course?title~'lab'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE (POSITION(LOWER('lab') IN LOWER("course"."title")) > 0) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."title" ILIKE '%lab%') ORDER BY 1 ASC, 2 ASC
     - uri: /course?title!= 'Organic Chemistry Laboratory I'
       status: 200 OK
       headers:
