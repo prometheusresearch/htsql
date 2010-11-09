@@ -31,7 +31,7 @@ from ..code import (FunctionCode, NegationCode, ScalarUnit, AggregateUnit,
 from ..assemble import Evaluate
 from ..reduce import Reduce
 from ..frame import (FunctionPhrase, IsNullPhrase, NullIfPhrase, IfNullPhrase,
-                     LiteralPhrase, TruePhrase, FalsePhrase)
+                     LiteralPhrase, TruePhrase, FalsePhrase, NullPhrase)
 from ..serializer import Serializer, Format, Serialize
 from ..coerce import coerce
 from ..lookup import lookup
@@ -1635,7 +1635,7 @@ class IfNullMethod(ProperMethod):
     def correlate(self, this, ops):
         domain = coerce(this.domain, *(op.domain for op in ops))
         if domain is None:
-            raise InvalidArgumentError("unexpected domain", op.mark)
+            raise InvalidArgumentError("unexpected domain", self.syntax.mark)
         this = CastBinding(this, domain, this.syntax)
         ops = [CastBinding(op, domain, op.syntax) for op in ops]
         yield IfNullBinding(domain, self.syntax, this=this, ops=ops)
@@ -1917,8 +1917,27 @@ EvaluateContains = GenericEvaluate.factory(ContainsOperator,
         ContainsExpression, ContainsPhrase)
 ReduceContains = GenericReduce.factory(ContainsOperator,
         ContainsPhrase)
-SerializeContains = GenericSerialize.factory(ContainsOperator,
-        ContainsPhrase, "(POSITION(LOWER(%(right)s) IN LOWER(%(left)s)) > 0)")
+
+
+class SerializeContains(Serialize):
+
+    adapts(ContainsPhrase, Serializer)
+
+    def serialize(self):
+        left = self.serializer.serialize(self.phrase.left)
+        if isinstance(self.phrase.right, NullPhrase):
+            return self.serializer.serialize(self.phrase.right)
+        if isinstance(self.phrase.right, LiteralPhrase):
+            value = self.phrase.right.value
+            value = value.replace('%', '\\%').replace('_', '\\_')
+            value = "%%%s%%" % value
+            right = LiteralPhrase(value, self.phrase.right.domain,
+                                  self.phrase.right.expression)
+            right = self.serializer.serialize(right)
+            return self.format.ilike(left, right)
+        else:
+            right = self.serializer.serialize(self.phrase.right)
+            return self.format.contains(left, right)
 
 
 class FormatFunctions(Format):
@@ -1950,6 +1969,13 @@ class FormatFunctions(Format):
 
     def not_among(self, lop, rops):
         return "(%s NOT IN (%s))" % (lop, ", ".join(rops))
+
+    def contains(self, left, right):
+        return "(POSITION(LOWER(%(right)s) IN LOWER(%(left)s)) > 0)" \
+                % (left, right)
+
+    def ilike(self, left, right):
+        return "(%s ILIKE %s)" % (left, right)
 
     def round_fn(self, value, digits=None):
         if digits is None:

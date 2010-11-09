@@ -12,11 +12,12 @@
 from setuptools import setup, find_packages
 import os.path
 
-# We use the merged content of `README` and `NEWS` as the long
-# description of the package.
+# We use the merged content of `README`, `EXAMPLES` and `NEWS` as the
+# long description of the package.
 
 root = os.path.dirname(__file__)
 README = open(os.path.join(root, 'README')).read()
+EXAMPLES = open(os.path.join(root, 'EXAMPLES')).read()
 NEWS = open(os.path.join(root, 'NEWS')).read()
 
 # The distutils parameters are defined here.  Do not forget to update
@@ -27,7 +28,7 @@ NEWS = open(os.path.join(root, 'NEWS')).read()
 NAME = "HTSQL"
 VERSION = "2.0.0b2"
 DESCRIPTION = "Query language for the accidental programmer"
-LONG_DESCRIPTION = "\n".join([README, NEWS])
+LONG_DESCRIPTION = "\n".join([README, EXAMPLES, NEWS])
 AUTHOR = "Clark C. Evans and Kirill Simonov; Prometheus Research, LLC"
 AUTHOR_EMAIL = "cce@clarkevans.com"
 LICENSE = "Free To Use But Restricted"
