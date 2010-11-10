@@ -36,6 +36,10 @@ class ReducingState(object):
     def reduce(self, clause):
         return reduce(clause, self)
 
+    def collapse(self, frame):
+        collapse = Collapse(frame, self)
+        return collapse()
+
 
 class Reduce(Adapter):
 
@@ -49,153 +53,46 @@ class Reduce(Adapter):
         raise NotImplementedError()
 
 
-class Collapse(Reduce):
+class ReduceFrame(Reduce):
 
     adapts(Frame)
 
-    def __init__(self, clause, state):
-        super(Collapse, self).__init__(clause, state)
-        self.frame = clause
-        self.term = clause.term
-
-
-class CollapseScalar(Collapse):
-
-    adapts(ScalarFrame)
-
-    def __call__(self):
-        phrase = TruePhrase(self.term.expression)
-        return NestedFrame(include=[], embed=[],
-                           select=[phrase], where=None,
-                           group=[], having=None,
-                           order=[], limit=None, offset=None,
-                           term=self.term)
-
-
-class CollapseTable(Collapse):
-
-    adapts(TableFrame)
+    def __init__(self, frame, state):
+        super(ReduceFrame, self).__init__(frame, state)
+        self.frame = frame
 
     def __call__(self):
         return self.frame
 
 
-class CollapseBranch(Collapse):
+class ReduceBranch(Reduce):
 
     adapts(BranchFrame)
 
-    def prune_scalars(self, frame):
-        if not frame.include:
-            return frame
-        include = frame.include[:]
-        idx = 0
-        while idx < len(include):
-            anchor = include[idx]
-            next_anchor = (include[idx+1] if idx+1 < len(include) else None)
-            if (anchor.frame.is_scalar and anchor.is_cross
-                    and (next_anchor is None or next_anchor.is_cross)):
-                del include[idx]
-            else:
-                idx += 1
-        return frame.clone(include=include)
+    def reduce_include(self):
+        return [self.state.reduce(anchor)
+                for anchor in self.frame.include]
 
-    def collapse(self, frame):
-        if not frame.include:
-            return frame
-        head = frame.include[0].frame
-        tail = frame.include[1:]
-        if not head.is_nested:
-            return frame
-        if any(anchor.is_right for anchor in tail):
-            return frame
-        head = self.prune_scalars(head)
-        if not head.include:
-            if tail and not tail[0].is_cross:
-                return frame
-        if head.group:
-            if tail:
-                return frame
-            if not all(isinstance(phrase, LiteralPhrase)
-                       for phrase in head.group):
-                return frame
-            if frame.where is not None or frame.group or frame.order:
-                return frame
-            if frame.limit is not None or frame.offset is not None:
-                return frame
-            if head.having is not None or head.order:
-                return frame
-            if head.limit is not None or head.offset is not None:
-                return frame
-        assert head.having is None
-        if head.limit is not None or head.offset is not None:
-            if frame.limit is not None or frame.offset is not None:
-                return frame
-            if not (head.space.conforms(frame.space) and
-                        head.baseline == frame.baseline and
-                        head.space.ordering() == frame.space.ordering()):
-                return frame
-        include = head.include+tail
-        embed = head.embed+frame.embed
-        for index, phrase in enumerate(head.select):
-            key = (head.tag, index)
-            self.state.substitutes[key] = phrase
-        where = frame.where
-        if head.where:
-            if where is None:
-                where = head.where
-            else:
-                where = ConjunctionPhrase([where, head.where],
-                                          where.expression)
-        order = head.order
-        if frame.order:
-            order = frame.order
-        limit = head.limit
-        if frame.limit is not None:
-            limit = frame.limit
-        offset = head.offset
-        if frame.offset is not None:
-            offset = frame.offset
-        return frame.clone(include=include, embed=embed, where=where,
-                           order=order, limit=limit, offset=offset)
+    def reduce_embed(self):
+        return [self.state.reduce(self.state.collapse(frame))
+                for frame in self.frame.embed]
 
-    def reduce_include(self, frame):
-        frame = self.prune_scalars(frame)
-        old_frame = None
-        while frame != old_frame:
-            old_frame = frame
-            frame = self.collapse(frame)
-        if not frame.include:
-            return frame
-        include = [self.state.reduce(anchor)
-                   for anchor in frame.include]
-        return frame.clone(include=include)
+    def reduce_select(self):
+        return [self.state.reduce(phrase)
+                for phrase in self.frame.select]
 
-    def reduce_embed(self, frame):
-        if not frame.embed:
-            return frame
-        embed = [self.state.reduce(subframe)
-                 for subframe in frame.embed]
-        return frame.clone(embed=embed)
-
-    def reduce_select(self, frame):
-        select = [self.state.reduce(phrase)
-                  for phrase in frame.select]
-        return frame.clone(select=select)
-
-    def reduce_where(self, frame):
-        if frame.where is None:
-            return frame
-        where = self.state.reduce(frame.where)
+    def reduce_where(self):
+        if self.frame.where is None:
+            return None
+        where = self.state.reduce(self.frame.where)
         if isinstance(where, TruePhrase):
             where = None
-        return frame.clone(where=where)
+        return where
 
-    def reduce_group(self, frame):
-        if not frame.group:
-            return frame
+    def reduce_group(self):
         group = []
         duplicates = set()
-        for phrase in frame.group:
+        for phrase in self.frame.group:
             phrase = self.state.reduce(phrase)
             if isinstance(phrase, LiteralPhrase):
                 continue
@@ -203,22 +100,20 @@ class CollapseBranch(Collapse):
                 continue
             group.append(phrase)
             duplicates.add(phrase)
-        return frame.clone(group=group)
+        return group
 
-    def reduce_having(self, frame):
-        if frame.having is None:
-            return frame
-        having = self.state.reduce(frame.having)
+    def reduce_having(self):
+        if self.frame.having is None:
+            return None
+        having = self.state.reduce(self.frame.having)
         if isinstance(having, TruePhrase):
             having = None
-        return frame.clone(having=having)
+        return having
 
-    def reduce_order(self, frame):
-        if not frame.order:
-            return frame
+    def reduce_order(self):
         order = []
         duplicates = set()
-        for phrase, direction in frame.order:
+        for phrase, direction in self.frame.order:
             phrase = self.state.reduce(phrase)
             if isinstance(phrase, LiteralPhrase):
                 continue
@@ -226,29 +121,151 @@ class CollapseBranch(Collapse):
                 continue
             order.append((phrase, direction))
             duplicates.add(phrase)
-        return frame.clone(order=order)
+        return order
 
     def __call__(self):
-        frame = self.frame
-        frame = self.reduce_include(frame)
-        frame = self.reduce_embed(frame)
-        frame = self.reduce_select(frame)
-        frame = self.reduce_where(frame)
-        frame = self.reduce_group(frame)
-        frame = self.reduce_having(frame)
-        frame = self.reduce_order(frame)
-        return frame
+        include = self.reduce_include()
+        embed = self.reduce_embed()
+        select = self.reduce_select()
+        where = self.reduce_where()
+        group = self.reduce_group()
+        having = self.reduce_having()
+        order = self.reduce_order()
+        return self.frame.clone(include=include, embed=embed,
+                                select=select, where=where,
+                                group=group, having=having,
+                                order=order)
 
 
-class CollapseQuery(Collapse):
+
+class Collapse(Adapter):
+
+    adapts(Frame)
+
+    def __init__(self, frame, state):
+        self.frame = frame
+        self.term = frame.term
+        self.state = state
+
+    def collapse(self):
+        return
+
+    def __call__(self):
+        frame = self.collapse()
+        if frame is None:
+            return self.frame
+        return self.state.collapse(frame)
+
+
+class CollapseScalar(Collapse):
+
+    adapts(ScalarFrame)
+
+    def collapse(self):
+        select = [TruePhrase(self.term.expression)]
+        return NestedFrame(include=[], embed=[], select=select,
+                           where=None, group=[], having=None,
+                           order=[], limit=None, offset=None,
+                           term=self.term)
+
+
+class CollapseBranch(Collapse):
+
+    adapts(BranchFrame)
+
+    def collapse(self):
+        if not self.frame.include:
+            return
+        head = self.frame.include[0].frame
+        tail = self.frame.include[1:]
+        if head.is_scalar:
+            if tail and not tail[0].is_cross:
+                return
+            return self.frame.clone(include=tail)
+        if not head.is_nested:
+            return
+        if not head.include:
+            if tail and not tail[0].is_cross:
+                return
+        if any(anchor.is_right for anchor in tail):
+            return
+        if head.group:
+            if not all(isinstance(phrase, LiteralPhrase)
+                       for phrase in head.group):
+                return
+            if tail:
+                return
+            if not (self.frame.where is None and
+                    not self.frame.group and
+                    not self.frame.order and
+                    self.frame.limit is None and
+                    self.frame.offset is None):
+                return
+            if not (head.having is None and
+                    not head.order and
+                    head.limit is None and
+                    head.offset is None):
+                return
+        assert head.having is None
+        if not (head.limit is None and
+                head.offset is None):
+            if not (self.frame.limit is None and
+                    self.frame.offset is None):
+                return
+            if not (head.space.conforms(self.frame.space) and
+                    head.baseline == self.frame.baseline and
+                    head.space.ordering() == self.frame.space.ordering()):
+                return
+        include = head.include+tail
+        embed = head.embed+self.frame.embed
+        assert head.tag not in self.state.substitutes
+        self.state.substitutes[head.tag] = head.select
+        where = self.frame.where
+        if head.where:
+            if where is None:
+                where = head.where
+            else:
+                where = ConjunctionPhrase([where, head.where],
+                                          where.expression)
+        order = head.order
+        if self.frame.order:
+            order = self.frame.order
+        limit = head.limit
+        if self.frame.limit is not None:
+            limit = self.frame.limit
+        offset = head.offset
+        if self.frame.offset is not None:
+            offset = self.frame.offset
+        return self.frame.clone(include=include, embed=embed, where=where,
+                                order=order, limit=limit, offset=offset)
+
+
+class ReduceAnchor(Reduce):
+
+    adapts(Anchor)
+
+    def __init__(self, clause, state):
+        super(ReduceAnchor, self).__init__(clause, state)
+        self.anchor = clause
+
+    def __call__(self):
+        frame = self.state.reduce(self.state.collapse(self.anchor.frame))
+        condition = (self.state.reduce(self.anchor.condition)
+                     if self.anchor.condition is not None else None)
+        return self.anchor.clone(frame=frame, condition=condition)
+
+
+class ReduceQuery(Reduce):
 
     adapts(QueryFrame)
 
     def __call__(self):
-        if self.frame.segment is not None:
-            segment = self.state.reduce(self.frame.segment)
-            return self.frame.clone(segment=segment)
-        return self.frame
+        if self.clause.segment is None:
+            return self.clause
+        segment = self.clause.segment
+        segment = self.state.collapse(segment)
+        segment = self.state.reduce(segment)
+        return self.clause.clone(segment=segment)
 
 
 class ReducePhrase(Reduce):
@@ -519,25 +536,11 @@ class ReduceReference(Reduce):
     adapts(ReferencePhrase)
 
     def __call__(self):
-        key = (self.clause.tag, self.clause.index)
-        if key in self.state.substitutes:
-            return self.state.reduce(self.state.substitutes[key])
-        return self.clause
-
-
-class ReduceAnchor(Reduce):
-
-    adapts(Anchor)
-
-    def __init__(self, clause, state):
-        super(ReduceAnchor, self).__init__(clause, state)
-        self.anchor = clause
-
-    def __call__(self):
-        frame = self.state.reduce(self.anchor.frame)
-        condition = (self.state.reduce(self.anchor.condition)
-                     if self.anchor.condition is not None else None)
-        return self.anchor.clone(frame=frame, condition=condition)
+        if self.clause.tag not in self.state.substitutes:
+            return self.clause
+        select = self.state.substitutes[self.clause.tag]
+        phrase = select[self.clause.index]
+        return self.state.reduce(phrase)
 
 
 def reduce(clause, state=None):

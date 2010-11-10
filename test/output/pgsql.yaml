@@ -4285,7 +4285,7 @@ tests:
 
          ----
          /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
-         SELECT "school"."!", "!_4"."!", "!_5"."!" FROM (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" LEFT OUTER JOIN (SELECT COALESCE("school"."!", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" ON (TRUE)) AS "!_4" ON (TRUE) LEFT OUTER JOIN (SELECT COALESCE("school"."!", 0) AS "!" FROM (SELECT TRUE AS "!" WHERE FALSE) AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" ON (TRUE)) AS "!_5" ON (TRUE)
+         SELECT "school"."!", "!_4"."!", "!_5"."!" FROM (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" LEFT OUTER JOIN (SELECT COALESCE("school"."!", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" ON (TRUE)) AS "!_4" ON (TRUE) LEFT OUTER JOIN (SELECT COALESCE("school"."!", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" ON (TRUE) WHERE FALSE) AS "!_5" ON (TRUE)
     - uri: /school{code,name,this(){code}?name!~'art', root().school{code}?name!~'art'}
       status: 200 OK
       headers:
