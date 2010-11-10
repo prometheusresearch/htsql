@@ -1069,6 +1069,11 @@ class GenericSerialize(Serialize):
                 arguments[name] = self.phrase.arguments[name]
         return self.template % arguments
 
+    def call(self):
+        if self.function.names:
+            return self.function.names[0]
+        return super(GenericSerialize, self).call()
+
 
 DateConstructorBinding = GenericBinding.factory(DateConstructor)
 DateConstructorExpression = GenericExpression.factory(DateConstructor)

@@ -137,7 +137,6 @@ class ReduceBranch(Reduce):
                                 order=order)
 
 
-
 class Collapse(Adapter):
 
     adapts(Frame)

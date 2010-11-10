@@ -3720,7 +3720,7 @@ tests:
 
          ----
          /{count(school),count(department),count(course)}
-         SELECT "school"."!", "department"."!", "course"."!" FROM (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" CROSS JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."department" AS "department") AS "department" CROSS JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."course" AS "course") AS "course"
+         SELECT "school"."count", "department"."count", "course"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department") AS "department" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."course" AS "course") AS "course"
     - uri: /{count(department),count(department?exists(course))}
       status: 200 OK
       headers:
@@ -3735,7 +3735,7 @@ tests:
 
          ----
          /{count(department),count(department?exists(course))}
-         SELECT "department_1"."!", "department_2"."!" FROM (SELECT COUNT(TRUE) AS "!" FROM "ad"."department" AS "department") AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."department" AS "department" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department")))) AS "department_2"
+         SELECT "department_1"."count", "department_2"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department") AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department")))) AS "department_2"
     - uri: /department{code,count(course{credits=3})}
       status: 200 OK
       headers:
@@ -3776,7 +3776,7 @@ tests:
 
          ----
          /department{code,count(course{credits=3})}
-         SELECT "department"."code", COALESCE("course"."!", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "!", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /department{code,count(course?credits=3)}
       status: 200 OK
       headers:
@@ -3817,7 +3817,7 @@ tests:
 
          ----
          /department{code,count(course?credits=3)}
-         SELECT "department"."code", COALESCE("course"."!", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."credits" = 3) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."credits" = 3) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /school{code,count(department.course{credits=3})}
       status: 200 OK
       headers:
@@ -3840,7 +3840,7 @@ tests:
 
          ----
          /school{code,count(department.course{credits=3})}
-         SELECT "school"."code", COALESCE("course"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "!", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."course" AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "course" ON (("school"."code" = "course"."school")) ORDER BY 1 ASC
+         SELECT "school"."code", COALESCE("course"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."course" AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "course" ON (("school"."code" = "course"."school")) ORDER BY 1 ASC
     - uri: /school{code}?count(department.course{credits=3})=20
       status: 200 OK
       headers:
@@ -3855,7 +3855,7 @@ tests:
 
          ----
          /school{code}?count(department.course{credits=3})=20
-         SELECT "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "!", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."course" AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "course" ON (("school"."code" = "course"."school")) WHERE (COALESCE("course"."!", 0) = 20) ORDER BY 1 ASC
+         SELECT "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."course" AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "course" ON (("school"."code" = "course"."school")) WHERE (COALESCE("course"."count", 0) = 20) ORDER BY 1 ASC
     - uri: /department?exists(course.credits=5)
       status: 200 OK
       headers:
@@ -3935,7 +3935,7 @@ tests:
 
          ----
          /department{code,min(course.credits),max(course.credits)}
-         SELECT "department"."code", "course"."!_1", "course"."!_2" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "!_1", MAX("course"."credits") AS "!_2", "course"."department" FROM "ad"."course" AS "course" GROUP BY 3) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code", "course"."min", "course"."max" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min", MAX("course"."credits") AS "max", "course"."department" FROM "ad"."course" AS "course" GROUP BY 3) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /department{code,avg(course.credits), sum(course.credits)/count(course.credits)}
       status: 200 OK
       headers:
@@ -3976,7 +3976,7 @@ tests:
 
          ----
          /department{code,avg(course.credits),sum(course.credits)/count(course.credits)}
-         SELECT "department"."code", "course"."!_1", (CAST("course"."!_2" AS NUMERIC) / CAST(COALESCE("course"."!_3", 0) AS NUMERIC)) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "!_1", SUM("course"."credits") AS "!_2", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "!_3", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code", "course"."avg", (CAST("course"."sum" AS NUMERIC) / CAST(COALESCE("course"."count", 0) AS NUMERIC)) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", SUM("course"."credits") AS "sum", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "count", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /department?exists(course)
       status: 200 OK
       headers:
@@ -4050,7 +4050,7 @@ tests:
 
          ----
          /school{*,count(department)}
-         SELECT "school"."code", "school"."name", COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+         SELECT "school"."code", "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
     - uri: /school{*,count(department?exists(course))}
       status: 200 OK
       headers:
@@ -4074,7 +4074,7 @@ tests:
 
          ----
          /school{*,count(department?exists(course))}
-         SELECT "school"."code", "school"."name", COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department"))) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+         SELECT "school"."code", "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department"))) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
     - uri: /school{*,count(department.exists(course))}
       status: 200 OK
       headers:
@@ -4098,7 +4098,7 @@ tests:
 
          ----
          /school{*,count(department.exists(course))}
-         SELECT "school"."code", "school"."name", COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department"))), FALSE)) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+         SELECT "school"."code", "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department"))), FALSE)) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
     - uri: /school{code,count(department),count(program)}
       status: 200 OK
       headers:
@@ -4121,7 +4121,7 @@ tests:
 
          ----
          /school{code,count(department),count(program)}
-         SELECT "school"."code", COALESCE("department"."!", 0), COALESCE("program"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school")) ORDER BY 1 ASC
+         SELECT "school"."code", COALESCE("department"."count", 0), COALESCE("program"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school")) ORDER BY 1 ASC
     - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
       status: 200 OK
       headers:
@@ -4155,7 +4155,7 @@ tests:
 
          ----
          /department{sum(course.credits),count(course.credits),avg(course.credits)}?exists(course)
-         SELECT "course"."!_1", COALESCE("course"."!_2", 0), "course"."!_3" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "!_1", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "!_2", AVG(CAST("course"."credits" AS NUMERIC)) AS "!_3", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course_2" WHERE ("department"."code" = "course_2"."department"))) ORDER BY "department"."code" ASC
+         SELECT "course"."sum", COALESCE("course"."count", 0), "course"."avg" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "count", AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course_2" WHERE ("department"."code" = "course_2"."department"))) ORDER BY "department"."code" ASC
     - uri: /department{code,school.code, count(school.program),school.count(program)}
       status: 200 OK
       headers:
@@ -4196,7 +4196,7 @@ tests:
 
          ----
          /department{code,school.code,count(school.program),school.count(program)}
-         SELECT "department"."code", "school_1"."code", COALESCE("program"."!", 0), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school_1"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COALESCE("program"."!", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school"))) AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code", "school_1"."code", COALESCE("program"."count", 0), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school_1"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COALESCE("program"."count", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school"))) AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
     - uri: /department{code,school.code, exists(school.program),school.exists(program)}
       status: 200 OK
       headers:
@@ -4237,7 +4237,7 @@ tests:
 
          ----
          /department{code,school.code,exists(school.program),school.exists(program)}
-         SELECT "department"."code", "school_1"."code", EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school_1"."code" = "program"."school"))), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school"."code" = "program"."school"))) AS "!", "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code", "school_1"."code", EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school_1"."code" = "program"."school"))), "school_2"."exists" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school"."code" = "program"."school"))) AS "exists", "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
   - id: root,-this,-direct-and-fiber-functions
     tests:
     - uri: /{count(school)*count(department),count(school.direct(department))}
@@ -4254,7 +4254,7 @@ tests:
 
          ----
          /{count(school)*count(department),count(school.direct(department))}
-         SELECT ("school"."!" * "department_1"."!"), "department_2"."!" FROM (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" CROSS JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."department" AS "department") AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school" CROSS JOIN "ad"."department" AS "department") AS "department_2"
+         SELECT ("school"."count" * "department_1"."count"), "department_2"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department") AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" CROSS JOIN "ad"."department" AS "department") AS "department_2"
     - uri: /{count(school.department), count(school.direct(department)?school=root().school.code),
         count(school.fiber(department,code,school.code))}
       status: 200 OK
@@ -4270,7 +4270,7 @@ tests:
 
          ----
          /{count(school.department),count(school.direct(department)?school=root().school.code),count(school.fiber(department,code,school.code))}
-         SELECT "department_1"."!", "department_2"."!", "department_3"."!" FROM (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school" INNER JOIN "ad"."department" AS "department" ON (("school"."code" = "department"."school"))) AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school" CROSS JOIN "ad"."department" AS "department" WHERE ("department"."school" = "school"."code")) AS "department_2" CROSS JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school_1" CROSS JOIN "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_1"."code" = "school_2"."code")) AS "department_3"
+         SELECT "department_1"."count", "department_2"."count", "department_3"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" INNER JOIN "ad"."department" AS "department" ON (("school"."code" = "department"."school"))) AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" CROSS JOIN "ad"."department" AS "department" WHERE ("department"."school" = "school"."code")) AS "department_2" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school_1" CROSS JOIN "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_1"."code" = "school_2"."code")) AS "department_3"
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
       status: 200 OK
       headers:
@@ -4285,7 +4285,7 @@ tests:
 
          ----
          /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
-         SELECT "school"."!", "!_4"."!", "!_5"."!" FROM (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" LEFT OUTER JOIN (SELECT COALESCE("school"."!", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" ON (TRUE)) AS "!_4" ON (TRUE) LEFT OUTER JOIN (SELECT COALESCE("school"."!", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!" FROM "ad"."school" AS "school") AS "school" ON (TRUE) WHERE FALSE) AS "!_5" ON (TRUE)
+         SELECT "school"."count", "!_3"."!", "!_4"."!" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" LEFT OUTER JOIN (SELECT COALESCE("school"."count", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" ON (TRUE)) AS "!_3" ON (TRUE) LEFT OUTER JOIN (SELECT COALESCE("school"."count", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" ON (TRUE) WHERE FALSE) AS "!_4" ON (TRUE)
     - uri: /school{code,name,this(){code}?name!~'art', root().school{code}?name!~'art'}
       status: 200 OK
       headers:
@@ -4333,7 +4333,7 @@ tests:
 
          ----
          /school{name,count(department),this(){count(department)}?name!~'art'}
-         SELECT "school_1"."name", COALESCE("department"."!", 0), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school_1"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COALESCE("department"."!", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
+         SELECT "school_1"."name", COALESCE("department"."count", 0), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school_1"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COALESCE("department"."count", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
     - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
       status: 200 OK
       headers:
@@ -4357,7 +4357,7 @@ tests:
 
          ----
          /school{name,exists(department),this(){exists(department)}?name!~'art'}
-         SELECT "school_1"."name", EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school_1"."code" = "department"."school"))), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school"))) AS "!", "school"."code" FROM "ad"."school" AS "school" WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
+         SELECT "school_1"."name", EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school_1"."code" = "department"."school"))), "school_2"."exists" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school"))) AS "exists", "school"."code" FROM "ad"."school" AS "school" WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
   - id: table-expressions
     tests:
     - uri: /(school?code='art').department
@@ -5701,7 +5701,7 @@ tests:
 
          ----
          /department{name,max(course.credits)}
-         SELECT "department"."name", "course"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "!", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
+         SELECT "department"."name", "course"."max" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
     - uri: /department{name, count(school)}
       status: 400 Bad Request
       headers:
@@ -5748,7 +5748,7 @@ tests:
 
          ----
          /school{name,count(program),count(department)}
-         SELECT "school"."name", COALESCE("program"."!", 0), COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
+         SELECT "school"."name", COALESCE("program"."count", 0), COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
     - uri: /department{name, count(course?number>=400)}
       status: 200 OK
       headers:
@@ -5789,7 +5789,7 @@ tests:
 
          ----
          /department{name,count(course?number>=400)}
-         SELECT "department"."name", COALESCE("course"."!", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."number" >= 400) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
+         SELECT "department"."name", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."number" >= 400) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
     - uri: /school{name, avg(department.count(course))}
       status: 200 OK
       headers:
@@ -5813,7 +5813,7 @@ tests:
 
          ----
          /school{name,avg(department.count(course))}
-         SELECT "school"."name", "department"."!" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("course"."!", 0) AS NUMERIC)) AS "!", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
+         SELECT "school"."name", "department"."avg" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("course"."count", 0) AS NUMERIC)) AS "avg", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
     - uri: /school{name, count(department?exists(course?credits>3))}
       status: 200 OK
       headers:
@@ -5837,7 +5837,7 @@ tests:
 
          ----
          /school{name,count(department?exists(course?credits>3))}
-         SELECT "school"."name", COALESCE("department"."!", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "!", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE (("department"."code" = "course"."department") AND ("course"."credits" > 3)))) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
+         SELECT "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE (("department"."code" = "course"."department") AND ("course"."credits" > 3)))) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
     - uri: /department{name, avg((course?number>400).credits)}
       status: 200 OK
       headers:
@@ -5878,7 +5878,7 @@ tests:
 
          ----
          /department{name,avg((course?number>400).credits)}
-         SELECT "department"."name", "course"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "!", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."number" > 400) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
+         SELECT "department"."name", "course"."avg" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."number" > 400) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
     - uri: /department{code, min(course.credits), max(course.credits), avg(course.credits)}
       status: 200 OK
       headers:
@@ -5919,7 +5919,7 @@ tests:
 
          ----
          /department{code,min(course.credits),max(course.credits),avg(course.credits)}
-         SELECT "department"."code", "course"."!_1", "course"."!_2", "course"."!_3" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "!_1", MAX("course"."credits") AS "!_2", AVG(CAST("course"."credits" AS NUMERIC)) AS "!_3", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code", "course"."min", "course"."max", "course"."avg" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min", MAX("course"."credits") AS "max", AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
     - uri: /department{name, avg(course.credits), count(course)} ?every(course.credits=3)
       status: 200 OK
       headers:
@@ -5944,7 +5944,7 @@ tests:
 
          ----
          /department{name,avg(course.credits),count(course)}?every(course.credits=3)
-         SELECT "department"."name", "course"."!_1", COALESCE("course"."!_2", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "!_1", COUNT(TRUE) AS "!_2", "course"."department" FROM "ad"."course" AS "course" GROUP BY 3) AS "course" ON (("department"."code" = "course"."department")) WHERE NOT EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course_2" WHERE (("department"."code" = "course_2"."department") AND ("course_2"."credits" != 3)))) ORDER BY "department"."code" ASC
+         SELECT "department"."name", "course"."avg", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" GROUP BY 3) AS "course" ON (("department"."code" = "course"."department")) WHERE NOT EXISTS((SELECT TRUE AS "!" FROM "ad"."course" AS "course_2" WHERE (("department"."code" = "course_2"."department") AND ("course_2"."credits" != 3)))) ORDER BY "department"."code" ASC
     - uri: /course?title='Drawing'
       status: 200 OK
       headers:
