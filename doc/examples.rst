@@ -2,12 +2,9 @@
   Examples
 ============
 
-HTSQL provides outstanding clarity without sacrificing rigor.  Not only
-is working with HTSQL more productive than SQL, but things are possible
-that may have otherwise exceeded a user's mental capacity. 
-
-Let's assume we have a data model, with schools, departments, programs
-and courses.  Here it is::
+HTSQL provides outstanding clarity without sacrificing rigor.  Let's
+assume we have a data model, with schools, departments, programs and
+courses.  Here it is::
 
          +-------------+       +--------+
     /---m| DEPARTMENT  |>-----o| SCHOOL |m----\
