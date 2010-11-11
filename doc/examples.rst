@@ -272,7 +272,7 @@ You need at least 3 **SQL** statements to produce the same result::
 .. _C3: http://demo.htsql.com/school{count(program)^,count()}/({name};department)
 
 
-For more examples, see `the HTSQL regression test suite`_.
+For more examples, see `the HTSQL regression test suite`_, or read :doc:`tutorial`.
 
 .. _the HTSQL regression test suite:
     http://bitbucket.org/prometheus/htsql/src/tip/test/input/pgsql.yaml
