@@ -4301,6 +4301,48 @@ tests:
          ----
          /{count(school.department),count(school.direct(department)?school=root().school.code),count(school.fiber(department,code,school.code))}
          SELECT "department_1"."count", "department_2"."count", "department_3"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" INNER JOIN "ad"."department" AS "department" ON (("school"."code" = "department"."school"))) AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" CROSS JOIN "ad"."department" AS "department" WHERE ("department"."school" = "school"."code")) AS "department_2" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school_1" CROSS JOIN "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_1"."code" = "school_2"."code")) AS "department_3"
+    - uri: /school{code,count(department)}?count(department)=max(direct(school).count(department))
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (school?count(department)=max(direct(school).count(department))) |
+        -+------------------------------------------------------------------+-
+         | code                     | count(department)                     |
+        -+--------------------------+---------------------------------------+-
+         | la                       |                                     5 |
+                                                                      (1 row)
+
+         ----
+         /school{code,count(department)}?count(department)=max(direct(school).count(department))
+         SELECT "school_1"."code", COALESCE("department_2"."count", 0) FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department_1" ON (("school_1"."code" = "department_1"."school")) LEFT OUTER JOIN (SELECT MAX(COALESCE("department"."count", 0)) AS "max" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school"))) AS "school_2" ON (TRUE) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department_2" ON (("school_1"."code" = "department_2"."school")) WHERE (COALESCE("department_1"."count", 0) = "school_2"."max") ORDER BY 1 ASC
+    - uri: /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | (school.program?count(student)=max(fiber(program,school).count(student))) |
+        -+---------------------------------------------------------------------------+-
+         | school              | code                  | count(student)              |
+        -+---------------------+-----------------------+-----------------------------+-
+         | art                 | gart                  |                           5 |
+         | bus                 | pacc                  |                           2 |
+         | bus                 | pcap                  |                           2 |
+         | bus                 | uacct                 |                           2 |
+         | bus                 | ucorpfi               |                           2 |
+         | edu                 | gedlead               |                           1 |
+         | edu                 | gedu                  |                           1 |
+         | edu                 | glited                |                           1 |
+         | edu                 | psci                  |                           1 |
+         | egn                 | ucompsci              |                           4 |
+         | la                  | gengl                 |                           3 |
+         | mart                | bmart                 |                           0 |
+         | ns                  | uphys                 |                           5 |
+                                                                             (13 rows)
+
+         ----
+         /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
+         SELECT "program_1"."school", "program_1"."code", COALESCE("student_2"."count", 0) FROM "ad"."school" AS "school_2" INNER JOIN "ad"."program" AS "program_1" ON (("school_2"."code" = "program_1"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "student"."school", "student"."program" FROM "ed"."student" AS "student" GROUP BY 2, 3) AS "student_1" ON ((("program_1"."school" = "student_1"."school") AND ("program_1"."code" = "student_1"."program"))) LEFT OUTER JOIN (SELECT MAX(COALESCE("student"."count", 0)) AS "max", "program_1"."school", "program_1"."code" FROM "ad"."program" AS "program_1" CROSS JOIN "ad"."program" AS "program_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "student"."school", "student"."program" FROM "ed"."student" AS "student" GROUP BY 2, 3) AS "student" ON ((("program_2"."school" = "student"."school") AND ("program_2"."code" = "student"."program"))) WHERE ("program_1"."school" = "program_2"."school") GROUP BY 2, 3) AS "program_2" ON ((("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code"))) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "student"."school", "student"."program" FROM "ed"."student" AS "student" GROUP BY 2, 3) AS "student_2" ON ((("program_1"."school" = "student_2"."school") AND ("program_1"."code" = "student_2"."program"))) WHERE (COALESCE("student_1"."count", 0) = "program_2"."max") ORDER BY "school_2"."code" ASC, 1 ASC, 2 ASC
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
       status: 200 OK
       headers:

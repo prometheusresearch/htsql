@@ -870,8 +870,8 @@ class InjectSpace(Inject):
             is_right = False
             # Re-use the old routing table, but add the new axis.
             routes = rkid.routes.copy()
-            routes[unmasked_space] = lkid[unmasked_space]
-            routes[self.space] = lkid[unmasked_space]
+            routes[unmasked_space] = lkid.routes[unmasked_space]
+            routes[self.space] = lkid.routes[unmasked_space]
             # Compile and return a join term.
             return JoinTerm(self.state.tag(), lkid, rkid, joints,
                             is_left, is_right, rkid.space, routes)

@@ -194,7 +194,7 @@ class FiberFunction(Function):
     named('fiber')
 
     def __call__(self):
-        if len(self.syntax.arguments) != 3:
+        if len(self.syntax.arguments) not in [2, 3]:
             raise InvalidArgumentError("three arguments expected",
                                        self.syntax.mark)
         identifier = self.syntax.arguments[0]
@@ -207,7 +207,10 @@ class FiberFunction(Function):
                                        argument.mark)
         binding = binding.clone(base=self.state.base)
         parent = self.state.bind(self.syntax.arguments[1])
-        child = self.state.bind(self.syntax.arguments[2], base=binding)
+        if len(self.syntax.arguments) == 3:
+            child = self.state.bind(self.syntax.arguments[2], base=binding)
+        else:
+            child = self.state.bind(self.syntax.arguments[1], base=binding)
         domain = coerce(parent.domain, child.domain)
         if domain is None:
             raise InvalidArgumentError("incompatible types",

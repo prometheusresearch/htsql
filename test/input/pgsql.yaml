@@ -410,6 +410,8 @@ tests:
     - uri: /{count(school.department),
              count(school.direct(department)?school=root().school.code),
              count(school.fiber(department,code,school.code))}
+    - uri: /school{code,count(department)}?count(department)=max(direct(school).count(department))
+    - uri: /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
     # Lifting a unit to a dominating space.
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
     - uri: /school{code,name,this(){code}?name!~'art',
