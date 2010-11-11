@@ -22,6 +22,10 @@ and courses.  Here it is::
          +-------------+       +---------+
 
 
+Basic examples
+==============
+
+
 List all schools
 ----------------
 
@@ -110,6 +114,10 @@ Schools with programs
                  FROM ad.program AS p
                  WHERE s.code = p.school)
     ORDER BY 1;
+
+
+Advanced examples
+=================
 
 
 The number of schools with programs
