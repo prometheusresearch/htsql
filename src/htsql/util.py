@@ -89,7 +89,7 @@ class DB(object):
         assert isinstance(username, maybe(str))
         assert isinstance(password, maybe(str))
         assert isinstance(host, maybe(str))
-        assert isinstance(port, maybe(str))
+        assert isinstance(port, maybe(int))
         assert isinstance(database, str)
         assert isinstance(options, maybe(dictof(str, str)))
 
