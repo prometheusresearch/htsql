@@ -6,6 +6,9 @@
 # to match your configuration.
 -include Makefile.env
 
+# Path to Python executable.
+PYTHON?=python
+
 # The connection URI for regression databases.
 SQLITE_REGRESS_DB?=sqlite:///build/regress/regress-sqlite/htsql_regress.sqlite
 PGSQL_ADDRESS?=${PGSQL_HOST}$(if ${PGSQL_PORT},:${PGSQL_PORT})
