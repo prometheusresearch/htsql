@@ -2,7 +2,7 @@
 # included to the source distribution.
 
 # README files.
-include README INSTALL EXAMPLES NEWS LICENSE
+include README INSTALL NEWS LICENSE
 
 # Makefile files.
 include Makefile Makefile.common Makefile.env.sample
