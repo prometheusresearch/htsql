@@ -29,7 +29,7 @@ Basic examples
 List all schools
 ----------------
 
-An **HTSQL** query::
+An **HTSQL** query (A1_)::
 
     /school
 
@@ -39,11 +39,13 @@ An equivalent **SQL** query::
     FROM ad.school
     ORDER BY code;
 
+.. _A1: http://demo.htsql.org/school
+
 
 Programs ordered by the title
 -----------------------------
 
-**HTSQL**::
+**HTSQL** (A2_)::
 
     /program{title+}
 
@@ -53,11 +55,13 @@ Programs ordered by the title
     FROM ad.program
     ORDER BY title, school, code;
 
+.. _A2: http://demo.htsql.org/program{title+}
+
 
 All courses missing a description
 ---------------------------------
 
-**HTSQL**::
+**HTSQL** (A3_)::
 
     /course?!description
 
@@ -68,11 +72,13 @@ All courses missing a description
     WHERE NULLIF(description, '') IS NULL
     ORDER BY 1, 2;
 
+.. _A3: http://demo.htsql.org/course?!description
+
 
 Departments in schools having "art" in its name
 -----------------------------------------------
 
-**HTSQL**::
+**HTSQL** (A4_)::
 
     /department?school.name~'art'
 
@@ -85,11 +91,13 @@ Departments in schools having "art" in its name
     WHERE s.name ILIKE '%art%'
     ORDER BY 1;
 
+.. _A4: http://demo.htsql.org/department?school.name~'art'
+
 
 The number of schools
 ---------------------
 
-**HTSQL**::
+**HTSQL** (A5_)::
 
     /count(school)
 
@@ -98,11 +106,13 @@ The number of schools
     SELECT COUNT(TRUE)
     FROM ad.school;
 
+.. _A5: http://demo.htsql.org/count(school)
+
 
 Schools with programs
 ---------------------
 
-**HTSQL**::
+**HTSQL** (A6_)::
 
     /school?exists(program)
 
@@ -115,6 +125,8 @@ Schools with programs
                  WHERE s.code = p.school)
     ORDER BY 1;
 
+.. _A6: http://demo.htsql.org/school?exists(program)
+
 
 Advanced examples
 =================
@@ -123,7 +135,7 @@ Advanced examples
 The number of schools with programs
 -----------------------------------
 
-**HTSQL**::
+**HTSQL** (B1_)::
 
     /count(school?exists(program))
 
@@ -135,11 +147,13 @@ The number of schools with programs
                  FROM ad.program AS p
                  WHERE (s.code = p.school));
 
+.. _B1: http://demo.htsql.org/count(school?exists(program))
+
 
 Number of programs and departments per school
 ---------------------------------------------
 
-**HTSQL**::
+**HTSQL** (B2_)::
 
     /school{name, count(program), count(department)}
 
@@ -157,11 +171,13 @@ Number of programs and departments per school
           GROUP BY 2) AS d ON (s.code = d.school)
     ORDER BY s.code;
 
+.. _B2: http://demo.htsql.org/school{name,count(program),count(department)}
+
 
 Average number of courses offered by departments in each school
 ---------------------------------------------------------------
 
-**HTSQL**::
+**HTSQL** (B3_)::
 
     /school{name, avg(department.count(course))}
 
@@ -179,6 +195,8 @@ Average number of courses offered by departments in each school
           GROUP BY 2) AS d ON (s.code = d.school)
     ORDER BY s.code;
 
+.. _B3: http://demo.htsql.org/school{name,avg(department.count(course))}
+
 
 .. warning::
 
@@ -188,7 +206,7 @@ Average number of courses offered by departments in each school
 *Programs and departments in each school*
 -----------------------------------------
 
-**HTSQL**::
+**HTSQL** (C1_, using 1.0, different syntax)::
 
     /school{name, /program{title}, /department{name}}
 
@@ -222,11 +240,13 @@ You need at least 3 **SQL** statements to produce the same result::
          ad.department AS d ON (s.code = d.school)
     ORDER BY s.code, d.code;
 
+.. _C1: http://demo.htsql.com/school{name}/(program{title};department{name})
+
 
 *The number of programs per degree*
 -----------------------------------
 
-**HTSQL**::
+**HTSQL** (C2_, using 1.0)::
 
     /program{degree^, count()}
 
@@ -237,14 +257,18 @@ You need at least 3 **SQL** statements to produce the same result::
     GROUP BY 1
     ORDER BY 1;
 
+.. _C2: http://demo.htsql.com/program{degree^,count()}
+
 
 *The number&list of schools and the top 2 departments by the number of programs*
 --------------------------------------------------------------------------------
 
-**HTSQL**::
+**HTSQL** (C3_, using 1.0, different syntax, w/o ``top()``)::
 
     /school{count(program)^, count(), /name, /department.top(2)}
 
 **SQL**: *Ahhh!*
+
+.. _C3: http://demo.htsql.com/school{count(program)^,count()}/({name};department)
 
 
