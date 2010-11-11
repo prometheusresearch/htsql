@@ -24,7 +24,7 @@ htraf.autoId = function() {
 };
 
 htraf.quote = function(s) {
-    return "'" + s.replace(/'/g, "''") + "'";
+    return "'" + escape(s.replace(/'/g, "''")) + "'";
 };
 
 htraf.convertNull = function(value) {

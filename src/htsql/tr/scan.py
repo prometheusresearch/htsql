@@ -261,7 +261,7 @@ class Scanner(object):
             code = match.group('code')
             # Complain if we get `%` not followed by two hexdecimal digits.
             if not code:
-                mark = Mark(match.string, match.begin(), match.end())
+                mark = Mark(match.string, match.start(), match.end())
                 raise ScanError("invalid escape sequence", mark)
             # Return the character corresponding to the escape sequence.
             return chr(int(code, 16))
