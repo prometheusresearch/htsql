@@ -19,8 +19,54 @@ courses.  Here it is::
          +-------------+       +---------+
 
 
-Basic examples
-==============
+Sample application
+==================
+
+The full source code:
+
+.. image:: htraf-screenshot.png
+   :scale: 75%
+   :alt: The HTRAF demo
+   :align: right
+   :target: http://htraf.htsql.org/
+
+.. code-block:: html
+
+    <body>
+        <h3>Select School</h3>
+        <select id="school"
+                data-source="/school{code, name}"/>
+        <div class="chart"
+             data-source="/program{title, count(student)}
+                          ?school=$school&count(student)>0" 
+             data-display="chart"
+             data-chart-title="Percent of Students by Program"/>
+
+        <h3>Departments</h3>
+        <p>Filter by name: <input id="department_name"/></p>
+        <table id="department"
+               data-hide-first-column="yes" 
+               data-source="/department{code, name, school.name}
+                            ?school=$school&name~$department_name"/>
+        <p>
+            The selected department: 
+            <em data-source="/department{name}?code=$department"/>
+            <br/>
+            The number of courses in selected department:
+            <strong data-source="/department{count(course)}
+                                 ?code=$department"/>
+        </p>
+
+        <h3>Courses</h3>
+        <table id="course" 
+               data-source="/course?department=$department"/>
+    </body>
+
+See a live demo at http://htraf.htsql.org/.
+
+
+Basic queries
+=============
 
 
 List all schools
@@ -125,8 +171,8 @@ Schools with programs
 .. _A6: http://demo.htsql.org/school?exists(program)
 
 
-Advanced examples
-=================
+Advanced queries
+================
 
 
 The number of schools with programs
