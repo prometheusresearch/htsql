@@ -26,6 +26,8 @@
    :members:
 .. automodule:: htsql.tr.parse
    :members:
+.. automodule:: htsql.tr.reduce
+   :members:
 .. automodule:: htsql.tr.scan
    :members:
 .. automodule:: htsql.tr.syntax

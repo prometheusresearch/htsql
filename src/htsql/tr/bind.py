@@ -69,9 +69,9 @@ class BindingState(object):
         self.root = root
         self.base = root
 
-    def unset_root(self):
+    def flush(self):
         """
-        Removes the root lookup context.
+        Clears the lookup context.
         """
         # We expect the lookup context stack being empty and the current
         # context to coincide with the root context.
@@ -218,7 +218,7 @@ class BindQuery(Bind):
         if self.syntax.segment is not None:
             segment = self.state.bind(self.syntax.segment)
         # Shut down the lookup context stack.
-        self.state.unset_root()
+        self.state.flush()
         # Construct and return the top-level binding node.
         yield QueryBinding(root, segment, self.syntax)
 

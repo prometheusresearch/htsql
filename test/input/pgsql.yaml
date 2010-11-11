@@ -398,6 +398,9 @@ tests:
                        count(school.program),school.count(program)}
     - uri: /department{code,school.code,
                        exists(school.program),school.exists(program)}
+    # Ensure that aggregates are not lost during the reduction process
+    - uri: /{count(school)&false(),count(school)|true()}
+    - uri: /{count(school)==null()}
 
   - title: Root, This, Direct and Fiber functions
     tests:

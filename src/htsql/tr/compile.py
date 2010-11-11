@@ -164,7 +164,7 @@ class CompilingState(object):
         self.baseline = space
         self.mask = space
 
-    def unset_scalar(self):
+    def flush(self):
         """
         Clears the state spaces.
         """
@@ -702,7 +702,7 @@ class CompileSegment(Compile):
             kid = OrderTerm(self.state.tag(), kid, order, None, None,
                             kid.space, kid.routes.copy())
         # Shut down the state spaces.
-        self.state.unset_scalar()
+        self.state.flush()
         # Construct a segment term.
         return SegmentTerm(self.state.tag(), kid, self.expression.elements,
                            kid.space, kid.routes.copy())

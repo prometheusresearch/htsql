@@ -198,7 +198,7 @@ class AssemblingState(object):
         for offspring in term.offsprings:
             self.claims_by_broker[offspring] = []
 
-    def unset_tree(self):
+    def flush(self):
         """
         Clears the assembling state.
         """
@@ -1127,7 +1127,7 @@ class AssembleQuery(Assemble):
             # Compile the segment.
             segment = self.state.assemble(self.term.segment)
             # Clean up the state.
-            self.state.unset_tree()
+            self.state.flush()
         # Generate a frame node.
         return QueryFrame(segment, self.term)
 

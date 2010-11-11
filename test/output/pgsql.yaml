@@ -4238,6 +4238,36 @@ tests:
          ----
          /department{code,school.code,exists(school.program),school.exists(program)}
          SELECT "department"."code", "school_1"."code", EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school_1"."code" = "program"."school"))), "school_2"."exists" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT EXISTS((SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school"."code" = "program"."school"))) AS "exists", "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+    - uri: /{count(school)&false(),count(school)|true()}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |                                              |
+        -+----------------------------------------------+-
+         | count(school)&false() | count(school)|true() |
+        -+-----------------------+----------------------+-
+         | false                 | true                 |
+                                                  (1 row)
+
+         ----
+         /{count(school)&false(),count(school)|true()}
+         SELECT ((COUNT(TRUE) IS NOT NULL) AND FALSE), ((COUNT(TRUE) IS NOT NULL) OR TRUE) FROM "ad"."school" AS "school"
+    - uri: /{count(school)==null()}
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         |                       |
+        -+-----------------------+-
+         | count(school)==null() |
+        -+-----------------------+-
+         | false                 |
+                           (1 row)
+
+         ----
+         /{count(school)==null()}
+         SELECT (COUNT(TRUE) IS NULL) FROM "ad"."school" AS "school"
   - id: root,-this,-direct-and-fiber-functions
     tests:
     - uri: /{count(school)*count(department),count(school.direct(department))}

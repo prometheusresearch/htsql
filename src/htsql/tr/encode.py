@@ -59,6 +59,13 @@ class EncodingState(object):
         # A mapping of cached results of `relate()`.
         self.binding_to_space = {}
 
+    def flush(self):
+        """
+        Clears the encoding state.
+        """
+        self.binding_to_code.clear()
+        self.binding_to_state.clear()
+
     def encode(self, binding):
         """
         Encodes the given binding node to a code expression node.
