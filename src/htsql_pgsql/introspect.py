@@ -150,6 +150,8 @@ class IntrospectPGSQL(Introspect):
         for relid, num in sorted(self.meta.pg_attribute_by_class[table_oid]):
             att = self.meta.pg_attribute[relid, num]
             name = att.attname
+            if att.attisdropped:
+                continue
             if not self.permit_column(schema_name, table_name, name):
                 continue
             domain = self.introspect_domain(relid, num)
