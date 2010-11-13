@@ -13,6 +13,7 @@ This module declares the database connection adapter.
 """
 
 
+from __future__ import with_statement
 from .adapter import Adapter, Utility, adapts
 from .domain import Domain
 
