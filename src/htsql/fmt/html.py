@@ -230,7 +230,16 @@ class FormatDomain(Format):
     def __call__(self, value):
         if value is None:
             return self.format_null()
-        return "<em>?</em>"
+        if isinstance(value, str):
+            try:
+                value.decode('utf-8')
+            except UnicodeDecodeError:
+                value = repr(value)
+        elif isinstance(value, unicode):
+            value = value.encode('utf-8')
+        else:
+            value = str(value)
+        return "<em>%s</em>" % cgi.escape(value)
 
 
 class FormatBoolean(Format):

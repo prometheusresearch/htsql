@@ -2178,7 +2178,7 @@ EvaluateExistsWrapper = GenericEvaluate.factory(ExistsFunction,
 ReduceExistsWrapper = GenericReduce.factory(ExistsFunction,
         ExistsWrapperPhrase)
 SerializeExistsWrapper = GenericSerialize.factory(ExistsFunction,
-        ExistsWrapperPhrase, "EXISTS(%(op)s)")
+        ExistsWrapperPhrase, "EXISTS%(op)s")
 
 
 class EncodeEvery(EncodeExistsEvery):
@@ -2192,7 +2192,7 @@ EvaluateEveryWrapper = GenericEvaluate.factory(EveryFunction,
 ReduceEveryWrapper = GenericReduce.factory(EveryFunction,
         EveryWrapperPhrase)
 SerializeEveryWrapper = GenericSerialize.factory(EveryFunction,
-        EveryWrapperPhrase, "NOT EXISTS(%(op)s)")
+        EveryWrapperPhrase, "NOT EXISTS%(op)s")
 
 
 class MinFunction(ProperFunction):

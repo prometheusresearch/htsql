@@ -180,12 +180,23 @@ class FormatDomain(Format):
     def measure(self, value):
         if value is None:
             return 0
-        return 1
+        if not isinstance(value, unicode):
+            try:
+                value = self.escape_string(str(value).decode('utf-8'))
+            except UnicodeDecodeError:
+                value = unicode(repr(value))
+        return len(value)
 
     def __call__(self, value, width):
         if value is None:
             return self.format_null(width)
-        return ["%*s" % (-width, "?")]
+        if not isinstance(value, unicode):
+            try:
+                value = self.escape_string(str(value).decode('utf-8'))
+            except UnicodeDecodeError:
+                value = unicode(repr(value))
+        line = u"%*s" % (-width, value)
+        return [line.encode('utf-8')]
 
 
 class FormatBoolean(Format):

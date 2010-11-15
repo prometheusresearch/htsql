@@ -79,7 +79,14 @@ class FormatDomain(Format):
     def __call__(self, value):
         if value is None:
             return ""
-        return "\"?\""
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+        value = str(value)
+        try:
+            value.decode('utf-8')
+        except UnicodeDecodeError:
+            value = repr(value)
+        return value
 
 
 class FormatBoolean(Format):

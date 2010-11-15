@@ -9,6 +9,13 @@
 :mod:`htsql.tr`
 ===============
 
+.. epigraph::
+
+    Those are the hills of Hell, my love,
+    Where you and I must go
+
+    -- (Traditional)
+
 This package implements the HTSQL-to-SQL translator.
 """
 
