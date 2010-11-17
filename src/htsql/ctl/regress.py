@@ -19,8 +19,9 @@ from .routine import Argument, Routine
 from .option import (InputOption, TrainOption, PurgeOption,
                      ForceOption, QuietOption)
 from .request import Request
-from ..validator import (Val, AnyVal, BoolVal, StrVal, WordVal, ChoiceVal,
-                         IntVal, UFloatVal, DBVal, SeqVal, MapVal, ClassVal)
+from ..validator import (Validator, AnyVal, BoolVal, StrVal, WordVal,
+                         ChoiceVal, IntVal, UFloatVal, DBVal, SeqVal,
+                         MapVal, ClassVal)
 from ..util import maybe, trim_doc, DB
 import traceback
 import StringIO
@@ -89,7 +90,7 @@ class Field(object):
     `attribute` (a string)
         The name of the attribute that contains the field value.
 
-    `validator` (:class:`htsql.validator.Val`)
+    `val` (:class:`htsql.validator.Validator`)
         The validator for the field values.
 
     `default`
@@ -104,16 +105,16 @@ class Field(object):
     # Use it to filter out `AnyField` instances.
     is_any = False
 
-    def __init__(self, attribute, validator,
+    def __init__(self, attribute, val,
                  default=MANDATORY_FIELD, hint=None):
         # Sanity check on the arguments.
         assert isinstance(attribute, str)
         assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
-        assert isinstance(validator, Val)
+        assert isinstance(val, Validator)
         assert isinstance(hint, maybe(str))
 
         self.attribute = attribute
-        self.validator = validator
+        self.val = val
         self.default = default
         self.is_mandatory = (default is MANDATORY_FIELD)
         self.hint = hint
@@ -2353,7 +2354,7 @@ class RegressYAMLLoader(BaseYAMLLoader):
             if key in value_by_key:
                 value = value_by_key[key]
                 try:
-                    value = field.validator(value)
+                    value = field.val(value)
                 except ValueError, exc:
                     raise yaml.constructor.ConstructorError(None, None,
                             "invalid field %r (%s)" % (key, exc),

@@ -16,7 +16,7 @@ This module declares term nodes.
 from ..util import (listof, dictof, oneof, tupleof, maybe,
                     Clonable, Printable)
 from ..domain import BooleanDomain
-from .code import Expression, Space, Code, Unit, QueryExpression
+from .code import Expression, Space, Code, Unit, QueryExpr
 
 
 class PreTerm(Clonable, Printable):
@@ -616,7 +616,7 @@ class QueryTerm(PreTerm):
 
     def __init__(self, segment, expression):
         assert isinstance(segment, maybe(SegmentTerm))
-        assert isinstance(expression, QueryExpression)
+        assert isinstance(expression, QueryExpr)
         super(QueryTerm, self).__init__(expression)
         self.segment = segment
 

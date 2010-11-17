@@ -14,7 +14,7 @@ This module defines script options.
 
 
 from ..util import maybe
-from ..validator import Val, StrVal
+from ..validator import Validator, StrVal
 import re
 
 
@@ -39,7 +39,7 @@ class Option(object):
     `value_name` (a string or ``None``)
         The name of the option parameter.
 
-    `validator` (:class:`htsql.validator.Val` or ``None``)
+    `validator` (:class:`htsql.validator.Validator` or ``None``)
         The validator for the option parameter.
 
     `default`
@@ -78,7 +78,7 @@ class Option(object):
         assert short_name is not None or long_name is not None
         assert isinstance(with_value, bool)
         assert isinstance(value_name, maybe(str))
-        assert isinstance(validator, maybe(Val))
+        assert isinstance(validator, maybe(Validator))
         if with_value:
             assert validator is not None
         else:

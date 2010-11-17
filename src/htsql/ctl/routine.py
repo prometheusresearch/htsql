@@ -14,7 +14,7 @@ This module defines basic classes for implementing script routines.
 
 
 from .error import ScriptError
-from ..validator import Val
+from ..validator import Validator
 from ..util import maybe, trim_doc
 import re
 
@@ -31,7 +31,7 @@ class Argument(object):
         initialized, the value of the argument is assigned to
         the attribute.
 
-    `validator` (:class:`htsql.validator.Val`)
+    `validator` (:class:`htsql.validator.Validator`)
         The validator for the argument value.
 
     `default`
@@ -53,7 +53,7 @@ class Argument(object):
         # Sanity check on the arguments.
         assert isinstance(attribute, str)
         assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
-        assert isinstance(validator, Val)
+        assert isinstance(validator, Validator)
         assert isinstance(is_list, bool)
         assert isinstance(hint, maybe(str))
 

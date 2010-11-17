@@ -17,7 +17,7 @@ from util import DB, maybe, oneof, listof
 import re
 
 
-class Val(object):
+class Validator(object):
     """
     Validators check if a given value conforms the specified format.
 
@@ -31,18 +31,18 @@ class Val(object):
 
     Attribute `hint` gives a short textual description of the format.
 
-    :class:`Val` is the base abstract class for validators.  Its subclasses
-    provide validators for specific formats.
+    :class:`Validator` is the base abstract class for validators.  Its
+    subclasses provide validators for specific formats.
 
-    To create a validator for a new format, create a subclass of :class:`Val`
-    and override the :meth:`__call__()` method.  The method should accept
-    values of any type.  If the value does not conform to the format,
-    :exc:`ValueError` should be raised; otherwise the value should be
-    normalized and returned.
+    To create a validator for a new format, create a subclass of
+    :class:`Validator` and override the :meth:`__call__()` method.  The
+    method should accept values of any type.  If the value does not conform
+    to the format, :exc:`ValueError` should be raised; otherwise the value
+    should be normalized and returned.
 
     Example::
 
-        class IntVal(Val):
+        class IntVal(Validator):
 
             hint = "an integer"
 
@@ -65,7 +65,7 @@ class Val(object):
         return self.hint
 
 
-class AnyVal(Val):
+class AnyVal(Validator):
     """
     A no-op validator.
     """
@@ -77,7 +77,7 @@ class AnyVal(Val):
         return value
 
 
-class StrVal(Val):
+class StrVal(Validator):
     """
     Verifies if the value is a UTF-8 encoded string.
 
@@ -137,7 +137,7 @@ class StrVal(Val):
         return value
 
 
-class WordVal(Val):
+class WordVal(Validator):
     """
     Verifies if the value is a word.
 
@@ -194,7 +194,7 @@ class WordVal(Val):
         return value
 
 
-class ChoiceVal(Val):
+class ChoiceVal(Validator):
     """
     Verifies if the value belongs to a specified set of string constants.
 
@@ -240,7 +240,7 @@ class ChoiceVal(Val):
         return value
 
 
-class BoolVal(Val):
+class BoolVal(Validator):
     """
     Verifies if the value is Boolean.
 
@@ -284,7 +284,7 @@ class BoolVal(Val):
         return value
 
 
-class IntVal(Val):
+class IntVal(Validator):
     """
     Verifies if the value is an integer.
 
@@ -362,7 +362,7 @@ class PIntVal(IntVal):
         super(PIntVal, self).__init__(1, max_bound, is_nullable)
 
 
-class FloatVal(Val):
+class FloatVal(Validator):
     """
     Verifies if the value is an integer.
 
@@ -431,7 +431,7 @@ class UFloatVal(IntVal):
         super(UFloatVal, self).__init__(0, max_bound, is_nullable)
 
 
-class SeqVal(Val):
+class SeqVal(Validator):
     """
     Verifies if the value is a list with each list item conforming
     the specified format.
@@ -447,7 +447,7 @@ class SeqVal(Val):
     be represented literally; otherwise it should be quited with ``'`` and
     any single quote character should be duplicated.
 
-    `item_validator` (:class:`Val`)
+    `item_validator` (:class:`Validator`)
         Validator for the sequence elements.
 
     `length` (an integer or ``None``)
@@ -470,7 +470,7 @@ class SeqVal(Val):
 
     def __init__(self, item_validator, length=None, is_nullable=False):
         # Sanity check on the arguments.
-        assert isinstance(item_validator, Val)
+        assert isinstance(item_validator, Validator)
         assert isinstance(length, maybe(int))
         assert isinstance(is_nullable, bool)
 
@@ -574,7 +574,7 @@ class SeqVal(Val):
         return value
 
 
-class MapVal(Val):
+class MapVal(Validator):
     """
     Verifies if the value is a dictionary with keys and items conforming
     the specified formats.
@@ -591,10 +591,10 @@ class MapVal(Val):
     element is enclosed with ``'`` and has any single quote character
     duplicated.
 
-    `key_validator` (:class:`Val`)
+    `key_validator` (:class:`Validator`)
         Validator for the mapping keys.
 
-    `item_validator` (:class:`Val`)
+    `item_validator` (:class:`Validator`)
         Validator for the mapping values.
 
     `is_nullable` (Boolean)
@@ -615,8 +615,8 @@ class MapVal(Val):
 
     def __init__(self, key_validator, item_validator, is_nullable=False):
         # Sanity check on the arguments.
-        assert isinstance(key_validator, Val)
-        assert isinstance(item_validator, Val)
+        assert isinstance(key_validator, Validator)
+        assert isinstance(item_validator, Validator)
         assert isinstance(is_nullable, bool)
 
         self.key_validator = key_validator
@@ -761,7 +761,7 @@ class MapVal(Val):
         return value
 
 
-class ClassVal(Val):
+class ClassVal(Validator):
     """
     Verifies if the value is an instance of the specified class.
 
@@ -803,7 +803,7 @@ class ClassVal(Val):
         return value
 
 
-class DBVal(Val):
+class DBVal(Validator):
     """
     Verifies if the value is a connection URI.
 

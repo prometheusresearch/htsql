@@ -20,9 +20,8 @@ from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
                    DirectProductSpace, FiberProductSpace,
                    FilteredSpace, OrderedSpace, MaskedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
-                   QueryExpression, SegmentExpression,
-                   BatchExpression, ScalarBatchExpression,
-                   AggregateBatchExpression)
+                   QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
+                   AggregateBatchExpr)
 from .term import (PreTerm, Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, SegmentTerm, QueryTerm)
@@ -291,12 +290,12 @@ class CompilingState(object):
         # term tree when it processes all units sharing the same
         # form simultaneously.  To handle this case, we collect
         # all expressions into an auxiliary expression node
-        # `BatchExpression`.  When injected, the group expression
+        # `BatchExpr`.  When injected, the group expression
         # applies the multi-unit optimizations.
         if len(expressions) == 1:
             expression = expressions[0]
         else:
-            expression = BatchExpression(expressions, term.binding)
+            expression = BatchExpr(expressions, term.binding)
         # Realize and apply the `Inject` adapter.
         inject = Inject(expression, term, self)
         return inject()
@@ -666,7 +665,7 @@ class CompileQuery(Compile):
     Compiles a top-level query term.
     """
 
-    adapts(QueryExpression)
+    adapts(QueryExpr)
 
     def __call__(self):
         # Compile the segment term.
@@ -682,7 +681,7 @@ class CompileSegment(Compile):
     Compiles a segment term.
     """
 
-    adapts(SegmentExpression)
+    adapts(SegmentExpr)
 
     def __call__(self):
         # Initialize the all state spaces with a scalar space.
@@ -1165,8 +1164,8 @@ class InjectScalar(Inject):
         if self.unit in self.term.routes:
             return self.term
         # Form a batch consisting of a single unit.
-        batch = ScalarBatchExpression(self.unit.space, [self.unit],
-                                      self.unit.binding)
+        batch = ScalarBatchExpr(self.unit.space, [self.unit],
+                                self.unit.binding)
         # Delegate the injecting to the batch.
         return self.state.inject(self.term, [batch])
 
@@ -1188,9 +1187,9 @@ class InjectAggregate(Inject):
         if self.unit in self.term.routes:
             return self.term
         # Form a batch consisting of a single unit.
-        batch = AggregateBatchExpression(self.unit.plural_space,
-                                         self.unit.space, [self.unit],
-                                         self.unit.binding)
+        batch = AggregateBatchExpr(self.unit.plural_space,
+                                   self.unit.space, [self.unit],
+                                   self.unit.binding)
         # Delegate the injecting to the batch.
         return self.state.inject(self.term, [batch])
 
@@ -1271,7 +1270,7 @@ class InjectBatch(Inject):
     Injects a batch of expressions into a term.
     """
 
-    adapts(BatchExpression)
+    adapts(BatchExpr)
 
     def __init__(self, expression, term, state):
         super(InjectBatch, self).__init__(expression, term, state)
@@ -1320,8 +1319,8 @@ class InjectBatch(Inject):
         # Form and inject batches of matching scalar units.
         for space in scalar_spaces:
             batch_units = scalar_space_to_units[space]
-            batch = ScalarBatchExpression(space, batch_units,
-                                          self.term.binding)
+            batch = ScalarBatchExpr(space, batch_units,
+                                    self.term.binding)
             term = self.state.inject(term, [batch])
 
         # Find all aggregate units and group them by their plural and unit
@@ -1340,8 +1339,8 @@ class InjectBatch(Inject):
         for pair in aggregate_space_pairs:
             plural_space, space = pair
             group_units = aggregate_space_pair_to_units[pair]
-            group = AggregateBatchExpression(plural_space, space, group_units,
-                                             self.term.binding)
+            group = AggregateBatchExpr(plural_space, space, group_units,
+                                       self.term.binding)
             term = self.state.inject(term, [group])
 
         # Finally, just take and inject all the given expressions.  We don't
@@ -1357,7 +1356,7 @@ class InjectScalarBatch(Inject):
     Injects a batch of scalar units sharing the same space.
     """
 
-    adapts(ScalarBatchExpression)
+    adapts(ScalarBatchExpr)
 
     def __init__(self, expression, term, state):
         super(InjectScalarBatch, self).__init__(expression, term, state)
@@ -1426,7 +1425,7 @@ class InjectAggregateBatch(Inject):
     Injects a batch of aggregate units sharing the same plural and unit spaces.
     """
 
-    adapts(AggregateBatchExpression)
+    adapts(AggregateBatchExpr)
 
     def __init__(self, expression, term, state):
         super(InjectAggregateBatch, self).__init__(expression, term, state)

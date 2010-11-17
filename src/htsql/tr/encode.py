@@ -26,7 +26,7 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       DirectionBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
                    FilteredSpace, OrderedSpace,
-                   QueryExpression, SegmentExpression, LiteralCode,
+                   QueryExpr, SegmentExpr, LiteralCode,
                    EqualityCode, TotalEqualityCode,
                    ConjunctionCode, DisjunctionCode, NegationCode,
                    CastCode, ColumnUnit, ScalarUnit)
@@ -239,7 +239,7 @@ class EncodeQuery(Encode):
     """
     Encodes the top-level binding node :class:`htsql.tr.binding.QueryBinding`.
 
-    Produces an instance of :class:`htsql.tr.code.QueryExpression`.
+    Produces an instance of :class:`htsql.tr.code.QueryExpr`.
     """
 
     adapts(QueryBinding)
@@ -250,14 +250,14 @@ class EncodeQuery(Encode):
         if self.binding.segment is not None:
             segment = self.state.encode(self.binding.segment)
         # Construct the expression node.
-        return QueryExpression(segment, self.binding)
+        return QueryExpr(segment, self.binding)
 
 
 class EncodeSegment(Encode):
     """
     Encodes a segment binding node :class:`htsql.tr.binding.SegmentBinding`.
 
-    Produces an instance of :class:`htsql.tr.code.SegmentExpression`.
+    Produces an instance of :class:`htsql.tr.code.SegmentExpr`.
     """
 
     adapts(SegmentBinding)
@@ -286,7 +286,7 @@ class EncodeSegment(Encode):
         if order:
             space = OrderedSpace(space, order, None, None, self.binding)
         # Construct the expression node.
-        return SegmentExpression(space, elements, self.binding)
+        return SegmentExpr(space, elements, self.binding)
 
 
 class RelateRoot(Relate):

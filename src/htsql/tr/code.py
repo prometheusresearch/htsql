@@ -109,22 +109,22 @@ class Expression(Comparable, Clonable, Printable):
         return str(self.syntax)
 
 
-class QueryExpression(Expression):
+class QueryExpr(Expression):
     """
     Represents a whole HTSQL query.
 
-    `segment` (:class:`SegmentExpression` or ``None``)
+    `segment` (:class:`SegmentExpr` or ``None``)
         The query segment.
     """
 
     def __init__(self, segment, binding):
-        assert isinstance(segment, maybe(SegmentExpression))
+        assert isinstance(segment, maybe(SegmentExpr))
         assert isinstance(binding, QueryBinding)
-        super(QueryExpression, self).__init__(binding)
+        super(QueryExpr, self).__init__(binding)
         self.segment = segment
 
 
-class SegmentExpression(Expression):
+class SegmentExpr(Expression):
     """
     Represents a segment of an HTSQL query.
 
@@ -139,7 +139,7 @@ class SegmentExpression(Expression):
         assert isinstance(space, Space)
         assert isinstance(elements, listof(Code))
         assert isinstance(binding, SegmentBinding)
-        super(SegmentExpression, self).__init__(binding)
+        super(SegmentExpr, self).__init__(binding)
         self.space = space
         self.elements = elements
 
@@ -1502,7 +1502,7 @@ class CorrelatedUnit(AggregateUnitBase):
     """
 
 
-class BatchExpression(Expression):
+class BatchExpr(Expression):
     """
     Represents a collection of expression nodes.
 
@@ -1514,7 +1514,7 @@ class BatchExpression(Expression):
 
     def __init__(self, collection, binding):
         assert isinstance(collection, listof(Expression))
-        super(BatchExpression, self).__init__(binding)
+        super(BatchExpr, self).__init__(binding)
         self.collection = collection
 
     def __str__(self):
@@ -1524,7 +1524,7 @@ class BatchExpression(Expression):
                                   for expression in self.collection)
 
 
-class ScalarBatchExpression(BatchExpression):
+class ScalarBatchExpr(BatchExpr):
     """
     Represents a collection of sclar units sharing the same base space.
 
@@ -1542,11 +1542,11 @@ class ScalarBatchExpression(BatchExpression):
         assert isinstance(space, Space)
         assert isinstance(collection, listof(ScalarUnit))
         assert all(space == unit.space for unit in collection)
-        super(ScalarBatchExpression, self).__init__(collection, binding)
+        super(ScalarBatchExpr, self).__init__(collection, binding)
         self.space = space
 
 
-class AggregateBatchExpression(BatchExpression):
+class AggregateBatchExpr(BatchExpr):
     """
     Represents a collection of aggregate units sharing the same base and
     plural spaces.
@@ -1570,7 +1570,7 @@ class AggregateBatchExpression(BatchExpression):
         assert isinstance(collection, listof(AggregateUnit))
         assert all(plural_space == unit.plural_space and space == unit.space
                    for unit in collection)
-        super(AggregateBatchExpression, self).__init__(collection, binding)
+        super(AggregateBatchExpr, self).__init__(collection, binding)
         self.plural_space = plural_space
         self.space = space
 
