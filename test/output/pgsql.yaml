@@ -3009,7 +3009,7 @@ tests:
                                     (1 row)
 
          ----
-         /{null() as Title,null() as 'Title with whitespaces'}
+         /{null():as(Title),null():as('Title with whitespaces')}
          SELECT NULL, NULL
     - uri: /{null() as 'Hidden title' as 'Visible title'}
       status: 200 OK
@@ -3024,22 +3024,22 @@ tests:
                    (1 row)
 
          ----
-         /{null() as 'Hidden title' as 'Visible title'}
+         /{null():as('Hidden title'):as('Visible title')}
          SELECT NULL
     - uri: /{('HT' as HT)+('SQL' as SQL)}
       status: 200 OK
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |2
-         |                             |
-        -+-----------------------------+-
-         | ('HT' as HT)+('SQL' as SQL) |
-        -+-----------------------------+-
-         | HTSQL                       |
-                                 (1 row)
+         |                               |
+        -+-------------------------------+-
+         | ('HT':as(HT))+('SQL':as(SQL)) |
+        -+-------------------------------+-
+         | HTSQL                         |
+                                   (1 row)
 
          ----
-         /{('HT' as HT)+('SQL' as SQL)}
+         /{('HT':as(HT))+('SQL':as(SQL))}
          SELECT ('HT' || 'SQL')
     - uri: /(school as Schools)
       status: 200 OK
@@ -3063,7 +3063,7 @@ tests:
                                             (9 rows)
 
          ----
-         /(school as Schools)
+         /(school:as(Schools))
          SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
     - uri: /(school as Schools){name as Title}?code='art'
       status: 200 OK
@@ -3078,7 +3078,7 @@ tests:
                               (1 row)
 
          ----
-         /(school as Schools){name as Title}?code='art'
+         /(school:as(Schools)){name:as(Title)}?code='art'
          SELECT "school"."name" FROM "ad"."school" AS "school" WHERE ("school"."code" = 'art') ORDER BY "school"."code" ASC
     - uri: /school{* as Columns}
       status: 400 Bad Request
@@ -3192,7 +3192,7 @@ tests:
                                      (9 rows)
 
          ----
-         /school{name as Title+}
+         /school{name:as(Title)+}
          SELECT "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, "school"."code" ASC
     - uri: /school{name+ as Title}
       status: 400 Bad Request
@@ -3224,7 +3224,7 @@ tests:
                                      (9 rows)
 
          ----
-         /school{(name+) as Title}
+         /school{(name+):as(Title)}
          SELECT "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, "school"."code" ASC
     - uri: /course{department+,title,credits-}?number<200
       status: 200 OK
@@ -4561,8 +4561,8 @@ tests:
       status: 200 OK
       headers:
       - [Content-Type, text/csv; charset=UTF-8]
-      - [Content-Disposition, 'attachment; filename="((school as ''School Record''){code
-          as ''Code name'',name as ''Long name''}).csv"']
+      - [Content-Disposition, 'attachment; filename="((school:as(''School Record'')){code:as(''Code
+          name''),name:as(''Long name'')}).csv"']
       body: "Code name,Long name\r\nart,School of Art and Design\r\nbus,School of
         Business\r\nedu,College of Education\r\negn,School of Engineering\r\nla,\"School
         of Arts, Letters, and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical
@@ -4589,7 +4589,7 @@ tests:
                                                  (9 rows)
 
          ----
-         /(school as 'School Record'){code as 'Code name',name as 'Long name'}
+         /(school:as('School Record')){code:as('Code name'),name:as('Long name')}
          SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
     - uri: /(school as 'School Record'){code as 'Code name', name as 'Long name'}
       status: 200 OK
@@ -4600,7 +4600,7 @@ tests:
         <html>
         <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>/(school as 'School Record'){code as 'Code name',name as 'Long name'}</title>
+        <title>/(school:as('School Record')){code:as('Code name'),name:as('Long name')}</title>
         <style type="text/css">
         body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
         a:link, a:visited { color: #1f4884; text-decoration: none }
@@ -4626,7 +4626,7 @@ tests:
         </style>
         </head>
         <body>
-        <table class="page" summary="/(school as 'School Record'){code as 'Code name',name as 'Long name'}">
+        <table class="page" summary="/(school:as('School Record')){code:as('Code name'),name:as('Long name')}">
         <tr>
         <td class="content">
         <table class="chart" summary="School Record">
@@ -4643,7 +4643,7 @@ tests:
         <tr class="odd"><td>sc</td><td>School of Continuing Studies</td></tr>
         <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
         </tr>
-        <tr><td class="footer">/(school as 'School Record'){code as 'Code name',name as 'Long name'}</td></tr>
+        <tr><td class="footer">/(school:as('School Record')){code:as('Code name'),name:as('Long name')}</td></tr>
         </table>
         </body>
         </html>
@@ -5183,7 +5183,7 @@ tests:
                                                                 (100 rows)
 
          ----
-         /course{department as 'Dept Code'+,number as 'No.',credits-,title}
+         /course{department:as('Dept Code')+,number:as('No.'),credits-,title}
          SELECT "course"."department", "course"."number", "course"."credits", "course"."title" FROM "ad"."course" AS "course" ORDER BY 1 ASC, 3 DESC, 2 ASC
     - uri: /program{school.name, title}
       status: 200 OK
