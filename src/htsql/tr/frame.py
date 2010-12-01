@@ -19,6 +19,7 @@ from ..domain import Domain, BooleanDomain
 from .coerce import coerce
 from .code import Expression
 from .term import Term, QueryTerm
+from .signature import Signature
 
 
 class Clause(Comparable, Clonable, Printable):
@@ -274,7 +275,7 @@ class BranchFrame(Frame):
         assert isinstance(include, listof(Anchor))
         # Check that the join condition on the first subframe is no-op.
         if include:
-            assert include[0].is_cross
+            assert isinstance(include[0], LeadingAnchor)
         assert isinstance(embed, listof(NestedFrame))
         assert isinstance(select, listof(Phrase)) and len(select) > 0
         assert isinstance(where, maybe(Phrase))
@@ -352,6 +353,13 @@ class Anchor(Clause):
         self.is_right = is_right
         self.is_inner = (not is_left and not is_right)
         self.is_cross = (self.is_inner and condition is None)
+
+
+class LeadingAnchor(Anchor):
+
+    def __init__(self, frame, condition=None, is_left=False, is_right=False):
+        assert condition is None and is_left is False and is_right is False
+        super(LeadingAnchor, self).__init__(frame, condition, is_left, is_right)
 
 
 class QueryFrame(Clause):
@@ -754,24 +762,18 @@ class FunctionPhrase(Phrase):
         we expect :class:`Phrase` objects or lists of :class:`Phrase` objects.
     """
 
-    def __init__(self, domain, is_nullable, expression, **arguments):
-        # Extract the equality vector from the arguments (FIXME: messy).
-        equality_vector = [domain]
-        for key in sorted(arguments):
-            value = arguments[key]
-            # Argument values are expected to be `Phrase` objects,
-            # lists of `Phrase` objects or some other (immutable) objects.
-            if isinstance(value, list):
-                value = tuple(value)
-            equality_vector.append((key, value))
-        equality_vector = tuple(equality_vector)
+    def __init__(self, signature, domain, is_nullable, expression, **arguments):
+        assert isinstance(signature, Signature)
+        signature.verify(Phrase, arguments)
+        equality_vector = ((signature.__class__, domain)
+                           + signature.freeze(arguments))
         super(FunctionPhrase, self).__init__(domain, is_nullable, expression,
                                              equality_vector)
+        self.signature = signature
         self.arguments = arguments
         # For convenience, we permit access to function arguments using
         # object attributes.
-        for key in arguments:
-            setattr(self, key, arguments[key])
+        signature.extract(self, arguments)
 
 
 class ExportPhrase(Phrase):

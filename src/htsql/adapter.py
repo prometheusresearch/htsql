@@ -364,22 +364,16 @@ class Adapter(Component):
         # (2) The signature of the component is more specific than
         #     the signature of the other component.
         # Note: In case if the component has more than one signature,
-        # we require that each of the signatures is equal or more specific
-        # than some signature of the other component and at least one
-        # signature is strictly more specific than some signature
-        # of the other component.
-        is_greater = True
-        is_strict = False
+        # we require that at least one of the signatures is more
+        # specific than some signature of the other component.  This
+        # rule does not guarantee anti-symmetricity, so ambiguously
+        # defined implementations may make the ordering ill defined.
+        # Validness of the ordering is verified in `Component.realize()`.
         for self_signature in component.signatures:
             for other_signature in other.signatures:
                 if aresubclasses(self_signature, other_signature):
                     if self_signature != other_signature:
-                        is_strict = True
-                    break
-            else:
-                is_greater = False
-        if is_greater and is_strict:
-            return True
+                        return True
 
         return False
 

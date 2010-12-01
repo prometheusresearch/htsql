@@ -14,11 +14,11 @@ This module defines syntax nodes for the HTSQL grammar.
 
 
 from ..mark import Mark
-from ..util import maybe, listof
+from ..util import maybe, listof, Printable
 import re
 
 
-class Syntax(object):
+class Syntax(Printable):
     """
     Represents a syntax node.
 
@@ -276,50 +276,43 @@ class OperatorSyntax(CallSyntax):
 
 class FunctionOperatorSyntax(CallSyntax):
     """
-    Represents a binary function call in the operator form.
+    Represents a function call in the operator form.
 
-    This expression has the form::
+    This expression has one of the forms::
 
-        larg identifier rarg
+        arg1 :identifier
+        arg1 :identifier arg2
+        arg1 :identifier (arg2, ...)
 
     and is equivalent to the expression::
 
-        identifier(larg, rarg)
+        identifier(arg1, arg2, ...)
 
     `identifier` (:class:`IdentifierSyntax`)
         The function name.
 
-    `left_argument` (:class:`Syntax`)
-        The first argument.
-
-    `right_argument` (:class:`Syntax`)
-        The second argument.
+    `arguments` (:class:`Syntax`)
+        The function arguments.
     """
 
-    def __init__(self, identifier, left_argument, right_argument, mark):
+    def __init__(self, identifier, arguments, mark):
         assert isinstance(identifier, IdentifierSyntax)
-        # Note: the grammar may be changed to make the right argument optional.
-        assert isinstance(left_argument, Syntax)
-        assert isinstance(right_argument, Syntax)
+        assert isinstance(arguments, listof(Syntax))
+        assert len(arguments) > 0
 
         name = identifier.value
-        arguments = [left_argument, right_argument]
         super(FunctionOperatorSyntax, self).__init__(name, arguments, mark)
         self.identifier = identifier
-        self.left_argument = left_argument
-        self.right_argument = right_argument
 
     def __str__(self):
         # Generate an expression of the form:
-        #   larg identifier rarg
+        #   arg1:identifier(arg2,...)
         chunks = []
-        if self.left_argument is not None:
-            chunks.append(str(self.left_argument))
-            chunks.append(' ')
-        chunks.append(str(self.identifier))
-        if self.right_argument is not None:
-            chunks.append(' ')
-            chunks.append(str(self.right_argument))
+        chunks.append(str(self.arguments[0]))
+        chunks.append(':%s' % self.identifier)
+        if len(self.arguments) > 1:
+            chunks.append('(%s)' % ','.join(str(argument)
+                                            for argument in self.arguments[1:]))
         return ''.join(chunks)
 
 

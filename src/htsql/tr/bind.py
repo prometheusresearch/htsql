@@ -13,22 +13,22 @@ This module implements the binding process.
 """
 
 
-from ..adapter import Adapter, adapts
+from ..util import tupleof
+from ..adapter import Adapter, Protocol, adapts
 from ..context import context
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
-                     SieveSyntax, OperatorSyntax, FunctionOperatorSyntax,
-                     FunctionCallSyntax, GroupSyntax, SpecifierSyntax,
-                     IdentifierSyntax, WildcardSyntax, StringSyntax,
-                     NumberSyntax)
+                     SieveSyntax, CallSyntax, OperatorSyntax,
+                     FunctionOperatorSyntax, FunctionCallSyntax, GroupSyntax,
+                     SpecifierSyntax, IdentifierSyntax, WildcardSyntax,
+                     StringSyntax, NumberSyntax)
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding)
-from .lookup import lookup, itemize
+from .lookup import lookup, itemize, normalize
 from .coerce import coerce
-from .fn.function import call
 import decimal
 
 
@@ -157,7 +157,13 @@ class BindingState(object):
             If set, the lookup context is set to `base` when
             binding the syntax node.
         """
-        return call(syntax, self, base)
+        if base is not None:
+            self.push_base(base)
+        bind = BindByName(syntax, self)
+        bindings = list(bind())
+        if base is not None:
+            self.pop_base()
+        return bindings
 
 
 class Bind(Adapter):
@@ -410,6 +416,57 @@ class BindFunctionCall(Bind):
             base = self.state.bind(self.syntax.base)
         # Find and bind the function.
         return self.state.call(self.syntax, base)
+
+
+class BindByName(Protocol):
+
+    names = []
+
+    @classmethod
+    def dispatch(interface, syntax, *args, **kwds):
+        assert isinstance(syntax, CallSyntax)
+        return (syntax.name, len(syntax.arguments))
+
+    @classmethod
+    def matches(component, dispatch_key):
+        assert isinstance(dispatch_key, tupleof(str, int))
+        key_name, key_arity = dispatch_key
+        for name in component.names:
+            arity = None
+            if isinstance(name, tuple):
+                name, arity = name
+            if name == key_name:
+                if arity is None or arity == key_arity:
+                    return True
+        return False
+
+    @classmethod
+    def dominates(component, other):
+        if issubclass(component, other):
+            return True
+        for name in component.names:
+            arity = None
+            if isinstance(name, tuple):
+                name, arity = name
+            for other_name in other.names:
+                other_arity = None
+                if isinstance(other_name, tuple):
+                    other_name, other_arity = other_name
+                if normalize(name) == normalize(other_name):
+                    if arity is not None and other_arity is None:
+                        return True
+        return False
+
+    def __init__(self, syntax, state):
+        assert isinstance(syntax, CallSyntax)
+        assert isinstance(state, BindingState)
+        self.syntax = syntax
+        self.name = syntax.name
+        self.arguments = syntax.arguments
+        self.state = state
+
+    def __call__(self):
+        raise BindError("unknown function %s" % self.name, self.syntax.mark)
 
 
 class BindGroup(Bind):

@@ -18,6 +18,7 @@ from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax
 from .coerce import coerce
+from .signature import Signature
 
 
 class Binding(Clonable, Printable):
@@ -430,11 +431,13 @@ class FunctionBinding(Binding):
     # FIXME: should logical operators (`EqualityBinding`, etc) inherit
     # from `FunctionBinding`?
 
-    def __init__(self, domain, syntax, **arguments):
+    def __init__(self, signature, domain, syntax, **arguments):
+        assert isinstance(signature, Signature)
+        signature.verify(Binding, arguments)
         super(FunctionBinding, self).__init__(domain, syntax)
+        self.signature = signature
         self.arguments = arguments
-        for key in arguments:
-            setattr(self, key, arguments[key])
+        signature.extract(self, arguments)
 
 
 class WrapperBinding(Binding):

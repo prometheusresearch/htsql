@@ -20,3 +20,6 @@ This package implements the HTSQL-to-SQL translator.
 """
 
 
+from . import fn
+
+

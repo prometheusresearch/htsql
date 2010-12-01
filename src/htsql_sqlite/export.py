@@ -17,7 +17,7 @@ from htsql.addon import Addon
 import htsql_sqlite.connect
 import htsql_sqlite.split_sql
 import htsql_sqlite.introspect
-import htsql_sqlite.tr.serializer
+import htsql_sqlite.tr.serialize
 
 
 class ENGINE_SQLITE(Addon):

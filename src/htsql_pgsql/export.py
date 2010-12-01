@@ -17,7 +17,7 @@ from htsql.addon import Addon
 import htsql_pgsql.connect
 import htsql_pgsql.split_sql
 import htsql_pgsql.introspect
-import htsql_pgsql.tr.serializer
+import htsql_pgsql.tr.serialize
 
 
 class ENGINE_PGSQL(Addon):

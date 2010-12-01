@@ -136,7 +136,8 @@ class TextRenderer(Renderer):
         yield "\n"
         yield " ----\n"
         yield " %s\n" % request_title
-        yield " %s\n" % product.profile.plan.sql
+        for line in product.profile.plan.sql.splitlines():
+            yield " %s\n" % line
 
 
 class TextFormatter(Formatter):

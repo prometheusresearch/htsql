@@ -74,3 +74,14 @@ class CompileError(TranslateError):
     kind = "compile error"
 
 
+class SerializeError(TranslateError):
+    """
+    Represents a serializer error.
+
+    This error is raized when the serializer is unable to translate a clause
+    node to SQL.
+    """
+
+    kind = "serialize error"
+
+

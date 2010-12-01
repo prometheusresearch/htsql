@@ -19,7 +19,7 @@ from ..domain import BooleanDomain
 from .coerce import coerce
 from .code import (Code, LiteralCode, EqualityCode, TotalEqualityCode,
                    ConjunctionCode, DisjunctionCode, NegationCode,
-                   CastCode, Unit, ColumnUnit)
+                   FunctionCode, CastCode, Unit, ColumnUnit)
 from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
@@ -30,7 +30,8 @@ from .frame import (LeafFrame, ScalarFrame, TableFrame, BranchFrame,
                     EqualityPhrase, TotalEqualityPhrase, CastPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
                     ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
-                    Anchor)
+                    FunctionPhrase, Anchor, LeadingAnchor)
+from .signature import Signature
 
 
 class Claim(Comparable, Printable):
@@ -744,7 +745,7 @@ class AssembleUnary(AssembleBranch):
         self.state.pop_gate()
         # Generate a `JOIN` clause.  Since it is the first (and the only)
         # subframe, the `JOIN` clause has no join condition.
-        anchor = Anchor(frame, None, False, False)
+        anchor = LeadingAnchor(frame)
         # Return a `FROM` list with a single subframe.
         return [anchor]
 
@@ -908,7 +909,7 @@ class AssembleJoin(Assemble):
         # Restore the original dispatch context.
         self.state.pop_gate()
         # Generate a `JOIN` clause for the first subframe.
-        lanchor = Anchor(lframe, None, False, False)
+        lanchor = LeadingAnchor(lframe)
         # Set up the dispatch context for the second child term.
         self.state.push_gate(is_nullable=self.term.is_left,
                              dispatcher=self.term.rkid)
@@ -929,6 +930,8 @@ class AssembleJoin(Assemble):
         condition = None
         if equalities:
             condition = ConjunctionPhrase(equalities, self.term.expression)
+        elif self.term.is_left or self.term.is_right:
+            condition = TruePhrase(self.term.expression)
         # Generate a `JOIN` clause for the second subframe.
         ranchor = Anchor(rframe, condition,
                          self.term.is_left, self.term.is_right)
@@ -986,7 +989,7 @@ class AssembleEmbedding(Assemble):
         # Restore the original dispatch context.
         self.state.pop_gate()
         # Generate a `JOIN` clause (without any join condition).
-        anchor = Anchor(frame, None, False, False)
+        anchor = LeadingAnchor(frame)
         # Return a `FROM` list with a single subframe.
         return [anchor]
 
@@ -1261,6 +1264,51 @@ class EvaluateCast(Evaluate):
         # retranslate a generic cast phrase to a more specific expression.
         base = self.state.evaluate(self.code.base)
         return CastPhrase(base, self.code.domain, base.is_nullable, self.code)
+
+
+class EvaluateBySignature(Adapter):
+
+    adapts(Signature)
+
+    is_null_regular = True
+    is_nullable = True
+
+    @classmethod
+    def dispatch(interface, code, *args, **kwds):
+        assert isinstance(code, FunctionCode)
+        return (type(code.signature),)
+
+    def __init__(self, code, state):
+        assert isinstance(code, FunctionCode)
+        assert isinstance(state, AssemblingState)
+        self.code = code
+        self.state = state
+        self.signature = code.signature
+        self.domain = code.domain
+        self.arguments = code.arguments
+        self.signature.extract(self, self.arguments)
+
+    def __call__(self):
+        arguments = self.signature.apply(self.state.evaluate, self.arguments)
+        if self.is_null_regular:
+            is_nullable = any(argument.is_nullable
+                              for argument in self.signature.iterate(arguments))
+        else:
+            is_nullable = self.is_nullable
+        return FunctionPhrase(self.signature,
+                              self.domain,
+                              is_nullable,
+                              self.code,
+                              **arguments)
+
+
+class EvaluateFunction(Evaluate):
+
+    adapts(FunctionCode)
+
+    def __call__(self):
+        evaluate = EvaluateBySignature(self.code, self.state)
+        return evaluate()
 
 
 class EvaluateUnit(Evaluate):

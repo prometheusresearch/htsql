@@ -139,14 +139,14 @@ tests:
         # Is NULL function (null => true, otherwise => false).
         - uri: /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
         # Null If method (`this` is equal to one of the arguments => null, otherwise => `this`).
-        - uri: /{'Y'.null_if('X'),'Y'.null_if('Y'),
-                 (5).null_if(1,2,3),(5).null_if(1,2,3,4,5,6,7,8,9,10),
-                 null().null_if(null()),null().null_if('X')}
+        - uri: /{'Y':null_if('X'),'Y':null_if('Y'),
+                 (5):null_if(1,2,3),(5):null_if(1,2,3,4,5,6,7,8,9,10),
+                 null():null_if(null()),null():null_if('X')}
         # If Null method (`this` is null => the first non-null argument, otherwise => `this`).
-        - uri: /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()),
-                 null().if_null(null(),null(),null()),
-                 null().if_null(null(),null(),0),
-                 null().if_null(0,1,2,3,null())}
+        - uri: /{'X':if_null('Y'),null():if_null('X'),null():if_null(null()),
+                 null():if_null(null(),null(),null()),
+                 null():if_null(null(),null(),0),
+                 null():if_null(0,1,2,3,null())}
         # If function (if(`cond1`,`then1`,[`cond2`,`then2`,...],[`else`])).
         - uri: /{if(true(),1),if(false(),1),if(null(),1),
                  if(true(),1,0),if(false(),1,0),if(null(),1,0),
@@ -264,7 +264,7 @@ tests:
         # String cast (from untyped, string, integer, decimal, float).
         - uri: /{string('X'),string(string('X')), string(1), string(1.0), string(1e0)}
         # The Length method.
-        - uri: /{'HTSQL'.length(),''.length(),null().length()}
+        - uri: /{'HTSQL':length,'':length,null():length}
         # The Contains operator.
         - uri: /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'',
                  'HTSQL'~null(),null()~'HTSQL',null()~null()}
@@ -285,10 +285,12 @@ tests:
         # Invalid integer->date cast.
         - uri: /{date(1)}
           expect: 400
+          skip: true
         # Invalid date constructor.
         - uri: /{date(0,0,0)}
           expect: 409
           ignore: true
+          skip: true
         # Date arithmetic operations.
         - uri: /{date('2010-07-28')+1,date('2010-07-28')-1,
                  date('2010-07-28')-date('2009-07-28')}
@@ -389,6 +391,7 @@ tests:
     - uri: /department{code,min(course.credits),max(course.credits)}
     - uri: /department{code,avg(course.credits),
                             sum(course.credits)/count(course.credits)}
+      skip: true
     - uri: /department?exists(course)
     - uri: /school?!exists(department)
     - uri: /school{*,count(department)}

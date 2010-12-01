@@ -23,13 +23,14 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       SortBinding, EqualityBinding, TotalEqualityBinding,
                       ConjunctionBinding, DisjunctionBinding,
                       NegationBinding, CastBinding, WrapperBinding,
-                      DirectionBinding)
+                      DirectionBinding, FunctionBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode,
-                   EqualityCode, TotalEqualityCode,
+                   EqualityCode, TotalEqualityCode, FunctionCode,
                    ConjunctionCode, DisjunctionCode, NegationCode,
                    CastCode, ColumnUnit, ScalarUnit)
+from .signature import Signature
 
 
 class EncodingState(object):
@@ -683,6 +684,76 @@ class DirectCast(Direct):
         # because many expressions (including segment elements) are wrapped
         # with implicit cast nodes, which otherwise would mask any decorators.
         return self.state.direct(self.binding.base)
+
+
+class EncodeBySignatureBase(Adapter):
+
+    adapts(Signature)
+
+    @classmethod
+    def dispatch(interface, binding, *args, **kwds):
+        assert isinstance(binding, FunctionBinding)
+        return (type(binding.signature),)
+
+    def __init__(self, binding, state):
+        assert isinstance(binding, FunctionBinding)
+        assert isinstance(state, EncodingState)
+        self.binding = binding
+        self.state = state
+        self.signature = binding.signature
+        self.domain = binding.domain
+        self.arguments = binding.arguments
+        self.signature.extract(self, self.arguments)
+
+
+class EncodeBySignature(EncodeBySignatureBase):
+
+    def __call__(self):
+        arguments = self.signature.apply(self.state.encode, self.arguments)
+        return FunctionCode(self.signature,
+                            self.domain,
+                            self.binding,
+                            **arguments)
+
+
+class RelateBySignature(EncodeBySignatureBase):
+
+    def __call__(self):
+        raise EncodeError("expected a valid space expression",
+                          self.binding.mark)
+
+
+class DirectBySignature(EncodeBySignatureBase):
+
+    def __call__(self):
+        return None
+
+
+class EncodeFunction(Encode):
+
+    adapts(FunctionBinding)
+
+    def __call__(self):
+        encode = EncodeBySignature(self.binding, self.state)
+        return encode()
+
+
+class RelateFunction(Relate):
+
+    adapts(FunctionBinding)
+
+    def __call__(self):
+        relate = RelateBySignature(self.binding, self.state)
+        return relate()
+
+
+class DirectFunction(Direct):
+
+    adapts(FunctionBinding)
+
+    def __call__(self):
+        direct = DirectBySignature(self.binding, self.state)
+        return direct()
 
 
 class EncodeWrapper(Encode):

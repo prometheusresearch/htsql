@@ -24,8 +24,9 @@ from .frame import (Clause, Frame, ScalarFrame, TableFrame, BranchFrame,
                     TotalEqualityPhrase, TotalInequalityPhrase,
                     ConnectivePhraseBase, ConjunctionPhrase, NegationPhrase,
                     IsNullPhraseBase, IsNullPhrase, IsNotNullPhrase,
-                    IfNullPhrase, NullIfPhrase, CastPhrase,
-                    ExportPhrase, ReferencePhrase, Anchor)
+                    IfNullPhrase, NullIfPhrase, CastPhrase, FunctionPhrase,
+                    ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
+from .signature import Signature
 
 
 class ReducingState(object):
@@ -333,6 +334,10 @@ class CollapseBranch(Collapse):
             # `FROM` clause.
             if tail and not tail[0].is_cross:
                 return self.frame
+            # Indicate that the first anchor in the tail is now
+            # a leading anchor.
+            if tail:
+                tail[0] = LeadingAnchor(tail[0].frame)
             # Make a new frame with a reduced `FROM` clause.
             frame = self.frame.clone(include=tail)
             # Try to further collapse the frame.
@@ -435,6 +440,8 @@ class CollapseBranch(Collapse):
 
         # Merge the `FROM` clause of the head with the rest of the `FROM`
         # clause of the frame.
+        if not head.include and tail:
+            tail[0] = LeadingAnchor(tail[0].frame)
         include = head.include+tail
 
         # Merge the embedded subframes.
@@ -995,6 +1002,44 @@ class ConvertDomainToItself(Convert):
     def __call__(self):
         # Eliminate the cast operator, return a (reduced) operand.
         return self.state.reduce(self.base)
+
+
+class ReduceBySignature(Adapter):
+
+    adapts(Signature)
+
+    @classmethod
+    def dispatch(interface, phrase, *args, **kwds):
+        assert isinstance(phrase, FunctionPhrase)
+        return (type(phrase.signature),)
+
+    def __init__(self, phrase, state):
+        assert isinstance(phrase, FunctionPhrase)
+        assert isinstance(state, ReducingState)
+        self.phrase = phrase
+        self.state = state
+        self.signature = phrase.signature
+        self.domain = phrase.domain
+        self.arguments = phrase.arguments
+        self.is_nullable = phrase.is_nullable
+        self.signature.extract(self, self.arguments)
+
+    def __call__(self):
+        arguments = self.signature.apply(self.state.reduce, self.arguments)
+        return FunctionPhrase(self.signature,
+                              self.domain,
+                              self.is_nullable,
+                              self.phrase.expression,
+                              **arguments)
+
+
+class ReduceFunction(Reduce):
+
+    adapts(FunctionPhrase)
+
+    def __call__(self):
+        reduce = ReduceBySignature(self.phrase, self.state)
+        return reduce()
 
 
 class ReduceExport(Reduce):

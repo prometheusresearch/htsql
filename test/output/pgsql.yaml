@@ -32,7 +32,10 @@ tests:
 
          ----
          /school
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /department
       status: 200 OK
       headers:
@@ -73,7 +76,11 @@ tests:
 
          ----
          /department
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         ORDER BY 1 ASC
     - uri: /program
       status: 200 OK
       headers:
@@ -143,7 +150,12 @@ tests:
 
          ----
          /program
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school",
+                "program"."code",
+                "program"."title",
+                "program"."degree"
+         FROM "ad"."program" AS "program"
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course
       status: 200 OK
       headers:
@@ -696,7 +708,13 @@ tests:
 
          ----
          /course
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         ORDER BY 1 ASC, 2 ASC
     - uri: /instructor
       status: 200 OK
       headers:
@@ -749,7 +767,13 @@ tests:
 
          ----
          /instructor
-         SELECT "instructor"."code", "instructor"."title", "instructor"."full_name", "instructor"."phone", "instructor"."email" FROM "id"."instructor" AS "instructor" ORDER BY 1 ASC
+         SELECT "instructor"."code",
+                "instructor"."title",
+                "instructor"."full_name",
+                "instructor"."phone",
+                "instructor"."email"
+         FROM "id"."instructor" AS "instructor"
+         ORDER BY 1 ASC
     - uri: /confidential
       status: 200 OK
       headers:
@@ -799,7 +823,12 @@ tests:
 
          ----
          /confidential
-         SELECT "confidential"."instructor", "confidential"."ssn", "confidential"."pay_grade", "confidential"."home_phone" FROM "id"."confidential" AS "confidential" ORDER BY 1 ASC
+         SELECT "confidential"."instructor",
+                "confidential"."ssn",
+                "confidential"."pay_grade",
+                "confidential"."home_phone"
+         FROM "id"."confidential" AS "confidential"
+         ORDER BY 1 ASC
     - uri: /appointment
       status: 200 OK
       headers:
@@ -851,7 +880,11 @@ tests:
 
          ----
          /appointment
-         SELECT "appointment"."department", "appointment"."instructor", "appointment"."percent" FROM "id"."appointment" AS "appointment" ORDER BY 1 ASC, 2 ASC
+         SELECT "appointment"."department",
+                "appointment"."instructor",
+                "appointment"."percent"
+         FROM "id"."appointment" AS "appointment"
+         ORDER BY 1 ASC, 2 ASC
     - uri: /semester
       status: 200 OK
       headers:
@@ -877,7 +910,12 @@ tests:
 
          ----
          /semester
-         SELECT "semester"."year", "semester"."season", "semester"."begin_date", "semester"."end_date" FROM "cd"."semester" AS "semester" ORDER BY 1 ASC, 2 ASC
+         SELECT "semester"."year",
+                "semester"."season",
+                "semester"."begin_date",
+                "semester"."end_date"
+         FROM "cd"."semester" AS "semester"
+         ORDER BY 1 ASC, 2 ASC
     - uri: /class
       status: 200 OK
       headers:
@@ -985,7 +1023,15 @@ tests:
 
          ----
          /class
-         SELECT "class"."department", "class"."course", "class"."year", "class"."season", "class"."section", "class"."instructor", "class"."class_seq" FROM "cd"."class" AS "class" ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
+         SELECT "class"."department",
+                "class"."course",
+                "class"."year",
+                "class"."season",
+                "class"."section",
+                "class"."instructor",
+                "class"."class_seq"
+         FROM "cd"."class" AS "class"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
     - uri: /student
       status: 200 OK
       headers:
@@ -1063,10 +1109,10 @@ tests:
         \      | m      | 2001-05-05 | la     | uspan    | 2009-05-21 | true      |\n
         |  92039 | Syed Ishaq             | m      | 1992-10-23 | art    | gart     |
         2010-09-02 | true      |\n                                                                                              (51
-        rows)\n\n ----\n /student\n SELECT \"student\".\"number\", \"student\".\"name\",
-        \"student\".\"gender\", \"student\".\"dob\", \"student\".\"school\", \"student\".\"program\",
-        \"student\".\"start_date\", \"student\".\"is_active\" FROM \"ed\".\"student\"
-        AS \"student\" ORDER BY 1 ASC\n"
+        rows)\n\n ----\n /student\n SELECT \"student\".\"number\",\n        \"student\".\"name\",\n
+        \       \"student\".\"gender\",\n        \"student\".\"dob\",\n        \"student\".\"school\",\n
+        \       \"student\".\"program\",\n        \"student\".\"start_date\",\n        \"student\".\"is_active\"\n
+        FROM \"ed\".\"student\" AS \"student\"\n ORDER BY 1 ASC\n"
     - uri: /enrollment
       status: 200 OK
       headers:
@@ -1085,7 +1131,12 @@ tests:
 
          ----
          /enrollment
-         SELECT "enrollment"."student", "enrollment"."class", "enrollment"."status", "enrollment"."grade" FROM "ed"."enrollment" AS "enrollment" ORDER BY 1 ASC, 2 ASC
+         SELECT "enrollment"."student",
+                "enrollment"."class",
+                "enrollment"."status",
+                "enrollment"."grade"
+         FROM "ed"."enrollment" AS "enrollment"
+         ORDER BY 1 ASC, 2 ASC
     - uri: /prerequisite
       status: 200 OK
       headers:
@@ -1120,7 +1171,12 @@ tests:
 
          ----
          /prerequisite
-         SELECT "prerequisite"."of_department", "prerequisite"."of_course", "prerequisite"."on_department", "prerequisite"."on_course" FROM "rd"."prerequisite" AS "prerequisite" ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC
+         SELECT "prerequisite"."of_department",
+                "prerequisite"."of_course",
+                "prerequisite"."on_department",
+                "prerequisite"."on_course"
+         FROM "rd"."prerequisite" AS "prerequisite"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC
     - uri: /classification
       status: 200 OK
       headers:
@@ -1260,7 +1316,13 @@ tests:
 
          ----
          /classification
-         SELECT "classification"."code", "classification"."type", "classification"."title", "classification"."description", "classification"."part_of" FROM "rd"."classification" AS "classification" ORDER BY 1 ASC
+         SELECT "classification"."code",
+                "classification"."type",
+                "classification"."title",
+                "classification"."description",
+                "classification"."part_of"
+         FROM "rd"."classification" AS "classification"
+         ORDER BY 1 ASC
     - uri: /course_classification
       status: 200 OK
       headers:
@@ -1387,7 +1449,11 @@ tests:
 
          ----
          /course_classification
-         SELECT "course_classification"."department", "course_classification"."course", "course_classification"."classification" FROM "rd"."course_classification" AS "course_classification" ORDER BY 1 ASC, 2 ASC, 3 ASC
+         SELECT "course_classification"."department",
+                "course_classification"."course",
+                "course_classification"."classification"
+         FROM "rd"."course_classification" AS "course_classification"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC
     - uri: /program_requirement
       status: 200 OK
       headers:
@@ -1815,7 +1881,13 @@ tests:
 
          ----
          /program_requirement
-         SELECT "program_requirement"."school", "program_requirement"."program", "program_requirement"."classification", "program_requirement"."credit_hours", "program_requirement"."rationale" FROM "rd"."program_requirement" AS "program_requirement" ORDER BY 1 ASC, 2 ASC, 3 ASC
+         SELECT "program_requirement"."school",
+                "program_requirement"."program",
+                "program_requirement"."classification",
+                "program_requirement"."credit_hours",
+                "program_requirement"."rationale"
+         FROM "rd"."program_requirement" AS "program_requirement"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC
   - id: scalar-queries
     tests:
     - uri: /
@@ -1857,8 +1929,8 @@ tests:
           | \"\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\"
           |\n                                                                                                                                                                                                                  (1
           row)\n\n ----\n /{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2','%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F','%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'}\n
-          SELECT '', 'HTSQL', 'O''Reilly', '\u03BB\u03CC\u03B3\u03BF\u03C2', '\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F',
-          '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F'\n"
+          SELECT '',\n        'HTSQL',\n        'O''Reilly',\n        '\u03BB\u03CC\u03B3\u03BF\u03C2',\n
+          \       '\x01\x02\x03\x04\x05\x06\a\b\t\n \v\f\n \x0E\x0F','\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F'\n"
       - uri: /{0,1,100,65536}
         status: 200 OK
         headers:
@@ -1873,13 +1945,16 @@ tests:
 
            ----
            /{0,1,100,65536}
-           SELECT 0, 1, 100, 65536
+           SELECT 0,
+                  1,
+                  100,
+                  65536
       - uri: /{115792089237316195423570985008687907853269984665640564039457584007913129639936}
         status: 400 Bad Request
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
         body: |
-          invalid argument: invalid integer value:
+          serialize error: invalid integer value:
               /{115792089237316195423570985008687907853269984665640564039457584007913129639936}
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       - uri: /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}
@@ -1896,7 +1971,11 @@ tests:
 
            ----
            /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}
-           SELECT 0.0, 1.0, 3.14, 1E-11, 1234567890.0987654321
+           SELECT 0.0,
+                  1.0,
+                  3.14,
+                  1E-11,
+                  1234567890.0987654321
       - uri: /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1}
         status: 200 OK
         headers:
@@ -1926,13 +2005,16 @@ tests:
 
            ----
            /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}
-           SELECT 0.0::float8, 10.0::float8, 3.14159265359::float8, 0.271828182846::float8
+           SELECT 0.0::FLOAT8,
+                  10.0::FLOAT8,
+                  3.1415926535897931::FLOAT8,
+                  0.27182818284590449::FLOAT8
       - uri: /{1e1024}
         status: 400 Bad Request
         headers:
         - [Content-Type, text/plain; charset=UTF-8]
         body: |
-          invalid argument: invalid float value:
+          serialize error: invalid float value:
               /{1e1024}
                 ^^^^^^
     - id: scalar-functions
@@ -1953,7 +2035,8 @@ tests:
 
              ----
              /{true(),false()}
-             SELECT TRUE, FALSE
+             SELECT TRUE,
+                    FALSE
         - uri: /{boolean(null()),boolean(true()),boolean(false())}
           status: 200 OK
           headers:
@@ -1968,7 +2051,9 @@ tests:
 
              ----
              /{boolean(null()),boolean(true()),boolean(false())}
-             SELECT NULL, TRUE, FALSE
+             SELECT NULL,
+                    TRUE,
+                    FALSE
         - uri: /{boolean('true'),boolean('false')}
           status: 200 OK
           headers:
@@ -1983,7 +2068,8 @@ tests:
 
              ----
              /{boolean('true'),boolean('false')}
-             SELECT TRUE, FALSE
+             SELECT TRUE,
+                    FALSE
         - uri: /{boolean('')}
           status: 400 Bad Request
           headers:
@@ -2014,7 +2100,13 @@ tests:
 
              ----
              /{boolean(integer(null())),boolean(0),boolean(1),boolean(0.0),boolean(1.0),boolean(0e0),boolean(1e0)}
-             SELECT FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
+             SELECT FALSE,
+                    TRUE,
+                    TRUE,
+                    TRUE,
+                    TRUE,
+                    TRUE,
+                    TRUE
         - uri: /{boolean(string(null())),boolean(string('')),boolean(string('X')),
             boolean(string('true')),boolean(string('false'))}
           status: 200 OK
@@ -2030,7 +2122,11 @@ tests:
 
              ----
              /{boolean(string(null())),boolean(string('')),boolean(string('X')),boolean(string('true')),boolean(string('false'))}
-             SELECT FALSE, FALSE, TRUE, TRUE, TRUE
+             SELECT FALSE,
+                    FALSE,
+                    TRUE,
+                    TRUE,
+                    TRUE
         - uri: /{false()&false(),false()&true(),true()&false(),true()&true(), null()&false(),null()&true(),null()&null()}
           status: 200 OK
           headers:
@@ -2045,7 +2141,13 @@ tests:
 
              ----
              /{false()&false(),false()&true(),true()&false(),true()&true(),null()&false(),null()&true(),null()&null()}
-             SELECT FALSE, FALSE, FALSE, TRUE, FALSE, NULL, NULL
+             SELECT FALSE,
+                    FALSE,
+                    FALSE,
+                    TRUE,
+                    FALSE,
+                    NULL,
+                    NULL
         - uri: /{string('')&string('X'),0&1}
           status: 200 OK
           headers:
@@ -2060,7 +2162,8 @@ tests:
 
              ----
              /{string('')&string('X'),0&1}
-             SELECT FALSE, TRUE
+             SELECT FALSE,
+                    TRUE
         - uri: /{null()&null(),integer(null())&null(),integer(null())&integer(null())}
           status: 200 OK
           headers:
@@ -2075,7 +2178,9 @@ tests:
 
              ----
              /{null()&null(),integer(null())&null(),integer(null())&integer(null())}
-             SELECT NULL, FALSE, FALSE
+             SELECT NULL,
+                    FALSE,
+                    FALSE
         - uri: /{false()|false(),false()|true(),true()|false(),true()|true(), null()|false(),null()|true(),null()|null()}
           status: 200 OK
           headers:
@@ -2090,7 +2195,13 @@ tests:
 
              ----
              /{false()|false(),false()|true(),true()|false(),true()|true(),null()|false(),null()|true(),null()|null()}
-             SELECT FALSE, TRUE, TRUE, TRUE, NULL, TRUE, NULL
+             SELECT FALSE,
+                    TRUE,
+                    TRUE,
+                    TRUE,
+                    NULL,
+                    TRUE,
+                    NULL
         - uri: /{string('')|string('X'),0|1,integer(null())|string(null())}
           status: 200 OK
           headers:
@@ -2105,7 +2216,9 @@ tests:
 
              ----
              /{string('')|string('X'),0|1,integer(null())|string(null())}
-             SELECT TRUE, TRUE, FALSE
+             SELECT TRUE,
+                    TRUE,
+                    FALSE
         - uri: /{!true(),!false(),!null()}
           status: 200 OK
           headers:
@@ -2120,7 +2233,9 @@ tests:
 
              ----
              /{!true(),!false(),!null()}
-             SELECT FALSE, TRUE, NULL
+             SELECT FALSE,
+                    TRUE,
+                    NULL
         - uri: /{!string(''),!string('X'),!1,!integer(null())}
           status: 200 OK
           headers:
@@ -2135,7 +2250,10 @@ tests:
 
              ----
              /{!string(''),!string('X'),!1,!integer(null())}
-             SELECT TRUE, FALSE, FALSE, TRUE
+             SELECT TRUE,
+                    FALSE,
+                    FALSE,
+                    TRUE
       - id: comparison-functions-and-operators
         tests:
         - uri: /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
@@ -2152,39 +2270,52 @@ tests:
 
              ----
              /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
-             SELECT TRUE, FALSE, FALSE, FALSE
-        - uri: /{'Y'.null_if('X'),'Y'.null_if('Y'), (5).null_if(1,2,3),(5).null_if(1,2,3,4,5,6,7,8,9,10),
-            null().null_if(null()),null().null_if('X')}
+             SELECT TRUE,
+                    FALSE,
+                    FALSE,
+                    FALSE
+        - uri: /{'Y':null_if('X'),'Y':null_if('Y'), (5):null_if(1,2,3),(5):null_if(1,2,3,4,5,6,7,8,9,10),
+            null():null_if(null()),null():null_if('X')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
              |                                                                                                                                             |
             -+---------------------------------------------------------------------------------------------------------------------------------------------+-
-             | 'Y'.null_if('X') | 'Y'.null_if('Y') | (5).null_if(1,2,3) | (5).null_if(1,2,3,4,5,6,7,8,9,10) | null().null_if(null()) | null().null_if('X') |
+             | 'Y':null_if('X') | 'Y':null_if('Y') | (5):null_if(1,2,3) | (5):null_if(1,2,3,4,5,6,7,8,9,10) | null():null_if(null()) | null():null_if('X') |
             -+------------------+------------------+--------------------+-----------------------------------+------------------------+---------------------+-
              | Y                |                  |                  5 |                                   |                        |                     |
                                                                                                                                                      (1 row)
 
              ----
-             /{'Y'.null_if('X'),'Y'.null_if('Y'),(5).null_if(1,2,3),(5).null_if(1,2,3,4,5,6,7,8,9,10),null().null_if(null()),null().null_if('X')}
-             SELECT NULLIF('Y', 'X'), NULL, NULLIF(NULLIF(NULLIF(5, 1), 2), 3), NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(5, 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), NULL, NULL
-        - uri: /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()), null().if_null(null(),null(),null()),
-            null().if_null(null(),null(),0), null().if_null(0,1,2,3,null())}
+             /{'Y':null_if('X'),'Y':null_if('Y'),(5):null_if(1,2,3),(5):null_if(1,2,3,4,5,6,7,8,9,10),null():null_if(null()),null():null_if('X')}
+             SELECT NULLIF('Y', 'X'),
+                    NULL,
+                    NULLIF(NULLIF(NULLIF(5, 1), 2), 3),
+                    NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(5, 1), 2), 3), 4), 5), 6), 7), 8), 9), 10),
+                    NULL,
+                    NULL
+        - uri: /{'X':if_null('Y'),null():if_null('X'),null():if_null(null()), null():if_null(null(),null(),null()),
+            null():if_null(null(),null(),0), null():if_null(0,1,2,3,null())}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
              |                                                                                                                                                                           |
             -+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-
-             | 'X'.if_null('Y') | null().if_null('X') | null().if_null(null()) | null().if_null(null(),null(),null()) | null().if_null(null(),null(),0) | null().if_null(0,1,2,3,null()) |
+             | 'X':if_null('Y') | null():if_null('X') | null():if_null(null()) | null():if_null(null(),null(),null()) | null():if_null(null(),null(),0) | null():if_null(0,1,2,3,null()) |
             -+------------------+---------------------+------------------------+--------------------------------------+---------------------------------+--------------------------------+-
              | X                | X                   |                        |                                      |                               0 |                              0 |
                                                                                                                                                                                    (1 row)
 
              ----
-             /{'X'.if_null('Y'),null().if_null('X'),null().if_null(null()),null().if_null(null(),null(),null()),null().if_null(null(),null(),0),null().if_null(0,1,2,3,null())}
-             SELECT COALESCE('X', 'Y'), COALESCE(NULL, 'X'), COALESCE(NULL, NULL), COALESCE(NULL, NULL, NULL, NULL), COALESCE(NULL, NULL, NULL, 0), COALESCE(NULL, 0, 1, 2, 3, NULL)
+             /{'X':if_null('Y'),null():if_null('X'),null():if_null(null()),null():if_null(null(),null(),null()),null():if_null(null(),null(),0),null():if_null(0,1,2,3,null())}
+             SELECT 'X',
+                    'X',
+                    NULL,
+                    NULL,
+                    0,
+                    0
         - uri: /{if(true(),1),if(false(),1),if(null(),1), if(true(),1,0),if(false(),1,0),if(null(),1,0),
             if(true(),1,true(),2),if(true(),1,false(),2), if(false(),1,true(),2),if(false(),1,false(),2),
             if(false(),1,false(),2,0)}
@@ -2201,7 +2332,17 @@ tests:
 
              ----
              /{if(true(),1),if(false(),1),if(null(),1),if(true(),1,0),if(false(),1,0),if(null(),1,0),if(true(),1,true(),2),if(true(),1,false(),2),if(false(),1,true(),2),if(false(),1,false(),2),if(false(),1,false(),2,0)}
-             SELECT (CASE WHEN TRUE THEN 1 END), (CASE WHEN FALSE THEN 1 END), (CASE WHEN NULL THEN 1 END), (CASE WHEN TRUE THEN 1 ELSE 0 END), (CASE WHEN FALSE THEN 1 ELSE 0 END), (CASE WHEN NULL THEN 1 ELSE 0 END), (CASE WHEN TRUE THEN 1 WHEN TRUE THEN 2 END), (CASE WHEN TRUE THEN 1 WHEN FALSE THEN 2 END), (CASE WHEN FALSE THEN 1 WHEN TRUE THEN 2 END), (CASE WHEN FALSE THEN 1 WHEN FALSE THEN 2 END), (CASE WHEN FALSE THEN 1 WHEN FALSE THEN 2 ELSE 0 END)
+             SELECT (CASE WHEN TRUE THEN 1 END),
+                    (CASE WHEN FALSE THEN 1 END),
+                    (CASE WHEN NULL THEN 1 END),
+                    (CASE WHEN TRUE THEN 1 ELSE 0 END),
+                    (CASE WHEN FALSE THEN 1 ELSE 0 END),
+                    (CASE WHEN NULL THEN 1 ELSE 0 END),
+                    (CASE WHEN TRUE THEN 1 WHEN TRUE THEN 2 END),
+                    (CASE WHEN TRUE THEN 1 WHEN FALSE THEN 2 END),
+                    (CASE WHEN FALSE THEN 1 WHEN TRUE THEN 2 END),
+                    (CASE WHEN FALSE THEN 1 WHEN FALSE THEN 2 END),
+                    (CASE WHEN FALSE THEN 1 WHEN FALSE THEN 2 ELSE 0 END)
         - uri: /{switch('Y','X',1),switch('Y','Y',1), switch('Y','X',1,0),switch('Y','Y',1,0),
             switch(null(),null(),1,0), switch('Y','X',1,'Y',2,'Z',3), switch('Y','A',1,'B',2,'C',3,0)}
           status: 200 OK
@@ -2217,7 +2358,13 @@ tests:
 
              ----
              /{switch('Y','X',1),switch('Y','Y',1),switch('Y','X',1,0),switch('Y','Y',1,0),switch(null(),null(),1,0),switch('Y','X',1,'Y',2,'Z',3),switch('Y','A',1,'B',2,'C',3,0)}
-             SELECT (CASE 'Y' WHEN 'X' THEN 1 END), (CASE 'Y' WHEN 'Y' THEN 1 END), (CASE 'Y' WHEN 'X' THEN 1 ELSE 0 END), (CASE 'Y' WHEN 'Y' THEN 1 ELSE 0 END), (CASE NULL WHEN NULL THEN 1 ELSE 0 END), (CASE 'Y' WHEN 'X' THEN 1 WHEN 'Y' THEN 2 WHEN 'Z' THEN 3 END), (CASE 'Y' WHEN 'A' THEN 1 WHEN 'B' THEN 2 WHEN 'C' THEN 3 ELSE 0 END)
+             SELECT (CASE 'Y' WHEN 'X' THEN 1 END),
+                    (CASE 'Y' WHEN 'Y' THEN 1 END),
+                    (CASE 'Y' WHEN 'X' THEN 1 ELSE 0 END),
+                    (CASE 'Y' WHEN 'Y' THEN 1 ELSE 0 END),
+                    (CASE NULL WHEN NULL THEN 1 ELSE 0 END),
+                    (CASE 'Y' WHEN 'X' THEN 1 WHEN 'Y' THEN 2 WHEN 'Z' THEN 3 END),
+                    (CASE 'Y' WHEN 'A' THEN 1 WHEN 'B' THEN 2 WHEN 'C' THEN 3 ELSE 0 END)
         - uri: /{1=1,1=0,1=null(),null()=null(), 1!=1,1!=0,1!=null(),null()!=null(),
             1==1,1==0,1==null(),null()==null(), 1!==1,1!==0,1!==null(),null()!==null()}
           status: 200 OK
@@ -2233,7 +2380,22 @@ tests:
 
              ----
              /{1=1,1=0,1=null(),null()=null(),1!=1,1!=0,1!=null(),null()!=null(),1==1,1==0,1==null(),null()==null(),1!==1,1!==0,1!==null(),null()!==null()}
-             SELECT (1 = 1), (1 = 0), NULL, NULL, (1 != 1), (1 != 0), NULL, NULL, (1 = 1), (1 = 0), FALSE, TRUE, (1 != 1), (1 != 0), TRUE, FALSE
+             SELECT (1 = 1),
+                    (1 = 0),
+                    NULL,
+                    NULL,
+                    (1 <> 1),
+                    (1 <> 0),
+                    NULL,
+                    NULL,
+                    (1 = 1),
+                    (1 = 0),
+                    FALSE,
+                    TRUE,
+                    (1 <> 1),
+                    (1 <> 0),
+                    TRUE,
+                    FALSE
         - uri: /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
           status: 200 OK
           headers:
@@ -2248,7 +2410,11 @@ tests:
 
              ----
              /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
-             SELECT ('X' = 'X'), (CAST(1 AS NUMERIC) = 1.0), (CAST(1 AS FLOAT) = 1.0::float8), (CAST(1.0 AS FLOAT) = 1.0::float8), (1 = 1)
+             SELECT ('X' = 'X'),
+                    (CAST(1 AS DECIMAL) = 1.0),
+                    (CAST(1 AS DOUBLE PRECISION) = 1.0::FLOAT8),
+                    (CAST(1.0 AS DOUBLE PRECISION) = 1.0::FLOAT8),
+                    (1 = 1)
         - uri: /{0={1,2,3},2={1,2,3},0!={1,2,3},2!={1,2,3}}
           status: 200 OK
           headers:
@@ -2263,7 +2429,10 @@ tests:
 
              ----
              /{0={1,2,3},2={1,2,3},0!={1,2,3},2!={1,2,3}}
-             SELECT (0 IN (1, 2, 3)), (2 IN (1, 2, 3)), (0 NOT IN (1, 2, 3)), (2 NOT IN (1, 2, 3))
+             SELECT (0 IN (1, 2, 3)),
+                    (2 IN (1, 2, 3)),
+                    (0 NOT IN (1, 2, 3)),
+                    (2 NOT IN (1, 2, 3))
         - uri: /{'X'!={'A','B','C'},1.0={0,1,2}}
           status: 200 OK
           headers:
@@ -2278,13 +2447,14 @@ tests:
 
              ----
              /{'X'!={'A','B','C'},1.0={0,1,2}}
-             SELECT ('X' NOT IN ('A', 'B', 'C')), (1.0 IN (CAST(0 AS NUMERIC), CAST(1 AS NUMERIC), CAST(2 AS NUMERIC)))
+             SELECT ('X' NOT IN ('A', 'B', 'C')),
+                    (1.0 IN (CAST(0 AS DECIMAL), CAST(1 AS DECIMAL), CAST(2 AS DECIMAL)))
         - uri: /{integer('1')=string('1')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: incompatible types:
+            bind error: incompatible arguments:
                 /{integer('1')=string('1')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y', 'X'<null(),'X'<=null(),'X'>null(),'X'>=null()}
@@ -2301,7 +2471,14 @@ tests:
 
              ----
              /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y','X'<null(),'X'<=null(),'X'>null(),'X'>=null()}
-             SELECT ('X' < 'Y'), ('X' <= 'Y'), ('X' > 'Y'), ('X' >= 'Y'), ('X' < NULL), ('X' <= NULL), ('X' > NULL), ('X' >= NULL)
+             SELECT ('X' < 'Y'),
+                    ('X' <= 'Y'),
+                    ('X' > 'Y'),
+                    ('X' >= 'Y'),
+                    ('X' < NULL),
+                    ('X' <= NULL),
+                    ('X' > NULL),
+                    ('X' >= NULL)
         - uri: /{1<2,1<=2,1>2,1>=2, 1<2.0,1<=2.0,1>2.0,1>=2.0, 1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}
           status: 200 OK
           headers:
@@ -2316,13 +2493,24 @@ tests:
 
              ----
              /{1<2,1<=2,1>2,1>=2,1<2.0,1<=2.0,1>2.0,1>=2.0,1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}
-             SELECT (1 < 2), (1 <= 2), (1 > 2), (1 >= 2), (CAST(1 AS NUMERIC) < 2.0), (CAST(1 AS NUMERIC) <= 2.0), (CAST(1 AS NUMERIC) > 2.0), (CAST(1 AS NUMERIC) >= 2.0), (1.0::float8 < CAST(2.0 AS FLOAT)), (1.0::float8 <= CAST(2.0 AS FLOAT)), (1.0::float8 > CAST(2.0 AS FLOAT)), (1.0::float8 > CAST(2.0 AS FLOAT))
+             SELECT (1 < 2),
+                    (1 <= 2),
+                    (1 > 2),
+                    (1 >= 2),
+                    (CAST(1 AS DECIMAL) < 2.0),
+                    (CAST(1 AS DECIMAL) <= 2.0),
+                    (CAST(1 AS DECIMAL) > 2.0),
+                    (CAST(1 AS DECIMAL) >= 2.0),
+                    (1.0::FLOAT8 < CAST(2.0 AS DOUBLE PRECISION)),
+                    (1.0::FLOAT8 <= CAST(2.0 AS DOUBLE PRECISION)),
+                    (1.0::FLOAT8 > CAST(2.0 AS DOUBLE PRECISION)),
+                    (1.0::FLOAT8 > CAST(2.0 AS DOUBLE PRECISION))
         - uri: /{integer('1')<string('1')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: incompatible types:
+            bind error: incompatible arguments:
                 /{integer('1')<string('1')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
       - id: numeric-functions-and-operators
@@ -2341,7 +2529,11 @@ tests:
 
              ----
              /{integer('1'),integer(string('1')),integer(1),integer(1.0),integer(1e0)}
-             SELECT 1, CAST('1' AS INTEGER), 1, CAST(1.0 AS INTEGER), CAST(1.0::float8 AS INTEGER)
+             SELECT 1,
+                    CAST('1' AS INTEGER),
+                    1,
+                    CAST(1.0 AS INTEGER),
+                    CAST(1.0::FLOAT8 AS INTEGER)
         - uri: /{integer(65536.0),integer(65.536),integer(655.36), integer(65536e0),integer(65536e-3),integer(65535e-2)}
           status: 200 OK
           headers:
@@ -2356,7 +2548,12 @@ tests:
 
              ----
              /{integer(65536.0),integer(65.536),integer(655.36),integer(65536e0),integer(65536e-3),integer(65535e-2)}
-             SELECT CAST(65536.0 AS INTEGER), CAST(65.536 AS INTEGER), CAST(655.36 AS INTEGER), CAST(65536.0::float8 AS INTEGER), CAST(65.536::float8 AS INTEGER), CAST(655.35::float8 AS INTEGER)
+             SELECT CAST(65536.0 AS INTEGER),
+                    CAST(65.536 AS INTEGER),
+                    CAST(655.36 AS INTEGER),
+                    CAST(65536.0::FLOAT8 AS INTEGER),
+                    CAST(65.536000000000001::FLOAT8 AS INTEGER),
+                    CAST(655.35000000000002::FLOAT8 AS INTEGER)
         - uri: /{integer(100000000000000000000.0)}
           status: 409 Conflict
           headers:
@@ -2408,7 +2605,11 @@ tests:
 
              ----
              /{decimal('1.5'),decimal(string('1.5')),decimal(15),decimal(1.5),decimal(15e-1)}
-             SELECT 1.5, CAST('1.5' AS NUMERIC), CAST(15 AS NUMERIC), 1.5, CAST(1.5::float8 AS NUMERIC)
+             SELECT 1.5,
+                    CAST('1.5' AS DECIMAL),
+                    CAST(15 AS DECIMAL),
+                    1.5,
+                    CAST(1.5::FLOAT8 AS DECIMAL)
         - uri: /{decimal(65535e0),decimal(65535e10),decimal(65535e-10)}
           status: 200 OK
           headers:
@@ -2423,7 +2624,9 @@ tests:
 
              ----
              /{decimal(65535e0),decimal(65535e10),decimal(65535e-10)}
-             SELECT CAST(65535.0::float8 AS NUMERIC), CAST(6.5535e+14::float8 AS NUMERIC), CAST(6.5535e-06::float8 AS NUMERIC)
+             SELECT CAST(65535.0::FLOAT8 AS DECIMAL),
+                    CAST(655350000000000.0::FLOAT8 AS DECIMAL),
+                    CAST(6.5535e-06::FLOAT8 AS DECIMAL)
         - uri: /{decimal(1e300),decimal(1e-300)}
           status: 200 OK
           headers:
@@ -2438,7 +2641,8 @@ tests:
 
              ----
              /{decimal(1e300),decimal(1e-300)}
-             SELECT CAST(1e+300::float8 AS NUMERIC), CAST(1e-300::float8 AS NUMERIC)
+             SELECT CAST(1.0000000000000001e+300::FLOAT8 AS DECIMAL),
+                    CAST(1e-300::FLOAT8 AS DECIMAL)
         - uri: /{decimal('X')}
           status: 400 Bad Request
           headers:
@@ -2472,7 +2676,11 @@ tests:
 
              ----
              /{float('1.5'),float(string('1.5')),float(15),float(1.5),float(15e-1)}
-             SELECT 1.5::float8, CAST('1.5' AS FLOAT), CAST(15 AS FLOAT), CAST(1.5 AS FLOAT), 1.5::float8
+             SELECT 1.5::FLOAT8,
+                    CAST('1.5' AS DOUBLE PRECISION),
+                    CAST(15 AS DOUBLE PRECISION),
+                    CAST(1.5 AS DOUBLE PRECISION),
+                    1.5::FLOAT8
         - uri: /{float(123456789.123456789)}
           status: 200 OK
           headers:
@@ -2487,7 +2695,7 @@ tests:
 
              ----
              /{float(123456789.123456789)}
-             SELECT CAST(123456789.123456789 AS FLOAT)
+             SELECT CAST(123456789.123456789 AS DOUBLE PRECISION)
         - uri: /{float('X')}
           status: 400 Bad Request
           headers:
@@ -2521,7 +2729,16 @@ tests:
 
              ----
              /{+2,+2.0,+2e0,-2,-2.0,-2e0,++1,+-1,-+1,--1}
-             SELECT (+ 2), (+ 2.0), (+ 2.0::float8), (- 2), (- 2.0), (- 2.0::float8), (+ (+ 1)), (+ (- 1)), (- (+ 1)), (- (- 1))
+             SELECT 2,
+                    2.0,
+                    2.0::FLOAT8,
+                    (- 2),
+                    (- 2.0),
+                    (- 2.0::FLOAT8),
+                    1,
+                    (- 1),
+                    (- 1),
+                    (- (- 1))
         - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
           status: 200 OK
           headers:
@@ -2536,7 +2753,12 @@ tests:
 
              ----
              /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
-             SELECT (2 + 2), (CAST(2 AS NUMERIC) + 2.0), (CAST(2 AS FLOAT) + 2.0::float8), (2.0 + 2.0), (CAST(2.0 AS FLOAT) + 2.0::float8), (2.0::float8 + 2.0::float8)
+             SELECT (2 + 2),
+                    (CAST(2 AS DECIMAL) + 2.0),
+                    (CAST(2 AS DOUBLE PRECISION) + 2.0::FLOAT8),
+                    (2.0 + 2.0),
+                    (CAST(2.0 AS DOUBLE PRECISION) + 2.0::FLOAT8),
+                    (2.0::FLOAT8 + 2.0::FLOAT8)
         - uri: /{2-1,2-1.0,2-1e0,2.0-1.0,2.0-1e0,2e0-1e0}
           status: 200 OK
           headers:
@@ -2551,7 +2773,12 @@ tests:
 
              ----
              /{2-1,2-1.0,2-1e0,2.0-1.0,2.0-1e0,2e0-1e0}
-             SELECT (2 - 1), (CAST(2 AS NUMERIC) - 1.0), (CAST(2 AS FLOAT) - 1.0::float8), (2.0 - 1.0), (CAST(2.0 AS FLOAT) - 1.0::float8), (2.0::float8 - 1.0::float8)
+             SELECT (2 - 1),
+                    (CAST(2 AS DECIMAL) - 1.0),
+                    (CAST(2 AS DOUBLE PRECISION) - 1.0::FLOAT8),
+                    (2.0 - 1.0),
+                    (CAST(2.0 AS DOUBLE PRECISION) - 1.0::FLOAT8),
+                    (2.0::FLOAT8 - 1.0::FLOAT8)
         - uri: /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}
           status: 200 OK
           headers:
@@ -2566,7 +2793,12 @@ tests:
 
              ----
              /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}
-             SELECT (5 * 5), (CAST(5 AS NUMERIC) * 5.0), (CAST(5 AS FLOAT) * 5.0::float8), (5.0 * 5.0), (CAST(5.0 AS FLOAT) * 5.0::float8), (5.0::float8 * 5.0::float8)
+             SELECT (5 * 5),
+                    (CAST(5 AS DECIMAL) * 5.0),
+                    (CAST(5 AS DOUBLE PRECISION) * 5.0::FLOAT8),
+                    (5.0 * 5.0),
+                    (CAST(5.0 AS DOUBLE PRECISION) * 5.0::FLOAT8),
+                    (5.0::FLOAT8 * 5.0::FLOAT8)
         - uri: /{1/2,1/2.0,1/2e0,1.0/2.0,1.0/2e0, 1e0/2e0}
           status: 200 OK
           headers:
@@ -2581,7 +2813,12 @@ tests:
 
              ----
              /{1/2,1/2.0,1/2e0,1.0/2.0,1.0/2e0,1e0/2e0}
-             SELECT (CAST(1 AS NUMERIC) / CAST(2 AS NUMERIC)), (CAST(1 AS NUMERIC) / 2.0), (CAST(1 AS FLOAT) / 2.0::float8), (1.0 / 2.0), (CAST(1.0 AS FLOAT) / 2.0::float8), (1.0::float8 / 2.0::float8)
+             SELECT (CAST(1 AS DECIMAL) / CAST(2 AS DECIMAL)),
+                    (CAST(1 AS DECIMAL) / 2.0),
+                    (CAST(1 AS DOUBLE PRECISION) / 2.0::FLOAT8),
+                    (1.0 / 2.0),
+                    (CAST(1.0 AS DOUBLE PRECISION) / 2.0::FLOAT8),
+                    (1.0::FLOAT8 / 2.0::FLOAT8)
         - uri: /{1/0}
           status: 409 Conflict
           headers:
@@ -2596,7 +2833,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: unexpected argument types:
+            bind error: incompatible arguments:
                 /{1+'1'}
                   ^^^^^
         - uri: /{65536*65536}
@@ -2622,7 +2859,10 @@ tests:
 
              ----
              /{round(65.536),round(65.536,0),round(65.536,1),round(65.536,-1)}
-             SELECT ROUND(65.536, 0), ROUND(65.536, 0), ROUND(65.536, 1), ROUND(65.536, (- 1))
+             SELECT ROUND(65.536),
+                    ROUND(65.536, 0),
+                    ROUND(65.536, 1),
+                    ROUND(65.536, (- 1))
         - uri: /{round(65535),round(65536,-3)}
           status: 200 OK
           headers:
@@ -2637,7 +2877,8 @@ tests:
 
              ----
              /{round(65535),round(65536,-3)}
-             SELECT ROUND(CAST(65535 AS NUMERIC), 0), ROUND(CAST(65536 AS NUMERIC), (- 3))
+             SELECT ROUND(CAST(65535 AS DECIMAL)),
+                    ROUND(CAST(65536 AS DECIMAL), (- 3))
         - uri: /{round(35536e-3)}
           status: 200 OK
           headers:
@@ -2652,15 +2893,15 @@ tests:
 
              ----
              /{round(35536e-3)}
-             SELECT ROUND(35.536::float8)
+             SELECT ROUND(35.536000000000001::FLOAT8)
         - uri: /{round(35536e-3,1)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: unexpected argument:
+            bind error: incompatible arguments:
                 /{round(35536e-3,1)}
-                                 ^
+                  ^^^^^^^^^^^^^^^^^
       - id: string-functions-and-operators
         tests:
         - uri: /{string('X'),string(string('X')), string(1), string(1.0), string(1e0)}
@@ -2677,22 +2918,28 @@ tests:
 
              ----
              /{string('X'),string(string('X')),string(1),string(1.0),string(1e0)}
-             SELECT 'X', 'X', CAST(1 AS TEXT), CAST(1.0 AS TEXT), CAST(1.0::float8 AS TEXT)
-        - uri: /{'HTSQL'.length(),''.length(),null().length()}
+             SELECT 'X',
+                    'X',
+                    CAST(1 AS CHARACTER VARYING),
+                    CAST(1.0 AS CHARACTER VARYING),
+                    CAST(1.0::FLOAT8 AS CHARACTER VARYING)
+        - uri: /{'HTSQL':length,'':length,null():length}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                  |
-            -+--------------------------------------------------+-
-             | 'HTSQL'.length() | ''.length() | null().length() |
-            -+------------------+-------------+-----------------+-
-             |                5 |           0 |                 |
-                                                          (1 row)
+             |                                            |
+            -+--------------------------------------------+-
+             | 'HTSQL':length | '':length | null():length |
+            -+----------------+-----------+---------------+-
+             |              5 |         0 |               |
+                                                    (1 row)
 
              ----
-             /{'HTSQL'.length(),''.length(),null().length()}
-             SELECT CHARACTER_LENGTH('HTSQL'), CHARACTER_LENGTH(''), CHARACTER_LENGTH(NULL)
+             /{'HTSQL':length,'':length,null():length}
+             SELECT CHARACTER_LENGTH('HTSQL'),
+                    CHARACTER_LENGTH(''),
+                    CHARACTER_LENGTH(NULL)
         - uri: /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'', 'HTSQL'~null(),null()~'HTSQL',null()~null()}
           status: 200 OK
           headers:
@@ -2707,7 +2954,12 @@ tests:
 
              ----
              /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'','HTSQL'~null(),null()~'HTSQL',null()~null()}
-             SELECT ('HTSQL' ILIKE '%sql%'), ('HTSQL' ILIKE '%HTTP%'), ('HTSQL' ILIKE '%%'), NULL, (NULL ILIKE '%HTSQL%'), NULL
+             SELECT ('HTSQL' ILIKE '%sql%'),
+                    ('HTSQL' ILIKE '%HTTP%'),
+                    ('HTSQL' ILIKE '%%'),
+                    ('HTSQL' ILIKE NULL),
+                    (NULL ILIKE '%HTSQL%'),
+                    (NULL ILIKE NULL)
       - id: date-functions-and-operators
         tests:
         - uri: /{date('2010-07-28'),date(string('2010-07-28'))}
@@ -2724,7 +2976,8 @@ tests:
 
              ----
              /{date('2010-07-28'),date(string('2010-07-28'))}
-             SELECT CAST('2010-07-28' AS DATE), CAST('2010-07-28' AS DATE)
+             SELECT '2010-07-28'::DATE,
+                    CAST('2010-07-28' AS DATE)
         - uri: /{date(2010,07,28)}
           status: 200 OK
           headers:
@@ -2739,7 +2992,7 @@ tests:
 
              ----
              /{date(2010,07,28)}
-             SELECT CAST(LPAD(CAST(2010 AS TEXT), 4, '0') || '-' || LPAD(CAST(7 AS TEXT), 2, '0') || '-' || LPAD(CAST(28 AS TEXT), 2, '0') AS DATE)
+             SELECT CAST('0001-01-01'::DATE + (2010 - 1) * '1 YEAR'::INTERVAL + (7 - 1) * '1 MONTH'::INTERVAL + (28 - 1) * '1 DAY'::INTERVAL AS DATE)
         - uri: /{date('X')}
           status: 400 Bad Request
           headers:
@@ -2790,7 +3043,9 @@ tests:
 
              ----
              /{date('2010-07-28')+1,date('2010-07-28')-1,date('2010-07-28')-date('2009-07-28')}
-             SELECT (CAST('2010-07-28' AS DATE) + 1), (CAST('2010-07-28' AS DATE) - 1), (CAST('2010-07-28' AS DATE) - CAST('2009-07-28' AS DATE))
+             SELECT ('2010-07-28'::DATE + 1),
+                    ('2010-07-28'::DATE - 1),
+                    ('2010-07-28'::DATE - '2009-07-28'::DATE)
   - id: sorting-and-paging
     tests:
     - uri: /school
@@ -2816,7 +3071,10 @@ tests:
 
          ----
          /school
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /school.limit(1)
       status: 200 OK
       headers:
@@ -2831,7 +3089,11 @@ tests:
 
          ----
          /school.limit(1)
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC LIMIT 1
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
+         LIMIT 1
     - uri: /school.limit(2,5)
       status: 200 OK
       headers:
@@ -2847,7 +3109,12 @@ tests:
 
          ----
          /school.limit(2,5)
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC LIMIT 2 OFFSET 5
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
+         LIMIT 2
+         OFFSET 5
     - uri: /school.sort(name).limit(1)
       status: 200 OK
       headers:
@@ -2862,7 +3129,11 @@ tests:
 
          ----
          /school.sort(name).limit(1)
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 2 ASC, 1 ASC LIMIT 1
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 2 ASC, 1 ASC
+         LIMIT 1
     - uri: /school.limit(1).sort(name)
       status: 200 OK
       headers:
@@ -2877,7 +3148,14 @@ tests:
 
          ----
          /school.limit(1).sort(name)
-         SELECT "school"."code", "school"."name" FROM (SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC LIMIT 1) AS "school" ORDER BY 2 ASC, 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM (SELECT "school"."code",
+                      "school"."name"
+               FROM "ad"."school" AS "school"
+               ORDER BY 1 ASC
+               LIMIT 1) AS "school"
+         ORDER BY 2 ASC, 1 ASC
     - uri: /course?department='acc'
       status: 200 OK
       headers:
@@ -2918,7 +3196,14 @@ tests:
 
          ----
          /course?department='acc'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."department" = 'acc')
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course.sort(credits)?department='acc'
       status: 200 OK
       headers:
@@ -2959,7 +3244,14 @@ tests:
 
          ----
          /course.sort(credits)?department='acc'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."department" = 'acc')
+         ORDER BY 4 ASC, 1 ASC, 2 ASC
     - uri: /(course.sort(credits)?department='acc').limit(1,1)
       status: 200 OK
       headers:
@@ -2979,7 +3271,16 @@ tests:
 
          ----
          /(course.sort(credits)?department='acc').limit(1,1)
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC LIMIT 1 OFFSET 1
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."department" = 'acc')
+         ORDER BY 4 ASC, 1 ASC, 2 ASC
+         LIMIT 1
+         OFFSET 1
     - uri: /course.sort(credits).limit(1,1)?department='acc'
       status: 200 OK
       headers:
@@ -2993,7 +3294,22 @@ tests:
 
          ----
          /course.sort(credits).limit(1,1)?department='acc'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM (SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" ORDER BY 4 ASC, 1 ASC, 2 ASC LIMIT 1 OFFSET 1) AS "course" WHERE ("course"."department" = 'acc') ORDER BY 4 ASC, 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM (SELECT "course"."department",
+                      "course"."number",
+                      "course"."title",
+                      "course"."credits",
+                      "course"."description"
+               FROM "ad"."course" AS "course"
+               ORDER BY 4 ASC, 1 ASC, 2 ASC
+               LIMIT 1
+               OFFSET 1) AS "course"
+         WHERE ("course"."department" = 'acc')
+         ORDER BY 4 ASC, 1 ASC, 2 ASC
   - id: title-decorator
     tests:
     - uri: /{null() as Title, null() as 'Title with whitespaces'}
@@ -3009,8 +3325,9 @@ tests:
                                     (1 row)
 
          ----
-         /{null() as Title,null() as 'Title with whitespaces'}
-         SELECT NULL, NULL
+         /{null():as(Title),null():as('Title with whitespaces')}
+         SELECT NULL,
+                NULL
     - uri: /{null() as 'Hidden title' as 'Visible title'}
       status: 200 OK
       headers:
@@ -3024,22 +3341,22 @@ tests:
                    (1 row)
 
          ----
-         /{null() as 'Hidden title' as 'Visible title'}
+         /{null():as('Hidden title'):as('Visible title')}
          SELECT NULL
     - uri: /{('HT' as HT)+('SQL' as SQL)}
       status: 200 OK
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |2
-         |                             |
-        -+-----------------------------+-
-         | ('HT' as HT)+('SQL' as SQL) |
-        -+-----------------------------+-
-         | HTSQL                       |
-                                 (1 row)
+         |                               |
+        -+-------------------------------+-
+         | ('HT':as(HT))+('SQL':as(SQL)) |
+        -+-------------------------------+-
+         | HTSQL                         |
+                                   (1 row)
 
          ----
-         /{('HT' as HT)+('SQL' as SQL)}
+         /{('HT':as(HT))+('SQL':as(SQL))}
          SELECT ('HT' || 'SQL')
     - uri: /(school as Schools)
       status: 200 OK
@@ -3063,8 +3380,11 @@ tests:
                                             (9 rows)
 
          ----
-         /(school as Schools)
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         /(school:as(Schools))
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /(school as Schools){name as Title}?code='art'
       status: 200 OK
       headers:
@@ -3078,8 +3398,11 @@ tests:
                               (1 row)
 
          ----
-         /(school as Schools){name as Title}?code='art'
-         SELECT "school"."name" FROM "ad"."school" AS "school" WHERE ("school"."code" = 'art') ORDER BY "school"."code" ASC
+         /(school:as(Schools)){name:as(Title)}?code='art'
+         SELECT "school"."name"
+         FROM "ad"."school" AS "school"
+         WHERE ("school"."code" = 'art')
+         ORDER BY "school"."code" ASC
     - uri: /school{* as Columns}
       status: 400 Bad Request
       headers:
@@ -3093,7 +3416,7 @@ tests:
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |
-        invalid argument: expected a string literal or an identifier:
+        bind error: expected a string literal or an identifier:
             /school{code as school.code}
                             ^^^^^^^^^^^
   - id: order-modifiers
@@ -3121,7 +3444,10 @@ tests:
 
          ----
          /school{code+,name}
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /school{code-,name}
       status: 200 OK
       headers:
@@ -3145,7 +3471,10 @@ tests:
 
          ----
          /school{code-,name}
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 DESC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 DESC
     - uri: /school{code--,name}
       status: 200 OK
       headers:
@@ -3169,7 +3498,10 @@ tests:
 
          ----
          /school{code--,name}
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /school{name as Title+}
       status: 200 OK
       headers:
@@ -3192,8 +3524,10 @@ tests:
                                      (9 rows)
 
          ----
-         /school{name as Title+}
-         SELECT "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, "school"."code" ASC
+         /school{name:as(Title)+}
+         SELECT "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC, "school"."code" ASC
     - uri: /school{name+ as Title}
       status: 400 Bad Request
       headers:
@@ -3224,8 +3558,10 @@ tests:
                                      (9 rows)
 
          ----
-         /school{(name+) as Title}
-         SELECT "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC, "school"."code" ASC
+         /school{(name+):as(Title)}
+         SELECT "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC, "school"."code" ASC
     - uri: /course{department+,title,credits-}?number<200
       status: 200 OK
       headers:
@@ -3265,7 +3601,12 @@ tests:
 
          ----
          /course{department+,title,credits-}?number<200
-         SELECT "course"."department", "course"."title", "course"."credits" FROM "ad"."course" AS "course" WHERE ("course"."number" < 200) ORDER BY 1 ASC, 3 DESC, "course"."number" ASC
+         SELECT "course"."department",
+                "course"."title",
+                "course"."credits"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."number" < 200)
+         ORDER BY 1 ASC, 3 DESC, "course"."number" ASC
     - uri: /course.sort(department+,credits-){department,title,credits}?number<200
       status: 200 OK
       headers:
@@ -3305,7 +3646,12 @@ tests:
 
          ----
          /course.sort(department+,credits-){department,title,credits}?number<200
-         SELECT "course"."department", "course"."title", "course"."credits" FROM "ad"."course" AS "course" WHERE ("course"."number" < 200) ORDER BY 1 ASC, 3 DESC, "course"."number" ASC
+         SELECT "course"."department",
+                "course"."title",
+                "course"."credits"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."number" < 200)
+         ORDER BY 1 ASC, 3 DESC, "course"."number" ASC
   - id: simple-filters
     tests:
     - uri: /school?code='ns'
@@ -3322,7 +3668,11 @@ tests:
 
          ----
          /school?code='ns'
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" WHERE ("school"."code" = 'ns') ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         WHERE ("school"."code" = 'ns')
+         ORDER BY 1 ASC
     - uri: /department?school.code='ns'
       status: 200 OK
       headers:
@@ -3340,7 +3690,15 @@ tests:
 
          ----
          /department?school.code='ns'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         WHERE ("school"."code" = 'ns')
+         ORDER BY 1 ASC
     - uri: /department?school.code={'art','la'}
       status: 200 OK
       headers:
@@ -3361,7 +3719,15 @@ tests:
 
          ----
          /department?school.code={'art','la'}
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" IN ('art', 'la')) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         WHERE ("school"."code" IN ('art', 'la'))
+         ORDER BY 1 ASC
     - uri: /program?school.code='ns'&code='uchem'
       status: 200 OK
       headers:
@@ -3376,7 +3742,16 @@ tests:
 
          ----
          /program?school.code='ns'&code='uchem'
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" INNER JOIN "ad"."school" AS "school_2" ON (("program"."school" = "school_2"."code")) WHERE (("school_2"."code" = 'ns') AND ("program"."code" = 'uchem')) ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school",
+                "program"."code",
+                "program"."title",
+                "program"."degree"
+         FROM "ad"."program" AS "program"
+                  INNER JOIN
+              "ad"."school" AS "school"
+                  ON (("program"."school" = "school"."code"))
+         WHERE (("school"."code" = 'ns') AND ("program"."code" = 'uchem'))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?credits=5
       status: 200 OK
       headers:
@@ -3407,7 +3782,14 @@ tests:
 
          ----
          /course?credits=5
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."credits" = 5) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."credits" = 5)
+         ORDER BY 1 ASC, 2 ASC
     - uri: /department?school
       status: 200 OK
       headers:
@@ -3445,7 +3827,12 @@ tests:
 
          ----
          /department?school
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE (NULLIF("department"."school", '') IS NOT NULL) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE (NULLIF("department"."school", '') IS NOT NULL)
+         ORDER BY 1 ASC
     - uri: /semester?season='fall'
       status: 200 OK
       headers:
@@ -3463,7 +3850,13 @@ tests:
 
          ----
          /semester?season='fall'
-         SELECT "semester"."year", "semester"."season", "semester"."begin_date", "semester"."end_date" FROM "cd"."semester" AS "semester" WHERE ("semester"."season" = 'fall') ORDER BY 1 ASC, 2 ASC
+         SELECT "semester"."year",
+                "semester"."season",
+                "semester"."begin_date",
+                "semester"."end_date"
+         FROM "cd"."semester" AS "semester"
+         WHERE ("semester"."season" = 'fall')
+         ORDER BY 1 ASC, 2 ASC
     - uri: /program{school.name,title}?school.code='art'
       status: 200 OK
       headers:
@@ -3481,7 +3874,14 @@ tests:
 
          ----
          /program{school.name,title}?school.code='art'
-         SELECT "school"."name", "program"."title" FROM "ad"."program" AS "program" INNER JOIN "ad"."school" AS "school" ON (("program"."school" = "school"."code")) WHERE ("school"."code" = 'art') ORDER BY "program"."school" ASC, "program"."code" ASC
+         SELECT "school"."name",
+                "program"."title"
+         FROM "ad"."program" AS "program"
+                  INNER JOIN
+              "ad"."school" AS "school"
+                  ON (("program"."school" = "school"."code"))
+         WHERE ("school"."code" = 'art')
+         ORDER BY "program"."school" ASC, "program"."code" ASC
   - id: simple-selectors
     tests:
     - uri: /school{name}
@@ -3507,7 +3907,9 @@ tests:
 
          ----
          /school{name}
-         SELECT "school"."name" FROM "ad"."school" AS "school" ORDER BY "school"."code" ASC
+         SELECT "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY "school"."code" ASC
     - uri: /department{school.*,*}
       status: 200 OK
       headers:
@@ -3553,7 +3955,16 @@ tests:
 
          ----
          /department{school.*,*}
-         SELECT "school_2"."code", "school_2"."name", "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 3 ASC
+         SELECT "school"."code",
+                "school"."name",
+                "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         ORDER BY 3 ASC
     - uri: /department{school.name+' - '+name}
       status: 200 OK
       headers:
@@ -3613,7 +4024,12 @@ tests:
 
          ----
          /department{school.name+' - '+name}
-         SELECT (COALESCE((COALESCE("school"."name", '') || ' - '), '') || "department"."name") FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
+         SELECT ((COALESCE("school"."name", '') || ' - ') || "department"."name")
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         ORDER BY "department"."code" ASC
   - id: aggregates
     tests:
     - uri: /exists(school)
@@ -3630,7 +4046,8 @@ tests:
 
          ----
          /exists(school)
-         SELECT EXISTS(SELECT TRUE AS "!" FROM "ad"."school" AS "school")
+         SELECT EXISTS(SELECT TRUE
+                       FROM "ad"."school" AS "school")
     - uri: /count(school)
       status: 200 OK
       headers:
@@ -3645,7 +4062,8 @@ tests:
 
          ----
          /count(school)
-         SELECT COUNT(TRUE) FROM "ad"."school" AS "school"
+         SELECT COUNT(TRUE)
+         FROM "ad"."school" AS "school"
     - uri: /exists(school?exists(department))
       status: 200 OK
       headers:
@@ -3660,7 +4078,11 @@ tests:
 
          ----
          /exists(school?exists(department))
-         SELECT EXISTS(SELECT TRUE AS "!" FROM "ad"."school" AS "school" WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school")))
+         SELECT EXISTS(SELECT TRUE
+                       FROM "ad"."school" AS "school"
+                       WHERE EXISTS(SELECT TRUE
+                                    FROM "ad"."department" AS "department"
+                                    WHERE ("school"."code" = "department"."school")))
     - uri: /count(school?exists(department))
       status: 200 OK
       headers:
@@ -3675,7 +4097,11 @@ tests:
 
          ----
          /count(school?exists(department))
-         SELECT COUNT(TRUE) FROM "ad"."school" AS "school" WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school"))
+         SELECT COUNT(TRUE)
+         FROM "ad"."school" AS "school"
+         WHERE EXISTS(SELECT TRUE
+                      FROM "ad"."department" AS "department"
+                      WHERE ("school"."code" = "department"."school"))
     - uri: /{exists(school?!exists(department)), count(school?!exists(department))}
       status: 200 OK
       headers:
@@ -3690,7 +4116,16 @@ tests:
 
          ----
          /{exists(school?!exists(department)),count(school?!exists(department))}
-         SELECT EXISTS(SELECT TRUE AS "!" FROM "ad"."school" AS "school_2" WHERE (NOT EXISTS(SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school_2"."code" = "department"."school")))), COUNT(TRUE) FROM "ad"."school" AS "school" WHERE (NOT EXISTS(SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school")))
+         SELECT EXISTS(SELECT TRUE
+                       FROM "ad"."school" AS "school_1"
+                       WHERE (NOT EXISTS(SELECT TRUE
+                                         FROM "ad"."department" AS "department"
+                                         WHERE ("school_1"."code" = "department"."school")))),
+                COUNT(TRUE)
+         FROM "ad"."school" AS "school"
+         WHERE (NOT EXISTS(SELECT TRUE
+                           FROM "ad"."department" AS "department"
+                           WHERE ("school"."code" = "department"."school")))
     - uri: /{count(course),min(course.credits), max(course.credits), avg(course.credits)}
       status: 200 OK
       headers:
@@ -3705,7 +4140,11 @@ tests:
 
          ----
          /{count(course),min(course.credits),max(course.credits),avg(course.credits)}
-         SELECT COUNT(TRUE), MIN("course"."credits"), MAX("course"."credits"), AVG(CAST("course"."credits" AS NUMERIC)) FROM "ad"."course" AS "course"
+         SELECT COUNT(TRUE),
+                MIN("course"."credits"),
+                MAX("course"."credits"),
+                AVG(CAST("course"."credits" AS DECIMAL))
+         FROM "ad"."course" AS "course"
     - uri: /{count(school),count(department),count(course)}
       status: 200 OK
       headers:
@@ -3720,7 +4159,17 @@ tests:
 
          ----
          /{count(school),count(department),count(course)}
-         SELECT "school"."count", "department"."count", "course"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department") AS "department" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."course" AS "course") AS "course"
+         SELECT "!_1"."count",
+                "!_2"."count",
+                "!_3"."count"
+         FROM (SELECT COUNT(TRUE)
+               FROM "ad"."school" AS "school") AS "!_1"
+                  CROSS JOIN
+              (SELECT COUNT(TRUE) AS "count"
+               FROM "ad"."department" AS "department") AS "!_2"
+                  CROSS JOIN
+              (SELECT COUNT(TRUE) AS "count"
+               FROM "ad"."course" AS "course") AS "!_3"
     - uri: /{count(department),count(department?exists(course))}
       status: 200 OK
       headers:
@@ -3735,7 +4184,16 @@ tests:
 
          ----
          /{count(department),count(department?exists(course))}
-         SELECT "department_1"."count", "department_2"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department") AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department" WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department"))) AS "department_2"
+         SELECT "!_1"."count",
+                "!_2"."count"
+         FROM (SELECT COUNT(TRUE)
+               FROM "ad"."department" AS "department") AS "!_1"
+                  CROSS JOIN
+              (SELECT COUNT(TRUE) AS "count"
+               FROM "ad"."department" AS "department"
+               WHERE EXISTS(SELECT TRUE
+                            FROM "ad"."course" AS "course"
+                            WHERE ("department"."code" = "course"."department"))) AS "!_2"
     - uri: /department{code,count(course{credits=3})}
       status: 200 OK
       headers:
@@ -3776,7 +4234,16 @@ tests:
 
          ----
          /department{code,count(course{credits=3})}
-         SELECT "department"."code", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                COALESCE("course"."count", 0)
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               GROUP BY 2) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         ORDER BY 1 ASC
     - uri: /department{code,count(course?credits=3)}
       status: 200 OK
       headers:
@@ -3817,7 +4284,17 @@ tests:
 
          ----
          /department{code,count(course?credits=3)}
-         SELECT "department"."code", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."credits" = 3) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                COALESCE("course"."count", 0)
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               WHERE ("course"."credits" = 3)
+               GROUP BY 2) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         ORDER BY 1 ASC
     - uri: /school{code,count(department.course{credits=3})}
       status: 200 OK
       headers:
@@ -3840,7 +4317,19 @@ tests:
 
          ----
          /school{code,count(department.course{credits=3})}
-         SELECT "school"."code", COALESCE("course"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."course" AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "course" ON (("school"."code" = "course"."school")) ORDER BY 1 ASC
+         SELECT "school"."code",
+                COALESCE("department"."count", 0)
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+                        INNER JOIN
+                    "ad"."course" AS "course"
+                        ON (("department"."code" = "course"."department"))
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         ORDER BY 1 ASC
     - uri: /school{code}?count(department.course{credits=3})=20
       status: 200 OK
       headers:
@@ -3855,7 +4344,19 @@ tests:
 
          ----
          /school{code}?count(department.course{credits=3})=20
-         SELECT "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count", "department"."school" FROM "ad"."department" AS "department" INNER JOIN "ad"."course" AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "course" ON (("school"."code" = "course"."school")) WHERE (COALESCE("course"."count", 0) = 20) ORDER BY 1 ASC
+         SELECT "school"."code"
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+                        INNER JOIN
+                    "ad"."course" AS "course"
+                        ON (("department"."code" = "course"."department"))
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         WHERE (COALESCE("department"."count", 0) = 20)
+         ORDER BY 1 ASC
     - uri: /department?exists(course.credits=5)
       status: 200 OK
       headers:
@@ -3872,7 +4373,14 @@ tests:
 
          ----
          /department?exists(course.credits=5)
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE (("department"."code" = "course"."department") AND ("course"."credits" = 5))) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE EXISTS(SELECT TRUE
+                      FROM "ad"."course" AS "course"
+                      WHERE (("department"."code" = "course"."department") AND ("course"."credits" = 5)))
+         ORDER BY 1 ASC
     - uri: /department?every(course.credits=5)
       status: 200 OK
       headers:
@@ -3894,7 +4402,14 @@ tests:
 
          ----
          /department?every(course.credits=5)
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE NOT EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE (("department"."code" = "course"."department") AND ("course"."credits" != 5))) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE (NOT EXISTS(SELECT TRUE
+                           FROM "ad"."course" AS "course"
+                           WHERE (("department"."code" = "course"."department") AND ("course"."credits" <> 5))))
+         ORDER BY 1 ASC
     - uri: /department{code,min(course.credits),max(course.credits)}
       status: 200 OK
       headers:
@@ -3935,7 +4450,18 @@ tests:
 
          ----
          /department{code,min(course.credits),max(course.credits)}
-         SELECT "department"."code", "course"."min", "course"."max" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min", MAX("course"."credits") AS "max", "course"."department" FROM "ad"."course" AS "course" GROUP BY 3) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "course"."min",
+                "course"."max"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT MIN("course"."credits") AS "min",
+                      MAX("course"."credits") AS "max",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               GROUP BY 3) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         ORDER BY 1 ASC
     - uri: /department{code,avg(course.credits), sum(course.credits)/count(course.credits)}
       status: 200 OK
       headers:
@@ -4010,7 +4536,14 @@ tests:
 
          ----
          /department?exists(course)
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE EXISTS(SELECT TRUE
+                      FROM "ad"."course" AS "course"
+                      WHERE ("department"."code" = "course"."department"))
+         ORDER BY 1 ASC
     - uri: /school?!exists(department)
       status: 200 OK
       headers:
@@ -4026,7 +4559,13 @@ tests:
 
          ----
          /school?!exists(department)
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" WHERE (NOT EXISTS(SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school"))) ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         WHERE (NOT EXISTS(SELECT TRUE
+                           FROM "ad"."department" AS "department"
+                           WHERE ("school"."code" = "department"."school")))
+         ORDER BY 1 ASC
     - uri: /school{*,count(department)}
       status: 200 OK
       headers:
@@ -4050,7 +4589,17 @@ tests:
 
          ----
          /school{*,count(department)}
-         SELECT "school"."code", "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name",
+                COALESCE("department"."count", 0)
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         ORDER BY 1 ASC
     - uri: /school{*,count(department?exists(course))}
       status: 200 OK
       headers:
@@ -4074,7 +4623,20 @@ tests:
 
          ----
          /school{*,count(department?exists(course))}
-         SELECT "school"."code", "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department")) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name",
+                COALESCE("department"."count", 0)
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               WHERE EXISTS(SELECT TRUE
+                            FROM "ad"."course" AS "course"
+                            WHERE ("department"."code" = "course"."department"))
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         ORDER BY 1 ASC
     - uri: /school{*,count(department.exists(course))}
       status: 200 OK
       headers:
@@ -4098,7 +4660,19 @@ tests:
 
          ----
          /school{*,count(department.exists(course))}
-         SELECT "school"."code", "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(NULLIF(EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE ("department"."code" = "course"."department")), FALSE)) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name",
+                COALESCE("department"."count", 0)
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(NULLIF(EXISTS(SELECT TRUE
+                                          FROM "ad"."course" AS "course"
+                                          WHERE ("department"."code" = "course"."department")), FALSE)) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         ORDER BY 1 ASC
     - uri: /school{code,count(department),count(program)}
       status: 200 OK
       headers:
@@ -4121,7 +4695,23 @@ tests:
 
          ----
          /school{code,count(department),count(program)}
-         SELECT "school"."code", COALESCE("department"."count", 0), COALESCE("program"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school")) ORDER BY 1 ASC
+         SELECT "school"."code",
+                COALESCE("department"."count", 0),
+                COALESCE("program"."count", 0)
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "program"."school" AS "school"
+               FROM "ad"."program" AS "program"
+               GROUP BY 2) AS "program"
+                  ON (("school"."code" = "program"."school"))
+         ORDER BY 1 ASC
     - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
       status: 200 OK
       headers:
@@ -4155,7 +4745,22 @@ tests:
 
          ----
          /department{sum(course.credits),count(course.credits),avg(course.credits)}?exists(course)
-         SELECT "course"."sum", COALESCE("course"."count", 0), "course"."avg" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum", COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "count", AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course_2" WHERE ("department"."code" = "course_2"."department")) ORDER BY "department"."code" ASC
+         SELECT COALESCE("course"."sum", 0),
+                COALESCE("course"."count", 0),
+                "course"."avg"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT SUM("course"."credits") AS "sum",
+                      COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "count",
+                      AVG(CAST("course"."credits" AS DECIMAL)) AS "avg",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               GROUP BY 4) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         WHERE EXISTS(SELECT TRUE
+                      FROM "ad"."course" AS "course_1"
+                      WHERE ("department"."code" = "course_1"."department"))
+         ORDER BY "department"."code" ASC
     - uri: /department{code,school.code, count(school.program),school.count(program)}
       status: 200 OK
       headers:
@@ -4196,7 +4801,32 @@ tests:
 
          ----
          /department{code,school.code,count(school.program),school.count(program)}
-         SELECT "department"."code", "school_1"."code", COALESCE("program"."count", 0), "school_2"."!" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school_1"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COALESCE("program"."count", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school"))) AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "school_1"."code",
+                COALESCE("program"."count", 0),
+                "school_2"."count"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school_1"
+                  ON (("department"."school" = "school_1"."code"))
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "program"."school" AS "school"
+               FROM "ad"."program" AS "program"
+               GROUP BY 2) AS "program"
+                  ON (("school_1"."code" = "program"."school"))
+                  LEFT OUTER JOIN
+              (SELECT COALESCE("program"."count", 0) AS "count",
+                      "school"."code" AS "code"
+               FROM "ad"."school" AS "school"
+                        LEFT OUTER JOIN
+                    (SELECT COUNT(TRUE) AS "count",
+                            "program"."school" AS "school"
+                     FROM "ad"."program" AS "program"
+                     GROUP BY 2) AS "program"
+                        ON (("school"."code" = "program"."school"))) AS "school_2"
+                  ON (("department"."school" = "school_2"."code"))
+         ORDER BY 1 ASC
     - uri: /department{code,school.code, exists(school.program),school.exists(program)}
       status: 200 OK
       headers:
@@ -4237,7 +4867,24 @@ tests:
 
          ----
          /department{code,school.code,exists(school.program),school.exists(program)}
-         SELECT "department"."code", "school_1"."code", EXISTS(SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school_1"."code" = "program"."school")), "school_2"."exists" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_1" ON (("department"."school" = "school_1"."code")) LEFT OUTER JOIN (SELECT EXISTS(SELECT TRUE AS "!" FROM "ad"."program" AS "program" WHERE ("school"."code" = "program"."school")) AS "exists", "school"."code" FROM "ad"."school" AS "school") AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "school_1"."code",
+                EXISTS(SELECT TRUE
+                       FROM "ad"."program" AS "program"
+                       WHERE ("school_1"."code" = "program"."school")),
+                "school_2"."exists"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school_1"
+                  ON (("department"."school" = "school_1"."code"))
+                  LEFT OUTER JOIN
+              (SELECT EXISTS(SELECT TRUE
+                             FROM "ad"."program" AS "program"
+                             WHERE ("school"."code" = "program"."school")) AS "exists",
+                      "school"."code" AS "code"
+               FROM "ad"."school" AS "school") AS "school_2"
+                  ON (("department"."school" = "school_2"."code"))
+         ORDER BY 1 ASC
     - uri: /{count(school)&false(),count(school)|true()}
       status: 200 OK
       headers:
@@ -4252,7 +4899,9 @@ tests:
 
          ----
          /{count(school)&false(),count(school)|true()}
-         SELECT ((COUNT(TRUE) IS NOT NULL) AND FALSE), ((COUNT(TRUE) IS NOT NULL) OR TRUE) FROM "ad"."school" AS "school"
+         SELECT ((COUNT(TRUE) IS NOT NULL) AND FALSE),
+                ((COUNT(TRUE) IS NOT NULL) OR TRUE)
+         FROM "ad"."school" AS "school"
     - uri: /{count(school)==null()}
       status: 200 OK
       headers:
@@ -4267,7 +4916,8 @@ tests:
 
          ----
          /{count(school)==null()}
-         SELECT (COUNT(TRUE) IS NULL) FROM "ad"."school" AS "school"
+         SELECT (COUNT(TRUE) IS NULL)
+         FROM "ad"."school" AS "school"
   - id: root,-this,-direct-and-fiber-functions
     tests:
     - uri: /{count(school)*count(department),count(school.direct(department))}
@@ -4284,7 +4934,18 @@ tests:
 
          ----
          /{count(school)*count(department),count(school.direct(department))}
-         SELECT ("school"."count" * "department_1"."count"), "department_2"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."department" AS "department") AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" CROSS JOIN "ad"."department" AS "department") AS "department_2"
+         SELECT ("!_1"."count" * "!_2"."count"),
+                "!_3"."count"
+         FROM (SELECT COUNT(TRUE)
+               FROM "ad"."school" AS "school") AS "!_1"
+                  CROSS JOIN
+              (SELECT COUNT(TRUE) AS "count"
+               FROM "ad"."department" AS "department") AS "!_2"
+                  CROSS JOIN
+              (SELECT COUNT(TRUE) AS "count"
+               FROM "ad"."school" AS "school"
+                        CROSS JOIN
+                    "ad"."department" AS "department") AS "!_3"
     - uri: /{count(school.department), count(school.direct(department)?school=root().school.code),
         count(school.fiber(department,code,school.code))}
       status: 200 OK
@@ -4300,7 +4961,29 @@ tests:
 
          ----
          /{count(school.department),count(school.direct(department)?school=root().school.code),count(school.fiber(department,code,school.code))}
-         SELECT "department_1"."count", "department_2"."count", "department_3"."count" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" INNER JOIN "ad"."department" AS "department" ON (("school"."code" = "department"."school"))) AS "department_1" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school" CROSS JOIN "ad"."department" AS "department" WHERE ("department"."school" = "school"."code")) AS "department_2" CROSS JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school_1" CROSS JOIN "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_1"."code" = "school_2"."code")) AS "department_3"
+         SELECT "!_1"."count",
+                "!_2"."count",
+                "!_3"."count"
+         FROM (SELECT COUNT(TRUE)
+               FROM "ad"."school" AS "school"
+                        INNER JOIN
+                    "ad"."department" AS "department"
+                        ON (("school"."code" = "department"."school"))) AS "!_1"
+                  CROSS JOIN
+              (SELECT COUNT(TRUE) AS "count"
+               FROM "ad"."school" AS "school"
+                        CROSS JOIN
+                    "ad"."department" AS "department"
+               WHERE ("department"."school" = "school"."code")) AS "!_2"
+                  CROSS JOIN
+              (SELECT COUNT(TRUE) AS "count"
+               FROM "ad"."school" AS "school_1"
+                        CROSS JOIN
+                    "ad"."department" AS "department"
+                        LEFT OUTER JOIN
+                    "ad"."school" AS "school_2"
+                        ON (("department"."school" = "school_2"."code"))
+               WHERE ("school_1"."code" = "school_2"."code")) AS "!_3"
     - uri: /school{code,count(department)}?count(department)=max(direct(school).count(department))
       status: 200 OK
       headers:
@@ -4315,7 +4998,33 @@ tests:
 
          ----
          /school{code,count(department)}?count(department)=max(direct(school).count(department))
-         SELECT "school_1"."code", COALESCE("department_2"."count", 0) FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department_1" ON (("school_1"."code" = "department_1"."school")) LEFT OUTER JOIN (SELECT MAX(COALESCE("department"."count", 0)) AS "max" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school"))) AS "school_2" ON (TRUE) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department_2" ON (("school_1"."code" = "department_2"."school")) WHERE (COALESCE("department_1"."count", 0) = "school_2"."max") ORDER BY 1 ASC
+         SELECT "school_1"."code",
+                COALESCE("department_2"."count", 0)
+         FROM "ad"."school" AS "school_1"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               GROUP BY 2) AS "department_1"
+                  ON (("school_1"."code" = "department_1"."school"))
+                  LEFT OUTER JOIN
+              (SELECT MAX(COALESCE("department"."count", 0)) AS "max"
+               FROM "ad"."school" AS "school"
+                        LEFT OUTER JOIN
+                    (SELECT COUNT(TRUE) AS "count",
+                            "department"."school" AS "school"
+                     FROM "ad"."department" AS "department"
+                     GROUP BY 2) AS "department"
+                        ON (("school"."code" = "department"."school"))) AS "school_2"
+                  ON (TRUE)
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               GROUP BY 2) AS "department_2"
+                  ON (("school_1"."code" = "department_2"."school"))
+         WHERE (COALESCE("department_1"."count", 0) = "school_2"."max")
+         ORDER BY 1 ASC
     - uri: /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
       status: 200 OK
       headers:
@@ -4342,7 +5051,46 @@ tests:
 
          ----
          /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
-         SELECT "program_1"."school", "program_1"."code", COALESCE("student_2"."count", 0) FROM "ad"."school" AS "school_2" INNER JOIN "ad"."program" AS "program_1" ON (("school_2"."code" = "program_1"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "student"."school", "student"."program" FROM "ed"."student" AS "student" GROUP BY 2, 3) AS "student_1" ON ((("program_1"."school" = "student_1"."school") AND ("program_1"."code" = "student_1"."program"))) LEFT OUTER JOIN (SELECT MAX(COALESCE("student"."count", 0)) AS "max", "program_1"."school", "program_1"."code" FROM "ad"."program" AS "program_1" CROSS JOIN "ad"."program" AS "program_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "student"."school", "student"."program" FROM "ed"."student" AS "student" GROUP BY 2, 3) AS "student" ON ((("program_2"."school" = "student"."school") AND ("program_2"."code" = "student"."program"))) WHERE ("program_1"."school" = "program_2"."school") GROUP BY 2, 3) AS "program_2" ON ((("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code"))) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "student"."school", "student"."program" FROM "ed"."student" AS "student" GROUP BY 2, 3) AS "student_2" ON ((("program_1"."school" = "student_2"."school") AND ("program_1"."code" = "student_2"."program"))) WHERE (COALESCE("student_1"."count", 0) = "program_2"."max") ORDER BY "school_2"."code" ASC, 1 ASC, 2 ASC
+         SELECT "program_1"."school",
+                "program_1"."code",
+                COALESCE("student_2"."count", 0)
+         FROM "ad"."school" AS "school"
+                  INNER JOIN
+              "ad"."program" AS "program_1"
+                  ON (("school"."code" = "program_1"."school"))
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "student"."school" AS "school",
+                      "student"."program" AS "program"
+               FROM "ed"."student" AS "student"
+               GROUP BY 2, 3) AS "student_1"
+                  ON ((("program_1"."school" = "student_1"."school") AND ("program_1"."code" = "student_1"."program")))
+                  LEFT OUTER JOIN
+              (SELECT MAX(COALESCE("student"."count", 0)) AS "max",
+                      "program_1"."school" AS "school",
+                      "program_1"."code" AS "code"
+               FROM "ad"."program" AS "program_1"
+                        CROSS JOIN
+                    "ad"."program" AS "program_2"
+                        LEFT OUTER JOIN
+                    (SELECT COUNT(TRUE) AS "count",
+                            "student"."school" AS "school",
+                            "student"."program" AS "program"
+                     FROM "ed"."student" AS "student"
+                     GROUP BY 2, 3) AS "student"
+                        ON ((("program_2"."school" = "student"."school") AND ("program_2"."code" = "student"."program")))
+               WHERE ("program_1"."school" = "program_2"."school")
+               GROUP BY 2, 3) AS "program_2"
+                  ON ((("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code")))
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "student"."school" AS "school",
+                      "student"."program" AS "program"
+               FROM "ed"."student" AS "student"
+               GROUP BY 2, 3) AS "student_2"
+                  ON ((("program_1"."school" = "student_2"."school") AND ("program_1"."code" = "student_2"."program")))
+         WHERE (COALESCE("student_1"."count", 0) = "program_2"."max")
+         ORDER BY "school"."code" ASC, 1 ASC, 2 ASC
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
       status: 200 OK
       headers:
@@ -4357,7 +5105,28 @@ tests:
 
          ----
          /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
-         SELECT "school"."count", "!_3"."!", "!_4"."!" FROM (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" LEFT OUTER JOIN (SELECT COALESCE("school"."count", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" ON (TRUE)) AS "!_3" ON (TRUE) LEFT OUTER JOIN (SELECT COALESCE("school"."count", 0) AS "!" FROM (SELECT TRUE AS "!") AS "!_2" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count" FROM "ad"."school" AS "school") AS "school" ON (TRUE) WHERE FALSE) AS "!_4" ON (TRUE)
+         SELECT "!_1"."count",
+                "!_2"."count",
+                "!_3"."count"
+         FROM (SELECT COUNT(TRUE)
+               FROM "ad"."school" AS "school") AS "!_1"
+                  LEFT OUTER JOIN
+              (SELECT COALESCE("school"."count", 0) AS "count"
+               FROM (SELECT TRUE AS "!") AS "!"
+                        LEFT OUTER JOIN
+                    (SELECT COUNT(TRUE) AS "count"
+                     FROM "ad"."school" AS "school") AS "school"
+                        ON (TRUE)) AS "!_2"
+                  ON (TRUE)
+                  LEFT OUTER JOIN
+              (SELECT COALESCE("school"."count", 0) AS "count"
+               FROM (SELECT TRUE AS "!") AS "!"
+                        LEFT OUTER JOIN
+                    (SELECT COUNT(TRUE) AS "count"
+                     FROM "ad"."school" AS "school") AS "school"
+                        ON (TRUE)
+               WHERE FALSE) AS "!_3"
+                  ON (TRUE)
     - uri: /school{code,name,this(){code}?name!~'art', root().school{code}?name!~'art'}
       status: 200 OK
       headers:
@@ -4381,7 +5150,17 @@ tests:
 
          ----
          /school{code,name,this(){code}?name!~'art',root().school{code}?name!~'art'}
-         SELECT "school_1"."code", "school_1"."name", "school_2"."code", "school_2"."code" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT "school"."code" FROM "ad"."school" AS "school" WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "school_1"."code",
+                "school_1"."name",
+                "school_2"."code",
+                "school_2"."code"
+         FROM "ad"."school" AS "school_1"
+                  LEFT OUTER JOIN
+              (SELECT "school"."code" AS "code"
+               FROM "ad"."school" AS "school"
+               WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
+                  ON (("school_1"."code" = "school_2"."code"))
+         ORDER BY 1 ASC
     - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
       status: 200 OK
       headers:
@@ -4405,7 +5184,29 @@ tests:
 
          ----
          /school{name,count(department),this(){count(department)}?name!~'art'}
-         SELECT "school_1"."name", COALESCE("department"."count", 0), "school_2"."!" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school_1"."code" = "department"."school")) LEFT OUTER JOIN (SELECT COALESCE("department"."count", 0) AS "!", "school"."code" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
+         SELECT "school_1"."name",
+                COALESCE("department"."count", 0),
+                "school_2"."count"
+         FROM "ad"."school" AS "school_1"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               GROUP BY 2) AS "department"
+                  ON (("school_1"."code" = "department"."school"))
+                  LEFT OUTER JOIN
+              (SELECT COALESCE("department"."count", 0) AS "count",
+                      "school"."code" AS "code"
+               FROM "ad"."school" AS "school"
+                        LEFT OUTER JOIN
+                    (SELECT COUNT(TRUE) AS "count",
+                            "department"."school" AS "school"
+                     FROM "ad"."department" AS "department"
+                     GROUP BY 2) AS "department"
+                        ON (("school"."code" = "department"."school"))
+               WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
+                  ON (("school_1"."code" = "school_2"."code"))
+         ORDER BY "school_1"."code" ASC
     - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
       status: 200 OK
       headers:
@@ -4429,7 +5230,21 @@ tests:
 
          ----
          /school{name,exists(department),this(){exists(department)}?name!~'art'}
-         SELECT "school_1"."name", EXISTS(SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school_1"."code" = "department"."school")), "school_2"."exists" FROM "ad"."school" AS "school_1" LEFT OUTER JOIN (SELECT EXISTS(SELECT TRUE AS "!" FROM "ad"."department" AS "department" WHERE ("school"."code" = "department"."school")) AS "exists", "school"."code" FROM "ad"."school" AS "school" WHERE (NOT ("school"."name" ILIKE '%art%'))) AS "school_2" ON (("school_1"."code" = "school_2"."code")) ORDER BY "school_1"."code" ASC
+         SELECT "school_1"."name",
+                EXISTS(SELECT TRUE
+                       FROM "ad"."department" AS "department"
+                       WHERE ("school_1"."code" = "department"."school")),
+                "school_2"."exists"
+         FROM "ad"."school" AS "school_1"
+                  LEFT OUTER JOIN
+              (SELECT EXISTS(SELECT TRUE
+                             FROM "ad"."department" AS "department"
+                             WHERE ("school"."code" = "department"."school")) AS "exists",
+                      "school"."code" AS "code"
+               FROM "ad"."school" AS "school"
+               WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
+                  ON (("school_1"."code" = "school_2"."code"))
+         ORDER BY "school_1"."code" ASC
   - id: table-expressions
     tests:
     - uri: /(school?code='art').department
@@ -4447,7 +5262,15 @@ tests:
 
          ----
          /(school?code='art').department
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."school" AS "school_2" INNER JOIN "ad"."department" AS "department" ON (("school_2"."code" = "department"."school")) WHERE ("school_2"."code" = 'art') ORDER BY "school_2"."code" ASC, 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."school" AS "school"
+                  INNER JOIN
+              "ad"."department" AS "department"
+                  ON (("school"."code" = "department"."school"))
+         WHERE ("school"."code" = 'art')
+         ORDER BY "school"."code" ASC, 1 ASC
   - id: formatters
     tests:
     - uri: /school
@@ -4500,7 +5323,10 @@ tests:
 
          ----
          /school
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /school
       status: 200 OK
       headers:
@@ -4561,8 +5387,8 @@ tests:
       status: 200 OK
       headers:
       - [Content-Type, text/csv; charset=UTF-8]
-      - [Content-Disposition, 'attachment; filename="((school as ''School Record''){code
-          as ''Code name'',name as ''Long name''}).csv"']
+      - [Content-Disposition, 'attachment; filename="((school:as(''School Record'')){code:as(''Code
+          name''),name:as(''Long name'')}).csv"']
       body: "Code name,Long name\r\nart,School of Art and Design\r\nbus,School of
         Business\r\nedu,College of Education\r\negn,School of Engineering\r\nla,\"School
         of Arts, Letters, and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical
@@ -4589,8 +5415,11 @@ tests:
                                                  (9 rows)
 
          ----
-         /(school as 'School Record'){code as 'Code name',name as 'Long name'}
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         /(school:as('School Record')){code:as('Code name'),name:as('Long name')}
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /(school as 'School Record'){code as 'Code name', name as 'Long name'}
       status: 200 OK
       headers:
@@ -4600,7 +5429,7 @@ tests:
         <html>
         <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>/(school as 'School Record'){code as 'Code name',name as 'Long name'}</title>
+        <title>/(school:as('School Record')){code:as('Code name'),name:as('Long name')}</title>
         <style type="text/css">
         body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
         a:link, a:visited { color: #1f4884; text-decoration: none }
@@ -4626,7 +5455,7 @@ tests:
         </style>
         </head>
         <body>
-        <table class="page" summary="/(school as 'School Record'){code as 'Code name',name as 'Long name'}">
+        <table class="page" summary="/(school:as('School Record')){code:as('Code name'),name:as('Long name')}">
         <tr>
         <td class="content">
         <table class="chart" summary="School Record">
@@ -4643,7 +5472,7 @@ tests:
         <tr class="odd"><td>sc</td><td>School of Continuing Studies</td></tr>
         <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
         </tr>
-        <tr><td class="footer">/(school as 'School Record'){code as 'Code name',name as 'Long name'}</td></tr>
+        <tr><td class="footer">/(school:as('School Record')){code:as('Code name'),name:as('Long name')}</td></tr>
         </table>
         </body>
         </html>
@@ -4697,7 +5526,10 @@ tests:
 
          ----
          /school/:txt
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /school/:html
       status: 200 OK
       headers:
@@ -4793,7 +5625,10 @@ tests:
 
          ----
          /school
-         SELECT "school"."code", "school"."name" FROM "ad"."school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "ad"."school" AS "school"
+         ORDER BY 1 ASC
     - uri: /program{school, code, title}
       status: 200 OK
       headers:
@@ -4863,7 +5698,11 @@ tests:
 
          ----
          /program{school,code,title}
-         SELECT "program"."school", "program"."code", "program"."title" FROM "ad"."program" AS "program" ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school",
+                "program"."code",
+                "program"."title"
+         FROM "ad"."program" AS "program"
+         ORDER BY 1 ASC, 2 ASC
     - uri: /department{name-, school}
       status: 200 OK
       headers:
@@ -4904,7 +5743,10 @@ tests:
 
          ----
          /department{name-,school}
-         SELECT "department"."name", "department"."school" FROM "ad"."department" AS "department" ORDER BY 1 DESC, "department"."code" ASC
+         SELECT "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         ORDER BY 1 DESC, "department"."code" ASC
     - uri: /course{department+, number, credits-, title}
       status: 200 OK
       headers:
@@ -5044,7 +5886,12 @@ tests:
 
          ----
          /course{department+,number,credits-,title}
-         SELECT "course"."department", "course"."number", "course"."credits", "course"."title" FROM "ad"."course" AS "course" ORDER BY 1 ASC, 3 DESC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."credits",
+                "course"."title"
+         FROM "ad"."course" AS "course"
+         ORDER BY 1 ASC, 3 DESC, 2 ASC
     - uri: /course{department as 'Dept Code'+, number as 'No.', credits-, title}
       status: 200 OK
       headers:
@@ -5183,8 +6030,13 @@ tests:
                                                                 (100 rows)
 
          ----
-         /course{department as 'Dept Code'+,number as 'No.',credits-,title}
-         SELECT "course"."department", "course"."number", "course"."credits", "course"."title" FROM "ad"."course" AS "course" ORDER BY 1 ASC, 3 DESC, 2 ASC
+         /course{department:as('Dept Code')+,number:as('No.'),credits-,title}
+         SELECT "course"."department",
+                "course"."number",
+                "course"."credits",
+                "course"."title"
+         FROM "ad"."course" AS "course"
+         ORDER BY 1 ASC, 3 DESC, 2 ASC
     - uri: /program{school.name, title}
       status: 200 OK
       headers:
@@ -5260,7 +6112,13 @@ tests:
 
          ----
          /program{school.name,title}
-         SELECT "school"."name", "program"."title" FROM "ad"."program" AS "program" INNER JOIN "ad"."school" AS "school" ON (("program"."school" = "school"."code")) ORDER BY "program"."school" ASC, "program"."code" ASC
+         SELECT "school"."name",
+                "program"."title"
+         FROM "ad"."program" AS "program"
+                  INNER JOIN
+              "ad"."school" AS "school"
+                  ON (("program"."school" = "school"."code"))
+         ORDER BY "program"."school" ASC, "program"."code" ASC
     - uri: /program?degree={'ba','bs'}
       status: 200 OK
       headers:
@@ -5304,7 +6162,13 @@ tests:
 
          ----
          /program?degree={'ba','bs'}
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" WHERE ("program"."degree" IN ('ba', 'bs')) ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school",
+                "program"."code",
+                "program"."title",
+                "program"."degree"
+         FROM "ad"."program" AS "program"
+         WHERE ("program"."degree" IN ('ba', 'bs'))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course{department.school.name, department.name, title}
       status: 200 OK
       headers:
@@ -5461,7 +6325,17 @@ tests:
 
          ----
          /course{department.school.name,department.name,title}
-         SELECT "school"."name", "department"."name", "course"."title" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department" ON (("course"."department" = "department"."code")) LEFT OUTER JOIN "ad"."school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
+         SELECT "school"."name",
+                "department"."name",
+                "course"."title"
+         FROM "ad"."course" AS "course"
+                  INNER JOIN
+              "ad"."department" AS "department"
+                  ON (("course"."department" = "department"."code"))
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         ORDER BY "course"."department" ASC, "course"."number" ASC
     - uri: /department{*,school.*}
       status: 200 OK
       headers:
@@ -5507,7 +6381,16 @@ tests:
 
          ----
          /department{*,school.*}
-         SELECT "department"."code", "department"."name", "department"."school", "school_2"."code", "school_2"."name" FROM "ad"."department" AS "department" LEFT OUTER JOIN "ad"."school" AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school",
+                "school"."code",
+                "school"."name"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              "ad"."school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         ORDER BY 1 ASC
     - uri: /department?school='egn'
       status: 200 OK
       headers:
@@ -5525,7 +6408,12 @@ tests:
 
          ----
          /department?school='egn'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE ("department"."school" = 'egn') ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE ("department"."school" = 'egn')
+         ORDER BY 1 ASC
     - uri: /program?school='bus'&degree!='bs'
       status: 200 OK
       headers:
@@ -5542,7 +6430,13 @@ tests:
 
          ----
          /program?school='bus'&degree!='bs'
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "ad"."program" AS "program" WHERE (("program"."school" = 'bus') AND ("program"."degree" != 'bs')) ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school",
+                "program"."code",
+                "program"."title",
+                "program"."degree"
+         FROM "ad"."program" AS "program"
+         WHERE (("program"."school" = 'bus') AND ("program"."degree" <> 'bs'))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course{department, number, title}? credits<3&department.school='ns'
       status: 200 OK
       headers:
@@ -5560,7 +6454,15 @@ tests:
 
          ----
          /course{department,number,title}?credits<3&department.school='ns'
-         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title"
+         FROM "ad"."course" AS "course"
+                  INNER JOIN
+              "ad"."department" AS "department"
+                  ON (("course"."department" = "department"."code"))
+         WHERE (("course"."credits" < 3) AND ("department"."school" = 'ns'))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /(course?credits<3&department.school='ns') {department, number, title}
       status: 200 OK
       headers:
@@ -5578,7 +6480,15 @@ tests:
 
          ----
          /(course?credits<3&department.school='ns'){department,number,title}
-         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department_2" ON (("course"."department" = "department_2"."code")) WHERE (("course"."credits" < 3) AND ("department_2"."school" = 'ns')) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title"
+         FROM "ad"."course" AS "course"
+                  INNER JOIN
+              "ad"."department" AS "department"
+                  ON (("course"."department" = "department"."code"))
+         WHERE (("course"."credits" < 3) AND ("department"."school" = 'ns'))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /school/:json
       status: 200 OK
       headers:
@@ -5724,7 +6634,13 @@ tests:
 
          ----
          /course{department.name,credits}
-         SELECT "department"."name", "course"."credits" FROM "ad"."course" AS "course" INNER JOIN "ad"."department" AS "department" ON (("course"."department" = "department"."code")) ORDER BY "course"."department" ASC, "course"."number" ASC
+         SELECT "department"."name",
+                "course"."credits"
+         FROM "ad"."course" AS "course"
+                  INNER JOIN
+              "ad"."department" AS "department"
+                  ON (("course"."department" = "department"."code"))
+         ORDER BY "course"."department" ASC, "course"."number" ASC
     - uri: /department{name, course.credits}
       status: 400 Bad Request
       headers:
@@ -5773,13 +6689,22 @@ tests:
 
          ----
          /department{name,max(course.credits)}
-         SELECT "department"."name", "course"."max" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
+         SELECT "department"."name",
+                "course"."max"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT MAX("course"."credits") AS "max",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               GROUP BY 2) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         ORDER BY "department"."code" ASC
     - uri: /department{name, count(school)}
       status: 400 Bad Request
       headers:
       - [Content-Type, text/plain; charset=UTF-8]
       body: |
-        invalid argument: a plural operand is required:
+        encode error: a plural operand is required:
             /department{name, count(school)}
                               ^^^^^^^^^^^^^
     - uri: /max(course.credits)
@@ -5796,7 +6721,8 @@ tests:
 
          ----
          /max(course.credits)
-         SELECT MAX("course"."credits") FROM "ad"."course" AS "course"
+         SELECT MAX("course"."credits")
+         FROM "ad"."course" AS "course"
     - uri: /school{name, count(program), count(department)}
       status: 200 OK
       headers:
@@ -5820,7 +6746,23 @@ tests:
 
          ----
          /school{name,count(program),count(department)}
-         SELECT "school"."name", COALESCE("program"."count", 0), COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON (("school"."code" = "program"."school")) LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
+         SELECT "school"."name",
+                COALESCE("program"."count", 0),
+                COALESCE("department"."count", 0)
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "program"."school" AS "school"
+               FROM "ad"."program" AS "program"
+               GROUP BY 2) AS "program"
+                  ON (("school"."code" = "program"."school"))
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         ORDER BY "school"."code" ASC
     - uri: /department{name, count(course?number>=400)}
       status: 200 OK
       headers:
@@ -5861,7 +6803,17 @@ tests:
 
          ----
          /department{name,count(course?number>=400)}
-         SELECT "department"."name", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."number" >= 400) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
+         SELECT "department"."name",
+                COALESCE("course"."count", 0)
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               WHERE ("course"."number" >= 400)
+               GROUP BY 2) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         ORDER BY "department"."code" ASC
     - uri: /school{name, avg(department.count(course))}
       status: 200 OK
       headers:
@@ -5885,7 +6837,22 @@ tests:
 
          ----
          /school{name,avg(department.count(course))}
-         SELECT "school"."name", "department"."avg" FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("course"."count", 0) AS NUMERIC)) AS "avg", "department"."school" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
+         SELECT "school"."name",
+                "department"."avg"
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT AVG(CAST(COALESCE("course"."count", 0) AS DECIMAL)) AS "avg",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+                        LEFT OUTER JOIN
+                    (SELECT COUNT(TRUE) AS "count",
+                            "course"."department" AS "department"
+                     FROM "ad"."course" AS "course"
+                     GROUP BY 2) AS "course"
+                        ON (("department"."code" = "course"."department"))
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         ORDER BY "school"."code" ASC
     - uri: /school{name, count(department?exists(course?credits>3))}
       status: 200 OK
       headers:
@@ -5909,7 +6876,19 @@ tests:
 
          ----
          /school{name,count(department?exists(course?credits>3))}
-         SELECT "school"."name", COALESCE("department"."count", 0) FROM "ad"."school" AS "school" LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school" FROM "ad"."department" AS "department" WHERE EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course" WHERE (("department"."code" = "course"."department") AND ("course"."credits" > 3))) GROUP BY 2) AS "department" ON (("school"."code" = "department"."school")) ORDER BY "school"."code" ASC
+         SELECT "school"."name",
+                COALESCE("department"."count", 0)
+         FROM "ad"."school" AS "school"
+                  LEFT OUTER JOIN
+              (SELECT COUNT(TRUE) AS "count",
+                      "department"."school" AS "school"
+               FROM "ad"."department" AS "department"
+               WHERE EXISTS(SELECT TRUE
+                            FROM "ad"."course" AS "course"
+                            WHERE (("department"."code" = "course"."department") AND ("course"."credits" > 3)))
+               GROUP BY 2) AS "department"
+                  ON (("school"."code" = "department"."school"))
+         ORDER BY "school"."code" ASC
     - uri: /department{name, avg((course?number>400).credits)}
       status: 200 OK
       headers:
@@ -5950,7 +6929,17 @@ tests:
 
          ----
          /department{name,avg((course?number>400).credits)}
-         SELECT "department"."name", "course"."avg" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", "course"."department" FROM "ad"."course" AS "course" WHERE ("course"."number" > 400) GROUP BY 2) AS "course" ON (("department"."code" = "course"."department")) ORDER BY "department"."code" ASC
+         SELECT "department"."name",
+                "course"."avg"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT AVG(CAST("course"."credits" AS DECIMAL)) AS "avg",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               WHERE ("course"."number" > 400)
+               GROUP BY 2) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         ORDER BY "department"."code" ASC
     - uri: /department{code, min(course.credits), max(course.credits), avg(course.credits)}
       status: 200 OK
       headers:
@@ -5991,7 +6980,20 @@ tests:
 
          ----
          /department{code,min(course.credits),max(course.credits),avg(course.credits)}
-         SELECT "department"."code", "course"."min", "course"."max", "course"."avg" FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min", MAX("course"."credits") AS "max", AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", "course"."department" FROM "ad"."course" AS "course" GROUP BY 4) AS "course" ON (("department"."code" = "course"."department")) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "course"."min",
+                "course"."max",
+                "course"."avg"
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT MIN("course"."credits") AS "min",
+                      MAX("course"."credits") AS "max",
+                      AVG(CAST("course"."credits" AS DECIMAL)) AS "avg",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               GROUP BY 4) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         ORDER BY 1 ASC
     - uri: /department{name, avg(course.credits), count(course)} ?every(course.credits=3)
       status: 200 OK
       headers:
@@ -6016,7 +7018,21 @@ tests:
 
          ----
          /department{name,avg(course.credits),count(course)}?every(course.credits=3)
-         SELECT "department"."name", "course"."avg", COALESCE("course"."count", 0) FROM "ad"."department" AS "department" LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "avg", COUNT(TRUE) AS "count", "course"."department" FROM "ad"."course" AS "course" GROUP BY 3) AS "course" ON (("department"."code" = "course"."department")) WHERE NOT EXISTS(SELECT TRUE AS "!" FROM "ad"."course" AS "course_2" WHERE (("department"."code" = "course_2"."department") AND ("course_2"."credits" != 3))) ORDER BY "department"."code" ASC
+         SELECT "department"."name",
+                "course"."avg",
+                COALESCE("course"."count", 0)
+         FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN
+              (SELECT AVG(CAST("course"."credits" AS DECIMAL)) AS "avg",
+                      COUNT(TRUE) AS "count",
+                      "course"."department" AS "department"
+               FROM "ad"."course" AS "course"
+               GROUP BY 3) AS "course"
+                  ON (("department"."code" = "course"."department"))
+         WHERE (NOT EXISTS(SELECT TRUE
+                           FROM "ad"."course" AS "course_1"
+                           WHERE (("department"."code" = "course_1"."department") AND ("course_1"."credits" <> 3))))
+         ORDER BY "department"."code" ASC
     - uri: /course?title='Drawing'
       status: 200 OK
       headers:
@@ -6035,7 +7051,14 @@ tests:
 
          ----
          /course?title='Drawing'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."title" = 'Drawing') ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."title" = 'Drawing')
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?title~'lab'
       status: 200 OK
       headers:
@@ -6076,7 +7099,14 @@ tests:
 
          ----
          /course?title~'lab'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."title" ILIKE '%lab%') ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."title" ILIKE '%lab%')
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?title!= 'Organic Chemistry Laboratory I'
       status: 200 OK
       headers:
@@ -6626,7 +7656,14 @@ tests:
 
          ----
          /course?title!='Organic Chemistry Laboratory I'
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."title" != 'Organic Chemistry Laboratory I') ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."title" <> 'Organic Chemistry Laboratory I')
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course{department,number,title}?number=101
       status: 200 OK
       headers:
@@ -6642,7 +7679,12 @@ tests:
 
          ----
          /course{department,number,title}?number=101
-         SELECT "course"."department", "course"."number", "course"."title" FROM "ad"."course" AS "course" WHERE ("course"."number" = 101) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."number" = 101)
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?credits>3
       status: 200 OK
       headers:
@@ -6743,7 +7785,14 @@ tests:
 
          ----
          /course?credits>3
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."credits" > 3) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."credits" > 3)
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?credits>=3
       status: 200 OK
       headers:
@@ -7253,7 +8302,14 @@ tests:
 
          ----
          /course?credits>=3
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."credits" >= 3) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."credits" >= 3)
+         ORDER BY 1 ASC, 2 ASC
     - uri: /department?code>'me'
       status: 200 OK
       headers:
@@ -7278,7 +8334,12 @@ tests:
 
          ----
          /department?code>'me'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE ("department"."code" > 'me') ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE ("department"."code" > 'me')
+         ORDER BY 1 ASC
     - uri: /{true(), false(), null()}
       status: 200 OK
       headers:
@@ -7293,7 +8354,9 @@ tests:
 
          ----
          /{true(),false(),null()}
-         SELECT TRUE, FALSE, NULL
+         SELECT TRUE,
+                FALSE,
+                NULL
     - uri: /department{code, name}?is_null(school)
       status: 200 OK
       headers:
@@ -7310,7 +8373,11 @@ tests:
 
          ----
          /department{code,name}?is_null(school)
-         SELECT "department"."code", "department"."name" FROM "ad"."department" AS "department" WHERE ("department"."school" IS NULL) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name"
+         FROM "ad"."department" AS "department"
+         WHERE ("department"."school" IS NULL)
+         ORDER BY 1 ASC
     - uri: /department{code, name}?!is_null(school)
       status: 200 OK
       headers:
@@ -7348,7 +8415,11 @@ tests:
 
          ----
          /department{code,name}?!is_null(school)
-         SELECT "department"."code", "department"."name" FROM "ad"."department" AS "department" WHERE ("department"."school" IS NOT NULL) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name"
+         FROM "ad"."department" AS "department"
+         WHERE ("department"."school" IS NOT NULL)
+         ORDER BY 1 ASC
     - uri: /course?department='acc'&credits<3
       status: 200 OK
       headers:
@@ -7363,7 +8434,14 @@ tests:
 
          ----
          /course?department='acc'&credits<3
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE (("course"."department" = 'acc') AND ("course"."credits" < 3)) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE (("course"."department" = 'acc') AND ("course"."credits" < 3))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?credits>4|credits<3
       status: 200 OK
       headers:
@@ -7439,7 +8517,14 @@ tests:
 
          ----
          /course?credits>4|credits<3
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE (("course"."credits" > 4) OR ("course"."credits" < 3)) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE (("course"."credits" > 4) OR ("course"."credits" < 3))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /{true()|false()&false(),(true()|false())&false()}
       status: 200 OK
       headers:
@@ -7454,7 +8539,8 @@ tests:
 
          ----
          /{true()|false()&false(),(true()|false())&false()}
-         SELECT TRUE, FALSE
+         SELECT TRUE,
+                FALSE
     - uri: /course?(department='arthis'|department='stdart')&credits>3
       status: 200 OK
       headers:
@@ -7492,7 +8578,14 @@ tests:
 
          ----
          /course?(department='arthis'|department='stdart')&credits>3
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ((("course"."department" = 'arthis') OR ("course"."department" = 'stdart')) AND ("course"."credits" > 3)) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ((("course"."department" = 'arthis') OR ("course"."department" = 'stdart')) AND ("course"."credits" > 3))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?department='arthis'|department='stdart'&credits>3
       status: 200 OK
       headers:
@@ -7551,7 +8644,14 @@ tests:
 
          ----
          /course?department='arthis'|department='stdart'&credits>3
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE (("course"."department" = 'arthis') OR (("course"."department" = 'stdart') AND ("course"."credits" > 3))) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE (("course"."department" = 'arthis') OR (("course"."department" = 'stdart') AND ("course"."credits" > 3)))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?!(department='arthis'|department='stdart')
       status: 200 OK
       headers:
@@ -8046,7 +9146,14 @@ tests:
 
          ----
          /course?!(department='arthis'|department='stdart')
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE (NOT (("course"."department" = 'arthis') OR ("course"."department" = 'stdart'))) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE (NOT (("course"."department" = 'arthis') OR ("course"."department" = 'stdart')))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?department!={'arthis','stdart'}
       status: 200 OK
       headers:
@@ -8541,7 +9648,14 @@ tests:
 
          ----
          /course?department!={'arthis','stdart'}
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE ("course"."department" NOT IN ('arthis', 'stdart')) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE ("course"."department" NOT IN ('arthis', 'stdart'))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?description
       status: 200 OK
       headers:
@@ -9091,7 +10205,14 @@ tests:
 
          ----
          /course?description
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "ad"."course" AS "course" WHERE (NULLIF("course"."description", '') IS NOT NULL) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE (NULLIF("course"."description", '') IS NOT NULL)
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course{department,number,description}? !description
       status: 200 OK
       headers:
@@ -9107,7 +10228,12 @@ tests:
 
          ----
          /course{department,number,description}?!description
-         SELECT "course"."department", "course"."number", "course"."description" FROM "ad"."course" AS "course" WHERE (NULLIF("course"."description", '') IS NULL) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."description"
+         FROM "ad"."course" AS "course"
+         WHERE (NULLIF("course"."description", '') IS NULL)
+         ORDER BY 1 ASC, 2 ASC
     - uri: /department?school==null()
       status: 200 OK
       headers:
@@ -9124,7 +10250,12 @@ tests:
 
          ----
          /department?school==null()
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE ("department"."school" IS NULL) ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE ("department"."school" IS NULL)
+         ORDER BY 1 ASC
     - uri: /department?school!=='art'
       status: 200 OK
       headers:
@@ -9163,4 +10294,9 @@ tests:
 
          ----
          /department?school!=='art'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "ad"."department" AS "department" WHERE ("department"."school" IS DISTINCT FROM 'art') ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "ad"."department" AS "department"
+         WHERE ("department"."school" IS DISTINCT FROM 'art')
+         ORDER BY 1 ASC

@@ -21,6 +21,7 @@ from ..domain import Domain, BooleanDomain
 from .syntax import IdentifierSyntax
 from .binding import Binding, QueryBinding, SegmentBinding
 from .coerce import coerce
+from .signature import Signature
 
 
 class Expression(Comparable, Clonable, Printable):
@@ -1230,36 +1231,24 @@ class FunctionCode(Code):
         objects.
     """
 
-    def __init__(self, domain, binding, **arguments):
-        # Extract the units and the equality vector from the arguments.
-        # FIXME: messy, add some formal definition of the argument structure
-        # and/or a walker operator?
+    def __init__(self, signature, domain, binding, **arguments):
+        assert isinstance(signature, Signature)
+        signature.verify(Code, arguments)
         units = []
-        equality_vector = [domain]
-        for key in sorted(arguments):
-            value = arguments[key]
-            # Argument values are expected to be `Code` objects,
-            # list of `Code` objects or some other (immutable) objects.
-            if isinstance(value, Code):
-                units.extend(value.units)
-            if isinstance(value, list):
-                for item in value:
-                    if isinstance(item, Code):
-                        units.extend(item.units)
-                value = tuple(value)
-            equality_vector.append((key, value))
-        equality_vector = tuple(equality_vector)
-
+        for code in signature.iterate(arguments):
+            units.extend(code.units)
+        equality_vector = ((signature.__class__, domain)
+                           + signature.freeze(arguments))
         super(FunctionCode, self).__init__(
                     domain=domain,
                     units=units,
                     binding=binding,
                     equality_vector=equality_vector)
+        self.signature = signature
         self.arguments = arguments
         # For convenience, we permit access to function arguments using
         # object attributes.
-        for key in arguments:
-            setattr(self, key, arguments[key])
+        signature.extract(self, arguments)
 
 
 class Unit(Code):

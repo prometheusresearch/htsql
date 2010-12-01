@@ -32,7 +32,10 @@ tests:
 
          ----
          /school
-         SELECT "school"."code", "school"."name" FROM "school" AS "school" ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "school" AS "school"
+         ORDER BY 1 ASC
     - uri: /department
       status: 200 OK
       headers:
@@ -70,7 +73,11 @@ tests:
 
          ----
          /department
-         SELECT "department"."code", "department"."name", "department"."school" FROM "department" AS "department" ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "department" AS "department"
+         ORDER BY 1 ASC
     - uri: /program
       status: 200 OK
       headers:
@@ -140,7 +147,12 @@ tests:
 
          ----
          /program
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "program" AS "program" ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school",
+                "program"."code",
+                "program"."title",
+                "program"."degree"
+         FROM "program" AS "program"
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course
       status: 200 OK
       headers:
@@ -696,7 +708,13 @@ tests:
 
          ----
          /course
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "course" AS "course" ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "course" AS "course"
+         ORDER BY 1 ASC, 2 ASC
   - id: scalar-queries
     tests:
     - uri: /
@@ -754,7 +772,11 @@ tests:
 
          ----
          /school?code='ns'
-         SELECT "school"."code", "school"."name" FROM "school" AS "school" WHERE ("school"."code" = 'ns') ORDER BY 1 ASC
+         SELECT "school"."code",
+                "school"."name"
+         FROM "school" AS "school"
+         WHERE ("school"."code" = 'ns')
+         ORDER BY 1 ASC
     - uri: /department?school.code='ns'
       status: 200 OK
       headers:
@@ -772,7 +794,15 @@ tests:
 
          ----
          /department?school.code='ns'
-         SELECT "department"."code", "department"."name", "department"."school" FROM "department" AS "department" INNER JOIN "school" AS "school_2" ON (("department"."school" = "school_2"."code")) WHERE ("school_2"."code" = 'ns') ORDER BY 1 ASC
+         SELECT "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "department" AS "department"
+                  INNER JOIN
+              "school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         WHERE ("school"."code" = 'ns')
+         ORDER BY 1 ASC
     - uri: /program?school.code='ns'&code='uchem'
       status: 200 OK
       headers:
@@ -787,7 +817,16 @@ tests:
 
          ----
          /program?school.code='ns'&code='uchem'
-         SELECT "program"."school", "program"."code", "program"."title", "program"."degree" FROM "program" AS "program" INNER JOIN "school" AS "school_2" ON (("program"."school" = "school_2"."code")) WHERE (("school_2"."code" = 'ns') AND ("program"."code" = 'uchem')) ORDER BY 1 ASC, 2 ASC
+         SELECT "program"."school",
+                "program"."code",
+                "program"."title",
+                "program"."degree"
+         FROM "program" AS "program"
+                  INNER JOIN
+              "school" AS "school"
+                  ON (("program"."school" = "school"."code"))
+         WHERE (("school"."code" = 'ns') AND ("program"."code" = 'uchem'))
+         ORDER BY 1 ASC, 2 ASC
     - uri: /course?credits=5
       status: 200 OK
       headers:
@@ -818,7 +857,14 @@ tests:
 
          ----
          /course?credits=5
-         SELECT "course"."department", "course"."number", "course"."title", "course"."credits", "course"."description" FROM "course" AS "course" WHERE ("course"."credits" = 5) ORDER BY 1 ASC, 2 ASC
+         SELECT "course"."department",
+                "course"."number",
+                "course"."title",
+                "course"."credits",
+                "course"."description"
+         FROM "course" AS "course"
+         WHERE ("course"."credits" = 5)
+         ORDER BY 1 ASC, 2 ASC
   - id: simple-selectors
     tests:
     - uri: /school{name}
@@ -844,7 +890,9 @@ tests:
 
          ----
          /school{name}
-         SELECT "school"."name" FROM "school" AS "school" ORDER BY "school"."code" ASC
+         SELECT "school"."name"
+         FROM "school" AS "school"
+         ORDER BY "school"."code" ASC
     - uri: /department{school.*,*}
       status: 200 OK
       headers:
@@ -887,7 +935,16 @@ tests:
 
          ----
          /department{school.*,*}
-         SELECT "school_2"."code", "school_2"."name", "department"."code", "department"."name", "department"."school" FROM "department" AS "department" INNER JOIN "school" AS "school_2" ON (("department"."school" = "school_2"."code")) ORDER BY 3 ASC
+         SELECT "school"."code",
+                "school"."name",
+                "department"."code",
+                "department"."name",
+                "department"."school"
+         FROM "department" AS "department"
+                  INNER JOIN
+              "school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         ORDER BY 3 ASC
     - uri: /department{school.name+' - '+name}
       status: 200 OK
       headers:
@@ -944,4 +1001,9 @@ tests:
 
          ----
          /department{school.name+' - '+name}
-         SELECT (("school"."name" || ' - ') || "department"."name") FROM "department" AS "department" INNER JOIN "school" AS "school" ON (("department"."school" = "school"."code")) ORDER BY "department"."code" ASC
+         SELECT (("school"."name" || ' - ') || "department"."name")
+         FROM "department" AS "department"
+                  INNER JOIN
+              "school" AS "school"
+                  ON (("department"."school" = "school"."code"))
+         ORDER BY "department"."code" ASC
