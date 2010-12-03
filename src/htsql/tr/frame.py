@@ -45,9 +45,9 @@ class Clause(Comparable, Clonable, Printable):
 
     The following adapter is associated with the serializing process::
 
-        Serialize: (Clause, SerializingState) -> str
+        Dump: (Clause, DumpingState) -> str
 
-    See :class:`htsql.tr.serialize.Serialize` for more detail.
+    See :class:`htsql.tr.dump.Dump` for more detail.
 
     Clause nodes support equality by value.
 

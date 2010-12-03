@@ -6,13 +6,13 @@
 
 
 """
-:mod:`htsql.tr.fn.serialize`
-============================
+:mod:`htsql.tr.fn.dump`
+=======================
 """
 
 
 from ...adapter import adapts
-from ..serialize import SerializeBySignature
+from ..dump import DumpBySignature
 from .signature import (NumericAddSig, ConcatenateSig, DateIncrementSig,
                         NumericSubtractSig, DateDecrementSig,
                         DateDifferenceSig, NumericMultiplySig,
@@ -23,7 +23,7 @@ from .signature import (NumericAddSig, ConcatenateSig, DateIncrementSig,
                         TakeSumSig, TakeAvgSig)
 
 
-class SerializeFunction(SerializeBySignature):
+class DumpFunction(DumpBySignature):
 
     template = None
 
@@ -33,37 +33,37 @@ class SerializeFunction(SerializeBySignature):
         self.state.format(self.template, self.arguments, self.signature)
 
 
-class SerializeNumericAdd(SerializeFunction):
+class DumpNumericAdd(DumpFunction):
 
     adapts(NumericAddSig)
     template = "({lop} + {rop})"
 
 
-class SerializeNumericSubtract(SerializeFunction):
+class DumpNumericSubtract(DumpFunction):
 
     adapts(NumericSubtractSig)
     template = "({lop} - {rop})"
 
 
-class SerializeNumericMultiply(SerializeFunction):
+class DumpNumericMultiply(DumpFunction):
 
     adapts(NumericMultiplySig)
     template = "({lop} * {rop})"
 
 
-class SerializeNumericDivide(SerializeFunction):
+class DumpNumericDivide(DumpFunction):
 
     adapts(NumericDivideSig)
     template = "({lop} / {rop})"
 
 
-class SerializeConcatenate(SerializeFunction):
+class DumpConcatenate(DumpFunction):
 
     adapts(ConcatenateSig)
     template = "({lop} || {rop})"
 
 
-class SerializeIf(SerializeFunction):
+class DumpIf(DumpFunction):
 
     adapts(IfSig)
 
@@ -79,7 +79,7 @@ class SerializeIf(SerializeFunction):
         self.state.format(" END)")
 
 
-class SerializeSwitch(SerializeFunction):
+class DumpSwitch(DumpFunction):
 
     adapts(SwitchSig)
 
@@ -96,73 +96,73 @@ class SerializeSwitch(SerializeFunction):
         self.state.format(" END)")
 
 
-class SerializeAmong(SerializeFunction):
+class DumpAmong(DumpFunction):
 
     adapts(AmongSig)
     template = "({lop} {polarity:polarity}IN ({rops:join{, }}))"
 
 
-class SerializeCompare(SerializeFunction):
+class DumpCompare(DumpFunction):
 
     adapts(CompareSig)
     template = "({lop} {relation:asis} {rop})"
 
 
-class SerializeReversePolarity(SerializeFunction):
+class DumpReversePolarity(DumpFunction):
 
     adapts(NumericReversePolaritySig)
     template = "(- {op})"
 
 
-class SerializeRound(SerializeFunction):
+class DumpRound(DumpFunction):
 
     adapts(RoundSig)
     template = "ROUND({op})"
 
 
-class SerializeRoundTo(SerializeFunction):
+class DumpRoundTo(DumpFunction):
 
     adapts(RoundToSig)
     template = "ROUND({op}, {precision})"
 
 
-class SerializeStringLength(SerializeFunction):
+class DumpStringLength(DumpFunction):
 
     adapts(StringLengthSig)
     template = "CHARACTER_LENGTH({op})"
 
 
-class SerializeWrapExists(SerializeFunction):
+class DumpWrapExists(DumpFunction):
 
     adapts(WrapExistsSig)
     template = "EXISTS{op}"
 
 
-class SerializeTakeCount(SerializeFunction):
+class DumpTakeCount(DumpFunction):
 
     adapts(TakeCountSig)
     template = "COUNT({op})"
 
 
-class SerializeTakeMin(SerializeFunction):
+class DumpTakeMin(DumpFunction):
 
     adapts(TakeMinSig)
     template = "MIN({op})"
 
 
-class SerializeTakeMax(SerializeFunction):
+class DumpTakeMax(DumpFunction):
 
     adapts(TakeMaxSig)
     template = "MAX({op})"
 
 
-class SerializeTakeSum(SerializeFunction):
+class DumpTakeSum(DumpFunction):
 
     adapts(TakeSumSig)
     template = "SUM({op})"
 
 
-class SerializeTakeAvg(SerializeFunction):
+class DumpTakeAvg(DumpFunction):
 
     adapts(TakeAvgSig)
     template = "AVG({op})"

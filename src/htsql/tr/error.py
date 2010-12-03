@@ -74,7 +74,7 @@ class CompileError(TranslateError):
     kind = "compile error"
 
 
-class SerializeError(TranslateError):
+class DumpError(TranslateError):
     """
     Represents a serializer error.
 
@@ -82,6 +82,6 @@ class SerializeError(TranslateError):
     node to SQL.
     """
 
-    kind = "serialize error"
+    kind = "dump error"
 
 

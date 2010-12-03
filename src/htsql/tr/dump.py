@@ -6,8 +6,8 @@
 
 
 """
-:mod:`htsql.tr.serialize`
-=========================
+:mod:`htsql.tr.dump`
+====================
 
 This module implements the SQL serializing process.
 """
@@ -15,7 +15,7 @@ This module implements the SQL serializing process.
 
 from ..util import listof
 from ..adapter import Adapter, Utility, adapts
-from .error import SerializeError
+from .error import DumpError
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
                       DateDomain)
@@ -74,7 +74,7 @@ class Stream(object):
         return output
 
 
-class SerializingState(object):
+class DumpingState(object):
 
     def __init__(self):
         self.stream = Stream()
@@ -127,8 +127,8 @@ class SerializingState(object):
         dub = Dub(clause, self)
         return dub()
 
-    def serialize(self, clause):
-        return serialize(clause, self)
+    def dump(self, clause):
+        return dump(clause, self)
 
 
 class Format(Utility):
@@ -152,7 +152,7 @@ class Format(Utility):
     template_regexp = re.compile(template_pattern, re.X)
 
     def __init__(self, state, template, variables):
-        assert isinstance(state, SerializingState)
+        assert isinstance(state, DumpingState)
         assert isinstance(template, str)
         assert isinstance(variables, dict)
         self.state = state
@@ -188,7 +188,7 @@ class Format(Utility):
     def default(self, value, modifier=None):
         assert isinstance(value, Clause)
         assert modifier is None
-        self.state.serialize(value)
+        self.state.dump(value)
 
     def join(self, value, modifier=", "):
         assert isinstance(value, listof(Clause))
@@ -196,7 +196,7 @@ class Format(Utility):
         for index, phrase in enumerate(value):
             if index > 0:
                 self.stream.write(modifier)
-            self.state.serialize(phrase)
+            self.state.dump(phrase)
 
     def name(self, value, modifier=None):
         assert isinstance(value, str)
@@ -304,13 +304,13 @@ class DubEmbedding(Dub):
         return self.state.dub(phrase)
 
 
-class Serialize(Adapter):
+class Dump(Adapter):
 
     adapts(Clause)
 
     def __init__(self, clause, state):
         assert isinstance(clause, Clause)
-        assert isinstance(state, SerializingState)
+        assert isinstance(state, DumpingState)
         self.clause = clause
         self.state = state
 
@@ -318,25 +318,25 @@ class Serialize(Adapter):
         raise NotImplementedError(repr(self.clause))
 
 
-class SerializeFrame(Serialize):
+class DumpFrame(Dump):
 
     adapts(Frame)
 
     def __init__(self, frame, state):
-        super(SerializeFrame, self).__init__(frame, state)
+        super(DumpFrame, self).__init__(frame, state)
         self.frame = frame
 
 
-class SerializePhrase(Serialize):
+class DumpPhrase(Dump):
 
     adapts(Phrase)
 
     def __init__(self, phrase, state):
-        super(SerializePhrase, self).__init__(phrase, state)
+        super(DumpPhrase, self).__init__(phrase, state)
         self.phrase = phrase
 
 
-class SerializeTable(Serialize):
+class DumpTable(Dump):
 
     adapts(TableFrame)
 
@@ -347,20 +347,20 @@ class SerializeTable(Serialize):
                           table=table.name)
 
 
-class SerializeBranch(Serialize):
+class DumpBranch(Dump):
 
     adapts(BranchFrame)
 
     def __call__(self):
-        self.serialize_select()
-        self.serialize_include()
-        self.serialize_where()
-        self.serialize_group()
-        self.serialize_having()
-        self.serialize_order()
-        self.serialize_limit()
+        self.dump_select()
+        self.dump_include()
+        self.dump_where()
+        self.dump_group()
+        self.dump_having()
+        self.dump_order()
+        self.dump_limit()
 
-    def serialize_select(self):
+    def dump_select(self):
         aliases = self.state.select_aliases_by_tag[self.frame.tag]
         self.state.format("SELECT ")
         self.state.indent()
@@ -377,7 +377,7 @@ class SerializeBranch(Serialize):
                 self.state.newline()
         self.state.dedent()
 
-    def serialize_include(self):
+    def dump_include(self):
         if not self.frame.include:
             return
         self.state.newline()
@@ -387,14 +387,14 @@ class SerializeBranch(Serialize):
             self.state.format("{anchor}", anchor=anchor)
         self.state.dedent()
 
-    def serialize_where(self):
+    def dump_where(self):
         if self.frame.where is None:
             return
         self.state.newline()
         self.state.format("WHERE {condition}",
                           condition=self.frame.where)
 
-    def serialize_group(self):
+    def dump_group(self):
         if not self.frame.group:
             return
         self.state.newline()
@@ -408,14 +408,14 @@ class SerializeBranch(Serialize):
             if index < len(self.frame.group)-1:
                 self.state.format(", ")
 
-    def serialize_having(self):
+    def dump_having(self):
         if self.frame.having is None:
             return
         self.state.newline()
         self.state.format("HAVING {condition}",
                           condition=self.frame.having)
 
-    def serialize_order(self):
+    def dump_order(self):
         if not self.frame.order:
             return
         self.state.newline()
@@ -433,7 +433,7 @@ class SerializeBranch(Serialize):
             if index < len(self.frame.order)-1:
                 self.state.format(", ")
 
-    def serialize_limit(self):
+    def dump_limit(self):
         if self.frame.limit is None and self.frame.offset is None:
             return
         if self.frame.limit is not None:
@@ -444,19 +444,19 @@ class SerializeBranch(Serialize):
             self.state.format("OFFSET "+str(self.frame.offset))
 
 
-class SerializeNested(Serialize):
+class DumpNested(Dump):
 
     adapts(NestedFrame)
 
     def __call__(self):
         self.state.format("(")
         self.state.indent()
-        super(SerializeNested, self).__call__()
+        super(DumpNested, self).__call__()
         self.state.dedent()
         self.state.format(")")
 
 
-class SerializeSegment(Serialize):
+class DumpSegment(Dump):
 
     adapts(SegmentFrame)
 
@@ -464,7 +464,7 @@ class SerializeSegment(Serialize):
 
     def __call__(self):
         self.aliasing()
-        super(SerializeSegment, self).__call__()
+        super(DumpSegment, self).__call__()
         self.state.newline()
 
     def aliasing(self, frame=None,
@@ -522,7 +522,7 @@ class SerializeSegment(Serialize):
         return aliases
 
 
-class SerializeLeadingAnchor(Serialize):
+class DumpLeadingAnchor(Dump):
 
     adapts(LeadingAnchor)
 
@@ -532,7 +532,7 @@ class SerializeLeadingAnchor(Serialize):
                           frame=self.clause.frame, alias=alias)
 
 
-class SerializeAnchor(Serialize):
+class DumpAnchor(Dump):
 
     adapts(Anchor)
 
@@ -558,16 +558,16 @@ class SerializeAnchor(Serialize):
                               condition=self.clause.condition)
 
 
-class SerializeLiteral(Serialize):
+class DumpLiteral(Dump):
 
     adapts(LiteralPhrase)
 
     def __call__(self):
-        serialize = SerializeByDomain(self.phrase, self.state)
-        return serialize()
+        dump = DumpByDomain(self.phrase, self.state)
+        return dump()
 
 
-class SerializeNull(Serialize):
+class DumpNull(Dump):
 
     adapts(NullPhrase)
 
@@ -575,7 +575,7 @@ class SerializeNull(Serialize):
         self.state.format("NULL")
 
 
-class SerializeByDomain(Adapter):
+class DumpByDomain(Adapter):
 
     adapts(Domain)
 
@@ -587,7 +587,7 @@ class SerializeByDomain(Adapter):
     def __init__(self, phrase, state):
         assert isinstance(phrase, LiteralPhrase)
         assert phrase.value is not None
-        assert isinstance(state, SerializingState)
+        assert isinstance(state, DumpingState)
         self.phrase = phrase
         self.state = state
         self.value = phrase.value
@@ -597,7 +597,7 @@ class SerializeByDomain(Adapter):
         raise NotImplementedError()
 
 
-class SerializeBoolean(SerializeByDomain):
+class DumpBoolean(DumpByDomain):
 
     adapts(BooleanDomain)
 
@@ -608,29 +608,29 @@ class SerializeBoolean(SerializeByDomain):
             self.state.format("(1 = 0)")
 
 
-class SerializeInteger(SerializeByDomain):
+class DumpInteger(DumpByDomain):
 
     adapts(IntegerDomain)
 
     def __call__(self):
         if not (-2**63 <= self.value < 2**63):
-            raise SerializeError("invalid integer value",
+            raise DumpError("invalid integer value",
                                  self.phrase.mark)
         self.state.format(str(self.value))
 
 
-class SerializeFloat(SerializeByDomain):
+class DumpFloat(DumpByDomain):
 
     adapts(FloatDomain)
 
     def __call__(self):
         if str(self.value) in ['inf', '-inf', 'nan']:
-            raise SerializeError("invalid float value",
+            raise DumpError("invalid float value",
                                  self.phrase.mark)
         self.state.format(repr(self.value))
 
 
-class SerializeDecimal(SerializeByDomain):
+class DumpDecimal(DumpByDomain):
 
     adapts(DecimalDomain)
 
@@ -638,7 +638,7 @@ class SerializeDecimal(SerializeByDomain):
         self.state.format(str(self.value))
 
 
-class SerializeString(SerializeByDomain):
+class DumpString(DumpByDomain):
 
     adapts(StringDomain)
 
@@ -646,7 +646,7 @@ class SerializeString(SerializeByDomain):
         self.state.format("{value:literal}", value=self.value)
 
 
-class SerializeEnum(SerializeByDomain):
+class DumpEnum(DumpByDomain):
 
     adapts(EnumDomain)
 
@@ -654,7 +654,7 @@ class SerializeEnum(SerializeByDomain):
         self.state.format("{value:literal}", value=self.value)
 
 
-class SerializeEquality(Serialize):
+class DumpEquality(Dump):
 
     adapts(EqualityPhrase)
 
@@ -662,7 +662,7 @@ class SerializeEquality(Serialize):
         self.state.format("({lop} = {rop})", self.phrase)
 
 
-class SerializeInequality(Serialize):
+class DumpInequality(Dump):
 
     adapts(InequalityPhrase)
 
@@ -670,7 +670,7 @@ class SerializeInequality(Serialize):
         self.state.format("({lop} <> {rop})", self.phrase)
 
 
-class SerializeTotalEquality(Serialize):
+class DumpTotalEquality(Dump):
 
     adapts(TotalEqualityPhrase)
 
@@ -681,7 +681,7 @@ class SerializeTotalEquality(Serialize):
                           self.phrase)
 
 
-class SerializeTotalInequality(Serialize):
+class DumpTotalInequality(Dump):
 
     adapts(TotalInequalityPhrase)
 
@@ -692,7 +692,7 @@ class SerializeTotalInequality(Serialize):
                           self.phrase)
 
 
-class SerializeConjunction(Serialize):
+class DumpConjunction(Dump):
 
     adapts(ConjunctionPhrase)
 
@@ -700,7 +700,7 @@ class SerializeConjunction(Serialize):
         self.state.format("({ops:join{ AND }})", self.phrase)
 
 
-class SerializeDisjunction(Serialize):
+class DumpDisjunction(Dump):
 
     adapts(DisjunctionPhrase)
 
@@ -708,7 +708,7 @@ class SerializeDisjunction(Serialize):
         self.state.format("({ops:join{ OR }})", self.phrase)
 
 
-class SerializeNegation(Serialize):
+class DumpNegation(Dump):
 
     adapts(NegationPhrase)
 
@@ -716,7 +716,7 @@ class SerializeNegation(Serialize):
         self.state.format("(NOT {op})", self.phrase)
 
 
-class SerializeIsNull(Serialize):
+class DumpIsNull(Dump):
 
     adapts(IsNullPhrase)
 
@@ -724,7 +724,7 @@ class SerializeIsNull(Serialize):
         self.state.format("({op} IS NULL)", self.phrase)
 
 
-class SerializeIsNotNull(Serialize):
+class DumpIsNotNull(Dump):
 
     adapts(IsNotNullPhrase)
 
@@ -732,7 +732,7 @@ class SerializeIsNotNull(Serialize):
         self.state.format("({op} IS NOT NULL)", self.phrase)
 
 
-class SerializeIfNull(Serialize):
+class DumpIfNull(Dump):
 
     adapts(IfNullPhrase)
 
@@ -740,7 +740,7 @@ class SerializeIfNull(Serialize):
         self.state.format("COALESCE({lop}, {rop})", self.phrase)
 
 
-class SerializeNullIf(Serialize):
+class DumpNullIf(Dump):
 
     adapts(NullIfPhrase)
 
@@ -748,16 +748,16 @@ class SerializeNullIf(Serialize):
         self.state.format("NULLIF({lop}, {rop})", self.phrase)
 
 
-class SerializeCast(Serialize):
+class DumpCast(Dump):
 
     adapts(CastPhrase)
 
     def __call__(self):
-        serialize = SerializeToDomain(self.phrase, self.state)
-        return serialize()
+        dump = DumpToDomain(self.phrase, self.state)
+        return dump()
 
 
-class SerializeToDomain(Adapter):
+class DumpToDomain(Adapter):
 
     adapts(Domain, Domain)
 
@@ -768,7 +768,7 @@ class SerializeToDomain(Adapter):
 
     def __init__(self, phrase, state):
         assert isinstance(phrase, CastPhrase)
-        assert isinstance(state, SerializingState)
+        assert isinstance(state, DumpingState)
         self.phrase = phrase
         self.base = phrase.base
         self.domain = phrase.domain
@@ -778,7 +778,7 @@ class SerializeToDomain(Adapter):
         raise NotImplementedError()
 
 
-class SerializeToInteger(SerializeToDomain):
+class DumpToInteger(DumpToDomain):
 
     adapts(Domain, IntegerDomain)
 
@@ -786,7 +786,7 @@ class SerializeToInteger(SerializeToDomain):
         self.state.format("CAST({base} AS INTEGER)", base=self.base)
 
 
-class SerializeToFloat(SerializeToDomain):
+class DumpToFloat(DumpToDomain):
 
     adapts(Domain, FloatDomain)
 
@@ -794,7 +794,7 @@ class SerializeToFloat(SerializeToDomain):
         self.state.format("CAST({base} AS DOUBLE PRECISION)", base=self.base)
 
 
-class SerializeToDecimal(SerializeToDomain):
+class DumpToDecimal(DumpToDomain):
 
     adapts(Domain, DecimalDomain)
 
@@ -802,7 +802,7 @@ class SerializeToDecimal(SerializeToDomain):
         self.state.format("CAST({base} AS DECIMAL)", base=self.base)
 
 
-class SerializeToString(SerializeToDomain):
+class DumpToString(DumpToDomain):
 
     adapts(Domain, StringDomain)
 
@@ -810,16 +810,16 @@ class SerializeToString(SerializeToDomain):
         self.state.format("CAST({base} AS CHARACTER VARYING)", base=self.base)
 
 
-class SerializeFormula(Serialize):
+class DumpFormula(Dump):
 
     adapts(FormulaPhrase)
 
     def __call__(self):
-        serialize = SerializeBySignature(self.phrase, self.state)
-        return serialize()
+        dump = DumpBySignature(self.phrase, self.state)
+        return dump()
 
 
-class SerializeBySignature(Adapter):
+class DumpBySignature(Adapter):
 
     adapts(Signature)
 
@@ -830,7 +830,7 @@ class SerializeBySignature(Adapter):
 
     def __init__(self, phrase, state):
         assert isinstance(phrase, FormulaPhrase)
-        assert isinstance(state, SerializingState)
+        assert isinstance(state, DumpingState)
         self.phrase = phrase
         self.state = state
         self.signature = phrase.signature
@@ -841,7 +841,7 @@ class SerializeBySignature(Adapter):
         raise NotImplementedError()
 
 
-class SerializeColumn(Serialize):
+class DumpColumn(Dump):
 
     adapts(ColumnPhrase)
 
@@ -852,7 +852,7 @@ class SerializeColumn(Serialize):
                           parent=parent, child=child)
 
 
-class SerializeReference(Serialize):
+class DumpReference(Dump):
 
     adapts(ReferencePhrase)
 
@@ -864,7 +864,7 @@ class SerializeReference(Serialize):
                           parent=parent, child=child)
 
 
-class SerializeEmbedding(Serialize):
+class DumpEmbedding(Dump):
 
     adapts(EmbeddingPhrase)
 
@@ -875,7 +875,7 @@ class SerializeEmbedding(Serialize):
         self.state.pop_with_aliases()
 
 
-class SerializeQuery(Serialize):
+class DumpQuery(Dump):
 
     adapts(QueryFrame)
 
@@ -883,15 +883,15 @@ class SerializeQuery(Serialize):
         sql = None
         if self.clause.segment is not None:
             self.state.set_tree(self.clause.segment)
-            self.state.serialize(self.clause.segment)
+            self.state.dump(self.clause.segment)
             sql = self.state.flush()
         return Plan(self.clause, sql, self.clause.mark)
 
 
-def serialize(clause, state=None):
+def dump(clause, state=None):
     if state is None:
-        state = SerializingState()
-    serialize = Serialize(clause, state)
-    return serialize()
+        state = DumpingState()
+    dump = Dump(clause, state)
+    return dump()
 
 

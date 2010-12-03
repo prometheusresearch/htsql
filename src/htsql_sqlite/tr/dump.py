@@ -6,8 +6,8 @@
 
 
 """
-:mod:`htsql_sqlite.tr.serialize`
-================================
+:mod:`htsql_sqlite.tr.dump`
+===========================
 
 This module adapts the SQL serializer for SQLite.
 """
@@ -15,17 +15,17 @@ This module adapts the SQL serializer for SQLite.
 
 from htsql.adapter import adapts
 from htsql.tr.frame import TableFrame
-from htsql.tr.serialize import SerializeTable, SerializeBoolean
+from htsql.tr.dump import DumpTable, DumpBoolean
 
 
-class SQLiteSerializeTable(SerializeTable):
+class SQLiteDumpTable(DumpTable):
 
     def __call__(self):
         table = self.frame.space.table
         self.state.format("{table:name}", table=table.name)
 
 
-class SQLiteSerializeBoolean(SerializeBoolean):
+class SQLiteDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:

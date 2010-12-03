@@ -17,6 +17,6 @@ from . import bind
 from . import encode
 from . import assemble
 from . import reduce
-from . import serialize
+from . import dump
 
 

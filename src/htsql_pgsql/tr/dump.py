@@ -6,8 +6,8 @@
 
 
 """
-:mod:`htsql_pgsql.tr.serialize`
-===============================
+:mod:`htsql_pgsql.tr.dump`
+==========================
 
 This module adapts the SQL serializer for PostgreSQL.
 """
@@ -15,15 +15,15 @@ This module adapts the SQL serializer for PostgreSQL.
 
 from htsql.adapter import adapts
 from htsql.domain import Domain, DateDomain
-from htsql.tr.serialize import (Format, SerializeBoolean, SerializeFloat,
-                                SerializeByDomain, SerializeToDomain,
-                                SerializeTotalEquality,
-                                SerializeTotalInequality)
+from htsql.tr.dump import (Format, DumpBoolean, DumpFloat,
+                           DumpByDomain, DumpToDomain,
+                           DumpTotalEquality,
+                           DumpTotalInequality)
 from htsql.tr.fn.signature import (DateSig, ContainsSig, DateIncrementSig,
                                    DateDecrementSig, DateDifferenceSig)
-from htsql.tr.fn.serialize import SerializeFunction
+from htsql.tr.fn.dump import DumpFunction
 from htsql.tr.frame import LiteralPhrase, NullPhrase
-from htsql.tr.error import SerializeError
+from htsql.tr.error import DumpError
 
 
 class PGSQLFormat(Format):
@@ -41,7 +41,7 @@ class PGSQLFormat(Format):
             self.stream.write("'%s'" % value)
 
 
-class PGSQLSerializeBoolean(SerializeBoolean):
+class PGSQLDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:
@@ -50,11 +50,11 @@ class PGSQLSerializeBoolean(SerializeBoolean):
             self.state.format("FALSE")
 
 
-class PGSQLSerializeFloat(SerializeFloat):
+class PGSQLDumpFloat(DumpFloat):
 
     def __call__(self):
         if str(self.value) in ['inf', '-inf', 'nan']:
-            raise SerializeError("invalid float value",
+            raise DumpError("invalid float value",
                                  self.phrase.mark)
         self.state.format("%r::FLOAT8" % self.value)
 
@@ -64,7 +64,7 @@ class PGSQLSerializeFloat(SerializeFloat):
             self.state.format("FALSE")
 
 
-class PGSQLSerializeDate(SerializeByDomain):
+class PGSQLDumpDate(DumpByDomain):
 
     adapts(DateDomain)
 
@@ -72,7 +72,7 @@ class PGSQLSerializeDate(SerializeByDomain):
         self.state.format("{value:literal}::DATE", value=str(self.value))
 
 
-class PGSQLSerializeToDate(SerializeToDomain):
+class PGSQLDumpToDate(DumpToDomain):
 
     adapts(Domain, DateDomain)
 
@@ -80,19 +80,19 @@ class PGSQLSerializeToDate(SerializeToDomain):
         self.state.format("CAST({base} AS DATE)", base=self.base)
 
 
-class PGSQLSerializeTotalEquality(SerializeTotalEquality):
+class PGSQLDumpTotalEquality(DumpTotalEquality):
 
     def __call__(self):
         self.state.format("({lop} IS NOT DISTINCT FROM {rop})", self.phrase)
 
 
-class PGSQLSerializeTotalInequality(SerializeTotalInequality):
+class PGSQLDumpTotalInequality(DumpTotalInequality):
 
     def __call__(self):
         self.state.format("({lop} IS DISTINCT FROM {rop})", self.phrase)
 
 
-class PGSQLSerializeDateConstructor(SerializeFunction):
+class PGSQLDumpDateConstructor(DumpFunction):
 
     adapts(DateSig)
     template = ("CAST('0001-01-01'::DATE"
@@ -102,25 +102,25 @@ class PGSQLSerializeDateConstructor(SerializeFunction):
                 " AS DATE)")
 
 
-class PGSQLSerializeDateIncrement(SerializeFunction):
+class PGSQLDumpDateIncrement(DumpFunction):
 
     adapts(DateIncrementSig)
     template = "({lop} + {rop})"
 
 
-class PGSQLSerializeDateDecrement(SerializeFunction):
+class PGSQLDumpDateDecrement(DumpFunction):
 
     adapts(DateDecrementSig)
     template = "({lop} - {rop})"
 
 
-class PGSQLSerializeDateDifference(SerializeFunction):
+class PGSQLDumpDateDifference(DumpFunction):
 
     adapts(DateDifferenceSig)
     template = "({lop} - {rop})"
 
 
-class PGSQLSerializeStringContains(SerializeFunction):
+class PGSQLDumpStringContains(DumpFunction):
 
     adapts(ContainsSig)
 
