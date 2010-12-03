@@ -130,10 +130,6 @@ class AddSig(BinarySig):
     pass
 
 
-class NumericAddSig(AddSig):
-    pass
-
-
 class ConcatenateSig(AddSig):
     pass
 
@@ -143,10 +139,6 @@ class DateIncrementSig(AddSig):
 
 
 class SubtractSig(BinarySig):
-    pass
-
-
-class NumericSubtractSig(SubtractSig):
     pass
 
 
@@ -162,15 +154,7 @@ class MultiplySig(BinarySig):
     pass
 
 
-class NumericMultiplySig(MultiplySig):
-    pass
-
-
 class DivideSig(BinarySig):
-    pass
-
-
-class NumericDivideSig(DivideSig):
     pass
 
 
@@ -179,14 +163,6 @@ class KeepPolaritySig(UnarySig):
 
 
 class ReversePolaritySig(UnarySig):
-    pass
-
-
-class NumericKeepPolaritySig(KeepPolaritySig):
-    pass
-
-
-class NumericReversePolaritySig(ReversePolaritySig):
     pass
 
 
@@ -237,15 +213,7 @@ class LengthSig(UnarySig):
     pass
 
 
-class StringLengthSig(LengthSig):
-    pass
-
-
 class ContainsSig(BinarySig, PolarSig):
-    pass
-
-
-class StringContainsSig(ContainsSig):
     pass
 
 

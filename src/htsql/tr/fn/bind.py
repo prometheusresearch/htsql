@@ -30,15 +30,12 @@ from .signature import (Signature, ThisSig, RootSig, DirectSig, FiberSig, AsSig,
                         SortDirectionSig, LimitSig, SortSig, NullSig, TrueSig,
                         FalseSig, CastSig, DateSig, EqualSig, AmongSig,
                         TotallyEqualSig, AndSig, OrSig, NotSig, CompareSig,
-                        AddSig, NumericAddSig, ConcatenateSig,
-                        DateIncrementSig, SubtractSig, NumericSubtractSig,
-                        DateDecrementSig, DateDifferenceSig, MultiplySig,
-                        NumericMultiplySig, DivideSig, NumericDivideSig,
-                        IsNullSig, NullIfSig, IfNullSig, IfSig, SwitchSig,
-                        KeepPolaritySig, ReversePolaritySig,
-                        NumericKeepPolaritySig, NumericReversePolaritySig,
-                        RoundSig, RoundToSig, LengthSig, StringLengthSig,
-                        ContainsSig, StringContainsSig, ExistsSig, EverySig,
+                        AddSig, ConcatenateSig, DateIncrementSig,
+                        SubtractSig, DateDecrementSig, DateDifferenceSig,
+                        MultiplySig, DivideSig, IsNullSig, NullIfSig,
+                        IfNullSig, IfSig, SwitchSig, KeepPolaritySig,
+                        ReversePolaritySig, RoundSig, RoundToSig, LengthSig,
+                        ContainsSig, ExistsSig, EverySig,
                         UnarySig, CountSig, MinSig, MaxSig, SumSig, AvgSig)
 import sys
 
@@ -634,7 +631,7 @@ class BindAdd(BindPolyFunction):
 class CorrelateIntegerAdd(Correlate):
 
     correlates(AddSig, (IntegerDomain, IntegerDomain))
-    signature = NumericAddSig
+    signature = AddSig
     domains = [IntegerDomain(), IntegerDomain()]
     codomain = IntegerDomain()
 
@@ -644,7 +641,7 @@ class CorrelateDecimalAdd(Correlate):
     correlates(AddSig, (IntegerDomain, DecimalDomain),
                        (DecimalDomain, IntegerDomain),
                        (DecimalDomain, DecimalDomain))
-    signature = NumericAddSig
+    signature = AddSig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
 
@@ -656,7 +653,7 @@ class CorrelateFloatAdd(Correlate):
                        (FloatDomain, IntegerDomain),
                        (FloatDomain, DecimalDomain),
                        (FloatDomain, FloatDomain))
-    signature = NumericAddSig
+    signature = AddSig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
 
@@ -689,7 +686,7 @@ class BindSubtract(BindPolyFunction):
 class CorrelateIntegerSubtract(Correlate):
 
     correlates(SubtractSig, (IntegerDomain, IntegerDomain))
-    signature = NumericSubtractSig
+    signature = SubtractSig
     domains = [IntegerDomain(), IntegerDomain()]
     codomain = IntegerDomain()
 
@@ -699,7 +696,7 @@ class CorrelateDecimalSubtract(Correlate):
     correlates(SubtractSig, (IntegerDomain, DecimalDomain),
                             (DecimalDomain, IntegerDomain),
                             (DecimalDomain, DecimalDomain))
-    signature = NumericSubtractSig
+    signature = SubtractSig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
 
@@ -711,7 +708,7 @@ class CorrelateFloatSubtract(Correlate):
                             (FloatDomain, IntegerDomain),
                             (FloatDomain, DecimalDomain),
                             (FloatDomain, FloatDomain))
-    signature = NumericSubtractSig
+    signature = SubtractSig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
 
@@ -741,7 +738,7 @@ class BindMultiply(BindPolyFunction):
 class CorrelateIntegerMultiply(Correlate):
 
     correlates(MultiplySig, (IntegerDomain, IntegerDomain))
-    signature = NumericMultiplySig
+    signature = MultiplySig
     domains = [IntegerDomain(), IntegerDomain()]
     codomain = IntegerDomain()
 
@@ -751,7 +748,7 @@ class CorrelateDecimalMultiply(Correlate):
     correlates(MultiplySig, (IntegerDomain, DecimalDomain),
                             (DecimalDomain, IntegerDomain),
                             (DecimalDomain, DecimalDomain))
-    signature = NumericMultiplySig
+    signature = MultiplySig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
 
@@ -763,7 +760,7 @@ class CorrelateFloatMultiply(Correlate):
                             (FloatDomain, IntegerDomain),
                             (FloatDomain, DecimalDomain),
                             (FloatDomain, FloatDomain))
-    signature = NumericMultiplySig
+    signature = MultiplySig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
 
@@ -780,7 +777,7 @@ class CorrelateDecimalDivide(Correlate):
                           (IntegerDomain, DecimalDomain),
                           (DecimalDomain, IntegerDomain),
                           (DecimalDomain, DecimalDomain))
-    signature = NumericDivideSig
+    signature = DivideSig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
 
@@ -792,7 +789,7 @@ class CorrelateFloatDivide(Correlate):
                           (FloatDomain, IntegerDomain),
                           (FloatDomain, DecimalDomain),
                           (FloatDomain, FloatDomain))
-    signature = NumericDivideSig
+    signature = DivideSig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
 
@@ -806,7 +803,7 @@ class BindKeepPolarity(BindPolyFunction):
 class CorrelateIntegerKeepPolarity(Correlate):
 
     correlates(KeepPolaritySig, IntegerDomain)
-    signature = NumericKeepPolaritySig
+    signature = KeepPolaritySig
     domains = [IntegerDomain()]
     codomain = IntegerDomain()
 
@@ -814,7 +811,7 @@ class CorrelateIntegerKeepPolarity(Correlate):
 class CorrelateDecimalKeepPolarity(Correlate):
 
     correlates(KeepPolaritySig, DecimalDomain)
-    signature = NumericKeepPolaritySig
+    signature = KeepPolaritySig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
 
@@ -822,7 +819,7 @@ class CorrelateDecimalKeepPolarity(Correlate):
 class CorrelateFloatKeepPolarity(Correlate):
 
     correlates(KeepPolaritySig, FloatDomain)
-    signature = NumericKeepPolaritySig
+    signature = KeepPolaritySig
     domains = [FloatDomain()]
     codomain = FloatDomain()
 
@@ -836,7 +833,7 @@ class BindReversePolarity(BindPolyFunction):
 class CorrelateIntegerReversePolarity(Correlate):
 
     correlates(ReversePolaritySig, IntegerDomain)
-    signature = NumericReversePolaritySig
+    signature = ReversePolaritySig
     domains = [IntegerDomain()]
     codomain = IntegerDomain()
 
@@ -844,7 +841,7 @@ class CorrelateIntegerReversePolarity(Correlate):
 class CorrelateDecimalReversePolarity(Correlate):
 
     correlates(ReversePolaritySig, DecimalDomain)
-    signature = NumericReversePolaritySig
+    signature = ReversePolaritySig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
 
@@ -852,7 +849,7 @@ class CorrelateDecimalReversePolarity(Correlate):
 class CorrelateFloatReversePolarity(Correlate):
 
     correlates(ReversePolaritySig, FloatDomain)
-    signature = NumericReversePolaritySig
+    signature = ReversePolaritySig
     domains = [FloatDomain()]
     codomain = FloatDomain()
 
@@ -905,7 +902,7 @@ class CorrelateStringLength(Correlate):
 
     correlates(LengthSig, StringDomain,
                           UntypedDomain)
-    signature = StringLengthSig
+    signature = LengthSig
     domains = [StringDomain()]
     codomain = IntegerDomain()
 
@@ -940,7 +937,7 @@ class CorrelateStringContains(Correlate):
                             (StringDomain, UntypedDomain),
                             (UntypedDomain, StringDomain),
                             (UntypedDomain, UntypedDomain))
-    signature = StringContainsSig
+    signature = ContainsSig
     domains = [StringDomain(), StringDomain()]
     codomain = BooleanDomain()
 

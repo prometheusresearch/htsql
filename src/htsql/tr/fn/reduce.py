@@ -16,7 +16,7 @@ from ..reduce import ReduceBySignature
 from ..frame import (IsNullPhrase, NullIfPhrase, IfNullPhrase,
                      LiteralPhrase, FormulaPhrase)
 from .signature import (IsNullSig, NullIfSig, IfNullSig,
-                        NumericKeepPolaritySig, ConcatenateSig)
+                        KeepPolaritySig, ConcatenateSig)
 
 
 class ReduceIsNull(ReduceBySignature):
@@ -54,7 +54,7 @@ class ReduceIfNullSig(ReduceBySignature):
 
 class ReduceKeepPolaritySig(ReduceBySignature):
 
-    adapts(NumericKeepPolaritySig)
+    adapts(KeepPolaritySig)
 
     def __call__(self):
         return self.state.reduce(self.phrase.op)

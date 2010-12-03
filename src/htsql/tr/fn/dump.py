@@ -13,12 +13,11 @@
 
 from ...adapter import adapts
 from ..dump import DumpBySignature
-from .signature import (NumericAddSig, ConcatenateSig, DateIncrementSig,
-                        NumericSubtractSig, DateDecrementSig,
-                        DateDifferenceSig, NumericMultiplySig,
-                        NumericDivideSig, IfSig, SwitchSig,
-                        AmongSig, CompareSig, NumericReversePolaritySig,
-                        RoundSig, RoundToSig, StringLengthSig,
+from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
+                        SubtractSig, DateDecrementSig, DateDifferenceSig,
+                        MultiplySig, DivideSig, IfSig, SwitchSig,
+                        AmongSig, CompareSig, ReversePolaritySig,
+                        RoundSig, RoundToSig, LengthSig,
                         WrapExistsSig, TakeCountSig, TakeMinSig, TakeMaxSig,
                         TakeSumSig, TakeAvgSig)
 
@@ -33,27 +32,27 @@ class DumpFunction(DumpBySignature):
         self.state.format(self.template, self.arguments, self.signature)
 
 
-class DumpNumericAdd(DumpFunction):
+class DumpAdd(DumpFunction):
 
-    adapts(NumericAddSig)
+    adapts(AddSig)
     template = "({lop} + {rop})"
 
 
-class DumpNumericSubtract(DumpFunction):
+class DumpSubtract(DumpFunction):
 
-    adapts(NumericSubtractSig)
+    adapts(SubtractSig)
     template = "({lop} - {rop})"
 
 
-class DumpNumericMultiply(DumpFunction):
+class DumpMultiply(DumpFunction):
 
-    adapts(NumericMultiplySig)
+    adapts(MultiplySig)
     template = "({lop} * {rop})"
 
 
-class DumpNumericDivide(DumpFunction):
+class DumpDivide(DumpFunction):
 
-    adapts(NumericDivideSig)
+    adapts(DivideSig)
     template = "({lop} / {rop})"
 
 
@@ -110,7 +109,7 @@ class DumpCompare(DumpFunction):
 
 class DumpReversePolarity(DumpFunction):
 
-    adapts(NumericReversePolaritySig)
+    adapts(ReversePolaritySig)
     template = "(- {op})"
 
 
@@ -126,9 +125,9 @@ class DumpRoundTo(DumpFunction):
     template = "ROUND({op}, {precision})"
 
 
-class DumpStringLength(DumpFunction):
+class DumpLength(DumpFunction):
 
-    adapts(StringLengthSig)
+    adapts(LengthSig)
     template = "CHARACTER_LENGTH({op})"
 
 
