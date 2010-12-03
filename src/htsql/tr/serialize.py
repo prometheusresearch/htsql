@@ -836,7 +836,6 @@ class SerializeBySignature(Adapter):
         self.signature = phrase.signature
         self.domain = phrase.domain
         self.arguments = phrase.arguments
-        self.signature.extract(self, self.arguments)
 
     def __call__(self):
         raise NotImplementedError()

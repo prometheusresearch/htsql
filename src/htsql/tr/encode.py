@@ -703,13 +703,12 @@ class EncodeBySignatureBase(Adapter):
         self.signature = binding.signature
         self.domain = binding.domain
         self.arguments = binding.arguments
-        self.signature.extract(self, self.arguments)
 
 
 class EncodeBySignature(EncodeBySignatureBase):
 
     def __call__(self):
-        arguments = self.signature.apply(self.state.encode, self.arguments)
+        arguments = self.arguments.map(self.state.encode)
         return FunctionCode(self.signature,
                             self.domain,
                             self.binding,

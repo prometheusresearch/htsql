@@ -48,22 +48,22 @@ class BindFunction(BindByName):
     def match(self):
         operands = self.syntax.arguments[:]
         arguments = {}
-        parameters = []
+        slots = []
         if self.signature is not None:
-            parameters = self.signature.parameters
-        for index, parameter in enumerate(parameters):
-            name = parameter.name
+            slots = self.signature.slots
+        for index, slot in enumerate(slots):
+            name = slot.name
             value = None
             if not operands:
-                if parameter.is_mandatory:
+                if slot.is_mandatory:
                     raise BindError("missing argument %s" % name,
                                     self.syntax.mark)
-                if parameter.is_list:
+                if not slot.is_singular:
                     value = []
-            elif not parameter.is_list:
+            elif slot.is_singular:
                 value = operands.pop(0)
             else:
-                if index == len(self.signature.parameters)-1:
+                if index == len(slots)-1:
                     value = operands[:]
                     operands[:] = []
                 else:
@@ -76,20 +76,20 @@ class BindFunction(BindByName):
     def bind(self):
         arguments = self.match()
         bound_arguments = {}
-        parameters = []
+        slots = []
         if self.signature is not None:
-            parameters = self.signature.parameters
-        for parameter in parameters:
-            name = parameter.name
+            slots = self.signature.slots
+        for slot in slots:
+            name = slot.name
             value = arguments[name]
             bound_value = None
-            if not parameter.is_list:
+            if slot.is_singular:
                 if value is not None:
                     bound_values = self.state.bind_all(value)
                     if len(bound_values) > 1:
                         raise BindError("unexpected list argument",
                                         value.mark)
-                    if parameter.is_mandatory and not bound_values:
+                    if slot.is_mandatory and not bound_values:
                         raise BindError("unexpected empty argument",
                                         value.mark)
                     if bound_values:
@@ -100,7 +100,7 @@ class BindFunction(BindByName):
                 elif len(value) == 1:
                     [value] = value
                     bound_value = self.state.bind_all(value)
-                    if parameter.is_mandatory and not bound_value:
+                    if slot.is_mandatory and not bound_value:
                         raise BindError("missing argument %s" % name,
                                         value.mark)
                 else:
@@ -338,14 +338,14 @@ class BindMonoFunction(BindFunction):
 
     def correlate(self, **arguments):
         assert self.signature is not None
-        assert len(self.signature.parameters) == len(self.domains)
+        assert len(self.signature.slots) == len(self.domains)
         assert self.codomain is not None
         cast_arguments = {}
-        for domain, parameter in zip(self.domains, self.signature.parameters):
+        for domain, slot in zip(self.domains, self.signature.slots):
             domain = coerce(domain)
-            name = parameter.name
+            name = slot.name
             value = arguments[name]
-            if not parameter.is_list:
+            if slot.is_singular:
                 if value is not None:
                     value = CastBinding(value, domain, value.syntax)
             else:
@@ -527,19 +527,18 @@ class BindPolyFunction(BindFunction):
 
     def correlate(self, **arguments):
         domains = []
-        for parameter in self.signature.parameters:
-            if parameter.is_list or not parameter.is_mandatory:
+        for slot in self.signature.slots:
+            if not (slot.is_singular and slot.is_mandatory):
                 break
-            name = parameter.name
+            name = slot.name
             value = arguments[name]
             domains.append(value.domain)
         correlate = self.correlation(*domains)
         if not correlate():
             raise BindError("incompatible arguments", self.syntax.mark)
         correlated_arguments = arguments.copy()
-        for domain, parameter in zip(correlate.domains,
-                                     self.signature.parameters):
-            name = parameter.name
+        for domain, slot in zip(correlate.domains, self.signature.slots):
+            name = slot.name
             value = correlated_arguments[name]
             value = CastBinding(value, coerce(domain), value.syntax)
             correlated_arguments[name] = value
@@ -939,10 +938,10 @@ class BindHomoFunction(BindFunction):
     def correlate(self, **arguments):
         assert self.signature is not None
         domains = []
-        for parameter in self.signature.parameters:
-            name = parameter.name
+        for slot in self.signature.slots:
+            name = slot.name
             value = arguments[name]
-            if not parameter.is_list:
+            if slot.is_singular:
                 if value is not None:
                     domains.append(value.domain)
             else:
@@ -951,10 +950,10 @@ class BindHomoFunction(BindFunction):
         if domain is None:
             raise BindError("incompatible arguments", self.syntax.mark)
         cast_arguments = {}
-        for parameter in self.signature.parameters:
-            name = parameter.name
+        for slot in self.signature.slots:
+            name = slot.name
             value = arguments[name]
-            if not parameter.is_list:
+            if slot.is_singular:
                 if value is not None:
                     value = CastBinding(value, domain, value.syntax)
             else:

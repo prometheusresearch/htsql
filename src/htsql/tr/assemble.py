@@ -1286,13 +1286,11 @@ class EvaluateBySignature(Adapter):
         self.signature = code.signature
         self.domain = code.domain
         self.arguments = code.arguments
-        self.signature.extract(self, self.arguments)
 
     def __call__(self):
-        arguments = self.signature.apply(self.state.evaluate, self.arguments)
+        arguments = self.arguments.map(self.state.evaluate)
         if self.is_null_regular:
-            is_nullable = any(argument.is_nullable
-                              for argument in self.signature.iterate(arguments))
+            is_nullable = any(cell.is_nullable for cell in arguments.cells())
         else:
             is_nullable = self.is_nullable
         return FunctionPhrase(self.signature,

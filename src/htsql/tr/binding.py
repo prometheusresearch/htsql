@@ -18,7 +18,7 @@ from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax
 from .coerce import coerce
-from .signature import Signature
+from .signature import Signature, Bag
 
 
 class Binding(Clonable, Printable):
@@ -433,11 +433,12 @@ class FunctionBinding(Binding):
 
     def __init__(self, signature, domain, syntax, **arguments):
         assert isinstance(signature, Signature)
-        signature.verify(Binding, arguments)
+        arguments = Bag(**arguments)
+        assert arguments.admits(Binding, signature)
         super(FunctionBinding, self).__init__(domain, syntax)
         self.signature = signature
         self.arguments = arguments
-        signature.extract(self, arguments)
+        arguments.impress(self)
 
 
 class WrapperBinding(Binding):

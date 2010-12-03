@@ -11,82 +11,179 @@
 """
 
 
-from ..util import maybe, listof
+from ..util import maybe, listof, Comparable
 
 
-class Parameter(object):
+class Slot(object):
 
-    def __init__(self, name, is_mandatory=True, is_list=False):
+    def __init__(self, name, is_mandatory=True, is_singular=True):
         assert isinstance(name, str) and len(name) > 0
         assert isinstance(is_mandatory, bool)
-        assert isinstance(is_list, bool)
+        assert isinstance(is_singular, bool)
         self.name = name
         self.is_mandatory = is_mandatory
-        self.is_list = is_list
+        self.is_singular = is_singular
 
 
-class Signature(object):
+class Signature(Comparable):
 
-    parameters = []
+    slots = []
 
-    @classmethod
-    def verify(cls, kind, arguments):
+    def __init__(self, equality_vector=()):
+        super(Signature, self).__init__(equality_vector=equality_vector)
+
+    def __iter__(self):
+        return iter(self.slots)
+
+
+class Bag(dict):
+
+    def __init__(self, **keywords):
+        self.update(keywords)
+
+    def admits(self, kind, signature):
         assert isinstance(kind, type)
-        assert isinstance(arguments, dict)
-        assert set(arguments) == set(parameter.name
-                                     for parameter in cls.parameters)
-        for parameter in cls.parameters:
-            value = arguments[parameter.name]
-            if not parameter.is_list:
-                assert isinstance(value, maybe(kind))
-                if parameter.is_mandatory:
-                    assert value is not None
+        assert isinstance(signature, Signature)
+        if set(self.keys()) != set(slot.name for slot in signature):
+            return False
+        for slot in signature:
+            value = self[slot.name]
+            if slot.is_singular:
+                if not isinstance(value, maybe(kind)):
+                    return False
+                if slot.is_mandatory:
+                    if value is None:
+                        return False
             else:
-                assert isinstance(value, listof(kind))
-                if parameter.is_mandatory:
-                    assert len(value) > 0
+                if not isinstance(value, listof(kind)):
+                    return False
+                if slot.is_mandatory:
+                    if not value:
+                        return False
+        return True
 
-    @classmethod
-    def extract(cls, instance, arguments):
-        assert isinstance(arguments, dict)
-        for parameter in cls.parameters:
-            assert not hasattr(instance, parameter.name)
-            value = arguments[parameter.name]
-            setattr(instance, parameter.name, value)
+    def cells(self):
+        cells = []
+        for key in sorted(self.keys()):
+            value = self[key]
+            if value is not None:
+                if isinstance(value, list):
+                    cells.extend(value)
+                else:
+                    cells.append(value)
+        return cells
 
-    @classmethod
-    def apply(cls, method, arguments):
-        assert isinstance(arguments, dict)
-        result = {}
-        for parameter in cls.parameters:
-            value = arguments[parameter.name]
-            if not parameter.is_list:
-                if value is not None:
+    def impress(self, owner):
+        for key in sorted(self.keys()):
+            assert not hasattr(owner, key)
+            setattr(owner, key, self[key])
+
+    def map(self, method):
+        keywords = {}
+        for key in sorted(self.keys()):
+            value = self[key]
+            if value is not None:
+                if isinstance(value, list):
+                    value = [method(item) for item in value]
+                else:
                     value = method(value)
-            else:
-                value = [method(item) for item in value]
-            result[parameter.name] = value
-        return result
+            keywords[key] = value
+        return self.__class__(**keywords)
 
-    @classmethod
-    def iterate(cls, arguments):
-        for parameter in cls.parameters:
-            value = arguments[parameter.name]
-            if not parameter.is_list:
-                if value is not None:
-                    yield value
-            else:
-                for item in value:
-                    yield item
-
-    @classmethod
-    def freeze(cls, arguments):
-        result = []
-        for parameter in cls.parameters:
-            value = arguments[parameter.name]
-            if parameter.is_list:
+    def freeze(self):
+        values = []
+        for key in sorted(self.keys()):
+            value = self[key]
+            if isinstance(value, list):
                 value = tuple(value)
-            result.append(value)
-        return tuple(result)
+            values.append(value)
+        return tuple(values)
+
+
+class NullarySig(Signature):
+
+    slots = []
+
+
+class UnarySig(Signature):
+
+    slots = [
+            Slot('op'),
+    ]
+
+
+class BinarySig(Signature):
+
+    slots = [
+            Slot('lop'),
+            Slot('rop'),
+    ]
+
+
+class NArySig(Signature):
+
+    slots = [
+            Slot('lop'),
+            Slot('rops', is_singular=False),
+    ]
+
+
+class ConnectiveSig(Signature):
+
+    slots = [
+            Slot('ops', is_singular=False),
+    ]
+
+
+class PolarSig(Signature):
+
+    def __init__(self, polarity):
+        assert polarity in [+1, -1]
+        super(PolarSig, self).__init__(equality_vector=(polarity,))
+        self.polarity = polarity
+
+
+class IsEqualSig(BinarySig, PolarSig):
+    pass
+
+
+class IsTotallyEqualSig(BinarySig, PolarSig):
+    pass
+
+
+class IsInSig(NArySig, PolarSig):
+    pass
+
+
+class IsNullSig(UnarySig, PolarSig):
+    pass
+
+
+class IfNullSig(NArySig):
+    pass
+
+
+class NullIfSig(NArySig):
+    pass
+
+
+class CompareSig(BinarySig):
+
+    def __init__(self, relation):
+        assert relation in ['<', '<=', '>', '>=']
+        super(CompareSig, self).__init__(equality_vector=(relation,))
+        self.relation = relation
+
+
+class AndSig(ConnectiveSig):
+    pass
+
+
+class OrSig(ConnectiveSig):
+    pass
+
+
+class NotSig(UnarySig):
+    pass
 
 

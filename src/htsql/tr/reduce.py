@@ -1022,10 +1022,9 @@ class ReduceBySignature(Adapter):
         self.domain = phrase.domain
         self.arguments = phrase.arguments
         self.is_nullable = phrase.is_nullable
-        self.signature.extract(self, self.arguments)
 
     def __call__(self):
-        arguments = self.signature.apply(self.state.reduce, self.arguments)
+        arguments = self.arguments.map(self.state.reduce)
         return FunctionPhrase(self.signature,
                               self.domain,
                               self.is_nullable,

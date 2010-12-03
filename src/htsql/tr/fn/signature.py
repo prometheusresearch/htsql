@@ -11,7 +11,8 @@
 """
 
 
-from ..signature import Signature, Parameter
+from ..signature import (Signature, Slot, NullarySig, UnarySig, BinarySig,
+                         NArySig, ConnectiveSig, PolarSig, CompareSig)
 
 
 class ThisSig(Signature):
@@ -24,51 +25,52 @@ class RootSig(Signature):
 
 class DirectSig(Signature):
 
-    parameters = [
-            Parameter('table'),
+    slots = [
+            Slot('table'),
     ]
 
 
 class FiberSig(Signature):
 
-    parameters = [
-            Parameter('table'),
-            Parameter('image'),
-            Parameter('counterimage', is_mandatory=False),
+    slots = [
+            Slot('table'),
+            Slot('image'),
+            Slot('counterimage', is_mandatory=False),
     ]
 
 
 class AsSig(Signature):
 
-    parameters = [
-            Parameter('base'),
-            Parameter('title'),
+    slots = [
+            Slot('base'),
+            Slot('title'),
     ]
 
 
 class SortDirectionSig(Signature):
 
-    parameters = [
-            Parameter('base'),
+    slots = [
+            Slot('base'),
     ]
 
     def __init__(self, direction):
         assert direction in [+1, -1]
+        super(SortDirectionSig, self).__init__(equality_vector=(direction,))
         self.direction = direction
 
 
 class LimitSig(Signature):
 
-    parameters = [
-            Parameter('limit'),
-            Parameter('offset', is_mandatory=False),
+    slots = [
+            Slot('limit'),
+            Slot('offset', is_mandatory=False),
     ]
 
 
 class SortSig(Signature):
 
-    parameters = [
-            Parameter('order', is_list=True),
+    slots = [
+            Slot('order', is_singular=False),
     ]
 
 
@@ -86,62 +88,30 @@ class FalseSig(Signature):
 
 class CastSig(Signature):
 
-    parameters = [
-            Parameter('base'),
+    slots = [
+            Slot('base'),
     ]
 
 
 class DateSig(Signature):
 
-    parameters = [
-            Parameter('year'),
-            Parameter('month'),
-            Parameter('day'),
+    slots = [
+            Slot('year'),
+            Slot('month'),
+            Slot('day'),
     ]
 
 
-class UnarySig(Signature):
-
-    parameters = [
-            Parameter('op'),
-    ]
+class EqualSig(BinarySig, PolarSig):
+    pass
 
 
-class BinarySig(Signature):
-
-    parameters = [
-            Parameter('lop'),
-            Parameter('rop'),
-    ]
+class AmongSig(NArySig, PolarSig):
+    pass
 
 
-class NArySig(Signature):
-
-    parameters = [
-            Parameter('lop'),
-            Parameter('rops', is_list=True),
-    ]
-
-
-class EqualSig(BinarySig):
-
-    def __init__(self, polarity):
-        assert polarity in [+1, -1]
-        self.polarity = polarity
-
-
-class AmongSig(NArySig):
-
-    def __init__(self, polarity):
-        assert polarity in [+1, -1]
-        self.polarity = polarity
-
-
-class TotallyEqualSig(BinarySig):
-
-    def __init__(self, polarity):
-        assert polarity in [+1, -1]
-        self.polarity = polarity
+class TotallyEqualSig(BinarySig, PolarSig):
+    pass
 
 
 class AndSig(BinarySig):
@@ -154,13 +124,6 @@ class OrSig(BinarySig):
 
 class NotSig(UnarySig):
     pass
-
-
-class CompareSig(BinarySig):
-
-    def __init__(self, relation):
-        assert relation in ['<', '<=', '>', '>=']
-        self.relation = relation
 
 
 class AddSig(BinarySig):
@@ -233,9 +196,9 @@ class RoundSig(UnarySig):
 
 class RoundToSig(Signature):
 
-    parameters = [
-            Parameter('op'),
-            Parameter('precision'),
+    slots = [
+            Slot('op'),
+            Slot('precision'),
     ]
 
 
@@ -253,20 +216,20 @@ class IfNullSig(NArySig):
 
 class IfSig(Signature):
 
-    parameters = [
-            Parameter('predicates', is_list=True),
-            Parameter('consequents', is_list=True),
-            Parameter('alternative', is_mandatory=False),
+    slots = [
+            Slot('predicates', is_singular=False),
+            Slot('consequents', is_singular=False),
+            Slot('alternative', is_mandatory=False),
     ]
 
 
 class SwitchSig(Signature):
 
-    parameters = [
-            Parameter('variable'),
-            Parameter('variants', is_list=True),
-            Parameter('consequents', is_list=True),
-            Parameter('alternative', is_mandatory=False),
+    slots = [
+            Slot('variable'),
+            Slot('variants', is_singular=False),
+            Slot('consequents', is_singular=False),
+            Slot('alternative', is_mandatory=False),
     ]
 
 
@@ -278,39 +241,32 @@ class StringLengthSig(LengthSig):
     pass
 
 
-class ContainsSig(BinarySig):
-
-    def __init__(self, polarity):
-        assert polarity in [+1, -1]
-        self.polarity = polarity
+class ContainsSig(BinarySig, PolarSig):
+    pass
 
 
 class StringContainsSig(ContainsSig):
     pass
 
 
-class QuantifySig(Signature):
+class QuantifySig(PolarSig):
 
-    parameters = [
-            Parameter('base'),
-            Parameter('op'),
+    slots = [
+            Slot('base'),
+            Slot('op'),
     ]
-
-    def __init__(self, polarity):
-        assert polarity in [+1, -1]
-        self.polarity = polarity
 
 
 class ExistsSig(QuantifySig):
 
     def __init__(self):
-        super(ExistsSig, self).__init__(+1)
+        super(ExistsSig, self).__init__(polarity=+1)
 
 
 class EverySig(QuantifySig):
 
     def __init__(self):
-        super(EverySig, self).__init__(-1)
+        super(EverySig, self).__init__(polarity=-1)
 
 
 class WrapExistsSig(UnarySig):
@@ -319,9 +275,9 @@ class WrapExistsSig(UnarySig):
 
 class AggregateSig(Signature):
 
-    parameters = [
-            Parameter('base'),
-            Parameter('op'),
+    slots = [
+            Slot('base'),
+            Slot('op'),
     ]
 
 

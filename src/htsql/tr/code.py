@@ -21,7 +21,7 @@ from ..domain import Domain, BooleanDomain
 from .syntax import IdentifierSyntax
 from .binding import Binding, QueryBinding, SegmentBinding
 from .coerce import coerce
-from .signature import Signature
+from .signature import Signature, Bag
 
 
 class Expression(Comparable, Clonable, Printable):
@@ -1233,12 +1233,12 @@ class FunctionCode(Code):
 
     def __init__(self, signature, domain, binding, **arguments):
         assert isinstance(signature, Signature)
-        signature.verify(Code, arguments)
+        arguments = Bag(**arguments)
+        assert arguments.admits(Code, signature)
         units = []
-        for code in signature.iterate(arguments):
-            units.extend(code.units)
-        equality_vector = ((signature.__class__, domain)
-                           + signature.freeze(arguments))
+        for cell in arguments.cells():
+            units.extend(cell.units)
+        equality_vector = (signature, domain, arguments.freeze())
         super(FunctionCode, self).__init__(
                     domain=domain,
                     units=units,
@@ -1248,7 +1248,7 @@ class FunctionCode(Code):
         self.arguments = arguments
         # For convenience, we permit access to function arguments using
         # object attributes.
-        signature.extract(self, arguments)
+        arguments.impress(self)
 
 
 class Unit(Code):

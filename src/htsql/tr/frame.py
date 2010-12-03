@@ -19,7 +19,7 @@ from ..domain import Domain, BooleanDomain
 from .coerce import coerce
 from .code import Expression
 from .term import Term, QueryTerm
-from .signature import Signature
+from .signature import Signature, Bag
 
 
 class Clause(Comparable, Clonable, Printable):
@@ -764,16 +764,16 @@ class FunctionPhrase(Phrase):
 
     def __init__(self, signature, domain, is_nullable, expression, **arguments):
         assert isinstance(signature, Signature)
-        signature.verify(Phrase, arguments)
-        equality_vector = ((signature.__class__, domain)
-                           + signature.freeze(arguments))
+        arguments = Bag(**arguments)
+        assert arguments.admits(Phrase, signature)
+        equality_vector = (signature, domain, arguments.freeze())
         super(FunctionPhrase, self).__init__(domain, is_nullable, expression,
                                              equality_vector)
         self.signature = signature
         self.arguments = arguments
         # For convenience, we permit access to function arguments using
         # object attributes.
-        signature.extract(self, arguments)
+        arguments.impress(self)
 
 
 class ExportPhrase(Phrase):
