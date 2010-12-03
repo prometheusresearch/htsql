@@ -18,7 +18,7 @@ from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax
 from .coerce import coerce
-from .signature import Signature, Bag
+from .signature import Signature, Bag, Formula
 
 
 class Binding(Clonable, Printable):
@@ -331,73 +331,6 @@ class EqualityBindingBase(Binding):
         self.rop = rop
 
 
-class EqualityBinding(EqualityBindingBase):
-    """
-    Represents the "equality" (``=``) operator.
-
-    The regular "equality" operator treats ``NULL`` as a special value:
-    if any of the arguments is ``NULL``, the result is also ``NULL``.
-    """
-
-
-class TotalEqualityBinding(EqualityBindingBase):
-    """
-    Represents the "total equality" (``==``) operator.
-
-    The "total equality" operator treats ``NULL`` as a regular value.
-    """
-
-
-class ConnectiveBindingBase(Binding):
-    """
-    Represents an N-ary logical connective.
-
-    This is an abstract class for "AND" (``&``) and "OR" (``|``) operators.
-
-    `ops` (a list of :class:`Binding`)
-        The operands.
-    """
-
-    def __init__(self, ops, syntax):
-        assert isinstance(ops, listof(Binding))
-        # Use the engine-specific Boolean type, which, we assume,
-        # must always exist.
-        domain = coerce(BooleanDomain())
-        assert domain is not None
-        super(ConnectiveBindingBase, self).__init__(domain, syntax)
-        self.ops = ops
-
-
-class ConjunctionBinding(ConnectiveBindingBase):
-    """
-    Represents the logical "AND" (``&``) operator.
-    """
-
-
-class DisjunctionBinding(ConnectiveBindingBase):
-    """
-    Represents the logical "OR" (``|``) operator.
-    """
-
-
-class NegationBinding(Binding):
-    """
-    Represents the logical "NOT" (``!``) operator.
-
-    `op` (:class:`Binding`)
-        The operand.
-    """
-
-    def __init__(self, op, syntax):
-        assert isinstance(op, Binding)
-        # Use the engine-specific Boolean type, which, we assume,
-        # must always exist.
-        domain = coerce(BooleanDomain())
-        assert domain is not None
-        super(NegationBinding, self).__init__(domain, syntax)
-        self.op = op
-
-
 class CastBinding(Binding):
     """
     Represents a type conversion operator.
@@ -414,7 +347,7 @@ class CastBinding(Binding):
         self.base = base
 
 
-class FormulaBinding(Binding):
+class FormulaBinding(Formula, Binding):
     """
     Represents a function or an operator binding.
 
@@ -428,17 +361,12 @@ class FormulaBinding(Binding):
         A mapping from argument names to values.
     """
 
-    # FIXME: should logical operators (`EqualityBinding`, etc) inherit
-    # from `FunctionBinding`?
-
     def __init__(self, signature, domain, syntax, **arguments):
         assert isinstance(signature, Signature)
         arguments = Bag(**arguments)
         assert arguments.admits(Binding, signature)
-        super(FormulaBinding, self).__init__(domain, syntax)
-        self.signature = signature
-        self.arguments = arguments
-        arguments.impress(self)
+        super(FormulaBinding, self).__init__(signature, arguments,
+                                             domain, syntax)
 
 
 class WrapperBinding(Binding):

@@ -19,7 +19,7 @@ from ..domain import Domain, BooleanDomain
 from .coerce import coerce
 from .code import Expression
 from .term import Term, QueryTerm
-from .signature import Signature, Bag
+from .signature import Signature, Bag, Formula
 
 
 class Clause(Comparable, Clonable, Printable):
@@ -461,273 +461,6 @@ class FalsePhrase(LiteralPhrase):
         super(FalsePhrase, self).__init__(False, domain, expression)
 
 
-class EqualityPhraseBase(Phrase):
-    """
-    Represents an equality operator.
-
-    This is an abstract class for ``=``, ``!=``, ``==``, ``!==`` operators.
-
-    Class attributes:
-
-    `is_regular` (Boolean)
-        Indicates that the operator is regular: if any of the arguments is
-        ``NULL``, the value is also ``NULL``.
-
-    `is_total` (Boolean)
-        Indicates that the operator is total: no exception for ``NULL`` values.
-
-    `is_positive` (Boolean)
-        Indicates that the phrase represents an equality operator.
-
-    `is_negative` (Boolean)
-        Indicates that the phrase represents an inequality operator.
-
-    Constructor arguments:
-
-    `lop` (:class:`Phrase`)
-        The left operand.
-
-    `rop` (:class:`Phrase`)
-        The right operand.
-    """
-
-    is_regular = False
-    is_total = False
-    is_positive = False
-    is_negative = False
-
-    def __init__(self, lop, rop, expression):
-        assert isinstance(lop, Phrase)
-        assert isinstance(rop, Phrase)
-        domain = coerce(BooleanDomain())
-        is_nullable = self.is_regular and (lop.is_nullable or rop.is_nullable)
-        equality_vector = (lop, rop)
-        super(EqualityPhraseBase, self).__init__(domain, is_nullable,
-                                                 expression, equality_vector)
-        self.lop = lop
-        self.rop = rop
-
-
-class EqualityPhrase(EqualityPhraseBase):
-    """
-    Represents the "equality" (``=``) operator.
-
-    The regular "equality" operator treats ``NULL`` as a special value:
-    if any of the arguments is ``NULL``, the result is also ``NULL``.
-    """
-
-    is_regular = True
-    is_positive = True
-
-
-class InequalityPhrase(EqualityPhraseBase):
-    """
-    Represents the "inequality" (``!=``) operator.
-
-    The regular "inequality" operator treats ``NULL`` as a special value:
-    if any of the arguments is ``NULL``, the result is also ``NULL``.
-    """
-
-    is_regular = True
-    is_negative = True
-
-
-class TotalEqualityPhrase(EqualityPhraseBase):
-    """
-    Represents the "total equality" (``==``) operator.
-
-    The "total equality" operator treats ``NULL`` as a regular value.
-    """
-
-    is_total = True
-    is_positive = True
-
-
-class TotalInequalityPhrase(EqualityPhraseBase):
-    """
-    Represents the "total inequality" (``!==``) operator.
-
-    The "total inequality" operator treats ``NULL`` as a regular value.
-    """
-
-    is_total = True
-    is_negative = True
-
-
-class ConnectivePhraseBase(Phrase):
-    """
-    Represents an N-ary logical connective.
-
-    This is an abstract class for ``AND`` and ``OR`` operators.
-
-    `ops` (a list of :class:`Phrase`)
-        The operands.
-
-    Class attributes:
-
-    `is_contjunction` (Boolean)
-        Indicates that the phrase represents the ``AND`` operator.
-
-    `is_disjunction` (Boolean)
-        Indicates that the phrase represents the ``OR`` operator.
-    """
-
-    is_conjunction = False
-    is_disjunction = False
-
-    def __init__(self, ops, expression):
-        assert isinstance(ops, listof(Phrase))
-        assert all(isinstance(op.domain, BooleanDomain) for op in ops)
-        domain = coerce(BooleanDomain())
-        is_nullable = any(op.is_nullable for op in ops)
-        equality_vector = tuple(ops)
-        super(ConnectivePhraseBase, self).__init__(domain, is_nullable,
-                                                   expression, equality_vector)
-        self.ops = ops
-
-
-class ConjunctionPhrase(ConnectivePhraseBase):
-    """
-    Represents the logical ``AND`` operator.
-    """
-
-    is_conjunction = True
-
-
-class DisjunctionPhrase(ConnectivePhraseBase):
-    """
-    Represents the logical ``OR`` operator.
-    """
-
-    is_disjunction = True
-
-
-class NegationPhrase(Phrase):
-    """
-    Represents the logical ``NOT`` operator.
-
-    `op` (:class:`Phrase`)
-        The operand.
-    """
-
-    def __init__(self, op, expression):
-        assert isinstance(op, Phrase)
-        assert isinstance(op.domain, BooleanDomain)
-        domain = coerce(BooleanDomain())
-        is_nullable = op.is_nullable
-        equality_vector = (op,)
-        super(NegationPhrase, self).__init__(domain, is_nullable, expression,
-                                             equality_vector)
-        self.op = op
-
-
-class IsNullPhraseBase(Phrase):
-    """
-    Represents the ``IS NULL`` and ``IS NOT NULL`` operators.
-
-    `op` (:class:`Phrase`)
-        The operand.
-
-    Class attributes:
-
-    `is_positive` (Boolean)
-        Indicates that the phrase represents the ``IS NULL`` operator.
-
-    `is_negative` (Boolean)
-        Indicates that the phrase represents the ``IS NOT NULL`` operator.
-    """
-
-    is_positive = False
-    is_negative = False
-
-    def __init__(self, op, expression):
-        assert isinstance(op, Phrase)
-        domain = coerce(BooleanDomain())
-        is_nullable = False
-        equality_vector = (op,)
-        super(IsNullPhraseBase, self).__init__(domain, is_nullable, expression,
-                                               equality_vector)
-        self.op = op
-
-
-class IsNullPhrase(IsNullPhraseBase):
-    """
-    Represents the ``IS NULL`` operator.
-
-    The ``IS NULL`` operator produces ``TRUE`` when its operand is ``NULL``,
-    ``FALSE`` otherwise.
-    """
-
-    is_positive = True
-
-
-class IsNotNullPhrase(IsNullPhraseBase):
-    """
-    Represents the ``IS NOT NULL`` operator.
-
-    The ``IS NOT NULL`` operator produces ``FALSE`` when its operand is
-    ``NULL``, ``TRUE`` otherwise.
-    """
-
-    is_negative = True
-
-
-class IfNullPhrase(Phrase):
-    """
-    Represents the ``IFNULL`` operator.
-
-    The ``IFNULL`` operator takes two operands, returns the first one
-    if it is not equal to ``NULL``, otherwise returns the second operand.
-
-    `lop` (:class:`Phrase`)
-        The first operand.
-
-    `rop` (:class:`Phrase`)
-        The second operand.
-    """
-
-    def __init__(self, lop, rop, domain, expression):
-        assert isinstance(lop, Phrase)
-        assert isinstance(rop, Phrase)
-        assert isinstance(domain, Domain)
-        # Note: the result could be `NULL` only if both arguments are nullable
-        # (as opposed to most regular functions).
-        is_nullable = (lop.is_nullable and rop.is_nullable)
-        equality_vector = (lop, rop)
-        super(IfNullPhrase, self).__init__(domain, is_nullable, expression,
-                                           equality_vector)
-        self.lop = lop
-        self.rop = rop
-
-
-class NullIfPhrase(Phrase):
-    """
-    Represents the ``NULLIF`` operator.
-
-    The ``NULLIF`` operator takes two operands, returns the first one
-    if it is not equal to the second operand, otherwise returns ``NULL``.
-
-    `lop` (:class:`Phrase`)
-        The first operand.
-
-    `rop` (:class:`Phrase`)
-        The second operand.
-    """
-
-    def __init__(self, lop, rop, domain, expression):
-        assert isinstance(lop, Phrase)
-        assert isinstance(rop, Phrase)
-        assert isinstance(domain, Domain)
-        # Note: the result could be `NULL` even when both arguments are not
-        # nullable.
-        is_nullable = True
-        equality_vector = (lop, rop)
-        super(NullIfPhrase, self).__init__(domain, is_nullable, expression,
-                                           equality_vector)
-        self.lop = lop
-        self.rop = rop
-
-
 class CastPhrase(Phrase):
     """
     Represents the ``CAST`` operator.
@@ -747,7 +480,7 @@ class CastPhrase(Phrase):
         self.base = base
 
 
-class FormulaPhrase(Phrase):
+class FormulaPhrase(Formula, Phrase):
     """
     Represents a function or an operator expression.
 
@@ -767,13 +500,9 @@ class FormulaPhrase(Phrase):
         arguments = Bag(**arguments)
         assert arguments.admits(Phrase, signature)
         equality_vector = (signature, domain, arguments.freeze())
-        super(FormulaPhrase, self).__init__(domain, is_nullable, expression,
+        super(FormulaPhrase, self).__init__(signature, arguments,
+                                            domain, is_nullable, expression,
                                             equality_vector)
-        self.signature = signature
-        self.arguments = arguments
-        # For convenience, we permit access to function arguments using
-        # object attributes.
-        arguments.impress(self)
 
 
 class ExportPhrase(Phrase):

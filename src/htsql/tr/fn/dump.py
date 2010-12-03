@@ -16,7 +16,7 @@ from ..dump import DumpBySignature
 from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
                         SubtractSig, DateDecrementSig, DateDifferenceSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
-                        AmongSig, CompareSig, ReversePolaritySig,
+                        ReversePolaritySig,
                         RoundSig, RoundToSig, LengthSig,
                         WrapExistsSig, TakeCountSig, TakeMinSig, TakeMaxSig,
                         TakeSumSig, TakeAvgSig)
@@ -28,6 +28,7 @@ class DumpFunction(DumpBySignature):
 
     def __call__(self):
         if self.template is None:
+            print self.phrase, self.phrase.signature
             raise NotImplementedError()
         self.state.format(self.template, self.arguments, self.signature)
 
@@ -93,18 +94,6 @@ class DumpSwitch(DumpFunction):
             self.state.format(" ELSE {alternative}",
                               alternative=self.phrase.alternative)
         self.state.format(" END)")
-
-
-class DumpAmong(DumpFunction):
-
-    adapts(AmongSig)
-    template = "({lop} {polarity:polarity}IN ({rops:join{, }}))"
-
-
-class DumpCompare(DumpFunction):
-
-    adapts(CompareSig)
-    template = "({lop} {relation:asis} {rop})"
 
 
 class DumpReversePolarity(DumpFunction):

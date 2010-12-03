@@ -17,9 +17,7 @@ from ..util import listof, Printable, Comparable
 from ..adapter import Adapter, adapts, adapts_many
 from ..domain import BooleanDomain
 from .coerce import coerce
-from .code import (Code, LiteralCode, EqualityCode, TotalEqualityCode,
-                   ConjunctionCode, DisjunctionCode, NegationCode,
-                   FormulaCode, CastCode, Unit, ColumnUnit)
+from .code import (Code, LiteralCode, FormulaCode, CastCode, Unit, ColumnUnit)
 from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
@@ -27,11 +25,10 @@ from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
 from .frame import (LeafFrame, ScalarFrame, TableFrame, BranchFrame,
                     NestedFrame, SegmentFrame, QueryFrame,
                     Phrase, LiteralPhrase, NullPhrase, TruePhrase, FalsePhrase,
-                    EqualityPhrase, TotalEqualityPhrase, CastPhrase,
-                    ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
-                    ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
+                    CastPhrase, ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
                     FormulaPhrase, Anchor, LeadingAnchor)
-from .signature import Signature
+from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsNullSig,
+                        NullIfSig, IfNullSig, AndSig)
 
 
 class Claim(Comparable, Printable):
@@ -925,11 +922,17 @@ class AssembleJoin(Assemble):
         for lop, rop in self.term.joints:
             lop = self.state.evaluate(lop, router=self.term.lkid)
             rop = self.state.evaluate(rop, router=self.term.rkid)
-            equality = EqualityPhrase(lop, rop, self.term.expression)
+            is_nullable = (lop.is_nullable or rop.is_nullable)
+            equality = FormulaPhrase(IsEqualSig(+1), coerce(BooleanDomain()),
+                                     is_nullable, self.term.expression,
+                                     lop=lop, rop=rop)
             equalities.append(equality)
         condition = None
         if equalities:
-            condition = ConjunctionPhrase(equalities, self.term.expression)
+            is_nullable = any(equality.is_nullable for equality in equalities)
+            condition = FormulaPhrase(AndSig(), coerce(BooleanDomain()),
+                                      is_nullable, self.term.expression,
+                                      ops=equalities)
         elif self.term.is_left or self.term.is_right:
             condition = TruePhrase(self.term.expression)
         # Generate a `JOIN` clause for the second subframe.
@@ -1074,12 +1077,18 @@ class AssembleCorrelation(Assemble):
             # Evaluate the right operand against the child frame.
             rop = self.state.evaluate(rop, router=self.term.kid)
             # An individual condition.
-            equality = EqualityPhrase(lop, rop, self.term.expression)
+            is_nullable = (lop.is_nullable or rop.is_nullable)
+            equality = FormulaPhrase(IsEqualSig(+1), coerce(BooleanDomain()),
+                                     is_nullable, self.term.expression,
+                                     lop=lop, rop=rop)
             equalities.append(equality)
         # Generate and return the clause.
         condition = None
         if equalities:
-            condition = ConjunctionPhrase(equalities, self.term.expression)
+            is_nullable = any(equality.is_nullable for equality in equalities)
+            condition = FormulaPhrase(AndSig(), coerce(BooleanDomain()),
+                                      is_nullable, self.term.expression,
+                                      ops=equalities)
         return condition
 
 
@@ -1180,77 +1189,6 @@ class EvaluateLiteral(Evaluate):
         return LiteralPhrase(self.code.value, self.code.domain, self.code)
 
 
-class EvaluateEquality(Evaluate):
-    """
-    Evaluates an equality (``=``) code.
-    """
-
-    adapts(EqualityCode)
-
-    # FIXME: a generic translator for the cases when we just need to evaluate
-    # the child nodes and generate a new phrase with the same structure as
-    # the original code node.
-
-    def __call__(self):
-        # Evaluate the operands and generate a phrase node.
-        lop = self.state.evaluate(self.code.lop)
-        rop = self.state.evaluate(self.code.rop)
-        return EqualityPhrase(lop, rop, self.code)
-
-
-class EvaluateTotalEquality(Evaluate):
-    """
-    Evaluates a total equality (``==``) code.
-    """
-
-    adapts(TotalEqualityCode)
-
-    def __call__(self):
-        # Evaluate the operands and generate a phrase node.
-        lop = self.state.evaluate(self.code.lop)
-        rop = self.state.evaluate(self.code.rop)
-        return TotalEqualityPhrase(lop, rop, self.code)
-
-
-class EvaluateConjunction(Evaluate):
-    """
-    Evaluates a logical "AND" (``&``) code.
-    """
-
-    adapts(ConjunctionCode)
-
-    def __call__(self):
-        # Evaluate the operands and generate a phrase node.
-        ops = [self.state.evaluate(op) for op in self.code.ops]
-        return ConjunctionPhrase(ops, self.code)
-
-
-class EvaluateDisjunction(Evaluate):
-    """
-    Evaluates a logical "OR" (``|``) code.
-    """
-
-    adapts(DisjunctionCode)
-
-    def __call__(self):
-        # Evaluate the operands and generate a phrase node.
-        ops = [self.state.evaluate(op) for op in self.code.ops]
-        return DisjunctionPhrase(ops, self.code)
-
-
-class EvaluateNegation(Evaluate):
-    """
-    Evaluates a logical "NOT" (``!``) code.
-    """
-
-    adapts(NegationCode)
-
-    def __call__(self):
-        # Evaluate the operand and generate a phrase node.
-        op = self.state.evaluate(self.code.op)
-        return NegationPhrase(op, self.code)
-
-
 class EvaluateCast(Evaluate):
     """
     Evaluates a cast code.
@@ -1266,12 +1204,18 @@ class EvaluateCast(Evaluate):
         return CastPhrase(base, self.code.domain, base.is_nullable, self.code)
 
 
+class EvaluateFormula(Evaluate):
+
+    adapts(FormulaCode)
+
+    def __call__(self):
+        evaluate = EvaluateBySignature(self.code, self.state)
+        return evaluate()
+
+
 class EvaluateBySignature(Adapter):
 
     adapts(Signature)
-
-    is_null_regular = True
-    is_nullable = True
 
     @classmethod
     def dispatch(interface, code, *args, **kwds):
@@ -1289,10 +1233,7 @@ class EvaluateBySignature(Adapter):
 
     def __call__(self):
         arguments = self.arguments.map(self.state.evaluate)
-        if self.is_null_regular:
-            is_nullable = any(cell.is_nullable for cell in arguments.cells())
-        else:
-            is_nullable = self.is_nullable
+        is_nullable = any(cell.is_nullable for cell in arguments.cells())
         return FormulaPhrase(self.signature,
                              self.domain,
                              is_nullable,
@@ -1300,13 +1241,45 @@ class EvaluateBySignature(Adapter):
                              **arguments)
 
 
-class EvaluateFormula(Evaluate):
+class EvaluateIsTotallyEqual(EvaluateBySignature):
 
-    adapts(FormulaCode)
+    adapts(IsTotallyEqualSig)
 
     def __call__(self):
-        evaluate = EvaluateBySignature(self.code, self.state)
-        return evaluate()
+        arguments = self.arguments.map(self.state.evaluate)
+        return FormulaPhrase(self.signature, self.domain, False, self.code,
+                             **arguments)
+
+
+class EvaluateIsNull(EvaluateBySignature):
+
+    adapts(IsNullSig)
+
+    def __call__(self):
+        arguments = self.arguments.map(self.state.evaluate)
+        return FormulaPhrase(self.signature, self.domain, False, self.code,
+                             **arguments)
+
+
+class EvaluateNullIf(EvaluateBySignature):
+
+    adapts(NullIfSig)
+
+    def __call__(self):
+        arguments = self.arguments.map(self.state.evaluate)
+        return FormulaPhrase(self.signature, self.domain, True, self.code,
+                             **arguments)
+
+
+class EvaluateIfNull(EvaluateBySignature):
+
+    adapts(IfNullSig)
+
+    def __call__(self):
+        arguments = self.arguments.map(self.state.evaluate)
+        is_nullable = all(cell.is_nullable for cell in arguments.cells())
+        return FormulaPhrase(self.signature, self.domain, is_nullable,
+                             self.code, **arguments)
 
 
 class EvaluateUnit(Evaluate):

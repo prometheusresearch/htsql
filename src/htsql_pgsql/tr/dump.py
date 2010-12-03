@@ -17,8 +17,7 @@ from htsql.adapter import adapts
 from htsql.domain import Domain, DateDomain
 from htsql.tr.dump import (Format, DumpBoolean, DumpFloat,
                            DumpByDomain, DumpToDomain,
-                           DumpTotalEquality,
-                           DumpTotalInequality)
+                           DumpIsTotallyEqual)
 from htsql.tr.fn.signature import (DateSig, ContainsSig, DateIncrementSig,
                                    DateDecrementSig, DateDifferenceSig)
 from htsql.tr.fn.dump import DumpFunction
@@ -80,16 +79,11 @@ class PGSQLDumpToDate(DumpToDomain):
         self.state.format("CAST({base} AS DATE)", base=self.base)
 
 
-class PGSQLDumpTotalEquality(DumpTotalEquality):
+class PGSQLDumpIsTotallyEqual(DumpIsTotallyEqual):
 
     def __call__(self):
-        self.state.format("({lop} IS NOT DISTINCT FROM {rop})", self.phrase)
-
-
-class PGSQLDumpTotalInequality(DumpTotalInequality):
-
-    def __call__(self):
-        self.state.format("({lop} IS DISTINCT FROM {rop})", self.phrase)
+        self.state.format("({lop} IS {polarity:polarity}DISTINCT FROM {rop})",
+                          self.arguments, polarity=-self.signature.polarity)
 
 
 class PGSQLDumpDateConstructor(DumpFunction):

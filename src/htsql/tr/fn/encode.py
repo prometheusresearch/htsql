@@ -17,10 +17,10 @@ from ..encode import EncodeBySignature
 from ..error import EncodeError
 from ..coerce import coerce
 from ..binding import LiteralBinding, CastBinding
-from ..code import (NegationCode, LiteralCode, ScalarUnit, CorrelatedUnit,
+from ..code import (LiteralCode, ScalarUnit, CorrelatedUnit,
                     AggregateUnit, FilteredSpace, FormulaCode)
-from .signature import (NullIfSig, IfNullSig, QuantifySig, WrapExistsSig,
-                        AggregateSig, CountSig,TakeCountSig,
+from .signature import (NotSig, NullIfSig, IfNullSig, QuantifySig,
+                        WrapExistsSig, AggregateSig, CountSig,TakeCountSig,
                         MinSig, TakeMinSig, MaxSig, TakeMaxSig,
                         SumSig, TakeSumSig, AvgSig, TakeAvgSig)
 
@@ -31,8 +31,8 @@ class EncodeQuantify(EncodeBySignature):
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
-        if self.signature.polarity == -1:
-            op = NegationCode(op, self.binding)
+        if self.signature.polarity < 0:
+            op = FormulaCode(NotSig(), op.domain, op.binding, op=op)
         space = self.state.relate(self.binding.base)
         plural_units = [unit for unit in op.units
                              if not space.spans(unit.space)]
@@ -58,8 +58,9 @@ class EncodeQuantify(EncodeBySignature):
                                    self.binding)
         wrapper = FormulaCode(WrapExistsSig(), op.domain, self.binding,
                               op=aggregate)
-        if self.signature.polarity == -1:
-            wrapper = NegationCode(wrapper, self.binding)
+        if self.signature.polarity < 0:
+            wrapper = FormulaCode(NotSig(), wrapper.domain, wrapper.binding,
+                                  op=wrapper)
         wrapper = ScalarUnit(wrapper, space, self.binding)
         return wrapper
 
@@ -108,7 +109,7 @@ class EncodeCount(EncodeAggregate):
     def take(self, op):
         false = LiteralCode(False, op.domain, op.binding)
         op = FormulaCode(NullIfSig(), op.domain, op.binding,
-                         lop=op, rops=[false])
+                         lop=op, rop=false)
         return FormulaCode(TakeCountSig(), self.binding.domain, self.binding,
                            op=op)
 
@@ -117,7 +118,7 @@ class EncodeCount(EncodeAggregate):
         zero = CastBinding(zero, op.domain, op.syntax)
         zero = self.state.encode(zero)
         return FormulaCode(IfNullSig(), op.domain, op.binding,
-                           lop=op, rops=[zero])
+                           lop=op, rop=zero)
 
 
 class EncodeMin(EncodeAggregate):
@@ -151,7 +152,7 @@ class EncodeSum(EncodeAggregate):
         zero = CastBinding(zero, op.domain, op.syntax)
         zero = self.state.encode(zero)
         return FormulaCode(IfNullSig(), op.domain, op.binding,
-                           lop=op, rops=[zero])
+                           lop=op, rop=zero)
 
 
 class EncodeAvg(EncodeAggregate):

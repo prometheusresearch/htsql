@@ -21,7 +21,7 @@ from ..domain import Domain, BooleanDomain
 from .syntax import IdentifierSyntax
 from .binding import Binding, QueryBinding, SegmentBinding
 from .coerce import coerce
-from .signature import Signature, Bag
+from .signature import Signature, Bag, Formula
 
 
 class Expression(Comparable, Clonable, Printable):
@@ -1090,112 +1090,6 @@ class LiteralCode(Code):
         return repr(self.value)
 
 
-class EqualityCodeBase(Code):
-    """
-    Represents an equality operator.
-
-    This is an abstract class for the ``=`` and ``==`` operators.
-
-    `lop` (:class:`Code`)
-        The left operand.
-
-    `rop` (:class:`Code`)
-        The right operand.
-    """
-
-    def __init__(self, lop, rop, binding):
-        assert isinstance(lop, Code)
-        assert isinstance(rop, Code)
-        super(EqualityCodeBase, self).__init__(
-                    # We rely on that an engine-specific Boolean type
-                    # always exists.
-                    domain=coerce(BooleanDomain()),
-                    # Units of a complex expression are usually a composition
-                    # of argument units.  Note that duplicates are possible.
-                    units=(lop.units+rop.units),
-                    binding=binding,
-                    equality_vector=(lop, rop))
-        self.lop = lop
-        self.rop = rop
-
-
-class EqualityCode(EqualityCodeBase):
-    """
-    Represents the "equality" (``=``) operator.
-
-    The regular "equality" operator treats ``NULL`` as a special value:
-    if any of the arguments is ``NULL``, the result is also ``NULL``.
-    """
-
-
-class TotalEqualityCode(EqualityCodeBase):
-    """
-    Represents the "total equality" (``==``) operator.
-
-    The "total equality" operator treats ``NULL`` as a regular value.
-    """
-
-
-class ConnectiveCodeBase(Code):
-    """
-    Represents an N-ary logical connective.
-
-    This is an abstract class for "AND" (``&``) and "OR" (``|``) operators.
-
-    `ops` (a list of :class:`Code`)
-        The operands.
-    """
-
-    def __init__(self, ops, binding):
-        assert isinstance(ops, listof(Code))
-        assert all(isinstance(op.domain, BooleanDomain) for op in ops)
-        # Extract all units from the arguments.
-        units = []
-        for op in ops:
-            units.extend(op.units)
-        super(ConnectiveCodeBase, self).__init__(
-                    # We rely on that an engine-specific Boolean type
-                    # always exists.
-                    domain=coerce(BooleanDomain()),
-                    units=units,
-                    binding=binding,
-                    equality_vector=tuple(ops))
-        self.ops = ops
-
-
-class ConjunctionCode(ConnectiveCodeBase):
-    """
-    Represents the logical "AND" (``&``) operator.
-    """
-
-
-class DisjunctionCode(ConnectiveCodeBase):
-    """
-    Represents the logical "OR" (``|``) operator.
-    """
-
-
-class NegationCode(Code):
-    """
-    Represents the logical "NOT" (``!``) operator.
-
-    `op` (:class:`Code`)
-        The operand.
-    """
-
-    def __init__(self, op, binding):
-        assert isinstance(op, Code)
-        assert isinstance(op.domain, BooleanDomain)
-        super(NegationCode, self).__init__(
-                    # We rely on that an engine-specific Boolean type
-                    # always exists.
-                    domain=coerce(BooleanDomain()),
-                    units=op.units,
-                    binding=binding,
-                    equality_vector=(op,))
-        self.op = op
-
-
 class CastCode(Code):
     """
     Represents a type conversion operator.
@@ -1216,7 +1110,7 @@ class CastCode(Code):
         self.base = base
 
 
-class FormulaCode(Code):
+class FormulaCode(Formula, Code):
     """
     Represents a function or an operator expression.
 
@@ -1240,15 +1134,11 @@ class FormulaCode(Code):
             units.extend(cell.units)
         equality_vector = (signature, domain, arguments.freeze())
         super(FormulaCode, self).__init__(
+                    signature, arguments,
                     domain=domain,
                     units=units,
                     binding=binding,
                     equality_vector=equality_vector)
-        self.signature = signature
-        self.arguments = arguments
-        # For convenience, we permit access to function arguments using
-        # object attributes.
-        arguments.impress(self)
 
 
 class Unit(Code):

@@ -20,17 +20,13 @@ from .coerce import coerce
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
-                      SortBinding, EqualityBinding, TotalEqualityBinding,
-                      ConjunctionBinding, DisjunctionBinding,
-                      NegationBinding, CastBinding, WrapperBinding,
+                      SortBinding, CastBinding, WrapperBinding,
                       DirectionBinding, FormulaBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
                    FilteredSpace, OrderedSpace,
-                   QueryExpr, SegmentExpr, LiteralCode,
-                   EqualityCode, TotalEqualityCode, FormulaCode,
-                   ConjunctionCode, DisjunctionCode, NegationCode,
+                   QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
                    CastCode, ColumnUnit, ScalarUnit)
-from .signature import Signature
+from .signature import Signature, IsNullSig
 
 
 class EncodingState(object):
@@ -457,89 +453,6 @@ class EncodeLiteral(Encode):
                            self.binding)
 
 
-class EncodeEquality(Encode):
-    """
-    Encodes an equality (``=``) binding.
-
-    Returns a :class:`htsql.tr.code.EqualityCode` node.
-    """
-
-    # FIXME: this and the next few encoders share the same structure:
-    # encode the operands and generate a new code node that have the
-    # same shape as the original binding node.  There must be a generic
-    # way to do it without adding an adapter for each binding.  This is
-    # also a problem with encoding functions.
-
-    adapts(EqualityBinding)
-
-    def __call__(self):
-        # Translate the operands and generate a code node.
-        lop = self.state.encode(self.binding.lop)
-        rop = self.state.encode(self.binding.rop)
-        return EqualityCode(lop, rop, self.binding)
-
-
-class EncodeTotalEquality(Encode):
-    """
-    Encodes a total equality (``==``) binding.
-
-    Returns a :class:`htsql.tr.code.TotalEqualityCode` node.
-    """
-
-    adapts(TotalEqualityBinding)
-
-    def __call__(self):
-        # Translate the operands and generate a code node.
-        lop = self.state.encode(self.binding.lop)
-        rop = self.state.encode(self.binding.rop)
-        return TotalEqualityCode(lop, rop, self.binding)
-
-
-class EncodeConjunction(Encode):
-    """
-    Encodes a logical "AND" (``&``) binding.
-
-    Returns a :class:`htsql.tr.code.ConjunctionCode` node.
-    """
-
-    adapts(ConjunctionBinding)
-
-    def __call__(self):
-        # Translate the operands and generate a code node.
-        ops = [self.state.encode(op) for op in self.binding.ops]
-        return ConjunctionCode(ops, self.binding)
-
-
-class EncodeDisjunction(Encode):
-    """
-    Encodes a logical "OR" (``|``) binding.
-
-    Returns a :class:`htsql.tr.code.DisjunctionCode` node.
-    """
-
-    adapts(DisjunctionBinding)
-
-    def __call__(self):
-        # Translate the operands and generate a code node.
-        ops = [self.state.encode(op) for op in self.binding.ops]
-        return DisjunctionCode(ops, self.binding)
-
-
-class EncodeNegation(Encode):
-    """
-    Encodes a logical "NOT" (``!``) binding.
-
-    Returns a :class:`htsql.tr.code.NegationCode` node.
-    """
-
-    adapts(NegationBinding)
-
-    def __call__(self):
-        # Translate the operand and generate a code node.
-        op = self.state.encode(self.binding.op)
-        return NegationCode(op, self.binding)
-
-
 class Convert(Adapter):
     """
     Encodes a cast binding to a code node.
@@ -642,19 +555,18 @@ class ConvertTupleToBoolean(Convert):
         # represents some space.  In this case, Boolean cast produces
         # an expression which is `FALSE` when the space is empty and
         # `TRUE` otherwise.  The actual expression is:
-        #   `!(unit==null())`,
+        #   `!is_null(unit)`,
         # where `unit` is some non-nullable function on the space.
 
         # Translate the operand to a space node.
         space = self.state.relate(self.base)
-        # `TRUE` and `NULL` literals.
+        # A `TRUE` literal.
         true_literal = LiteralCode(True, coerce(BooleanDomain()), self.binding)
-        null_literal = LiteralCode(None, coerce(BooleanDomain()), self.binding)
         # A `TRUE` constant as a function on the space.
         unit = ScalarUnit(true_literal, space, self.binding)
-        # Return `!(unit==null())`.
-        return NegationCode(TotalEqualityCode(unit, null_literal, self.binding),
-                            self.binding)
+        # Return `!is_null(unit)`.
+        return FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
+                           self.binding, op=unit)
 
 
 class EncodeCast(Encode):

@@ -2274,6 +2274,41 @@ tests:
                     FALSE,
                     FALSE,
                     FALSE
+        - uri: /{'Y':null_if('X'),'Y':null_if('Y'), null():null_if(null()),null():null_if('X')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                    |
+            -+------------------------------------------------------------------------------------+-
+             | 'Y':null_if('X') | 'Y':null_if('Y') | null():null_if(null()) | null():null_if('X') |
+            -+------------------+------------------+------------------------+---------------------+-
+             | Y                |                  |                        |                     |
+                                                                                            (1 row)
+
+             ----
+             /{'Y':null_if('X'),'Y':null_if('Y'),null():null_if(null()),null():null_if('X')}
+             SELECT NULLIF('Y', 'X'),
+                    NULL,
+                    NULL,
+                    NULL
+        - uri: /{'X':if_null('Y'),null():if_null('X'),null():if_null(null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                 |
+            -+-----------------------------------------------------------------+-
+             | 'X':if_null('Y') | null():if_null('X') | null():if_null(null()) |
+            -+------------------+---------------------+------------------------+-
+             | X                | X                   |                        |
+                                                                         (1 row)
+
+             ----
+             /{'X':if_null('Y'),null():if_null('X'),null():if_null(null())}
+             SELECT 'X',
+                    'X',
+                    NULL
         - uri: /{'Y':null_if('X'),'Y':null_if('Y'), (5):null_if(1,2,3),(5):null_if(1,2,3,4,5,6,7,8,9,10),
             null():null_if(null()),null():null_if('X')}
           status: 200 OK

@@ -13,43 +13,8 @@
 
 from ...adapter import adapts
 from ..reduce import ReduceBySignature
-from ..frame import (IsNullPhrase, NullIfPhrase, IfNullPhrase,
-                     LiteralPhrase, FormulaPhrase)
-from .signature import (IsNullSig, NullIfSig, IfNullSig,
-                        KeepPolaritySig, ConcatenateSig)
-
-
-class ReduceIsNull(ReduceBySignature):
-
-    adapts(IsNullSig)
-
-    def __call__(self):
-        phrase = IsNullPhrase(self.phrase.op, self.phrase.expression)
-        return self.state.reduce(phrase)
-
-
-class ReduceNullIfSig(ReduceBySignature):
-
-    adapts(NullIfSig)
-
-    def __call__(self):
-        phrase = self.phrase.lop
-        for rop in self.phrase.rops:
-            phrase = NullIfPhrase(phrase, rop, self.phrase.domain,
-                                  self.phrase.expression)
-        return self.state.reduce(phrase)
-
-
-class ReduceIfNullSig(ReduceBySignature):
-
-    adapts(IfNullSig)
-
-    def __call__(self):
-        phrase = self.phrase.lop
-        for rop in self.phrase.rops:
-            phrase = IfNullPhrase(phrase, rop, self.phrase.domain,
-                                  self.phrase.expression)
-        return self.state.reduce(phrase)
+from ..frame import LiteralPhrase, FormulaPhrase
+from .signature import KeepPolaritySig, ConcatenateSig, IfNullSig
 
 
 class ReduceKeepPolaritySig(ReduceBySignature):
@@ -68,10 +33,12 @@ class ReduceConcatenate(ReduceBySignature):
         empty = LiteralPhrase('', self.phrase.domain, self.phrase.expression)
         lop = self.phrase.lop
         if lop.is_nullable:
-            lop = IfNullPhrase(lop, empty, lop.domain, lop.expression)
+            lop = FormulaPhrase(IfNullSig(), lop.domain, False,
+                                lop.expression, lop=lop, rop=empty)
         rop = self.phrase.rop
         if rop.is_nullable:
-            rop = IfNullPhrase(rop, empty, rop.domain, rop.expression)
+            rop = FormulaPhrase(IfNullSig(), rop.domain, False,
+                                rop.expression, lop=rop, rop=empty)
         return FormulaPhrase(self.phrase.signature, self.phrase.domain,
                              False, self.phrase.expression,
                              lop=self.state.reduce(lop),

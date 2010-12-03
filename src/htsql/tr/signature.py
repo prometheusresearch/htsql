@@ -11,7 +11,7 @@
 """
 
 
-from ..util import maybe, listof, Comparable
+from ..util import maybe, listof, Comparable, Clonable
 
 
 class Slot(object):
@@ -25,7 +25,7 @@ class Slot(object):
         self.is_singular = is_singular
 
 
-class Signature(Comparable):
+class Signature(Comparable, Clonable):
 
     slots = []
 
@@ -106,6 +106,45 @@ class Bag(dict):
         return tuple(values)
 
 
+class Formula(object):
+
+    def __init__(self, signature, arguments, *args, **kwds):
+        assert isinstance(signature, Signature)
+        assert isinstance(arguments, Bag)
+        super(Formula, self).__init__(*args, **kwds)
+        self.signature = signature
+        self.arguments = arguments
+        arguments.impress(self)
+
+    def clone(self, **replacements):
+        if not replacements:
+            return self
+        init_code = self.__init__.im_func.func_code
+        names = list(init_code.co_varnames[1:init_code.co_argcount])
+        names += sorted(self.arguments)
+        assert all(key in names for key in sorted(replacements)), (names, replacements)
+        arguments = {}
+        is_modified = False
+        for name in names:
+            value = getattr(self, name)
+            if name in replacements and replacements[name] is not value:
+                value = replacements[name]
+                is_modified = True
+            arguments[name] = value
+        if not is_modified:
+            return self
+        clone = self.__class__(**arguments)
+        return clone
+
+
+def isformula(formula, signatures):
+    if not isinstance(signatures, tuple):
+        signatures = (signatures,)
+    return (isinstance(formula, Formula) and
+            any(isinstance(formula.signature, signature)
+                for signature in signatures))
+
+
 class NullarySig(Signature):
 
     slots = []
@@ -153,6 +192,9 @@ class PolarSig(Signature):
         super(PolarSig, self).__init__(equality_vector=(polarity,))
         self.polarity = polarity
 
+    def reverse(self):
+        return self.clone(polarity=-self.polarity)
+
 
 class IsEqualSig(BinarySig, PolarSig):
     pass
@@ -170,11 +212,11 @@ class IsNullSig(UnarySig, PolarSig):
     pass
 
 
-class IfNullSig(NArySig):
+class IfNullSig(BinarySig):
     pass
 
 
-class NullIfSig(NArySig):
+class NullIfSig(BinarySig):
     pass
 
 

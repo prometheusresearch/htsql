@@ -22,13 +22,12 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
 from .syntax import IdentifierSyntax, CallSyntax, LiteralSyntax
 from .frame import (Clause, Frame, LeafFrame, ScalarFrame, TableFrame,
                     BranchFrame, NestedFrame, SegmentFrame, QueryFrame,
-                    Phrase, NullPhrase, EqualityPhrase, InequalityPhrase,
-                    TotalEqualityPhrase, TotalInequalityPhrase,
-                    ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
-                    IsNullPhrase, IsNotNullPhrase, IfNullPhrase, NullIfPhrase,
-                    CastPhrase, LiteralPhrase, ColumnPhrase, ReferencePhrase,
-                    EmbeddingPhrase, FormulaPhrase, Anchor, LeadingAnchor)
-from .signature import Signature
+                    Phrase, NullPhrase, CastPhrase, LiteralPhrase,
+                    ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
+                    FormulaPhrase, Anchor, LeadingAnchor)
+from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsInSig,
+                        IsNullSig, IfNullSig, NullIfSig, CompareSig,
+                        AndSig, OrSig, NotSig)
 from .plan import Plan
 import decimal
 import StringIO
@@ -654,100 +653,6 @@ class DumpEnum(DumpByDomain):
         self.state.format("{value:literal}", value=self.value)
 
 
-class DumpEquality(Dump):
-
-    adapts(EqualityPhrase)
-
-    def __call__(self):
-        self.state.format("({lop} = {rop})", self.phrase)
-
-
-class DumpInequality(Dump):
-
-    adapts(InequalityPhrase)
-
-    def __call__(self):
-        self.state.format("({lop} <> {rop})", self.phrase)
-
-
-class DumpTotalEquality(Dump):
-
-    adapts(TotalEqualityPhrase)
-
-    def __call__(self):
-        self.state.format("((CASE WHEN (({lop} = {rop}) OR"
-                          " (({lop} IS NULL) AND ({rop} IS NULL)))"
-                          " THEN 1 ELSE 0 END) = 1)",
-                          self.phrase)
-
-
-class DumpTotalInequality(Dump):
-
-    adapts(TotalInequalityPhrase)
-
-    def __call__(self):
-        self.state.format("((CASE WHEN (({lop} = {rop}) OR"
-                          " (({lop} IS NULL) AND ({rop} IS NULL)))"
-                          " THEN 1 ELSE 0 END) = 0)",
-                          self.phrase)
-
-
-class DumpConjunction(Dump):
-
-    adapts(ConjunctionPhrase)
-
-    def __call__(self):
-        self.state.format("({ops:join{ AND }})", self.phrase)
-
-
-class DumpDisjunction(Dump):
-
-    adapts(DisjunctionPhrase)
-
-    def __call__(self):
-        self.state.format("({ops:join{ OR }})", self.phrase)
-
-
-class DumpNegation(Dump):
-
-    adapts(NegationPhrase)
-
-    def __call__(self):
-        self.state.format("(NOT {op})", self.phrase)
-
-
-class DumpIsNull(Dump):
-
-    adapts(IsNullPhrase)
-
-    def __call__(self):
-        self.state.format("({op} IS NULL)", self.phrase)
-
-
-class DumpIsNotNull(Dump):
-
-    adapts(IsNotNullPhrase)
-
-    def __call__(self):
-        self.state.format("({op} IS NOT NULL)", self.phrase)
-
-
-class DumpIfNull(Dump):
-
-    adapts(IfNullPhrase)
-
-    def __call__(self):
-        self.state.format("COALESCE({lop}, {rop})", self.phrase)
-
-
-class DumpNullIf(Dump):
-
-    adapts(NullIfPhrase)
-
-    def __call__(self):
-        self.state.format("NULLIF({lop}, {rop})", self.phrase)
-
-
 class DumpCast(Dump):
 
     adapts(CastPhrase)
@@ -839,6 +744,101 @@ class DumpBySignature(Adapter):
 
     def __call__(self):
         raise NotImplementedError()
+
+
+class DumpIsEqual(DumpBySignature):
+
+    adapts(IsEqualSig)
+
+    def __call__(self):
+        if self.signature.polarity > 0:
+            self.state.format("({lop} = {rop})", self.arguments)
+        else:
+            self.state.format("({lop} <> {rop})", self.arguments)
+
+
+class DumpIsTotallyEqual(DumpBySignature):
+
+    adapts(IsTotallyEqualSig)
+
+    def __call__(self):
+        if self.signature.polarity > 0:
+            self.state.format("(CASE WHEN (({lop} = {rop}) OR"
+                              " (({lop} IS NULL) AND ({rop} IS NULL)))"
+                              " THEN 1 ELSE 0 END)",
+                              self.arguments)
+        else:
+            self.state.format("(CASE WHEN (({lop} <> {rop}) AND"
+                              " (({lop} IS NOT NULL) OR ({rop} IS NOT NULL)))"
+                              " THEN 1 ELSE 0 END)",
+                              self.arguments)
+
+
+class DumpIsIn(DumpBySignature):
+
+    adapts(IsInSig)
+
+    def __call__(self):
+        self.state.format("({lop} {polarity:polarity}IN ({rops:join{, }}))",
+                          self.arguments, self.signature)
+
+
+class DumpAnd(DumpBySignature):
+
+    adapts(AndSig)
+
+    def __call__(self):
+        self.state.format("({ops:join{ AND }})", self.arguments)
+
+
+class DumpOr(DumpBySignature):
+
+    adapts(OrSig)
+
+    def __call__(self):
+        self.state.format("({ops:join{ OR }})", self.arguments)
+
+
+class DumpNot(DumpBySignature):
+
+    adapts(NotSig)
+
+    def __call__(self):
+        self.state.format("(NOT {op})", self.arguments)
+
+
+class DumpIsNull(DumpBySignature):
+
+    adapts(IsNullSig)
+
+    def __call__(self):
+        self.state.format("({op} IS {polarity:polarity}NULL)",
+                          self.arguments, self.signature)
+
+
+class DumpIfNull(DumpBySignature):
+
+    adapts(IfNullSig)
+
+    def __call__(self):
+        self.state.format("COALESCE({lop}, {rop})", self.arguments)
+
+
+class DumpNullIf(DumpBySignature):
+
+    adapts(NullIfSig)
+
+    def __call__(self):
+        self.state.format("NULLIF({lop}, {rop})", self.arguments)
+
+
+class DumpCompare(DumpBySignature):
+
+    adapts(CompareSig)
+
+    def __call__(self):
+        self.state.format("({lop} {relation:asis} {rop})",
+                          self.arguments, self.signature)
 
 
 class DumpColumn(Dump):

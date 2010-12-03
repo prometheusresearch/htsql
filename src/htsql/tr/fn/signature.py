@@ -12,7 +12,9 @@
 
 
 from ..signature import (Signature, Slot, NullarySig, UnarySig, BinarySig,
-                         NArySig, ConnectiveSig, PolarSig, CompareSig)
+                         NArySig, ConnectiveSig, PolarSig, CompareSig,
+                         IsEqualSig, IsTotallyEqualSig, IsInSig, IsNullSig,
+                         IfNullSig, NullIfSig, AndSig, OrSig, NotSig)
 
 
 class ThisSig(Signature):
@@ -102,30 +104,6 @@ class DateSig(Signature):
     ]
 
 
-class EqualSig(BinarySig, PolarSig):
-    pass
-
-
-class AmongSig(NArySig, PolarSig):
-    pass
-
-
-class TotallyEqualSig(BinarySig, PolarSig):
-    pass
-
-
-class AndSig(BinarySig):
-    pass
-
-
-class OrSig(BinarySig):
-    pass
-
-
-class NotSig(UnarySig):
-    pass
-
-
 class AddSig(BinarySig):
     pass
 
@@ -176,18 +154,6 @@ class RoundToSig(Signature):
             Slot('op'),
             Slot('precision'),
     ]
-
-
-class IsNullSig(UnarySig):
-    pass
-
-
-class NullIfSig(NArySig):
-    pass
-
-
-class IfNullSig(NArySig):
-    pass
 
 
 class IfSig(Signature):

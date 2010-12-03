@@ -18,24 +18,22 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        DateDomain, EnumDomain)
 from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
-                       FormulaBinding, EqualityBinding, TotalEqualityBinding,
-                       ConjunctionBinding, DisjunctionBinding, NegationBinding,
-                       CastBinding, WrapperBinding, TitleBinding,
-                       DirectionBinding, Binding)
+                       FormulaBinding, CastBinding, WrapperBinding,
+                       TitleBinding, DirectionBinding, Binding)
 from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..lookup import lookup
 from .signature import (Signature, ThisSig, RootSig, DirectSig, FiberSig, AsSig,
                         SortDirectionSig, LimitSig, SortSig, NullSig, TrueSig,
-                        FalseSig, CastSig, DateSig, EqualSig, AmongSig,
-                        TotallyEqualSig, AndSig, OrSig, NotSig, CompareSig,
+                        FalseSig, CastSig, DateSig, IsEqualSig, IsInSig,
+                        IsTotallyEqualSig, AndSig, OrSig, NotSig, CompareSig,
                         AddSig, ConcatenateSig, DateIncrementSig,
                         SubtractSig, DateDecrementSig, DateDifferenceSig,
                         MultiplySig, DivideSig, IsNullSig, NullIfSig,
                         IfNullSig, IfSig, SwitchSig, KeepPolaritySig,
                         ReversePolaritySig, RoundSig, RoundToSig, LengthSig,
-                        ContainsSig, ExistsSig, EverySig,
+                        ContainsSig, ExistsSig, EverySig, BinarySig,
                         UnarySig, CountSig, MinSig, MaxSig, SumSig, AvgSig)
 import sys
 
@@ -176,7 +174,8 @@ class BindFiber(BindMacro):
                                        self.syntax.mark)
         parent = CastBinding(parent, domain, parent.syntax)
         child = CastBinding(child, domain, child.syntax)
-        condition = EqualityBinding(parent, child, self.syntax)
+        condition = FormulaBinding(IsEqualSig(+1), coerce(BooleanDomain()),
+                                   self.syntax, lop=parent, rop=child)
         yield SieveBinding(binding, condition, self.syntax)
 
 
@@ -365,7 +364,7 @@ class BindDate(BindMonoFunction):
 
 class BindAmongBase(BindFunction):
 
-    signature = AmongSig
+    signature = IsInSig
     polarity = None
 
     def correlate(self, lop, rops):
@@ -375,10 +374,9 @@ class BindAmongBase(BindFunction):
         lop = CastBinding(lop, domain, lop.syntax)
         rops = [CastBinding(rop, domain, rop.syntax) for rop in rops]
         if len(rops) == 1:
-            binding = EqualityBinding(lop, rops[0], self.syntax)
-            if self.polarity == -1:
-                binding = NegationBinding(binding, self.syntax)
-            return binding
+            return FormulaBinding(IsEqualSig(self.polarity),
+                                  coerce(BooleanDomain()),
+                                  self.syntax, lop=lop, rop=rops[0])
         else:
             return FormulaBinding(self.signature(self.polarity),
                                   coerce(BooleanDomain()),
@@ -399,7 +397,7 @@ class BindNotAmong(BindAmongBase):
 
 class BindTotallyEqualBase(BindFunction):
 
-    signature = TotallyEqualSig
+    signature = IsTotallyEqualSig
     polarity = None
 
     def correlate(self, lop, rop):
@@ -408,10 +406,9 @@ class BindTotallyEqualBase(BindFunction):
             raise BindError("incompatible arguments", self.syntax.mark)
         lop = CastBinding(lop, domain, lop.syntax)
         rop = CastBinding(rop, domain, rop.syntax)
-        binding = TotalEqualityBinding(lop, rop, self.syntax)
-        if self.polarity == -1:
-            binding = NegationBinding(binding, self.syntax)
-        return binding
+        return FormulaBinding(IsTotallyEqualSig(self.polarity),
+                              coerce(BooleanDomain()), self.syntax,
+                              lop=lop, rop=rop)
 
 
 class BindTotallyEqual(BindTotallyEqualBase):
@@ -429,23 +426,25 @@ class BindTotallyNotEqual(BindTotallyEqualBase):
 class BindAnd(BindFunction):
 
     named('&')
-    signature = AndSig
+    signature = BinarySig
 
     def correlate(self, lop, rop):
-        lop = CastBinding(lop, coerce(BooleanDomain()), lop.syntax)
-        rop = CastBinding(rop, coerce(BooleanDomain()), rop.syntax)
-        return ConjunctionBinding([lop, rop], self.syntax)
+        domain = coerce(BooleanDomain())
+        lop = CastBinding(lop, domain, lop.syntax)
+        rop = CastBinding(rop, domain, rop.syntax)
+        return FormulaBinding(AndSig(), domain, self.syntax, ops=[lop, rop])
 
 
 class BindOr(BindFunction):
 
     named('|')
-    signature = OrSig
+    signature = BinarySig
 
     def correlate(self, lop, rop):
-        lop = CastBinding(lop, coerce(BooleanDomain()), lop.syntax)
-        rop = CastBinding(rop, coerce(BooleanDomain()), rop.syntax)
-        return DisjunctionBinding([lop, rop], self.syntax)
+        domain = coerce(BooleanDomain())
+        lop = CastBinding(lop, domain, lop.syntax)
+        rop = CastBinding(rop, domain, rop.syntax)
+        return FormulaBinding(OrSig(), domain, self.syntax, ops=[lop, rop])
 
 
 class BindNot(BindFunction):
@@ -454,8 +453,9 @@ class BindNot(BindFunction):
     signature = NotSig
 
     def correlate(self, op):
-        op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
-        return NegationBinding(op, self.syntax)
+        domain = coerce(BooleanDomain())
+        op = CastBinding(op, domain, op.syntax)
+        return FormulaBinding(self.signature(), domain, self.syntax, op=op)
 
 
 class BindCompare(BindFunction):
@@ -982,7 +982,7 @@ class BindHomoFunction(BindFunction):
 class BindIsNull(BindHomoFunction):
 
     named('is_null')
-    signature = IsNullSig()
+    signature = IsNullSig(+1)
     codomain = BooleanDomain()
 
 

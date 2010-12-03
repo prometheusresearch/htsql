@@ -142,11 +142,16 @@ tests:
         - uri: /{'Y':null_if('X'),'Y':null_if('Y'),
                  (5):null_if(1,2,3),(5):null_if(1,2,3,4,5,6,7,8,9,10),
                  null():null_if(null()),null():null_if('X')}
+          skip: true
+        - uri: /{'Y':null_if('X'),'Y':null_if('Y'),
+                 null():null_if(null()),null():null_if('X')}
         # If Null method (`this` is null => the first non-null argument, otherwise => `this`).
         - uri: /{'X':if_null('Y'),null():if_null('X'),null():if_null(null()),
                  null():if_null(null(),null(),null()),
                  null():if_null(null(),null(),0),
                  null():if_null(0,1,2,3,null())}
+          skip: true
+        - uri: /{'X':if_null('Y'),null():if_null('X'),null():if_null(null())}
         # If function (if(`cond1`,`then1`,[`cond2`,`then2`,...],[`else`])).
         - uri: /{if(true(),1),if(false(),1),if(null(),1),
                  if(true(),1,0),if(false(),1,0),if(null(),1,0),

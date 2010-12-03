@@ -11,19 +11,47 @@
 """
 
 
-from ...adapter import adapts
+from ...adapter import adapts, adapts_none
 from ..assemble import EvaluateBySignature
-from .signature import ConcatenateSig, WrapExistsSig
+from ..frame import FormulaPhrase
+from .signature import ConcatenateSig, WrapExistsSig, TakeCountSig
 
 
-class EvaluateWrapExists(EvaluateBySignature):
+class EvaluateFunction(EvaluateBySignature):
+
+    adapts_none()
+
+    is_null_regular = True
+    is_nullable = True
+
+    def __call__(self):
+        arguments = self.arguments.map(self.state.evaluate)
+        if self.is_null_regular:
+            is_nullable = any(cell.is_nullable for cell in arguments.cells())
+        else:
+            is_nullable = self.is_nullable
+        return FormulaPhrase(self.signature,
+                             self.domain,
+                             is_nullable,
+                             self.code,
+                             **arguments)
+
+
+class EvaluateWrapExists(EvaluateFunction):
 
     adapts(WrapExistsSig)
     is_null_regular = False
     is_nullable = False
 
 
-class EvaluateConcatenate(EvaluateBySignature):
+class EvaluateTakeCount(EvaluateFunction):
+
+    adapts(TakeCountSig)
+    is_null_regular = False
+    is_nullable = False
+
+
+class EvaluateConcatenate(EvaluateFunction):
 
     adapts(ConcatenateSig)
     is_null_regular = False
