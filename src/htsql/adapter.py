@@ -302,7 +302,7 @@ class Adapter(Component):
 
     Class attributes:
 
-    `signatures` (a list of signatures)
+    `types` (a list of type signatures)
         List of signatures that the component matches.
     
     `arity` (an integer)
@@ -348,7 +348,7 @@ class Adapter(Component):
         [123, ABC, 'Hello, World!']
     """
 
-    signatures = []
+    types = []
     arity = 0
 
     @classmethod
@@ -369,8 +369,8 @@ class Adapter(Component):
         # rule does not guarantee anti-symmetricity, so ambiguously
         # defined implementations may make the ordering ill defined.
         # Validness of the ordering is verified in `Component.realize()`.
-        for self_signature in component.signatures:
-            for other_signature in other.signatures:
+        for self_signature in component.types:
+            for other_signature in other.types:
                 if aresubclasses(self_signature, other_signature):
                     if self_signature != other_signature:
                         return True
@@ -387,7 +387,7 @@ class Adapter(Component):
         # is equal or less specific than the dispatch key.
         assert isinstance(list(dispatch_key), listof(type))
         return any(aresubclasses(dispatch_key, signature)
-                   for signature in component.signatures)
+                   for signature in component.types)
 
     @classmethod
     def dispatch(interface, *args, **kwds):
@@ -413,7 +413,7 @@ def adapts(*signature):
     """
     assert isinstance(list(signature), listof(type))
     frame = sys._getframe(1)
-    frame.f_locals['signatures'] = [signature]
+    frame.f_locals['types'] = [signature]
     frame.f_locals['arity'] = len(signature)
 
 
@@ -428,7 +428,7 @@ def adapts_none():
             adapts_none()
     """
     frame = sys._getframe(1)
-    frame.f_locals['signatures'] = []
+    frame.f_locals['types'] = []
 
 
 def adapts_many(*signatures):
@@ -453,7 +453,7 @@ def adapts_many(*signatures):
     arity = len(signatures[0])
     assert all(len(signature) == arity for signature in signatures)
     frame = sys._getframe(1)
-    frame.f_locals['signatures'] = signatures
+    frame.f_locals['types'] = signatures
     frame.f_locals['arity'] = arity
 
 
