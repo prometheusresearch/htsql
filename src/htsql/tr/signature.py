@@ -29,6 +29,11 @@ class Signature(Comparable):
 
     slots = []
 
+    @classmethod
+    def inherit(cls, other):
+        assert isinstance(other, Signature)
+        return cls()
+
     def __init__(self, equality_vector=()):
         super(Signature, self).__init__(equality_vector=equality_vector)
 
@@ -43,10 +48,11 @@ class Bag(dict):
 
     def admits(self, kind, signature):
         assert isinstance(kind, type)
-        assert isinstance(signature, Signature)
-        if set(self.keys()) != set(slot.name for slot in signature):
+        assert (isinstance(signature, Signature) or
+                issubclass(signature, Signature))
+        if set(self.keys()) != set(slot.name for slot in signature.slots):
             return False
-        for slot in signature:
+        for slot in signature.slots:
             value = self[slot.name]
             if slot.is_singular:
                 if not isinstance(value, maybe(kind)):
@@ -137,6 +143,11 @@ class ConnectiveSig(Signature):
 
 class PolarSig(Signature):
 
+    @classmethod
+    def inherit(cls, other):
+        assert isinstance(other, PolarSig)
+        return cls(polarity=other.polarity)
+
     def __init__(self, polarity):
         assert polarity in [+1, -1]
         super(PolarSig, self).__init__(equality_vector=(polarity,))
@@ -168,6 +179,11 @@ class NullIfSig(NArySig):
 
 
 class CompareSig(BinarySig):
+
+    @classmethod
+    def inherit(cls, other):
+        assert isinstance(other, CompareSig)
+        return cls(relation=other.relation)
 
     def __init__(self, relation):
         assert relation in ['<', '<=', '>', '>=']

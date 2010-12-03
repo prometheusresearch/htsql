@@ -431,10 +431,14 @@ class BindByName(Protocol):
     def matches(component, dispatch_key):
         assert isinstance(dispatch_key, tupleof(str, int))
         key_name, key_arity = dispatch_key
+        if key_name.isalnum():
+            key_name = normalize(key_name)
         for name in component.names:
             arity = None
             if isinstance(name, tuple):
                 name, arity = name
+            if name.isalnum():
+                name = normalize(name)
             if name == key_name:
                 if arity is None or arity == key_arity:
                     return True
@@ -448,11 +452,15 @@ class BindByName(Protocol):
             arity = None
             if isinstance(name, tuple):
                 name, arity = name
+            if name.isalnum():
+                name = normalize(name)
             for other_name in other.names:
                 other_arity = None
                 if isinstance(other_name, tuple):
                     other_name, other_arity = other_name
-                if normalize(name) == normalize(other_name):
+                if other_name.isalnum():
+                    other_name = normalize(other_name)
+                if name == other_name:
                     if arity is not None and other_arity is None:
                         return True
         return False

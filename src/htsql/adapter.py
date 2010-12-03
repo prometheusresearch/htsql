@@ -369,10 +369,10 @@ class Adapter(Component):
         # rule does not guarantee anti-symmetricity, so ambiguously
         # defined implementations may make the ordering ill defined.
         # Validness of the ordering is verified in `Component.realize()`.
-        for self_signature in component.types:
-            for other_signature in other.types:
-                if aresubclasses(self_signature, other_signature):
-                    if self_signature != other_signature:
+        for type_vector in component.types:
+            for other_type_vector in other.types:
+                if aresubclasses(type_vector, other_type_vector):
+                    if type_vector != other_type_vector:
                         return True
 
         return False
@@ -386,19 +386,19 @@ class Adapter(Component):
         # matches the dispatch key if at least one of its signatures
         # is equal or less specific than the dispatch key.
         assert isinstance(list(dispatch_key), listof(type))
-        return any(aresubclasses(dispatch_key, signature)
-                   for signature in component.types)
+        return any(aresubclasses(dispatch_key, type_vector)
+                   for type_vector in component.types)
 
     @classmethod
     def dispatch(interface, *args, **kwds):
         # The types of the leading arguments of the constructor
         # form a dispatch key.
         assert interface.arity <= len(args)
-        signature = tuple(type(arg) for arg in args[:interface.arity])
-        return signature
+        type_vector = tuple(type(arg) for arg in args[:interface.arity])
+        return type_vector
 
 
-def adapts(*signature):
+def adapts(*type_vector):
     """
     Specifies the adapter signature.
 
@@ -411,10 +411,10 @@ def adapts(*signature):
 
             adapts(T1, T2, ...)
     """
-    assert isinstance(list(signature), listof(type))
+    assert isinstance(list(type_vector), listof(type))
     frame = sys._getframe(1)
-    frame.f_locals['types'] = [signature]
-    frame.f_locals['arity'] = len(signature)
+    frame.f_locals['types'] = [type_vector]
+    frame.f_locals['arity'] = len(type_vector)
 
 
 def adapts_none():
@@ -431,7 +431,7 @@ def adapts_none():
     frame.f_locals['types'] = []
 
 
-def adapts_many(*signatures):
+def adapts_many(*type_vectors):
     """
     Specifies signatures of the adapter.
 
@@ -446,14 +446,16 @@ def adapts_many(*signatures):
                         (T21, T22, ...),
                         ...)
     """
-    # Normalize the signatures.
-    signatures = [signature if isinstance(signature, tuple) else (signature,)
-                  for signature in signatures]
-    assert len(signatures) > 0
-    arity = len(signatures[0])
-    assert all(len(signature) == arity for signature in signatures)
+    # Normalize the given type vectors.
+    type_vectors = [type_vector if isinstance(type_vector, tuple)
+                                else (type_vector,)
+                  for type_vector in type_vectors]
+    assert len(type_vectors) > 0
+    arity = len(type_vectors[0])
+    assert all(len(type_vector) == arity
+               for type_vector in type_vectors)
     frame = sys._getframe(1)
-    frame.f_locals['types'] = signatures
+    frame.f_locals['types'] = type_vectors
     frame.f_locals['arity'] = arity
 
 
