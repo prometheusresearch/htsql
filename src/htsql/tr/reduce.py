@@ -24,7 +24,7 @@ from .frame import (Clause, Frame, ScalarFrame, TableFrame, BranchFrame,
                     TotalEqualityPhrase, TotalInequalityPhrase,
                     ConnectivePhraseBase, ConjunctionPhrase, NegationPhrase,
                     IsNullPhraseBase, IsNullPhrase, IsNotNullPhrase,
-                    IfNullPhrase, NullIfPhrase, CastPhrase, FunctionPhrase,
+                    IfNullPhrase, NullIfPhrase, CastPhrase, FormulaPhrase,
                     ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
 from .signature import Signature
 
@@ -1010,11 +1010,11 @@ class ReduceBySignature(Adapter):
 
     @classmethod
     def dispatch(interface, phrase, *args, **kwds):
-        assert isinstance(phrase, FunctionPhrase)
+        assert isinstance(phrase, FormulaPhrase)
         return (type(phrase.signature),)
 
     def __init__(self, phrase, state):
-        assert isinstance(phrase, FunctionPhrase)
+        assert isinstance(phrase, FormulaPhrase)
         assert isinstance(state, ReducingState)
         self.phrase = phrase
         self.state = state
@@ -1025,16 +1025,16 @@ class ReduceBySignature(Adapter):
 
     def __call__(self):
         arguments = self.arguments.map(self.state.reduce)
-        return FunctionPhrase(self.signature,
-                              self.domain,
-                              self.is_nullable,
-                              self.phrase.expression,
-                              **arguments)
+        return FormulaPhrase(self.signature,
+                             self.domain,
+                             self.is_nullable,
+                             self.phrase.expression,
+                             **arguments)
 
 
-class ReduceFunction(Reduce):
+class ReduceFormula(Reduce):
 
-    adapts(FunctionPhrase)
+    adapts(FormulaPhrase)
 
     def __call__(self):
         reduce = ReduceBySignature(self.phrase, self.state)

@@ -747,7 +747,7 @@ class CastPhrase(Phrase):
         self.base = base
 
 
-class FunctionPhrase(Phrase):
+class FormulaPhrase(Phrase):
     """
     Represents a function or an operator expression.
 
@@ -767,8 +767,8 @@ class FunctionPhrase(Phrase):
         arguments = Bag(**arguments)
         assert arguments.admits(Phrase, signature)
         equality_vector = (signature, domain, arguments.freeze())
-        super(FunctionPhrase, self).__init__(domain, is_nullable, expression,
-                                             equality_vector)
+        super(FormulaPhrase, self).__init__(domain, is_nullable, expression,
+                                            equality_vector)
         self.signature = signature
         self.arguments = arguments
         # For convenience, we permit access to function arguments using

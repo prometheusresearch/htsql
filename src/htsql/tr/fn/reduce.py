@@ -14,7 +14,7 @@
 from ...adapter import adapts
 from ..reduce import ReduceBySignature
 from ..frame import (IsNullPhrase, NullIfPhrase, IfNullPhrase,
-                     LiteralPhrase, FunctionPhrase)
+                     LiteralPhrase, FormulaPhrase)
 from .signature import (IsNullSig, NullIfSig, IfNullSig,
                         NumericKeepPolaritySig, ConcatenateSig)
 
@@ -72,9 +72,9 @@ class ReduceConcatenate(ReduceBySignature):
         rop = self.phrase.rop
         if rop.is_nullable:
             rop = IfNullPhrase(rop, empty, rop.domain, rop.expression)
-        return FunctionPhrase(self.phrase.signature, self.phrase.domain,
-                              False, self.phrase.expression,
-                              lop=self.state.reduce(lop),
-                              rop=self.state.reduce(rop))
+        return FormulaPhrase(self.phrase.signature, self.phrase.domain,
+                             False, self.phrase.expression,
+                             lop=self.state.reduce(lop),
+                             rop=self.state.reduce(rop))
 
 

@@ -19,7 +19,7 @@ from ..domain import BooleanDomain
 from .coerce import coerce
 from .code import (Code, LiteralCode, EqualityCode, TotalEqualityCode,
                    ConjunctionCode, DisjunctionCode, NegationCode,
-                   FunctionCode, CastCode, Unit, ColumnUnit)
+                   FormulaCode, CastCode, Unit, ColumnUnit)
 from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
@@ -30,7 +30,7 @@ from .frame import (LeafFrame, ScalarFrame, TableFrame, BranchFrame,
                     EqualityPhrase, TotalEqualityPhrase, CastPhrase,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
                     ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
-                    FunctionPhrase, Anchor, LeadingAnchor)
+                    FormulaPhrase, Anchor, LeadingAnchor)
 from .signature import Signature
 
 
@@ -1275,11 +1275,11 @@ class EvaluateBySignature(Adapter):
 
     @classmethod
     def dispatch(interface, code, *args, **kwds):
-        assert isinstance(code, FunctionCode)
+        assert isinstance(code, FormulaCode)
         return (type(code.signature),)
 
     def __init__(self, code, state):
-        assert isinstance(code, FunctionCode)
+        assert isinstance(code, FormulaCode)
         assert isinstance(state, AssemblingState)
         self.code = code
         self.state = state
@@ -1293,16 +1293,16 @@ class EvaluateBySignature(Adapter):
             is_nullable = any(cell.is_nullable for cell in arguments.cells())
         else:
             is_nullable = self.is_nullable
-        return FunctionPhrase(self.signature,
-                              self.domain,
-                              is_nullable,
-                              self.code,
-                              **arguments)
+        return FormulaPhrase(self.signature,
+                             self.domain,
+                             is_nullable,
+                             self.code,
+                             **arguments)
 
 
-class EvaluateFunction(Evaluate):
+class EvaluateFormula(Evaluate):
 
-    adapts(FunctionCode)
+    adapts(FormulaCode)
 
     def __call__(self):
         evaluate = EvaluateBySignature(self.code, self.state)

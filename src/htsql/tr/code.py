@@ -1216,7 +1216,7 @@ class CastCode(Code):
         self.base = base
 
 
-class FunctionCode(Code):
+class FormulaCode(Code):
     """
     Represents a function or an operator expression.
 
@@ -1239,7 +1239,7 @@ class FunctionCode(Code):
         for cell in arguments.cells():
             units.extend(cell.units)
         equality_vector = (signature, domain, arguments.freeze())
-        super(FunctionCode, self).__init__(
+        super(FormulaCode, self).__init__(
                     domain=domain,
                     units=units,
                     binding=binding,

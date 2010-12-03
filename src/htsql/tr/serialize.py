@@ -27,7 +27,7 @@ from .frame import (Clause, Frame, LeafFrame, ScalarFrame, TableFrame,
                     ConjunctionPhrase, DisjunctionPhrase, NegationPhrase,
                     IsNullPhrase, IsNotNullPhrase, IfNullPhrase, NullIfPhrase,
                     CastPhrase, LiteralPhrase, ColumnPhrase, ReferencePhrase,
-                    EmbeddingPhrase, FunctionPhrase, Anchor, LeadingAnchor)
+                    EmbeddingPhrase, FormulaPhrase, Anchor, LeadingAnchor)
 from .signature import Signature
 from .plan import Plan
 import decimal
@@ -810,9 +810,9 @@ class SerializeToString(SerializeToDomain):
         self.state.format("CAST({base} AS CHARACTER VARYING)", base=self.base)
 
 
-class SerializeFunction(Serialize):
+class SerializeFormula(Serialize):
 
-    adapts(FunctionPhrase)
+    adapts(FormulaPhrase)
 
     def __call__(self):
         serialize = SerializeBySignature(self.phrase, self.state)
@@ -825,11 +825,11 @@ class SerializeBySignature(Adapter):
 
     @classmethod
     def dispatch(interface, phrase, *args, **kwds):
-        assert isinstance(phrase, FunctionPhrase)
+        assert isinstance(phrase, FormulaPhrase)
         return (type(phrase.signature),)
 
     def __init__(self, phrase, state):
-        assert isinstance(phrase, FunctionPhrase)
+        assert isinstance(phrase, FormulaPhrase)
         assert isinstance(state, SerializingState)
         self.phrase = phrase
         self.state = state

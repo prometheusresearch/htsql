@@ -414,7 +414,7 @@ class CastBinding(Binding):
         self.base = base
 
 
-class FunctionBinding(Binding):
+class FormulaBinding(Binding):
     """
     Represents a function or an operator binding.
 
@@ -435,7 +435,7 @@ class FunctionBinding(Binding):
         assert isinstance(signature, Signature)
         arguments = Bag(**arguments)
         assert arguments.admits(Binding, signature)
-        super(FunctionBinding, self).__init__(domain, syntax)
+        super(FormulaBinding, self).__init__(domain, syntax)
         self.signature = signature
         self.arguments = arguments
         arguments.impress(self)

@@ -23,11 +23,11 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       SortBinding, EqualityBinding, TotalEqualityBinding,
                       ConjunctionBinding, DisjunctionBinding,
                       NegationBinding, CastBinding, WrapperBinding,
-                      DirectionBinding, FunctionBinding)
+                      DirectionBinding, FormulaBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode,
-                   EqualityCode, TotalEqualityCode, FunctionCode,
+                   EqualityCode, TotalEqualityCode, FormulaCode,
                    ConjunctionCode, DisjunctionCode, NegationCode,
                    CastCode, ColumnUnit, ScalarUnit)
 from .signature import Signature
@@ -692,11 +692,11 @@ class EncodeBySignatureBase(Adapter):
 
     @classmethod
     def dispatch(interface, binding, *args, **kwds):
-        assert isinstance(binding, FunctionBinding)
+        assert isinstance(binding, FormulaBinding)
         return (type(binding.signature),)
 
     def __init__(self, binding, state):
-        assert isinstance(binding, FunctionBinding)
+        assert isinstance(binding, FormulaBinding)
         assert isinstance(state, EncodingState)
         self.binding = binding
         self.state = state
@@ -709,10 +709,10 @@ class EncodeBySignature(EncodeBySignatureBase):
 
     def __call__(self):
         arguments = self.arguments.map(self.state.encode)
-        return FunctionCode(self.signature,
-                            self.domain,
-                            self.binding,
-                            **arguments)
+        return FormulaCode(self.signature,
+                           self.domain,
+                           self.binding,
+                           **arguments)
 
 
 class RelateBySignature(EncodeBySignatureBase):
@@ -728,27 +728,27 @@ class DirectBySignature(EncodeBySignatureBase):
         return None
 
 
-class EncodeFunction(Encode):
+class EncodeFormula(Encode):
 
-    adapts(FunctionBinding)
+    adapts(FormulaBinding)
 
     def __call__(self):
         encode = EncodeBySignature(self.binding, self.state)
         return encode()
 
 
-class RelateFunction(Relate):
+class RelateFormula(Relate):
 
-    adapts(FunctionBinding)
+    adapts(FormulaBinding)
 
     def __call__(self):
         relate = RelateBySignature(self.binding, self.state)
         return relate()
 
 
-class DirectFunction(Direct):
+class DirectFormula(Direct):
 
-    adapts(FunctionBinding)
+    adapts(FormulaBinding)
 
     def __call__(self):
         direct = DirectBySignature(self.binding, self.state)

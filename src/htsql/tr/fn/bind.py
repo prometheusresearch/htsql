@@ -17,7 +17,7 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        DateDomain, EnumDomain)
 from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
-                       FunctionBinding, EqualityBinding, TotalEqualityBinding,
+                       FormulaBinding, EqualityBinding, TotalEqualityBinding,
                        ConjunctionBinding, DisjunctionBinding, NegationBinding,
                        CastBinding, WrapperBinding, TitleBinding,
                        DirectionBinding)
@@ -352,7 +352,7 @@ class BindMonoFunction(BindFunction):
                 value = [CastBinding(item, domain, item.syntax)
                          for item in value]
             cast_arguments[name] = value
-        return FunctionBinding(self.signature, coerce(self.codomain),
+        return FormulaBinding(self.signature, coerce(self.codomain),
                                self.syntax, **cast_arguments)
 
 
@@ -378,7 +378,7 @@ class BindAmongBase(BindFunction):
                 binding = NegationBinding(binding, self.syntax)
             return binding
         else:
-            return FunctionBinding(self.signature, coerce(BooleanDomain()),
+            return FormulaBinding(self.signature, coerce(BooleanDomain()),
                                    self.syntax, lop=lop, rops=rops)
 
 
@@ -463,7 +463,7 @@ class BindCompare(BindFunction):
         comparable = Comparable(domain)
         if not comparable():
             raise BindError("uncomparable arguments", self.syntax.mark)
-        return FunctionBinding(self.signature, coerce(BooleanDomain()),
+        return FormulaBinding(self.signature, coerce(BooleanDomain()),
                                self.syntax, lop=lop, rop=rop)
 
 
@@ -542,7 +542,7 @@ class BindPolyFunction(BindFunction):
             value = correlated_arguments[name]
             value = CastBinding(value, coerce(domain), value.syntax)
             correlated_arguments[name] = value
-        return FunctionBinding(correlate.signature, coerce(correlate.codomain),
+        return FormulaBinding(correlate.signature, coerce(correlate.codomain),
                                self.syntax, **correlated_arguments)
 
 
@@ -964,7 +964,7 @@ class BindHomoFunction(BindFunction):
             codomain = domain
         else:
             codomain = coerce(self.codomain)
-        return FunctionBinding(self.signature, codomain, self.syntax,
+        return FormulaBinding(self.signature, codomain, self.syntax,
                                **cast_arguments)
 
 
@@ -1025,7 +1025,7 @@ class BindIf(BindFunction):
                        for consequent in consequents]
         if alternative is not None:
             alternative = CastBinding(alternative, domain, consequent.syntax)
-        return FunctionBinding(self.signature, domain, self.syntax,
+        return FormulaBinding(self.signature, domain, self.syntax,
                                predicates=predicates,
                                consequents=consequents,
                                alternative=alternative)
@@ -1076,7 +1076,7 @@ class BindSwitch(BindFunction):
                        for consequent in consequents]
         if alternative is not None:
             alternative = CastBinding(alternative, domain, consequent.syntax)
-        return FunctionBinding(self.signature, domain, self.syntax,
+        return FormulaBinding(self.signature, domain, self.syntax,
                                variable=variable,
                                variants=variants,
                                consequents=consequents,
@@ -1090,7 +1090,7 @@ class BindExistsBase(BindFunction):
 
     def correlate(self, op):
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
-        return FunctionBinding(self.bind_signature, op.domain, self.syntax,
+        return FormulaBinding(self.bind_signature, op.domain, self.syntax,
                                base=self.state.base, op=op)
 
 
@@ -1113,7 +1113,7 @@ class BindCount(BindFunction):
 
     def correlate(self, op):
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
-        return FunctionBinding(CountSig(), coerce(IntegerDomain()),
+        return FormulaBinding(CountSig(), coerce(IntegerDomain()),
                                self.syntax, base=self.state.base, op=op)
 
 
@@ -1140,7 +1140,7 @@ class BindPolyAggregate(BindFunction):
         if not correlate():
             raise BindError("incompatible argument", self.syntax.mark)
         op = CastBinding(op, coerce(correlate.domain), op.syntax)
-        return FunctionBinding(correlate.signature, coerce(correlate.codomain),
+        return FormulaBinding(correlate.signature, coerce(correlate.codomain),
                                self.syntax, base=self.state.base, op=op)
 
 
