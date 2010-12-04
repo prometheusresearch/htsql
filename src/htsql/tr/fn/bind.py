@@ -586,7 +586,7 @@ class Correlate(Component):
     def __call__(self):
         if self.signature is None:
             raise BindError("incompatible arguments", self.binding.mark)
-        signature = self.signature.inherit(self.binding.signature)
+        signature = self.binding.signature.clone_to(self.signature)
         assert self.arguments.admits(Binding, signature)
         arguments = {}
         for index, slot in enumerate(signature.slots):

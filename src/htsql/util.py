@@ -688,20 +688,56 @@ class Clonable(object):
         `replacements` (a dictionary)
             A mapping: attribute -> value containing new attribute values.
         """
-        # If there are no replacements, we could reuse the same object.
+        # A shortcut: if there are no replacements, we could reuse
+        # the same object.
         if not replacements:
             return self
+        # Otherwise, reuse a more general method.
+        return self.clone_to(self.__class__, **replacements)
+
+    def clone_to(self, clone_type, **replacements):
+        """
+        Clones the node changing its type and assigning new values to
+        selected attributes.
+
+        Returns a new object of the specified type which keeps the
+        attributes of the original objects except those for which new
+        values are specified.
+
+        `clone_type` (a type)
+            The type of the cloned node.
+
+        `replacements` (a dictionary)
+            A mapping: attribute -> value containing new attribute values.
+        """
         # Get the list of constructor arguments.  Note that we assume
         # for each constructor argument, a node object has an attribute
         # with the same name.
         init_code = self.__init__.im_func.func_code
-        names = init_code.co_varnames[1:init_code.co_argcount]
+        # Fetch the names of regular arguments, but skip `self`.
+        names = list(init_code.co_varnames[1:init_code.co_argcount])
+        # Check for * and ** arguments.  We cannot properly support
+        # * arguments, so just complain about it.
+        assert not (init_code.co_flags & 0x04)  # CO_VARARGS
+        # Check for ** arguments.  If present, they must adhere
+        # the following protocol:
+        # (1) The node must keep the ** dictionary as an attribute
+        #     with the same name and content.
+        # (2) The node must have an attribute for each entry in
+        #     the ** dictionary.
+        if init_code.co_flags & 0x08:           # CO_VARKEYWORDS
+            name = init_code.co_varnames[init_code.co_argcount]
+            names += sorted(getattr(self, name))
         # Check that all replacements are, indeed, constructor parameters.
         assert all(key in names for key in sorted(replacements))
         # Arguments of a constructor call to generate a clone.
         arguments = {}
         # Indicates if at least one argument has changed.
         is_modified = False
+        # If the target type differs from the node type, we need to
+        # generate a new object even when there are no modified attributes.
+        if self.__class__ is not clone_type:
+            is_modified = True
         # For each argument, either extract the current value, or
         # get a replacement.
         for name in names:
@@ -710,12 +746,12 @@ class Clonable(object):
                 value = replacements[name]
                 is_modified = True
             arguments[name] = value
-        # Even though we have some replacements, in fact they all coincide
+        # Even though we may have some replacements, in fact they all coincide
         # with the object attributes, so we could reuse the same object.
         if not is_modified:
             return self
         # Call the node constructor and return a new object.
-        clone = self.__class__(**arguments)
+        clone = clone_type(**arguments)
         return clone
 
 

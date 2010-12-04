@@ -29,11 +29,6 @@ class Signature(Comparable, Clonable):
 
     slots = []
 
-    @classmethod
-    def inherit(cls, other):
-        assert isinstance(other, Signature)
-        return cls()
-
     def __init__(self, equality_vector=()):
         super(Signature, self).__init__(equality_vector=equality_vector)
 
@@ -116,26 +111,6 @@ class Formula(object):
         self.arguments = arguments
         arguments.impress(self)
 
-    def clone(self, **replacements):
-        if not replacements:
-            return self
-        init_code = self.__init__.im_func.func_code
-        names = list(init_code.co_varnames[1:init_code.co_argcount])
-        names += sorted(self.arguments)
-        assert all(key in names for key in sorted(replacements)), (names, replacements)
-        arguments = {}
-        is_modified = False
-        for name in names:
-            value = getattr(self, name)
-            if name in replacements and replacements[name] is not value:
-                value = replacements[name]
-                is_modified = True
-            arguments[name] = value
-        if not is_modified:
-            return self
-        clone = self.__class__(**arguments)
-        return clone
-
 
 def isformula(formula, signatures):
     if not isinstance(signatures, tuple):
@@ -182,11 +157,6 @@ class ConnectiveSig(Signature):
 
 class PolarSig(Signature):
 
-    @classmethod
-    def inherit(cls, other):
-        assert isinstance(other, PolarSig)
-        return cls(polarity=other.polarity)
-
     def __init__(self, polarity):
         assert polarity in [+1, -1]
         super(PolarSig, self).__init__(equality_vector=(polarity,))
@@ -221,11 +191,6 @@ class NullIfSig(BinarySig):
 
 
 class CompareSig(BinarySig):
-
-    @classmethod
-    def inherit(cls, other):
-        assert isinstance(other, CompareSig)
-        return cls(relation=other.relation)
 
     def __init__(self, relation):
         assert relation in ['<', '<=', '>', '>=']
