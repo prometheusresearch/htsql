@@ -37,6 +37,9 @@ class Parser(object):
         The input HTSQL expression.
     """
 
+    # FIXME: get rid of the metaclass and `<<`.  Implement `Parser`
+    # as an adapter with matching by rule of an LL(n) grammar.
+
     class __metaclass__(type):
         # Implements a shortcut:
         #   Parser << tokens
@@ -607,7 +610,7 @@ class SelectorParser(Parser):
 
 class IdentifierParser(Parser):
     """
-    Parser an `identifier` production.
+    Parses an `identifier` production.
     """
 
     @classmethod

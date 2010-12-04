@@ -14,10 +14,10 @@ This module defines token types used by the HTSQL scanner.
 
 
 from ..mark import Mark
-from ..util import maybe
+from ..util import maybe, Printable
 
 
-class Token(object):
+class Token(Printable):
     """
     Represents a lexical token.
 
@@ -77,9 +77,6 @@ class Token(object):
 
     def __str__(self):
         return self.value
-
-    def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__, str(self))
 
 
 class SpaceToken(Token):

@@ -30,6 +30,8 @@
    :members:
 .. automodule:: htsql.tr.scan
    :members:
+.. automodule:: htsql.tr.signature
+   :members:
 .. automodule:: htsql.tr.syntax
    :members:
 .. automodule:: htsql.tr.term

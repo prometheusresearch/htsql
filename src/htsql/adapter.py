@@ -355,7 +355,7 @@ class Adapter(Component):
     def dominates(component, other):
         # A component implementing an adapter interface dominates
         # over another component implementing the same interface
-        # if one of the two conditions hold:
+        # if one of the following two conditions holds:
         
         # (1) The component is a subclass of the other component.
         if issubclass(component, other):

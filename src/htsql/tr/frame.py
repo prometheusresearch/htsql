@@ -356,10 +356,30 @@ class Anchor(Clause):
 
 
 class LeadingAnchor(Anchor):
+    """
+    Represents the leading frame in the ``FROM`` list.
+
+    `frame` (:class:`Frame`)
+        The leading frame.
+
+    `condition` (``None``)
+        The join condition.
+
+    `is_left` (``False``)
+        Indicates that the join is ``LEFT OUTER``.
+
+    `is_right` (``False``)
+        Indicates that the join is ``RIGHT OUTER``.
+
+    """
 
     def __init__(self, frame, condition=None, is_left=False, is_right=False):
-        assert condition is None and is_left is False and is_right is False
-        super(LeadingAnchor, self).__init__(frame, condition, is_left, is_right)
+        # We retain the constructor arguments to faciliate `clone()`, but
+        # we ensure that their values are always fixed.
+        assert condition is None
+        assert is_left is False and is_right is False
+        super(LeadingAnchor, self).__init__(frame, condition,
+                                            is_left, is_right)
 
 
 class QueryFrame(Clause):
@@ -482,24 +502,31 @@ class CastPhrase(Phrase):
 
 class FormulaPhrase(Formula, Phrase):
     """
-    Represents a function or an operator expression.
+    Represents a formula phrase.
 
-    This is an abstract class; see subclasses for concrete functions and
-    operators.
+    A formula phrase represents a function or an operator call as
+    a phrase node.
 
-    `domain` (:class:`htsql.domain.Domain`)
-        The function co-domain.
+    `signature` (:class:`htsql.tr.signature.Signature`)
+        The signature of the formula.
+
+    `domain` (:class:`Domain`)
+        The co-domain of the formula.
 
     `arguments` (a dictionary)
-        A mapping from argument names to argument values.  Among values,
-        we expect :class:`Phrase` objects or lists of :class:`Phrase` objects.
+        The arguments of the formula.
+
+        Note that all the arguments become attributes of the node object.
     """
 
     def __init__(self, signature, domain, is_nullable, expression, **arguments):
         assert isinstance(signature, Signature)
+        # Check that the arguments match the formula signature.
         arguments = Bag(**arguments)
         assert arguments.admits(Phrase, signature)
         equality_vector = (signature, domain, arguments.freeze())
+        # The first tow arguments are processed by the `Formula`
+        # constructor; the rest of them go to the `Phrase` constructor.
         super(FormulaPhrase, self).__init__(signature, arguments,
                                             domain, is_nullable, expression,
                                             equality_vector)

@@ -394,6 +394,8 @@ class SpecifierSyntax(Syntax):
         The specifier identifier.
     """
 
+    # FIXME: allow general `base.(expr)`?
+
     def __init__(self, base, identifier, mark):
         assert isinstance(base, Syntax)
         assert isinstance(identifier, (IdentifierSyntax, WildcardSyntax))

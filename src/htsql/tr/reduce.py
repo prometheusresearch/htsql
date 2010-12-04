@@ -13,18 +13,16 @@ This module implements the reducing process.
 """
 
 
-from ..adapter import Adapter, adapts, adapts_many
-from ..domain import (Domain, BooleanDomain, IntegerDomain, FloatDomain,
-                      DecimalDomain, StringDomain, EnumDomain, DateDomain)
+from ..adapter import Adapter, adapts
+from ..domain import BooleanDomain, StringDomain
 from .coerce import coerce
 from .frame import (Clause, Frame, ScalarFrame, TableFrame, BranchFrame,
-                    NestedFrame, QueryFrame, Phrase, LiteralPhrase,
-                    NullPhrase, TruePhrase, FalsePhrase,
-                    CastPhrase, FormulaPhrase,
+                    NestedFrame, QueryFrame, Phrase, LiteralPhrase, NullPhrase,
+                    TruePhrase, FalsePhrase, CastPhrase, FormulaPhrase,
                     ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
-                        IsInSig, IsNullSig, IfNullSig, NullIfSig, AndSig,
-                        OrSig, NotSig)
+                        IsInSig, IsNullSig, IfNullSig, NullIfSig,
+                        AndSig, OrSig, NotSig)
 
 
 class ReducingState(object):
@@ -335,7 +333,7 @@ class CollapseBranch(Collapse):
             # Indicate that the first anchor in the tail is now
             # a leading anchor.
             if tail:
-                tail[0] = LeadingAnchor(tail[0].frame)
+                tail[0] = tail[0].clone_to(LeadingAnchor)
             # Make a new frame with a reduced `FROM` clause.
             frame = self.frame.clone(include=tail)
             # Try to further collapse the frame.
@@ -439,7 +437,7 @@ class CollapseBranch(Collapse):
         # Merge the `FROM` clause of the head with the rest of the `FROM`
         # clause of the frame.
         if not head.include and tail:
-            tail[0] = LeadingAnchor(tail[0].frame)
+            tail[0] = tail[0].clone_to(LeadingAnchor)
         include = head.include+tail
 
         # Merge the embedded subframes.
@@ -577,152 +575,67 @@ class ReduceCast(Reduce):
     adapts(CastPhrase)
 
     def __call__(self):
-        # We use an auxiliary adapter `Convert` to dispatch `reduce()`
-        # basing on the origin and the target domains of the cast.
-        convert = Convert(self.phrase, self.state)
-        return convert()
-
-
-class Convert(Adapter):
-    """
-    Reduces a ``CAST`` operator.
-
-    This is an auxiliary adapter used to reduce
-    :class:`htsql.tr.frame.CastPhrase` nodes.  The adapter is polymorphic
-    on the origin and the target domains.
-
-    When possible, the adapter expresses the cast in terms of other
-    operators or eliminates the cast completely.  Otherwise, the adapter
-    just reduces the operand of the cast.
-
-    `phrase` (:class:`htsql.tr.frame.CastPhrase`)
-        The cast phrase to reduce.
-
-    `state` (:class:`ReducingState`)
-        The current state of the reducing process.
-    """
-
-    adapts(Domain, Domain)
-
-    @classmethod
-    def dispatch(interface, phrase, *args, **kwds):
-        # Override the standard producer of a dispatch key;
-        # instead dispatch by the origin and the target domains.
-        assert isinstance(phrase, CastPhrase)
-        return (type(phrase.base.domain), type(phrase.domain))
-
-    def __init__(self, phrase, state):
-        assert isinstance(phrase, CastPhrase)
-        assert isinstance(state, ReducingState)
-        self.phrase = phrase
-        self.base = phrase.base
-        self.domain = phrase.domain
-        self.state = state
-
-    def __call__(self):
-        # The default implementation simply reduces the operand.
-        base = self.state.reduce(self.base)
-        return self.phrase.clone(base=base)
-
-
-class ConvertToBoolean(Convert):
-    """
-    Reduces a cast to Boolean.
-    """
-
-    adapts(Domain, BooleanDomain)
-
-    def __call__(self):
-        # In general,
-        #   boolean(base) => !is_null(base)
-        # There could be different implementations for specific
-        # origin domains.
-        phrase = FormulaPhrase(IsNullSig(-1), self.domain, False,
-                               self.phrase.expression, op=self.base)
-        # We still need to reduce the phrase.
-        return self.state.reduce(phrase)
-
-
-class ConvertStringToBoolean(Convert):
-    """
-    Reduces a cast from a string to Boolean.
-    """
-
-    adapts(StringDomain, BooleanDomain)
-
-    def __call__(self):
-        # An empty and a `NULL` strings are considered `FALSE`, all the
-        # other strings are converted to `TRUE`.
-
-        # Handle the case when the operand is a literal:
-        #   boolean(string(null())) => false()
-        #   boolean(string('')) => false()
-        #   boolean(string('...')) => true()
-        # We assume that an empty string in SQL always corresponds to
-        # an empty string in Python.
-        if isinstance(self.base, LiteralPhrase):
-            if self.base.value is None or self.base.value == '':
-                return FalsePhrase(self.phrase.expression)
-            else:
-                return TruePhrase(self.phrase.expression)
-        # If the operand is nullable, then:
-        #   boolean(base) => !is_null(null_if(base, ''))
-        # Otherwise:
-        #   boolean(base) => (base!='')
-        empty = LiteralPhrase('', coerce(StringDomain()),
-                              self.phrase.expression)
-        if not self.base.is_nullable:
-            phrase = FormulaPhrase(IsEqualSig(-1), self.domain,
-                                   False, self.phrase.expression,
-                                   lop=self.base, rop=empty)
-        else:
-            phrase = FormulaPhrase(NullIfSig(), self.base.domain,
-                                   True, self.phrase.expression,
-                                   lop=self.base, rop=empty)
-            phrase = FormulaPhrase(IsNullSig(-1), self.domain,
-                                   False, self.phrase.expression, op=phrase)
-
-        # We still need to reduce the expression.
-        return self.state.reduce(phrase)
-
-
-class ConvertDomainToItself(Convert):
-    """
-    Reduces a cast when the origin and the target domains coincide.
-    """
-
-    adapts_many((BooleanDomain, BooleanDomain),
-                (IntegerDomain, IntegerDomain),
-                (FloatDomain, FloatDomain),
-                (DecimalDomain, DecimalDomain),
-                (StringDomain, StringDomain),
-                (DateDomain, DateDomain))
-    # FIXME: not sure if adding `EnumDomain` to this list is
-    # safe and/or necessary.
-
-    # Note: adding a new domain likely requires a similar implementation
-    # of the `Convert` adapter.
-
-    def __call__(self):
-        # Eliminate the cast operator, return a (reduced) operand.
-        return self.state.reduce(self.base)
+        # Reduce the operand of the cast.  We do not specialize
+        # on the domains here because we assume that any domain
+        # specific conversion is already done by the encoder.
+        return self.phrase.clone(base=self.state.reduce(self.phrase.base))
 
 
 class ReduceFormula(Reduce):
+    """
+    Reduces a formula node.
+
+    Reducing a formula is specific to the formula signature and is
+    implemented by the :class:`ReduceBySignature` adapter.
+    """
 
     adapts(FormulaPhrase)
 
     def __call__(self):
+        # Delegate the reduction to the `ReduceBySignature` adapter.
         reduce = ReduceBySignature(self.phrase, self.state)
         return reduce()
 
 
 class ReduceBySignature(Adapter):
+    """
+    Reduces a formula node.
+
+    This is an auxiliary adapter used to reduce
+    :class:`htsql.tr.frame.FormulaPhrase` nodes.  The adapter is polymorphic
+    on the formula signature.
+
+    Unless overridden, the adapter reduces the arguments of the formula
+    and generates a new formula with the same signature.
+
+    `phrase` (:class:`htsql.tr.frame.FormulaPhrase`)
+        The formula node to reduce.
+
+    `state` (:class:`ReducingState`)
+        The current state of the reducing process.
+
+    Aliases:
+
+    `signature` (:class:`htsql.tr.signature.Signature`)
+        The signature of the formula.
+
+    `domain` (:class:`htsql.tr.domain.Domain`)
+        The co-domain of the formula.
+
+    `arguments` (:class:`htsql.tr.signature.Bag`)
+        The arguments of the formula.
+
+    `is_nullable` (Boolean)
+        Indicates that the formula may produce a ``NULL`` value.
+    """
 
     adapts(Signature)
 
     @classmethod
     def dispatch(interface, phrase, *args, **kwds):
+        # Override the default dispatch since the adapter is polymorphic
+        # not on the type of the formula, but on the type of the formula
+        # signature.
         assert isinstance(phrase, FormulaPhrase)
         return (type(phrase.signature),)
 
@@ -737,6 +650,7 @@ class ReduceBySignature(Adapter):
         self.is_nullable = phrase.is_nullable
 
     def __call__(self):
+        # By default, just reduce the arguments of the formula.
         arguments = self.arguments.map(self.state.reduce)
         return FormulaPhrase(self.signature,
                              self.domain,
@@ -794,8 +708,10 @@ class ReduceIsEqual(ReduceBySignature):
                 return FalsePhrase(self.phrase.expression)
 
         # None of specific optimizations were applied, just return
-        # the same operator with reduced operands.
-        return self.phrase.clone(lop=lop, rop=rop)
+        # the same operator with reduced operands.  Update the `is_nullable`
+        # status since it may change after reducing the arguments.
+        is_nullable = (lop.is_nullable or rop.is_nullable)
+        return self.phrase.clone(is_nullable=is_nullable, lop=lop, rop=rop)
 
 
 class ReduceIsTotallyEqual(ReduceBySignature):
@@ -874,6 +790,161 @@ class ReduceIsTotallyEqual(ReduceBySignature):
         return self.phrase.clone(lop=lop, rop=rop)
 
 
+class ReduceIsIn(ReduceBySignature):
+    """
+    Reduces the ``IN`` and ``NOT IN`` clauses.
+    """
+
+    adapts(IsInSig)
+
+    def __call__(self):
+        # Reduce the left operand.
+        lop = self.state.reduce(self.phrase.lop)
+        # Reduce the right operands, eliminating duplicates.
+        rops = []
+        duplicates = set()
+        for rop in self.phrase.rops:
+            rop = self.state.reduce(rop)
+            if rop in duplicates:
+                continue
+            rops.append(rop)
+            duplicates.add(rop)
+
+        # Reduce:
+        #   null()={...} => null()
+        # We could do this substitution safely only when all operands
+        # on the right are literals.
+        if isinstance(lop, NullPhrase):
+            if all(isinstance(rop, LiteralPhrase) for rop in rops):
+                return NullPhrase(self.domain, self.phrase.expression)
+        # Similarly, reduce:
+        #   x={null(),null(),...}
+        if all(isinstance(rop, NullPhrase) for rop in rops):
+            if isinstance(lop, LiteralPhrase):
+                return NullPhrase(self.domain, self.phrase.expression)
+
+        # Reduce:
+        #   x={y} => x=y
+        if len(rops) == 1:
+            rop = [rops]
+            signature = IsEqualSig(self.signature.polarity)
+            is_nullable = (lop.is_nullable or rop.is_nullable)
+            return FormulaPhrase(signature, self.domain, is_nullable,
+                                 self.phrase.expression, lop=lop, rop=rop)
+
+        # None of specific optimizations were applied, just return
+        # the same operator with reduced operands.  Update the `is_nullable`
+        # status since it may change after reducing the arguments.
+        is_nullable = (lop.is_nullable or any(rop.is_nullable for rop in rops))
+        return self.phrase.clone(is_nullable=is_nullable, lop=lop, rops=rops)
+
+
+class ReduceIsNull(ReduceBySignature):
+    """
+    Reduces the ``IS NULL`` and ``IS NOT NULL`` clauses.
+    """
+
+    adapts(IsNullSig)
+
+    def __call__(self):
+        # Start with reducing the operand.
+        op = self.state.reduce(self.phrase.op)
+
+        # Reduce:
+        #   is_null(null()) => true()
+        #   !is_null(null()) => false()
+        if isinstance(op, NullPhrase):
+            if self.signature.polarity > 0:
+                return TruePhrase(self.phrase.expression)
+            else:
+                return FalsePhrase(self.phrase.expression)
+        # If the operand is not nullable, we could reduce the operator
+        # to a `TRUE` or a `FALSE` clause.  However it is only safe
+        # to do for a literal operand.
+        if isinstance(op, LiteralPhrase):
+            if self.signature.polarity > 0:
+                return FalsePhrase(self.phrase.expression)
+            else:
+                return TruePhrase(self.phrase.expression)
+
+        # Return the same operator with a reduced operand.
+        return self.phrase.clone(op=op)
+
+
+class ReduceIfNull(ReduceBySignature):
+    """
+    Reduces the ``IFNULL`` clause.
+    """
+
+    adapts(IfNullSig)
+
+    def __call__(self):
+        # Reduce the operands.
+        lop = self.state.reduce(self.phrase.lop)
+        rop = self.state.reduce(self.phrase.rop)
+
+        # If the first operand is not nullable, then the operation is no-op,
+        # and we could just return the first operand discarding the second
+        # one.  However discarding a clause is not safe in general, so we
+        # only do that when the second operand is a literal.
+        if not lop.is_nullable and isinstance(rop, LiteralPhrase):
+            return lop
+        # Reduce:
+        #   if_null(lop,null()) => lop
+        if isinstance(rop, NullPhrase):
+            return lop
+        # Reduce:
+        #   if_null(null(),rop) => rop
+        if isinstance(lop, NullPhrase):
+            return rop
+
+        # Return the same operator with reduced operands.
+        is_nullable = (lop.is_nullable and rop.is_nullable)
+        return self.phrase.clone(is_nullable=is_nullable, lop=lop, rop=rop)
+
+
+class ReduceNullIf(ReduceBySignature):
+    """
+    Reduces the ``NULLIF`` clause.
+    """
+
+    adapts(NullIfSig)
+
+    def __call__(self):
+        # Reduce the operands.
+        lop = self.state.reduce(self.phrase.lop)
+        rop = self.state.reduce(self.phrase.rop)
+        # Reduce (when it is safe, i.e., when `rop` is a literal):
+        #   null_if(null(),rop) => null()
+        if isinstance(lop, NullPhrase):
+            if isinstance(rop, LiteralPhrase):
+                return lop
+        # Reduce:
+        #   null_if(lop,null()) => lop
+        if isinstance(rop, NullPhrase):
+            return lop
+        # When both operands are literals, we could determine the result
+        # immediately.  We should be careful though since we cannot precisely
+        # mimic the equality operator of the database.
+        if isinstance(lop, LiteralPhrase) and isinstance(rop, LiteralPhrase):
+            # Assume that if the literals are equal in Python, they would
+            # be equal for the database too.  The reverse is not valid in
+            # general, but still valid for some literals.
+            if lop.value == rop.value:
+                return NullPhrase(self.phrase.domain, self.phrase.expression)
+            # We could safely rely on comparison for Boolean values.
+            elif isinstance(self.phrase.domain, BooleanDomain):
+                return lop
+            # In general, we can't rely on comparison for string values,
+            # but we could assume that an empty string is only equal to itself.
+            elif isinstance(self.phrase.domain, StringDomain):
+                if len(lop.value) > 0 and len(rop.value) == 0:
+                    return lop
+
+        # Return the same operator with reduced operands.
+        return self.phrase.clone(lop=lop, rop=rop)
+
+
 class ReduceAnd(ReduceBySignature):
     """
     Reduces "AND" (``&``) operator.
@@ -924,8 +995,13 @@ class ReduceAnd(ReduceBySignature):
             if all(isinstance(op, LiteralPhrase) for op in ops):
                 return FalsePhrase(self.phrase.expression)
 
-        # Return the same operator with reduced operands.
-        return self.phrase.clone(ops=ops)
+        # Return the same operator with reduced operands.  Update
+        # the `is_nullable` status since it could change after reducing
+        # the arguments.
+        is_nullable = any(op.is_nullable for op in ops)
+        if any(isinstance(op, FalsePhrase) for op in ops):
+            is_nullable = False
+        return self.phrase.clone(is_nullable=is_nullable, ops=ops)
 
 
 class ReduceOr(ReduceBySignature):
@@ -978,8 +1054,14 @@ class ReduceOr(ReduceBySignature):
             if all(isinstance(op, LiteralPhrase) for op in ops):
                 return TruePhrase(self.phrase.expression)
 
-        # Return the same operator with reduced operands.
         return self.phrase.clone(ops=ops)
+        # Return the same operator with reduced operands.  Update
+        # the `is_nullable` status since it could change after reducing
+        # the arguments.
+        is_nullable = any(op.is_nullable for op in ops)
+        if any(isinstance(op, TruePhrase) for op in ops):
+            is_nullable = False
+        return self.phrase.clone(is_nullable=is_nullable, ops=ops)
 
 
 class ReduceNot(ReduceBySignature):
@@ -1006,110 +1088,11 @@ class ReduceNot(ReduceBySignature):
         # Reverse polarity of equality operators:
         #   !(lop=rop) => lop!=rop
         #   ...
-        if isformula(op, (IsEqualSig, IsTotallyEqualSig, IsNullSig)):
+        if isformula(op, (IsEqualSig, IsTotallyEqualSig, IsInSig, IsNullSig)):
             return op.clone(signature=op.signature.reverse())
 
         # Return the same operator with a reduced operand.
-        return self.phrase.clone(op=op)
-
-
-class ReduceIsNull(ReduceBySignature):
-    """
-    Reduces ``IS NULL`` and ``IS NOT NULL`` clauses.
-    """
-
-    adapts(IsNullSig)
-
-    def __call__(self):
-        # Start with reducing the operand.
-        op = self.state.reduce(self.phrase.op)
-
-        # Reduce:
-        #   is_null(null()) => true()
-        #   !is_null(null()) => false()
-        if isinstance(op, NullPhrase):
-            if self.signature.polarity > 0:
-                return TruePhrase(self.phrase.expression)
-            else:
-                return FalsePhrase(self.phrase.expression)
-        # If the operand is not nullable, we could reduce the operator
-        # to a `TRUE` or a `FALSE` clause.  However it is only safe
-        # to do for a literal operand.
-        if isinstance(op, LiteralPhrase):
-            if self.signature.polarity > 0:
-                return FalsePhrase(self.phrase.expression)
-            else:
-                return TruePhrase(self.phrase.expression)
-
-        # Return the same operator with a reduced operand.
-        return self.phrase.clone(op=op)
-
-
-class ReduceIfNull(ReduceBySignature):
-    """
-    Reduces an ``IFNULL`` clause.
-    """
-
-    adapts(IfNullSig)
-
-    def __call__(self):
-        # Reduce the operands.
-        lop = self.state.reduce(self.phrase.lop)
-        rop = self.state.reduce(self.phrase.rop)
-
-        # If the first operand is not nullable, then the operation is no-op,
-        # and we could just return the first operand discarding the second
-        # one.  However discarding a clause is not safe in general, so we
-        # only do that when the second operand is a literal.
-        if not lop.is_nullable and isinstance(rop, LiteralPhrase):
-            return lop
-        # Reduce:
-        #   if_null(lop,null()) => lop
-        if isinstance(rop, NullPhrase):
-            return lop
-        # Reduce:
-        #   if_null(null(),rop) => rop
-        if isinstance(lop, NullPhrase):
-            return rop
-
-        # Return the same operator with reduced operands.
-        return self.phrase.clone(lop=lop, rop=rop)
-
-
-class ReduceNullIf(ReduceBySignature):
-    """
-    Reduces a ``NULLIF`` clause.
-    """
-
-    adapts(NullIfSig)
-
-    def __call__(self):
-        # Reduce the operands.
-        lop = self.state.reduce(self.phrase.lop)
-        rop = self.state.reduce(self.phrase.rop)
-        # Reduce (when it is safe, i.e., when `rop` is a literal):
-        #   null_if(null(),rop) => null()
-        if isinstance(lop, NullPhrase):
-            if isinstance(rop, LiteralPhrase):
-                return lop
-        # Reduce:
-        #   null_if(lop,null()) => lop
-        if isinstance(rop, NullPhrase):
-            return lop
-        # When both operands are literals, we could determine the result
-        # immediately.  We should be careful though since we cannot precisely
-        # mimic the equality operator of the database.
-        if isinstance(lop, LiteralPhrase) and isinstance(rop, LiteralPhrase):
-            # Assume that if the literals are equal in Python, they would
-            # be equal for the database too.  The reverse is not valid in
-            # general, but still valid for boolean literals.
-            if lop.value == rop.value:
-                return NullPhrase(self.phrase.domain, self.phrase.expression)
-            elif isinstance(self.phrase.domain, BooleanDomain):
-                return lop
-
-        # Return the same operator with reduced operands.
-        return self.phrase.clone(lop=lop, rop=rop)
+        return self.phrase.clone(is_nullable=op.is_nullable, op=op)
 
 
 class ReduceExport(Reduce):
@@ -1126,6 +1109,9 @@ class ReduceExport(Reduce):
 
 
 class ReduceReference(Reduce):
+    """
+    Reduce a reference phrase.
+    """
 
     adapts(ReferencePhrase)
 

@@ -157,12 +157,16 @@ class BindingState(object):
             If set, the lookup context is set to `base` when
             binding the syntax node.
         """
+        # If passed, set the new lookup context.
         if base is not None:
             self.push_base(base)
+        # Realize and apply `BindByName` protocol.
         bind = BindByName(syntax, self)
         bindings = list(bind())
+        # Restore the old lookup context.
         if base is not None:
             self.pop_base()
+        # Return the generated binding nodes.
         return bindings
 
 
@@ -250,7 +254,7 @@ class BindSegment(Bind):
 
         # If the syntax node has the form:
         #   /{selector}
-        # we take the current lookup context as the segment base.
+        # we use the current lookup context as the segment base.
         base = self.state.base
         # Othewise, for queries `/base{selector}?filter` and `/base{selector}`
         # we bind the nodes `(base?filter)` and `base` respectively
@@ -268,12 +272,12 @@ class BindSegment(Bind):
             bare_elements = self.state.bind_all(self.syntax.selector, base)
         else:
             # No selector means that the segment has the form:
-            #   / base   or   / base ?filter
+            #   /base   or   /base?filter
             # This is a special case: depending on whether the base is
             # enumerable, it is interpreted either as
-            #   / base {*}
+            #   /base{*}
             # or as
-            #   / {base}
+            #   /{base}
             bare_elements = itemize(base, base.syntax)
             if bare_elements is None:
                 bare_elements = [base]
@@ -419,62 +423,120 @@ class BindFunctionCall(Bind):
 
 
 class BindByName(Protocol):
+    """
+    Binds a call node.
+
+    This is an abstract protocol interface that provides a mechanism
+    for name-based dispatch of call syntax nodes.
+
+    The :class:`BindByName` interface has the following signature::
+
+        BindByName: (CallSyntax, BindingState) -> listof(Binding)
+
+    The protocol is polymorphic on `name` and `len(arguments)`, where
+    `name` and `arguments` are attributes of the call node.
+
+    To add an implementation of the interface, define a subclass
+    of :class:`BindByName` and specify its name and expected number
+    of arguments using function :func:`named`.
+
+    For more implementations of the interface, see :mod:`htsql.tr.fn.bind`.
+
+    Class attributes:
+
+    `names` (a list of names or pairs `(name, length)`)
+        List of names the component matches.
+
+        Here `name` is a non-empty string, `length` is an integer or
+        ``None``.
+    """
 
     names = []
 
     @classmethod
-    def dispatch(interface, syntax, *args, **kwds):
-        assert isinstance(syntax, CallSyntax)
-        return (syntax.name, len(syntax.arguments))
-
-    @classmethod
-    def matches(component, dispatch_key):
-        assert isinstance(dispatch_key, tupleof(str, int))
-        key_name, key_arity = dispatch_key
-        if key_name.isalnum():
-            key_name = normalize(key_name)
-        for name in component.names:
-            arity = None
-            if isinstance(name, tuple):
-                name, arity = name
-            if name.isalnum():
-                name = normalize(name)
-            if name == key_name:
-                if arity is None or arity == key_arity:
-                    return True
-        return False
-
-    @classmethod
     def dominates(component, other):
+        # Determine if the component dominates another component
+        # assuming that they match the same dispatch key.
+
+        # A component implementing a protocol interface dominates
+        # another component if one of the following two conditions
+        # holds:
+
+        # (1) The component is a subclass of the other component.
         if issubclass(component, other):
             return True
+
+        # (2) The component and the other component match the
+        # same name, but the former requires a fixed number of
+        # arguments while the latter accepts a node with any
+        # number of arguments.
         for name in component.names:
             arity = None
             if isinstance(name, tuple):
                 name, arity = name
-            if name.isalnum():
-                name = normalize(name)
+            name = name.lower()
             for other_name in other.names:
                 other_arity = None
                 if isinstance(other_name, tuple):
                     other_name, other_arity = other_name
-                if other_name.isalnum():
-                    other_name = normalize(other_name)
+                other_name = other_name.lower()
                 if name == other_name:
                     if arity is not None and other_arity is None:
                         return True
+
         return False
+
+    @classmethod
+    def matches(component, dispatch_key):
+        # Check if the component matches the given function name
+        # and the number of arguments.
+        assert isinstance(dispatch_key, tupleof(str, int))
+
+        # The name and the number of arguments of the call node.
+        key_name, key_arity = dispatch_key
+        # We want to compare names case insensitive.  Unfortunately,
+        # we cannot use `normalize` from `htsql.tr.lookup` since it
+        # mangles symbols.
+        key_name = key_name.lower()
+
+        # Check if any of the component names matches the given name.
+        for name in component.names:
+            # `name` could be either a string or a pair of a string
+            # and an integer.  The former assumes that the component
+            # accepts call nodes with any number of arguments.
+            arity = None
+            if isinstance(name, tuple):
+                name, arity = name
+            name = name.lower()
+            # Check if the component name matches the node name.
+            if name == key_name:
+                if arity is None or arity == key_arity:
+                    return True
+
+        # None of the names matched the dispatch key.
+        return False
+
+    @classmethod
+    def dispatch(interface, syntax, *args, **kwds):
+        assert isinstance(syntax, CallSyntax)
+        # We override `dispatch` since, as opposed to regular protocol
+        # interfaces, we also want to take into account not only the
+        # function name, but also the number of arguments.
+        return (syntax.name, len(syntax.arguments))
 
     def __init__(self, syntax, state):
         assert isinstance(syntax, CallSyntax)
         assert isinstance(state, BindingState)
         self.syntax = syntax
+        self.state = state
+        # Extract commonly accessed attributes of the call node.
         self.name = syntax.name
         self.arguments = syntax.arguments
-        self.state = state
 
     def __call__(self):
-        raise BindError("unknown function %s" % self.name, self.syntax.mark)
+        # The default implementation; override in subclasses.
+        raise BindError("unknown function %s" % self.name,
+                        self.syntax.mark)
 
 
 class BindGroup(Bind):

@@ -426,10 +426,10 @@ class Space(Expression):
         Provides ordering of the space.
 
         The function returns a list of pairs `(code, direction)`, where
-        `code` is a :class:`Code` instance and `direction` is a number ``+1``
-        or ``-1``.  The `code` objects specify expressions by which the
-        rows are sorted, `direction` indicates the respective order (``+1``
-        for ascending, ``-1`` for descending).
+        `code` is a :class:`Code` instance and `direction` is a number
+        ``+1`` or ``-1``.  The `code` objects specify expressions by which
+        the rows are sorted, `direction` indicates the respective order
+        (``+1`` for ascending, ``-1`` for descending).
 
         `with_strong` (Boolean)
             If set, include strong (explicit) ordering.
@@ -1112,27 +1112,34 @@ class CastCode(Code):
 
 class FormulaCode(Formula, Code):
     """
-    Represents a function or an operator expression.
+    Represents a formula code.
 
-    This is an abstract class; see subclasses for concrete function types.
+    A formula code represents a function or an operator call as a code node.
 
-    `domain` (:class:`htsql.domain.Domain`)
-        The function co-domain.
+    `signature` (:class:`htsql.tr.signature.Signature`)
+        The signature of the formula.
+
+    `domain` (:class:`Domain`)
+        The co-domain of the formula.
 
     `arguments` (a dictionary)
-        A mapping from argument names to argument values.  Among values,
-        we expect other :class:`Code` objects or lists of :class:`Code`
-        objects.
+        The arguments of the formula.
+
+        Note that all the arguments become attributes of the node object.
     """
 
     def __init__(self, signature, domain, binding, **arguments):
         assert isinstance(signature, Signature)
+        # Check that the arguments match the formula signature.
         arguments = Bag(**arguments)
         assert arguments.admits(Code, signature)
+        # Extract unit nodes from the arguments.
         units = []
         for cell in arguments.cells():
             units.extend(cell.units)
         equality_vector = (signature, domain, arguments.freeze())
+        # The first two arguments are processed by the `Formula`
+        # constructor, the rest of them go to the `Binding` constructor.
         super(FormulaCode, self).__init__(
                     signature, arguments,
                     domain=domain,
@@ -1216,7 +1223,7 @@ class PrimitiveUnit(Unit):
     """
     Represents a primitive unit.
 
-    A primitive unit is a intrinsic function on a space.
+    A primitive unit is an intrinsic function on a space.
 
     This is an abstract class; for the (only) concrete subclass, see
     :class:`ColumnUnit`.

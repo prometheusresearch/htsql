@@ -1205,20 +1205,56 @@ class EvaluateCast(Evaluate):
 
 
 class EvaluateFormula(Evaluate):
+    """
+    Evaluates a formula node.
+
+    The evaluation could be specific to the formula signature and is
+    implemented by the :class:`EvaluateBySignature` adapter.
+    """
 
     adapts(FormulaCode)
 
     def __call__(self):
+        # Delegate the evaluation to `EvaluteBySignature`.
         evaluate = EvaluateBySignature(self.code, self.state)
         return evaluate()
 
 
 class EvaluateBySignature(Adapter):
+    """
+    Evaluates a formula node.
+
+    This is an auxiliary adapter used to evaluate
+    :class:`htsql.tr.code.FormulaCode` nodes.  The adapter is polymorphic
+    on the formula signature.
+
+    Unless overridden, the adapter evaluates the arguments of the formula
+    and generates a new formula phrase with the same signature.
+
+    `code` (:class:`htsql.tr.code.FormulaCode`)
+        The formula node to evaluate.
+
+    `state` (:class:`AssemblingState`)
+        The current state of the assembling process.
+
+    Aliases:
+
+    `signature` (:class:`htsql.tr.signature.Signature`)
+        The signature of the formula.
+
+    `domain` (:class:`htsql.tr.domain.Domain`)
+        The co-domain of the formula.
+
+    `arguments` (:class:`htsql.tr.signature.Bag`)
+        The arguments of the formula.
+    """
 
     adapts(Signature)
 
     @classmethod
     def dispatch(interface, code, *args, **kwds):
+        # Override the default dispatch since the adapter is polymorphic
+        # on the type of the formula signature, not on the formula itself.
         assert isinstance(code, FormulaCode)
         return (type(code.signature),)
 
@@ -1227,13 +1263,18 @@ class EvaluateBySignature(Adapter):
         assert isinstance(state, AssemblingState)
         self.code = code
         self.state = state
+        # Extract commonly used attributes of the node.
         self.signature = code.signature
         self.domain = code.domain
         self.arguments = code.arguments
 
     def __call__(self):
+        # Evaluate the arguments of the formula.
         arguments = self.arguments.map(self.state.evaluate)
+        # By default, assume that the formula is null-regular.  The adapter
+        # should be overridden for nodes where it is not the case.
         is_nullable = any(cell.is_nullable for cell in arguments.cells())
+        # Generate a new formula node.
         return FormulaPhrase(self.signature,
                              self.domain,
                              is_nullable,
@@ -1242,44 +1283,65 @@ class EvaluateBySignature(Adapter):
 
 
 class EvaluateIsTotallyEqual(EvaluateBySignature):
+    """
+    Evaluates the total equality (``==``) operator.
+    """
 
     adapts(IsTotallyEqualSig)
 
     def __call__(self):
+        # Override the default implementation since the total equality
+        # operator is not null-regular, and, in fact, always not nullable.
         arguments = self.arguments.map(self.state.evaluate)
-        return FormulaPhrase(self.signature, self.domain, False, self.code,
-                             **arguments)
+        return FormulaPhrase(self.signature, self.domain,
+                             False, self.code, **arguments)
 
 
 class EvaluateIsNull(EvaluateBySignature):
+    """
+    Evaluates the ``is_null()`` operator.
+    """
 
     adapts(IsNullSig)
 
     def __call__(self):
+        # Override the default implementation since the `is_null()`
+        # operator is not null-regular, and, in fact, always not nullable.
         arguments = self.arguments.map(self.state.evaluate)
-        return FormulaPhrase(self.signature, self.domain, False, self.code,
-                             **arguments)
+        return FormulaPhrase(self.signature, self.domain,
+                             False, self.code, **arguments)
 
 
 class EvaluateNullIf(EvaluateBySignature):
+    """
+    Evaluates the ``null_if()`` operator.
+    """
 
     adapts(NullIfSig)
 
     def __call__(self):
+        # Override the default implementation since the `null_if()`
+        # operator is not null-regular, and, in fact, is always nullable.
         arguments = self.arguments.map(self.state.evaluate)
-        return FormulaPhrase(self.signature, self.domain, True, self.code,
-                             **arguments)
+        return FormulaPhrase(self.signature, self.domain,
+                             True, self.code, **arguments)
 
 
 class EvaluateIfNull(EvaluateBySignature):
+    """
+    Evaluates the ``if_null()`` operator.
+    """
 
     adapts(IfNullSig)
 
     def __call__(self):
+        # Override the default implementation since the `null_if()`
+        # operator is not null-regular.  It is nullable only if all of
+        # its arguments are nullable.
         arguments = self.arguments.map(self.state.evaluate)
         is_nullable = all(cell.is_nullable for cell in arguments.cells())
-        return FormulaPhrase(self.signature, self.domain, is_nullable,
-                             self.code, **arguments)
+        return FormulaPhrase(self.signature, self.domain,
+                             is_nullable, self.code, **arguments)
 
 
 class EvaluateUnit(Evaluate):

@@ -9,7 +9,8 @@
 :mod:`htsql.tr.error`
 =====================
 
-This module implements HTSQL translation errors.
+This module declares exceptions that can be raised by the HTSQL-to-SQL
+translator.
 """
 
 
@@ -66,12 +67,23 @@ class EncodeError(TranslateError):
 
 class CompileError(TranslateError):
     """
-    Represents an compiler error.
+    Represents a compiler error.
 
     This error is raised when the compiler is unable to generate a term node.
     """
 
     kind = "compile error"
+
+
+class AssembleError(TranslateError):
+    """
+    Represents an assembler error.
+
+    This error is raised when the assembler is unable to generate a frame
+    or a phrase node.
+    """
+
+    kind = "assemble error"
 
 
 class DumpError(TranslateError):

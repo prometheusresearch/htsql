@@ -17,7 +17,6 @@ from ..util import maybe, listof, Clonable, Printable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax
-from .coerce import coerce
 from .signature import Signature, Bag, Formula
 
 
@@ -300,35 +299,8 @@ class LiteralBinding(Binding):
     """
 
     def __init__(self, value, domain, syntax):
-        # FIXME: It appears `domain` is always `UntypedDomain()`.
-        # Hard-code the domain value then?
         super(LiteralBinding, self).__init__(domain, syntax)
         self.value = value
-
-
-class EqualityBindingBase(Binding):
-    """
-    Represents an equality operator.
-
-    This is an abstract class for the ``=`` and ``==`` operators.
-
-    `lop` (:class:`Binding`)
-        The left operand.
-
-    `rop` (:class:`Binding`)
-        The right operand.
-    """
-
-    def __init__(self, lop, rop, syntax):
-        assert isinstance(lop, Binding)
-        assert isinstance(rop, Binding)
-        # We want to use an engine-specific Boolean type, which, we assume,
-        # must always exist.
-        domain = coerce(BooleanDomain())
-        assert domain is not None
-        super(EqualityBindingBase, self).__init__(domain, syntax)
-        self.lop = lop
-        self.rop = rop
 
 
 class CastBinding(Binding):
@@ -349,22 +321,29 @@ class CastBinding(Binding):
 
 class FormulaBinding(Formula, Binding):
     """
-    Represents a function or an operator binding.
+    Represents a formula binding.
 
-    This is an abstract class; see subclasses for concrete functions and
-    operators.
+    A formula binding represents a function or an operator call as
+    as a binding node.
+
+    `signature` (:class:`htsql.tr.signature.Signature`)
+        The signature of the formula.
 
     `domain` (:class:`Domain`)
-        The type of the result.
+        The co-domain of the formula.
 
     `arguments` (a dictionary)
-        A mapping from argument names to values.
+        The arguments of the formula.
+
+        Note that all the arguments become attributes of the node object.
     """
 
     def __init__(self, signature, domain, syntax, **arguments):
         assert isinstance(signature, Signature)
+        # Check that the arguments match the formula signature.
         arguments = Bag(**arguments)
         assert arguments.admits(Binding, signature)
+        # This will impress the arguments to the node.
         super(FormulaBinding, self).__init__(signature, arguments,
                                              domain, syntax)
 
@@ -400,7 +379,7 @@ class DirectionBinding(WrapperBinding):
     """
 
     def __init__(self, base, direction, syntax):
-        assert direction in [-1, +1]
+        assert direction in [+1, -1]
         super(DirectionBinding, self).__init__(base, syntax)
         self.direction = direction
 
@@ -439,6 +418,8 @@ class FormatBinding(WrapperBinding):
     `format` (a string)
         The formatting hint.
     """
+
+    # FIXME: currently unused.
 
     def __init__(self, base, format, syntax):
         assert isinstance(format, str)
