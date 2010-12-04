@@ -183,30 +183,6 @@ class ContainsSig(BinarySig, PolarSig):
     pass
 
 
-class QuantifySig(PolarSig):
-
-    slots = [
-            Slot('base'),
-            Slot('op'),
-    ]
-
-
-class ExistsSig(QuantifySig):
-
-    def __init__(self):
-        super(ExistsSig, self).__init__(polarity=+1)
-
-
-class EverySig(QuantifySig):
-
-    def __init__(self):
-        super(EverySig, self).__init__(polarity=-1)
-
-
-class WrapExistsSig(UnarySig):
-    pass
-
-
 class AggregateSig(Signature):
 
     slots = [
@@ -215,43 +191,27 @@ class AggregateSig(Signature):
     ]
 
 
-class CountSig(AggregateSig):
+class QuantifySig(AggregateSig, PolarSig):
     pass
 
 
-class TakeCountSig(UnarySig):
+class ExistsSig(UnarySig):
     pass
 
 
-class MinSig(AggregateSig):
+class CountSig(UnarySig):
     pass
 
 
-class TakeMinSig(UnarySig):
+class MinMaxSig(UnarySig, PolarSig):
     pass
 
 
-class MaxSig(AggregateSig):
+class SumSig(UnarySig):
     pass
 
 
-class TakeMaxSig(UnarySig):
-    pass
-
-
-class SumSig(AggregateSig):
-    pass
-
-
-class TakeSumSig(UnarySig):
-    pass
-
-
-class AvgSig(AggregateSig):
-    pass
-
-
-class TakeAvgSig(UnarySig):
+class AvgSig(UnarySig):
     pass
 
 

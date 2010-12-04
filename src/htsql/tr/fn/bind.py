@@ -24,23 +24,26 @@ from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..lookup import lookup
-from .signature import (Signature, ThisSig, RootSig, DirectSig, FiberSig, AsSig,
-                        SortDirectionSig, LimitSig, SortSig, NullSig, TrueSig,
-                        FalseSig, CastSig, DateSig, IsEqualSig, IsInSig,
-                        IsTotallyEqualSig, AndSig, OrSig, NotSig, CompareSig,
-                        AddSig, ConcatenateSig, DateIncrementSig,
-                        SubtractSig, DateDecrementSig, DateDifferenceSig,
+from .signature import (Signature, UnarySig, BinarySig, ThisSig, RootSig,
+                        DirectSig, FiberSig, AsSig, SortDirectionSig, LimitSig,
+                        SortSig, NullSig, TrueSig, FalseSig, CastSig, DateSig,
+                        IsEqualSig, IsInSig, IsTotallyEqualSig, AndSig, OrSig,
+                        NotSig, CompareSig, AddSig, ConcatenateSig,
+                        DateIncrementSig, SubtractSig, DateDecrementSig,
+                        DateDifferenceSig,
                         MultiplySig, DivideSig, IsNullSig, NullIfSig,
                         IfNullSig, IfSig, SwitchSig, KeepPolaritySig,
                         ReversePolaritySig, RoundSig, RoundToSig, LengthSig,
-                        ContainsSig, ExistsSig, EverySig, BinarySig,
-                        UnarySig, CountSig, MinSig, MaxSig, SumSig, AvgSig)
+                        ContainsSig, ExistsSig, CountSig, MinMaxSig,
+                        SumSig, AvgSig, AggregateSig, QuantifySig)
 import sys
 
 
 class BindFunction(BindByName):
 
     signature = None
+    hint = None
+    help = None
 
     def match(self):
         assert self.signature is not None
@@ -531,8 +534,15 @@ class Correlate(Component):
     domains = []
     codomain = None
 
+    hint = None
+    help = None
+
     @classmethod
     def dominates(component, other):
+        if component.input_signature is None:
+            return False
+        if other.input_signature is None:
+            return False
         if issubclass(component, other):
             return True
         if issubclass(component.input_signature, other.input_signature):
@@ -541,6 +551,8 @@ class Correlate(Component):
 
     @classmethod
     def matches(component, dispatch_key):
+        if component.input_signature is None:
+            return False
         key_signature, key_domain_vector = dispatch_key
         if not issubclass(key_signature, component.input_signature):
             return False
@@ -608,6 +620,13 @@ def correlates(signature, *domain_vectors):
     frame.f_locals['input_signature'] = signature
     frame.f_locals['input_domains'] = domain_vectors
     frame.f_locals['input_arity'] = arity
+
+
+def correlates_none():
+    frame = sys._getframe(1)
+    frame.f_locals['input_signature'] = None
+    frame.f_locals['input_domains'] = []
+    frame.f_locals['input_arity'] = 0
 
 
 class BindPolyFunction(BindFunction):
@@ -1096,213 +1115,181 @@ class BindSwitch(BindFunction):
 
 class BindExistsBase(BindFunction):
 
-    signature = UnarySig
-    bind_signature = None
+    signature = ExistsSig
+    polarity = None
 
     def correlate(self, op):
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
-        return FormulaBinding(self.bind_signature(), op.domain, self.syntax,
-                               base=self.state.base, op=op)
+        return FormulaBinding(QuantifySig(self.polarity), op.domain,
+                              self.syntax, base=self.state.base, op=op)
 
 
 class BindExists(BindExistsBase):
 
     named('exists')
-    bind_signature = ExistsSig
+    polarity = +1
 
 
 class BindEvery(BindExistsBase):
 
     named('every')
-    bind_signature = EverySig
+    polarity = -1
 
 
 class BindCount(BindFunction):
 
     named('count')
-    signature = UnarySig
+    signature = CountSig
 
     def correlate(self, op):
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
-        return FormulaBinding(CountSig(), coerce(IntegerDomain()),
-                               self.syntax, base=self.state.base, op=op)
-
-
-class CorrelateAggregate(Adapter):
-
-    adapts(Domain)
-    signature = None
-    domain = None
-    codomain = None
-
-    def __call__(self):
-        return (self.signature is not None and
-                self.domain is not None and
-                self.codomain is not None)
-
-
-class BindPolyAggregate(BindFunction):
-
-    signature = UnarySig
-    correlation = None
-
-    def correlate(self, op):
-        correlate = self.correlation(op.domain)
-        if not correlate():
-            raise BindError("incompatible argument", self.syntax.mark)
-        op = CastBinding(op, coerce(correlate.domain), op.syntax)
-        return FormulaBinding(correlate.signature(),
-                              coerce(correlate.codomain), self.syntax,
+        op = FormulaBinding(CountSig(), coerce(IntegerDomain()),
+                            self.syntax, op=op)
+        return FormulaBinding(AggregateSig(), op.domain, self.syntax,
                               base=self.state.base, op=op)
 
 
-class CorrelateMin(CorrelateAggregate):
+class BindPolyAggregate(BindPolyFunction):
 
-    signature = MinSig
+    signature = UnarySig
+    codomain = UntypedDomain()
+
+    def correlate(self, op):
+        binding = FormulaBinding(self.signature(), self.codomain, self.syntax,
+                                 op=op)
+        correlate = CorrelateAggregate(binding, self.state)
+        return correlate()
 
 
-class BindMin(BindPolyAggregate):
+class CorrelateAggregate(Correlate):
+
+    correlates_none()
+    signature = None
+    domains = []
+    codomain = None
+
+    def __call__(self):
+        op = super(CorrelateAggregate, self).__call__()
+        return FormulaBinding(AggregateSig(), op.domain, op.syntax,
+                              base=self.state.base, op=op)
+
+
+class BindMinMaxBase(BindPolyAggregate):
+
+    signature = MinMaxSig
+    polarity = None
+
+    def correlate(self, op):
+        binding = FormulaBinding(self.signature(self.polarity), self.codomain,
+                                 self.syntax, op=op)
+        correlate = CorrelateAggregate(binding, self.state)
+        return correlate()
+
+
+class BindMinMaxBase(BindMinMaxBase):
 
     named('min')
-    correlation = CorrelateMin
+    signature = MinMaxSig
+    polarity = +1
 
 
-class CorrelateIntegerMin(CorrelateMin):
-
-    adapts(IntegerDomain)
-    domain = IntegerDomain()
-    codomain = IntegerDomain()
-
-
-class CorrelateDecimalMin(CorrelateMin):
-
-    adapts(DecimalDomain)
-    domain = DecimalDomain()
-    codomain = DecimalDomain()
-
-
-class CorrelateFloatMin(CorrelateMin):
-
-    adapts(FloatDomain)
-    domain = FloatDomain()
-    codomain = FloatDomain()
-
-
-class CorrelateStringMin(CorrelateMin):
-
-    adapts(StringDomain)
-    domain = StringDomain()
-    codomain = StringDomain()
-
-
-class CorrelateDateMin(CorrelateMin):
-
-    adapts(DateDomain)
-    domain = DateDomain()
-    codomain = DateDomain()
-
-
-class CorrelateMax(CorrelateAggregate):
-
-    signature = MaxSig
-
-
-class BindMax(BindPolyAggregate):
+class BindMinMaxBase(BindMinMaxBase):
 
     named('max')
-    correlation = CorrelateMax
+    signature = MinMaxSig
+    polarity = -1
 
 
-class CorrelateIntegerMax(CorrelateMax):
+class CorrelateIntegerMinMax(CorrelateAggregate):
 
-    adapts(IntegerDomain)
-    domain = IntegerDomain()
+    correlates(MinMaxSig, IntegerDomain)
+    signature = MinMaxSig
+    domains = [IntegerDomain()]
     codomain = IntegerDomain()
 
 
-class CorrelateDecimalMax(CorrelateMax):
+class CorrelateDecimalMinMax(CorrelateAggregate):
 
-    adapts(DecimalDomain)
-    domain = DecimalDomain()
+    correlates(MinMaxSig, DecimalDomain)
+    signature = MinMaxSig
+    domains = [DecimalDomain()]
     codomain = DecimalDomain()
 
 
-class CorrelateFloatMax(CorrelateMax):
+class CorrelateFloatMinMax(CorrelateAggregate):
 
-    adapts(FloatDomain)
-    domain = FloatDomain()
+    correlates(MinMaxSig, FloatDomain)
+    signature = MinMaxSig
+    domains = [FloatDomain()]
     codomain = FloatDomain()
 
 
-class CorrelateStringMax(CorrelateMax):
+class CorrelateStringMinMax(CorrelateAggregate):
 
-    adapts(StringDomain)
-    domain = StringDomain()
+    correlates(MinMaxSig, StringDomain)
+    signature = MinMaxSig
+    domains = [StringDomain()]
     codomain = StringDomain()
 
 
-class CorrelateDateMax(CorrelateMax):
+class CorrelateDateMinMax(CorrelateAggregate):
 
-    adapts(DateDomain)
-    domain = DateDomain()
+    correlates(MinMaxSig, DateDomain)
+    signature = MinMaxSig
+    domains = [DateDomain()]
     codomain = DateDomain()
-
-
-class CorrelateSum(CorrelateAggregate):
-
-    signature = SumSig
 
 
 class BindSum(BindPolyAggregate):
 
     named('sum')
-    correlation = CorrelateSum
+    signature = SumSig
 
 
-class CorrelateIntegerSum(CorrelateSum):
+class CorrelateIntegerSum(CorrelateAggregate):
 
-    adapts(IntegerDomain)
-    domain = IntegerDomain()
+    correlates(SumSig, IntegerDomain)
+    signature = SumSig
+    domains = [IntegerDomain()]
     codomain = IntegerDomain()
 
 
-class CorrelateDecimalSum(CorrelateSum):
+class CorrelateDecimalSum(CorrelateAggregate):
 
-    adapts(DecimalDomain)
-    domain = DecimalDomain()
+    correlates(SumSig, DecimalDomain)
+    signature = SumSig
+    domains = [DecimalDomain()]
     codomain = DecimalDomain()
 
 
-class CorrelateFloatSum(CorrelateSum):
+class CorrelateFloatSum(CorrelateAggregate):
 
-    adapts(FloatDomain)
-    domain = FloatDomain()
+    correlates(SumSig, FloatDomain)
+    signature = SumSig
+    domains = [FloatDomain()]
     codomain = FloatDomain()
-
-
-class CorrelateAvg(CorrelateAggregate):
-
-    signature = AvgSig
 
 
 class BindAvg(BindPolyAggregate):
 
     named('avg')
-    correlation = CorrelateAvg
+    signature = AvgSig
 
 
-class CorrelateDecimalAvg(CorrelateAvg):
+class CorrelateDecimalAvg(CorrelateAggregate):
 
-    adapts_many(IntegerDomain,
-                DecimalDomain)
-    domain = DecimalDomain()
+    correlates(AvgSig, IntegerDomain,
+                       DecimalDomain)
+    signature = AvgSig
+    domains = [DecimalDomain()]
     codomain = DecimalDomain()
 
 
-class CorrelateFloatAvg(CorrelateAvg):
+class CorrelateFloatAvg(CorrelateAggregate):
 
-    adapts(FloatDomain)
-    domain = FloatDomain()
+    correlates(AvgSig, FloatDomain)
+    signature = AvgSig
+    domains = [FloatDomain()]
     codomain = FloatDomain()
 
 

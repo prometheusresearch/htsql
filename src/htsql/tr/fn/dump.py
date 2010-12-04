@@ -18,8 +18,7 @@ from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
                         ReversePolaritySig,
                         RoundSig, RoundToSig, LengthSig,
-                        WrapExistsSig, TakeCountSig, TakeMinSig, TakeMaxSig,
-                        TakeSumSig, TakeAvgSig)
+                        ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig)
 
 
 class DumpFunction(DumpBySignature):
@@ -120,39 +119,38 @@ class DumpLength(DumpFunction):
     template = "CHARACTER_LENGTH({op})"
 
 
-class DumpWrapExists(DumpFunction):
+class DumpExists(DumpFunction):
 
-    adapts(WrapExistsSig)
+    adapts(ExistsSig)
     template = "EXISTS{op}"
 
 
-class DumpTakeCount(DumpFunction):
+class DumpCount(DumpFunction):
 
-    adapts(TakeCountSig)
+    adapts(CountSig)
     template = "COUNT({op})"
 
 
-class DumpTakeMin(DumpFunction):
+class DumpMinMax(DumpFunction):
 
-    adapts(TakeMinSig)
-    template = "MIN({op})"
+    adapts(MinMaxSig)
+
+    def __call__(self):
+        if self.signature.polarity > 0:
+            self.state.format("MIN({op})", self.arguments)
+        else:
+            self.state.format("MAX({op})", self.arguments)
 
 
-class DumpTakeMax(DumpFunction):
+class DumpSum(DumpFunction):
 
-    adapts(TakeMaxSig)
-    template = "MAX({op})"
-
-
-class DumpTakeSum(DumpFunction):
-
-    adapts(TakeSumSig)
+    adapts(SumSig)
     template = "SUM({op})"
 
 
-class DumpTakeAvg(DumpFunction):
+class DumpAvg(DumpFunction):
 
-    adapts(TakeAvgSig)
+    adapts(AvgSig)
     template = "AVG({op})"
 
 

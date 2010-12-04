@@ -14,7 +14,7 @@
 from ...adapter import adapts, adapts_none
 from ..assemble import EvaluateBySignature
 from ..frame import FormulaPhrase
-from .signature import ConcatenateSig, WrapExistsSig, TakeCountSig
+from .signature import ConcatenateSig, ExistsSig, CountSig
 
 
 class EvaluateFunction(EvaluateBySignature):
@@ -39,14 +39,14 @@ class EvaluateFunction(EvaluateBySignature):
 
 class EvaluateWrapExists(EvaluateFunction):
 
-    adapts(WrapExistsSig)
+    adapts(ExistsSig)
     is_null_regular = False
     is_nullable = False
 
 
 class EvaluateTakeCount(EvaluateFunction):
 
-    adapts(TakeCountSig)
+    adapts(CountSig)
     is_null_regular = False
     is_nullable = False
 
