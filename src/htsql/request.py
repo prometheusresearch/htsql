@@ -22,7 +22,7 @@ from .tr.encode import encode
 from .tr.compile import compile
 from .tr.assemble import assemble
 from .tr.reduce import reduce
-from .tr.dump import dump
+from .tr.dump import serialize
 from .fmt.format import FindRenderer
 import urllib
 
@@ -99,7 +99,7 @@ class Request(Utility):
         term = compile(expression)
         frame = assemble(term)
         frame = reduce(frame)
-        plan = dump(frame)
+        plan = serialize(frame)
         return plan
 
     def produce(self):

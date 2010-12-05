@@ -11,7 +11,7 @@
 """
 
 
-from ...adapter import adapts
+from ...adapter import adapts, adapts_none
 from ..dump import DumpBySignature
 from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
                         SubtractSig, DateDecrementSig, DateDifferenceSig,
@@ -23,13 +23,14 @@ from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
 
 class DumpFunction(DumpBySignature):
 
+    adapts_none()
     template = None
 
     def __call__(self):
         if self.template is None:
-            print self.phrase, self.phrase.signature
-            raise NotImplementedError()
-        self.state.format(self.template, self.arguments, self.signature)
+            super(DumpFunction, self).__call__()
+        else:
+            self.format(self.template, self.arguments, self.signature)
 
 
 class DumpAdd(DumpFunction):
@@ -67,15 +68,15 @@ class DumpIf(DumpFunction):
     adapts(IfSig)
 
     def __call__(self):
-        self.state.format("(CASE")
+        self.format("(CASE")
         for predicate, consequent in zip(self.phrase.predicates,
                                          self.phrase.consequents):
-            self.state.format(" WHEN {predicate} THEN {consequent}",
-                              predicate=predicate, consequent=consequent)
+            self.format(" WHEN {predicate} THEN {consequent}",
+                        predicate=predicate, consequent=consequent)
         if self.phrase.alternative is not None:
-            self.state.format(" ELSE {alternative}",
-                              alternative=self.phrase.alternative)
-        self.state.format(" END)")
+            self.format(" ELSE {alternative}",
+                        alternative=self.phrase.alternative)
+        self.format(" END)")
 
 
 class DumpSwitch(DumpFunction):
@@ -83,16 +84,16 @@ class DumpSwitch(DumpFunction):
     adapts(SwitchSig)
 
     def __call__(self):
-        self.state.format("(CASE {variable}",
-                          variable=self.phrase.variable)
+        self.format("(CASE {variable}",
+                    variable=self.phrase.variable)
         for variant, consequent in zip(self.phrase.variants,
                                        self.phrase.consequents):
-            self.state.format(" WHEN {variant} THEN {consequent}",
-                              variant=variant, consequent=consequent)
+            self.format(" WHEN {variant} THEN {consequent}",
+                        variant=variant, consequent=consequent)
         if self.phrase.alternative is not None:
-            self.state.format(" ELSE {alternative}",
-                              alternative=self.phrase.alternative)
-        self.state.format(" END)")
+            self.format(" ELSE {alternative}",
+                        alternative=self.phrase.alternative)
+        self.format(" END)")
 
 
 class DumpReversePolarity(DumpFunction):
@@ -137,9 +138,9 @@ class DumpMinMax(DumpFunction):
 
     def __call__(self):
         if self.signature.polarity > 0:
-            self.state.format("MIN({op})", self.arguments)
+            self.format("MIN({op})", self.arguments)
         else:
-            self.state.format("MAX({op})", self.arguments)
+            self.format("MAX({op})", self.arguments)
 
 
 class DumpSum(DumpFunction):

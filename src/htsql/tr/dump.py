@@ -9,12 +9,12 @@
 :mod:`htsql.tr.dump`
 ====================
 
-This module implements the SQL serializing process.
+This module implements the SQL serialization process.
 """
 
 
-from ..util import listof
-from ..adapter import Adapter, Utility, adapts
+from ..util import listof, maybe
+from ..adapter import Adapter, Protocol, adapts, named
 from .error import DumpError
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
@@ -34,46 +34,87 @@ import StringIO
 import re
 
 
-class Stream(object):
+class Stream(StringIO.StringIO, object):
+    """
+    Implements a writable file-like object.
+
+    Use :meth:`write` to write a string to the stream.  The data is
+    accumulated in an internal buffer of the stream.
+
+    Use :meth:`flush` to get the accumulated content and truncate
+    the stream.
+
+    :class:`Stream` also provides means for automatic indentation.
+    Use :meth:`indent` to set a new indentation level, :meth:`dedent`
+    to revert to the previous indentation level, :meth:`newline`
+    to set the position to the current indentation level.
+    """
+    # Note: we inherit from `object` to be able to use `super()`.
 
     def __init__(self):
-        self.io = StringIO.StringIO()
-        self.line = 0
+        # Initialize the `StringIO` object.
+        super(Stream, self).__init__()
+        # The current cursor position.
         self.column = 0
+        # The current indentation level.
         self.indentation = 0
+        # The stack of previous indentation levels.
         self.indentation_stack = []
 
     def write(self, data):
-        self.io.write(data)
+        """
+        Writes a string to the stream.
+        """
+        # Call `StringIO.write`, which performs the action.
+        super(Stream, self).write(data)
+        # Update the cursor position.  Note that we count
+        # Unicode codepoints rather than bytes.
         data = data.decode('utf-8')
-        self.line += data.count(u"\n")
         if u"\n" in data:
             self.column = len(data)-data.rindex(u"\n")-1
         else:
             self.column += len(data)
 
     def newline(self):
+        """
+        Sets the cursor to the current indentation level.
+        """
         if self.column <= self.indentation:
             self.write(" "*(self.indentation-self.column))
         else:
             self.write("\n"+" "*self.indentation)
 
     def indent(self):
+        """
+        Sets the indentation level to the current cursor position.
+        """
         self.indentation_stack.append(self.indentation)
         self.indentation = self.column
 
     def dedent(self):
+        """
+        Reverts to the previous indentation level.
+        """
         self.indentation = self.indentation_stack.pop()
 
     def flush(self):
-        output = self.io.getvalue()
-        self.io = StringIO.StringIO()
-        self.line = 0
+        """
+        Returns the accumulated content and truncates the stream.
+        """
+        # FIXME: we override the builtin `StringIO.flush()`
+        # (which is no-op though)
+
+        # Make sure the indentation level is at zero position.
+        assert self.indentation == 0 and not self.indentation_stack
+        # The accumulated content of the stream.
+        output = self.getvalue()
+        # Blank the stream and return the content.
+        self.truncate(0)
         self.column = 0
         return output
 
 
-class DumpingState(object):
+class SerializingState(object):
 
     def __init__(self):
         self.stream = Stream()
@@ -91,28 +132,12 @@ class DumpingState(object):
     def pop_with_aliases(self):
         self.with_aliases = self.with_aliases_stack.pop()
 
-    def format(self, template, *args, **kwds):
-        variables = {}
-        for arg in args:
-            if isinstance(arg, dict):
-                variables.update(arg)
-            else:
-                assert hasattr(arg, '__dict__')
-                variables.update(arg.__dict__)
-        variables.update(kwds)
-        format = Format(self, template, variables)
-        return format()
-
-    def indent(self):
-        self.stream.indent()
-
-    def dedent(self):
-        self.stream.dedent()
-
-    def newline(self):
-        self.stream.newline()
-
     def flush(self):
+        self.frame_by_tag = {}
+        self.select_aliases_by_tag = {}
+        self.frame_alias_by_tag = {}
+        self.with_aliases_stack = []
+        self.with_aliases = False
         return self.stream.flush()
 
     def set_tree(self, frame):
@@ -122,194 +147,25 @@ class DumpingState(object):
             self.frame_by_tag[frame.tag] = frame
             queue.extend(frame.kids)
 
+    def serialize(self, clause):
+        return serialize(clause, self)
+
+    def dump(self, clause):
+        dump = Dump(clause, self)
+        return dump()
+
     def dub(self, clause):
         dub = Dub(clause, self)
         return dub()
 
-    def dump(self, clause):
-        return dump(clause, self)
 
-
-class Format(Utility):
-
-    template_pattern = r"""
-        \{
-            (?P<name> \w+ )
-            (?:
-                :
-                (?P<kind> \w+ )
-                (?:
-                    \{
-                        (?P<modifier> [^{}]* )
-                    \}
-                )?
-            )?
-        \}
-        |
-        (?P<chunk> [^{}]+ )
-    """
-    template_regexp = re.compile(template_pattern, re.X)
-
-    def __init__(self, state, template, variables):
-        assert isinstance(state, DumpingState)
-        assert isinstance(template, str)
-        assert isinstance(variables, dict)
-        self.state = state
-        self.stream = state.stream
-        self.template = template
-        self.variables = variables
-
-    def __call__(self):
-        start = 0
-        while start < len(self.template):
-            match = self.template_regexp.match(self.template, start)
-            assert match is not None, (self.template, start)
-            start = match.end()
-            chunk = match.group('chunk')
-            if chunk is not None:
-                self.stream.write(chunk)
-            else:
-                name = match.group('name')
-                kind = match.group('kind')
-                modifier = match.group('modifier')
-                assert name in self.variables, name
-                assert kind is None or hasattr(self, kind), kind
-                value = self.variables[name]
-                if kind is not None:
-                    method = getattr(self, kind)
-                else:
-                    method = self.default
-                if modifier is None:
-                    method(value)
-                else:
-                    method(value, modifier)
-
-    def default(self, value, modifier=None):
-        assert isinstance(value, Clause)
-        assert modifier is None
-        self.state.dump(value)
-
-    def join(self, value, modifier=", "):
-        assert isinstance(value, listof(Clause))
-        assert isinstance(modifier, str)
-        for index, phrase in enumerate(value):
-            if index > 0:
-                self.stream.write(modifier)
-            self.state.dump(phrase)
-
-    def name(self, value, modifier=None):
-        assert isinstance(value, str)
-        assert modifier is None
-        assert "\0" not in value
-        assert len(value) > 0
-        value.decode('utf-8')
-        self.stream.write("\"%s\"" % value.replace("\"", "\"\""))
-
-    def literal(self, value, modifier=None):
-        assert isinstance(value, str)
-        assert modifier is None
-        assert "\0" not in value
-        value.decode('utf-8')
-        self.stream.write("'%s'" % value.replace("'", "''"))
-
-    def polarity(self, value, modifier=None):
-        assert value in [+1, -1]
-        assert modifier is None
-        if value == -1:
-            self.stream.write("NOT ")
-
-    def asis(self, value, modifier=None):
-        assert isinstance(value, str)
-        assert modifier is None
-        self.stream.write(value)
-
-
-class Dub(Adapter):
-
-    adapts(Clause)
-
-    def __init__(self, clause, state):
-        self.clause = clause
-        self.state = state
-
-    def __call__(self):
-        return "!"
-
-
-class DubFrame(Dub):
-
-    adapts(Frame)
-
-    def __init__(self, frame, state):
-        super(DubFrame, self).__init__(frame, state)
-        self.frame = frame
-        self.term = frame.term
-        self.space = frame.space
-        self.binding = frame.binding
-        self.syntax = frame.syntax
-
-    def __call__(self):
-        if self.space.table is not None:
-            return self.space.table.name
-        return super(DubFrame, self).__call__()
-
-
-class DubPhrase(Dub):
-
-    adapts(Phrase)
-
-    def __init__(self, phrase, state):
-        super(DubPhrase, self).__init__(phrase, state)
-        self.phrase = phrase
-        self.expression = phrase.expression
-        self.binding = phrase.binding
-        self.syntax = phrase.syntax
-
-    def __call__(self):
-        if isinstance(self.syntax, IdentifierSyntax):
-            return self.syntax.value
-        if isinstance(self.syntax, CallSyntax):
-            return self.syntax.name
-        if isinstance(self.syntax, LiteralSyntax):
-            return self.syntax.value
-        return super(DubPhrase, self).__call__()
-
-
-class DubColumn(Dub):
-
-    adapts(ColumnPhrase)
-
-    def __call__(self):
-        return self.phrase.column.name
-
-
-class DubReference(Dub):
-
-    adapts(ReferencePhrase)
-
-    def __call__(self):
-        frame = self.state.frame_by_tag[self.phrase.tag]
-        phrase = frame.select[self.phrase.index]
-        return self.state.dub(phrase)
-
-
-class DubEmbedding(Dub):
-
-    adapts(EmbeddingPhrase)
-
-    def __call__(self):
-        frame = self.state.frame_by_tag[self.phrase.tag]
-        phrase = frame.select[0]
-        return self.state.dub(phrase)
-
-
-class Dump(Adapter):
+class Serialize(Adapter):
 
     adapts(Clause)
 
     def __init__(self, clause, state):
         assert isinstance(clause, Clause)
-        assert isinstance(state, DumpingState)
+        assert isinstance(state, SerializingState)
         self.clause = clause
         self.state = state
 
@@ -317,160 +173,35 @@ class Dump(Adapter):
         raise NotImplementedError(repr(self.clause))
 
 
-class DumpFrame(Dump):
+class SerializeQuery(Serialize):
 
-    adapts(Frame)
-
-    def __init__(self, frame, state):
-        super(DumpFrame, self).__init__(frame, state)
-        self.frame = frame
-
-
-class DumpPhrase(Dump):
-
-    adapts(Phrase)
-
-    def __init__(self, phrase, state):
-        super(DumpPhrase, self).__init__(phrase, state)
-        self.phrase = phrase
-
-
-class DumpTable(Dump):
-
-    adapts(TableFrame)
+    adapts(QueryFrame)
 
     def __call__(self):
-        table = self.frame.space.table
-        self.state.format("{schema:name}.{table:name}",
-                          schema=table.schema_name,
-                          table=table.name)
+        sql = None
+        if self.clause.segment is not None:
+            sql = self.state.serialize(self.clause.segment)
+        return Plan(self.clause, sql, self.clause.mark)
 
 
-class DumpBranch(Dump):
-
-    adapts(BranchFrame)
-
-    def __call__(self):
-        self.dump_select()
-        self.dump_include()
-        self.dump_where()
-        self.dump_group()
-        self.dump_having()
-        self.dump_order()
-        self.dump_limit()
-
-    def dump_select(self):
-        aliases = self.state.select_aliases_by_tag[self.frame.tag]
-        self.state.format("SELECT ")
-        self.state.indent()
-        for index, phrase in enumerate(self.frame.select):
-            if self.state.with_aliases:
-                alias = aliases[index]
-                self.state.format("{selection} AS {alias:name}",
-                                  selection=phrase, alias=alias)
-            else:
-                self.state.format("{selection}",
-                                  selection=phrase)
-            if index < len(self.frame.select)-1:
-                self.state.format(",")
-                self.state.newline()
-        self.state.dedent()
-
-    def dump_include(self):
-        if not self.frame.include:
-            return
-        self.state.newline()
-        self.state.format("FROM ")
-        self.state.indent()
-        for index, anchor in enumerate(self.frame.include):
-            self.state.format("{anchor}", anchor=anchor)
-        self.state.dedent()
-
-    def dump_where(self):
-        if self.frame.where is None:
-            return
-        self.state.newline()
-        self.state.format("WHERE {condition}",
-                          condition=self.frame.where)
-
-    def dump_group(self):
-        if not self.frame.group:
-            return
-        self.state.newline()
-        self.state.format("GROUP BY ")
-        for index, phrase in enumerate(self.frame.group):
-            if phrase in self.frame.select:
-                position = self.frame.select.index(phrase)+1
-                self.state.format(str(position))
-            else:
-                self.state.format("{kernel}", kernel=phrase)
-            if index < len(self.frame.group)-1:
-                self.state.format(", ")
-
-    def dump_having(self):
-        if self.frame.having is None:
-            return
-        self.state.newline()
-        self.state.format("HAVING {condition}",
-                          condition=self.frame.having)
-
-    def dump_order(self):
-        if not self.frame.order:
-            return
-        self.state.newline()
-        self.state.format("ORDER BY ")
-        for index, (phrase, direction) in enumerate(self.frame.order):
-            if phrase in self.frame.select:
-                position = self.frame.select.index(phrase)+1
-                self.state.format(str(position))
-            else:
-                self.state.format("{kernel}", kernel=phrase)
-            if direction == +1:
-                self.state.format(" ASC")
-            if direction == -1:
-                self.state.format(" DESC")
-            if index < len(self.frame.order)-1:
-                self.state.format(", ")
-
-    def dump_limit(self):
-        if self.frame.limit is None and self.frame.offset is None:
-            return
-        if self.frame.limit is not None:
-            self.state.newline()
-            self.state.format("LIMIT "+str(self.frame.limit))
-        if self.frame.offset is not None:
-            self.state.newline()
-            self.state.format("OFFSET "+str(self.frame.offset))
-
-
-class DumpNested(Dump):
-
-    adapts(NestedFrame)
-
-    def __call__(self):
-        self.state.format("(")
-        self.state.indent()
-        super(DumpNested, self).__call__()
-        self.state.dedent()
-        self.state.format(")")
-
-
-class DumpSegment(Dump):
+class SerializeSegment(Serialize):
 
     adapts(SegmentFrame)
 
     max_alias_length = 63
 
     def __call__(self):
+        self.state.set_tree(self.clause)
         self.aliasing()
-        super(DumpSegment, self).__call__()
-        self.state.newline()
+        self.state.dump(self.clause)
+        sql = self.state.flush()
+        return sql
 
     def aliasing(self, frame=None,
                  taken_select_aliases=None,
                  taken_include_aliases=None):
         if frame is None:
-            frame = self.frame
+            frame = self.clause
         if taken_select_aliases is None:
             taken_select_aliases = set()
         if taken_include_aliases is None:
@@ -521,14 +252,394 @@ class DumpSegment(Dump):
         return aliases
 
 
+class DumpBase(Adapter):
+
+    template_pattern = r"""
+        \{
+            (?P<name> \w+ )
+            (?:
+                :
+                (?P<kind> \w+ )
+                (?:
+                    \{
+                        (?P<modifier> [^{}]* )
+                    \}
+                )?
+            )?
+        \}
+        |
+        (?P<chunk> [^{}]+ )
+    """
+    template_regexp = re.compile(template_pattern, re.X)
+
+    def __init__(self, clause, state):
+        assert isinstance(clause, Clause)
+        assert isinstance(state, SerializingState)
+        self.clause = clause
+        self.state = state
+        self.stream = state.stream
+
+    def __call__(self):
+        raise NotImplementedError(repr(self.clause))
+
+    def format(self, template, *args, **kwds):
+        variables = {}
+        for arg in args:
+            if isinstance(arg, dict):
+                variables.update(arg)
+            else:
+                assert hasattr(arg, '__dict__')
+                variables.update(arg.__dict__)
+        variables.update(kwds)
+        start = 0
+        while start < len(template):
+            match = self.template_regexp.match(template, start)
+            assert match is not None, (template, start)
+            start = match.end()
+            chunk = match.group('chunk')
+            if chunk is not None:
+                self.stream.write(chunk)
+            else:
+                name = match.group('name')
+                kind = match.group('kind')
+                if kind is None:
+                    kind = 'default'
+                modifier = match.group('modifier')
+                assert name in variables, name
+                value = variables[name]
+                format = Format(kind, value, modifier, self.state)
+                format()
+
+    def write(self, data):
+        self.stream.write(data)
+
+    def indent(self):
+        self.stream.indent()
+
+    def dedent(self):
+        self.stream.dedent()
+
+    def newline(self):
+        self.stream.newline()
+
+
+class Format(Protocol):
+
+    def __init__(self, name, value, modifier, state):
+        assert isinstance(name, str)
+        assert isinstance(state, SerializingState)
+        self.name = name
+        self.value = value
+        self.modifier = modifier
+        self.state = state
+        self.stream = state.stream
+
+    def __call__(self):
+        raise NotImplementedError(self.name)
+
+
+class FormatDefault(Format):
+
+    named('default')
+
+    def __init__(self, name, value, modifier, state):
+        assert isinstance(value, Clause)
+        assert modifier is None
+        super(FormatDefault, self).__init__(name, value, modifier, state)
+
+    def __call__(self):
+        assert isinstance(self.value, Clause)
+        assert self.modifier is None
+        self.state.dump(self.value)
+
+
+class FormatUnion(Format):
+
+    named('union')
+
+    def __init__(self, name, value, modifier, state):
+        assert isinstance(value, listof(Clause))
+        assert isinstance(modifier, maybe(str))
+        if modifier is None:
+            modifier = ", "
+        super(FormatUnion, self).__init__(name, value, modifier, state)
+
+    def __call__(self):
+        for index, phrase in enumerate(self.value):
+            if index > 0:
+                self.stream.write(self.modifier)
+            self.state.dump(phrase)
+
+
+class FormatName(Format):
+
+    named('name')
+
+    def __init__(self, name, value, modifier, state):
+        assert isinstance(value, str)
+        assert modifier is None
+        assert "\0" not in value
+        assert len(value) > 0
+        value.decode('utf-8')
+        super(FormatName, self).__init__(name, value, modifier, state)
+
+    def __call__(self):
+        self.stream.write("\"%s\"" % self.value.replace("\"", "\"\""))
+
+
+class FormatLiteral(Format):
+
+    named('literal')
+
+    def __init__(self, name, value, modifier, state):
+        assert isinstance(value, str)
+        assert modifier is None
+        assert "\0" not in value
+        value.decode('utf-8')
+        super(FormatLiteral, self).__init__(name, value, modifier, state)
+
+    def __call__(self):
+        self.stream.write("'%s'" % self.value.replace("'", "''"))
+
+
+class FormatNot(Format):
+
+    named('not')
+
+    def __init__(self, name, value, modifier, state):
+        assert value in [+1, -1]
+        assert modifier is None
+        super(FormatNot, self).__init__(name, value, modifier, state)
+
+    def __call__(self):
+        if self.value == -1:
+            self.stream.write("NOT ")
+
+
+class FormatPass(Format):
+
+    named('pass')
+
+    def __init__(self, name, value, modifier, state):
+        assert isinstance(value, str)
+        assert modifier is None
+        super(FormatPass, self).__init__(name, value, modifier, state)
+
+    def __call__(self):
+        self.stream.write(self.value)
+
+
+class Dub(Adapter):
+
+    adapts(Clause)
+
+    def __init__(self, clause, state):
+        self.clause = clause
+        self.state = state
+
+    def __call__(self):
+        return "!"
+
+
+class Dump(DumpBase):
+
+    adapts(Clause)
+
+
+class DubFrame(Dub):
+
+    adapts(Frame)
+
+    def __init__(self, frame, state):
+        super(DubFrame, self).__init__(frame, state)
+        self.frame = frame
+        self.term = frame.term
+        self.space = frame.space
+        self.binding = frame.binding
+        self.syntax = frame.syntax
+
+    def __call__(self):
+        if self.space.table is not None:
+            return self.space.table.name
+        return super(DubFrame, self).__call__()
+
+
+class DumpFrame(Dump):
+
+    adapts(Frame)
+
+    def __init__(self, frame, state):
+        super(DumpFrame, self).__init__(frame, state)
+        self.frame = frame
+
+
+class DubPhrase(Dub):
+
+    adapts(Phrase)
+
+    def __init__(self, phrase, state):
+        super(DubPhrase, self).__init__(phrase, state)
+        self.phrase = phrase
+        self.expression = phrase.expression
+        self.binding = phrase.binding
+        self.syntax = phrase.syntax
+
+    def __call__(self):
+        if isinstance(self.syntax, IdentifierSyntax):
+            return self.syntax.value
+        if isinstance(self.syntax, CallSyntax):
+            return self.syntax.name
+        if isinstance(self.syntax, LiteralSyntax):
+            return self.syntax.value
+        return super(DubPhrase, self).__call__()
+
+
+class DumpPhrase(Dump):
+
+    adapts(Phrase)
+
+    def __init__(self, phrase, state):
+        super(DumpPhrase, self).__init__(phrase, state)
+        self.phrase = phrase
+
+
+class DumpTable(Dump):
+
+    adapts(TableFrame)
+
+    def __call__(self):
+        table = self.frame.space.table
+        self.format("{schema:name}.{table:name}",
+                    schema=table.schema_name,
+                    table=table.name)
+
+
+class DumpBranch(Dump):
+
+    adapts(BranchFrame)
+
+    def __call__(self):
+        self.dump_select()
+        self.dump_include()
+        self.dump_where()
+        self.dump_group()
+        self.dump_having()
+        self.dump_order()
+        self.dump_limit()
+
+    def dump_select(self):
+        aliases = self.state.select_aliases_by_tag[self.frame.tag]
+        self.format("SELECT ")
+        self.indent()
+        for index, phrase in enumerate(self.frame.select):
+            if self.state.with_aliases:
+                alias = aliases[index]
+                self.format("{selection} AS {alias:name}",
+                            selection=phrase, alias=alias)
+            else:
+                self.format("{selection}",
+                            selection=phrase)
+            if index < len(self.frame.select)-1:
+                self.format(",")
+                self.newline()
+        self.dedent()
+
+    def dump_include(self):
+        if not self.frame.include:
+            return
+        self.newline()
+        self.format("FROM ")
+        self.indent()
+        for index, anchor in enumerate(self.frame.include):
+            self.format("{anchor}", anchor=anchor)
+        self.dedent()
+
+    def dump_where(self):
+        if self.frame.where is None:
+            return
+        self.newline()
+        self.format("WHERE {condition}",
+                    condition=self.frame.where)
+
+    def dump_group(self):
+        if not self.frame.group:
+            return
+        self.newline()
+        self.format("GROUP BY ")
+        for index, phrase in enumerate(self.frame.group):
+            if phrase in self.frame.select:
+                position = self.frame.select.index(phrase)+1
+                self.format(str(position))
+            else:
+                self.format("{kernel}", kernel=phrase)
+            if index < len(self.frame.group)-1:
+                self.format(", ")
+
+    def dump_having(self):
+        if self.frame.having is None:
+            return
+        self.newline()
+        self.format("HAVING {condition}",
+                    condition=self.frame.having)
+
+    def dump_order(self):
+        if not self.frame.order:
+            return
+        self.newline()
+        self.format("ORDER BY ")
+        for index, (phrase, direction) in enumerate(self.frame.order):
+            if phrase in self.frame.select:
+                position = self.frame.select.index(phrase)+1
+                self.format(str(position))
+            else:
+                self.format("{kernel}", kernel=phrase)
+            if direction == +1:
+                self.format(" ASC")
+            if direction == -1:
+                self.format(" DESC")
+            if index < len(self.frame.order)-1:
+                self.format(", ")
+
+    def dump_limit(self):
+        if self.frame.limit is None and self.frame.offset is None:
+            return
+        if self.frame.limit is not None:
+            self.newline()
+            self.format("LIMIT "+str(self.frame.limit))
+        if self.frame.offset is not None:
+            self.newline()
+            self.format("OFFSET "+str(self.frame.offset))
+
+
+class DumpNested(Dump):
+
+    adapts(NestedFrame)
+
+    def __call__(self):
+        self.format("(")
+        self.indent()
+        super(DumpNested, self).__call__()
+        self.dedent()
+        self.format(")")
+
+
+class DumpSegment(Dump):
+
+    adapts(SegmentFrame)
+
+    def __call__(self):
+        super(DumpSegment, self).__call__()
+        self.newline()
+
+
 class DumpLeadingAnchor(Dump):
 
     adapts(LeadingAnchor)
 
     def __call__(self):
         alias = self.state.frame_alias_by_tag[self.clause.frame.tag]
-        self.state.format("{frame} AS {alias:name}",
-                          frame=self.clause.frame, alias=alias)
+        self.format("{frame} AS {alias:name}",
+                    frame=self.clause.frame, alias=alias)
 
 
 class DumpAnchor(Dump):
@@ -537,24 +648,86 @@ class DumpAnchor(Dump):
 
     def __call__(self):
         alias = self.state.frame_alias_by_tag[self.clause.frame.tag]
-        self.state.newline()
+        self.newline()
         if self.clause.is_cross:
-            self.state.format("    CROSS JOIN")
+            self.format("    CROSS JOIN")
         elif self.clause.is_inner:
-            self.state.format("    INNER JOIN")
+            self.format("    INNER JOIN")
         elif self.clause.is_left and not self.clause.is_right:
-            self.state.format("    LEFT OUTER JOIN")
+            self.format("    LEFT OUTER JOIN")
         elif self.clause.is_right and not self.clause.is_left:
-            self.state.format("    RIGHT OUTER JOIN")
-        self.state.newline()
+            self.format("    RIGHT OUTER JOIN")
+        self.newline()
         self.state.push_with_aliases(True)
-        self.state.format("{frame} AS {alias:name}",
-                          frame=self.clause.frame, alias=alias)
+        self.format("{frame} AS {alias:name}",
+                    frame=self.clause.frame, alias=alias)
         self.state.pop_with_aliases()
         if self.clause.condition is not None:
-            self.state.newline()
-            self.state.format("    ON ({condition})",
-                              condition=self.clause.condition)
+            self.newline()
+            self.format("    ON ({condition})",
+                        condition=self.clause.condition)
+
+
+class DubColumn(Dub):
+
+    adapts(ColumnPhrase)
+
+    def __call__(self):
+        return self.phrase.column.name
+
+
+class DumpColumn(Dump):
+
+    adapts(ColumnPhrase)
+
+    def __call__(self):
+        parent = self.state.frame_alias_by_tag[self.phrase.tag]
+        child = self.phrase.column.name
+        self.format("{parent:name}.{child:name}",
+                    parent=parent, child=child)
+
+
+class DubReference(Dub):
+
+    adapts(ReferencePhrase)
+
+    def __call__(self):
+        frame = self.state.frame_by_tag[self.phrase.tag]
+        phrase = frame.select[self.phrase.index]
+        return self.state.dub(phrase)
+
+
+class DumpReference(Dump):
+
+    adapts(ReferencePhrase)
+
+    def __call__(self):
+        parent = self.state.frame_alias_by_tag[self.phrase.tag]
+        select_aliases = self.state.select_aliases_by_tag[self.phrase.tag]
+        child = select_aliases[self.phrase.index]
+        self.format("{parent:name}.{child:name}",
+                    parent=parent, child=child)
+
+
+class DubEmbedding(Dub):
+
+    adapts(EmbeddingPhrase)
+
+    def __call__(self):
+        frame = self.state.frame_by_tag[self.phrase.tag]
+        phrase = frame.select[0]
+        return self.state.dub(phrase)
+
+
+class DumpEmbedding(Dump):
+
+    adapts(EmbeddingPhrase)
+
+    def __call__(self):
+        frame = self.state.frame_by_tag[self.phrase.tag]
+        self.state.push_with_aliases(False)
+        self.format("{frame}", frame=frame)
+        self.state.pop_with_aliases()
 
 
 class DumpLiteral(Dump):
@@ -571,10 +744,10 @@ class DumpNull(Dump):
     adapts(NullPhrase)
 
     def __call__(self):
-        self.state.format("NULL")
+        self.format("NULL")
 
 
-class DumpByDomain(Adapter):
+class DumpByDomain(DumpBase):
 
     adapts(Domain)
 
@@ -586,14 +759,10 @@ class DumpByDomain(Adapter):
     def __init__(self, phrase, state):
         assert isinstance(phrase, LiteralPhrase)
         assert phrase.value is not None
-        assert isinstance(state, DumpingState)
+        super(DumpByDomain, self).__init__(phrase, state)
         self.phrase = phrase
-        self.state = state
         self.value = phrase.value
         self.domain = phrase.domain
-
-    def __call__(self):
-        raise NotImplementedError()
 
 
 class DumpBoolean(DumpByDomain):
@@ -602,9 +771,9 @@ class DumpBoolean(DumpByDomain):
 
     def __call__(self):
         if self.value is True:
-            self.state.format("(1 = 1)")
+            self.format("(1 = 1)")
         if self.value is False:
-            self.state.format("(1 = 0)")
+            self.format("(1 = 0)")
 
 
 class DumpInteger(DumpByDomain):
@@ -614,8 +783,8 @@ class DumpInteger(DumpByDomain):
     def __call__(self):
         if not (-2**63 <= self.value < 2**63):
             raise DumpError("invalid integer value",
-                                 self.phrase.mark)
-        self.state.format(str(self.value))
+                            self.phrase.mark)
+        self.format(str(self.value))
 
 
 class DumpFloat(DumpByDomain):
@@ -625,8 +794,8 @@ class DumpFloat(DumpByDomain):
     def __call__(self):
         if str(self.value) in ['inf', '-inf', 'nan']:
             raise DumpError("invalid float value",
-                                 self.phrase.mark)
-        self.state.format(repr(self.value))
+                            self.phrase.mark)
+        self.format(repr(self.value))
 
 
 class DumpDecimal(DumpByDomain):
@@ -634,7 +803,7 @@ class DumpDecimal(DumpByDomain):
     adapts(DecimalDomain)
 
     def __call__(self):
-        self.state.format(str(self.value))
+        self.format(str(self.value))
 
 
 class DumpString(DumpByDomain):
@@ -642,7 +811,7 @@ class DumpString(DumpByDomain):
     adapts(StringDomain)
 
     def __call__(self):
-        self.state.format("{value:literal}", value=self.value)
+        self.format("{value:literal}", value=self.value)
 
 
 class DumpEnum(DumpByDomain):
@@ -650,7 +819,7 @@ class DumpEnum(DumpByDomain):
     adapts(EnumDomain)
 
     def __call__(self):
-        self.state.format("{value:literal}", value=self.value)
+        self.format("{value:literal}", value=self.value)
 
 
 class DumpCast(Dump):
@@ -662,7 +831,7 @@ class DumpCast(Dump):
         return dump()
 
 
-class DumpToDomain(Adapter):
+class DumpToDomain(DumpBase):
 
     adapts(Domain, Domain)
 
@@ -673,14 +842,10 @@ class DumpToDomain(Adapter):
 
     def __init__(self, phrase, state):
         assert isinstance(phrase, CastPhrase)
-        assert isinstance(state, DumpingState)
+        super(DumpToDomain, self).__init__(phrase, state)
         self.phrase = phrase
         self.base = phrase.base
         self.domain = phrase.domain
-        self.state = state
-
-    def __call__(self):
-        raise NotImplementedError()
 
 
 class DumpToInteger(DumpToDomain):
@@ -688,7 +853,7 @@ class DumpToInteger(DumpToDomain):
     adapts(Domain, IntegerDomain)
 
     def __call__(self):
-        self.state.format("CAST({base} AS INTEGER)", base=self.base)
+        self.format("CAST({base} AS INTEGER)", base=self.base)
 
 
 class DumpToFloat(DumpToDomain):
@@ -696,7 +861,7 @@ class DumpToFloat(DumpToDomain):
     adapts(Domain, FloatDomain)
 
     def __call__(self):
-        self.state.format("CAST({base} AS DOUBLE PRECISION)", base=self.base)
+        self.format("CAST({base} AS DOUBLE PRECISION)", base=self.base)
 
 
 class DumpToDecimal(DumpToDomain):
@@ -704,7 +869,7 @@ class DumpToDecimal(DumpToDomain):
     adapts(Domain, DecimalDomain)
 
     def __call__(self):
-        self.state.format("CAST({base} AS DECIMAL)", base=self.base)
+        self.format("CAST({base} AS DECIMAL)", base=self.base)
 
 
 class DumpToString(DumpToDomain):
@@ -712,7 +877,7 @@ class DumpToString(DumpToDomain):
     adapts(Domain, StringDomain)
 
     def __call__(self):
-        self.state.format("CAST({base} AS CHARACTER VARYING)", base=self.base)
+        self.format("CAST({base} AS CHARACTER VARYING)", base=self.base)
 
 
 class DumpFormula(Dump):
@@ -724,7 +889,7 @@ class DumpFormula(Dump):
         return dump()
 
 
-class DumpBySignature(Adapter):
+class DumpBySignature(DumpBase):
 
     adapts(Signature)
 
@@ -735,15 +900,11 @@ class DumpBySignature(Adapter):
 
     def __init__(self, phrase, state):
         assert isinstance(phrase, FormulaPhrase)
-        assert isinstance(state, DumpingState)
+        super(DumpBySignature, self).__init__(phrase, state)
         self.phrase = phrase
-        self.state = state
         self.signature = phrase.signature
         self.domain = phrase.domain
         self.arguments = phrase.arguments
-
-    def __call__(self):
-        raise NotImplementedError()
 
 
 class DumpIsEqual(DumpBySignature):
@@ -752,9 +913,9 @@ class DumpIsEqual(DumpBySignature):
 
     def __call__(self):
         if self.signature.polarity > 0:
-            self.state.format("({lop} = {rop})", self.arguments)
+            self.format("({lop} = {rop})", self.arguments)
         else:
-            self.state.format("({lop} <> {rop})", self.arguments)
+            self.format("({lop} <> {rop})", self.arguments)
 
 
 class DumpIsTotallyEqual(DumpBySignature):
@@ -763,15 +924,15 @@ class DumpIsTotallyEqual(DumpBySignature):
 
     def __call__(self):
         if self.signature.polarity > 0:
-            self.state.format("(CASE WHEN (({lop} = {rop}) OR"
-                              " (({lop} IS NULL) AND ({rop} IS NULL)))"
-                              " THEN 1 ELSE 0 END)",
-                              self.arguments)
+            self.format("(CASE WHEN (({lop} = {rop}) OR"
+                        " (({lop} IS NULL) AND ({rop} IS NULL)))"
+                        " THEN 1 ELSE 0 END)",
+                        self.arguments)
         else:
-            self.state.format("(CASE WHEN (({lop} <> {rop}) AND"
-                              " (({lop} IS NOT NULL) OR ({rop} IS NOT NULL)))"
-                              " THEN 1 ELSE 0 END)",
-                              self.arguments)
+            self.format("(CASE WHEN (({lop} <> {rop}) AND"
+                        " (({lop} IS NOT NULL) OR ({rop} IS NOT NULL)))"
+                        " THEN 1 ELSE 0 END)",
+                        self.arguments)
 
 
 class DumpIsIn(DumpBySignature):
@@ -779,8 +940,8 @@ class DumpIsIn(DumpBySignature):
     adapts(IsInSig)
 
     def __call__(self):
-        self.state.format("({lop} {polarity:polarity}IN ({rops:join{, }}))",
-                          self.arguments, self.signature)
+        self.format("({lop} {polarity:not}IN ({rops:union{, }}))",
+                    self.arguments, self.signature)
 
 
 class DumpAnd(DumpBySignature):
@@ -788,7 +949,7 @@ class DumpAnd(DumpBySignature):
     adapts(AndSig)
 
     def __call__(self):
-        self.state.format("({ops:join{ AND }})", self.arguments)
+        self.format("({ops:union{ AND }})", self.arguments)
 
 
 class DumpOr(DumpBySignature):
@@ -796,7 +957,7 @@ class DumpOr(DumpBySignature):
     adapts(OrSig)
 
     def __call__(self):
-        self.state.format("({ops:join{ OR }})", self.arguments)
+        self.format("({ops:union{ OR }})", self.arguments)
 
 
 class DumpNot(DumpBySignature):
@@ -804,7 +965,7 @@ class DumpNot(DumpBySignature):
     adapts(NotSig)
 
     def __call__(self):
-        self.state.format("(NOT {op})", self.arguments)
+        self.format("(NOT {op})", self.arguments)
 
 
 class DumpIsNull(DumpBySignature):
@@ -812,8 +973,8 @@ class DumpIsNull(DumpBySignature):
     adapts(IsNullSig)
 
     def __call__(self):
-        self.state.format("({op} IS {polarity:polarity}NULL)",
-                          self.arguments, self.signature)
+        self.format("({op} IS {polarity:not}NULL)",
+                    self.arguments, self.signature)
 
 
 class DumpIfNull(DumpBySignature):
@@ -821,7 +982,7 @@ class DumpIfNull(DumpBySignature):
     adapts(IfNullSig)
 
     def __call__(self):
-        self.state.format("COALESCE({lop}, {rop})", self.arguments)
+        self.format("COALESCE({lop}, {rop})", self.arguments)
 
 
 class DumpNullIf(DumpBySignature):
@@ -829,7 +990,7 @@ class DumpNullIf(DumpBySignature):
     adapts(NullIfSig)
 
     def __call__(self):
-        self.state.format("NULLIF({lop}, {rop})", self.arguments)
+        self.format("NULLIF({lop}, {rop})", self.arguments)
 
 
 class DumpCompare(DumpBySignature):
@@ -837,61 +998,14 @@ class DumpCompare(DumpBySignature):
     adapts(CompareSig)
 
     def __call__(self):
-        self.state.format("({lop} {relation:asis} {rop})",
-                          self.arguments, self.signature)
+        self.format("({lop} {relation:pass} {rop})",
+                    self.arguments, self.signature)
 
 
-class DumpColumn(Dump):
-
-    adapts(ColumnPhrase)
-
-    def __call__(self):
-        parent = self.state.frame_alias_by_tag[self.phrase.tag]
-        child = self.phrase.column.name
-        self.state.format("{parent:name}.{child:name}",
-                          parent=parent, child=child)
-
-
-class DumpReference(Dump):
-
-    adapts(ReferencePhrase)
-
-    def __call__(self):
-        parent = self.state.frame_alias_by_tag[self.phrase.tag]
-        select_aliases = self.state.select_aliases_by_tag[self.phrase.tag]
-        child = select_aliases[self.phrase.index]
-        self.state.format("{parent:name}.{child:name}",
-                          parent=parent, child=child)
-
-
-class DumpEmbedding(Dump):
-
-    adapts(EmbeddingPhrase)
-
-    def __call__(self):
-        frame = self.state.frame_by_tag[self.phrase.tag]
-        self.state.push_with_aliases(False)
-        self.state.format("{frame}", frame=frame)
-        self.state.pop_with_aliases()
-
-
-class DumpQuery(Dump):
-
-    adapts(QueryFrame)
-
-    def __call__(self):
-        sql = None
-        if self.clause.segment is not None:
-            self.state.set_tree(self.clause.segment)
-            self.state.dump(self.clause.segment)
-            sql = self.state.flush()
-        return Plan(self.clause, sql, self.clause.mark)
-
-
-def dump(clause, state=None):
+def serialize(clause, state=None):
     if state is None:
-        state = DumpingState()
-    dump = Dump(clause, state)
-    return dump()
+        state = SerializingState()
+    serialize = Serialize(clause, state)
+    return serialize()
 
 

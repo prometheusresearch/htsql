@@ -15,7 +15,7 @@ This module adapts the SQL serializer for PostgreSQL.
 
 from htsql.adapter import adapts
 from htsql.domain import Domain, DateDomain
-from htsql.tr.dump import (Format, DumpBoolean, DumpFloat,
+from htsql.tr.dump import (FormatLiteral, DumpBoolean, DumpFloat,
                            DumpByDomain, DumpToDomain,
                            DumpIsTotallyEqual)
 from htsql.tr.fn.signature import (DateSig, ContainsSig, DateIncrementSig,
@@ -25,14 +25,10 @@ from htsql.tr.frame import LiteralPhrase, NullPhrase
 from htsql.tr.error import DumpError
 
 
-class PGSQLFormat(Format):
+class PGSQLFormatLiteral(FormatLiteral):
 
-    def literal(self, value, modifier=None):
-        assert isinstance(value, str)
-        assert modifier is None
-        assert "\0" not in value
-        value.decode('utf-8')
-        value = value.replace("'", "''")
+    def __call__(self):
+        value = self.value.replace("'", "''")
         if "\\" in value:
             value = value.replace("\\", "\\\\")
             self.stream.write("E'%s'" % value)
@@ -44,9 +40,9 @@ class PGSQLDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:
-            self.state.format("TRUE")
+            self.format("TRUE")
         if self.value is False:
-            self.state.format("FALSE")
+            self.format("FALSE")
 
 
 class PGSQLDumpFloat(DumpFloat):
@@ -55,12 +51,7 @@ class PGSQLDumpFloat(DumpFloat):
         if str(self.value) in ['inf', '-inf', 'nan']:
             raise DumpError("invalid float value",
                                  self.phrase.mark)
-        self.state.format("%r::FLOAT8" % self.value)
-
-        if self.value is True:
-            self.state.format("TRUE")
-        if self.value is False:
-            self.state.format("FALSE")
+        self.format("%r::FLOAT8" % self.value)
 
 
 class PGSQLDumpDate(DumpByDomain):
@@ -68,7 +59,7 @@ class PGSQLDumpDate(DumpByDomain):
     adapts(DateDomain)
 
     def __call__(self):
-        self.state.format("{value:literal}::DATE", value=str(self.value))
+        self.format("{value:literal}::DATE", value=str(self.value))
 
 
 class PGSQLDumpToDate(DumpToDomain):
@@ -76,14 +67,14 @@ class PGSQLDumpToDate(DumpToDomain):
     adapts(Domain, DateDomain)
 
     def __call__(self):
-        self.state.format("CAST({base} AS DATE)", base=self.base)
+        self.format("CAST({base} AS DATE)", base=self.base)
 
 
 class PGSQLDumpIsTotallyEqual(DumpIsTotallyEqual):
 
     def __call__(self):
-        self.state.format("({lop} IS {polarity:polarity}DISTINCT FROM {rop})",
-                          self.arguments, polarity=-self.signature.polarity)
+        self.format("({lop} IS {polarity:not}DISTINCT FROM {rop})",
+                    self.arguments, polarity=-self.signature.polarity)
 
 
 class PGSQLDumpDateConstructor(DumpFunction):
@@ -120,26 +111,26 @@ class PGSQLDumpStringContains(DumpFunction):
 
     def __call__(self):
         if isinstance(self.phrase.rop, NullPhrase):
-            self.state.format("({lop} {polarity:polarity}ILIKE {rop})",
-                              self.phrase, self.phrase.signature)
+            self.format("({lop} {polarity:not}ILIKE {rop})",
+                        self.phrase, self.phrase.signature)
         elif isinstance(self.phrase.rop, LiteralPhrase):
             value = self.phrase.rop.value
             value.replace("%", "\\%").replace("_", "\\_")
             value = "%"+value+"%"
-            self.state.format("({lop} {polarity:polarity}ILIKE"
-                              " {value:literal})",
-                              self.phrase, self.phrase.signature,
-                              value=value)
+            self.format("({lop} {polarity:not}ILIKE"
+                        " {value:literal})",
+                        self.phrase, self.phrase.signature,
+                        value=value)
         else:
-            self.state.format("({lop} {polarity:polarity}ILIKE"
-                              " ({percent:literal} ||"
-                              " REPLACE(REPLACE({rop},"
-                              " {percent:literal}, {xpercent:literal}),"
-                              " {underline:literal}, {xunderline:literal}) ||"
-                              " {percent:literal}))",
-                              self.phrase,
-                              self.phrase.signature,
-                              percent="%", underline="_",
-                              xpercent="\\%", xunderline="\\_")
+            self.format("({lop} {polarity:not}ILIKE"
+                        " ({percent:literal} ||"
+                        " REPLACE(REPLACE({rop},"
+                        " {percent:literal}, {xpercent:literal}),"
+                        " {underline:literal}, {xunderline:literal}) ||"
+                        " {percent:literal}))",
+                        self.phrase,
+                        self.phrase.signature,
+                        percent="%", underline="_",
+                        xpercent="\\%", xunderline="\\_")
 
 

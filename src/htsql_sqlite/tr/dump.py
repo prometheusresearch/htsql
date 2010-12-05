@@ -22,15 +22,15 @@ class SQLiteDumpTable(DumpTable):
 
     def __call__(self):
         table = self.frame.space.table
-        self.state.format("{table:name}", table=table.name)
+        self.format("{table:name}", table=table.name)
 
 
 class SQLiteDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:
-            self.state.format("1")
+            self.format("1")
         if self.value is False:
-            self.state.format("0")
+            self.format("0")
 
 
