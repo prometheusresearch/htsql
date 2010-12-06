@@ -39,13 +39,9 @@ features in this release, see ``NEWS``.  HTSQL documentation is in the
     http://lists.htsql.org/mailman/listinfo/htsql-users
         The mailing list for users of HTSQL
 
-Generous support for HTSQL was provided by Prometheus Research, LLC and
-The Simons Foundation. This material is also based upon work supported
-by the National Science Foundation under Grant #0944460. Any opinions,
-findings, and conclusions or recommendations expressed in this material
-are those of the author(s) and do not necessarily reflect the views of
-the National Science Foundation. 
-
 HTSQL is copyright by Prometheus Research, LLC.  HTSQL is written by
 Clark C. Evans <cce@clarkevans.com> and Kirill Simonov <xi@resolvent.net>.
 
+Generous support for HTSQL was provided by the Simons Foundation.
+This material is also based upon work supported by the National
+Science Foundation under Grant #0944460.
