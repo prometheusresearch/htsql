@@ -27,7 +27,7 @@ CREATE TABLE school (
 CREATE TABLE department (
     code        VARCHAR(16) NOT NULL,
     name        VARCHAR(64) NOT NULL,
-    school      VARCHAR(16) NOT NULL,
+    school      VARCHAR(16),
     CONSTRAINT department_pk
       PRIMARY KEY (code),
     CONSTRAINT department_name_uk
@@ -116,7 +116,7 @@ INSERT INTO department (code, name, school) VALUES
 INSERT INTO department (code, name, school) VALUES
     ('arthis', 'Art History', 'art');
 INSERT INTO department (code, name, school) VALUES
-    ('artstd', 'Studio Art', 'art');
+    ('stdart', 'Studio Art', 'art');
 INSERT INTO department (code, name, school) VALUES
     ('tched', 'Teacher Education', 'edu');
 INSERT INTO department (code, name, school) VALUES
@@ -135,6 +135,13 @@ INSERT INTO department (code, name, school) VALUES
     ('win', 'Wind', 'mus');
 INSERT INTO department (code, name, school) VALUES
     ('str', 'Strings', 'mus');
+-- Non-Academic Departments
+INSERT INTO department (code, name, school) VALUES
+    ('bursar', 'Bursar''s Office', NULL);
+INSERT INTO department (code, name, school) VALUES
+    ('career', 'Career Development', NULL);
+INSERT INTO department (code, name, school) VALUES
+    ('parent', 'Parents & Alumni', NULL);
 
 INSERT INTO program (school, code, title, degree) VALUES
     ('ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs');
@@ -326,7 +333,7 @@ INSERT INTO course (department, number, title, credits, description) VALUES
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('me', 501, 'Advanced Welding', 3, 'Advanced applications of welding and machine tool technology. Computer numerical control, multi-axis machining set-up, gas tungsten arc welding, and gas metal arch welding.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('me', 627, 'Advanced Heating and Air Conditioning', 4, 'Open to juniors and seniors. Requires permission of instructor.');
+    ('me', 627, 'Advanced Heating and Air Conditioning', 4, '');
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('me', 712, 'Graphic Communication and Design', 3, 'Sketching and orthographic projection. Covers detail and assembly working drawings, dimensioning, tolerance specification, and design projects.');
 INSERT INTO course (department, number, title, credits, description) VALUES
@@ -350,17 +357,17 @@ INSERT INTO course (department, number, title, credits, description) VALUES
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('arthis', 623, 'Contemporary Latin American Art', 3, 'A survey of the last twenty years of Latin American art with a focus on the Caribbean and Central America.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('artstd', 714, 'Peer Portfolio Review', 0, 'An opportunity to practice giving and receiving constructive criticism.');
+    ('stdart', 714, 'Peer Portfolio Review', 0, 'An opportunity to practice giving and receiving constructive criticism.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('artstd', 411, 'Underwater Basket Weaving', 4, 'This course provides a novel perspective on the traditional art of basketry as it is experienced in reduced gravity and in the context of fluid dynamics. Requires instructor permission and a valid c-card.');
+    ('stdart', 411, 'Underwater Basket Weaving', 4, 'This course provides a novel perspective on the traditional art of basketry as it is experienced in reduced gravity and in the context of fluid dynamics. Requires instructor permission and a valid c-card.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('artstd', 512, 'Art in Therapy', 3, 'Surveys methods and results of using art and craft therapy with developmentally disabled adults.');
+    ('stdart', 512, 'Art in Therapy', 3, 'Surveys methods and results of using art and craft therapy with developmentally disabled adults.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('artstd', 614, 'Drawing Master Class', 5, 'For fine arts majors only, an intensive studio study including field trips to local parks and museums and a final group art show.');
+    ('stdart', 614, 'Drawing Master Class', 5, 'For fine arts majors only, an intensive studio study including field trips to local parks and museums and a final group art show.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('artstd', 509, 'Twentieth Century Printmaking', 4, 'Development of personalized concepts and individual aesthetic expression in printmaking with reference to various styles and trends in Twentieth Century printmaking.');
+    ('stdart', 509, 'Twentieth Century Printmaking', 4, 'Development of personalized concepts and individual aesthetic expression in printmaking with reference to various styles and trends in Twentieth Century printmaking.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('artstd', 333, 'Drawing', 3, 'Exploration of the structure and interrelationships of visual form in drawing, painting, and sculpture. Principal historical modes of drawing are examined.');
+    ('stdart', 333, 'Drawing', 3, 'Exploration of the structure and interrelationships of visual form in drawing, painting, and sculpture. Principal historical modes of drawing are examined.');
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('tched', 122, 'Theory and Practice of Early Childhood Education', 3, 'Emphasis on the skills and processes needed for the design and implementation of optimal learning environments. Exploration of issues related to societal and cultural influences on the education of young children.');
 INSERT INTO course (department, number, title, credits, description) VALUES
@@ -376,7 +383,7 @@ INSERT INTO course (department, number, title, credits, description) VALUES
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('edpol', 551, 'Classroom Visit', NULL, 'Elective visit to a local classroom for observation.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('artstd', 119, 'Spring Basket Weaving Workshop', NULL, 'A just-for-fun chance to learn the basics of basket weaving.');
+    ('stdart', 119, 'Spring Basket Weaving Workshop', NULL, 'A just-for-fun chance to learn the basics of basket weaving.');
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('edpol', 313, 'Technology, Society and Schools', 3, 'Examination of theories and history of interaction of society and technology with implications for instructional technology and schooling. Resources for constructing personal definitions of technology.');
 INSERT INTO course (department, number, title, credits, description) VALUES
@@ -390,7 +397,7 @@ INSERT INTO course (department, number, title, credits, description) VALUES
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('corpfi', 601, 'Case Studies in Corporate Finance', 3, 'A course designed to use case studies and financial analysis to further knowledge and ability to make financial management decisions.');
 INSERT INTO course (department, number, title, credits, description) VALUES
-    ('acc', 100, 'Practical Bookkeeping', 2, 'A introduction to business with practical bookkeeping application.');
+    ('acc', 100, 'Practical Bookkeeping', 2, NULL);
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('acc', 200, 'Principles of Accounting I', 3, 'The initial course in the theory and practice of financial accounting. Topics emphasized include the preparation, reporting, and analysis of financial data.');
 INSERT INTO course (department, number, title, credits, description) VALUES
