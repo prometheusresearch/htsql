@@ -1084,7 +1084,7 @@ tests:
         true      |\n |  32214 | Joseph Tan             | m      | 1992-08-01 | egn
         \   | gbuseng  | 2008-01-06 | true      |\n |  32711 | Peter Zajac Jr.        |
         m      | 1994-01-23 | bus    | ucorpfi  | 2009-09-10 | true      |\n |  32718
-        | Raisa Antonov          | f      | 1992-12-09 | egn    | gbe      | 2008-09-15
+        | Raisa Antonova         | f      | 1992-12-09 | egn    | gbe      | 2008-09-15
         | false     |\n |  33278 | Andrea Kaminski        | f      | 1981-04-20 |
         bus    | pcap     | 2009-01-15 | true      |\n |  35163 | Nicola Ralls Jr.
         \      | f      | 1993-06-02 | bus    | uacct    | 2010-01-12 | true      |\n

@@ -37,6 +37,17 @@ tests:
     - uri: /department
     - uri: /program
     - uri: /course
+    - uri: /instructor
+    - uri: /confidential
+    - uri: /appointment
+    - uri: /semester
+    - uri: /class
+    - uri: /student
+    - uri: /enrollment
+    - uri: /prerequisite
+    - uri: /classification
+    - uri: /course_classification
+    - uri: /program_requirement
 
   # Empty and scalar queries.
   - title: Scalar queries

@@ -715,6 +715,1179 @@ tests:
                 "course"."description"
          FROM "course" AS "course"
          ORDER BY 1 ASC, 2 ASC
+    - uri: /instructor
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | instructor                                                                        |
+        -+-----------------------------------------------------------------------------------+-
+         | code         | title | full_name            | phone    | email                    |
+        -+--------------+-------+----------------------+----------+--------------------------+-
+         | acaspar      | dr    | Alesia Caspar        |          |                          |
+         | afrenski     | mr    | Andre Frenski        | 555-1723 | afrenski@example.com     |
+         | alang42      | prof  | Adrian Laang         | 555-0973 | alang42@example.com      |
+         | amiller213   | ms    | Antoinette Miller    | 555-7728 | amiller213@example.com   |
+         | anabib       | prof  | Ashish Nabib         | 555-1667 | anabib@example.com       |
+         | asacco       | prof  | Andrea Sacco         | 555-1381 | asacco@example.com       |
+         | astone77     | mr    | Alan P. Stone        | 555-1738 | astone77@example.com     |
+         | bburling     | prof  | Benjamin Burling     | 555-1823 | bburling@example.com     |
+         | bsacks66     | prof  | Benjamin Sacks       | 555-2212 | bsacks66@example.com     |
+         | cfergus12    | prof  | Adam Ferguson        |          | cfergus12@example.com    |
+         | dbundt31     | dr    | David Bundt          | 555-1553 | dbundt31@example.com     |
+         | dfallon23    | prof  | David N. Fallon      | 555-1666 | dfallon23@example.com    |
+         | dsims51      | mr    | Dante Sims           |          | dsims51@example.com      |
+         | egasner      | dr    | Ernst Gasner         | 555-6652 | egasner@example.com      |
+         | elhill4      | dr    | Ellen Last Hill      | 555-1995 | ehill4@example.com       |
+         | emurphy55    | prof  | Erin L. Murphy       |          | emurphy55@example.com    |
+         | evargas112   | prof  | Elena Vargas         | 555-1572 | evargas112@example.com   |
+         | hbarone      | prof  | Harold Barone        | 555-0911 | hbarone@example.com      |
+         | hbenmahem    | mr    | Hani Ben-Mahem       | 555-1827 | hbenmahem@example.com    |
+         | icampbell12  | prof  | Ian W. Campbell      | 555-2275 | icampbell12@example.com  |
+         | jconnell51   | dr    | Jamie Connell        | 555-2157 | jconnell51@example.com   |
+         | jflug29      | dr    | Jason Flug           | 555-6672 | jflug23@example.com      |
+         | kcavallaro   | prof  | Katherine Cavallaro  | 555-4325 | kvallaro@example.com     |
+         | kmaas11      | prof  | Kari Maas            | 555-1027 | kmaas11@example.com      |
+         | kmarkman     | ms    | Kristen Maison       |          | kmarkman@example.com     |
+         | kmurray44    | mr    | Kevin Murray         | 555-1753 | kmurray44@example.com    |
+         | lbrooks61    | prof  | Lynn L. Brooks       | 555-8872 | lbrooks61@example.com    |
+         | lmcooper11   | prof  | Louisa M. Cooper     | 555-2112 | lmscooper11@example.com  |
+         | mbyer55      | prof  | Michael L. Byer      | 555-1287 |                          |
+         | mcardana     | prof  | Maximo Cardana       | 555-1738 | mcardana@example.com     |
+         | mscott51     | prof  | Mindy Scott          | 555-3521 | mscott51@example.com     |
+         | pblum21      | ms    | Petra Blum           | 555-2873 | pblum21@example.com      |
+         | rrosenfeld31 | ms    | Rebecca L. Rosenfeld | 555-8816 | rrosenfeld31@example.com |
+         | sbadhreya    | prof  | Said Badhreya        | 555-2873 | sbadhreya@example.com    |
+         | sbyrne202    | ms    | Susan Byrne          | 555-9002 |                          |
+         | srandrews    | mr    | Stuart Andrews       | 555-2113 | srandrews@example.com    |
+         | tobrien21    | prof  | Timothy O'Brien      |          | tobrien21@example.com    |
+         | vball77      | ms    | Vivienne Ball        | 555-2830 |                          |
+         | wyu112       | mr    | Walter Yu            | 555-2954 | wyu112@example.com       |
+                                                                                     (39 rows)
+
+         ----
+         /instructor
+         SELECT "instructor"."code",
+                "instructor"."title",
+                "instructor"."full_name",
+                "instructor"."phone",
+                "instructor"."email"
+         FROM "instructor" AS "instructor"
+         ORDER BY 1 ASC
+    - uri: /confidential
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | confidential                                           |
+        -+--------------------------------------------------------+-
+         | instructor   | SSN         | pay_grade | home_phone    |
+        -+--------------+-------------+-----------+---------------+-
+         | afrenski     | 987-65-4321 | 4         |               |
+         | alang42      | 788-33-0000 | 6         | 702-555-1721  |
+         | amiller213   | 987-65-4324 | 7         | 452-555-7728  |
+         | anabib       | 787-22-0000 | 7         | 702-55-1627   |
+         | asacco       | 783-78-0000 | 5         | 702-555-1692  |
+         | astone77     | 688-33-0000 | 8         | 702-555-0173  |
+         | bburling     | 672-88-0000 | 5         |               |
+         | bsacks66     | 782-78-0000 | 7         | 202-555-7283  |
+         | cfergus12    | 987-65-4320 | 6         | 702-555-1738  |
+         | dbundt31     | 000-53-2873 | 7         | 202-555-1738  |
+         | dfallon23    | 274-66-0000 | 4         | 702-555-1778  |
+         | dsims51      | 987-65-4325 | 5         | 452-555-9273  |
+         | egasner      | 784-44-0000 | 8         | 702-555-8995  |
+         | elhill4      | 933-55-0000 | 4         | 702-555-8829  |
+         | emurphy55    | 787-22-0000 | 8         | 452-555-7849  |
+         | hbarone      | 511-66-0000 | 4         | 702-555-1089  |
+         | hbenmahem    | 674-57-0000 | 4         | 702-555-0115  |
+         | icampbell12  | 000-52-8758 | 5         |               |
+         | jconnell51   | 717-67-0000 | 8         | 702-555-1672  |
+         | jflug29      | 578-41-0000 | 6         | 702-555-7727  |
+         | kcavallaro   | 123-74-0000 | 5         | 702-555-1670  |
+         | kmaas11      | 371-55-0000 | 7         | 702-555-1875  |
+         | kmarkman     | 000-72-1875 | 4         | 702-555-8211  |
+         | kmurray44    | 152-62-0000 | 7         | 702-555-6612  |
+         | lbrooks61    | 673-11-0000 | 8         | 452-555-7276  |
+         | lmcooper11   | 987-65-4329 | 8         | 702-555-9992  |
+         | mbyer55      | 000-22-4320 | 6         | 452-555-7311  |
+         | mscott51     | 126-33-0000 | 7         | 702-555-7819  |
+         | pblum21      | 000-33-2783 | 5         | 702-555-6522  |
+         | rrosenfeld31 | 857-22-0000 | 7         | 702-555-0989  |
+         | sbadhreya    | 987-65-4328 | 4         | 702-555-66738 |
+         | sbyrne202    | 987-65-4327 | 5         | 617-555-8382  |
+         | srandrews    | 987-65-4326 | 8         | 702-555-3627  |
+         | tobrien21    | 000-38-2875 | 4         |               |
+         | vball77      | 799-11-0000 | 4         | 702-555-1425  |
+         | wyu112       | 987-65-4323 | 5         | 702-555-2954  |
+                                                          (36 rows)
+
+         ----
+         /confidential
+         SELECT "confidential"."instructor",
+                "confidential"."SSN",
+                "confidential"."pay_grade",
+                "confidential"."home_phone"
+         FROM "confidential" AS "confidential"
+         ORDER BY 1 ASC
+    - uri: /appointment
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | appointment                         |
+        -+-------------------------------------+-
+         | department | instructor   | percent |
+        -+------------+--------------+---------+-
+         | acc        | dfallon23    | 1       |
+         | arthis     | emurphy55    | 0.5     |
+         | arthis     | icampbell12  | 1       |
+         | astro      | asacco       |         |
+         | astro      | cfergus12    | 0.5     |
+         | astro      | kmaas11      |         |
+         | be         | hbarone      | 0.5     |
+         | be         | pblum21      | 0.5     |
+         | capmrk     | jflug29      | 1       |
+         | chem       | bsacks66     | 1       |
+         | chem       | evargas112   | 1       |
+         | chem       | hbenmahem    | 0.5     |
+         | comp       | anabib       | 0.5     |
+         | comp       | sbadhreya    | 1       |
+         | corpfi     | astone77     | 1       |
+         | edpol      | kmarkman     | 1       |
+         | edpol      | rrosenfeld31 | 1       |
+         | ee         | alang42      | 1       |
+         | ee         | lmcooper11   | 1       |
+         | eng        | mcardana     |         |
+         | eng        | wyu112       | 0.5     |
+         | hist       | dsims51      | 0.5     |
+         | hist       | vball77      | 1       |
+         | lang       | amiller213   | 1       |
+         | lang       | jconnell51   | 1       |
+         | me         | kcavallaro   | 1       |
+         | me         | mbyer55      | 1       |
+         | phys       | afrenski     | 1       |
+         | phys       | bburling     | 1       |
+         | phys       | mscott51     | 1       |
+         | poli       | lbrooks61    | 0.5     |
+         | poli       | sbyrne202    | 1       |
+         | psych      | kmurray44    | 1       |
+         | psych      | srandrews    | 1       |
+         | stdart     | acaspar      | 1       |
+         | stdart     | egasner      | 1       |
+         | tched      | dbundt31     | 0.5     |
+         | tched      | elhill4      | 1       |
+                                       (38 rows)
+
+         ----
+         /appointment
+         SELECT "appointment"."department",
+                "appointment"."instructor",
+                "appointment"."percent"
+         FROM "appointment" AS "appointment"
+         ORDER BY 1 ASC, 2 ASC
+    - uri: /semester
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | semester                                |
+        -+-----------------------------------------+-
+         | year | season | begin_date | end_date   |
+        -+------+--------+------------+------------+-
+         | 2009 | fall   | 2009-08-15 | 2009-12-31 |
+         | 2009 | spring | 2010-01-01 | 2010-05-15 |
+         | 2009 | summer | 2010-06-01 | 2010-08-01 |
+         | 2010 | fall   | 2010-08-15 | 2010-12-31 |
+         | 2010 | spring | 2011-01-01 | 2011-05-15 |
+         | 2010 | summer | 2011-06-01 | 2011-08-01 |
+         | 2011 | fall   | 2011-08-15 | 2011-12-31 |
+         | 2011 | spring | 2012-01-01 | 2012-05-15 |
+         | 2011 | summer | 2012-06-01 | 2012-08-01 |
+         | 2012 | fall   | 2012-08-15 | 2012-12-31 |
+         | 2012 | spring | 2013-01-01 | 2013-05-15 |
+         | 2012 | summer | 2013-06-01 | 2013-08-01 |
+                                           (12 rows)
+
+         ----
+         /semester
+         SELECT "semester"."year",
+                "semester"."season",
+                "semester"."begin_date",
+                "semester"."end_date"
+         FROM "semester" AS "semester"
+         ORDER BY 1 ASC, 2 ASC
+    - uri: /class
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | class                                                                    |
+        -+--------------------------------------------------------------------------+-
+         | department | course | year | season | section | instructor   | class_seq |
+        -+------------+--------+------+--------+---------+--------------+-----------+-
+         | acc        |    200 | 2010 | summer | 001     | dfallon23    |     10086 |
+         | acc        |    315 | 2011 | fall   | 003     | dfallon23    |     10087 |
+         | acc        |    426 | 2011 | fall   | 001     | dfallon23    |     10088 |
+         | acc        |    527 | 2011 | spring | 001     | dfallon23    |     10089 |
+         | acc        |    606 | 2011 | spring | 001     | dfallon23    |     10090 |
+         | arthis     |    202 | 2011 | fall   | 003     | emurphy55    |     10063 |
+         | arthis     |    340 | 2011 | spring | 001     | icampbell12  |     10065 |
+         | arthis     |    623 | 2009 | fall   | 002     | icampbell12  |     10068 |
+         | arthis     |    710 | 2011 | spring | 001     | emurphy55    |     10066 |
+         | arthis     |    712 | 2011 | fall   | 001     | icampbell12  |     10064 |
+         | arthis     |    809 | 2011 | summer | 001     | emurphy55    |     10067 |
+         | astro      |    137 | 2009 | fall   | 001     | egasner      |     10001 |
+         | astro      |    142 | 2009 | spring | 001     | asacco       |     10002 |
+         | astro      |    155 | 2010 | fall   | 001     | cfergus12    |     10003 |
+         | astro      |    254 | 2009 | summer | 002     | cfergus12    |     10004 |
+         | be         |    112 | 2011 | spring | 001     | hbarone      |     10059 |
+         | be         |    308 | 2011 | summer | 002     | hbarone      |     10060 |
+         | be         |    415 | 2010 | spring | 002     | pblum21      |     10061 |
+         | be         |    509 | 2012 | summer | 001     | pblum21      |     10062 |
+         | capmrk     |    712 | 2011 | summer | 001     | jflug29      |     10091 |
+         | capmrk     |    756 | 2011 | spring | 001     | jflug29      |     10094 |
+         | capmrk     |    808 | 2012 | summer | 002     | jflug29      |     10092 |
+         | capmrk     |    818 | 2010 | spring | 002     | jflug29      |     10093 |
+         | chem       |    100 | 2010 | fall   | 002     | bsacks66     |     10005 |
+         | chem       |    110 | 2010 | spring | 001     | evargas112   |     10006 |
+         | chem       |    115 | 2012 | summer | 003     | hbenmahem    |     10007 |
+         | chem       |    314 | 2011 | fall   | 001     | evargas112   |     10008 |
+         | chem       |    655 | 2011 | fall   | 001     | bsacks66     |     10009 |
+         | comp       |    102 | 2010 | spring | 001     | anabib       |     10042 |
+         | comp       |    230 | 2010 | summer | 001     | anabib       |     10043 |
+         | comp       |    350 | 2011 | fall   | 002     | sbadhreya    |     10044 |
+         | comp       |    615 | 2011 | fall   | 002     | sbadhreya    |     10045 |
+         | comp       |    710 | 2011 | spring | 001     | sbadhreya    |     10046 |
+         | comp       |    810 | 2011 | spring | 003     | anabib       |     10047 |
+         | comp       |    819 | 2011 | summer | 001     | anabib       |     10048 |
+         | corpfi     |    234 | 2009 | summer | 001     | astone77     |     10083 |
+         | corpfi     |    404 | 2010 | fall   | 002     | astone77     |     10084 |
+         | corpfi     |    601 | 2012 | summer | 002     | astone77     |     10085 |
+         | edpol      |    202 | 2012 | fall   | 003     | kmarkman     |     10079 |
+         | edpol      |    313 | 2009 | fall   | 001     | kmarkman     |     10080 |
+         | edpol      |    505 | 2009 | spring | 001     | rrosenfeld31 |     10081 |
+         | edpol      |    617 | 2010 | fall   | 001     | rrosenfeld31 |     10082 |
+         | ee         |    107 | 2009 | fall   | 001     | alang42      |     10049 |
+         | ee         |    202 | 2012 | spring | 001     | alang42      |     10050 |
+         | ee         |    412 | 2010 | fall   | 001     | lmcooper11   |     10051 |
+         | ee         |    505 | 2009 | summer | 002     | alang42      |     10052 |
+         | ee         |    615 | 2010 | fall   | 002     | lmcooper11   |     10053 |
+         | eng        |    101 | 2009 | summer | 001     | mcardana     |     10016 |
+         | eng        |    175 | 2010 | summer | 001     | wyu112       |     10019 |
+         | eng        |    247 | 2010 | fall   | 001     | wyu112       |     10017 |
+         | eng        |    276 | 2012 | fall   | 002     | mcardana     |     10020 |
+         | eng        |    311 | 2010 | spring | 001     | wyu112       |     10018 |
+         | eng        |    412 | 2011 | fall   | 002     | mcardana     |     10021 |
+         | hist       |    112 | 2011 | spring | 001     | dsims51      |     10022 |
+         | hist       |    212 | 2011 | spring | 003     | vball77      |     10023 |
+         | hist       |    333 | 2009 | spring | 001     | dsims51      |     10026 |
+         | hist       |    415 | 2012 | fall   | 001     | dsims51      |     10024 |
+         | hist       |    505 | 2009 | fall   | 001     | vball77      |     10025 |
+         | lang       |    201 | 2010 | fall   | 001     | amiller213   |     10027 |
+         | lang       |    203 | 2012 | spring | 002     | amiller213   |     10028 |
+         | lang       |    207 | 2010 | spring | 001     | jconnell51   |     10030 |
+         | lang       |    304 | 2010 | fall   | 002     | jconnell51   |     10029 |
+         | lang       |    305 | 2010 | summer | 003     | jconnell51   |     10031 |
+         | me         |    111 | 2010 | spring | 001     | kcavallaro   |     10054 |
+         | me         |    344 | 2010 | summer | 003     | kcavallaro   |     10055 |
+         | me         |    501 | 2012 | fall   | 001     | mbyer55      |     10056 |
+         | me         |    627 | 2011 | fall   | 001     | mbyer55      |     10057 |
+         | me         |    712 | 2011 | spring | 001     | mbyer55      |     10058 |
+         | phys       |    211 | 2011 | spring | 001     | afrenski     |     10010 |
+         | phys       |    303 | 2012 | fall   | 001     | bburling     |     10011 |
+         | phys       |    388 | 2011 | summer | 002     | mscott51     |     10012 |
+         | phys       |    512 | 2009 | fall   | 002     | afrenski     |     10013 |
+         | phys       |    713 | 2009 | spring | 001     | bburling     |     10014 |
+         | phys       |    819 | 2010 | fall   | 003     | bsacks66     |     10015 |
+         | poli       |    113 | 2009 | fall   | 002     | lbrooks61    |     10037 |
+         | poli       |    347 | 2012 | spring | 001     | lbrooks61    |     10038 |
+         | poli       |    402 | 2010 | fall   | 003     | sbyrne202    |     10039 |
+         | poli       |    431 | 2010 | fall   | 001     | sbyrne202    |     10041 |
+         | poli       |    644 | 2009 | summer | 001     | sbyrne202    |     10040 |
+         | psych      |    102 | 2011 | fall   | 001     | kmurray44    |     10032 |
+         | psych      |    304 | 2011 | fall   | 001     | srandrews    |     10033 |
+         | psych      |    450 | 2011 | spring | 001     | srandrews    |     10034 |
+         | psych      |    560 | 2012 | fall   | 001     | kmurray44    |     10035 |
+         | psych      |    610 | 2011 | summer | 002     | kmurray44    |     10036 |
+         | stdart     |    333 | 2010 | spring | 001     | acaspar      |     10073 |
+         | stdart     |    411 | 2009 | spring | 002     | acaspar      |     10069 |
+         | stdart     |    509 | 2012 | summer | 001     | acaspar      |     10072 |
+         | stdart     |    512 | 2010 | fall   | 001     | egasner      |     10070 |
+         | stdart     |    614 | 2009 | summer | 003     | egasner      |     10071 |
+         | tched      |    122 | 2010 | summer | 001     | dbundt31     |     10074 |
+         | tched      |    155 | 2011 | fall   | 001     | elhill4      |     10075 |
+         | tched      |    367 | 2011 | fall   | 002     | elhill4      |     10076 |
+         | tched      |    501 | 2011 | spring | 002     | dbundt31     |     10077 |
+         | tched      |    609 | 2011 | spring | 001     | dbundt31     |     10078 |
+                                                                            (94 rows)
+
+         ----
+         /class
+         SELECT "class"."department",
+                "class"."course",
+                "class"."year",
+                "class"."season",
+                "class"."section",
+                "class"."instructor",
+                "class"."class_seq"
+         FROM "class" AS "class"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
+    - uri: /student
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: " | student                                                                                            |\n-+----------------------------------------------------------------------------------------------------+-\n
+        | number | name                   | gender | dob        | school | program
+        \ | start_date | is_active |\n-+--------+------------------------+--------+------------+--------+----------+------------+-----------+-\n
+        |  12328 | Karen Yuen             | f      | 1991-09-10 | ns     | uphys    |
+        2007-05-16 | true      |\n |  12738 | Helmut Dietmark        | m      | 1989-11-27
+        | edu    | psci     | 2008-03-17 | true      |\n |  12837 | Christine Leung
+        \       | f      | 1991-06-06 | egn    | gme      | 2009-08-17 | true      |\n
+        |  13723 | Narissa Maya           | f      | 1992-04-30 | la     | upsych
+        \  | 2007-11-21 | false     |\n |  17283 | Lucy Ryong             | f      |
+        1988-01-25 | edu    | gedu     | 2009-01-27 | true      |\n |  17385 | Valeria
+        Rinaldi        | f      | 1985-09-02 | bus    | pcap     | 2004-09-01 | false
+        \    |\n |  20927 | Glenn L. McNair        | m      | 1987-12-13 | egn    |
+        gee      | 2009-08-23 | true      |\n |  21135 | Luis Riviera Espinoza  |
+        m      | 1993-05-21 | egn    | gbe      | 2010-02-19 | true      |\n |  21166
+        | Laura Elmer Long       | f      | 1991-02-14 | ns     | uastro   | 2009-01-31
+        | true      |\n |  21263 | Ari Ben David          | m      | 1989-03-15 |
+        la     | gengl    | 2006-12-15 | true      |\n |  21837 | Jalene Flambeau
+        \       | f      | 1989-03-23 | art    | gart     | 2010-06-11 | true      |\n
+        |  22313 | James Earl Sims III    | m      | 2002-07-06 | egn    | umech    |
+        2004-08-16 | true      |\n |  23137 | Rachel Feld            | f      | 1992-09-27
+        | ns     | uchem    | 2008-12-23 | true      |\n |  23817 | Benjamin Wen           |
+        m      | 1993-12-16 | la     | uhist    | 2009-01-12 | true      |\n |  24431
+        | Annette Dupree         | f      | 1987-01-28 | egn    | umech    | 2006-01-16
+        | true      |\n |  24672 | Mahesh Basa            | m      | 1995-08-21 |
+        egn    | ucompsci | 2008-04-15 | false     |\n |  25371 | John L. Hanley         |
+        m      | 1990-04-28 | egn    | gbuseng  | 2009-07-15 | true      |\n |  25723
+        | Kumar Suresh           | m      | 1994-09-11 | egn    | ucompsci | 2009-08-23
+        | true      |\n |  26743 | Ulf Knudsen            | m      | 1990-11-14 |
+        ns     | uphys    | 2008-04-27 | true      |\n |  26764 | Bernard Careval
+        \       | m      | 1992-08-23 | art    | gart     | 2008-07-30 | true      |\n
+        |  27138 | Artem Karpov           | m      | 1991-10-16 | egn    | gbe      |
+        2009-08-22 | true      |\n |  27281 | Jos\xE9 N. Marte\xF1es       | m      |
+        1993-11-19 | egn    | ucompsci | 2007-06-15 | true      |\n |  27817 | Niall
+        Crawford         | m      | 1998-12-14 | bus    | pacc     | 2010-01-02 |
+        true      |\n |  28371 | Ken Tanaka             | m      | 1992-11-03 | art
+        \   | gart     | 2010-09-08 | true      |\n |  28382 | Martha O'Mally         |
+        f      | 1995-05-14 | bus    | pacc     | 2005-01-01 | true      |\n |  29301
+        | Eduardo Serrano        | m      | 1991-09-09 | art    | uhist    | 2006-01-14
+        | true      |\n |  29878 | Ellen Lansburgh        | f      | 1992-02-01 |
+        bus    | uacct    | 2008-01-05 | true      |\n |  31331 | Khadija Hamad Azzan
+        \   | f      | 1992-11-26 | ns     | uastro   | 2008-09-21 | false     |\n
+        |  31332 | Dara Subramanya        | f      | 1994-11-16 | la     | upsych
+        \  | 2008-09-10 | true      |\n |  31735 | Demetrios Kanakis      | m      |
+        1995-04-17 | egn    | ucompsci | 2009-05-21 | true      |\n |  31835 | Paavo
+        Kekkonen         | m      | 2000-09-08 | ns     | uphys    | 2008-06-11 |
+        true      |\n |  32214 | Joseph Tan             | m      | 1992-08-01 | egn
+        \   | gbuseng  | 2008-01-06 | true      |\n |  32711 | Peter Zajac Jr.        |
+        m      | 1994-01-23 | bus    | ucorpfi  | 2009-09-10 | true      |\n |  32718
+        | Raisa Antonova         | f      | 1992-12-09 | egn    | gbe      | 2008-09-15
+        | false     |\n |  33278 | Andrea Kaminski        | f      | 1981-04-20 |
+        bus    | pcap     | 2009-01-15 | true      |\n |  35163 | Nicola Ralls Jr.
+        \      | f      | 1993-06-02 | bus    | uacct    | 2010-01-12 | true      |\n
+        |  35183 | Teisha Worth Day       | f      | 1983-12-31 | edu    | gedlead
+        \ | 2009-08-21 | true      |\n |  35523 | Nikki Agbo             | m      |
+        1985-05-05 | la     | gengl    | 2006-02-25 | true      |\n |  35572 | Corinna
+        Ellis          | f      | 1995-07-22 | edu    | glited   | 2007-05-14 | true
+        \     |\n |  36446 | Milton Mahanga         | m      | 1991-11-06 | art    |
+        gart     | 2009-05-05 | true      |\n |  37182 | Amy Yang               |
+        f      | 1992-12-17 | ns     | uphys    | 2002-08-10 | false     |\n |  37278
+        | Ming Wang              | m      | 1988-03-15 | la     | gengl    | 2002-11-27
+        | false     |\n |  37283 | Janine Sylvia          | f      | 1993-12-02 |
+        ns     | uastro   | 2009-08-14 | true      |\n |  37744 | Scott Blank            |
+        m      | 1988-06-12 | bus    | ucorpfi  | 2007-12-15 | true      |\n |  37855
+        | Amina N. Elsaeed       | f      | 1987-10-29 | la     | uhist    | 2005-09-02
+        | true      |\n |  38187 | Mary Ann Flenderson    | f      | 1993-05-16 |
+        ns     | uphys    | 2010-08-26 | true      |\n |  38721 | Alicia Montez-Galliano
+        | f      | 1994-07-11 | ns     | uchem    | 2010-09-10 | true      |\n |  38794
+        | Bailey Melvin          | m      | 1988-03-13 | la     | psciwri  | 2005-04-20
+        | true      |\n |  43278 | Trina Wood Campbell    | f      | 1990-02-12 |
+        egn    | gme      | 2007-09-01 | true      |\n |  57382 | Paul Duncan Ulam
+        \      | m      | 2001-05-05 | la     | uspan    | 2009-05-21 | true      |\n
+        |  92039 | Syed Ishaq             | m      | 1992-10-23 | art    | gart     |
+        2010-09-02 | true      |\n                                                                                              (51
+        rows)\n\n ----\n /student\n SELECT \"student\".\"number\",\n        \"student\".\"name\",\n
+        \       \"student\".\"gender\",\n        \"student\".\"dob\",\n        \"student\".\"school\",\n
+        \       \"student\".\"program\",\n        \"student\".\"start_date\",\n        \"student\".\"is_active\"\n
+        FROM \"student\" AS \"student\"\n ORDER BY 1 ASC\n"
+    - uri: /enrollment
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | enrollment                       |
+        -+----------------------------------+-
+         | student | class | status | grade |
+        -+---------+-------+--------+-------+-
+         |   25371 | 10051 | enr    | 3.7   |
+         |   25371 | 10086 | ngr    |       |
+         |   29878 | 10086 | inc    |       |
+         |   37278 | 10018 | enr    | 2.6   |
+         |   92039 | 10071 | enr    | 3.1   |
+                                     (5 rows)
+
+         ----
+         /enrollment
+         SELECT "enrollment"."student",
+                "enrollment"."class",
+                "enrollment"."status",
+                "enrollment"."grade"
+         FROM "enrollment" AS "enrollment"
+         ORDER BY 1 ASC, 2 ASC
+    - uri: /prerequisite
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | prerequisite                                          |
+        -+-------------------------------------------------------+-
+         | of_department | of_course | on_department | on_course |
+        -+---------------+-----------+---------------+-----------+-
+         | acc           |       527 | acc           |       200 |
+         | arthis        |       710 | arthis        |       202 |
+         | astro         |       142 | astro         |       137 |
+         | be            |       415 | be            |       112 |
+         | capmrk        |       818 | acc           |       315 |
+         | chem          |       110 | chem          |       100 |
+         | chem          |       314 | chem          |       115 |
+         | comp          |       710 | comp          |       102 |
+         | corpfi        |       601 | corpfi        |       404 |
+         | edpol         |       313 | edpol         |       202 |
+         | ee            |       412 | ee            |       107 |
+         | eng           |       412 | eng           |       276 |
+         | hist          |       212 | hist          |       112 |
+         | lang          |       203 | lang          |       201 |
+         | lang          |       305 | lang          |       207 |
+         | me            |       344 | me            |       111 |
+         | phys          |       303 | phys          |       211 |
+         | phys          |       713 | phys          |       512 |
+         | poli          |       402 | poli          |       113 |
+         | stdart        |       614 | stdart        |       333 |
+         | tched         |       609 | tched         |       122 |
+                                                         (21 rows)
+
+         ----
+         /prerequisite
+         SELECT "prerequisite"."of_department",
+                "prerequisite"."of_course",
+                "prerequisite"."on_department",
+                "prerequisite"."on_course"
+         FROM "prerequisite" AS "prerequisite"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC
+    - uri: /classification
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | classification                                                                                                       |
+        -+----------------------------------------------------------------------------------------------------------------------+-
+         | code            | type       | title                            | description                      | part_of         |
+        -+-----------------+------------+----------------------------------+----------------------------------+-----------------+-
+         | accounting      | department | Accounting                       |                                  | financial       |
+         | algebra         | department | Abstract Algebra                 |                                  | math            |
+         | amhistory       | department | American History                 |                                  | humanities      |
+         | analysis        | department | Real and Complex Analysis        |                                  | math            |
+         | ancient         | department | Ancient Art                      |                                  | arthistory      |
+         | anclanguage     | department | Ancient Languages                |                                  | language        |
+         | artbus          | department | Business of Art                  |                                  | arthistory      |
+         | artdesign       | university | Art and Design                   |                                  |                 |
+         | arthistory      | school     | Art                              |                                  | humanities      |
+         | artstudio       | school     | Studio Art                       |                                  | artdesign       |
+         | astrolab        | department | Astronomy Laboratory             |                                  | astronomy       |
+         | astronomy       | school     | Astronomy                        |                                  | science         |
+         | astrotheory     | department | Astrophysics Theory              |                                  | astronomy       |
+         | be              | school     | Biomedical Engineering           |                                  | engineering     |
+         | beclinical      | department | Clinical Engineering             |                                  | be              |
+         | begeneral       | department | General Biomedical Engineering   |                                  | be              |
+         | behpsych        | department | Behavioral Science               |                                  | psychology      |
+         | biomaterials    | department | Biomaterials                     |                                  | be              |
+         | business        | university | Business                         |                                  |                 |
+         | chemcomputation | department | Algorithms and Data              |                                  | chemistry       |
+         :                 :            : Visualization for Chemists       :                                  :                 :
+         | chemistry       | school     | Chemistry                        |                                  | science         |
+         | chemlab         | department | Chemistry Laboratory             |                                  | chemistry       |
+         | chemtheory      | department | Theoretical Chemistry            |                                  | chemistry       |
+         | chipsych        | department | Child Psychology and Development |                                  | psychology      |
+         | classical       | department | Classical Art                    |                                  | ancient         |
+         | cogpsych        | department | Cognitive Science                |                                  | psychology      |
+         | compai          | department | Artificial Intelligence          |                                  | compsci         |
+         | compsci         | school     | Computer Science                 |                                  | engineering     |
+         | comptheory      | department | Computationial Science           |                                  | compsci         |
+         | cross           |            | Cross-Cutting Requirements       |                                  |                 |
+         | digital         | school     | Digital Media                    |                                  | artdesign       |
+         | dischistory     | department | Interdisciplinary History        |                                  | humanities      |
+         | diversity       | university | Region and Ethnic Diversity      | Courses which provide a rich     | cross           |
+         :                 :            :                                  : exposure to foreign cultures and :                 :
+         :                 :            :                                  : regions qualify for this         :                 :
+         :                 :            :                                  : classification.                  :                 :
+         | drawing         | department | Drawing                          |                                  | artstudio       |
+         | earlyed         | department | Early Education                  |                                  | teached         |
+         | eastern         | department | Near Eastern Art                 |                                  | ancient         |
+         | edmanagement    | department | Education Management             |                                  | teached         |
+         | edpol           | school     | Educational Policy               |                                  | education       |
+         | edresearch      | department | Educational Research             |                                  | edpol           |
+         | edstudies       | department | Policy Studies                   |                                  | edpol           |
+         | education       | university | Education                        |                                  |                 |
+         | ee              | school     | Electrical Engineering           |                                  | engineering     |
+         | eecom           | department | Communications                   |                                  | eeconcentration |
+         | eeconcentration | department | EE Concentrations                |                                  | ee              |
+         | eenetworking    | department | Electrical Networking            |                                  | eeconcentration |
+         | eetheory        | department | Electrical Engineering Theory    |                                  | ee              |
+         | engineering     | university | Engineering                      |                                  |                 |
+         | englit          | department | EnglishLanguage Literature       |                                  | humanities      |
+         | ethics          | school     | Business Ethics                  |                                  | business        |
+         | eurohistory     | department | European History                 |                                  | humanities      |
+         | eurolit         | department | European Literature in           |                                  | humanities      |
+         :                 :            : Translation                      :                                  :                 :
+         | fiction         | department | Fiction Writing                  |                                  | literature      |
+         | financial       | school     | Financial Analysis               |                                  | financial       |
+         | french          | department | French                           |                                  | modlanguage     |
+         | german          | department | German                           |                                  | modlanguage     |
+         | government      | department | Government                       |                                  | polisci         |
+         | history         | school     | American and World History       |                                  | humanities      |
+         | humanities      | university | Arts, Letters, and the           |                                  |                 |
+         :                 :            : Humanities                       :                                  :                 :
+         | industrial      | school     | Industrial Design                |                                  | artdesign       |
+         | institutional   | department | Institutional Investment         |                                  | investment      |
+         | intrelations    | department | International Relations          |                                  | polisci         |
+         | investment      | department | Investment                       |                                  | financial       |
+         | journalism      | department | Journalistic Writing             |                                  | literature      |
+         | language        | school     | World Languages                  |                                  | humanities      |
+         | linguistics     | department | Linguistics                      |                                  | language        |
+         | literature      | school     | English and World Literature     |                                  | humanities      |
+         | management      | school     | Management                       |                                  | business        |
+         | markets         | school     | Capital Markets                  |                                  | financial       |
+         | math            | school     | Mathematics                      |                                  | science         |
+         | me              | school     | Mechanical Engineering           |                                  | engineering     |
+         | medesign        | department | Design and Manufacturing         |                                  | me              |
+         | memechanics     | department | Mechanics                        |                                  | me              |
+         | mesystems       | department | Systems and Controls             |                                  | me              |
+         | methods         | department | Teaching Methods                 |                                  | teached         |
+         | modern          | department | Modern Art                       |                                  | arthistory      |
+         | modlanguage     | department | Modern Languages                 |                                  | language        |
+         | nanotech        | department | Nanotechnology                   |                                  | be              |
+         | nonfiction      | department | NonFiction Writing               |                                  | literature      |
+         | nonwesternhist  | department | NonWestern History               |                                  | humanities      |
+         | observation     | department | Observing Skills                 |                                  | astronomy       |
+         | personal        | department | Personal Investment              |                                  | investment      |
+         | physcomputer    | department | Computer Languages for Physics   |                                  | physics         |
+         | physics         | school     | Physics                          |                                  | science         |
+         | physlab         | department | Practical Physics                |                                  | physics         |
+         | phystheory      | department | Theoretical Physics              |                                  | physics         |
+         | poetry          | department | Poetry Writing                   |                                  | literature      |
+         | poliecon        | department | Political Economy                |                                  | polisci         |
+         | polisci         | school     | Political Science                |                                  | humanities      |
+         | power           | department | Power Electronics                |                                  | eeconcentration |
+         | printmaking     | department | Printmaking                      |                                  | artstudio       |
+         | psychology      | school     | Psychology                       |                                  | humanities      |
+         | reasoning       | university | Quantitative Reasoning           | Quantitative resoning courses    | cross           |
+         :                 :            :                                  : focus on numerical analysis to   :                 :
+         :                 :            :                                  : evaluate, describe and justify   :                 :
+         :                 :            :                                  : outcomes of complex decisions.   :                 :
+         | remedial        | university | Remedial Courses                 | Classes for which credit is not  |                 |
+         :                 :            :                                  : typically given for degree       :                 :
+         :                 :            :                                  : programs in the same school;     :                 :
+         :                 :            :                                  : e.g.  College Algebra courses do :                 :
+         :                 :            :                                  : not earn credit for those in the :                 :
+         :                 :            :                                  : School of Natural Science.       :                 :
+         | research        | university | Research Experience              | Research courses focus on the    | cross           |
+         :                 :            :                                  : scientific method to create      :                 :
+         :                 :            :                                  : hypothesis and test them in a    :                 :
+         :                 :            :                                  : structured laboratory            :                 :
+         :                 :            :                                  : environment.                     :                 :
+         | science         | university | Natural Sciences                 |                                  |                 |
+         | sculpture       | department | Sculpture                        |                                  | artstudio       |
+         | signal          | department | Signal Processing                |                                  | eeconcentration |
+         | society         | school     | Art and Society                  |                                  | artdesign       |
+         | softeng         | department | Software Engineering             |                                  | compsci         |
+         | spanish         | department | Spanish                          |                                  | modlanguage     |
+         | statistics      | department | Probability and Statistics       |                                  | math            |
+         | studio          | school     | Studio Arts                      |                                  | artdesign       |
+         | teached         | school     | Teacher Education                |                                  | education       |
+         | writing         | university | Writing Intensive                | Writing intensive courses        | cross           |
+         :                 :            :                                  : involve 3 or more papers per     :                 :
+         :                 :            :                                  : semester; at least one of which  :                 :
+         :                 :            :                                  : is a research paper of 20 pages  :                 :
+         :                 :            :                                  : or more.                         :                 :
+                                                                                                                       (104 rows)
+
+         ----
+         /classification
+         SELECT "classification"."code",
+                "classification"."type",
+                "classification"."title",
+                "classification"."description",
+                "classification"."part_of"
+         FROM "classification" AS "classification"
+         ORDER BY 1 ASC
+    - uri: /course_classification
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | course_classification                |
+        -+--------------------------------------+-
+         | department | course | classification |
+        -+------------+--------+----------------+-
+         | acc        |    100 | remedial       |
+         | acc        |    200 | accounting     |
+         | acc        |    315 | accounting     |
+         | acc        |    426 | accounting     |
+         | acc        |    527 | accounting     |
+         | acc        |    606 | accounting     |
+         | arthis     |    202 | modern         |
+         | arthis     |    340 | eastern        |
+         | arthis     |    623 | diversity      |
+         | arthis     |    623 | modern         |
+         | arthis     |    710 | modern         |
+         | arthis     |    712 | artbus         |
+         | arthis     |    712 | management     |
+         | arthis     |    809 | modern         |
+         | astro      |    137 | astronomy      |
+         | astro      |    142 | astrolab       |
+         | astro      |    155 | observation    |
+         | astro      |    254 | astrotheory    |
+         | be         |    112 | begeneral      |
+         | be         |    308 | begeneral      |
+         | be         |    415 | beclinical     |
+         | be         |    509 | beclinical     |
+         | capmrk     |    712 | markets        |
+         | capmrk     |    756 | markets        |
+         | capmrk     |    808 | institutional  |
+         | capmrk     |    818 | institutional  |
+         | chem       |    100 | remedial       |
+         | chem       |    110 | science        |
+         | chem       |    115 | chemlab        |
+         | chem       |    655 | chemtheory     |
+         | comp       |    102 | remedial       |
+         | comp       |    230 | comptheory     |
+         | comp       |    350 | comptheory     |
+         | comp       |    615 | compai         |
+         | comp       |    710 | softeng        |
+         | comp       |    810 | softeng        |
+         | comp       |    819 | comptheory     |
+         | corpfi     |    234 | financial      |
+         | corpfi     |    404 | financial      |
+         | corpfi     |    601 | financial      |
+         | edpol      |    202 | edresearch     |
+         | edpol      |    313 | amhistory      |
+         | edpol      |    313 | edresearch     |
+         | edpol      |    505 | edresearch     |
+         | edpol      |    551 | edresearch     |
+         | edpol      |    617 | edstudies      |
+         | ee         |    107 | eetheory       |
+         | ee         |    202 | eetheory       |
+         | ee         |    412 | eetheory       |
+         | ee         |    505 | eetheory       |
+         | ee         |    615 | eecom          |
+         | eng        |    101 | remedial       |
+         | eng        |    175 | journalism     |
+         | eng        |    175 | writing        |
+         | eng        |    247 | eurolit        |
+         | eng        |    276 | nonfiction     |
+         | eng        |    276 | writing        |
+         | eng        |    311 | nonfiction     |
+         | eng        |    412 | nonfiction     |
+         | eng        |    412 | writing        |
+         | hist       |    112 | amhistory      |
+         | hist       |    212 | amhistory      |
+         | hist       |    333 | dischistory    |
+         | hist       |    415 | dischistory    |
+         | hist       |    415 | diversity      |
+         | hist       |    415 | earlyed        |
+         | lang       |    201 | modlanguage    |
+         | lang       |    203 | modlanguage    |
+         | lang       |    207 | earlyed        |
+         | lang       |    207 | linguistics    |
+         | lang       |    305 | linguistics    |
+         | me         |    111 | memechanics    |
+         | me         |    344 | memechanics    |
+         | me         |    501 | mesystems      |
+         | me         |    627 | memechanics    |
+         | me         |    712 | industrial     |
+         | me         |    712 | medesign       |
+         | mth        |    101 | remedial       |
+         | phys       |    211 | science        |
+         | phys       |    303 | phystheory     |
+         | phys       |    388 | physlab        |
+         | phys       |    388 | reasoning      |
+         | phys       |    512 | phystheory     |
+         | phys       |    713 | phystheory     |
+         | phys       |    819 | phystheory     |
+         | poli       |    113 | government     |
+         | poli       |    402 | government     |
+         | poli       |    431 | government     |
+         | poli       |    644 | intrelations   |
+         | poli       |    715 | intrelations   |
+         | psych      |    102 | remedial       |
+         | psych      |    304 | cogpsych       |
+         | psych      |    304 | reasoning      |
+         | psych      |    450 | behpsych       |
+         | psych      |    560 | cogpsych       |
+         | psych      |    560 | compai         |
+         | psych      |    610 | chipsych       |
+         | psych      |    610 | earlyed        |
+         | psych      |    610 | research       |
+         | stdart     |    119 | sculpture      |
+         | stdart     |    333 | drawing        |
+         | stdart     |    411 | physlab        |
+         | stdart     |    411 | sculpture      |
+         | stdart     |    509 | printmaking    |
+         | stdart     |    512 | society        |
+         | stdart     |    614 | drawing        |
+         | stdart     |    714 | drawing        |
+         | tched      |    122 | earlyed        |
+         | tched      |    155 | methods        |
+         | tched      |    367 | edmanagement   |
+         | tched      |    367 | management     |
+         | tched      |    501 | earlyed        |
+         | tched      |    609 | earlyed        |
+                                       (113 rows)
+
+         ----
+         /course_classification
+         SELECT "course_classification"."department",
+                "course_classification"."course",
+                "course_classification"."classification"
+         FROM "course_classification" AS "course_classification"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC
+    - uri: /program_requirement
+      status: 200 OK
+      headers:
+      - [Content-Type, text/plain; charset=UTF-8]
+      body: |2
+         | program_requirement                                                                   |
+        -+---------------------------------------------------------------------------------------+-
+         | school | program  | classification  | credit_hours | rationale                        |
+        -+--------+----------+-----------------+--------------+----------------------------------+-
+         | art    | gart     | arthistory      |           20 | Candidates for the Post          |
+         :        :          :                 :              : Baccalaureate in Art History     :
+         :        :          :                 :              : must complete a minimum number   :
+         :        :          :                 :              : of core art history courses.     :
+         | art    | uhist    | arthistory      |           14 | Students in the undergraduate    |
+         :        :          :                 :              : Art History program are required :
+         :        :          :                 :              : to take 9 credit hours of        :
+         :        :          :                 :              : elective classes in art history. :
+         | art    | uhist    | classical       |            9 | Students in the undergraduate    |
+         :        :          :                 :              : Art History program are required :
+         :        :          :                 :              : to take 9 credit hours of study  :
+         :        :          :                 :              : of classical art.                :
+         | art    | uhist    | eastern         |            6 | Students in the undergraduate    |
+         :        :          :                 :              : Art History program are required :
+         :        :          :                 :              : to take 9 credit hours of study  :
+         :        :          :                 :              : of eastern art.                  :
+         | art    | uhist    | modern          |            9 | Students in the undergraduate    |
+         :        :          :                 :              : Art History program are required :
+         :        :          :                 :              : to take 9 credit hours of study  :
+         :        :          :                 :              : of modern art.                   :
+         | art    | ustudio  | artstudio       |           24 | Students in the undergraduate    |
+         :        :          :                 :              : Studio Art program will          :
+         :        :          :                 :              : concentrate on their selected    :
+         :        :          :                 :              : studio discipline.               :
+         | art    | ustudio  | digital         |            6 | All Studio Art undergraduate     |
+         :        :          :                 :              : students must take a minimum of  :
+         :        :          :                 :              : 6 hours of credit in Digital     :
+         :        :          :                 :              : Art.                             :
+         | art    | ustudio  | drawing         |            8 | All Studio Art undergraduate     |
+         :        :          :                 :              : students must take a minimum 8   :
+         :        :          :                 :              : hours of credit in freehand      :
+         :        :          :                 :              : drawing.                         :
+         | art    | ustudio  | society         |            6 | All Studio Art undergraduate     |
+         :        :          :                 :              : students must take a minimum of  :
+         :        :          :                 :              : 6 hours of credit in Art &       :
+         :        :          :                 :              : Society.                         :
+         | bus    | pacc     | accounting      |           20 | Requirements for the Graduate    |
+         :        :          :                 :              : Certificate in Accounting        :
+         :        :          :                 :              : require a minimum number of      :
+         :        :          :                 :              : credit hours in accounting and   :
+         :        :          :                 :              : accounting theory.               :
+         | bus    | pcap     | markets         |           20 | Requirements for the Certificate |
+         :        :          :                 :              : in Capital Markets include       :
+         :        :          :                 :              : completion of a minimum number   :
+         :        :          :                 :              : of credit hours in markets       :
+         :        :          :                 :              : topics.                          :
+         | bus    | uacct    | accounting      |           24 | Students pursuing the B.S. in    |
+         :        :          :                 :              : Accounting will take the         :
+         :        :          :                 :              : majority of their credit hours   :
+         :        :          :                 :              : in accounting.                   :
+         | bus    | uacct    | analysis        |            8 | Students pursuing the B.S. in    |
+         :        :          :                 :              : Accounting must take at least 8  :
+         :        :          :                 :              : credit hours of relevant         :
+         :        :          :                 :              : mathematics.                     :
+         | bus    | uacct    | ethics          |           12 | Students pursuing any            |
+         :        :          :                 :              : undergraduate degree in business :
+         :        :          :                 :              : will be required to meet a core  :
+         :        :          :                 :              : requirement in business ethics.  :
+         | bus    | uacct    | investment      |            8 | Students pursuing the B.S. in    |
+         :        :          :                 :              : Accounting must take at least 8  :
+         :        :          :                 :              : credit hours in general          :
+         :        :          :                 :              : investment topics.               :
+         | bus    | ubusad   | ethics          |           12 | Students pursuing any            |
+         :        :          :                 :              : undergraduate degree in business :
+         :        :          :                 :              : will be required to meet a core  :
+         :        :          :                 :              : requirement in business ethics.  :
+         | bus    | ubusad   | management      |           24 | B.S. students in Business        |
+         :        :          :                 :              : Administration will focus on     :
+         :        :          :                 :              : corporate management.            :
+         | bus    | ucorpfi  | accounting      |           10 | Students pursuing the B.S. in    |
+         :        :          :                 :              : Corporate Finance must take a    :
+         :        :          :                 :              : minimum of 10 credit hours in    :
+         :        :          :                 :              : accounting.                      :
+         | bus    | ucorpfi  | ethics          |           12 | Students pursuing any            |
+         :        :          :                 :              : undergraduate degree in business :
+         :        :          :                 :              : will be required to meet a core  :
+         :        :          :                 :              : requirement in business ethics.  :
+         | bus    | ucorpfi  | financial       |           18 | Students pursuing the B.S. in    |
+         :        :          :                 :              : Corporate Finance will take the  :
+         :        :          :                 :              : majority of their credit hours   :
+         :        :          :                 :              : in general financial classes.    :
+         | bus    | ucorpfi  | management      |            6 | Students pursuing the B.S. in    |
+         :        :          :                 :              : Corporate Finance must take a    :
+         :        :          :                 :              : minimum number of credits in     :
+         :        :          :                 :              : corporate management.            :
+         | edu    | gedlead  | edpol           |           20 | Candidates for the Master of     |
+         :        :          :                 :              : Arts in Educational Leadership   :
+         :        :          :                 :              : will concentrate in educational  :
+         :        :          :                 :              : policy.                          :
+         | edu    | gedlead  | management      |            8 | Candidates for the Master of     |
+         :        :          :                 :              : Arts in Educational Leadership   :
+         :        :          :                 :              : will take a minimum number of    :
+         :        :          :                 :              : credit hours in management at    :
+         :        :          :                 :              : the School of Business.          :
+         | edu    | gedu     | edresearch      |           22 | Candidates for the Master of     |
+         :        :          :                 :              : Science in Education will focus  :
+         :        :          :                 :              : on a core requirement of         :
+         :        :          :                 :              : educationrelated research        :
+         :        :          :                 :              : leading up to the master's       :
+         :        :          :                 :              : thesis.                          :
+         | edu    | glited   | teached         |           28 | Candidates for the Master of     |
+         :        :          :                 :              : Arts in Literacy Education will  :
+         :        :          :                 :              : take the majority of their       :
+         :        :          :                 :              : credit hours in teacher          :
+         :        :          :                 :              : education, focusing on literacy. :
+         | edu    | gtch     | teached         |           28 | Candidates for the Master of     |
+         :        :          :                 :              : Arts in Teaching will            :
+         :        :          :                 :              : concentrate on the study of      :
+         :        :          :                 :              : teaching methods in their chosen :
+         :        :          :                 :              : concentration.                   :
+         | edu    | psci     | methods         |           12 | Candidates for the Certificate   |
+         :        :          :                 :              : in Science Teaching are required :
+         :        :          :                 :              : to take a minimum number of      :
+         :        :          :                 :              : credit hours in teaching         :
+         :        :          :                 :              : methods.                         :
+         | edu    | psci     | science         |           12 | Candidates for the Certificate   |
+         :        :          :                 :              : in Science Teaching are required :
+         :        :          :                 :              : to take a minimum number of      :
+         :        :          :                 :              : credit hours in general science. :
+         | edu    | umath    | diversity       |            8 | In acknowledgement of the        |
+         :        :          :                 :              : importance of diversity in       :
+         :        :          :                 :              : education, all candidates for    :
+         :        :          :                 :              : education degrees must take at   :
+         :        :          :                 :              : least 8 credit hours in diverse  :
+         :        :          :                 :              : cultures and history.            :
+         | edu    | umath    | math            |           16 | Bachelor of Arts students in     |
+         :        :          :                 :              : Science Education must take at   :
+         :        :          :                 :              : least 16 hours of general math.  :
+         | edu    | umath    | teached         |           20 | Bachelor of Arts students in     |
+         :        :          :                 :              : Math Education must take at      :
+         :        :          :                 :              : least 20 credit hours of general :
+         :        :          :                 :              : teacher education.               :
+         | edu    | usci     | diversity       |            8 | In acknowledgement of the        |
+         :        :          :                 :              : importance of diversity in       :
+         :        :          :                 :              : education, all candidates for    :
+         :        :          :                 :              : education degrees must take at   :
+         :        :          :                 :              : least 8 credit hours in diverse  :
+         :        :          :                 :              : cultures and history.            :
+         | edu    | usci     | science         |           14 | Bachelor of Arts students in     |
+         :        :          :                 :              : Science Education must take at   :
+         :        :          :                 :              : least 14 hours of general        :
+         :        :          :                 :              : science.                         :
+         | edu    | usci     | teached         |           22 | Bachelor of Arts students in     |
+         :        :          :                 :              : Science Education must take at   :
+         :        :          :                 :              : least 22 credit hours of general :
+         :        :          :                 :              : science education.               :
+         | egn    | gbe      | ee              |           38 | Candidates for the Master of     |
+         :        :          :                 :              : Science in Electrical            :
+         :        :          :                 :              : Engineering must take at least   :
+         :        :          :                 :              : 38 credit hours in graduate      :
+         :        :          :                 :              : electrical engineering.          :
+         | egn    | gbuseng  | business        |           16 | Candidates for the Master of     |
+         :        :          :                 :              : Science in Business and          :
+         :        :          :                 :              : Engineering are required to take :
+         :        :          :                 :              : at least 16 credit hours in      :
+         :        :          :                 :              : general business.                :
+         | egn    | gbuseng  | engineering     |           22 | Candidates for the Master of     |
+         :        :          :                 :              : Science in Business and          :
+         :        :          :                 :              : Engineering are required to take :
+         :        :          :                 :              : at least 22 credit hours in one  :
+         :        :          :                 :              : or more relevant engineering     :
+         :        :          :                 :              : disciplines.                     :
+         | egn    | gee      | ee              |           34 | Candidates for the Master of     |
+         :        :          :                 :              : Science in Electrical            :
+         :        :          :                 :              : Engineering must take at least   :
+         :        :          :                 :              : 34 credit hours in graduate      :
+         :        :          :                 :              : electrical engineering.          :
+         | egn    | gme      | ee              |           36 | Candidates for the Master of     |
+         :        :          :                 :              : Science in Electrical            :
+         :        :          :                 :              : Engineering must take at least   :
+         :        :          :                 :              : 36 credit hours in graduate      :
+         :        :          :                 :              : electrical engineering.          :
+         | egn    | ubio     | be              |           24 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates in Bioengineering are :
+         :        :          :                 :              : expected to take at least 24     :
+         :        :          :                 :              : hours of credit in their area of :
+         :        :          :                 :              : concentrationclinical, nanotech, :
+         :        :          :                 :              : orbiomaterials                   :
+         | egn    | ubio     | compsci         |           12 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates are expected to take  :
+         :        :          :                 :              : at least 12 hours of credit in   :
+         :        :          :                 :              : computer science and/or          :
+         :        :          :                 :              : programming related to their     :
+         :        :          :                 :              : major.                           :
+         | egn    | ubio     | humanities      |           12 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates are expected to take  :
+         :        :          :                 :              : at least 12 hours of credit in   :
+         :        :          :                 :              : general humanities.              :
+         | egn    | ubio     | mesystems       |           10 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates in Bioengineering are :
+         :        :          :                 :              : expected to take at least 9      :
+         :        :          :                 :              : hours of credit in biomaterials, :
+         :        :          :                 :              : regardless of their area of      :
+         :        :          :                 :              : concentration.                   :
+         | egn    | uelec    | compsci         |           12 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates are expected to take  :
+         :        :          :                 :              : at least 12 hours of credit in   :
+         :        :          :                 :              : computer science and/or          :
+         :        :          :                 :              : programming related to their     :
+         :        :          :                 :              : major.                           :
+         | egn    | uelec    | eeconcentration |           22 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates in Electrical         :
+         :        :          :                 :              : Engineering are expected to take :
+         :        :          :                 :              : at least 22 hours of credit in   :
+         :        :          :                 :              : their area of concentration.     :
+         | egn    | uelec    | eetheory        |           18 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates in Electrical         :
+         :        :          :                 :              : Engineering are expected to take :
+         :        :          :                 :              : at least 18 hours of credit in   :
+         :        :          :                 :              : EE theory.                       :
+         | egn    | umech    | compsci         |           12 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates are expected to take  :
+         :        :          :                 :              : at least 12 hours of credit in   :
+         :        :          :                 :              : computer science and/or          :
+         :        :          :                 :              : programming related to their     :
+         :        :          :                 :              : major.                           :
+         | egn    | umech    | humanities      |           12 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates are expected to take  :
+         :        :          :                 :              : at least 12 hours of credit in   :
+         :        :          :                 :              : general humanities.              :
+         | egn    | umech    | me              |           22 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates in Mechanical         :
+         :        :          :                 :              : Engineering are expected to take :
+         :        :          :                 :              : at least 22 hours of credit in   :
+         :        :          :                 :              : their area of                    :
+         :        :          :                 :              : concentrationmechanics, de sign, :
+         :        :          :                 :              : or systems.                      :
+         | egn    | umech    | mesystems       |            9 | Bachelor of Engineering          |
+         :        :          :                 :              : candidates in Mechanical         :
+         :        :          :                 :              : Engineering are expected to take :
+         :        :          :                 :              : at least 9 hours of credit in    :
+         :        :          :                 :              : systems, regardless of their     :
+         :        :          :                 :              : area of concentration.           :
+         | la     | gengl    | literature      |           36 | Candidates for the M.A. in       |
+         :        :          :                 :              : English will take a minimum of   :
+         :        :          :                 :              : 36 credit hours of literature    :
+         :        :          :                 :              : courses.                         :
+         | la     | glang    | language        |           22 | Candidates for the Master of     |
+         :        :          :                 :              : Arts in Modern Languages must    :
+         :        :          :                 :              : take a minimum of 22 credit      :
+         :        :          :                 :              : hours in the modern language of  :
+         :        :          :                 :              : their concentration.             :
+         | la     | gscitch  | earlyed         |           12 | M.S. candidates will take a      |
+         :        :          :                 :              : minimum of 12 hours of early     :
+         :        :          :                 :              : childhood education instruction. :
+         | la     | gscitch  | methods         |           18 | M.S. candidates should complete  |
+         :        :          :                 :              : a minimum of 18 credit hours     :
+         :        :          :                 :              : focused on teaching methods.     :
+         | la     | gscitch  | science         |           18 | M.S. candidates for the science  |
+         :        :          :                 :              : teaching degree who do not have  :
+         :        :          :                 :              : undergraduate degrees in science :
+         :        :          :                 :              : must take a minimum of 18 credit :
+         :        :          :                 :              : hours in one scientific          :
+         :        :          :                 :              : discipline.                      :
+         | la     | psciwri  | journalism      |           12 | Candidates will take four        |
+         :        :          :                 :              : threehour classes in writing     :
+         :        :          :                 :              : focused on scientific journalism :
+         | la     | psciwri  | science         |           12 | Candidates for the Certificate   |
+         :        :          :                 :              : in Science Writing will take     :
+         :        :          :                 :              : four threehour classes in        :
+         :        :          :                 :              : general science.                 :
+         | la     | uengl    | eurolit         |           12 | B.A. candidates in English are   |
+         :        :          :                 :              : expected to take three courses   :
+         :        :          :                 :              : in European literature.          :
+         | la     | uengl    | humanities      |           16 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of 16 credit hours in general    :
+         :        :          :                 :              : humanities outside their major.  :
+         | la     | uengl    | literature      |           30 | B.A. candidates in English are   |
+         :        :          :                 :              : expected to take 30 credit hours :
+         :        :          :                 :              : in general literature.           :
+         | la     | uengl    | modlanguage     |           16 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of two years of a modern         :
+         :        :          :                 :              : language of their choice.        :
+         | la     | uengl    | reasoning       |            6 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of two courses emphasizing       :
+         :        :          :                 :              : reasoning.                       :
+         | la     | uhist    | diversity       |           16 | In recognition of the importance |
+         :        :          :                 :              : of diversity in modern society,  :
+         :        :          :                 :              : undergraduate humanities majors  :
+         :        :          :                 :              : must take a minimum of 16        :
+         :        :          :                 :              : credits hours of course          :
+         :        :          :                 :              : emphasizing cultural diversity.  :
+         | la     | upolisci | diversity       |           16 | In recognition of the importance |
+         :        :          :                 :              : of diversity in modern society,  :
+         :        :          :                 :              : undergraduate humanities majors  :
+         :        :          :                 :              : must take a minimum of 16        :
+         :        :          :                 :              : credits hours of course          :
+         :        :          :                 :              : emphasizing cultural diversity.  :
+         | la     | upolisci | government      |           16 | Political Science majors will    |
+         :        :          :                 :              : take at least 16 credit hours of :
+         :        :          :                 :              : coursework in world government   :
+         | la     | upolisci | intrelations    |           12 | Political Science majors will    |
+         :        :          :                 :              : take at least 12 credit hours of :
+         :        :          :                 :              : coursework in international      :
+         :        :          :                 :              : relations.                       :
+         | la     | upolisci | poliecon        |           12 | Political Science majors will    |
+         :        :          :                 :              : take at least 12 credit hours of :
+         :        :          :                 :              : coursework in political economy. :
+         | la     | upolisci | reasoning       |            6 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of two courses emphasizing       :
+         :        :          :                 :              : reasoning.                       :
+         | la     | upolisci | writing         |           12 | Political science majors must    |
+         :        :          :                 :              : take a minimum of 12 credit      :
+         :        :          :                 :              : hours in writing.                :
+         | la     | upsych   | diversity       |           16 | In recognition of the importance |
+         :        :          :                 :              : of diversity in modern society,  :
+         :        :          :                 :              : undergraduate humanities majors  :
+         :        :          :                 :              : must take a minimum of 16        :
+         :        :          :                 :              : credits hours of course          :
+         :        :          :                 :              : emphasizing cultural diversity.  :
+         | la     | upsych   | psychology      |           24 | Psychology majors must take the  |
+         :        :          :                 :              : minimum credit hours in one or   :
+         :        :          :                 :              : more of the three major          :
+         :        :          :                 :              : psychology                       :
+         :        :          :                 :              : concentrationscognitive,         :
+         :        :          :                 :              : behavioral, or child.            :
+         | la     | upsych   | reasoning       |            6 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of two courses emphasizing       :
+         :        :          :                 :              : reasoning.                       :
+         | la     | upsych   | writing         |           12 | Psychology majors must take a    |
+         :        :          :                 :              : minimum of 12 credit hours in    :
+         :        :          :                 :              : writing.                         :
+         | la     | uspan    | diversity       |           16 | In recognition of the importance |
+         :        :          :                 :              : of diversity in modern society,  :
+         :        :          :                 :              : undergraduate humanities majors  :
+         :        :          :                 :              : must take a minimum of 16        :
+         :        :          :                 :              : credits hours of course          :
+         :        :          :                 :              : emphasizing cultural diversity.  :
+         | la     | uspan    | humanities      |           16 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of 16 credit hours in general    :
+         :        :          :                 :              : humanities outside their major.  :
+         | la     | uspan    | modlanguage     |           16 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of two years of a modern         :
+         :        :          :                 :              : language of their choice.        :
+         | la     | uspan    | reasoning       |            6 | B.A. candidates in the           |
+         :        :          :                 :              : humanities will take a minimum   :
+         :        :          :                 :              : of two courses emphasizing       :
+         :        :          :                 :              : reasoning.                       :
+         | la     | uspan    | spanish         |           24 | Spanish majors will take a       |
+         :        :          :                 :              : minimum of 24 credit hours in    :
+         :        :          :                 :              : the Spanish majors.              :
+         | mart   | bmart    | arthistory      |           10 | Students in the undergraduate    |
+         :        :          :                 :              : Modern Art program are required  :
+         :        :          :                 :              : to take 10 credit hours of       :
+         :        :          :                 :              : elective classes in art history. :
+         | mart   | bmart    | classical       |            9 | Students in the undergraduate    |
+         :        :          :                 :              : Modern Art program are required  :
+         :        :          :                 :              : to take 9 credit hours of study  :
+         :        :          :                 :              : of classical art.                :
+         | mart   | bmart    | modern          |           24 | Students in the undergraduate    |
+         :        :          :                 :              : Modern Art program are required  :
+         :        :          :                 :              : to take 24 credit hours of study :
+         :        :          :                 :              : of modern art.                   :
+         | ns     | uastro   | astrolab        |            8 | Astronomy students are expected  |
+         :        :          :                 :              : to take a minimum of 8 credit    :
+         :        :          :                 :              : hours in the astronomy           :
+         :        :          :                 :              : laboratory.                      :
+         | ns     | uastro   | astrotheory     |           24 | Undergraduate astronomy students |
+         :        :          :                 :              : will take a minimum of 12 credit :
+         :        :          :                 :              : hours of coursework on astronomy :
+         :        :          :                 :              : theory.                          :
+         | ns     | uastro   | humanities      |           16 | B.S. candidates in the sciences  |
+         :        :          :                 :              : will take a minimum of 16 credit :
+         :        :          :                 :              : hours in the humanities.         :
+         | ns     | uastro   | observation     |           12 | Undergraduate astronomy students |
+         :        :          :                 :              : will take a minimum of 12 credit :
+         :        :          :                 :              : hours of observational           :
+         :        :          :                 :              : astronomy.                       :
+         | ns     | uastro   | physics         |            9 | Undergraduate astronomy students |
+         :        :          :                 :              : will take a minimum of 9 credit  :
+         :        :          :                 :              : hours in physics.                :
+         | ns     | uastro   | reasoning       |           12 | Undergraduate science students   |
+         :        :          :                 :              : will take a minimum of 12 credit :
+         :        :          :                 :              : hours in general reasoning.      :
+         | ns     | uastro   | research        |           12 | B.S. candidates in the sciences  |
+         :        :          :                 :              : will take a minimum of 12 credit :
+         :        :          :                 :              : hours in research techniques.    :
+         | ns     | uchem    | chemlab         |           16 | Undergraduate chemistry students |
+         :        :          :                 :              : must satisfy a minimum           :
+         :        :          :                 :              : requirement for chemistry        :
+         :        :          :                 :              : labwork.                         :
+         | ns     | uchem    | chemtheory      |           18 | Undergraduate chemistry students |
+         :        :          :                 :              : must satisfy a minimum           :
+         :        :          :                 :              : requirement for chemistry        :
+         :        :          :                 :              : theory.                          :
+         | ns     | uchem    | humanities      |           16 | B.S. candidates in the sciences  |
+         :        :          :                 :              : will take a minimum of 16 credit :
+         :        :          :                 :              : hours in the humanities.         :
+         | ns     | uchem    | reasoning       |           12 | Undergraduate science students   |
+         :        :          :                 :              : will take a minimum of 12 credit :
+         :        :          :                 :              : hours in general reasoning.      :
+         | ns     | uchem    | research        |           12 | B.S. candidates in the sciences  |
+         :        :          :                 :              : will take a minimum of 12 credit :
+         :        :          :                 :              : hours in research techniques.    :
+         | ns     | uphys    | humanities      |           16 | B.S. candidates in the sciences  |
+         :        :          :                 :              : will take a minimum of 12 credit :
+         :        :          :                 :              : hours in the humanities.         :
+         | ns     | uphys    | physlab         |           12 | Candidates for the B.S. in       |
+         :        :          :                 :              : physics must take a minimum of   :
+         :        :          :                 :              : 12 hours of physics labwork.     :
+         | ns     | uphys    | phystheory      |           26 | Candidates for the B.S. in       |
+         :        :          :                 :              : physics must take a minimum of   :
+         :        :          :                 :              : 26 hours of physics theory.      :
+         | ns     | uphys    | science         |           12 | Physics majors are expected to   |
+         :        :          :                 :              : take a minimum of 12 credit      :
+         :        :          :                 :              : hours in other scientific        :
+         :        :          :                 :              : disciplines.                     :
+                                                                                         (97 rows)
+
+         ----
+         /program_requirement
+         SELECT "program_requirement"."school",
+                "program_requirement"."program",
+                "program_requirement"."classification",
+                "program_requirement"."credit_hours",
+                "program_requirement"."rationale"
+         FROM "program_requirement" AS "program_requirement"
+         ORDER BY 1 ASC, 2 ASC, 3 ASC
   - id: scalar-queries
     tests:
     - uri: /

@@ -40,9 +40,9 @@ which do not offer a degree.
 
 ::
 
-  +--------------------+              +---------------------+     
-  | DEPARTMENT         |              | SCHOOL              |     
-  +--------------------+              +---------------------+     
+  +--------------------+              +---------------------+
+  | DEPARTMENT         |              | SCHOOL              |
+  +--------------------+              +---------------------+
   | code            PK |--\       /---| code             PK |----\
   | school          FK |>-|------/    | name          NN,UK |    |
   | name         NN,UK |  |    .      +---------------------+    |
@@ -57,13 +57,13 @@ which do not offer a degree.
   +--------------------+  |           | PROGRAM             |    |
   | department  FK,PK1 |>-/           +---------------------+    |
   | number         PK2 |              | school       PK1,FK |>---/
-  | title           NN |              | code            PK2 |        
-  | credits         NN |              | title            NN |        
-  | description        |              | degree           CK |        
-  +--------------------+              +---------------------+        
+  | title           NN |              | code            PK2 |
+  | credits         NN |              | title            NN |
+  | description        |              | degree           CK |
+  +--------------------+              +---------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint   
+  NN - Not Null      CK - Check Constraint
 $_$;
 
 CREATE TABLE ad.school (
@@ -92,7 +92,7 @@ CREATE TABLE ad.program (
     school      VARCHAR(16) NOT NULL,
     code        VARCHAR(16) NOT NULL,
     title       VARCHAR(64) NOT NULL,
-    degree      CHAR(2),  
+    degree      CHAR(2),
     CONSTRAINT program_pk
       PRIMARY KEY (school, code),
     CONSTRAINT program_title_uk
@@ -119,7 +119,7 @@ CREATE TABLE ad.course (
       REFERENCES ad.department(code)
 );
 
-INSERT INTO ad.school (code, name) VALUES 
+INSERT INTO ad.school (code, name) VALUES
 ('ns', 'School of Natural Sciences'),
 ('sc', 'School of Continuing Studies'),
 ('la', 'School of Arts, Letters, and the Humanities'),
@@ -334,42 +334,42 @@ instructor to a given department.
 
 ::
 
-  +--------------------+              +---------------------+ 
+  +--------------------+              +---------------------+
   | APPOINTMENT        |      /-------| DEPARTMENT          |
-  |--------------------|      |  .    +---------------------+ 
-  | department  FK,PK1 |>-----/   .                    
-  | instructor  FK,PK2 |>-----\     a department may have many    
+  |--------------------|      |  .    +---------------------+
+  | department  FK,PK1 |>-----/   .
+  | instructor  FK,PK2 |>-----\     a department may have many
   | percent            |      |     instructors with part-time
-  +--------------------+    . |     teaching appointments      
-                           .  |                                 
+  +--------------------+    . |     teaching appointments
+                           .  |
     an instructor may have    |       +---------------------+
     teaching appointments     |       | INSTRUCTOR          |
     in many departments       |       +---------------------+
                               \-- /---| code             PK |
-  +--------------------+          |   | title            NN |  
-  | CONFIDENTIAL       |          |   | full_name        NN | 
+  +--------------------+          |   | title            NN |
+  | CONFIDENTIAL       |          |   | full_name        NN |
   +--------------------+          |   | phone               |
-  | instructor   FK,PK |o-------- /   | email               | 
-  | SSN             NN |   .          +---------------------+  
-  | pay_grade       NN |    .       
-  | home_phone         |      an instructor may have a record    
+  | instructor   FK,PK |o-------- /   | email               |
+  | SSN             NN |   .          +---------------------+
+  | pay_grade       NN |    .
+  | home_phone         |      an instructor may have a record
   +--------------------+      holding confidential information
 
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint   
+  NN - Not Null      CK - Check Constraint
 $_$;
 
 CREATE TABLE id.instructor (
     code        VARCHAR(16) NOT NULL,
-    title       VARCHAR(4) NOT NULL, 
+    title       VARCHAR(4) NOT NULL,
     full_name   VARCHAR(64) NOT NULL,
     phone       VARCHAR(16),
     email       VARCHAR(64),
-    CONSTRAINT instructor_pk 
+    CONSTRAINT instructor_pk
       PRIMARY KEY (code),
     CONSTRAINT instructor_title_ck
-      CHECK (title IN ('mr','dr','prof','ms'))
+      CHECK (title IN ('mr', 'dr', 'prof', 'ms'))
 );
 
 CREATE TABLE id.confidential (
@@ -381,7 +381,7 @@ CREATE TABLE id.confidential (
       PRIMARY KEY (instructor),
     CONSTRAINT confidential_instructor_fk
       FOREIGN KEY (instructor)
-      REFERENCES id.instructor(code) 
+      REFERENCES id.instructor(code)
 );
 
 CREATE TABLE id.appointment (
@@ -536,7 +536,7 @@ a ``course`` offering during a particular ``semester`` delivered by a
 given ``instructor``.  The ``semester`` table has a compound primary key
 of ``year`` and ``period``.  The ``class`` table has a 5 column primary
 key, 2 columns referencing a given course (by number), 2 columns
-referencing a semester, and finally, a 3-digit ``section`` number. 
+referencing a semester, and finally, a 3-digit ``section`` number.
 
 Since the natural primary key is so large, a secondary candidate key
 ``class_seq`` is provided.  This mandatory and unique column is then
@@ -545,27 +545,27 @@ referenced by down-stream tables, such as student enrollment.
 ::
 
   +--------------------+              +---------------------+
-  | COURSE             |---\          | SEMESTER            |  
-  +--------------------+   |          +---------------------+ 
-                         . |   /------| year            PK1 | 
-    each course may be  .  |   |      | season          PK2 | 
-    offered many times     |   |      | begin_date       NN | 
-    in a given quarter     |   | .    | end_date         NN | 
+  | COURSE             |---\          | SEMESTER            |
+  +--------------------+   |          +---------------------+
+                         . |   /------| year            PK1 |
+    each course may be  .  |   |      | season          PK2 |
+    offered many times     |   |      | begin_date       NN |
+    in a given quarter     |   | .    | end_date         NN |
                            |   |  .   +---------------------+
   +--------------------+   |   |
   | CLASS              |   |   |   each section of a class
   +--------------------+   |   |   is tracked by semester
-  | department PK1,FK1 |\__/   |                            
-  | course     PK2,FK2 |/      |    classes are taught by 
-  | year       PK3,FK1 |\______/    an instructor 
-  | season     PK4,FK2 |/          . 
-  | section        PK5 |          .   +---------------------+ 
-  | instructor     FK  |>-------------| INSTRUCTOR          | 
-  | class_seq   NN,UK  |              +---------------------+ 
-  +--------------------+      
+  | department PK1,FK1 |\__/   |
+  | course     PK2,FK2 |/      |    classes are taught by
+  | year       PK3,FK1 |\______/    an instructor
+  | season     PK4,FK2 |/          .
+  | section        PK5 |          .   +---------------------+
+  | instructor     FK  |>-------------| INSTRUCTOR          |
+  | class_seq   NN,UK  |              +---------------------+
+  +--------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint   
+  NN - Not Null      CK - Check Constraint
 $_$;
 
 CREATE TYPE cd.season_t AS ENUM ('fall', 'spring', 'summer');
@@ -584,29 +584,29 @@ CREATE TABLE cd.semester (
 CREATE SEQUENCE class_seq START 20001;
 
 CREATE TABLE cd.class (
-    department   VARCHAR(16) NOT NULL,
-    course       INTEGER NOT NULL, 
-    year         cd.year_t NOT NULL,
-    season       cd.season_t NOT NULL,
-    section      CHAR(3) NOT NULL,
-    instructor   VARCHAR(16),
-    class_seq    INTEGER NOT NULL DEFAULT nextval('class_seq'),
-    CONSTRAINT class_pk 
+    department  VARCHAR(16) NOT NULL,
+    course      INTEGER NOT NULL,
+    year        cd.year_t NOT NULL,
+    season      cd.season_t NOT NULL,
+    section     CHAR(3) NOT NULL,
+    instructor  VARCHAR(16),
+    class_seq   INTEGER NOT NULL DEFAULT nextval('class_seq'),
+    CONSTRAINT class_pk
       PRIMARY KEY (department, course, year, season, section),
-    CONSTRAINT class_uk 
-       UNIQUE (class_seq),
+    CONSTRAINT class_uk
+      UNIQUE (class_seq),
     CONSTRAINT class_department_fk
-       FOREIGN KEY (department)
-       REFERENCES ad.department(code),
+      FOREIGN KEY (department)
+      REFERENCES ad.department(code),
     CONSTRAINT class_course_fk
-       FOREIGN KEY (department, course)
-       REFERENCES ad.course(department, number),
+      FOREIGN KEY (department, course)
+      REFERENCES ad.course(department, number),
     CONSTRAINT class_semester_fk
-       FOREIGN KEY (year, season)
-       REFERENCES cd.semester(year, season),
+      FOREIGN KEY (year, season)
+      REFERENCES cd.semester(year, season),
     CONSTRAINT class_instructor_fk
-       FOREIGN KEY (instructor)
-       REFERENCES id.instructor(code)
+      FOREIGN KEY (instructor)
+      REFERENCES id.instructor(code)
 );
 
 INSERT INTO cd.semester (year, season, begin_date, end_date) VALUES
@@ -743,50 +743,50 @@ columns: ``status`` and ``grade``.
 
 ::
 
-  +--------------------+              +---------------------+       
+  +--------------------+              +---------------------+
   | CLASS              |---\          | PROGRAM             |----\
   +--------------------+   |          +---------------------+    |
                            |                                   . |
-    each class may have    |            students are admitted .  |   
-    several student     .  |            into a school program    | 
-    enrollments          . |                                     | 
+    each class may have    |            students are admitted .  |
+    several student     .  |            into a school program    |
+    enrollments          . |                                     |
                            |          +---------------------+    |
   +--------------------+   |          | STUDENT             |    |
-  | ENROLLMENT         |   |          +---------------------+    | 
-  +--------------------+   |     /----| number           PK |    |     
+  | ENROLLMENT         |   |          +---------------------+    |
+  +--------------------+   |     /----| number           PK |    |
   | class       PK, FK |>--/     |    | name             NN |    |
-  | student     PK, FK |---------/    | gender           NN |    | 
+  | student     PK, FK |---------/    | gender           NN |    |
   | status             |     .        | dob              NN |    |
   | grade              |    .         | school          FK1 |\___/
-  +--------------------+   .          | program         FK2 |/  
-                                      | start_date       NN |   
-    students may enroll in            | is_active        NN |   
-    one or more classes               +---------------------+   
+  +--------------------+   .          | program         FK2 |/
+                                      | start_date       NN |
+    students may enroll in            | is_active        NN |
+    one or more classes               +---------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint   
+  NN - Not Null      CK - Check Constraint
 $_$;
 
-CREATE TYPE ed.enrollment_status_t AS ENUM ('enr','inc','ngr');
-CREATE TYPE ed.student_gender_t AS ENUM ('f','i','m');
+CREATE TYPE ed.enrollment_status_t AS ENUM ('enr', 'inc', 'ngr');
+CREATE TYPE ed.student_gender_t AS ENUM ('f', 'i', 'm');
 
 CREATE TABLE ed.student (
     number      INTEGER NOT NULL,
-    name        VARCHAR(64) NOT NULL, 
+    name        VARCHAR(64) NOT NULL,
     gender      ed.student_gender_t NOT NULL,
     dob         DATE NOT NULL,
     school      VARCHAR(16),
     program     VARCHAR(16),
     start_date  DATE NOT NULL,
-    is_active   BOOLEAN NOT NUll,
-    CONSTRAINT student_pk 
+    is_active   BOOLEAN NOT NULL,
+    CONSTRAINT student_pk
       PRIMARY KEY (number),
     CONSTRAINT student_school_fk
       FOREIGN KEY (school)
       REFERENCES ad.school (code),
     CONSTRAINT student_program_fk
       FOREIGN KEY (school, program)
-      REFERENCES ad.program (school, code)    
+      REFERENCES ad.program (school, code)
 );
 
 CREATE TABLE ed.enrollment (
@@ -798,10 +798,10 @@ CREATE TABLE ed.enrollment (
       PRIMARY KEY (student, class),
     CONSTRAINT enrollment_student_fk
       FOREIGN KEY (student)
-      REFERENCES ed.student(number), 
+      REFERENCES ed.student(number),
     CONSTRAINT enrollment_class_fk
       FOREIGN KEY (class)
-    REFERENCES cd.class(class_seq)
+      REFERENCES cd.class(class_seq)
 );
 
 INSERT INTO ed.student (number, name, gender, dob, school, program, start_date, is_active) VALUES
@@ -819,7 +819,7 @@ INSERT INTO ed.student (number, name, gender, dob, school, program, start_date, 
 ('12837', 'Christine Leung', 'f', '1991-06-06', 'egn', 'gme', '2009-08-17', TRUE),
 ('38721', 'Alicia Montez-Galliano', 'f', '1994-07-11', 'ns', 'uchem', '2010-09-10', TRUE),
 ('37182', 'Amy Yang', 'f', '1992-12-17', 'ns', 'uphys', '2002-08-10', FALSE),
-('32718', 'Raisa Antonov', 'f', '1992-12-09', 'egn', 'gbe', '2008-09-15', FALSE),
+('32718', 'Raisa Antonova', 'f', '1992-12-09', 'egn', 'gbe', '2008-09-15', FALSE),
 ('32711', 'Peter Zajac Jr.', 'm', '1994-01-23', 'bus', 'ucorpfi', '2009-09-10', TRUE),
 ('33278', 'Andrea Kaminski', 'f', '1981-04-20', 'bus', 'pcap', '2009-01-15', TRUE),
 ('17283', 'Lucy Ryong', 'f', '1988-01-25', 'edu', 'gedu', '2009-01-27', TRUE),
@@ -863,7 +863,7 @@ INSERT INTO ed.enrollment (student, class, status, grade) VALUES
 ('25371', 10051, 'enr', 3.7),
 ('29878', 10086, 'inc', NULL),
 ('37278', 10018, 'enr', 2.6),
-('92039', 10071, 'enr', 3.1) 
+('92039', 10071, 'enr', 3.1)
 ;
 
 
@@ -887,7 +887,7 @@ representing membership, associating a ``course`` with a
 The classification table models distributional requirements, where a
 course may be tagged with a specific program requirement, such as
 ``"art-history"`` which also acts as a broader distributional
-requirement, ``"humanities"``. 
+requirement, ``"humanities"``.
 
 A ``program_requirement`` table models an optional The hierarchy is
 interpreted to imply that a class tagged with the former also counts to
@@ -895,41 +895,41 @@ fulfill requirements of the latter.
 
 ::
 
-  +-----------------------+                                           
+  +-----------------------+
   | PREREQUISITE          |            two foreign keys denote a
   +-----------------------+          . dependency *by* a course,
   | by_department FK1,PK1 |\_______ .  such as chem.100, *on*
   | by_course     FK2,PK2 |/       \   another, such as mth.101
-  | on_department FK1,PK3 |\______ |       
+  | on_department FK1,PK3 |\______ |
   | on_course     FK2,PK4 |/     | |  +---------------------+
-  +-----------------------+   /- \-\--| COURSE              |      
-                              |       +---------------------+ 
+  +-----------------------+   /- \-\--| COURSE              |
+                              |       +---------------------+
    a course can be a member   |
-   of several classifications |       +---------------------+ 
-                           .  |       | CLASSIFICATION      |     
-  +-----------------------+ . |       +---------------------+      
-  | COURSE_CLASSIFICATION |   | /- /--| code             PK |----\ 
+   of several classifications |       +---------------------+
+                           .  |       | CLASSIFICATION      |
+  +-----------------------+ . |       +---------------------+
+  | COURSE_CLASSIFICATION |   | /- /--| code             PK |----\
   +-----------------------+   | |  |  | type             NN |    |
-  | department    FK1,PK1 |\__/ |  |  | title            NN |    | 
-  | course        FK2,PK2 |/    |  |  | description         |    |  
+  | department    FK1,PK1 |\__/ |  |  | title            NN |    |
+  | course        FK2,PK2 |/    |  |  | description         |    |
   | classification FK,PK3 |>----/  |  | part_of          FK |>---/
   +-----------------------+  .     |  +---------------------+  .
                             .      |                          .
     a classification is used       |    a classification may be
     to tag multiple courses   /----/    part of a broader category
-                              |                                   
+                              |
   +-----------------------+   | . courses, by classification, are
-  | PROGRAM_REQUIREMENT   |   |.  required by a given program             
-  +-----------------------+   |                                     
-  | school        FK1,PK1 |\__|____     +---------------------+   
-  | program       FK2,PK2 |/  |    `----| PROGRAM             |  
-  | classification FK,PK3 |>--/   .     +---------------------+ 
-  | credit_hours       NN |      .       
+  | PROGRAM_REQUIREMENT   |   |.  required by a given program
+  +-----------------------+   |
+  | school        FK1,PK1 |\__|____     +---------------------+
+  | program       FK2,PK2 |/  |    `----| PROGRAM             |
+  | classification FK,PK3 |>--/   .     +---------------------+
+  | credit_hours       NN |      .
   | rationale             |    programs require class credits
   +-----------------------+    specified via classifications
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint   
+  NN - Not Null      CK - Check Constraint
 $_$;
 
 CREATE TABLE rd.prerequisite (
@@ -947,7 +947,7 @@ CREATE TABLE rd.prerequisite (
       REFERENCES ad.course(department, number)
 );
 
-CREATE TYPE rd.classification_type_t 
+CREATE TYPE rd.classification_type_t
   AS ENUM ('department', 'school', 'university');
 
 CREATE TABLE rd.classification (
@@ -969,30 +969,30 @@ CREATE TABLE rd.course_classification (
     department      VARCHAR(16) NOT NULL,
     course          INTEGER NOT NULL,
     classification  VARCHAR(16) NOT NULL,
-   CONSTRAINT course_classification_pk
-     PRIMARY KEY (department, course, classification),
-   CONSTRAINT course_classification_course_fk
-     FOREIGN KEY (department, course)
-     REFERENCES ad.course(department, number),
-   CONSTRAINT course_classification_classification_fk
-     FOREIGN KEY (classification)
-     REFERENCES rd.classification(code)
+    CONSTRAINT course_classification_pk
+      PRIMARY KEY (department, course, classification),
+    CONSTRAINT course_classification_course_fk
+      FOREIGN KEY (department, course)
+      REFERENCES ad.course(department, number),
+    CONSTRAINT course_classification_classification_fk
+      FOREIGN KEY (classification)
+      REFERENCES rd.classification(code)
 );
 
 CREATE TABLE rd.program_requirement (
     school          VARCHAR(16) NOT NULL,
-    program         VARCHAR(16) NOT NULL, 
+    program         VARCHAR(16) NOT NULL,
     classification  VARCHAR(16) NOT NULL,
     credit_hours    INTEGER NOT NULL,
     rationale       TEXT,
-   CONSTRAINT program_classification_pk
-     PRIMARY KEY (school, program, classification),
-   CONSTRAINT program_classification_course_fk
-     FOREIGN KEY (school, program)
-     REFERENCES ad.program(school, code),
-   CONSTRAINT program_classification_classification_fk
-     FOREIGN KEY (classification)
-     REFERENCES rd.classification(code)
+    CONSTRAINT program_classification_pk
+      PRIMARY KEY (school, program, classification),
+    CONSTRAINT program_classification_course_fk
+      FOREIGN KEY (school, program)
+      REFERENCES ad.program(school, code),
+    CONSTRAINT program_classification_classification_fk
+      FOREIGN KEY (classification)
+      REFERENCES rd.classification(code)
 );
 
 INSERT INTO rd.prerequisite (of_department, of_course, on_department, on_course) VALUES
@@ -1071,8 +1071,7 @@ INSERT INTO rd.classification (code, type, title, description, part_of) VALUES
   ('physics', 'school', 'Physics', NULL, 'science'),
     ('phystheory', 'department', 'Theoretical Physics', NULL, 'physics'),
     ('physlab', 'department', 'Practical Physics', NULL, 'physics'),
-    ('physcomputer', 'department',
-        'Computer Languages for Physics', NULL, 'physics'),
+    ('physcomputer', 'department', 'Computer Languages for Physics', NULL, 'physics'),
   ('math', 'school', 'Mathematics', NULL, 'science'),
     ('analysis', 'department', 'Real and Complex Analysis', NULL, 'math'),
     ('algebra', 'department', 'Abstract Algebra', NULL, 'math'),
@@ -1103,7 +1102,7 @@ INSERT INTO rd.classification (code, type, title, description, part_of) VALUES
     ('medesign', 'department', 'Design and Manufacturing', NULL, 'me'),
     ('mesystems', 'department', 'Systems and Controls', NULL, 'me'),
   ('be', 'school', 'Biomedical Engineering', NULL, 'engineering'),
-    ('begeneral', 'department', 'General Biomedical Engineering', NULL, 'be'),   
+    ('begeneral', 'department', 'General Biomedical Engineering', NULL, 'be'),
     ('beclinical', 'department', 'Clinical Engineering', NULL, 'be'),
     ('nanotech', 'department', 'Nanotechnology', NULL, 'be'),
     ('biomaterials', 'department', 'Biomaterials', NULL, 'be'),
@@ -1122,9 +1121,10 @@ INSERT INTO rd.classification (code, type, title, description, part_of) VALUES
     ('investment', 'department', 'Investment', NULL, 'financial'),
       ('personal', 'department', 'Personal Investment', NULL, 'investment'),
       ('institutional', 'department', 'Institutional Investment', NULL, 'investment'),
-    ('markets', 'school', 'Capital Markets', NULL, 'financial'),    
+    ('markets', 'school', 'Capital Markets', NULL, 'financial'),
   ('management', 'school', 'Management', NULL, 'business'),
-('remedial', 'university', 'Remedial Courses', 'Classes for which credit is not typically given for degree programs in the same school; e.g.  College Algebra courses do not earn credit for those in the School of Natural Science.', NULL);
+('remedial', 'university', 'Remedial Courses', 'Classes for which credit is not typically given for degree programs in the same school; e.g.  College Algebra courses do not earn credit for those in the School of Natural Science.', NULL)
+;
 
 INSERT INTO rd.course_classification (department, course, classification) VALUES
 ('astro', 137, 'astronomy'),
@@ -1242,7 +1242,7 @@ INSERT INTO rd.course_classification (department, course, classification) VALUES
 ('capmrk', 756, 'markets')
 ;
 
-INSERT INTO rd.program_requirement (school, program, classification, credit_hours, rationale) VALUES 
+INSERT INTO rd.program_requirement (school, program, classification, credit_hours, rationale) VALUES
 ('ns', 'uastro', 'astrolab', 8, 'Astronomy students are expected to take a minimum of 8 credit hours in the astronomy laboratory.'),
 ('ns', 'uastro', 'observation', 12, 'Undergraduate astronomy students will take a minimum of 12 credit hours of observational astronomy.'),
 ('ns', 'uastro', 'astrotheory', 24, 'Undergraduate astronomy students will take a minimum of 12 credit hours of coursework on astronomy theory.'),

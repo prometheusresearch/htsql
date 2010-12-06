@@ -16,7 +16,7 @@ This module implements the connection adapter for SQLite.
 from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
-from htsql.domain import BooleanDomain, StringDomain
+from htsql.domain import BooleanDomain, StringDomain, DateDomain
 # In Python 2.6, the `sqlite3` module is built-in, but
 # for Python 2.5, we need to import a third-party module.
 try:
@@ -76,6 +76,17 @@ class NormalizeSQLiteString(Normalize):
     def __call__(self, value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
+        return value
+
+
+class NormalizeSQLiteDate(Normalize):
+
+    adapts(DateDomain)
+
+    def __call__(self, value):
+        if isinstance(value, (str, unicode)):
+            converter = sqlite3.converters['DATE']
+            value = converter(value)
         return value
 
 
