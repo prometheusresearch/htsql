@@ -25,7 +25,7 @@ NEWS = open(os.path.join(root, 'NEWS')).read()
 # parameter is updated here.
 
 NAME = "HTSQL"
-VERSION = "2.0.0b3"
+VERSION = "2.0.0b4"
 DESCRIPTION = "Query language for the accidental programmer"
 LONG_DESCRIPTION = "\n".join([README, NEWS])
 AUTHOR = "Clark C. Evans and Kirill Simonov; Prometheus Research, LLC"

@@ -2,6 +2,18 @@ List of Changes
 ===============
 
 
+2.0.0 beta 4 (2010-12-05)
+-------------------------
+
+* Refactored peep-hole optimization of the frame tree and SQL
+  serialization; refined the generated SQL.
+* Refactored the internal API for adding functions.
+* Added new (experimental) syntax for infix function call.
+* Added an "Examples" section to the documentation.
+* Fixed compatibility with Python 2.5.
+* Many minor bugfixes, documentation updates, etc.
+
+
 2.0.0 beta 3 (2010-11-09)
 -------------------------
 
