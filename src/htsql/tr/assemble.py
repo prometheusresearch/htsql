@@ -588,7 +588,7 @@ class AssembleBranch(Assemble):
                 self.state.schedule(claim.unit.code)
 
     def assemble_include(self):
-        # Assemle the `FROM` list; should be overriden in subclasses.
+        # Assemle the `FROM` list; should be overridden in subclasses.
         return []
 
     def assemble_embed(self):
@@ -598,7 +598,7 @@ class AssembleBranch(Assemble):
 
     def assemble_select(self):
         # Assemble the `SELECT` clause and satisfy all the claims; may be
-        # overriden in subclasses.
+        # overridden in subclasses.
 
         # Note that this method is called after `assemble_include()` and
         # `assemble_embed()`, so any claims requested by `delegate()` should
@@ -665,33 +665,33 @@ class AssembleBranch(Assemble):
         return select
 
     def assemble_where(self):
-        # Assemble the `WHERE` clause; could be overriden in subclasses.
+        # Assemble the `WHERE` clause; could be overridden in subclasses.
         return None
 
     def assemble_group(self):
-        # Assemble the `GROUP BY` clause; could be overriden in subclasses.
+        # Assemble the `GROUP BY` clause; could be overridden in subclasses.
         return []
 
     def assemble_having(self):
-        # Assemble the `HAVING` clause; could be overriden in subclasses.
+        # Assemble the `HAVING` clause; could be overridden in subclasses.
         return None
 
     def assemble_order(self):
-        # Assemble the `ORDER BY` clause; could be overriden in subclasses.
+        # Assemble the `ORDER BY` clause; could be overridden in subclasses.
         return []
 
     def assemble_limit(self):
-        # Assemble the `LIMIT` clause; could be overriden in subclasses.
+        # Assemble the `LIMIT` clause; could be overridden in subclasses.
         return None
 
     def assemble_offset(self):
-        # Assemble the `OFFSET` clause; could be overriden in subclasses.
+        # Assemble the `OFFSET` clause; could be overridden in subclasses.
         return None
 
     def assemble_frame(self, include, embed, select,
                        where, group, having,
                        order, limit, offset):
-        # Assemble a frame node with the given clauses; could be overriden
+        # Assemble a frame node with the given clauses; could be overridden
         # in subclasses.
         return NestedFrame(include, embed, select,
                            where, group, having,

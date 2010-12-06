@@ -15,14 +15,14 @@ This module adapts the SQL serializer for PostgreSQL.
 
 from htsql.adapter import adapts
 from htsql.domain import Domain, DateDomain
-from htsql.tr.dump import (FormatLiteral, DumpBoolean, DumpFloat,
-                           DumpByDomain, DumpToDomain,
-                           DumpIsTotallyEqual)
+from htsql.tr.dump import (FormatLiteral, DumpBranch, DumpInteger, DumpFloat,
+                           DumpDecimal, DumpDate, DumpToDecimal, DumpToFloat,
+                           DumpToString)
 from htsql.tr.fn.signature import (DateSig, ContainsSig, DateIncrementSig,
                                    DateDecrementSig, DateDifferenceSig)
 from htsql.tr.fn.dump import DumpFunction
 from htsql.tr.frame import LiteralPhrase, NullPhrase
-from htsql.tr.error import DumpError
+from htsql.tr.error import SerializeError
 
 
 class PGSQLFormatLiteral(FormatLiteral):
@@ -36,45 +36,83 @@ class PGSQLFormatLiteral(FormatLiteral):
             self.stream.write("'%s'" % value)
 
 
-class PGSQLDumpBoolean(DumpBoolean):
+class PGSQLDumpBranch(DumpBranch):
+
+    def dump_order(self):
+        if not self.frame.order:
+            return
+        self.newline()
+        self.format("ORDER BY ")
+        for index, (phrase, direction) in enumerate(self.frame.order):
+            if phrase in self.frame.select:
+                position = self.frame.select.index(phrase)+1
+                self.write(str(position))
+            else:
+                self.format("{kernel}", kernel=phrase)
+            self.format(" {direction:switch{ASC|DESC}}", direction=direction)
+            if phrase.is_nullable:
+                self.format(" NULLS {direction:switch{FIRST|LAST}}",
+                            direction=direction)
+            if index < len(self.frame.order)-1:
+                self.write(", ")
+
+
+class PGSQLDumpInteger(DumpInteger):
 
     def __call__(self):
-        if self.value is True:
-            self.format("TRUE")
-        if self.value is False:
-            self.format("FALSE")
+        if not (-2**63 <= self.value < 2**63):
+            raise SerializeError("invalid integer value",
+                                 self.phrase.mark)
+        self.write(str(self.value))
 
 
 class PGSQLDumpFloat(DumpFloat):
 
     def __call__(self):
-        if str(self.value) in ['inf', '-inf', 'nan']:
-            raise DumpError("invalid float value",
+        value = repr(self.value)
+        if value == 'inf':
+            value = "'Infinity'"
+        elif value == '-inf':
+            value = "'-Infinity'"
+        elif value == 'nan':
+            value = "'NaN'"
+        self.format("%s::FLOAT8" % value)
+
+
+class PGSQLDumpDecimal(DumpDecimal):
+
+    def __call__(self):
+        if self.value.is_nan():
+            self.write("'NaN'::NUMERIC")
+            return
+        if not self.value.is_finite():
+            raise SerializeError("invalid decimal value",
                                  self.phrase.mark)
-        self.format("%r::FLOAT8" % self.value)
+        self.format("%s::NUMERIC" % self.value)
 
 
-class PGSQLDumpDate(DumpByDomain):
-
-    adapts(DateDomain)
+class PGSQLDumpDate(DumpDate):
 
     def __call__(self):
         self.format("{value:literal}::DATE", value=str(self.value))
 
 
-class PGSQLDumpToDate(DumpToDomain):
-
-    adapts(Domain, DateDomain)
+class PGSQLDumpToFloat(DumpToFloat):
 
     def __call__(self):
-        self.format("CAST({base} AS DATE)", base=self.base)
+        self.format("CAST({base} AS FLOAT8)", base=self.base)
 
 
-class PGSQLDumpIsTotallyEqual(DumpIsTotallyEqual):
+class PGSQLDumpToDecimal(DumpToDecimal):
 
     def __call__(self):
-        self.format("({lop} IS {polarity:not}DISTINCT FROM {rop})",
-                    self.arguments, polarity=-self.signature.polarity)
+        self.format("CAST({base} AS NUMERIC)", base=self.base)
+
+
+class PGSQLDumpToString(DumpToString):
+
+    def __call__(self):
+        self.format("CAST({base} AS TEXT)", base=self.base)
 
 
 class PGSQLDumpDateConstructor(DumpFunction):

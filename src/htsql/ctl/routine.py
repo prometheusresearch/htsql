@@ -89,7 +89,7 @@ class Routine(object):
     :class:`Routine`, declare the routine name, arguments and
     options, and override :meth:`run`.
 
-    The following class attributes should be overriden.
+    The following class attributes should be overridden.
 
     `name` (a string)
         The name of the routine.  The name must be unique across

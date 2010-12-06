@@ -723,9 +723,7 @@ class ConvertToDecimal(Convert):
                 if code.value is None:
                     return code.clone(domain=self.domain)
                 else:
-                    # Make sure that the string representation
-                    # of the decimal value has the decimal point.
-                    value = decimal.Decimal("%s.0" % code.value)
+                    value = decimal.Decimal(code.value)
                     return code.clone(value=value, domain=self.domain)
         # For the regular case, generate an appropriate cast node.
         return CastCode(code, self.domain, self.binding)

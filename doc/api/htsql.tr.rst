@@ -16,6 +16,8 @@
    :members:
 .. automodule:: htsql.tr.compile
    :members:
+.. automodule:: htsql.tr.dump
+   :members:
 .. automodule:: htsql.tr.encode
    :members:
 .. automodule:: htsql.tr.error
@@ -25,6 +27,8 @@
 .. automodule:: htsql.tr.lookup
    :members:
 .. automodule:: htsql.tr.parse
+   :members:
+.. automodule:: htsql.tr.plan
    :members:
 .. automodule:: htsql.tr.reduce
    :members:

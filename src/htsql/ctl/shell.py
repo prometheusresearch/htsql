@@ -39,7 +39,7 @@ class Cmd(object):
     a concrete command, subclass :class:`Cmd`, declare the command
     name and other parameters, and override :meth:`execute`.
 
-    The following class attributes could be overriden.
+    The following class attributes could be overridden.
 
     `name` (a string)
         The name of the command.  Name equal to an empty string (``''``)

@@ -91,9 +91,8 @@ tests:
       - uri: /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1}
       # Float literals.
       - uri: /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}
-      # Invalid float literal (inf).
-      - uri: /{1e1024}
-        expect: 400
+      # Non-nuleric float values.
+      - uri: /{1e1024,-1e1024,1e1024/1e1024}
 
     - title: Scalar functions
       tests:

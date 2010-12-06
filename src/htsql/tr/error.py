@@ -86,7 +86,7 @@ class AssembleError(TranslateError):
     kind = "assemble error"
 
 
-class DumpError(TranslateError):
+class SerializeError(TranslateError):
     """
     Represents a serializer error.
 
@@ -94,6 +94,6 @@ class DumpError(TranslateError):
     node to SQL.
     """
 
-    kind = "dump error"
+    kind = "serialize error"
 
 

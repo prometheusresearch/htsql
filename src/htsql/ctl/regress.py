@@ -630,7 +630,7 @@ class RunAndCompareTestCase(TestCase):
     and compare it with the expected output.
 
     This is an abstract class; create a subclass to implement a concrete
-    test case.  The following methods has to be overriden: :meth:`execute`,
+    test case.  The following methods has to be overridden: :meth:`execute`,
     :meth:`render` and :meth:`differs`.
     """
 
@@ -853,7 +853,7 @@ class AppTestCase(TestCase):
 
         # Create an application and update the testing state.  The created
         # application will be in effect for the subsequent tests in the
-        # current suite and all the nested suites unless overriden.
+        # current suite and all the nested suites unless overridden.
         from htsql.application import Application
         self.state.app = None
         try:

@@ -9,7 +9,7 @@
 :mod:`htsql.tr.plan`
 ====================
 
-This module implements a plan node.
+This module declares a SQL execution plan.
 """
 
 
@@ -19,18 +19,27 @@ from .frame import QueryFrame
 
 
 class Plan(Printable):
+    """
+    Represents a SQL execution plan.
 
-    def __init__(self, frame, sql, mark):
-        assert isinstance(frame, QueryFrame)
+    `sql` (a string or ``None``)
+        The SQL statement to execute.
+
+    `frame` (:class:`htsql.tr.frame.QueryFrame`)
+        The query frame corresponding to the plan.
+    """
+
+    def __init__(self, sql, frame):
         assert isinstance(sql, maybe(str))
-        assert isinstance(mark, Mark)
+        assert isinstance(frame, QueryFrame)
+        self.sql = sql
         self.frame = frame
+        # Extract nodes that gave rise to the generated SQL.
         self.term = frame.term
         self.code = frame.expression
         self.binding = frame.binding
         self.syntax = frame.syntax
-        self.sql = sql
-        self.mark = mark
+        self.mark = frame.mark
 
     def __str__(self):
         return ("<%s>" % self.sql if self.sql is not None else "<>")
