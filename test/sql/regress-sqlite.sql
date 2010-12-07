@@ -436,7 +436,7 @@ CREATE TABLE instructor (
 CREATE TABLE confidential (
     instructor  VARCHAR(16) NOT NULL,
     SSN         CHAR(11) NOT NULL,
-    pay_grade   DECIMAL(1,0) NOT NULL,
+    pay_grade   INTEGER NOT NULL,
     home_phone  VARCHAR(16),
     CONSTRAINT confidential_pk
       PRIMARY KEY (instructor),
@@ -448,7 +448,7 @@ CREATE TABLE confidential (
 CREATE TABLE appointment (
     department  VARCHAR(16) NOT NULL,
     instructor  VARCHAR(16) NOT NULL,
-    percent     DECIMAL(3,2),
+    percent     FLOAT,
     CONSTRAINT appointment_pk
       PRIMARY KEY (department, instructor),
     CONSTRAINT appointment_department_fk
@@ -694,7 +694,7 @@ INSERT INTO appointment (department, instructor, percent) VALUES
 --
 
 CREATE TABLE semester (
-    year        DECIMAL(4,0) NOT NULL,
+    year        INTEGER NOT NULL,
     season      VARCHAR(6) NOT NULL,
     begin_date  DATE NOT NULL,
     end_date    DATE NOT NULL,
@@ -707,7 +707,7 @@ CREATE TABLE semester (
 CREATE TABLE class (
     department  VARCHAR(16) NOT NULL,
     course      INTEGER NOT NULL,
-    year        DECIMAL(4,0) NOT NULL,
+    year        INTEGER NOT NULL,
     season      VARCHAR(6) NOT NULL,
     section     CHAR(3) NOT NULL,
     instructor  VARCHAR(16),
@@ -978,7 +978,7 @@ CREATE TABLE enrollment (
     student     INTEGER NOT NULL,
     class       INTEGER NOT NULL,
     status      CHAR(3) NOT NULL,
-    grade       DECIMAL(3,2),
+    grade       FLOAT,
     CONSTRAINT enrollment_pk
       PRIMARY KEY (student, class),
     CONSTRAINT enrollment_status_ck

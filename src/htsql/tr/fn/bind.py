@@ -545,7 +545,8 @@ class Correlate(Component):
             return False
         if issubclass(component, other):
             return True
-        if issubclass(component.input_signature, other.input_signature):
+        if (issubclass(component.input_signature, other.input_signature)
+            and component.input_signature is not other.input_signature):
             return True
         return False
 

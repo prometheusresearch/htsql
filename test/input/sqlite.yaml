@@ -8,7 +8,6 @@ title: SQLite regression tests
 id: sqlite
 output: test/output/sqlite.yaml
 tests:
-# FIXME: need a regression schema and a set of tests.
 
 - title: Remove any existing regression database
   id: cleanup-sqlite
@@ -24,50 +23,20 @@ tests:
       database: build/regress/regress-sqlite/htsql_regress.sqlite
     sql-include: test/sql/regress-sqlite.sql
 
-- db: *connect
-
-- title: Queries
-  id: queries-sqlite
+- title: Run the test collection
+  id: test-sqlite
   tests:
-
-  # Display all tables in the regression schema.
-  - title: Regression schema
-    tests:
-    - uri: /school
-    - uri: /department
-    - uri: /program
-    - uri: /course
-    - uri: /instructor
-    - uri: /confidential
-    - uri: /appointment
-    - uri: /semester
-    - uri: /class
-    - uri: /student
-    - uri: /enrollment
-    - uri: /prerequisite
-    - uri: /classification
-    - uri: /course_classification
-    - uri: /program_requirement
-
-  # Empty and scalar queries.
-  - title: Scalar queries
-    tests:
-    - uri: /
-    - uri: /{2+2}
-    - uri: /{'HT'+'SQL'}
-
-  # Simple (non-aggregate) filters.
-  - title: Simple filters
-    tests:
-    - uri: /school?code='ns'
-    - uri: /department?school.code='ns'
-    - uri: /program?school.code='ns'&code='uchem'
-    - uri: /course?credits=5
-
-  # Simple (non-aggregate) selectors.
-  - title: Simple selectors
-    tests:
-    - uri: /school{name}
-    - uri: /department{school.*,*}
-    - uri: /department{school.name+' - '+name}
+  - define: sqlite
+  - db: *connect
+  # The Regression Schema
+  - include: test/input/schema.yaml
+  # Examples from the Tutorial
+  - include: test/input/tutorial.yaml
+  # Standard Data Types, Functions, and Operations
+  - include: test/input/library.yaml
+    skip: true  # FIXME: poor support for standard functions
+  # Edge Cases of HTSQL-to-SQL Translation
+  - include: test/input/translation.yaml
+  # Formatting Output Data
+  - include: test/input/format.yaml
 

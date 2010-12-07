@@ -1,0 +1,168 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: The Regression Schema
+id: schema
+tests:
+
+- title: Tables
+  tests:
+  # Administrative Directory
+  - uri: /school
+  - uri: /department
+  - uri: /program
+  - uri: /course
+  # Instructor Directory
+  - uri: /instructor
+  - uri: /confidential
+  - uri: /appointment
+  # Class Directory
+  - uri: /semester
+  - uri: /class
+  # Enrollment Directory
+  - uri: /student
+  - uri: /enrollment
+  # Requirement Directory
+  - uri: /prerequisite
+  - uri: /classification
+  - uri: /course_classification
+  - uri: /program_requirement
+
+- title: Links
+  tests:
+  # FIXME: rewrite using locators once we have them.
+
+  # School -> Department
+  - uri: /(school?code='art').department
+  # School -> Program
+  - uri: /(school?code='art').program
+  # School -> Student (via Program)
+  - uri: /(school?code='art').student
+
+  # Department -> School (singular, optional)
+  - uri: /(department?code='ee').school
+  # Department -> Course
+  - uri: /(department?code='ee').course
+  # Department -> Appointment
+  - uri: /(department?code='ee').appointment
+  # Department -> Class (via Course)
+  - uri: /(department?code='ee').class
+
+  # Program -> School (parental)
+  - uri: /(program?school='egn'&code='umech').school
+  # Program -> Student
+  - uri: /(program?school='egn'&code='umech').student
+  # Program -> Program Requirement
+  - uri: /(program?school='egn'&code='umech').program_requirement
+
+  # Course -> Department (parental)
+  - uri: /(course?department='psych'&number=610).department
+  # Course -> Class
+  - uri: /(course?department='psych'&number=610).class
+  # Course -> Prerequisite
+  # FIXME: broken! Cannot choose between on_course and of_course links;
+  # need a mechanism to select a desired link among ambiguous links.
+  - uri: /(course?department='psych'&number=610).prerequisite
+    expect: 400
+  # Course -> Course Classification
+  - uri: /(course?department='psych'&number=610).course_classification
+
+  # Instructor -> Confidential (singular, optional)
+  - uri: /(instructor?code='kcavallaro').confidential
+  # Instructor -> Appointment
+  - uri: /(instructor?code='kcavallaro').appointment
+  # Instructor -> Class
+  - uri: /(instructor?code='kcavallaro').class
+
+  # Confidential -> Instructor
+  - uri: /(confidential?instructor='tobrien21').instructor
+
+  # Appointment -> Department (parental)
+  - uri: /(appointment?department='eng'&instructor='wyu112').department
+  # Appointment -> Instructor (parental)
+  - uri: /(appointment?department='eng'&instructor='wyu112').instructor
+
+  # Semester -> Class
+  - uri: /(semester?year=2010&season='fall').class
+
+  # Class -> Department (grand-parental, via Course)
+  - uri: /(class?class_seq=10086).department
+  # Class -> Course (parental)
+  - uri: /(class?class_seq=10086).course
+  # Class -> Semester (parental)
+  - uri: /(class?class_seq=10086).semester
+  # Aliases for Class -> Semester
+  - uri: /(class?class_seq=10086).year
+  - uri: /(class?class_seq=10086).season
+  # Class -> Instructor (singular, optional)
+  - uri: /(class?class_seq=10086).instructor
+  # Class -> Enrollment
+  - uri: /(class?class_seq=10086).enrollment
+
+  # Student -> School (singular, optional, via Program)
+  - uri: /(student?number=25371).school
+  # Student -> Program (singular, optional)
+  - uri: /(student?number=25371).program
+  # Student -> Enrollment
+  - uri: /(student?number=25371).enrollment
+
+  # Enrollment -> Student (parental)
+  - uri: /(enrollment?student=92039&class=10071).student
+  # Enrollment -> Class (parental)
+  - uri: /(enrollment?student=92039&class=10071).class
+
+  # Prerequisite -> Department (grand-parental, via Course, using of_department)
+  - uri: /(prerequisite?of_department='capmrk'&of_course=818
+                       &on_department='acc'&on_course=315).of_department
+  # Prerequisite -> Department (grand-parental, via Course, using on_department)
+  - uri: /(prerequisite?of_department='capmrk'&of_course=818
+                       &on_department='acc'&on_course=315).on_department
+  # Prerequisite -> Department (ambiguous)
+  - uri: /(prerequisite?of_department='capmrk'&of_course=818
+                       &on_department='acc'&on_course=315).department
+    expect: 400
+  # Prerequisite -> Course (parental, using of_course)
+  - uri: /(prerequisite?of_department='capmrk'&of_course=818
+                       &on_department='acc'&on_course=315).of_course
+  # Prerequisite -> Course (parental, using on_course)
+  - uri: /(prerequisite?of_department='capmrk'&of_course=818
+                       &on_department='acc'&on_course=315).on_course
+  # Prerequisite -> Course (ambiguous)
+  - uri: /(prerequisite?of_department='capmrk'&of_course=818
+                       &on_department='acc'&on_course=315).course
+    expect: 400
+
+  # Classification -> Classification (singular, self-referencial)
+  - uri: /(classification?code='modlanguage').part_of
+  # Classification -> Classification (reverse self-referential)
+  # FIXME: broken! No way to indicate a reverse self-referential link.
+  # The query below, in fact, produces a direct self-referential link.
+  - uri: /(classification?code='modlanguage').classification
+  # Classification -> Course Classification
+  - uri: /(classification?code='modlanguage').course_classification
+  # Classification -> Program Requirement
+  - uri: /(classification?code='modlanguage').program_requirement
+
+  # Course Classification -> Department (grand-parental, via Course)
+  - uri: /(course_classification?department='be'&course=112
+                                &classification='begeneral').department
+  # Course Classification -> Course (parental)
+  - uri: /(course_classification?department='be'&course=112
+                                &classification='begeneral').course
+  # Course Classification -> Classification (parental)
+  - uri: /(course_classification?department='be'&course=112
+                                &classification='begeneral').classification
+
+  # Program Requirement -> School (grand-parental, via Program)
+  - uri: /(program_requirement?school='bus'&program='uacct'
+                              &classification='accounting').school
+  # Program Requirement -> Program (parental)
+  - uri: /(program_requirement?school='bus'&program='uacct'
+                              &classification='accounting').program
+  # Program Requirement -> Classification (parental)
+  - uri: /(program_requirement?school='bus'&program='uacct'
+                              &classification='accounting').classification
+

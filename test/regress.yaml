@@ -20,7 +20,7 @@
 title: HTSQL regression tests
 id: all
 tests:
-- include: test/input/ctl.yaml
+- include: test/input/routine.yaml
 - include: test/input/sqlite.yaml
 - include: test/input/pgsql.yaml
 

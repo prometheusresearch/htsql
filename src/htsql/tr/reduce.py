@@ -972,7 +972,7 @@ class ReduceAnd(ReduceBySignature):
                 for nop in op.ops:
                     if nop in duplicates:
                         continue
-                    ops.extend(nop)
+                    ops.append(nop)
                     duplicates.add(nop)
                 continue
             ops.append(op)
@@ -1031,7 +1031,7 @@ class ReduceOr(ReduceBySignature):
                 for nop in op.ops:
                     if nop in duplicates:
                         continue
-                    ops.extend(nop)
+                    ops.append(nop)
                     duplicates.add(nop)
                 continue
             ops.append(op)

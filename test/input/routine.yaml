@@ -4,9 +4,9 @@
 #          Kirill Simonov <xi@resolvent.net>
 #
 
-title: Regression tests for htsql-ctl routines
-id: ctl
-output: test/output/ctl.yaml
+title: HTSQL-CTL Command-Line Tool
+id: routine
+output: test/output/routine.yaml
 tests:
 - ctl: []
 - ctl: [help]

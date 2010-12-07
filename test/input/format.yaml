@@ -1,0 +1,49 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: Formatting Output Data
+id: format
+tests:
+
+- title: Supported Output Formats
+  tests:
+  - uri: /school/:json
+  - uri: /school/:csv
+  - uri: /school/:txt
+  - uri: /school/:html
+  - uri: /school/:unknown
+    expect: 400
+
+- title: Format Selection by `Accept`
+  tests:
+  - uri: /school
+    headers:
+      Accept: application/json
+  - uri: /school
+    headers:
+      Accept: text/csv
+  - uri: /school
+    headers:
+      Accept: text/plain
+  - uri: /school
+    headers:
+      Accept: text/html
+
+- title: The `AS` Decorator
+  tests:
+    - uri: /(school as 'List of Schools')
+            {name as Name, count(department) as '# of Departments'}
+            /:json
+    - uri: /(school as 'List of Schools')
+            {name as Name, count(department) as '# of Departments'}
+            /:csv
+    - uri: /(school as 'List of Schools')
+            {name as Name, count(department) as '# of Departments'}
+            /:txt
+    - uri: /(school as 'List of Schools')
+            {name as Name, count(department) as '# of Departments'}
+            /:html
+

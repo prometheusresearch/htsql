@@ -622,7 +622,74 @@ class TestCase(object):
         return None
 
 
-class RunAndCompareTestCase(TestCase):
+class SkipTestCase(TestCase):
+    """
+    Implements a skippable test case.
+
+    This is an abstract mixin class; subclasses should call :meth:`skipped`
+    to check if the test case is enabled or not.
+    """
+
+    class Input(TestData):
+        fields = [
+                Field('skip', BoolVal(), False,
+                      hint="""do not run the test"""),
+                Field('ifdef', SeqVal(StrVal()), None,
+                      hint="""run only if a given toggle is active"""),
+                Field('ifndef', SeqVal(StrVal()), None,
+                      hint="""run only if a given toggle is inactive"""),
+        ]
+
+    def skipped(self):
+        """
+        Checks if the test is disabled.
+        """
+        # Verify if the test is unconditionally disabled.
+        if self.input.skip:
+            return True
+        # If a positive guard is set, check that at least one of the required
+        # toggles is active.
+        if self.input.ifdef is not None:
+            if not (self.state.toggles & set(self.input.ifdef)):
+                return True
+        # If a negative guard is set, check that none of the suppressed
+        # toggles is active.
+        if self.input.ifndef is not None:
+            if self.state.toggles & set(self.input.ifndef):
+                return True
+        # The test is not skipped.
+        return False
+
+
+class DefineTestCase(SkipTestCase):
+    """
+    Activates a named toggle.
+    """
+
+    name = "define"
+    hint = """activates a toggle"""
+    help = """
+    This test case activates a toggle variable.  A toggle allows one
+    to conditionally enable or disable some test cases using `ifdef`
+    and `ifndef` directives.
+    """
+
+    class Input(TestData):
+        fields = [
+                Field('define', SeqVal(StrVal()),
+                      hint="""activate the given toggles"""),
+        ] + SkipTestCase.Input.fields
+
+    def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
+        # Activates the toggles.
+        for toggle in self.input.define:
+            self.state.toggles.add(toggle)
+
+
+class RunAndCompareTestCase(SkipTestCase):
     """
     Implements common methods for a broad category of test cases.
 
@@ -710,6 +777,10 @@ class RunAndCompareTestCase(TestCase):
         raise NotImplementedError()
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
+
         # Display the header.
         self.out_header()
 
@@ -736,6 +807,10 @@ class RunAndCompareTestCase(TestCase):
         return self.passed()
 
     def train(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return self.output
+
         # Display the header.
         self.out_header()
 
@@ -784,29 +859,7 @@ class RunAndCompareTestCase(TestCase):
         return self.output
 
 
-class SkipTestCase(TestCase):
-    """
-    Disables an existing test case.
-    """
-
-    name = "skip"
-    hint = """disable a test case"""
-    help = """
-    Add a `skip` field to any input test record to disable the test.
-    """
-
-    class Input(TestData):
-        fields = [
-                Field('skip', AnyVal(),
-                      hint="""indicates that the test is disabled"""),
-                AnyField(),
-        ]
-
-    def verify(self):
-        return 
-
-
-class AppTestCase(TestCase):
+class AppTestCase(SkipTestCase):
     """
     Configures the HTSQL application.
     """
@@ -823,7 +876,7 @@ class AppTestCase(TestCase):
         fields = [
                 Field('db', DBVal(),
                       hint="""the connection URI"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def out_header(self):
         # Overriden to avoid printing the password to the database.
@@ -848,6 +901,10 @@ class AppTestCase(TestCase):
             self.out("(%s)" % self.input.location, indent=2)
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
+
         # Display the header.
         self.out_header()
 
@@ -866,7 +923,7 @@ class AppTestCase(TestCase):
         return self.passed()
 
 
-class IncludeTestCase(TestCase):
+class IncludeTestCase(SkipTestCase):
     """
     Loads input test data from a file.
     """
@@ -882,13 +939,13 @@ class IncludeTestCase(TestCase):
         fields = [
                 Field('include', StrVal(),
                       hint="""file containing input test data"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     class Output(TestData):
         fields = [
                 Field('include', StrVal(),
                       hint="""file containing input test data"""),
-                Field('output', SeqVal(ClassVal(TestData)),
+                Field('output', ClassVal(TestData),
                       hint="""the corresponding output test data"""),
         ]
 
@@ -911,10 +968,17 @@ class IncludeTestCase(TestCase):
         return self.case.get_suites()
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
         # Run the included test.
         self.case.verify()
 
     def train(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return self.output
+
         # Run the included test; get the output.
         new_output = self.case.train()
 
@@ -933,7 +997,7 @@ class IncludeTestCase(TestCase):
         return output
 
 
-class SuiteTestCase(TestCase):
+class SuiteTestCase(SkipTestCase):
     """
     Implements a container of test cases.
     """
@@ -958,7 +1022,7 @@ class SuiteTestCase(TestCase):
                       hint="""file to save the output of the tests"""),
                 Field('tests', SeqVal(ClassVal(TestData)),
                       hint="""a list of test inputs"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
         def init_attributes(self):
             # When `id` is not specified, generate it from the title.
@@ -1044,6 +1108,10 @@ class SuiteTestCase(TestCase):
     def skipped(self):
         # Check if the suite should not be executed.
 
+        # Check if the test case was explicitly disabled.
+        if super(SuiteTestCase, self).skipped():
+            return True
+
         # The suite is skipped when:
         # - the user specified an explicit list of the suites to run;
         # - and the suite is not one of them;
@@ -1065,8 +1133,8 @@ class SuiteTestCase(TestCase):
 
         # Push the current state to the cases state.
         self.state.push(self.cases_state)
-        # Check if the user specified the suites to run and
-        # this one is not among them.
+        # Check if the suite is disabled or if the user specified
+        # the suites to run and this one is not among them.
         if self.skipped():
             return
         # Display the headers.
@@ -1085,8 +1153,8 @@ class SuiteTestCase(TestCase):
 
         # Push the current state to the cases state.
         self.state.push(self.cases_state)
-        # Check if the user specified the suites to run and
-        # this one is not among them.
+        # Check if the suite is disabled or if the user specified
+        # the suites to run and this one is not among them.
         if self.skipped():
             return self.output
         # A dictionary containing the output (or `None`) generated by test
@@ -1248,7 +1316,7 @@ class QueryTestCase(RunAndCompareTestCase):
                       hint="""the HTTP status code to expect"""),
                 Field('ignore', BoolVal(), False,
                       hint="""ignore the response body"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
         def init_attributes(self):
             # Check that `content-type` and `content-body` are set only if
@@ -1264,7 +1332,6 @@ class QueryTestCase(RunAndCompareTestCase):
                 if self.content_body is None:
                     raise ValueError("no expected content-body parameter"
                                      " for a POST request")
-
 
     class Output(TestData):
         fields = [
@@ -1395,7 +1462,7 @@ class CtlTestCase(RunAndCompareTestCase):
                       hint="""the exit code to expect"""),
                 Field('ignore', BoolVal(), False,
                       hint="""ignore the exit code and the standard output"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     class Output(TestData):
         fields = [
@@ -1590,7 +1657,7 @@ class Fork(object):
         return output
 
 
-class StartCtlTestCase(TestCase):
+class StartCtlTestCase(SkipTestCase):
     """
     Starts a long-running routine.
     """
@@ -1611,10 +1678,14 @@ class StartCtlTestCase(TestCase):
                       hint="""the content of the standard output"""),
                 Field('sleep', UFloatVal(), 0,
                       hint="""sleep for the specified number of seconds"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def verify(self):
         # Execute the test.
+
+        # Check if the test case is skipped.
+        if self.skipped():
+            return
 
         # Check if an application with the same command-line parameters
         # has already been started.
@@ -1647,7 +1718,7 @@ class EndCtlTestCase(RunAndCompareTestCase):
                       hint="""a list of command-line parameters"""),
                 Field('ignore', BoolVal(), False,
                       hint="""ignore the exit code and the standard output"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     class Output(TestData):
         fields = [
@@ -1713,7 +1784,7 @@ class PythonCodeTestCase(RunAndCompareTestCase):
                       hint="""the name of an exception to expect"""),
                 Field('ignore', BoolVal(), False,
                       hint="""ignore the standard output"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     class Output(TestData):
         fields = [
@@ -1777,11 +1848,10 @@ class PythonCodeTestCase(RunAndCompareTestCase):
         return new_output
 
 
-class SQLTestCase(TestCase):
+class SQLTestCase(SkipTestCase):
     """
     Executes a SQL query.
     """
-    # TODO: Can't implement until the SQL splitter is done.
 
     name = "sql"
     hint = """execute a SQL statement"""
@@ -1799,7 +1869,7 @@ class SQLTestCase(TestCase):
                       hint="""use the auto-commit mode"""),
                 Field('ignore', BoolVal(), False,
                       hint="""ignore any errors"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def out_header(self):
         # Print:
@@ -1813,6 +1883,10 @@ class SQLTestCase(TestCase):
             self.out("(%s)" % self.input.location, indent=2)
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
+
         # Display the header.
         self.out_header()
 
@@ -1921,7 +1995,7 @@ class SQLIncludeTestCase(SQLTestCase):
                       hint="""use the auto-commit mode"""),
                 Field('ignore', BoolVal(), False,
                       hint="""ignore any errors"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def out_header(self):
         # Print:
@@ -1942,7 +2016,7 @@ class SQLIncludeTestCase(SQLTestCase):
         return sql
 
 
-class WriteToFileTestCase(TestCase):
+class WriteToFileTestCase(SkipTestCase):
     """
     Writes some data to a file.
     """
@@ -1957,9 +2031,12 @@ class WriteToFileTestCase(TestCase):
                       hint="""the file name"""),
                 Field('data', StrVal(),
                       hint="""the data to write"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
         # Display the header.
         self.out_header()
         # Write the data to the file.
@@ -1981,7 +2058,7 @@ class ReadFromFileTestCase(RunAndCompareTestCase):
         fields = [
                 Field('read', StrVal(),
                       hint="""the file name"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     class Output(TestData):
         fields = [
@@ -2034,9 +2111,12 @@ class RemoveFilesTestCase(TestCase):
         fields = [
                 Field('remove', SeqVal(StrVal()),
                       hint="""a list of files to remove"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
         # Display the header.
         self.out_header()
         # Remove the given files.
@@ -2045,7 +2125,7 @@ class RemoveFilesTestCase(TestCase):
                 os.unlink(path)
 
 
-class MakeDirTestCase(TestCase):
+class MakeDirTestCase(SkipTestCase):
     """
     Creates a directory.
     """
@@ -2061,9 +2141,12 @@ class MakeDirTestCase(TestCase):
         fields = [
                 Field('mkdir', StrVal(),
                       hint="""the directory name"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
         # Display the header.
         self.out_header()
         # Create the directory if it does not already exist.
@@ -2071,7 +2154,7 @@ class MakeDirTestCase(TestCase):
             os.makedirs(self.input.mkdir)
 
 
-class RemoveDirTestCase(TestCase):
+class RemoveDirTestCase(SkipTestCase):
     """
     Removes a directory.
     """
@@ -2087,9 +2170,12 @@ class RemoveDirTestCase(TestCase):
         fields = [
                 Field('rmdir', StrVal(),
                       hint="""the directory name"""),
-        ]
+        ] + SkipTestCase.Input.fields
 
     def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
         # Display the header.
         self.out_header()
         # Remove the directory with all its content (DANGEROUS!).
@@ -2108,6 +2194,9 @@ class TestState(object):
         A mapping from command-line parameters to :class:`Fork`
         instances; contains long-running applications.
 
+    `toggles`
+        A set of active named toggles.
+
     `with_all_suites`
         Indicates that the current suite or one of its ancestors
         was explicitly selected by the user.
@@ -2125,10 +2214,12 @@ class TestState(object):
         Indicates whether the user asked to halt the testing.
     """
 
-    def __init__(self, app=None, forks=None, with_all_suites=False,
-                 passed=0, failed=0, updated=0, is_exiting=False):
+    def __init__(self, app=None, forks=None, toggles=None,
+                 with_all_suites=False, passed=0, failed=0, updated=0,
+                 is_exiting=False):
         self.app = app
         self.forks = forks or {}
+        self.toggles = toggles or set()
         self.with_all_suites = with_all_suites
         self.passed = passed
         self.failed = failed
@@ -2144,7 +2235,8 @@ class TestState(object):
             the suite test cases.
         """
         other.app = self.app
-        other.forks = self.forks
+        other.forks = self.forks.copy()
+        other.toggles = self.toggles.copy()
         other.with_all_suites = self.with_all_suites
         other.passed = self.passed
         other.failed = self.failed
@@ -2592,8 +2684,8 @@ class RegressRoutine(Routine):
 
     # List of supported types of test cases.
     cases = [
-            SkipTestCase,
             AppTestCase,
+            DefineTestCase,
             IncludeTestCase,
             SuiteTestCase,
             QueryTestCase,

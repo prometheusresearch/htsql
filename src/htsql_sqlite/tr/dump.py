@@ -80,8 +80,8 @@ class SQLiteDumpToDate(DumpToDate):
 class SQLiteDumpIsTotallyEqual(DumpIsTotallyEqual):
 
     def __call__(self):
-        self.format("(CASE WHEN ({lop} {polarity:switch{=|<>}} {rop}) OR"
-                    " {polarity:not}({lop} IS NULL AND {rop} IS NULL)"
+        self.format("({polarity:not}CASE WHEN ({lop} = {rop}) OR"
+                    " ({lop} IS NULL AND {rop} IS NULL)"
                     " THEN 1 ELSE 0 END)",
                     self.arguments, self.signature)
 

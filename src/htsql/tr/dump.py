@@ -1222,8 +1222,10 @@ class DumpLeadingAnchor(Dump):
         # Dump:
         #   <frame> AS <alias>
         alias = self.state.frame_alias_by_tag[self.clause.frame.tag]
+        self.state.push_hook(with_aliases=True)
         self.format("{frame} AS {alias:name}",
                     frame=self.clause.frame, alias=alias)
+        self.state.pop_hook()
 
 
 class DumpAnchor(Dump):

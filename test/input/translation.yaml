@@ -1,0 +1,106 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: Edge Cases of HTSQL-to-SQL Translation
+id: translation
+tests:
+
+# FIXME: update and refurbish!
+
+- title: Random collection of tests
+  tests:
+
+  # Simple (non-aggregate) filters.
+  - title: Simple filters
+    tests:
+    - uri: /school?code='ns'
+    - uri: /department?school.code='ns'
+    - uri: /department?school.code={'art','la'}
+    - uri: /program?school.code='ns'&code='uchem'
+    - uri: /course?credits=5
+    - uri: /department?school
+    # ENUM literal.
+    - uri: /semester?season='fall'
+    # Using the same term for a filter and a selector
+    - uri: /program{school.name,title}?school.code='art'
+
+  # Simple (non-aggregate) selectors.
+  - title: Simple selectors
+    tests:
+    - uri: /school{name}
+    - uri: /department{school.*,*}
+    - uri: /department{school.name+' - '+name}
+
+  # Plural links and aggregates.
+  - title: Aggregates
+    tests:
+    - uri: /exists(school)
+    - uri: /count(school)
+    - uri: /exists(school?exists(department))
+    - uri: /count(school?exists(department))
+    - uri: /{exists(school?!exists(department)),
+             count(school?!exists(department))}
+    - uri: /{count(course),min(course.credits),
+                           max(course.credits),
+                           avg(course.credits)}
+    - uri: /{count(school),count(department),count(course)}
+    - uri: /{count(department),count(department?exists(course))}
+    - uri: /department{code,count(course{credits=3})}
+    - uri: /department{code,count(course?credits=3)}
+    - uri: /school{code,count(department.course{credits=3})}
+    - uri: /school{code}?count(department.course{credits=3})=20
+    - uri: /department?exists(course.credits=5)
+    - uri: /department?every(course.credits=5)
+    - uri: /department{code,min(course.credits),max(course.credits)}
+    - uri: /department{code,avg(course.credits),
+                            sum(course.credits)/count(course.credits)}
+      skip: true
+    - uri: /department?exists(course)
+    - uri: /school?!exists(department)
+    - uri: /school{*,count(department)}
+    - uri: /school{*,count(department?exists(course))}
+    - uri: /school{*,count(department.exists(course))}
+    - uri: /school{code,count(department),count(program)}
+    - uri: /school{code,exists(department),exists(program)}
+      skip: true # broken until `reduce` is implemented
+    # Aggregates sharing the same spaces.
+    - uri: /department{sum(course.credits),count(course.credits),
+                       avg(course.credits)}?exists(course)
+    # Aggregates with non-native spaces.
+    # Triggers a bug in the Postgresql optimizer
+    # (see http://archives.postgresql.org/pgsql-bugs/2010-09/msg00265.php).
+    - uri: /department{code,school.code,
+                       count(school.program),school.count(program)}
+    - uri: /department{code,school.code,
+                       exists(school.program),school.exists(program)}
+    # Ensure that aggregates are not lost during the reduction process
+    - uri: /{count(school)&false(),count(school)|true()}
+    - uri: /{count(school)==null()}
+
+  - title: Root, This, Direct and Fiber functions
+    tests:
+    # Cross joins.
+    - uri: /{count(school)*count(department),count(school.direct(department))}
+    # Custom joins.
+    - uri: /{count(school.department),
+             count(school.direct(department)?school=root().school.code),
+             count(school.fiber(department,code,school.code))}
+    - uri: /school{code,count(department)}?count(department)=max(direct(school).count(department))
+    - uri: /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
+    # Lifting a unit to a dominating space.
+    - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
+    - uri: /school{code,name,this(){code}?name!~'art',
+                   root().school{code}?name!~'art'}
+      ifndef: sqlite    # no support for `~` operator yet
+    - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
+      ifndef: sqlite    # no support for `~` operator yet
+    - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
+      ifndef: sqlite    # no support for `~` operator yet
+
+  - title: Table Expressions
+    tests:
+    - uri: /(school?code='art').department
+

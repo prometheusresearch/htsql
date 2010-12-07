@@ -1,0 +1,292 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: Standard Data Types, Functions, and Operations
+id: library
+tests:
+
+# FIXME: update and refurbish!
+
+- title: Literals
+  tests:
+  # String literals.
+  - uri: /{'','HTSQL','O''Reilly','λόγος',
+           '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F',
+           '%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'}
+  # Integer literals.
+  - uri: /{0,1,100,65536}
+  # Invalid integer literal (must be in range from -2**63 to 2**63-1).
+  - uri: /{115792089237316195423570985008687907853269984665640564039457584007913129639936}
+    expect: 400
+  # Decimal literals.
+  - uri: /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}
+  # Decimal values are of arbitrary size.
+  - uri: /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1}
+  # Float literals.
+  - uri: /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}
+  # Non-nuleric float values.
+  - uri: /{1e1024,-1e1024,1e1024/1e1024}
+
+- title: Scalar functions
+  tests:
+  - title: Boolean constants and logical operators
+    tests:
+    # Boolean constants.
+    - uri: /{true(),false()}
+    # Boolean->Boolean cast (identity).
+    - uri: /{boolean(null()),boolean(true()),boolean(false())}
+    # Untyped boolean values.
+    - uri: /{boolean('true'),boolean('false')}
+    # Invalid untyped boolean values.
+    - uri: /{boolean('')}
+      expect: 400
+    - uri: /{boolean('X')}
+      expect: 400
+    # Number->Boolean cast (null => false, otherwise => true).
+    - uri: /{boolean(integer(null())),boolean(0),boolean(1),
+             boolean(0.0),boolean(1.0),boolean(0e0),boolean(1e0)}
+    # String->Boolean cast (null, '' => false, otherwise => true).
+    - uri: /{boolean(string(null())),boolean(string('')),boolean(string('X')),
+             boolean(string('true')),boolean(string('false'))}
+           # Note: boolean(string('false')) => true
+    # The AND operator.
+    - uri: /{false()&false(),false()&true(),true()&false(),true()&true(),
+             null()&false(),null()&true(),null()&null()}
+    # Auto-cast of arguments (false,true).
+    - uri: /{string('')&string('X'),0&1}
+    # Auto-cast of NULL values (null,false,false).
+    - uri: /{null()&null(),integer(null())&null(),integer(null())&integer(null())}
+    # The OR operator.
+    - uri: /{false()|false(),false()|true(),true()|false(),true()|true(),
+             null()|false(),null()|true(),null()|null()}
+    # Auto-cast of arguments (true,true,false).
+    - uri: /{string('')|string('X'),0|1,integer(null())|string(null())}
+    # The NOT operator.
+    - uri: /{!true(),!false(),!null()}
+    # Auto-cast of arguments (true,false,false,true).
+    - uri: /{!string(''),!string('X'),!1,!integer(null())}
+
+  - title: Comparison functions and operators
+    tests:
+    # Is NULL function (null => true, otherwise => false).
+    - uri: /{is_null(null()),is_null(true()),is_null(''),is_null(0)}
+    # Null If method (`this` is equal to one of the arguments => null, otherwise => `this`).
+    - uri: /{'Y':null_if('X'),'Y':null_if('Y'),
+             (5):null_if(1,2,3),(5):null_if(1,2,3,4,5,6,7,8,9,10),
+             null():null_if(null()),null():null_if('X')}
+      skip: true
+    - uri: /{'Y':null_if('X'),'Y':null_if('Y'),
+             null():null_if(null()),null():null_if('X')}
+    # If Null method (`this` is null => the first non-null argument, otherwise => `this`).
+    - uri: /{'X':if_null('Y'),null():if_null('X'),null():if_null(null()),
+             null():if_null(null(),null(),null()),
+             null():if_null(null(),null(),0),
+             null():if_null(0,1,2,3,null())}
+      skip: true
+    - uri: /{'X':if_null('Y'),null():if_null('X'),null():if_null(null())}
+    # If function (if(`cond1`,`then1`,[`cond2`,`then2`,...],[`else`])).
+    - uri: /{if(true(),1),if(false(),1),if(null(),1),
+             if(true(),1,0),if(false(),1,0),if(null(),1,0),
+             if(true(),1,true(),2),if(true(),1,false(),2),
+             if(false(),1,true(),2),if(false(),1,false(),2),
+             if(false(),1,false(),2,0)}
+    # Switch function (switch(`token`,`case1`,`then1`,[`case2`,`then2`,...],[`else`])).
+    - uri: /{switch('Y','X',1),switch('Y','Y',1),
+             switch('Y','X',1,0),switch('Y','Y',1,0),
+             switch(null(),null(),1,0),
+             switch('Y','X',1,'Y',2,'Z',3),
+             switch('Y','A',1,'B',2,'C',3,0)}
+    # Equality/Inequality.
+    - uri: /{1=1,1=0,1=null(),null()=null(),
+             1!=1,1!=0,1!=null(),null()!=null(),
+             1==1,1==0,1==null(),null()==null(),
+             1!==1,1!==0,1!==null(),null()!==null()}
+    - uri: /{'X'='X',1=1.0,1=1e0,1.0=1e0,1='1'}
+    - uri: /{0={1,2,3},2={1,2,3},0!={1,2,3},2!={1,2,3}}
+    - uri: /{'X'!={'A','B','C'},1.0={0,1,2}}
+    - uri: /{integer('1')=string('1')}
+      expect: 400
+    # Less Than/Greater Than.
+    - uri: /{'X'<'Y','X'<='Y','X'>'Y','X'>='Y',
+             'X'<null(),'X'<=null(),'X'>null(),'X'>=null()}
+    - uri: /{1<2,1<=2,1>2,1>=2,
+             1<2.0,1<=2.0,1>2.0,1>=2.0,
+             1e0<2.0,1e0<=2.0,1e0>2.0,1e0>2.0}
+    - uri: /{integer('1')<string('1')}
+      expect: 400
+
+  - title: Numeric functions and operators
+    tests:
+    # Integer cast (from untyped, string, integer, decimal and float).
+    - uri: /{integer('1'),integer(string('1')),
+             integer(1),integer(1.0),integer(1e0)}
+    # Decimal->Integer and Float->Decimal casts.
+    - uri: /{integer(65536.0),integer(65.536),integer(655.36),
+             integer(65536e0),integer(65536e-3),integer(65535e-2)}
+    # Decimal->Integer cast overflow.
+    - uri: /{integer(100000000000000000000.0)}
+      expect: 409
+      ignore: true
+    # Float->Integer cast overflow.
+    - uri: /{integer(1e100)}
+      expect: 409
+      ignore: true
+    # Invalid Untyped->Integer cast.
+    - uri: /{integer('X')}
+      expect: 400
+    # Invalid String->Integer cast.
+    - uri: /{integer(string('X'))}
+      expect: 409
+      ignore: true
+    # Decimal cast (from untyped, string, integer, decimal and float).
+    - uri: /{decimal('1.5'),decimal(string('1.5')),
+             decimal(15),decimal(1.5),decimal(15e-1)}
+    # Float->Decimal cast.
+    - uri: /{decimal(65535e0),decimal(65535e10),decimal(65535e-10)}
+    # Float->Decimal cast with huge values.
+    - uri: /{decimal(1e300),decimal(1e-300)}
+    # Invalid Untyped->Decimal cast.
+    - uri: /{decimal('X')}
+      expect: 400
+    # Invalid String->Decimal cast.
+    - uri: /{decimal(string('X'))}
+      expect: 409
+      ignore: true
+    # Float cast (from untyped, string, integer, decimal and float).
+    - uri: /{float('1.5'),float(string('1.5')),
+             float(15),float(1.5),float(15e-1)}
+    # Decimal->Float cast with truncation.
+    - uri: /{float(123456789.123456789)}
+    # Invalid Untyped->Float cast.
+    - uri: /{float('X')}
+      expect: 400
+    # Invalid String->Float cast.
+    - uri: /{float(string('X'))}
+      expect: 409
+      ignore: true
+    # Unary plus and minus.
+    - uri: /{+2,+2.0,+2e0,-2,-2.0,-2e0,++1,+-1,-+1,--1}
+    # Addition.
+    - uri: /{2+2,2+2.0,2+2e0,2.0+2.0,2.0+2e0,2e0+2e0}
+    # Subtraction.
+    - uri: /{2-1,2-1.0,2-1e0,2.0-1.0,2.0-1e0,2e0-1e0}
+    # Multiplication.
+    - uri: /{5*5,5*5.0,5*5e0,5.0*5.0,5.0*5e0,5e0*5e0}
+    # Division.
+    - uri: /{1/2,1/2.0,1/2e0,1.0/2.0,1.0/2e0, 1e0/2e0}
+    # Division by zero.
+    - uri: /{1/0}
+      expect: 409
+      ignore: true
+    # Addition: invalid types.
+    - uri: /{1+'1'}
+      expect: 400
+    # Multiplication: overflow.
+    - uri: /{65536*65536}
+      expect: 409
+      ignore: true
+    # Round for decimal values.
+    - uri: /{round(65.536),round(65.536,0),
+             round(65.536,1),round(65.536,-1)}
+    # Round with integer values (implicitly cast to decimal).
+    - uri: /{round(65535),round(65536,-3)}
+    # Round for float values.
+    - uri: /{round(35536e-3)}
+    # Invalid Round call with float values and digits indicator.
+    - uri: /{round(35536e-3,1)}
+      expect: 400
+
+  - title: String functions and operators
+    tests:
+    # String cast (from untyped, string, integer, decimal, float).
+    - uri: /{string('X'),string(string('X')), string(1), string(1.0), string(1e0)}
+    # The Length method.
+    - uri: /{'HTSQL':length,'':length,null():length}
+    # The Contains operator.
+    - uri: /{'HTSQL'~'sql','HTSQL'~'HTTP','HTSQL'~'',
+             'HTSQL'~null(),null()~'HTSQL',null()~null()}
+
+  - title: Date functions and operators
+    tests:
+    # Date cast (from untyped, string).
+    - uri: /{date('2010-07-28'),date(string('2010-07-28'))}
+    # Date constructor.
+    - uri: /{date(2010,07,28)}
+    # Invalid untyped->date cast.
+    - uri: /{date('X')}
+      expect: 400
+    # Invalid string->date cast.
+    - uri: /{date(string('X'))}
+      expect: 409
+      ignore: true
+    # Invalid integer->date cast.
+    - uri: /{date(1)}
+      expect: 400
+      skip: true
+    # Invalid date constructor.
+    - uri: /{date(0,0,0)}
+      expect: 409
+      ignore: true
+      skip: true
+    # Date arithmetic operations.
+    - uri: /{date('2010-07-28')+1,date('2010-07-28')-1,
+             date('2010-07-28')-date('2009-07-28')}
+
+- title: Table functions
+  tests:
+
+  # Sort and Limit functions.
+  - title: Sorting and paging
+    tests:
+    - uri: /school
+    - uri: /school.limit(1)
+    - uri: /school.limit(2,5)
+    - uri: /school.sort(name).limit(1)
+    - uri: /school.limit(1).sort(name)
+    - uri: /course?department='acc'
+    - uri: /course.sort(credits)?department='acc'
+    - uri: /(course.sort(credits)?department='acc').limit(1,1)
+    - uri: /course.sort(credits).limit(1,1)?department='acc'
+
+  # The `as` operator.
+  - title: Title decorator
+    tests:
+    # Identifiers and string literals are accepted.
+    - uri: /{null() as Title, null() as 'Title with whitespaces'}
+    # The outer `as` overrides any others.
+    - uri: /{null() as 'Hidden title' as 'Visible title'}
+    # `as` in expressions is no-op.
+    - uri: /{('HT' as HT)+('SQL' as SQL)}
+    # Using `as` to decorate the segment base.
+    - uri: /(school as Schools)
+    # Also works over selectors and filters.
+    - uri: /(school as Schools){name as Title}?code='art'
+    # Expects a non-wildcard argument.
+    - uri: /school{* as Columns}
+      expect: 400
+    # Expects a string literal or an identifier.
+    - uri: /school{code as school.code}
+      expect: 400
+
+  # The order modifiers: `+` and `-`.
+  - title: Order modifiers
+    tests:
+    # Ascending order (default for this table).
+    - uri: /school{code+,name}
+    # Descending order.
+    - uri: /school{code-,name}
+    # Combinations of several order modifiers.
+    - uri: /school{code--,name}
+    # Combined with `as`.
+    - uri: /school{name as Title+}
+    - uri: /school{name+ as Title}
+      expect: 400
+    - uri: /school{(name+) as Title}
+    # Non-unique explicit ordering is complemented with the default ordering.
+    - uri: /course{department+,title,credits-}?number<200
+    # Same using the `sort` method.
+    - uri: /course.sort(department+,credits-){department,title,credits}?number<200
+

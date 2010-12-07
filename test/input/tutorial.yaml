@@ -1,0 +1,99 @@
+#
+# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: Examples from the Tutorial
+id: tutorial
+tests:
+
+- title: Getting Started
+  tests:
+  # Selecting Data
+  - uri: /school
+  - uri: /program{school, code, title}
+  - uri: /department{name-, school}
+  - uri: /course{department+, number, credits-, title}
+  - uri: /course{department as 'Dept Code'+, number as 'No.',
+                 credits-, title}
+  # Linking Data
+  - uri: /program{school.name, title}
+  - uri: /course{department.school.name, department.name, title}
+  - uri: /course{department{school.name, name}, title}
+  - uri: /department{*,school.*}
+  # Filtering Data
+  - uri: /department?school='egn'
+  - uri: /program?degree={'ba','bs'}
+  - uri: /program?school='bus'&degree!='bs'
+  - uri: /course{department, number, title}
+                ?credits<3&department.school='ns'
+  - uri: /(course?credits<3&department.school='ns')
+                {department, number, title}
+  # Formatters
+  - uri: /school/:json
+  # Putting it All Together
+  - uri: /course{department{code, name},number,title+}
+                ?department.school='bus'/:csv
+
+- title: Relating and Aggregating Data
+  tests:
+  # Basic Linking
+  - uri: /course{department.name, title}    # singular join
+  - uri: /department{name, course.credits}  # invalid plural join
+    expect: 400
+  - uri: /department{name, max(course.credits)}
+  - uri: /department{name, count(school)}   # invalid singular join
+    expect: 400
+  - uri: /max(course.credits)
+  # Aggregate Expressions
+  - uri: /school{name, count(program), count(department)}
+  - uri: /department{name, count(course?number>=400)}
+  - uri: /school{name, avg(department.count(course))}
+  - uri: /school{name, count(department?exists(course?credits>3))}
+  - uri: /department{name, avg((course?number>400).credits)}
+  - uri: /department{code, min(course.credits), max(course.credits),
+                           avg(course.credits)}
+  - uri: /department{name, avg(course.credits), count(course)}
+                ?every(course.credits=3)
+
+- title: Logical Expressions
+  tests:
+  # Comparison Operators
+  - uri: /course?title='Drawing'
+  - uri: /course?title~'lab'
+    ifndef: sqlite  # no support for `~` operator yet
+  - uri: /course?title!~'lab'
+    ifndef: sqlite  # no support for `~` operator yet
+  - uri: /course?title!='Organic Chemistry Laboratory I'
+  - uri: /course{department,number,title}?number=101
+  - uri: /course?department!={'arthis','stdart'}
+  - uri: /course?credits>3
+  - uri: /course?credits>=3
+  - uri: /department?code>'me'
+  # Boolean Expressions
+  - uri: /{true(), false(), null(), ''}
+  - uri: /department{code, name}?is_null(school)
+  - uri: /department{code, name}?!is_null(school)
+  - uri: /course?department='acc'&credits<3
+  - uri: /course?credits>4|credits<3
+  - uri: /course?(department='arthis'|department='stdart')&credits>3
+  - uri: /course?department='arthis'|department='stdart'&credits>3
+  - uri: /course?description
+  - uri: /course{department, number, description}?!description
+
+- title: Types and Functions
+  tests:
+  # Working with NULLs
+  - uri: /department?school=null()
+  - uri: /department?school==null()
+  - uri: /department?school!=='art'
+
+- title: Odds & Ends
+  tests:
+  - uri: /{1='1'}               # untyped literals
+  - uri: /{'Bursar''s Office'}  # single-quote escaping
+  - uri: /{'%25'}               # percent-encoding
+  - uri: /course.sort(credits)  # sort expression
+  - uri: /course.limit(5,20)    # limit/offset
+
