@@ -15,7 +15,7 @@ tests:
   - uri: /program{school, code, title}
   - uri: /department{name-, school}
   - uri: /course{department+, number, credits-, title}
-  - uri: /course{department as 'Dept Code'+, number as 'No.',
+  - uri: /course{department+ :as 'Dept Code', number as 'No.',
                  credits-, title}
   # Linking Data
   - uri: /program{school.name, title}

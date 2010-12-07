@@ -3456,7 +3456,7 @@ tests:
                     "course"."title"
              FROM "ad"."course" AS "course"
              ORDER BY 1 ASC, 3 DESC NULLS LAST, 2 ASC
-        - uri: /course{department as 'Dept Code'+, number as 'No.', credits-, title}
+        - uri: /course{department+ :as 'Dept Code', number as 'No.', credits-, title}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -3594,7 +3594,7 @@ tests:
                                                                     (100 rows)
 
              ----
-             /course{department:as('Dept Code')+,number:as('No.'),credits-,title}
+             /course{department+:as('Dept Code'),number:as('No.'),credits-,title}
              SELECT "course"."department",
                     "course"."number",
                     "course"."credits",
