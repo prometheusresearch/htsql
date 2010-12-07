@@ -185,10 +185,10 @@ order on ``department`` and then descending on ``credits`` (A4_)::
     http://demo.htsql.org
     /course{department+, number, credits-, title}
  
-To display friendlier names for the columns, use ``as`` to rename a
+To display friendlier names for the columns, use ``:as`` to rename a
 column's title (A5_)::
 
-    /course{department as 'Dept Code'+, number as 'No.',
+    /course{department+ :as 'Dept Code', number :as 'No.',
             credits-, title}
 
     course                                            
@@ -202,7 +202,7 @@ column's title (A5_)::
 
 .. _A5: 
     http://demo.htsql.org
-    /course{department%20as%20'Dept%20Code'+,number%20as%20'No.',
+    /course{department+%20:as%20'Dept%20Code',number%20:as%20'No.',
             credits-, title}
 
 Selectors let you choose, rearrange, and sort columns of interest.  They
