@@ -49,7 +49,7 @@ class SQLiteDumpDecimal(DumpDecimal):
 class SQLiteDumpDate(DumpDate):
 
     def __call__(self):
-        self.write(str(self.value))
+        self.format("{value:literal}", value=str(self.value))
 
 
 class SQLiteDumpToFloat(DumpToFloat):

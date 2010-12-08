@@ -8163,6 +8163,314 @@ tests:
              ORDER BY 1 ASC, 2 ASC
              LIMIT 5
              OFFSET 20
+  - include: test/input/library.yaml
+    output:
+      id: library
+      tests:
+      - id: literals
+        tests:
+        - uri: /{null(), '', 'HTSQL'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                       |
+            -+-----------------------+-
+             | null() | '' | 'HTSQL' |
+            -+--------+----+---------+-
+             |        | "" | HTSQL   |
+                               (1 row)
+
+             ----
+             /{null(),'','HTSQL'}
+             SELECT NULL,
+                    '',
+                    'HTSQL'
+        - uri: /{true(), false()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                  |
+            -+------------------+-
+             | true() | false() |
+            -+--------+---------+-
+             | true   | false   |
+                          (1 row)
+
+             ----
+             /{true(),false()}
+             SELECT 1,
+                    0
+        - uri: /{boolean('true'), boolean('false')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                    |
+            -+------------------------------------+-
+             | boolean('true') | boolean('false') |
+            -+-----------------+------------------+-
+             | true            | false            |
+                                            (1 row)
+
+             ----
+             /{boolean('true'),boolean('false')}
+             SELECT 1,
+                    0
+        - uri: /boolean('')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid Boolean literal: expected 'true' or 'false'; got '':
+                /boolean('')
+                 ^^^^^^^^^^^
+        - uri: /boolean('yes')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid Boolean literal: expected 'true' or 'false'; got 'yes':
+                /boolean('yes')
+                 ^^^^^^^^^^^^^^
+        - uri: /{'', 'HTSQL', 'O''Reilly', '%ce%bb%cf%8c%ce%b3%ce%bf%cf%82', '$-b
+            \pm \sqrt{b^2 - 4ac} \over 2a$'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: " |                                                                             |\n-+-----------------------------------------------------------------------------+-\n
+            | '' | 'HTSQL' | 'O''Reilly' | '\u03BB\u03CC\u03B3\u03BF\u03C2' | '$-b
+            \\pm \\sqrt{b^2 - 4ac} \\over 2a$' |\n-+----+---------+-------------+---------+--------------------------------------+-\n
+            | \"\" | HTSQL   | O'Reilly    | \u03BB\u03CC\u03B3\u03BF\u03C2   | $-b
+            \\pm \\sqrt{b^2 - 4ac} \\over 2a$   |\n                                                                         (1
+            row)\n\n ----\n /{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2','$-b
+            \\pm \\sqrt{b^2 - 4ac} \\over 2a$'}\n SELECT '',\n        'HTSQL',\n        'O''Reilly',\n
+            \       '\u03BB\u03CC\u03B3\u03BF\u03C2',\n        '$-b \\pm \\sqrt{b^2
+            - 4ac} \\over 2a$'\n"
+        - uri: /{string('832040')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                  |
+            -+------------------+-
+             | string('832040') |
+            -+------------------+-
+             | 832040           |
+                          (1 row)
+
+             ----
+             /{string('832040')}
+             SELECT '832040'
+        - uri: /{0, 7, -97, 3571}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                    |
+            -+--------------------+-
+             | 0 | 7 | -97 | 3571 |
+            -+---+---+-----+------+-
+             | 0 | 7 | -97 | 3571 |
+                            (1 row)
+
+             ----
+             /{0,7,-97,3571}
+             SELECT 0,
+                    7,
+                    (- 97),
+                    3571
+        - uri: /{integer('4862'), integer('-9694845')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                       |
+            -+---------------------------------------+-
+             | integer('4862') | integer('-9694845') |
+            -+-----------------+---------------------+-
+             |            4862 |            -9694845 |
+                                               (1 row)
+
+             ----
+             /{integer('4862'),integer('-9694845')}
+             SELECT 4862,
+                    -9694845
+        - uri: /{integer('-2147483648'), integer('2147483647')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                |
+            -+------------------------------------------------+-
+             | integer('-2147483648') | integer('2147483647') |
+            -+------------------------+-----------------------+-
+             |            -2147483648 |            2147483647 |
+                                                        (1 row)
+
+             ----
+             /{integer('-2147483648'),integer('2147483647')}
+             SELECT -2147483648,
+                    2147483647
+        - uri: /{integer('2.5e1')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid integer literal: expected an integer in a decimal format; got '2.5e1':
+                /{integer('2.5e1')}
+                  ^^^^^^^^^^^^^^^^
+        - uri: /{4294967296}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            serialize error: invalid integer value:
+                /{4294967296}
+                  ^^^^^^^^^^
+        - uri: /{18446744073709551616}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            serialize error: invalid integer value:
+                /{18446744073709551616}
+                  ^^^^^^^^^^^^^^^^^^^^
+        - uri: /{1.0, -2.5, 0.875}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                    |
+            -+--------------------+-
+             | 1.0 | -2.5 | 0.875 |
+            -+-----+------+-------+-
+             | 1.0 | -2.5 | 0.875 |
+                            (1 row)
+
+             ----
+             /{1.0,-2.5,0.875}
+             SELECT 1.0,
+                    (- 2.5),
+                    0.875
+        - uri: /{decimal('1E-10')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                  |
+            -+------------------+-
+             | decimal('1E-10') |
+            -+------------------+-
+             |            1e-10 |
+                          (1 row)
+
+             ----
+             /{decimal('1E-10')}
+             SELECT 1e-10
+        - uri: /{4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                           |
+            -+-------------------------------------------------------------------------------------------+-
+             | 4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000 |
+            -+-------------------------------------------------------------------------------------------+-
+             |                                                                         4.15478148123e+33 |
+                                                                                                   (1 row)
+
+             ----
+             /{4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000}
+             SELECT 4.154781481226426e+33
+        - uri: /{decimal('vingt-cinq')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid float literal: vingt-cinq:
+                /{decimal('vingt-cinq')}
+                  ^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{0e0, -57721e-5, 36288e2}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                             |
+            -+-----------------------------+-
+             | 0e0 | -57721e-5 | 36288e2   |
+            -+-----+-----------+-----------+-
+             | 0.0 |  -0.57721 | 3628800.0 |
+                                     (1 row)
+
+             ----
+             /{0e0,-57721e-5,36288e2}
+             SELECT 0.0,
+                    (- 0.57721),
+                    3628800.0
+        - uri: /{float('2147483647')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                     |
+            -+---------------------+-
+             | float('2147483647') |
+            -+---------------------+-
+             |        2147483647.0 |
+                             (1 row)
+
+             ----
+             /{float('2147483647')}
+             SELECT 2147483647.0
+        - uri: /float('vingt-cinq')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid float literal: vingt-cinq:
+                /float('vingt-cinq')
+                 ^^^^^^^^^^^^^^^^^^^
+        - uri: /{1e1024}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid float literal: inf:
+                /{1e1024}
+                  ^^^^^^
+        - uri: /{float('inf')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid float literal: inf:
+                /{float('inf')}
+                  ^^^^^^^^^^^^
+        - uri: /{date('2010-04-15')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                    |
+            -+--------------------+-
+             | date('2010-04-15') |
+            -+--------------------+-
+             | 2010-04-15         |
+                            (1 row)
+
+             ----
+             /{date('2010-04-15')}
+             SELECT '2010-04-15'
+        - uri: /date('2010-13-07')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid date literal: month must be in 1..12:
+                /date('2010-13-07')
+                 ^^^^^^^^^^^^^^^^^^
   - include: test/input/translation.yaml
     output:
       id: translation

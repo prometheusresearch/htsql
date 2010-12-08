@@ -245,7 +245,7 @@ class FloatDomain(NumberDomain):
     Represents an IEEE 754 float data type.
 
     Valid literal values: floating-point numbers in decimal or scientific
-    format, `[+-]inf`, or `nan`.
+    format.
 
     Valid native values: `float` objects.
 
@@ -268,11 +268,15 @@ class FloatDomain(NumberDomain):
         if data is None:
             return None
         # Parse the numeric value.
-        # FIXME: `float('inf')` and `float('nan')` breaks under Python 2.5.
         try:
             value = float(data)
-        except ValueError, exc:
-            raise ValueError("invalid float literal: %s" % exc)
+        except ValueError:
+            raise ValueError("invalid float literal: %s" % data)
+        # Check if we got a finite number.
+        # FIXME: the check may break under Python 2.5; also, in Python 2.6
+        # could use `math.isinf()` and `math.isnan()`.
+        if str(value) in ['inf', '-inf', 'nan']:
+            raise ValueError("invalid float literal: %s" % value)
         return value
 
     def dump(self, value):
@@ -295,7 +299,7 @@ class DecimalDomain(NumberDomain):
     Represents an exact decimal data type.
 
     Valid literal values: floating-point numbers in decimal or scientific
-    format, `[+-]inf`, or `nan`.
+    format.
 
     Valid native values: `decimal.Decimal` objects.
 
@@ -326,8 +330,11 @@ class DecimalDomain(NumberDomain):
         # Parse the literal (NB: it handles `inf` and `nan` values too).
         try:
             value = decimal.Decimal(data)
-        except decimal.InvalidOperation, exc:
-            raise ValueError("invalid decimal literal: %s" % exc)
+        except decimal.InvalidOperation:
+            raise ValueError("invalid decimal literal: %s" % data)
+        # Verify that we got a finite number.
+        if not value.is_finite():
+            raise ValueError("invalid decimal literal: %s" % data)
         return value
 
     def dump(self, value):

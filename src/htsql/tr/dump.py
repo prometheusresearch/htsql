@@ -1470,12 +1470,9 @@ class DumpFloat(DumpByDomain):
         # to support a different range of floating-point values or to
         # provide an exact type specifier.
 
-        # Filter out special non-numeric values.
-        # FIXME: this check is only valid under Python 2.6.
-        # Also, in Python 2.6, could use `math.isinf()` and `math.isnan()`.
-        if str(self.value) in ['inf', '-inf', 'nan']:
-            raise SerializeError("invalid float value",
-                                 self.phrase.mark)
+        # Last check that we didn't get a non-number.
+        # FIXME: Python 2.5/win32?
+        assert str(self.value) not in ['inf', '-inf', 'nan']
         # Write the standard representation of the number assuming that
         # the database could figure out its type from the context.
         self.write(repr(self.value))
@@ -1493,10 +1490,8 @@ class DumpDecimal(DumpByDomain):
         # to support a different range of values or to add an exact
         # type specifier.
 
-        # Filter out special non-numeric values.
-        if not self.value.is_finite():
-            raise SerializeError("invalid decimal value",
-                                 self.phrase.mark)
+        # Last check that we didn't get a non-number.
+        assert self.value.is_finite()
         # Write the standard representation of the number assuming that
         # the database could figure out its type from the context.
         self.write(str(self.value))

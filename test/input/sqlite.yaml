@@ -34,7 +34,6 @@ tests:
   - include: test/input/tutorial.yaml
   # Standard Data Types, Functions, and Operations
   - include: test/input/library.yaml
-    skip: true  # FIXME: poor support for standard functions
   # Edge Cases of HTSQL-to-SQL Translation
   - include: test/input/translation.yaml
   # Formatting Output Data
