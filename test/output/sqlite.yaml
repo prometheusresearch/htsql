@@ -9820,6 +9820,503 @@ tests:
              /{date(string('birthday')),date(string('2010-13-07'))}
              SELECT DATE('birthday'),
                     DATE('2010-13-07')
+      - id: aggregate-functions
+        tests:
+        - uri: /course?department='lang'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (course?department='lang')                                                                      |
+            -+-------------------------------------------------------------------------------------------------+-
+             | department | number | title                        | credits | description                      |
+            -+------------+--------+------------------------------+---------+----------------------------------+-
+             | lang       |    201 | Introduction to Spanish      |       4 | Introduction to the Spanish      |
+             :            :        :                              :         : language, with an emphasis on    :
+             :            :        :                              :         : every day conversation and basic :
+             :            :        :                              :         : grammar.                         :
+             | lang       |    203 | Intermediate Spanish         |       3 | Continuation of fundamental      |
+             :            :        :                              :         : Spanish language learning,       :
+             :            :        :                              :         : including verb tenses, reading   :
+             :            :        :                              :         : skills, and basic conversation.  :
+             | lang       |    207 | Child Second Language        |       3 | Examines issues in child second  |
+             :            :        : Development                  :         : language acquisition, including  :
+             :            :        :                              :         : the critical period hypothesis   :
+             :            :        :                              :         : and universal grammar.           :
+             | lang       |    304 | Spanish Conversation Group   |       2 | Informal weekly conversation     |
+             :            :        :                              :         : group designed to improve        :
+             :            :        :                              :         : understanding of spoken Spanish. :
+             :            :        :                              :         : Suitable for both majors and     :
+             :            :        :                              :         : casual speakers who wish to      :
+             :            :        :                              :         : improve their skills for         :
+             :            :        :                              :         : personal enjoyment or travel.    :
+             | lang       |    305 | Second Language Syntax       |       3 | This course examines the form    |
+             :            :        :                              :         : and acquisition of nonnative     :
+             :            :        :                              :         : syntax. Consideration of whether :
+             :            :        :                              :         : nonnative grammars are           :
+             :            :        :                              :         : fundamentally different than     :
+             :            :        :                              :         : native grammars.                 :
+                                                                                                        (5 rows)
+
+             ----
+             /course?department='lang'
+             SELECT "course"."department",
+                    "course"."number",
+                    "course"."title",
+                    "course"."credits",
+                    "course"."description"
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'lang')
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /{exists(course?department='lang'), every(course?department='lang'),
+            count(course?department='lang')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                      |
+            -+------------------------------------------------------------------------------------------------------+-
+             | exists(course?department='lang') | every(course?department='lang') | count(course?department='lang') |
+            -+----------------------------------+---------------------------------+---------------------------------+-
+             | true                             | true                            |                               5 |
+                                                                                                              (1 row)
+
+             ----
+             /{exists(course?department='lang'),every(course?department='lang'),count(course?department='lang')}
+             SELECT EXISTS(SELECT 1
+                           FROM "course" AS "course_1"
+                           WHERE ("course_1"."department" = 'lang')),
+                    (NOT EXISTS(SELECT 1
+                                FROM "course" AS "course_1"
+                                WHERE 0
+                                      AND ("course_1"."department" = 'lang'))),
+                    COUNT(1)
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'lang')
+        - uri: /course?department='str'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (course?department='str')                           |
+            -+-----------------------------------------------------+-
+             | department | number | title | credits | description |
+            -+------------+--------+-------+---------+-------------+-
+                                                           (no rows)
+
+             ----
+             /course?department='str'
+             SELECT "course"."department",
+                    "course"."number",
+                    "course"."title",
+                    "course"."credits",
+                    "course"."description"
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'str')
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /{exists(course?department='str'), every(course?department='str'),
+            count(course?department='str')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                   |
+            -+---------------------------------------------------------------------------------------------------+-
+             | exists(course?department='str') | every(course?department='str') | count(course?department='str') |
+            -+---------------------------------+--------------------------------+--------------------------------+-
+             | false                           | true                           |                              0 |
+                                                                                                           (1 row)
+
+             ----
+             /{exists(course?department='str'),every(course?department='str'),count(course?department='str')}
+             SELECT EXISTS(SELECT 1
+                           FROM "course" AS "course_1"
+                           WHERE ("course_1"."department" = 'str')),
+                    (NOT EXISTS(SELECT 1
+                                FROM "course" AS "course_1"
+                                WHERE 0
+                                      AND ("course_1"."department" = 'str'))),
+                    COUNT(1)
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'str')
+        - uri: /course{department,number,credits,credits>3} ?department={'me','mth','phys'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (course?department={'me','mth','phys'})   |
+            -+-------------------------------------------+-
+             | department | number | credits | credits>3 |
+            -+------------+--------+---------+-----------+-
+             | me         |    111 |       3 | false     |
+             | me         |    344 |       4 | true      |
+             | me         |    501 |       3 | false     |
+             | me         |    627 |       4 | true      |
+             | me         |    712 |       3 | false     |
+             | mth        |    101 |       5 | true      |
+             | phys       |    211 |       3 | false     |
+             | phys       |    303 |       3 | false     |
+             | phys       |    388 |       2 | false     |
+             | phys       |    512 |       3 | false     |
+             | phys       |    713 |       3 | false     |
+             | phys       |    819 |       3 | false     |
+                                                 (12 rows)
+
+             ----
+             /course{department,number,credits,credits>3}?department={'me','mth','phys'}
+             SELECT "course"."department",
+                    "course"."number",
+                    "course"."credits",
+                    ("course"."credits" > 3)
+             FROM "course" AS "course"
+             WHERE ("course"."department" IN ('me', 'mth', 'phys'))
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /{exists(course{credits>3}?department='me'), every(course{credits>3}?department='me'),
+            count(course{credits>3}?department='me')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                 |
+            -+---------------------------------------------------------------------------------------------------------------------------------+-
+             | exists(course{credits>3}?department='me') | every(course{credits>3}?department='me') | count(course{credits>3}?department='me') |
+            -+-------------------------------------------+------------------------------------------+------------------------------------------+-
+             | true                                      | false                                    |                                        2 |
+                                                                                                                                         (1 row)
+
+             ----
+             /{exists(course{credits>3}?department='me'),every(course{credits>3}?department='me'),count(course{credits>3}?department='me')}
+             SELECT EXISTS(SELECT 1
+                           FROM "course" AS "course_1"
+                           WHERE ("course_1"."credits" > 3)
+                                 AND ("course_1"."department" = 'me')),
+                    (NOT EXISTS(SELECT 1
+                                FROM "course" AS "course_1"
+                                WHERE (NOT ("course_1"."credits" > 3))
+                                      AND ("course_1"."department" = 'me'))),
+                    COUNT(NULLIF(("course"."credits" > 3), 0))
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'me')
+        - uri: /{exists(course{credits>3}?department='mth'), every(course{credits>3}?department='mth'),
+            count(course{credits>3}?department='mth')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                    |
+            -+------------------------------------------------------------------------------------------------------------------------------------+-
+             | exists(course{credits>3}?department='mth') | every(course{credits>3}?department='mth') | count(course{credits>3}?department='mth') |
+            -+--------------------------------------------+-------------------------------------------+-------------------------------------------+-
+             | true                                       | true                                      |                                         1 |
+                                                                                                                                            (1 row)
+
+             ----
+             /{exists(course{credits>3}?department='mth'),every(course{credits>3}?department='mth'),count(course{credits>3}?department='mth')}
+             SELECT EXISTS(SELECT 1
+                           FROM "course" AS "course_1"
+                           WHERE ("course_1"."credits" > 3)
+                                 AND ("course_1"."department" = 'mth')),
+                    (NOT EXISTS(SELECT 1
+                                FROM "course" AS "course_1"
+                                WHERE (NOT ("course_1"."credits" > 3))
+                                      AND ("course_1"."department" = 'mth'))),
+                    COUNT(NULLIF(("course"."credits" > 3), 0))
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'mth')
+        - uri: /{exists(course{credits>3}?department='phys'), every(course{credits>3}?department='phys'),
+            count(course{credits>3}?department='phys')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                       |
+            -+---------------------------------------------------------------------------------------------------------------------------------------+-
+             | exists(course{credits>3}?department='phys') | every(course{credits>3}?department='phys') | count(course{credits>3}?department='phys') |
+            -+---------------------------------------------+--------------------------------------------+--------------------------------------------+-
+             | false                                       | false                                      |                                          0 |
+                                                                                                                                               (1 row)
+
+             ----
+             /{exists(course{credits>3}?department='phys'),every(course{credits>3}?department='phys'),count(course{credits>3}?department='phys')}
+             SELECT EXISTS(SELECT 1
+                           FROM "course" AS "course_1"
+                           WHERE ("course_1"."credits" > 3)
+                                 AND ("course_1"."department" = 'phys')),
+                    (NOT EXISTS(SELECT 1
+                                FROM "course" AS "course_1"
+                                WHERE (NOT ("course_1"."credits" > 3))
+                                      AND ("course_1"."department" = 'phys'))),
+                    COUNT(NULLIF(("course"."credits" > 3), 0))
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'phys')
+        - uri: /department{code,school,boolean(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | department                        |
+            -+-----------------------------------+-
+             | code   | school | boolean(school) |
+            -+--------+--------+-----------------+-
+             | acc    | bus    | true            |
+             | arthis | art    | true            |
+             | astro  | ns     | true            |
+             | be     | egn    | true            |
+             | bursar |        | false           |
+             | capmrk | bus    | true            |
+             | career |        | false           |
+             | chem   | ns     | true            |
+             | comp   | egn    | true            |
+             | corpfi | bus    | true            |
+             | edpol  | edu    | true            |
+             | ee     | egn    | true            |
+             | eng    | la     | true            |
+             | hist   | la     | true            |
+             | lang   | la     | true            |
+             | me     | egn    | true            |
+             | mth    | ns     | true            |
+             | parent |        | false           |
+             | phys   | ns     | true            |
+             | pia    | mus    | true            |
+             | poli   | la     | true            |
+             | psych  | la     | true            |
+             | stdart | art    | true            |
+             | str    | mus    | true            |
+             | tched  | edu    | true            |
+             | voc    | mus    | true            |
+             | win    | mus    | true            |
+                                         (27 rows)
+
+             ----
+             /department{code,school,boolean(school)}
+             SELECT "department"."code",
+                    "department"."school",
+                    (NULLIF("department"."school", '') IS NOT NULL)
+             FROM "department" AS "department"
+             ORDER BY 1 ASC
+        - uri: /{exists(department{school}), every(department{school}), count(department{school})}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                    |
+            -+------------------------------------------------------------------------------------+-
+             | exists(department{school}) | every(department{school}) | count(department{school}) |
+            -+----------------------------+---------------------------+---------------------------+-
+             | true                       | false                     |                        24 |
+                                                                                            (1 row)
+
+             ----
+             /{exists(department{school}),every(department{school}),count(department{school})}
+             SELECT EXISTS(SELECT 1
+                           FROM "department" AS "department_1"
+                           WHERE (NULLIF("department_1"."school", '') IS NOT NULL)),
+                    (NOT EXISTS(SELECT 1
+                                FROM "department" AS "department_1"
+                                WHERE (NULLIF("department_1"."school", '') IS NULL))),
+                    COUNT(NULLIF((NULLIF("department"."school", '') IS NOT NULL), 0))
+             FROM "department" AS "department"
+        - uri: /{exists(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a plural operand is required:
+                /{exists(true())}
+                         ^^^^^^
+        - uri: /{every(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a plural operand is required:
+                /{every(true())}
+                        ^^^^^^
+        - uri: /{count(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a plural operand is required:
+                /{count(true())}
+                  ^^^^^^^^^^^^^
+        - uri: /course{number,credits}?department='be'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (course?department='be') |
+            -+--------------------------+-
+             | number     | credits     |
+            -+------------+-------------+-
+             |        112 |           3 |
+             |        308 |           3 |
+             |        415 |           8 |
+             |        509 |           3 |
+                                 (4 rows)
+
+             ----
+             /course{number,credits}?department='be'
+             SELECT "course"."number",
+                    "course"."credits"
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'be')
+             ORDER BY "course"."department" ASC, 1 ASC
+        - uri: /{min(course{credits}?department='be'), max(course{credits}?department='be')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                             |
+            -+-----------------------------------------------------------------------------+-
+             | min(course{credits}?department='be') | max(course{credits}?department='be') |
+            -+--------------------------------------+--------------------------------------+-
+             |                                    3 |                                    8 |
+                                                                                     (1 row)
+
+             ----
+             /{min(course{credits}?department='be'),max(course{credits}?department='be')}
+             SELECT MIN("course"."credits"),
+                    MAX("course"."credits")
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'be')
+        - uri: /course?department='str'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (course?department='str')                           |
+            -+-----------------------------------------------------+-
+             | department | number | title | credits | description |
+            -+------------+--------+-------+---------+-------------+-
+                                                           (no rows)
+
+             ----
+             /course?department='str'
+             SELECT "course"."department",
+                    "course"."number",
+                    "course"."title",
+                    "course"."credits",
+                    "course"."description"
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'str')
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /{min(course{credits}?department='str'), max(course{credits}?department='str')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                               |
+            -+-------------------------------------------------------------------------------+-
+             | min(course{credits}?department='str') | max(course{credits}?department='str') |
+            -+---------------------------------------+---------------------------------------+-
+             |                                       |                                       |
+                                                                                       (1 row)
+
+             ----
+             /{min(course{credits}?department='str'),max(course{credits}?department='str')}
+             SELECT MIN("course"."credits"),
+                    MAX("course"."credits")
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'str')
+        - uri: /{min(student.dob), max(student.dob)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                     |
+            -+-------------------------------------+-
+             | min(student.dob) | max(student.dob) |
+            -+------------------+------------------+-
+             | 1981-04-20       | 2002-07-06       |
+                                             (1 row)
+
+             ----
+             /{min(student.dob),max(student.dob)}
+             SELECT MIN("student"."dob"),
+                    MAX("student"."dob")
+             FROM "student" AS "student"
+        - uri: /{min(student.name), max(student.name)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                            |
+            -+--------------------------------------------+-
+             | min(student.name)      | max(student.name) |
+            -+------------------------+-------------------+-
+             | Alicia Montez-Galliano | Valeria Rinaldi   |
+                                                    (1 row)
+
+             ----
+             /{min(student.name),max(student.name)}
+             SELECT MIN("student"."name"),
+                    MAX("student"."name")
+             FROM "student" AS "student"
+        - uri: /{min(student.is_active), max(student.is_active)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{min(student.is_active), max(student.is_active)}
+                  ^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{sum(course{credits}?department='be'), count(course{credits}?department='be'),
+            avg(course{credits}?department='be')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                      |
+            -+----------------------------------------------------------------------------------------------------------------------+-
+             | sum(course{credits}?department='be') | count(course{credits}?department='be') | avg(course{credits}?department='be') |
+            -+--------------------------------------+----------------------------------------+--------------------------------------+-
+             |                                   17 |                                      4 |                                 4.25 |
+                                                                                                                              (1 row)
+
+             ----
+             /{sum(course{credits}?department='be'),count(course{credits}?department='be'),avg(course{credits}?department='be')}
+             SELECT COALESCE(SUM("course"."credits"), 0),
+                    COUNT(NULLIF(("course"."credits" IS NOT NULL), 0)),
+                    AVG(CAST("course"."credits" AS REAL))
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'be')
+        - uri: /{sum(course{credits}?department='str'), count(course{credits}?department='str'),
+            avg(course{credits}?department='str')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                         |
+            -+-------------------------------------------------------------------------------------------------------------------------+-
+             | sum(course{credits}?department='str') | count(course{credits}?department='str') | avg(course{credits}?department='str') |
+            -+---------------------------------------+-----------------------------------------+---------------------------------------+-
+             |                                     0 |                                       0 |                                       |
+                                                                                                                                 (1 row)
+
+             ----
+             /{sum(course{credits}?department='str'),count(course{credits}?department='str'),avg(course{credits}?department='str')}
+             SELECT COALESCE(SUM("course"."credits"), 0),
+                    COUNT(NULLIF(("course"."credits" IS NOT NULL), 0)),
+                    AVG(CAST("course"."credits" AS REAL))
+             FROM "course" AS "course"
+             WHERE ("course"."department" = 'str')
+        - uri: /{sum(student.dob)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{sum(student.dob)}
+                  ^^^^^^^^^^^^^^^^
+        - uri: /{avg(student.name)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{avg(student.name)}
+                  ^^^^^^^^^^^^^^^^^
   - include: test/input/translation.yaml
     output:
       id: translation

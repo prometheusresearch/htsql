@@ -116,7 +116,7 @@ tests:
            null()==null(), null()!==null()}
   # Coercion
   - uri: /{7=0.7e1, '13'=13.0, '13'!=='13.0'}
-  # Incompatible operands
+  # Inadmissible operands
   - uri: /{true()=1}
     expect: 400
   - uri: /{'cinq'!=4.9}
@@ -133,7 +133,7 @@ tests:
   - uri: /{0<null(), ''>null(), null()>=null()}
   # Coercion
   - uri: /{175e-2>'875e-3', '2010-04-15'>=date('1991-08-20')}
-  # Incompatible operands
+  # Inadmissible operands
   - uri: /{false()<true()}
     expect: 400
   - uri: /{'cinq'>4.9}
@@ -153,7 +153,7 @@ tests:
            null_if(null(), null())}
   # Coercion
   - uri: /{if_null(1, 0.1e1), null_if(1, 0.1e1)}
-  # Incompatible operands
+  # Inadmissible operands
   - uri: /{if_null('cinq', 5)}
     expect: 400
   - uri: /{null_if('cinq', 5)}
@@ -182,7 +182,7 @@ tests:
   - uri: /{switch(date('2010-04-15'),
                   '1991-08-20', 'WWW',
                   '2010-04-15', 'HTSQL')}
-  # Incompatible operands
+  # Inadmissible operands
   - uri: /{if('', 'then', 'else')}
     expect: 400
   - uri: /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
@@ -205,7 +205,7 @@ tests:
   - uri: /{integer(string('60'))}
   - uri: /{decimal(string('2.125'))}
   - uri: /{float(string('271828e-5'))}
-  # Incompatible operand
+  # Inadmissible operand
   - uri: /{integer('cinq')}
     expect: 400
   - uri: /{decimal(true())}
@@ -245,7 +245,7 @@ tests:
   - uri: /{7-2.125, 7-271828e-5, 2.125-271828e-5}
   - uri: /{7*2.125, 7*271828e-5, 2.125*271828e-5}
   - uri: /{7/2.125, 7/271828e-5, 2.125/271828e-5}
-  # Incompatible operands
+  # Inadmissible operands
   - uri: /{'cinq'+7}
     expect: 400
   - uri: /{2.125-date('2010-04-15')}
@@ -288,7 +288,7 @@ tests:
   - uri: /{round(9973)}
   - uri: /{round(9973,-2)}
     ifndef: sqlite
-  # Incompatible operand
+  # Inadmissible operand
   - uri: /{round(271828e-5,2)}
     expect: 400
     ifndef: sqlite
@@ -311,7 +311,7 @@ tests:
     skip: true
   - uri: /{length(null())}
     skip: true
-  # Incompatible operand
+  # Inadmissible operand
   - uri: /{length(date(2010-04-15))}
     expect: 400
 
@@ -319,7 +319,7 @@ tests:
   - uri: /{'OMG'+'WTF'+'BBQ'}
   - uri: /{null()+'LOL', 'LOL'+null(),
            string(null())+string(null())}
-  # Incompatible operands
+  # Inadmissible operands
   - uri: /{string('LOL')+7}
     expect: 400
 
@@ -384,7 +384,7 @@ tests:
 
   # Conversion
   - uri: /{date(null()), date('2010-04-15')}
-  # Incompatible operand
+  # Inadmissible operand
   - uri: /{date('2010-13-07')}
     expect: 400
   - uri: /{date(true())}
@@ -422,6 +422,84 @@ tests:
            date('2010-04-15')-6813,
            date('2010-04-15')-date('1991-08-20')}
     skip: true
+
+########################################################################
+
+- title: Aggregate functions
+  tests:
+
+  # Exists, Every, Count
+  - uri: /course?department='lang'
+  - uri: /{exists(course?department='lang'),
+           every(course?department='lang'),
+           count(course?department='lang')}
+  # Applied to an empty set
+  - uri: /course?department='str'
+  - uri: /{exists(course?department='str'),
+           every(course?department='str'),
+           count(course?department='str')}
+  # Applied to all-TRUE, all-FALSE, mixed sets
+  - uri: /course{department,number,credits,credits>3}
+                ?department={'me','mth','phys'}
+  - uri: /{exists(course{credits>3}?department='me'),
+           every(course{credits>3}?department='me'),
+           count(course{credits>3}?department='me')}
+  - uri: /{exists(course{credits>3}?department='mth'),
+           every(course{credits>3}?department='mth'),
+           count(course{credits>3}?department='mth')}
+  - uri: /{exists(course{credits>3}?department='phys'),
+           every(course{credits>3}?department='phys'),
+           count(course{credits>3}?department='phys')}
+  # Coercion
+  - uri: /department{code,school,boolean(school)}
+  - uri: /{exists(department{school}),
+           every(department{school}),
+           count(department{school})}
+  # Singular operand
+  - uri: /{exists(true())}
+    expect: 400
+  - uri: /{every(true())}
+    expect: 400
+  - uri: /{count(true())}
+    expect: 400
+
+  # Min, Max
+  - uri: /course{number,credits}?department='be'
+  - uri: /{min(course{credits}?department='be'),
+           max(course{credits}?department='be')}
+  # Applied to an empty set
+  - uri: /course?department='str'
+  - uri: /{min(course{credits}?department='str'),
+           max(course{credits}?department='str')}
+  # Non-numeric operands
+  - uri: /{min(student.dob), max(student.dob)}
+  - uri: /{min(student.name), max(student.name)}
+  # Inadmissible operand
+  - uri: /{min(student.is_active), max(student.is_active)}
+    expect: 400
+
+  # Sum, Avg
+  - uri: /{sum(course{credits}?department='be'),
+           count(course{credits}?department='be'),
+           avg(course{credits}?department='be')}
+  # Applied to an empty set
+  - uri: /{sum(course{credits}?department='str'),
+           count(course{credits}?department='str'),
+           avg(course{credits}?department='str')}
+  # Inadmissible operands
+  - uri: /{sum(student.dob)}
+    expect: 400
+  - uri: /{avg(student.name)}
+    expect: 400
+
+########################################################################
+
+- title: Table functions and operators
+  tests: []
+
+- title: Decorators
+  tests: []
+
 
 
 
