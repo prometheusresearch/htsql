@@ -9060,116 +9060,747 @@ tests:
             encode error: invalid date literal: month must be in 1..12:
                 /date('2010-13-07')
                  ^^^^^^^^^^^^^^^^^^
-        - uri: "/{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2', '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F',
-            '%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'}"
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: " |                                                                                                                                                                                                                      |\n-+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-\n
-            | '' | 'HTSQL' | 'O''Reilly' | '\u03BB\u03CC\u03B3\u03BF\u03C2' | '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F'
-            \                         | '%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'
-            \                                                |\n-+----+---------+-------------+---------+--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------+-\n
-            | \"\" | HTSQL   | O'Reilly    | \u03BB\u03CC\u03B3\u03BF\u03C2   | \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\"
-            | \"\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\"
-            |\n                                                                                                                                                                                                                  (1
-            row)\n\n ----\n /{'','HTSQL','O''Reilly','\u03BB\u03CC\u03B3\u03BF\u03C2','%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F','%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F'}\n
-            SELECT '',\n        'HTSQL',\n        'O''Reilly',\n        '\u03BB\u03CC\u03B3\u03BF\u03C2',\n
-            \       '\x01\x02\x03\x04\x05\x06\a\b\t\n \v\f\n \x0E\x0F','\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F'\n"
-        - uri: /{0,1,100,65536}
+      - id: logical-and-comparison-operators
+        tests:
+        - uri: /{true(), false()}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                     |
-            -+---------------------+-
-             | 0 | 1 | 100 | 65536 |
-            -+---+---+-----+-------+-
-             | 0 | 1 | 100 | 65536 |
-                             (1 row)
+             |                  |
+            -+------------------+-
+             | true() | false() |
+            -+--------+---------+-
+             | true   | false   |
+                          (1 row)
 
              ----
-             /{0,1,100,65536}
-             SELECT 0,
-                    1,
-                    100,
-                    65536
-        - uri: /{115792089237316195423570985008687907853269984665640564039457584007913129639936}
+             /{true(),false()}
+             SELECT TRUE,
+                    FALSE
+        - uri: /{boolean(null()), boolean('true'), boolean('false')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                      |
+            -+------------------------------------------------------+-
+             | boolean(null()) | boolean('true') | boolean('false') |
+            -+-----------------+-----------------+------------------+-
+             |                 | true            | false            |
+                                                              (1 row)
+
+             ----
+             /{boolean(null()),boolean('true'),boolean('false')}
+             SELECT NULL,
+                    TRUE,
+                    FALSE
+        - uri: /{boolean(integer(null())), boolean(0.0), boolean(1e0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                        |
+            -+--------------------------------------------------------+-
+             | boolean(integer(null())) | boolean(0.0) | boolean(1e0) |
+            -+--------------------------+--------------+--------------+-
+             | false                    | true         | true         |
+                                                                (1 row)
+
+             ----
+             /{boolean(integer(null())),boolean(0.0),boolean(1e0)}
+             SELECT FALSE,
+                    TRUE,
+                    TRUE
+        - uri: /{boolean(string(null())), boolean(string('')), boolean(string('FALSE'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                          |
+            -+--------------------------------------------------------------------------+-
+             | boolean(string(null())) | boolean(string('')) | boolean(string('FALSE')) |
+            -+-------------------------+---------------------+--------------------------+-
+             | false                   | false               | true                     |
+                                                                                  (1 row)
+
+             ----
+             /{boolean(string(null())),boolean(string('')),boolean(string('FALSE'))}
+             SELECT FALSE,
+                    FALSE,
+                    TRUE
+        - uri: /{boolean(date(null())), boolean(date('2010-04-15'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                     |
+            -+-----------------------------------------------------+-
+             | boolean(date(null())) | boolean(date('2010-04-15')) |
+            -+-----------------------+-----------------------------+-
+             | false                 | true                        |
+                                                             (1 row)
+
+             ----
+             /{boolean(date(null())),boolean(date('2010-04-15'))}
+             SELECT FALSE,
+                    TRUE
+        - uri: /{true()&true(), true()&false(), false()&true(), false()&false()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                   |
+            -+-------------------------------------------------------------------+-
+             | true()&true() | true()&false() | false()&true() | false()&false() |
+            -+---------------+----------------+----------------+-----------------+-
+             | true          | false          | false          | false           |
+                                                                           (1 row)
+
+             ----
+             /{true()&true(),true()&false(),false()&true(),false()&false()}
+             SELECT TRUE,
+                    FALSE,
+                    FALSE,
+                    FALSE
+        - uri: /{true()|true(), true()|false(), false()|true(), false()|false()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                   |
+            -+-------------------------------------------------------------------+-
+             | true()|true() | true()|false() | false()|true() | false()|false() |
+            -+---------------+----------------+----------------+-----------------+-
+             | true          | true           | true           | false           |
+                                                                           (1 row)
+
+             ----
+             /{true()|true(),true()|false(),false()|true(),false()|false()}
+             SELECT TRUE,
+                    TRUE,
+                    TRUE,
+                    FALSE
+        - uri: /{!true(), !false()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                    |
+            -+--------------------+-
+             | !true() | !false() |
+            -+---------+----------+-
+             | false   | true     |
+                            (1 row)
+
+             ----
+             /{!true(),!false()}
+             SELECT FALSE,
+                    TRUE
+        - uri: /{null()&true(), null()&false(), null()&null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                |
+            -+------------------------------------------------+-
+             | null()&true() | null()&false() | null()&null() |
+            -+---------------+----------------+---------------+-
+             |               | false          |               |
+                                                        (1 row)
+
+             ----
+             /{null()&true(),null()&false(),null()&null()}
+             SELECT NULL,
+                    FALSE,
+                    NULL
+        - uri: /{null()|true(), null()|false(), null()|null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                |
+            -+------------------------------------------------+-
+             | null()|true() | null()|false() | null()|null() |
+            -+---------------+----------------+---------------+-
+             | true          |                |               |
+                                                        (1 row)
+
+             ----
+             /{null()|true(),null()|false(),null()|null()}
+             SELECT TRUE,
+                    NULL,
+                    NULL
+        - uri: /{!null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |         |
+            -+---------+-
+             | !null() |
+            -+---------+-
+             |         |
+                 (1 row)
+
+             ----
+             /{!null()}
+             SELECT NULL
+        - uri: /{is_null(null()), is_null('NULL'), is_null(0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                |
+            -+------------------------------------------------+-
+             | is_null(null()) | is_null('NULL') | is_null(0) |
+            -+-----------------+-----------------+------------+-
+             | true            | false           | false      |
+                                                        (1 row)
+
+             ----
+             /{is_null(null()),is_null('NULL'),is_null(0)}
+             SELECT TRUE,
+                    FALSE,
+                    FALSE
+        - uri: /{true()=true(), 1=1, 'HTSQL'='HTSQL', date('2010-04-15')=date('2010-04-15')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                |
+            -+--------------------------------------------------------------------------------+-
+             | true()=true() | 1=1  | 'HTSQL'='HTSQL' | date('2010-04-15')=date('2010-04-15') |
+            -+---------------+------+-----------------+---------------------------------------+-
+             | true          | true | true            | true                                  |
+                                                                                        (1 row)
+
+             ----
+             /{true()=true(),1=1,'HTSQL'='HTSQL',date('2010-04-15')=date('2010-04-15')}
+             SELECT TRUE,
+                    (1 = 1),
+                    ('HTSQL' = 'HTSQL'),
+                    ('2010-04-15'::DATE = '2010-04-15'::DATE)
+        - uri: /{true()!=false(), 1!=0, 'HTSQL'!='PITA', date('2010-04-15')!=date('1991-08-20')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                   |
+            -+-----------------------------------------------------------------------------------+-
+             | true()!=false() | 1!=0 | 'HTSQL'!='PITA' | date('2010-04-15')!=date('1991-08-20') |
+            -+-----------------+------+-----------------+----------------------------------------+-
+             | true            | true | true            | true                                   |
+                                                                                           (1 row)
+
+             ----
+             /{true()!=false(),1!=0,'HTSQL'!='PITA',date('2010-04-15')!=date('1991-08-20')}
+             SELECT TRUE,
+                    (1 <> 0),
+                    ('HTSQL' <> 'PITA'),
+                    ('2010-04-15'::DATE <> '1991-08-20'::DATE)
+        - uri: /{true()!=true(), 1!=1, 'HTSQL'!='HTSQL', date('2010-04-15')!=date('2010-04-15')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                    |
+            -+------------------------------------------------------------------------------------+-
+             | true()!=true() | 1!=1  | 'HTSQL'!='HTSQL' | date('2010-04-15')!=date('2010-04-15') |
+            -+----------------+-------+------------------+----------------------------------------+-
+             | false          | false | false            | false                                  |
+                                                                                            (1 row)
+
+             ----
+             /{true()!=true(),1!=1,'HTSQL'!='HTSQL',date('2010-04-15')!=date('2010-04-15')}
+             SELECT FALSE,
+                    (1 <> 1),
+                    ('HTSQL' <> 'HTSQL'),
+                    ('2010-04-15'::DATE <> '2010-04-15'::DATE)
+        - uri: /{true()=false(), 1=0, 'HTSQL'='PITA', date('2010-04-15')=date('1991-08-20')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                 |
+            -+---------------------------------------------------------------------------------+-
+             | true()=false() | 1=0   | 'HTSQL'='PITA' | date('2010-04-15')=date('1991-08-20') |
+            -+----------------+-------+----------------+---------------------------------------+-
+             | false          | false | false          | false                                 |
+                                                                                         (1 row)
+
+             ----
+             /{true()=false(),1=0,'HTSQL'='PITA',date('2010-04-15')=date('1991-08-20')}
+             SELECT FALSE,
+                    (1 = 0),
+                    ('HTSQL' = 'PITA'),
+                    ('2010-04-15'::DATE = '1991-08-20'::DATE)
+        - uri: /{5={2,3,5,7}, 'HTSQL'!={'ISBL','SQUARE','QUEL'}}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                 |
+            -+-------------------------------------------------+-
+             | 5={2,3,5,7} | 'HTSQL'!={'ISBL','SQUARE','QUEL'} |
+            -+-------------+-----------------------------------+-
+             | true        | true                              |
+                                                         (1 row)
+
+             ----
+             /{5={2,3,5,7},'HTSQL'!={'ISBL','SQUARE','QUEL'}}
+             SELECT (5 IN (2, 3, 5, 7)),
+                    ('HTSQL' NOT IN ('ISBL', 'SQUARE', 'QUEL'))
+        - uri: /{5!={2,3,5,7}, 'HTSQL'={'ISBL','SQUARE','QUEL'}}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                 |
+            -+-------------------------------------------------+-
+             | 5!={2,3,5,7} | 'HTSQL'={'ISBL','SQUARE','QUEL'} |
+            -+--------------+----------------------------------+-
+             | false        | false                            |
+                                                         (1 row)
+
+             ----
+             /{5!={2,3,5,7},'HTSQL'={'ISBL','SQUARE','QUEL'}}
+             SELECT (5 NOT IN (2, 3, 5, 7)),
+                    ('HTSQL' IN ('ISBL', 'SQUARE', 'QUEL'))
+        - uri: /{1=null(), 1!=null(), null()=null(), null()!=null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                       |
+            -+-------------------------------------------------------+-
+             | 1=null() | 1!=null() | null()=null() | null()!=null() |
+            -+----------+-----------+---------------+----------------+-
+             |          |           |               |                |
+                                                               (1 row)
+
+             ----
+             /{1=null(),1!=null(),null()=null(),null()!=null()}
+             SELECT NULL,
+                    NULL,
+                    NULL,
+                    NULL
+        - uri: /{false()={false(),null()}, true()={false(),null()}, false()!={false(),null()},
+            false()!={true(),null()}}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                           |
+            -+-----------------------------------------------------------------------------------------------------------+-
+             | false()={false(),null()} | true()={false(),null()} | false()!={false(),null()} | false()!={true(),null()} |
+            -+--------------------------+-------------------------+---------------------------+--------------------------+-
+             | true                     |                         | false                     |                          |
+                                                                                                                   (1 row)
+
+             ----
+             /{false()={false(),null()},true()={false(),null()},false()!={false(),null()},false()!={true(),null()}}
+             SELECT (FALSE IN (FALSE, NULL)),
+                    (TRUE IN (FALSE, NULL)),
+                    (FALSE NOT IN (FALSE, NULL)),
+                    (FALSE NOT IN (TRUE, NULL))
+        - uri: /{null()={true(),false()}, null()!={true(),false()}}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                    |
+            -+----------------------------------------------------+-
+             | null()={true(),false()} | null()!={true(),false()} |
+            -+-------------------------+--------------------------+-
+             |                         |                          |
+                                                            (1 row)
+
+             ----
+             /{null()={true(),false()},null()!={true(),false()}}
+             SELECT NULL,
+                    NULL
+        - uri: /{1==1, 1!==0, 1==null(), 1!==null(), null()==null(), null()!==null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                          |
+            -+--------------------------------------------------------------------------+-
+             | 1==1 | 1!==0 | 1==null() | 1!==null() | null()==null() | null()!==null() |
+            -+------+-------+-----------+------------+----------------+-----------------+-
+             | true | true  | false     | true       | true           | false           |
+                                                                                  (1 row)
+
+             ----
+             /{1==1,1!==0,1==null(),1!==null(),null()==null(),null()!==null()}
+             SELECT (1 = 1),
+                    (1 <> 0),
+                    FALSE,
+                    TRUE,
+                    TRUE,
+                    FALSE
+        - uri: /{7=0.7e1, '13'=13.0, '13'!=='13.0'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                     |
+            -+-------------------------------------+-
+             | 7=0.7e1 | '13'=13.0 | '13'!=='13.0' |
+            -+---------+-----------+---------------+-
+             | true    | true      | true          |
+                                             (1 row)
+
+             ----
+             /{7=0.7e1,'13'=13.0,'13'!=='13.0'}
+             SELECT (7.0::FLOAT8 = 7.0::FLOAT8),
+                    (13::NUMERIC = 13.0::NUMERIC),
+                    ('13' <> '13.0')
+        - uri: /{true()=1}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            serialize error: invalid integer value:
-                /{115792089237316195423570985008687907853269984665640564039457584007913129639936}
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        - uri: /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}
+            bind error: incompatible arguments:
+                /{true()=1}
+                  ^^^^^^^^
+        - uri: /{'cinq'!=4.9}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid decimal literal: cinq:
+                /{'cinq'!=4.9}
+                  ^^^^^^
+        - uri: /{date('2010-04-15')==1991}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{date('2010-04-15')==1991}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha', date('2010-04-15')>=date('1991-08-20')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                          |
-            -+----------------------------------------------------------+-
-             | 0.0 | 1.0 | 3.14 | 0.00000000001 | 1234567890.0987654321 |
-            -+-----+-----+------+---------------+-----------------------+-
-             | 0.0 | 1.0 | 3.14 |         1E-11 | 1234567890.0987654321 |
-                                                                  (1 row)
+             |                                                                            |
+            -+----------------------------------------------------------------------------+-
+             | 1<10 | 7.0<=7.0 | 'omega'>'alpha' | date('2010-04-15')>=date('1991-08-20') |
+            -+------+----------+-----------------+----------------------------------------+-
+             | true | true     | true            | true                                   |
+                                                                                    (1 row)
 
              ----
-             /{0.0,1.0,3.14,0.00000000001,1234567890.0987654321}
-             SELECT 0.0::NUMERIC,
-                    1.0::NUMERIC,
-                    3.14::NUMERIC,
-                    1E-11::NUMERIC,
-                    1234567890.0987654321::NUMERIC
-        - uri: /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1}
+             /{1<10,7.0<=7.0,'omega'>'alpha',date('2010-04-15')>=date('1991-08-20')}
+             SELECT (1 < 10),
+                    (7.0::NUMERIC <= 7.0::NUMERIC),
+                    ('omega' > 'alpha'),
+                    ('2010-04-15'::DATE >= '1991-08-20'::DATE)
+        - uri: /{1>=10, 7.0>7.0, 'omega'<='alpha', date('2010-04-15')<date('1991-08-20')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                                                                         |
-            -+---------------------------------------------------------------------------------------------------------+-
-             | 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1 |
-            -+---------------------------------------------------------------------------------------------------------+-
-             | 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1 |
-                                                                                                                 (1 row)
+             |                                                                            |
+            -+----------------------------------------------------------------------------+-
+             | 1>=10 | 7.0>7.0 | 'omega'<='alpha' | date('2010-04-15')<date('1991-08-20') |
+            -+-------+---------+------------------+---------------------------------------+-
+             | false | false   | false            | false                                 |
+                                                                                    (1 row)
 
              ----
-             /{10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1}
-             SELECT 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.1::NUMERIC
-        - uri: /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}
+             /{1>=10,7.0>7.0,'omega'<='alpha',date('2010-04-15')<date('1991-08-20')}
+             SELECT (1 >= 10),
+                    (7.0::NUMERIC > 7.0::NUMERIC),
+                    ('omega' <= 'alpha'),
+                    ('2010-04-15'::DATE < '1991-08-20'::DATE)
+        - uri: /{0<null(), ''>null(), null()>=null()}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                           |
-            -+-----------------------------------------------------------+-
-             | 0e0 | 1e1  | 0.31415926535897931e1 | 2718281828459045e-16 |
-            -+-----+------+-----------------------+----------------------+-
-             | 0.0 | 10.0 |         3.14159265359 |       0.271828182846 |
-                                                                   (1 row)
+             |                                       |
+            -+---------------------------------------+-
+             | 0<null() | ''>null() | null()>=null() |
+            -+----------+-----------+----------------+-
+             |          |           |                |
+                                               (1 row)
 
              ----
-             /{0e0,1e1,0.31415926535897931e1,2718281828459045e-16}
-             SELECT 0.0::FLOAT8,
-                    10.0::FLOAT8,
-                    3.1415926535897931::FLOAT8,
-                    0.27182818284590449::FLOAT8
-        - uri: /{1e1024,-1e1024,1e1024/1e1024}
+             /{0<null(),''>null(),null()>=null()}
+             SELECT (0 < NULL),
+                    ('' > NULL),
+                    (NULL >= NULL)
+        - uri: /{175e-2>'875e-3', '2010-04-15'>=date('1991-08-20')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                  |
-            -+----------------------------------+-
-             | 1e1024 | -1e1024 | 1e1024/1e1024 |
-            -+--------+---------+---------------+-
-             |    inf |    -inf |           nan |
-                                          (1 row)
+             |                                                    |
+            -+----------------------------------------------------+-
+             | 175e-2>'875e-3' | '2010-04-15'>=date('1991-08-20') |
+            -+-----------------+----------------------------------+-
+             | true            | true                             |
+                                                            (1 row)
 
              ----
-             /{1e1024,-1e1024,1e1024/1e1024}
-             SELECT 'Infinity'::FLOAT8,
-                    (- 'Infinity'::FLOAT8),
-                    ('Infinity'::FLOAT8 / 'Infinity'::FLOAT8)
+             /{175e-2>'875e-3','2010-04-15'>=date('1991-08-20')}
+             SELECT (1.75::FLOAT8 > 0.875::FLOAT8),
+                    ('2010-04-15'::DATE >= '1991-08-20'::DATE)
+        - uri: /{false()<true()}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: uncomparable arguments:
+                /{false()<true()}
+                  ^^^^^^^^^^^^^^
+        - uri: /{'cinq'>4.9}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid decimal literal: cinq:
+                /{'cinq'>4.9}
+                  ^^^^^^
+        - uri: /{date('2010-04-15')>=1991}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{date('2010-04-15')>=1991}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{if_null('Victor', 'William'), if_null(null(), 'William'), if_null('Victor',
+            null()), if_null(null(), null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                             |
+            -+-------------------------------------------------------------------------------------------------------------+-
+             | if_null('Victor','William') | if_null(null(),'William') | if_null('Victor',null()) | if_null(null(),null()) |
+            -+-----------------------------+---------------------------+--------------------------+------------------------+-
+             | Victor                      | William                   | Victor                   |                        |
+                                                                                                                     (1 row)
+
+             ----
+             /{if_null('Victor','William'),if_null(null(),'William'),if_null('Victor',null()),if_null(null(),null())}
+             SELECT 'Victor',
+                    'William',
+                    'Victor',
+                    NULL
+        - uri: /{null_if('George', 'George'), null_if('George', 'Harry'), null_if(null(),  'Harry'),
+            null_if('George', null()), null_if(null(), null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                      |
+            -+--------------------------------------------------------------------------------------------------------------------------------------+-
+             | null_if('George','George') | null_if('George','Harry') | null_if(null(),'Harry') | null_if('George',null()) | null_if(null(),null()) |
+            -+----------------------------+---------------------------+-------------------------+--------------------------+------------------------+-
+             |                            | George                    |                         | George                   |                        |
+                                                                                                                                              (1 row)
+
+             ----
+             /{null_if('George','George'),null_if('George','Harry'),null_if(null(),'Harry'),null_if('George',null()),null_if(null(),null())}
+             SELECT NULL,
+                    NULLIF('George', 'Harry'),
+                    NULL,
+                    'George',
+                    NULL
+        - uri: /{if_null(1, 0.1e1), null_if(1, 0.1e1)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                     |
+            -+-------------------------------------+-
+             | if_null(1,0.1e1) | null_if(1,0.1e1) |
+            -+------------------+------------------+-
+             |              1.0 |                  |
+                                             (1 row)
+
+             ----
+             /{if_null(1,0.1e1),null_if(1,0.1e1)}
+             SELECT 1.0::FLOAT8,
+                    NULL
+        - uri: /{if_null('cinq', 5)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid integer literal: expected an integer in a decimal format; got 'cinq':
+                /{if_null('cinq', 5)}
+                          ^^^^^^
+        - uri: /{null_if('cinq', 5)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid integer literal: expected an integer in a decimal format; got 'cinq':
+                /{null_if('cinq', 5)}
+                          ^^^^^^
+        - uri: /{if_null(date('2010-04-15'),1991)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{if_null(date('2010-04-15'),1991)}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{null_if(date('2010-04-15'),1991)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{null_if(date('2010-04-15'),1991)}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{if(true(), 'then'), if(false(), 'then'), if(null(), 'then')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                            |
+            -+------------------------------------------------------------+-
+             | if(true(),'then') | if(false(),'then') | if(null(),'then') |
+            -+-------------------+--------------------+-------------------+-
+             | then              |                    |                   |
+                                                                    (1 row)
+
+             ----
+             /{if(true(),'then'),if(false(),'then'),if(null(),'then')}
+             SELECT (CASE WHEN TRUE THEN 'then' END),
+                    (CASE WHEN FALSE THEN 'then' END),
+                    (CASE WHEN NULL THEN 'then' END)
+        - uri: /{if(true(), 'then', 'else'), if(false(), 'then', 'else'), if(null(),
+            'then', 'else')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                 |
+            -+---------------------------------------------------------------------------------+-
+             | if(true(),'then','else') | if(false(),'then','else') | if(null(),'then','else') |
+            -+--------------------------+---------------------------+--------------------------+-
+             | then                     | else                      | else                     |
+                                                                                         (1 row)
+
+             ----
+             /{if(true(),'then','else'),if(false(),'then','else'),if(null(),'then','else')}
+             SELECT (CASE WHEN TRUE THEN 'then' ELSE 'else' END),
+                    (CASE WHEN FALSE THEN 'then' ELSE 'else' END),
+                    (CASE WHEN NULL THEN 'then' ELSE 'else' END)
+        - uri: /{if(7=0, 'none', 7=1, 'one', 7=2, 'two', 'many')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                           |
+            -+-------------------------------------------+-
+             | if(7=0,'none',7=1,'one',7=2,'two','many') |
+            -+-------------------------------------------+-
+             | many                                      |
+                                                   (1 row)
+
+             ----
+             /{if(7=0,'none',7=1,'one',7=2,'two','many')}
+             SELECT (CASE WHEN (7 = 0) THEN 'none' WHEN (7 = 1) THEN 'one' WHEN (7 = 2) THEN 'two' ELSE 'many' END)
+        - uri: /{switch(1, 1, 'George', 2, 'Harry'), switch(2, 1, 'George', 2, 'Harry'),
+            switch(3, 1, 'George', 2, 'Harry')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                  |
+            -+--------------------------------------------------------------------------------------------------+-
+             | switch(1,1,'George',2,'Harry') | switch(2,1,'George',2,'Harry') | switch(3,1,'George',2,'Harry') |
+            -+--------------------------------+--------------------------------+--------------------------------+-
+             | George                         | Harry                          |                                |
+                                                                                                          (1 row)
+
+             ----
+             /{switch(1,1,'George',2,'Harry'),switch(2,1,'George',2,'Harry'),switch(3,1,'George',2,'Harry')}
+             SELECT (CASE 1 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' END),
+                    (CASE 2 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' END),
+                    (CASE 3 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' END)
+        - uri: /{switch(1, 1, 'George', 2, 'Harry', 'Edward'), switch(2, 1, 'George',
+            2, 'Harry', 'Edward'), switch(3, 1, 'George', 2, 'Harry', 'Edward')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                             |
+            -+-----------------------------------------------------------------------------------------------------------------------------+-
+             | switch(1,1,'George',2,'Harry','Edward') | switch(2,1,'George',2,'Harry','Edward') | switch(3,1,'George',2,'Harry','Edward') |
+            -+-----------------------------------------+-----------------------------------------+-----------------------------------------+-
+             | George                                  | Harry                                   | Edward                                  |
+                                                                                                                                     (1 row)
+
+             ----
+             /{switch(1,1,'George',2,'Harry','Edward'),switch(2,1,'George',2,'Harry','Edward'),switch(3,1,'George',2,'Harry','Edward')}
+             SELECT (CASE 1 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' ELSE 'Edward' END),
+                    (CASE 2 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' ELSE 'Edward' END),
+                    (CASE 3 WHEN 1 THEN 'George' WHEN 2 THEN 'Harry' ELSE 'Edward' END)
+        - uri: /{if(true(), 1, 0e0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                  |
+            -+------------------+-
+             | if(true(),1,0e0) |
+            -+------------------+-
+             |              1.0 |
+                          (1 row)
+
+             ----
+             /{if(true(),1,0e0)}
+             SELECT (CASE WHEN TRUE THEN 1.0::FLOAT8 ELSE 0.0::FLOAT8 END)
+        - uri: /{switch(date('2010-04-15'), '1991-08-20', 'WWW', '2010-04-15', 'HTSQL')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                    |
+            -+--------------------------------------------------------------------+-
+             | switch(date('2010-04-15'),'1991-08-20','WWW','2010-04-15','HTSQL') |
+            -+--------------------------------------------------------------------+-
+             | HTSQL                                                              |
+                                                                            (1 row)
+
+             ----
+             /{switch(date('2010-04-15'),'1991-08-20','WWW','2010-04-15','HTSQL')}
+             SELECT (CASE '2010-04-15'::DATE WHEN '1991-08-20'::DATE THEN 'WWW' WHEN '2010-04-15'::DATE THEN 'HTSQL' END)
+        - uri: /{if('', 'then', 'else')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid Boolean literal: expected 'true' or 'false'; got '':
+                /{if('', 'then', 'else')}
+                     ^^
+        - uri: /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{switch(1, 1, 'George', 2, false())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid Boolean literal: expected 'true' or 'false'; got 'George':
+                /{switch(1, 1, 'George', 2, false())}
+                               ^^^^^^^^
       - id: scalar-functions
         tests:
         - id: boolean-constants-and-logical-operators

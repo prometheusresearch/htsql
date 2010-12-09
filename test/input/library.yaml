@@ -76,7 +76,122 @@ tests:
   - uri: /date('2010-13-07')
     expect: 400
 
+- title: Logical and Comparison Operators
+  tests:
 
+  # Boolean literals
+  - uri: /{true(), false()}
+  # Boolean conversion
+  - uri: /{boolean(null()), boolean('true'), boolean('false')}
+  - uri: /{boolean(integer(null())), boolean(0.0), boolean(1e0)}
+  - uri: /{boolean(string(null())),
+           boolean(string('')),
+           boolean(string('FALSE'))}
+  - uri: /{boolean(date(null())), boolean(date('2010-04-15'))}
+  # AND, OR, NOT
+  - uri: /{true()&true(), true()&false(), false()&true(), false()&false()}
+  - uri: /{true()|true(), true()|false(), false()|true(), false()|false()}
+  - uri: /{!true(), !false()}
+  - uri: /{null()&true(), null()&false(), null()&null()}
+  - uri: /{null()|true(), null()|false(), null()|null()}
+  - uri: /{!null()}
+  # Is NULL
+  - uri: /{is_null(null()), is_null('NULL'), is_null(0)}
+
+  # Equality
+  - uri: /{true()=true(), 1=1, 'HTSQL'='HTSQL',
+           date('2010-04-15')=date('2010-04-15')}
+  - uri: /{true()!=false(), 1!=0, 'HTSQL'!='PITA',
+           date('2010-04-15')!=date('1991-08-20')}
+  - uri: /{true()!=true(), 1!=1, 'HTSQL'!='HTSQL',
+           date('2010-04-15')!=date('2010-04-15')}
+  - uri: /{true()=false(), 1=0, 'HTSQL'='PITA',
+           date('2010-04-15')=date('1991-08-20')}
+  # IN
+  - uri: /{5={2,3,5,7}, 'HTSQL'!={'ISBL','SQUARE','QUEL'}}
+  - uri: /{5!={2,3,5,7}, 'HTSQL'={'ISBL','SQUARE','QUEL'}}
+  # NULL and Total Equality
+  - uri: /{1=null(), 1!=null(), null()=null(), null()!=null()}
+  - uri: /{false()={false(),null()}, true()={false(),null()},
+           false()!={false(),null()}, false()!={true(),null()}}
+  - uri: /{null()={true(),false()}, null()!={true(),false()}}
+  - uri: /{1==1, 1!==0, 1==null(), 1!==null(),
+           null()==null(), null()!==null()}
+  # Coercion
+  - uri: /{7=0.7e1, '13'=13.0, '13'!=='13.0'}
+  # Incompatible Operands
+  - uri: /{true()=1}
+    expect: 400
+  - uri: /{'cinq'!=4.9}
+    expect: 400
+  - uri: /{date('2010-04-15')==1991}
+    expect: 400
+
+  # Comparison
+  - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha',
+           date('2010-04-15')>=date('1991-08-20')}
+  - uri: /{1>=10, 7.0>7.0, 'omega'<='alpha',
+           date('2010-04-15')<date('1991-08-20')}
+  # NULL
+  - uri: /{0<null(), ''>null(), null()>=null()}
+  # Coercion
+  - uri: /{175e-2>'875e-3', '2010-04-15'>=date('1991-08-20')}
+  # Incompatible Operands
+  - uri: /{false()<true()}
+    expect: 400
+  - uri: /{'cinq'>4.9}
+    expect: 400
+  - uri: /{date('2010-04-15')>=1991}
+    expect: 400
+
+  # If NULL and NULL If
+  - uri: /{if_null('Victor', 'William'),
+           if_null(null(), 'William'),
+           if_null('Victor', null()),
+           if_null(null(), null())}
+  - uri: /{null_if('George', 'George'),
+           null_if('George', 'Harry'),
+           null_if(null(),  'Harry'),
+           null_if('George', null()),
+           null_if(null(), null())}
+  # Coercion
+  - uri: /{if_null(1, 0.1e1), null_if(1, 0.1e1)}
+  # Incompatible Operands
+  - uri: /{if_null('cinq', 5)}
+    expect: 400
+  - uri: /{null_if('cinq', 5)}
+    expect: 400
+  - uri: /{if_null(date('2010-04-15'),1991)}
+    expect: 400
+  - uri: /{null_if(date('2010-04-15'),1991)}
+    expect: 400
+
+  # If and Switch
+  - uri: /{if(true(), 'then'),
+           if(false(), 'then'),
+           if(null(), 'then')}
+  - uri: /{if(true(), 'then', 'else'),
+           if(false(), 'then', 'else'),
+           if(null(), 'then', 'else')}
+  - uri: /{if(7=0, 'none', 7=1, 'one', 7=2, 'two', 'many')}
+  - uri: /{switch(1, 1, 'George', 2, 'Harry'),
+           switch(2, 1, 'George', 2, 'Harry'),
+           switch(3, 1, 'George', 2, 'Harry')}
+  - uri: /{switch(1, 1, 'George', 2, 'Harry', 'Edward'),
+           switch(2, 1, 'George', 2, 'Harry', 'Edward'),
+           switch(3, 1, 'George', 2, 'Harry', 'Edward')}
+  # Coercion
+  - uri: /{if(true(), 1, 0e0)}
+  - uri: /{switch(date('2010-04-15'),
+                  '1991-08-20', 'WWW',
+                  '2010-04-15', 'HTSQL')}
+  # Incompatible Operands
+  - uri: /{if('', 'then', 'else')}
+    expect: 400
+  - uri: /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
+    expect: 400
+  - uri: /{switch(1, 1, 'George', 2, false())}
+    expect: 400
 
 # FIXME: update and refurbish!
 
