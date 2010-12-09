@@ -8,6 +8,8 @@ title: Standard Data Types, Functions, and Operations
 id: library
 tests:
 
+########################################################################
+
 - title: Literals
   tests:
 
@@ -68,6 +70,8 @@ tests:
   # Invalid date
   - uri: /date('2010-13-07')
     expect: 400
+
+########################################################################
 
 - title: Logical and Comparison Operators
   tests:
@@ -186,22 +190,32 @@ tests:
   - uri: /{switch(1, 1, 'George', 2, false())}
     expect: 400
 
+########################################################################
+
 - title: Numeric Functions and Operators
   tests:
 
   # Conversion
   - uri: /{integer(null()), integer('60'), integer(60)}
+  - uri: /{decimal(null()), decimal('2.125'), decimal(2.125)}
+  - uri: /{float(null()), float('271828e-5'), float('271828e-5')}
   - uri: /{integer(2.125), integer(271828e-5)}
+  - uri: /{decimal(60), decimal(271828e-5)}
+  - uri: /{float(60), float(2.125)}
   - uri: /{integer(string('60'))}
+  - uri: /{decimal(string('2.125'))}
+  - uri: /{float(string('271828e-5'))}
   # Incompatible operand
   - uri: /{integer('cinq')}
     expect: 400
-  - uri: /{integer(true())}
+  - uri: /{decimal(true())}
     expect: 400
-  - uri: /{integer(date('2010-04-15'))}
+  - uri: /{float(date('2010-04-15'))}
     expect: 400
   # Not a number
   - uri: /{integer(string('zero'))}
+    ifdef: sqlite
+  - uri: /{float(string('zero'))}
     ifdef: sqlite
   - uri: /{integer(string('cinq'))}
     expect: 409
@@ -270,6 +284,9 @@ tests:
   - uri: /{round(271828e-5,2)}
     expect: 400
     ifndef: sqlite
+
+########################################################################
+
 
 
 # FIXME: update and refurbish!

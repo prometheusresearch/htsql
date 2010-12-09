@@ -9223,6 +9223,40 @@ tests:
              SELECT NULL,
                     60,
                     60
+        - uri: /{decimal(null()), decimal('2.125'), decimal(2.125)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                     |
+            -+-----------------------------------------------------+-
+             | decimal(null()) | decimal('2.125') | decimal(2.125) |
+            -+-----------------+------------------+----------------+-
+             |                 |            2.125 |          2.125 |
+                                                             (1 row)
+
+             ----
+             /{decimal(null()),decimal('2.125'),decimal(2.125)}
+             SELECT NULL,
+                    2.125,
+                    2.125
+        - uri: /{float(null()), float('271828e-5'), float('271828e-5')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                         |
+            -+---------------------------------------------------------+-
+             | float(null()) | float('271828e-5') | float('271828e-5') |
+            -+---------------+--------------------+--------------------+-
+             |               |            2.71828 |            2.71828 |
+                                                                 (1 row)
+
+             ----
+             /{float(null()),float('271828e-5'),float('271828e-5')}
+             SELECT NULL,
+                    2.71828,
+                    2.71828
         - uri: /{integer(2.125), integer(271828e-5)}
           status: 200 OK
           headers:
@@ -9239,6 +9273,38 @@ tests:
              /{integer(2.125),integer(271828e-5)}
              SELECT CAST(2.125 AS INTEGER),
                     CAST(2.71828 AS INTEGER)
+        - uri: /{decimal(60), decimal(271828e-5)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                  |
+            -+----------------------------------+-
+             | decimal(60) | decimal(271828e-5) |
+            -+-------------+--------------------+-
+             |        60.0 |            2.71828 |
+                                          (1 row)
+
+             ----
+             /{decimal(60),decimal(271828e-5)}
+             SELECT 60.0,
+                    2.71828
+        - uri: /{float(60), float(2.125)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                          |
+            -+--------------------------+-
+             | float(60) | float(2.125) |
+            -+-----------+--------------+-
+             |      60.0 |        2.125 |
+                                  (1 row)
+
+             ----
+             /{float(60),float(2.125)}
+             SELECT 60.0,
+                    2.125
         - uri: /{integer(string('60'))}
           status: 200 OK
           headers:
@@ -9254,6 +9320,36 @@ tests:
              ----
              /{integer(string('60'))}
              SELECT CAST('60' AS INTEGER)
+        - uri: /{decimal(string('2.125'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                          |
+            -+--------------------------+-
+             | decimal(string('2.125')) |
+            -+--------------------------+-
+             |                    2.125 |
+                                  (1 row)
+
+             ----
+             /{decimal(string('2.125'))}
+             SELECT CAST('2.125' AS REAL)
+        - uri: /{float(string('271828e-5'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                            |
+            -+----------------------------+-
+             | float(string('271828e-5')) |
+            -+----------------------------+-
+             |                    2.71828 |
+                                    (1 row)
+
+             ----
+             /{float(string('271828e-5'))}
+             SELECT CAST('271828e-5' AS REAL)
         - uri: /{integer('cinq')}
           status: 400 Bad Request
           headers:
@@ -9262,22 +9358,22 @@ tests:
             encode error: invalid integer literal: expected an integer in a decimal format; got 'cinq':
                 /{integer('cinq')}
                   ^^^^^^^^^^^^^^^
-        - uri: /{integer(true())}
+        - uri: /{decimal(true())}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             encode error: inadmissible conversion:
-                /{integer(true())}
+                /{decimal(true())}
                   ^^^^^^^^^^^^^^^
-        - uri: /{integer(date('2010-04-15'))}
+        - uri: /{float(date('2010-04-15'))}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             encode error: inadmissible conversion:
-                /{integer(date('2010-04-15'))}
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                /{float(date('2010-04-15'))}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{integer(string('zero'))}
           status: 200 OK
           headers:
@@ -9293,6 +9389,21 @@ tests:
              ----
              /{integer(string('zero'))}
              SELECT CAST('zero' AS INTEGER)
+        - uri: /{float(string('zero'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                       |
+            -+-----------------------+-
+             | float(string('zero')) |
+            -+-----------------------+-
+             |                   0.0 |
+                               (1 row)
+
+             ----
+             /{float(string('zero'))}
+             SELECT CAST('zero' AS REAL)
         - uri: /{integer(4294967296.0), integer(1.8446744073709552e+19)}
           status: 200 OK
           headers:
