@@ -8297,22 +8297,22 @@ tests:
              /{integer('4862'),integer('-9694845')}
              SELECT 4862,
                     -9694845
-        - uri: /{integer('-2147483648'), integer('2147483647')}
+        - uri: /{integer('-9223372036854775808'), integer('9223372036854775807')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                |
-            -+------------------------------------------------+-
-             | integer('-2147483648') | integer('2147483647') |
-            -+------------------------+-----------------------+-
-             |            -2147483648 |            2147483647 |
-                                                        (1 row)
+             |                                                                  |
+            -+------------------------------------------------------------------+-
+             | integer('-9223372036854775808') | integer('9223372036854775807') |
+            -+---------------------------------+--------------------------------+-
+             |            -9223372036854775808 |            9223372036854775807 |
+                                                                          (1 row)
 
              ----
-             /{integer('-2147483648'),integer('2147483647')}
-             SELECT -2147483648,
-                    2147483647
+             /{integer('-9223372036854775808'),integer('9223372036854775807')}
+             SELECT -9223372036854775808,
+                    9223372036854775807
         - uri: /{integer('2.5e1')}
           status: 400 Bad Request
           headers:
@@ -8321,14 +8321,6 @@ tests:
             encode error: invalid integer literal: expected an integer in a decimal format; got '2.5e1':
                 /{integer('2.5e1')}
                   ^^^^^^^^^^^^^^^^
-        - uri: /{4294967296}
-          status: 400 Bad Request
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            serialize error: invalid integer value:
-                /{4294967296}
-                  ^^^^^^^^^^
         - uri: /{18446744073709551616}
           status: 400 Bad Request
           headers:
@@ -9212,6 +9204,370 @@ tests:
             encode error: invalid Boolean literal: expected 'true' or 'false'; got 'George':
                 /{switch(1, 1, 'George', 2, false())}
                                ^^^^^^^^
+      - id: numeric-functions-and-operators
+        tests:
+        - uri: /{integer(null()), integer('60'), integer(60)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                               |
+            -+-----------------------------------------------+-
+             | integer(null()) | integer('60') | integer(60) |
+            -+-----------------+---------------+-------------+-
+             |                 |            60 |          60 |
+                                                       (1 row)
+
+             ----
+             /{integer(null()),integer('60'),integer(60)}
+             SELECT NULL,
+                    60,
+                    60
+        - uri: /{integer(2.125), integer(271828e-5)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                     |
+            -+-------------------------------------+-
+             | integer(2.125) | integer(271828e-5) |
+            -+----------------+--------------------+-
+             |              2 |                  2 |
+                                             (1 row)
+
+             ----
+             /{integer(2.125),integer(271828e-5)}
+             SELECT CAST(2.125 AS INTEGER),
+                    CAST(2.71828 AS INTEGER)
+        - uri: /{integer(string('60'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                       |
+            -+-----------------------+-
+             | integer(string('60')) |
+            -+-----------------------+-
+             |                    60 |
+                               (1 row)
+
+             ----
+             /{integer(string('60'))}
+             SELECT CAST('60' AS INTEGER)
+        - uri: /{integer('cinq')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid integer literal: expected an integer in a decimal format; got 'cinq':
+                /{integer('cinq')}
+                  ^^^^^^^^^^^^^^^
+        - uri: /{integer(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{integer(true())}
+                  ^^^^^^^^^^^^^^^
+        - uri: /{integer(date('2010-04-15'))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{integer(date('2010-04-15'))}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{integer(string('zero'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                         |
+            -+-------------------------+-
+             | integer(string('zero')) |
+            -+-------------------------+-
+             |                       0 |
+                                 (1 row)
+
+             ----
+             /{integer(string('zero'))}
+             SELECT CAST('zero' AS INTEGER)
+        - uri: /{integer(4294967296.0), integer(1.8446744073709552e+19)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                         |
+            -+---------------------------------------------------------+-
+             | integer(4294967296.0) | integer(1.8446744073709552e+19) |
+            -+-----------------------+---------------------------------+-
+             |            4294967296 |            -9223372036854775808 |
+                                                                 (1 row)
+
+             ----
+             /{integer(4294967296.0),integer(1.8446744073709552e+19)}
+             SELECT CAST(4294967296.0 AS INTEGER),
+                    CAST(1.8446744073709552e+19 AS INTEGER)
+        - uri: /{+7, -7, +2.125, -2.125, +271828e-5, -271828e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                     |
+            -+-----------------------------------------------------+-
+             | +7 | -7 | +2.125 | -2.125 | +271828e-5 | -271828e-5 |
+            -+----+----+--------+--------+------------+------------+-
+             |  7 | -7 |  2.125 | -2.125 |    2.71828 |   -2.71828 |
+                                                             (1 row)
+
+             ----
+             /{+7,-7,+2.125,-2.125,+271828e-5,-271828e-5}
+             SELECT 7,
+                    (- 7),
+                    2.125,
+                    (- 2.125),
+                    2.71828,
+                    (- 2.71828)
+        - uri: /{7920+9504, 7.25+0.875, 120205e-5+57721e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                             |
+            -+---------------------------------------------+-
+             | 7920+9504 | 7.25+0.875 | 120205e-5+57721e-5 |
+            -+-----------+------------+--------------------+-
+             |     17424 |      8.125 |            1.77926 |
+                                                     (1 row)
+
+             ----
+             /{7920+9504,7.25+0.875,120205e-5+57721e-5}
+             SELECT (7920 + 9504),
+                    (7.25 + 0.875),
+                    (1.2020500000000001 + 0.57721)
+        - uri: /{7920-9504, 7.25-0.875, 120205e-5-57721e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                             |
+            -+---------------------------------------------+-
+             | 7920-9504 | 7.25-0.875 | 120205e-5-57721e-5 |
+            -+-----------+------------+--------------------+-
+             |     -1584 |      6.375 |            0.62484 |
+                                                     (1 row)
+
+             ----
+             /{7920-9504,7.25-0.875,120205e-5-57721e-5}
+             SELECT (7920 - 9504),
+                    (7.25 - 0.875),
+                    (1.2020500000000001 - 0.57721)
+        - uri: /{7920*9504, 7.25*0.875, 120205e-5*57721e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                             |
+            -+---------------------------------------------+-
+             | 7920*9504 | 7.25*0.875 | 120205e-5*57721e-5 |
+            -+-----------+------------+--------------------+-
+             |  75271680 |    6.34375 |       0.6938352805 |
+                                                     (1 row)
+
+             ----
+             /{7920*9504,7.25*0.875,120205e-5*57721e-5}
+             SELECT (7920 * 9504),
+                    (7.25 * 0.875),
+                    (1.2020500000000001 * 0.57721)
+        - uri: /{7920/9504, 7.25/0.875, 120205e-5/57721e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                     |
+            -+-----------------------------------------------------+-
+             | 7920/9504      | 7.25/0.875    | 120205e-5/57721e-5 |
+            -+----------------+---------------+--------------------+-
+             | 0.833333333333 | 8.28571428571 |       2.0825176279 |
+                                                             (1 row)
+
+             ----
+             /{7920/9504,7.25/0.875,120205e-5/57721e-5}
+             SELECT (7920.0 / 9504.0),
+                    (7.25 / 0.875),
+                    (1.2020500000000001 / 0.57721)
+        - uri: /{7+2.125, 7+271828e-5, 2.125+271828e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                         |
+            -+-----------------------------------------+-
+             | 7+2.125 | 7+271828e-5 | 2.125+271828e-5 |
+            -+---------+-------------+-----------------+-
+             |   9.125 |     9.71828 |         4.84328 |
+                                                 (1 row)
+
+             ----
+             /{7+2.125,7+271828e-5,2.125+271828e-5}
+             SELECT (7.0 + 2.125),
+                    (7.0 + 2.71828),
+                    (2.125 + 2.71828)
+        - uri: /{7-2.125, 7-271828e-5, 2.125-271828e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                         |
+            -+-----------------------------------------+-
+             | 7-2.125 | 7-271828e-5 | 2.125-271828e-5 |
+            -+---------+-------------+-----------------+-
+             |   4.875 |     4.28172 |        -0.59328 |
+                                                 (1 row)
+
+             ----
+             /{7-2.125,7-271828e-5,2.125-271828e-5}
+             SELECT (7.0 - 2.125),
+                    (7.0 - 2.71828),
+                    (2.125 - 2.71828)
+        - uri: /{7*2.125, 7*271828e-5, 2.125*271828e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                         |
+            -+-----------------------------------------+-
+             | 7*2.125 | 7*271828e-5 | 2.125*271828e-5 |
+            -+---------+-------------+-----------------+-
+             |  14.875 |    19.02796 |        5.776345 |
+                                                 (1 row)
+
+             ----
+             /{7*2.125,7*271828e-5,2.125*271828e-5}
+             SELECT (7.0 * 2.125),
+                    (7.0 * 2.71828),
+                    (2.125 * 2.71828)
+        - uri: /{7/2.125, 7/271828e-5, 2.125/271828e-5}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                 |
+            -+-------------------------------------------------+-
+             | 7/2.125       | 7/271828e-5   | 2.125/271828e-5 |
+            -+---------------+---------------+-----------------+-
+             | 3.29411764706 | 2.57515782039 |  0.781744338332 |
+                                                         (1 row)
+
+             ----
+             /{7/2.125,7/271828e-5,2.125/271828e-5}
+             SELECT (7.0 / 2.125),
+                    (7.0 / 2.71828),
+                    (2.125 / 2.71828)
+        - uri: /{'cinq'+7}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{'cinq'+7}
+                  ^^^^^^^^
+        - uri: /{2.125-date('2010-04-15')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{2.125-date('2010-04-15')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{true()/271828e-5}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{true()/271828e-5}
+                  ^^^^^^^^^^^^^^^^
+        - uri: /{7*2147483647, 9223372036854775807+1}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                      |
+            -+--------------------------------------+-
+             | 7*2147483647 | 9223372036854775807+1 |
+            -+--------------+-----------------------+-
+             |  15032385529 |  -9223372036854775808 |
+                                              (1 row)
+
+             ----
+             /{7*2147483647,9223372036854775807+1}
+             SELECT (7 * 2147483647),
+                    (9223372036854775807 + 1)
+        - uri: /{7/0, 7/0.0, 7/0e0}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                     |
+            -+---------------------+-
+             | 7/0 | 7/0.0 | 7/0e0 |
+            -+-----+-------+-------+-
+             |     |       |       |
+                             (1 row)
+
+             ----
+             /{7/0,7/0.0,7/0e0}
+             SELECT (7.0 / 0.0),
+                    (7.0 / 0.0),
+                    (7.0 / 0.0)
+        - uri: /{round(3272.78125,2)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                     |
+            -+---------------------+-
+             | round(3272.78125,2) |
+            -+---------------------+-
+             |             3272.78 |
+                             (1 row)
+
+             ----
+             /{round(3272.78125,2)}
+             SELECT ROUND(3272.78125, 2)
+        - uri: /{round(3272.78125), round(271828e-5)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                      |
+            -+--------------------------------------+-
+             | round(3272.78125) | round(271828e-5) |
+            -+-------------------+------------------+-
+             |            3273.0 |              3.0 |
+                                              (1 row)
+
+             ----
+             /{round(3272.78125),round(271828e-5)}
+             SELECT ROUND(3272.78125),
+                    ROUND(2.71828)
+        - uri: /{round(9973)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |             |
+            -+-------------+-
+             | round(9973) |
+            -+-------------+-
+             |      9973.0 |
+                     (1 row)
+
+             ----
+             /{round(9973)}
+             SELECT ROUND(9973.0)
   - include: test/input/translation.yaml
     output:
       id: translation

@@ -1448,10 +1448,9 @@ class DumpInteger(DumpByDomain):
         # Dump an integer number.  A backend may override this implementation
         # to support a different range of integer values.
 
-        # We assume that the database supports no more that 4-byte signed
-        # integer values natively and complain if the value is out of this
-        # range.
-        if not (-2**31 <= self.value < 2**31):
+        # We assume that the database supports 8-byte signed integer values
+        # natively and complain if the value is out of this range.
+        if not (-2**63 <= self.value < 2**63):
             raise SerializeError("invalid integer value",
                                  self.phrase.mark)
         # Write the number.

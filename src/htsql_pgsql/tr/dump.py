@@ -57,38 +57,16 @@ class PGSQLDumpBranch(DumpBranch):
                 self.write(", ")
 
 
-class PGSQLDumpInteger(DumpInteger):
-
-    def __call__(self):
-        if not (-2**63 <= self.value < 2**63):
-            raise SerializeError("invalid integer value",
-                                 self.phrase.mark)
-        self.write(str(self.value))
-
-
 class PGSQLDumpFloat(DumpFloat):
 
     def __call__(self):
-        value = repr(self.value)
-        if value == 'inf':
-            value = "'Infinity'"
-        elif value == '-inf':
-            value = "'-Infinity'"
-        elif value == 'nan':
-            value = "'NaN'"
-        self.format("%s::FLOAT8" % value)
+        self.write("%s::FLOAT8" % repr(self.value))
 
 
 class PGSQLDumpDecimal(DumpDecimal):
 
     def __call__(self):
-        if self.value.is_nan():
-            self.write("'NaN'::NUMERIC")
-            return
-        if not self.value.is_finite():
-            raise SerializeError("invalid decimal value",
-                                 self.phrase.mark)
-        self.format("%s::NUMERIC" % self.value)
+        self.write("%s::NUMERIC" % self.value)
 
 
 class PGSQLDumpDate(DumpDate):
