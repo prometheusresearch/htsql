@@ -219,13 +219,16 @@ tests:
     ifdef: sqlite
   - uri: /{integer(string('cinq'))}
     expect: 409
+    ignore: true
     ifdef: pgsql
   # Integer overflow
   - uri: /{integer(4294967296.0)}
     expect: 409
+    ignore: true
     ifdef: pgsql
   - uri: /{integer(1.8446744073709552e+19)}
     expect: 409
+    ignore: true
     ifdef: pgsql
   - uri: /{integer(4294967296.0),
            integer(1.8446744073709552e+19)}
@@ -252,21 +255,26 @@ tests:
   # Integer overflow
   - uri: /{7*2147483647}
     expect: 409
+    ignore: true
     ifdef: pgsql
   - uri: /{9223372036854775807+1}
     expect: 409
+    ignore: true
     ifdef: pgsql
   - uri: /{7*2147483647, 9223372036854775807+1}
     ifdef: sqlite
   # Division by zero
   - uri: /{7/0}
     expect: 409
+    ignore: true
     ifdef: pgsql
   - uri: /{7/0.0}
     expect: 409
+    ignore: true
     ifdef: pgsql
   - uri: /{7/0e0}
     expect: 409
+    ignore: true
     ifdef: pgsql
   - uri: /{7/0, 7/0.0, 7/0e0}
     ifdef: sqlite
@@ -295,7 +303,7 @@ tests:
   - uri: /{string(true()), string(false())}
     skip: true
   - uri: /{string(60), string(2.125), string(-57721e-5)}
-  - uri: /{string(date(2010-04-15))}
+  - uri: /{string(date('2010-04-15'))}
     skip: true
 
   # Length
@@ -367,6 +375,52 @@ tests:
   - uri: /{replace(null(),'WTF','LOL'),
            replace('OMGWTFBBQ',null(),'LOL'),
            replace('OMGWTFBBQ','WTF',null())
+    skip: true
+
+########################################################################
+
+- title: Date Functions and Operators
+  tests:
+
+  # Conversion
+  - uri: /{date(null()), date('2010-04-15')}
+  # Incompatible operand
+  - uri: /{date('2010-13-07')}
+    expect: 400
+  - uri: /{date(true())}
+    expect: 400
+  - uri: /{date(7)}
+    expect: 400
+  # Not a date
+  - uri: /{date(string('birthday'))}
+    expect: 409
+    ignore: true
+    ifdef: pgsql
+  - uri: /{date(string('2010-13-07'))}
+    expect: 409
+    ignore: true
+    ifdef: pgsql
+  - uri: /{date(string('birthday')),
+           date(string('2010-13-07'))}
+    ifdef: sqlite
+
+  # Construction
+  - uri: /{today()}
+    ignore: true
+    skip: true
+  - uri: /{date(2010,4,15), date(2010,3,45), date(2011,-8,15)}
+    skip: true
+
+  # Components
+  - uri: /{year(date('2010-04-15')),
+           month(date('2010-04-15')),
+           day(date('2010-04-15'))}
+    skip: true
+
+  # Arithmetics
+  - uri: /{date('1991-08-20')+6813,
+           date('2010-04-15')-6813,
+           date('2010-04-15')-date('1991-08-20')}
     skip: true
 
 

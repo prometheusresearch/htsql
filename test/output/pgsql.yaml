@@ -10407,6 +10407,71 @@ tests:
             bind error: incompatible arguments:
                 /{string('LOL')+7}
                   ^^^^^^^^^^^^^^^
+      - id: date-functions-and-operators
+        tests:
+        - uri: /{date(null()), date('2010-04-15')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                   |
+            -+-----------------------------------+-
+             | date(null()) | date('2010-04-15') |
+            -+--------------+--------------------+-
+             |              | 2010-04-15         |
+                                           (1 row)
+
+             ----
+             /{date(null()),date('2010-04-15')}
+             SELECT NULL,
+                    '2010-04-15'::DATE
+        - uri: /{date('2010-13-07')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid date literal: month must be in 1..12:
+                /{date('2010-13-07')}
+                  ^^^^^^^^^^^^^^^^^^
+        - uri: /{date(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{date(true())}
+                  ^^^^^^^^^^^^
+        - uri: /{date(7)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{date(7)}
+                  ^^^^^^^
+        - uri: /{date(string('birthday'))}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing "SELECT CAST('birthday' AS DATE)\n": invalid input syntax for type date: "birthday"
+            LINE 1: SELECT CAST('birthday' AS DATE)
+                                ^
+            :
+                /{date(string('birthday'))}
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{date(string('2010-13-07'))}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing "SELECT CAST('2010-13-07' AS DATE)\n": date/time field value out of range: "2010-13-07"
+            LINE 1: SELECT CAST('2010-13-07' AS DATE)
+                                ^
+            HINT:  Perhaps you need a different "datestyle" setting.
+            :
+                /{date(string('2010-13-07'))}
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       - id: scalar-functions
         tests:
         - id: boolean-constants-and-logical-operators

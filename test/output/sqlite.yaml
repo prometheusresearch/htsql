@@ -9762,6 +9762,64 @@ tests:
             bind error: incompatible arguments:
                 /{string('LOL')+7}
                   ^^^^^^^^^^^^^^^
+      - id: date-functions-and-operators
+        tests:
+        - uri: /{date(null()), date('2010-04-15')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                   |
+            -+-----------------------------------+-
+             | date(null()) | date('2010-04-15') |
+            -+--------------+--------------------+-
+             |              | 2010-04-15         |
+                                           (1 row)
+
+             ----
+             /{date(null()),date('2010-04-15')}
+             SELECT NULL,
+                    '2010-04-15'
+        - uri: /{date('2010-13-07')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid date literal: month must be in 1..12:
+                /{date('2010-13-07')}
+                  ^^^^^^^^^^^^^^^^^^
+        - uri: /{date(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{date(true())}
+                  ^^^^^^^^^^^^
+        - uri: /{date(7)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{date(7)}
+                  ^^^^^^^
+        - uri: /{date(string('birthday')), date(string('2010-13-07'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                       |
+            -+-------------------------------------------------------+-
+             | date(string('birthday')) | date(string('2010-13-07')) |
+            -+--------------------------+----------------------------+-
+             |                          |                            |
+                                                               (1 row)
+
+             ----
+             /{date(string('birthday')),date(string('2010-13-07'))}
+             SELECT DATE('birthday'),
+                    DATE('2010-13-07')
   - include: test/input/translation.yaml
     output:
       id: translation
