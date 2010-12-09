@@ -9679,6 +9679,89 @@ tests:
              ----
              /{round(9973)}
              SELECT ROUND(9973.0)
+      - id: string-functions-and-operators
+        tests:
+        - uri: /{string(null()), string('OMGWTFBBQ')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                      |
+            -+--------------------------------------+-
+             | string(null()) | string('OMGWTFBBQ') |
+            -+----------------+---------------------+-
+             |                | OMGWTFBBQ           |
+                                              (1 row)
+
+             ----
+             /{string(null()),string('OMGWTFBBQ')}
+             SELECT NULL,
+                    'OMGWTFBBQ'
+        - uri: /{string(60), string(2.125), string(-57721e-5)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                |
+            -+------------------------------------------------+-
+             | string(60) | string(2.125) | string(-57721e-5) |
+            -+------------+---------------+-------------------+-
+             | 60         | 2.125         | -0.57721          |
+                                                        (1 row)
+
+             ----
+             /{string(60),string(2.125),string(-57721e-5)}
+             SELECT CAST(60 AS TEXT),
+                    CAST(2.125 AS TEXT),
+                    CAST((- 0.57721) AS TEXT)
+        - uri: /{length(date(2010-04-15))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{length(date(2010-04-15))}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{'OMG'+'WTF'+'BBQ'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                   |
+            -+-------------------+-
+             | 'OMG'+'WTF'+'BBQ' |
+            -+-------------------+-
+             | OMGWTFBBQ         |
+                           (1 row)
+
+             ----
+             /{'OMG'+'WTF'+'BBQ'}
+             SELECT (('OMG' || 'WTF') || 'BBQ')
+        - uri: /{null()+'LOL', 'LOL'+null(), string(null())+string(null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                             |
+            -+-------------------------------------------------------------+-
+             | null()+'LOL' | 'LOL'+null() | string(null())+string(null()) |
+            -+--------------+--------------+-------------------------------+-
+             | LOL          | LOL          | ""                            |
+                                                                     (1 row)
+
+             ----
+             /{null()+'LOL','LOL'+null(),string(null())+string(null())}
+             SELECT ('' || 'LOL'),
+                    ('LOL' || ''),
+                    ('' || '')
+        - uri: /{string('LOL')+7}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{string('LOL')+7}
+                  ^^^^^^^^^^^^^^^
   - include: test/input/translation.yaml
     output:
       id: translation
