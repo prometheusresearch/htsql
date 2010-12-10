@@ -18,9 +18,12 @@ from htsql.domain import Domain, DateDomain
 from htsql.tr.dump import (FormatLiteral, DumpBranch, DumpInteger, DumpFloat,
                            DumpDecimal, DumpDate, DumpToDecimal, DumpToFloat,
                            DumpToString)
-from htsql.tr.fn.signature import (DateSig, ContainsSig, DateIncrementSig,
+from htsql.tr.fn.signature import (MakeDateSig, ContainsSig, DateIncrementSig,
                                    DateDecrementSig, DateDifferenceSig)
-from htsql.tr.fn.dump import DumpFunction
+from htsql.tr.fn.dump import (DumpFunction, DumpLike, DumpDateIncrement,
+                              DumpDateDecrement, DumpDateDifference,
+                              DumpMakeDate, DumpExtractYear, DumpExtractMonth,
+                              DumpExtractDay)
 from htsql.tr.frame import LiteralPhrase, NullPhrase
 from htsql.tr.error import SerializeError
 
@@ -93,9 +96,8 @@ class PGSQLDumpToString(DumpToString):
         self.format("CAST({base} AS TEXT)", base=self.base)
 
 
-class PGSQLDumpDateConstructor(DumpFunction):
+class PGSQLDumpMakeDate(DumpMakeDate):
 
-    adapts(DateSig)
     template = ("CAST('0001-01-01'::DATE"
                 " + ({year} - 1) * '1 YEAR'::INTERVAL"
                 " + ({month} - 1) * '1 MONTH'::INTERVAL"
@@ -103,50 +105,40 @@ class PGSQLDumpDateConstructor(DumpFunction):
                 " AS DATE)")
 
 
-class PGSQLDumpDateIncrement(DumpFunction):
+class PGSQLDumpDateIncrement(DumpDateIncrement):
 
-    adapts(DateIncrementSig)
     template = "({lop} + {rop})"
 
 
-class PGSQLDumpDateDecrement(DumpFunction):
+class PGSQLDumpDateDecrement(DumpDateDecrement):
 
-    adapts(DateDecrementSig)
     template = "({lop} - {rop})"
 
 
-class PGSQLDumpDateDifference(DumpFunction):
+class PGSQLDumpDateDifference(DumpDateDifference):
 
-    adapts(DateDifferenceSig)
     template = "({lop} - {rop})"
 
 
-class PGSQLDumpStringContains(DumpFunction):
+class PGSQLDumpExtractYear(DumpExtractYear):
 
-    adapts(ContainsSig)
+    template = "CAST(EXTRACT(YEAR FROM {op}) AS INTEGER)"
+
+
+class PGSQLDumpExtractMonth(DumpExtractMonth):
+
+    template = "CAST(EXTRACT(MONTH FROM {op}) AS INTEGER)"
+
+
+class PGSQLDumpExtractDay(DumpExtractDay):
+
+    template = "CAST(EXTRACT(DAY FROM {op}) AS INTEGER)"
+
+
+class PGSQLDumpLike(DumpLike):
 
     def __call__(self):
-        if isinstance(self.phrase.rop, NullPhrase):
-            self.format("({lop} {polarity:not}ILIKE {rop})",
-                        self.phrase, self.phrase.signature)
-        elif isinstance(self.phrase.rop, LiteralPhrase):
-            value = self.phrase.rop.value
-            value.replace("%", "\\%").replace("_", "\\_")
-            value = "%"+value+"%"
-            self.format("({lop} {polarity:not}ILIKE"
-                        " {value:literal})",
-                        self.phrase, self.phrase.signature,
-                        value=value)
-        else:
-            self.format("({lop} {polarity:not}ILIKE"
-                        " ({percent:literal} ||"
-                        " REPLACE(REPLACE({rop},"
-                        " {percent:literal}, {xpercent:literal}),"
-                        " {underline:literal}, {xunderline:literal}) ||"
-                        " {percent:literal}))",
-                        self.phrase,
-                        self.phrase.signature,
-                        percent="%", underline="_",
-                        xpercent="\\%", xunderline="\\_")
+        self.format("({lop} {polarity:not}ILIKE {rop})",
+                    self.phrase, self.signature)
 
 

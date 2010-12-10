@@ -301,16 +301,12 @@ tests:
   # Conversion
   - uri: /{string(null()), string('OMGWTFBBQ')}
   - uri: /{string(true()), string(false())}
-    skip: true
   - uri: /{string(60), string(2.125), string(-57721e-5)}
   - uri: /{string(date('2010-04-15'))}
-    skip: true
 
   # Length
   - uri: /{length(''), length('OMGWTFBBQ')}
-    skip: true
   - uri: /{length(null())}
-    skip: true
   # Inadmissible operand
   - uri: /{length(date(2010-04-15))}
     expect: 400
@@ -325,57 +321,39 @@ tests:
 
   # Contains
   - uri: /{'OMGWTFBBQ'~'wtf', 'OMGWTFBBQ'!~'LOL'}
-    skip: true
   - uri: /{'OMGWTFBBQ'!~'wtf', 'OMGWTFBBQ'~'LOL'}
-    skip: true
   - uri: /{null()~'LOL', 'LOL'~null(), null()~null()}
-    skip: true
 
   # Slicing
   - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
-    skip: true
   - uri: /{tail('OMGWTFBBQ'), tail('OMGWTFBBQ',3), tail('OMGWTFBBQ',-3)}
-    skip: true
   - uri: /{head('OMGWTFBBQ',0), tail('OMGWTFBBQ',0)}
-    skip: true
-  - uri: /{head(null()), tail(null())}
-    skip: true
+  - uri: /{head(null()), tail(null()),
+           head('OMGWTFBBQ',null()), tail('OMGWTFBBQ',null())}
   - uri: /{slice('OMGWTFBBQ',3,6), slice('OMGWTFBBQ',3,-3),
            slice('OMGWTFBBQ',-6,6), slice('OMGWTFBBQ',-6,-3)}
-    skip: true
   - uri: /{slice('OMGWTFBBQ',0,0), slice('OMGWTFBBQ',6,3),
            slice('OMGWTFBBQ',10,13), slice('OMGWTFBBQ',-3,-6)}
-    skip: true
-  - uri: /{slice(null(),3,-3), slice('OMGWTGBBQ',null(),null())}
-    skip: true
+  - uri: /{slice(null(),3,-3), slice('OMGWTGBBQ',null(),null()),
+           slice('OMGWTFBBQ',-3,null()), slice('OMGWTFBBQ',null(),3)}
   - uri: /{at('OMGWTFBBQ',0), at('OMGWTFBBQ',3), at('OMGWTFBBQ',-3)}
-    skip: true
-  - uri: /{at('OMGWTFBBQ',3,3), at('OMGWTFBBQ',3,0), at('OMGWTFBBQ',3,-3)}
-    skip: true
+  - uri: /{at('OMGWTFBBQ',3,3), at('OMGWTFBBQ',6,-3),
+           at('OMGWTFBBQ',-3,3), at('OMGWTFBBQ',-12,6)}
   - uri: /{at('OMGWTFBBQ',10), at('OMGWTFBBQ',0,-3)}
-    skip: true
   - uri: /{at(null(),3), at('OMGWTFBBQ',null(),3), at('OMGWTFBBQ',3,null())}
-    skip: true
 
   # Transformations
   - uri: /{upper('lol'), lower('LOL')}
-    skip: true
   - uri: /{trim('  LOL  '), ltrim('  LOL  '), rtrim('  LOL  ')}
-    skip: true
   - uri: /{replace('OMGWTFBBQ','WTF','LOL')}
-    skip: true
   - uri: /{replace('OMGWTFBBQ','wtf','LOL'),
            replace('OMGWTFBBQ','WTF','lol')}
-    skip: true
   - uri: /{replace('floccinaucinihilipilification','ili','LOL')}
-    skip: true
   - uri: /{replace('OMGWTFBBQ','','LOL'),
            replace('OMGWTFBBQ','WTF','')}
-    skip: true
   - uri: /{replace(null(),'WTF','LOL'),
            replace('OMGWTFBBQ',null(),'LOL'),
-           replace('OMGWTFBBQ','WTF',null())
-    skip: true
+           replace('OMGWTFBBQ','WTF',null())}
 
 ########################################################################
 
@@ -407,21 +385,17 @@ tests:
   # Construction
   - uri: /{today()}
     ignore: true
-    skip: true
-  - uri: /{date(2010,4,15), date(2010,3,45), date(2011,-8,15)}
-    skip: true
+  - uri: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
 
   # Components
   - uri: /{year(date('2010-04-15')),
            month(date('2010-04-15')),
            day(date('2010-04-15'))}
-    skip: true
 
   # Arithmetics
   - uri: /{date('1991-08-20')+6813,
            date('2010-04-15')-6813,
            date('2010-04-15')-date('1991-08-20')}
-    skip: true
 
 ########################################################################
 
@@ -509,14 +483,12 @@ tests:
   - uri: /confidential.instructor
   # Cross join
   - uri: /school.fiber(school)
-    skip: true
   # Fiber join
   - uri: /department.fiber(program,school)
   - uri: /classification.fiber(classification,code,part_of)
             {part_of, code}
   # Context
   - uri: /school.fiber(school){root().school.code, this().code}
-    skip: true
   # Invalid link
   - uri: /student.instructor
     expect: 400

@@ -672,7 +672,8 @@ class ConvertToString(Convert):
     Convert an expression to a string.
     """
 
-    adapts_many((NumberDomain, StringDomain),
+    adapts_many((BooleanDomain, StringDomain),
+                (NumberDomain, StringDomain),
                 (EnumDomain, StringDomain),
                 (DateDomain, StringDomain),
                 (OpaqueDomain, StringDomain))

@@ -11,8 +11,8 @@
 """
 
 
-from ...adapter import Adapter, adapts, adapts_many
-from ...domain import UntypedDomain, BooleanDomain
+from ...adapter import Adapter, adapts, adapts_many, adapts_none
+from ...domain import UntypedDomain, BooleanDomain, IntegerDomain
 from ..encode import EncodeBySignature, EncodingState
 from ..error import EncodeError
 from ..coerce import coerce
@@ -21,10 +21,314 @@ from ..code import (LiteralCode, ScalarUnit, CorrelatedUnit,
                     AggregateUnit, FilteredSpace, FormulaCode)
 from .signature import (Signature, NotSig, NullIfSig, IfNullSig, QuantifySig,
                         ExistsSig, AggregateSig, QuantifySig,
-                        CountSig, SumSig)
+                        CountSig, SumSig, ReplaceSig, ConcatenateSig,
+                        LikeSig, ContainsSig, HeadSig, TailSig, SliceSig, AtSig,
+                        SubstringSig, LengthSig, AddSig, SubtractSig,
+                        CompareSig, IfSig, ReversePolaritySig)
 
 
-class EncodeAggregate(EncodeBySignature):
+class EncodeFunction(EncodeBySignature):
+
+    adapts_none()
+
+
+class EncodeContains(EncodeFunction):
+
+    adapts(ContainsSig)
+
+    def __call__(self):
+        lop = self.state.encode(self.binding.lop)
+        rop = self.state.encode(self.binding.rop)
+        if isinstance(rop, LiteralCode):
+            if rop.value is not None:
+                value = ("%" + rop.value.replace("\\", "\\\\")
+                                        .replace("%", "\\%")
+                                        .replace("_", "\\_") + "%")
+                rop = rop.clone(value=value)
+        else:
+            backslash_literal = LiteralCode("\\", rop.domain, self.binding)
+            xbackslash_literal = LiteralCode("\\\\", rop.domain, self.binding)
+            percent_literal = LiteralCode("%", rop.domain, self.binding)
+            xpercent_literal = LiteralCode("\\%", rop.domain, self.binding)
+            underscore_literal = LiteralCode("_", rop.domain, self.binding)
+            xunderscore_literal = LiteralCode("\\_", rop.domain, self.binding)
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+                              op=rop, old=backslash_literal,
+                              new=xbackslash_literal)
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+                              op=rop, old=percent_literal,
+                              new=xpercent_literal)
+            rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
+                              op=rop, old=underscore_literal,
+                              new=xunderscore_literal)
+            rop = FormulaCode(ConcatenateSig(), rop.domain, self.binding,
+                              lop=percent_literal, rop=rop)
+            rop = FormulaCode(ConcatenateSig(), rop.domain, self.binding,
+                              lop=rop, rop=percent_literal)
+        return FormulaCode(self.signature.clone_to(LikeSig),
+                           self.domain, self.binding, lop=lop, rop=rop)
+
+
+class EncodeHead(EncodeFunction):
+
+    adapts(HeadSig)
+
+    def __call__(self):
+        op = self.state.encode(self.binding.op)
+        op_length = FormulaCode(LengthSig(), coerce(IntegerDomain()),
+                                self.binding, op=op)
+        zero_literal = LiteralCode(0, coerce(IntegerDomain()), self.binding)
+        one_literal = LiteralCode(1, coerce(IntegerDomain()), self.binding)
+        if self.binding.length is None:
+            length = one_literal
+        else:
+            length = self.state.encode(self.binding.length)
+        if isinstance(length, LiteralCode):
+            if length.value is None:
+                length = one_literal
+            if length.value >= 0:
+                return FormulaCode(SubstringSig(), self.binding.domain,
+                                   self.binding, op=op, start=one_literal,
+                                   length=length)
+        length = FormulaCode(IfNullSig(), length.domain, self.binding,
+                             lop=length, rop=one_literal)
+        negative_length = FormulaCode(AddSig(), length.domain, self.binding,
+                                      lop=op_length, rop=length)
+        if_positive = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                  self.binding, lop=length, rop=zero_literal)
+        if_negative = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                  self.binding, lop=negative_length,
+                                  rop=zero_literal)
+        length = FormulaCode(IfSig(), length.domain, self.binding,
+                             predicates=[if_positive, if_negative],
+                             consequents=[length, negative_length],
+                             alternative=zero_literal)
+        return FormulaCode(SubstringSig(), self.binding.domain, self.binding,
+                           op=op, start=one_literal, length=length)
+
+
+class EncodeTail(EncodeFunction):
+
+    adapts(TailSig)
+
+    def __call__(self):
+        op = self.state.encode(self.binding.op)
+        op_length = FormulaCode(LengthSig(), coerce(IntegerDomain()),
+                                self.binding, op=op)
+        zero_literal = LiteralCode(0, coerce(IntegerDomain()), self.binding)
+        one_literal = LiteralCode(1, coerce(IntegerDomain()), self.binding)
+        if self.binding.length is None:
+            length = one_literal
+        else:
+            length = self.state.encode(self.binding.length)
+        if isinstance(length, LiteralCode):
+            if length.value is None:
+                length = one_literal
+            if length.value < 0:
+                start = length.clone(value=1-length.value)
+                return FormulaCode(SubstringSig(), self.binding.domain,
+                                   self.binding, op=op,
+                                   start=start, length=None)
+        length = FormulaCode(IfNullSig(), length.domain, self.binding,
+                             lop=length, rop=one_literal)
+        start = FormulaCode(SubtractSig(), length.domain, self.binding,
+                            lop=one_literal, rop=length)
+        positive_start = FormulaCode(AddSig(), length.domain, self.binding,
+                                     lop=op_length, rop=start)
+        if_negative = FormulaCode(CompareSig('<'), coerce(BooleanDomain()),
+                                  self.binding, lop=length, rop=zero_literal)
+        if_positive = FormulaCode(CompareSig('<='), coerce(BooleanDomain()),
+                                  self.binding, lop=length, rop=op_length)
+        start = FormulaCode(IfSig(), length.domain, self.binding,
+                            predicates=[if_negative, if_positive],
+                            consequents=[start, positive_start],
+                            alternative=one_literal)
+        return FormulaCode(SubstringSig(), self.binding.domain, self.binding,
+                           op=op, start=start, length=None)
+
+
+class EncodeSlice(EncodeFunction):
+
+    adapts(SliceSig)
+
+    def __call__(self):
+        op = self.state.encode(self.binding.op)
+        op_length = FormulaCode(LengthSig(), coerce(IntegerDomain()),
+                                self.binding, op=op)
+        null_literal = LiteralCode(None, coerce(IntegerDomain()), self.binding)
+        zero_literal = LiteralCode(0, coerce(IntegerDomain()), self.binding)
+        one_literal = LiteralCode(1, coerce(IntegerDomain()), self.binding)
+        if self.binding.left is None:
+            left = zero_literal
+        else:
+            left = self.state.encode(self.binding.left)
+        if self.binding.right is None:
+            right = null_literal
+        else:
+            right = self.state.encode(self.binding.right)
+        if isinstance(left, LiteralCode) and left.value is None:
+            start = one_literal
+        elif isinstance(left, LiteralCode) and left.value >= 0:
+            start = left.clone(value=left.value+1)
+        else:
+            left = FormulaCode(IfNullSig(), left.domain, self.binding,
+                               lop=left, rop=zero_literal)
+            start = left
+            negative_start = FormulaCode(AddSig(), left.domain, self.binding,
+                                         lop=left, rop=op_length)
+            if_positive = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                      self.binding, lop=start,
+                                      rop=zero_literal)
+            if_negative = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                      self.binding, lop=negative_start,
+                                      rop=zero_literal)
+            start = FormulaCode(IfSig(), left.domain, self.binding,
+                                predicates=[if_positive, if_negative],
+                                consequents=[start, negative_start],
+                                alternative=zero_literal)
+            start = FormulaCode(AddSig(), left.domain, self.binding,
+                                lop=start, rop=one_literal)
+        if isinstance(right, LiteralCode) and right.value is None:
+            return FormulaCode(SubstringSig(), self.binding.domain,
+                               self.binding, op=op,
+                               start=start, length=None)
+        elif isinstance(right, LiteralCode) and right.value >= 0:
+            if isinstance(start, LiteralCode):
+                assert start.value >= 0
+                value = right.value-start.value+1
+                if value < 0:
+                    value = 0
+                length = right.clone(value=value)
+                return FormulaCode(SubstringSig(), self.binding.domain,
+                                   self.binding, op=op,
+                                   start=start, length=length)
+            end = right.clone(value=right.value+1)
+        else:
+            if not isinstance(right, LiteralCode):
+                right = FormulaCode(IfNullSig(), right.domain, self.binding,
+                                    lop=right, rop=op_length)
+            end = right
+            negative_end = FormulaCode(AddSig(), right.domain, self.binding,
+                                       lop=right, rop=op_length)
+            if_positive = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                      self.binding, lop=end,
+                                      rop=zero_literal)
+            if_negative = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                      self.binding, lop=negative_end,
+                                      rop=zero_literal)
+            end = FormulaCode(IfSig(), right.domain, self.binding,
+                                predicates=[if_positive, if_negative],
+                                consequents=[end, negative_end],
+                                alternative=zero_literal)
+            end = FormulaCode(AddSig(), right.domain, self.binding,
+                                lop=end, rop=one_literal)
+        length = FormulaCode(SubtractSig(), coerce(IntegerDomain()),
+                             self.binding, lop=end, rop=start)
+        condition = FormulaCode(CompareSig('<'), coerce(BooleanDomain()),
+                                self.binding, lop=start, rop=end)
+        length = FormulaCode(IfSig(), length.domain, self.binding,
+                             predicates=[condition],
+                             consequents=[length],
+                             alternative=zero_literal)
+        return FormulaCode(SubstringSig(), self.binding.domain, self.binding,
+                           op=op, start=start, length=length)
+
+
+class EncodeAt(EncodeFunction):
+
+    adapts(AtSig)
+
+    def __call__(self):
+        op = self.state.encode(self.binding.op)
+        op_length = FormulaCode(LengthSig(), coerce(IntegerDomain()),
+                                self.binding, op=op)
+        zero_literal = LiteralCode(0, coerce(IntegerDomain()), self.binding)
+        one_literal = LiteralCode(1, coerce(IntegerDomain()), self.binding)
+        index = self.state.encode(self.binding.index)
+        if self.binding.length is not None:
+            length = self.state.encode(self.binding.length)
+        else:
+            length = one_literal
+        if isinstance(index, LiteralCode) and index.value is None:
+            return FormulaCode(SubstringSig(), self.binding.domain,
+                               self.binding, op=op, start=index,
+                               length=zero_literal)
+        if isinstance(length, LiteralCode) and length.value is None:
+            length = one_literal
+        if (isinstance(index, LiteralCode) and index.value >= 0
+                and isinstance(length, LiteralCode)):
+            index_value = index.value
+            length_value = length.value
+            if length_value < 0:
+                index_value += length_value
+                length_value = -length_value
+            if index_value < 0:
+                length_value += index_value
+                index_value = 0
+            if length_value < 0:
+                length_value = 0
+            start = index.clone(value=index_value+1)
+            length = length.clone(value=length_value)
+            return FormulaCode(SubstringSig(), self.binding.domain,
+                               self.binding, op=op, start=start, length=length)
+        length = FormulaCode(IfNullSig(), length.domain, self.binding,
+                             lop=length, rop=one_literal)
+        negative_index = FormulaCode(AddSig(), index.domain, self.binding,
+                                     lop=index, rop=op_length)
+        condition = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                self.binding, lop=index, rop=zero_literal)
+        index = FormulaCode(IfSig(), index.domain, self.binding,
+                            predicates=[condition], consequents=[index],
+                            alternative=negative_index)
+        condition = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                self.binding, lop=length, rop=zero_literal)
+        negative_index = FormulaCode(AddSig(), index.domain, self.binding,
+                                     lop=index, rop=length)
+        negative_length = FormulaCode(ReversePolaritySig(), length.domain,
+                                      self.binding, op=length)
+        index = FormulaCode(IfSig(), index.domain, self.binding,
+                            predicates=[condition], consequents=[index],
+                            alternative=negative_index)
+        length = FormulaCode(IfSig(), length.domain, self.binding,
+                             predicates=[condition], consequents=[length],
+                             alternative=negative_length)
+        condition = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                self.binding, lop=index, rop=zero_literal)
+        negative_length = FormulaCode(AddSig(), length.domain, self.binding,
+                                      lop=length, rop=index)
+        index = FormulaCode(IfSig(), index.domain, self.binding,
+                            predicates=[condition], consequents=[index],
+                            alternative=zero_literal)
+        length = FormulaCode(IfSig(), length.domain, self.binding,
+                             predicates=[condition], consequents=[length],
+                             alternative=negative_length)
+        condition = FormulaCode(CompareSig('>='), coerce(BooleanDomain()),
+                                self.binding, lop=length, rop=zero_literal)
+        length = FormulaCode(IfSig(), length.domain, self.binding,
+                             predicates=[condition], consequents=[length],
+                             alternative=zero_literal)
+        start = FormulaCode(AddSig(), index.domain, self.binding,
+                            lop=index, rop=one_literal)
+        return FormulaCode(SubstringSig(), self.binding.domain,
+                           self.binding, op=op, start=start, length=length)
+
+
+class EncodeReplace(EncodeFunction):
+
+    adapts(ReplaceSig)
+
+    def __call__(self):
+        op = self.state.encode(self.binding.op)
+        old = self.state.encode(self.binding.old)
+        new = self.state.encode(self.binding.new)
+        empty = LiteralCode('', old.domain, self.binding)
+        old = FormulaCode(IfNullSig(), old.domain, self.binding,
+                          lop=old, rop=empty)
+        return FormulaCode(self.signature, self.domain, self.binding,
+                           op=op, old=old, new=new)
+
+
+class EncodeAggregate(EncodeFunction):
 
     adapts(AggregateSig)
 
@@ -82,7 +386,7 @@ class WrapAggregate(Adapter):
         return self.unit
 
 
-class EncodeCount(EncodeBySignature):
+class EncodeCount(EncodeFunction):
 
     adapts(CountSig)
 

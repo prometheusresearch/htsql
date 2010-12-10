@@ -10311,6 +10311,22 @@ tests:
              /{string(null()),string('OMGWTFBBQ')}
              SELECT NULL,
                     'OMGWTFBBQ'
+        - uri: /{string(true()), string(false())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                  |
+            -+----------------------------------+-
+             | string(true()) | string(false()) |
+            -+----------------+-----------------+-
+             | true           | false           |
+                                          (1 row)
+
+             ----
+             /{string(true()),string(false())}
+             SELECT CAST(TRUE AS TEXT),
+                    CAST(FALSE AS TEXT)
         - uri: /{string(60), string(2.125), string(-57721e-5)}
           status: 200 OK
           headers:
@@ -10328,6 +10344,21 @@ tests:
              SELECT CAST(60 AS TEXT),
                     CAST(2.125::NUMERIC AS TEXT),
                     CAST((- 0.57721::FLOAT8) AS TEXT)
+        - uri: /{string(date('2010-04-15'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                            |
+            -+----------------------------+-
+             | string(date('2010-04-15')) |
+            -+----------------------------+-
+             | 2010-04-15                 |
+                                    (1 row)
+
+             ----
+             /{string(date('2010-04-15'))}
+             SELECT CAST('2010-04-15'::DATE AS TEXT)
         - uri: /{length(''), length('OMGWTFBBQ')}
           status: 200 OK
           headers:
@@ -10407,6 +10438,361 @@ tests:
             bind error: incompatible arguments:
                 /{string('LOL')+7}
                   ^^^^^^^^^^^^^^^
+        - uri: /{'OMGWTFBBQ'~'wtf', 'OMGWTFBBQ'!~'LOL'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                        |
+            -+----------------------------------------+-
+             | 'OMGWTFBBQ'~'wtf' | 'OMGWTFBBQ'!~'LOL' |
+            -+-------------------+--------------------+-
+             | true              | true               |
+                                                (1 row)
+
+             ----
+             /{'OMGWTFBBQ'~'wtf','OMGWTFBBQ'!~'LOL'}
+             SELECT ('OMGWTFBBQ' ILIKE '%wtf%'),
+                    ('OMGWTFBBQ' NOT ILIKE '%LOL%')
+        - uri: /{'OMGWTFBBQ'!~'wtf', 'OMGWTFBBQ'~'LOL'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                        |
+            -+----------------------------------------+-
+             | 'OMGWTFBBQ'!~'wtf' | 'OMGWTFBBQ'~'LOL' |
+            -+--------------------+-------------------+-
+             | false              | false             |
+                                                (1 row)
+
+             ----
+             /{'OMGWTFBBQ'!~'wtf','OMGWTFBBQ'~'LOL'}
+             SELECT ('OMGWTFBBQ' NOT ILIKE '%wtf%'),
+                    ('OMGWTFBBQ' ILIKE '%LOL%')
+        - uri: /{null()~'LOL', 'LOL'~null(), null()~null()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                             |
+            -+---------------------------------------------+-
+             | null()~'LOL' | 'LOL'~null() | null()~null() |
+            -+--------------+--------------+---------------+-
+             |              |              |               |
+                                                     (1 row)
+
+             ----
+             /{null()~'LOL','LOL'~null(),null()~null()}
+             SELECT (NULL ILIKE '%LOL%'),
+                    ('LOL' ILIKE NULL),
+                    (NULL ILIKE NULL)
+        - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                |
+            -+----------------------------------------------------------------+-
+             | head('OMGWTFBBQ') | head('OMGWTFBBQ',3) | head('OMGWTFBBQ',-3) |
+            -+-------------------+---------------------+----------------------+-
+             | O                 | OMG                 | OMGWTF               |
+                                                                        (1 row)
+
+             ----
+             /{head('OMGWTFBBQ'),head('OMGWTFBBQ',3),head('OMGWTFBBQ',-3)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM 1 FOR 1),
+                    SUBSTRING('OMGWTFBBQ' FROM 1 FOR 3),
+                    SUBSTRING('OMGWTFBBQ' FROM 1 FOR (CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN ((CHARACTER_LENGTH('OMGWTFBBQ') + (- 3)) >= 0) THEN (CHARACTER_LENGTH('OMGWTFBBQ') + (- 3)) ELSE 0 END))
+        - uri: /{tail('OMGWTFBBQ'), tail('OMGWTFBBQ',3), tail('OMGWTFBBQ',-3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                |
+            -+----------------------------------------------------------------+-
+             | tail('OMGWTFBBQ') | tail('OMGWTFBBQ',3) | tail('OMGWTFBBQ',-3) |
+            -+-------------------+---------------------+----------------------+-
+             | Q                 | BBQ                 | WTFBBQ               |
+                                                                        (1 row)
+
+             ----
+             /{tail('OMGWTFBBQ'),tail('OMGWTFBBQ',3),tail('OMGWTFBBQ',-3)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM (CASE WHEN (1 < 0) THEN (1 - 1) WHEN (1 <= CHARACTER_LENGTH('OMGWTFBBQ')) THEN (CHARACTER_LENGTH('OMGWTFBBQ') + (1 - 1)) ELSE 1 END)),
+                    SUBSTRING('OMGWTFBBQ' FROM (CASE WHEN (3 < 0) THEN (1 - 3) WHEN (3 <= CHARACTER_LENGTH('OMGWTFBBQ')) THEN (CHARACTER_LENGTH('OMGWTFBBQ') + (1 - 3)) ELSE 1 END)),
+                    SUBSTRING('OMGWTFBBQ' FROM (CASE WHEN ((- 3) < 0) THEN (1 - (- 3)) WHEN ((- 3) <= CHARACTER_LENGTH('OMGWTFBBQ')) THEN (CHARACTER_LENGTH('OMGWTFBBQ') + (1 - (- 3))) ELSE 1 END))
+        - uri: /{head('OMGWTFBBQ',0), tail('OMGWTFBBQ',0)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                           |
+            -+-------------------------------------------+-
+             | head('OMGWTFBBQ',0) | tail('OMGWTFBBQ',0) |
+            -+---------------------+---------------------+-
+             | ""                  | ""                  |
+                                                   (1 row)
+
+             ----
+             /{head('OMGWTFBBQ',0),tail('OMGWTFBBQ',0)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM 1 FOR 0),
+                    SUBSTRING('OMGWTFBBQ' FROM (CASE WHEN (0 < 0) THEN (1 - 0) WHEN (0 <= CHARACTER_LENGTH('OMGWTFBBQ')) THEN (CHARACTER_LENGTH('OMGWTFBBQ') + (1 - 0)) ELSE 1 END))
+        - uri: /{head(null()), tail(null()), head('OMGWTFBBQ',null()), tail('OMGWTFBBQ',null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                   |
+            -+-----------------------------------------------------------------------------------+-
+             | head(null()) | tail(null()) | head('OMGWTFBBQ',null()) | tail('OMGWTFBBQ',null()) |
+            -+--------------+--------------+--------------------------+--------------------------+-
+             |              |              | O                        | Q                        |
+                                                                                           (1 row)
+
+             ----
+             /{head(null()),tail(null()),head('OMGWTFBBQ',null()),tail('OMGWTFBBQ',null())}
+             SELECT SUBSTRING(NULL FROM 1 FOR 1),
+                    SUBSTRING(NULL FROM (CASE WHEN (1 < 0) THEN (1 - 1) WHEN (1 <= CHARACTER_LENGTH(NULL)) THEN (CHARACTER_LENGTH(NULL) + (1 - 1)) ELSE 1 END)),
+                    SUBSTRING('OMGWTFBBQ' FROM 1 FOR 1),
+                    SUBSTRING('OMGWTFBBQ' FROM (CASE WHEN (1 < 0) THEN (1 - 1) WHEN (1 <= CHARACTER_LENGTH('OMGWTFBBQ')) THEN (CHARACTER_LENGTH('OMGWTFBBQ') + (1 - 1)) ELSE 1 END))
+        - uri: /{slice('OMGWTFBBQ',3,6), slice('OMGWTFBBQ',3,-3), slice('OMGWTFBBQ',-6,6),
+            slice('OMGWTFBBQ',-6,-3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                       |
+            -+-------------------------------------------------------------------------------------------------------+-
+             | slice('OMGWTFBBQ',3,6) | slice('OMGWTFBBQ',3,-3) | slice('OMGWTFBBQ',-6,6) | slice('OMGWTFBBQ',-6,-3) |
+            -+------------------------+-------------------------+-------------------------+--------------------------+-
+             | WTF                    | WTF                     | WTF                     | WTF                      |
+                                                                                                               (1 row)
+
+             ----
+             /{slice('OMGWTFBBQ',3,6),slice('OMGWTFBBQ',3,-3),slice('OMGWTFBBQ',-6,6),slice('OMGWTFBBQ',-6,-3)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM 4 FOR 3),
+                    SUBSTRING('OMGWTFBBQ' FROM 4 FOR (CASE WHEN (4 < ((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - 4) ELSE 0 END)),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) FOR (CASE WHEN (((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < 7) THEN (7 - ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END)),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) FOR (CASE WHEN (((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < ((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END))
+        - uri: /{slice('OMGWTFBBQ',0,0), slice('OMGWTFBBQ',6,3), slice('OMGWTFBBQ',10,13),
+            slice('OMGWTFBBQ',-3,-6)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                       |
+            -+-------------------------------------------------------------------------------------------------------+-
+             | slice('OMGWTFBBQ',0,0) | slice('OMGWTFBBQ',6,3) | slice('OMGWTFBBQ',10,13) | slice('OMGWTFBBQ',-3,-6) |
+            -+------------------------+------------------------+--------------------------+--------------------------+-
+             | ""                     | ""                     | ""                       | ""                       |
+                                                                                                               (1 row)
+
+             ----
+             /{slice('OMGWTFBBQ',0,0),slice('OMGWTFBBQ',6,3),slice('OMGWTFBBQ',10,13),slice('OMGWTFBBQ',-3,-6)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM 1 FOR 0),
+                    SUBSTRING('OMGWTFBBQ' FROM 7 FOR 0),
+                    SUBSTRING('OMGWTFBBQ' FROM 11 FOR 3),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) FOR (CASE WHEN (((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < ((CASE WHEN (COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 6), CHARACTER_LENGTH('OMGWTFBBQ')) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - ((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END))
+        - uri: /{slice(null(),3,-3), slice('OMGWTGBBQ',null(),null()), slice('OMGWTFBBQ',-3,null()),
+            slice('OMGWTFBBQ',null(),3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                    |
+            -+--------------------------------------------------------------------------------------------------------------------+-
+             | slice(null(),3,-3) | slice('OMGWTGBBQ',null(),null()) | slice('OMGWTFBBQ',-3,null()) | slice('OMGWTFBBQ',null(),3) |
+            -+--------------------+----------------------------------+------------------------------+-----------------------------+-
+             |                    | OMGWTGBBQ                        | BBQ                          | OMG                         |
+                                                                                                                            (1 row)
+
+             ----
+             /{slice(null(),3,-3),slice('OMGWTGBBQ',null(),null()),slice('OMGWTFBBQ',-3,null()),slice('OMGWTFBBQ',null(),3)}
+             SELECT SUBSTRING(NULL FROM 4 FOR (CASE WHEN (4 < ((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH(NULL)) WHEN ((COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH(NULL)) WHEN ((COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) ELSE 0 END) + 1) - 4) ELSE 0 END)),
+                    SUBSTRING('OMGWTGBBQ' FROM 1),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)),
+                    SUBSTRING('OMGWTFBBQ' FROM 1 FOR 3)
+        - uri: /{at('OMGWTFBBQ',0), at('OMGWTFBBQ',3), at('OMGWTFBBQ',-3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                            |
+            -+------------------------------------------------------------+-
+             | at('OMGWTFBBQ',0) | at('OMGWTFBBQ',3) | at('OMGWTFBBQ',-3) |
+            -+-------------------+-------------------+--------------------+-
+             | O                 | W                 | B                  |
+                                                                    (1 row)
+
+             ----
+             /{at('OMGWTFBBQ',0),at('OMGWTFBBQ',3),at('OMGWTFBBQ',-3)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM 1 FOR 1),
+                    SUBSTRING('OMGWTFBBQ' FROM 4 FOR 1),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 1) END) ELSE 0 END) + 1) FOR (CASE WHEN ((CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) ELSE ((CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) + (CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 1) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) ELSE ((CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) + (CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 1) END)) END) ELSE 0 END))
+        - uri: /{at('OMGWTFBBQ',3,3), at('OMGWTFBBQ',6,-3), at('OMGWTFBBQ',-3,3),
+            at('OMGWTFBBQ',-12,6)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                           |
+            -+-------------------------------------------------------------------------------------------+-
+             | at('OMGWTFBBQ',3,3) | at('OMGWTFBBQ',6,-3) | at('OMGWTFBBQ',-3,3) | at('OMGWTFBBQ',-12,6) |
+            -+---------------------+----------------------+----------------------+-----------------------+-
+             | WTF                 | WTF                  | BBQ                  | OMG                   |
+                                                                                                   (1 row)
+
+             ----
+             /{at('OMGWTFBBQ',3,3),at('OMGWTFBBQ',6,-3),at('OMGWTFBBQ',-3,3),at('OMGWTFBBQ',-12,6)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM 4 FOR 3),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) ELSE 0 END) + 1) FOR (CASE WHEN ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) ELSE 0 END)),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 3) END) ELSE 0 END) + 1) FOR (CASE WHEN ((CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) ELSE ((CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) + (CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 3) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) ELSE ((CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) + (CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 3) END)) END) ELSE 0 END)),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 6) END) ELSE 0 END) + 1) FOR (CASE WHEN ((CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) + (CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 6) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) + (CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + CHARACTER_LENGTH('OMGWTFBBQ')) END) + 6) END)) END) ELSE 0 END))
+        - uri: /{at('OMGWTFBBQ',10), at('OMGWTFBBQ',0,-3)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                           |
+            -+-------------------------------------------+-
+             | at('OMGWTFBBQ',10) | at('OMGWTFBBQ',0,-3) |
+            -+--------------------+----------------------+-
+             | ""                 | ""                   |
+                                                   (1 row)
+
+             ----
+             /{at('OMGWTFBBQ',10),at('OMGWTFBBQ',0,-3)}
+             SELECT SUBSTRING('OMGWTFBBQ' FROM 11 FOR 1),
+                    SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) ELSE 0 END) + 1) FOR (CASE WHEN ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + CHARACTER_LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) ELSE 0 END))
+        - uri: /{at(null(),3), at('OMGWTFBBQ',null(),3), at('OMGWTFBBQ',3,null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                    |
+            -+--------------------------------------------------------------------+-
+             | at(null(),3) | at('OMGWTFBBQ',null(),3) | at('OMGWTFBBQ',3,null()) |
+            -+--------------+--------------------------+--------------------------+-
+             |              |                          | W                        |
+                                                                            (1 row)
+
+             ----
+             /{at(null(),3),at('OMGWTFBBQ',null(),3),at('OMGWTFBBQ',3,null())}
+             SELECT SUBSTRING(NULL FROM 4 FOR 1),
+                    SUBSTRING('OMGWTFBBQ' FROM NULL FOR 0),
+                    SUBSTRING('OMGWTFBBQ' FROM 4 FOR 1)
+        - uri: /{upper('lol'), lower('LOL')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                             |
+            -+-----------------------------+-
+             | upper('lol') | lower('LOL') |
+            -+--------------+--------------+-
+             | LOL          | lol          |
+                                     (1 row)
+
+             ----
+             /{upper('lol'),lower('LOL')}
+             SELECT UPPER('lol'),
+                    LOWER('LOL')
+        - uri: /{trim('  LOL  '), ltrim('  LOL  '), rtrim('  LOL  ')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                       |
+            -+-------------------------------------------------------+-
+             | trim('  LOL  ') | ltrim('  LOL  ') | rtrim('  LOL  ') |
+            -+-----------------+------------------+------------------+-
+             | LOL             | "LOL  "          | "  LOL"          |
+                                                               (1 row)
+
+             ----
+             /{trim('  LOL  '),ltrim('  LOL  '),rtrim('  LOL  ')}
+             SELECT TRIM('  LOL  '),
+                    TRIM(LEADING FROM '  LOL  '),
+                    TRIM(TRAILING FROM '  LOL  ')
+        - uri: /{replace('OMGWTFBBQ','WTF','LOL')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                  |
+            -+----------------------------------+-
+             | replace('OMGWTFBBQ','WTF','LOL') |
+            -+----------------------------------+-
+             | OMGLOLBBQ                        |
+                                          (1 row)
+
+             ----
+             /{replace('OMGWTFBBQ','WTF','LOL')}
+             SELECT REPLACE('OMGWTFBBQ', 'WTF', 'LOL')
+        - uri: /{replace('OMGWTFBBQ','wtf','LOL'), replace('OMGWTFBBQ','WTF','lol')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                     |
+            -+---------------------------------------------------------------------+-
+             | replace('OMGWTFBBQ','wtf','LOL') | replace('OMGWTFBBQ','WTF','lol') |
+            -+----------------------------------+----------------------------------+-
+             | OMGWTFBBQ                        | OMGlolBBQ                        |
+                                                                             (1 row)
+
+             ----
+             /{replace('OMGWTFBBQ','wtf','LOL'),replace('OMGWTFBBQ','WTF','lol')}
+             SELECT REPLACE('OMGWTFBBQ', 'wtf', 'LOL'),
+                    REPLACE('OMGWTFBBQ', 'WTF', 'lol')
+        - uri: /{replace('floccinaucinihilipilification','ili','LOL')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                      |
+            -+------------------------------------------------------+-
+             | replace('floccinaucinihilipilification','ili','LOL') |
+            -+------------------------------------------------------+-
+             | floccinaucinihLOLpLOLfication                        |
+                                                              (1 row)
+
+             ----
+             /{replace('floccinaucinihilipilification','ili','LOL')}
+             SELECT REPLACE('floccinaucinihilipilification', 'ili', 'LOL')
+        - uri: /{replace('OMGWTFBBQ','','LOL'), replace('OMGWTFBBQ','WTF','')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                               |
+            -+---------------------------------------------------------------+-
+             | replace('OMGWTFBBQ','','LOL') | replace('OMGWTFBBQ','WTF','') |
+            -+-------------------------------+-------------------------------+-
+             | OMGWTFBBQ                     | OMGBBQ                        |
+                                                                       (1 row)
+
+             ----
+             /{replace('OMGWTFBBQ','','LOL'),replace('OMGWTFBBQ','WTF','')}
+             SELECT REPLACE('OMGWTFBBQ', '', 'LOL'),
+                    REPLACE('OMGWTFBBQ', 'WTF', '')
+        - uri: /{replace(null(),'WTF','LOL'), replace('OMGWTFBBQ',null(),'LOL'), replace('OMGWTFBBQ','WTF',null())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                     |
+            -+-----------------------------------------------------------------------------------------------------+-
+             | replace(null(),'WTF','LOL') | replace('OMGWTFBBQ',null(),'LOL') | replace('OMGWTFBBQ','WTF',null()) |
+            -+-----------------------------+-----------------------------------+-----------------------------------+-
+             |                             | OMGWTFBBQ                         |                                   |
+                                                                                                             (1 row)
+
+             ----
+             /{replace(null(),'WTF','LOL'),replace('OMGWTFBBQ',null(),'LOL'),replace('OMGWTFBBQ','WTF',null())}
+             SELECT REPLACE(NULL, 'WTF', 'LOL'),
+                    REPLACE('OMGWTFBBQ', '', 'LOL'),
+                    REPLACE('OMGWTFBBQ', 'WTF', NULL)
       - id: date-functions-and-operators
         tests:
         - uri: /{date(null()), date('2010-04-15')}
@@ -10472,6 +10858,72 @@ tests:
             :
                 /{date(string('2010-13-07'))}
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{today()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |            |
+            -+------------+-
+             | today()    |
+            -+------------+-
+             | 2010-12-10 |
+                    (1 row)
+
+             ----
+             /{today()}
+             SELECT CURRENT_DATE
+        - uri: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                      |
+            -+------------------------------------------------------+-
+             | date(2010,4,15) | date(2010,3,46) | date(2011,-8,15) |
+            -+-----------------+-----------------+------------------+-
+             | 2010-04-15      | 2010-04-15      | 2010-04-15       |
+                                                              (1 row)
+
+             ----
+             /{date(2010,4,15),date(2010,3,46),date(2011,-8,15)}
+             SELECT CAST('0001-01-01'::DATE + (2010 - 1) * '1 YEAR'::INTERVAL + (4 - 1) * '1 MONTH'::INTERVAL + (15 - 1) * '1 DAY'::INTERVAL AS DATE),
+                    CAST('0001-01-01'::DATE + (2010 - 1) * '1 YEAR'::INTERVAL + (3 - 1) * '1 MONTH'::INTERVAL + (46 - 1) * '1 DAY'::INTERVAL AS DATE),
+                    CAST('0001-01-01'::DATE + (2011 - 1) * '1 YEAR'::INTERVAL + ((- 8) - 1) * '1 MONTH'::INTERVAL + (15 - 1) * '1 DAY'::INTERVAL AS DATE)
+        - uri: /{year(date('2010-04-15')), month(date('2010-04-15')), day(date('2010-04-15'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                |
+            -+--------------------------------------------------------------------------------+-
+             | year(date('2010-04-15')) | month(date('2010-04-15')) | day(date('2010-04-15')) |
+            -+--------------------------+---------------------------+-------------------------+-
+             |                     2010 |                         4 |                      15 |
+                                                                                        (1 row)
+
+             ----
+             /{year(date('2010-04-15')),month(date('2010-04-15')),day(date('2010-04-15'))}
+             SELECT CAST(EXTRACT(YEAR FROM '2010-04-15'::DATE) AS INTEGER),
+                    CAST(EXTRACT(MONTH FROM '2010-04-15'::DATE) AS INTEGER),
+                    CAST(EXTRACT(DAY FROM '2010-04-15'::DATE) AS INTEGER)
+        - uri: /{date('1991-08-20')+6813, date('2010-04-15')-6813, date('2010-04-15')-date('1991-08-20')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                           |
+            -+-------------------------------------------------------------------------------------------+-
+             | date('1991-08-20')+6813 | date('2010-04-15')-6813 | date('2010-04-15')-date('1991-08-20') |
+            -+-------------------------+-------------------------+---------------------------------------+-
+             | 2010-04-15              | 1991-08-20              |                                  6813 |
+                                                                                                   (1 row)
+
+             ----
+             /{date('1991-08-20')+6813,date('2010-04-15')-6813,date('2010-04-15')-date('1991-08-20')}
+             SELECT ('1991-08-20'::DATE + 6813),
+                    ('2010-04-15'::DATE - 6813),
+                    ('2010-04-15'::DATE - '1991-08-20'::DATE)
       - id: aggregate-functions
         tests:
         - uri: /course?department='lang'
@@ -11319,6 +11771,114 @@ tests:
                   INNER JOIN "id"."instructor" AS "instructor"
                              ON ("confidential"."instructor" = "instructor"."code")
              ORDER BY "confidential"."instructor" ASC
+        - uri: /school.fiber(school)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school.fiber(school)                    |
+            -+-----------------------------------------+-
+             | code | name                             |
+            -+------+----------------------------------+-
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+             | art  | School of Art and Design         |
+             | bus  | School of Business               |
+             | edu  | College of Education             |
+             | egn  | School of Engineering            |
+             | la   | School of Arts, Letters, and the |
+             :      : Humanities                       :
+             | mart | School of Modern Art             |
+             | mus  | Musical School                   |
+             | ns   | School of Natural Sciences       |
+             | sc   | School of Continuing Studies     |
+                                               (81 rows)
+
+             ----
+             /school.fiber(school)
+             SELECT "school_2"."code",
+                    "school_2"."name"
+             FROM "ad"."school" AS "school_1"
+                  CROSS JOIN "ad"."school" AS "school_2"
+             ORDER BY "school_1"."code" ASC, 1 ASC
         - uri: /department.fiber(program,school)
           status: 200 OK
           headers:
@@ -11648,6 +12208,105 @@ tests:
                   CROSS JOIN "rd"."classification" AS "classification_2"
              WHERE ("classification_1"."code" = "classification_2"."part_of")
              ORDER BY "classification_1"."code" ASC, 2 ASC
+        - uri: /school.fiber(school){root().school.code, this().code}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school.fiber(school)             |
+            -+----------------------------------+-
+             | root().school.code | this().code |
+            -+--------------------+-------------+-
+             | art                | art         |
+             | art                | bus         |
+             | art                | edu         |
+             | art                | egn         |
+             | art                | la          |
+             | art                | mart        |
+             | art                | mus         |
+             | art                | ns          |
+             | art                | sc          |
+             | bus                | art         |
+             | bus                | bus         |
+             | bus                | edu         |
+             | bus                | egn         |
+             | bus                | la          |
+             | bus                | mart        |
+             | bus                | mus         |
+             | bus                | ns          |
+             | bus                | sc          |
+             | edu                | art         |
+             | edu                | bus         |
+             | edu                | edu         |
+             | edu                | egn         |
+             | edu                | la          |
+             | edu                | mart        |
+             | edu                | mus         |
+             | edu                | ns          |
+             | edu                | sc          |
+             | egn                | art         |
+             | egn                | bus         |
+             | egn                | edu         |
+             | egn                | egn         |
+             | egn                | la          |
+             | egn                | mart        |
+             | egn                | mus         |
+             | egn                | ns          |
+             | egn                | sc          |
+             | la                 | art         |
+             | la                 | bus         |
+             | la                 | edu         |
+             | la                 | egn         |
+             | la                 | la          |
+             | la                 | mart        |
+             | la                 | mus         |
+             | la                 | ns          |
+             | la                 | sc          |
+             | mart               | art         |
+             | mart               | bus         |
+             | mart               | edu         |
+             | mart               | egn         |
+             | mart               | la          |
+             | mart               | mart        |
+             | mart               | mus         |
+             | mart               | ns          |
+             | mart               | sc          |
+             | mus                | art         |
+             | mus                | bus         |
+             | mus                | edu         |
+             | mus                | egn         |
+             | mus                | la          |
+             | mus                | mart        |
+             | mus                | mus         |
+             | mus                | ns          |
+             | mus                | sc          |
+             | ns                 | art         |
+             | ns                 | bus         |
+             | ns                 | edu         |
+             | ns                 | egn         |
+             | ns                 | la          |
+             | ns                 | mart        |
+             | ns                 | mus         |
+             | ns                 | ns          |
+             | ns                 | sc          |
+             | sc                 | art         |
+             | sc                 | bus         |
+             | sc                 | edu         |
+             | sc                 | egn         |
+             | sc                 | la          |
+             | sc                 | mart        |
+             | sc                 | mus         |
+             | sc                 | ns          |
+             | sc                 | sc          |
+                                        (81 rows)
+
+             ----
+             /school.fiber(school){root().school.code,this().code}
+             SELECT "school_1"."code",
+                    "school_2"."code"
+             FROM "ad"."school" AS "school_1"
+                  CROSS JOIN "ad"."school" AS "school_2"
+             ORDER BY 1 ASC, 2 ASC
         - uri: /student.instructor
           status: 400 Bad Request
           headers:
@@ -13903,20 +14562,20 @@ tests:
                FROM "ad"."school" AS "school"
         - id: root,-this,-direct-and-fiber-functions
           tests:
-          - uri: /{count(school)*count(department),count(school.direct(department))}
+          - uri: /{count(school)*count(department),count(school.fiber(department))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |                                                                    |
-              -+--------------------------------------------------------------------+-
-               | count(school)*count(department) | count(school.direct(department)) |
-              -+---------------------------------+----------------------------------+-
-               |                             243 |                              243 |
-                                                                              (1 row)
+               |                                                                   |
+              -+-------------------------------------------------------------------+-
+               | count(school)*count(department) | count(school.fiber(department)) |
+              -+---------------------------------+---------------------------------+-
+               |                             243 |                             243 |
+                                                                             (1 row)
 
                ----
-               /{count(school)*count(department),count(school.direct(department))}
+               /{count(school)*count(department),count(school.fiber(department))}
                SELECT ("!_1"."count" * "!_2"."count"),
                       "!_3"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
@@ -13926,21 +14585,21 @@ tests:
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
                                 FROM "ad"."school" AS "school"
                                      CROSS JOIN "ad"."department" AS "department") AS "!_3"
-          - uri: /{count(school.department), count(school.direct(department)?school=root().school.code),
+          - uri: /{count(school.department), count(school.fiber(department)?school=root().school.code),
               count(school.fiber(department,code,school.code))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |                                                                                                                                          |
-              -+------------------------------------------------------------------------------------------------------------------------------------------+-
-               | count(school.department) | count(school.direct(department)?school=root().school.code) | count(school.fiber(department,code,school.code)) |
-              -+--------------------------+------------------------------------------------------------+--------------------------------------------------+-
-               |                       24 |                                                         24 |                                               24 |
-                                                                                                                                                    (1 row)
+               |                                                                                                                                         |
+              -+-----------------------------------------------------------------------------------------------------------------------------------------+-
+               | count(school.department) | count(school.fiber(department)?school=root().school.code) | count(school.fiber(department,code,school.code)) |
+              -+--------------------------+-----------------------------------------------------------+--------------------------------------------------+-
+               |                       24 |                                                        24 |                                               24 |
+                                                                                                                                                   (1 row)
 
                ----
-               /{count(school.department),count(school.direct(department)?school=root().school.code),count(school.fiber(department,code,school.code))}
+               /{count(school.department),count(school.fiber(department)?school=root().school.code),count(school.fiber(department,code,school.code))}
                SELECT "!_1"."count",
                       "!_2"."count",
                       "!_3"."count"
@@ -13958,20 +14617,20 @@ tests:
                                      LEFT OUTER JOIN "ad"."school" AS "school_2"
                                                      ON ("department"."school" = "school_2"."code")
                                 WHERE ("school_1"."code" = "school_2"."code")) AS "!_3"
-          - uri: /school{code,count(department)}?count(department)=max(direct(school).count(department))
+          - uri: /school{code,count(department)}?count(department)=max(fiber(school).count(department))
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school?count(department)=max(direct(school).count(department))) |
-              -+------------------------------------------------------------------+-
-               | code                     | count(department)                     |
-              -+--------------------------+---------------------------------------+-
-               | la                       |                                     5 |
-                                                                            (1 row)
+               | (school?count(department)=max(fiber(school).count(department))) |
+              -+-----------------------------------------------------------------+-
+               | code                     | count(department)                    |
+              -+--------------------------+--------------------------------------+-
+               | la                       |                                    5 |
+                                                                           (1 row)
 
                ----
-               /school{code,count(department)}?count(department)=max(direct(school).count(department))
+               /school{code,count(department)}?count(department)=max(fiber(school).count(department))
                SELECT "school_1"."code",
                       COALESCE("department_2"."count", 0)
                FROM "ad"."school" AS "school_1"

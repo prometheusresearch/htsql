@@ -25,18 +25,11 @@ class RootSig(Signature):
     pass
 
 
-class DirectSig(Signature):
-
-    slots = [
-            Slot('table'),
-    ]
-
-
 class FiberSig(Signature):
 
     slots = [
             Slot('table'),
-            Slot('image'),
+            Slot('image', is_mandatory=False),
             Slot('counterimage', is_mandatory=False),
     ]
 
@@ -95,13 +88,29 @@ class CastSig(Signature):
     ]
 
 
-class DateSig(Signature):
+class MakeDateSig(Signature):
 
     slots = [
             Slot('year'),
             Slot('month'),
             Slot('day'),
     ]
+
+
+class ExtractSig(UnarySig):
+    pass
+
+
+class ExtractYearSig(ExtractSig):
+    pass
+
+
+class ExtractMonthSig(ExtractSig):
+    pass
+
+
+class ExtractDaySig(ExtractSig):
+    pass
 
 
 class AddSig(BinarySig):
@@ -180,6 +189,85 @@ class LengthSig(UnarySig):
 
 
 class ContainsSig(BinarySig, PolarSig):
+    pass
+
+
+class LikeSig(BinarySig, PolarSig):
+    pass
+
+
+class ReplaceSig(Signature):
+
+    slots = [
+            Slot('op'),
+            Slot('old'),
+            Slot('new'),
+    ]
+
+
+class SubstringSig(Signature):
+
+    slots = [
+            Slot('op'),
+            Slot('start'),
+            Slot('length', is_mandatory=False),
+    ]
+
+
+class HeadSig(Signature):
+
+    slots = [
+            Slot('op'),
+            Slot('length', is_mandatory=False),
+    ]
+
+
+class TailSig(Signature):
+
+    slots = [
+            Slot('op'),
+            Slot('length', is_mandatory=False),
+    ]
+
+
+class SliceSig(Signature):
+
+    slots = [
+            Slot('op'),
+            Slot('left', is_mandatory=False),
+            Slot('right', is_mandatory=False),
+    ]
+
+
+class AtSig(Signature):
+
+    slots = [
+            Slot('op'),
+            Slot('index'),
+            Slot('length', is_mandatory=False),
+    ]
+
+
+class UpperSig(UnarySig):
+    pass
+
+
+class LowerSig(UnarySig):
+    pass
+
+
+class TrimSig(UnarySig):
+
+    def __init__(self, is_left=True, is_right=True):
+        assert isinstance(is_left, bool)
+        assert isinstance(is_right, bool)
+        assert is_left or is_right
+        super(TrimSig, self).__init__(equality_vector=(is_left, is_right))
+        self.is_left = is_left
+        self.is_right = is_right
+
+
+class TodaySig(NullarySig):
     pass
 
 

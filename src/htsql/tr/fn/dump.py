@@ -16,8 +16,10 @@ from ..dump import DumpBySignature
 from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
                         SubtractSig, DateDecrementSig, DateDifferenceSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
-                        ReversePolaritySig,
-                        RoundSig, RoundToSig, LengthSig,
+                        ReversePolaritySig, RoundSig, RoundToSig,
+                        LengthSig, LikeSig, ReplaceSig, SubstringSig,
+                        UpperSig, LowerSig, TrimSig, TodaySig, MakeDateSig,
+                        ExtractYearSig, ExtractMonthSig, ExtractDaySig,
                         ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig)
 
 
@@ -55,6 +57,24 @@ class DumpDivide(DumpFunction):
 
     adapts(DivideSig)
     template = "({lop} / {rop})"
+
+
+class DumpDateIncrement(DumpFunction):
+
+    adapts(DateIncrementSig)
+    template = "CAST({lop} + {rop} * INTERVAL '1' DAY AS DATE)"
+
+
+class DumpDateDecrement(DumpFunction):
+
+    adapts(DateDecrementSig)
+    template = "CAST({lop} - {rop} * INTERVAL '1' DAY AS DATE)"
+
+
+class DumpDateDifference(DumpFunction):
+
+    adapts(DateDifferenceSig)
+    template = "EXTRACT(DAY FROM {lop} - {rop})"
 
 
 class DumpConcatenate(DumpFunction):
@@ -118,6 +138,90 @@ class DumpLength(DumpFunction):
 
     adapts(LengthSig)
     template = "CHARACTER_LENGTH({op})"
+
+
+class DumpLike(DumpFunction):
+
+    adapts(LikeSig)
+
+    def __call__(self):
+        self.format("({lop} {polarity:not}LIKE {rop} ESCAPE {escape:literal})",
+                    self.arguments, self.signature, escape="\\")
+
+
+class DumpReplace(DumpFunction):
+
+    adapts(ReplaceSig)
+    template = "REPLACE({op}, {old}, {new})"
+
+
+class DumpSubstring(DumpFunction):
+
+    adapts(SubstringSig)
+
+    def __call__(self):
+        if self.phrase.length is not None:
+            self.format("SUBSTRING({op} FROM {start} FOR {length})",
+                        self.phrase)
+        else:
+            self.format("SUBSTRING({op} FROM {start})", self.arguments)
+
+
+class DumpUpper(DumpFunction):
+
+    adapts(UpperSig)
+    template = "UPPER({op})"
+
+
+class DumpLower(DumpFunction):
+
+    adapts(LowerSig)
+    template = "LOWER({op})"
+
+
+class DumpTrim(DumpFunction):
+
+    adapts(TrimSig)
+
+    def __call__(self):
+        if self.signature.is_left and not self.signature.is_right:
+            self.format("TRIM(LEADING FROM {op})", self.arguments)
+        elif not self.signature.is_left and self.signature.is_right:
+            self.format("TRIM(TRAILING FROM {op})", self.arguments)
+        else:
+            self.format("TRIM({op})", self.arguments)
+
+
+class DumpToday(DumpFunction):
+
+    adapts(TodaySig)
+    template = "CURRENT_DATE"
+
+
+class DumpMakeDate(DumpFunction):
+
+    adapts(MakeDateSig)
+    template = ("CAST(DATE '2001-01-01' + ({year} - 2001) * INTERVAL '1' YEAR"
+                " + ({month} - 1) * INTERVAL '1' MONTH"
+                " + ({day} - 1) * INTERVAL '1' DAY AS DATE)")
+
+
+class DumpExtractYear(DumpFunction):
+
+    adapts(ExtractYearSig)
+    template = "EXTRACT(YEAR FROM {op})"
+
+
+class DumpExtractMonth(DumpFunction):
+
+    adapts(ExtractMonthSig)
+    template = "EXTRACT(MONTH FROM {op})"
+
+
+class DumpExtractDay(DumpFunction):
+
+    adapts(ExtractDaySig)
+    template = "EXTRACT(DAY FROM {op})"
 
 
 class DumpExists(DumpFunction):

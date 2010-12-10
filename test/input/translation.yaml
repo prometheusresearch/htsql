@@ -83,12 +83,12 @@ tests:
   - title: Root, This, Direct and Fiber functions
     tests:
     # Cross joins.
-    - uri: /{count(school)*count(department),count(school.direct(department))}
+    - uri: /{count(school)*count(department),count(school.fiber(department))}
     # Custom joins.
     - uri: /{count(school.department),
-             count(school.direct(department)?school=root().school.code),
+             count(school.fiber(department)?school=root().school.code),
              count(school.fiber(department,code,school.code))}
-    - uri: /school{code,count(department)}?count(department)=max(direct(school).count(department))
+    - uri: /school{code,count(department)}?count(department)=max(fiber(school).count(department))
     - uri: /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
     # Lifting a unit to a dominating space.
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
