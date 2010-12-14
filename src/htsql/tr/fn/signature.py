@@ -17,14 +17,6 @@ from ..signature import (Signature, Slot, NullarySig, UnarySig, BinarySig,
                          IfNullSig, NullIfSig, AndSig, OrSig, NotSig)
 
 
-class ThisSig(Signature):
-    pass
-
-
-class RootSig(Signature):
-    pass
-
-
 class FiberSig(Signature):
 
     slots = [
@@ -67,18 +59,6 @@ class SortSig(Signature):
     slots = [
             Slot('order', is_singular=False),
     ]
-
-
-class NullSig(Signature):
-    pass
-
-
-class TrueSig(Signature):
-    pass
-
-
-class FalseSig(Signature):
-    pass
 
 
 class CastSig(Signature):

@@ -24,11 +24,10 @@ from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..lookup import lookup
-from .signature import (Signature, UnarySig, BinarySig, ThisSig, RootSig,
+from .signature import (Signature, NullarySig, UnarySig, BinarySig,
                         FiberSig, AsSig, SortDirectionSig, LimitSig,
-                        SortSig, NullSig, TrueSig, FalseSig, CastSig,
-                        MakeDateSig, ExtractYearSig, ExtractMonthSig,
-                        ExtractDaySig,
+                        SortSig, CastSig, MakeDateSig, ExtractYearSig,
+                        ExtractMonthSig, ExtractDaySig,
                         IsEqualSig, IsInSig, IsTotallyEqualSig, AndSig, OrSig,
                         NotSig, CompareSig, AddSig, ConcatenateSig,
                         HeadSig, TailSig, SliceSig, AtSig, ReplaceSig,
@@ -313,18 +312,41 @@ class BindPolyFunction(BindFunction):
         return correlate()
 
 
+class BindNull(BindMacro):
+
+    named('null')
+    signature = NullarySig
+    hint = """null() -> NULL"""
+
+    def expand(self):
+        yield LiteralBinding(None, UntypedDomain(), self.syntax)
 
 
+class BindTrue(BindMacro):
+
+    named('true')
+    signature = NullarySig
+    hint = """true() -> TRUE"""
+
+    def expand(self):
+        yield LiteralBinding(True, coerce(BooleanDomain()), self.syntax)
 
 
+class BindFalse(BindMacro):
 
+    named('false')
+    signature = NullarySig
+    hint = """false() -> FALSE"""
 
+    def expand(self):
+        yield LiteralBinding(False, coerce(BooleanDomain()), self.syntax)
 
 
 class BindRoot(BindMacro):
 
     named('root')
-    signature = RootSig
+    signature = NullarySig
+    hint = """base.root() -> the root space"""
 
     def expand(self):
         yield WrapperBinding(self.state.root, self.syntax)
@@ -333,7 +355,8 @@ class BindRoot(BindMacro):
 class BindThis(BindMacro):
 
     named('this')
-    signature = ThisSig
+    signature = NullarySig
+    hint = """base.this() -> the current base space"""
 
     def expand(self):
         yield WrapperBinding(self.state.base, self.syntax)
@@ -343,6 +366,7 @@ class BindFiber(BindMacro):
 
     named('fiber')
     signature = FiberSig
+    hint = """base.fiber(T[, img][, cimg]) -> fiber product of base and T"""
 
     def expand(self, table, image=None, counterimage=None):
         if not isinstance(table, IdentifierSyntax):
@@ -375,6 +399,13 @@ class BindAs(BindMacro):
 
     named('as')
     signature = AsSig
+    hint = """as(expr, title) -> expression with a title"""
+    help = """
+    Decorates an expression with a title.
+
+    `expr`: an arbitrary expression.
+    `title`: an identifier or a string literal.
+    """
 
     def expand(self, base, title):
         if not isinstance(title, (StringSyntax, IdentifierSyntax)):
@@ -398,18 +429,24 @@ class BindAscDir(BindDirectionBase):
 
     named('_+')
     direction = +1
+    hint = """(expr +) -> sort in ascending order"""
+    help = """
+    Decorates an expression with a sort order indicator.
+    """
 
 
 class BindDescDir(BindDirectionBase):
 
     named('_-')
     direction = -1
+    hint = """(expr -) -> sort in descending order"""
 
 
 class BindLimit(BindMacro):
 
     named('limit')
     signature = LimitSig
+    hint = """base.limit(N[, skip]) -> slice of the base space"""
 
     def parse(self, argument):
         try:
@@ -433,6 +470,7 @@ class BindSort(BindMacro):
 
     named('sort')
     signature = SortSig
+    hint = """base.sort(expr[, ...]) -> sorted space"""
 
     def expand(self, order):
         bindings = []
@@ -447,33 +485,6 @@ class BindSort(BindMacro):
         yield SortBinding(self.state.base, bindings, None, None, self.syntax)
 
 
-class BindNull(BindMacro):
-
-    named('null')
-    signature = NullSig
-
-    def expand(self):
-        yield LiteralBinding(None, UntypedDomain(), self.syntax)
-
-
-class BindTrue(BindMacro):
-
-    named('true')
-    signature = TrueSig
-
-    def expand(self):
-        yield LiteralBinding(True, coerce(BooleanDomain()), self.syntax)
-
-
-class BindFalse(BindMacro):
-
-    named('false')
-    signature = FalseSig
-
-    def expand(self):
-        yield LiteralBinding(False, coerce(BooleanDomain()), self.syntax)
-
-
 class BindCast(BindFunction):
 
     signature = CastSig
@@ -486,38 +497,44 @@ class BindCast(BindFunction):
 
 class BindBooleanCast(BindCast):
 
-    named('boolean')
+    named('boolean', 'bool')
     codomain = BooleanDomain()
+    hint = """boolean(expr) -> expression converted to Boolean"""
 
 
 class BindStringCast(BindCast):
 
-    named('string')
+    named('string', 'str')
     codomain = StringDomain()
+    hint = """string(expr) -> expression converted to a string"""
 
 
 class BindIntegerCast(BindCast):
 
-    named('integer')
+    named('integer', 'int')
     codomain = IntegerDomain()
+    hint = """integer(expr) -> expression converted to integer"""
 
 
 class BindDecimalCast(BindCast):
 
-    named('decimal')
+    named('decimal', 'dec')
     codomain = DecimalDomain()
+    hint = """decimal(expr) -> expression converted to decimal"""
 
 
 class BindFloatCast(BindCast):
 
     named('float')
     codomain = FloatDomain()
+    hint = """float(expr) -> expression converted to float"""
 
 
 class BindDateCast(BindCast):
 
     named('date')
     codomain = DateDomain()
+    hint = """date(expr) -> expression converted to date"""
 
 
 class BindMakeDate(BindMonoFunction):
@@ -526,6 +543,7 @@ class BindMakeDate(BindMonoFunction):
     signature = MakeDateSig
     domains = [IntegerDomain(), IntegerDomain(), IntegerDomain()]
     codomain = DateDomain()
+    hint = """date(year, month, day) -> date value"""
 
 
 class BindAmongBase(BindFunction):
@@ -553,12 +571,14 @@ class BindAmong(BindAmongBase):
 
     named('=')
     polarity = +1
+    hint = """(x = y) -> TRUE if x is equal to y"""
 
 
 class BindNotAmong(BindAmongBase):
 
     named('!=')
     polarity = -1
+    hint = """(x != y) -> TRUE if x is not equal to y"""
 
 
 class BindTotallyEqualBase(BindFunction):
@@ -581,18 +601,21 @@ class BindTotallyEqual(BindTotallyEqualBase):
 
     named('==')
     polarity = +1
+    hint = """(x == y) -> TRUE if x is equal to y"""
 
 
 class BindTotallyNotEqual(BindTotallyEqualBase):
 
     named('!==')
     polarity = -1
+    hint = """(x !== y) -> TRUE if x is not equal to y"""
 
 
 class BindAnd(BindFunction):
 
     named('&')
     signature = BinarySig
+    hint = """(p & q) -> TRUE if both p and q are TRUE"""
 
     def correlate(self, lop, rop):
         domain = coerce(BooleanDomain())
@@ -605,6 +628,7 @@ class BindOr(BindFunction):
 
     named('|')
     signature = BinarySig
+    hint = """(p | q) -> TRUE if either p or q is TRUE"""
 
     def correlate(self, lop, rop):
         domain = coerce(BooleanDomain())
@@ -617,6 +641,7 @@ class BindNot(BindFunction):
 
     named('!_')
     signature = NotSig
+    hint = """(! p) -> TRUE if p is FALSE"""
 
     def correlate(self, op):
         domain = coerce(BooleanDomain())
@@ -647,24 +672,28 @@ class BindLessThan(BindCompare):
 
     named('<')
     relation = '<'
+    hint = """(x < y) -> TRUE if x is less than y"""
 
 
 class BindLessThanOrEqual(BindCompare):
 
     named('<=')
     relation = '<='
+    hint = """(x < y) -> TRUE if x is less than or equal to y"""
 
 
 class BindGreaterThan(BindCompare):
 
     named('>')
     relation = '>'
+    hint = """(x > y) -> TRUE if x is greater than y"""
 
 
 class BindGreaterThanOrEqual(BindCompare):
 
     named('>=')
     relation = '>='
+    hint = """(x >= y) -> TRUE if x is greater than or equal to y"""
 
 
 class Comparable(Adapter):
@@ -691,6 +720,7 @@ class BindAdd(BindPolyFunction):
 
     named('+')
     signature = AddSig
+    hint = """(x + y) -> sum of x and y"""
 
 
 class CorrelateIntegerAdd(CorrelateFunction):
@@ -746,6 +776,7 @@ class BindSubtract(BindPolyFunction):
 
     named('-')
     signature = SubtractSig
+    hint = """(x - y) -> difference between x and y"""
 
 
 class CorrelateIntegerSubtract(CorrelateFunction):
@@ -798,6 +829,7 @@ class BindMultiply(BindPolyFunction):
 
     named('*')
     signature = MultiplySig
+    hint = """(x * y) -> product of x and y"""
 
 
 class CorrelateIntegerMultiply(CorrelateFunction):
@@ -834,6 +866,7 @@ class BindDivide(BindPolyFunction):
 
     named('/')
     signature = DivideSig
+    hint = """(x / y) -> quotient of x divided by y"""
 
 
 class CorrelateDecimalDivide(CorrelateFunction):
@@ -863,6 +896,7 @@ class BindKeepPolarity(BindPolyFunction):
 
     named('+_')
     signature = KeepPolaritySig
+    hint = """(+ x) -> x"""
 
 
 class CorrelateIntegerKeepPolarity(CorrelateFunction):
@@ -893,6 +927,7 @@ class BindReversePolarity(BindPolyFunction):
 
     named('-_')
     signature = ReversePolaritySig
+    hint = """(- x) -> negation of x"""
 
 
 class CorrelateIntegerReversePolarity(CorrelateFunction):
@@ -923,6 +958,7 @@ class BindRound(BindPolyFunction):
 
     named('round')
     signature = RoundSig
+    hint = """round(x) -> x rounded to zero"""
 
 
 class CorrelateDecimalRound(CorrelateFunction):
@@ -946,6 +982,7 @@ class BindRoundTo(BindPolyFunction):
 
     named(('round', 2))
     signature = RoundToSig
+    hint = """round(x, n) -> x rounded to a given precision"""
 
 
 class CorrelateDecimalRoundTo(CorrelateFunction):
@@ -961,6 +998,7 @@ class BindLength(BindPolyFunction):
 
     named('length')
     signature = LengthSig
+    hint = """length(s) -> length of s"""
 
 
 class CorrelateStringLength(CorrelateFunction):
@@ -988,12 +1026,14 @@ class BindContains(BindContainsBase):
 
     named('~')
     polarity = +1
+    hint = """(s ~ sub) -> TRUE if s contains sub"""
 
 
 class BindNotContains(BindContainsBase):
 
     named('!~')
     polarity = -1
+    hint = """(s !~ sub) -> TRUE if s does not contain sub"""
 
 
 class CorrelateStringContains(CorrelateFunction):
@@ -1024,12 +1064,14 @@ class BindHead(BindPolyFunction):
 
     named('head')
     signature = HeadSig
+    hint = """head(s[, N=1]) -> the first N elements of s"""
 
 
 class BindTail(BindPolyFunction):
 
     named('tail')
     signature = TailSig
+    hint = """tail(s[, N=1]) -> the last N elements of s"""
 
 
 class CorrelateHead(CorrelateFunction):
@@ -1052,6 +1094,7 @@ class BindSlice(BindPolyFunction):
 
     named('slice')
     signature = SliceSig
+    hint = """slice(s, i, j) -> slice of s from i-th to j-th elements"""
 
     def correlate(self, op, left, right):
         if left is not None:
@@ -1076,6 +1119,7 @@ class BindAt(BindPolyFunction):
 
     named('at')
     signature = AtSig
+    hint = """at(s, i[, len=1]) -> i-th to (i+len)-th elements of s"""
 
     def correlate(self, op, index, length):
         index = CastBinding(index, coerce(IntegerDomain()), index.syntax)
@@ -1100,6 +1144,7 @@ class BindReplace(BindPolyFunction):
 
     named('replace')
     signature = ReplaceSig
+    hint = """replace(s, o, n) -> s with occurences of o replaced by n"""
 
 
 class CorrelateReplace(CorrelateFunction):
@@ -1114,6 +1159,7 @@ class BindUpper(BindPolyFunction):
 
     named('upper')
     signature = UpperSig
+    hint = """upper(s) -> s converted to uppercase"""
 
 
 class CorrelateUpper(CorrelateFunction):
@@ -1128,6 +1174,7 @@ class BindLower(BindPolyFunction):
 
     named('lower')
     signature = LowerSig
+    hint = """lower(s) -> s converted to lowercase"""
 
 
 class CorrelateLower(CorrelateFunction):
@@ -1157,18 +1204,21 @@ class BindTrim(BindTrimBase):
     named('trim')
     is_left = True
     is_right = True
+    hint = """trim(s) -> s with leading and trailing whitespaces removed"""
 
 
 class BindLTrim(BindTrimBase):
 
     named('ltrim')
     is_left = True
+    hint = """ltrim(s) -> s with leading whitespaces removed"""
 
 
 class BindRTrim(BindTrimBase):
 
     named('rtrim')
     is_right = True
+    hint = """rtrim(s) -> s with trailing whitespaces removed"""
 
 
 class BindToday(BindMonoFunction):
@@ -1176,24 +1226,28 @@ class BindToday(BindMonoFunction):
     named('today')
     signature = TodaySig
     codomain = DateDomain()
+    hint = """today() -> the current date"""
 
 
 class BindExtractYear(BindPolyFunction):
 
     named('year')
     signature = ExtractYearSig
+    hint = """year(date) -> the year of a given date"""
 
 
 class BindExtractMonth(BindPolyFunction):
 
     named('month')
     signature = ExtractMonthSig
+    hint = """month(date) -> the month of a given date"""
 
 
 class BindExtractDay(BindPolyFunction):
 
     named('day')
     signature = ExtractDaySig
+    hint = """day(date) -> the day of a given date"""
 
 
 class CorrelateExtractYear(CorrelateFunction):
@@ -1230,24 +1284,28 @@ class BindIsNull(BindHomoFunction):
     named('is_null')
     signature = IsNullSig(+1)
     codomain = BooleanDomain()
+    hint = """is_null(x) -> TRUE if x is NULL"""
 
 
 class BindNullIf(BindHomoFunction):
 
     named('null_if')
     signature = NullIfSig()
+    hint = """null_if(x, y) -> NULL if x is equal to y; x otherwise"""
 
 
 class BindIfNull(BindHomoFunction):
 
     named('if_null')
     signature = IfNullSig()
+    hint = """if_null(x, y) -> y if x is NULL; x otherwise"""
 
 
 class BindIf(BindFunction):
 
     named('if')
     signature = IfSig
+    hint = """if(p, c[, ...][, a=NULL]) -> c if p; a otherwise"""
 
     def match(self):
         operands = list(reversed(self.syntax.arguments))
@@ -1292,6 +1350,7 @@ class BindSwitch(BindFunction):
 
     named('switch')
     signature = SwitchSig
+    hint = """switch(x, v, c, [...][, a=NULL]) -> c if x = v; a otherwise"""
 
     def match(self):
         operands = list(reversed(self.syntax.arguments))
@@ -1355,18 +1414,21 @@ class BindExists(BindExistsBase):
 
     named('exists')
     polarity = +1
+    hint = """base.exists(p) -> TRUE if there exists p such that p = TRUE"""
 
 
 class BindEvery(BindExistsBase):
 
     named('every')
     polarity = -1
+    hint = """base.every(p) -> TRUE if p = TRUE for every p"""
 
 
 class BindCount(BindFunction):
 
     named('count')
     signature = CountSig
+    hint = """base.count(p) -> the number of p such that p = TRUE"""
 
     def correlate(self, op):
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
@@ -1418,6 +1480,7 @@ class BindMinMaxBase(BindMinMaxBase):
     named('min')
     signature = MinMaxSig
     polarity = +1
+    hint = """base.min(x) -> the minimal value in the set of x"""
 
 
 class BindMinMaxBase(BindMinMaxBase):
@@ -1425,6 +1488,7 @@ class BindMinMaxBase(BindMinMaxBase):
     named('max')
     signature = MinMaxSig
     polarity = -1
+    hint = """base.avg(x) -> the maximal value in the set of x"""
 
 
 class CorrelateIntegerMinMax(CorrelateAggregate):
@@ -1471,6 +1535,7 @@ class BindSum(BindPolyAggregate):
 
     named('sum')
     signature = SumSig
+    hint = """base.sum(x) -> the sum of x"""
 
 
 class CorrelateIntegerSum(CorrelateAggregate):
@@ -1501,6 +1566,7 @@ class BindAvg(BindPolyAggregate):
 
     named('avg')
     signature = AvgSig
+    hint = """base.avg(x) -> the average value of x"""
 
 
 class CorrelateDecimalAvg(CorrelateAggregate):
