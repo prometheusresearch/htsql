@@ -51,8 +51,8 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries",
 ]
 KEYWORDS = "sql http uri relational database"
-PACKAGES = find_packages(os.path.join(root, 'src'))
-PACKAGE_DIR = {'': os.path.join(root, 'src')}
+PACKAGES = find_packages('src')
+PACKAGE_DIR = {'': 'src'}
 INCLUDE_PACKAGE_DATA = True
 ENTRY_POINTS = {
     'console_scripts': ['htsql-ctl = htsql.ctl:main'],
