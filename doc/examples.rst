@@ -1,6 +1,6 @@
-============
-  Examples
-============
+======================
+  HTSQL 2.0 Examples
+======================
 
 HTSQL supports parsimonious database reporting and self-documenting
 dashboards.  By reducing query construction complexity, HTSQL enables a

@@ -13,6 +13,7 @@
    tutorial
    examples
    reference
+   funccard
    api
 
 Indices and tables
