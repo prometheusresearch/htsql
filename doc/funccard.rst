@@ -42,9 +42,9 @@ string typed values using single quotes in the output column.
 |                |                  +----------------------+---------------+
 |                |                  | ``false()`` :string  | 'false'       |
 +----------------+------------------+----------------------+---------------+
-| x + y          | concatenation    | 'Hello' + ' World'   | 'Hello World' |
-|                | (treats nulls as +----------------------+---------------+
-|                |  empty strings)  | 'Hello' + ``null()`` | 'Hello'       |
+| x + y          | concatenation;   | 'Hello' + ' World'   | 'Hello World' |
+|                | treats nulls as  +----------------------+---------------+
+|                | empty strings    | 'Hello' + ``null()`` | 'Hello'       |
 +----------------+------------------+----------------------+---------------+
 | x ~ y          | case-insensitive | 'HTSQL' ~ 'sql'      | ``true()``    |
 |                | string contains  |                      |               |
