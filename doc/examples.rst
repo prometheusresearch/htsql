@@ -15,6 +15,7 @@ screenshot, the complete source code, and link to a live demo:
 
 .. image:: htraf-screenshot.png
    :alt: The HTRAF demo
+   :align: right
    :target: http://htraf.htsql.org/
 
 .. code-block:: html
