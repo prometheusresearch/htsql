@@ -65,6 +65,10 @@ install:
 develop:
 	python setup.py develop
 
+# clean build area
+clean:
+	rm -rf build/*
+
 # Build the HTSQL documentation.
 doc:
 	sphinx-build -b html doc build/doc

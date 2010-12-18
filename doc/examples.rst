@@ -2,30 +2,18 @@
   Examples
 ============
 
-HTSQL provides outstanding clarity without sacrificing rigor.  Let's
-assume we have a data model, with schools, departments, programs and
-courses.  Here it is::
+HTSQL supports parsimonious database reporting and self-documenting
+dashboards.  By reducing query construction complexity, HTSQL enables a
+new level of service for your existing databases. 
 
-         +-------------+       +--------+
-    /---m| DEPARTMENT  |>-----o| SCHOOL |m----\
-    |.   +-------------+  .    +--------+    .|
-    | .                  .                  . |
-    |   department   department    a school   |
-    |   offers       may be part   has one or |
-    |   courses      of school     programs   |
-    |                                         |
-    |    +-------------+       +---------+    |
-    \---<| COURSE      |       | PROGRAM |>---/
-         +-------------+       +---------+
+Easy Dashboarding
+=================
 
-
-Sample application
-==================
-
-The full source code:
+The following example dashboard is a 3-level drill down (``school``,
+``department`` and ``course``) for a university schema. Here is a
+screenshot, the complete source code, and link to a live demo:
 
 .. image:: htraf-screenshot.png
-   :scale: 75%
    :alt: The HTRAF demo
    :align: right
    :target: http://htraf.htsql.org/
@@ -64,10 +52,25 @@ The full source code:
 
 See a live demo at http://htraf.htsql.org/.
 
-
-Basic queries
+Basic Queries
 =============
 
+For the examples below, the following "university catalog" schema is
+used.  It has two top-level tables, ``school`` and ``department``; where
+department has an optional link to school.  Subordinate tables, having
+mandatory foreign key references are ``course`` and ``program``::
+
+         +-------------+       +--------+
+    /---m| DEPARTMENT  |>-----o| SCHOOL |m----\
+    |.   +-------------+  .    +--------+    .|
+    | .                  .                  . |
+    |   department   department    a school   |
+    |   offers       may be part   has one or |
+    |   courses      of school     programs   |
+    |                                         |
+    |    +-------------+       +---------+    |
+    \---<| COURSE      |       | PROGRAM |>---/
+         +-------------+       +---------+
 
 List all schools
 ----------------
@@ -315,8 +318,12 @@ You need at least 3 **SQL** statements to produce the same result::
 .. _C3: http://demo.htsql.com/school{count(program)^,count()}/({name};department)
 
 
-For more examples, see `the HTSQL regression test suite`_, or read :doc:`tutorial`.
+For more examples, see `feature_tests`_, `function_tests`_ and read
+:doc:`tutorial`.
 
-.. _the HTSQL regression test suite:
-    http://bitbucket.org/prometheus/htsql/src/tip/test/input/pgsql.yaml
+.. _feature_tests:
+    http://bitbucket.org/prometheus/htsql/src/tip/test/input/schema.yaml
+
+.. _function_tests:
+    http://bitbucket.org/prometheus/htsql/src/tip/test/input/library.yaml
 
