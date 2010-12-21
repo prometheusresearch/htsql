@@ -22,14 +22,14 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc','sphinx.ext.graphviz']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.graphviz']
 graphviz_output_format = 'svg'
 
 # Sort automatically documented members by source order (requires Sphinx 1.0).
 autodoc_member_order = 'bysource'
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+#templates_path = ['_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -43,7 +43,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'HTSQL'
 copyright = (u'2006-2011 Prometheus Reserch, LLC;'
-             'written by Clark C. Evans and Kirill Simonov')
+             ' written by Clark C. Evans and Kirill Simonov')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -126,7 +126,7 @@ html_theme_options = {}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

@@ -1,6 +1,6 @@
 # This makefile provides various build, installation and testing tasks.
 
-.PHONY: default build install develop doc dist windist pypi \
+.PHONY: default build install develop doc dist windist pypi clean \
 	test cleanup train train-routine train-sqlite train-pgsql purge-test \
 	demo-htraf demo-ssi
 
@@ -27,6 +27,7 @@ default:
 	@echo "  doc: to build the HTSQL documentation"
 	@echo "  dist: to build a source and an EGG distribution"
 	@echo "  pypi: to register and upload the package to PyPI"
+	@echo "  clean: to remove the build directory"
 	@echo
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
@@ -65,10 +66,6 @@ install:
 develop:
 	python setup.py develop
 
-# clean build area
-clean:
-	rm -rf build/*
-
 # Build the HTSQL documentation.
 doc:
 	sphinx-build -b html doc build/doc
@@ -87,6 +84,10 @@ dist:
 pypi:
 	rm -rf build
 	python setup.py register sdist bdist_egg upload
+
+# Delete the build directory.
+clean:
+	rm -rf build
 
 #
 # Regression testing tasks.
