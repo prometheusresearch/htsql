@@ -14,6 +14,7 @@
    examples
    reference
    funccard
+   roadmap
    api
 
 Indices and tables
