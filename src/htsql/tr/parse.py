@@ -115,7 +115,7 @@ class QueryParser(Parser):
                                          expression )?
 
         expression      ::= term ( ( '+' | '-' ) term )*
-        term            ::= factor ( ( '*' | '/' | identifier ) factor )*
+        term            ::= factor ( ( '*' | '/' ) factor )*
         factor          ::= ( '+' | '-' ) factor | power
         power           ::= sieve ( '^' power )?
 
@@ -383,26 +383,17 @@ class TermParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Parses the production:
-        #   term            ::= factor ( ( '*' | '/' | identifier ) factor )*
+        #   term            ::= factor ( ( '*' | '/' ) factor )*
         expression = FactorParser << tokens
         while (tokens.peek(SymbolToken, ['*'])
                or (tokens.peek(SymbolToken, ['/'], ahead=0)
-                   and not tokens.peek(SymbolToken, [':'], ahead=1))
-               or tokens.peek(NameToken)):
-            if tokens.peek(SymbolToken, ['*', '/']):
-                symbol_token = tokens.pop(SymbolToken, ['*', '/'])
-                symbol = symbol_token.value
-                left = expression
-                right = FactorParser << tokens
-                mark = Mark.union(left, right)
-                expression = OperatorSyntax(symbol, left, right, mark)
-            else:
-                identifier = IdentifierParser << tokens
-                left = expression
-                right = FactorParser << tokens
-                mark = Mark.union(left, right)
-                expression = FunctionOperatorSyntax(identifier,
-                                                    [left, right], mark)
+                   and not tokens.peek(SymbolToken, [':'], ahead=1))):
+            symbol_token = tokens.pop(SymbolToken, ['*', '/'])
+            symbol = symbol_token.value
+            left = expression
+            right = FactorParser << tokens
+            mark = Mark.union(left, right)
+            expression = OperatorSyntax(symbol, left, right, mark)
         return expression
 
 

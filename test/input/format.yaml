@@ -34,16 +34,16 @@ tests:
 
 - title: The `AS` Decorator
   tests:
-    - uri: /(school as 'List of Schools')
-            {name as Name, count(department) as '# of Departments'}
+    - uri: /(school :as 'List of Schools')
+            {name :as Name, count(department) :as '# of Departments'}
             /:json
-    - uri: /(school as 'List of Schools')
-            {name as Name, count(department) as '# of Departments'}
+    - uri: /(school :as 'List of Schools')
+            {name :as Name, count(department) :as '# of Departments'}
             /:csv
-    - uri: /(school as 'List of Schools')
-            {name as Name, count(department) as '# of Departments'}
+    - uri: /(school :as 'List of Schools')
+            {name :as Name, count(department) :as '# of Departments'}
             /:txt
-    - uri: /(school as 'List of Schools')
-            {name as Name, count(department) as '# of Departments'}
+    - uri: /(school :as 'List of Schools')
+            {name :as Name, count(department) :as '# of Departments'}
             /:html
 

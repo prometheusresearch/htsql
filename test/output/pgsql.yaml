@@ -3456,7 +3456,7 @@ tests:
                     "course"."title"
              FROM "ad"."course" AS "course"
              ORDER BY 1 ASC, 3 DESC NULLS LAST, 2 ASC
-        - uri: /course{department+ :as 'Dept Code', number as 'No.', credits-, title}
+        - uri: /course{department+ :as 'Dept Code', number :as 'No.', credits-, title}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -15122,7 +15122,7 @@ tests:
             </html>
       - id: the-`as`-decorator
         tests:
-        - uri: /(school as 'List of Schools') {name as Name, count(department) as
+        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:json
           status: 200 OK
           headers:
@@ -15142,7 +15142,7 @@ tests:
               ["School of Natural Sciences", 4],
               ["School of Continuing Studies", 0]
             ]
-        - uri: /(school as 'List of Schools') {name as Name, count(department) as
+        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:csv
           status: 200 OK
           headers:
@@ -15153,7 +15153,7 @@ tests:
             Business,3\r\nCollege of Education,2\r\nSchool of Engineering,4\r\n\"School
             of Arts, Letters, and the Humanities\",5\r\nSchool of Modern Art,0\r\nMusical
             School,4\r\nSchool of Natural Sciences,4\r\nSchool of Continuing Studies,0\r\n"
-        - uri: /(school as 'List of Schools') {name as Name, count(department) as
+        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:txt
           status: 200 OK
           headers:
@@ -15186,7 +15186,7 @@ tests:
                                    GROUP BY 2) AS "department"
                                   ON ("school"."code" = "department"."school")
              ORDER BY "school"."code" ASC
-        - uri: /(school as 'List of Schools') {name as Name, count(department) as
+        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:html
           status: 200 OK
           headers:
