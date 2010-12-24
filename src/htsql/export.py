@@ -13,8 +13,11 @@ This module exports the `htsql.core` addon.
 """
 
 
-from addon import Addon
-import htsql
+from .util import autoimport
+from .addon import Addon
+
+
+autoimport('htsql')
 
 
 class HTSQL_CORE(Addon):

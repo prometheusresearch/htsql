@@ -13,13 +13,11 @@ This module exports the `engine.sqlite` addon.
 """
 
 
+from htsql.util import autoimport
 from htsql.addon import Addon
-import htsql_sqlite.connect
-import htsql_sqlite.split_sql
-import htsql_sqlite.introspect
-import htsql_sqlite.tr.coerce
-import htsql_sqlite.tr.bind
-import htsql_sqlite.tr.dump
+
+
+autoimport('htsql_sqlite')
 
 
 class ENGINE_SQLITE(Addon):

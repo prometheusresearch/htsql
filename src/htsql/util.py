@@ -16,6 +16,7 @@ This module provides various hard-to-categorize utilities.
 import re
 import sys
 import urllib
+import pkgutil
 
 
 #
@@ -807,5 +808,31 @@ class Comparable(object):
                 self.__class__ is not other.__class__ or
                 self.hash != other.hash and
                 self.equality_vector != other.equality_vector)
+
+
+#
+# Auto-import utility.
+#
+
+
+def autoimport(name):
+    """
+    Imports all modules (including subpackages) in a package.
+
+    `name` (a string)
+        The package name.
+    """
+    # Import the package itself.
+    package = __import__(name)
+    # It must be the package we asked for.
+    assert hasattr(package, '__name__') and package.__name__ == name
+    # Make sure it is indeed a package (has `__name__`).
+    assert hasattr(package, '__path__')
+    # Get the list of modules in the package directory; prepend the module
+    # names with the package name.  That also includes any subpackages.
+    modules = pkgutil.walk_packages(package.__path__, name+'.')
+    # Import the modules in the package.
+    for importer, module_name, is_package in modules:
+        __import__(module_name)
 
 

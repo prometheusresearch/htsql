@@ -13,11 +13,11 @@ This module exports the `engine.pgsql` addon.
 """
 
 
+from htsql.util import autoimport
 from htsql.addon import Addon
-import htsql_pgsql.connect
-import htsql_pgsql.split_sql
-import htsql_pgsql.introspect
-import htsql_pgsql.tr.dump
+
+
+autoimport('htsql_pgsql')
 
 
 class ENGINE_PGSQL(Addon):
