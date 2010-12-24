@@ -15,7 +15,6 @@ This module implements the binding process.
 
 from ..util import tupleof
 from ..adapter import Adapter, Protocol, adapts
-from ..context import context
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
 from .error import BindError
@@ -27,9 +26,8 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding)
-from .lookup import lookup, itemize, normalize
+from .lookup import lookup, itemize
 from .coerce import coerce
-import decimal
 
 
 class BindingState(object):

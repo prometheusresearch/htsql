@@ -42,12 +42,4 @@ class WSGI(Utility):
         start_response(status, headers)
         return body
 
-    def request(self, environ):
-        path_info = environ['PATH_INFO']
-        query_string = environ.get('QUERY_STRING')
-        uri = urllib.quote(path_info)
-        if query_string:
-            uri += '?'+query_string
-        return uri
-
 

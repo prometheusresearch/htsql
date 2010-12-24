@@ -56,7 +56,7 @@ class ConnectSQLite(Connect):
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(SQLiteConnect, self).normalize_error(exception)
+        return super(ConnectSQLite, self).normalize_error(exception)
 
 
 class NormalizeSQLiteBoolean(Normalize):

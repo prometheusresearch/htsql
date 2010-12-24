@@ -164,7 +164,7 @@ class Request(object):
             finally:
                 if hasattr(iterator, 'close'):
                     iterator.close()
-        except Exception, exc:
+        except Exception:
             # Save the exception data.
             response.set(exc_info=sys.exc_info())
 

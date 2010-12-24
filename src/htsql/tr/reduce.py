@@ -16,8 +16,8 @@ This module implements the reducing process.
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain, StringDomain
 from .coerce import coerce
-from .frame import (Clause, Frame, ScalarFrame, TableFrame, BranchFrame,
-                    NestedFrame, QueryFrame, Phrase, LiteralPhrase, NullPhrase,
+from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
+                    QueryFrame, Phrase, LiteralPhrase, NullPhrase,
                     TruePhrase, FalsePhrase, CastPhrase, FormulaPhrase,
                     ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,

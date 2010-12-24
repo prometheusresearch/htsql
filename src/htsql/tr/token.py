@@ -14,7 +14,7 @@ This module defines token types used by the HTSQL scanner.
 
 
 from ..mark import Mark
-from ..util import maybe, Printable
+from ..util import Printable
 
 
 class Token(Printable):

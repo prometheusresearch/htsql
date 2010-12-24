@@ -14,7 +14,6 @@ This module declares a SQL execution plan.
 
 
 from ..util import maybe, Printable
-from ..mark import Mark
 from .frame import QueryFrame
 
 

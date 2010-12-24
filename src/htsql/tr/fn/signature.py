@@ -12,9 +12,7 @@
 
 
 from ..signature import (Signature, Slot, NullarySig, UnarySig, BinarySig,
-                         NArySig, ConnectiveSig, PolarSig, CompareSig,
-                         IsEqualSig, IsTotallyEqualSig, IsInSig, IsNullSig,
-                         IfNullSig, NullIfSig, AndSig, OrSig, NotSig)
+                         PolarSig)
 
 
 class FiberSig(Signature):

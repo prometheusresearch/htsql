@@ -20,7 +20,7 @@ from ..domain import (Domain, UntypedDomain, TupleDomain, BooleanDomain,
 from .error import EncodeError
 from .coerce import coerce
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
-                      TableBinding, FreeTableBinding, AttachedTableBinding,
+                      FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       SortBinding, CastBinding, WrapperBinding,
                       DirectionBinding, FormulaBinding)

@@ -13,13 +13,13 @@ This module implements the `server` routine.
 """
 
 
-from .error import ScriptError
 from .routine import Argument, Routine
 from .option import QuietOption
 from ..validator import StrVal, IntVal, DBVal
 import socket
 import SocketServer
 import wsgiref.simple_server
+import binascii
 
 
 class HTSQLServer(SocketServer.ThreadingMixIn,

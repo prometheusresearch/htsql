@@ -13,19 +13,13 @@ This module adapts the SQL serializer for PostgreSQL.
 """
 
 
-from htsql.adapter import adapts
-from htsql.domain import Domain, DateDomain
-from htsql.tr.dump import (FormatLiteral, DumpBranch, DumpInteger, DumpFloat,
+from htsql.tr.dump import (FormatLiteral, DumpBranch, DumpFloat,
                            DumpDecimal, DumpDate, DumpToDecimal, DumpToFloat,
                            DumpToString)
-from htsql.tr.fn.signature import (MakeDateSig, ContainsSig, DateIncrementSig,
-                                   DateDecrementSig, DateDifferenceSig)
-from htsql.tr.fn.dump import (DumpFunction, DumpLike, DumpDateIncrement,
+from htsql.tr.fn.dump import (DumpLike, DumpDateIncrement,
                               DumpDateDecrement, DumpDateDifference,
                               DumpMakeDate, DumpExtractYear, DumpExtractMonth,
                               DumpExtractDay)
-from htsql.tr.frame import LiteralPhrase, NullPhrase
-from htsql.tr.error import SerializeError
 
 
 class PGSQLFormatLiteral(FormatLiteral):

@@ -19,12 +19,12 @@ from ..coerce import coerce
 from ..binding import LiteralBinding, CastBinding
 from ..code import (LiteralCode, ScalarUnit, CorrelatedUnit,
                     AggregateUnit, FilteredSpace, FormulaCode)
-from .signature import (Signature, NotSig, NullIfSig, IfNullSig, QuantifySig,
-                        ExistsSig, AggregateSig, QuantifySig,
+from ..signature import Signature, NotSig, NullIfSig, IfNullSig, CompareSig
+from .signature import (ExistsSig, AggregateSig, QuantifySig,
                         CountSig, SumSig, ReplaceSig, ConcatenateSig,
                         LikeSig, ContainsSig, HeadSig, TailSig, SliceSig, AtSig,
                         SubstringSig, LengthSig, AddSig, SubtractSig,
-                        CompareSig, IfSig, ReversePolaritySig)
+                        IfSig, ReversePolaritySig)
 
 
 class EncodeFunction(EncodeBySignature):

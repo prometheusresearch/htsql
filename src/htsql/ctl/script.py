@@ -16,7 +16,7 @@ This module implements a command-line application with subcommands.
 from .error import ScriptError
 from .routine import Argument, Routine
 from .option import Option
-from ..util import maybe, listof, trim_doc
+from ..util import listof, trim_doc
 
 
 class Script(object):
@@ -134,7 +134,7 @@ class Script(object):
             for parameter in routine_class.arguments+routine_class.options:
                 assert parameter.attribute not in attributes, \
                        "duplicate attribute name %r in routine %r" \
-                       % (parameter.attribute, routine.name)
+                       % (parameter.attribute, routine_class.name)
                 attributes.add(parameter.attribute)
             has_list_arguments = False
             has_optional_arguments = False

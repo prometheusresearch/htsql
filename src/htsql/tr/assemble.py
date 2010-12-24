@@ -13,7 +13,7 @@ This module implements the assembling process.
 """
 
 
-from ..util import listof, Printable, Comparable
+from ..util import Printable, Comparable
 from ..adapter import Adapter, adapts, adapts_many
 from ..domain import BooleanDomain
 from .coerce import coerce
@@ -22,10 +22,10 @@ from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
                    QueryTerm)
-from .frame import (LeafFrame, ScalarFrame, TableFrame, BranchFrame,
-                    NestedFrame, SegmentFrame, QueryFrame,
-                    Phrase, LiteralPhrase, NullPhrase, TruePhrase, FalsePhrase,
-                    CastPhrase, ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
+from .frame import (ScalarFrame, TableFrame, NestedFrame,
+                    SegmentFrame, QueryFrame,
+                    LiteralPhrase, TruePhrase, CastPhrase,
+                    ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
                     FormulaPhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsNullSig,
                         NullIfSig, IfNullSig, AndSig)
@@ -388,7 +388,7 @@ class AssemblingState(object):
         """
         Evaluates the given code node.
 
-        Returns the corresponding :class:`Phrase` node.
+        Returns the corresponding :class:`htsql.tr.frame.Phrase` node.
 
         It is assumed that the code node was previously scheduled
         with :meth:`schedule` and all the claims were satisfied.

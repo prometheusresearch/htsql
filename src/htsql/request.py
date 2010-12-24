@@ -120,7 +120,7 @@ class Request(Utility):
             records = []
             select = plan.frame.segment.select
             normalizers = []
-            for phrase in plan.frame.segment.select:
+            for phrase in select:
                 normalize = Normalize(phrase.domain)
                 normalizers.append(normalize)
             for row in rows:

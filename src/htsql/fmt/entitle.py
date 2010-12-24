@@ -13,8 +13,7 @@ This module implements the entitle adapter.
 """
 
 
-from ..util import setof
-from ..adapter import Adapter, Utility, adapts, adapts_many
+from ..adapter import Adapter, adapts, adapts_many
 from ..tr.binding import (Binding, RootBinding, SieveBinding, SortBinding,
                           CastBinding, WrapperBinding, TitleBinding)
 

@@ -22,7 +22,7 @@ from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
                    AggregateBatchExpr)
-from .term import (PreTerm, Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
+from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, SegmentTerm, QueryTerm)
 

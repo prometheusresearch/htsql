@@ -16,12 +16,11 @@ This module implements the SQL serialization process.
 from ..util import listof, maybe
 from ..adapter import Adapter, Protocol, adapts, named
 from .error import SerializeError
-from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
-                      DecimalDomain, FloatDomain, StringDomain, EnumDomain,
-                      DateDomain)
+from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
+                      FloatDomain, StringDomain, EnumDomain, DateDomain)
 from .syntax import IdentifierSyntax, CallSyntax, LiteralSyntax
-from .frame import (Clause, Frame, LeafFrame, ScalarFrame, TableFrame,
-                    BranchFrame, NestedFrame, SegmentFrame, QueryFrame,
+from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
+                    SegmentFrame, QueryFrame,
                     Phrase, NullPhrase, CastPhrase, LiteralPhrase,
                     ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
                     FormulaPhrase, Anchor, LeadingAnchor)
@@ -29,7 +28,6 @@ from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
                         AndSig, OrSig, NotSig)
 from .plan import Plan
-import decimal
 import StringIO
 import re
 

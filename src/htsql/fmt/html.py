@@ -38,43 +38,6 @@ class HTMLRenderer(Renderer):
     def generate_headers(self, product):
         return [('Content-Type', 'text/html; charset=UTF-8')]
 
-    def calculate_layout(self, product, formats):
-        segment = product.profile.binding.segment
-        caption = entitle(segment.base).decode('utf-8')
-        headers = [entitle(element).decode('utf-8')
-                   for element in segment.elements]
-        column_widths = [len(header) for header in headers]
-        total = 0
-        for record in product:
-            for idx, (format, value) in enumerate(zip(formats, record)):
-                width = format.measure(value)
-                column_widths[idx] = max(column_widths[idx], width)
-            total += 1
-        table_width = len(caption)
-        if total == 0:
-            total = u"(no rows)"
-        elif total == 1:
-            total = u"(1 row)"
-        else:
-            total = u"(%s rows)" % total
-        table_width = max(table_width, len(total)-2)
-        if formats:
-            columns_width = sum(column_widths)+3*(len(formats)-1)
-            table_width = max(table_width, columns_width)
-            if columns_width < table_width:
-                extra = table_width-columns_width
-                inc = extra/len(formats)
-                rem = extra - inc*len(formats)
-                for idx in range(len(formats)):
-                    column_widths[idx] += inc
-                    if idx < rem:
-                        column_widths[idx] += 1
-        caption = (u"%*s" % (-table_width, caption)).encode('utf-8')
-        headers = [(u"%*s" % (-width, header)).encode('utf-8')
-                   for width, header in zip(column_widths, headers)]
-        total = (u"%*s" % (table_width+4, total)).encode('utf-8')
-        return Layout(caption, headers, total, table_width, column_widths)
-
     def generate_body(self, product):
         for chunk in self.serialize_html(product):
             yield chunk

@@ -14,7 +14,7 @@
 from ...util import aresubclasses
 from ...adapter import Adapter, Component, adapts, adapts_many, named
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
-                       NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
+                       IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, EnumDomain)
 from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
@@ -24,19 +24,21 @@ from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..lookup import lookup
-from .signature import (Signature, NullarySig, UnarySig, BinarySig,
-                        FiberSig, AsSig, SortDirectionSig, LimitSig,
+from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
+                         CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
+                         IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
+                         NotSig)
+from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         SortSig, CastSig, MakeDateSig, ExtractYearSig,
                         ExtractMonthSig, ExtractDaySig,
-                        IsEqualSig, IsInSig, IsTotallyEqualSig, AndSig, OrSig,
-                        NotSig, CompareSig, AddSig, ConcatenateSig,
+                        AddSig, ConcatenateSig,
                         HeadSig, TailSig, SliceSig, AtSig, ReplaceSig,
                         UpperSig, LowerSig, TrimSig,
                         DateIncrementSig, SubtractSig, DateDecrementSig,
                         DateDifferenceSig, TodaySig,
-                        MultiplySig, DivideSig, IsNullSig, NullIfSig,
-                        IfNullSig, IfSig, SwitchSig, KeepPolaritySig,
-                        ReversePolaritySig, RoundSig, RoundToSig, LengthSig,
+                        MultiplySig, DivideSig, IfSig, SwitchSig,
+                        KeepPolaritySig, ReversePolaritySig,
+                        RoundSig, RoundToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig)
 import sys
@@ -373,7 +375,7 @@ class BindFiber(BindMacro):
             raise BindError("an identifier expected", table.mark)
         binding = lookup(self.state.root, table)
         if binding is None:
-            raise InvalidArgumentError("unknown identifier", table.mark)
+            raise BindError("unknown identifier", table.mark)
         binding = binding.clone(base=self.state.base)
         if image is None and counterimage is None:
             yield WrapperBinding(binding, self.syntax)
@@ -386,8 +388,7 @@ class BindFiber(BindMacro):
         child = self.state.bind(counterimage, base=binding)
         domain = coerce(parent.domain, child.domain)
         if domain is None:
-            raise InvalidArgumentError("incompatible images",
-                                       self.syntax.mark)
+            raise BindError("incompatible images", self.syntax.mark)
         parent = CastBinding(parent, domain, parent.syntax)
         child = CastBinding(child, domain, child.syntax)
         condition = FormulaBinding(IsEqualSig(+1), coerce(BooleanDomain()),
@@ -1335,7 +1336,7 @@ class BindIf(BindFunction):
             domains.append(alternative.domain)
         domain = coerce(*domains)
         if domain is None:
-            raise BindingError("incompatible arguments", self.syntax.mark)
+            raise BindError("incompatible arguments", self.syntax.mark)
         consequents = [CastBinding(consequent, domain, consequent.syntax)
                        for consequent in consequents]
         if alternative is not None:
@@ -1387,7 +1388,7 @@ class BindSwitch(BindFunction):
             domains.append(alternative.domain)
         domain = coerce(*domains)
         if domain is None:
-            raise BindingError("incompatible arguments", self.syntax.mark)
+            raise BindError("incompatible arguments", self.syntax.mark)
         consequents = [CastBinding(consequent, domain, consequent.syntax)
                        for consequent in consequents]
         if alternative is not None:

@@ -19,7 +19,7 @@ from .routine import Argument, Routine
 from .option import (InputOption, TrainOption, PurgeOption,
                      ForceOption, QuietOption)
 from .request import Request
-from ..validator import (Validator, AnyVal, BoolVal, StrVal, WordVal,
+from ..validator import (Validator, BoolVal, StrVal, WordVal,
                          ChoiceVal, IntVal, UFloatVal, DBVal, SeqVal,
                          MapVal, ClassVal)
 from ..util import maybe, trim_doc, DB
@@ -30,6 +30,10 @@ import os, os.path
 import shutil
 import re
 import difflib
+import tempfile
+import subprocess
+import atexit
+import time
 import yaml, yaml.constructor
 
 
@@ -915,7 +919,7 @@ class AppTestCase(SkipTestCase):
         self.state.app = None
         try:
             self.state.app = Application(self.input.db)
-        except Exception, exc:
+        except Exception:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"
                                " initializing an HTSQL application")

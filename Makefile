@@ -1,7 +1,7 @@
 # This makefile provides various build, installation and testing tasks.
 
 .PHONY: default build install develop doc dist windist pypi clean \
-	test cleanup train train-routine train-sqlite train-pgsql purge-test \
+	test cleanup train train-routine train-sqlite train-pgsql purge-test lint \
 	demo-htraf demo-ssi
 
 
@@ -37,6 +37,7 @@ default:
 	@echo "  train-sqlite: to run SQLite-specific tests in the train mode"
 	@echo "  train-pgsql: to run PostgreSQL-specific tests in the train mode"
 	@echo "  purge-test: to purge state test output data"
+	@echo "  lint: detect errors in the source code"
 	@echo
 	@echo "  *** Shell and Server ***"
 	@echo "  shell-sqlite: to start an HTSQL shell on the SQLite test database"
@@ -120,6 +121,10 @@ train-pgsql:
 # Purge stale output records from HTSQL regression tests.
 purge-test:
 	htsql-ctl regress -i test/regress.yaml -q --train --purge
+
+# Detect errors in the source code (requires PyFlakes)
+lint:
+	pyflakes src/htsql src/htsql_pgsql src/htsql_sqlite
 
 
 #

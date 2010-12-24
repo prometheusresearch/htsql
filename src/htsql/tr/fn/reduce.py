@@ -14,7 +14,8 @@
 from ...adapter import adapts
 from ..reduce import ReduceBySignature
 from ..frame import LiteralPhrase, FormulaPhrase
-from .signature import KeepPolaritySig, ConcatenateSig, IfNullSig
+from ..signature import IfNullSig
+from .signature import KeepPolaritySig, ConcatenateSig
 
 
 class ReduceKeepPolaritySig(ReduceBySignature):
