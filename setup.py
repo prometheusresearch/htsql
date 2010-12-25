@@ -64,7 +64,6 @@ ENTRY_POINTS = {
 }
 INSTALL_REQUIRES = [
     'setuptools>=0.6c9',
-    'simplejson>=2.0',
     'pyyaml>=3.07',
     'psycopg2>=2.0.10',
 ]

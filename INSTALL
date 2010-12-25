@@ -12,7 +12,7 @@ TL;DR version
 1. Install Python and required Python modules::
 
     # apt-get install python
-    # apt-get install python-setuptools python-simplejson python-yaml python-psycopg2
+    # apt-get install python-setuptools python-yaml python-psycopg2
 
 2. Install Mercurial and download HTSQL source code::
 
@@ -53,13 +53,12 @@ already installed; if not, you could install it by running::
 HTSQL depends on the following external Python packages:
 
  * `setuptools` (0.6c9 or newer);
- * `simplejson` (2.0 or newer);
  * `PyYAML` (3.07 or newer, compiled with LibYAML bindings);
  * `psycopg2` (2.0.10 or newer, earlier versions are known to segfault).
 
 To install the packages, run::
 
-    # apt-get install python-setuptools python-simplejson python-yaml python-psycopg2
+    # apt-get install python-setuptools python-yaml python-psycopg2
 
 Alternatively, you could install these Python modules from sources using the
 `easy_install` script from `setuptools`.  To do that, you need to install
@@ -67,7 +66,6 @@ header files for Python, PostgreSQL and LibYAML::
 
     # apt-get install build-essential python-dev libpq-dev libyaml-dev
     # apt-get install python-setuptools
-    # easy_install simplejson
     # easy_install PyYAML
     # easy_install psycopg2
 
