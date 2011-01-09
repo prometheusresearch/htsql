@@ -17,6 +17,7 @@ A few observations about HTSQL's function and operator usage:
   and is automatically cast depending upon the context -- it is not
   necessarily a string value.
 
+
 String Functions
 ================
 
@@ -31,16 +32,12 @@ string typed values using single quotes in the output column.
 | string(x)      | cast to string   | string('Hello')      | 'Hello'       |
 |                |                  +----------------------+---------------+
 |                |                  | string(1.0)          | '1.0'         |
-|                +------------------+----------------------+---------------+
-|                | cast to string   | 'Hello' :string()    | 'Hello'       |
-|                | using postfix    +----------------------+---------------+
-|                | call notation    | 'Hello' :string      | 'Hello'       |
 |                |                  +----------------------+---------------+
-|                |                  | ``null()`` :string   | ``null()``    |
+|                |                  | string(``null()``)   | ``null()``    |
 |                |                  +----------------------+---------------+
-|                |                  | ``true()`` :string   | 'true'        |
+|                |                  | string(``true()``)   | 'true'        |
 |                |                  +----------------------+---------------+
-|                |                  | ``false()`` :string  | 'false'       |
+|                |                  | string(``false()``)  | 'false'       |
 +----------------+------------------+----------------------+---------------+
 | x + y          | concatenation;   | 'Hello' + ' World'   | 'Hello World' |
 |                | treats nulls as  +----------------------+---------------+
@@ -73,12 +70,10 @@ string typed values using single quotes in the output column.
 |                |                  | at('HTSQL,-3,3)      | 'SQL'         |
 +----------------+------------------+----------------------+---------------+
 | upper(s)       | returns upper    | upper('htsql')       | 'HTSQL'       |
-|                | case of s        +----------------------+---------------+
-|                |                  | 'htsql' :upper()     | 'HTSQL'       |
+|                | case of s        |                      |               |
 +----------------+------------------+----------------------+---------------+
 | lower(s)       | returns lower    | lower('HTSQL')       | 'htsql'       |
-|                | case of s        +----------------------+---------------+
-|                |                  | 'HTSQL' :lower()     | 'htsql'       |
+|                | case of s        |                      |               |
 +----------------+------------------+----------------------+---------------+
 | replace(s,x,y) | replaces all     | replace('HTSQL',     | 'HTRAF'       |
 |                | occurrences of x |         'SQL','RAF') |               |
@@ -92,6 +87,6 @@ string typed values using single quotes in the output column.
 +----------------+------------------+----------------------+---------------+
 | trim(s)        | strips leading   | trim('  HTSQL  ')    | 'HTSQL'       |
 |                | and trailing     +----------------------+---------------+
-|                | spaces from s    | 'HTSQL' :trim()      | 'HTSQL'       |
+|                | spaces from s    | trim('HTSQL')        | 'HTSQL'       |
 +----------------+------------------+----------------------+---------------+
 
