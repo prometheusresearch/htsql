@@ -48,18 +48,18 @@ which do not offer a degree.
   | name         NN,UK |  |    .      +---------------------+    |
   +--------------------+  |     .                              . |
                         . |  departments                      .  |
-       a department    .  |  belong to                       .   |
-       offers zero or .   |  at most one       a school          |
-       more courses       |  school            administers zero  |
-                          |                    or more programs  |
-  +--------------------+  |                                      |
-  | COURSE             |  |           +---------------------+    |
-  +--------------------+  |           | PROGRAM             |    |
-  | department  FK,PK1 |>-/           +---------------------+    |
-  | number         PK2 |              | school       PK1,FK |>---/
-  | title           NN |              | code            PK2 |
-  | credits         NN |              | title            NN |
-  | description        |              | degree           CK |
+       a department    .  |  belong to         a school          |
+       offers zero or .   |  at most one       administers zero  |
+       more courses       |  school            or more programs  |
+                          |                                      | 
+  +--------------------+  |           +---------------------+    | 
+  | COURSE             |  |           | PROGRAM             |    |
+  +--------------------+  |           +---------------------+    |
+  | department  FK,PK1 |>-/           | school       PK1,FK |>---/
+  | number         PK2 |              | code            PK2 |>---\    
+  | title           NN |              | title            NN |    |
+  | credits         NN |              | degree           CK |    |
+  | description        |              | part_of          FK |----/
   +--------------------+              +---------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
@@ -93,15 +93,19 @@ CREATE TABLE ad.program (
     code        VARCHAR(16) NOT NULL,
     title       VARCHAR(64) NOT NULL,
     degree      CHAR(2),
+    part_of     VARCHAR(16),
     CONSTRAINT program_pk
       PRIMARY KEY (school, code),
     CONSTRAINT program_title_uk
       UNIQUE (title),
     CONSTRAINT program_degree_ck
-      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms')),
+      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
     CONSTRAINT program_school_fk
       FOREIGN KEY (school)
       REFERENCES ad.school(code)
+--  CONSTRAINT program_part_of_fk
+--    FOREIGN KEY (school, part_of)
+--    REFERENCES ad.program(school, code)
 );
 
 CREATE TABLE ad.course (
@@ -162,43 +166,46 @@ INSERT INTO ad.department (code, name, school) VALUES
 ('parent', 'Parents & Alumni', NULL)
 ;
 
-INSERT INTO ad.program (school, code, title, degree) VALUES
-('ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs'),
-('ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs'),
-('ns', 'uphys', 'Bachelor of Science in Physics', 'bs'),
-('la', 'upsych', 'Bachelor of Arts in Psychology', 'ba'),
-('la', 'upolisci', 'Bachelor of Arts in Political Science', 'ba'),
-('la', 'gscitch', 'Master of Arts in Science Teaching', 'ma'),
-('la', 'psciwri', 'Science Writing', 'ct'),
-('la', 'gengl', 'Master of Arts in English', 'ma'),
-('la', 'uengl', 'Bachelor of Arts in English', 'ba'),
-('la', 'uhist', 'Bachelor of Arts in History', 'ba'),
-('la', 'uspan', 'Bachelor of Arts in Spanish', 'ba'),
-('la', 'glang', 'Master of Arts in Modern Languages', 'ma'),
-('egn', 'uelec', 'Bachelor of Science in Electrical Engineering', 'bs'),
-('egn', 'umech', 'Bachelor of Science in Mechanical Engineering', 'bs'),
-('egn', 'ubio', 'Bachelor of Science in Bioengineering', 'bs'),
-('egn', 'ucompsci', 'Bachelor of Science in Computer Science', 'bs'),
-('egn', 'gbuseng', 'Master of Science in Business and Engineering', 'ms'),
-('egn', 'gee', 'Master of Science in Electrical Engineering', 'ms'),
-('egn', 'gme', 'Master of Science in Mechanical Engineering', 'ms'),
-('egn', 'gbe', 'Master of Science in Bioengineering', 'ms'),
-('edu', 'umath', 'Bachelor of Arts in Math Education', 'ba'),
-('edu', 'usci', 'Bachelor of Arts in Science Education', 'ba'),
-('edu', 'psci', 'Certificate in Science Teaching', 'ct'),
-('edu', 'glited', 'Master of Arts in Literacy Education', 'ma'),
-('edu', 'gedlead', 'Master of Arts in Educational Leadership', 'ma'),
-('edu', 'gedu', 'Master of Science in Education', 'ms'),
-('edu', 'gtch', 'Master of Arts in Teaching', 'ma'),
-('bus', 'uacct', 'Bachelor of Science in Accounting', 'bs'),
-('bus', 'ucorpfi', 'Bachelor of Science in Corporate Finance', 'bs'),
-('bus', 'ubusad', 'Bachelor of Science in Business Administration', 'bs'),
-('bus', 'pacc', 'Graduate Certificate in Accounting', 'ct'),
-('bus', 'pcap', 'Certificate in Capital Markets', 'ct'),
-('art', 'gart', 'Post Baccalaureate in Art History', 'pb'),
-('art', 'uhist', 'Bachelor of Arts in Art History', 'ba'),
-('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba'),
-('ph', 'phd', 'Honorary PhD', NULL)
+INSERT INTO ad.program (school, code, title, degree, part_of) VALUES
+('ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs', NULL),
+('ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs', NULL),
+('ns', 'uphys', 'Bachelor of Science in Physics', 'bs', NULL),
+('ns', 'pmth', 'Doctorate of Science in Mathematics', 'ph', NULL),
+('ns', 'gmth', 'Masters of Science in Mathematics', 'bs', 'pmth'),
+('ns', 'umth', 'Bachelor of Science in Mathematics', 'bs', 'gmth'),
+('la', 'upsych', 'Bachelor of Arts in Psychology', 'ba', NULL),
+('la', 'upolisci', 'Bachelor of Arts in Political Science', 'ba', NULL),
+('la', 'gscitch', 'Master of Arts in Science Teaching', 'ma', NULL),
+('la', 'psciwri', 'Science Writing', 'ct', NULL),
+('la', 'gengl', 'Master of Arts in English', 'ma', NULL),
+('la', 'uengl', 'Bachelor of Arts in English', 'ba', 'gengl'),
+('la', 'uhist', 'Bachelor of Arts in History', 'ba', NULL),
+('la', 'uspan', 'Bachelor of Arts in Spanish', 'ba', NULL),
+('la', 'glang', 'Master of Arts in Modern Languages', 'ma', NULL),
+('egn', 'gee', 'M.S. in Electrical Engineering', 'ms', NULL),
+('egn', 'gme', 'M.S. in Mechanical Engineering', 'ms', NULL),
+('egn', 'gbe', 'M.S. in Bioengineering', 'ms', NULL),
+('egn', 'uelec', 'B.S. in Electrical Engineering', 'bs', 'gee'),
+('egn', 'umech', 'B.S. in Mechanical Engineering', 'bs', 'gme'),
+('egn', 'ubio', 'B.S. in Bioengineering', 'bs', 'gbe'),
+('egn', 'ucompsci', 'B.S. in Computer Science', 'bs', NULL),
+('egn', 'gbuseng', 'M.S. in Business and Engineering', 'ms', NULL),
+('edu', 'umath', 'Bachelor of Arts in Math Education', 'ba', NULL),
+('edu', 'usci', 'Bachelor of Arts in Science Education', 'ba', NULL),
+('edu', 'psci', 'Certificate in Science Teaching', 'ct', NULL),
+('edu', 'glited', 'Master of Arts in Literacy Education', 'ma', NULL),
+('edu', 'gedlead', 'Master of Arts in Education Leadership', 'ma', NULL),
+('edu', 'gedu', 'M.S. in Education', 'ms', NULL),
+('edu', 'gtch', 'Master of Arts in Teaching', 'ma', NULL),
+('bus', 'uacct', 'B.S. in Accounting', 'bs', NULL),
+('bus', 'ucorpfi', 'B.S. in Corporate Finance', 'bs', NULL),
+('bus', 'ubusad', 'B.S. in Business Administration', 'bs', NULL),
+('bus', 'pacc', 'Graduate Certificate in Accounting', 'ct', NULL),
+('bus', 'pcap', 'Certificate in Capital Markets', 'ct', NULL),
+('art', 'gart', 'Post Baccalaureate in Art History', 'pb', NULL),
+('art', 'uhist', 'Bachelor of Arts in Art History', 'ba', NULL),
+('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba', NULL),
+('ph', 'phd', 'Honorary PhD', NULL, NULL)
 ;
 
 INSERT INTO ad.course (department, number, title, credits, description) VALUES

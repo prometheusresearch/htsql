@@ -41,15 +41,19 @@ CREATE TABLE program (
     code        VARCHAR(16) NOT NULL,
     title       VARCHAR(64) NOT NULL,
     degree      CHAR(2),
+    part_of     VARCHAR(16),
     CONSTRAINT program_pk
       PRIMARY KEY (school, code),
     CONSTRAINT program_title_uk
       UNIQUE (title),
     CONSTRAINT program_degree_ck
-      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms')),
+      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
     CONSTRAINT program_school_fk
       FOREIGN KEY (school)
       REFERENCES school(code)
+--  CONSTRAINT program_part_of_fk
+--    FOREIGN KEY (school, part_of )
+--    REFERENCES program(school, code)
 );
 
 CREATE TABLE course (
@@ -142,78 +146,84 @@ INSERT INTO department (code, name, school) VALUES
 INSERT INTO department (code, name, school) VALUES
     ('parent', 'Parents & Alumni', NULL);
 
-INSERT INTO program (school, code, title, degree) VALUES
-    ('ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('ns', 'uphys', 'Bachelor of Science in Physics', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'upsych', 'Bachelor of Arts in Psychology', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'upolisci', 'Bachelor of Arts in Political Science', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'gscitch', 'Master of Arts in Science Teaching', 'ma');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'psciwri', 'Science Writing', 'ct');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'gengl', 'Master of Arts in English', 'ma');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'uengl', 'Bachelor of Arts in English', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'uhist', 'Bachelor of Arts in History', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'uspan', 'Bachelor of Arts in Spanish', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('la', 'glang', 'Master of Arts in Modern Languages', 'ma');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'uelec', 'Bachelor of Science in Electrical Engineering', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'umech', 'Bachelor of Science in Mechanical Engineering', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'ubio', 'Bachelor of Science in Bioengineering', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'ucompsci', 'Bachelor of Science in Computer Science', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'gbuseng', 'Master of Science in Business and Engineering', 'ms');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'gee', 'Master of Science in Electrical Engineering', 'ms');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'gme', 'Master of Science in Mechanical Engineering', 'ms');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('egn', 'gbe', 'Master of Science in Bioengineering', 'ms');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('edu', 'umath', 'Bachelor of Arts in Math Education', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('edu', 'usci', 'Bachelor of Arts in Science Education', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('edu', 'psci', 'Certificate in Science Teaching', 'ct');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('edu', 'glited', 'Master of Arts in Literacy Education', 'ma');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('edu', 'gedlead', 'Master of Arts in Educational Leadership', 'ma');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('edu', 'gedu', 'Master of Science in Education', 'ms');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('edu', 'gtch', 'Master of Arts in Teaching', 'ma');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('bus', 'uacct', 'Bachelor of Science in Accounting', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('bus', 'ucorpfi', 'Bachelor of Science in Corporate Finance', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('bus', 'ubusad', 'Bachelor of Science in Business Administration', 'bs');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('bus', 'pacc', 'Graduate Certificate in Accounting', 'ct');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('bus', 'pcap', 'Certificate in Capital Markets', 'ct');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('art', 'gart', 'Post Baccalaureate in Art History', 'pb');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('art', 'uhist', 'Bachelor of Arts in Art History', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba');
-INSERT INTO program (school, code, title, degree) VALUES
-    ('ph', 'phd', 'Honorary PhD', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('ns', 'uphys', 'Bachelor of Science in Physics', 'bs', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('ns', 'pmth', 'Doctorate of Science in Mathematics', 'ph', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('ns', 'gmth', 'Masters of Science in Mathematics', 'bs', 'pmth');
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('ns', 'umth', 'Bachelor of Science in Mathematics', 'bs', 'gmth');
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'upsych', 'Bachelor of Arts in Psychology', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'upolisci', 'Bachelor of Arts in Political Science', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'gscitch', 'Master of Arts in Science Teaching', 'ma', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'psciwri', 'Science Writing', 'ct', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'gengl', 'Master of Arts in English', 'ma', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'uengl', 'Bachelor of Arts in English', 'ba', 'gengl');
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'uhist', 'Bachelor of Arts in History', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'uspan', 'Bachelor of Arts in Spanish', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('la', 'glang', 'Master of Arts in Modern Languages', 'ma', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'gbuseng', 'M.S. in Business and Engineering', 'ms', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'gee', 'M.S. in Electrical Engineering', 'ms', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'gme', 'M.S. in Mechanical Engineering', 'ms', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'gbe', 'M.S. in Bioengineering', 'ms', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'uelec', 'B.S. in Electrical Engineering', 'bs', 'gee');
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'umech', 'B.S. in Mechanical Engineering', 'bs', 'gme');
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'ubio', 'B.S. in Bioengineering', 'bs', 'gbe');
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('egn', 'ucompsci', 'B.S. in Computer Science', 'bs', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('edu', 'umath', 'Bachelor of Arts in Math Education', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('edu', 'usci', 'Bachelor of Arts in Science Education', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('edu', 'psci', 'Certificate in Science Teaching', 'ct', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('edu', 'glited', 'Master of Arts in Literacy Education', 'ma', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('edu', 'gedlead', 'Master of Arts in Education Leadership', 'ma', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('edu', 'gedu', 'M.S. in Education', 'ms', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('edu', 'gtch', 'Master of Arts in Teaching', 'ma', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('bus', 'uacct', 'B.S. in Accounting', 'bs', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('bus', 'ucorpfi', 'B.S. in Corporate Finance', 'bs', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('bus', 'ubusad', 'B.S. in Business Administration', 'bs', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('bus', 'pacc', 'Graduate Certificate in Accounting', 'ct', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('bus', 'pcap', 'Certificate in Capital Markets', 'ct', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('art', 'gart', 'Post Baccalaureate in Art History', 'pb', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('art', 'uhist', 'Bachelor of Arts in Art History', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba', NULL);
+INSERT INTO program (school, code, title, degree, part_of) VALUES
+    ('ph', 'phd', 'Honorary PhD', NULL, NULL);
 
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('astro', 137, 'The Solar System', 3, 'Introductory survey of the solar system, including structure and motion of the planets, properties of the sun, and comparison to extrasolar systems.');
