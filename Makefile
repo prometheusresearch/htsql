@@ -137,6 +137,7 @@ shell-sqlite:
 
 # Start an HTSQL shell on the PostgreSQL regression database.
 shell-pgsql:
+	htsql-ctl regress -i test/regress.yaml -q cleanup-pgsql setup-pgsql
 	htsql-ctl shell ${PGSQL_REGRESS_DB}
 
 # Start an HTTP/HTSQL server on the SQLite regression database.

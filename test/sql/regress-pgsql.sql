@@ -120,15 +120,15 @@ CREATE TABLE ad.course (
 );
 
 INSERT INTO ad.school (code, name) VALUES
-('ns', 'School of Natural Sciences'),
-('sc', 'School of Continuing Studies'),
-('la', 'School of Arts, Letters, and the Humanities'),
-('egn', 'School of Engineering'),
 ('art', 'School of Art and Design'),
-('edu', 'College of Education'),
 ('bus', 'School of Business'),
-('mart', 'School of Modern Art'),
-('mus', 'Musical School')
+('edu', 'College of Education'),
+('egn', 'School of Engineering'),
+('la', 'School of Arts and Humanities'),
+('mus', 'School of Music & Dance'),
+('ns', 'School of Natural Sciences'),
+('ph', 'Public Honorariums'),
+('sc', 'School of Continuing Studies')
 ;
 
 INSERT INTO ad.department (code, name, school) VALUES
@@ -198,7 +198,7 @@ INSERT INTO ad.program (school, code, title, degree) VALUES
 ('art', 'gart', 'Post Baccalaureate in Art History', 'pb'),
 ('art', 'uhist', 'Bachelor of Arts in Art History', 'ba'),
 ('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba'),
-('mart', 'bmart', 'Bachelor of Modern Art', 'ba')
+('ph', 'phd', 'Honorary PhD', NULL)
 ;
 
 INSERT INTO ad.course (department, number, title, credits, description) VALUES
@@ -1336,10 +1336,7 @@ INSERT INTO rd.program_requirement (school, program, classification, credit_hour
 ('art', 'ustudio', 'artstudio', 24, 'Students in the undergraduate Studio Art program will concentrate on their selected studio discipline.'),
 ('art', 'ustudio', 'drawing', 8, 'All Studio Art undergraduate students must take a minimum 8 hours of credit in freehand drawing.'),
 ('art', 'ustudio', 'society', 6, 'All Studio Art undergraduate students must take a minimum of 6 hours of credit in Art & Society.'),
-('art', 'ustudio', 'digital', 6, 'All Studio Art undergraduate students must take a minimum of 6 hours of credit in Digital Art.'),
-('mart', 'bmart', 'classical', 9, 'Students in the undergraduate Modern Art program are required to take 9 credit hours of study of classical art.'),
-('mart', 'bmart', 'modern', 24, 'Students in the undergraduate Modern Art program are required to take 24 credit hours of study of modern art.'),
-('mart', 'bmart', 'arthistory', 10, 'Students in the undergraduate Modern Art program are required to take 10 credit hours of elective classes in art history.')
+('art', 'ustudio', 'digital', 6, 'All Studio Art undergraduate students must take a minimum of 6 hours of credit in Digital Art.')
 ;
 
 

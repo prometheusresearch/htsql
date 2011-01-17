@@ -867,7 +867,7 @@ while the empty string is presented as a double-quoted pair (PA1_)::
     /{true(), false(), null()}
 
 The ``is_null()`` function returns ``true()`` if it's operand is
-``null()``. In our schema, non-academic ``department`` records that have
+``null()``.  In our schema, non-academic ``department`` records with
 a ``NULL`` ``school`` can be listed (PA2_)::
 
     /department{code, name}?is_null(school)
@@ -941,11 +941,11 @@ anomalous number of credits (PA5_)::
     /course?credits>4|credits<3
 
 The precedence rules for boolean operators follow typical programming
-convention, negation binds more tightly than conjunction, which binds
+convention; negation binds more tightly than conjunction, which binds
 more tightly than alternation.  Parenthesis can be used to override this
 default grouping rule or to better clarify intent.  The next example
-returns that are in "Art History" or "Studio Art" having more than three
-credits (PA6_)::
+returns courses that are in "Art History" or "Studio Art" departments
+that have more than three credits (PA6_)::
 
     /course?(department='arthis'|department='stdart')&credits>3
 
@@ -1018,7 +1018,7 @@ this shortcut is more illustrative (PA9_)::
 Types and Functions
 ===================
 
-HTSQL supports *boolean*, *date*, *numeric*, and *text* data types, as
+HTSQL supports *boolean*, *date*, *numeric*, and *string* data types, as
 well as variants.  The pluggable type system can be used to augment the
 core types provided. 
 
@@ -1063,8 +1063,8 @@ operator (``==``) which treats ``NULL`` values as equivalent (WN2_)::
     http://demo.htsql.org
     /department?school==null()
 
-The ``!==`` operator lists the complement, including records with a
-``NULL`` for the field tested (WN3_)::
+The ``!==`` operator lists distinct values, including records with 
+a ``NULL`` for the field tested (WN3_)::
 
     /department?school!=='art'
 
@@ -1082,6 +1082,7 @@ The ``!==`` operator lists the complement, including records with a
 .. _WN3:
     http://demo.htsql.org
     /department?school!=='art'
+
 
 
 

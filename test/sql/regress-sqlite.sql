@@ -72,7 +72,7 @@ INSERT INTO school (code, name) VALUES
 INSERT INTO school (code, name) VALUES
     ('sc', 'School of Continuing Studies');
 INSERT INTO school (code, name) VALUES
-    ('la', 'School of Arts, Letters, and the Humanities');
+    ('la', 'School of Arts and Humanities');
 INSERT INTO school (code, name) VALUES
     ('egn', 'School of Engineering');
 INSERT INTO school (code, name) VALUES
@@ -82,9 +82,9 @@ INSERT INTO school (code, name) VALUES
 INSERT INTO school (code, name) VALUES
     ('bus', 'School of Business');
 INSERT INTO school (code, name) VALUES
-    ('mart', 'School of Modern Art');
+    ('ph', 'Public Honorariums');
 INSERT INTO school (code, name) VALUES
-    ('mus', 'Musical School');
+    ('mus', 'School of Music & Dance');
 
 INSERT INTO department (code, name, school) VALUES
     ('astro', 'Astronomy', 'ns');
@@ -213,7 +213,7 @@ INSERT INTO program (school, code, title, degree) VALUES
 INSERT INTO program (school, code, title, degree) VALUES
     ('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba');
 INSERT INTO program (school, code, title, degree) VALUES
-    ('mart', 'bmart', 'Bachelor of Modern Art', 'ba');
+    ('ph', 'phd', 'Honorary PhD', NULL);
 
 INSERT INTO course (department, number, title, credits, description) VALUES
     ('astro', 137, 'The Solar System', 3, 'Introductory survey of the solar system, including structure and motion of the planets, properties of the sun, and comparison to extrasolar systems.');
@@ -1839,11 +1839,3 @@ INSERT INTO program_requirement (school, program, classification, credit_hours, 
     ('art', 'ustudio', 'society', 6, 'All Studio Art undergraduate students must take a minimum of 6 hours of credit in Art & Society.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
     ('art', 'ustudio', 'digital', 6, 'All Studio Art undergraduate students must take a minimum of 6 hours of credit in Digital Art.');
-INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('mart', 'bmart', 'classical', 9, 'Students in the undergraduate Modern Art program are required to take 9 credit hours of study of classical art.');
-INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('mart', 'bmart', 'modern', 24, 'Students in the undergraduate Modern Art program are required to take 24 credit hours of study of modern art.');
-INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('mart', 'bmart', 'arthistory', 10, 'Students in the undergraduate Modern Art program are required to take 10 credit hours of elective classes in art history.');
-
-

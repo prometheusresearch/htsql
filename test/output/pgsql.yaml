@@ -18,21 +18,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                  |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-                                                (9 rows)
+             | school                               |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+                                             (9 rows)
 
              ----
              /school
@@ -146,10 +145,10 @@ tests:
              :        :          : Science                          :        :
              | la     | upsych   | Bachelor of Arts in Psychology   | ba     |
              | la     | uspan    | Bachelor of Arts in Spanish      | ba     |
-             | mart   | bmart    | Bachelor of Modern Art           | ba     |
              | ns     | uastro   | Bachelor of Science in Astronomy | bs     |
              | ns     | uchem    | Bachelor of Science in Chemistry | bs     |
              | ns     | uphys    | Bachelor of Science in Physics   | bs     |
+             | ph     | phd      | Honorary PhD                     |        |
                                                                      (36 rows)
 
              ----
@@ -1822,18 +1821,6 @@ tests:
              | la     | uspan    | spanish         |           24 | Spanish majors will take a       |
              :        :          :                 :              : minimum of 24 credit hours in    :
              :        :          :                 :              : the Spanish majors.              :
-             | mart   | bmart    | arthistory      |           10 | Students in the undergraduate    |
-             :        :          :                 :              : Modern Art program are required  :
-             :        :          :                 :              : to take 10 credit hours of       :
-             :        :          :                 :              : elective classes in art history. :
-             | mart   | bmart    | classical       |            9 | Students in the undergraduate    |
-             :        :          :                 :              : Modern Art program are required  :
-             :        :          :                 :              : to take 9 credit hours of study  :
-             :        :          :                 :              : of classical art.                :
-             | mart   | bmart    | modern          |           24 | Students in the undergraduate    |
-             :        :          :                 :              : Modern Art program are required  :
-             :        :          :                 :              : to take 24 credit hours of study :
-             :        :          :                 :              : of modern art.                   :
              | ns     | uastro   | astrolab        |            8 | Astronomy students are expected  |
              :        :          :                 :              : to take a minimum of 8 credit    :
              :        :          :                 :              : hours in the astronomy           :
@@ -1888,7 +1875,7 @@ tests:
              :        :          :                 :              : take a minimum of 12 credit      :
              :        :          :                 :              : hours in other scientific        :
              :        :          :                 :              : disciplines.                     :
-                                                                                             (97 rows)
+                                                                                             (94 rows)
 
              ----
              /program_requirement
@@ -3171,21 +3158,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                  |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-                                                (9 rows)
+             | school                               |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+                                             (9 rows)
 
              ----
              /school
@@ -3254,10 +3240,10 @@ tests:
              :        :          : Science                          :
              | la     | upsych   | Bachelor of Arts in Psychology   |
              | la     | uspan    | Bachelor of Arts in Spanish      |
-             | mart   | bmart    | Bachelor of Modern Art           |
              | ns     | uastro   | Bachelor of Science in Astronomy |
              | ns     | uchem    | Bachelor of Science in Chemistry |
              | ns     | uphys    | Bachelor of Science in Physics   |
+             | ph     | phd      | Honorary PhD                     |
                                                             (36 rows)
 
              ----
@@ -3606,73 +3592,67 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                             |
-            -+---------------------------------------------------------------------+-
-             | school.name                      | title                            |
-            -+----------------------------------+----------------------------------+-
-             | School of Art and Design         | Post Baccalaureate in Art        |
-             :                                  : History                          :
-             | School of Art and Design         | Bachelor of Arts in Art History  |
-             | School of Art and Design         | Bachelor of Arts in Studio Art   |
-             | School of Business               | Graduate Certificate in          |
-             :                                  : Accounting                       :
-             | School of Business               | Certificate in Capital Markets   |
-             | School of Business               | Bachelor of Science in           |
-             :                                  : Accounting                       :
-             | School of Business               | Bachelor of Science in Business  |
-             :                                  : Administration                   :
-             | School of Business               | Bachelor of Science in Corporate |
-             :                                  : Finance                          :
-             | College of Education             | Master of Arts in Educational    |
-             :                                  : Leadership                       :
-             | College of Education             | Master of Science in Education   |
-             | College of Education             | Master of Arts in Literacy       |
-             :                                  : Education                        :
-             | College of Education             | Master of Arts in Teaching       |
-             | College of Education             | Certificate in Science Teaching  |
-             | College of Education             | Bachelor of Arts in Math         |
-             :                                  : Education                        :
-             | College of Education             | Bachelor of Arts in Science      |
-             :                                  : Education                        :
-             | School of Engineering            | Master of Science in             |
-             :                                  : Bioengineering                   :
-             | School of Engineering            | Master of Science in Business    |
-             :                                  : and Engineering                  :
-             | School of Engineering            | Master of Science in Electrical  |
-             :                                  : Engineering                      :
-             | School of Engineering            | Master of Science in Mechanical  |
-             :                                  : Engineering                      :
-             | School of Engineering            | Bachelor of Science in           |
-             :                                  : Bioengineering                   :
-             | School of Engineering            | Bachelor of Science in Computer  |
-             :                                  : Science                          :
-             | School of Engineering            | Bachelor of Science in           |
-             :                                  : Electrical Engineering           :
-             | School of Engineering            | Bachelor of Science in           |
-             :                                  : Mechanical Engineering           :
-             | School of Arts, Letters, and the | Master of Arts in English        |
-             : Humanities                       :                                  :
-             | School of Arts, Letters, and the | Master of Arts in Modern         |
-             : Humanities                       : Languages                        :
-             | School of Arts, Letters, and the | Master of Arts in Science        |
-             : Humanities                       : Teaching                         :
-             | School of Arts, Letters, and the | Science Writing                  |
-             : Humanities                       :                                  :
-             | School of Arts, Letters, and the | Bachelor of Arts in English      |
-             : Humanities                       :                                  :
-             | School of Arts, Letters, and the | Bachelor of Arts in History      |
-             : Humanities                       :                                  :
-             | School of Arts, Letters, and the | Bachelor of Arts in Political    |
-             : Humanities                       : Science                          :
-             | School of Arts, Letters, and the | Bachelor of Arts in Psychology   |
-             : Humanities                       :                                  :
-             | School of Arts, Letters, and the | Bachelor of Arts in Spanish      |
-             : Humanities                       :                                  :
-             | School of Modern Art             | Bachelor of Modern Art           |
-             | School of Natural Sciences       | Bachelor of Science in Astronomy |
-             | School of Natural Sciences       | Bachelor of Science in Chemistry |
-             | School of Natural Sciences       | Bachelor of Science in Physics   |
-                                                                           (36 rows)
+             | program                                                          |
+            -+------------------------------------------------------------------+-
+             | school.name                   | title                            |
+            -+-------------------------------+----------------------------------+-
+             | School of Art and Design      | Post Baccalaureate in Art        |
+             :                               : History                          :
+             | School of Art and Design      | Bachelor of Arts in Art History  |
+             | School of Art and Design      | Bachelor of Arts in Studio Art   |
+             | School of Business            | Graduate Certificate in          |
+             :                               : Accounting                       :
+             | School of Business            | Certificate in Capital Markets   |
+             | School of Business            | Bachelor of Science in           |
+             :                               : Accounting                       :
+             | School of Business            | Bachelor of Science in Business  |
+             :                               : Administration                   :
+             | School of Business            | Bachelor of Science in Corporate |
+             :                               : Finance                          :
+             | College of Education          | Master of Arts in Educational    |
+             :                               : Leadership                       :
+             | College of Education          | Master of Science in Education   |
+             | College of Education          | Master of Arts in Literacy       |
+             :                               : Education                        :
+             | College of Education          | Master of Arts in Teaching       |
+             | College of Education          | Certificate in Science Teaching  |
+             | College of Education          | Bachelor of Arts in Math         |
+             :                               : Education                        :
+             | College of Education          | Bachelor of Arts in Science      |
+             :                               : Education                        :
+             | School of Engineering         | Master of Science in             |
+             :                               : Bioengineering                   :
+             | School of Engineering         | Master of Science in Business    |
+             :                               : and Engineering                  :
+             | School of Engineering         | Master of Science in Electrical  |
+             :                               : Engineering                      :
+             | School of Engineering         | Master of Science in Mechanical  |
+             :                               : Engineering                      :
+             | School of Engineering         | Bachelor of Science in           |
+             :                               : Bioengineering                   :
+             | School of Engineering         | Bachelor of Science in Computer  |
+             :                               : Science                          :
+             | School of Engineering         | Bachelor of Science in           |
+             :                               : Electrical Engineering           :
+             | School of Engineering         | Bachelor of Science in           |
+             :                               : Mechanical Engineering           :
+             | School of Arts and Humanities | Master of Arts in English        |
+             | School of Arts and Humanities | Master of Arts in Modern         |
+             :                               : Languages                        :
+             | School of Arts and Humanities | Master of Arts in Science        |
+             :                               : Teaching                         :
+             | School of Arts and Humanities | Science Writing                  |
+             | School of Arts and Humanities | Bachelor of Arts in English      |
+             | School of Arts and Humanities | Bachelor of Arts in History      |
+             | School of Arts and Humanities | Bachelor of Arts in Political    |
+             :                               : Science                          :
+             | School of Arts and Humanities | Bachelor of Arts in Psychology   |
+             | School of Arts and Humanities | Bachelor of Arts in Spanish      |
+             | School of Natural Sciences    | Bachelor of Science in Astronomy |
+             | School of Natural Sciences    | Bachelor of Science in Chemistry |
+             | School of Natural Sciences    | Bachelor of Science in Physics   |
+             | Public Honorariums            | Honorary PhD                     |
+                                                                        (36 rows)
 
              ----
              /program{school.name,title}
@@ -3687,154 +3667,137 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course                                                                                       |
-            -+----------------------------------------------------------------------------------------------+-
-             | department.school.name           | department.name        | title                            |
-            -+----------------------------------+------------------------+----------------------------------+-
-             | School of Business               | Accounting             | Practical Bookkeeping            |
-             | School of Business               | Accounting             | Principles of Accounting I       |
-             | School of Business               | Accounting             | Financial Accounting             |
-             | School of Business               | Accounting             | Corporate Taxation               |
-             | School of Business               | Accounting             | Advanced Accounting              |
-             | School of Business               | Accounting             | Corporate Financial Law          |
-             | School of Art and Design         | Art History            | History of Art Criticism         |
-             | School of Art and Design         | Art History            | Arts of Asia                     |
-             | School of Art and Design         | Art History            | Contemporary Latin American Art  |
-             | School of Art and Design         | Art History            | Methods in Art History           |
-             | School of Art and Design         | Art History            | Museum and Gallery Management    |
-             | School of Art and Design         | Art History            | Materials and Construction in    |
-             :                                  :                        : European Art                     :
-             | School of Natural Sciences       | Astronomy              | The Solar System                 |
-             | School of Natural Sciences       | Astronomy              | Solar System Lab                 |
-             | School of Natural Sciences       | Astronomy              | Telescope Workshop               |
-             | School of Natural Sciences       | Astronomy              | Life in the Universe             |
-             | School of Engineering            | Bioengineering         | Introduction to Biomedical       |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Bioengineering         | Fundamentals of Biochemistry     |
-             | School of Engineering            | Bioengineering         | Internship in Biomedical         |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Bioengineering         | Systems of Drug Delivery         |
-             | School of Business               | Capital Markets        | International Financial Markets  |
-             | School of Business               | Capital Markets        | Capital Risk Management          |
-             | School of Business               | Capital Markets        | Principles of Portfolio          |
-             :                                  :                        : Management                       :
-             | School of Business               | Capital Markets        | Financial Statement Analysis     |
-             | School of Natural Sciences       | Chemistry              | Principles of Chemistry          |
-             | School of Natural Sciences       | Chemistry              | Organic Chemistry I              |
-             | School of Natural Sciences       | Chemistry              | Organic Chemistry Laboratory I   |
-             | School of Natural Sciences       | Chemistry              | Laboratory Chemistry             |
-             | School of Natural Sciences       | Chemistry              | Protein Folding Problem          |
-             | School of Engineering            | Computer Science       | Introduction to Computer Science |
-             | School of Engineering            | Computer Science       | History of Computing             |
-             | School of Engineering            | Computer Science       | Introduction to Signal           |
-             :                                  :                        : Processing                       :
-             | School of Engineering            | Computer Science       | Introduction to Automata         |
-             | School of Engineering            | Computer Science       | Laboratory in Computer Science   |
-             | School of Engineering            | Computer Science       | Thesis Research                  |
-             | School of Engineering            | Computer Science       | Advanced Algorithms in           |
-             :                                  :                        : Bioinformatics                   :
-             | School of Business               | Corporate Finance      | Accounting Information Systems   |
-             | School of Business               | Corporate Finance      | Corporate Financial Management   |
-             | School of Business               | Corporate Finance      | Case Studies in Corporate        |
-             :                                  :                        : Finance                          :
-             | College of Education             | Educational Policy     | Technology in the Classroom      |
-             | College of Education             | Educational Policy     | Technology, Society and Schools  |
-             | College of Education             | Educational Policy     | Qualitative Research for         |
-             :                                  :                        : Educators                        :
-             | College of Education             | Educational Policy     | Classroom Visit                  |
-             | College of Education             | Educational Policy     | Educational Policy Analysis      |
-             | School of Engineering            | Electrical Engineering | Exploration of Electrical        |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Electrical Engineering | Engineering Electromagnetics     |
-             | School of Engineering            | Electrical Engineering | Laboratory in Electrical         |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Electrical Engineering | Information Theory               |
-             | School of Engineering            | Electrical Engineering | Learning and Adaptive Systems    |
-             | School of Arts, Letters, and the | English                | Introduction to Composition      |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | College Newspaper                |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Boccaccio's Decameron            |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Introduction to Science Writing  |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Writing Styles                   |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Ecology Writing Workshop         |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | History                | The United States in World       |
-             : Humanities                       :                        : History                          :
-             | School of Arts, Letters, and the | History                | Historical Perspective on the    |
-             : Humanities                       :                        : Constitution                     :
-             | School of Arts, Letters, and the | History                | History of American Education    |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | History                | History of the Family in Global  |
-             : Humanities                       :                        : Perspective                      :
-             | School of Arts, Letters, and the | History                | Science and History              |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Introduction to Spanish          |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Intermediate Spanish             |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Child Second Language            |
-             : Humanities                       :                        : Development                      :
-             | School of Arts, Letters, and the | Foreign Languages      | Spanish Conversation Group       |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Second Language Syntax           |
-             : Humanities                       :                        :                                  :
-             | School of Engineering            | Mechanical Engineering | Introduction to Mechanical       |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Mechanical Engineering | Undergraduate Research           |
-             | School of Engineering            | Mechanical Engineering | Advanced Welding                 |
-             | School of Engineering            | Mechanical Engineering | Advanced Heating and Air         |
-             :                                  :                        : Conditioning                     :
-             | School of Engineering            | Mechanical Engineering | Graphic Communication and Design |
-             | School of Natural Sciences       | Mathematics            | College Algebra                  |
-             | School of Natural Sciences       | Physics                | General Physics I                |
-             | School of Natural Sciences       | Physics                | Relativity & Cosmology           |
-             | School of Natural Sciences       | Physics                | Experimental Physics I           |
-             | School of Natural Sciences       | Physics                | Quantum Field Theory             |
-             | School of Natural Sciences       | Physics                | Quarks, Nuclei, and Cosmology    |
-             | School of Natural Sciences       | Physics                | Superconductivity                |
-             | School of Arts, Letters, and the | Political Science      | American Government and Politics |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Political Science      | American Foreign Policy          |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Political Science      | Government Internship: Semester  |
-             : Humanities                       :                        : in Washington                    :
-             | School of Arts, Letters, and the | Political Science      | American Government and          |
-             : Humanities                       :                        : Corporate Interests              :
-             | School of Arts, Letters, and the | Political Science      | Research Seminar in Middle       |
-             : Humanities                       :                        : Eastern Affairs                  :
-             | School of Arts, Letters, and the | Political Science      | #5 is the 50% Solution           |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Psychology             | General Psychology               |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Psychology             | Introduction to Cognitive        |
-             : Humanities                       :                        : Psychology                       :
-             | School of Arts, Letters, and the | Psychology             | Laboratory in Applied Behavioral |
-             : Humanities                       :                        : Science                          :
-             | School of Arts, Letters, and the | Psychology             | Examination of Real-Time         |
-             : Humanities                       :                        : Language Processing              :
-             | School of Arts, Letters, and the | Psychology             | Applied Child Psychology         |
-             : Humanities                       :                        :                                  :
-             | School of Art and Design         | Studio Art             | Spring Basket Weaving Workshop   |
-             | School of Art and Design         | Studio Art             | Drawing                          |
-             | School of Art and Design         | Studio Art             | Underwater Basket Weaving        |
-             | School of Art and Design         | Studio Art             | Twentieth Century Printmaking    |
-             | School of Art and Design         | Studio Art             | Art in Therapy                   |
-             | School of Art and Design         | Studio Art             | Drawing Master Class             |
-             | School of Art and Design         | Studio Art             | Peer Portfolio Review            |
-             | College of Education             | Teacher Education      | Theory and Practice of Early     |
-             :                                  :                        : Childhood Education              :
-             | College of Education             | Teacher Education      | Methods of Early Science         |
-             :                                  :                        : Education                        :
-             | College of Education             | Teacher Education      | Problems in Education Management |
-             | College of Education             | Teacher Education      | Challenges of Teaching the       |
-             :                                  :                        : Gifted and Talented              :
-             | College of Education             | Teacher Education      | Supervised Internship in         |
-             :                                  :                        : Education                        :
-                                                                                                   (100 rows)
+             | course                                                                                    |
+            -+-------------------------------------------------------------------------------------------+-
+             | department.school.name        | department.name        | title                            |
+            -+-------------------------------+------------------------+----------------------------------+-
+             | School of Business            | Accounting             | Practical Bookkeeping            |
+             | School of Business            | Accounting             | Principles of Accounting I       |
+             | School of Business            | Accounting             | Financial Accounting             |
+             | School of Business            | Accounting             | Corporate Taxation               |
+             | School of Business            | Accounting             | Advanced Accounting              |
+             | School of Business            | Accounting             | Corporate Financial Law          |
+             | School of Art and Design      | Art History            | History of Art Criticism         |
+             | School of Art and Design      | Art History            | Arts of Asia                     |
+             | School of Art and Design      | Art History            | Contemporary Latin American Art  |
+             | School of Art and Design      | Art History            | Methods in Art History           |
+             | School of Art and Design      | Art History            | Museum and Gallery Management    |
+             | School of Art and Design      | Art History            | Materials and Construction in    |
+             :                               :                        : European Art                     :
+             | School of Natural Sciences    | Astronomy              | The Solar System                 |
+             | School of Natural Sciences    | Astronomy              | Solar System Lab                 |
+             | School of Natural Sciences    | Astronomy              | Telescope Workshop               |
+             | School of Natural Sciences    | Astronomy              | Life in the Universe             |
+             | School of Engineering         | Bioengineering         | Introduction to Biomedical       |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Bioengineering         | Fundamentals of Biochemistry     |
+             | School of Engineering         | Bioengineering         | Internship in Biomedical         |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Bioengineering         | Systems of Drug Delivery         |
+             | School of Business            | Capital Markets        | International Financial Markets  |
+             | School of Business            | Capital Markets        | Capital Risk Management          |
+             | School of Business            | Capital Markets        | Principles of Portfolio          |
+             :                               :                        : Management                       :
+             | School of Business            | Capital Markets        | Financial Statement Analysis     |
+             | School of Natural Sciences    | Chemistry              | Principles of Chemistry          |
+             | School of Natural Sciences    | Chemistry              | Organic Chemistry I              |
+             | School of Natural Sciences    | Chemistry              | Organic Chemistry Laboratory I   |
+             | School of Natural Sciences    | Chemistry              | Laboratory Chemistry             |
+             | School of Natural Sciences    | Chemistry              | Protein Folding Problem          |
+             | School of Engineering         | Computer Science       | Introduction to Computer Science |
+             | School of Engineering         | Computer Science       | History of Computing             |
+             | School of Engineering         | Computer Science       | Introduction to Signal           |
+             :                               :                        : Processing                       :
+             | School of Engineering         | Computer Science       | Introduction to Automata         |
+             | School of Engineering         | Computer Science       | Laboratory in Computer Science   |
+             | School of Engineering         | Computer Science       | Thesis Research                  |
+             | School of Engineering         | Computer Science       | Advanced Algorithms in           |
+             :                               :                        : Bioinformatics                   :
+             | School of Business            | Corporate Finance      | Accounting Information Systems   |
+             | School of Business            | Corporate Finance      | Corporate Financial Management   |
+             | School of Business            | Corporate Finance      | Case Studies in Corporate        |
+             :                               :                        : Finance                          :
+             | College of Education          | Educational Policy     | Technology in the Classroom      |
+             | College of Education          | Educational Policy     | Technology, Society and Schools  |
+             | College of Education          | Educational Policy     | Qualitative Research for         |
+             :                               :                        : Educators                        :
+             | College of Education          | Educational Policy     | Classroom Visit                  |
+             | College of Education          | Educational Policy     | Educational Policy Analysis      |
+             | School of Engineering         | Electrical Engineering | Exploration of Electrical        |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Electrical Engineering | Engineering Electromagnetics     |
+             | School of Engineering         | Electrical Engineering | Laboratory in Electrical         |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Electrical Engineering | Information Theory               |
+             | School of Engineering         | Electrical Engineering | Learning and Adaptive Systems    |
+             | School of Arts and Humanities | English                | Introduction to Composition      |
+             | School of Arts and Humanities | English                | College Newspaper                |
+             | School of Arts and Humanities | English                | Boccaccio's Decameron            |
+             | School of Arts and Humanities | English                | Introduction to Science Writing  |
+             | School of Arts and Humanities | English                | Writing Styles                   |
+             | School of Arts and Humanities | English                | Ecology Writing Workshop         |
+             | School of Arts and Humanities | History                | The United States in World       |
+             :                               :                        : History                          :
+             | School of Arts and Humanities | History                | Historical Perspective on the    |
+             :                               :                        : Constitution                     :
+             | School of Arts and Humanities | History                | History of American Education    |
+             | School of Arts and Humanities | History                | History of the Family in Global  |
+             :                               :                        : Perspective                      :
+             | School of Arts and Humanities | History                | Science and History              |
+             | School of Arts and Humanities | Foreign Languages      | Introduction to Spanish          |
+             | School of Arts and Humanities | Foreign Languages      | Intermediate Spanish             |
+             | School of Arts and Humanities | Foreign Languages      | Child Second Language            |
+             :                               :                        : Development                      :
+             | School of Arts and Humanities | Foreign Languages      | Spanish Conversation Group       |
+             | School of Arts and Humanities | Foreign Languages      | Second Language Syntax           |
+             | School of Engineering         | Mechanical Engineering | Introduction to Mechanical       |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Mechanical Engineering | Undergraduate Research           |
+             | School of Engineering         | Mechanical Engineering | Advanced Welding                 |
+             | School of Engineering         | Mechanical Engineering | Advanced Heating and Air         |
+             :                               :                        : Conditioning                     :
+             | School of Engineering         | Mechanical Engineering | Graphic Communication and Design |
+             | School of Natural Sciences    | Mathematics            | College Algebra                  |
+             | School of Natural Sciences    | Physics                | General Physics I                |
+             | School of Natural Sciences    | Physics                | Relativity & Cosmology           |
+             | School of Natural Sciences    | Physics                | Experimental Physics I           |
+             | School of Natural Sciences    | Physics                | Quantum Field Theory             |
+             | School of Natural Sciences    | Physics                | Quarks, Nuclei, and Cosmology    |
+             | School of Natural Sciences    | Physics                | Superconductivity                |
+             | School of Arts and Humanities | Political Science      | American Government and Politics |
+             | School of Arts and Humanities | Political Science      | American Foreign Policy          |
+             | School of Arts and Humanities | Political Science      | Government Internship: Semester  |
+             :                               :                        : in Washington                    :
+             | School of Arts and Humanities | Political Science      | American Government and          |
+             :                               :                        : Corporate Interests              :
+             | School of Arts and Humanities | Political Science      | Research Seminar in Middle       |
+             :                               :                        : Eastern Affairs                  :
+             | School of Arts and Humanities | Political Science      | #5 is the 50% Solution           |
+             | School of Arts and Humanities | Psychology             | General Psychology               |
+             | School of Arts and Humanities | Psychology             | Introduction to Cognitive        |
+             :                               :                        : Psychology                       :
+             | School of Arts and Humanities | Psychology             | Laboratory in Applied Behavioral |
+             :                               :                        : Science                          :
+             | School of Arts and Humanities | Psychology             | Examination of Real-Time         |
+             :                               :                        : Language Processing              :
+             | School of Arts and Humanities | Psychology             | Applied Child Psychology         |
+             | School of Art and Design      | Studio Art             | Spring Basket Weaving Workshop   |
+             | School of Art and Design      | Studio Art             | Drawing                          |
+             | School of Art and Design      | Studio Art             | Underwater Basket Weaving        |
+             | School of Art and Design      | Studio Art             | Twentieth Century Printmaking    |
+             | School of Art and Design      | Studio Art             | Art in Therapy                   |
+             | School of Art and Design      | Studio Art             | Drawing Master Class             |
+             | School of Art and Design      | Studio Art             | Peer Portfolio Review            |
+             | College of Education          | Teacher Education      | Theory and Practice of Early     |
+             :                               :                        : Childhood Education              :
+             | College of Education          | Teacher Education      | Methods of Early Science         |
+             :                               :                        : Education                        :
+             | College of Education          | Teacher Education      | Problems in Education Management |
+             | College of Education          | Teacher Education      | Challenges of Teaching the       |
+             :                               :                        : Gifted and Talented              :
+             | College of Education          | Teacher Education      | Supervised Internship in         |
+             :                               :                        : Education                        :
+                                                                                                (100 rows)
 
              ----
              /course{department.school.name,department.name,title}
@@ -3852,154 +3815,137 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course                                                                                       |
-            -+----------------------------------------------------------------------------------------------+-
-             | department{school.name}          | department{name}       | title                            |
-            -+----------------------------------+------------------------+----------------------------------+-
-             | School of Business               | Accounting             | Practical Bookkeeping            |
-             | School of Business               | Accounting             | Principles of Accounting I       |
-             | School of Business               | Accounting             | Financial Accounting             |
-             | School of Business               | Accounting             | Corporate Taxation               |
-             | School of Business               | Accounting             | Advanced Accounting              |
-             | School of Business               | Accounting             | Corporate Financial Law          |
-             | School of Art and Design         | Art History            | History of Art Criticism         |
-             | School of Art and Design         | Art History            | Arts of Asia                     |
-             | School of Art and Design         | Art History            | Contemporary Latin American Art  |
-             | School of Art and Design         | Art History            | Methods in Art History           |
-             | School of Art and Design         | Art History            | Museum and Gallery Management    |
-             | School of Art and Design         | Art History            | Materials and Construction in    |
-             :                                  :                        : European Art                     :
-             | School of Natural Sciences       | Astronomy              | The Solar System                 |
-             | School of Natural Sciences       | Astronomy              | Solar System Lab                 |
-             | School of Natural Sciences       | Astronomy              | Telescope Workshop               |
-             | School of Natural Sciences       | Astronomy              | Life in the Universe             |
-             | School of Engineering            | Bioengineering         | Introduction to Biomedical       |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Bioengineering         | Fundamentals of Biochemistry     |
-             | School of Engineering            | Bioengineering         | Internship in Biomedical         |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Bioengineering         | Systems of Drug Delivery         |
-             | School of Business               | Capital Markets        | International Financial Markets  |
-             | School of Business               | Capital Markets        | Capital Risk Management          |
-             | School of Business               | Capital Markets        | Principles of Portfolio          |
-             :                                  :                        : Management                       :
-             | School of Business               | Capital Markets        | Financial Statement Analysis     |
-             | School of Natural Sciences       | Chemistry              | Principles of Chemistry          |
-             | School of Natural Sciences       | Chemistry              | Organic Chemistry I              |
-             | School of Natural Sciences       | Chemistry              | Organic Chemistry Laboratory I   |
-             | School of Natural Sciences       | Chemistry              | Laboratory Chemistry             |
-             | School of Natural Sciences       | Chemistry              | Protein Folding Problem          |
-             | School of Engineering            | Computer Science       | Introduction to Computer Science |
-             | School of Engineering            | Computer Science       | History of Computing             |
-             | School of Engineering            | Computer Science       | Introduction to Signal           |
-             :                                  :                        : Processing                       :
-             | School of Engineering            | Computer Science       | Introduction to Automata         |
-             | School of Engineering            | Computer Science       | Laboratory in Computer Science   |
-             | School of Engineering            | Computer Science       | Thesis Research                  |
-             | School of Engineering            | Computer Science       | Advanced Algorithms in           |
-             :                                  :                        : Bioinformatics                   :
-             | School of Business               | Corporate Finance      | Accounting Information Systems   |
-             | School of Business               | Corporate Finance      | Corporate Financial Management   |
-             | School of Business               | Corporate Finance      | Case Studies in Corporate        |
-             :                                  :                        : Finance                          :
-             | College of Education             | Educational Policy     | Technology in the Classroom      |
-             | College of Education             | Educational Policy     | Technology, Society and Schools  |
-             | College of Education             | Educational Policy     | Qualitative Research for         |
-             :                                  :                        : Educators                        :
-             | College of Education             | Educational Policy     | Classroom Visit                  |
-             | College of Education             | Educational Policy     | Educational Policy Analysis      |
-             | School of Engineering            | Electrical Engineering | Exploration of Electrical        |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Electrical Engineering | Engineering Electromagnetics     |
-             | School of Engineering            | Electrical Engineering | Laboratory in Electrical         |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Electrical Engineering | Information Theory               |
-             | School of Engineering            | Electrical Engineering | Learning and Adaptive Systems    |
-             | School of Arts, Letters, and the | English                | Introduction to Composition      |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | College Newspaper                |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Boccaccio's Decameron            |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Introduction to Science Writing  |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Writing Styles                   |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | English                | Ecology Writing Workshop         |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | History                | The United States in World       |
-             : Humanities                       :                        : History                          :
-             | School of Arts, Letters, and the | History                | Historical Perspective on the    |
-             : Humanities                       :                        : Constitution                     :
-             | School of Arts, Letters, and the | History                | History of American Education    |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | History                | History of the Family in Global  |
-             : Humanities                       :                        : Perspective                      :
-             | School of Arts, Letters, and the | History                | Science and History              |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Introduction to Spanish          |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Intermediate Spanish             |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Child Second Language            |
-             : Humanities                       :                        : Development                      :
-             | School of Arts, Letters, and the | Foreign Languages      | Spanish Conversation Group       |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Foreign Languages      | Second Language Syntax           |
-             : Humanities                       :                        :                                  :
-             | School of Engineering            | Mechanical Engineering | Introduction to Mechanical       |
-             :                                  :                        : Engineering                      :
-             | School of Engineering            | Mechanical Engineering | Undergraduate Research           |
-             | School of Engineering            | Mechanical Engineering | Advanced Welding                 |
-             | School of Engineering            | Mechanical Engineering | Advanced Heating and Air         |
-             :                                  :                        : Conditioning                     :
-             | School of Engineering            | Mechanical Engineering | Graphic Communication and Design |
-             | School of Natural Sciences       | Mathematics            | College Algebra                  |
-             | School of Natural Sciences       | Physics                | General Physics I                |
-             | School of Natural Sciences       | Physics                | Relativity & Cosmology           |
-             | School of Natural Sciences       | Physics                | Experimental Physics I           |
-             | School of Natural Sciences       | Physics                | Quantum Field Theory             |
-             | School of Natural Sciences       | Physics                | Quarks, Nuclei, and Cosmology    |
-             | School of Natural Sciences       | Physics                | Superconductivity                |
-             | School of Arts, Letters, and the | Political Science      | American Government and Politics |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Political Science      | American Foreign Policy          |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Political Science      | Government Internship: Semester  |
-             : Humanities                       :                        : in Washington                    :
-             | School of Arts, Letters, and the | Political Science      | American Government and          |
-             : Humanities                       :                        : Corporate Interests              :
-             | School of Arts, Letters, and the | Political Science      | Research Seminar in Middle       |
-             : Humanities                       :                        : Eastern Affairs                  :
-             | School of Arts, Letters, and the | Political Science      | #5 is the 50% Solution           |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Psychology             | General Psychology               |
-             : Humanities                       :                        :                                  :
-             | School of Arts, Letters, and the | Psychology             | Introduction to Cognitive        |
-             : Humanities                       :                        : Psychology                       :
-             | School of Arts, Letters, and the | Psychology             | Laboratory in Applied Behavioral |
-             : Humanities                       :                        : Science                          :
-             | School of Arts, Letters, and the | Psychology             | Examination of Real-Time         |
-             : Humanities                       :                        : Language Processing              :
-             | School of Arts, Letters, and the | Psychology             | Applied Child Psychology         |
-             : Humanities                       :                        :                                  :
-             | School of Art and Design         | Studio Art             | Spring Basket Weaving Workshop   |
-             | School of Art and Design         | Studio Art             | Drawing                          |
-             | School of Art and Design         | Studio Art             | Underwater Basket Weaving        |
-             | School of Art and Design         | Studio Art             | Twentieth Century Printmaking    |
-             | School of Art and Design         | Studio Art             | Art in Therapy                   |
-             | School of Art and Design         | Studio Art             | Drawing Master Class             |
-             | School of Art and Design         | Studio Art             | Peer Portfolio Review            |
-             | College of Education             | Teacher Education      | Theory and Practice of Early     |
-             :                                  :                        : Childhood Education              :
-             | College of Education             | Teacher Education      | Methods of Early Science         |
-             :                                  :                        : Education                        :
-             | College of Education             | Teacher Education      | Problems in Education Management |
-             | College of Education             | Teacher Education      | Challenges of Teaching the       |
-             :                                  :                        : Gifted and Talented              :
-             | College of Education             | Teacher Education      | Supervised Internship in         |
-             :                                  :                        : Education                        :
-                                                                                                   (100 rows)
+             | course                                                                                    |
+            -+-------------------------------------------------------------------------------------------+-
+             | department{school.name}       | department{name}       | title                            |
+            -+-------------------------------+------------------------+----------------------------------+-
+             | School of Business            | Accounting             | Practical Bookkeeping            |
+             | School of Business            | Accounting             | Principles of Accounting I       |
+             | School of Business            | Accounting             | Financial Accounting             |
+             | School of Business            | Accounting             | Corporate Taxation               |
+             | School of Business            | Accounting             | Advanced Accounting              |
+             | School of Business            | Accounting             | Corporate Financial Law          |
+             | School of Art and Design      | Art History            | History of Art Criticism         |
+             | School of Art and Design      | Art History            | Arts of Asia                     |
+             | School of Art and Design      | Art History            | Contemporary Latin American Art  |
+             | School of Art and Design      | Art History            | Methods in Art History           |
+             | School of Art and Design      | Art History            | Museum and Gallery Management    |
+             | School of Art and Design      | Art History            | Materials and Construction in    |
+             :                               :                        : European Art                     :
+             | School of Natural Sciences    | Astronomy              | The Solar System                 |
+             | School of Natural Sciences    | Astronomy              | Solar System Lab                 |
+             | School of Natural Sciences    | Astronomy              | Telescope Workshop               |
+             | School of Natural Sciences    | Astronomy              | Life in the Universe             |
+             | School of Engineering         | Bioengineering         | Introduction to Biomedical       |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Bioengineering         | Fundamentals of Biochemistry     |
+             | School of Engineering         | Bioengineering         | Internship in Biomedical         |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Bioengineering         | Systems of Drug Delivery         |
+             | School of Business            | Capital Markets        | International Financial Markets  |
+             | School of Business            | Capital Markets        | Capital Risk Management          |
+             | School of Business            | Capital Markets        | Principles of Portfolio          |
+             :                               :                        : Management                       :
+             | School of Business            | Capital Markets        | Financial Statement Analysis     |
+             | School of Natural Sciences    | Chemistry              | Principles of Chemistry          |
+             | School of Natural Sciences    | Chemistry              | Organic Chemistry I              |
+             | School of Natural Sciences    | Chemistry              | Organic Chemistry Laboratory I   |
+             | School of Natural Sciences    | Chemistry              | Laboratory Chemistry             |
+             | School of Natural Sciences    | Chemistry              | Protein Folding Problem          |
+             | School of Engineering         | Computer Science       | Introduction to Computer Science |
+             | School of Engineering         | Computer Science       | History of Computing             |
+             | School of Engineering         | Computer Science       | Introduction to Signal           |
+             :                               :                        : Processing                       :
+             | School of Engineering         | Computer Science       | Introduction to Automata         |
+             | School of Engineering         | Computer Science       | Laboratory in Computer Science   |
+             | School of Engineering         | Computer Science       | Thesis Research                  |
+             | School of Engineering         | Computer Science       | Advanced Algorithms in           |
+             :                               :                        : Bioinformatics                   :
+             | School of Business            | Corporate Finance      | Accounting Information Systems   |
+             | School of Business            | Corporate Finance      | Corporate Financial Management   |
+             | School of Business            | Corporate Finance      | Case Studies in Corporate        |
+             :                               :                        : Finance                          :
+             | College of Education          | Educational Policy     | Technology in the Classroom      |
+             | College of Education          | Educational Policy     | Technology, Society and Schools  |
+             | College of Education          | Educational Policy     | Qualitative Research for         |
+             :                               :                        : Educators                        :
+             | College of Education          | Educational Policy     | Classroom Visit                  |
+             | College of Education          | Educational Policy     | Educational Policy Analysis      |
+             | School of Engineering         | Electrical Engineering | Exploration of Electrical        |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Electrical Engineering | Engineering Electromagnetics     |
+             | School of Engineering         | Electrical Engineering | Laboratory in Electrical         |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Electrical Engineering | Information Theory               |
+             | School of Engineering         | Electrical Engineering | Learning and Adaptive Systems    |
+             | School of Arts and Humanities | English                | Introduction to Composition      |
+             | School of Arts and Humanities | English                | College Newspaper                |
+             | School of Arts and Humanities | English                | Boccaccio's Decameron            |
+             | School of Arts and Humanities | English                | Introduction to Science Writing  |
+             | School of Arts and Humanities | English                | Writing Styles                   |
+             | School of Arts and Humanities | English                | Ecology Writing Workshop         |
+             | School of Arts and Humanities | History                | The United States in World       |
+             :                               :                        : History                          :
+             | School of Arts and Humanities | History                | Historical Perspective on the    |
+             :                               :                        : Constitution                     :
+             | School of Arts and Humanities | History                | History of American Education    |
+             | School of Arts and Humanities | History                | History of the Family in Global  |
+             :                               :                        : Perspective                      :
+             | School of Arts and Humanities | History                | Science and History              |
+             | School of Arts and Humanities | Foreign Languages      | Introduction to Spanish          |
+             | School of Arts and Humanities | Foreign Languages      | Intermediate Spanish             |
+             | School of Arts and Humanities | Foreign Languages      | Child Second Language            |
+             :                               :                        : Development                      :
+             | School of Arts and Humanities | Foreign Languages      | Spanish Conversation Group       |
+             | School of Arts and Humanities | Foreign Languages      | Second Language Syntax           |
+             | School of Engineering         | Mechanical Engineering | Introduction to Mechanical       |
+             :                               :                        : Engineering                      :
+             | School of Engineering         | Mechanical Engineering | Undergraduate Research           |
+             | School of Engineering         | Mechanical Engineering | Advanced Welding                 |
+             | School of Engineering         | Mechanical Engineering | Advanced Heating and Air         |
+             :                               :                        : Conditioning                     :
+             | School of Engineering         | Mechanical Engineering | Graphic Communication and Design |
+             | School of Natural Sciences    | Mathematics            | College Algebra                  |
+             | School of Natural Sciences    | Physics                | General Physics I                |
+             | School of Natural Sciences    | Physics                | Relativity & Cosmology           |
+             | School of Natural Sciences    | Physics                | Experimental Physics I           |
+             | School of Natural Sciences    | Physics                | Quantum Field Theory             |
+             | School of Natural Sciences    | Physics                | Quarks, Nuclei, and Cosmology    |
+             | School of Natural Sciences    | Physics                | Superconductivity                |
+             | School of Arts and Humanities | Political Science      | American Government and Politics |
+             | School of Arts and Humanities | Political Science      | American Foreign Policy          |
+             | School of Arts and Humanities | Political Science      | Government Internship: Semester  |
+             :                               :                        : in Washington                    :
+             | School of Arts and Humanities | Political Science      | American Government and          |
+             :                               :                        : Corporate Interests              :
+             | School of Arts and Humanities | Political Science      | Research Seminar in Middle       |
+             :                               :                        : Eastern Affairs                  :
+             | School of Arts and Humanities | Political Science      | #5 is the 50% Solution           |
+             | School of Arts and Humanities | Psychology             | General Psychology               |
+             | School of Arts and Humanities | Psychology             | Introduction to Cognitive        |
+             :                               :                        : Psychology                       :
+             | School of Arts and Humanities | Psychology             | Laboratory in Applied Behavioral |
+             :                               :                        : Science                          :
+             | School of Arts and Humanities | Psychology             | Examination of Real-Time         |
+             :                               :                        : Language Processing              :
+             | School of Arts and Humanities | Psychology             | Applied Child Psychology         |
+             | School of Art and Design      | Studio Art             | Spring Basket Weaving Workshop   |
+             | School of Art and Design      | Studio Art             | Drawing                          |
+             | School of Art and Design      | Studio Art             | Underwater Basket Weaving        |
+             | School of Art and Design      | Studio Art             | Twentieth Century Printmaking    |
+             | School of Art and Design      | Studio Art             | Art in Therapy                   |
+             | School of Art and Design      | Studio Art             | Drawing Master Class             |
+             | School of Art and Design      | Studio Art             | Peer Portfolio Review            |
+             | College of Education          | Teacher Education      | Theory and Practice of Early     |
+             :                               :                        : Childhood Education              :
+             | College of Education          | Teacher Education      | Methods of Early Science         |
+             :                               :                        : Education                        :
+             | College of Education          | Teacher Education      | Problems in Education Management |
+             | College of Education          | Teacher Education      | Challenges of Teaching the       |
+             :                               :                        : Gifted and Talented              :
+             | College of Education          | Teacher Education      | Supervised Internship in         |
+             :                               :                        : Education                        :
+                                                                                                (100 rows)
 
              ----
              /course{department{school.name,name},title}
@@ -4017,43 +3963,38 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department                                                                                |
-            -+-------------------------------------------------------------------------------------------+-
-             | code   | name                   | school | school.code | school.name                      |
-            -+--------+------------------------+--------+-------------+----------------------------------+-
-             | acc    | Accounting             | bus    | bus         | School of Business               |
-             | arthis | Art History            | art    | art         | School of Art and Design         |
-             | astro  | Astronomy              | ns     | ns          | School of Natural Sciences       |
-             | be     | Bioengineering         | egn    | egn         | School of Engineering            |
-             | bursar | Bursar's Office        |        |             |                                  |
-             | capmrk | Capital Markets        | bus    | bus         | School of Business               |
-             | career | Career Development     |        |             |                                  |
-             | chem   | Chemistry              | ns     | ns          | School of Natural Sciences       |
-             | comp   | Computer Science       | egn    | egn         | School of Engineering            |
-             | corpfi | Corporate Finance      | bus    | bus         | School of Business               |
-             | edpol  | Educational Policy     | edu    | edu         | College of Education             |
-             | ee     | Electrical Engineering | egn    | egn         | School of Engineering            |
-             | eng    | English                | la     | la          | School of Arts, Letters, and the |
-             :        :                        :        :             : Humanities                       :
-             | hist   | History                | la     | la          | School of Arts, Letters, and the |
-             :        :                        :        :             : Humanities                       :
-             | lang   | Foreign Languages      | la     | la          | School of Arts, Letters, and the |
-             :        :                        :        :             : Humanities                       :
-             | me     | Mechanical Engineering | egn    | egn         | School of Engineering            |
-             | mth    | Mathematics            | ns     | ns          | School of Natural Sciences       |
-             | parent | Parents & Alumni       |        |             |                                  |
-             | phys   | Physics                | ns     | ns          | School of Natural Sciences       |
-             | pia    | Piano                  | mus    | mus         | Musical School                   |
-             | poli   | Political Science      | la     | la          | School of Arts, Letters, and the |
-             :        :                        :        :             : Humanities                       :
-             | psych  | Psychology             | la     | la          | School of Arts, Letters, and the |
-             :        :                        :        :             : Humanities                       :
-             | stdart | Studio Art             | art    | art         | School of Art and Design         |
-             | str    | Strings                | mus    | mus         | Musical School                   |
-             | tched  | Teacher Education      | edu    | edu         | College of Education             |
-             | voc    | Vocals                 | mus    | mus         | Musical School                   |
-             | win    | Wind                   | mus    | mus         | Musical School                   |
-                                                                                                 (27 rows)
+             | department                                                                             |
+            -+----------------------------------------------------------------------------------------+-
+             | code   | name                   | school | school.code | school.name                   |
+            -+--------+------------------------+--------+-------------+-------------------------------+-
+             | acc    | Accounting             | bus    | bus         | School of Business            |
+             | arthis | Art History            | art    | art         | School of Art and Design      |
+             | astro  | Astronomy              | ns     | ns          | School of Natural Sciences    |
+             | be     | Bioengineering         | egn    | egn         | School of Engineering         |
+             | bursar | Bursar's Office        |        |             |                               |
+             | capmrk | Capital Markets        | bus    | bus         | School of Business            |
+             | career | Career Development     |        |             |                               |
+             | chem   | Chemistry              | ns     | ns          | School of Natural Sciences    |
+             | comp   | Computer Science       | egn    | egn         | School of Engineering         |
+             | corpfi | Corporate Finance      | bus    | bus         | School of Business            |
+             | edpol  | Educational Policy     | edu    | edu         | College of Education          |
+             | ee     | Electrical Engineering | egn    | egn         | School of Engineering         |
+             | eng    | English                | la     | la          | School of Arts and Humanities |
+             | hist   | History                | la     | la          | School of Arts and Humanities |
+             | lang   | Foreign Languages      | la     | la          | School of Arts and Humanities |
+             | me     | Mechanical Engineering | egn    | egn         | School of Engineering         |
+             | mth    | Mathematics            | ns     | ns          | School of Natural Sciences    |
+             | parent | Parents & Alumni       |        |             |                               |
+             | phys   | Physics                | ns     | ns          | School of Natural Sciences    |
+             | pia    | Piano                  | mus    | mus         | School of Music & Dance       |
+             | poli   | Political Science      | la     | la          | School of Arts and Humanities |
+             | psych  | Psychology             | la     | la          | School of Arts and Humanities |
+             | stdart | Studio Art             | art    | art         | School of Art and Design      |
+             | str    | Strings                | mus    | mus         | School of Music & Dance       |
+             | tched  | Teacher Education      | edu    | edu         | College of Education          |
+             | voc    | Vocals                 | mus    | mus         | School of Music & Dance       |
+             | win    | Wind                   | mus    | mus         | School of Music & Dance       |
+                                                                                              (27 rows)
 
              ----
              /department{*,school.*}
@@ -4124,11 +4065,10 @@ tests:
              :        :          : Science                          :        :
              | la     | upsych   | Bachelor of Arts in Psychology   | ba     |
              | la     | uspan    | Bachelor of Arts in Spanish      | ba     |
-             | mart   | bmart    | Bachelor of Modern Art           | ba     |
              | ns     | uastro   | Bachelor of Science in Astronomy | bs     |
              | ns     | uchem    | Bachelor of Science in Chemistry | bs     |
              | ns     | uphys    | Bachelor of Science in Physics   | bs     |
-                                                                     (20 rows)
+                                                                     (19 rows)
 
              ----
              /program?degree={'ba','bs'}
@@ -4227,10 +4167,10 @@ tests:
               ["bus", "School of Business"],
               ["edu", "College of Education"],
               ["egn", "School of Engineering"],
-              ["la", "School of Arts, Letters, and the Humanities"],
-              ["mart", "School of Modern Art"],
-              ["mus", "Musical School"],
+              ["la", "School of Arts and Humanities"],
+              ["mus", "School of Music & Dance"],
               ["ns", "School of Natural Sciences"],
+              ["ph", "Public Honorariums"],
               ["sc", "School of Continuing Studies"]
             ]
         - uri: /course{department{code, name},number,title+} ?department.school='bus'/:csv
@@ -4481,21 +4421,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                                                |
-            -+-----------------------------------------------------------------------+-
-             | name                             | count(program) | count(department) |
-            -+----------------------------------+----------------+-------------------+-
-             | School of Art and Design         |              3 |                 2 |
-             | School of Business               |              5 |                 3 |
-             | College of Education             |              7 |                 2 |
-             | School of Engineering            |              8 |                 4 |
-             | School of Arts, Letters, and the |              9 |                 5 |
-             : Humanities                       :                :                   :
-             | School of Modern Art             |              1 |                 0 |
-             | Musical School                   |              0 |                 4 |
-             | School of Natural Sciences       |              3 |                 4 |
-             | School of Continuing Studies     |              0 |                 0 |
-                                                                              (9 rows)
+             | school                                                             |
+            -+--------------------------------------------------------------------+-
+             | name                          | count(program) | count(department) |
+            -+-------------------------------+----------------+-------------------+-
+             | School of Art and Design      |              3 |                 2 |
+             | School of Business            |              5 |                 3 |
+             | College of Education          |              7 |                 2 |
+             | School of Engineering         |              8 |                 4 |
+             | School of Arts and Humanities |              9 |                 5 |
+             | School of Music & Dance       |              0 |                 4 |
+             | School of Natural Sciences    |              3 |                 4 |
+             | Public Honorariums            |              1 |                 0 |
+             | School of Continuing Studies  |              0 |                 0 |
+                                                                           (9 rows)
 
              ----
              /school{name,count(program),count(department)}
@@ -4569,21 +4508,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                                           |
-            -+------------------------------------------------------------------+-
-             | name                             | avg(department.count(course)) |
-            -+----------------------------------+-------------------------------+-
-             | School of Art and Design         |            6.5000000000000000 |
-             | School of Business               |            4.3333333333333333 |
-             | College of Education             |            5.0000000000000000 |
-             | School of Engineering            |            5.2500000000000000 |
-             | School of Arts, Letters, and the |            5.4000000000000000 |
-             : Humanities                       :                               :
-             | School of Modern Art             |                               |
-             | Musical School                   |                         0E-20 |
-             | School of Natural Sciences       |            4.0000000000000000 |
-             | School of Continuing Studies     |                               |
-                                                                         (9 rows)
+             | school                                                        |
+            -+---------------------------------------------------------------+-
+             | name                          | avg(department.count(course)) |
+            -+-------------------------------+-------------------------------+-
+             | School of Art and Design      |            6.5000000000000000 |
+             | School of Business            |            4.3333333333333333 |
+             | College of Education          |            5.0000000000000000 |
+             | School of Engineering         |            5.2500000000000000 |
+             | School of Arts and Humanities |            5.4000000000000000 |
+             | School of Music & Dance       |                         0E-20 |
+             | School of Natural Sciences    |            4.0000000000000000 |
+             | Public Honorariums            |                               |
+             | School of Continuing Studies  |                               |
+                                                                      (9 rows)
 
              ----
              /school{name,avg(department.count(course))}
@@ -4606,21 +4544,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                                                        |
-            -+-------------------------------------------------------------------------------+-
-             | name                             | count(department?exists(course?credits>3)) |
-            -+----------------------------------+--------------------------------------------+-
-             | School of Art and Design         |                                          2 |
-             | School of Business               |                                          1 |
-             | College of Education             |                                          1 |
-             | School of Engineering            |                                          4 |
-             | School of Arts, Letters, and the |                                          3 |
-             : Humanities                       :                                            :
-             | School of Modern Art             |                                          0 |
-             | Musical School                   |                                          0 |
-             | School of Natural Sciences       |                                          1 |
-             | School of Continuing Studies     |                                          0 |
-                                                                                      (9 rows)
+             | school                                                                     |
+            -+----------------------------------------------------------------------------+-
+             | name                          | count(department?exists(course?credits>3)) |
+            -+-------------------------------+--------------------------------------------+-
+             | School of Art and Design      |                                          2 |
+             | School of Business            |                                          1 |
+             | College of Education          |                                          1 |
+             | School of Engineering         |                                          4 |
+             | School of Arts and Humanities |                                          3 |
+             | School of Music & Dance       |                                          0 |
+             | School of Natural Sciences    |                                          1 |
+             | Public Honorariums            |                                          0 |
+             | School of Continuing Studies  |                                          0 |
+                                                                                   (9 rows)
 
              ----
              /school{name,count(department?exists(course?credits>3))}
@@ -11484,10 +11421,10 @@ tests:
              :        :          : Science                          :        :
              | la     | upsych   | Bachelor of Arts in Psychology   | ba     |
              | la     | uspan    | Bachelor of Arts in Spanish      | ba     |
-             | mart   | bmart    | Bachelor of Modern Art           | ba     |
              | ns     | uastro   | Bachelor of Science in Astronomy | bs     |
              | ns     | uchem    | Bachelor of Science in Chemistry | bs     |
              | ns     | uphys    | Bachelor of Science in Physics   | bs     |
+             | ph     | phd      | Honorary PhD                     |        |
                                                                      (36 rows)
 
              ----
@@ -11549,56 +11486,47 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program.school                          |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | art  | School of Art and Design         |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | bus  | School of Business               |
-             | bus  | School of Business               |
-             | bus  | School of Business               |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | edu  | College of Education             |
-             | edu  | College of Education             |
-             | edu  | College of Education             |
-             | edu  | College of Education             |
-             | edu  | College of Education             |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | egn  | School of Engineering            |
-             | egn  | School of Engineering            |
-             | egn  | School of Engineering            |
-             | egn  | School of Engineering            |
-             | egn  | School of Engineering            |
-             | egn  | School of Engineering            |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | ns   | School of Natural Sciences       |
-             | ns   | School of Natural Sciences       |
-             | ns   | School of Natural Sciences       |
-                                               (36 rows)
+             | program.school                       |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | art  | School of Art and Design      |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | bus  | School of Business            |
+             | bus  | School of Business            |
+             | bus  | School of Business            |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | edu  | College of Education          |
+             | edu  | College of Education          |
+             | edu  | College of Education          |
+             | edu  | College of Education          |
+             | edu  | College of Education          |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | egn  | School of Engineering         |
+             | egn  | School of Engineering         |
+             | egn  | School of Engineering         |
+             | egn  | School of Engineering         |
+             | egn  | School of Engineering         |
+             | egn  | School of Engineering         |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | ns   | School of Natural Sciences    |
+             | ns   | School of Natural Sciences    |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+                                            (36 rows)
 
              ----
              /program.school
@@ -11613,40 +11541,35 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department.school                       |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | bus  | School of Business               |
-             | art  | School of Art and Design         |
-             | ns   | School of Natural Sciences       |
-             | egn  | School of Engineering            |
-             | bus  | School of Business               |
-             | ns   | School of Natural Sciences       |
-             | egn  | School of Engineering            |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | egn  | School of Engineering            |
-             | ns   | School of Natural Sciences       |
-             | ns   | School of Natural Sciences       |
-             | mus  | Musical School                   |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | art  | School of Art and Design         |
-             | mus  | Musical School                   |
-             | edu  | College of Education             |
-             | mus  | Musical School                   |
-             | mus  | Musical School                   |
-                                               (24 rows)
+             | department.school                    |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | bus  | School of Business            |
+             | art  | School of Art and Design      |
+             | ns   | School of Natural Sciences    |
+             | egn  | School of Engineering         |
+             | bus  | School of Business            |
+             | ns   | School of Natural Sciences    |
+             | egn  | School of Engineering         |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | egn  | School of Engineering         |
+             | ns   | School of Natural Sciences    |
+             | ns   | School of Natural Sciences    |
+             | mus  | School of Music & Dance       |
+             | la   | School of Arts and Humanities |
+             | la   | School of Arts and Humanities |
+             | art  | School of Art and Design      |
+             | mus  | School of Music & Dance       |
+             | edu  | College of Education          |
+             | mus  | School of Music & Dance       |
+             | mus  | School of Music & Dance       |
+                                            (24 rows)
 
              ----
              /department.school
@@ -11776,101 +11699,92 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school.fiber(school)                    |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-                                               (81 rows)
+             | school.fiber(school)                 |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+                                            (81 rows)
 
              ----
              /school.fiber(school)
@@ -12222,81 +12136,81 @@ tests:
              | art                | edu         |
              | art                | egn         |
              | art                | la          |
-             | art                | mart        |
              | art                | mus         |
              | art                | ns          |
+             | art                | ph          |
              | art                | sc          |
              | bus                | art         |
              | bus                | bus         |
              | bus                | edu         |
              | bus                | egn         |
              | bus                | la          |
-             | bus                | mart        |
              | bus                | mus         |
              | bus                | ns          |
+             | bus                | ph          |
              | bus                | sc          |
              | edu                | art         |
              | edu                | bus         |
              | edu                | edu         |
              | edu                | egn         |
              | edu                | la          |
-             | edu                | mart        |
              | edu                | mus         |
              | edu                | ns          |
+             | edu                | ph          |
              | edu                | sc          |
              | egn                | art         |
              | egn                | bus         |
              | egn                | edu         |
              | egn                | egn         |
              | egn                | la          |
-             | egn                | mart        |
              | egn                | mus         |
              | egn                | ns          |
+             | egn                | ph          |
              | egn                | sc          |
              | la                 | art         |
              | la                 | bus         |
              | la                 | edu         |
              | la                 | egn         |
              | la                 | la          |
-             | la                 | mart        |
              | la                 | mus         |
              | la                 | ns          |
+             | la                 | ph          |
              | la                 | sc          |
-             | mart               | art         |
-             | mart               | bus         |
-             | mart               | edu         |
-             | mart               | egn         |
-             | mart               | la          |
-             | mart               | mart        |
-             | mart               | mus         |
-             | mart               | ns          |
-             | mart               | sc          |
              | mus                | art         |
              | mus                | bus         |
              | mus                | edu         |
              | mus                | egn         |
              | mus                | la          |
-             | mus                | mart        |
              | mus                | mus         |
              | mus                | ns          |
+             | mus                | ph          |
              | mus                | sc          |
              | ns                 | art         |
              | ns                 | bus         |
              | ns                 | edu         |
              | ns                 | egn         |
              | ns                 | la          |
-             | ns                 | mart        |
              | ns                 | mus         |
              | ns                 | ns          |
+             | ns                 | ph          |
              | ns                 | sc          |
+             | ph                 | art         |
+             | ph                 | bus         |
+             | ph                 | edu         |
+             | ph                 | egn         |
+             | ph                 | la          |
+             | ph                 | mus         |
+             | ph                 | ns          |
+             | ph                 | ph          |
+             | ph                 | sc          |
              | sc                 | art         |
              | sc                 | bus         |
              | sc                 | edu         |
              | sc                 | egn         |
              | sc                 | la          |
-             | sc                 | mart        |
              | sc                 | mus         |
              | sc                 | ns          |
+             | sc                 | ph          |
              | sc                 | sc          |
                                         (81 rows)
 
@@ -12320,12 +12234,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (school?code='mus')   |
-            -+-----------------------+-
-             | code | name           |
-            -+------+----------------+-
-             | mus  | Musical School |
-                               (1 row)
+             | (school?code='mus')            |
+            -+--------------------------------+-
+             | code | name                    |
+            -+------+-------------------------+-
+             | mus  | School of Music & Dance |
+                                        (1 row)
 
              ----
              /school?code='mus'
@@ -13061,21 +12975,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                           |
-            -+----------------------------------+-
-             | name                             |
-            -+----------------------------------+-
-             | School of Art and Design         |
-             | School of Business               |
-             | College of Education             |
-             | School of Engineering            |
-             | School of Arts, Letters, and the |
-             : Humanities                       :
-             | School of Modern Art             |
-             | Musical School                   |
-             | School of Natural Sciences       |
-             | School of Continuing Studies     |
-                                         (9 rows)
+             | school                        |
+            -+-------------------------------+-
+             | name                          |
+            -+-------------------------------+-
+             | School of Art and Design      |
+             | School of Business            |
+             | College of Education          |
+             | School of Engineering         |
+             | School of Arts and Humanities |
+             | School of Music & Dance       |
+             | School of Natural Sciences    |
+             | Public Honorariums            |
+             | School of Continuing Studies  |
+                                      (9 rows)
 
              ----
              /school{name}
@@ -13087,43 +13000,38 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department                                                |
-            -+-----------------------------------------------------------+-
-             | school.name                      | name                   |
-            -+----------------------------------+------------------------+-
-             | School of Business               | Accounting             |
-             | School of Art and Design         | Art History            |
-             | School of Natural Sciences       | Astronomy              |
-             | School of Engineering            | Bioengineering         |
-             |                                  | Bursar's Office        |
-             | School of Business               | Capital Markets        |
-             |                                  | Career Development     |
-             | School of Natural Sciences       | Chemistry              |
-             | School of Engineering            | Computer Science       |
-             | School of Business               | Corporate Finance      |
-             | College of Education             | Educational Policy     |
-             | School of Engineering            | Electrical Engineering |
-             | School of Arts, Letters, and the | English                |
-             : Humanities                       :                        :
-             | School of Arts, Letters, and the | History                |
-             : Humanities                       :                        :
-             | School of Arts, Letters, and the | Foreign Languages      |
-             : Humanities                       :                        :
-             | School of Engineering            | Mechanical Engineering |
-             | School of Natural Sciences       | Mathematics            |
-             |                                  | Parents & Alumni       |
-             | School of Natural Sciences       | Physics                |
-             | Musical School                   | Piano                  |
-             | School of Arts, Letters, and the | Political Science      |
-             : Humanities                       :                        :
-             | School of Arts, Letters, and the | Psychology             |
-             : Humanities                       :                        :
-             | School of Art and Design         | Studio Art             |
-             | Musical School                   | Strings                |
-             | College of Education             | Teacher Education      |
-             | Musical School                   | Vocals                 |
-             | Musical School                   | Wind                   |
-                                                                 (27 rows)
+             | department                                             |
+            -+--------------------------------------------------------+-
+             | school.name                   | name                   |
+            -+-------------------------------+------------------------+-
+             | School of Business            | Accounting             |
+             | School of Art and Design      | Art History            |
+             | School of Natural Sciences    | Astronomy              |
+             | School of Engineering         | Bioengineering         |
+             |                               | Bursar's Office        |
+             | School of Business            | Capital Markets        |
+             |                               | Career Development     |
+             | School of Natural Sciences    | Chemistry              |
+             | School of Engineering         | Computer Science       |
+             | School of Business            | Corporate Finance      |
+             | College of Education          | Educational Policy     |
+             | School of Engineering         | Electrical Engineering |
+             | School of Arts and Humanities | English                |
+             | School of Arts and Humanities | History                |
+             | School of Arts and Humanities | Foreign Languages      |
+             | School of Engineering         | Mechanical Engineering |
+             | School of Natural Sciences    | Mathematics            |
+             |                               | Parents & Alumni       |
+             | School of Natural Sciences    | Physics                |
+             | School of Music & Dance       | Piano                  |
+             | School of Arts and Humanities | Political Science      |
+             | School of Arts and Humanities | Psychology             |
+             | School of Art and Design      | Studio Art             |
+             | School of Music & Dance       | Strings                |
+             | College of Education          | Teacher Education      |
+             | School of Music & Dance       | Vocals                 |
+             | School of Music & Dance       | Wind                   |
+                                                              (27 rows)
 
              ----
              /department{school.name,name}
@@ -13138,21 +13046,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                  |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-                                                (9 rows)
+             | school                               |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+                                             (9 rows)
 
              ----
              /school{*}
@@ -13165,43 +13072,38 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department                                                                                |
-            -+-------------------------------------------------------------------------------------------+-
-             | school.code | school.name                      | code   | name                   | school |
-            -+-------------+----------------------------------+--------+------------------------+--------+-
-             | bus         | School of Business               | acc    | Accounting             | bus    |
-             | art         | School of Art and Design         | arthis | Art History            | art    |
-             | ns          | School of Natural Sciences       | astro  | Astronomy              | ns     |
-             | egn         | School of Engineering            | be     | Bioengineering         | egn    |
-             |             |                                  | bursar | Bursar's Office        |        |
-             | bus         | School of Business               | capmrk | Capital Markets        | bus    |
-             |             |                                  | career | Career Development     |        |
-             | ns          | School of Natural Sciences       | chem   | Chemistry              | ns     |
-             | egn         | School of Engineering            | comp   | Computer Science       | egn    |
-             | bus         | School of Business               | corpfi | Corporate Finance      | bus    |
-             | edu         | College of Education             | edpol  | Educational Policy     | edu    |
-             | egn         | School of Engineering            | ee     | Electrical Engineering | egn    |
-             | la          | School of Arts, Letters, and the | eng    | English                | la     |
-             :             : Humanities                       :        :                        :        :
-             | la          | School of Arts, Letters, and the | hist   | History                | la     |
-             :             : Humanities                       :        :                        :        :
-             | la          | School of Arts, Letters, and the | lang   | Foreign Languages      | la     |
-             :             : Humanities                       :        :                        :        :
-             | egn         | School of Engineering            | me     | Mechanical Engineering | egn    |
-             | ns          | School of Natural Sciences       | mth    | Mathematics            | ns     |
-             |             |                                  | parent | Parents & Alumni       |        |
-             | ns          | School of Natural Sciences       | phys   | Physics                | ns     |
-             | mus         | Musical School                   | pia    | Piano                  | mus    |
-             | la          | School of Arts, Letters, and the | poli   | Political Science      | la     |
-             :             : Humanities                       :        :                        :        :
-             | la          | School of Arts, Letters, and the | psych  | Psychology             | la     |
-             :             : Humanities                       :        :                        :        :
-             | art         | School of Art and Design         | stdart | Studio Art             | art    |
-             | mus         | Musical School                   | str    | Strings                | mus    |
-             | edu         | College of Education             | tched  | Teacher Education      | edu    |
-             | mus         | Musical School                   | voc    | Vocals                 | mus    |
-             | mus         | Musical School                   | win    | Wind                   | mus    |
-                                                                                                 (27 rows)
+             | department                                                                             |
+            -+----------------------------------------------------------------------------------------+-
+             | school.code | school.name                   | code   | name                   | school |
+            -+-------------+-------------------------------+--------+------------------------+--------+-
+             | bus         | School of Business            | acc    | Accounting             | bus    |
+             | art         | School of Art and Design      | arthis | Art History            | art    |
+             | ns          | School of Natural Sciences    | astro  | Astronomy              | ns     |
+             | egn         | School of Engineering         | be     | Bioengineering         | egn    |
+             |             |                               | bursar | Bursar's Office        |        |
+             | bus         | School of Business            | capmrk | Capital Markets        | bus    |
+             |             |                               | career | Career Development     |        |
+             | ns          | School of Natural Sciences    | chem   | Chemistry              | ns     |
+             | egn         | School of Engineering         | comp   | Computer Science       | egn    |
+             | bus         | School of Business            | corpfi | Corporate Finance      | bus    |
+             | edu         | College of Education          | edpol  | Educational Policy     | edu    |
+             | egn         | School of Engineering         | ee     | Electrical Engineering | egn    |
+             | la          | School of Arts and Humanities | eng    | English                | la     |
+             | la          | School of Arts and Humanities | hist   | History                | la     |
+             | la          | School of Arts and Humanities | lang   | Foreign Languages      | la     |
+             | egn         | School of Engineering         | me     | Mechanical Engineering | egn    |
+             | ns          | School of Natural Sciences    | mth    | Mathematics            | ns     |
+             |             |                               | parent | Parents & Alumni       |        |
+             | ns          | School of Natural Sciences    | phys   | Physics                | ns     |
+             | mus         | School of Music & Dance       | pia    | Piano                  | mus    |
+             | la          | School of Arts and Humanities | poli   | Political Science      | la     |
+             | la          | School of Arts and Humanities | psych  | Psychology             | la     |
+             | art         | School of Art and Design      | stdart | Studio Art             | art    |
+             | mus         | School of Music & Dance       | str    | Strings                | mus    |
+             | edu         | College of Education          | tched  | Teacher Education      | edu    |
+             | mus         | School of Music & Dance       | voc    | Vocals                 | mus    |
+             | mus         | School of Music & Dance       | win    | Wind                   | mus    |
+                                                                                              (27 rows)
 
              ----
              /department{school.*,*}
@@ -13221,21 +13123,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | List of Schools                         |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-                                                (9 rows)
+             | List of Schools                      |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+                                             (9 rows)
 
              ----
              /(school:as('List of Schools'))
@@ -13248,21 +13149,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                           |
-            -+----------------------------------+-
-             | Name                             |
-            -+----------------------------------+-
-             | School of Art and Design         |
-             | School of Business               |
-             | College of Education             |
-             | School of Engineering            |
-             | School of Arts, Letters, and the |
-             : Humanities                       :
-             | School of Modern Art             |
-             | Musical School                   |
-             | School of Natural Sciences       |
-             | School of Continuing Studies     |
-                                         (9 rows)
+             | school                        |
+            -+-------------------------------+-
+             | Name                          |
+            -+-------------------------------+-
+             | School of Art and Design      |
+             | School of Business            |
+             | College of Education          |
+             | School of Engineering         |
+             | School of Arts and Humanities |
+             | School of Music & Dance       |
+             | School of Natural Sciences    |
+             | Public Honorariums            |
+             | School of Continuing Studies  |
+                                      (9 rows)
 
              ----
              /school{name:as(Name)}
@@ -13275,21 +13175,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | List of Schools                                     |
-            -+-----------------------------------------------------+-
-             | Name                             | # of Departments |
-            -+----------------------------------+------------------+-
-             | School of Art and Design         |                2 |
-             | School of Business               |                3 |
-             | College of Education             |                2 |
-             | School of Engineering            |                4 |
-             | School of Arts, Letters, and the |                5 |
-             : Humanities                       :                  :
-             | School of Modern Art             |                0 |
-             | Musical School                   |                4 |
-             | School of Natural Sciences       |                4 |
-             | School of Continuing Studies     |                0 |
-                                                            (9 rows)
+             | List of Schools                                  |
+            -+--------------------------------------------------+-
+             | Name                          | # of Departments |
+            -+-------------------------------+------------------+-
+             | School of Art and Design      |                2 |
+             | School of Business            |                3 |
+             | College of Education          |                2 |
+             | School of Engineering         |                4 |
+             | School of Arts and Humanities |                5 |
+             | School of Music & Dance       |                4 |
+             | School of Natural Sciences    |                4 |
+             | Public Honorariums            |                0 |
+             | School of Continuing Studies  |                0 |
+                                                         (9 rows)
 
              ----
              /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}
@@ -13307,21 +13206,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                           |
-            -+----------------------------------+-
-             | name+                            |
-            -+----------------------------------+-
-             | College of Education             |
-             | Musical School                   |
-             | School of Art and Design         |
-             | School of Arts, Letters, and the |
-             : Humanities                       :
-             | School of Business               |
-             | School of Continuing Studies     |
-             | School of Engineering            |
-             | School of Modern Art             |
-             | School of Natural Sciences       |
-                                         (9 rows)
+             | school                        |
+            -+-------------------------------+-
+             | name+                         |
+            -+-------------------------------+-
+             | College of Education          |
+             | Public Honorariums            |
+             | School of Art and Design      |
+             | School of Arts and Humanities |
+             | School of Business            |
+             | School of Continuing Studies  |
+             | School of Engineering         |
+             | School of Music & Dance       |
+             | School of Natural Sciences    |
+                                      (9 rows)
 
              ----
              /school{name+}
@@ -13594,21 +13492,20 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                           |
-              -+----------------------------------+-
-               | name                             |
-              -+----------------------------------+-
-               | School of Art and Design         |
-               | School of Business               |
-               | College of Education             |
-               | School of Engineering            |
-               | School of Arts, Letters, and the |
-               : Humanities                       :
-               | School of Modern Art             |
-               | Musical School                   |
-               | School of Natural Sciences       |
-               | School of Continuing Studies     |
-                                           (9 rows)
+               | school                        |
+              -+-------------------------------+-
+               | name                          |
+              -+-------------------------------+-
+               | School of Art and Design      |
+               | School of Business            |
+               | College of Education          |
+               | School of Engineering         |
+               | School of Arts and Humanities |
+               | School of Music & Dance       |
+               | School of Natural Sciences    |
+               | Public Honorariums            |
+               | School of Continuing Studies  |
+                                        (9 rows)
 
                ----
                /school{name}
@@ -13620,43 +13517,38 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | department                                                                                |
-              -+-------------------------------------------------------------------------------------------+-
-               | school.code | school.name                      | code   | name                   | school |
-              -+-------------+----------------------------------+--------+------------------------+--------+-
-               | bus         | School of Business               | acc    | Accounting             | bus    |
-               | art         | School of Art and Design         | arthis | Art History            | art    |
-               | ns          | School of Natural Sciences       | astro  | Astronomy              | ns     |
-               | egn         | School of Engineering            | be     | Bioengineering         | egn    |
-               |             |                                  | bursar | Bursar's Office        |        |
-               | bus         | School of Business               | capmrk | Capital Markets        | bus    |
-               |             |                                  | career | Career Development     |        |
-               | ns          | School of Natural Sciences       | chem   | Chemistry              | ns     |
-               | egn         | School of Engineering            | comp   | Computer Science       | egn    |
-               | bus         | School of Business               | corpfi | Corporate Finance      | bus    |
-               | edu         | College of Education             | edpol  | Educational Policy     | edu    |
-               | egn         | School of Engineering            | ee     | Electrical Engineering | egn    |
-               | la          | School of Arts, Letters, and the | eng    | English                | la     |
-               :             : Humanities                       :        :                        :        :
-               | la          | School of Arts, Letters, and the | hist   | History                | la     |
-               :             : Humanities                       :        :                        :        :
-               | la          | School of Arts, Letters, and the | lang   | Foreign Languages      | la     |
-               :             : Humanities                       :        :                        :        :
-               | egn         | School of Engineering            | me     | Mechanical Engineering | egn    |
-               | ns          | School of Natural Sciences       | mth    | Mathematics            | ns     |
-               |             |                                  | parent | Parents & Alumni       |        |
-               | ns          | School of Natural Sciences       | phys   | Physics                | ns     |
-               | mus         | Musical School                   | pia    | Piano                  | mus    |
-               | la          | School of Arts, Letters, and the | poli   | Political Science      | la     |
-               :             : Humanities                       :        :                        :        :
-               | la          | School of Arts, Letters, and the | psych  | Psychology             | la     |
-               :             : Humanities                       :        :                        :        :
-               | art         | School of Art and Design         | stdart | Studio Art             | art    |
-               | mus         | Musical School                   | str    | Strings                | mus    |
-               | edu         | College of Education             | tched  | Teacher Education      | edu    |
-               | mus         | Musical School                   | voc    | Vocals                 | mus    |
-               | mus         | Musical School                   | win    | Wind                   | mus    |
-                                                                                                   (27 rows)
+               | department                                                                             |
+              -+----------------------------------------------------------------------------------------+-
+               | school.code | school.name                   | code   | name                   | school |
+              -+-------------+-------------------------------+--------+------------------------+--------+-
+               | bus         | School of Business            | acc    | Accounting             | bus    |
+               | art         | School of Art and Design      | arthis | Art History            | art    |
+               | ns          | School of Natural Sciences    | astro  | Astronomy              | ns     |
+               | egn         | School of Engineering         | be     | Bioengineering         | egn    |
+               |             |                               | bursar | Bursar's Office        |        |
+               | bus         | School of Business            | capmrk | Capital Markets        | bus    |
+               |             |                               | career | Career Development     |        |
+               | ns          | School of Natural Sciences    | chem   | Chemistry              | ns     |
+               | egn         | School of Engineering         | comp   | Computer Science       | egn    |
+               | bus         | School of Business            | corpfi | Corporate Finance      | bus    |
+               | edu         | College of Education          | edpol  | Educational Policy     | edu    |
+               | egn         | School of Engineering         | ee     | Electrical Engineering | egn    |
+               | la          | School of Arts and Humanities | eng    | English                | la     |
+               | la          | School of Arts and Humanities | hist   | History                | la     |
+               | la          | School of Arts and Humanities | lang   | Foreign Languages      | la     |
+               | egn         | School of Engineering         | me     | Mechanical Engineering | egn    |
+               | ns          | School of Natural Sciences    | mth    | Mathematics            | ns     |
+               |             |                               | parent | Parents & Alumni       |        |
+               | ns          | School of Natural Sciences    | phys   | Physics                | ns     |
+               | mus         | School of Music & Dance       | pia    | Piano                  | mus    |
+               | la          | School of Arts and Humanities | poli   | Political Science      | la     |
+               | la          | School of Arts and Humanities | psych  | Psychology             | la     |
+               | art         | School of Art and Design      | stdart | Studio Art             | art    |
+               | mus         | School of Music & Dance       | str    | Strings                | mus    |
+               | edu         | College of Education          | tched  | Teacher Education      | edu    |
+               | mus         | School of Music & Dance       | voc    | Vocals                 | mus    |
+               | mus         | School of Music & Dance       | win    | Wind                   | mus    |
+                                                                                                (27 rows)
 
                ----
                /department{school.*,*}
@@ -13699,12 +13591,12 @@ tests:
                : Educational Policy               :
                | School of Engineering -          |
                : Electrical Engineering           :
-               | School of Arts, Letters, and the |
-               : Humanities - English             :
-               | School of Arts, Letters, and the |
-               : Humanities - History             :
-               | School of Arts, Letters, and the |
-               : Humanities - Foreign Languages   :
+               | School of Arts and Humanities -  |
+               : English                          :
+               | School of Arts and Humanities -  |
+               : History                          :
+               | School of Arts and Humanities -  |
+               : Foreign Languages                :
                | School of Engineering -          |
                : Mechanical Engineering           :
                | School of Natural Sciences -     |
@@ -13712,18 +13604,19 @@ tests:
                | " - Parents & Alumni"            |
                | School of Natural Sciences -     |
                : Physics                          :
-               | Musical School - Piano           |
-               | School of Arts, Letters, and the |
-               : Humanities - Political Science   :
-               | School of Arts, Letters, and the |
-               : Humanities - Psychology          :
+               | School of Music & Dance - Piano  |
+               | School of Arts and Humanities -  |
+               : Political Science                :
+               | School of Arts and Humanities -  |
+               : Psychology                       :
                | School of Art and Design -       |
                : Studio Art                       :
-               | Musical School - Strings         |
+               | School of Music & Dance -        |
+               : Strings                          :
                | College of Education - Teacher   |
                : Education                        :
-               | Musical School - Vocals          |
-               | Musical School - Wind            |
+               | School of Music & Dance - Vocals |
+               | School of Music & Dance - Wind   |
                                           (27 rows)
 
                ----
@@ -14007,9 +13900,9 @@ tests:
                | edu  |                                   8 |
                | egn  |                                  16 |
                | la   |                                  20 |
-               | mart |                                   0 |
                | mus  |                                   0 |
                | ns   |                                  11 |
+               | ph   |                                   0 |
                | sc   |                                   0 |
                                                      (9 rows)
 
@@ -14207,7 +14100,7 @@ tests:
               -+-------------------------------------+-
                | code | name                         |
               -+------+------------------------------+-
-               | mart | School of Modern Art         |
+               | ph   | Public Honorariums           |
                | sc   | School of Continuing Studies |
                                               (2 rows)
 
@@ -14225,21 +14118,20 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                      |
-              -+-------------------------------------------------------------+-
-               | code | name                             | count(department) |
-              -+------+----------------------------------+-------------------+-
-               | art  | School of Art and Design         |                 2 |
-               | bus  | School of Business               |                 3 |
-               | edu  | College of Education             |                 2 |
-               | egn  | School of Engineering            |                 4 |
-               | la   | School of Arts, Letters, and the |                 5 |
-               :      : Humanities                       :                   :
-               | mart | School of Modern Art             |                 0 |
-               | mus  | Musical School                   |                 4 |
-               | ns   | School of Natural Sciences       |                 4 |
-               | sc   | School of Continuing Studies     |                 0 |
-                                                                      (9 rows)
+               | school                                                   |
+              -+----------------------------------------------------------+-
+               | code | name                          | count(department) |
+              -+------+-------------------------------+-------------------+-
+               | art  | School of Art and Design      |                 2 |
+               | bus  | School of Business            |                 3 |
+               | edu  | College of Education          |                 2 |
+               | egn  | School of Engineering         |                 4 |
+               | la   | School of Arts and Humanities |                 5 |
+               | mus  | School of Music & Dance       |                 4 |
+               | ns   | School of Natural Sciences    |                 4 |
+               | ph   | Public Honorariums            |                 0 |
+               | sc   | School of Continuing Studies  |                 0 |
+                                                                   (9 rows)
 
                ----
                /school{*,count(department)}
@@ -14258,21 +14150,20 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                     |
-              -+----------------------------------------------------------------------------+-
-               | code | name                             | count(department?exists(course)) |
-              -+------+----------------------------------+----------------------------------+-
-               | art  | School of Art and Design         |                                2 |
-               | bus  | School of Business               |                                3 |
-               | edu  | College of Education             |                                2 |
-               | egn  | School of Engineering            |                                4 |
-               | la   | School of Arts, Letters, and the |                                5 |
-               :      : Humanities                       :                                  :
-               | mart | School of Modern Art             |                                0 |
-               | mus  | Musical School                   |                                0 |
-               | ns   | School of Natural Sciences       |                                4 |
-               | sc   | School of Continuing Studies     |                                0 |
-                                                                                     (9 rows)
+               | school                                                                  |
+              -+-------------------------------------------------------------------------+-
+               | code | name                          | count(department?exists(course)) |
+              -+------+-------------------------------+----------------------------------+-
+               | art  | School of Art and Design      |                                2 |
+               | bus  | School of Business            |                                3 |
+               | edu  | College of Education          |                                2 |
+               | egn  | School of Engineering         |                                4 |
+               | la   | School of Arts and Humanities |                                5 |
+               | mus  | School of Music & Dance       |                                0 |
+               | ns   | School of Natural Sciences    |                                4 |
+               | ph   | Public Honorariums            |                                0 |
+               | sc   | School of Continuing Studies  |                                0 |
+                                                                                  (9 rows)
 
                ----
                /school{*,count(department?exists(course))}
@@ -14294,21 +14185,20 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                     |
-              -+----------------------------------------------------------------------------+-
-               | code | name                             | count(department.exists(course)) |
-              -+------+----------------------------------+----------------------------------+-
-               | art  | School of Art and Design         |                                2 |
-               | bus  | School of Business               |                                3 |
-               | edu  | College of Education             |                                2 |
-               | egn  | School of Engineering            |                                4 |
-               | la   | School of Arts, Letters, and the |                                5 |
-               :      : Humanities                       :                                  :
-               | mart | School of Modern Art             |                                0 |
-               | mus  | Musical School                   |                                0 |
-               | ns   | School of Natural Sciences       |                                4 |
-               | sc   | School of Continuing Studies     |                                0 |
-                                                                                     (9 rows)
+               | school                                                                  |
+              -+-------------------------------------------------------------------------+-
+               | code | name                          | count(department.exists(course)) |
+              -+------+-------------------------------+----------------------------------+-
+               | art  | School of Art and Design      |                                2 |
+               | bus  | School of Business            |                                3 |
+               | edu  | College of Education          |                                2 |
+               | egn  | School of Engineering         |                                4 |
+               | la   | School of Arts and Humanities |                                5 |
+               | mus  | School of Music & Dance       |                                0 |
+               | ns   | School of Natural Sciences    |                                4 |
+               | ph   | Public Honorariums            |                                0 |
+               | sc   | School of Continuing Studies  |                                0 |
+                                                                                  (9 rows)
 
                ----
                /school{*,count(department.exists(course))}
@@ -14338,9 +14228,9 @@ tests:
                | edu  |                 2 |              7 |
                | egn  |                 4 |              8 |
                | la   |                 5 |              9 |
-               | mart |                 0 |              1 |
                | mus  |                 4 |              0 |
                | ns   |                 4 |              3 |
+               | ph   |                 0 |              1 |
                | sc   |                 0 |              0 |
                                                     (9 rows)
 
@@ -14422,9 +14312,9 @@ tests:
                | arthis | art         |                     3 |                     3 |
                | astro  | ns          |                     3 |                     3 |
                | be     | egn         |                     8 |                     8 |
-               | bursar |             |                     0 |                       |
+               | bursar |             |                     0 |                     0 |
                | capmrk | bus         |                     5 |                     5 |
-               | career |             |                     0 |                       |
+               | career |             |                     0 |                     0 |
                | chem   | ns          |                     3 |                     3 |
                | comp   | egn         |                     8 |                     8 |
                | corpfi | bus         |                     5 |                     5 |
@@ -14435,7 +14325,7 @@ tests:
                | lang   | la          |                     9 |                     9 |
                | me     | egn         |                     8 |                     8 |
                | mth    | ns          |                     3 |                     3 |
-               | parent |             |                     0 |                       |
+               | parent |             |                     0 |                     0 |
                | phys   | ns          |                     3 |                     3 |
                | pia    | mus         |                     0 |                     0 |
                | poli   | la          |                     9 |                     9 |
@@ -14674,8 +14564,8 @@ tests:
                | edu                 | psci                  |                           1 |
                | egn                 | ucompsci              |                           4 |
                | la                  | gengl                 |                           3 |
-               | mart                | bmart                 |                           0 |
                | ns                  | uphys                 |                           5 |
+               | ph                  | phd                   |                           0 |
                                                                                    (13 rows)
 
                ----
@@ -14751,21 +14641,20 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                               |
-              -+------------------------------------------------------------------------------------------------------+-
-               | code | name                             | this(){code}?name!~'art' | root().school{code}?name!~'art' |
-              -+------+----------------------------------+--------------------------+---------------------------------+-
-               | art  | School of Art and Design         |                          |                                 |
-               | bus  | School of Business               | bus                      | bus                             |
-               | edu  | College of Education             | edu                      | edu                             |
-               | egn  | School of Engineering            | egn                      | egn                             |
-               | la   | School of Arts, Letters, and the |                          |                                 |
-               :      : Humanities                       :                          :                                 :
-               | mart | School of Modern Art             |                          |                                 |
-               | mus  | Musical School                   | mus                      | mus                             |
-               | ns   | School of Natural Sciences       | ns                       | ns                              |
-               | sc   | School of Continuing Studies     | sc                       | sc                              |
-                                                                                                               (9 rows)
+               | school                                                                                            |
+              -+---------------------------------------------------------------------------------------------------+-
+               | code | name                          | this(){code}?name!~'art' | root().school{code}?name!~'art' |
+              -+------+-------------------------------+--------------------------+---------------------------------+-
+               | art  | School of Art and Design      |                          |                                 |
+               | bus  | School of Business            | bus                      | bus                             |
+               | edu  | College of Education          | edu                      | edu                             |
+               | egn  | School of Engineering         | egn                      | egn                             |
+               | la   | School of Arts and Humanities |                          |                                 |
+               | mus  | School of Music & Dance       | mus                      | mus                             |
+               | ns   | School of Natural Sciences    | ns                       | ns                              |
+               | ph   | Public Honorariums            | ph                       | ph                              |
+               | sc   | School of Continuing Studies  | sc                       | sc                              |
+                                                                                                            (9 rows)
 
                ----
                /school{code,name,this(){code}?name!~'art',root().school{code}?name!~'art'}
@@ -14784,21 +14673,20 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                       |
-              -+----------------------------------------------------------------------------------------------+-
-               | name                             | count(department) | this(){count(department)}?name!~'art' |
-              -+----------------------------------+-------------------+---------------------------------------+-
-               | School of Art and Design         |                 2 |                                       |
-               | School of Business               |                 3 |                                     3 |
-               | College of Education             |                 2 |                                     2 |
-               | School of Engineering            |                 4 |                                     4 |
-               | School of Arts, Letters, and the |                 5 |                                       |
-               : Humanities                       :                   :                                       :
-               | School of Modern Art             |                 0 |                                       |
-               | Musical School                   |                 4 |                                     4 |
-               | School of Natural Sciences       |                 4 |                                     4 |
-               | School of Continuing Studies     |                 0 |                                     0 |
-                                                                                                       (9 rows)
+               | school                                                                                    |
+              -+-------------------------------------------------------------------------------------------+-
+               | name                          | count(department) | this(){count(department)}?name!~'art' |
+              -+-------------------------------+-------------------+---------------------------------------+-
+               | School of Art and Design      |                 2 |                                     0 |
+               | School of Business            |                 3 |                                     3 |
+               | College of Education          |                 2 |                                     2 |
+               | School of Engineering         |                 4 |                                     4 |
+               | School of Arts and Humanities |                 5 |                                     0 |
+               | School of Music & Dance       |                 4 |                                     4 |
+               | School of Natural Sciences    |                 4 |                                     4 |
+               | Public Honorariums            |                 0 |                                     0 |
+               | School of Continuing Studies  |                 0 |                                     0 |
+                                                                                                    (9 rows)
 
                ----
                /school{name,count(department),this(){count(department)}?name!~'art'}
@@ -14827,21 +14715,20 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                         |
-              -+------------------------------------------------------------------------------------------------+-
-               | name                             | exists(department) | this(){exists(department)}?name!~'art' |
-              -+----------------------------------+--------------------+----------------------------------------+-
-               | School of Art and Design         | true               |                                        |
-               | School of Business               | true               | true                                   |
-               | College of Education             | true               | true                                   |
-               | School of Engineering            | true               | true                                   |
-               | School of Arts, Letters, and the | true               |                                        |
-               : Humanities                       :                    :                                        :
-               | School of Modern Art             | false              |                                        |
-               | Musical School                   | true               | true                                   |
-               | School of Natural Sciences       | true               | true                                   |
-               | School of Continuing Studies     | false              | false                                  |
-                                                                                                         (9 rows)
+               | school                                                                                      |
+              -+---------------------------------------------------------------------------------------------+-
+               | name                          | exists(department) | this(){exists(department)}?name!~'art' |
+              -+-------------------------------+--------------------+----------------------------------------+-
+               | School of Art and Design      | true               |                                        |
+               | School of Business            | true               | true                                   |
+               | College of Education          | true               | true                                   |
+               | School of Engineering         | true               | true                                   |
+               | School of Arts and Humanities | true               |                                        |
+               | School of Music & Dance       | true               | true                                   |
+               | School of Natural Sciences    | true               | true                                   |
+               | Public Honorariums            | false              | false                                  |
+               | School of Continuing Studies  | false              | false                                  |
+                                                                                                      (9 rows)
 
                ----
                /school{name,exists(department),this(){exists(department)}?name!~'art'}
@@ -14902,10 +14789,10 @@ tests:
               ["bus", "School of Business"],
               ["edu", "College of Education"],
               ["egn", "School of Engineering"],
-              ["la", "School of Arts, Letters, and the Humanities"],
-              ["mart", "School of Modern Art"],
-              ["mus", "Musical School"],
+              ["la", "School of Arts and Humanities"],
+              ["mus", "School of Music & Dance"],
               ["ns", "School of Natural Sciences"],
+              ["ph", "Public Honorariums"],
               ["sc", "School of Continuing Studies"]
             ]
         - uri: /school/:csv
@@ -14914,29 +14801,28 @@ tests:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="(school).csv"]
           body: "code,name\r\nart,School of Art and Design\r\nbus,School of Business\r\nedu,College
-            of Education\r\negn,School of Engineering\r\nla,\"School of Arts, Letters,
-            and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical School\r\nns,School
-            of Natural Sciences\r\nsc,School of Continuing Studies\r\n"
+            of Education\r\negn,School of Engineering\r\nla,School of Arts and Humanities\r\nmus,School
+            of Music & Dance\r\nns,School of Natural Sciences\r\nph,Public Honorariums\r\nsc,School
+            of Continuing Studies\r\n"
         - uri: /school/:txt
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                  |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-                                                (9 rows)
+             | school                               |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+                                             (9 rows)
 
              ----
              /school/:txt
@@ -14989,10 +14875,10 @@ tests:
             <tr class="even"><td>bus</td><td>School of Business</td></tr>
             <tr class="odd"><td>edu</td><td>College of Education</td></tr>
             <tr class="even"><td>egn</td><td>School of Engineering</td></tr>
-            <tr class="odd"><td>la</td><td>School of Arts, Letters, and the Humanities</td></tr>
-            <tr class="even"><td>mart</td><td>School of Modern Art</td></tr>
-            <tr class="odd"><td>mus</td><td>Musical School</td></tr>
-            <tr class="even"><td>ns</td><td>School of Natural Sciences</td></tr>
+            <tr class="odd"><td>la</td><td>School of Arts and Humanities</td></tr>
+            <tr class="even"><td>mus</td><td>School of Music &amp; Dance</td></tr>
+            <tr class="odd"><td>ns</td><td>School of Natural Sciences</td></tr>
+            <tr class="even"><td>ph</td><td>Public Honorariums</td></tr>
             <tr class="odd"><td>sc</td><td>School of Continuing Studies</td></tr>
             <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
             </tr>
@@ -15022,10 +14908,10 @@ tests:
               ["bus", "School of Business"],
               ["edu", "College of Education"],
               ["egn", "School of Engineering"],
-              ["la", "School of Arts, Letters, and the Humanities"],
-              ["mart", "School of Modern Art"],
-              ["mus", "Musical School"],
+              ["la", "School of Arts and Humanities"],
+              ["mus", "School of Music & Dance"],
               ["ns", "School of Natural Sciences"],
+              ["ph", "Public Honorariums"],
               ["sc", "School of Continuing Studies"]
             ]
         - uri: /school
@@ -15034,29 +14920,28 @@ tests:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="(school).csv"]
           body: "code,name\r\nart,School of Art and Design\r\nbus,School of Business\r\nedu,College
-            of Education\r\negn,School of Engineering\r\nla,\"School of Arts, Letters,
-            and the Humanities\"\r\nmart,School of Modern Art\r\nmus,Musical School\r\nns,School
-            of Natural Sciences\r\nsc,School of Continuing Studies\r\n"
+            of Education\r\negn,School of Engineering\r\nla,School of Arts and Humanities\r\nmus,School
+            of Music & Dance\r\nns,School of Natural Sciences\r\nph,Public Honorariums\r\nsc,School
+            of Continuing Studies\r\n"
         - uri: /school
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                  |
-            -+-----------------------------------------+-
-             | code | name                             |
-            -+------+----------------------------------+-
-             | art  | School of Art and Design         |
-             | bus  | School of Business               |
-             | edu  | College of Education             |
-             | egn  | School of Engineering            |
-             | la   | School of Arts, Letters, and the |
-             :      : Humanities                       :
-             | mart | School of Modern Art             |
-             | mus  | Musical School                   |
-             | ns   | School of Natural Sciences       |
-             | sc   | School of Continuing Studies     |
-                                                (9 rows)
+             | school                               |
+            -+--------------------------------------+-
+             | code | name                          |
+            -+------+-------------------------------+-
+             | art  | School of Art and Design      |
+             | bus  | School of Business            |
+             | edu  | College of Education          |
+             | egn  | School of Engineering         |
+             | la   | School of Arts and Humanities |
+             | mus  | School of Music & Dance       |
+             | ns   | School of Natural Sciences    |
+             | ph   | Public Honorariums            |
+             | sc   | School of Continuing Studies  |
+                                             (9 rows)
 
              ----
              /school
@@ -15109,10 +14994,10 @@ tests:
             <tr class="even"><td>bus</td><td>School of Business</td></tr>
             <tr class="odd"><td>edu</td><td>College of Education</td></tr>
             <tr class="even"><td>egn</td><td>School of Engineering</td></tr>
-            <tr class="odd"><td>la</td><td>School of Arts, Letters, and the Humanities</td></tr>
-            <tr class="even"><td>mart</td><td>School of Modern Art</td></tr>
-            <tr class="odd"><td>mus</td><td>Musical School</td></tr>
-            <tr class="even"><td>ns</td><td>School of Natural Sciences</td></tr>
+            <tr class="odd"><td>la</td><td>School of Arts and Humanities</td></tr>
+            <tr class="even"><td>mus</td><td>School of Music &amp; Dance</td></tr>
+            <tr class="odd"><td>ns</td><td>School of Natural Sciences</td></tr>
+            <tr class="even"><td>ph</td><td>Public Honorariums</td></tr>
             <tr class="odd"><td>sc</td><td>School of Continuing Studies</td></tr>
             <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
             </tr>
@@ -15136,10 +15021,10 @@ tests:
               ["School of Business", 3],
               ["College of Education", 2],
               ["School of Engineering", 4],
-              ["School of Arts, Letters, and the Humanities", 5],
-              ["School of Modern Art", 0],
-              ["Musical School", 4],
+              ["School of Arts and Humanities", 5],
+              ["School of Music & Dance", 4],
               ["School of Natural Sciences", 4],
+              ["Public Honorariums", 0],
               ["School of Continuing Studies", 0]
             ]
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
@@ -15150,30 +15035,29 @@ tests:
           - [Content-Disposition, 'attachment; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
               of Departments'')}).csv"']
           body: "Name,# of Departments\r\nSchool of Art and Design,2\r\nSchool of
-            Business,3\r\nCollege of Education,2\r\nSchool of Engineering,4\r\n\"School
-            of Arts, Letters, and the Humanities\",5\r\nSchool of Modern Art,0\r\nMusical
-            School,4\r\nSchool of Natural Sciences,4\r\nSchool of Continuing Studies,0\r\n"
+            Business,3\r\nCollege of Education,2\r\nSchool of Engineering,4\r\nSchool
+            of Arts and Humanities,5\r\nSchool of Music & Dance,4\r\nSchool of Natural
+            Sciences,4\r\nPublic Honorariums,0\r\nSchool of Continuing Studies,0\r\n"
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:txt
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | List of Schools                                     |
-            -+-----------------------------------------------------+-
-             | Name                             | # of Departments |
-            -+----------------------------------+------------------+-
-             | School of Art and Design         |                2 |
-             | School of Business               |                3 |
-             | College of Education             |                2 |
-             | School of Engineering            |                4 |
-             | School of Arts, Letters, and the |                5 |
-             : Humanities                       :                  :
-             | School of Modern Art             |                0 |
-             | Musical School                   |                4 |
-             | School of Natural Sciences       |                4 |
-             | School of Continuing Studies     |                0 |
-                                                            (9 rows)
+             | List of Schools                                  |
+            -+--------------------------------------------------+-
+             | Name                          | # of Departments |
+            -+-------------------------------+------------------+-
+             | School of Art and Design      |                2 |
+             | School of Business            |                3 |
+             | College of Education          |                2 |
+             | School of Engineering         |                4 |
+             | School of Arts and Humanities |                5 |
+             | School of Music & Dance       |                4 |
+             | School of Natural Sciences    |                4 |
+             | Public Honorariums            |                0 |
+             | School of Continuing Studies  |                0 |
+                                                         (9 rows)
 
              ----
              /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}/:txt
@@ -15232,10 +15116,10 @@ tests:
             <tr class="even"><td>School of Business</td><td class="number">3</td></tr>
             <tr class="odd"><td>College of Education</td><td class="number">2</td></tr>
             <tr class="even"><td>School of Engineering</td><td class="number">4</td></tr>
-            <tr class="odd"><td>School of Arts, Letters, and the Humanities</td><td class="number">5</td></tr>
-            <tr class="even"><td>School of Modern Art</td><td class="number">0</td></tr>
-            <tr class="odd"><td>Musical School</td><td class="number">4</td></tr>
-            <tr class="even"><td>School of Natural Sciences</td><td class="number">4</td></tr>
+            <tr class="odd"><td>School of Arts and Humanities</td><td class="number">5</td></tr>
+            <tr class="even"><td>School of Music &amp; Dance</td><td class="number">4</td></tr>
+            <tr class="odd"><td>School of Natural Sciences</td><td class="number">4</td></tr>
+            <tr class="even"><td>Public Honorariums</td><td class="number">0</td></tr>
             <tr class="odd"><td>School of Continuing Studies</td><td class="number">0</td></tr>
             <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
             </tr>
