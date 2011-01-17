@@ -50,10 +50,10 @@ CREATE TABLE program (
       CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
     CONSTRAINT program_school_fk
       FOREIGN KEY (school)
-      REFERENCES school(code)
---  CONSTRAINT program_part_of_fk
---    FOREIGN KEY (school, part_of )
---    REFERENCES program(school, code)
+      REFERENCES school(code),
+    CONSTRAINT program_part_of_fk
+      FOREIGN KEY (school, part_of )
+      REFERENCES program(school, code)
 );
 
 CREATE TABLE course (

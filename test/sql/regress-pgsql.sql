@@ -102,10 +102,10 @@ CREATE TABLE ad.program (
       CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
     CONSTRAINT program_school_fk
       FOREIGN KEY (school)
-      REFERENCES ad.school(code)
---  CONSTRAINT program_part_of_fk
---    FOREIGN KEY (school, part_of)
---    REFERENCES ad.program(school, code)
+      REFERENCES ad.school(code),
+   CONSTRAINT program_part_of_fk
+      FOREIGN KEY (school, part_of)
+      REFERENCES ad.program(school, code)
 );
 
 CREATE TABLE ad.course (
