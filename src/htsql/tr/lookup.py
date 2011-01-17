@@ -246,6 +246,11 @@ class LookupItemizeTableMixin(object):
                 idx = fk.origin_column_names.index(column.name)
                 target_column_name = fk.target_column_names[idx]
                 target_column = target.columns[target_column_name]
+                # Ignore the case whan the column points to itself.  This may
+                # actually happen when the foreign key is multicolumn
+                # self-referential link.
+                if target_column is column:
+                    continue
                 # We got a chain extension.  Add it to the list of candidate
                 # chains and to the queue of potentially extendable chains.
                 candidate = path+[fk]
