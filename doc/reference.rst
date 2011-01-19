@@ -1,6 +1,53 @@
-==============================
-  HTSQL 2.0 Function Summary
-==============================
+====================
+  HTSQL Reference
+====================
+
+Grammar
+=======
+
+This is the HTSQL grammar::
+
+        query        ::= '/' segment? format?
+        segment      ::= selector | specifier selector? filter?
+        filter       ::= '?' test
+        format       ::= '/' ':' identifier
+
+        test         ::= test direction | test application | or_test
+        direction    ::= ( '+' | '-' )
+        application  ::= ':' identifier ( or_test | call )?
+        or_test      ::= and_test ( '|' and_test )*
+        and_test     ::= implies_test ( '&' implies_test )*
+        implies_test ::= unary_test ( '->' unary_test )?
+        unary_test   ::= '!' unary_test | comparison
+
+        comparison   ::= expression ( ( '=~~' | '=~' | '^~~' | '^~' |
+                                        '$~~' | '$~' | '~~' | '~' |
+                                        '!=~~' | '!=~' | '!^~~' | '!^~' |
+                                        '!$~~' | '!$~' | '!~~' | '!~' |
+                                        '<=' | '<' | '>=' |  '>' |
+                                        '==' | '=' | '!==' | '!=' )
+                                      expression )?
+
+        expression   ::= term ( ( '+' | '-' ) term )*
+        term         ::= factor ( ( '*' | '/' ) factor )*
+        factor       ::= ( '+' | '-' ) factor | power
+        power        ::= sieve ( '^' power )?
+
+        sieve        ::= specifier selector? filter?
+        specifier    ::= atom ( '.' identifier call? )* ( '.' '*' )?
+        atom         ::= '*' | selector | group | identifier call? | literal
+
+        group        ::= '(' test ')'
+        call         ::= '(' tests? ')'
+        selector     ::= '{' tests? '}'
+        tests        ::= test ( ',' test )* ','?
+
+        identifier   ::= NAME
+        literal      ::= STRING | NUMBER
+
+
+Function Summary
+================
 
 A few observations about HTSQL's function and operator usage:
 
@@ -19,7 +66,7 @@ A few observations about HTSQL's function and operator usage:
 
 
 String Functions
-================
+----------------
 
 By convention, string functions take a string as its first parameter.
 When an untyped literal, such as ``'value'`` is used and a string is
