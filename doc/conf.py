@@ -92,6 +92,10 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+# A string to include at the beginning of every reStructuredText source file.
+rst_prolog = """
+:tocdepth: 2
+"""
 
 # -- Options for HTML output ---------------------------------------------------
 
