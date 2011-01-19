@@ -10,10 +10,9 @@
 .. toctree::
    :maxdepth: 2
 
+   showcase
    tutorial
-   examples
    reference
-   funccard
    roadmap
    api
 
