@@ -2113,6 +2113,56 @@ tests:
              WHERE ("program"."school" = 'egn')
                    AND ("program"."code" = 'umech')
              ORDER BY "program"."school" ASC, "program"."code" ASC
+        - uri: /(program?school='egn'&code='umech').part_of
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (program?school='egn'&code='umech').part_of                       |
+            -+-------------------------------------------------------------------+-
+             | school | code | title                          | degree | part_of |
+            -+--------+------+--------------------------------+--------+---------+-
+             | egn    | gme  | M.S. in Mechanical Engineering | ms     |         |
+                                                                           (1 row)
+
+             ----
+             /(program?school='egn'&code='umech').part_of
+             SELECT "program_2"."school",
+                    "program_2"."code",
+                    "program_2"."title",
+                    "program_2"."degree",
+                    "program_2"."part_of"
+             FROM "program" AS "program_1"
+                  INNER JOIN "program" AS "program_2"
+                             ON (("program_1"."school" = "program_2"."school") AND ("program_1"."part_of" = "program_2"."code"))
+             WHERE ("program_1"."school" = 'egn')
+                   AND ("program_1"."code" = 'umech')
+             ORDER BY "program_1"."school" ASC, "program_1"."code" ASC
+        - uri: /(program?school='egn'&code='umech').program
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (program?school='egn'&code='umech').program                       |
+            -+-------------------------------------------------------------------+-
+             | school | code | title                          | degree | part_of |
+            -+--------+------+--------------------------------+--------+---------+-
+             | egn    | gme  | M.S. in Mechanical Engineering | ms     |         |
+                                                                           (1 row)
+
+             ----
+             /(program?school='egn'&code='umech').program
+             SELECT "program_2"."school",
+                    "program_2"."code",
+                    "program_2"."title",
+                    "program_2"."degree",
+                    "program_2"."part_of"
+             FROM "program" AS "program_1"
+                  INNER JOIN "program" AS "program_2"
+                             ON (("program_1"."school" = "program_2"."school") AND ("program_1"."part_of" = "program_2"."code"))
+             WHERE ("program_1"."school" = 'egn')
+                   AND ("program_1"."code" = 'umech')
+             ORDER BY "program_1"."school" ASC, "program_1"."code" ASC
         - uri: /(program?school='egn'&code='umech').student
           status: 200 OK
           headers:

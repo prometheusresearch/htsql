@@ -53,6 +53,12 @@ tests:
 
   # Program -> School (parental)
   - uri: /(program?school='egn'&code='umech').school
+  # Program -> Program (singular, self-referencial)
+  - uri: /(program?school='egn'&code='umech').part_of
+  # Program -> Program (reverse self-referential)
+  # FIXME: broken! No way to indicate a reverse self-referential link.
+  # The query below, in fact, produces a direct self-referential link.
+  - uri: /(program?school='egn'&code='umech').program
   # Program -> Student
   - uri: /(program?school='egn'&code='umech').student
   # Program -> Program Requirement
