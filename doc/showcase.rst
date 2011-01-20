@@ -1,24 +1,64 @@
-===================
+*******************
   HTSQL Showcase
-===================
+*******************
+
+What is HTSQL?
+==============
 
 HTSQL supports parsimonious database reporting and self-documenting
-dashboards.  By reducing query construction complexity, HTSQL enables a
-new level of service for your existing databases. 
+dashboards.  By reducing query construction complexity, HTSQL enables
+a new level of service for your existing databases.
 
-Easy Dashboarding
-=================
+HTSQL is a Web Query Language
+-----------------------------
 
-The following example dashboard is a 3-level drill down (``school``,
-``department`` and ``course``) for a university schema. Here is a
-screenshot, the complete source code, and link to a live demo:
+.. sourcecode:: htsql
 
-.. image:: htraf-screenshot.png
+   /school
+
+.. image:: img/show_school.png
+   :alt: output of /school query
+   :target: http://demo.htsql.org/school
+
+HTSQL is a REST query language for the web.  Queries *are* URLs_ that
+can be directly typed into a browser.  The default output format of the
+request depends upon the user-agent and its Accept_ header.
+
+.. _Accept: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+.. _URLs: http://www.ietf.org/rfc/rfc3986.txt
+
+HTSQL is a Relational Database Gateway
+--------------------------------------
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /school
+
+   .. sourcecode:: sql
+
+      SELECT code, name
+      FROM ad.school
+      ORDER BY code;
+
+HTSQL provides access to relational databases via web service.  It
+translates a URL into corresponding SQL, executes this query against the
+database, and returns the result as formatted as requested by the user
+agent.  For example, this example query (A1_) returns all rows and all
+columns for the ``school`` table formatted for the given user agent.
+
+.. _A1: http://demo.htsql.org/school
+
+HTSQL Makes Dashboarding Easy
+-----------------------------
+
+.. image:: img/htraf_screenshot.png
    :alt: The HTRAF demo
    :align: right
    :target: http://htraf.htsql.org/
 
-.. code-block:: html
+.. sourcecode:: html
 
     <body>
         <h3>Select School</h3>
@@ -50,7 +90,9 @@ screenshot, the complete source code, and link to a live demo:
                data-source="/course?department=$department"/>
     </body>
 
-See a live demo at http://htraf.htsql.org/.
+The dashboard above (using the JQuery HTRAF toolkit) shows a 3-level
+drill down (``school``, ``department`` and ``course``) for a university
+schema.  The live demo for this dashboard is at http://htraf.htsql.org/. 
 
 Basic Queries
 =============
@@ -174,7 +216,7 @@ Schools with programs
 .. _A6: http://demo.htsql.org/school?exists(program)
 
 
-Advanced queries
+Advanced Queries
 ================
 
 
