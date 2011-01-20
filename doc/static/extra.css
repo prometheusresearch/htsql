@@ -1,7 +1,20 @@
 
-div.vsplit div {
-  width: 49%;
+div.vsplit:after {
+  visibility: hidden;
+  display: block;
+  font-size: 0;
+  content: " ";
+  clear: both;
+  height: 0;
+}
+
+div.vsplit > *:first-child {
+  width: 45%;
   float: left;
-  background: transparent;
+}
+
+div.vsplit > *:first-child +* {
+  width: 45%;
+  float: right;
 }
 
