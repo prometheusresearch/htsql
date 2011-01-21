@@ -22,8 +22,10 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.graphviz']
+sys.path.append(os.path.abspath('extensions'))
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.graphviz', 'htsqldoc']
 graphviz_output_format = 'svg'
+htsql_server = 'http://demo.htsql.org'
 
 # Sort automatically documented members by source order (requires Sphinx 1.0).
 autodoc_member_order = 'bysource'

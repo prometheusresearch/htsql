@@ -20,3 +20,14 @@ div.vsplit > *:first-child +* {
   font-size: 95%;
 }
 
+div.htsql-output {
+  max-height: 10em;
+  overflow: auto;
+  display: none;
+}
+
+div.htsql-toggle {
+  float: right;
+  cursor: pointer
+}
+

@@ -2,6 +2,7 @@
   HTSQL Showcase
 ******************
 
+
 What is HTSQL?
 ==============
 
@@ -88,8 +89,8 @@ were a database assembly language.
 Show me this HTSQL!
 ===================
 
-HTSQL was designed from the ground up as a self-serve reporting tool 
-for data analysts.  With HTSQL, the easy stuff is truly easy; and, 
+HTSQL was designed from the ground up as a self-serve reporting tool
+for data analysts.  With HTSQL, the easy stuff is truly easy; and,
 well, complex stuff is easy too.
 
 Database Introspection
@@ -351,6 +352,7 @@ HTSQL reduces the number of meetings in your organization::
 HTSQL is a common language usable by software developers, data analysts,
 database administrators, and even business users.
 
+
 What's up Next?
 ===============
 
@@ -390,9 +392,9 @@ HTSQL is not limited to tabular output.
 
    .. sourcecode:: htsql
 
-      /school{name, 
-          /program{title}, 
-          /department{name}}
+      /school{name,
+              /program{title},
+              /department{name}}
 
    .. sourcecode:: sql
 
@@ -426,6 +428,6 @@ The current release of HTSQL supports PostgreSQL and SQLite.
 Subsequent releases will add support for MySQL, Oracle and
 Microsoft SQL Server.
 
-The challenge here is providing consistent function definitions 
+The challenge here is providing consistent function definitions
 and semantics that work across various SQL database systems.
 
