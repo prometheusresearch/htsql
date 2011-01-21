@@ -25,7 +25,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -51,19 +51,19 @@ tests:
              | acc    | Accounting             | bus    |
              | arthis | Art History            | art    |
              | astro  | Astronomy              | ns     |
-             | be     | Bioengineering         | egn    |
+             | be     | Bioengineering         | eng    |
              | bursar | Bursar's Office        |        |
              | capmrk | Capital Markets        | bus    |
              | career | Career Development     |        |
              | chem   | Chemistry              | ns     |
-             | comp   | Computer Science       | egn    |
+             | comp   | Computer Science       | eng    |
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
-             | ee     | Electrical Engineering | egn    |
+             | ee     | Electrical Engineering | eng    |
              | eng    | English                | la     |
              | hist   | History                | la     |
              | lang   | Foreign Languages      | la     |
-             | me     | Mechanical Engineering | egn    |
+             | me     | Mechanical Engineering | eng    |
              | mth    | Mathematics            | ns     |
              | parent | Parents & Alumni       |        |
              | phys   | Physics                | ns     |
@@ -114,14 +114,14 @@ tests:
              :        :          : Education                        :        :         :
              | edu    | usci     | Bachelor of Arts in Science      | ba     |         |
              :        :          : Education                        :        :         :
-             | egn    | gbe      | M.S. in Bioengineering           | ms     |         |
-             | egn    | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | egn    | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | egn    | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | egn    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | egn    | ucompsci | B.S. in Computer Science         | bs     |         |
-             | egn    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | egn    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+             | eng    | gbe      | M.S. in Bioengineering           | ms     |         |
+             | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |
+             | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |
+             | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |
+             | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+             | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+             | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+             | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
              | la     | gengl    | Master of Arts in English        | ma     |         |
              | la     | glang    | Master of Arts in Modern         | ma     |         |
              :        :          : Languages                        :        :         :
@@ -1041,36 +1041,36 @@ tests:
             |  12328 | Karen Yuen             | f      | 1991-09-10 | ns     | uphys
             \   | 2007-05-16 | true      |\n |  12738 | Helmut Dietmark        | m
             \     | 1989-11-27 | edu    | psci     | 2008-03-17 | true      |\n |
-            \ 12837 | Christine Leung        | f      | 1991-06-06 | egn    | gme
+            \ 12837 | Christine Leung        | f      | 1991-06-06 | eng    | gme
             \     | 2009-08-17 | true      |\n |  13723 | Narissa Maya           |
             f      | 1992-04-30 | la     | upsych   | 2007-11-21 | false     |\n |
             \ 17283 | Lucy Ryong             | f      | 1988-01-25 | edu    | gedu
             \    | 2009-01-27 | true      |\n |  17385 | Valeria Rinaldi        |
             f      | 1985-09-02 | bus    | pcap     | 2004-09-01 | false     |\n |
-            \ 20927 | Glenn L. McNair        | m      | 1987-12-13 | egn    | gee
+            \ 20927 | Glenn L. McNair        | m      | 1987-12-13 | eng    | gee
             \     | 2009-08-23 | true      |\n |  21135 | Luis Riviera Espinoza  |
-            m      | 1993-05-21 | egn    | gbe      | 2010-02-19 | true      |\n |
+            m      | 1993-05-21 | eng    | gbe      | 2010-02-19 | true      |\n |
             \ 21166 | Laura Elmer Long       | f      | 1991-02-14 | ns     | uastro
             \  | 2009-01-31 | true      |\n |  21263 | Ari Ben David          | m
             \     | 1989-03-15 | la     | gengl    | 2006-12-15 | true      |\n |
             \ 21837 | Jalene Flambeau        | f      | 1989-03-23 | art    | gart
             \    | 2010-06-11 | true      |\n |  22313 | James Earl Sims III    |
-            m      | 2002-07-06 | egn    | umech    | 2004-08-16 | true      |\n |
+            m      | 2002-07-06 | eng    | umech    | 2004-08-16 | true      |\n |
             \ 23137 | Rachel Feld            | f      | 1992-09-27 | ns     | uchem
             \   | 2008-12-23 | true      |\n |  23817 | Benjamin Wen           | m
             \     | 1993-12-16 | la     | uhist    | 2009-01-12 | true      |\n |
-            \ 24431 | Annette Dupree         | f      | 1987-01-28 | egn    | umech
+            \ 24431 | Annette Dupree         | f      | 1987-01-28 | eng    | umech
             \   | 2006-01-16 | true      |\n |  24672 | Mahesh Basa            | m
-            \     | 1995-08-21 | egn    | ucompsci | 2008-04-15 | false     |\n |
-            \ 25371 | John L. Hanley         | m      | 1990-04-28 | egn    | gbuseng
+            \     | 1995-08-21 | eng    | ucompsci | 2008-04-15 | false     |\n |
+            \ 25371 | John L. Hanley         | m      | 1990-04-28 | eng    | gbuseng
             \ | 2009-07-15 | true      |\n |  25723 | Kumar Suresh           | m      |
-            1994-09-11 | egn    | ucompsci | 2009-08-23 | true      |\n |  26743 |
+            1994-09-11 | eng    | ucompsci | 2009-08-23 | true      |\n |  26743 |
             Ulf Knudsen            | m      | 1990-11-14 | ns     | uphys    | 2008-04-27
             | true      |\n |  26764 | Bernard Careval        | m      | 1992-08-23
             | art    | gart     | 2008-07-30 | true      |\n |  27138 | Artem Karpov
-            \          | m      | 1991-10-16 | egn    | gbe      | 2009-08-22 | true
+            \          | m      | 1991-10-16 | eng    | gbe      | 2009-08-22 | true
             \     |\n |  27281 | Jos\xE9 N. Marte\xF1es       | m      | 1993-11-19
-            | egn    | ucompsci | 2007-06-15 | true      |\n |  27817 | Niall Crawford
+            | eng    | ucompsci | 2007-06-15 | true      |\n |  27817 | Niall Crawford
             \        | m      | 1998-12-14 | bus    | pacc     | 2010-01-02 | true
             \     |\n |  28371 | Ken Tanaka             | m      | 1992-11-03 | art
             \   | gart     | 2010-09-08 | true      |\n |  28382 | Martha O'Mally
@@ -1081,13 +1081,13 @@ tests:
             \     |\n |  31331 | Khadija Hamad Azzan    | f      | 1992-11-26 | ns
             \    | uastro   | 2008-09-21 | false     |\n |  31332 | Dara Subramanya
             \       | f      | 1994-11-16 | la     | upsych   | 2008-09-10 | true
-            \     |\n |  31735 | Demetrios Kanakis      | m      | 1995-04-17 | egn
+            \     |\n |  31735 | Demetrios Kanakis      | m      | 1995-04-17 | eng
             \   | ucompsci | 2009-05-21 | true      |\n |  31835 | Paavo Kekkonen
             \        | m      | 2000-09-08 | ns     | uphys    | 2008-06-11 | true
-            \     |\n |  32214 | Joseph Tan             | m      | 1992-08-01 | egn
+            \     |\n |  32214 | Joseph Tan             | m      | 1992-08-01 | eng
             \   | gbuseng  | 2008-01-06 | true      |\n |  32711 | Peter Zajac Jr.
             \       | m      | 1994-01-23 | bus    | ucorpfi  | 2009-09-10 | true
-            \     |\n |  32718 | Raisa Antonova         | f      | 1992-12-09 | egn
+            \     |\n |  32718 | Raisa Antonova         | f      | 1992-12-09 | eng
             \   | gbe      | 2008-09-15 | false     |\n |  33278 | Andrea Kaminski
             \       | f      | 1981-04-20 | bus    | pcap     | 2009-01-15 | true
             \     |\n |  35163 | Nicola Ralls Jr.       | f      | 1993-06-02 | bus
@@ -1109,7 +1109,7 @@ tests:
             | true      |\n |  38721 | Alicia Montez-Galliano | f      | 1994-07-11
             | ns     | uchem    | 2010-09-10 | true      |\n |  38794 | Bailey Melvin
             \         | m      | 1988-03-13 | la     | psciwri  | 2005-04-20 | true
-            \     |\n |  43278 | Trina Wood Campbell    | f      | 1990-02-12 | egn
+            \     |\n |  43278 | Trina Wood Campbell    | f      | 1990-02-12 | eng
             \   | gme      | 2007-09-01 | true      |\n |  57382 | Paul Duncan Ulam
             \      | m      | 2001-05-05 | la     | uspan    | 2009-05-21 | true      |\n
             |  92039 | Syed Ishaq             | m      | 1992-10-23 | art    | gart
@@ -1615,88 +1615,88 @@ tests:
              :        :          :                 :              : Science Education must take at   :
              :        :          :                 :              : least 22 credit hours of general :
              :        :          :                 :              : science education.               :
-             | egn    | gbe      | ee              |           38 | Candidates for the Master of     |
+             | eng    | gbe      | ee              |           38 | Candidates for the Master of     |
              :        :          :                 :              : Science in Electrical            :
              :        :          :                 :              : Engineering must take at least   :
              :        :          :                 :              : 38 credit hours in graduate      :
              :        :          :                 :              : electrical engineering.          :
-             | egn    | gbuseng  | business        |           16 | Candidates for the Master of     |
+             | eng    | gbuseng  | business        |           16 | Candidates for the Master of     |
              :        :          :                 :              : Science in Business and          :
              :        :          :                 :              : Engineering are required to take :
              :        :          :                 :              : at least 16 credit hours in      :
              :        :          :                 :              : general business.                :
-             | egn    | gbuseng  | engineering     |           22 | Candidates for the Master of     |
+             | eng    | gbuseng  | engineering     |           22 | Candidates for the Master of     |
              :        :          :                 :              : Science in Business and          :
              :        :          :                 :              : Engineering are required to take :
              :        :          :                 :              : at least 22 credit hours in one  :
              :        :          :                 :              : or more relevant engineering     :
              :        :          :                 :              : disciplines.                     :
-             | egn    | gee      | ee              |           34 | Candidates for the Master of     |
+             | eng    | gee      | ee              |           34 | Candidates for the Master of     |
              :        :          :                 :              : Science in Electrical            :
              :        :          :                 :              : Engineering must take at least   :
              :        :          :                 :              : 34 credit hours in graduate      :
              :        :          :                 :              : electrical engineering.          :
-             | egn    | gme      | ee              |           36 | Candidates for the Master of     |
+             | eng    | gme      | ee              |           36 | Candidates for the Master of     |
              :        :          :                 :              : Science in Electrical            :
              :        :          :                 :              : Engineering must take at least   :
              :        :          :                 :              : 36 credit hours in graduate      :
              :        :          :                 :              : electrical engineering.          :
-             | egn    | ubio     | be              |           24 | Bachelor of Engineering          |
+             | eng    | ubio     | be              |           24 | Bachelor of Engineering          |
              :        :          :                 :              : candidates in Bioengineering are :
              :        :          :                 :              : expected to take at least 24     :
              :        :          :                 :              : hours of credit in their area of :
              :        :          :                 :              : concentrationclinical, nanotech, :
              :        :          :                 :              : orbiomaterials                   :
-             | egn    | ubio     | compsci         |           12 | Bachelor of Engineering          |
+             | eng    | ubio     | compsci         |           12 | Bachelor of Engineering          |
              :        :          :                 :              : candidates are expected to take  :
              :        :          :                 :              : at least 12 hours of credit in   :
              :        :          :                 :              : computer science and/or          :
              :        :          :                 :              : programming related to their     :
              :        :          :                 :              : major.                           :
-             | egn    | ubio     | humanities      |           12 | Bachelor of Engineering          |
+             | eng    | ubio     | humanities      |           12 | Bachelor of Engineering          |
              :        :          :                 :              : candidates are expected to take  :
              :        :          :                 :              : at least 12 hours of credit in   :
              :        :          :                 :              : general humanities.              :
-             | egn    | ubio     | mesystems       |           10 | Bachelor of Engineering          |
+             | eng    | ubio     | mesystems       |           10 | Bachelor of Engineering          |
              :        :          :                 :              : candidates in Bioengineering are :
              :        :          :                 :              : expected to take at least 9      :
              :        :          :                 :              : hours of credit in biomaterials, :
              :        :          :                 :              : regardless of their area of      :
              :        :          :                 :              : concentration.                   :
-             | egn    | uelec    | compsci         |           12 | Bachelor of Engineering          |
+             | eng    | uelec    | compsci         |           12 | Bachelor of Engineering          |
              :        :          :                 :              : candidates are expected to take  :
              :        :          :                 :              : at least 12 hours of credit in   :
              :        :          :                 :              : computer science and/or          :
              :        :          :                 :              : programming related to their     :
              :        :          :                 :              : major.                           :
-             | egn    | uelec    | eeconcentration |           22 | Bachelor of Engineering          |
+             | eng    | uelec    | eeconcentration |           22 | Bachelor of Engineering          |
              :        :          :                 :              : candidates in Electrical         :
              :        :          :                 :              : Engineering are expected to take :
              :        :          :                 :              : at least 22 hours of credit in   :
              :        :          :                 :              : their area of concentration.     :
-             | egn    | uelec    | eetheory        |           18 | Bachelor of Engineering          |
+             | eng    | uelec    | eetheory        |           18 | Bachelor of Engineering          |
              :        :          :                 :              : candidates in Electrical         :
              :        :          :                 :              : Engineering are expected to take :
              :        :          :                 :              : at least 18 hours of credit in   :
              :        :          :                 :              : EE theory.                       :
-             | egn    | umech    | compsci         |           12 | Bachelor of Engineering          |
+             | eng    | umech    | compsci         |           12 | Bachelor of Engineering          |
              :        :          :                 :              : candidates are expected to take  :
              :        :          :                 :              : at least 12 hours of credit in   :
              :        :          :                 :              : computer science and/or          :
              :        :          :                 :              : programming related to their     :
              :        :          :                 :              : major.                           :
-             | egn    | umech    | humanities      |           12 | Bachelor of Engineering          |
+             | eng    | umech    | humanities      |           12 | Bachelor of Engineering          |
              :        :          :                 :              : candidates are expected to take  :
              :        :          :                 :              : at least 12 hours of credit in   :
              :        :          :                 :              : general humanities.              :
-             | egn    | umech    | me              |           22 | Bachelor of Engineering          |
+             | eng    | umech    | me              |           22 | Bachelor of Engineering          |
              :        :          :                 :              : candidates in Mechanical         :
              :        :          :                 :              : Engineering are expected to take :
              :        :          :                 :              : at least 22 hours of credit in   :
              :        :          :                 :              : their area of                    :
              :        :          :                 :              : concentrationmechanics, de sign, :
              :        :          :                 :              : or systems.                      :
-             | egn    | umech    | mesystems       |            9 | Bachelor of Engineering          |
+             | eng    | umech    | mesystems       |            9 | Bachelor of Engineering          |
              :        :          :                 :              : candidates in Mechanical         :
              :        :          :                 :              : Engineering are expected to take :
              :        :          :                 :              : at least 9 hours of credit in    :
@@ -1975,7 +1975,7 @@ tests:
             -+-------------------------------+-
              | code  | name                  |
             -+-------+-----------------------+-
-             | egn   | School of Engineering |
+             | eng   | School of Engineering |
                                        (1 row)
 
              ----
@@ -2091,42 +2091,42 @@ tests:
                              ON ("department"."code" = "class"."department")
              WHERE ("department"."code" = 'ee')
              ORDER BY "department"."code" ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
-        - uri: /(program?school='egn'&code='umech').school
+        - uri: /(program?school='eng'&code='umech').school
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (program?school='egn'&code='umech').school |
+             | (program?school='eng'&code='umech').school |
             -+--------------------------------------------+-
              | code        | name                         |
             -+-------------+------------------------------+-
-             | egn         | School of Engineering        |
+             | eng         | School of Engineering        |
                                                     (1 row)
 
              ----
-             /(program?school='egn'&code='umech').school
+             /(program?school='eng'&code='umech').school
              SELECT "school"."code",
                     "school"."name"
              FROM "ad"."program" AS "program"
                   INNER JOIN "ad"."school" AS "school"
                              ON ("program"."school" = "school"."code")
-             WHERE ("program"."school" = 'egn')
+             WHERE ("program"."school" = 'eng')
                    AND ("program"."code" = 'umech')
              ORDER BY "program"."school" ASC, "program"."code" ASC
-        - uri: /(program?school='egn'&code='umech').part_of
+        - uri: /(program?school='eng'&code='umech').part_of
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (program?school='egn'&code='umech').part_of                       |
+             | (program?school='eng'&code='umech').part_of                       |
             -+-------------------------------------------------------------------+-
              | school | code | title                          | degree | part_of |
             -+--------+------+--------------------------------+--------+---------+-
-             | egn    | gme  | M.S. in Mechanical Engineering | ms     |         |
+             | eng    | gme  | M.S. in Mechanical Engineering | ms     |         |
                                                                            (1 row)
 
              ----
-             /(program?school='egn'&code='umech').part_of
+             /(program?school='eng'&code='umech').part_of
              SELECT "program_2"."school",
                     "program_2"."code",
                     "program_2"."title",
@@ -2135,23 +2135,23 @@ tests:
              FROM "ad"."program" AS "program_1"
                   INNER JOIN "ad"."program" AS "program_2"
                              ON (("program_1"."school" = "program_2"."school") AND ("program_1"."part_of" = "program_2"."code"))
-             WHERE ("program_1"."school" = 'egn')
+             WHERE ("program_1"."school" = 'eng')
                    AND ("program_1"."code" = 'umech')
              ORDER BY "program_1"."school" ASC, "program_1"."code" ASC
-        - uri: /(program?school='egn'&code='umech').program
+        - uri: /(program?school='eng'&code='umech').program
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (program?school='egn'&code='umech').program                       |
+             | (program?school='eng'&code='umech').program                       |
             -+-------------------------------------------------------------------+-
              | school | code | title                          | degree | part_of |
             -+--------+------+--------------------------------+--------+---------+-
-             | egn    | gme  | M.S. in Mechanical Engineering | ms     |         |
+             | eng    | gme  | M.S. in Mechanical Engineering | ms     |         |
                                                                            (1 row)
 
              ----
-             /(program?school='egn'&code='umech').program
+             /(program?school='eng'&code='umech').program
              SELECT "program_2"."school",
                     "program_2"."code",
                     "program_2"."title",
@@ -2160,24 +2160,24 @@ tests:
              FROM "ad"."program" AS "program_1"
                   INNER JOIN "ad"."program" AS "program_2"
                              ON (("program_1"."school" = "program_2"."school") AND ("program_1"."part_of" = "program_2"."code"))
-             WHERE ("program_1"."school" = 'egn')
+             WHERE ("program_1"."school" = 'eng')
                    AND ("program_1"."code" = 'umech')
              ORDER BY "program_1"."school" ASC, "program_1"."code" ASC
-        - uri: /(program?school='egn'&code='umech').student
+        - uri: /(program?school='eng'&code='umech').student
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (program?school='egn'&code='umech').student                                                    |
+             | (program?school='eng'&code='umech').student                                                    |
             -+------------------------------------------------------------------------------------------------+-
              | number | name                | gender | dob        | school | program | start_date | is_active |
             -+--------+---------------------+--------+------------+--------+---------+------------+-----------+-
-             |  22313 | James Earl Sims III | m      | 2002-07-06 | egn    | umech   | 2004-08-16 | true      |
-             |  24431 | Annette Dupree      | f      | 1987-01-28 | egn    | umech   | 2006-01-16 | true      |
+             |  22313 | James Earl Sims III | m      | 2002-07-06 | eng    | umech   | 2004-08-16 | true      |
+             |  24431 | Annette Dupree      | f      | 1987-01-28 | eng    | umech   | 2006-01-16 | true      |
                                                                                                        (2 rows)
 
              ----
-             /(program?school='egn'&code='umech').student
+             /(program?school='eng'&code='umech').student
              SELECT "student"."number",
                     "student"."name",
                     "student"."gender",
@@ -2189,36 +2189,36 @@ tests:
              FROM "ad"."program" AS "program"
                   INNER JOIN "ed"."student" AS "student"
                              ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
-             WHERE ("program"."school" = 'egn')
+             WHERE ("program"."school" = 'eng')
                    AND ("program"."code" = 'umech')
              ORDER BY "program"."school" ASC, "program"."code" ASC, 1 ASC
-        - uri: /(program?school='egn'&code='umech').program_requirement
+        - uri: /(program?school='eng'&code='umech').program_requirement
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (program?school='egn'&code='umech').program_requirement                             |
+             | (program?school='eng'&code='umech').program_requirement                             |
             -+-------------------------------------------------------------------------------------+-
              | school | program | classification | credit_hours | rationale                        |
             -+--------+---------+----------------+--------------+----------------------------------+-
-             | egn    | umech   | compsci        |           12 | Bachelor of Engineering          |
+             | eng    | umech   | compsci        |           12 | Bachelor of Engineering          |
              :        :         :                :              : candidates are expected to take  :
              :        :         :                :              : at least 12 hours of credit in   :
              :        :         :                :              : computer science and/or          :
              :        :         :                :              : programming related to their     :
              :        :         :                :              : major.                           :
-             | egn    | umech   | humanities     |           12 | Bachelor of Engineering          |
+             | eng    | umech   | humanities     |           12 | Bachelor of Engineering          |
              :        :         :                :              : candidates are expected to take  :
              :        :         :                :              : at least 12 hours of credit in   :
              :        :         :                :              : general humanities.              :
-             | egn    | umech   | me             |           22 | Bachelor of Engineering          |
+             | eng    | umech   | me             |           22 | Bachelor of Engineering          |
              :        :         :                :              : candidates in Mechanical         :
              :        :         :                :              : Engineering are expected to take :
              :        :         :                :              : at least 22 hours of credit in   :
              :        :         :                :              : their area of                    :
              :        :         :                :              : concentrationmechanics, de sign, :
              :        :         :                :              : or systems.                      :
-             | egn    | umech   | mesystems      |            9 | Bachelor of Engineering          |
+             | eng    | umech   | mesystems      |            9 | Bachelor of Engineering          |
              :        :         :                :              : candidates in Mechanical         :
              :        :         :                :              : Engineering are expected to take :
              :        :         :                :              : at least 9 hours of credit in    :
@@ -2227,7 +2227,7 @@ tests:
                                                                                             (4 rows)
 
              ----
-             /(program?school='egn'&code='umech').program_requirement
+             /(program?school='eng'&code='umech').program_requirement
              SELECT "program_requirement"."school",
                     "program_requirement"."program",
                     "program_requirement"."classification",
@@ -2236,7 +2236,7 @@ tests:
              FROM "ad"."program" AS "program"
                   INNER JOIN "rd"."program_requirement" AS "program_requirement"
                              ON (("program"."school" = "program_requirement"."school") AND ("program"."code" = "program_requirement"."program"))
-             WHERE ("program"."school" = 'egn')
+             WHERE ("program"."school" = 'eng')
                    AND ("program"."code" = 'umech')
              ORDER BY "program"."school" ASC, "program"."code" ASC, 1 ASC, 2 ASC, 3 ASC
         - uri: /(course?department='psych'&number=610).department
@@ -2684,7 +2684,7 @@ tests:
             -+-------------------------------+-
              | code  | name                  |
             -+-------+-----------------------+-
-             | egn   | School of Engineering |
+             | eng   | School of Engineering |
                                        (1 row)
 
              ----
@@ -2707,7 +2707,7 @@ tests:
             -+------------------------------------------------------------------------+-
              | school | code    | title                            | degree | part_of |
             -+--------+---------+----------------------------------+--------+---------+-
-             | egn    | gbuseng | M.S. in Business and Engineering | ms     |         |
+             | eng    | gbuseng | M.S. in Business and Engineering | ms     |         |
                                                                                 (1 row)
 
              ----
@@ -3045,7 +3045,7 @@ tests:
             -+------------------------------------------------------------------------------------------+-
              | code                     | name                              | school                    |
             -+--------------------------+-----------------------------------+---------------------------+-
-             | be                       | Bioengineering                    | egn                       |
+             | be                       | Bioengineering                    | eng                       |
                                                                                                   (1 row)
 
              ----
@@ -3213,7 +3213,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -3257,14 +3257,14 @@ tests:
              :        :          : Education                        :
              | edu    | usci     | Bachelor of Arts in Science      |
              :        :          : Education                        :
-             | egn    | gbe      | M.S. in Bioengineering           |
-             | egn    | gbuseng  | M.S. in Business and Engineering |
-             | egn    | gee      | M.S. in Electrical Engineering   |
-             | egn    | gme      | M.S. in Mechanical Engineering   |
-             | egn    | ubio     | B.S. in Bioengineering           |
-             | egn    | ucompsci | B.S. in Computer Science         |
-             | egn    | uelec    | B.S. in Electrical Engineering   |
-             | egn    | umech    | B.S. in Mechanical Engineering   |
+             | eng    | gbe      | M.S. in Bioengineering           |
+             | eng    | gbuseng  | M.S. in Business and Engineering |
+             | eng    | gee      | M.S. in Electrical Engineering   |
+             | eng    | gme      | M.S. in Mechanical Engineering   |
+             | eng    | ubio     | B.S. in Bioengineering           |
+             | eng    | ucompsci | B.S. in Computer Science         |
+             | eng    | uelec    | B.S. in Electrical Engineering   |
+             | eng    | umech    | B.S. in Mechanical Engineering   |
              | la     | gengl    | Master of Arts in English        |
              | la     | glang    | Master of Arts in Modern         |
              :        :          : Languages                        :
@@ -3315,20 +3315,20 @@ tests:
              | Piano                  | mus    |
              | Physics                | ns     |
              | Parents & Alumni       |        |
-             | Mechanical Engineering | egn    |
+             | Mechanical Engineering | eng    |
              | Mathematics            | ns     |
              | History                | la     |
              | Foreign Languages      | la     |
              | English                | la     |
-             | Electrical Engineering | egn    |
+             | Electrical Engineering | eng    |
              | Educational Policy     | edu    |
              | Corporate Finance      | bus    |
-             | Computer Science       | egn    |
+             | Computer Science       | eng    |
              | Chemistry              | ns     |
              | Career Development     |        |
              | Capital Markets        | bus    |
              | Bursar's Office        |        |
-             | Bioengineering         | egn    |
+             | Bioengineering         | eng    |
              | Astronomy              | ns     |
              | Art History            | art    |
              | Accounting             | bus    |
@@ -4008,19 +4008,19 @@ tests:
              | acc    | Accounting             | bus    | bus         | School of Business            |
              | arthis | Art History            | art    | art         | School of Art and Design      |
              | astro  | Astronomy              | ns     | ns          | School of Natural Sciences    |
-             | be     | Bioengineering         | egn    | egn         | School of Engineering         |
+             | be     | Bioengineering         | eng    | eng         | School of Engineering         |
              | bursar | Bursar's Office        |        |             |                               |
              | capmrk | Capital Markets        | bus    | bus         | School of Business            |
              | career | Career Development     |        |             |                               |
              | chem   | Chemistry              | ns     | ns          | School of Natural Sciences    |
-             | comp   | Computer Science       | egn    | egn         | School of Engineering         |
+             | comp   | Computer Science       | eng    | eng         | School of Engineering         |
              | corpfi | Corporate Finance      | bus    | bus         | School of Business            |
              | edpol  | Educational Policy     | edu    | edu         | College of Education          |
-             | ee     | Electrical Engineering | egn    | egn         | School of Engineering         |
+             | ee     | Electrical Engineering | eng    | eng         | School of Engineering         |
              | eng    | English                | la     | la          | School of Arts and Humanities |
              | hist   | History                | la     | la          | School of Arts and Humanities |
              | lang   | Foreign Languages      | la     | la          | School of Arts and Humanities |
-             | me     | Mechanical Engineering | egn    | egn         | School of Engineering         |
+             | me     | Mechanical Engineering | eng    | eng         | School of Engineering         |
              | mth    | Mathematics            | ns     | ns          | School of Natural Sciences    |
              | parent | Parents & Alumni       |        |             |                               |
              | phys   | Physics                | ns     | ns          | School of Natural Sciences    |
@@ -4045,28 +4045,28 @@ tests:
                   LEFT OUTER JOIN "ad"."school" AS "school"
                                   ON ("department"."school" = "school"."code")
              ORDER BY 1 ASC
-        - uri: /department?school='egn'
+        - uri: /department?school='eng'
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (department?school='egn')              |
+             | (department?school='eng')              |
             -+----------------------------------------+-
              | code | name                   | school |
             -+------+------------------------+--------+-
-             | be   | Bioengineering         | egn    |
-             | comp | Computer Science       | egn    |
-             | ee   | Electrical Engineering | egn    |
-             | me   | Mechanical Engineering | egn    |
+             | be   | Bioengineering         | eng    |
+             | comp | Computer Science       | eng    |
+             | ee   | Electrical Engineering | eng    |
+             | me   | Mechanical Engineering | eng    |
                                                (4 rows)
 
              ----
-             /department?school='egn'
+             /department?school='eng'
              SELECT "department"."code",
                     "department"."name",
                     "department"."school"
              FROM "ad"."department" AS "department"
-             WHERE ("department"."school" = 'egn')
+             WHERE ("department"."school" = 'eng')
              ORDER BY 1 ASC
         - uri: /program?degree={'ba','bs'}
           status: 200 OK
@@ -4086,10 +4086,10 @@ tests:
              :        :          : Education                        :        :         :
              | edu    | usci     | Bachelor of Arts in Science      | ba     |         |
              :        :          : Education                        :        :         :
-             | egn    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | egn    | ucompsci | B.S. in Computer Science         | bs     |         |
-             | egn    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | egn    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+             | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+             | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+             | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+             | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
              | la     | uengl    | Bachelor of Arts in English      | ba     | gengl   |
              | la     | uhist    | Bachelor of Arts in History      | ba     |         |
              | la     | upolisci | Bachelor of Arts in Political    | ba     |         |
@@ -4203,7 +4203,7 @@ tests:
               ["art", "School of Art and Design"],
               ["bus", "School of Business"],
               ["edu", "College of Education"],
-              ["egn", "School of Engineering"],
+              ["eng", "School of Engineering"],
               ["la", "School of Arts and Humanities"],
               ["mus", "School of Music & Dance"],
               ["ns", "School of Natural Sciences"],
@@ -8028,19 +8028,19 @@ tests:
             -+--------+------------------------+--------+-
              | acc    | Accounting             | bus    |
              | astro  | Astronomy              | ns     |
-             | be     | Bioengineering         | egn    |
+             | be     | Bioengineering         | eng    |
              | bursar | Bursar's Office        |        |
              | capmrk | Capital Markets        | bus    |
              | career | Career Development     |        |
              | chem   | Chemistry              | ns     |
-             | comp   | Computer Science       | egn    |
+             | comp   | Computer Science       | eng    |
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
-             | ee     | Electrical Engineering | egn    |
+             | ee     | Electrical Engineering | eng    |
              | eng    | English                | la     |
              | hist   | History                | la     |
              | lang   | Foreign Languages      | la     |
-             | me     | Mechanical Engineering | egn    |
+             | me     | Mechanical Engineering | eng    |
              | mth    | Mathematics            | ns     |
              | parent | Parents & Alumni       |        |
              | phys   | Physics                | ns     |
@@ -11139,19 +11139,19 @@ tests:
              | acc    | bus    | true            |
              | arthis | art    | true            |
              | astro  | ns     | true            |
-             | be     | egn    | true            |
+             | be     | eng    | true            |
              | bursar |        | false           |
              | capmrk | bus    | true            |
              | career |        | false           |
              | chem   | ns     | true            |
-             | comp   | egn    | true            |
+             | comp   | eng    | true            |
              | corpfi | bus    | true            |
              | edpol  | edu    | true            |
-             | ee     | egn    | true            |
+             | ee     | eng    | true            |
              | eng    | la     | true            |
              | hist   | la     | true            |
              | lang   | la     | true            |
-             | me     | egn    | true            |
+             | me     | eng    | true            |
              | mth    | ns     | true            |
              | parent |        | false           |
              | phys   | ns     | true            |
@@ -11427,14 +11427,14 @@ tests:
              :        :          : Education                        :        :         :
              | edu    | usci     | Bachelor of Arts in Science      | ba     |         |
              :        :          : Education                        :        :         :
-             | egn    | gbe      | M.S. in Bioengineering           | ms     |         |
-             | egn    | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | egn    | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | egn    | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | egn    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | egn    | ucompsci | B.S. in Computer Science         | bs     |         |
-             | egn    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | egn    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+             | eng    | gbe      | M.S. in Bioengineering           | ms     |         |
+             | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |
+             | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |
+             | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |
+             | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+             | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+             | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+             | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
              | la     | gengl    | Master of Arts in English        | ma     |         |
              | la     | glang    | Master of Arts in Modern         | ma     |         |
              :        :          : Languages                        :        :         :
@@ -11486,10 +11486,10 @@ tests:
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
              | tched  | Teacher Education      | edu    |
-             | be     | Bioengineering         | egn    |
-             | comp   | Computer Science       | egn    |
-             | ee     | Electrical Engineering | egn    |
-             | me     | Mechanical Engineering | egn    |
+             | be     | Bioengineering         | eng    |
+             | comp   | Computer Science       | eng    |
+             | ee     | Electrical Engineering | eng    |
+             | me     | Mechanical Engineering | eng    |
              | eng    | English                | la     |
              | hist   | History                | la     |
              | lang   | Foreign Languages      | la     |
@@ -11538,14 +11538,14 @@ tests:
              | edu  | College of Education          |
              | edu  | College of Education          |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
-             | egn  | School of Engineering         |
-             | egn  | School of Engineering         |
-             | egn  | School of Engineering         |
-             | egn  | School of Engineering         |
-             | egn  | School of Engineering         |
-             | egn  | School of Engineering         |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
+             | eng  | School of Engineering         |
+             | eng  | School of Engineering         |
+             | eng  | School of Engineering         |
+             | eng  | School of Engineering         |
+             | eng  | School of Engineering         |
+             | eng  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | la   | School of Arts and Humanities |
              | la   | School of Arts and Humanities |
@@ -11584,17 +11584,17 @@ tests:
              | bus  | School of Business            |
              | art  | School of Art and Design      |
              | ns   | School of Natural Sciences    |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | bus  | School of Business            |
              | ns   | School of Natural Sciences    |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | la   | School of Arts and Humanities |
              | la   | School of Arts and Humanities |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | ns   | School of Natural Sciences    |
              | ns   | School of Natural Sciences    |
              | mus  | School of Music & Dance       |
@@ -11742,7 +11742,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11751,7 +11751,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11760,7 +11760,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11769,7 +11769,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11778,7 +11778,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11787,7 +11787,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11796,7 +11796,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11805,7 +11805,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11814,7 +11814,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -11857,14 +11857,14 @@ tests:
              | ns     | umth     | Bachelor of Science in           | bs     | gmth    |
              :        :          : Mathematics                      :        :         :
              | ns     | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | egn    | gbe      | M.S. in Bioengineering           | ms     |         |
-             | egn    | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | egn    | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | egn    | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | egn    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | egn    | ucompsci | B.S. in Computer Science         | bs     |         |
-             | egn    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | egn    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+             | eng    | gbe      | M.S. in Bioengineering           | ms     |         |
+             | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |
+             | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |
+             | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |
+             | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+             | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+             | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+             | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
              | bus    | pacc     | Graduate Certificate in          | ct     |         |
              :        :          : Accounting                       :        :         :
              | bus    | pcap     | Certificate in Capital Markets   | ct     |         |
@@ -11880,14 +11880,14 @@ tests:
              | ns     | umth     | Bachelor of Science in           | bs     | gmth    |
              :        :          : Mathematics                      :        :         :
              | ns     | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | egn    | gbe      | M.S. in Bioengineering           | ms     |         |
-             | egn    | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | egn    | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | egn    | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | egn    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | egn    | ucompsci | B.S. in Computer Science         | bs     |         |
-             | egn    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | egn    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+             | eng    | gbe      | M.S. in Bioengineering           | ms     |         |
+             | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |
+             | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |
+             | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |
+             | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+             | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+             | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+             | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
              | bus    | pacc     | Graduate Certificate in          | ct     |         |
              :        :          : Accounting                       :        :         :
              | bus    | pcap     | Certificate in Capital Markets   | ct     |         |
@@ -11905,14 +11905,14 @@ tests:
              :        :          : Education                        :        :         :
              | edu    | usci     | Bachelor of Arts in Science      | ba     |         |
              :        :          : Education                        :        :         :
-             | egn    | gbe      | M.S. in Bioengineering           | ms     |         |
-             | egn    | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | egn    | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | egn    | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | egn    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | egn    | ucompsci | B.S. in Computer Science         | bs     |         |
-             | egn    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | egn    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+             | eng    | gbe      | M.S. in Bioengineering           | ms     |         |
+             | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |
+             | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |
+             | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |
+             | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+             | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+             | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+             | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
              | la     | gengl    | Master of Arts in English        | ma     |         |
              | la     | glang    | Master of Arts in Modern         | ma     |         |
              :        :          : Languages                        :        :         :
@@ -11949,14 +11949,14 @@ tests:
              :        :          : Science                          :        :         :
              | la     | upsych   | Bachelor of Arts in Psychology   | ba     |         |
              | la     | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | egn    | gbe      | M.S. in Bioengineering           | ms     |         |
-             | egn    | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | egn    | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | egn    | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | egn    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | egn    | ucompsci | B.S. in Computer Science         | bs     |         |
-             | egn    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | egn    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+             | eng    | gbe      | M.S. in Bioengineering           | ms     |         |
+             | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |
+             | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |
+             | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |
+             | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+             | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+             | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+             | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
              | ns     | gmth     | Masters of Science in            | bs     | pmth    |
              :        :          : Mathematics                      :        :         :
              | ns     | pmth     | Doctorate of Science in          | ph     |         |
@@ -12154,7 +12154,7 @@ tests:
              | art                | art         |
              | art                | bus         |
              | art                | edu         |
-             | art                | egn         |
+             | art                | eng         |
              | art                | la          |
              | art                | mus         |
              | art                | ns          |
@@ -12163,7 +12163,7 @@ tests:
              | bus                | art         |
              | bus                | bus         |
              | bus                | edu         |
-             | bus                | egn         |
+             | bus                | eng         |
              | bus                | la          |
              | bus                | mus         |
              | bus                | ns          |
@@ -12172,25 +12172,25 @@ tests:
              | edu                | art         |
              | edu                | bus         |
              | edu                | edu         |
-             | edu                | egn         |
+             | edu                | eng         |
              | edu                | la          |
              | edu                | mus         |
              | edu                | ns          |
              | edu                | ph          |
              | edu                | sc          |
-             | egn                | art         |
-             | egn                | bus         |
-             | egn                | edu         |
-             | egn                | egn         |
-             | egn                | la          |
-             | egn                | mus         |
-             | egn                | ns          |
-             | egn                | ph          |
-             | egn                | sc          |
+             | eng                | art         |
+             | eng                | bus         |
+             | eng                | edu         |
+             | eng                | eng         |
+             | eng                | la          |
+             | eng                | mus         |
+             | eng                | ns          |
+             | eng                | ph          |
+             | eng                | sc          |
              | la                 | art         |
              | la                 | bus         |
              | la                 | edu         |
-             | la                 | egn         |
+             | la                 | eng         |
              | la                 | la          |
              | la                 | mus         |
              | la                 | ns          |
@@ -12199,7 +12199,7 @@ tests:
              | mus                | art         |
              | mus                | bus         |
              | mus                | edu         |
-             | mus                | egn         |
+             | mus                | eng         |
              | mus                | la          |
              | mus                | mus         |
              | mus                | ns          |
@@ -12208,7 +12208,7 @@ tests:
              | ns                 | art         |
              | ns                 | bus         |
              | ns                 | edu         |
-             | ns                 | egn         |
+             | ns                 | eng         |
              | ns                 | la          |
              | ns                 | mus         |
              | ns                 | ns          |
@@ -12217,7 +12217,7 @@ tests:
              | ph                 | art         |
              | ph                 | bus         |
              | ph                 | edu         |
-             | ph                 | egn         |
+             | ph                 | eng         |
              | ph                 | la          |
              | ph                 | mus         |
              | ph                 | ns          |
@@ -12226,7 +12226,7 @@ tests:
              | sc                 | art         |
              | sc                 | bus         |
              | sc                 | edu         |
-             | sc                 | egn         |
+             | sc                 | eng         |
              | sc                 | la          |
              | sc                 | mus         |
              | sc                 | ns          |
@@ -12279,9 +12279,9 @@ tests:
             -+--------+---------------------+--------+------------+--------+----------+------------+-----------+-
              |  13723 | Narissa Maya        | f      | 1992-04-30 | la     | upsych   | 2007-11-21 | false     |
              |  17385 | Valeria Rinaldi     | f      | 1985-09-02 | bus    | pcap     | 2004-09-01 | false     |
-             |  24672 | Mahesh Basa         | m      | 1995-08-21 | egn    | ucompsci | 2008-04-15 | false     |
+             |  24672 | Mahesh Basa         | m      | 1995-08-21 | eng    | ucompsci | 2008-04-15 | false     |
              |  31331 | Khadija Hamad Azzan | f      | 1992-11-26 | ns     | uastro   | 2008-09-21 | false     |
-             |  32718 | Raisa Antonova      | f      | 1992-12-09 | egn    | gbe      | 2008-09-15 | false     |
+             |  32718 | Raisa Antonova      | f      | 1992-12-09 | eng    | gbe      | 2008-09-15 | false     |
              |  37182 | Amy Yang            | f      | 1992-12-17 | ns     | uphys    | 2002-08-10 | false     |
              |  37278 | Ming Wang           | m      | 1988-03-15 | la     | gengl    | 2002-11-27 | false     |
                                                                                                         (7 rows)
@@ -12311,17 +12311,17 @@ tests:
              | acc    | Accounting             | bus    |
              | arthis | Art History            | art    |
              | astro  | Astronomy              | ns     |
-             | be     | Bioengineering         | egn    |
+             | be     | Bioengineering         | eng    |
              | capmrk | Capital Markets        | bus    |
              | chem   | Chemistry              | ns     |
-             | comp   | Computer Science       | egn    |
+             | comp   | Computer Science       | eng    |
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
-             | ee     | Electrical Engineering | egn    |
+             | ee     | Electrical Engineering | eng    |
              | eng    | English                | la     |
              | hist   | History                | la     |
              | lang   | Foreign Languages      | la     |
-             | me     | Mechanical Engineering | egn    |
+             | me     | Mechanical Engineering | eng    |
              | mth    | Mathematics            | ns     |
              | phys   | Physics                | ns     |
              | pia    | Piano                  | mus    |
@@ -12354,20 +12354,20 @@ tests:
              | acc    | Accounting             | bus    |
              | arthis | Art History            | art    |
              | astro  | Astronomy              | ns     |
-             | be     | Bioengineering         | egn    |
+             | be     | Bioengineering         | eng    |
              | bursar | Bursar's Office        |        |
              | capmrk | Capital Markets        | bus    |
              | career | Career Development     |        |
              | chem   | Chemistry              | ns     |
-             | comp   | Computer Science       | egn    |
+             | comp   | Computer Science       | eng    |
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
-             | ee     | Electrical Engineering | egn    |
+             | ee     | Electrical Engineering | eng    |
              | eng    | English                | la     |
              | lang   | Foreign Languages      | la     |
              | hist   | History                | la     |
              | mth    | Mathematics            | ns     |
-             | me     | Mechanical Engineering | egn    |
+             | me     | Mechanical Engineering | eng    |
              | parent | Parents & Alumni       |        |
              | phys   | Physics                | ns     |
              | pia    | Piano                  | mus    |
@@ -12399,20 +12399,20 @@ tests:
              | acc    | Accounting             | bus    |
              | arthis | Art History            | art    |
              | astro  | Astronomy              | ns     |
-             | be     | Bioengineering         | egn    |
+             | be     | Bioengineering         | eng    |
              | bursar | Bursar's Office        |        |
              | capmrk | Capital Markets        | bus    |
              | career | Career Development     |        |
              | chem   | Chemistry              | ns     |
-             | comp   | Computer Science       | egn    |
+             | comp   | Computer Science       | eng    |
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
-             | ee     | Electrical Engineering | egn    |
+             | ee     | Electrical Engineering | eng    |
              | eng    | English                | la     |
              | lang   | Foreign Languages      | la     |
              | hist   | History                | la     |
              | mth    | Mathematics            | ns     |
-             | me     | Mechanical Engineering | egn    |
+             | me     | Mechanical Engineering | eng    |
              | parent | Parents & Alumni       |        |
              | phys   | Physics                | ns     |
              | pia    | Piano                  | mus    |
@@ -12451,20 +12451,20 @@ tests:
              | pia    | Piano                  | mus    |
              | phys   | Physics                | ns     |
              | parent | Parents & Alumni       |        |
-             | me     | Mechanical Engineering | egn    |
+             | me     | Mechanical Engineering | eng    |
              | mth    | Mathematics            | ns     |
              | hist   | History                | la     |
              | lang   | Foreign Languages      | la     |
              | eng    | English                | la     |
-             | ee     | Electrical Engineering | egn    |
+             | ee     | Electrical Engineering | eng    |
              | edpol  | Educational Policy     | edu    |
              | corpfi | Corporate Finance      | bus    |
-             | comp   | Computer Science       | egn    |
+             | comp   | Computer Science       | eng    |
              | chem   | Chemistry              | ns     |
              | career | Career Development     |        |
              | capmrk | Capital Markets        | bus    |
              | bursar | Bursar's Office        |        |
-             | be     | Bioengineering         | egn    |
+             | be     | Bioengineering         | eng    |
              | astro  | Astronomy              | ns     |
              | arthis | Art History            | art    |
              | acc    | Accounting             | bus    |
@@ -12496,10 +12496,10 @@ tests:
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
              | tched  | Teacher Education      | edu    |
-             | be     | Bioengineering         | egn    |
-             | comp   | Computer Science       | egn    |
-             | ee     | Electrical Engineering | egn    |
-             | me     | Mechanical Engineering | egn    |
+             | be     | Bioengineering         | eng    |
+             | comp   | Computer Science       | eng    |
+             | ee     | Electrical Engineering | eng    |
+             | me     | Mechanical Engineering | eng    |
              | eng    | English                | la     |
              | hist   | History                | la     |
              | lang   | Foreign Languages      | la     |
@@ -12544,10 +12544,10 @@ tests:
              | lang   | Foreign Languages      | la     |
              | poli   | Political Science      | la     |
              | psych  | Psychology             | la     |
-             | be     | Bioengineering         | egn    |
-             | comp   | Computer Science       | egn    |
-             | ee     | Electrical Engineering | egn    |
-             | me     | Mechanical Engineering | egn    |
+             | be     | Bioengineering         | eng    |
+             | comp   | Computer Science       | eng    |
+             | ee     | Electrical Engineering | eng    |
+             | me     | Mechanical Engineering | eng    |
              | edpol  | Educational Policy     | edu    |
              | tched  | Teacher Education      | edu    |
              | acc    | Accounting             | bus    |
@@ -12579,17 +12579,17 @@ tests:
              | acc    | Accounting             | bus    |
              | arthis | Art History            | art    |
              | astro  | Astronomy              | ns     |
-             | be     | Bioengineering         | egn    |
+             | be     | Bioengineering         | eng    |
              | capmrk | Capital Markets        | bus    |
              | chem   | Chemistry              | ns     |
-             | comp   | Computer Science       | egn    |
+             | comp   | Computer Science       | eng    |
              | corpfi | Corporate Finance      | bus    |
              | edpol  | Educational Policy     | edu    |
-             | ee     | Electrical Engineering | egn    |
+             | ee     | Electrical Engineering | eng    |
              | eng    | English                | la     |
              | hist   | History                | la     |
              | lang   | Foreign Languages      | la     |
-             | me     | Mechanical Engineering | egn    |
+             | me     | Mechanical Engineering | eng    |
              | mth    | Mathematics            | ns     |
              | phys   | Physics                | ns     |
              | pia    | Piano                  | mus    |
@@ -12627,10 +12627,10 @@ tests:
              | corpfi  | Corporate Finance      | bus    |
              | edpol   | Educational Policy     | edu    |
              | tched   | Teacher Education      | edu    |
-             | be      | Bioengineering         | egn    |
-             | comp    | Computer Science       | egn    |
-             | ee      | Electrical Engineering | egn    |
-             | me      | Mechanical Engineering | egn    |
+             | be      | Bioengineering         | eng    |
+             | comp    | Computer Science       | eng    |
+             | ee      | Electrical Engineering | eng    |
+             | me      | Mechanical Engineering | eng    |
              | eng     | English                | la     |
              | hist    | History                | la     |
              | lang    | Foreign Languages      | la     |
@@ -13073,7 +13073,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -13099,19 +13099,19 @@ tests:
              | bus         | School of Business            | acc    | Accounting             | bus    |
              | art         | School of Art and Design      | arthis | Art History            | art    |
              | ns          | School of Natural Sciences    | astro  | Astronomy              | ns     |
-             | egn         | School of Engineering         | be     | Bioengineering         | egn    |
+             | eng         | School of Engineering         | be     | Bioengineering         | eng    |
              |             |                               | bursar | Bursar's Office        |        |
              | bus         | School of Business            | capmrk | Capital Markets        | bus    |
              |             |                               | career | Career Development     |        |
              | ns          | School of Natural Sciences    | chem   | Chemistry              | ns     |
-             | egn         | School of Engineering         | comp   | Computer Science       | egn    |
+             | eng         | School of Engineering         | comp   | Computer Science       | eng    |
              | bus         | School of Business            | corpfi | Corporate Finance      | bus    |
              | edu         | College of Education          | edpol  | Educational Policy     | edu    |
-             | egn         | School of Engineering         | ee     | Electrical Engineering | egn    |
+             | eng         | School of Engineering         | ee     | Electrical Engineering | eng    |
              | la          | School of Arts and Humanities | eng    | English                | la     |
              | la          | School of Arts and Humanities | hist   | History                | la     |
              | la          | School of Arts and Humanities | lang   | Foreign Languages      | la     |
-             | egn         | School of Engineering         | me     | Mechanical Engineering | egn    |
+             | eng         | School of Engineering         | me     | Mechanical Engineering | eng    |
              | ns          | School of Natural Sciences    | mth    | Mathematics            | ns     |
              |             |                               | parent | Parents & Alumni       |        |
              | ns          | School of Natural Sciences    | phys   | Physics                | ns     |
@@ -13150,7 +13150,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -13427,17 +13427,17 @@ tests:
                | acc    | Accounting             | bus    |
                | arthis | Art History            | art    |
                | astro  | Astronomy              | ns     |
-               | be     | Bioengineering         | egn    |
+               | be     | Bioengineering         | eng    |
                | capmrk | Capital Markets        | bus    |
                | chem   | Chemistry              | ns     |
-               | comp   | Computer Science       | egn    |
+               | comp   | Computer Science       | eng    |
                | corpfi | Corporate Finance      | bus    |
                | edpol  | Educational Policy     | edu    |
-               | ee     | Electrical Engineering | egn    |
+               | ee     | Electrical Engineering | eng    |
                | eng    | English                | la     |
                | hist   | History                | la     |
                | lang   | Foreign Languages      | la     |
-               | me     | Mechanical Engineering | egn    |
+               | me     | Mechanical Engineering | eng    |
                | mth    | Mathematics            | ns     |
                | phys   | Physics                | ns     |
                | pia    | Piano                  | mus    |
@@ -13545,19 +13545,19 @@ tests:
                | bus         | School of Business            | acc    | Accounting             | bus    |
                | art         | School of Art and Design      | arthis | Art History            | art    |
                | ns          | School of Natural Sciences    | astro  | Astronomy              | ns     |
-               | egn         | School of Engineering         | be     | Bioengineering         | egn    |
+               | eng         | School of Engineering         | be     | Bioengineering         | eng    |
                |             |                               | bursar | Bursar's Office        |        |
                | bus         | School of Business            | capmrk | Capital Markets        | bus    |
                |             |                               | career | Career Development     |        |
                | ns          | School of Natural Sciences    | chem   | Chemistry              | ns     |
-               | egn         | School of Engineering         | comp   | Computer Science       | egn    |
+               | eng         | School of Engineering         | comp   | Computer Science       | eng    |
                | bus         | School of Business            | corpfi | Corporate Finance      | bus    |
                | edu         | College of Education          | edpol  | Educational Policy     | edu    |
-               | egn         | School of Engineering         | ee     | Electrical Engineering | egn    |
+               | eng         | School of Engineering         | ee     | Electrical Engineering | eng    |
                | la          | School of Arts and Humanities | eng    | English                | la     |
                | la          | School of Arts and Humanities | hist   | History                | la     |
                | la          | School of Arts and Humanities | lang   | Foreign Languages      | la     |
-               | egn         | School of Engineering         | me     | Mechanical Engineering | egn    |
+               | eng         | School of Engineering         | me     | Mechanical Engineering | eng    |
                | ns          | School of Natural Sciences    | mth    | Mathematics            | ns     |
                |             |                               | parent | Parents & Alumni       |        |
                | ns          | School of Natural Sciences    | phys   | Physics                | ns     |
@@ -13919,7 +13919,7 @@ tests:
                | art  |                                   7 |
                | bus  |                                  11 |
                | edu  |                                   8 |
-               | egn  |                                  16 |
+               | eng  |                                  16 |
                | la   |                                  20 |
                | mus  |                                   0 |
                | ns   |                                  11 |
@@ -14083,17 +14083,17 @@ tests:
                | acc    | Accounting             | bus    |
                | arthis | Art History            | art    |
                | astro  | Astronomy              | ns     |
-               | be     | Bioengineering         | egn    |
+               | be     | Bioengineering         | eng    |
                | capmrk | Capital Markets        | bus    |
                | chem   | Chemistry              | ns     |
-               | comp   | Computer Science       | egn    |
+               | comp   | Computer Science       | eng    |
                | corpfi | Corporate Finance      | bus    |
                | edpol  | Educational Policy     | edu    |
-               | ee     | Electrical Engineering | egn    |
+               | ee     | Electrical Engineering | eng    |
                | eng    | English                | la     |
                | hist   | History                | la     |
                | lang   | Foreign Languages      | la     |
-               | me     | Mechanical Engineering | egn    |
+               | me     | Mechanical Engineering | eng    |
                | mth    | Mathematics            | ns     |
                | phys   | Physics                | ns     |
                | poli   | Political Science      | la     |
@@ -14146,7 +14146,7 @@ tests:
                | art  | School of Art and Design      |                 2 |
                | bus  | School of Business            |                 3 |
                | edu  | College of Education          |                 2 |
-               | egn  | School of Engineering         |                 4 |
+               | eng  | School of Engineering         |                 4 |
                | la   | School of Arts and Humanities |                 5 |
                | mus  | School of Music & Dance       |                 4 |
                | ns   | School of Natural Sciences    |                 4 |
@@ -14178,7 +14178,7 @@ tests:
                | art  | School of Art and Design      |                                2 |
                | bus  | School of Business            |                                3 |
                | edu  | College of Education          |                                2 |
-               | egn  | School of Engineering         |                                4 |
+               | eng  | School of Engineering         |                                4 |
                | la   | School of Arts and Humanities |                                5 |
                | mus  | School of Music & Dance       |                                0 |
                | ns   | School of Natural Sciences    |                                4 |
@@ -14213,7 +14213,7 @@ tests:
                | art  | School of Art and Design      |                                2 |
                | bus  | School of Business            |                                3 |
                | edu  | College of Education          |                                2 |
-               | egn  | School of Engineering         |                                4 |
+               | eng  | School of Engineering         |                                4 |
                | la   | School of Arts and Humanities |                                5 |
                | mus  | School of Music & Dance       |                                0 |
                | ns   | School of Natural Sciences    |                                4 |
@@ -14247,7 +14247,7 @@ tests:
                | art  |                 2 |              3 |
                | bus  |                 3 |              5 |
                | edu  |                 2 |              7 |
-               | egn  |                 4 |              8 |
+               | eng  |                 4 |              8 |
                | la   |                 5 |              9 |
                | mus  |                 4 |              0 |
                | ns   |                 4 |              6 |
@@ -14332,21 +14332,21 @@ tests:
                | acc    | bus         |                     5 |                     5 |
                | arthis | art         |                     3 |                     3 |
                | astro  | ns          |                     6 |                     6 |
-               | be     | egn         |                     8 |                     8 |
-               | bursar |             |                     0 |                       |
+               | be     | eng         |                     8 |                     8 |
+               | bursar |             |                     0 |                     0 |
                | capmrk | bus         |                     5 |                     5 |
-               | career |             |                     0 |                       |
+               | career |             |                     0 |                     0 |
                | chem   | ns          |                     6 |                     6 |
-               | comp   | egn         |                     8 |                     8 |
+               | comp   | eng         |                     8 |                     8 |
                | corpfi | bus         |                     5 |                     5 |
                | edpol  | edu         |                     7 |                     7 |
-               | ee     | egn         |                     8 |                     8 |
+               | ee     | eng         |                     8 |                     8 |
                | eng    | la          |                     9 |                     9 |
                | hist   | la          |                     9 |                     9 |
                | lang   | la          |                     9 |                     9 |
-               | me     | egn         |                     8 |                     8 |
+               | me     | eng         |                     8 |                     8 |
                | mth    | ns          |                     6 |                     6 |
-               | parent |             |                     0 |                       |
+               | parent |             |                     0 |                     0 |
                | phys   | ns          |                     6 |                     6 |
                | pia    | mus         |                     0 |                     0 |
                | poli   | la          |                     9 |                     9 |
@@ -14394,19 +14394,19 @@ tests:
                | acc    | bus         | true                   | true                   |
                | arthis | art         | true                   | true                   |
                | astro  | ns          | true                   | true                   |
-               | be     | egn         | true                   | true                   |
+               | be     | eng         | true                   | true                   |
                | bursar |             | false                  |                        |
                | capmrk | bus         | true                   | true                   |
                | career |             | false                  |                        |
                | chem   | ns          | true                   | true                   |
-               | comp   | egn         | true                   | true                   |
+               | comp   | eng         | true                   | true                   |
                | corpfi | bus         | true                   | true                   |
                | edpol  | edu         | true                   | true                   |
-               | ee     | egn         | true                   | true                   |
+               | ee     | eng         | true                   | true                   |
                | eng    | la          | true                   | true                   |
                | hist   | la          | true                   | true                   |
                | lang   | la          | true                   | true                   |
-               | me     | egn         | true                   | true                   |
+               | me     | eng         | true                   | true                   |
                | mth    | ns          | true                   | true                   |
                | parent |             | false                  |                        |
                | phys   | ns          | true                   | true                   |
@@ -14583,7 +14583,7 @@ tests:
                | edu                 | gedu                  |                           1 |
                | edu                 | glited                |                           1 |
                | edu                 | psci                  |                           1 |
-               | egn                 | ucompsci              |                           4 |
+               | eng                 | ucompsci              |                           4 |
                | la                  | gengl                 |                           3 |
                | ns                  | uphys                 |                           5 |
                | ph                  | phd                   |                           0 |
@@ -14669,7 +14669,7 @@ tests:
                | art  | School of Art and Design      |                          |                                 |
                | bus  | School of Business            | bus                      | bus                             |
                | edu  | College of Education          | edu                      | edu                             |
-               | egn  | School of Engineering         | egn                      | egn                             |
+               | eng  | School of Engineering         | eng                      | eng                             |
                | la   | School of Arts and Humanities |                          |                                 |
                | mus  | School of Music & Dance       | mus                      | mus                             |
                | ns   | School of Natural Sciences    | ns                       | ns                              |
@@ -14698,11 +14698,11 @@ tests:
               -+-------------------------------------------------------------------------------------------+-
                | name                          | count(department) | this(){count(department)}?name!~'art' |
               -+-------------------------------+-------------------+---------------------------------------+-
-               | School of Art and Design      |                 2 |                                       |
+               | School of Art and Design      |                 2 |                                     0 |
                | School of Business            |                 3 |                                     3 |
                | College of Education          |                 2 |                                     2 |
                | School of Engineering         |                 4 |                                     4 |
-               | School of Arts and Humanities |                 5 |                                       |
+               | School of Arts and Humanities |                 5 |                                     0 |
                | School of Music & Dance       |                 4 |                                     4 |
                | School of Natural Sciences    |                 4 |                                     4 |
                | Public Honorariums            |                 0 |                                     0 |
@@ -14809,7 +14809,7 @@ tests:
               ["art", "School of Art and Design"],
               ["bus", "School of Business"],
               ["edu", "College of Education"],
-              ["egn", "School of Engineering"],
+              ["eng", "School of Engineering"],
               ["la", "School of Arts and Humanities"],
               ["mus", "School of Music & Dance"],
               ["ns", "School of Natural Sciences"],
@@ -14831,7 +14831,7 @@ tests:
                 ["art", "School of Art and Design"],
                 ["bus", "School of Business"],
                 ["edu", "College of Education"],
-                ["egn", "School of Engineering"],
+                ["eng", "School of Engineering"],
                 ["la", "School of Arts and Humanities"],
                 ["mus", "School of Music & Dance"],
                 ["ns", "School of Natural Sciences"],
@@ -14845,7 +14845,7 @@ tests:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="(school).csv"]
           body: "code,name\r\nart,School of Art and Design\r\nbus,School of Business\r\nedu,College
-            of Education\r\negn,School of Engineering\r\nla,School of Arts and Humanities\r\nmus,School
+            of Education\r\neng,School of Engineering\r\nla,School of Arts and Humanities\r\nmus,School
             of Music & Dance\r\nns,School of Natural Sciences\r\nph,Public Honorariums\r\nsc,School
             of Continuing Studies\r\n"
         - uri: /school/:txt
@@ -14860,7 +14860,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -14918,7 +14918,7 @@ tests:
             <tr class="odd"><td>art</td><td>School of Art and Design</td></tr>
             <tr class="even"><td>bus</td><td>School of Business</td></tr>
             <tr class="odd"><td>edu</td><td>College of Education</td></tr>
-            <tr class="even"><td>egn</td><td>School of Engineering</td></tr>
+            <tr class="even"><td>eng</td><td>School of Engineering</td></tr>
             <tr class="odd"><td>la</td><td>School of Arts and Humanities</td></tr>
             <tr class="even"><td>mus</td><td>School of Music &amp; Dance</td></tr>
             <tr class="odd"><td>ns</td><td>School of Natural Sciences</td></tr>
@@ -14951,7 +14951,7 @@ tests:
               ["art", "School of Art and Design"],
               ["bus", "School of Business"],
               ["edu", "College of Education"],
-              ["egn", "School of Engineering"],
+              ["eng", "School of Engineering"],
               ["la", "School of Arts and Humanities"],
               ["mus", "School of Music & Dance"],
               ["ns", "School of Natural Sciences"],
@@ -14964,7 +14964,7 @@ tests:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="(school).csv"]
           body: "code,name\r\nart,School of Art and Design\r\nbus,School of Business\r\nedu,College
-            of Education\r\negn,School of Engineering\r\nla,School of Arts and Humanities\r\nmus,School
+            of Education\r\neng,School of Engineering\r\nla,School of Arts and Humanities\r\nmus,School
             of Music & Dance\r\nns,School of Natural Sciences\r\nph,Public Honorariums\r\nsc,School
             of Continuing Studies\r\n"
         - uri: /school
@@ -14979,7 +14979,7 @@ tests:
              | art  | School of Art and Design      |
              | bus  | School of Business            |
              | edu  | College of Education          |
-             | egn  | School of Engineering         |
+             | eng  | School of Engineering         |
              | la   | School of Arts and Humanities |
              | mus  | School of Music & Dance       |
              | ns   | School of Natural Sciences    |
@@ -15037,7 +15037,7 @@ tests:
             <tr class="odd"><td>art</td><td>School of Art and Design</td></tr>
             <tr class="even"><td>bus</td><td>School of Business</td></tr>
             <tr class="odd"><td>edu</td><td>College of Education</td></tr>
-            <tr class="even"><td>egn</td><td>School of Engineering</td></tr>
+            <tr class="even"><td>eng</td><td>School of Engineering</td></tr>
             <tr class="odd"><td>la</td><td>School of Arts and Humanities</td></tr>
             <tr class="even"><td>mus</td><td>School of Music &amp; Dance</td></tr>
             <tr class="odd"><td>ns</td><td>School of Natural Sciences</td></tr>

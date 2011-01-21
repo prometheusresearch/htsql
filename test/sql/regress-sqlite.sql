@@ -78,7 +78,7 @@ INSERT INTO school (code, name) VALUES
 INSERT INTO school (code, name) VALUES
     ('la', 'School of Arts and Humanities');
 INSERT INTO school (code, name) VALUES
-    ('egn', 'School of Engineering');
+    ('eng', 'School of Engineering');
 INSERT INTO school (code, name) VALUES
     ('art', 'School of Art and Design');
 INSERT INTO school (code, name) VALUES
@@ -109,13 +109,13 @@ INSERT INTO department (code, name, school) VALUES
 INSERT INTO department (code, name, school) VALUES
     ('poli', 'Political Science', 'la');
 INSERT INTO department (code, name, school) VALUES
-    ('comp', 'Computer Science', 'egn');
+    ('comp', 'Computer Science', 'eng');
 INSERT INTO department (code, name, school) VALUES
-    ('ee', 'Electrical Engineering', 'egn');
+    ('ee', 'Electrical Engineering', 'eng');
 INSERT INTO department (code, name, school) VALUES
-    ('me', 'Mechanical Engineering', 'egn');
+    ('me', 'Mechanical Engineering', 'eng');
 INSERT INTO department (code, name, school) VALUES
-    ('be', 'Bioengineering', 'egn');
+    ('be', 'Bioengineering', 'eng');
 INSERT INTO department (code, name, school) VALUES
     ('arthis', 'Art History', 'art');
 INSERT INTO department (code, name, school) VALUES
@@ -177,21 +177,21 @@ INSERT INTO program (school, code, title, degree, part_of) VALUES
 INSERT INTO program (school, code, title, degree, part_of) VALUES
     ('la', 'glang', 'Master of Arts in Modern Languages', 'ma', NULL);
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'gbuseng', 'M.S. in Business and Engineering', 'ms', NULL);
+    ('eng', 'gbuseng', 'M.S. in Business and Engineering', 'ms', NULL);
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'gee', 'M.S. in Electrical Engineering', 'ms', NULL);
+    ('eng', 'gee', 'M.S. in Electrical Engineering', 'ms', NULL);
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'gme', 'M.S. in Mechanical Engineering', 'ms', NULL);
+    ('eng', 'gme', 'M.S. in Mechanical Engineering', 'ms', NULL);
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'gbe', 'M.S. in Bioengineering', 'ms', NULL);
+    ('eng', 'gbe', 'M.S. in Bioengineering', 'ms', NULL);
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'uelec', 'B.S. in Electrical Engineering', 'bs', 'gee');
+    ('eng', 'uelec', 'B.S. in Electrical Engineering', 'bs', 'gee');
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'umech', 'B.S. in Mechanical Engineering', 'bs', 'gme');
+    ('eng', 'umech', 'B.S. in Mechanical Engineering', 'bs', 'gme');
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'ubio', 'B.S. in Bioengineering', 'bs', 'gbe');
+    ('eng', 'ubio', 'B.S. in Bioengineering', 'bs', 'gbe');
 INSERT INTO program (school, code, title, degree, part_of) VALUES
-    ('egn', 'ucompsci', 'B.S. in Computer Science', 'bs', NULL);
+    ('eng', 'ucompsci', 'B.S. in Computer Science', 'bs', NULL);
 INSERT INTO program (school, code, title, degree, part_of) VALUES
     ('edu', 'umath', 'Bachelor of Arts in Math Education', 'ba', NULL);
 INSERT INTO program (school, code, title, degree, part_of) VALUES
@@ -1002,7 +1002,7 @@ CREATE TABLE enrollment (
 );
 
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('25371', 'John L. Hanley', 'm', '1990-04-28', 'egn', 'gbuseng', '2009-07-15', 1);
+    ('25371', 'John L. Hanley', 'm', '1990-04-28', 'eng', 'gbuseng', '2009-07-15', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('29878', 'Ellen Lansburgh', 'f', '1992-02-01', 'bus', 'uacct', '2008-01-05', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
@@ -1020,17 +1020,17 @@ INSERT INTO student (number, name, gender, dob, school, program, start_date, is_
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('38187', 'Mary Ann Flenderson', 'f', '1993-05-16', 'ns', 'uphys', '2010-08-26', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('43278', 'Trina Wood Campbell', 'f', '1990-02-12', 'egn', 'gme', '2007-09-01', 1);
+    ('43278', 'Trina Wood Campbell', 'f', '1990-02-12', 'eng', 'gme', '2007-09-01', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('27138', 'Artem Karpov', 'm', '1991-10-16', 'egn', 'gbe', '2009-08-22', 1);
+    ('27138', 'Artem Karpov', 'm', '1991-10-16', 'eng', 'gbe', '2009-08-22', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('12837', 'Christine Leung', 'f', '1991-06-06', 'egn', 'gme', '2009-08-17', 1);
+    ('12837', 'Christine Leung', 'f', '1991-06-06', 'eng', 'gme', '2009-08-17', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('38721', 'Alicia Montez-Galliano', 'f', '1994-07-11', 'ns', 'uchem', '2010-09-10', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('37182', 'Amy Yang', 'f', '1992-12-17', 'ns', 'uphys', '2002-08-10', 0);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('32718', 'Raisa Antonova', 'f', '1992-12-09', 'egn', 'gbe', '2008-09-15', 0);
+    ('32718', 'Raisa Antonova', 'f', '1992-12-09', 'eng', 'gbe', '2008-09-15', 0);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('32711', 'Peter Zajac Jr.', 'm', '1994-01-23', 'bus', 'ucorpfi', '2009-09-10', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
@@ -1052,11 +1052,11 @@ INSERT INTO student (number, name, gender, dob, school, program, start_date, is_
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('12328', 'Karen Yuen', 'f', '1991-09-10', 'ns', 'uphys', '2007-05-16', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('32214', 'Joseph Tan', 'm', '1992-08-01', 'egn', 'gbuseng', '2008-01-06', 1);
+    ('32214', 'Joseph Tan', 'm', '1992-08-01', 'eng', 'gbuseng', '2008-01-06', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('22313', 'James Earl Sims III', 'm', '2002-07-06', 'egn', 'umech', '2004-08-16', 1);
+    ('22313', 'James Earl Sims III', 'm', '2002-07-06', 'eng', 'umech', '2004-08-16', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('24431', 'Annette Dupree', 'f', '1987-01-28', 'egn', 'umech', '2006-01-16', 1);
+    ('24431', 'Annette Dupree', 'f', '1987-01-28', 'eng', 'umech', '2006-01-16', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('38794', 'Bailey Melvin', 'm', '1988-03-13', 'la', 'psciwri', '2005-04-20', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
@@ -1064,21 +1064,21 @@ INSERT INTO student (number, name, gender, dob, school, program, start_date, is_
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('35523', 'Nikki Agbo', 'm', '1985-05-05', 'la', 'gengl', '2006-02-25', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('20927', 'Glenn L. McNair', 'm', '1987-12-13', 'egn', 'gee', '2009-08-23', 1);
+    ('20927', 'Glenn L. McNair', 'm', '1987-12-13', 'eng', 'gee', '2009-08-23', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('35183', 'Teisha Worth Day', 'f', '1983-12-31', 'edu', 'gedlead', '2009-08-21', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('25723', 'Kumar Suresh', 'm', '1994-09-11', 'egn', 'ucompsci', '2009-08-23', 1);
+    ('25723', 'Kumar Suresh', 'm', '1994-09-11', 'eng', 'ucompsci', '2009-08-23', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('24672', 'Mahesh Basa', 'm', '1995-08-21', 'egn', 'ucompsci', '2008-04-15', 0);
+    ('24672', 'Mahesh Basa', 'm', '1995-08-21', 'eng', 'ucompsci', '2008-04-15', 0);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('23137', 'Rachel Feld', 'f', '1992-09-27', 'ns', 'uchem', '2008-12-23', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('35163', 'Nicola Ralls Jr.', 'f', '1993-06-02', 'bus', 'uacct', '2010-01-12', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('21135', 'Luis Riviera Espinoza', 'm', '1993-05-21', 'egn', 'gbe', '2010-02-19', 1);
+    ('21135', 'Luis Riviera Espinoza', 'm', '1993-05-21', 'eng', 'gbe', '2010-02-19', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('31735', 'Demetrios Kanakis', 'm', '1995-04-17', 'egn', 'ucompsci', '2009-05-21', 1);
+    ('31735', 'Demetrios Kanakis', 'm', '1995-04-17', 'eng', 'ucompsci', '2009-05-21', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('21166', 'Laura Elmer Long', 'f', '1991-02-14', 'ns', 'uastro', '2009-01-31', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
@@ -1100,7 +1100,7 @@ INSERT INTO student (number, name, gender, dob, school, program, start_date, is_
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('28382', 'Martha O''Mally', 'f', '1995-05-14', 'bus', 'pacc', '2005-01-01', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
-    ('27281', 'José N. Marteñes', 'm', '1993-11-19', 'egn', 'ucompsci', '2007-06-15', 1);
+    ('27281', 'José N. Marteñes', 'm', '1993-11-19', 'eng', 'ucompsci', '2007-06-15', 1);
 INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('27817', 'Niall Crawford', 'm', '1998-12-14', 'bus', 'pacc', '2010-01-02', 1);
 
@@ -1750,37 +1750,37 @@ INSERT INTO program_requirement (school, program, classification, credit_hours, 
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
     ('la', 'glang', 'language', 22, 'Candidates for the Master of Arts in Modern Languages must take a minimum of 22 credit hours in the modern language of their concentration.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'uelec', 'eetheory', 18, 'Bachelor of Engineering candidates in Electrical Engineering are expected to take at least 18 hours of credit in EE theory.');
+    ('eng', 'uelec', 'eetheory', 18, 'Bachelor of Engineering candidates in Electrical Engineering are expected to take at least 18 hours of credit in EE theory.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'uelec', 'eeconcentration', 22, 'Bachelor of Engineering candidates in Electrical Engineering are expected to take at least 22 hours of credit in their area of concentration.');
+    ('eng', 'uelec', 'eeconcentration', 22, 'Bachelor of Engineering candidates in Electrical Engineering are expected to take at least 22 hours of credit in their area of concentration.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'uelec', 'compsci', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in computer science and/or programming related to their major.');
+    ('eng', 'uelec', 'compsci', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in computer science and/or programming related to their major.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'umech', 'me', 22, 'Bachelor of Engineering candidates in Mechanical Engineering are expected to take at least 22 hours of credit in their area of concentrationmechanics, de sign, or systems.');
+    ('eng', 'umech', 'me', 22, 'Bachelor of Engineering candidates in Mechanical Engineering are expected to take at least 22 hours of credit in their area of concentrationmechanics, de sign, or systems.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'umech', 'mesystems', 9, 'Bachelor of Engineering candidates in Mechanical Engineering are expected to take at least 9 hours of credit in systems, regardless of their area of concentration.');
+    ('eng', 'umech', 'mesystems', 9, 'Bachelor of Engineering candidates in Mechanical Engineering are expected to take at least 9 hours of credit in systems, regardless of their area of concentration.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'umech', 'compsci', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in computer science and/or programming related to their major.');
+    ('eng', 'umech', 'compsci', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in computer science and/or programming related to their major.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'umech', 'humanities', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in general humanities.');
+    ('eng', 'umech', 'humanities', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in general humanities.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'ubio', 'be', 24, 'Bachelor of Engineering candidates in Bioengineering are expected to take at least 24 hours of credit in their area of concentrationclinical, nanotech, orbiomaterials');
+    ('eng', 'ubio', 'be', 24, 'Bachelor of Engineering candidates in Bioengineering are expected to take at least 24 hours of credit in their area of concentrationclinical, nanotech, orbiomaterials');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'ubio', 'mesystems', 10, 'Bachelor of Engineering candidates in Bioengineering are expected to take at least 9 hours of credit in biomaterials, regardless of their area of concentration.');
+    ('eng', 'ubio', 'mesystems', 10, 'Bachelor of Engineering candidates in Bioengineering are expected to take at least 9 hours of credit in biomaterials, regardless of their area of concentration.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'ubio', 'compsci', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in computer science and/or programming related to their major.');
+    ('eng', 'ubio', 'compsci', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in computer science and/or programming related to their major.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'ubio', 'humanities', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in general humanities.');
+    ('eng', 'ubio', 'humanities', 12, 'Bachelor of Engineering candidates are expected to take at least 12 hours of credit in general humanities.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'gbuseng', 'business', 16, 'Candidates for the Master of Science in Business and Engineering are required to take at least 16 credit hours in general business.');
+    ('eng', 'gbuseng', 'business', 16, 'Candidates for the Master of Science in Business and Engineering are required to take at least 16 credit hours in general business.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'gbuseng', 'engineering', 22, 'Candidates for the Master of Science in Business and Engineering are required to take at least 22 credit hours in one or more relevant engineering disciplines.');
+    ('eng', 'gbuseng', 'engineering', 22, 'Candidates for the Master of Science in Business and Engineering are required to take at least 22 credit hours in one or more relevant engineering disciplines.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'gee', 'ee', 34, 'Candidates for the Master of Science in Electrical Engineering must take at least 34 credit hours in graduate electrical engineering.');
+    ('eng', 'gee', 'ee', 34, 'Candidates for the Master of Science in Electrical Engineering must take at least 34 credit hours in graduate electrical engineering.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'gme', 'ee', 36, 'Candidates for the Master of Science in Electrical Engineering must take at least 36 credit hours in graduate electrical engineering.');
+    ('eng', 'gme', 'ee', 36, 'Candidates for the Master of Science in Electrical Engineering must take at least 36 credit hours in graduate electrical engineering.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
-    ('egn', 'gbe', 'ee', 38, 'Candidates for the Master of Science in Electrical Engineering must take at least 38 credit hours in graduate electrical engineering.');
+    ('eng', 'gbe', 'ee', 38, 'Candidates for the Master of Science in Electrical Engineering must take at least 38 credit hours in graduate electrical engineering.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
     ('edu', 'umath', 'teached', 20, 'Bachelor of Arts students in Math Education must take at least 20 credit hours of general teacher education.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES

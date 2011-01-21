@@ -23,7 +23,7 @@ tests:
   - uri: /course{department{school.name, name}, title}
   - uri: /department{*,school.*}
   # Filtering Data
-  - uri: /department?school='egn'
+  - uri: /department?school='eng'
   - uri: /program?degree={'ba','bs'}
   - uri: /program?school='bus'&degree!='bs'
   - uri: /course{department, number, title}

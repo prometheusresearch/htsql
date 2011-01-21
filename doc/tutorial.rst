@@ -234,11 +234,11 @@ Predicate expressions in HTSQL follow the question mark ``?``.
 For example, to return departments in the 'School of Engineering'
 we write (C1_):
 
-.. htsql:: /department?school='egn'
+.. htsql:: /department?school='eng'
 
 .. _C1:
     http://demo.htsql.org
-    /department?school='egn'
+    /department?school='eng'
 
 The request above returns all rows in the ``department`` table where the
 column ``school`` is equal to ``'eng'``.   In HTSQL, *literal* values are

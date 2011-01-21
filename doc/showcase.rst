@@ -50,6 +50,9 @@ HTSQL wraps SQL databases.  On startup HTSQL introspects structure of
 the database.  At runtime, each request is then translated into SQL and
 executed.
 
+Throughout this document, the code blocks on the right represent the SQL
+equivalent of the HTSQL expression on the left.
+
 HTSQL is an Advanced Query Language
 -----------------------------------
 
@@ -178,7 +181,7 @@ HTSQL lets you filter results with arbitrary predicates.
    .. sourcecode:: htsql
 
       /course?credits>3
-             &department.school='egn'
+             &department.school='eng'
 
    .. sourcecode:: sql
 
@@ -191,7 +194,7 @@ HTSQL lets you filter results with arbitrary predicates.
        INNER JOIN "ad"."department" AS "department"
        ON ("course"."department" = "department"."code")
        WHERE ("course"."credits" > 3)
-         AND ("department"."school" = 'egn')
+         AND ("department"."school" = 'eng')
        ORDER BY 1 ASC, 2 ASC
 
 This query (Q3_) returns courses from the school of
@@ -199,7 +202,7 @@ engineering having more than 3 credits.
 
 .. _Q3:
      http://demo.htsql.org
-     /course?department.school='egn'&credits>3
+     /course?department.school='eng'&credits>3
 
 Paging and Sorting
 ------------------
@@ -223,8 +226,8 @@ Table operations such as sorting and paging are chainable.
       ORDER BY 4 ASC NULLS FIRST, 1 ASC, 2 ASC
       LIMIT 10 OFFSET 20
 
-This query (Q4_) returns page 3 of the course catalog as
-sorted by number of credits.
+This query (Q4_) returns courses 21 to 30 in the course
+catalog as sorted by number of credits.
 
 .. _Q4:
      http://demo.htsql.org

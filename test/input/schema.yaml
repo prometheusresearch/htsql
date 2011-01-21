@@ -52,17 +52,17 @@ tests:
   - uri: /(department?code='ee').class
 
   # Program -> School (parental)
-  - uri: /(program?school='egn'&code='umech').school
+  - uri: /(program?school='eng'&code='umech').school
   # Program -> Program (singular, self-referencial)
-  - uri: /(program?school='egn'&code='umech').part_of
+  - uri: /(program?school='eng'&code='umech').part_of
   # Program -> Program (reverse self-referential)
   # FIXME: broken! No way to indicate a reverse self-referential link.
   # The query below, in fact, produces a direct self-referential link.
-  - uri: /(program?school='egn'&code='umech').program
+  - uri: /(program?school='eng'&code='umech').program
   # Program -> Student
-  - uri: /(program?school='egn'&code='umech').student
+  - uri: /(program?school='eng'&code='umech').student
   # Program -> Program Requirement
-  - uri: /(program?school='egn'&code='umech').program_requirement
+  - uri: /(program?school='eng'&code='umech').program_requirement
 
   # Course -> Department (parental)
   - uri: /(course?department='psych'&number=610).department
