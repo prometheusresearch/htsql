@@ -15,6 +15,7 @@ This package implements product formatters.
 
 from .format import FindRenderer
 from .json import JSONRenderer
+from .jsonex import JSONExRenderer
 from .spreadsheet import CSVRenderer
 from .html import HTMLRenderer
 from .text import TextRenderer
@@ -23,7 +24,8 @@ from .text import TextRenderer
 class FindStandardRenderer(FindRenderer):
 
     def get_renderers(self):
-        return ([CSVRenderer, JSONRenderer, HTMLRenderer, TextRenderer]
+        return ([CSVRenderer, JSONRenderer, JSONExRenderer,
+                 HTMLRenderer, TextRenderer]
                 + super(FindStandardRenderer, self).get_renderers())
 
 

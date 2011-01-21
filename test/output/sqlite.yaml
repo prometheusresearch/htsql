@@ -14085,6 +14085,29 @@ tests:
               ["ph", "Public Honorariums"],
               ["sc", "School of Continuing Studies"]
             ]
+        - uri: /school/:jsonex
+          status: 200 OK
+          headers:
+          - [Content-Type, application/json]
+          - [Content-Disposition, attachment; filename="(school).json"]
+          body: |
+            {
+              "meta": [
+                {"title": "code", "domain": "string"},
+                {"title": "name", "domain": "string"}
+              ],
+              "data": [
+                ["art", "School of Art and Design"],
+                ["bus", "School of Business"],
+                ["edu", "College of Education"],
+                ["egn", "School of Engineering"],
+                ["la", "School of Arts and Humanities"],
+                ["mus", "School of Music & Dance"],
+                ["ns", "School of Natural Sciences"],
+                ["ph", "Public Honorariums"],
+                ["sc", "School of Continuing Studies"]
+              ]
+            }
         - uri: /school/:csv
           status: 200 OK
           headers:
@@ -14318,6 +14341,31 @@ tests:
               ["School of Continuing Studies", 0]
             ]
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
+            '# of Departments'} /:jsonex
+          status: 200 OK
+          headers:
+          - [Content-Type, application/json]
+          - [Content-Disposition, 'attachment; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
+              of Departments'')}).json"']
+          body: |
+            {
+              "meta": [
+                {"title": "Name", "domain": "string"},
+                {"title": "# of Departments", "domain": "number"}
+              ],
+              "data": [
+                ["School of Art and Design", 2],
+                ["School of Business", 3],
+                ["College of Education", 2],
+                ["School of Engineering", 4],
+                ["School of Arts and Humanities", 5],
+                ["School of Music & Dance", 4],
+                ["School of Natural Sciences", 4],
+                ["Public Honorariums", 0],
+                ["School of Continuing Studies", 0]
+              ]
+            }
+        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:csv
           status: 200 OK
           headers:
@@ -14414,6 +14462,216 @@ tests:
             <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
             </tr>
             <tr><td class="footer">/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}/:html</td></tr>
+            </table>
+            </body>
+            </html>
+      - id: data-types
+        tests:
+        - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+            /:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/json]
+          - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15'')}).json"']
+          body: |
+            [
+              ["null()", "true()", "false()", "60", "2.125", "271828e-5", "'HTSQL'", "date('2010-04-15')"],
+              [null, true, false, 60, 2.125, 2.71828, "HTSQL", "2010-04-15"]
+            ]
+        - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+            /:jsonex
+          status: 200 OK
+          headers:
+          - [Content-Type, application/json]
+          - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15'')}).json"']
+          body: |
+            {
+              "meta": [
+                {"title": "null()", "domain": "string"},
+                {"title": "true()", "domain": "boolean"},
+                {"title": "false()", "domain": "boolean"},
+                {"title": "60", "domain": "number"},
+                {"title": "2.125", "domain": "number"},
+                {"title": "271828e-5", "domain": "number"},
+                {"title": "'HTSQL'", "domain": "string"},
+                {"title": "date('2010-04-15')", "domain": "date"}
+              ],
+              "data": [
+                [null, true, false, 60, 2.125, 2.71828, "HTSQL", "2010-04-15"]
+              ]
+            }
+        - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+            /:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15'')}).csv"']
+          body: "null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')\r\n,true,false,60,2.125,2.71828,HTSQL,2010-04-15\r\n"
+        - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+            /:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                   |
+            -+-----------------------------------------------------------------------------------+-
+             | null() | true() | false() | 60 | 2.125 | 271828e-5 | 'HTSQL' | date('2010-04-15') |
+            -+--------+--------+---------+----+-------+-----------+---------+--------------------+-
+             |        | true   | false   | 60 | 2.125 |   2.71828 | HTSQL   | 2010-04-15         |
+                                                                                           (1 row)
+
+             ----
+             /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}/:txt
+             SELECT NULL,
+                    1,
+                    0,
+                    60,
+                    2.125,
+                    2.71828,
+                    'HTSQL',
+                    '2010-04-15'
+        - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+            /:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}/:html</title>
+            <style type="text/css">
+            body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
+            a:link, a:visited { color: #1f4884; text-decoration: none }
+            a:hover { text-decoration: underline }
+            table { border-collapse: collapse; margin: 0.5em auto; width: 100% }
+            table, tr { border-style: solid; border-width: 0 }
+            td, th { padding: 0.2em 0.5em; vertical-align: top; text-align: left }
+            div.tab { position: relative; left: -1px; margin-right: 60%; padding: 0.2em 0.5em; background: #ffffff; border-style: solid; border-width: 5px 1px 0; border-top-left-radius: 10px; border-top-right-radius: 10px; -moz-border-radius-topleft: 10px; -moz-border-radius-topright: 10px; -webkit-border-top-left-radius: 10px; -webkit-border-top-right-radius: 10px }
+            table.page { border: 0; padding: 1em; width: auto }
+            tr.content { padding: 1em 1em 0.5em }
+            tr.footer { padding: 0 1em 1em; text-align: left; font-style: italic }
+            table.chart .number { text-align: right }
+            tr.caption { font-size: 105%; background: transparent }
+            tr.caption th { padding: 0 }
+            div.tab { border-color: #6f9ad3 #c3c3c3 }
+            tr.header { background: #dae3ea; border-color: #c3c3c3; border-width: 1px 1px 0 }
+            tr.odd { background: #ffffff; border-color: #c3c3c3; border-width: 0 1px }
+            tr.even { background: #f2f2f2; border-color: #c3c3c3; border-width: 0 1px }
+            tr.odd:hover, tr.even:hover { background: #ffe3bd }
+            tr.total { background: transparent;border-color: #c3c3c3; border-width: 1px 0 0 }
+            tr.total td { text-align: right; font-size: 75%; font-style: italic; padding: 0.3em 0.5em 0 }
+            table.void { text-align: center; border-color: #c3c3c3; border-width: 1px 0 }
+            </style>
+            </head>
+            <body>
+            <table class="page" summary="/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}/:html">
+            <tr>
+            <td class="content">
+            <table class="chart" summary="">
+            <tr class="caption"><th colspan="8"><div class="tab"></div></th></tr>
+            <tr class="header"><th>null()</th><th>true()</th><th>false()</th><th class="number">60</th><th class="number">2.125</th><th class="number">271828e-5</th><th>'HTSQL'</th><th>date('2010-04-15')</th></tr>
+            <tr class="odd"><td><em>&mdash;</em></td><td><em>true</em></td><td><em>false</em></td><td class="number">60</td><td class="number">2.125</td><td class="number">2.71828</td><td>HTSQL</td><td>2010-04-15</td></tr>
+            <tr class="total"><td colspan="8">(1 row)</td></tr></table></td>
+            </tr>
+            <tr><td class="footer">/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}/:html</td></tr>
+            </table>
+            </body>
+            </html>
+      - id: no-rows
+        tests:
+        - uri: /school?false()/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/json]
+          - [Content-Disposition, 'attachment; filename="(school?false()).json"']
+          body: |
+            [
+              ["code", "name"]
+            ]
+        - uri: /school?false()/:jsonex
+          status: 200 OK
+          headers:
+          - [Content-Type, application/json]
+          - [Content-Disposition, 'attachment; filename="(school?false()).json"']
+          body: |
+            {
+              "meta": [
+                {"title": "code", "domain": "string"},
+                {"title": "name", "domain": "string"}
+              ],
+              "data": [
+              ]
+            }
+        - uri: /school?false()/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, 'attachment; filename="(school?false()).csv"']
+          body: "code,name\r\n"
+        - uri: /school?false()/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | (school?false()) |
+            -+------------------+-
+             | code    | name   |
+            -+---------+--------+-
+                        (no rows)
+
+             ----
+             /school?false()/:txt
+             SELECT "school"."code",
+                    "school"."name"
+             FROM "school" AS "school"
+             WHERE 0
+             ORDER BY 1 ASC
+        - uri: /school?false()/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>/school?false()/:html</title>
+            <style type="text/css">
+            body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
+            a:link, a:visited { color: #1f4884; text-decoration: none }
+            a:hover { text-decoration: underline }
+            table { border-collapse: collapse; margin: 0.5em auto; width: 100% }
+            table, tr { border-style: solid; border-width: 0 }
+            td, th { padding: 0.2em 0.5em; vertical-align: top; text-align: left }
+            div.tab { position: relative; left: -1px; margin-right: 60%; padding: 0.2em 0.5em; background: #ffffff; border-style: solid; border-width: 5px 1px 0; border-top-left-radius: 10px; border-top-right-radius: 10px; -moz-border-radius-topleft: 10px; -moz-border-radius-topright: 10px; -webkit-border-top-left-radius: 10px; -webkit-border-top-right-radius: 10px }
+            table.page { border: 0; padding: 1em; width: auto }
+            tr.content { padding: 1em 1em 0.5em }
+            tr.footer { padding: 0 1em 1em; text-align: left; font-style: italic }
+            table.chart .number { text-align: right }
+            tr.caption { font-size: 105%; background: transparent }
+            tr.caption th { padding: 0 }
+            div.tab { border-color: #6f9ad3 #c3c3c3 }
+            tr.header { background: #dae3ea; border-color: #c3c3c3; border-width: 1px 1px 0 }
+            tr.odd { background: #ffffff; border-color: #c3c3c3; border-width: 0 1px }
+            tr.even { background: #f2f2f2; border-color: #c3c3c3; border-width: 0 1px }
+            tr.odd:hover, tr.even:hover { background: #ffe3bd }
+            tr.total { background: transparent;border-color: #c3c3c3; border-width: 1px 0 0 }
+            tr.total td { text-align: right; font-size: 75%; font-style: italic; padding: 0.3em 0.5em 0 }
+            table.void { text-align: center; border-color: #c3c3c3; border-width: 1px 0 }
+            </style>
+            </head>
+            <body>
+            <table class="page" summary="/school?false()/:html">
+            <tr>
+            <td class="content">
+            <table class="chart" summary="(school?false())">
+            <tr class="caption"><th colspan="2"><div class="tab">(school?false())</div></th></tr>
+            <tr class="header"><th>code</th><th>name</th></tr>
+            <tr class="total"><td colspan="2">(no rows)</td></tr></table></td>
+            </tr>
+            <tr><td class="footer">/school?false()/:html</td></tr>
             </table>
             </body>
             </html>

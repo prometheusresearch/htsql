@@ -143,7 +143,7 @@ class FormatDate(Format):
     def __call__(self, value):
         if value is None:
             return "null"
-        return str(value)
+        return escape(str(value))
 
 
 class Escape(object):

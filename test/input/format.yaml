@@ -11,6 +11,7 @@ tests:
 - title: Supported Output Formats
   tests:
   - uri: /school/:json
+  - uri: /school/:jsonex
   - uri: /school/:csv
   - uri: /school/:txt
   - uri: /school/:html
@@ -39,6 +40,9 @@ tests:
             /:json
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
+            /:jsonex
+    - uri: /(school :as 'List of Schools')
+            {name :as Name, count(department) :as '# of Departments'}
             /:csv
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
@@ -46,4 +50,25 @@ tests:
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
             /:html
+
+- title: Data Types
+  tests:
+  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+          /:json
+  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+          /:jsonex
+  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+          /:csv
+  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+          /:txt
+  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+          /:html
+
+- title: No Rows
+  tests:
+  - uri: /school?false()/:json
+  - uri: /school?false()/:jsonex
+  - uri: /school?false()/:csv
+  - uri: /school?false()/:txt
+  - uri: /school?false()/:html
 
