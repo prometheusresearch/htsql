@@ -2,12 +2,10 @@
   HTSQL Showcase
 ******************
 
-
 What is HTSQL?
 ==============
 
 HTSQL is a query language and web service for relational databases.
-
 
 HTSQL is a Web Service
 ----------------------
@@ -31,7 +29,6 @@ HTTP_ request depends upon the user-agent and its Accept_ header.
 .. _Accept: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
 .. _URLs: http://www.ietf.org/rfc/rfc3986.txt
 
-
 HTSQL is a Relational Database Gateway
 --------------------------------------
 
@@ -51,7 +48,6 @@ HTSQL is a Relational Database Gateway
 HTSQL wraps SQL databases.  On startup HTSQL introspects structure of
 the database.  At runtime, each request is then translated into SQL and
 executed.
-
 
 HTSQL is an Advanced Query Language
 -----------------------------------
@@ -89,32 +85,37 @@ HTSQL is a high-level query language that compiles into SQL as if it
 were a database assembler.
 
 
-Show me HTSQL
-=============
+Show me this HTSQL!
+===================
 
 HTSQL was designed from the ground up as a self-serve reporting tool for
 data analysts.  With HTSQL, the easy stuff is truly easy; oh, yea, and
 complex stuff is easy too.
 
-For the examples below, the following "university catalog" schema is
-used.  It has two top-level tables, ``school`` and ``department``, where
-``department`` has an optional link to ``school``.  Subordinate tables,
-having mandatory foreign key references are ``course`` and ``program``::
+Database Introspection
+----------------------
+
+On startup, HTSQL examines tables, primary keys, and foreign keys
+to construct a navigational graph of your database.  For example::
 
          +------------+               +------------+
     /---+| DEPARTMENT |>-------------o|   SCHOOL   |+---\
     |.   +------------+        .      +------------+   .|
     | .                       .                       . |
     |  .                     .                       .  |
-    |   department       department         a school    |
-    |   offers           may be part        has one or  |
-    |   courses          of school          programs    |
+    |   department       department        school may   |
+    |   offers           may be part       offer some   |
+    |   courses          of school         programs     |
     |                                                   |
     |                                                   |
     |    +------------+               +------------+    |
     \---<|   COURSE   |               |  PROGRAM   |>---/
          +------------+               +------------+
 
+For the examples below, the "university catalog" schema above is used.
+It has two top-level tables, ``school`` and ``department``, where
+``department`` has an optional link to ``school``.  Subordinate tables,
+having mandatory foreign key references are ``course`` and ``program``.
 
 Choosing a Table
 ----------------
@@ -138,7 +139,6 @@ HTSQL queries typically start with the driving table.
 This query (Q1_) returns all departments.
 
 .. _Q1: http://demo.htsql.org/department
-
 
 Selecting Columns
 -----------------
@@ -168,7 +168,6 @@ associated school and the name of the department.
 .. _Q2:
      http://demo.htsql.org
      /department{school.name :as 'School', name :as 'Department'}
-
 
 Filtering Rows
 --------------
@@ -203,7 +202,6 @@ engineering having more than 3 credits.
      http://demo.htsql.org
      /course?department.school='egn'&credits>3
 
-
 Paging and Sorting
 ------------------
 
@@ -232,7 +230,6 @@ sorted by number of credits.
 .. _Q4:
      http://demo.htsql.org
      /course.sort(credits).limit(10,20)
-
 
 Aggregating Data
 ----------------
@@ -290,7 +287,6 @@ How do I use HTSQL?
 
 HTSQL can be used with any number of higher-level tools.
 
-
 HTSQL Makes Dashboarding Easy
 -----------------------------
 
@@ -336,7 +332,6 @@ The dashboard above (using the JQuery-based HTRAF toolkit) shows a 3-level
 drill down (``school``, ``department`` and ``course``) for a university
 schema.  The live demo for this dashboard is at http://htraf.htsql.org/.
 
-
 HTSQL is a Communication Tool
 -----------------------------
 
@@ -363,36 +358,78 @@ database administrators, and even business users.
 What's up Next?
 ===============
 
-
-Hierarchical Output
--------------------
-
-HTSQL will not be limited to tabular output.
-
-.. sourcecode:: htsql
-
-   /school{name, /program{title}, /department{name}}
-
-This query (R1_) returns programs and departments
-in each school.
-
-.. _R1:
-     http://demo.htsql.com
-     /school{name}/(program{title};department{name})
-
+Over the next few months we'll be adding more features (some
+of them are already implemented in our internal 1.X branch).
 
 Projections
 -----------
 
-HTSQL will support complex grouping operations.
+HTSQL supports complex grouping operations.
 
-.. sourcecode:: htsql
+.. container:: vsplit
 
-   /program{degree^, count()}
+   .. sourcecode:: htsql
 
-This query (R2_) returns the number of programs per degree.
+      /program{degree^, count()}
 
-.. _R2:
-     http://demo.htsql.com/program{degree^,count()}
+   .. sourcecode:: sql
 
+      SELECT degree, COUNT(TRUE)
+      FROM ad.program
+      GROUP BY 1
+      ORDER BY 1;
+
+This query (N1_) returns the number of programs per degree.
+
+.. _N1:
+     http://demo.htsql.com
+     /program{degree^,count()}
+
+Hierarchical Output
+-------------------
+
+HTSQL is not limited to tabular output.
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /school{name, 
+          /program{title}, 
+          /department{name}}
+
+   .. sourcecode:: sql
+
+      SELECT name, code
+      FROM ad.school
+      ORDER BY code;
+
+      SELECT s.code, p.title
+      FROM ad.school AS s
+      INNER JOIN ad.program AS p
+      ON (s.code = p.school)
+      ORDER BY s.code, p.code;
+
+      SELECT s.code, d.name
+      FROM ad.school AS s
+      INNER JOIN ad.department
+      AS d ON (s.code = d.school)
+      ORDER BY s.code,d.code;
+
+This query (N2_) returns programs and departments
+in each school.
+
+.. _N2:
+     http://demo.htsql.com
+     /school{name}/(program{title};department{name})
+
+More Backends
+-------------
+
+The current release of HTSQL supports PostgreSQL and SQLite.
+Subsequent releases will add support for MySQL, Oracle and
+Microsoft SQL Server.
+
+The challenge here is providing consistent function definitions 
+and semantics that work across various SQL database systems.
 
