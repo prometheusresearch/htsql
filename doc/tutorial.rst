@@ -464,28 +464,32 @@ example shows average credits from only high-level courses (RB5_):
     http://demo.htsql.org
     /department{name, avg((course?number>400).credits)}
 
-Numerical aggregates are supported.  This request computes some useful
-``course.credit`` statistics (RB6_):
+Numerical aggregates are supported.  These requests compute some useful
+``course.credit`` statistics (RB6_, RB7_):
 
-.. htsql:: /department{code, min(course.credits), max(course.credits),
-                       avg(course.credits)}
+.. htsql:: /department{code, min(course.credits), max(course.credits)}
+
+.. htsql:: /department{code, sum(course.credits), avg(course.credits)}
 
 .. _RB6:
     http://demo.htsql.org
-    /department{code, min(course.credits), max(course.credits),
-                      avg(course.credits)}
+    /department{code, min(course.credits), max(course.credits)}
+
+.. _RB7:
+    http://demo.htsql.org
+    /department{code, sum(course.credits), avg(course.credits)}
 
 The ``every`` aggregate tests that a predicate is true for every row in
 the correlated set.  This example returns ``department`` records that
 either lack correlated ``course`` records or where every one of those
-``course`` records have exactly ``3`` credits (RB7_):
+``course`` records have exactly ``3`` credits (RB8_):
 
-.. htsql:: /department{name, avg(course.credits), count(course)}
+.. htsql:: /department{name, avg(course.credits)}
             ?every(course.credits=3)
 
-.. _RB7:
+.. _RB8:
     http://demo.htsql.org
-    /department{name, avg(course.credits), count(course)}
+    /department{name, avg(course.credits)}
       ?every(course.credits=3)
 
 
