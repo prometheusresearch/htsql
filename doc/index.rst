@@ -14,6 +14,7 @@
    tutorial
    reference
    roadmap
+   design
    api
 
 Indices and tables
