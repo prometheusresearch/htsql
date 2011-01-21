@@ -21,7 +21,8 @@ static/external:
 	rm -rf build
 	mkdir build
 	wget -P build -q http://code.jquery.com/jquery-1.4.3.min.js
-	wget -P build -q http://bitbucket.org/cleonello/jqplot/downloads/jquery.jqplot.0.9.7r629.tar.gz
+	wget -P build -q --no-check-certificate \
+		http://bitbucket.org/cleonello/jqplot/downloads/jquery.jqplot.0.9.7r629.tar.gz
 	tar -xz -C build -f build/jquery.jqplot.0.9.7r629.tar.gz
 	mkdir static/external
 	mkdir static/external/jquery
