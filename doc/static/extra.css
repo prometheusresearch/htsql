@@ -9,12 +9,14 @@ div.vsplit:after {
 }
 
 div.vsplit > *:first-child {
-  width: 35%;
+  width: 45%;
   float: left;
+  font-size: 95%;
 }
 
 div.vsplit > *:first-child +* {
-  width: 60%;
+  width: 50%;
   float: right;
+  font-size: 95%;
 }
 
