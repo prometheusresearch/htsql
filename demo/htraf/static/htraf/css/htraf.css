@@ -1,8 +1,0 @@
-tr.row-hover {
-    background: #DDDDDD;
-    cursor: pointer;
-}
-
-tr.row-selected {
-    background: #AAAAAA;
-}

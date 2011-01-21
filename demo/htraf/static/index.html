@@ -3,35 +3,38 @@
 <head>
     <title> HTRAF Demo </title>
     <script type="text/javascript">
-        var HTSQL_PREFIX = '/@';
+        var HTRAF = {
+            prefix: 'htraf',
+            htsqlPrefix: '/@'
+        } 
     </script>
-    <script type="text/javascript" src="htraf/htraf.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/custom.css"/>
+    <script type="text/javascript" src="htraf/htraf2.js"></script>
+    <link rel="stylesheet" type="text/css" href="htraf/css/htraf-02.css"/>
 </head>
 <body>
     <h3>Select a School</h3>
-    <select id="school" data-source="/school{code, name}"></select>
-    <div class="chart"
-        data-source="/program{title, count(student)}
+    <select id="school" data-htsql="/school{code, name}"></select>
+    <div style="width: 500px; height: 350px;" 
+        data-htsql="/program{title, count(student)}
                     ?school=$school&count(student)>0" 
-        data-display="chart"
-        data-chart-title="Percent of Students by Program"></div>
+        data-type="pie"
+        data-widget="chart"
+        data-title="Percent of Students by Program"></div>
     <h3>Departments</h3>
     <p>Filter by name: <input id="department_name"/></p>
-    <table id="department" data-hide-first-column="yes" 
-        data-source="/department{code, name, school.name}
-                     ?school=$school&name~$department_name">
+    <table id="department" data-hide-column-0="yes" 
+        data-htsql="/department{code, name, school.name}
+                    ?school=$school&name~$department_name">
     </table>
     <p>
         The selected department: 
-        <em data-source="/department{name}?code=$department"></em> <br/>
+        <em data-htsql="/department{name}?code=$department"></em> <br/>
         The number of courses in the selected department: 
-        <strong data-source="/department{count(course)}?code=$department">
+        <strong data-htsql="/department{count(course)}?code=$department">
         </strong>
     </p>
     <h3>Courses</h3>
-    <table id="course" 
-        data-source="/course?department=$department">
+    <table id="course" data-htsql="/course?department=$department">
     </table>
 </body>
 </html>
