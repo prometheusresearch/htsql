@@ -321,8 +321,7 @@ filtered by all departments in the 'School of Business', sorted by
 and returned as a "Comma-Separated Values" (RFC 4180) (E1_):
 
 .. htsql:: /course{department{code,name},number,title+}?
-            department.school='bus'
-            /:csv
+            department.school='bus'/:csv
 
 .. _E1:
     http://demo.htsql.org

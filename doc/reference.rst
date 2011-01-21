@@ -46,8 +46,8 @@ This is the HTSQL grammar::
         literal      ::= STRING | NUMBER
 
 
-Function Summary
-================
+Function Syntax
+===============
 
 A few observations about HTSQL's function and operator usage:
 
@@ -65,8 +65,8 @@ A few observations about HTSQL's function and operator usage:
   necessarily a string value.
 
 
-Logical and Comparison Operators
---------------------------------
+Logical Operators
+=================
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -187,8 +187,8 @@ Logical and Comparison Operators
 .. |switch-0-in| replace:: ``switch(0,1,'up',0,'down')``
 
 
-Numeric Functions and Operators
--------------------------------
+Numeric Functions
+=================
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -238,8 +238,8 @@ Numeric Functions and Operators
 .. |float-from-string-in| replace:: ``float(string('223607e-5'))``
 
 
-String Functions and Operators
-------------------------------
+String Functions
+================
 
 By convention, string functions take a string as its first parameter.
 When an untyped literal, such as ``'value'`` is used and a string is
@@ -330,8 +330,8 @@ string typed values using single quotes in the output column.
 .. |replace-null-in| replace:: ``replace('HTSQL',null(),'RAF')``
 
 
-Date Functions and Operators
-----------------------------
+Date Functions
+==============
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -370,7 +370,7 @@ Date Functions and Operators
 
 
 Aggregate Functions
--------------------
+===================
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -397,8 +397,8 @@ Aggregate Functions
 +----------------------+---------------------------+---------------------------+----------------------+
 
 
-Navigation Functions and Operators
-----------------------------------
+Navigation Operations
+=====================
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -431,7 +431,7 @@ Navigation Functions and Operators
 
 
 Decorators
-----------
+==========
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
