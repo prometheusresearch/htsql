@@ -82,38 +82,37 @@ HTSQL is an Advanced Query Language
       ORDER BY "school"."code" ASC
 
 HTSQL is a high-level query language that compiles into SQL as if it
-were a database assembler.
+were a database assembly language.
 
 
 Show me this HTSQL!
 ===================
 
-HTSQL was designed from the ground up as a self-serve reporting tool for
-data analysts.  With HTSQL, the easy stuff is truly easy; oh, yea, and
-complex stuff is easy too.
+HTSQL was designed from the ground up as a self-serve reporting tool 
+for data analysts.  With HTSQL, the easy stuff is truly easy; and, 
+well, complex stuff is easy too.
 
 Database Introspection
 ----------------------
 
 On startup, HTSQL examines tables, primary keys, and foreign keys
-to construct a navigational graph of your database.  For example::
+to construct a navigational graph of your database.  Or regression
+test is introspected::
 
          +------------+               +------------+
     /---+| DEPARTMENT |>-------------o|   SCHOOL   |+---\
     |.   +------------+        .      +------------+   .|
-    | .                       .                       . |
     |  .                     .                       .  |
     |   department       department        school may   |
     |   offers           may be part       offer some   |
     |   courses          of school         programs     |
     |                                                   |
-    |                                                   |
     |    +------------+               +------------+    |
     \---<|   COURSE   |               |  PROGRAM   |>---/
          +------------+               +------------+
 
-For the examples below, the "university catalog" schema above is used.
-It has two top-level tables, ``school`` and ``department``, where
+This "university catalog" schema is used in the examples below.  The
+data model two top-level tables, ``school`` and ``department``, where
 ``department`` has an optional link to ``school``.  Subordinate tables,
 having mandatory foreign key references are ``course`` and ``program``.
 
@@ -335,8 +334,7 @@ schema.  The live demo for this dashboard is at http://htraf.htsql.org/.
 HTSQL is a Communication Tool
 -----------------------------
 
-HTSQL reduces the number of meetings in your organization.  The
-following may happen to you as well::
+HTSQL reduces the number of meetings in your organization::
 
    From: "Anne (data analyst)" <ann@example.com>
    To: "Dave (product manager)" <dave@example.com>
@@ -353,7 +351,6 @@ following may happen to you as well::
 
 HTSQL is a common language usable by software developers, data analysts,
 database administrators, and even business users.
-
 
 What's up Next?
 ===============
