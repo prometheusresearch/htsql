@@ -11,7 +11,7 @@ HTSQL is a query language and web service for relational databases.
 HTSQL is a Web Service
 ----------------------
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: text
 
@@ -33,7 +33,7 @@ HTTP_ request depends upon the user-agent and its Accept_ header.
 HTSQL is a Relational Database Gateway
 --------------------------------------
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -56,7 +56,7 @@ equivalent of the HTSQL expression on the left.
 HTSQL is an Advanced Query Language
 -----------------------------------
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -124,7 +124,7 @@ Choosing a Table
 
 HTSQL queries typically start with the driving table.
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -148,7 +148,7 @@ Selecting Columns
 Output columns are selected with curly brackets ``{}``; the ``:as``
 decorator sets the title.
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -176,7 +176,7 @@ Filtering Rows
 
 HTSQL lets you filter results with arbitrary predicates.
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -209,7 +209,7 @@ Paging and Sorting
 
 Table operations such as sorting and paging are chainable.
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -238,7 +238,7 @@ Aggregating Data
 
 In HTSQL, aggregates aren't a reason to run to the DBA.
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -292,7 +292,7 @@ HTSQL can be used with any number of higher-level tools.
 HTSQL Makes Dashboarding Easy
 -----------------------------
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: html
 
@@ -367,7 +367,7 @@ Projections
 
 HTSQL supports complex grouping operations.
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 
@@ -391,7 +391,7 @@ Hierarchical Output
 
 HTSQL is not limited to tabular output.
 
-.. container:: vsplit
+.. vsplit::
 
    .. sourcecode:: htsql
 

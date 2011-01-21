@@ -1,22 +1,21 @@
 
-div.vsplit:after {
-  visibility: hidden;
-  display: block;
-  font-size: 0;
-  content: " ";
-  clear: both;
-  height: 0;
-}
-
-div.vsplit > *:first-child {
+.vsplit-left {
   width: 45%;
   float: left;
   font-size: 95%;
 }
 
-div.vsplit > *:first-child +* {
+.vsplit-right {
   width: 50%;
   float: right;
+  font-size: 95%;
+}
+
+.vsplit-clear {
+  clear: both;
+}
+
+div.htsql-input {
   font-size: 95%;
 }
 

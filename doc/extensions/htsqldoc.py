@@ -41,6 +41,23 @@ class HTSQLDirective(Directive):
         return [query_container, result_container]
 
 
+class VSplitDirective(Directive):
+
+    has_content = True
+
+    def run(self):
+        self.assert_has_content()
+        text = '\n'.join(self.content)
+        node = nodes.container(text, classes=['vsplit'])
+        self.state.nested_parse(self.content, self.content_offset, node)
+        if len(node) != 2:
+            raise self.error("%s directive expects 2 subnodes", self.name)
+        node[0]['classes'].append('vsplit-left')
+        node[1]['classes'].append('vsplit-right')
+        node += nodes.container(classes=['vsplit-clear'])
+        return [node]
+
+
 def load_uri(uri, error=False):
     try:
         headers = { 'Accept': 'application/json' }
@@ -112,7 +129,8 @@ def build_result(line, content_type, content):
 def setup(app):
     app.add_config_value('htsql_server', None, '')
     app.add_directive('htsql', HTSQLDirective)
-    app.add_stylesheet('extra.css')
-    app.add_javascript('extra.js')
+    app.add_directive('vsplit', VSplitDirective)
+    app.add_stylesheet('htsqldoc.css')
+    app.add_javascript('htsqldoc.js')
 
 

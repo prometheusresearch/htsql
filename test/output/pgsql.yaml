@@ -14333,9 +14333,9 @@ tests:
                | arthis | art         |                     3 |                     3 |
                | astro  | ns          |                     6 |                     6 |
                | be     | eng         |                     8 |                     8 |
-               | bursar |             |                     0 |                     0 |
+               | bursar |             |                     0 |                       |
                | capmrk | bus         |                     5 |                     5 |
-               | career |             |                     0 |                     0 |
+               | career |             |                     0 |                       |
                | chem   | ns          |                     6 |                     6 |
                | comp   | eng         |                     8 |                     8 |
                | corpfi | bus         |                     5 |                     5 |
@@ -14346,7 +14346,7 @@ tests:
                | lang   | la          |                     9 |                     9 |
                | me     | eng         |                     8 |                     8 |
                | mth    | ns          |                     6 |                     6 |
-               | parent |             |                     0 |                     0 |
+               | parent |             |                     0 |                       |
                | phys   | ns          |                     6 |                     6 |
                | pia    | mus         |                     0 |                     0 |
                | poli   | la          |                     9 |                     9 |
@@ -14698,11 +14698,11 @@ tests:
               -+-------------------------------------------------------------------------------------------+-
                | name                          | count(department) | this(){count(department)}?name!~'art' |
               -+-------------------------------+-------------------+---------------------------------------+-
-               | School of Art and Design      |                 2 |                                     0 |
+               | School of Art and Design      |                 2 |                                       |
                | School of Business            |                 3 |                                     3 |
                | College of Education          |                 2 |                                     2 |
                | School of Engineering         |                 4 |                                     4 |
-               | School of Arts and Humanities |                 5 |                                     0 |
+               | School of Arts and Humanities |                 5 |                                       |
                | School of Music & Dance       |                 4 |                                     4 |
                | School of Natural Sciences    |                 4 |                                     4 |
                | Public Honorariums            |                 0 |                                     0 |
