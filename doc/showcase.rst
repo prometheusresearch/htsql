@@ -5,25 +5,27 @@
 What is HTSQL?
 ==============
 
-HTSQL supports parsimonious database reporting and self-documenting
-dashboards.  By reducing query construction complexity, HTSQL enables
-a new level of service for your existing databases.
+HTSQL is a query language and web service for relational databases.
 
-HTSQL is a Web Query Language
------------------------------
+HTSQL is a Web Service
+----------------------
 
-.. sourcecode:: htsql
+.. container:: vsplit
 
-   /school
+   .. sourcecode:: htsql
 
-.. image:: img/show_school.png
-   :alt: output of /school query
-   :target: http://demo.htsql.org/school
+      /school
 
-HTSQL is a REST query language for the web.  Queries *are* URLs_ that
-can be directly typed into a browser.  The default output format of the
-request depends upon the user-agent and its Accept_ header.
+   .. image:: img/show_school.png
+      :alt: output of /school query
+      :target: http://demo.htsql.org/school
 
+HTSQL is a REST_ query language for the web.  Queries are URLs_ that can
+be directly typed into a browser.  The default output format of the
+HTTP_ request depends upon the user-agent and its Accept_ header.
+
+.. _REST: http://en.wikipedia.org/wiki/Representational_State_Transfer
+.. _HTTP: http://www.w3.org/Protocols/rfc2616/rfc2616.html
 .. _Accept: http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
 .. _URLs: http://www.ietf.org/rfc/rfc3986.txt
 
@@ -42,13 +44,260 @@ HTSQL is a Relational Database Gateway
       FROM ad.school
       ORDER BY code;
 
-HTSQL provides access to relational databases via web service.  It
-translates a URL into corresponding SQL, executes this query against the
-database, and returns the result as formatted as requested by the user
-agent.  For example, this example query (A1_) returns all rows and all
-columns for the ``school`` table formatted for the given user agent.
+HTSQL wraps SQL databases.  On startup HTSQL introspects structure of
+the database.  At runtime, each request is then translated into SQL and
+executed.
 
-.. _A1: http://demo.htsql.org/school
+HTSQL is an Advanced Query Language
+-----------------------------------
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /school{name, count(program), 
+         count(department)}
+
+   .. sourcecode:: sql
+
+      SELECT s.name, COALESCE(p.cnt, 0), COALESCE(d.cnt, 0)
+      FROM ad.school AS s
+      LEFT OUTER JOIN
+           (SELECT COUNT(TRUE) AS cnt, p.school
+            FROM ad.program AS p
+            GROUP BY 2) AS p ON (s.code = p.school)
+      LEFT OUTER JOIN
+           (SELECT COUNT(TRUE) AS cnt, d.school
+            FROM ad.department AS d
+            GROUP BY 2) AS d ON (s.code = d.school)
+      ORDER BY s.code;
+
+HTSQL is a high-level query language that compiles into SQL as if it
+were a database assembler.
+
+HTSQL is a Communication Tool
+-----------------------------
+
+HTSQL reduces the number of meetings in your organization. The
+following may happen to you as well::
+
+   From: "Anne (data analyst)" <ann@example.com>
+   To: "Dave (product manager)" <dave@example.com> 
+   Cc: jess@example.com, tim@example.com, jose@example.com
+   Subject: do we need to meet?
+  
+   Does the HTSQL below return, for each school, the average 
+   number of courses offered in its departments? If so, then 
+   Tim and I don't need to meet with you tomorrow.
+
+   http://demo.htsql.org
+   /school{name,avg(department.count(course))}
+
+   - A
+
+HTSQL is a common language usable by software developers, data analysts,
+database administrators, and even business users.
+
+
+Show me HTSQL
+=============
+
+HTSQL was designed from the ground up as a self-serve reporting tool for
+data analysts.  With HTSQL the easy stuff is truly easy; oh, yea, and
+complex stuff is easy too.
+
+For the examples below, the following "university catalog" schema is
+used.  It has two top-level tables, ``school`` and ``department``; where
+department has an optional link to school.  Subordinate tables, having
+mandatory foreign key references are ``course`` and ``program``::
+
+         +-------------+              +--------+
+    /---m| DEPARTMENT  |>-------------| SCHOOL |m----\
+    |.   +-------------+       .      +--------+    .|
+    | .                       .                    . |
+    |  .                     .                    .  |
+    |   department       department      a school    |
+    |   offers           may be part     has one or  |
+    |   courses          of school       programs    |
+    |                                                |
+    |                                                |
+    |    +-------------+              +---------+    |
+    \---<| COURSE      |              | PROGRAM |>---/
+         +-------------+              +---------+
+
+
+Choosing a Table
+----------------
+
+HTSQL queries typically start with the driving table.
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /department
+
+   .. sourcecode:: sql
+
+    SELECT "department"."code",
+           "department"."name",
+           "department"."school"
+    FROM "ad"."department" AS "department"
+    ORDER BY 1 ASC
+
+This query (Q1_) all departments.
+
+.. _Q1: http://demo.htsql.org/department
+
+Selecting Columns
+-----------------
+
+Output columns are selected with curly brackets ``{}``; the ``:as``
+decorator sets the title.  
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /department{school.name :as 'School', 
+                  name :as 'Department'}
+
+   .. sourcecode:: sql
+
+      SELECT "school"."name" AS "School",
+             "department"."name" AS "Department"
+      FROM "ad"."department" AS "department"
+           LEFT OUTER JOIN "ad"."school" AS "school"
+           ON ("department"."school" = "school"."code")
+      ORDER BY "department"."code" ASC
+
+This query (Q2_) returns, for each department, the name of the
+associated school and the name of the department.
+
+.. _Q2: 
+     http://demo.htsql.org
+     /department{school.name :as 'School', name :as 'Department'}
+
+Filtering Rows
+--------------
+
+HTSQL lets you filter results with arbitrary predicates.
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /course?credits>3
+       &department.school='egn'
+
+   .. sourcecode:: sql
+
+       SELECT "course"."department",
+              "course"."number",
+              "course"."title",
+              "course"."credits",
+              "course"."description"
+       FROM "ad"."course" AS "course"
+            INNER JOIN "ad"."department" AS "department"
+            ON ("course"."department" = "department"."code")
+       WHERE ("course"."credits" > 3)
+         AND ("department"."school" = 'egn')
+       ORDER BY 1 ASC, 2 ASC
+
+This query (Q3_) returns courses from the school of 
+engineering having more than 3 credits.
+
+.. _Q3: 
+     http://demo.htsql.org
+     /course?department.school='egn'&credits>3
+
+Paging and Sorting
+------------------
+
+HTSQL has a composable table expression mechanism for things like
+sorting and paging.
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /course.sort(credits)
+             .limit(10,20)
+
+   .. sourcecode:: sql
+
+      SELECT "course"."department",
+             "course"."number",
+             "course"."title",
+             "course"."credits",
+             "course"."description"
+      FROM "ad"."course" AS "course"
+      ORDER BY 4 ASC NULLS FIRST, 1 ASC, 2 ASC
+      LIMIT 10 OFFSET 20
+
+This query (Q4_) returns page 3 of the course catalog as
+sorted by number of credits.
+
+.. _Q4: 
+     http://demo.htsql.org
+     /course.sort(credits).limit(10,20)
+
+Aggregating Data
+----------------
+
+In HTSQL, aggregates aren't a reason to run to the DBA.
+
+.. container:: vsplit
+
+   .. sourcecode:: htsql
+
+      /school{name,
+          avg(department.count(course))
+      }?exists(program.degree='ms')
+
+   .. sourcecode:: sql
+
+      SELECT "school"."name",
+             "department"."avg"
+      FROM "ad"."school" AS "school"
+      LEFT OUTER JOIN (
+        SELECT AVG(CAST(COALESCE("course"."count", 0) 
+                        AS NUMERIC)) AS "avg",
+               "department"."school"
+        FROM "ad"."department" AS "department"
+        LEFT OUTER JOIN (
+          SELECT COUNT(TRUE) AS "count",
+                 "course"."department"
+          FROM "ad"."course" AS "course"
+          GROUP BY 2
+        ) AS "course"
+        ON ("department"."code" = "course"."department")
+        GROUP BY 2
+      ) AS "department"
+      ON ("school"."code" = "department"."school")
+      WHERE EXISTS(
+        SELECT TRUE
+        FROM "ad"."program" AS "program"
+        WHERE ("school"."code" = "program"."school")
+          AND ("program"."degree" = 'ms')
+      )
+      ORDER BY "school"."code" ASC
+
+This query (Q5_) returns, for each school having a 
+MS program, the average number of courses offered 
+in its departments.
+
+.. _Q5: 
+     http://demo.htsql.org
+     /school{name,avg(department.count(course))}?
+          exists(program.degree='ms')
+
+
+How do I use HTSQL?
+===================
+
+HTSQL is a tool that can be used with any number of higher-level
+tools.
 
 HTSQL Makes Dashboarding Easy
 -----------------------------
@@ -94,201 +343,9 @@ The dashboard above (using the JQuery HTRAF toolkit) shows a 3-level
 drill down (``school``, ``department`` and ``course``) for a university
 schema.  The live demo for this dashboard is at http://htraf.htsql.org/. 
 
-Basic Queries
-=============
 
-For the examples below, the following "university catalog" schema is
-used.  It has two top-level tables, ``school`` and ``department``; where
-department has an optional link to school.  Subordinate tables, having
-mandatory foreign key references are ``course`` and ``program``::
-
-         +-------------+       +--------+
-    /---m| DEPARTMENT  |>-----o| SCHOOL |m----\
-    |.   +-------------+  .    +--------+    .|
-    | .                  .                  . |
-    |   department   department    a school   |
-    |   offers       may be part   has one or |
-    |   courses      of school     programs   |
-    |                                         |
-    |    +-------------+       +---------+    |
-    \---<| COURSE      |       | PROGRAM |>---/
-         +-------------+       +---------+
-
-List all schools
-----------------
-
-An **HTSQL** query (A1_)::
-
-    /school
-
-An equivalent **SQL** query::
-
-    SELECT code, name
-    FROM ad.school
-    ORDER BY code;
-
-.. _A1: http://demo.htsql.org/school
-
-
-Programs ordered by the title
------------------------------
-
-**HTSQL** (A2_)::
-
-    /program{title+}
-
-**SQL**::
-
-    SELECT title
-    FROM ad.program
-    ORDER BY title, school, code;
-
-.. _A2: http://demo.htsql.org/program{title+}
-
-
-All courses missing a description
----------------------------------
-
-**HTSQL** (A3_)::
-
-    /course?!description
-
-**SQL**::
-
-    SELECT department, number, title, credits, description
-    FROM ad.course
-    WHERE NULLIF(description, '') IS NULL
-    ORDER BY 1, 2;
-
-.. _A3: http://demo.htsql.org/course?!description
-
-
-Departments in schools having "art" in its name
------------------------------------------------
-
-**HTSQL** (A4_)::
-
-    /department?school.name~'art'
-
-**SQL**::
-
-    SELECT d.code, d.name, d.school
-    FROM ad.department AS d
-    LEFT OUTER JOIN
-         ad.school AS s ON (d.school = s.code)
-    WHERE s.name ILIKE '%art%'
-    ORDER BY 1;
-
-.. _A4: http://demo.htsql.org/department?school.name~'art'
-
-
-The number of schools
----------------------
-
-**HTSQL** (A5_)::
-
-    /count(school)
-
-**SQL**::
-
-    SELECT COUNT(TRUE)
-    FROM ad.school;
-
-.. _A5: http://demo.htsql.org/count(school)
-
-
-Schools with programs
----------------------
-
-**HTSQL** (A6_)::
-
-    /school?exists(program)
-
-**SQL**::
-
-    SELECT s.code, s.name
-    FROM ad.school AS s
-    WHERE EXISTS(SELECT TRUE
-                 FROM ad.program AS p
-                 WHERE s.code = p.school)
-    ORDER BY 1;
-
-.. _A6: http://demo.htsql.org/school?exists(program)
-
-
-Advanced Queries
-================
-
-
-The number of schools with programs
------------------------------------
-
-**HTSQL** (B1_)::
-
-    /count(school?exists(program))
-
-**SQL**::
-
-    SELECT COUNT(TRUE)
-    FROM ad.school AS s
-    WHERE EXISTS(SELECT TRUE
-                 FROM ad.program AS p
-                 WHERE (s.code = p.school));
-
-.. _B1: http://demo.htsql.org/count(school?exists(program))
-
-
-Number of programs and departments per school
----------------------------------------------
-
-**HTSQL** (B2_)::
-
-    /school{name, count(program), count(department)}
-
-**SQL**::
-
-    SELECT s.name, COALESCE(p.cnt, 0), COALESCE(d.cnt, 0)
-    FROM ad.school AS s
-    LEFT OUTER JOIN
-         (SELECT COUNT(TRUE) AS cnt, p.school
-          FROM ad.program AS p
-          GROUP BY 2) AS p ON (s.code = p.school)
-    LEFT OUTER JOIN
-         (SELECT COUNT(TRUE) AS cnt, d.school
-          FROM ad.department AS d
-          GROUP BY 2) AS d ON (s.code = d.school)
-    ORDER BY s.code;
-
-.. _B2: http://demo.htsql.org/school{name,count(program),count(department)}
-
-
-Average number of courses offered by departments in each school
----------------------------------------------------------------
-
-**HTSQL** (B3_)::
-
-    /school{name, avg(department.count(course))}
-
-**SQL**::
-
-    SELECT s.name, d.av
-    FROM ad.school AS s
-    LEFT OUTER JOIN
-         (SELECT AVG(CAST(COALESCE(c.cnt, 0) AS NUMERIC)) AS av, d.school
-          FROM ad.department AS d
-          LEFT OUTER JOIN
-               (SELECT COUNT(TRUE) AS cnt, c.department
-               FROM ad.course AS c
-               GROUP BY 2) AS c ON (d.code = c.department)
-          GROUP BY 2) AS d ON (s.code = d.school)
-    ORDER BY s.code;
-
-.. _B3: http://demo.htsql.org/school{name,avg(department.count(course))}
-
-
-.. warning::
-
-   The following examples do not work in 2.0; will be available in 2.1+.
+What's up Next?
+===============
 
 
 *Programs and departments in each school*
@@ -359,13 +416,4 @@ You need at least 3 **SQL** statements to produce the same result::
 
 .. _C3: http://demo.htsql.com/school{count(program)^,count()}/({name};department)
 
-
-For more examples, see `feature_tests`_, `function_tests`_ and read
-:doc:`tutorial`.
-
-.. _feature_tests:
-    http://bitbucket.org/prometheus/htsql/src/tip/test/input/schema.yaml
-
-.. _function_tests:
-    http://bitbucket.org/prometheus/htsql/src/tip/test/input/library.yaml
 
