@@ -297,33 +297,30 @@ HTSQL Makes Dashboarding Easy
    .. sourcecode:: html
 
       <body>
-      <h3>Select School</h3>
-      <select id="school"
-              data-source="/school{code, name}"/>
-      <div class="chart"
-           data-source="/program{title, count(student)}
-                        ?school=$school&count(student)>0"
-           data-display="chart"
-           data-chart-title="Percent of Students by Program"/>
-
+      <h3>Select a School</h3>
+      <select id="school" data-htsql="/school{code, name}"></select>
+      <div style="width: 500px; height: 350px;"
+          data-htsql="/program{title, count(student)}
+                      ?school=$school&count(student)>0"
+          data-type="pie"
+          data-widget="chart"
+          data-title="Percent of Students by Program"></div>
       <h3>Departments</h3>
       <p>Filter by name: <input id="department_name"/></p>
-      <table id="department"
-             data-hide-first-column="yes"
-             data-source="/department{code, name, school.name}
-                          ?school=$school&name~$department_name"/>
+      <table id="department" data-hide-column-0="yes"
+          data-htsql="/department{code, name, school.name}
+                      ?school=$school&name~$department_name">
+      </table>
       <p>
           The selected department:
-          <em data-source="/department{name}?code=$department"/>
-          <br/>
-          The number of courses in selected department:
-          <strong data-source="/department{count(course)}
-                               ?code=$department"/>
+          <em data-htsql="/department{name}?code=$department"></em> <br/>
+          The number of courses in the selected department:
+          <strong data-htsql="/department{count(course)}?code=$department">
+          </strong>
       </p>
-
       <h3>Courses</h3>
-      <table id="course"
-             data-source="/course?department=$department"/>
+      <table id="course" data-htsql="/course?department=$department">
+      </table>
       </body>
 
    .. image:: img/htraf_screenshot.png
