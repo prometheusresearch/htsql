@@ -13,6 +13,7 @@
    showcase
    tutorial
    reference
+   install
    roadmap
    design
    api

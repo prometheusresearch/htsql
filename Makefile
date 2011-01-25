@@ -36,7 +36,7 @@ default:
 	@echo "  train-routine: to run tests for htsql-ctl tool in the train mode"
 	@echo "  train-sqlite: to run SQLite-specific tests in the train mode"
 	@echo "  train-pgsql: to run PostgreSQL-specific tests in the train mode"
-	@echo "  purge-test: to purge state test output data"
+	@echo "  purge-test: to purge stale test output data"
 	@echo "  lint: detect errors in the source code"
 	@echo
 	@echo "  *** Shell and Server ***"
