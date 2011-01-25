@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2010, Prometheus Research, LLC
+# Copyright (c) 2006-2011, Prometheus Research, LLC
 # Authors: Clark C. Evans <cce@clarkevans.com>,
 #          Kirill Simonov <xi@resolvent.net>
 #
@@ -49,7 +49,7 @@ class HTSQL_CTL(Script):
     Run `%(executable)s help` for general usage and list of routines.
     Run `%(executable)s help <routine>` for help on a specific routine.
     """
-    copyright = """Copyright (c) 2006-2010, Prometheus Research, LLC"""
+    copyright = """Copyright (c) 2006-2011, Prometheus Research, LLC"""
 
 
 def main():
