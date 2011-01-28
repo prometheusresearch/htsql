@@ -2,48 +2,149 @@
   HTSQL Reference
 ********************
 
-Grammar
-=======
+This page describes the use of the HTSQL language.  We start with
+describing the syntax of HTSQL, then we list available data types and
+functions, and conclude with a discussion on the HTSQL data model and
+the query semantics.
 
-This is the HTSQL grammar::
 
-        query        ::= '/' segment? format?
-        segment      ::= selector | specifier selector? filter?
-        filter       ::= '?' test
-        format       ::= '/' ':' identifier
+Syntax
+======
 
-        test         ::= test direction | test application | or_test
-        direction    ::= ( '+' | '-' )
-        application  ::= ':' identifier ( or_test | call )?
-        or_test      ::= and_test ( '|' and_test )*
-        and_test     ::= implies_test ( '&' implies_test )*
-        implies_test ::= unary_test ( '->' unary_test )?
-        unary_test   ::= '!' unary_test | comparison
+A valid input of the HTSQL translator is called an HTSQL query. 
 
-        comparison   ::= expression ( ( '=~~' | '=~' | '^~~' | '^~' |
-                                        '$~~' | '$~' | '~~' | '~' |
-                                        '!=~~' | '!=~' | '!^~~' | '!^~' |
-                                        '!$~~' | '!$~' | '!~~' | '!~' |
-                                        '<=' | '<' | '>=' |  '>' |
-                                        '==' | '=' | '!==' | '!=' )
-                                      expression )?
+Encoding
+--------
 
-        expression   ::= term ( ( '+' | '-' ) term )*
-        term         ::= factor ( ( '*' | '/' ) factor )*
-        factor       ::= ( '+' | '-' ) factor | power
-        power        ::= sieve ( '^' power )?
+An HTSQL query is a string of characters in UTF-8 encoding.  Octets
+composing the string could be written literally or percent-encoded.
+A percent-encoded octet is written as a series of three characters:
+``%`` followed by two hexdecimal digits encoding the octet value.
 
-        sieve        ::= specifier selector? filter?
-        specifier    ::= atom ( '.' identifier call? )* ( '.' '*' )?
-        atom         ::= '*' | selector | group | identifier call? | literal
+.. htsql:: /{'HTSQL', %27HTSQL%27, %27%48%54%53%51%4C%27}
+   :query: /%7B'HTSQL',%20%27HTSQL%27,%20%27%48%54%53%51%4C%27%7D
 
-        group        ::= '(' test ')'
-        call         ::= '(' tests? ')'
-        selector     ::= '{' tests? '}'
-        tests        ::= test ( ',' test )* ','?
+The percent (``%``) character itself must always be percent-encoded.
 
-        identifier   ::= NAME
-        literal      ::= STRING | NUMBER
+.. htsql:: /{'%25'}
+   :query: /%7B'%25'%7D
+
+A ``NUL`` character cannot appear in an HTSQL query, neither in literal
+nor in percent-encoded form.
+
+Percent-encoding is useful when transmitting an HTSQL query via channels
+that forbid certain characters in literal form.
+
+Lexical Structure
+-----------------
+
+An HTSQL query is parsed into a sequence of tokens.  The following
+tokens are recognized.
+
+*NAME*
+    A sequence of alphanumeric characters that does not start with a
+    digit.
+
+    .. htsql:: /school
+
+*NUMBER*
+    A numeric literal: integer, float and scientific notations are
+    recognized.
+
+    .. htsql:: /{60, 2.125, 271828e-5}
+
+*STRING*
+    A string literal enclosed in single quotes; any single quote
+    character should be doubled.
+
+    .. htsql:: /{'HTSQL', 'O''Reilly'}
+
+*SYMBOL*
+    A valid symbol in the HTSQL grammar; that includes operators and
+    punctuation characters.  Some symbols are represented by more than
+    one character (e.g. ``<=``, ``!~``).
+
+Individual tokens may be separated by whitespace characters.
+
+See :class:`htsql.tr.scan.Scanner` for detailed description of
+HTSQL tokens.
+
+Syntax Structure
+----------------
+
+A sequence of HTSQL tokens must obey the HTSQL grammar.
+
+An HTSQL query starts with a symbol ``/`` followed by a valid HTSQL
+expression and concluded with an optional query decorator.
+
+The following table lists HTSQL operations in the order of precedence.
+
++----------------------+---------------------------+---------------------------+----------------------+
+| Operation            | Description               | Example Input             | Output               |
++======================+===========================+===========================+======================+
+| `x :name`            | postfix function call     | ``'HTSQL':length``        | ``5``                |
++----------------------+                           +---------------------------+----------------------+
+| `x :name y`          |                           | ``1/3 :round 2``          | ``0.33``             |
++----------------------+                           +---------------------------+----------------------+
+| `x :name (y,z,...)`  |                           | ``'HTSQL':slice(1,-1)``   | ``'TSQ'``            |
++----------------------+---------------------------+---------------------------+----------------------+
+| `x +`, `x -`         | sorting decorator         | ``program{degree+}``      |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `p | q`              | logical *OR* operator     | ``true()|false()``        | ``true()``           |
++----------------------+---------------------------+---------------------------+----------------------+
+| `p & q`              | logical *AND* operator    | ``true()&false()``        | ``false()``          |
++----------------------+---------------------------+---------------------------+----------------------+
+| `\! p`               | logical *NOT* operator    | ``!true()``               | ``false()``          |
++----------------------+---------------------------+---------------------------+----------------------+
+| `x = y`, `x != y`,   | comparison operators      | ``2+2=4``                 | ``true()``           |
+| `x == y`, `x !== y`  |                           |                           |                      |
++----------------------+                           +---------------------------+----------------------+
+| `x ~ y`, `x !~ y`    |                           | ``'HTSQL'~'SQL'``         | ``true()``           |
++----------------------+                           +---------------------------+----------------------+
+| `x < y`, `x <= y`,   |                           | ``12>7``                  | ``true()``           |
+| `x > y`, `x >= y`    |                           |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `x + y`, `x - y`     | addition, subtraction     | ``'HT'+'SQL'``            | ``'HTSQL'``          |
++----------------------+---------------------------+---------------------------+----------------------+
+| `x * y`, `x / y`     | multiplication, division  | ``12*7``                  | ``84``               |
++----------------------+---------------------------+---------------------------+----------------------+
+| `- x`                | negation                  | ``-42``                   |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `chain ? p`          | sieve operator            | ``program?degree='ms'``   |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `chain {x,y,...}`    | selector operator         | ``school{code,name}``     |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `chain . name (...)` | chained function call     | ``school.count(program)`` |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `chain . \*`         | wildcard attribute        | ``school.*``              |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `chain . name`       | traversal operator        | ``school.program``        |                      |
+|                      +---------------------------+---------------------------+----------------------+
+|                      | attribute access          | ``school.name``           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `{...}`              | selection                 | ``9!={2,3,5,7,11}``       | ``true()``           |
++----------------------+---------------------------+---------------------------+----------------------+
+| `name (...)`         | function call             | ``round(1/3,2)``          | ``0.33``             |
++----------------------+---------------------------+---------------------------+----------------------+
+| `(...)`              | grouping                  | ``(7+4)*2``               | ``22``               |
++----------------------+---------------------------+---------------------------+----------------------+
+| `*`                  | wildcard name             | ``school{*}``             |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `name`               |                           | ``school``                |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `number`             |                           | ``60``, ``2.125``,        |                      |
+|                      |                           | ``271828e-5``             |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `string`             |                           | ``'HTSQL'``               |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+
+An optional query decorator starts with a symbol ``/`` followed by a
+postfix function call.
+
+.. htsql:: /school/:csv
+
+See :class:`htsql.tr.parse.QueryParser` for detailed description of
+the HTSQL grammar.
 
 
 Data Types

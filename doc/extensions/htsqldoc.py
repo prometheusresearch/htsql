@@ -13,6 +13,7 @@ class HTSQLDirective(Directive):
     option_spec = {
             'plain': directives.flag,
             'error': directives.flag,
+            'query': directives.path,
     }
 
     def run(self):
@@ -22,7 +23,11 @@ class HTSQLDirective(Directive):
         query_node['language'] = 'htsql'
         if not env.config.htsql_server:
             raise self.error("htsql_server is not set")
-        uri = env.config.htsql_server+quote(query)
+        if 'query' not in self.options:
+            query = quote(query)
+        else:
+            query = self.options['query']
+        uri = env.config.htsql_server+query
         if not hasattr(env, 'htsql_uris'):
             env.htsql_uris = {}
         if uri not in env.htsql_uris:

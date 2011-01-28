@@ -1,37 +1,31 @@
 Installation Instructions
 =========================
 
-1. Install Python and required Python modules::
+Download HTSQL source code::
 
-        # apt-get install python
-        # apt-get install python-setuptools python-yaml python-psycopg2
+    $ hg clone http://bitbucket.org/prometheus/htsql
 
-2. Install Mercurial and download HTSQL source code::
+Build and install HTSQL::
 
-        # apt-get install mercurial
-        # hg clone http://bitbucket.org/prometheus/htsql
+    $ cd htsql
+    $ make build
+    # make install
 
-3. Build and install HTSQL::
+Installing HTSQL creates a ``htsql-ctl`` script.  For general help and
+a list of commands, run::
 
-        # cd htsql
-        # make build
-        # make install
+    $ htsql-ctl help
 
-   This creates a ``htsql-ctl`` script.
-   
-4. For general help and a list of commands, run::
+To start a command-line HTSQL shell, run::
 
-        $ htsql-ctl help
+    $ htsql-ctl shell DBURI
 
-   To start a command-line HTSQL shell, run::
+To start an HTTP server running HTSQL, run:
 
-        $ htsql-ctl shell DBURI
+    $ htsql-ctl server DBURI [HOST [PORT]]
 
-   To start an HTTP server running HTSQL, run:
-
-        $ htsql-ctl server DBURI [HOST [PORT]]
-
-   ``DBURI`` specifies how to connect to the database and has the form::
+Here, ``DBURI`` specifies how to connect to the database and has the
+form::
 
         ENGINE://USER:PASS@HOST:PORT/DATABASE
 

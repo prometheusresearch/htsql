@@ -41,8 +41,8 @@ Quick Start
 
         $ htsql-ctl shell DBURI
 
-   To start an HTTP server running HTSQL on on the address ``HOST:PORT``,
-   type::
+   To start an HTTP server running HTSQL on the address ``HOST:PORT``,
+   run::
 
         $ htsql-ctl server DBURI [HOST [PORT]]
 
