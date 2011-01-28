@@ -521,26 +521,30 @@ Aggregate Functions
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `exists(ps)`         | *TRUE* if *ps* contains   |                           |                      |
+| `exists(ps)`         | *TRUE* if *ps* contains   | |exists-in|               |                      |
 |                      | at least one *TRUE*       |                           |                      |
 |                      | value; *FALSE* otherwise  |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `every(ps)`          | *TRUE* if *ps* contains   |                           |                      |
+| `every(ps)`          | *TRUE* if *ps* contains   | |every-in|                |                      |
 |                      | only *TRUE* values;       |                           |                      |
 |                      | *FALSE* otherwise         |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `count(ps)`          | number of *TRUE* values   |                           |                      |
+| `count(ps)`          | number of *TRUE* values   | |count-in|                |                      |
 |                      | in *ps*                   |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `min(xs)`            | smallest *x* in *sx*      |                           |                      |
+| `min(xs)`            | smallest *x* in *sx*      | ``min(course.credits)``   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `max(xs)`            | largest *x* in *sx*       |                           |                      |
+| `max(xs)`            | largest *x* in *sx*       | ``max(course.credits)``   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `sum(xs)`            | sum of *x* in *xs*        |                           |                      |
+| `sum(xs)`            | sum of *x* in *xs*        | ``sum(course.credits)``   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `avg(xs)`            | average value of *x*      |                           |                      |
+| `avg(xs)`            | average value of *x*      | ``avg(course.credits)``   |                      |
 |                      | in *xs*                   |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
+
+.. |exists-in| replace:: ``exists(course.credits>5)``
+.. |every-in| replace:: ``every(course.credits>5)``
+.. |count-in| replace:: ``count(course.credits>5)``
 
 
 Navigation Operations
@@ -549,25 +553,25 @@ Navigation Operations
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `chain . link`       | follow a link             |                           |                      |
+| `chain . link`       | traverse a link           | ``school.program``        |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain . attr`       | extract attribute value   |                           |                      |
+| `chain . attr`       | extract attribute value   | ``school.name``           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain . *`          | extract all attributes    |                           |                      |
+| `chain . \*`         | extract all attributes    | ``school.*``              |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain ? p`          | records from *chain*      |                           |                      |
+| `chain ? p`          | records from *chain*      | ``school?code='edu'``     |                      |
 |                      | satisfying condition *p*  |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain.sort(x,...)`  | records from *chain*      |                           |                      |
+| `chain.sort(x,...)`  | records from *chain*      | ``course.sort(credits-)`` |                      |
 |                      | sorted by *x*, ...        |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain.limit(n)`     | first *n* records from    |                           |                      |
+| `chain.limit(n)`     | first *n* records from    | ``course.limit(10)``      |                      |
 |                      | *chain*                   |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain.limit(n,k)`   | *n* records from *chain*  |                           |                      |
+| `chain.limit(n,k)`   | *n* records from *chain*  | ``course.limit(10,20)``   |                      |
 |                      | starting from *k*-th      |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain {x,...}`      | select *x*, ... from      |                           |                      |
+| `chain {x,...}`      | select *x*, ... from      | ``school{code,name}``     |                      |
 |                      | *chain*                   |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `root()`             | scalar class              |                           |                      |
@@ -582,12 +586,12 @@ Decorators
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `as(x,title)`        | set the column title      |                           |                      |
+| `as(x,title)`        | set the column title      | ``number :as 'No.'``      |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x+`                 | sort by *x* in            |                           |                      |
+| `x+`                 | sort by *x* in            | ``credits+``              |                      |
 |                      | ascending order           |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x-`                 | sort by *x* in            |                           |                      |
+| `x-`                 | sort by *x* in            | ``credits-``              |                      |
 |                      | descending order          |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 
