@@ -359,7 +359,7 @@ every record in one table, there is at most one record in a linked
 table; by *plural* we mean there is perhaps more than one correlated
 record.  To select a *plural* expression in a result set, an *aggregate*
 function, such as ``sum``, ``count``, or ``exists`` must be used.  In
-this way, what would be many values is converted into a single data cell
+this way, what would be many values are converted into a single data cell
 and integrated into a coherent result set.
 
 By requiring aggregates for plural expressions, HTSQL reduces query
