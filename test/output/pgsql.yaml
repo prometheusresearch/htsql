@@ -4198,18 +4198,23 @@ tests:
           - [Content-Type, application/json]
           - [Content-Disposition, attachment; filename="(school).json"]
           body: |
-            [
-              ["code", "name"],
-              ["art", "School of Art and Design"],
-              ["bus", "School of Business"],
-              ["edu", "College of Education"],
-              ["eng", "School of Engineering"],
-              ["la", "School of Arts and Humanities"],
-              ["mus", "School of Music & Dance"],
-              ["ns", "School of Natural Sciences"],
-              ["ph", "Public Honorariums"],
-              ["sc", "School of Continuing Studies"]
-            ]
+            {
+              "meta": [
+                {"title": "code", "domain": "string"},
+                {"title": "name", "domain": "string"}
+              ],
+              "data": [
+                ["art", "School of Art and Design"],
+                ["bus", "School of Business"],
+                ["edu", "College of Education"],
+                ["eng", "School of Engineering"],
+                ["la", "School of Arts and Humanities"],
+                ["mus", "School of Music & Dance"],
+                ["ns", "School of Natural Sciences"],
+                ["ph", "Public Honorariums"],
+                ["sc", "School of Continuing Studies"]
+              ]
+            }
         - uri: /course{department{code, name},number,title+} ?department.school='bus'/:csv
           status: 200 OK
           headers:
@@ -14804,24 +14809,6 @@ tests:
           - [Content-Type, application/json]
           - [Content-Disposition, attachment; filename="(school).json"]
           body: |
-            [
-              ["code", "name"],
-              ["art", "School of Art and Design"],
-              ["bus", "School of Business"],
-              ["edu", "College of Education"],
-              ["eng", "School of Engineering"],
-              ["la", "School of Arts and Humanities"],
-              ["mus", "School of Music & Dance"],
-              ["ns", "School of Natural Sciences"],
-              ["ph", "Public Honorariums"],
-              ["sc", "School of Continuing Studies"]
-            ]
-        - uri: /school/:jsonex
-          status: 200 OK
-          headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, attachment; filename="(school).json"]
-          body: |
             {
               "meta": [
                 {"title": "code", "domain": "string"},
@@ -14946,18 +14933,23 @@ tests:
           - [Content-Type, application/json]
           - [Content-Disposition, attachment; filename="(school).json"]
           body: |
-            [
-              ["code", "name"],
-              ["art", "School of Art and Design"],
-              ["bus", "School of Business"],
-              ["edu", "College of Education"],
-              ["eng", "School of Engineering"],
-              ["la", "School of Arts and Humanities"],
-              ["mus", "School of Music & Dance"],
-              ["ns", "School of Natural Sciences"],
-              ["ph", "Public Honorariums"],
-              ["sc", "School of Continuing Studies"]
-            ]
+            {
+              "meta": [
+                {"title": "code", "domain": "string"},
+                {"title": "name", "domain": "string"}
+              ],
+              "data": [
+                ["art", "School of Art and Design"],
+                ["bus", "School of Business"],
+                ["edu", "College of Education"],
+                ["eng", "School of Engineering"],
+                ["la", "School of Arts and Humanities"],
+                ["mus", "School of Music & Dance"],
+                ["ns", "School of Natural Sciences"],
+                ["ph", "Public Honorariums"],
+                ["sc", "School of Continuing Studies"]
+              ]
+            }
         - uri: /school
           status: 200 OK
           headers:
@@ -15053,26 +15045,6 @@ tests:
         tests:
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:json
-          status: 200 OK
-          headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, 'attachment; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
-              of Departments'')}).json"']
-          body: |
-            [
-              ["Name", "# of Departments"],
-              ["School of Art and Design", 2],
-              ["School of Business", 3],
-              ["College of Education", 2],
-              ["School of Engineering", 4],
-              ["School of Arts and Humanities", 5],
-              ["School of Music & Dance", 4],
-              ["School of Natural Sciences", 4],
-              ["Public Honorariums", 0],
-              ["School of Continuing Studies", 0]
-            ]
-        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
-            '# of Departments'} /:jsonex
           status: 200 OK
           headers:
           - [Content-Type, application/json]
@@ -15205,17 +15177,6 @@ tests:
           - [Content-Type, application/json]
           - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15'')}).json"']
           body: |
-            [
-              ["null()", "true()", "false()", "60", "2.125", "271828e-5", "'HTSQL'", "date('2010-04-15')"],
-              [null, true, false, 60, 2.125, 2.71828, "HTSQL", "2010-04-15"]
-            ]
-        - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
-            /:jsonex
-          status: 200 OK
-          headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15'')}).json"']
-          body: |
             {
               "meta": [
                 {"title": "null()", "domain": "string"},
@@ -15313,15 +15274,6 @@ tests:
       - id: no-rows
         tests:
         - uri: /school?false()/:json
-          status: 200 OK
-          headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, 'attachment; filename="(school?false()).json"']
-          body: |
-            [
-              ["code", "name"]
-            ]
-        - uri: /school?false()/:jsonex
           status: 200 OK
           headers:
           - [Content-Type, application/json]

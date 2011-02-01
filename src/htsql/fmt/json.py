@@ -13,7 +13,7 @@ This module implements the JSON renderer.
 """
 
 
-from ..adapter import adapts
+from ..adapter import Adapter, adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain)
@@ -25,7 +25,7 @@ class JSONRenderer(Renderer):
 
     # Note: see `http://www.ietf.org/rfc/rfc4627.txt`.
     name = 'application/json'
-    aliases = ['json']
+    aliases = ['json', 'jsonex']
 
     def render(self, product):
         status = self.generate_status(product)
@@ -48,16 +48,31 @@ class JSONRenderer(Renderer):
                   for element in product.profile.segment.elements]
         domains = [element.domain
                    for element in product.profile.segment.elements]
+        domain_titles = [escape(entitle_domain(domain)) for domain in domains]
         tool = JSONFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
-        yield "[\n"
-        items = titles
+        yield "{\n"
+        yield "  \"meta\": [\n"
+        items = []
+        for title, domain_title in zip(titles, domain_titles):
+            item = "\"title\": %s, \"domain\": %s" % (title, domain_title)
+            items.append(item)
+        if items:
+            for item in items[:-1]:
+                yield "    {%s},\n" % item
+            yield "    {%s}\n" % items[-1]
+        yield "  ],\n"
+        yield "  \"data\": [\n"
+        items = None
         for record in product:
-            yield "  [%s],\n" % ", ".join(items)
+            if items is not None:
+                yield "    [%s],\n" % ", ".join(items)
             items = [format(value)
                      for format, value in zip(formats, record)]
-        yield "  [%s]\n" % ", ".join(items)
-        yield "]\n"
+        if items is not None:
+            yield "    [%s]\n" % ", ".join(items)
+        yield "  ]\n"
+        yield "}\n"
 
 
 class JSONFormatter(Formatter):
@@ -146,6 +161,48 @@ class FormatDate(Format):
         return escape(str(value))
 
 
+class EntitleDomain(Adapter):
+
+    adapts(Domain)
+    name = "unknown"
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    def __call__(self):
+        return self.name
+
+
+class EntitleBoolean(EntitleDomain):
+
+    adapts(BooleanDomain)
+    name = "boolean"
+
+
+class EntitleNumber(EntitleDomain):
+
+    adapts(NumberDomain)
+    name = "number"
+
+
+class EntitleString(EntitleDomain):
+
+    adapts(StringDomain)
+    name = "string"
+
+
+class EntitleEnum(EntitleDomain):
+
+    adapts(EnumDomain)
+    name = "enum"
+
+
+class EntitleDate(EntitleDomain):
+
+    adapts(DateDomain)
+    name = "date"
+
+
 class Escape(object):
 
     escape_pattern = r"""[\x00-\x1F\\/"]"""
@@ -177,5 +234,10 @@ class Escape(object):
 
 
 escape = Escape.escape
+
+
+def entitle_domain(domain):
+    entitle = EntitleDomain(domain)
+    return entitle()
 
 
