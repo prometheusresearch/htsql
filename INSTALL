@@ -20,12 +20,12 @@ To start a command-line HTSQL shell, run::
 
     $ htsql-ctl shell DBURI
 
-To start an HTTP server running HTSQL, run:
+To start an HTTP server running HTSQL, run::
 
     $ htsql-ctl server DBURI [HOST [PORT]]
 
-Here, ``DBURI`` specifies how to connect to the database and has the
-form::
+Here, ``DBURI`` specifies how to connect to the database and must have
+the form::
 
     ENGINE://USER:PASS@HOST:PORT/DATABASE
 
