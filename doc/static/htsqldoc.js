@@ -1,7 +1,13 @@
 
 
 $(function () {
-    $('.htsql-input pre').prepend("<div class=\"htsql-toggle\">[+]</div>");
+    $('.htsql-input pre').each(function () {
+        $(this).prepend("<div class=\"htsql-toggle\">" +
+                        ($(this).parents('.htsql-input')
+                                .next('.htsql-output')
+                                .hasClass('htsql-hide') ? "[+]" : "[-]") +
+                        "</div>");
+    });
     $('.htsql-toggle').click(function () {
         var output = this;
         if ($(this).text() == '[+]') {

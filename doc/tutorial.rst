@@ -141,6 +141,7 @@ Not all columns are useful for every context.  Use a *selector* to
 choose columns for display (A2_):
 
 .. htsql:: /program{school, code, title}
+   :cut: 4
 
 .. _A2: http://demo.htsql.org/program{school,code,title}
 
@@ -149,6 +150,7 @@ ascending order.  Use a minus sign (``-``) for descending order.  For
 example, this request (A3_) returns departments in descending order:
 
 .. htsql:: /department{name-, school}
+   :cut: 4
 
 .. _A3:
     http://demo.htsql.org/department{name-,school}
@@ -158,6 +160,7 @@ appear in the selector.  In the example below, we sort in ascending
 order on ``department`` and then descending on ``credits`` (A4_):
 
 .. htsql:: /course{department+, number, credits-, title}
+   :cut: 3
 
 .. _A4:
     http://demo.htsql.org
@@ -168,6 +171,7 @@ column's title (A5_):
 
 .. htsql:: /course{department+ :as 'Dept Code', number :as 'No.',
                    credits-, title}
+   :cut: 3
 
 .. _A5:
     http://demo.htsql.org
@@ -185,6 +189,7 @@ Since the HTSQL processor knows about this relationship, it is possible
 to link data accordingly (B1_):
 
 .. htsql:: /program{school.name, title}
+   :cut: 4
 
 .. _B1:
     http://demo.htsql.org
@@ -200,6 +205,7 @@ is offered by a ``department`` which belongs to a ``school``, we can
 list courses including school and department name (B2_):
 
 .. htsql:: /course{department.school.name, department.name, title}
+   :cut: 4
 
 .. _B2:
     http://demo.htsql.org
@@ -209,6 +215,8 @@ This request can be shortened a bit by collapsing the duplicate mention
 of ``department``; the resulting request is equivalent (B3_):
 
 .. htsql:: /course{department{school.name, name}, title}
+   :cut: 4
+   :hide:
 
 .. _B3:
     http://demo.htsql.org
@@ -219,6 +227,7 @@ the wildcard ``*`` selector.  The request below returns all columns from
 ``department`` and all columns from its correlated ``school`` (B4_):
 
 .. htsql:: /department{*,school.*}
+   :cut: 4
 
 .. _B4:
     http://demo.htsql.org
@@ -235,6 +244,7 @@ For example, to return departments in the 'School of Engineering'
 we write (C1_):
 
 .. htsql:: /department?school='eng'
+   :cut: 4
 
 .. _C1:
     http://demo.htsql.org
@@ -249,6 +259,7 @@ next example returns rows from the ``program`` table for the "Bachelors
 of Arts" (``'ba'``) or "Bachelors of Science" (``'bs'``) degrees (C2_):
 
 .. htsql:: /program?degree={'ba','bs'}
+   :cut: 3
 
 .. _C2:
     http://demo.htsql.org
@@ -260,6 +271,7 @@ request returns programs in the "School of Business" that do not
 grant a "Bachelor of Science" degree (C3_):
 
 .. htsql:: /program?school='bus'&degree!='bs'
+   :cut: 3
 
 .. _C3:
     http://demo.htsql.org
@@ -271,6 +283,7 @@ than 3 credits in the "School of Natural Science" (C4_):
 
 .. htsql:: /course{department, number, title}
             ?credits<3&department.school='ns'
+   :cut: 4
 
 .. _C4:
     http://demo.htsql.org
@@ -283,6 +296,8 @@ is equivalent to (C5_):
 
 .. htsql:: /(course?credits<3&department.school='ns')
             {department, number, title}
+   :cut: 4
+   :hide:
 
 .. _C5:
     http://demo.htsql.org
@@ -322,6 +337,7 @@ and returned as a "Comma-Separated Values" (RFC 4180) (E1_):
 
 .. htsql:: /course{department{code,name},number,title+}?
             department.school='bus'/:csv
+   :hide:
 
 .. _E1:
     http://demo.htsql.org
@@ -365,6 +381,7 @@ If each row in your result set represents a ``course``, it is easy to
 get correlated information for each course's department (RA1_):
 
 .. htsql:: /course{department.name, title}
+   :cut: 3
 
 .. _RA1:
     http://demo.htsql.org
@@ -387,6 +404,7 @@ convert a plural expression into a singular value.  The following
 example shows the maximum course credits by department (RA3_):
 
 .. htsql:: /department{name, max(course.credits)}
+   :cut: 3
 
 .. _RA3:
     http://demo.htsql.org
@@ -421,6 +439,7 @@ Since ``school`` table has a *plural* (one to many) relationship
 with ``program`` and ``department``, we can count them (RB1_):
 
 .. htsql:: /school{name, count(program), count(department)}
+   :cut: 4
 
 .. _RB1:
     http://demo.htsql.org
@@ -431,6 +450,7 @@ following returns the number of courses, by department, that are at
 the 400 level or above (RB2_):
 
 .. htsql:: /department{name, count(course?number>=400)}
+   :cut: 4
 
 .. _RB2:
     http://demo.htsql.org
@@ -440,6 +460,7 @@ It's possible to nest aggregate expressions.  This request returns the
 average number of courses each department offers (RB3_):
 
 .. htsql:: /school{name, avg(department.count(course))}
+   :cut: 4
 
 .. _RB3:
     http://demo.htsql.org
@@ -449,6 +470,7 @@ Filters and nested aggregates can be combined.  Here we count, for each
 school, departments offering 4 or more credits (RB4_):
 
 .. htsql:: /school{name, count(department?exists(course?credits>3))}
+   :cut: 4
 
 .. _RB4:
     http://demo.htsql.org
@@ -458,6 +480,7 @@ Filtering can be done on one column, with aggregation on another.  This
 example shows average credits from only high-level courses (RB5_):
 
 .. htsql:: /department{name, avg((course?number>400).credits)}
+   :cut: 4
 
 .. _RB5:
     http://demo.htsql.org
@@ -467,8 +490,10 @@ Numerical aggregates are supported.  These requests compute some useful
 ``course.credit`` statistics (RB6_, RB7_):
 
 .. htsql:: /department{code, min(course.credits), max(course.credits)}
+   :cut: 4
 
 .. htsql:: /department{code, sum(course.credits), avg(course.credits)}
+   :cut: 4
 
 .. _RB6:
     http://demo.htsql.org
@@ -485,6 +510,8 @@ either lack correlated ``course`` records or where every one of those
 
 .. htsql:: /department{name, avg(course.credits)}
             ?every(course.credits=3)
+   :cut: 4
+   :hide:
 
 .. _RB8:
     http://demo.htsql.org
@@ -518,6 +545,7 @@ If you're not sure of the exact course title, use the case-insensitive
 records that contain the substring ``'lab'`` (PC2_):
 
 .. htsql:: /course?title~'lab'
+   :cut: 4
 
 .. _PC2:
     http://demo.htsql.org
@@ -527,6 +555,8 @@ Use the *not-contains* operator (``!~``) to exclude all courses with
 physics in the title (PC3_):
 
 .. htsql:: /course?title!~'lab'
+   :cut: 4
+   :hide:
 
 .. _PC3:
     http://demo.htsql.org
@@ -536,6 +566,8 @@ To exclude a specific class, use the *not-equals* operator (PC4_):
 
 
 .. htsql:: /course?title!='Organic Chemistry Laboratory I'
+   :cut: 4
+   :hide:
 
 .. _PC4:
     http://demo.htsql.org
@@ -546,6 +578,7 @@ The *equality* (``=``) and *inequality* (``!=``) operators are
 straightforward when used with numbers (PC5_):
 
 .. htsql:: /course{department,number,title}?number=101
+   :cut: 2
 
 .. _PC5:
     http://demo.htsql.org
@@ -556,6 +589,8 @@ This example, we return courses that are in neither the "Art History"
 nor the "Studio Art" department (PC6_):
 
 .. htsql:: /course?department!={'arthis','stdart'}
+   :cut: 4
+   :hide:
 
 .. _PC6:
     http://demo.htsql.org
@@ -565,6 +600,7 @@ Use the *greater-than* (``>``) operator to request courses with more
 than 3 credits (PC7_):
 
 .. htsql:: /course?credits>3
+   :cut: 2
 
 .. _PC7:
     http://demo.htsql.org
@@ -574,6 +610,8 @@ Use the *greater-than-or-equal-to* (``>=``) operator request courses
 that have three credits or more (PC8_):
 
 .. htsql:: /course?credits>=3
+   :cut: 4
+   :hide:
 
 .. _PC8:
     http://demo.htsql.org
@@ -585,6 +623,7 @@ example, the *greater-than* (``>``) operator can be used to request
 departments whose ``code`` follows ``'me'`` in the alphabet (PC9_):
 
 .. htsql:: /department?code>'me'
+   :cut: 4
 
 .. _PC9:
     http://demo.htsql.org
@@ -618,6 +657,7 @@ The *negation* operator (``!``) is ``true()`` when it's operand is
 ``false()``.   To skip non-academic ``department`` records (PA3_):
 
 .. htsql:: /department{code, name}?!is_null(school)
+   :cut: 4
 
 .. _PA3:
     http://demo.htsql.org
@@ -638,6 +678,7 @@ operands is ``true()``.  For example, we could list courses having
 anomalous number of credits (PA5_):
 
 .. htsql:: /course?credits>4|credits<3
+   :cut: 4
 
 .. _PA5:
     http://demo.htsql.org
@@ -651,6 +692,7 @@ returns courses that are in "Art History" or "Studio Art" departments
 that have more than three credits (PA6_):
 
 .. htsql:: /course?(department='arthis'|department='stdart')&credits>3
+   :cut: 4
 
 .. _PA6:
     http://demo.htsql.org
@@ -660,6 +702,7 @@ Without the parenthesis, the expression above would show all courses
 from ``'arthis'`` regardless of credits (PA7_):
 
 .. htsql:: /course?department='arthis'|department='stdart'&credits>3
+   :cut: 3
 
 .. _PA7:
     http://demo.htsql.org
@@ -675,6 +718,8 @@ For example, this query returns only ``course`` records having a
 ``description`` (PA8_):
 
 .. htsql:: /course?description
+   :cut: 4
+   :hide:
 
 .. _PA8:
     http://demo.htsql.org
@@ -728,6 +773,7 @@ The ``!==`` operator lists distinct values, including records with
 a ``NULL`` for the field tested (WN3_):
 
 .. htsql:: /department?school!=='art'
+   :cut: 5
 
 .. _WN3:
     http://demo.htsql.org

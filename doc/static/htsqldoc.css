@@ -22,6 +22,13 @@ div.htsql-input {
 div.htsql-output {
   max-height: 10em;
   overflow: auto;
+}
+
+div.htsql-output table.docutils tr.htsql-cut td {
+  border-bottom: 0;
+}
+
+div.htsql-hide {
   display: none;
 }
 

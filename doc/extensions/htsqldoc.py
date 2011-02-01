@@ -14,11 +14,14 @@ class HTSQLDirective(Directive):
             'plain': directives.flag,
             'error': directives.flag,
             'query': directives.path,
+            'hide': directives.flag,
+            'cut': directives.positive_int,
     }
 
     def run(self):
         env = self.state.document.settings.env
-        query = self.arguments[0].replace("\n", " ")
+        query = " ".join(line.strip()
+                         for line in self.arguments[0].split("\n"))
         query_node = nodes.literal_block(query, query)
         query_node['language'] = 'htsql'
         if not env.config.htsql_server:
@@ -38,11 +41,14 @@ class HTSQLDirective(Directive):
         content_type, content = env.htsql_uris[uri]
         if 'plain' in self.options:
             content_type = 'text/plain'
-        result_node = build_result(self.content_offset, content_type, content)
+        result_node = build_result(self.content_offset, content_type, content,
+                                   self.options.get('cut'))
         query_container = nodes.container('', query_node,
                                           classes=['htsql-input'])
         result_container = nodes.container('', result_node,
                                            classes=['htsql-output'])
+        if 'hide' in self.options:
+            result_container['classes'].append('htsql-hide')
         return [query_container, result_container]
 
 
@@ -78,9 +84,15 @@ def load_uri(uri, error=False):
     return (content_type, content)
 
 
-def build_result(line, content_type, content):
+def build_result(line, content_type, content, cut=None):
     if content_type == 'application/json':
         data = loads(content)
+        if isinstance(data, dict):
+            data = [meta['title'] for meta in data['meta']] + data['data']
+        is_cut = False
+        if cut and len(data) > cut+1:
+            data = data[:cut+1]
+            is_cut = True
         size = len(data[0])
         widths = [1]*size
         for row in data:
@@ -123,6 +135,16 @@ def build_result(line, content_type, content):
                     text_node += nodes.Text(u"false")
                 else:
                     text_node = nodes.Text(unicode(value))
+                para_node += text_node
+        if is_cut:
+            row_node = nodes.row(classes=['htsql-cut'])
+            body_node += row_node
+            for idx in range(size):
+                entry_node = nodes.entry()
+                row_node += entry_node
+                para_node = nodes.paragraph()
+                entry_node += para_node
+                text_node = nodes.Text(u"\u2026")
                 para_node += text_node
         result_node = table_node
     else:
