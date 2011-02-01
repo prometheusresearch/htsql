@@ -27,7 +27,7 @@ To start an HTTP server running HTSQL, run:
 Here, ``DBURI`` specifies how to connect to the database and has the
 form::
 
-        ENGINE://USER:PASS@HOST:PORT/DATABASE
+    ENGINE://USER:PASS@HOST:PORT/DATABASE
 
 See also:
 
