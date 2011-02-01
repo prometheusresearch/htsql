@@ -2,12 +2,20 @@ List of Changes
 ===============
 
 
+2.0.0 final (2011-02-01)
+------------------------
+
+* Merged `/:json` and `/:jsonex` formatters; use `/:jsonex` layout
+  to avoid CSRF issues.
+* Documentation updates.
+
+
 2.0.0 rc 1 (2011-01-21)
 -----------------------
 
 * HTRAF demo is promoted to a standalone project; see
   http://bitbucket.org/prometheus/htraf.
-* Added :/jsonex format: JSON with extra metadata.
+* Added `/:jsonex` format: JSON with extra metadata.
 * Documentation updates.
 
 
