@@ -88,7 +88,7 @@ def build_result(line, content_type, content, cut=None):
     if content_type == 'application/json':
         data = loads(content)
         if isinstance(data, dict):
-            data = [meta['title'] for meta in data['meta']] + data['data']
+            data = [[meta['title'] for meta in data['meta']]] + data['data']
         is_cut = False
         if cut and len(data) > cut+1:
             data = data[:cut+1]

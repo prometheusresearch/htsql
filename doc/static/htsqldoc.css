@@ -20,7 +20,7 @@ div.htsql-input {
 }
 
 div.htsql-output {
-  max-height: 10em;
+  max-height: 11em;
   overflow: auto;
 }
 
