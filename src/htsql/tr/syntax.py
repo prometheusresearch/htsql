@@ -14,11 +14,11 @@ This module defines syntax nodes for the HTSQL grammar.
 
 
 from ..mark import Mark
-from ..util import maybe, listof, Printable
+from ..util import maybe, listof, Printable, Clonable
 import re
 
 
-class Syntax(Printable):
+class Syntax(Printable, Clonable):
     """
     Represents a syntax node.
 

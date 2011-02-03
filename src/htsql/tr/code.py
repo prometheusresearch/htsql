@@ -878,6 +878,38 @@ class FiberProductSpace(ProductSpace):
         return "(%s . %s)" % (self.base, self.table)
 
 
+class QuotientSpace(Space):
+
+    is_axis = True
+
+    def __init__(self, base, seed, kernel, binding):
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
+        assert seed.spans(base)
+        assert not base.spans(seed)
+        assert isinstance(kernel, listof(Code))
+        super(QuotientSpace, self).__init__(
+                    base=base,
+                    table=None,
+                    is_contracting=False,
+                    is_expanding=False,
+                    binding=binding)
+
+
+class ComplementSpace(Space):
+
+    is_axis = True
+
+    def __init__(self, base, seed, binding):
+        assert isinstance(seed, Space)
+        super(ComplementSpace, self).__init__(
+                    base=base,
+                    table=seed.table,
+                    is_contracting=False,
+                    is_expanding=True,
+                    binding=binding)
+
+
 class FilteredSpace(Space):
     """
     Represents a filtered space.

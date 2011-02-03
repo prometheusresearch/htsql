@@ -104,3 +104,41 @@ tests:
     tests:
     - uri: /(school?code='art').department
 
+  - title: Projections
+    skip: true
+    tests:
+    - uri: /quotient(program, degree)
+    - uri: /quotient(program, degree){*}
+    - uri: /quotient(program, degree){kernel()}
+    - uri: /quotient(program, degree){kernel(),count(complement())}
+    - uri: /quotient(program, degree){kernel(),count(complement().student)}
+    - uri: /quotient(student, year(dob), gender)
+    - uri: /quotient(student, {year(dob), gender})
+    - uri: /quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
+    - uri: /quotient(student, {year(dob), gender}){kernel(),count(complement())}
+    - uri: /quotient(quotient(student, year(dob)).complement(), gender)
+                {kernel(), count(complement()), count(complement().is_active)}
+    - uri: /quotient(quotient(student, year(dob), gender), kernel(0))
+                {kernel(), count(complement()), count(complement().complement()),
+                 count(complement().complement().is_active)}
+    - uri: /school.quotient(program, degree)
+    - uri: /school.quotient(program, degree){*}
+    - uri: /school.quotient(program, degree){kernel()}
+    - uri: /school.quotient(program, degree){kernel(),count(complement())}
+    - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
+    - uri: /school.program
+            .quotient(student, year(dob), gender)
+    - uri: /school.program
+            .quotient(student, {year(dob), gender})
+    - uri: /school.program
+            .quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
+    - uri: /school.program
+            .quotient(student, {year(dob), gender}){kernel(),count(complement())}
+    - uri: /school.program
+            .quotient(quotient(student, year(dob)).complement(), gender)
+                {kernel(), count(complement()), count(complement().is_active)}
+    - uri: /school.program
+            .quotient(quotient(student, year(dob), gender), kernel(0))
+                {kernel(), count(complement()), count(complement().complement()),
+                 count(complement().complement().is_active)}
+

@@ -19,11 +19,12 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
 from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
-                       TitleBinding, DirectionBinding, Binding)
+                       TitleBinding, DirectionBinding, QuotientBinding,
+                       Binding)
 from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
-from ..lookup import lookup
+from ..lookup import lookup, get_complement, get_kernel
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -40,7 +41,8 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         KeepPolaritySig, ReversePolaritySig,
                         RoundSig, RoundToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
-                        SumSig, AvgSig, AggregateSig, QuantifySig)
+                        SumSig, AvgSig, AggregateSig, QuantifySig,
+                        QuotientSig, KernelSig, ComplementSig)
 import sys
 
 
@@ -394,6 +396,58 @@ class BindFiber(BindMacro):
         condition = FormulaBinding(IsEqualSig(+1), coerce(BooleanDomain()),
                                    self.syntax, lop=parent, rop=child)
         yield SieveBinding(binding, condition, self.syntax)
+
+
+class BindQuotient(BindMacro):
+
+    named('quotient')
+    signature = QuotientSig
+
+    def expand(self, seed, kernel):
+        seed_binding = self.state.bind(seed)
+        kernel_bindings = []
+        for expression in kernel:
+            kernel_bindings.extend(self.state.bind_all(expression,
+                                                       base=seed_binding))
+        yield QuotientBinding(self.state.base, seed_binding, kernel_bindings,
+                              self.syntax)
+
+
+class BindKernel(BindMacro):
+
+    named('kernel')
+    signature = KernelSig
+
+    def expand(self, index=None):
+        if index is not None:
+            if not isinstance(index, NumberSyntax):
+                raise BindError("expected a numeric literal", index.mark)
+            try:
+                index = int(index.value)
+            except ValueError:
+                raise BindError("expected an integer value", index.mark)
+        bindings = get_kernel(self.state.base, self.syntax)
+        if bindings is None:
+            raise BindError("expected a quotient context", self.syntax.mark)
+        if index is not None:
+            if not (0 <= index < len(bindings)):
+                raise BindError("index is out of range", self.syntax.mark)
+            yield bindings[index]
+        else:
+            for binding in bindings:
+                yield binding
+
+
+class BindComplement(BindMacro):
+
+    named('complement')
+    signature = ComplementSig
+
+    def expand(self):
+        binding = get_complement(self.state.base, self.syntax)
+        if binding is None:
+            raise BindError("expected a quotient context", self.syntax.mark)
+        yield binding
 
 
 class BindAs(BindMacro):

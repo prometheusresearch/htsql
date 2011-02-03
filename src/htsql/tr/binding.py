@@ -287,6 +287,32 @@ class ColumnBinding(ChainBinding):
         self.link = link
 
 
+class QuotientBinding(ChainBinding):
+
+    def __init__(self, base, seed, kernel, syntax):
+        assert isinstance(seed, Binding)
+        assert isinstance(kernel, listof(Binding))
+        super(QuotientBinding, self).__init__(base, TupleDomain(), syntax)
+        self.seed = seed
+        self.kernel = kernel
+
+
+class ComplementBinding(ChainBinding):
+
+    def __init__(self, base, seed, syntax):
+        assert isinstance(seed, Binding)
+        super(ComplementBinding, self).__init__(base, seed.domain, syntax)
+        self.seed = seed
+
+
+class KernelBinding(ChainBinding):
+
+    def __init__(self, base, index, domain, syntax):
+        assert isinstance(index, int) and index >= 0
+        super(KernelBinding, self).__init__(base, domain, syntax)
+        self.index = index
+
+
 class LiteralBinding(Binding):
     """
     Represents a literal value.

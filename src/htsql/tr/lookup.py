@@ -20,7 +20,8 @@ from ..entity import DirectJoin, ReverseJoin
 from .syntax import Syntax, IdentifierSyntax
 from .binding import (Binding, RootBinding, ChainBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
-                      ColumnBinding, SieveBinding, WrapperBinding, SortBinding)
+                      ColumnBinding, SieveBinding, WrapperBinding, SortBinding,
+                      QuotientBinding, ComplementBinding, KernelBinding)
 import re
 import unicodedata
 
@@ -150,6 +151,34 @@ class Itemize(Adapter, LookupItemizeMixin):
         assert isinstance(syntax, Syntax)
         super(Itemize, self).__init__(binding)
         self.syntax = syntax
+
+
+class GetComplement(Adapter):
+
+    adapts(Binding)
+
+    def __init__(self, binding, syntax):
+        assert isinstance(binding, Binding)
+        assert isinstance(syntax, Syntax)
+        self.binding = binding
+        self.syntax = syntax
+
+    def __call__(self):
+        return None
+
+
+class GetKernel(Adapter):
+
+    adapts(Binding)
+
+    def __init__(self, binding, syntax):
+        assert isinstance(binding, Binding)
+        assert isinstance(syntax, Syntax)
+        self.binding = binding
+        self.syntax = syntax
+
+    def __call__(self):
+        return None
 
 
 class LookupRoot(Lookup):
@@ -519,6 +548,119 @@ class ItemizeWrapper(Itemize):
         return (binding.clone(base=self.binding) for binding in bindings)
 
 
+class GetComplementFromWrapper(GetComplement):
+
+    adapts_many(WrapperBinding,
+                SieveBinding,
+                SortBinding)
+
+    def __call__(self):
+        binding = get_complement(self.binding.base, self.syntax)
+        if binding is None:
+            return None
+        assert isinstance(binding, ChainBinding)
+        assert binding.base is self.binding.base
+        return binding.clone(base=self.binding)
+
+
+class GetKernelFromWrapper(GetKernel):
+
+    adapts_many(WrapperBinding,
+                SieveBinding,
+                SortBinding)
+
+    def __call__(self):
+        bindings = get_kernel(self.binding.base, self.syntax)
+        if bindings is None:
+            return None
+        assert all(isinstance(binding, ChainBinding) and
+                   binding.base is self.binding.base
+                   for binding in bindings)
+        return (binding.clone(base=self.binding) for binding in bindings)
+
+
+class ItemizeQuotient(Itemize):
+
+    adapts(QuotientBinding)
+
+    def __call__(self):
+        return get_kernel(self.binding, self.syntax)
+
+
+class GetComplementFromQuotient(GetComplement):
+
+    adapts(QuotientBinding)
+
+    def __call__(self):
+        seed = self.binding.seed
+        return ComplementBinding(self.binding, seed,
+                                 seed.syntax.clone(mark=self.syntax.mark))
+
+
+class GetKernelFromQuotient(GetKernel):
+
+    adapts(QuotientBinding)
+
+    def __call__(self):
+        for index, binding in enumerate(self.binding.kernel):
+            yield KernelBinding(self.binding, index, binding.domain,
+                                binding.syntax.clone(mark=self.syntax.mark))
+
+
+class LookupComplement(Lookup):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        binding = lookup(self.binding.seed, self.identifier)
+        if binding is None:
+            return None
+        assert isinstance(binding, ChainBinding)
+        assert binding.base is self.binding.seed
+        return binding.clone(base=self.binding)
+
+
+class ItemizeComplement(Itemize):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        bindings = itemize(self.binding.seed, self.syntax)
+        if bindings is None:
+            return None
+        assert all(isinstance(binding, ChainBinding) and
+                   binding.base is self.binding.seed
+                   for binding in bindings)
+        return (binding.clone(base=self.binding) for binding in bindings)
+
+
+class GetComplementFromComplement(GetComplement):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        binding = get_complement(self.binding.seed, self.syntax)
+        if binding is None:
+            return None
+        assert isinstance(binding, ChainBinding)
+        assert binding.base is self.binding.seed
+        return binding.clone(base=self.binding)
+
+
+class GetKernelFromComplement(GetKernel):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        bindings = get_complement(self.binding.seed, self.syntax)
+        if bindings is None:
+            return None
+        assert all(isinstance(binding, ChainBinding) and
+                   binding.base is self.binding.seed
+                   for binding in bindings)
+        return (binding.clone(base=self.binding) for binding in bindings)
+
+
 def lookup(binding, identifier):
     """
     Looks for a member of the specified binding that matches
@@ -558,6 +700,20 @@ def itemize(binding, syntax):
     itemize = Itemize(binding, syntax)
     bindings = itemize()
     # Convert a generator to a regular list.
+    if bindings is not None:
+        bindings = list(bindings)
+    return bindings
+
+
+def get_complement(binding, syntax):
+    get_complement = GetComplement(binding, syntax)
+    binding = get_complement()
+    return binding
+
+
+def get_kernel(binding, syntax):
+    get_kernel = GetKernel(binding, syntax)
+    bindings = get_kernel()
     if bindings is not None:
         bindings = list(bindings)
     return bindings
