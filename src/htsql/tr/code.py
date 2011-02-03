@@ -401,15 +401,20 @@ class Space(Expression):
     is_axis = False
     is_scalar = False
 
-    def __init__(self, base, table, is_contracting, is_expanding,
+    def __init__(self, base, table, seed, kernel,
+                 is_contracting, is_expanding,
                  binding, equality_vector=None):
         assert isinstance(base, maybe(Space))
         assert isinstance(table, maybe(TableEntity))
+        assert isinstance(seed, maybe(Space))
+        assert isinstance(kernel, maybe(listof(Code)))
         assert isinstance(is_contracting, bool)
         assert isinstance(is_expanding, bool)
         super(Space, self).__init__(binding, equality_vector)
         self.base = base
         self.table = table
+        self.seed = seed
+        self.kernel = kernel
         self.is_contracting = is_contracting
         self.is_expanding = is_expanding
         # Indicates that the space itself and all its prefixes are axes.
@@ -720,6 +725,8 @@ class ScalarSpace(Space):
         super(ScalarSpace, self).__init__(
                     base=None,
                     table=None,
+                    seed=None,
+                    kernel=None,
                     is_contracting=False,
                     is_expanding=False,
                     binding=binding,
@@ -830,6 +837,8 @@ class DirectProductSpace(ProductSpace):
         super(DirectProductSpace, self).__init__(
                     base=base,
                     table=table,
+                    seed=None,
+                    kernel=None,
                     is_contracting=False,
                     is_expanding=False,
                     binding=binding,
@@ -866,6 +875,8 @@ class FiberProductSpace(ProductSpace):
         super(FiberProductSpace, self).__init__(
                     base=base,
                     table=join.target,
+                    seed=None,
+                    kernel=None,
                     is_contracting=join.is_contracting,
                     is_expanding=join.is_expanding,
                     binding=binding,
@@ -891,23 +902,60 @@ class QuotientSpace(Space):
         super(QuotientSpace, self).__init__(
                     base=base,
                     table=None,
+                    seed=seed,
+                    kernel=kernel,
                     is_contracting=False,
                     is_expanding=False,
-                    binding=binding)
+                    binding=binding,
+                    equality_vector=(base, seed, tuple(kernel)))
+        self.kernel = kernel
+
+    def ordering(self, with_strong=True, with_weak=True):
+        assert isinstance(with_strong, bool)
+        assert isinstance(with_weak, bool)
+        order = []
+        if with_strong:
+            order += self.base.ordering(with_strong=True, with_weak=False)
+        if with_weak:
+            order += self.base.ordering(with_strong=False, with_weak=True)
+            space = self.inflate()
+            for index, code in enumerate(self.kernel):
+                unit = KernelUnit(index, space, code.binding)
+                order.append((unit, +1))
+        return order
 
 
 class ComplementSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, seed, binding):
-        assert isinstance(seed, Space)
+    def __init__(self, base, binding):
+        assert isinstance(base, Space)
+        assert base.seed is not None
         super(ComplementSpace, self).__init__(
                     base=base,
-                    table=seed.table,
+                    table=base.seed.table,
+                    seed=base.seed.seed,
+                    kernel=base.seed.kernel,
                     is_contracting=False,
                     is_expanding=True,
-                    binding=binding)
+                    binding=binding,
+                    equality_vector=(base,))
+
+    def ordering(self, with_strong=True, with_weak=True):
+        assert isinstance(with_strong, bool)
+        assert isinstance(with_weak, bool)
+        order = []
+        if with_strong:
+            order += self.base.ordering(with_strong=True, with_weak=False)
+        if with_weak:
+            order += self.base.ordering(with_strong=False, with_weak=True)
+            space = self.inflate()
+            for code in self.base.seed.ordering():
+                if any(not self.base.spans(unit) for unit in code.units):
+                    unit = ComplementUnit(code, space, code.binding)
+                    order.append((unit, +1))
+        return order
 
 
 class FilteredSpace(Space):
@@ -931,6 +979,8 @@ class FilteredSpace(Space):
         super(FilteredSpace, self).__init__(
                     base=base,
                     table=base.table,
+                    seed=base.seed,
+                    kernel=base.kernel,
                     is_contracting=True,
                     is_expanding=False,
                     binding=binding,
@@ -958,6 +1008,8 @@ class MaskedSpace(Space):
         super(MaskedSpace, self).__init__(
                     base=base,
                     table=base.table,
+                    seed=base.seed,
+                    kernel=base.kernel,
                     is_contracting=True,
                     is_expanding=False,
                     binding=binding,
@@ -1010,6 +1062,8 @@ class OrderedSpace(Space):
         super(OrderedSpace, self).__init__(
                     base=base,
                     table=base.table,
+                    seed=base.seed,
+                    kernel=base.kernel,
                     is_contracting=True,
                     is_expanding=(limit is None and offset is None),
                     binding=binding,
@@ -1415,6 +1469,36 @@ class CorrelatedUnit(AggregateUnitBase):
     A correlated aggregate unit is expressed in SQL using a correlated
     subquery.
     """
+
+
+class KernelUnit(CompoundUnit):
+
+    def __init__(self, index, space, binding):
+        assert isinstance(index, int) and index >= 0
+        assert isinstance(space, Space)
+        assert space.seed is not None
+        assert index < len(space.kernel)
+        code = space.kernel[index]
+        super(KernelUnit, self).__init__(
+                    code=code,
+                    space=space,
+                    domain=code.domain,
+                    binding=binding,
+                    equality_vector=(index, space))
+        self.index = index
+
+
+class ComplementUnit(CompoundUnit):
+
+    def __init__(self, code, space, binding):
+        assert isinstance(code, Code)
+        assert isinstance(space, ComplementSpace)
+        super(ComplementUnit, self).__init__(
+                    code=code,
+                    space=space,
+                    domain=code.domain,
+                    binding=binding,
+                    equality_vector=(code, space))
 
 
 class BatchExpr(Expression):

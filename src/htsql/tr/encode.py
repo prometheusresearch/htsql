@@ -21,13 +21,15 @@ from .error import EncodeError
 from .coerce import coerce
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       FreeTableBinding, AttachedTableBinding,
+                      QuotientBinding, ComplementBinding, KernelBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       SortBinding, CastBinding, WrapperBinding,
                       DirectionBinding, FormulaBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
+                   QuotientSpace, ComplementSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
-                   CastCode, ColumnUnit, ScalarUnit)
+                   CastCode, ColumnUnit, ScalarUnit, KernelUnit)
 from .signature import Signature, IsNullSig, NullIfSig
 import decimal
 
@@ -439,6 +441,42 @@ class RelateColumn(Relate):
             return self.state.relate(self.binding.link)
         # Otherwise, let the parent produce an error message.
         return super(RelateColumn, self).__call__()
+
+
+class RelateQuotient(Relate):
+
+    adapts(QuotientBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        seed_space = self.state.relate(self.binding.seed)
+        if space.spans(seed_space):
+            raise EncodeError("a plural operand is required",
+                              seed_space.mark)
+        if not seed_space.spans(space):
+            raise EncodeError("invalid plural operand",
+                              seed_space.mark)
+        kernel = [self.state.encode(binding)
+                  for binding in self.binding.kernel]
+        return QuotientSpace(space, seed_space, kernel, self.binding)
+
+
+class RelateComplement(Relate):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        return ComplementSpace(space, self.binding)
+
+
+class EncodeKernel(Encode):
+
+    adapts(KernelBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        return KernelUnit(self.binding.index, space, self.binding)
 
 
 class EncodeLiteral(Encode):
