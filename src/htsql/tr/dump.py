@@ -881,6 +881,8 @@ class DubFrame(Dub):
         # For a frame, a good alias is the name of the table
         # represented by the frame.
         space = self.clause.space
+        while space.table is None and space.seed is not None:
+            space = space.seed
         if space.table is not None:
             return space.table.name
         # Use the default alias when the frame does not represent

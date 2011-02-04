@@ -13855,6 +13855,83 @@ tests:
                /{count(school)==null()}
                SELECT (COUNT(1) IS NULL)
                FROM "school" AS "school"
+          - uri: /this(){count(school)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | this()        |
+              -+---------------+-
+               | count(school) |
+              -+---------------+-
+               |             9 |
+                         (1 row)
+
+               ----
+               /this(){count(school)}
+               SELECT COUNT(1)
+               FROM "school" AS "school"
+          - uri: /this(){count(school)}?false()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (this()?false()) |
+              -+------------------+-
+               | count(school)    |
+              -+------------------+-
+                          (no rows)
+
+               ----
+               /this(){count(school)}?false()
+               SELECT COALESCE("school"."count", 0)
+               FROM (SELECT 1 AS "!") AS "!"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                     FROM "school" AS "school") AS "school"
+                                    ON 1
+               WHERE 0
+          - uri: /this(){count(school)}?exists(school)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (this()?exists(school)) |
+              -+-------------------------+-
+               | count(school)           |
+              -+-------------------------+-
+               |                       9 |
+                                   (1 row)
+
+               ----
+               /this(){count(school)}?exists(school)
+               SELECT COALESCE("school"."count", 0)
+               FROM (SELECT 1 AS "!") AS "!"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                     FROM "school" AS "school") AS "school"
+                                    ON 1
+               WHERE EXISTS(SELECT 1
+                            FROM "school" AS "school_1")
+          - uri: /this(){count(school)}?count(school)>1
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (this()?count(school)>1) |
+              -+--------------------------+-
+               | count(school)            |
+              -+--------------------------+-
+               |                        9 |
+                                    (1 row)
+
+               ----
+               /this(){count(school)}?count(school)>1
+               SELECT COALESCE("school"."count", 0)
+               FROM (SELECT COUNT(1) AS "count"
+                     FROM "school" AS "school") AS "!"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                     FROM "school" AS "school") AS "school"
+                                    ON 1
+               WHERE ("!"."count" > 1)
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.fiber(department))}
@@ -14066,6 +14143,303 @@ tests:
                                ON ("school"."code" = "department"."school")
                WHERE ("school"."code" = 'art')
                ORDER BY "school"."code" ASC, 1 ASC
+        - id: projections
+          tests:
+          - uri: /quotient(program, degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program,degree) |
+              -+--------------------------+-
+               | degree                   |
+              -+--------------------------+-
+               |                          |
+               | ba                       |
+               | bs                       |
+               | ct                       |
+               | ma                       |
+               | ms                       |
+               | pb                       |
+               | ph                       |
+                                   (8 rows)
+
+               ----
+               /quotient(program,degree)
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               GROUP BY 1
+               ORDER BY 1 ASC
+          - uri: /quotient(program, degree){*}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program,degree) |
+              -+--------------------------+-
+               | degree                   |
+              -+--------------------------+-
+               |                          |
+               | ba                       |
+               | bs                       |
+               | ct                       |
+               | ma                       |
+               | ms                       |
+               | pb                       |
+               | ph                       |
+                                   (8 rows)
+
+               ----
+               /quotient(program,degree){*}
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               GROUP BY 1
+               ORDER BY 1 ASC
+          - uri: /quotient(program, degree){kernel()}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program,degree) |
+              -+--------------------------+-
+               | degree                   |
+              -+--------------------------+-
+               |                          |
+               | ba                       |
+               | bs                       |
+               | ct                       |
+               | ma                       |
+               | ms                       |
+               | pb                       |
+               | ph                       |
+                                   (8 rows)
+
+               ----
+               /quotient(program,degree){kernel()}
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               GROUP BY 1
+               ORDER BY 1 ASC
+          - uri: /quotient(program, degree)?false()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(program,degree)?false()) |
+              -+------------------------------------+-
+               | degree                             |
+              -+------------------------------------+-
+                                            (no rows)
+
+               ----
+               /quotient(program,degree)?false()
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               GROUP BY 1
+               HAVING 0
+               ORDER BY 1 ASC
+          - uri: /quotient(program, degree){kernel()}?false()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(program,degree)?false()) |
+              -+------------------------------------+-
+               | degree                             |
+              -+------------------------------------+-
+                                            (no rows)
+
+               ----
+               /quotient(program,degree){kernel()}?false()
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               GROUP BY 1
+               HAVING 0
+               ORDER BY 1 ASC
+          - uri: /quotient(program, degree)?kernel()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(program,degree)?kernel()) |
+              -+-------------------------------------+-
+               | degree                              |
+              -+-------------------------------------+-
+               | ba                                  |
+               | bs                                  |
+               | ct                                  |
+               | ma                                  |
+               | ms                                  |
+               | pb                                  |
+               | ph                                  |
+                                              (7 rows)
+
+               ----
+               /quotient(program,degree)?kernel()
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               GROUP BY 1
+               HAVING (NULLIF("program"."degree", '') IS NOT NULL)
+               ORDER BY 1 ASC
+          - uri: /quotient(program, degree){kernel()}?kernel()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(program,degree)?kernel()) |
+              -+-------------------------------------+-
+               | degree                              |
+              -+-------------------------------------+-
+               | ba                                  |
+               | bs                                  |
+               | ct                                  |
+               | ma                                  |
+               | ms                                  |
+               | pb                                  |
+               | ph                                  |
+                                              (7 rows)
+
+               ----
+               /quotient(program,degree){kernel()}?kernel()
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               GROUP BY 1
+               HAVING (NULLIF("program"."degree", '') IS NOT NULL)
+               ORDER BY 1 ASC
+          - uri: /quotient(student, year(dob), gender)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(student,year(dob),gender) |
+              -+------------------------------------+-
+               | year(dob)         | gender         |
+              -+-------------------+----------------+-
+               |              1981 | f              |
+               |              1983 | f              |
+               |              1985 | f              |
+               |              1985 | m              |
+               |              1987 | f              |
+               |              1987 | m              |
+               |              1988 | f              |
+               |              1988 | m              |
+               |              1989 | f              |
+               |              1989 | m              |
+               |              1990 | f              |
+               |              1990 | m              |
+               |              1991 | f              |
+               |              1991 | m              |
+               |              1992 | f              |
+               |              1992 | m              |
+               |              1993 | f              |
+               |              1993 | m              |
+               |              1994 | f              |
+               |              1994 | m              |
+               |              1995 | f              |
+               |              1995 | m              |
+               |              1998 | m              |
+               |              2000 | m              |
+               |              2001 | m              |
+               |              2002 | m              |
+                                            (26 rows)
+
+               ----
+               /quotient(student,year(dob),gender)
+               SELECT CAST(STRFTIME('%Y', "student"."dob") AS INTEGER),
+                      "student"."gender"
+               FROM "student" AS "student"
+               GROUP BY 1, 2
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /quotient(student, {year(dob), gender})
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(student,{year(dob),gender}) |
+              -+--------------------------------------+-
+               | year(dob)          | gender          |
+              -+--------------------+-----------------+-
+               |               1981 | f               |
+               |               1983 | f               |
+               |               1985 | f               |
+               |               1985 | m               |
+               |               1987 | f               |
+               |               1987 | m               |
+               |               1988 | f               |
+               |               1988 | m               |
+               |               1989 | f               |
+               |               1989 | m               |
+               |               1990 | f               |
+               |               1990 | m               |
+               |               1991 | f               |
+               |               1991 | m               |
+               |               1992 | f               |
+               |               1992 | m               |
+               |               1993 | f               |
+               |               1993 | m               |
+               |               1994 | f               |
+               |               1994 | m               |
+               |               1995 | f               |
+               |               1995 | m               |
+               |               1998 | m               |
+               |               2000 | m               |
+               |               2001 | m               |
+               |               2002 | m               |
+                                              (26 rows)
+
+               ----
+               /quotient(student,{year(dob),gender})
+               SELECT CAST(STRFTIME('%Y', "student"."dob") AS INTEGER),
+                      "student"."gender"
+               FROM "student" AS "student"
+               GROUP BY 1, 2
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(student,{year(dob),gender})    |
+              -+-----------------------------------------+-
+               | year(dob) | gender | year(dob) | gender |
+              -+-----------+--------+-----------+--------+-
+               |      1981 | f      |      1981 | f      |
+               |      1983 | f      |      1983 | f      |
+               |      1985 | f      |      1985 | f      |
+               |      1985 | m      |      1985 | m      |
+               |      1987 | f      |      1987 | f      |
+               |      1987 | m      |      1987 | m      |
+               |      1988 | f      |      1988 | f      |
+               |      1988 | m      |      1988 | m      |
+               |      1989 | f      |      1989 | f      |
+               |      1989 | m      |      1989 | m      |
+               |      1990 | f      |      1990 | f      |
+               |      1990 | m      |      1990 | m      |
+               |      1991 | f      |      1991 | f      |
+               |      1991 | m      |      1991 | m      |
+               |      1992 | f      |      1992 | f      |
+               |      1992 | m      |      1992 | m      |
+               |      1993 | f      |      1993 | f      |
+               |      1993 | m      |      1993 | m      |
+               |      1994 | f      |      1994 | f      |
+               |      1994 | m      |      1994 | m      |
+               |      1995 | f      |      1995 | f      |
+               |      1995 | m      |      1995 | m      |
+               |      1998 | m      |      1998 | m      |
+               |      2000 | m      |      2000 | m      |
+               |      2001 | m      |      2001 | m      |
+               |      2002 | m      |      2002 | m      |
+                                                 (26 rows)
+
+               ----
+               /quotient(student,{year(dob),gender}){kernel(),kernel(0),kernel(1)}
+               SELECT CAST(STRFTIME('%Y', "student"."dob") AS INTEGER),
+                      "student"."gender",
+                      CAST(STRFTIME('%Y', "student"."dob") AS INTEGER),
+                      "student"."gender"
+               FROM "student" AS "student"
+               GROUP BY 1, 2
+               ORDER BY 1 ASC, 2 ASC
   - include: test/input/format.yaml
     output:
       id: format

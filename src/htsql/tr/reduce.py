@@ -370,29 +370,24 @@ class CollapseBranch(Collapse):
             # literal phrases, and thus will be eliminated by the reducer
             # (technically, it should contain a single `TRUE` literal,
             # but checking for arbitrary literals does not hurt).
-            if not all(isinstance(phrase, LiteralPhrase)
-                       for phrase in head.group):
-                return self.frame
+            #if not all(isinstance(phrase, LiteralPhrase)
+            #           for phrase in head.group):
+            #    return self.frame
+
             # We only collapse a projection subframe if it is the only
             # subframe in the `FROM` clause.
             if tail:
                 return self.frame
-            # Ensure that the outer frame is empty: that is, it
-            # has no `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY`,
-            # `LIMIT` and `OFFSET` clauses.
-            if not (self.frame.where is None and
-                    not self.frame.group and
-                    not self.frame.order and
-                    self.frame.limit is None and
-                    self.frame.offset is None):
+            # Ensure that the outer frame has no projection clauses, i.e.,
+            # `GROUP BY` and `HAVING`.
+            # The outer frame could still have `WHERE` clause (to be
+            # moved to `HAVING`), as well as `ORDER BY`, `LIMIT`, and `OFFSET`.
+            if self.frame.group or self.frame.having is not None:
                 return self.frame
-            # Ensure that the subframe is almost empty: that is, it
-            # has no `HAVING`, `ORDER BY`, `LIMIT` and `OFFSET`
-            # clauses.  Note that a `WHERE` clause is allowed.
-            if not (head.having is None and
-                    not head.order and
-                    head.limit is None and
-                    head.offset is None):
+            # Ensure that the subframe has no `HAVING` clause.
+            # The subframe could still have `WHERE`, `ORDER BY`, `LIMIT`,
+            # and `OFFSET` clauses.
+            if head.having is not None:
                 return self.frame
 
         # If we reached this point, the `HAVING` clause of the head subframe
@@ -452,7 +447,9 @@ class CollapseBranch(Collapse):
 
         # Merge the `WHERE` clauses; both the inner and the outer `WHERE`
         # clauses could be non-empty, in which case we join them with `AND`.
-        where = self.frame.where
+        where = None
+        if not head.group:
+            where = self.frame.where
         if head.where is not None:
             if where is None:
                 where = head.where
@@ -461,6 +458,19 @@ class CollapseBranch(Collapse):
                 where = FormulaPhrase(AndSig(), coerce(BooleanDomain()),
                                       is_nullable, where.expression,
                                       ops=[where, head.where])
+
+        # Pull the `GROUP BY` clause.
+        group = self.frame.group
+        if head.group:
+            assert not group
+            group = head.group
+
+        # If the subframe contains a `GROUP BY` clause, move the `WHERE`
+        # clause of the outer frame to `HAVING`.
+        having = self.frame.having
+        if head.group:
+            assert having is None
+            having = self.frame.where
 
         # Merge the `ORDER BY` clauses.  There are several possibilities:
         # - the inner `ORDER BY` is empty;
@@ -487,6 +497,7 @@ class CollapseBranch(Collapse):
 
         # Update the frame node.
         frame = self.frame.clone(include=include, embed=embed, where=where,
+                                 group=group, having=having,
                                  order=order, limit=limit, offset=offset)
         # Try to collapse the frame once again.
         return self.state.collapse(frame)
