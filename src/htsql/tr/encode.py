@@ -24,6 +24,7 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       QuotientBinding, ComplementBinding, KernelBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       SortBinding, CastBinding, WrapperBinding,
+                      DefinitionBinding, AliasBinding,
                       DirectionBinding, FormulaBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
                    QuotientSpace, ComplementSpace,
@@ -969,7 +970,8 @@ class EncodeWrapper(Encode):
     Translates a wrapper binding to a code node.
     """
 
-    adapts(WrapperBinding)
+    adapts_many(WrapperBinding,
+                DefinitionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -981,7 +983,8 @@ class RelateWrapper(Relate):
     Translates a wrapper binding to a space node.
     """
 
-    adapts(WrapperBinding)
+    adapts_many(WrapperBinding,
+                DefinitionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -993,11 +996,36 @@ class DirectWrapper(Direct):
     Extracts a direction modifier from a wrapper binding.
     """
 
-    adapts(WrapperBinding)
+    adapts_many(WrapperBinding,
+                DefinitionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
         return self.state.direct(self.binding.base)
+
+
+class EncodeAlias(Encode):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        return self.state.encode(self.binding.binding)
+
+
+class RelateAlias(Relate):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        return self.state.relate(self.binding.binding)
+
+
+class DirectWrapper(Direct):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        return self.state.direct(self.binding.binding)
 
 
 class DirectDirection(Direct):

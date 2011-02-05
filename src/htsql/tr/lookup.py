@@ -21,7 +21,8 @@ from .syntax import Syntax, IdentifierSyntax
 from .binding import (Binding, RootBinding, ChainBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, SieveBinding, WrapperBinding, SortBinding,
-                      QuotientBinding, ComplementBinding, KernelBinding)
+                      QuotientBinding, ComplementBinding, KernelBinding,
+                      DefinitionBinding, AliasBinding)
 import re
 import unicodedata
 
@@ -534,7 +535,8 @@ class ItemizeWrapper(Itemize):
 
     adapts_many(WrapperBinding,
                 SieveBinding,
-                SortBinding)
+                SortBinding,
+                DefinitionBinding)
 
     def __call__(self):
         # Delegate the request to the base node.
@@ -552,7 +554,8 @@ class GetComplementFromWrapper(GetComplement):
 
     adapts_many(WrapperBinding,
                 SieveBinding,
-                SortBinding)
+                SortBinding,
+                DefinitionBinding)
 
     def __call__(self):
         binding = get_complement(self.binding.base, self.syntax)
@@ -567,7 +570,8 @@ class GetKernelFromWrapper(GetKernel):
 
     adapts_many(WrapperBinding,
                 SieveBinding,
-                SortBinding)
+                SortBinding,
+                DefinitionBinding)
 
     def __call__(self):
         bindings = get_kernel(self.binding.base, self.syntax)
@@ -661,6 +665,17 @@ class GetKernelFromComplement(GetKernel):
         return (binding.clone(base=self.binding) for binding in bindings)
 
 
+class LookupDefinition(LookupWrapper):
+
+    adapts(DefinitionBinding)
+
+    def __call__(self):
+        if self.key == normalize(self.binding.name):
+            return AliasBinding(self.binding, self.binding.binding,
+                                self.identifier)
+        return super(LookupDefinition, self).__call__()
+
+
 def lookup(binding, identifier):
     """
     Looks for a member of the specified binding that matches
@@ -703,6 +718,59 @@ def itemize(binding, syntax):
     if bindings is not None:
         bindings = list(bindings)
     return bindings
+
+
+class LookupAlias(Lookup):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        binding = lookup(self.binding.binding, self.identifier)
+        if binding is not None:
+            assert isinstance(binding, ChainBinding)
+            assert binding.base is self.binding.binding
+            return binding.clone(base=self.binding)
+
+
+class ItemizeAlias(Itemize):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        bindings = itemize(self.binding.binding, self.syntax)
+        if bindings is None:
+            return None
+        assert all(isinstance(binding, ChainBinding) and
+                   binding.base is self.binding.binding
+                   for binding in bindings)
+        return (binding.clone(base=self.binding) for binding in bindings)
+
+
+class GetComplementFromAlias(GetComplement):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        binding = get_complement(self.binding.binding, self.syntax)
+        if binding is None:
+            return None
+        assert isinstance(binding, ChainBinding)
+        assert binding.base is self.binding.binding
+        return binding.clone(base=self.binding)
+
+
+class GetKernelFromWrapper(GetKernel):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        bindings = get_kernel(self.binding.binding, self.syntax)
+        if bindings is None:
+            return None
+        assert all(isinstance(binding, ChainBinding) and
+                   binding.base is self.binding.binding
+                   for binding in bindings)
+        return (binding.clone(base=self.binding) for binding in bindings)
 
 
 def get_complement(binding, syntax):

@@ -101,6 +101,7 @@ class QueryParser(Parser):
         test            ::= test direction | test application | or_test
         direction       ::= ( '+' | '-' )
         application     ::= ':' identifier ( or_test | call )?
+        assignment      ::= ':=' test
         or_test         ::= and_test ( '|' and_test )*
         and_test        ::= implies_test ( '&' implies_test )*
         implies_test    ::= unary_test ( '->' unary_test )?
@@ -120,8 +121,10 @@ class QueryParser(Parser):
         power           ::= sieve ( '^' power )?
 
         sieve           ::= specifier selector? filter?
-        specifier       ::= atom ( '.' identifier call? )* ( '.' '*' )?
+        specifier       ::= atom attribute* ( '.' '*' )? assignment?
         atom            ::= '*' | selector | group | identifier call? | literal
+        attribute       ::= '.' identifier call?
+        assignment      ::= ':=' test
 
         group           ::= '(' test ')'
         call            ::= '(' tests? ')'
@@ -475,7 +478,9 @@ class SpecifierParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Parses the productions:
-        #   specifier       ::= atom ( '.' identifier call? )* ( '.' '*' )?
+        #   specifier       ::= atom attribute* ( '.' '*' )? assignment?
+        #   attribute       ::= '.' identifier call?
+        #   assignment      ::= ':=' test
         #   call            ::= '(' test? ')'
         #   tests           ::= test ( ',' test )* ','?
         expression = AtomParser << tokens
@@ -503,6 +508,12 @@ class SpecifierParser(Parser):
                 else:
                     mark = Mark.union(expression, identifier)
                     expression = SpecifierSyntax(expression, identifier, mark)
+        if tokens.peek(SymbolToken, [':=']):
+            symbol_token = tokens.pop(SymbolToken, [':='])
+            symbol = symbol_token.value
+            argument = TestParser << tokens
+            mark = Mark.union(expression, argument)
+            expression = OperatorSyntax(symbol, expression, argument, mark)
         return expression
 
 

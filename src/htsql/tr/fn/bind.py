@@ -20,7 +20,7 @@ from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
-                       Binding)
+                       AssignmentBinding, DefinitionBinding, Binding)
 from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -42,7 +42,8 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         RoundSig, RoundToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
-                        QuotientSig, KernelSig, ComplementSig)
+                        QuotientSig, KernelSig, ComplementSig,
+                        AssignmentSig, LetSig)
 import sys
 
 
@@ -538,6 +539,36 @@ class BindSort(BindMacro):
                 binding = CastBinding(binding, domain, binding.syntax)
                 bindings.append(binding)
         yield SortBinding(self.state.base, bindings, None, None, self.syntax)
+
+
+class BindAssignment(BindMacro):
+
+    named(':=')
+    signature = AssignmentSig
+
+    def expand(self, lop, rop):
+        if not isinstance(lop, IdentifierSyntax):
+            raise BindError("an identifier expected", lop.mark)
+        name = lop.value
+        yield AssignmentBinding(name, rop, self.syntax)
+
+
+class BindLet(BindMacro):
+
+    named('let')
+    signature = LetSig
+
+    def expand(self, ops):
+        binding = self.state.base
+        for op in ops:
+            assignment = self.state.bind(op)
+            if not isinstance(assignment, AssignmentBinding):
+                raise BindError("an assignment expected", op.mark)
+            replacement = self.state.bind(assignment.replacement,
+                                          base=binding)
+            binding = DefinitionBinding(binding, assignment.name,
+                                        replacement, self.syntax)
+        yield binding
 
 
 class BindCast(BindFunction):

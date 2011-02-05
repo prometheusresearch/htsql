@@ -14143,6 +14143,155 @@ tests:
                                ON ("school"."code" = "department"."school")
                WHERE ("school"."code" = 'art')
                ORDER BY "school"."code" ASC, 1 ASC
+        - id: assignments
+          tests:
+          - uri: /school.let(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.let(c:=department.course.credits)?exists(c)) |
+              -+------------------------------------------------------+-
+               | code  | min(c)  | max(c)  | sum(c)  | avg(c)         |
+              -+-------+---------+---------+---------+----------------+-
+               | art   |       0 |       5 |      38 |  3.16666666667 |
+               | bus   |       2 |       5 |      40 |  3.07692307692 |
+               | edu   |       3 |       4 |      28 |  3.11111111111 |
+               | eng   |       3 |       8 |      72 |  3.42857142857 |
+               | la    |       2 |       4 |      82 |  3.03703703704 |
+               | ns    |       1 |       5 |      45 |         2.8125 |
+                                                               (6 rows)
+
+               ----
+               /school.let(c:=department.course.credits){code,min(c),max(c),sum(c),avg(c)}?exists(c)
+               SELECT "school"."code",
+                      "department"."min",
+                      "department"."max",
+                      COALESCE("department"."sum", 0),
+                      "department"."avg"
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min",
+                                            MAX("course"."credits") AS "max",
+                                            SUM("course"."credits") AS "sum",
+                                            AVG(CAST("course"."credits" AS REAL)) AS "avg",
+                                            "department"."school"
+                                     FROM "department" AS "department"
+                                          INNER JOIN "course" AS "course"
+                                                     ON ("department"."code" = "course"."department")
+                                     GROUP BY 5) AS "department"
+                                    ON ("school"."code" = "department"."school")
+               WHERE EXISTS(SELECT 1
+                            FROM "department" AS "department_1"
+                                 INNER JOIN "course" AS "course"
+                                            ON ("department_1"."code" = "course"."department")
+                            WHERE ("school"."code" = "department_1"."school")
+                                  AND ("course"."credits" IS NOT NULL))
+               ORDER BY 1 ASC
+          - uri: /school.let(program:=(program?degree='bs') .let(student:=student?is_active))
+              {code,count(program),count(program.student)}?code='eng'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.let(program:=(program?degree='bs').let(student:=student?is_active))?code='eng') |
+              -+-----------------------------------------------------------------------------------------+-
+               | code               | count(program)               | count(program.student)              |
+              -+--------------------+------------------------------+-------------------------------------+-
+               | eng                |                            4 |                                   5 |
+                                                                                                   (1 row)
+
+               ----
+               /school.let(program:=(program?degree='bs').let(student:=student?is_active)){code,count(program),count(program.student)}?code='eng'
+               SELECT "school"."code",
+                      COALESCE("program_1"."count", 0),
+                      COALESCE("program_2"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school"
+                                     FROM "program" AS "program"
+                                     WHERE ("program"."degree" = 'bs')
+                                     GROUP BY 2) AS "program_1"
+                                    ON ("school"."code" = "program_1"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school"
+                                     FROM "program" AS "program"
+                                          INNER JOIN "student" AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     WHERE "student"."is_active"
+                                           AND ("program"."degree" = 'bs')
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("school"."code" = "program_2"."school")
+               WHERE ("school"."code" = 'eng')
+               ORDER BY 1 ASC
+          - uri: /school{code,count(program.student), count((program.let(s:=student)?degree='bs').s),
+              count((program?degree='bs').let(s:=student).s)}?code='eng'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school?code='eng')                                                                                                             |
+              -+---------------------------------------------------------------------------------------------------------------------------------+-
+               | code | count(program.student) | count((program.let(s:=student)?degree='bs').s) | count((program?degree='bs').let(s:=student).s) |
+              -+------+------------------------+------------------------------------------------+------------------------------------------------+-
+               | eng  |                     14 |                                             14 |                                              6 |
+                                                                                                                                           (1 row)
+
+               ----
+               /school{code,count(program.student),count((program.let(s:=student)?degree='bs').s),count((program?degree='bs').let(s:=student).s)}?code='eng'
+               SELECT "school"."code",
+                      COALESCE("program_1"."count", 0),
+                      COALESCE("program_1"."count", 0),
+                      COALESCE("program_2"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school"
+                                     FROM "program" AS "program"
+                                          INNER JOIN "student" AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     GROUP BY 2) AS "program_1"
+                                    ON ("school"."code" = "program_1"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school"
+                                     FROM "program" AS "program"
+                                          INNER JOIN "student" AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     WHERE ("program"."degree" = 'bs')
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("school"."code" = "program_2"."school")
+               WHERE ("school"."code" = 'eng')
+               ORDER BY 1 ASC
+          - uri: /let(x:=2,y:=3,z:=x*y){x,y,z}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | let(x:=2,y:=3,z:=x*y) |
+              -+-----------------------+-
+               | x     | y     | z     |
+              -+-------+-------+-------+-
+               |     2 |     3 |     6 |
+                                 (1 row)
+
+               ----
+               /let(x:=2,y:=3,z:=x*y){x,y,z}
+               SELECT 2,
+                      3,
+                      (2 * 3)
+          - uri: /let(x:=2,x:=x+x,x:=x*x){x}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | let(x:=2,x:=x+x,x:=x*x) |
+              -+-------------------------+-
+               | x                       |
+              -+-------------------------+-
+               |                      16 |
+                                   (1 row)
+
+               ----
+               /let(x:=2,x:=x+x,x:=x*x){x}
+               SELECT ((2 + 2) * (2 + 2))
         - id: projections
           tests:
           - uri: /quotient(program, degree)
@@ -14303,6 +14452,94 @@ tests:
                /quotient(program,degree){kernel()}?kernel()
                SELECT "program"."degree"
                FROM "program" AS "program"
+               GROUP BY 1
+               HAVING (NULLIF("program"."degree", '') IS NOT NULL)
+               ORDER BY 1 ASC
+          - uri: /quotient(program?false(), degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program?false(),degree) |
+              -+----------------------------------+-
+               | degree                           |
+              -+----------------------------------+-
+                                          (no rows)
+
+               ----
+               /quotient(program?false(),degree)
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               WHERE 0
+               GROUP BY 1
+               ORDER BY 1 ASC
+          - uri: /quotient(program?degree, degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program?degree,degree) |
+              -+---------------------------------+-
+               | degree                          |
+              -+---------------------------------+-
+               | ba                              |
+               | bs                              |
+               | ct                              |
+               | ma                              |
+               | ms                              |
+               | pb                              |
+               | ph                              |
+                                          (7 rows)
+
+               ----
+               /quotient(program?degree,degree)
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               WHERE (NULLIF("program"."degree", '') IS NOT NULL)
+               GROUP BY 1
+               ORDER BY 1 ASC
+          - uri: /quotient(program?false(), degree)?false()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(program?false(),degree)?false()) |
+              -+--------------------------------------------+-
+               | degree                                     |
+              -+--------------------------------------------+-
+                                                    (no rows)
+
+               ----
+               /quotient(program?false(),degree)?false()
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               WHERE 0
+               GROUP BY 1
+               HAVING 0
+               ORDER BY 1 ASC
+          - uri: /quotient(program?degree, degree)?kernel()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(program?degree,degree)?kernel()) |
+              -+--------------------------------------------+-
+               | degree                                     |
+              -+--------------------------------------------+-
+               | ba                                         |
+               | bs                                         |
+               | ct                                         |
+               | ma                                         |
+               | ms                                         |
+               | pb                                         |
+               | ph                                         |
+                                                     (7 rows)
+
+               ----
+               /quotient(program?degree,degree)?kernel()
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               WHERE (NULLIF("program"."degree", '') IS NOT NULL)
                GROUP BY 1
                HAVING (NULLIF("program"."degree", '') IS NOT NULL)
                ORDER BY 1 ASC
