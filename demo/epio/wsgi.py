@@ -1,4 +1,5 @@
 #!/usr/bin/env python
-def app(environ, start_response):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-    return ['Hello, world!\n']
+from bundle_config import config
+from htsql.application import Application
+connect = "pgsql://%(username)s:%(password)s@%(host)s:%(port)s/%(database)s"
+app = Application(connect % config['postgres'])
