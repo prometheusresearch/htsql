@@ -18,8 +18,10 @@ from ..adapter import Adapter, adapts
 from .error import CompileError
 from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
                    DirectProductSpace, FiberProductSpace,
+                   QuotientSpace, ComplementSpace,
                    FilteredSpace, OrderedSpace, MaskedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
+                   KernelUnit, ComplementUnit,
                    QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
                    AggregateBatchExpr)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
@@ -492,8 +494,8 @@ class Inject(Adapter):
         # Compile the term, use the found baseline and the trunk space
         # as the mask.
         term = self.state.compile(space,
-                                   baseline=baseline,
-                                   mask=trunk_term.space)
+                                  baseline=baseline,
+                                  mask=trunk_term.space)
 
         # If provided, inject the given expressions.
         if codes is not None:
@@ -840,6 +842,7 @@ class InjectSpace(Inject):
                                        baseline=unmasked_space,
                                        mask=self.state.scalar)
             # We expect to get a table or a scalar term here.
+            # FIXME: No longer valid since the axis could be a quotient space.
             assert lkid.is_nullary
 
             # Find the axis directly above the space.  Note that here
@@ -976,6 +979,24 @@ class CompileProduct(CompileSpace):
         # Generate a join term node.
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
                         is_left, is_right, self.space, routes)
+
+
+class CompileQuotient(CompileSpace):
+
+    adapts(QuotientSpace)
+
+    def __call__(self):
+        plural_term = self.state.compile(self.space.seed)
+        plural_term = self.state.inject(plural_term, self.space.kernel)
+        routes = {}
+        routes[self.space] = plural_term.tag
+        term = ProjectionTerm(self.state.tag(), plural_term,
+                              self.space.kernel, self.space, routes)
+        routes = term.routes.copy()
+        for index, code in enumerate(self.space.kernel):
+            unit = KernelUnit(index, self.space, code.binding)
+            routes[unit] = term.tag
+        return WrapperTerm(self.state.tag(), term, self.space, routes)
 
 
 class CompileFiltered(CompileSpace):
@@ -1263,6 +1284,22 @@ class InjectCorrelated(Inject):
         # Otherwise, we need to attach the unit term to the main term.
         extra_routes = { self.unit: plural_term.tag }
         return self.join_terms(self.term, unit_term, extra_routes)
+
+
+class InjectKernel(Inject):
+
+    adapts(KernelUnit)
+
+    def __call__(self):
+        if self.unit in self.term.routes:
+            return self.term
+        if not self.term.space.spans(self.space):
+            raise CompileError("expected a singular expression",
+                               self.unit.mark)
+        term = self.state.inject(self.term, [self.space])
+        routes = term.routes.copy()
+        routes[self.unit] = routes[self.space]
+        return term.clone(routes=routes)
 
 
 class InjectBatch(Inject):

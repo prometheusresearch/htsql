@@ -12,7 +12,7 @@
 
 
 from ..signature import (Signature, Slot, NullarySig, UnarySig, BinarySig,
-                         PolarSig)
+                         PolarSig, ConnectiveSig)
 
 
 class FiberSig(Signature):
@@ -278,6 +278,33 @@ class SumSig(UnarySig):
 
 
 class AvgSig(UnarySig):
+    pass
+
+
+class QuotientSig(Signature):
+
+    slots = [
+            Slot('seed'),
+            Slot('kernel', is_singular=False),
+    ]
+
+
+class KernelSig(NullarySig):
+
+    slots = [
+            Slot('index', is_mandatory=False),
+    ]
+
+
+class ComplementSig(NullarySig):
+    pass
+
+
+class AssignmentSig(BinarySig):
+    pass
+
+
+class LetSig(ConnectiveSig):
     pass
 
 

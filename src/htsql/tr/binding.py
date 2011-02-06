@@ -287,6 +287,60 @@ class ColumnBinding(ChainBinding):
         self.link = link
 
 
+class QuotientBinding(ChainBinding):
+
+    def __init__(self, base, seed, kernel, syntax):
+        assert isinstance(seed, Binding)
+        assert isinstance(kernel, listof(Binding))
+        super(QuotientBinding, self).__init__(base, TupleDomain(), syntax)
+        self.seed = seed
+        self.kernel = kernel
+
+
+class ComplementBinding(ChainBinding):
+
+    def __init__(self, base, seed, syntax):
+        assert isinstance(seed, Binding)
+        super(ComplementBinding, self).__init__(base, seed.domain, syntax)
+        self.seed = seed
+
+
+class KernelBinding(ChainBinding):
+
+    def __init__(self, base, index, domain, syntax):
+        assert isinstance(index, int) and index >= 0
+        super(KernelBinding, self).__init__(base, domain, syntax)
+        self.index = index
+
+
+class AliasBinding(ChainBinding):
+
+    def __init__(self, base, binding, syntax):
+        assert isinstance(binding, Binding)
+        super(AliasBinding, self).__init__(base, binding.domain, syntax)
+        self.binding = binding
+
+
+class DefinitionBinding(ChainBinding):
+
+    def __init__(self, base, name, binding, syntax):
+        assert isinstance(name, str)
+        assert isinstance(binding, Binding)
+        super(DefinitionBinding, self).__init__(base, base.domain, syntax)
+        self.name = name
+        self.binding = binding
+
+
+class AssignmentBinding(Binding):
+
+    def __init__(self, name, replacement, syntax):
+        assert isinstance(name, str)
+        assert isinstance(replacement, Syntax)
+        super(AssignmentBinding, self).__init__(VoidDomain(), syntax)
+        self.name = name
+        self.replacement = replacement
+
+
 class LiteralBinding(Binding):
     """
     Represents a literal value.

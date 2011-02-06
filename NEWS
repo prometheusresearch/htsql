@@ -2,7 +2,7 @@ List of Changes
 ===============
 
 
-2.0.0 final (2011-02-01)
+2.0.1 final (2011-02-01)
 ------------------------
 
 * Merged `/:json` and `/:jsonex` formatters; use `/:jsonex` layout

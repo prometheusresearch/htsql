@@ -21,13 +21,16 @@ from .error import EncodeError
 from .coerce import coerce
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       FreeTableBinding, AttachedTableBinding,
+                      QuotientBinding, ComplementBinding, KernelBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       SortBinding, CastBinding, WrapperBinding,
+                      DefinitionBinding, AliasBinding,
                       DirectionBinding, FormulaBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
+                   QuotientSpace, ComplementSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
-                   CastCode, ColumnUnit, ScalarUnit)
+                   CastCode, ColumnUnit, ScalarUnit, KernelUnit)
 from .signature import Signature, IsNullSig, NullIfSig
 import decimal
 
@@ -439,6 +442,42 @@ class RelateColumn(Relate):
             return self.state.relate(self.binding.link)
         # Otherwise, let the parent produce an error message.
         return super(RelateColumn, self).__call__()
+
+
+class RelateQuotient(Relate):
+
+    adapts(QuotientBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        seed_space = self.state.relate(self.binding.seed)
+        if space.spans(seed_space):
+            raise EncodeError("a plural operand is required",
+                              seed_space.mark)
+        if not seed_space.spans(space):
+            raise EncodeError("invalid plural operand",
+                              seed_space.mark)
+        kernel = [self.state.encode(binding)
+                  for binding in self.binding.kernel]
+        return QuotientSpace(space, seed_space, kernel, self.binding)
+
+
+class RelateComplement(Relate):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        return ComplementSpace(space, self.binding)
+
+
+class EncodeKernel(Encode):
+
+    adapts(KernelBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        return KernelUnit(self.binding.index, space, self.binding)
 
 
 class EncodeLiteral(Encode):
@@ -931,7 +970,8 @@ class EncodeWrapper(Encode):
     Translates a wrapper binding to a code node.
     """
 
-    adapts(WrapperBinding)
+    adapts_many(WrapperBinding,
+                DefinitionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -943,7 +983,8 @@ class RelateWrapper(Relate):
     Translates a wrapper binding to a space node.
     """
 
-    adapts(WrapperBinding)
+    adapts_many(WrapperBinding,
+                DefinitionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -955,11 +996,36 @@ class DirectWrapper(Direct):
     Extracts a direction modifier from a wrapper binding.
     """
 
-    adapts(WrapperBinding)
+    adapts_many(WrapperBinding,
+                DefinitionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
         return self.state.direct(self.binding.base)
+
+
+class EncodeAlias(Encode):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        return self.state.encode(self.binding.binding)
+
+
+class RelateAlias(Relate):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        return self.state.relate(self.binding.binding)
+
+
+class DirectWrapper(Direct):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        return self.state.direct(self.binding.binding)
 
 
 class DirectDirection(Direct):
