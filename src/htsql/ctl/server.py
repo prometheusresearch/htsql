@@ -14,7 +14,7 @@ This module implements the `server` routine.
 
 
 from .routine import Argument, Routine
-from .option import QuietOption
+from .option import QuietOption, ExtensionsOption
 from ..validator import StrVal, IntVal, DBVal
 import socket
 import SocketServer
@@ -98,6 +98,7 @@ class ServerRoutine(Routine):
                      hint="""the port number (by default, 8080)"""),
     ]
     options = [
+            ExtensionsOption,
             QuietOption,
     ]
     hint = """start an HTTP server handling HTSQL requests"""
@@ -133,7 +134,7 @@ class ServerRoutine(Routine):
     def run(self):
         # Create the HTSQL application and the HTTP server.
         from htsql.application import Application
-        app = Application(self.db)
+        app = Application(self.db, *self.extensions)
         httpd = HTSQLServer(self)
         httpd.set_app(app)
 
