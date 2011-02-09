@@ -1020,7 +1020,7 @@ class RelateAlias(Relate):
         return self.state.relate(self.binding.binding)
 
 
-class DirectWrapper(Direct):
+class DirectAlias(Direct):
 
     adapts(AliasBinding)
 
@@ -1110,7 +1110,7 @@ def direct(binding, state=None):
     # Create a new encoding state if necessary.
     if state is None:
         state = EncodingState()
-    # Realize and apply the `Relate` adapter.
+    # Realize and apply the `Direct` adapter.
     direct = Direct(binding, state)
     return direct()
 

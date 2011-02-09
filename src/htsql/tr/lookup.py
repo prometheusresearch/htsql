@@ -759,7 +759,7 @@ class GetComplementFromAlias(GetComplement):
         return binding.clone(base=self.binding)
 
 
-class GetKernelFromWrapper(GetKernel):
+class GetKernelFromAlias(GetKernel):
 
     adapts(AliasBinding)
 
