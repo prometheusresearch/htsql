@@ -13884,11 +13884,9 @@ tests:
 
                ----
                /this(){count(school)}?false()
-               SELECT COALESCE("school"."count", 0)
-               FROM (SELECT 1 AS "!") AS "!"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
-                                     FROM "school" AS "school") AS "school"
-                                    ON 1
+               SELECT "!"."count"
+               FROM (SELECT COUNT(1) AS "count"
+                     FROM "school" AS "school") AS "!"
                WHERE 0
           - uri: /this(){count(school)}?exists(school)
             status: 200 OK
@@ -13904,13 +13902,11 @@ tests:
 
                ----
                /this(){count(school)}?exists(school)
-               SELECT COALESCE("school"."count", 0)
-               FROM (SELECT 1 AS "!") AS "!"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
-                                     FROM "school" AS "school") AS "school"
-                                    ON 1
+               SELECT "!"."count"
+               FROM (SELECT COUNT(1) AS "count"
+                     FROM "school" AS "school") AS "!"
                WHERE EXISTS(SELECT 1
-                            FROM "school" AS "school_1")
+                            FROM "school" AS "school")
           - uri: /this(){count(school)}?count(school)>1
             status: 200 OK
             headers:
@@ -13925,13 +13921,38 @@ tests:
 
                ----
                /this(){count(school)}?count(school)>1
-               SELECT COALESCE("school"."count", 0)
+               SELECT "!"."count"
                FROM (SELECT COUNT(1) AS "count"
                      FROM "school" AS "school") AS "!"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
-                                     FROM "school" AS "school") AS "school"
-                                    ON 1
                WHERE ("!"."count" > 1)
+          - uri: /school{code,count(program)}?count(program)>3
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school?count(program)>3) |
+              -+---------------------------+-
+               | code   | count(program)   |
+              -+--------+------------------+-
+               | bus    |                5 |
+               | edu    |                7 |
+               | eng    |                8 |
+               | la     |                9 |
+               | ns     |                6 |
+                                    (5 rows)
+
+               ----
+               /school{code,count(program)}?count(program)>3
+               SELECT "school"."code",
+                      COALESCE("program"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school"
+                                     FROM "program" AS "program"
+                                     GROUP BY 2) AS "program"
+                                    ON ("school"."code" = "program"."school")
+               WHERE (COALESCE("program"."count", 0) > 3)
+               ORDER BY 1 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.fiber(department))}
@@ -14004,13 +14025,13 @@ tests:
                ----
                /school{code,count(department)}?count(department)=max(fiber(school).count(department))
                SELECT "school_1"."code",
-                      COALESCE("department_2"."count", 0)
+                      COALESCE("department"."count", 0)
                FROM "school" AS "school_1"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "department"."school"
                                      FROM "department" AS "department"
-                                     GROUP BY 2) AS "department_1"
-                                    ON ("school_1"."code" = "department_1"."school")
+                                     GROUP BY 2) AS "department"
+                                    ON ("school_1"."code" = "department"."school")
                     LEFT OUTER JOIN (SELECT MAX(COALESCE("department"."count", 0)) AS "max"
                                      FROM "school" AS "school"
                                           LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
@@ -14019,12 +14040,7 @@ tests:
                                                            GROUP BY 2) AS "department"
                                                           ON ("school"."code" = "department"."school")) AS "school_2"
                                     ON 1
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "department"."school"
-                                     FROM "department" AS "department"
-                                     GROUP BY 2) AS "department_2"
-                                    ON ("school_1"."code" = "department_2"."school")
-               WHERE (COALESCE("department_1"."count", 0) = "school_2"."max")
+               WHERE (COALESCE("department"."count", 0) = "school_2"."max")
                ORDER BY 1 ASC
           - uri: /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
             status: 200 OK
@@ -14054,7 +14070,7 @@ tests:
                /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
                SELECT "program_1"."school",
                       "program_1"."code",
-                      COALESCE("student_2"."count", 0)
+                      COALESCE("student"."count", 0)
                FROM "school" AS "school"
                     INNER JOIN "program" AS "program_1"
                                ON ("school"."code" = "program_1"."school")
@@ -14062,8 +14078,8 @@ tests:
                                             "student"."school",
                                             "student"."program"
                                      FROM "student" AS "student"
-                                     GROUP BY 2, 3) AS "student_1"
-                                    ON (("program_1"."school" = "student_1"."school") AND ("program_1"."code" = "student_1"."program"))
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program_1"."school" = "student"."school") AND ("program_1"."code" = "student"."program"))
                     LEFT OUTER JOIN (SELECT MAX(COALESCE("student"."count", 0)) AS "max",
                                             "program_1"."school",
                                             "program_1"."code"
@@ -14078,13 +14094,7 @@ tests:
                                      WHERE ("program_1"."school" = "program_2"."school")
                                      GROUP BY 2, 3) AS "program_2"
                                     ON (("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code"))
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "student"."school",
-                                            "student"."program"
-                                     FROM "student" AS "student"
-                                     GROUP BY 2, 3) AS "student_2"
-                                    ON (("program_1"."school" = "student_2"."school") AND ("program_1"."code" = "student_2"."program"))
-               WHERE (COALESCE("student_1"."count", 0) = "program_2"."max")
+               WHERE (COALESCE("student"."count", 0) = "program_2"."max")
                ORDER BY "school"."code" ASC, 1 ASC, 2 ASC
           - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
             status: 200 OK
@@ -14101,22 +14111,14 @@ tests:
                ----
                /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
                SELECT "!_1"."count",
-                      "!_2"."count",
-                      "!_3"."count"
+                      "!_1"."count",
+                      "!_2"."count"
                FROM (SELECT COUNT(1) AS "count"
                      FROM "school" AS "school") AS "!_1"
-                    LEFT OUTER JOIN (SELECT COALESCE("school"."count", 0) AS "count"
-                                     FROM (SELECT 1 AS "!") AS "!"
-                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
-                                                           FROM "school" AS "school") AS "school"
-                                                          ON 1) AS "!_2"
-                                    ON 1
-                    LEFT OUTER JOIN (SELECT COALESCE("school"."count", 0) AS "count"
-                                     FROM (SELECT 1 AS "!") AS "!"
-                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
-                                                           FROM "school" AS "school") AS "school"
-                                                          ON 1
-                                     WHERE 0) AS "!_3"
+                    LEFT OUTER JOIN (SELECT "!"."count"
+                                     FROM (SELECT COUNT(1) AS "count"
+                                           FROM "school" AS "school") AS "!"
+                                     WHERE 0) AS "!_2"
                                     ON 1
         - id: table-expressions
           tests:

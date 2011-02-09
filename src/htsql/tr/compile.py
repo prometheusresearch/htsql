@@ -133,10 +133,10 @@ class CompilingState(object):
         self.baseline_stack = []
         # The current baseline space.
         self.baseline = None
-        # The stack of previous mask spaces.
-        self.mask_stack = []
-        # The current mask space.
-        self.mask = None
+        ## The stack of previous mask spaces.
+        #self.mask_stack = []
+        ## The current mask space.
+        #self.mask = None
 
     def tag(self):
         """
@@ -160,10 +160,10 @@ class CompilingState(object):
         # Check that the state spaces are not yet initialized.
         assert self.scalar is None
         assert self.baseline is None
-        assert self.mask is None
+        #assert self.mask is None
         self.scalar = space
         self.baseline = space
-        self.mask = space
+        #self.mask = space
 
     def flush(self):
         """
@@ -174,11 +174,11 @@ class CompilingState(object):
         assert self.scalar is not None
         assert not self.baseline_stack
         assert self.baseline is self.scalar
-        assert not self.mask_stack
-        assert self.mask is self.scalar
+        #assert not self.mask_stack
+        #assert self.mask is self.scalar
         self.scalar = None
         self.baseline = None
-        self.mask = None
+        #self.mask = None
 
     def push_baseline(self, baseline):
         """
@@ -211,15 +211,15 @@ class CompilingState(object):
         `mask` (:class:`htsql.tr.code.Space`)
             The new mask space.
         """
-        assert isinstance(mask, Space)
-        self.mask_stack.append(self.mask)
-        self.mask = mask
+        #assert isinstance(mask, Space)
+        #self.mask_stack.append(self.mask)
+        #self.mask = mask
 
     def pop_mask(self):
         """
         Restores the previous mask space.
         """
-        self.mask = self.mask_stack.pop()
+        #self.mask = self.mask_stack.pop()
 
     def compile(self, expression, baseline=None, mask=None):
         """
@@ -473,8 +473,11 @@ class Inject(Adapter):
         # we ask the compiler not to generate any axes under
         # the baseline).
 
-        # Start with removing any filters enforced by the trunk space.
-        baseline = space.prune(trunk_term.space)
+        ## Start with removing any filters enforced by the trunk space.
+        #baseline = space.prune(trunk_term.space)
+        baseline = space
+        assert baseline == space.prune(trunk_term.space)
+
         # Now find the longest prefix that does not contain any
         # non-axis operations.
         while not baseline.is_inflated:
@@ -773,7 +776,7 @@ class CompileSpace(Compile):
         self.backbone = backbone
         # Extract commonly used state properties.
         self.baseline = state.baseline
-        self.mask = state.mask
+        #self.mask = state.mask
 
 
 class InjectSpace(Inject):
@@ -815,19 +818,21 @@ class InjectSpace(Inject):
         if self.space in self.term.routes:
             return self.term
 
-        # Remove any non-axis filters that are enforced by the term space.
-        unmasked_space = self.space.prune(self.term.space)
+        ## Remove any non-axis filters that are enforced by the term space.
+        #unmasked_space = self.space.prune(self.term.space)
+        unmasked_space = self.space
+        assert unmasked_space == self.space.prune(self.term.space)
 
-        # When converged with the term space, `space` and `unmasked_space`
-        # contains the same set of rows, therefore in the context of the
-        # given term, they could be used interchangeably.
-        # In particular, if `unmasked_space` is already exported, we could
-        # use the same route for `space`.
-        if unmasked_space in self.term.routes:
-            routes = self.term.routes.copy()
-            routes[self.space] = routes[unmasked_space]
-            return WrapperTerm(self.state.tag(), self.term, self.term.space,
-                               routes)
+        ## When converged with the term space, `space` and `unmasked_space`
+        ## contains the same set of rows, therefore in the context of the
+        ## given term, they could be used interchangeably.
+        ## In particular, if `unmasked_space` is already exported, we could
+        ## use the same route for `space`.
+        #if unmasked_space in self.term.routes:
+        #    routes = self.term.routes.copy()
+        #    routes[self.space] = routes[unmasked_space]
+        #    return WrapperTerm(self.state.tag(), self.term, self.term.space,
+        #                       routes)
 
         # A special case when the given space is an axis prefix of the term
         # space.  The fact that the space is not exported by the term means
@@ -1015,21 +1020,21 @@ class CompileFiltered(CompileSpace):
         # The term corresponding to the space base.
         term = self.state.compile(self.space.base)
 
-        # Handle the special case when the filter is already enforced
-        # by the mask.  There is no method to directly verify it, so
-        # we prune the masked operations from the space itself and
-        # its base.  When the filter belongs to the mask, the resulting
-        # spaces will be equal.
-        if self.space.prune(self.mask) == self.space.base.prune(self.mask):
-            # We do not need to apply the filter since it is already
-            # enforced by the mask.  We still need to add the space
-            # to the routing table.
-            routes = term.routes.copy()
-            # The space itself and its base share the same inflated space
-            # (`backbone`), therefore the backbone must be in the routing
-            # table.
-            routes[self.space] = routes[self.backbone]
-            return WrapperTerm(self.state.tag(), term, self.space, routes)
+        ## Handle the special case when the filter is already enforced
+        ## by the mask.  There is no method to directly verify it, so
+        ## we prune the masked operations from the space itself and
+        ## its base.  When the filter belongs to the mask, the resulting
+        ## spaces will be equal.
+        #if self.space.prune(self.mask) == self.space.base.prune(self.mask):
+        #    # We do not need to apply the filter since it is already
+        #    # enforced by the mask.  We still need to add the space
+        #    # to the routing table.
+        #    routes = term.routes.copy()
+        #    # The space itself and its base share the same inflated space
+        #    # (`backbone`), therefore the backbone must be in the routing
+        #    # table.
+        #    routes[self.space] = routes[self.backbone]
+        #    return WrapperTerm(self.state.tag(), term, self.space, routes)
 
         # Now wrap the base term with a filter term node.
         # Make sure the base term is able to produce the filter expression.
@@ -1061,8 +1066,9 @@ class CompileOrdered(CompileSpace):
         # wrapping it with an order term node:
         # - when the order space does not apply limit/offset to its base;
         # - when the order space is already enforced by the mask.
-        if (self.space.is_expanding or
-            self.space.prune(self.mask) == self.space.base.prune(self.mask)):
+        #if (self.space.is_expanding or
+        #    self.space.prune(self.mask) == self.space.base.prune(self.mask)):
+        if self.space.is_expanding:
             # Generate a term for the space base.
             term = self.state.compile(self.space.base)
             # Update its routing table to include the given space and

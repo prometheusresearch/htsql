@@ -84,6 +84,8 @@ tests:
     - uri: /this(){count(school)}?false()
     - uri: /this(){count(school)}?exists(school)
     - uri: /this(){count(school)}?count(school)>1
+    # Unmasking and bundling aggregate units
+    - uri: /school{code,count(program)}?count(program)>3
 
   - title: Root, This, Direct and Fiber functions
     tests:

@@ -389,6 +389,14 @@ class CollapseBranch(Collapse):
             # and `OFFSET` clauses.
             if head.having is not None:
                 return self.frame
+            # If the outer frame has a `WHERE` clause, make sure the
+            # `GROUP BY` clause of the subframe is not trivial since
+            # not every database engine can handle `HAVING` without
+            # `GROUP BY` (PostgreSQL can, SQLite cannot).
+            if (self.frame.where is not None and
+                all(isinstance(phrase, LiteralPhrase)
+                               for phrase in head.group)):
+                return self.frame
 
         # If we reached this point, the `HAVING` clause of the head subframe
         # must be empty.  This check is no-op though since we never generate
