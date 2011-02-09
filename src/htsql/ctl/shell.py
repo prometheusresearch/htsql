@@ -15,6 +15,7 @@ This module implements the `shell` routine.
 
 from .error import ScriptError
 from .routine import Argument, Routine
+from .option import ExtensionsOption
 from .request import Request
 from ..validator import DBVal
 from ..util import listof, trim_doc
@@ -488,6 +489,9 @@ class ShellRoutine(Routine):
             Argument('db', DBVal(),
                      hint="""the connection URI"""),
     ]
+    options = [
+            ExtensionsOption,
+    ]
     hint = """start an HTSQL shell"""
     help = """
     The routine starts an interactive HTSQL shell over the specified database.
@@ -671,7 +675,7 @@ class ShellRoutine(Routine):
     def run(self):
         # Create the HTSQL application.
         from htsql.application import Application
-        app = Application(self.db)
+        app = Application(self.db, *self.extensions)
 
         # Display the welcome notice; load the history.
         self.setup(app)

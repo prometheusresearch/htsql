@@ -880,6 +880,8 @@ class AppTestCase(SkipTestCase):
         fields = [
                 Field('db', DBVal(),
                       hint="""the connection URI"""),
+                Field('extensions', SeqVal(StrVal()), default=[],
+                      hint="""include extra extensions"""),
         ] + SkipTestCase.Input.fields
 
     def out_header(self):
@@ -918,7 +920,8 @@ class AppTestCase(SkipTestCase):
         from htsql.application import Application
         self.state.app = None
         try:
-            self.state.app = Application(self.input.db)
+            self.state.app = Application(self.input.db,
+                                         *self.input.extensions)
         except Exception:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"

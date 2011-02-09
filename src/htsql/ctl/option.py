@@ -14,7 +14,7 @@ This module defines script options.
 
 
 from ..util import maybe
-from ..validator import Validator, StrVal
+from ..validator import Validator, StrVal, SeqVal
 import re
 
 
@@ -176,6 +176,16 @@ OutputOption = Option(
         value_name="file",
         validator=StrVal(),
         hint="""set output file to FILE""")
+
+ExtensionsOption = Option(
+        attribute='extensions',
+        short_name='-E',
+        long_name='--extensions',
+        with_value=True,
+        default=[],
+        value_name="addons",
+        validator=SeqVal(StrVal()),
+        hint="""include extra extensions""")
 
 TrainOption = Option(
         attribute='train',
