@@ -27,7 +27,7 @@ default:
 	@echo "  doc: to build the HTSQL documentation"
 	@echo "  dist: to build a source and an EGG distribution"
 	@echo "  pypi: to register and upload the package to PyPI"
-	@echo "  clean: to remove the build directory"
+	@echo "  clean: to remove the build directory and object files"
 	@echo
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
@@ -86,9 +86,11 @@ pypi:
 	rm -rf build
 	python setup.py register sdist bdist_egg upload
 
-# Delete the build directory.
+# Delete the build directory and object files.
 clean:
 	rm -rf build
+	find . -name '*.pyc' -exec rm '{}' ';'
+	find . -name '*.pyo' -exec rm '{}' ';'
 
 #
 # Regression testing tasks.
