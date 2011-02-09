@@ -17,7 +17,7 @@ from .error import ScriptError
 from .routine import Argument, Routine
 from .option import (InputOption, OutputOption,
                      RemoteUserOption, WithHeadersOption,
-                     ContentTypeOption)
+                     ContentTypeOption, ExtensionsOption)
 from ..validator import DBVal, StrVal
 from ..util import maybe, oneof, listof, tupleof, dictof, filelike
 import sys
@@ -266,6 +266,7 @@ class GetPostBaseRoutine(Routine):
     # These are common options for both routines.  The `post` routine
     # adds some extra options.
     options = [
+            ExtensionsOption,
             RemoteUserOption,
             OutputOption,
             WithHeadersOption,
@@ -276,7 +277,7 @@ class GetPostBaseRoutine(Routine):
     def run(self):
         # Create the HTSQL application.
         from htsql.application import Application
-        app = Application(self.db)
+        app = Application(self.db, *self.extensions)
 
         # Prepare a WSGI `environ` variable.
         if self.method == 'GET':
