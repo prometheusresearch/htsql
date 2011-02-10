@@ -1004,6 +1004,37 @@ class CompileQuotient(CompileSpace):
         return WrapperTerm(self.state.tag(), term, self.space, routes)
 
 
+class CompileComplement(CompileSpace):
+
+    adapts(ComplementSpace)
+
+    def __call__(self):
+        if self.backbone == self.baseline:
+            term = self.state.compile(self.space.base.seed,
+                                      baseline=self.state.scalar)
+            term = self.state.inject(term, self.space.base.kernel)
+            tag = self.state.tag()
+            routes = {}
+            routes[self.space] = term.routes[self.space.base.seed]
+            routes[self.backbone] = term.routes[self.space.base.seed]
+            for code in self.space.base.kernel:
+                unit = ComplementUnit(code, self.space, code.binding)
+                routes[unit] = term.tag
+            return WrapperTerm(tag, term, self.space, routes)
+
+        lkid = self.state.compile(self.space.base)
+        rkid = self.state.compile(self.space, baseline=self.backbone)
+        tie = SerialTie(self.backbone)
+        joints = self.state.connect([tie])
+        is_left = False
+        is_right = False
+        routes = {}
+        routes.update(lkid.routes)
+        routes.update(rkid.routes)
+        return JoinTerm(self.state.tag(), lkid, rkid, joints,
+                        is_left, is_right, self.space, routes)
+
+
 class CompileFiltered(CompileSpace):
     """
     Compiles a term corresponding to a filtered space.
@@ -1583,6 +1614,9 @@ class InjectAggregateBatch(Inject):
         routes = {}
         for tie in ties:
             routes[tie.space] = plural_term.routes[tie.space]
+
+        routes.update(plural_term.routes)
+
         # The term space must always be in the routing table.  The actual
         # route does not matter since it should never be used.
         routes[projected_space] = plural_term.tag
@@ -1732,6 +1766,19 @@ class ConnectFiberProductInSeries(Connect):
                                     self.space.join.target_columns):
             lunit = ColumnUnit(lcolumn, self.space.base, self.space.binding)
             runit = ColumnUnit(rcolumn, self.space, self.space.binding)
+            joints.append((lunit, runit))
+        return joints
+
+
+class ConnectComplementInSeries(Connect):
+
+    adapts(SerialTie, ComplementSpace)
+
+    def __call__(self):
+        joints = []
+        for index, code in enumerate(self.space.base.kernel):
+            lunit = KernelUnit(index, self.space.base, self.space.binding)
+            runit = ComplementUnit(code, self.space, self.space.binding)
             joints.append((lunit, runit))
         return joints
 

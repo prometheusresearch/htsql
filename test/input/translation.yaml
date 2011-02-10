@@ -139,17 +139,13 @@ tests:
     - uri: /quotient(program?false(), degree)?false()
     - uri: /quotient(program?degree, degree)?kernel()
     - uri: /quotient(program, degree){kernel(),count(complement())}
-      skip: true
     - uri: /quotient(program, degree){kernel(),count(complement().student)}
-      skip: true
     - uri: /quotient(student, year(dob), gender)
     - uri: /quotient(student, {year(dob), gender})
     - uri: /quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
     - uri: /quotient(student, {year(dob), gender}){kernel(),count(complement())}
-      skip: true
     - uri: /quotient(quotient(student, year(dob)).complement(), gender)
                 {kernel(), count(complement()), count(complement().is_active)}
-      skip: true
     - uri: /quotient(quotient(student, year(dob), gender), kernel(0))
                 {kernel(), count(complement()), count(complement().complement()),
                  count(complement().complement().is_active)}

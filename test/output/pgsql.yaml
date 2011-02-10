@@ -15276,6 +15276,72 @@ tests:
                GROUP BY 1
                HAVING (NULLIF("program"."degree", '') IS NOT NULL)
                ORDER BY 1 ASC NULLS FIRST
+          - uri: /quotient(program, degree){kernel(),count(complement())}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program,degree)     |
+              -+------------------------------+-
+               | degree | count(complement()) |
+              -+--------+---------------------+-
+               |        |                   0 |
+               | ba     |                   9 |
+               | bs     |                  12 |
+               | ct     |                   4 |
+               | ma     |                   6 |
+               | ms     |                   5 |
+               | pb     |                   1 |
+               | ph     |                   1 |
+                                       (8 rows)
+
+               ----
+               /quotient(program,degree){kernel(),count(complement())}
+               SELECT "program_1"."degree",
+                      COALESCE("program_2"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "ad"."program" AS "program"
+                     GROUP BY 1) AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."degree"
+                                     FROM "ad"."program" AS "program"
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("program_1"."degree" = "program_2"."degree")
+               ORDER BY 1 ASC NULLS FIRST
+          - uri: /quotient(program, degree){kernel(),count(complement().student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program,degree)             |
+              -+--------------------------------------+-
+               | degree | count(complement().student) |
+              -+--------+-----------------------------+-
+               |        |                           0 |
+               | ba     |                           6 |
+               | bs     |                          20 |
+               | ct     |                           6 |
+               | ma     |                           5 |
+               | ms     |                           9 |
+               | pb     |                           5 |
+               | ph     |                           0 |
+                                               (8 rows)
+
+               ----
+               /quotient(program,degree){kernel(),count(complement().student)}
+               SELECT "program_1"."degree",
+                      COALESCE("program_2"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "ad"."program" AS "program"
+                     GROUP BY 1) AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."degree"
+                                     FROM "ad"."program" AS "program"
+                                          INNER JOIN "ed"."student" AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("program_1"."degree" = "program_2"."degree")
+               ORDER BY 1 ASC NULLS FIRST
           - uri: /quotient(student, year(dob), gender)
             status: 200 OK
             headers:
@@ -15410,6 +15476,101 @@ tests:
                FROM "ed"."student" AS "student"
                GROUP BY 1, 2
                ORDER BY 1 ASC, 2 ASC
+          - uri: /quotient(student, {year(dob), gender}){kernel(),count(complement())}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(student,{year(dob),gender})     |
+              -+------------------------------------------+-
+               | year(dob) | gender | count(complement()) |
+              -+-----------+--------+---------------------+-
+               |      1981 | f      |                   1 |
+               |      1983 | f      |                   1 |
+               |      1985 | f      |                   1 |
+               |      1985 | m      |                   1 |
+               |      1987 | f      |                   2 |
+               |      1987 | m      |                   1 |
+               |      1988 | f      |                   1 |
+               |      1988 | m      |                   3 |
+               |      1989 | f      |                   1 |
+               |      1989 | m      |                   2 |
+               |      1990 | f      |                   1 |
+               |      1990 | m      |                   2 |
+               |      1991 | f      |                   3 |
+               |      1991 | m      |                   3 |
+               |      1992 | f      |                   6 |
+               |      1992 | m      |                   4 |
+               |      1993 | f      |                   3 |
+               |      1993 | m      |                   3 |
+               |      1994 | f      |                   2 |
+               |      1994 | m      |                   2 |
+               |      1995 | f      |                   2 |
+               |      1995 | m      |                   2 |
+               |      1998 | m      |                   1 |
+               |      2000 | m      |                   1 |
+               |      2001 | m      |                   1 |
+               |      2002 | m      |                   1 |
+                                                  (26 rows)
+
+               ----
+               /quotient(student,{year(dob),gender}){kernel(),count(complement())}
+               SELECT "student_1"."year",
+                      "student_1"."gender",
+                      COALESCE("student_2"."count", 0)
+               FROM (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                            "student"."gender"
+                     FROM "ed"."student" AS "student"
+                     GROUP BY 1, 2) AS "student_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                            "student"."gender"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3) AS "student_2"
+                                    ON (("student_1"."year" = "student_2"."year") AND ("student_1"."gender" = "student_2"."gender"))
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /quotient(quotient(student, year(dob)).complement(), gender) {kernel(),
+              count(complement()), count(complement().is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(quotient(student,year(dob)).complement(),gender)    |
+              -+--------------------------------------------------------------+-
+               | gender | count(complement()) | count(complement().is_active) |
+              -+--------+---------------------+-------------------------------+-
+               | f      |                  24 |                            19 |
+               | m      |                  27 |                            25 |
+                                                                       (2 rows)
+
+               ----
+               /quotient(quotient(student,year(dob)).complement(),gender){kernel(),count(complement()),count(complement().is_active)}
+               SELECT "student_1"."gender",
+                      COALESCE("student_2"."count_1", 0),
+                      COALESCE("student_2"."count_2", 0)
+               FROM (SELECT "student_2"."gender"
+                     FROM (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                           FROM "ed"."student" AS "student"
+                           GROUP BY 1) AS "student_1"
+                          INNER JOIN (SELECT "student"."gender",
+                                             CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                      FROM "ed"."student" AS "student") AS "student_2"
+                                     ON ("student_1"."year" = "student_2"."year")
+                     GROUP BY 1) AS "student_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count_1",
+                                            COUNT(NULLIF("student_2"."is_active", FALSE)) AS "count_2",
+                                            "student_2"."gender"
+                                     FROM (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                           FROM "ed"."student" AS "student"
+                                           GROUP BY 1) AS "student_1"
+                                          INNER JOIN (SELECT "student"."is_active",
+                                                             "student"."gender",
+                                                             CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                                      FROM "ed"."student" AS "student") AS "student_2"
+                                                     ON ("student_1"."year" = "student_2"."year")
+                                     GROUP BY 3) AS "student_2"
+                                    ON ("student_1"."gender" = "student_2"."gender")
+               ORDER BY 1 ASC
   - include: test/input/format.yaml
     output:
       id: format
