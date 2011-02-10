@@ -14840,6 +14840,114 @@ tests:
                                      GROUP BY 3) AS "student_2"
                                     ON ("student_1"."gender" = "student_2"."gender")
                ORDER BY 1 ASC
+          - uri: /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(program,degree)?count(complement())>5) |
+              -+--------------------------------------------------+-
+               | degree           | count(complement())           |
+              -+------------------+-------------------------------+-
+               | ba               |                             9 |
+               | bs               |                            12 |
+               | ma               |                             6 |
+                                                           (3 rows)
+
+               ----
+               /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
+               SELECT "program_1"."degree",
+                      COALESCE("program_2"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "program" AS "program"
+                     GROUP BY 1) AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."degree"
+                                     FROM "program" AS "program"
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("program_1"."degree" = "program_2"."degree")
+               WHERE (COALESCE("program_2"."count", 0) > 5)
+               ORDER BY 1 ASC
+          - uri: /quotient(course,credits)?kernel()>3
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient(course,credits)?kernel()>3) |
+              -+---------------------------------------+-
+               | credits                               |
+              -+---------------------------------------+-
+               |                                     4 |
+               |                                     5 |
+               |                                     8 |
+                                                (3 rows)
+
+               ----
+               /quotient(course,credits)?kernel()>3
+               SELECT "course"."credits"
+               FROM "course" AS "course"
+               GROUP BY 1
+               HAVING ("course"."credits" > 3)
+               ORDER BY 1 ASC
+          - uri: /quotient(course,credits){kernel()-}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(course,credits) |
+              -+--------------------------+-
+               | kernel()-                |
+              -+--------------------------+-
+               |                        8 |
+               |                        5 |
+               |                        4 |
+               |                        3 |
+               |                        2 |
+               |                        1 |
+               |                        0 |
+               |                          |
+                                   (8 rows)
+
+               ----
+               /quotient(course,credits){kernel()-}
+               SELECT "course"."credits"
+               FROM "course" AS "course"
+               GROUP BY 1
+               ORDER BY 1 DESC
+          - uri: /(quotient((department?code='stdart').course,credits)?kernel()>3)
+              {*,count(complement())}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (quotient((department?code='stdart').course,credits)?kernel()>3) |
+              -+------------------------------------------------------------------+-
+               | credits                   | count(complement())                  |
+              -+---------------------------+--------------------------------------+-
+               |                         4 |                                    2 |
+               |                         5 |                                    1 |
+                                                                           (2 rows)
+
+               ----
+               /(quotient((department?code='stdart').course,credits)?kernel()>3){*,count(complement())}
+               SELECT "course_1"."credits",
+                      COALESCE("course_2"."count", 0)
+               FROM (SELECT "course"."credits"
+                     FROM "department" AS "department"
+                          INNER JOIN "course" AS "course"
+                                     ON ("department"."code" = "course"."department")
+                     WHERE ("department"."code" = 'stdart')
+                     GROUP BY 1) AS "course_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "course"."credits"
+                                     FROM "department" AS "department"
+                                          INNER JOIN "course" AS "course"
+                                                     ON ("department"."code" = "course"."department")
+                                     WHERE ("department"."code" = 'stdart')
+                                     GROUP BY 2) AS "course_2"
+                                    ON ("course_1"."credits" = "course_2"."credits")
+               WHERE ("course_1"."credits" > 3)
+               ORDER BY 1 ASC
   - include: test/input/format.yaml
     output:
       id: format

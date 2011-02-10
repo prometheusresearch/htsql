@@ -176,6 +176,7 @@ tests:
       skip: true
     - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
       skip: true
+
     - uri: /school.program
             .quotient(student, year(dob), gender)
       skip: true
@@ -196,5 +197,13 @@ tests:
             .quotient(quotient(student, year(dob), gender), kernel(0))
                 {kernel(), count(complement()), count(complement().complement()),
                  count(complement().complement().is_active)}
+      skip: true
+
+    - uri: /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
+    - uri: /quotient(course,credits)?kernel()>3
+    - uri: /quotient(course,credits){kernel()-}
+    - uri: /(quotient((department?code='stdart').course,credits)?kernel()>3)
+                {*,count(complement())}
+    - uri: /quotient(school,count(program)){kernel(),count(complement())}
       skip: true
 
