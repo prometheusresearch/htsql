@@ -557,7 +557,7 @@ class Inject(Adapter):
             while axis != shoot_term.baseline.base:
                 assert axis in shoot_term.routes
                 # Skip non-expanding axes (but always include the baseline).
-                if axis.is_expanding or axis == shoot_term.baseline:
+                if not axis.is_contracting or axis == shoot_term.baseline:
                     tie = ParallelTie(axis)
                     ties.append(tie)
                 axis = axis.base

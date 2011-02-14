@@ -86,6 +86,13 @@ tests:
     - uri: /this(){count(school)}?count(school)>1
     # Unmasking and bundling aggregate units
     - uri: /school{code,count(program)}?count(program)>3
+    # Merging terms with parallel ties
+    - uri: /school.program{school, code, degree,
+                           count(root(){(school?code='art').program.student})}
+                           ?school~'a'
+    - uri: /program.school{code, root().program{code, degree},
+                           count(root(){(program?degree='ba').school.department})}
+                           ?code~'a'
 
   - title: Root, This, Direct and Fiber functions
     tests:

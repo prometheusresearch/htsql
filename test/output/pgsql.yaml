@@ -14574,6 +14574,99 @@ tests:
                                     ON ("school"."code" = "program"."school")
                WHERE (COALESCE("program"."count", 0) > 3)
                ORDER BY 1 ASC
+          - uri: /school.program{school, code, degree, count(root(){(school?code='art').program.student})}
+              ?school~'a'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.program?school~'a')                                                     |
+              -+---------------------------------------------------------------------------------+-
+               | school | code     | degree | count(root(){(school?code='art').program.student}) |
+              -+--------+----------+--------+----------------------------------------------------+-
+               | art    | gart     | pb     |                                                  5 |
+               | art    | uhist    | ba     |                                                  1 |
+               | art    | ustudio  | ba     |                                                  0 |
+               | la     | gengl    | ma     |                                                  0 |
+               | la     | glang    | ma     |                                                  0 |
+               | la     | gscitch  | ma     |                                                  0 |
+               | la     | psciwri  | ct     |                                                  0 |
+               | la     | uengl    | ba     |                                                  0 |
+               | la     | uhist    | ba     |                                                  0 |
+               | la     | upolisci | ba     |                                                  0 |
+               | la     | upsych   | ba     |                                                  0 |
+               | la     | uspan    | ba     |                                                  0 |
+                                                                                         (12 rows)
+
+               ----
+               /school.program{school,code,degree,count(root(){(school?code='art').program.student})}?school~'a'
+               SELECT "program_1"."school",
+                      "program_1"."code",
+                      "program_1"."degree",
+                      COALESCE("program_2"."count", 0)
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program_1"
+                               ON ("school"."code" = "program_1"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "school"."code" AS "code_1",
+                                            "program"."school",
+                                            "program"."code" AS "code_2"
+                                     FROM "ad"."school" AS "school"
+                                          INNER JOIN "ad"."program" AS "program"
+                                                     ON ("school"."code" = "program"."school")
+                                          INNER JOIN "ed"."student" AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     WHERE ("school"."code" = 'art')
+                                     GROUP BY 2, 3, 4) AS "program_2"
+                                    ON (("school"."code" = "program_2"."code_1") AND ("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code_2"))
+               WHERE ("program_1"."school" ILIKE '%a%')
+               ORDER BY "school"."code" ASC, 1 ASC, 2 ASC
+          - uri: /program.school{code, root().program{code, degree}, count(root(){(program?degree='ba').school.department})}
+              ?code~'a'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (program.school?code~'a')                                                                                     |
+              -+---------------------------------------------------------------------------------------------------------------+-
+               | code | root().program{code} | root().program{degree} | count(root(){(program?degree='ba').school.department}) |
+              -+------+----------------------+------------------------+--------------------------------------------------------+-
+               | art  | gart                 | pb                     |                                                      0 |
+               | art  | uhist                | ba                     |                                                      2 |
+               | art  | ustudio              | ba                     |                                                      2 |
+               | la   | gengl                | ma                     |                                                      0 |
+               | la   | glang                | ma                     |                                                      0 |
+               | la   | gscitch              | ma                     |                                                      0 |
+               | la   | psciwri              | ct                     |                                                      0 |
+               | la   | uengl                | ba                     |                                                      5 |
+               | la   | uhist                | ba                     |                                                      5 |
+               | la   | upolisci             | ba                     |                                                      5 |
+               | la   | upsych               | ba                     |                                                      5 |
+               | la   | uspan                | ba                     |                                                      5 |
+                                                                                                                       (12 rows)
+
+               ----
+               /program.school{code,root().program{code,degree},count(root(){(program?degree='ba').school.department})}?code~'a'
+               SELECT "school"."code",
+                      "program_1"."code",
+                      "program_1"."degree",
+                      COALESCE("program_2"."count", 0)
+               FROM "ad"."program" AS "program_1"
+                    INNER JOIN "ad"."school" AS "school"
+                               ON ("program_1"."school" = "school"."code")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."school",
+                                            "program"."code"
+                                     FROM "ad"."program" AS "program"
+                                          INNER JOIN "ad"."school" AS "school"
+                                                     ON ("program"."school" = "school"."code")
+                                          INNER JOIN "ad"."department" AS "department"
+                                                     ON ("school"."code" = "department"."school")
+                                     WHERE ("program"."degree" = 'ba')
+                                     GROUP BY 2, 3) AS "program_2"
+                                    ON (("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code"))
+               WHERE ("school"."code" ILIKE '%a%')
+               ORDER BY "program_1"."school" ASC, 2 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.fiber(department))}
