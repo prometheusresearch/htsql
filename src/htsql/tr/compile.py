@@ -998,8 +998,8 @@ class CompileQuotient(CompileSpace):
         term = ProjectionTerm(self.state.tag(), plural_term,
                               self.space.kernel, self.space, routes)
         routes = term.routes.copy()
-        for index, code in enumerate(self.space.kernel):
-            unit = KernelUnit(index, self.space, code.binding)
+        for code in self.space.kernel:
+            unit = KernelUnit(code, self.space, code.binding)
             routes[unit] = term.tag
         return WrapperTerm(self.state.tag(), term, self.space, routes)
 
@@ -1703,7 +1703,7 @@ class ConnectProductInParallel(Connect):
         # Connect a table axis to itself using the primary key of the table.
 
         # The table entity.
-        table = self.space.table
+        table = self.space.family.table
         # The columns that constitute the primary key (if we have one).
         connect_columns = None
         # If the table has a primary key, extract the columns.
@@ -1776,8 +1776,8 @@ class ConnectComplementInSeries(Connect):
 
     def __call__(self):
         joints = []
-        for index, code in enumerate(self.space.base.kernel):
-            lunit = KernelUnit(index, self.space.base, self.space.binding)
+        for code in self.space.base.kernel:
+            lunit = KernelUnit(code, self.space.base, self.space.binding)
             runit = ComplementUnit(code, self.space, self.space.binding)
             joints.append((lunit, runit))
         return joints

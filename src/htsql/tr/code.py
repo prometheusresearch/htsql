@@ -142,6 +142,38 @@ class SegmentExpr(Expression):
         self.elements = elements
 
 
+class Family(object):
+
+    is_scalar = False
+    is_table = False
+    is_kernel = False
+
+
+class ScalarFamily(Family):
+
+    is_scalar = True
+
+
+class TableFamily(Family):
+
+    is_table = True
+
+    def __init__(self, table):
+        assert isinstance(table, TableEntity)
+        self.table = table
+
+
+class KernelFamily(Family):
+
+    is_kernel = True
+
+    def __init__(self, seed, kernel):
+        assert isinstance(seed, Space)
+        assert isinstance(kernel, listof(Code))
+        self.seed = seed
+        self.kernel = kernel
+
+
 class Space(Expression):
     """
     Represents a space node.
@@ -401,20 +433,16 @@ class Space(Expression):
     is_axis = False
     is_scalar = False
 
-    def __init__(self, base, table, seed, kernel,
+    def __init__(self, base, family,
                  is_contracting, is_expanding,
                  binding, equality_vector=None):
         assert isinstance(base, maybe(Space))
-        assert isinstance(table, maybe(TableEntity))
-        assert isinstance(seed, maybe(Space))
-        assert isinstance(kernel, maybe(listof(Code)))
+        assert isinstance(family, Family)
         assert isinstance(is_contracting, bool)
         assert isinstance(is_expanding, bool)
         super(Space, self).__init__(binding, equality_vector)
         self.base = base
-        self.table = table
-        self.seed = seed
-        self.kernel = kernel
+        self.family = family
         self.is_contracting = is_contracting
         self.is_expanding = is_expanding
         # Indicates that the space itself and all its prefixes are axes.
@@ -724,9 +752,7 @@ class ScalarSpace(Space):
         # of the equality vector is the space base (used by `Space.resembles`).
         super(ScalarSpace, self).__init__(
                     base=None,
-                    table=None,
-                    seed=None,
-                    kernel=None,
+                    family=ScalarFamily(),
                     is_contracting=False,
                     is_expanding=False,
                     binding=binding,
@@ -781,16 +807,17 @@ class ProductSpace(Space):
                 columns = []
                 # When possible, we take the columns from the primary key
                 # of the table.
-                if self.table.primary_key is not None:
-                    column_names = self.table.primary_key.origin_column_names
-                    columns = [self.table.columns[column_name]
+                table = self.family.table
+                if table.primary_key is not None:
+                    column_names = table.primary_key.origin_column_names
+                    columns = [table.columns[column_name]
                                for column_name in column_names]
                 # However when the primary key does not exist, we use columns
                 # of the first unique key comprised of non-nullable columns.
                 else:
-                    for key in self.table.unique_keys:
+                    for key in table.unique_keys:
                         column_names = key.origin_column_names
-                        key_columns = [self.table.columns[column_name]
+                        key_columns = [table.columns[column_name]
                                        for column_name in column_names]
                         if all(not column.is_nullable
                                for column in key_columns):
@@ -800,7 +827,7 @@ class ProductSpace(Space):
                 # columns exist, we have one option left: sort by all columns
                 # of the table.
                 if not columns:
-                    columns = list(self.table.columns)
+                    columns = list(table.columns)
                 # We assign the column units to the inflated space: it makes
                 # it easier to find and eliminate duplicates.
                 space = self.inflate()
@@ -836,18 +863,17 @@ class DirectProductSpace(ProductSpace):
     def __init__(self, base, table, binding):
         super(DirectProductSpace, self).__init__(
                     base=base,
-                    table=table,
-                    seed=None,
-                    kernel=None,
+                    family=TableFamily(table),
                     is_contracting=False,
                     is_expanding=False,
                     binding=binding,
                     equality_vector=(base, table))
+        self.table = table
 
     def __str__(self):
         # Display:
         #   (<base> * schema.table)
-        return "(%s * %s)" % (self.base, self.table)
+        return "(%s * %s)" % (self.base, self.family.table)
 
 
 class FiberProductSpace(ProductSpace):
@@ -871,12 +897,11 @@ class FiberProductSpace(ProductSpace):
     def __init__(self, base, join, binding):
         assert isinstance(join, Join)
         # Check that the join origin is the prominent table of the base.
-        assert isinstance(base, Space) and base.table is join.origin
+        assert isinstance(base, Space) and base.family.is_table
+        assert base.family.table is join.origin
         super(FiberProductSpace, self).__init__(
                     base=base,
-                    table=join.target,
-                    seed=None,
-                    kernel=None,
+                    family=TableFamily(join.target),
                     is_contracting=join.is_contracting,
                     is_expanding=join.is_expanding,
                     binding=binding,
@@ -886,7 +911,7 @@ class FiberProductSpace(ProductSpace):
     def __str__(self):
         # Display:
         #   (<base> . schema.table)
-        return "(%s . %s)" % (self.base, self.table)
+        return "(%s . %s)" % (self.base, self.family.table)
 
 
 class QuotientSpace(Space):
@@ -901,13 +926,12 @@ class QuotientSpace(Space):
         assert isinstance(kernel, listof(Code))
         super(QuotientSpace, self).__init__(
                     base=base,
-                    table=None,
-                    seed=seed,
-                    kernel=kernel,
+                    family=KernelFamily(seed, kernel),
                     is_contracting=False,
                     is_expanding=False,
                     binding=binding,
                     equality_vector=(base, seed, tuple(kernel)))
+        self.seed = seed
         self.kernel = kernel
 
     def ordering(self, with_strong=True, with_weak=True):
@@ -919,8 +943,8 @@ class QuotientSpace(Space):
         if with_weak:
             order += self.base.ordering(with_strong=False, with_weak=True)
             space = self.inflate()
-            for index, code in enumerate(self.kernel):
-                unit = KernelUnit(index, space, code.binding)
+            for code in self.family.kernel:
+                unit = KernelUnit(code, space, code.binding)
                 order.append((unit, +1))
         return order
 
@@ -931,12 +955,10 @@ class ComplementSpace(Space):
 
     def __init__(self, base, binding):
         assert isinstance(base, Space)
-        assert base.seed is not None
+        assert base.family.is_kernel
         super(ComplementSpace, self).__init__(
                     base=base,
-                    table=base.seed.table,
-                    seed=base.seed.seed,
-                    kernel=base.seed.kernel,
+                    family=base.family.seed.family,
                     is_contracting=False,
                     is_expanding=True,
                     binding=binding,
@@ -951,7 +973,7 @@ class ComplementSpace(Space):
         if with_weak:
             order += self.base.ordering(with_strong=False, with_weak=True)
             space = self.inflate()
-            for code in self.base.seed.ordering():
+            for code in self.base.family.seed.ordering():
                 if any(not self.base.spans(unit) for unit in code.units):
                     unit = ComplementUnit(code, space, code.binding)
                     order.append((unit, +1))
@@ -978,9 +1000,7 @@ class FilteredSpace(Space):
         assert isinstance(filter.domain, BooleanDomain)
         super(FilteredSpace, self).__init__(
                     base=base,
-                    table=base.table,
-                    seed=base.seed,
-                    kernel=base.kernel,
+                    family=base.family,
                     is_contracting=True,
                     is_expanding=False,
                     binding=binding,
@@ -1007,9 +1027,7 @@ class MaskedSpace(Space):
         assert isinstance(mask, Space)
         super(MaskedSpace, self).__init__(
                     base=base,
-                    table=base.table,
-                    seed=base.seed,
-                    kernel=base.kernel,
+                    family=base.family,
                     is_contracting=True,
                     is_expanding=False,
                     binding=binding,
@@ -1061,9 +1079,7 @@ class OrderedSpace(Space):
         assert offset is None or offset >= 0
         super(OrderedSpace, self).__init__(
                     base=base,
-                    table=base.table,
-                    seed=base.seed,
-                    kernel=base.kernel,
+                    family=base.family,
                     is_contracting=True,
                     is_expanding=(limit is None and offset is None),
                     binding=binding,
@@ -1357,8 +1373,8 @@ class ColumnUnit(PrimitiveUnit):
 
     def __init__(self, column, space, binding):
         assert isinstance(column, ColumnEntity)
-        assert (space.table is not None and
-                (space.table.schema_name, space.table.name)
+        assert (space.family.is_table and
+                (space.family.table.schema_name, space.family.table.name)
                     == (column.schema_name, column.table_name))
         super(ColumnUnit, self).__init__(
                     space=space,
@@ -1473,25 +1489,19 @@ class CorrelatedUnit(AggregateUnitBase):
 
 class KernelUnit(CompoundUnit):
 
-    def __init__(self, index, space, binding):
-        assert isinstance(index, int) and index >= 0
-        assert isinstance(space, Space)
-        assert space.seed is not None
-        assert index < len(space.kernel)
-        code = space.kernel[index]
+    def __init__(self, code, space, binding):
+        assert space.family.is_kernel
         super(KernelUnit, self).__init__(
                     code=code,
                     space=space,
                     domain=code.domain,
                     binding=binding,
-                    equality_vector=(index, space))
-        self.index = index
+                    equality_vector=(code, space))
 
 
 class ComplementUnit(CompoundUnit):
 
     def __init__(self, code, space, binding):
-        assert isinstance(code, Code)
         assert isinstance(space, ComplementSpace)
         super(ComplementUnit, self).__init__(
                     code=code,

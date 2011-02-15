@@ -881,10 +881,10 @@ class DubFrame(Dub):
         # For a frame, a good alias is the name of the table
         # represented by the frame.
         space = self.clause.space
-        while space.table is None and space.seed is not None:
+        while space.family.is_kernel:
             space = space.seed
-        if space.table is not None:
-            return space.table.name
+        if space.family.is_table:
+            return space.family.table.name
         # Use the default alias when the frame does not represent
         # any table.
         return super(DubFrame, self).__call__()
@@ -955,7 +955,7 @@ class DumpTable(Dump):
         # Serialize a table reference in a `FROM` clause.  Dump:
         #   <schema>.<table>
         # Must be overridden for backends which lack schemas.
-        table = self.frame.space.table
+        table = self.frame.space.family.table
         self.format("{schema:name}.{table:name}",
                     schema=table.schema_name,
                     table=table.name)

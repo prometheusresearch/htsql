@@ -259,7 +259,7 @@ class ScalarTerm(NullaryTerm):
     def __init__(self, tag, space, routes):
         # The space itself is not required to be a scalar, but it
         # should not contain any other axes.
-        assert space.table is None
+        assert space.family.is_scalar
         super(ScalarTerm, self).__init__(tag, space, routes)
 
     def __str__(self):
@@ -281,9 +281,9 @@ class TableTerm(NullaryTerm):
     def __init__(self, tag, space, routes):
         # We assume that the table of the term is the prominent table
         # of the term space.
-        assert space.table is not None
+        assert space.family.is_table
         super(TableTerm, self).__init__(tag, space, routes)
-        self.table = space.table
+        self.table = space.family.table
 
     def __str__(self):
         # Display:

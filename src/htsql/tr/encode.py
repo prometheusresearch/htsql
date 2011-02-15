@@ -477,7 +477,8 @@ class EncodeKernel(Encode):
 
     def __call__(self):
         space = self.state.relate(self.binding.base)
-        return KernelUnit(self.binding.index, space, self.binding)
+        code = space.family.kernel[self.binding.index]
+        return KernelUnit(code, space, self.binding)
 
 
 class EncodeLiteral(Encode):

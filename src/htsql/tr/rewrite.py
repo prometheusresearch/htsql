@@ -18,7 +18,7 @@ from ..domain import BooleanDomain
 from .code import (Expression, QueryExpr, SegmentExpr, Space, ScalarSpace,
                    QuotientSpace, FilteredSpace, OrderedSpace,
                    Code, LiteralCode, CastCode, FormulaCode, Unit, ScalarUnit,
-                   AggregateUnitBase, ComplementUnit)
+                   AggregateUnitBase, KernelUnit, ComplementUnit)
 
 
 class RewritingState(object):
@@ -113,9 +113,9 @@ class RewriteQuotient(RewriteSpace):
     adapts(QuotientSpace)
 
     def __call__(self):
-        kernel = [self.state.rewrite(code, mask=self.space.seed)
-                  for code in self.space.kernel]
-        seed = self.state.rewrite(self.space.seed, mask=self.space.base)
+        kernel = [self.state.rewrite(code, mask=self.space.family.seed)
+                  for code in self.space.family.kernel]
+        seed = self.state.rewrite(self.space.family.seed, mask=self.space.base)
         base = self.state.rewrite(self.space.base)
         return self.space.clone(base=base, seed=seed, kernel=kernel)
 
@@ -236,12 +236,24 @@ class RewriteAggregate(RewriteUnit):
                                code=code)
 
 
+class RewriteKernel(RewriteUnit):
+
+    adapts(KernelUnit)
+
+    def __call__(self):
+        code = self.state.rewrite(self.unit.code,
+                                  mask=self.unit.space.family.seed)
+        space = self.state.rewrite(self.unit.space)
+        return self.unit.clone(space=space, code=code)
+
+
 class RewriteComplement(RewriteUnit):
 
     adapts(ComplementUnit)
 
     def __call__(self):
-        code = self.state.rewrite(self.unit.code, mask=self.unit.space.seed)
+        code = self.state.rewrite(self.unit.code,
+                                  mask=self.unit.space.base.family.seed)
         space = self.state.rewrite(self.unit.space)
         return self.unit.clone(space=space, code=code)
 
