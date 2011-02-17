@@ -19,7 +19,7 @@ from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
 from .syntax import (QuerySyntax, SegmentSyntax, SelectorSyntax,
                      SieveSyntax, OperatorSyntax, FunctionOperatorSyntax,
                      FunctionCallSyntax, GroupSyntax, SpecifierSyntax,
-                     IdentifierSyntax, WildcardSyntax,
+                     IdentifierSyntax, WildcardSyntax, ComplementSyntax,
                      StringSyntax, NumberSyntax)
 
 
@@ -121,9 +121,10 @@ class QueryParser(Parser):
         power           ::= sieve ( '^' power )?
 
         sieve           ::= specifier selector? filter?
-        specifier       ::= atom attribute* ( '.' '*' )? assignment?
-        atom            ::= '*' | selector | group | identifier call? | literal
-        attribute       ::= '.' identifier call?
+        specifier       ::= atom attribute* assignment?
+        atom            ::= '*' | '^' | selector | group |
+                            identifier call? | literal
+        attribute       ::= '.' ( '*' | '^' | identifier call? )
         assignment      ::= ':=' test
 
         group           ::= '(' test ')'
@@ -442,7 +443,7 @@ class PowerParser(Parser):
         left = expression
         right = PowerParser << tokens
         mark = Mark.union(left, right)
-        expression = OperatorSyntax(symbol, None, expression, mark)
+        expression = OperatorSyntax(symbol, left, right, mark)
         return expression
 
 
@@ -478,8 +479,8 @@ class SpecifierParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Parses the productions:
-        #   specifier       ::= atom attribute* ( '.' '*' )? assignment?
-        #   attribute       ::= '.' identifier call?
+        #   specifier       ::= atom attribute* assignment?
+        #   attribute       ::= '.' ( '*' | '^' | identifier call? )
         #   assignment      ::= ':=' test
         #   call            ::= '(' test? ')'
         #   tests           ::= test ( ',' test )* ','?
@@ -490,7 +491,11 @@ class SpecifierParser(Parser):
                 wildcard = WildcardSyntax(symbol_token.mark)
                 mark = Mark.union(expression, wildcard)
                 expression = SpecifierSyntax(expression, wildcard, mark)
-                break
+            elif tokens.peek(SymbolToken, ['^']):
+                symbol_token = tokens.pop(SymbolToken, ['^'])
+                complement = ComplementSyntax(symbol_token.mark)
+                mark = Mark.union(expression, complement)
+                expression = SpecifierSyntax(expression, complement, mark)
             else:
                 identifier = IdentifierParser << tokens
                 if tokens.peek(SymbolToken, ['(']):
@@ -525,7 +530,8 @@ class AtomParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Parses the productions:
-        #   atom        ::= '*' | selector | group | identifier call? | literal
+        #   atom            ::= '*' | '^' | selector | group |
+        #                       identifier call? | literal
         #   call        ::= '(' tests? ')'
         #   tests       ::= tests ( ',' tests )* ','?
         #   literal     ::= STRING | NUMBER
@@ -533,6 +539,10 @@ class AtomParser(Parser):
             symbol_token = tokens.pop(SymbolToken, ['*'])
             wildcard = WildcardSyntax(symbol_token.mark)
             return wildcard
+        if tokens.peek(SymbolToken, ['^']):
+            symbol_token = tokens.pop(SymbolToken, ['^'])
+            complement = ComplementSyntax(symbol_token.mark)
+            return complement
         elif tokens.peek(SymbolToken, ['(']):
             group = GroupParser << tokens
             return group

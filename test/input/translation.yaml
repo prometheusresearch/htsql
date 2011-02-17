@@ -200,4 +200,8 @@ tests:
     - uri: /quotient(program.sort(count(student)),degree).complement()
                 {*, count(student)}
     - uri: /quotient(program,degree){*,exists(complement()),count(complement())}
+    - uri: /school{code,count(program),count(quotient(program,degree))}
+    - uri: /school{code,count(program),count(program^degree)}
+    - uri: /(program^degree){*,count(^),count(^.student)}
+    - uri: /(student^{year(dob),gender}){*,count(^),count(^?is_active)}
 

@@ -414,6 +414,21 @@ class BindQuotient(BindMacro):
                               self.syntax)
 
 
+class BindQuotientOperator(BindMacro):
+
+    named('^')
+    signature = QuotientSig
+
+    def expand(self, seed, kernel):
+        seed_binding = self.state.bind(seed)
+        kernel_bindings = []
+        for expression in kernel:
+            kernel_bindings.extend(self.state.bind_all(expression,
+                                                       base=seed_binding))
+        yield QuotientBinding(self.state.base, seed_binding, kernel_bindings,
+                              self.syntax)
+
+
 class BindKernel(BindMacro):
 
     named('kernel')

@@ -22,11 +22,11 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      SieveSyntax, CallSyntax, OperatorSyntax,
                      FunctionOperatorSyntax, FunctionCallSyntax, GroupSyntax,
                      SpecifierSyntax, IdentifierSyntax, WildcardSyntax,
-                     StringSyntax, NumberSyntax)
+                     ComplementSyntax, StringSyntax, NumberSyntax)
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding)
-from .lookup import lookup, itemize
+from .lookup import lookup, itemize, get_kernel, get_complement
 from .coerce import coerce
 
 
@@ -613,6 +613,20 @@ class BindWildcard(Bind):
                             self.syntax.mark)
         for binding in bindings:
             yield binding
+
+
+class BindComplement(Bind):
+    """
+    Bind a :class:`htsql.tr.syntax.ComplementSyntax` node.
+    """
+
+    adapts(ComplementSyntax)
+
+    def __call__(self):
+        binding = get_complement(self.state.base, self.syntax)
+        if binding is None:
+            raise BindError("expected a quotient context", self.syntax.mark)
+        yield binding
 
 
 class BindString(Bind):

@@ -390,7 +390,7 @@ class SpecifierSyntax(Syntax):
     `base` (:class:`Syntax`)
         The specifier base.
 
-    `identifier` (:class:`IdentifierSyntax` or :class:`WildcardSyntax`)
+    `identifier` (:class:`Syntax`)
         The specifier identifier.
     """
 
@@ -398,7 +398,8 @@ class SpecifierSyntax(Syntax):
 
     def __init__(self, base, identifier, mark):
         assert isinstance(base, Syntax)
-        assert isinstance(identifier, (IdentifierSyntax, WildcardSyntax))
+        assert isinstance(identifier, (IdentifierSyntax, WildcardSyntax,
+                                       ComplementSyntax))
 
         super(SpecifierSyntax, self).__init__(mark)
         self.base = base
@@ -433,6 +434,15 @@ class WildcardSyntax(Syntax):
 
     def __str__(self):
         return '*'
+
+
+class ComplementSyntax(Syntax):
+    """
+    Represents a complement.
+    """
+
+    def __str__(self):
+        return '^'
 
 
 class LiteralSyntax(Syntax):
