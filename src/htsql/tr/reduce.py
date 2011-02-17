@@ -16,6 +16,7 @@ This module implements the reducing process.
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain, StringDomain
 from .coerce import coerce
+from .compile import ordering
 from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
                     QueryFrame, Phrase, LiteralPhrase, NullPhrase,
                     TruePhrase, FalsePhrase, CastPhrase, FormulaPhrase,
@@ -427,7 +428,7 @@ class CollapseBranch(Collapse):
             # can compare the ordering of the underlying spaces.
             if not (head.space.conforms(self.frame.space) and
                     head.baseline == self.frame.baseline and
-                    head.space.ordering() == self.frame.space.ordering()):
+                    ordering(head.space) == ordering(self.frame.space)):
                 return self.frame
             # Since the inner and the outer spaces conform to each other,
             # the outer frame cannot contain non-trivial `LIMIT` and `OFFSET`

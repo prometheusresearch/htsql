@@ -133,6 +133,7 @@ tests:
     - uri: /let(x:=2,x:=x+x,x:=x*x){x}
 
   - title: Projections
+    skip: true
     tests:
     - uri: /quotient(program, degree)
     - uri: /quotient(program, degree){*}

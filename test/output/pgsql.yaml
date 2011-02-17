@@ -13781,15 +13781,15 @@ tests:
 
                ----
                /{count(school),count(department),count(course)}
-               SELECT "!_1"."count",
-                      "!_2"."count",
-                      "!_3"."count"
+               SELECT "school"."count",
+                      "department"."count",
+                      "course"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
-                     FROM "ad"."school" AS "school") AS "!_1"
+                     FROM "ad"."school" AS "school") AS "school"
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
-                                FROM "ad"."department" AS "department") AS "!_2"
+                                FROM "ad"."department" AS "department") AS "department"
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
-                                FROM "ad"."course" AS "course") AS "!_3"
+                                FROM "ad"."course" AS "course") AS "course"
           - uri: /{count(department),count(department?exists(course))}
             status: 200 OK
             headers:
@@ -13804,15 +13804,15 @@ tests:
 
                ----
                /{count(department),count(department?exists(course))}
-               SELECT "!_1"."count",
-                      "!_2"."count"
+               SELECT "department_1"."count",
+                      "department_2"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
-                     FROM "ad"."department" AS "department") AS "!_1"
+                     FROM "ad"."department" AS "department") AS "department_1"
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
                                 FROM "ad"."department" AS "department"
                                 WHERE EXISTS(SELECT TRUE
                                              FROM "ad"."course" AS "course"
-                                             WHERE ("department"."code" = "course"."department"))) AS "!_2"
+                                             WHERE ("department"."code" = "course"."department"))) AS "department_2"
           - uri: /department{code,count(course{credits=3})}
             status: 200 OK
             headers:
@@ -13935,15 +13935,15 @@ tests:
                ----
                /school{code,count(department.course{credits=3})}
                SELECT "school"."code",
-                      COALESCE("department"."count", 0)
+                      COALESCE("course"."count", 0)
                FROM "ad"."school" AS "school"
                     LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."credits" = 3), FALSE)) AS "count",
                                             "department"."school"
                                      FROM "ad"."department" AS "department"
                                           INNER JOIN "ad"."course" AS "course"
                                                      ON ("department"."code" = "course"."department")
-                                     GROUP BY 2) AS "department"
-                                    ON ("school"."code" = "department"."school")
+                                     GROUP BY 2) AS "course"
+                                    ON ("school"."code" = "course"."school")
                ORDER BY 1 ASC
           - uri: /school{code}?count(department.course{credits=3})=20
             status: 200 OK
@@ -13966,9 +13966,9 @@ tests:
                                      FROM "ad"."department" AS "department"
                                           INNER JOIN "ad"."course" AS "course"
                                                      ON ("department"."code" = "course"."department")
-                                     GROUP BY 2) AS "department"
-                                    ON ("school"."code" = "department"."school")
-               WHERE (COALESCE("department"."count", 0) = 20)
+                                     GROUP BY 2) AS "course"
+                                    ON ("school"."code" = "course"."school")
+               WHERE (COALESCE("course"."count", 0) = 20)
                ORDER BY 1 ASC
           - uri: /department?exists(course.credits=5)
             status: 200 OK
@@ -14505,9 +14505,9 @@ tests:
 
                ----
                /this(){count(school)}?false()
-               SELECT "!"."count"
+               SELECT "school"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
-                     FROM "ad"."school" AS "school") AS "!"
+                     FROM "ad"."school" AS "school") AS "school"
                WHERE FALSE
           - uri: /this(){count(school)}?exists(school)
             status: 200 OK
@@ -14523,11 +14523,11 @@ tests:
 
                ----
                /this(){count(school)}?exists(school)
-               SELECT "!"."count"
+               SELECT "school"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
-                     FROM "ad"."school" AS "school") AS "!"
+                     FROM "ad"."school" AS "school") AS "school"
                WHERE EXISTS(SELECT TRUE
-                            FROM "ad"."school" AS "school")
+                            FROM "ad"."school" AS "school_1")
           - uri: /this(){count(school)}?count(school)>1
             status: 200 OK
             headers:
@@ -14542,10 +14542,10 @@ tests:
 
                ----
                /this(){count(school)}?count(school)>1
-               SELECT "!"."count"
+               SELECT "school"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
-                     FROM "ad"."school" AS "school") AS "!"
-               WHERE ("!"."count" > 1)
+                     FROM "ad"."school" AS "school") AS "school"
+               WHERE ("school"."count" > 1)
           - uri: /school{code,count(program)}?count(program)>3
             status: 200 OK
             headers:
@@ -14600,13 +14600,13 @@ tests:
 
                ----
                /school.program{school,code,degree,count(root(){(school?code='art').program.student})}?school~'a'
-               SELECT "program_1"."school",
-                      "program_1"."code",
-                      "program_1"."degree",
-                      COALESCE("program_2"."count", 0)
+               SELECT "program"."school",
+                      "program"."code",
+                      "program"."degree",
+                      COALESCE("student"."count", 0)
                FROM "ad"."school" AS "school"
-                    INNER JOIN "ad"."program" AS "program_1"
-                               ON ("school"."code" = "program_1"."school")
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "school"."code" AS "code_1",
                                             "program"."school",
@@ -14617,9 +14617,9 @@ tests:
                                           INNER JOIN "ed"."student" AS "student"
                                                      ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
                                      WHERE ("school"."code" = 'art')
-                                     GROUP BY 2, 3, 4) AS "program_2"
-                                    ON (("school"."code" = "program_2"."code_1") AND ("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code_2"))
-               WHERE ("program_1"."school" ILIKE '%a%')
+                                     GROUP BY 2, 3, 4) AS "student"
+                                    ON (("school"."code" = "student"."code_1") AND ("program"."school" = "student"."school") AND ("program"."code" = "student"."code_2"))
+               WHERE ("program"."school" ILIKE '%a%')
                ORDER BY "school"."code" ASC, 1 ASC, 2 ASC
           - uri: /program.school{code, root().program{code, degree}, count(root(){(program?degree='ba').school.department})}
               ?code~'a'
@@ -14648,12 +14648,12 @@ tests:
                ----
                /program.school{code,root().program{code,degree},count(root(){(program?degree='ba').school.department})}?code~'a'
                SELECT "school"."code",
-                      "program_1"."code",
-                      "program_1"."degree",
-                      COALESCE("program_2"."count", 0)
-               FROM "ad"."program" AS "program_1"
+                      "program"."code",
+                      "program"."degree",
+                      COALESCE("department"."count", 0)
+               FROM "ad"."program" AS "program"
                     INNER JOIN "ad"."school" AS "school"
-                               ON ("program_1"."school" = "school"."code")
+                               ON ("program"."school" = "school"."code")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."school",
                                             "program"."code"
@@ -14663,10 +14663,10 @@ tests:
                                           INNER JOIN "ad"."department" AS "department"
                                                      ON ("school"."code" = "department"."school")
                                      WHERE ("program"."degree" = 'ba')
-                                     GROUP BY 2, 3) AS "program_2"
-                                    ON (("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code"))
+                                     GROUP BY 2, 3) AS "department"
+                                    ON (("program"."school" = "department"."school") AND ("program"."code" = "department"."code"))
                WHERE ("school"."code" ILIKE '%a%')
-               ORDER BY "program_1"."school" ASC, 2 ASC
+               ORDER BY "program"."school" ASC, 2 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.fiber(department))}
@@ -14683,15 +14683,15 @@ tests:
 
                ----
                /{count(school)*count(department),count(school.fiber(department))}
-               SELECT ("!_1"."count" * "!_2"."count"),
-                      "!_3"."count"
+               SELECT ("school"."count" * "department_1"."count"),
+                      "department_2"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
-                     FROM "ad"."school" AS "school") AS "!_1"
+                     FROM "ad"."school" AS "school") AS "school"
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
-                                FROM "ad"."department" AS "department") AS "!_2"
+                                FROM "ad"."department" AS "department") AS "department_1"
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
                                 FROM "ad"."school" AS "school"
-                                     CROSS JOIN "ad"."department" AS "department") AS "!_3"
+                                     CROSS JOIN "ad"."department" AS "department") AS "department_2"
           - uri: /{count(school.department), count(school.fiber(department)?school=root().school.code),
               count(school.fiber(department,code,school.code))}
             status: 200 OK
@@ -14707,23 +14707,23 @@ tests:
 
                ----
                /{count(school.department),count(school.fiber(department)?school=root().school.code),count(school.fiber(department,code,school.code))}
-               SELECT "!_1"."count",
-                      "!_2"."count",
-                      "!_3"."count"
+               SELECT "department_1"."count",
+                      "department_2"."count",
+                      "department_3"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
                      FROM "ad"."school" AS "school"
                           INNER JOIN "ad"."department" AS "department"
-                                     ON ("school"."code" = "department"."school")) AS "!_1"
+                                     ON ("school"."code" = "department"."school")) AS "department_1"
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
                                 FROM "ad"."school" AS "school"
                                      CROSS JOIN "ad"."department" AS "department"
-                                WHERE ("department"."school" = "school"."code")) AS "!_2"
+                                WHERE ("department"."school" = "school"."code")) AS "department_2"
                     CROSS JOIN (SELECT COUNT(TRUE) AS "count"
                                 FROM "ad"."school" AS "school_1"
                                      CROSS JOIN "ad"."department" AS "department"
                                      LEFT OUTER JOIN "ad"."school" AS "school_2"
                                                      ON ("department"."school" = "school_2"."code")
-                                WHERE ("school_1"."code" = "school_2"."code")) AS "!_3"
+                                WHERE ("school_1"."code" = "school_2"."code")) AS "department_3"
           - uri: /school{code,count(department)}?count(department)=max(fiber(school).count(department))
             status: 200 OK
             headers:
@@ -14824,15 +14824,15 @@ tests:
 
                ----
                /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
-               SELECT "!_1"."count",
-                      "!_1"."count",
-                      "!_2"."count"
+               SELECT "school"."count",
+                      "school"."count",
+                      "!"."count"
                FROM (SELECT COUNT(TRUE) AS "count"
-                     FROM "ad"."school" AS "school") AS "!_1"
-                    LEFT OUTER JOIN (SELECT "!"."count"
+                     FROM "ad"."school" AS "school") AS "school"
+                    LEFT OUTER JOIN (SELECT "school"."count"
                                      FROM (SELECT COUNT(TRUE) AS "count"
-                                           FROM "ad"."school" AS "school") AS "!"
-                                     WHERE FALSE) AS "!_2"
+                                           FROM "ad"."school" AS "school") AS "school"
+                                     WHERE FALSE) AS "!"
                                     ON TRUE
           - uri: /school{code,name,this(){code}?name!~'art', root().school{code}?name!~'art'}
             status: 200 OK
@@ -14991,10 +14991,10 @@ tests:
                ----
                /school.let(c:=department.course.credits){code,min(c),max(c),sum(c),avg(c)}?exists(c)
                SELECT "school"."code",
-                      "department"."min",
-                      "department"."max",
-                      COALESCE("department"."sum", 0),
-                      "department"."avg"
+                      "course"."min",
+                      "course"."max",
+                      COALESCE("course"."sum", 0),
+                      "course"."avg"
                FROM "ad"."school" AS "school"
                     LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min",
                                             MAX("course"."credits") AS "max",
@@ -15004,14 +15004,14 @@ tests:
                                      FROM "ad"."department" AS "department"
                                           INNER JOIN "ad"."course" AS "course"
                                                      ON ("department"."code" = "course"."department")
-                                     GROUP BY 5) AS "department"
-                                    ON ("school"."code" = "department"."school")
+                                     GROUP BY 5) AS "course"
+                                    ON ("school"."code" = "course"."school")
                WHERE EXISTS(SELECT TRUE
-                            FROM "ad"."department" AS "department_1"
-                                 INNER JOIN "ad"."course" AS "course"
-                                            ON ("department_1"."code" = "course"."department")
-                            WHERE ("school"."code" = "department_1"."school")
-                                  AND ("course"."credits" IS NOT NULL))
+                            FROM "ad"."department" AS "department"
+                                 INNER JOIN "ad"."course" AS "course_1"
+                                            ON ("department"."code" = "course_1"."department")
+                            WHERE ("school"."code" = "department"."school")
+                                  AND ("course_1"."credits" IS NOT NULL))
                ORDER BY 1 ASC
           - uri: /school.let(program:=(program?degree='bs') .let(student:=student?is_active))
               {code,count(program),count(program.student)}?code='eng'
@@ -15029,15 +15029,15 @@ tests:
                ----
                /school.let(program:=(program?degree='bs').let(student:=student?is_active)){code,count(program),count(program.student)}?code='eng'
                SELECT "school"."code",
-                      COALESCE("program_1"."count", 0),
-                      COALESCE("program_2"."count", 0)
+                      COALESCE("program"."count", 0),
+                      COALESCE("student"."count", 0)
                FROM "ad"."school" AS "school"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."school"
                                      FROM "ad"."program" AS "program"
                                      WHERE ("program"."degree" = 'bs')
-                                     GROUP BY 2) AS "program_1"
-                                    ON ("school"."code" = "program_1"."school")
+                                     GROUP BY 2) AS "program"
+                                    ON ("school"."code" = "program"."school")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."school"
                                      FROM "ad"."program" AS "program"
@@ -15045,8 +15045,8 @@ tests:
                                                      ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
                                      WHERE "student"."is_active"
                                            AND ("program"."degree" = 'bs')
-                                     GROUP BY 2) AS "program_2"
-                                    ON ("school"."code" = "program_2"."school")
+                                     GROUP BY 2) AS "student"
+                                    ON ("school"."code" = "student"."school")
                WHERE ("school"."code" = 'eng')
                ORDER BY 1 ASC
           - uri: /school{code,count(program.student), count((program.let(s:=student)?degree='bs').s),
@@ -15065,25 +15065,25 @@ tests:
                ----
                /school{code,count(program.student),count((program.let(s:=student)?degree='bs').s),count((program?degree='bs').let(s:=student).s)}?code='eng'
                SELECT "school"."code",
-                      COALESCE("program_1"."count", 0),
-                      COALESCE("program_1"."count", 0),
-                      COALESCE("program_2"."count", 0)
+                      COALESCE("student_1"."count", 0),
+                      COALESCE("student_1"."count", 0),
+                      COALESCE("student_2"."count", 0)
                FROM "ad"."school" AS "school"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."school"
                                      FROM "ad"."program" AS "program"
                                           INNER JOIN "ed"."student" AS "student"
                                                      ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
-                                     GROUP BY 2) AS "program_1"
-                                    ON ("school"."code" = "program_1"."school")
+                                     GROUP BY 2) AS "student_1"
+                                    ON ("school"."code" = "student_1"."school")
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."school"
                                      FROM "ad"."program" AS "program"
                                           INNER JOIN "ed"."student" AS "student"
                                                      ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
                                      WHERE ("program"."degree" = 'bs')
-                                     GROUP BY 2) AS "program_2"
-                                    ON ("school"."code" = "program_2"."school")
+                                     GROUP BY 2) AS "student_2"
+                                    ON ("school"."code" = "student_2"."school")
                WHERE ("school"."code" = 'eng')
                ORDER BY 1 ASC
           - uri: /let(x:=2,y:=3,z:=x*y){x,y,z}

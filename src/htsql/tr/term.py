@@ -158,30 +158,16 @@ class Term(PreTerm):
     is_unary = False
     is_binary = False
 
-    def __init__(self, tag, kids, space, routes):
+    def __init__(self, tag, kids, space, baseline, routes):
         assert isinstance(tag, int)
         assert isinstance(kids, listof(Term))
         assert isinstance(space, Space)
-        assert isinstance(routes, dictof(oneof(Space, Unit), int))
+        assert isinstance(baseline, Space)
+        assert space.concludes(baseline)
+        assert baseline.is_inflated
+        assert isinstance(routes, dictof(Unit, int))
         # The inflation of the term space.
         backbone = space.inflate()
-        # The lestmost axis exported by the term.
-        baseline = backbone
-        while baseline.base in routes:
-            baseline = baseline.base
-        # Verify the validity of the `routes` table.  Note that we only do
-        # a few simple checks.  Here is the full list of assumptions that
-        # must be maintained:
-        # - The term space must be present in `routes`;
-        # - for any space in `routes`, its inflation must also be in `routes`;
-        # - if `axis` is an inflated prefix of the term space and its base
-        #   is in `routes`, `axis` must also be in `routes`.
-        assert space in routes
-        assert backbone in routes
-        axis = baseline.base
-        while axis is not None:
-            assert axis not in routes
-            axis = axis.base
         # For each descendant term, determine the immediate child whose
         # subtree contain the descendant.
         offsprings = {}
@@ -193,9 +179,9 @@ class Term(PreTerm):
         self.tag = tag
         self.kids = kids
         self.space = space
-        self.routes = routes
         self.backbone = backbone
         self.baseline = baseline
+        self.routes = routes
         self.offsprings = offsprings
 
 
@@ -206,8 +192,8 @@ class NullaryTerm(Term):
 
     is_nullary = True
 
-    def __init__(self, tag, space, routes):
-        super(NullaryTerm, self).__init__(tag, [], space, routes)
+    def __init__(self, tag, space, baseline, routes):
+        super(NullaryTerm, self).__init__(tag, [], space, baseline, routes)
 
 
 class UnaryTerm(Term):
@@ -220,8 +206,8 @@ class UnaryTerm(Term):
 
     is_unary = True
 
-    def __init__(self, tag, kid, space, routes):
-        super(UnaryTerm, self).__init__(tag, [kid], space, routes)
+    def __init__(self, tag, kid, space, baseline, routes):
+        super(UnaryTerm, self).__init__(tag, [kid], space, baseline, routes)
         self.kid = kid
 
 
@@ -238,8 +224,9 @@ class BinaryTerm(Term):
 
     is_binary = True
 
-    def __init__(self, tag, lkid, rkid, space, routes):
-        super(BinaryTerm, self).__init__(tag, [lkid, rkid], space, routes)
+    def __init__(self, tag, lkid, rkid, space, baseline, routes):
+        super(BinaryTerm, self).__init__(tag, [lkid, rkid],
+                                         space, baseline, routes)
         self.lkid = lkid
         self.rkid = rkid
 
@@ -256,11 +243,11 @@ class ScalarTerm(NullaryTerm):
         (SELECT ... FROM DUAL)
     """
 
-    def __init__(self, tag, space, routes):
+    def __init__(self, tag, space, baseline, routes):
         # The space itself is not required to be a scalar, but it
         # should not contain any other axes.
         assert space.family.is_scalar
-        super(ScalarTerm, self).__init__(tag, space, routes)
+        super(ScalarTerm, self).__init__(tag, space, baseline, routes)
 
     def __str__(self):
         return "I"
@@ -278,11 +265,12 @@ class TableTerm(NullaryTerm):
         (SELECT ... FROM <table>)
     """
 
-    def __init__(self, tag, space, routes):
+    def __init__(self, tag, space, baseline, routes):
         # We assume that the table of the term is the prominent table
         # of the term space.
         assert space.family.is_table
-        super(TableTerm, self).__init__(tag, space, routes)
+        assert space == baseline
+        super(TableTerm, self).__init__(tag, space, baseline, routes)
         self.table = space.family.table
 
     def __str__(self):
@@ -309,10 +297,10 @@ class FilterTerm(UnaryTerm):
         The conditional expression.
     """
 
-    def __init__(self, tag, kid, filter, space, routes):
+    def __init__(self, tag, kid, filter, space, baseline, routes):
         assert (isinstance(filter, Code) and
                 isinstance(filter.domain, BooleanDomain))
-        super(FilterTerm, self).__init__(tag, kid, space, routes)
+        super(FilterTerm, self).__init__(tag, kid, space, baseline, routes)
         self.filter = filter
 
     def __str__(self):
@@ -362,12 +350,13 @@ class JoinTerm(BinaryTerm):
     """
 
     def __init__(self, tag, lkid, rkid, joints,
-                 is_left, is_right, space, routes):
+                 is_left, is_right, space, baseline, routes):
         assert isinstance(joints, listof(tupleof(Code, Code)))
         assert isinstance(is_left, bool) and isinstance(is_right, bool)
         # Note: currently we never generate right outer joins.
         assert is_right is False
-        super(JoinTerm, self).__init__(tag, lkid, rkid, space, routes)
+        super(JoinTerm, self).__init__(tag, lkid, rkid,
+                                       space, baseline, routes)
         self.joints = joints
         self.is_left = is_left
         self.is_right = is_right
@@ -414,11 +403,12 @@ class EmbeddingTerm(BinaryTerm):
 
     """
 
-    def __init__(self, tag, lkid, rkid, space, routes):
+    def __init__(self, tag, lkid, rkid, space, baseline, routes):
         # Verify that the right child is a correlation term and the left
         # child is its link term.
         assert isinstance(rkid, CorrelationTerm) and rkid.link is lkid
-        super(EmbeddingTerm, self).__init__(tag, lkid, rkid, space, routes)
+        super(EmbeddingTerm, self).__init__(tag, lkid, rkid,
+                                            space, baseline, routes)
 
     def __str__(self):
         # Display:
@@ -449,10 +439,11 @@ class CorrelationTerm(UnaryTerm):
         of the form `lop = rop`.
     """
 
-    def __init__(self, tag, kid, link, joints, space, routes):
+    def __init__(self, tag, kid, link, joints, space, baseline, routes):
         assert isinstance(link, Term)
         assert isinstance(joints, listof(tupleof(Code, Code)))
-        super(CorrelationTerm, self).__init__(tag, kid, space, routes)
+        super(CorrelationTerm, self).__init__(tag, kid,
+                                              space, baseline, routes)
         self.link = link
         self.joints = joints
 
@@ -486,9 +477,9 @@ class ProjectionTerm(UnaryTerm):
         The equivalence kernel.
     """
 
-    def __init__(self, tag, kid, kernel, space, routes):
+    def __init__(self, tag, kid, kernel, space, baseline, routes):
         assert isinstance(kernel, listof(Code))
-        super(ProjectionTerm, self).__init__(tag, kid, space, routes)
+        super(ProjectionTerm, self).__init__(tag, kid, space, baseline, routes)
         self.kernel = kernel
 
     def __str__(self):
@@ -530,13 +521,14 @@ class OrderTerm(UnaryTerm):
         the first `offset` rows should be skipped.
     """
 
-    def __init__(self, tag, kid, order, limit, offset, space, routes):
+    def __init__(self, tag, kid, order, limit, offset,
+                 space, baseline, routes):
         assert isinstance(order, listof(tupleof(Code, int)))
         assert isinstance(limit, maybe(int))
         assert isinstance(offset, maybe(int))
         assert limit is None or limit >= 0
         assert offset is None or offset >= 0
-        super(OrderTerm, self).__init__(tag, kid, space, routes)
+        super(OrderTerm, self).__init__(tag, kid, space, baseline, routes)
         self.order = order
         self.limit = limit
         self.offset = offset
@@ -596,7 +588,8 @@ class SegmentTerm(UnaryTerm):
 
     def __init__(self, tag, kid, elements, space, routes):
         assert isinstance(elements, listof(Code))
-        super(SegmentTerm, self).__init__(tag, kid, space, routes)
+        super(SegmentTerm, self).__init__(tag, kid,
+                                          space, space.scalar, routes)
         self.elements = elements
 
     def __str__(self):

@@ -13,13 +13,14 @@ This module implements the compiling process.
 """
 
 
-from ..util import maybe, listof, Printable
+from ..util import maybe, listof
 from ..adapter import Adapter, adapts
 from .error import CompileError
+from .syntax import IdentifierSyntax
 from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
                    DirectProductSpace, FiberProductSpace,
                    QuotientSpace, ComplementSpace,
-                   FilteredSpace, OrderedSpace, MaskedSpace,
+                   FilteredSpace, OrderedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    KernelUnit, ComplementUnit,
                    QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
@@ -27,82 +28,6 @@ from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, SegmentTerm, QueryTerm)
-
-
-class Tie(Printable):
-    """
-    Represents a connection between two axes.
-
-    This is an auxiliary class used internally by the compiler.
-
-    An axis space could be naturally connected with:
-
-    - an identical axis space;
-    - or its base space.
-
-    These two types of connections are called *parallel* and *serial*
-    ties respectively.  Typically, a parallel tie is implemented using
-    a primary key constraint while a serial tie is implemented using
-    a foreign key constraint, but, in general, it depends on the type
-    of the axis space.
-
-    :class:`Tie` is an abstract case class with exactly two subclasses:
-    :class:`ParallelTie` and :class:`SerialTie`.
-
-    Class attributes:
-
-    `is_parallel` (Boolean)
-        Denotes a parallel tie.
-
-    `is_serial` (Boolean)
-        Denotes a serial tie.
-
-    Attributes:
-
-    `space` (:class:`htsql.tr.code.Space`)
-        An axis space.
-    """
-
-    is_parallel = False
-    is_serial = False
-
-    def __init__(self, space):
-        assert isinstance(space, Space) and space.is_axis
-        # Technically, non-inflated axis spaces could be permitted, but
-        # since the compiler only generates ties for inflated spaces,
-        # we add a respective check here.
-        assert space.is_inflated
-        self.space = space
-
-    def __str__(self):
-        # Display, depending on the tie direction,
-        #   ||<space> or ==<space>
-        indicator = None
-        if self.is_parallel:
-            indicator = "||"
-        if self.is_serial:
-            indicator = "=="
-        return "%s%s" % (indicator, self.space)
-
-
-class ParallelTie(Tie):
-    """
-    Represents a parallel tie.
-
-    A parallel tie is a connection of an axis space with itself.
-    """
-
-    is_parallel = True
-
-
-class SerialTie(Tie):
-    """
-    Represents a serial tie.
-
-    A serial tie is a connection between an axis space and its base.
-    """
-
-    is_serial = True
 
 
 class CompilingState(object):
@@ -302,53 +227,6 @@ class CompilingState(object):
         inject = Inject(expression, term, self)
         return inject()
 
-    def connect(self, ties):
-        """
-        Produces a list of joints corresponding to the given ties.
-
-        Ties represent a connection between two term nodes (see
-        :class:`Tie` for more details).  A connection is expressed
-        as a series of conditions of the form:
-
-            `lop = rop`,
-
-        where `lop` and `rop` are evaluated in the respective
-        terms.  The pair `(lop, rop)` is called a *joint*.
-
-        `ties` (a list of :class:`Tie`)
-            A list of ties (connecting two term nodes).
-        """
-        # The `Connect` adapter converts a single tie to a list of joints.
-        # Here we accumulate the joints by sequentially applying `Connect`
-        # to each of the given ties.
-        joints = []
-        for tie in ties:
-            connect = Connect(tie)
-            joints.extend(connect())
-        return joints
-
-    def project(self, ties):
-        """
-        Produces a kernel of a projection from the given ties.
-
-        An equivalence kernel is a function that establishes an equivalence
-        relation on a space.
-
-        A parallel tie indicates that the kernel must include the tie axis.
-        A serial tie indicates that the kernel must include the base of the
-        tie axis.
-
-        `ties` (a list of :class:`Tie`)
-            A list of ties indicating the quotient space.
-        """
-        # Generate joints corresponding to the ties and take the second
-        # expression from each pair.
-        # Note that for a parallel tie, `lop` and `rop` are identical,
-        # but for a serial tie, `lop` is defined on the base of the tie
-        # space while `rop` is defined on the tie space itself.  Since
-        # we need the expressions to act on the tie space, we take `rop`.
-        return [rop for lop, rop in self.connect(ties)]
-
 
 class Compile(Adapter):
     """
@@ -497,8 +375,7 @@ class Inject(Adapter):
         # Compile the term, use the found baseline and the trunk space
         # as the mask.
         term = self.state.compile(space,
-                                  baseline=baseline,
-                                  mask=trunk_term.space)
+                                  baseline=baseline)
 
         # If provided, inject the given expressions.
         if codes is not None:
@@ -538,7 +415,7 @@ class Inject(Adapter):
         #   the shoot baseline and its base.
 
         # Ties to attach the shoot to the trunk.
-        ties = []
+        joints = []
         # Check if the shoot baseline is an axis of the trunk space.
         if trunk_term.backbone.concludes(shoot_term.baseline):
             # In this case, we join the terms by all axes of the trunk
@@ -546,7 +423,7 @@ class Inject(Adapter):
             # Find the first inflated axis of the trunk exported
             # by the shoot.
             axis = trunk_term.backbone
-            while axis not in shoot_term.routes:
+            while not shoot_term.backbone.concludes(axis):
                 axis = axis.base
             # Now the axes between `axis` and `baseline` are common axes
             # of the trunk space and the shoot term.  For each of them,
@@ -554,16 +431,17 @@ class Inject(Adapter):
             # (and, in general, it is not required) that these axes
             # are exported by the trunk term.  Apply `inject_ties()` on
             # the trunk term before using the ties to join the terms.
+            axes = []
             while axis != shoot_term.baseline.base:
-                assert axis in shoot_term.routes
                 # Skip non-expanding axes (but always include the baseline).
                 if not axis.is_contracting or axis == shoot_term.baseline:
-                    tie = ParallelTie(axis)
-                    ties.append(tie)
+                    axes.append(axis)
                 axis = axis.base
             # We prefer (for no particular reason) the ties to go
             # from inner to outer axes.
-            ties.reverse()
+            axes.reverse()
+            for axis in axes:
+                joints.extend(sew(axis))
         else:
             # When the shoot does not touch the trunk space, we attach it
             # using a serial tie between the shoot baseline and its base.
@@ -571,13 +449,12 @@ class Inject(Adapter):
             # the trunk term export the base space.  Apply `inject_ties()`
             # on the trunk term to inject any necessary spaces before
             # joining the terms using the ties.
-            tie = SerialTie(shoot_term.baseline)
-            ties.append(tie)
+            joints = tie(shoot_term.baseline)
 
         # Return the generated ties.
-        return ties
+        return joints
 
-    def inject_ties(self, term, ties):
+    def inject_ties(self, term, joints):
         """
         Augments the term to ensure it can export all units required
         to generate tie conditions.
@@ -595,22 +472,9 @@ class Inject(Adapter):
         """
         # Sanity check on the arguments.
         assert isinstance(term, Term)
-        assert isinstance(ties, listof(Tie))
 
-        # Accumulate the axes we need to inject.
-        axes = []
-        # Iterate over the ties.
-        for tie in ties:
-            # For a parallel tie, we inject the tie space.
-            if tie.is_parallel:
-                axes.append(tie.space)
-            # For a serial tie, we inject the base of the tie space
-            # (the tie space itself goes to the shoot term).
-            if tie.is_serial:
-                axes.append(tie.space.base)
-
-        # Inject the required spaces and return the updated term.
-        return self.state.inject(term, axes)
+        units = [lunit for lunit, runit in joints]
+        return self.state.inject(term, units)
 
     def join_terms(self, trunk_term, shoot_term, extra_routes):
         """
@@ -641,11 +505,9 @@ class Inject(Adapter):
         assert isinstance(extra_routes, dict)
 
         # Ties that combine the terms.
-        ties = self.tie_terms(trunk_term, shoot_term)
+        joints = self.tie_terms(trunk_term, shoot_term)
         # Make sure the trunk term could export tie conditions.
-        trunk_term = self.inject_ties(trunk_term, ties)
-        # The joints to connect the terms.
-        joints = self.state.connect(ties)
+        trunk_term = self.inject_ties(trunk_term, joints)
         # Determine if we could use an inner join to attach the shoot
         # to the trunk.  We could do it if the inner join does not
         # decrease cardinality of the trunk.
@@ -662,7 +524,8 @@ class Inject(Adapter):
         routes.update(extra_routes)
         # Generate and return a join term.
         return JoinTerm(self.state.tag(), trunk_term, shoot_term,
-                        joints, is_left, is_right, trunk_term.space, routes)
+                        joints, is_left, is_right,
+                        trunk_term.space, trunk_term.baseline, routes)
 
 
 class CompileQuery(Compile):
@@ -694,7 +557,7 @@ class CompileSegment(Compile):
         # Construct a term corresponding to the segment space.
         kid = self.state.compile(self.expression.space)
         # Get the ordering of the segment space.
-        order = self.expression.space.ordering()
+        order = ordering(self.expression.space)
         # List of expressions we need the term to export.
         codes = self.expression.elements + [code for code, direction in order]
         # Inject the expressions into the term.
@@ -704,7 +567,7 @@ class CompileSegment(Compile):
         # with an order node.
         if order:
             kid = OrderTerm(self.state.tag(), kid, order, None, None,
-                            kid.space, kid.routes.copy())
+                            kid.space, kid.baseline, kid.routes.copy())
         # Shut down the state spaces.
         self.state.flush()
         # Construct a segment term.
@@ -769,7 +632,7 @@ class CompileSpace(Compile):
         # The inflation of the space.
         backbone = space.inflate()
         # Check that the baseline space is an axis of the given space.
-        assert backbone.concludes(state.baseline)
+        assert space.concludes(state.baseline)
         super(CompileSpace, self).__init__(space, state)
         self.space = space
         self.state = state
@@ -815,13 +678,13 @@ class InjectSpace(Inject):
         # and attach it to the main term.
 
         # Check if the space is already exported.
-        if self.space in self.term.routes:
+        if all(unit.clone(space=self.space) in self.term.routes
+               for unit in spread(self.space)):
             return self.term
 
         ## Remove any non-axis filters that are enforced by the term space.
         #unmasked_space = self.space.prune(self.term.space)
-        unmasked_space = self.space
-        assert unmasked_space == self.space.prune(self.term.space)
+        assert self.space == self.space.prune(self.term.space)
 
         ## When converged with the term space, `space` and `unmasked_space`
         ## contains the same set of rows, therefore in the context of the
@@ -838,50 +701,52 @@ class InjectSpace(Inject):
         # space.  The fact that the space is not exported by the term means
         # that the term tree is optimized by cutting all axes below some
         # baseline.  Now we need to grow these axes back.
-        if self.term.backbone.concludes(unmasked_space):
+        if self.term.space.concludes(self.space):
+            assert self.term.baseline.base.concludes(self.space)
             # Here we compile a table term corresponding to the space and
             # attach it to the axis directly above it using a serial tie.
 
             # Compile a term corresponding to the axis itself.
-            lkid = self.state.compile(unmasked_space,
-                                       baseline=unmasked_space,
-                                       mask=self.state.scalar)
-            # We expect to get a table or a scalar term here.
-            # FIXME: No longer valid since the axis could be a quotient space.
-            assert lkid.is_nullary
+            lkid = self.state.compile(self.term.baseline.base,
+                                       baseline=self.space)
+            ## We expect to get a table or a scalar term here.
+            ## FIXME: No longer valid since the axis could be a quotient space.
+            #assert lkid.is_nullary
 
-            # Find the axis directly above the space.  Note that here
-            # `unmasked_space` is the inflation of the given space.
-            next_axis = self.term.baseline
-            while next_axis.base != unmasked_space:
-                next_axis = next_axis.base
+            ## Find the axis directly above the space.  Note that here
+            ## `unmasked_space` is the inflation of the given space.
+            #next_axis = self.term.baseline
+            #while next_axis.base != unmasked_space:
+            #    next_axis = next_axis.base
 
-            # It is possible that `next_axis` is also not exported by
-            # the term (specifically, when `next_axis` is below the term
-            # baseline).  So we call `inject()` with `next_axis`, which
-            # should match the same special case and recursively add
-            # `next_axis` to the routing table.  Bugs in the compiler
-            # and in the compare-by-value code often cause an infinite
-            # loop or recursion here!
-            rkid = self.state.inject(self.term, [next_axis])
-            # Injecting an axis prefix should never add any axes below
-            # (but will add all the axis prefixes above).
-            assert unmasked_space not in rkid.routes
+            ## It is possible that `next_axis` is also not exported by
+            ## the term (specifically, when `next_axis` is below the term
+            ## baseline).  So we call `inject()` with `next_axis`, which
+            ## should match the same special case and recursively add
+            ## `next_axis` to the routing table.  Bugs in the compiler
+            ## and in the compare-by-value code often cause an infinite
+            ## loop or recursion here!
+            #rkid = self.state.inject(self.term, [next_axis])
+            rkid = self.term
+            ## Injecting an axis prefix should never add any axes below
+            ## (but will add all the axis prefixes above).
+            #assert unmasked_space not in rkid.routes
 
             # Join the terms using a serial tie.
-            tie = SerialTie(next_axis)
-            joints = self.state.connect([tie])
+            joints = tie(self.term.baseline)
+            lkid = self.inject_ties(lkid, joints)
             # Since we are expanding the term baseline, the join is always
             # inner.
             is_left = False
             is_right = False
             # Re-use the old routing table, but add the new axis.
-            routes = rkid.routes.copy()
-            routes[unmasked_space] = lkid.routes[unmasked_space]
-            routes[self.space] = lkid.routes[unmasked_space]
+            routes = {}
+            routes.update(lkid.routes)
+            routes.update(rkid.routes)
             # Compile and return a join term.
             return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                            is_left, is_right, rkid.space, routes)
+                            is_left, is_right,
+                            rkid.space, lkid.baseline, routes)
 
         # None of the special cases apply, so we use a general method:
         # - grow a shoot term for the given space;
@@ -891,8 +756,8 @@ class InjectSpace(Inject):
         space_term = self.compile_shoot(self.space, self.term)
         # The routes to add.
         extra_routes = {}
-        extra_routes[self.space] = space_term.routes[self.space]
-        extra_routes[unmasked_space] = space_term.routes[self.space]
+        for unit in spread(self.space):
+            extra_routes[unit.clone(space=self.space)] = space_term.routes[unit]
         # Join the shoot to the main term.
         return self.join_terms(self.term, space_term, extra_routes)
 
@@ -907,8 +772,8 @@ class CompileScalar(CompileSpace):
     def __call__(self):
         # Generate a `ScalarTerm` instance.
         tag = self.state.tag()
-        routes = { self.space: tag }
-        return ScalarTerm(tag, self.space, routes)
+        routes = {}
+        return ScalarTerm(tag, self.space, self.space, routes)
 
 
 class CompileProduct(CompileSpace):
@@ -928,7 +793,7 @@ class CompileProduct(CompileSpace):
         # we must export.  Since `baseline` is always an inflated space,
         # we need to compare it with the inflation of the given space
         # rather than with the space itself.
-        if self.backbone == self.baseline:
+        if self.space == self.baseline:
             # Generate a table term that exports rows from the prominent
             # table.
             tag = self.state.tag()
@@ -936,8 +801,10 @@ class CompileProduct(CompileSpace):
             # for any space it includes, the inflation of the space.
             # In this case, `self.space` is the term space, `self.backbone`
             # is its inflation.
-            routes = { self.space: tag, self.backbone: tag }
-            return TableTerm(tag, self.space, routes)
+            routes = {}
+            for unit in spread(self.space):
+                routes[unit] = tag
+            return TableTerm(tag, self.space, self.baseline, routes)
 
         # Term corresponding to the space base.
         term = self.state.compile(self.space.base)
@@ -951,12 +818,15 @@ class CompileProduct(CompileSpace):
         #   (A?f(B)).B,
         # where `B` is a singular, non-nullable link from `A` and `f(B)` is
         # an expression on `B`.
-        if self.backbone in term.routes and self.space.conforms(term.space):
+        if (self.space.conforms(term.space) and
+            all(unit in term.routes for unit in spread(self.space))):
             # We need to add the given space to the routing table and
             # replace the term space.
             routes = term.routes.copy()
-            routes[self.space] = routes[self.backbone]
-            return WrapperTerm(self.state.tag(), term, term.space, routes)
+            for unit in spread(self.space):
+                routes[unit.clone(space=self.space)] = routes[unit]
+            return WrapperTerm(self.state.tag(), term,
+                               self.space, term.baseline, routes)
 
         # Now the general case.  We take two terms:
         # - the term compiled for the space base
@@ -969,21 +839,23 @@ class CompileProduct(CompileSpace):
         # the space.  Instead of generating it directly, we call `compile`
         # on the same space, but with a different baseline, so that it
         # will hit the first special case and produce a table term.
-        rkid = self.state.compile(self.space, baseline=self.backbone)
+        rkid = self.state.compile(self.backbone, baseline=self.backbone)
         # The connections between the space to its base.
-        tie = SerialTie(self.backbone)
-        joints = self.state.connect([tie])
+        joints = tie(self.space)
         is_left = False
         is_right = False
         # We use the routing table of the base term with extra routes
         # corresponding to the given space and its inflation which we
         # export from the table term.
         routes = lkid.routes.copy()
-        routes[self.space] = rkid.routes[self.space]
-        routes[self.backbone] = rkid.routes[self.backbone]
+        routes = {}
+        routes.update(lkid.routes)
+        routes.update(rkid.routes)
+        for unit in spread(self.space):
+            routes[unit.clone(space=self.space)] = routes[unit]
         # Generate a join term node.
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                        is_left, is_right, self.space, routes)
+                        is_left, is_right, self.space, lkid.baseline, routes)
 
 
 class CompileQuotient(CompileSpace):
@@ -1025,7 +897,7 @@ class CompileComplement(CompileSpace):
         lkid = self.state.compile(self.space.base)
         rkid = self.state.compile(self.space, baseline=self.backbone)
         tie = SerialTie(self.backbone)
-        joints = self.state.connect([tie])
+        joints = connect([tie])
         is_left = False
         is_right = False
         routes = {}
@@ -1073,10 +945,11 @@ class CompileFiltered(CompileSpace):
         # Inherit the routing table from the base term, add the given
         # space to the routing table.
         routes = kid.routes.copy()
-        routes[self.space] = routes[self.backbone]
+        for unit in spread(self.space):
+            routes[unit.clone(space=self.space)] = routes[unit]
         # Generate a filter term node.
         return FilterTerm(self.state.tag(), kid, self.space.filter,
-                          self.space, routes)
+                          self.space, kid.baseline, routes)
 
 
 class CompileOrdered(CompileSpace):
@@ -1105,8 +978,10 @@ class CompileOrdered(CompileSpace):
             # Update its routing table to include the given space and
             # return the node.
             routes = term.routes.copy()
-            routes[self.space] = routes[self.backbone]
-            return WrapperTerm(self.state.tag(), term, self.space, routes)
+            for unit in spread(self.space):
+                routes[unit.clone(space=self.space)] = routes[unit]
+            return WrapperTerm(self.state.tag(), term,
+                               self.space, term.baseline, routes)
 
         # Applying limit/offset requires special care.  Since slicing
         # relies on precise row numbering, the base term must produce
@@ -1119,16 +994,17 @@ class CompileOrdered(CompileSpace):
                                   mask=self.state.scalar)
         # Extract the space ordering and make sure the base term is able
         # to produce the order expressions.
-        order = self.space.ordering()
+        order = ordering(self.space)
         codes = [code for code, direction in order]
         kid = self.state.inject(kid, codes)
         # Add the given space to the routing table.
         routes = kid.routes.copy()
-        routes[self.space] = routes[self.backbone]
+        for unit in spread(self.space):
+            routes[unit.clone(space=self.space)] = routes[unit]
         # Generate an order term.
         return OrderTerm(self.state.tag(), kid, order,
                          self.space.limit, self.space.offset,
-                         self.space, routes)
+                         self.space, kid.baseline, routes)
 
 
 class InjectCode(Inject):
@@ -1196,7 +1072,7 @@ class InjectColumn(Inject):
 
         # To avoid an extra `inject()` call, check if the unit space
         # is already exported by the term.
-        if self.space in self.term.routes:
+        if self.unit in self.term.routes:
             return self.term
         # Verify that the unit is singular on the term space.
         if not self.term.space.spans(self.space):
@@ -1301,20 +1177,18 @@ class InjectCorrelated(Inject):
         plural_term = self.compile_shoot(self.unit.plural_space,
                                          unit_term, [self.unit.code])
         # The ties connecting the correlated subquery to the main query.
-        ties = self.tie_terms(unit_term, plural_term)
-        # The respective joints.
-        joints = self.state.connect(ties)
+        joints = self.tie_terms(unit_term, plural_term)
         # Make sure that the unit term could export tie conditions.
-        unit_term = self.inject_ties(unit_term, ties)
+        unit_term = self.inject_ties(unit_term, joints)
         # Connect the plural term to the unit term.
         plural_term = CorrelationTerm(self.state.tag(), plural_term,
                                       unit_term, joints, plural_term.space,
-                                      plural_term.routes)
+                                      plural_term.baseline, plural_term.routes)
         # Implant the correlation term into the term tree.
         routes = unit_term.routes.copy()
         routes[self.unit] = plural_term.tag
         unit_term = EmbeddingTerm(self.state.tag(), unit_term, plural_term,
-                                  unit_term.space, routes)
+                                  unit_term.space, unit_term.baseline, routes)
         # If we attached the unit directly to the main term, we are done.
         if is_native:
             return unit_term
@@ -1479,7 +1353,7 @@ class InjectScalarBatch(Inject):
             for unit in units:
                 routes[unit] = tag
             # Wrap the term with the updated routing table.
-            return WrapperTerm(tag, term, term.space, routes)
+            return WrapperTerm(tag, term, term.space, term.baseline, routes)
 
         # The general case: compile a term for the unit space.
         unit_term = self.compile_shoot(self.space, self.term, codes)
@@ -1559,9 +1433,9 @@ class InjectAggregateBatch(Inject):
         plural_term = self.compile_shoot(self.plural_space,
                                          unit_term, codes)
         # Generate ties to attach the projected term to the unit term.
-        ties = self.tie_terms(unit_term, plural_term)
+        joints = self.tie_terms(unit_term, plural_term)
         # Make sure the unit term could export the tie conditions.
-        unit_term = self.inject_ties(unit_term, ties)
+        unit_term = self.inject_ties(unit_term, joints)
 
         # Now we are going to project the plural term onto the unit
         # space.  As the projection basis, we are using the ties.
@@ -1574,30 +1448,12 @@ class InjectAggregateBatch(Inject):
         # the basis is the foreign key that joins the tie space to
         # its base.  These are also the columns connecting the
         # projected term to the unit term.
-        basis = self.state.project(ties)
+        basis = [runit for lunit, runit in joints]
 
         # Determine the space of the projected term.
-        # FIXME: When we get a list of parallel ties from `tie_terms()`,
-        # we take the rightmost tie and assume that the space of the
-        # projected term is the tie space masked by the plural space,
-        # which is more or less correct.
-        # However, when `tie_terms()` returns a serial tie, we also claim
-        # that the projected space is the masked tie space, which is not
-        # true at all.  Indeed, in this case, the tie space is the baseline
-        # of the term.  Since we project the plural term onto the foreign
-        # key joining the baseline to its base, the actual projected space
-        # is the base of the baseline, masked appropriately.
-        # Unfortunately, we cannot specify the real projected space because
-        # the term cannot export any values from this space.  Currently,
-        # we maintain an assumption that the term is always able to
-        # export its own space.  Perhaps we need to lift it?
-        projected_space = MaskedSpace(ties[-1].space, self.plural_space,
-                                      self.expression.binding)
-        # When the unit space is the scalar space, the projected space
-        # should not be masked (this is one of the peculiarities of
-        # the SQL semantics).
-        if self.space.is_scalar:
-            projected_space = self.space
+        projected_space = QuotientSpace(self.space.inflate(),
+                                        self.plural_space, [],
+                                        self.expression.binding)
         # The routing table of the projected term.
         # FIXME: the projected term should be able to export the tie
         # conditions, so we add the tie spaces to the routing table.
@@ -1611,93 +1467,181 @@ class InjectAggregateBatch(Inject):
         # the projected term.  This seems to be the most correct approach,
         # but then what to do with the requirement that each term exports
         # its own space and backbone?
+        tag = self.state.tag()
         routes = {}
-        for tie in ties:
-            routes[tie.space] = plural_term.routes[tie.space]
+        joints_copy = joints
+        joints = []
+        for lunit, runit in joints_copy:
+            runit = KernelUnit(runit, projected_space, unit.binding)
+            routes[runit] = tag
+            joints.append((lunit, runit))
 
-        routes.update(plural_term.routes)
-
-        # The term space must always be in the routing table.  The actual
-        # route does not matter since it should never be used.
-        routes[projected_space] = plural_term.tag
+        ## The term space must always be in the routing table.  The actual
+        ## route does not matter since it should never be used.
+        #routes[projected_space] = plural_term.tag
         # Project the plural term onto the basis of the unit space.
-        projected_term = ProjectionTerm(self.state.tag(), plural_term,
-                                        basis, projected_space, routes)
+        projected_term = ProjectionTerm(tag, plural_term, basis,
+                                        projected_space, projected_space,
+                                        routes)
         # Attach the projected term to the unit term, add extra entries
         # to the routing table for each of the unit in the collection.
-        extra_routes = dict((unit, projected_term.tag) for unit in units)
-        unit_term = self.join_terms(unit_term, projected_term, extra_routes)
+        is_left = (not projected_space.dominates(unit_term.space))
+        is_right = False
+        # Use the routing table of the trunk term, but also add
+        # the given extra routes.
+        routes = unit_term.routes.copy()
+        for unit in units:
+            routes[unit] = projected_term.tag
+        # Generate and return a join term.
+        unit_term = JoinTerm(self.state.tag(), unit_term, projected_term,
+                             joints, is_left, is_right,
+                             unit_term.space, unit_term.baseline, routes)
         # For native units, we are done since we use the main term as
         # the unit term.  Note: currently this condition always holds.
         if is_native:
             return unit_term
         # Otherwise, attach the unit term to the main term.
+        extra_routes = dict((unit, projected_term.tag) for unit in units)
         return self.join_terms(self.term, unit_term, extra_routes)
 
 
-class Connect(Adapter):
-    """
-    Produces a list of joints corresponding to the given tie.
+class OrderSpace(Adapter):
 
-    The :class:`Connect` adapter converts the given tie to a series
-    of equality conditions:
+    adapts(Space)
 
-        `lop = rop`.
-
-    A pair `(lop, rop)` is called a joint.
-
-    The :class:`Connect` adapter has the following signature::
-
-        Connect: Tie -> list of (Code, Code)
-
-    The adapter is polymorphic on the tie and the tie space.
-
-    `tie` (:class:`Tie`)
-        A tie representing a connection between two terms.
-    """
-
-    adapts(Tie, Space)
-
-    @classmethod
-    def dispatch(interface, tie, *args, **kwds):
-        # Override the standard dispatch key extractor because we want
-        # dispatch to depend not only on the tie type, but also on the
-        # type of the tie axis.
-        assert isinstance(tie, Tie)
-        return (type(tie), type(tie.space))
-
-    def __init__(self, tie):
-        assert isinstance(tie, Tie)
-        self.tie = tie
-        # Extract the tie attributes.
-        self.space = tie.space
+    def __init__(self, space, with_strong=True, with_weak=True):
+        assert isinstance(space, Space)
+        assert isinstance(with_strong, bool)
+        assert isinstance(with_weak, bool)
+        self.space = space
+        self.with_strong = with_strong
+        self.with_weak = with_weak
 
     def __call__(self):
-        # No user query should trigger a call of the base method, so we
-        # do not bother with emitting a proper HTSQL error.
-        raise NotImplementedError("the connect adapter is not implemented"
-                                  " for a %r node" % self.tie)
+        return ordering(self.space.base, self.with_strong, self.with_weak)
 
 
-class ConnectScalarInParallel(Connect):
-    """
-    Connects a scalar axis to itself.
-    """
+class SpreadSpace(Adapter):
 
-    adapts(ParallelTie, ScalarSpace)
+    adapts(Space)
+
+    def __init__(self, space):
+        assert isinstance(space, Space)
+        self.space = space
 
     def __call__(self):
-        # A scalar space connects naturally to itself, so there are no
-        # join conditions.
+        if not self.space.is_axis:
+            return spread(self.space.base)
         return []
 
 
-class ConnectProductInParallel(Connect):
-    """
-    Connects a table axis to itself.
-    """
+class SewSpace(Adapter):
 
-    adapts(ParallelTie, ProductSpace)
+    adapts(Space)
+
+    def __init__(self, space):
+        assert isinstance(space, Space)
+        self.space = space
+
+    def __call__(self):
+        if not self.space.is_axis:
+            return sew(self.space.base)
+        return []
+
+
+class TieSpace(Adapter):
+
+    adapts(Space)
+
+    def __init__(self, space):
+        assert isinstance(space, Space)
+        self.space = space
+
+    def __call__(self):
+        if not self.space.is_axis:
+            return tie(self.space.base)
+        return []
+
+
+class OrderScalar(OrderSpace):
+
+    adapts(ScalarSpace)
+
+    def __call__(self):
+        return []
+
+
+class OrderProduct(OrderSpace):
+
+    adapts(ProductSpace)
+
+    def __call__(self):
+        # A product space complements the weak ordering of its base with
+        # implicit table ordering.
+
+        for code, direction in ordering(self.space.base,
+                                        with_strong=self.with_strong,
+                                        with_weak=self.with_weak):
+            yield (code, direction)
+
+        if self.with_weak:
+            # Complement the weak ordering with the table ordering (but only
+            # if the cardinality of the space may increase).
+            if not self.space.is_contracting:
+                # List of columns which provide the default table ordering.
+                columns = []
+                # When possible, we take the columns from the primary key
+                # of the table.
+                table = self.space.family.table
+                if table.primary_key is not None:
+                    column_names = table.primary_key.origin_column_names
+                    columns = [table.columns[column_name]
+                               for column_name in column_names]
+                # However when the primary key does not exist, we use columns
+                # of the first unique key comprised of non-nullable columns.
+                else:
+                    for key in table.unique_keys:
+                        column_names = key.origin_column_names
+                        key_columns = [table.columns[column_name]
+                                       for column_name in column_names]
+                        if all(not column.is_nullable
+                               for column in key_columns):
+                            columns = key_columns
+                            break
+                # If neither the primary key nor unique keys with non-nullable
+                # columns exist, we have one option left: sort by all columns
+                # of the table.
+                if not columns:
+                    columns = list(table.columns)
+                # We assign the column units to the inflated space: it makes
+                # it easier to find and eliminate duplicates.
+                space = self.space.inflate()
+                # Add weak table ordering.
+                for column in columns:
+                    # We need to associate the newly generated column unit
+                    # with some binding node.  We use the binding of the space,
+                    # but in order to produce a better string representation,
+                    # we replace the associated syntax node with a new
+                    # identifier named after the column.
+                    identifier = IdentifierSyntax(column.name, self.space.mark)
+                    binding = self.space.binding.clone(syntax=identifier)
+                    code = ColumnUnit(column, space, binding)
+                    yield (code, +1)
+
+
+class SpreadProduct(SpreadSpace):
+
+    adapts(ProductSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        for column in space.family.table.columns:
+            yield ColumnUnit(column, space, self.space.binding)
+
+
+class SewProduct(SewSpace):
+
+    adapts(ProductSpace)
 
     def __call__(self):
         # Connect a table axis to itself using the primary key of the table.
@@ -1731,56 +1675,193 @@ class ConnectProductInParallel(Connect):
             raise CompileError("unable to connect a table"
                                " lacking a primary key", self.space.mark)
         # Generate joints that represent a connection by the primary key.
-        joints = []
+        space = self.space.inflate()
         for column in connect_columns:
-            unit = ColumnUnit(column, self.space, self.space.binding)
-            joints.append((unit, unit))
-        return joints
+            unit = ColumnUnit(column, space, self.space.binding)
+            yield (unit, unit)
 
 
-class ConnectDirectProductInSeries(Connect):
-    """
-    Connects a direct product axis to its base.
-    """
+class TieFiberProduct(TieSpace):
 
-    adapts(SerialTie, DirectProductSpace)
-
-    def __call__(self):
-        # A direct product imposes no join conditions.
-        return []
-
-
-class ConnectFiberProductInSeries(Connect):
-    """
-    Connects a fiber product axis to its base.
-    """
-
-    adapts(SerialTie, FiberProductSpace)
+    adapts(FiberProductSpace)
 
     def __call__(self):
         # Generate a list of joints corresponding to a connection by
         # a foreign key.  Note that the left unit must belong to the base
         # of the term axis while the right unit belongs to the axis itself.
-        joints = []
-        for lcolumn, rcolumn in zip(self.space.join.origin_columns,
-                                    self.space.join.target_columns):
-            lunit = ColumnUnit(lcolumn, self.space.base, self.space.binding)
-            runit = ColumnUnit(rcolumn, self.space, self.space.binding)
-            joints.append((lunit, runit))
-        return joints
+        space = self.space.inflate()
+        for lcolumn, rcolumn in zip(space.join.origin_columns,
+                                    space.join.target_columns):
+            lunit = ColumnUnit(lcolumn, space.base, self.space.binding)
+            runit = ColumnUnit(rcolumn, space, self.space.binding)
+            yield (lunit, runit)
 
 
-class ConnectComplementInSeries(Connect):
+class OrderQuotient(OrderSpace):
 
-    adapts(SerialTie, ComplementSpace)
+    adapts(QuotientSpace)
 
     def __call__(self):
-        joints = []
-        for code in self.space.base.kernel:
-            lunit = KernelUnit(code, self.space.base, self.space.binding)
-            runit = ComplementUnit(code, self.space, self.space.binding)
-            joints.append((lunit, runit))
-        return joints
+        for code, direction in ordering(self.space.base,
+                                        with_strong=self.with_strong,
+                                        with_weak=self.with_weak):
+            yield (code, direction)
+        if self.with_weak:
+            space = self.space.inflate()
+            for code in self.family.kernel:
+                code = KernelUnit(code, space, code.binding)
+                yield (code, +1)
+
+
+class SpreadQuotient(SpreadSpace):
+
+    adapts(QuotientSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        for lunit, runit in tie(space.family.seed_baseline):
+            yield KernelUnit(runit, space, runit.binding)
+        for code in self.space.family.kernel:
+            yield KernelUnit(code, space, code.binding)
+
+
+class SewQuotient(SewSpace):
+
+    adapts(QuotientSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        for lunit, runit in tie(space.family.seed_baseline):
+            unit = KernelUnit(runit, space, runit.binding)
+            yield (unit, unit)
+        for code in space.family.kernel:
+            unit = KernelUnit(code, space, code.binding)
+            yield (unit, unit)
+
+
+class TieQuotient(TieSpace):
+
+    adapts(QuotientSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        for lunit, runit in tie(space.family.seed_baseline):
+            runit = KernelUnit(runit, space, runit.binding)
+            yield (lunit, runit)
+
+
+class OrderComplement(OrderSpace):
+
+    adapts(ComplementSpace)
+
+    def __call__(self):
+        for code, direction in ordering(self.space.base,
+                                        with_strong=self.with_strong,
+                                        with_weak=self.with_weak):
+            yield (code, direction)
+        if self.with_weak:
+            space = self.space.inflate()
+            for code in ordering(self.space.base.family.seed):
+                if any(not self.space.base.spans(unit) for unit in code.units):
+                    code = ComplementUnit(code, space, code.binding)
+                    yield (code, +1)
+
+
+class SpreadComplement(SpreadSpace):
+
+    adapts(ComplementSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        seed = self.space.base.family.seed.inflate()
+        #baseline = self.space.base.family.seed_baseline.inflate()
+        #axes = []
+        #axis = seed
+        #while axis is not None and axis.concludes(baseline):
+        #    axes.append(axis)
+        #    axis = axis.base
+        #axes.reverse()
+        #for axis in axes:
+        #    for unit in spread(axis):
+        #        yield ComplementUnit(unit, space, unit.binding)
+        #for code in self.space.base.family.kernel:
+        #    yield ComplementUnit(code, space, code.binding)
+        for unit in spread(seed):
+            yield unit.clone(base=space)
+
+
+class SewComplement(SewSpace):
+
+    adapts(ComplementSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        seed = self.space.base.family.seed.inflate()
+        baseline = self.space.base.family.seed_baseline.inflate()
+        axes = []
+        axis = seed
+        while axis is not None and axis.concludes(baseline):
+            axes.append(axis)
+            axis = axis.base
+        axes.reverse()
+        for axis in axes:
+            if not axis.is_contracting or axis == baseline:
+                for unit in sew(axis):
+                    unit = ComplementUnit(unit, space, unit.binding)
+                    yield (unit, unit)
+
+
+class TieComplement(TieSpace):
+
+    adapts(ComplementSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        for lunit, runit in tie(space.base.family.seed_baseline):
+            lunit = KernelUnit(runit, space.base, runit.binding)
+            runit = ComplementUnit(runit, space, runit.binding)
+            yield (lunit, runit)
+        for code in space.base.family.kernel:
+            lunit = KernelUnit(code, space.base, code.binding)
+            runit = ComplementUnit(code, space, code.binding)
+            yield (lunit, runit)
+
+
+class OrderOrdered(OrderSpace):
+
+    adapts(OrderedSpace)
+
+    def __call__(self):
+        if self.with_strong:
+            for code, direction in ordering(self.space.base,
+                                            with_strong=True, with_weak=False):
+                yield (code, direction)
+            for code, direction in self.space.order:
+                yield (code, direction)
+        if self.with_weak:
+            for code, direction in ordering(self.space.base,
+                                            with_strong=False, with_weak=True):
+                yield (code, direction)
+
+
+def ordering(space, with_strong=True, with_weak=True):
+    ordering = OrderSpace(space, with_strong, with_weak)
+    return list(ordering())
+
+
+def spread(space):
+    spread = SpreadSpace(space)
+    return list(spread())
+
+
+def sew(space):
+    sew = SewSpace(space)
+    return list(sew())
+
+
+def tie(space):
+    tie = TieSpace(space)
+    return list(tie())
 
 
 def compile(expression, state=None, baseline=None, mask=None):

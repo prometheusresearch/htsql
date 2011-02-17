@@ -167,10 +167,13 @@ class KernelFamily(Family):
 
     is_kernel = True
 
-    def __init__(self, seed, kernel):
+    def __init__(self, seed, seed_baseline, kernel):
         assert isinstance(seed, Space)
+        assert isinstance(seed_baseline, Space)
+        assert seed_baseline.is_axis and seed.concludes(seed_baseline)
         assert isinstance(kernel, listof(Code))
         self.seed = seed
+        self.seed_baseline = seed_baseline
         self.kernel = kernel
 
 
@@ -450,28 +453,6 @@ class Space(Expression):
                             (base.is_inflated and self.is_axis))
         # Extract the root scalar space from the base.
         self.scalar = (base.scalar if not self.is_scalar else self)
-
-    def ordering(self, with_strong=True, with_weak=True):
-        """
-        Provides ordering of the space.
-
-        The function returns a list of pairs `(code, direction)`, where
-        `code` is a :class:`Code` instance and `direction` is a number
-        ``+1`` or ``-1``.  The `code` objects specify expressions by which
-        the rows are sorted, `direction` indicates the respective order
-        (``+1`` for ascending, ``-1`` for descending).
-
-        `with_strong` (Boolean)
-            If set, include strong (explicit) ordering.
-
-        `with_weak` (Boolean)
-            If set, include weak (implicit) ordering.
-        """
-        # Sanity check on the arguments.
-        assert isinstance(with_strong, bool)
-        assert isinstance(with_weak, bool)
-        # The default implementation inherits ordering from the base space.
-        return self.base.ordering(with_strong, with_weak)
 
     def unfold(self):
         """
@@ -758,10 +739,6 @@ class ScalarSpace(Space):
                     binding=binding,
                     equality_vector=(base,))
 
-    def ordering(self, with_strong=True, with_weak=True):
-        # The scalar space does not impose any ordering.
-        return []
-
     def __str__(self):
         # Display a table expression in an algebraic form.
         return "I"
@@ -781,69 +758,6 @@ class ProductSpace(Space):
 
     # All subclasses of `ProductSpace` are axis spaces.
     is_axis = True
-
-    def ordering(self, with_strong=True, with_weak=True):
-        # A product space complements the weak ordering of its base with
-        # implicit table ordering.
-
-        # Sanity check on the arguments.
-        assert isinstance(with_strong, bool)
-        assert isinstance(with_weak, bool)
-
-        # A list of pairs `(code, direction)`.
-        order = []
-
-        if with_strong:
-            # Product space inherits its strong ordering from the base.
-            order += self.base.ordering(with_strong=True, with_weak=False)
-
-        if with_weak:
-            # Product space takes the weak ordering from its base.
-            order += self.base.ordering(with_strong=False, with_weak=True)
-            # And complement it with the table ordering (but only if
-            # the cardinality of the space may increase).
-            if not self.is_contracting:
-                # List of columns which provide the default table ordering.
-                columns = []
-                # When possible, we take the columns from the primary key
-                # of the table.
-                table = self.family.table
-                if table.primary_key is not None:
-                    column_names = table.primary_key.origin_column_names
-                    columns = [table.columns[column_name]
-                               for column_name in column_names]
-                # However when the primary key does not exist, we use columns
-                # of the first unique key comprised of non-nullable columns.
-                else:
-                    for key in table.unique_keys:
-                        column_names = key.origin_column_names
-                        key_columns = [table.columns[column_name]
-                                       for column_name in column_names]
-                        if all(not column.is_nullable
-                               for column in key_columns):
-                            columns = key_columns
-                            break
-                # If neither the primary key nor unique keys with non-nullable
-                # columns exist, we have one option left: sort by all columns
-                # of the table.
-                if not columns:
-                    columns = list(table.columns)
-                # We assign the column units to the inflated space: it makes
-                # it easier to find and eliminate duplicates.
-                space = self.inflate()
-                # Add weak table ordering.
-                for column in columns:
-                    # We need to associate the newly generated column unit
-                    # with some binding node.  We use the binding of the space,
-                    # but in order to produce a better string representation,
-                    # we replace the associated syntax node with a new
-                    # identifier named after the column.
-                    identifier = IdentifierSyntax(column.name, self.mark)
-                    binding = self.binding.clone(syntax=identifier)
-                    code = ColumnUnit(column, space, binding)
-                    order.append((code, +1))
-
-        return order
 
 
 class DirectProductSpace(ProductSpace):
@@ -923,30 +837,20 @@ class QuotientSpace(Space):
         assert isinstance(seed, Space)
         assert seed.spans(base)
         assert not base.spans(seed)
+        seed_baseline = seed.base
+        while not base.spans(seed_baseline):
+            seed_baseline = seed_baseline.base
         assert isinstance(kernel, listof(Code))
         super(QuotientSpace, self).__init__(
                     base=base,
-                    family=KernelFamily(seed, kernel),
-                    is_contracting=False,
-                    is_expanding=False,
+                    family=KernelFamily(seed, seed_baseline, kernel),
+                    is_contracting=(not kernel),
+                    is_expanding=(base.is_scalar and not kernel),
                     binding=binding,
                     equality_vector=(base, seed, tuple(kernel)))
         self.seed = seed
+        self.seed_baseline = seed_baseline
         self.kernel = kernel
-
-    def ordering(self, with_strong=True, with_weak=True):
-        assert isinstance(with_strong, bool)
-        assert isinstance(with_weak, bool)
-        order = []
-        if with_strong:
-            order += self.base.ordering(with_strong=True, with_weak=False)
-        if with_weak:
-            order += self.base.ordering(with_strong=False, with_weak=True)
-            space = self.inflate()
-            for code in self.family.kernel:
-                unit = KernelUnit(code, space, code.binding)
-                order.append((unit, +1))
-        return order
 
 
 class ComplementSpace(Space):
@@ -963,21 +867,6 @@ class ComplementSpace(Space):
                     is_expanding=True,
                     binding=binding,
                     equality_vector=(base,))
-
-    def ordering(self, with_strong=True, with_weak=True):
-        assert isinstance(with_strong, bool)
-        assert isinstance(with_weak, bool)
-        order = []
-        if with_strong:
-            order += self.base.ordering(with_strong=True, with_weak=False)
-        if with_weak:
-            order += self.base.ordering(with_strong=False, with_weak=True)
-            space = self.inflate()
-            for code in self.base.family.seed.ordering():
-                if any(not self.base.spans(unit) for unit in code.units):
-                    unit = ComplementUnit(code, space, code.binding)
-                    order.append((unit, +1))
-        return order
 
 
 class FilteredSpace(Space):
@@ -1011,33 +900,6 @@ class FilteredSpace(Space):
         # Display:
         #   (<base> ? <filter>)
         return "(%s ? %s)" % (self.base, self.filter)
-
-
-class MaskedSpace(Space):
-    """
-    Represents a masked space.
-
-    A masked space `A ^ B`, where `A` and `B` are spaces, consists of
-    rows from `A` that have at least one convergent row from `B`.
-
-    This is an auxiliary space node used internally by the compiler.
-    """
-
-    def __init__(self, base, mask, binding):
-        assert isinstance(mask, Space)
-        super(MaskedSpace, self).__init__(
-                    base=base,
-                    family=base.family,
-                    is_contracting=True,
-                    is_expanding=False,
-                    binding=binding,
-                    equality_vector=(base, mask))
-        self.mask = mask
-
-    def __str__(self):
-        # Display:
-        #   (<base> ^ <mask>)
-        return "(%s ^ %s)" % (self.base, self.mask)
 
 
 class OrderedSpace(Space):
@@ -1087,17 +949,6 @@ class OrderedSpace(Space):
         self.order = order
         self.limit = limit
         self.offset = offset
-
-    def ordering(self, with_strong=True, with_weak=True):
-        # Note: explicit ordering is applied after the strong ordering of
-        # the base and before the weak ordering of the base.
-        order = []
-        if with_strong:
-            order += self.base.ordering(with_strong=True, with_weak=False)
-            order += self.order
-        if with_weak:
-            order += self.base.ordering(with_strong=False, with_weak=True)
-        return order
 
     def __str__(self):
         # Display:

@@ -312,16 +312,18 @@ class AssemblingState(object):
         # Note that it is a responsibility of the caller to ensure that
         # the current routing table contains the given unit.
 
-        # Extract the (tag of the) target term from the current routing
-        # table.  Recall that `routes` does not keep primitive units directly,
-        # instead a space node represents all primitive units that belong
-        # to that space.
-        if unit.is_primitive:
-            assert unit.space in self.gate.routes
-            target = self.gate.routes[unit.space]
-        if unit.is_compound:
-            assert unit in self.gate.routes
-            target = self.gate.routes[unit]
+        ## Extract the (tag of the) target term from the current routing
+        ## table.  Recall that `routes` does not keep primitive units directly,
+        ## instead a space node represents all primitive units that belong
+        ## to that space.
+        #if unit.is_primitive:
+        #    assert unit.space in self.gate.routes
+        #    target = self.gate.routes[unit.space]
+        #if unit.is_compound:
+        #    assert unit in self.gate.routes
+        #    target = self.gate.routes[unit]
+        assert unit in self.gate.routes, (unit, self.gate.routes)
+        target = self.gate.routes[unit]
         # Extract the (tag of the) broker term from the current dispatch
         # table.
         # FIXME?: there is a possibility that the target coincides with
