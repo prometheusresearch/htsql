@@ -15422,18 +15422,18 @@ tests:
 
                ----
                /quotient(program,degree){kernel(),count(complement().student)}
-               SELECT "program_1"."degree",
-                      COALESCE("program_2"."count", 0)
+               SELECT "program"."degree",
+                      COALESCE("student"."count", 0)
                FROM (SELECT "program"."degree"
                      FROM "ad"."program" AS "program"
-                     GROUP BY 1) AS "program_1"
+                     GROUP BY 1) AS "program"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."degree"
                                      FROM "ad"."program" AS "program"
                                           INNER JOIN "ed"."student" AS "student"
                                                      ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
-                                     GROUP BY 2) AS "program_2"
-                                    ON ("program_1"."degree" = "program_2"."degree")
+                                     GROUP BY 2) AS "student"
+                                    ON ("program"."degree" = "student"."degree")
                ORDER BY 1 ASC NULLS FIRST
           - uri: /quotient(student, year(dob), gender)
             status: 200 OK
@@ -15664,6 +15664,401 @@ tests:
                                      GROUP BY 3) AS "student_2"
                                     ON ("student_1"."gender" = "student_2"."gender")
                ORDER BY 1 ASC
+          - uri: /school.quotient(program, degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program,degree) |
+              -+---------------------------------+-
+               | degree                          |
+              -+---------------------------------+-
+               | ba                              |
+               | pb                              |
+               | bs                              |
+               | ct                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | ms                              |
+               | bs                              |
+               | ms                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | bs                              |
+               | ph                              |
+               |                                 |
+                                         (16 rows)
+
+               ----
+               /school.quotient(program,degree)
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree){*}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program,degree) |
+              -+---------------------------------+-
+               | degree                          |
+              -+---------------------------------+-
+               | ba                              |
+               | pb                              |
+               | bs                              |
+               | ct                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | ms                              |
+               | bs                              |
+               | ms                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | bs                              |
+               | ph                              |
+               |                                 |
+                                         (16 rows)
+
+               ----
+               /school.quotient(program,degree){*}
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree){kernel()}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program,degree) |
+              -+---------------------------------+-
+               | degree                          |
+              -+---------------------------------+-
+               | ba                              |
+               | pb                              |
+               | bs                              |
+               | ct                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | ms                              |
+               | bs                              |
+               | ms                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | bs                              |
+               | ph                              |
+               |                                 |
+                                         (16 rows)
+
+               ----
+               /school.quotient(program,degree){kernel()}
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree)?false()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.quotient(program,degree)?false()) |
+              -+-------------------------------------------+-
+               | degree                                    |
+              -+-------------------------------------------+-
+                                                   (no rows)
+
+               ----
+               /school.quotient(program,degree)?false()
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               WHERE FALSE
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree){kernel()}?false()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.quotient(program,degree)?false()) |
+              -+-------------------------------------------+-
+               | degree                                    |
+              -+-------------------------------------------+-
+                                                   (no rows)
+
+               ----
+               /school.quotient(program,degree){kernel()}?false()
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               WHERE FALSE
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree)?kernel()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.quotient(program,degree)?kernel()) |
+              -+--------------------------------------------+-
+               | degree                                     |
+              -+--------------------------------------------+-
+               | ba                                         |
+               | pb                                         |
+               | bs                                         |
+               | ct                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ms                                         |
+               | bs                                         |
+               | ms                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | bs                                         |
+               | ph                                         |
+                                                    (15 rows)
+
+               ----
+               /school.quotient(program,degree)?kernel()
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               WHERE (NULLIF("program"."degree", '') IS NOT NULL)
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree){kernel()}?kernel()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.quotient(program,degree)?kernel()) |
+              -+--------------------------------------------+-
+               | degree                                     |
+              -+--------------------------------------------+-
+               | ba                                         |
+               | pb                                         |
+               | bs                                         |
+               | ct                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ms                                         |
+               | bs                                         |
+               | ms                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | bs                                         |
+               | ph                                         |
+                                                    (15 rows)
+
+               ----
+               /school.quotient(program,degree){kernel()}?kernel()
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               WHERE (NULLIF("program"."degree", '') IS NOT NULL)
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program?false(), degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program?false(),degree) |
+              -+-----------------------------------------+-
+               | degree                                  |
+              -+-----------------------------------------+-
+                                                 (no rows)
+
+               ----
+               /school.quotient(program?false(),degree)
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                WHERE FALSE
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program?degree, degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program?degree,degree) |
+              -+----------------------------------------+-
+               | degree                                 |
+              -+----------------------------------------+-
+               | ba                                     |
+               | pb                                     |
+               | bs                                     |
+               | ct                                     |
+               | ba                                     |
+               | ct                                     |
+               | ma                                     |
+               | ms                                     |
+               | bs                                     |
+               | ms                                     |
+               | ba                                     |
+               | ct                                     |
+               | ma                                     |
+               | bs                                     |
+               | ph                                     |
+                                                (15 rows)
+
+               ----
+               /school.quotient(program?degree,degree)
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                WHERE (NULLIF("program"."degree", '') IS NOT NULL)
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program?false(), degree)?false()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.quotient(program?false(),degree)?false()) |
+              -+---------------------------------------------------+-
+               | degree                                            |
+              -+---------------------------------------------------+-
+                                                           (no rows)
+
+               ----
+               /school.quotient(program?false(),degree)?false()
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                WHERE FALSE
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               WHERE FALSE
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program?degree, degree)?kernel()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school.quotient(program?degree,degree)?kernel()) |
+              -+---------------------------------------------------+-
+               | degree                                            |
+              -+---------------------------------------------------+-
+               | ba                                                |
+               | pb                                                |
+               | bs                                                |
+               | ct                                                |
+               | ba                                                |
+               | ct                                                |
+               | ma                                                |
+               | ms                                                |
+               | bs                                                |
+               | ms                                                |
+               | ba                                                |
+               | ct                                                |
+               | ma                                                |
+               | bs                                                |
+               | ph                                                |
+                                                           (15 rows)
+
+               ----
+               /school.quotient(program?degree,degree)?kernel()
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                WHERE (NULLIF("program"."degree", '') IS NOT NULL)
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               WHERE (NULLIF("program"."degree", '') IS NOT NULL)
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program,degree)      |
+              -+--------------------------------------+-
+               | degree | count(complement().student) |
+              -+--------+-----------------------------+-
+               | ba     |                           1 |
+               | pb     |                           5 |
+               | bs     |                           4 |
+               | ct     |                           4 |
+               | ba     |                           0 |
+               | ct     |                           1 |
+               | ma     |                           2 |
+               | ms     |                           1 |
+               | bs     |                           6 |
+               | ms     |                           8 |
+               | ba     |                           5 |
+               | ct     |                           1 |
+               | ma     |                           3 |
+               | bs     |                          10 |
+               | ph     |                           0 |
+               |        |                           0 |
+                                              (16 rows)
+
+               ----
+               /school.quotient(program,degree){kernel(),count(complement().student)}
+               SELECT "program"."degree",
+                      COALESCE("student"."count", 0)
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."school",
+                                            "program"."degree"
+                                     FROM "ad"."program" AS "program"
+                                          INNER JOIN "ed"."student" AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program"."school" = "student"."school") AND ("program"."degree" = "student"."degree"))
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
           - uri: /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
             status: 200 OK
             headers:
@@ -15772,6 +16167,143 @@ tests:
                                     ON ("course_1"."credits" = "course_2"."credits")
                WHERE ("course_1"."credits" > 3)
                ORDER BY 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program,degree) |
+              -+---------------------------------+-
+               | degree                          |
+              -+---------------------------------+-
+               | ba                              |
+               | pb                              |
+               | bs                              |
+               | ct                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | ms                              |
+               | bs                              |
+               | ms                              |
+               | ba                              |
+               | ct                              |
+               | ma                              |
+               | bs                              |
+               | ph                              |
+               |                                 |
+                                         (16 rows)
+
+               ----
+               /school.quotient(program,degree)
+               SELECT "program"."degree"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /department.quotient(school.program, degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department.quotient(school.program,degree) |
+              -+--------------------------------------------+-
+               | degree                                     |
+              -+--------------------------------------------+-
+               | bs                                         |
+               | ct                                         |
+               | ba                                         |
+               | pb                                         |
+               | bs                                         |
+               | ph                                         |
+               | bs                                         |
+               | ms                                         |
+               | bs                                         |
+               | ct                                         |
+               | bs                                         |
+               | ph                                         |
+               | bs                                         |
+               | ms                                         |
+               | bs                                         |
+               | ct                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ms                                         |
+               | bs                                         |
+               | ms                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | bs                                         |
+               | ms                                         |
+               | bs                                         |
+               | ph                                         |
+               | bs                                         |
+               | ph                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ba                                         |
+               | pb                                         |
+               | ba                                         |
+               | ct                                         |
+               | ma                                         |
+               | ms                                         |
+                                                    (49 rows)
+
+               ----
+               /department.quotient(school.program,degree)
+               SELECT "program"."degree"
+               FROM "ad"."department" AS "department"
+                    LEFT OUTER JOIN "ad"."school" AS "school"
+                                    ON ("department"."school" = "school"."code")
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "department"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /department.quotient((school?code='art').program, degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department.quotient((school?code='art').program,degree) |
+              -+---------------------------------------------------------+-
+               | degree                                                  |
+              -+---------------------------------------------------------+-
+               | ba                                                      |
+               | pb                                                      |
+               | ba                                                      |
+               | pb                                                      |
+                                                                  (4 rows)
+
+               ----
+               /department.quotient((school?code='art').program,degree)
+               SELECT "program"."degree"
+               FROM "ad"."department" AS "department"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "school"."code"
+                                FROM "ad"."school" AS "school"
+                                     INNER JOIN "ad"."program" AS "program"
+                                                ON ("school"."code" = "program"."school")
+                                WHERE ("school"."code" = 'art')
+                                GROUP BY 2, "program"."school", 1) AS "program"
+                               ON ("department"."school" = "program"."code")
+               ORDER BY "department"."code" ASC, 1 ASC NULLS FIRST
   - include: test/input/format.yaml
     output:
       id: format

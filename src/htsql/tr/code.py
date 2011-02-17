@@ -837,8 +837,8 @@ class QuotientSpace(Space):
         assert isinstance(seed, Space)
         assert seed.spans(base)
         assert not base.spans(seed)
-        seed_baseline = seed.base
-        while not base.spans(seed_baseline):
+        seed_baseline = seed
+        while not base.spans(seed_baseline.base):
             seed_baseline = seed_baseline.base
         assert isinstance(kernel, listof(Code))
         super(QuotientSpace, self).__init__(

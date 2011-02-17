@@ -228,95 +228,9 @@ class CompilingState(object):
         return inject()
 
 
-class Compile(Adapter):
-    """
-    Translates an expression node to a term node.
-
-    This is an interface adapter; see subclasses for implementations.
-
-    The :class:`Compile` adapter is implemented for two classes
-    of expressions:
-
-    - top-level expressions such as the whole query and the query segment,
-      for which it builds respective top-level term nodes;
-
-    - spaces, for which the adapter builds a corresponding relational
-      algebraic expression.
-
-    After a term is built, it is typically augmented using the
-    :class:`Inject` adapter to have it export any exprected units.
-
-    The :class:`Compile` adapter has the following signature::
-
-        Compile: (Expression, CompilingState) -> Term
-
-    The adapter is polymorphic on the `Expression` argument.
-
-    `expression` (:class:`htsql.tr.code.Expression`)
-        An expression node.
-
-    `state` (:class:`CompilingState`)
-        The current state of the compiling process.
-    """
+class CompileBase(Adapter):
 
     adapts(Expression)
-
-    def __init__(self, expression, state):
-        assert isinstance(expression, Expression)
-        assert isinstance(state, CompilingState)
-        self.expression = expression
-        self.state = state
-
-    def __call__(self):
-        # This should never be reachable; if we are here, it indicates
-        # either a bug or an incomplete implementation.  Since normally it
-        # cannot be triggered by a user, we don't bother with generating
-        # a user-level HTSQL exception.
-        raise NotImplementedError("the compile adapter is not implemented"
-                                  " for a %r node" % self.expression)
-
-
-class Inject(Adapter):
-    """
-    Augments a term to make it capable of producing the given expression.
-
-    This is an interface adapter; see subclasses for implementations.
-
-    This adapter takes a term node and an expression (usually, a unit)
-    and returns a new term (an augmentation of the given term) that is
-    able to produce the given expression.
-
-    The :class:`Inject` adapter has the following signature::
-
-        Inject: (Expression, Term, CompilingState) -> Term
-
-    The adapter is polymorphic on the `Expression` argument.
-
-    `expression` (:class:`htsql.tr.code.Expression`)
-        An expression node to inject.
-
-    `term` (:class:`htsql.tr.term.Term`)
-        A term node to inject into.
-
-    `state` (:class:`CompilingState`)
-        The current state of the compiling process.
-    """
-
-    adapts(Expression)
-
-    def __init__(self, expression, term, state):
-        assert isinstance(expression, Expression)
-        assert isinstance(term, Term)
-        assert isinstance(state, CompilingState)
-        self.expression = expression
-        self.term = term
-        self.state = state
-
-    def __call__(self):
-        # Same as with `Compile`, unless it's a bug or an incomplete
-        # implementation, it should never be reachable.
-        raise NotImplementedError("the inject adapter is not implemented"
-                                  " for a %r node" % self.expression)
 
     # Utility functions used by implementations.
 
@@ -526,6 +440,93 @@ class Inject(Adapter):
         return JoinTerm(self.state.tag(), trunk_term, shoot_term,
                         joints, is_left, is_right,
                         trunk_term.space, trunk_term.baseline, routes)
+
+
+class Compile(CompileBase):
+    """
+    Translates an expression node to a term node.
+
+    This is an interface adapter; see subclasses for implementations.
+
+    The :class:`Compile` adapter is implemented for two classes
+    of expressions:
+
+    - top-level expressions such as the whole query and the query segment,
+      for which it builds respective top-level term nodes;
+
+    - spaces, for which the adapter builds a corresponding relational
+      algebraic expression.
+
+    After a term is built, it is typically augmented using the
+    :class:`Inject` adapter to have it export any exprected units.
+
+    The :class:`Compile` adapter has the following signature::
+
+        Compile: (Expression, CompilingState) -> Term
+
+    The adapter is polymorphic on the `Expression` argument.
+
+    `expression` (:class:`htsql.tr.code.Expression`)
+        An expression node.
+
+    `state` (:class:`CompilingState`)
+        The current state of the compiling process.
+    """
+
+    def __init__(self, expression, state):
+        assert isinstance(expression, Expression)
+        assert isinstance(state, CompilingState)
+        self.expression = expression
+        self.state = state
+
+    def __call__(self):
+        # This should never be reachable; if we are here, it indicates
+        # either a bug or an incomplete implementation.  Since normally it
+        # cannot be triggered by a user, we don't bother with generating
+        # a user-level HTSQL exception.
+        raise NotImplementedError("the compile adapter is not implemented"
+                                  " for a %r node" % self.expression)
+
+
+class Inject(CompileBase):
+    """
+    Augments a term to make it capable of producing the given expression.
+
+    This is an interface adapter; see subclasses for implementations.
+
+    This adapter takes a term node and an expression (usually, a unit)
+    and returns a new term (an augmentation of the given term) that is
+    able to produce the given expression.
+
+    The :class:`Inject` adapter has the following signature::
+
+        Inject: (Expression, Term, CompilingState) -> Term
+
+    The adapter is polymorphic on the `Expression` argument.
+
+    `expression` (:class:`htsql.tr.code.Expression`)
+        An expression node to inject.
+
+    `term` (:class:`htsql.tr.term.Term`)
+        A term node to inject into.
+
+    `state` (:class:`CompilingState`)
+        The current state of the compiling process.
+    """
+
+    def __init__(self, expression, term, state):
+        assert isinstance(expression, Expression)
+        assert isinstance(term, Term)
+        assert isinstance(state, CompilingState)
+        self.expression = expression
+        self.term = term
+        self.state = state
+
+    def __call__(self):
+        # Same as with `Compile`, unless it's a bug or an incomplete
+        # implementation, it should never be reachable.
+        raise NotImplementedError("the inject adapter is not implemented"
+                                  " for a %r node" % self.expression)
 
 
 class CompileQuery(Compile):
@@ -863,17 +864,67 @@ class CompileQuotient(CompileSpace):
     adapts(QuotientSpace)
 
     def __call__(self):
-        plural_term = self.state.compile(self.space.seed)
-        plural_term = self.state.inject(plural_term, self.space.kernel)
+        baseline = self.space.seed_baseline
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        seed_term = self.state.compile(self.space.seed, baseline=baseline)
+        seed_term = self.state.inject(seed_term, self.space.kernel)
+        if (self.space == self.baseline and
+                seed_term.baseline == self.space.seed_baseline):
+            tag = self.state.tag()
+            basis = []
+            routes = {}
+            joints = tie(seed_term.baseline)
+            for lunit, runit in joints:
+                basis.append(runit)
+                unit = KernelUnit(runit, self.space, runit.binding)
+                routes[unit] = tag
+            for code in self.space.kernel:
+                basis.append(code)
+                unit = KernelUnit(code, self.space, code.binding)
+                routes[unit] = tag
+            term = ProjectionTerm(tag, seed_term, basis,
+                                  self.space, self.space, routes)
+            return term
+        baseline = self.baseline
+        if baseline == self.space:
+            baseline = baseline.base
+        lkid = self.state.compile(self.space.base, baseline=baseline)
+        joints = self.tie_terms(lkid, seed_term)
+        lkid = self.inject_ties(lkid, joints)
+        tag = self.state.tag()
+        basis = []
         routes = {}
-        routes[self.space] = plural_term.tag
-        term = ProjectionTerm(self.state.tag(), plural_term,
-                              self.space.kernel, self.space, routes)
-        routes = term.routes.copy()
+        joints_copy = joints
+        joints = []
+        for lunit, runit in joints_copy:
+            basis.append(runit)
+            runit = KernelUnit(runit, self.backbone, runit.binding)
+            routes[runit] = tag
+            joints.append((lunit, runit))
+        quotient_joints = tie(self.space.seed_baseline)
+        if seed_term.baseline != self.space.seed_baseline:
+            for lunit, runit in quotient_joints:
+                basis.append(runit)
+                unit = KernelUnit(runit, self.backbone, runit.binding)
+                routes[unit] = tag
+        else:
+            assert quotient_joints == joints_copy
         for code in self.space.kernel:
-            unit = KernelUnit(code, self.space, code.binding)
-            routes[unit] = term.tag
-        return WrapperTerm(self.state.tag(), term, self.space, routes)
+            basis.append(code)
+            unit = KernelUnit(code, self.backbone, code.binding)
+            routes[unit] = tag
+        rkid = ProjectionTerm(tag, seed_term, basis,
+                              self.backbone, self.backbone, routes)
+        is_left = False
+        is_right = False
+        routes = {}
+        routes.update(lkid.routes)
+        routes.update(rkid.routes)
+        for unit in spread(self.space):
+            routes[unit.clone(space=self.space)] = routes[unit]
+        return JoinTerm(self.state.tag(), lkid, rkid, joints,
+                        is_left, is_right, self.space, rkid.baseline, routes)
 
 
 class CompileComplement(CompileSpace):
@@ -881,30 +932,59 @@ class CompileComplement(CompileSpace):
     adapts(ComplementSpace)
 
     def __call__(self):
-        if self.backbone == self.baseline:
-            term = self.state.compile(self.space.base.seed,
-                                      baseline=self.state.scalar)
-            term = self.state.inject(term, self.space.base.kernel)
-            tag = self.state.tag()
+        family = self.space.base.family
+        baseline = family.seed_baseline
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        seed_term = self.state.compile(family.seed, baseline=baseline)
+        seed_term = self.state.inject(seed_term, family.kernel)
+        if seed_term.is_nullary:
+            seed_term = WrapperTerm(self.state.tag(), seed_term,
+                                    seed_term.space, seed_term.baseline,
+                                    seed_term.routes.copy())
+        if (self.space == self.baseline and
+                seed_term.baseline == family.seed_baseline):
             routes = {}
-            routes[self.space] = term.routes[self.space.base.seed]
-            routes[self.backbone] = term.routes[self.space.base.seed]
-            for code in self.space.base.kernel:
-                unit = ComplementUnit(code, self.space, code.binding)
-                routes[unit] = term.tag
-            return WrapperTerm(tag, term, self.space, routes)
-
-        lkid = self.state.compile(self.space.base)
-        rkid = self.state.compile(self.space, baseline=self.backbone)
-        tie = SerialTie(self.backbone)
-        joints = connect([tie])
+            for unit in seed_term.routes:
+                unit = ComplementUnit(unit, self.space, unit.binding)
+                routes[unit] = seed_term.tag
+            for unit in spread(family.seed):
+                routes[unit.clone(space=self.space)] = seed_term.routes[unit]
+            term = WrapperTerm(self.state.tag(), seed_term,
+                               self.space, self.space, routes)
+            return term
+        baseline = self.baseline
+        if baseline == self.space:
+            baseline = baseline.base
+        lkid = self.state.compile(self.space.base, baseline=baseline)
+        seed_joints = []
+        if seed_term.baseline != family.seed_baseline:
+            seed_joints = self.tie_terms(lkid, seed_term)
+            lkid = self.inject_ties(lkid, seed_joints)
+        routes = {}
+        for unit in seed_term.routes:
+            unit = ComplementUnit(unit, self.backbone, unit.binding)
+            routes[unit] = seed_term.tag
+        for unit in spread(family.seed):
+            routes[unit.clone(space=self.backbone)] = seed_term.routes[unit]
+        seed_joints_copy = seed_joints
+        seed_joints = []
+        for lunit, runit in seed_joints:
+            runit = ComplementUnit(runit, self.backbone, runit.binding)
+            routes[runit] = seed_term.tag
+            seed_joints.append((lunit, runit))
+        rkid = WrapperTerm(self.state.tag(), seed_term,
+                           self.backbone, self.backbone, routes)
+        joints = seed_joints + tie(self.space)
         is_left = False
         is_right = False
         routes = {}
         routes.update(lkid.routes)
         routes.update(rkid.routes)
+        for unit in spread(self.space):
+            routes[unit.clone(space=self.space)] = routes[unit]
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                        is_left, is_right, self.space, routes)
+                        is_left, is_right, self.space, rkid.baseline, routes)
 
 
 class CompileFiltered(CompileSpace):
@@ -1208,9 +1288,23 @@ class InjectKernel(Inject):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
         term = self.state.inject(self.term, [self.space])
-        routes = term.routes.copy()
-        routes[self.unit] = routes[self.space]
-        return term.clone(routes=routes)
+        assert self.unit in term
+        return term
+
+
+class InjectComplement(Inject):
+
+    adapts(ComplementUnit)
+
+    def __call__(self):
+        if self.unit in self.term.routes:
+            return self.term
+        if not self.term.space.spans(self.space):
+            raise CompileError("expected a singular expression",
+                               self.unit.mark)
+        term = self.state.inject(self.term, [self.space])
+        assert self.unit in term
+        return term
 
 
 class InjectBatch(Inject):
@@ -1362,7 +1456,8 @@ class InjectScalarBatch(Inject):
         # a no-op wrapper.
         if unit_term.is_nullary:
             unit_term = WrapperTerm(self.state.tag(), unit_term,
-                                    unit_term.space, unit_term.routes.copy())
+                                    unit_term.space, unit_term.baseline,
+                                    unit_term.routes.copy())
         # And join it to the main term.
         extra_routes = dict((unit, unit_term.tag) for unit in units)
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1708,7 +1803,7 @@ class OrderQuotient(OrderSpace):
             yield (code, direction)
         if self.with_weak:
             space = self.space.inflate()
-            for code in self.family.kernel:
+            for code in self.space.family.kernel:
                 code = KernelUnit(code, space, code.binding)
                 yield (code, +1)
 
@@ -1761,10 +1856,11 @@ class OrderComplement(OrderSpace):
             yield (code, direction)
         if self.with_weak:
             space = self.space.inflate()
-            for code in ordering(self.space.base.family.seed):
-                if any(not self.space.base.spans(unit) for unit in code.units):
+            for code, direction in ordering(self.space.base.family.seed):
+                if any(not self.space.base.spans(unit.space)
+                       for unit in code.units):
                     code = ComplementUnit(code, space, code.binding)
-                    yield (code, +1)
+                    yield (code, direction)
 
 
 class SpreadComplement(SpreadSpace):
@@ -1787,7 +1883,7 @@ class SpreadComplement(SpreadSpace):
         #for code in self.space.base.family.kernel:
         #    yield ComplementUnit(code, space, code.binding)
         for unit in spread(seed):
-            yield unit.clone(base=space)
+            yield unit.clone(space=space)
 
 
 class SewComplement(SewSpace):
