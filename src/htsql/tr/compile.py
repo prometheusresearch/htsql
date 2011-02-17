@@ -27,7 +27,7 @@ from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
                    AggregateBatchExpr)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
-                   WrapperTerm, SegmentTerm, QueryTerm)
+                   WrapperTerm, SegmentTerm, QueryTerm, Joint)
 
 
 class CompilingState(object):
@@ -897,16 +897,16 @@ class CompileQuotient(CompileSpace):
         routes = {}
         joints_copy = joints
         joints = []
-        for lunit, runit in joints_copy:
-            basis.append(runit)
-            runit = KernelUnit(runit, self.backbone, runit.binding)
-            routes[runit] = tag
-            joints.append((lunit, runit))
+        for joint in joints_copy:
+            basis.append(joint.rop)
+            rop = KernelUnit(joint.rop, self.backbone, joint.rop.binding)
+            routes[rop] = tag
+            joints.append(joint.clone(rop=rop))
         quotient_joints = tie(self.space.seed_baseline)
         if seed_term.baseline != self.space.seed_baseline:
-            for lunit, runit in quotient_joints:
-                basis.append(runit)
-                unit = KernelUnit(runit, self.backbone, runit.binding)
+            for joint in quotient_joints:
+                basis.append(joint.rop)
+                unit = KernelUnit(joint.rop, self.backbone, joint.rop.binding)
                 routes[unit] = tag
         else:
             assert quotient_joints == joints_copy
@@ -938,6 +938,8 @@ class CompileComplement(CompileSpace):
             baseline = baseline.base
         seed_term = self.state.compile(family.seed, baseline=baseline)
         seed_term = self.state.inject(seed_term, family.kernel)
+        if self.space.extra_codes is not None:
+            seed_term = self.state.inject(seed_term, self.space.extra_codes)
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.space, seed_term.baseline,
                                 seed_term.routes.copy())
@@ -950,6 +952,10 @@ class CompileComplement(CompileSpace):
             for code in family.kernel:
                 unit = ComplementUnit(code, self.space, unit.binding)
                 routes[unit] = seed_term.tag
+            if self.space.extra_codes is not None:
+                for code in self.space.extra_codes:
+                    unit = ComplementUnit(code, self.space, code.binding)
+                    routes[unit] = seed_term.tag
             for unit in spread(family.seed):
                 routes[unit.clone(space=self.space)] = seed_term.routes[unit]
             term = WrapperTerm(self.state.tag(), seed_term,
@@ -970,14 +976,18 @@ class CompileComplement(CompileSpace):
         for code in family.kernel:
             unit = ComplementUnit(code, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
+        if self.space.extra_codes is not None:
+            for code in self.space.extra_codes:
+                unit = ComplementUnit(code, self.backbone, code.binding)
+                routes[unit] = seed_term.tag
         for unit in spread(family.seed):
             routes[unit.clone(space=self.backbone)] = seed_term.routes[unit]
         seed_joints_copy = seed_joints
         seed_joints = []
-        for lunit, runit in seed_joints:
-            runit = ComplementUnit(runit, self.backbone, runit.binding)
-            routes[runit] = seed_term.tag
-            seed_joints.append((lunit, runit))
+        for joint in seed_joints:
+            rop = ComplementUnit(joint.rop, self.backbone, joint.rop.binding)
+            routes[rop] = seed_term.tag
+            seed_joints.append(joint.clone(rop=rop))
         rkid = WrapperTerm(self.state.tag(), seed_term,
                            self.backbone, self.backbone, routes)
         joints = seed_joints + tie(self.space)
@@ -1307,9 +1317,14 @@ class InjectComplement(Inject):
         if not self.term.space.spans(self.space):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        term = self.state.inject(self.term, [self.space])
-        assert self.unit in term.routes
-        return term
+        space = self.space.clone(extra_codes=[self.unit.code])
+        baseline = space
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        unit_term = self.state.compile(space, baseline=baseline)
+        assert self.unit in unit_term.routes
+        extra_routes = { self.unit: unit_term.routes[self.unit] }
+        return self.join_terms(self.term, unit_term, extra_routes)
 
 
 class InjectBatch(Inject):
@@ -1571,10 +1586,10 @@ class InjectAggregateBatch(Inject):
         routes = {}
         joints_copy = joints
         joints = []
-        for lunit, runit in joints_copy:
-            runit = KernelUnit(runit, projected_space, unit.binding)
-            routes[runit] = tag
-            joints.append((lunit, runit))
+        for joint in joints_copy:
+            rop = KernelUnit(joint.rop, projected_space, joint.rop.binding)
+            routes[rop] = tag
+            joints.append(joint.clone(rop=rop))
 
         ## The term space must always be in the routing table.  The actual
         ## route does not matter since it should never be used.
@@ -1778,7 +1793,7 @@ class SewProduct(SewSpace):
         space = self.space.inflate()
         for column in connect_columns:
             unit = ColumnUnit(column, space, self.space.binding)
-            yield (unit, unit)
+            yield Joint(unit, unit)
 
 
 class TieFiberProduct(TieSpace):
@@ -1794,7 +1809,7 @@ class TieFiberProduct(TieSpace):
                                     space.join.target_columns):
             lunit = ColumnUnit(lcolumn, space.base, self.space.binding)
             runit = ColumnUnit(rcolumn, space, self.space.binding)
-            yield (lunit, runit)
+            yield Joint(lunit, runit)
 
 
 class OrderQuotient(OrderSpace):
@@ -1831,12 +1846,12 @@ class SewQuotient(SewSpace):
 
     def __call__(self):
         space = self.space.inflate()
-        for lunit, runit in tie(space.family.seed_baseline):
-            unit = KernelUnit(runit, space, runit.binding)
-            yield (unit, unit)
+        for joint in tie(space.family.seed_baseline):
+            op = KernelUnit(joint.rop, space, joint.rop.binding)
+            yield joint.clone(lop=op, rop=op)
         for code in space.family.kernel:
             unit = KernelUnit(code, space, code.binding)
-            yield (unit, unit)
+            yield Joint(unit, unit, is_total=True)
 
 
 class TieQuotient(TieSpace):
@@ -1845,9 +1860,9 @@ class TieQuotient(TieSpace):
 
     def __call__(self):
         space = self.space.inflate()
-        for lunit, runit in tie(space.family.seed_baseline):
-            runit = KernelUnit(runit, space, runit.binding)
-            yield (lunit, runit)
+        for joint in tie(space.family.seed_baseline):
+            rop = KernelUnit(joint.rop, space, joint.rop.binding)
+            yield joint.clone(rop=rop)
 
 
 class OrderComplement(OrderSpace):
@@ -1875,18 +1890,6 @@ class SpreadComplement(SpreadSpace):
     def __call__(self):
         space = self.space.inflate()
         seed = self.space.base.family.seed.inflate()
-        #baseline = self.space.base.family.seed_baseline.inflate()
-        #axes = []
-        #axis = seed
-        #while axis is not None and axis.concludes(baseline):
-        #    axes.append(axis)
-        #    axis = axis.base
-        #axes.reverse()
-        #for axis in axes:
-        #    for unit in spread(axis):
-        #        yield ComplementUnit(unit, space, unit.binding)
-        #for code in self.space.base.family.kernel:
-        #    yield ComplementUnit(code, space, code.binding)
         for unit in spread(seed):
             yield unit.clone(space=space)
 
@@ -1907,9 +1910,9 @@ class SewComplement(SewSpace):
         axes.reverse()
         for axis in axes:
             if not axis.is_contracting or axis == baseline:
-                for unit in sew(axis):
-                    unit = ComplementUnit(unit, space, unit.binding)
-                    yield (unit, unit)
+                for joint in sew(axis):
+                    op = ComplementUnit(joint.lop, space, joint.lop.binding)
+                    yield joint.clone(lop=op, rop=op)
 
 
 class TieComplement(TieSpace):
@@ -1918,14 +1921,14 @@ class TieComplement(TieSpace):
 
     def __call__(self):
         space = self.space.inflate()
-        for lunit, runit in tie(space.base.family.seed_baseline):
-            lunit = KernelUnit(runit, space.base, runit.binding)
-            runit = ComplementUnit(runit, space, runit.binding)
-            yield (lunit, runit)
+        for joint in tie(space.base.family.seed_baseline):
+            lop = KernelUnit(joint.rop, space.base, joint.rop.binding)
+            rop = ComplementUnit(joint.rop, space, joint.rop.binding)
+            yield joint.clone(lop=lop, rop=rop)
         for code in space.base.family.kernel:
-            lunit = KernelUnit(code, space.base, code.binding)
-            runit = ComplementUnit(code, space, code.binding)
-            yield (lunit, runit)
+            lop = KernelUnit(code, space.base, code.binding)
+            rop = ComplementUnit(code, space, code.binding)
+            yield Joint(lop=lop, rop=rop, is_total=True)
 
 
 class OrderOrdered(OrderSpace):

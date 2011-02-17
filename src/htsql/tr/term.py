@@ -14,9 +14,24 @@ This module declares term nodes.
 
 
 from ..util import (listof, dictof, oneof, tupleof, maybe,
-                    Clonable, Printable)
+                    Clonable, Printable, Comparable)
 from ..domain import BooleanDomain
 from .code import Expression, Space, Code, Unit, QueryExpr
+
+
+class Joint(Comparable, Clonable, Printable):
+
+    def __init__(self, lop, rop, is_total=False):
+        assert isinstance(lop, Code)
+        assert isinstance(rop, Code)
+        assert isinstance(is_total, bool)
+        super(Joint, self).__init__(equality_vector=(lop, rop, is_total))
+        self.lop = lop
+        self.rop = rop
+        self.is_total = is_total
+
+    def __iter__(self):
+        return iter([self.lop, self.rop])
 
 
 class PreTerm(Clonable, Printable):
@@ -351,7 +366,7 @@ class JoinTerm(BinaryTerm):
 
     def __init__(self, tag, lkid, rkid, joints,
                  is_left, is_right, space, baseline, routes):
-        assert isinstance(joints, listof(tupleof(Code, Code)))
+        assert isinstance(joints, listof(Joint))
         assert isinstance(is_left, bool) and isinstance(is_right, bool)
         # Note: currently we never generate right outer joins.
         assert is_right is False
@@ -441,7 +456,7 @@ class CorrelationTerm(UnaryTerm):
 
     def __init__(self, tag, kid, link, joints, space, baseline, routes):
         assert isinstance(link, Term)
-        assert isinstance(joints, listof(tupleof(Code, Code)))
+        assert isinstance(joints, listof(Joint))
         super(CorrelationTerm, self).__init__(tag, kid,
                                               space, baseline, routes)
         self.link = link

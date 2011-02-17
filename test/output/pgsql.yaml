@@ -15433,7 +15433,7 @@ tests:
                                           INNER JOIN "ed"."student" AS "student"
                                                      ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
                                      GROUP BY 2) AS "student"
-                                    ON ("program"."degree" = "student"."degree")
+                                    ON ("program"."degree" IS NOT DISTINCT FROM "student"."degree")
                ORDER BY 1 ASC NULLS FIRST
           - uri: /quotient(student, year(dob), gender)
             status: 200 OK
@@ -16074,6 +16074,50 @@ tests:
                                ON ("school"."code" = "program"."school")
                WHERE (NULLIF("program"."degree", '') IS NOT NULL)
                ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.quotient(program, degree){kernel(),count(complement())}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.quotient(program,degree) |
+              -+---------------------------------+-
+               | degree   | count(complement())  |
+              -+----------+----------------------+-
+               | ba       |                    2 |
+               | pb       |                    1 |
+               | bs       |                    3 |
+               | ct       |                    2 |
+               | ba       |                    2 |
+               | ct       |                    1 |
+               | ma       |                    3 |
+               | ms       |                    1 |
+               | bs       |                    4 |
+               | ms       |                    4 |
+               | ba       |                    5 |
+               | ct       |                    1 |
+               | ma       |                    3 |
+               | bs       |                    5 |
+               | ph       |                    1 |
+               |          |                    1 |
+                                         (16 rows)
+
+               ----
+               /school.quotient(program,degree){kernel(),count(complement())}
+               SELECT "program_1"."degree",
+                      COALESCE("program_2"."count", 0)
+               FROM "ad"."school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "ad"."program" AS "program"
+                                GROUP BY 2, 1) AS "program_1"
+                               ON ("school"."code" = "program_1"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."school",
+                                            "program"."degree"
+                                     FROM "ad"."program" AS "program"
+                                     GROUP BY 2, 3) AS "program_2"
+                                    ON (("program_1"."school" = "program_2"."school") AND ("program_1"."degree" IS NOT DISTINCT FROM "program_2"."degree"))
+               ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
           - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
             status: 200 OK
             headers:
@@ -16118,7 +16162,7 @@ tests:
                                           INNER JOIN "ed"."student" AS "student"
                                                      ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
                                      GROUP BY 2, 3) AS "student"
-                                    ON (("program"."school" = "student"."school") AND ("program"."degree" = "student"."degree"))
+                                    ON (("program"."school" = "student"."school") AND ("program"."degree" IS NOT DISTINCT FROM "student"."degree"))
                ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
           - uri: /school.program .quotient(student, year(dob), gender)
             status: 200 OK
@@ -16649,7 +16693,7 @@ tests:
                                             "program"."degree"
                                      FROM "ad"."program" AS "program"
                                      GROUP BY 2) AS "program_2"
-                                    ON ("program_1"."degree" = "program_2"."degree")
+                                    ON ("program_1"."degree" IS NOT DISTINCT FROM "program_2"."degree")
                WHERE (COALESCE("program_2"."count", 0) > 5)
                ORDER BY 1 ASC NULLS FIRST
           - uri: /quotient(course,credits)?kernel()>3
@@ -16729,7 +16773,7 @@ tests:
                                                      ON ("department"."code" = "course"."department")
                                      WHERE ("department"."code" = 'stdart')
                                      GROUP BY 2) AS "course_2"
-                                    ON ("course_1"."credits" = "course_2"."credits")
+                                    ON ("course_1"."credits" IS NOT DISTINCT FROM "course_2"."credits")
                WHERE ("course_1"."credits" > 3)
                ORDER BY 1 ASC NULLS FIRST
           - uri: /quotient(school,count(program)){kernel(),count(complement())}
@@ -16920,6 +16964,7 @@ tests:
               -+-------------------------------------------------------------------------+-
                | school | code     | title                            | degree | part_of |
               -+--------+----------+----------------------------------+--------+---------+-
+               | ph     | phd      | Honorary PhD                     |        |         |
                | art    | uhist    | Bachelor of Arts in Art History  | ba     |         |
                | art    | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
                | edu    | umath    | Bachelor of Arts in Math         | ba     |         |
@@ -16970,7 +17015,7 @@ tests:
                :        :          : History                          :        :         :
                | ns     | pmth     | Doctorate of Science in          | ph     |         |
                :        :          : Mathematics                      :        :         :
-                                                                                 (38 rows)
+                                                                                 (39 rows)
 
                ----
                /quotient(program,degree).complement()
@@ -16988,8 +17033,141 @@ tests:
                                        "program"."degree",
                                        "program"."part_of"
                                 FROM "ad"."program" AS "program") AS "program_2"
-                               ON ("program_1"."degree" = "program_2"."degree")
+                               ON ("program_1"."degree" IS NOT DISTINCT FROM "program_2"."degree")
                ORDER BY "program_1"."degree" ASC NULLS FIRST, 1 ASC, 2 ASC
+          - uri: /quotient(program.sort(count(student)),degree).complement() {*, count(student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program.sort(count(student))                                                             |
+              -+------------------------------------------------------------------------------------------+-
+               | school | code     | title                            | degree | part_of | count(student) |
+              -+--------+----------+----------------------------------+--------+---------+----------------+-
+               | ph     | phd      | Honorary PhD                     |        |         |              0 |
+               | art    | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |              0 |
+               | edu    | umath    | Bachelor of Arts in Math         | ba     |         |              0 |
+               :        :          : Education                        :        :         :                :
+               | edu    | usci     | Bachelor of Arts in Science      | ba     |         |              0 |
+               :        :          : Education                        :        :         :                :
+               | la     | uengl    | Bachelor of Arts in English      | ba     | gengl   |              0 |
+               | la     | upolisci | Bachelor of Arts in Political    | ba     |         |              0 |
+               :        :          : Science                          :        :         :                :
+               | art    | uhist    | Bachelor of Arts in Art History  | ba     |         |              1 |
+               | la     | uspan    | Bachelor of Arts in Spanish      | ba     |         |              1 |
+               | la     | uhist    | Bachelor of Arts in History      | ba     |         |              2 |
+               | la     | upsych   | Bachelor of Arts in Psychology   | ba     |         |              2 |
+               | bus    | ubusad   | B.S. in Business Administration  | bs     |         |              0 |
+               | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |              0 |
+               | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |              0 |
+               | ns     | gmth     | Masters of Science in            | bs     | pmth    |              0 |
+               :        :          : Mathematics                      :        :         :                :
+               | ns     | umth     | Bachelor of Science in           | bs     | gmth    |              0 |
+               :        :          : Mathematics                      :        :         :                :
+               | bus    | uacct    | B.S. in Accounting               | bs     |         |              2 |
+               | bus    | ucorpfi  | B.S. in Corporate Finance        | bs     |         |              2 |
+               | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |              2 |
+               | ns     | uchem    | Bachelor of Science in Chemistry | bs     |         |              2 |
+               | ns     | uastro   | Bachelor of Science in Astronomy | bs     |         |              3 |
+               | eng    | ucompsci | B.S. in Computer Science         | bs     |         |              4 |
+               | ns     | uphys    | Bachelor of Science in Physics   | bs     |         |              5 |
+               | edu    | psci     | Certificate in Science Teaching  | ct     |         |              1 |
+               | la     | psciwri  | Science Writing                  | ct     |         |              1 |
+               | bus    | pacc     | Graduate Certificate in          | ct     |         |              2 |
+               :        :          : Accounting                       :        :         :                :
+               | bus    | pcap     | Certificate in Capital Markets   | ct     |         |              2 |
+               | edu    | gtch     | Master of Arts in Teaching       | ma     |         |              0 |
+               | la     | glang    | Master of Arts in Modern         | ma     |         |              0 |
+               :        :          : Languages                        :        :         :                :
+               | la     | gscitch  | Master of Arts in Science        | ma     |         |              0 |
+               :        :          : Teaching                         :        :         :                :
+               | edu    | gedlead  | Master of Arts in Education      | ma     |         |              1 |
+               :        :          : Leadership                       :        :         :                :
+               | edu    | glited   | Master of Arts in Literacy       | ma     |         |              1 |
+               :        :          : Education                        :        :         :                :
+               | la     | gengl    | Master of Arts in English        | ma     |         |              3 |
+               | edu    | gedu     | M.S. in Education                | ms     |         |              1 |
+               | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |              1 |
+               | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |              2 |
+               | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |              2 |
+               | eng    | gbe      | M.S. in Bioengineering           | ms     |         |              3 |
+               | art    | gart     | Post Baccalaureate in Art        | pb     |         |              5 |
+               :        :          : History                          :        :         :                :
+               | ns     | pmth     | Doctorate of Science in          | ph     |         |              0 |
+               :        :          : Mathematics                      :        :         :                :
+                                                                                                  (39 rows)
+
+               ----
+               /quotient(program.sort(count(student)),degree).complement(){*,count(student)}
+               SELECT "program_2"."school",
+                      "program_2"."code",
+                      "program_2"."title",
+                      "program_2"."degree",
+                      "program_2"."part_of",
+                      COALESCE("student"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "ad"."program" AS "program"
+                     GROUP BY 1) AS "program_1"
+                    INNER JOIN (SELECT "program"."school",
+                                       "program"."code",
+                                       "program"."title",
+                                       "program"."degree",
+                                       "program"."part_of"
+                                FROM "ad"."program" AS "program") AS "program_2"
+                               ON ("program_1"."degree" IS NOT DISTINCT FROM "program_2"."degree")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program_2"."school" = "student"."school") AND ("program_2"."code" = "student"."program"))
+                    INNER JOIN (SELECT COALESCE("student"."count", 0) AS "count",
+                                       "program"."school",
+                                       "program"."code"
+                                FROM "ad"."program" AS "program"
+                                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                             "student"."school",
+                                                             "student"."program"
+                                                      FROM "ed"."student" AS "student"
+                                                      GROUP BY 2, 3) AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))) AS "program_3"
+                               ON (("program_2"."school" = "program_3"."school") AND ("program_2"."code" = "program_3"."code"))
+               ORDER BY "program_1"."degree" ASC NULLS FIRST, "program_3"."count" ASC, 1 ASC, 2 ASC
+          - uri: /quotient(program,degree){*,exists(complement()),count(complement())}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(program,degree)                            |
+              -+-----------------------------------------------------+-
+               | degree | exists(complement()) | count(complement()) |
+              -+--------+----------------------+---------------------+-
+               |        | true                 |                   1 |
+               | ba     | true                 |                   9 |
+               | bs     | true                 |                  12 |
+               | ct     | true                 |                   4 |
+               | ma     | true                 |                   6 |
+               | ms     | true                 |                   5 |
+               | pb     | true                 |                   1 |
+               | ph     | true                 |                   1 |
+                                                              (8 rows)
+
+               ----
+               /quotient(program,degree){*,exists(complement()),count(complement())}
+               SELECT "program_1"."degree",
+                      EXISTS(SELECT TRUE
+                             FROM "ad"."program" AS "program"
+                             WHERE ("program_1"."degree" IS NOT DISTINCT FROM "program"."degree")),
+                      COALESCE("program_2"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "ad"."program" AS "program"
+                     GROUP BY 1) AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."degree"
+                                     FROM "ad"."program" AS "program"
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("program_1"."degree" IS NOT DISTINCT FROM "program_2"."degree")
+               ORDER BY 1 ASC NULLS FIRST
   - include: test/input/format.yaml
     output:
       id: format

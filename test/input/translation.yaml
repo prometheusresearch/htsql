@@ -169,7 +169,6 @@ tests:
     - uri: /school.quotient(program?false(), degree)?false()
     - uri: /school.quotient(program?degree, degree)?kernel()
     - uri: /school.quotient(program, degree){kernel(),count(complement())}
-      skip: true
     - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
 
     - uri: /school.program
@@ -199,5 +198,6 @@ tests:
     - uri: /department.quotient((school?code='art').program, degree)
     - uri: /quotient(program,degree).complement()
     - uri: /quotient(program.sort(count(student)),degree).complement()
-      skip: true
+                {*, count(student)}
+    - uri: /quotient(program,degree){*,exists(complement()),count(complement())}
 

@@ -892,9 +892,9 @@ class AssembleJoin(Assemble):
         # The join condition is composed of equality expressions
         # of the form: `lop = rop`, where the the operands are
         # exported from the left child and the right child respectively.
-        for lop, rop in self.term.joints:
-            self.state.schedule(lop, router=self.term.lkid)
-            self.state.schedule(rop, router=self.term.rkid)
+        for joint in self.term.joints:
+            self.state.schedule(joint.lop, router=self.term.lkid)
+            self.state.schedule(joint.rop, router=self.term.rkid)
 
     def assemble_include(self):
         # Assemble the `FROM` list.
@@ -921,11 +921,15 @@ class AssembleJoin(Assemble):
         # are evaluated against the left subframe and the right subframe
         # respectively.
         equalities = []
-        for lop, rop in self.term.joints:
-            lop = self.state.evaluate(lop, router=self.term.lkid)
-            rop = self.state.evaluate(rop, router=self.term.rkid)
+        for joint in self.term.joints:
+            lop = self.state.evaluate(joint.lop, router=self.term.lkid)
+            rop = self.state.evaluate(joint.rop, router=self.term.rkid)
             is_nullable = (lop.is_nullable or rop.is_nullable)
-            equality = FormulaPhrase(IsEqualSig(+1), coerce(BooleanDomain()),
+            if joint.is_total and lop.is_nullable and rop.is_nullable:
+                signature = IsTotallyEqualSig(+1)
+            else:
+                signature = IsEqualSig(+1)
+            equality = FormulaPhrase(signature, coerce(BooleanDomain()),
                                      is_nullable, self.term.expression,
                                      lop=lop, rop=rop)
             equalities.append(equality)
@@ -972,14 +976,14 @@ class AssembleEmbedding(Assemble):
         # The join condition is a sequence of equalities: `lop = rop`,
         # where `lop` is exported from `lkid` and `rop` is exported
         # from (the child of) `rkid`.
-        for lop, rop in correlation.joints:
+        for joint in correlation.joints:
             # Assign the claims from th embedded term to its sibling term;
             # here `correlation.link` coincides with `lkid`.
-            self.state.schedule(lop, router=correlation.link)
+            self.state.schedule(joint.lop, router=correlation.link)
             # While we are on it, we also assign claims to `rkid` (or rather
             # the child of `rkid`), although that is something `rkid` could
             # do for itself.
-            self.state.schedule(rop, dispatcher=correlation)
+            self.state.schedule(joint.rop, dispatcher=correlation)
 
     def assemble_include(self):
         # Assemble the `FROM` list.
@@ -1065,7 +1069,7 @@ class AssembleCorrelation(Assemble):
         # List of equality phrases.
         equalities = []
         # Iterate over `lop = rop` expressions:
-        for lop, rop in self.term.joints:
+        for joint in self.term.joints:
             # We cannot dispatch `lop` directly because `link` is not
             # our descendant and thus, it is not in the dispatch table.
             # So we temporarily pop the current gate making the parent
@@ -1073,14 +1077,18 @@ class AssembleCorrelation(Assemble):
             self.state.pop_gate()
             # Evaluate the left operand against our sibling (`link` coincides
             # with `lkid` of our parent term).
-            lop = self.state.evaluate(lop, router=self.term.link)
+            lop = self.state.evaluate(joint.lop, router=self.term.link)
             # Restore the original dispatching context.
             self.state.push_gate(is_nullable=True, dispatcher=self.term)
             # Evaluate the right operand against the child frame.
-            rop = self.state.evaluate(rop, router=self.term.kid)
+            rop = self.state.evaluate(joint.rop, router=self.term.kid)
             # An individual condition.
             is_nullable = (lop.is_nullable or rop.is_nullable)
-            equality = FormulaPhrase(IsEqualSig(+1), coerce(BooleanDomain()),
+            if joint.is_total and lop.is_nullable and rop.is_nullable:
+                signature = IsTotallyEqualSig(+1)
+            else:
+                signature = IsEqualSig(+1)
+            equality = FormulaPhrase(signature, coerce(BooleanDomain()),
                                      is_nullable, self.term.expression,
                                      lop=lop, rop=rop)
             equalities.append(equality)

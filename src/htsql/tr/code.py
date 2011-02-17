@@ -857,9 +857,10 @@ class ComplementSpace(Space):
 
     is_axis = True
 
-    def __init__(self, base, binding):
+    def __init__(self, base, binding, extra_codes=None):
         assert isinstance(base, Space)
         assert base.family.is_kernel
+        assert isinstance(extra_codes, maybe(listof(Code)))
         super(ComplementSpace, self).__init__(
                     base=base,
                     family=base.family.seed.family,
@@ -867,6 +868,7 @@ class ComplementSpace(Space):
                     is_expanding=True,
                     binding=binding,
                     equality_vector=(base,))
+        self.extra_codes = extra_codes
 
 
 class FilteredSpace(Space):
