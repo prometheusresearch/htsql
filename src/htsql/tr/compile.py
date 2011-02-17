@@ -924,7 +924,7 @@ class CompileQuotient(CompileSpace):
         for unit in spread(self.space):
             routes[unit.clone(space=self.space)] = routes[unit]
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                        is_left, is_right, self.space, rkid.baseline, routes)
+                        is_left, is_right, self.space, lkid.baseline, routes)
 
 
 class CompileComplement(CompileSpace):
@@ -938,15 +938,17 @@ class CompileComplement(CompileSpace):
             baseline = baseline.base
         seed_term = self.state.compile(family.seed, baseline=baseline)
         seed_term = self.state.inject(seed_term, family.kernel)
-        if seed_term.is_nullary:
-            seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                    seed_term.space, seed_term.baseline,
-                                    seed_term.routes.copy())
+        seed_term = WrapperTerm(self.state.tag(), seed_term,
+                                seed_term.space, seed_term.baseline,
+                                seed_term.routes.copy())
         if (self.space == self.baseline and
                 seed_term.baseline == family.seed_baseline):
             routes = {}
             for unit in seed_term.routes:
                 unit = ComplementUnit(unit, self.space, unit.binding)
+                routes[unit] = seed_term.tag
+            for code in family.kernel:
+                unit = ComplementUnit(code, self.space, unit.binding)
                 routes[unit] = seed_term.tag
             for unit in spread(family.seed):
                 routes[unit.clone(space=self.space)] = seed_term.routes[unit]
@@ -964,6 +966,9 @@ class CompileComplement(CompileSpace):
         routes = {}
         for unit in seed_term.routes:
             unit = ComplementUnit(unit, self.backbone, unit.binding)
+            routes[unit] = seed_term.tag
+        for code in family.kernel:
+            unit = ComplementUnit(code, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
         for unit in spread(family.seed):
             routes[unit.clone(space=self.backbone)] = seed_term.routes[unit]
@@ -984,7 +989,7 @@ class CompileComplement(CompileSpace):
         for unit in spread(self.space):
             routes[unit.clone(space=self.space)] = routes[unit]
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                        is_left, is_right, self.space, rkid.baseline, routes)
+                        is_left, is_right, self.space, lkid.baseline, routes)
 
 
 class CompileFiltered(CompileSpace):
@@ -1303,7 +1308,7 @@ class InjectComplement(Inject):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
         term = self.state.inject(self.term, [self.space])
-        assert self.unit in term
+        assert self.unit in term.routes
         return term
 
 

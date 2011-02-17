@@ -152,14 +152,11 @@ tests:
     - uri: /quotient(student, {year(dob), gender})
     - uri: /quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
     - uri: /quotient(student, {year(dob), gender}){kernel(),count(complement())}
-      skip: true
     - uri: /quotient(quotient(student, year(dob)).complement(), gender)
                 {kernel(), count(complement()), count(complement().is_active)}
-      skip: true
     - uri: /quotient(quotient(student, year(dob), gender), kernel(0))
                 {kernel(), count(complement()), count(complement().complement()),
                  count(complement().complement().is_active)}
-      skip: true
     - uri: /school.quotient(program, degree)
     - uri: /school.quotient(program, degree){*}
     - uri: /school.quotient(program, degree){kernel()}
@@ -177,25 +174,19 @@ tests:
 
     - uri: /school.program
             .quotient(student, year(dob), gender)
-      skip: true
     - uri: /school.program
             .quotient(student, {year(dob), gender})
-      skip: true
     - uri: /school.program
             .quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
-      skip: true
     - uri: /school.program
             .quotient(student, {year(dob), gender}){kernel(),count(complement())}
-      skip: true
     - uri: /school.program
             .quotient(quotient(student, year(dob)).complement(), gender)
                 {kernel(), count(complement()), count(complement().is_active)}
-      skip: true
     - uri: /school.program
             .quotient(quotient(student, year(dob), gender), kernel(0))
                 {kernel(), count(complement()), count(complement().complement()),
                  count(complement().complement().is_active)}
-      skip: true
 
     - uri: /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
     - uri: /quotient(course,credits)?kernel()>3
@@ -203,9 +194,10 @@ tests:
     - uri: /(quotient((department?code='stdart').course,credits)?kernel()>3)
                 {*,count(complement())}
     - uri: /quotient(school,count(program)){kernel(),count(complement())}
-      skip: true
     - uri: /school.quotient(program, degree)
     - uri: /department.quotient(school.program, degree)
     - uri: /department.quotient((school?code='art').program, degree)
-
+    - uri: /quotient(program,degree).complement()
+    - uri: /quotient(program.sort(count(student)),degree).complement()
+      skip: true
 

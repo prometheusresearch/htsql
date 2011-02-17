@@ -882,7 +882,7 @@ class DubFrame(Dub):
         # represented by the frame.
         space = self.clause.space
         while space.family.is_kernel:
-            space = space.seed
+            space = space.family.seed
         if space.family.is_table:
             return space.family.table.name
         # Use the default alias when the frame does not represent

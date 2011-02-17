@@ -113,9 +113,6 @@ class Request(Utility):
                 connect = Connect()
                 connection = connect()
                 cursor = connection.cursor()
-#                print '-'*50
-#                print plan.sql
-#                print '-'*50
                 cursor.execute(plan.sql)
                 rows = cursor.fetchall()
                 connection.close()

@@ -15664,6 +15664,67 @@ tests:
                                      GROUP BY 3) AS "student_2"
                                     ON ("student_1"."gender" = "student_2"."gender")
                ORDER BY 1 ASC
+          - uri: /quotient(quotient(student, year(dob), gender), kernel(0)) {kernel(),
+              count(complement()), count(complement().complement()), count(complement().complement().is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(quotient(student,year(dob),gender),kernel(0))                                                          |
+              -+-----------------------------------------------------------------------------------------------------------------+-
+               | year(dob) | count(complement()) | count(complement().complement()) | count(complement().complement().is_active) |
+              -+-----------+---------------------+----------------------------------+--------------------------------------------+-
+               |      1981 |                   1 |                                1 |                                          1 |
+               |      1983 |                   1 |                                1 |                                          1 |
+               |      1985 |                   2 |                                2 |                                          1 |
+               |      1987 |                   2 |                                3 |                                          3 |
+               |      1988 |                   2 |                                4 |                                          3 |
+               |      1989 |                   2 |                                3 |                                          3 |
+               |      1990 |                   2 |                                3 |                                          3 |
+               |      1991 |                   2 |                                6 |                                          6 |
+               |      1992 |                   2 |                               10 |                                          6 |
+               |      1993 |                   2 |                                6 |                                          6 |
+               |      1994 |                   2 |                                4 |                                          4 |
+               |      1995 |                   2 |                                4 |                                          3 |
+               |      1998 |                   1 |                                1 |                                          1 |
+               |      2000 |                   1 |                                1 |                                          1 |
+               |      2001 |                   1 |                                1 |                                          1 |
+               |      2002 |                   1 |                                1 |                                          1 |
+                                                                                                                         (16 rows)
+
+               ----
+               /quotient(quotient(student,year(dob),gender),kernel(0)){kernel(),count(complement()),count(complement().complement()),count(complement().complement().is_active)}
+               SELECT "student_1"."year",
+                      COALESCE("student_2"."count", 0),
+                      COALESCE("student_3"."count_1", 0),
+                      COALESCE("student_3"."count_2", 0)
+               FROM (SELECT "student"."year"
+                     FROM (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                           FROM "ed"."student" AS "student"
+                           GROUP BY 1, "student"."gender") AS "student"
+                     GROUP BY 1) AS "student_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."year"
+                                     FROM (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                           FROM "ed"."student" AS "student"
+                                           GROUP BY 1, "student"."gender") AS "student"
+                                     GROUP BY 2) AS "student_2"
+                                    ON ("student_1"."year" = "student_2"."year")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count_1",
+                                            COUNT(NULLIF("student_2"."is_active", FALSE)) AS "count_2",
+                                            "student_1"."year"
+                                     FROM (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                                  "student"."gender"
+                                           FROM "ed"."student" AS "student"
+                                           GROUP BY 1, 2) AS "student_1"
+                                          INNER JOIN (SELECT "student"."is_active",
+                                                             CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                                             "student"."gender"
+                                                      FROM "ed"."student" AS "student") AS "student_2"
+                                                     ON (("student_1"."year" = "student_2"."year") AND ("student_1"."gender" = "student_2"."gender"))
+                                     GROUP BY 3) AS "student_3"
+                                    ON ("student_1"."year" = "student_3"."year")
+               ORDER BY 1 ASC
           - uri: /school.quotient(program, degree)
             status: 200 OK
             headers:
@@ -16059,6 +16120,510 @@ tests:
                                      GROUP BY 2, 3) AS "student"
                                     ON (("program"."school" = "student"."school") AND ("program"."degree" = "student"."degree"))
                ORDER BY "school"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /school.program .quotient(student, year(dob), gender)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.program.quotient(student,year(dob),gender) |
+              -+---------------------------------------------------+-
+               | year(dob)                 | gender                |
+              -+---------------------------+-----------------------+-
+               |                      1989 | f                     |
+               |                      1991 | m                     |
+               |                      1992 | m                     |
+               |                      1991 | m                     |
+               |                      1995 | f                     |
+               |                      1998 | m                     |
+               |                      1981 | f                     |
+               |                      1985 | f                     |
+               |                      1992 | f                     |
+               |                      1993 | f                     |
+               |                      1988 | m                     |
+               |                      1994 | m                     |
+               |                      1983 | f                     |
+               |                      1988 | f                     |
+               |                      1995 | f                     |
+               |                      1989 | m                     |
+               |                      1991 | m                     |
+               |                      1992 | f                     |
+               |                      1993 | m                     |
+               |                      1990 | m                     |
+               |                      1992 | m                     |
+               |                      1987 | m                     |
+               |                      1990 | f                     |
+               |                      1991 | f                     |
+               |                      1993 | m                     |
+               |                      1994 | m                     |
+               |                      1995 | m                     |
+               |                      1987 | f                     |
+               |                      2002 | m                     |
+               |                      1985 | m                     |
+               |                      1988 | m                     |
+               |                      1989 | m                     |
+               |                      1988 | m                     |
+               |                      1987 | f                     |
+               |                      1993 | m                     |
+               |                      1992 | f                     |
+               |                      1994 | f                     |
+               |                      2001 | m                     |
+               |                      1991 | f                     |
+               |                      1992 | f                     |
+               |                      1993 | f                     |
+               |                      1992 | f                     |
+               |                      1994 | f                     |
+               |                      1990 | m                     |
+               |                      1991 | f                     |
+               |                      1992 | f                     |
+               |                      1993 | f                     |
+               |                      2000 | m                     |
+                                                           (48 rows)
+
+               ----
+               /school.program.quotient(student,year(dob),gender)
+               SELECT "student"."year",
+                      "student"."gender"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
+                    INNER JOIN (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                       "student"."gender",
+                                       "student"."school",
+                                       "student"."program"
+                                FROM "ed"."student" AS "student"
+                                GROUP BY 3, 4, 1, 2) AS "student"
+                               ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+               ORDER BY "school"."code" ASC, "program"."school" ASC, "program"."code" ASC, 1 ASC, 2 ASC
+          - uri: /school.program .quotient(student, {year(dob), gender})
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.program.quotient(student,{year(dob),gender}) |
+              -+-----------------------------------------------------+-
+               | year(dob)                  | gender                 |
+              -+----------------------------+------------------------+-
+               |                       1989 | f                      |
+               |                       1991 | m                      |
+               |                       1992 | m                      |
+               |                       1991 | m                      |
+               |                       1995 | f                      |
+               |                       1998 | m                      |
+               |                       1981 | f                      |
+               |                       1985 | f                      |
+               |                       1992 | f                      |
+               |                       1993 | f                      |
+               |                       1988 | m                      |
+               |                       1994 | m                      |
+               |                       1983 | f                      |
+               |                       1988 | f                      |
+               |                       1995 | f                      |
+               |                       1989 | m                      |
+               |                       1991 | m                      |
+               |                       1992 | f                      |
+               |                       1993 | m                      |
+               |                       1990 | m                      |
+               |                       1992 | m                      |
+               |                       1987 | m                      |
+               |                       1990 | f                      |
+               |                       1991 | f                      |
+               |                       1993 | m                      |
+               |                       1994 | m                      |
+               |                       1995 | m                      |
+               |                       1987 | f                      |
+               |                       2002 | m                      |
+               |                       1985 | m                      |
+               |                       1988 | m                      |
+               |                       1989 | m                      |
+               |                       1988 | m                      |
+               |                       1987 | f                      |
+               |                       1993 | m                      |
+               |                       1992 | f                      |
+               |                       1994 | f                      |
+               |                       2001 | m                      |
+               |                       1991 | f                      |
+               |                       1992 | f                      |
+               |                       1993 | f                      |
+               |                       1992 | f                      |
+               |                       1994 | f                      |
+               |                       1990 | m                      |
+               |                       1991 | f                      |
+               |                       1992 | f                      |
+               |                       1993 | f                      |
+               |                       2000 | m                      |
+                                                             (48 rows)
+
+               ----
+               /school.program.quotient(student,{year(dob),gender})
+               SELECT "student"."year",
+                      "student"."gender"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
+                    INNER JOIN (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                       "student"."gender",
+                                       "student"."school",
+                                       "student"."program"
+                                FROM "ed"."student" AS "student"
+                                GROUP BY 3, 4, 1, 2) AS "student"
+                               ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+               ORDER BY "school"."code" ASC, "program"."school" ASC, "program"."code" ASC, 1 ASC, 2 ASC
+          - uri: /school.program .quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.program.quotient(student,{year(dob),gender}) |
+              -+-----------------------------------------------------+-
+               | year(dob)    | gender    | year(dob)    | gender    |
+              -+--------------+-----------+--------------+-----------+-
+               |         1989 | f         |         1989 | f         |
+               |         1991 | m         |         1991 | m         |
+               |         1992 | m         |         1992 | m         |
+               |         1991 | m         |         1991 | m         |
+               |         1995 | f         |         1995 | f         |
+               |         1998 | m         |         1998 | m         |
+               |         1981 | f         |         1981 | f         |
+               |         1985 | f         |         1985 | f         |
+               |         1992 | f         |         1992 | f         |
+               |         1993 | f         |         1993 | f         |
+               |         1988 | m         |         1988 | m         |
+               |         1994 | m         |         1994 | m         |
+               |         1983 | f         |         1983 | f         |
+               |         1988 | f         |         1988 | f         |
+               |         1995 | f         |         1995 | f         |
+               |         1989 | m         |         1989 | m         |
+               |         1991 | m         |         1991 | m         |
+               |         1992 | f         |         1992 | f         |
+               |         1993 | m         |         1993 | m         |
+               |         1990 | m         |         1990 | m         |
+               |         1992 | m         |         1992 | m         |
+               |         1987 | m         |         1987 | m         |
+               |         1990 | f         |         1990 | f         |
+               |         1991 | f         |         1991 | f         |
+               |         1993 | m         |         1993 | m         |
+               |         1994 | m         |         1994 | m         |
+               |         1995 | m         |         1995 | m         |
+               |         1987 | f         |         1987 | f         |
+               |         2002 | m         |         2002 | m         |
+               |         1985 | m         |         1985 | m         |
+               |         1988 | m         |         1988 | m         |
+               |         1989 | m         |         1989 | m         |
+               |         1988 | m         |         1988 | m         |
+               |         1987 | f         |         1987 | f         |
+               |         1993 | m         |         1993 | m         |
+               |         1992 | f         |         1992 | f         |
+               |         1994 | f         |         1994 | f         |
+               |         2001 | m         |         2001 | m         |
+               |         1991 | f         |         1991 | f         |
+               |         1992 | f         |         1992 | f         |
+               |         1993 | f         |         1993 | f         |
+               |         1992 | f         |         1992 | f         |
+               |         1994 | f         |         1994 | f         |
+               |         1990 | m         |         1990 | m         |
+               |         1991 | f         |         1991 | f         |
+               |         1992 | f         |         1992 | f         |
+               |         1993 | f         |         1993 | f         |
+               |         2000 | m         |         2000 | m         |
+                                                             (48 rows)
+
+               ----
+               /school.program.quotient(student,{year(dob),gender}){kernel(),kernel(0),kernel(1)}
+               SELECT "student"."year",
+                      "student"."gender",
+                      "student"."year",
+                      "student"."gender"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
+                    INNER JOIN (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                       "student"."gender",
+                                       "student"."school",
+                                       "student"."program"
+                                FROM "ed"."student" AS "student"
+                                GROUP BY 3, 4, 1, 2) AS "student"
+                               ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+               ORDER BY "school"."code" ASC, "program"."school" ASC, "program"."code" ASC, 1 ASC, 2 ASC
+          - uri: /school.program .quotient(student, {year(dob), gender}){kernel(),count(complement())}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.program.quotient(student,{year(dob),gender}) |
+              -+-----------------------------------------------------+-
+               | year(dob)     | gender     | count(complement())    |
+              -+---------------+------------+------------------------+-
+               |          1989 | f          |                      1 |
+               |          1991 | m          |                      1 |
+               |          1992 | m          |                      3 |
+               |          1991 | m          |                      1 |
+               |          1995 | f          |                      1 |
+               |          1998 | m          |                      1 |
+               |          1981 | f          |                      1 |
+               |          1985 | f          |                      1 |
+               |          1992 | f          |                      1 |
+               |          1993 | f          |                      1 |
+               |          1988 | m          |                      1 |
+               |          1994 | m          |                      1 |
+               |          1983 | f          |                      1 |
+               |          1988 | f          |                      1 |
+               |          1995 | f          |                      1 |
+               |          1989 | m          |                      1 |
+               |          1991 | m          |                      1 |
+               |          1992 | f          |                      1 |
+               |          1993 | m          |                      1 |
+               |          1990 | m          |                      1 |
+               |          1992 | m          |                      1 |
+               |          1987 | m          |                      1 |
+               |          1990 | f          |                      1 |
+               |          1991 | f          |                      1 |
+               |          1993 | m          |                      1 |
+               |          1994 | m          |                      1 |
+               |          1995 | m          |                      2 |
+               |          1987 | f          |                      1 |
+               |          2002 | m          |                      1 |
+               |          1985 | m          |                      1 |
+               |          1988 | m          |                      1 |
+               |          1989 | m          |                      1 |
+               |          1988 | m          |                      1 |
+               |          1987 | f          |                      1 |
+               |          1993 | m          |                      1 |
+               |          1992 | f          |                      1 |
+               |          1994 | f          |                      1 |
+               |          2001 | m          |                      1 |
+               |          1991 | f          |                      1 |
+               |          1992 | f          |                      1 |
+               |          1993 | f          |                      1 |
+               |          1992 | f          |                      1 |
+               |          1994 | f          |                      1 |
+               |          1990 | m          |                      1 |
+               |          1991 | f          |                      1 |
+               |          1992 | f          |                      1 |
+               |          1993 | f          |                      1 |
+               |          2000 | m          |                      1 |
+                                                             (48 rows)
+
+               ----
+               /school.program.quotient(student,{year(dob),gender}){kernel(),count(complement())}
+               SELECT "student_1"."year",
+                      "student_1"."gender",
+                      COALESCE("student_2"."count", 0)
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
+                    INNER JOIN (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                       "student"."gender",
+                                       "student"."school",
+                                       "student"."program"
+                                FROM "ed"."student" AS "student"
+                                GROUP BY 3, 4, 1, 2) AS "student_1"
+                               ON (("program"."school" = "student_1"."school") AND ("program"."code" = "student_1"."program"))
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program",
+                                            CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                            "student"."gender"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3, 4, 5) AS "student_2"
+                                    ON (("student_1"."school" = "student_2"."school") AND ("student_1"."program" = "student_2"."program") AND ("student_1"."year" = "student_2"."year") AND ("student_1"."gender" = "student_2"."gender"))
+               ORDER BY "school"."code" ASC, "program"."school" ASC, "program"."code" ASC, 1 ASC, 2 ASC
+          - uri: /school.program .quotient(quotient(student, year(dob)).complement(),
+              gender) {kernel(), count(complement()), count(complement().is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.program.quotient(quotient(student,year(dob)).complement(),gender) |
+              -+--------------------------------------------------------------------------+-
+               | gender     | count(complement())     | count(complement().is_active)     |
+              -+------------+-------------------------+-----------------------------------+-
+               | f          |                       1 |                                 1 |
+               | m          |                       4 |                                 4 |
+               | m          |                       1 |                                 1 |
+               | f          |                       1 |                                 1 |
+               | m          |                       1 |                                 1 |
+               | f          |                       2 |                                 1 |
+               | f          |                       2 |                                 2 |
+               | m          |                       2 |                                 2 |
+               | f          |                       1 |                                 1 |
+               | f          |                       1 |                                 1 |
+               | f          |                       1 |                                 1 |
+               | m          |                       1 |                                 1 |
+               | f          |                       1 |                                 0 |
+               | m          |                       2 |                                 2 |
+               | m          |                       2 |                                 2 |
+               | m          |                       1 |                                 1 |
+               | f          |                       2 |                                 2 |
+               | m          |                       4 |                                 3 |
+               | f          |                       1 |                                 1 |
+               | m          |                       1 |                                 1 |
+               | m          |                       3 |                                 2 |
+               | m          |                       1 |                                 1 |
+               | f          |                       1 |                                 1 |
+               | m          |                       1 |                                 1 |
+               | f          |                       2 |                                 1 |
+               | m          |                       1 |                                 1 |
+               | f          |                       3 |                                 2 |
+               | f          |                       2 |                                 2 |
+               | f          |                       3 |                                 2 |
+               | m          |                       2 |                                 2 |
+                                                                                  (30 rows)
+
+               ----
+               /school.program.quotient(quotient(student,year(dob)).complement(),gender){kernel(),count(complement()),count(complement().is_active)}
+               SELECT "student_1"."gender",
+                      COALESCE("student_2"."count_1", 0),
+                      COALESCE("student_2"."count_2", 0)
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
+                    INNER JOIN (SELECT "student_2"."gender",
+                                       "student_1"."school",
+                                       "student_1"."program"
+                                FROM (SELECT "student"."school",
+                                             "student"."program",
+                                             CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                      FROM "ed"."student" AS "student"
+                                      GROUP BY 1, 2, 3) AS "student_1"
+                                     INNER JOIN (SELECT "student"."gender",
+                                                        "student"."school",
+                                                        "student"."program",
+                                                        CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                                 FROM "ed"."student" AS "student") AS "student_2"
+                                                ON (("student_1"."school" = "student_2"."school") AND ("student_1"."program" = "student_2"."program") AND ("student_1"."year" = "student_2"."year"))
+                                GROUP BY 2, 3, 1) AS "student_1"
+                               ON (("program"."school" = "student_1"."school") AND ("program"."code" = "student_1"."program"))
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count_1",
+                                            COUNT(NULLIF("student_2"."is_active", FALSE)) AS "count_2",
+                                            "student_1"."school",
+                                            "student_1"."program",
+                                            "student_2"."gender"
+                                     FROM (SELECT "student"."school",
+                                                  "student"."program",
+                                                  CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                           FROM "ed"."student" AS "student"
+                                           GROUP BY 1, 2, 3) AS "student_1"
+                                          INNER JOIN (SELECT "student"."is_active",
+                                                             "student"."gender",
+                                                             "student"."school",
+                                                             "student"."program",
+                                                             CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                                      FROM "ed"."student" AS "student") AS "student_2"
+                                                     ON (("student_1"."school" = "student_2"."school") AND ("student_1"."program" = "student_2"."program") AND ("student_1"."year" = "student_2"."year"))
+                                     GROUP BY 3, 4, 5) AS "student_2"
+                                    ON (("student_1"."school" = "student_2"."school") AND ("student_1"."program" = "student_2"."program") AND ("student_1"."gender" = "student_2"."gender"))
+               ORDER BY "school"."code" ASC, "program"."school" ASC, "program"."code" ASC, 1 ASC
+          - uri: /school.program .quotient(quotient(student, year(dob), gender), kernel(0))
+              {kernel(), count(complement()), count(complement().complement()), count(complement().complement().is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school.program.quotient(quotient(student,year(dob),gender),kernel(0))                                           |
+              -+-----------------------------------------------------------------------------------------------------------------+-
+               | year(dob) | count(complement()) | count(complement().complement()) | count(complement().complement().is_active) |
+              -+-----------+---------------------+----------------------------------+--------------------------------------------+-
+               |      1989 |                   1 |                                1 |                                          1 |
+               |      1991 |                   1 |                                1 |                                          1 |
+               |      1992 |                   1 |                                3 |                                          3 |
+               |      1991 |                   1 |                                1 |                                          1 |
+               |      1995 |                   1 |                                1 |                                          1 |
+               |      1998 |                   1 |                                1 |                                          1 |
+               |      1981 |                   1 |                                1 |                                          1 |
+               |      1985 |                   1 |                                1 |                                          0 |
+               |      1992 |                   1 |                                1 |                                          1 |
+               |      1993 |                   1 |                                1 |                                          1 |
+               |      1988 |                   1 |                                1 |                                          1 |
+               |      1994 |                   1 |                                1 |                                          1 |
+               |      1983 |                   1 |                                1 |                                          1 |
+               |      1988 |                   1 |                                1 |                                          1 |
+               |      1995 |                   1 |                                1 |                                          1 |
+               |      1989 |                   1 |                                1 |                                          1 |
+               |      1991 |                   1 |                                1 |                                          1 |
+               |      1992 |                   1 |                                1 |                                          0 |
+               |      1993 |                   1 |                                1 |                                          1 |
+               |      1990 |                   1 |                                1 |                                          1 |
+               |      1992 |                   1 |                                1 |                                          1 |
+               |      1987 |                   1 |                                1 |                                          1 |
+               |      1990 |                   1 |                                1 |                                          1 |
+               |      1991 |                   1 |                                1 |                                          1 |
+               |      1993 |                   1 |                                1 |                                          1 |
+               |      1994 |                   1 |                                1 |                                          1 |
+               |      1995 |                   1 |                                2 |                                          1 |
+               |      1987 |                   1 |                                1 |                                          1 |
+               |      2002 |                   1 |                                1 |                                          1 |
+               |      1985 |                   1 |                                1 |                                          1 |
+               |      1988 |                   1 |                                1 |                                          0 |
+               |      1989 |                   1 |                                1 |                                          1 |
+               |      1988 |                   1 |                                1 |                                          1 |
+               |      1987 |                   1 |                                1 |                                          1 |
+               |      1993 |                   1 |                                1 |                                          1 |
+               |      1992 |                   1 |                                1 |                                          0 |
+               |      1994 |                   1 |                                1 |                                          1 |
+               |      2001 |                   1 |                                1 |                                          1 |
+               |      1991 |                   1 |                                1 |                                          1 |
+               |      1992 |                   1 |                                1 |                                          0 |
+               |      1993 |                   1 |                                1 |                                          1 |
+               |      1992 |                   1 |                                1 |                                          1 |
+               |      1994 |                   1 |                                1 |                                          1 |
+               |      1990 |                   1 |                                1 |                                          1 |
+               |      1991 |                   1 |                                1 |                                          1 |
+               |      1992 |                   1 |                                1 |                                          0 |
+               |      1993 |                   1 |                                1 |                                          1 |
+               |      2000 |                   1 |                                1 |                                          1 |
+                                                                                                                         (48 rows)
+
+               ----
+               /school.program.quotient(quotient(student,year(dob),gender),kernel(0)){kernel(),count(complement()),count(complement().complement()),count(complement().complement().is_active)}
+               SELECT "student_1"."year",
+                      COALESCE("student_2"."count", 0),
+                      COALESCE("student_3"."count_1", 0),
+                      COALESCE("student_3"."count_2", 0)
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
+                    INNER JOIN (SELECT "student"."year",
+                                       "student"."school",
+                                       "student"."program"
+                                FROM (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                             "student"."school",
+                                             "student"."program"
+                                      FROM "ed"."student" AS "student"
+                                      GROUP BY 2, 3, 1, "student"."gender") AS "student"
+                                GROUP BY 2, 3, 1) AS "student_1"
+                               ON (("program"."school" = "student_1"."school") AND ("program"."code" = "student_1"."program"))
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program",
+                                            "student"."year"
+                                     FROM (SELECT "student"."school",
+                                                  "student"."program",
+                                                  CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year"
+                                           FROM "ed"."student" AS "student"
+                                           GROUP BY 1, 2, 3, "student"."gender") AS "student"
+                                     GROUP BY 2, 3, 4) AS "student_2"
+                                    ON (("student_1"."school" = "student_2"."school") AND ("student_1"."program" = "student_2"."program") AND ("student_1"."year" = "student_2"."year"))
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count_1",
+                                            COUNT(NULLIF("student_2"."is_active", FALSE)) AS "count_2",
+                                            "student_1"."school",
+                                            "student_1"."program",
+                                            "student_1"."year"
+                                     FROM (SELECT "student"."school",
+                                                  "student"."program",
+                                                  CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                                  "student"."gender"
+                                           FROM "ed"."student" AS "student"
+                                           GROUP BY 1, 2, 3, 4) AS "student_1"
+                                          INNER JOIN (SELECT "student"."is_active",
+                                                             "student"."school",
+                                                             "student"."program",
+                                                             CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                                             "student"."gender"
+                                                      FROM "ed"."student" AS "student") AS "student_2"
+                                                     ON (("student_1"."school" = "student_2"."school") AND ("student_1"."program" = "student_2"."program") AND ("student_1"."year" = "student_2"."year") AND ("student_1"."gender" = "student_2"."gender"))
+                                     GROUP BY 3, 4, 5) AS "student_3"
+                                    ON (("student_1"."school" = "student_3"."school") AND ("student_1"."program" = "student_3"."program") AND ("student_1"."year" = "student_3"."year"))
+               ORDER BY "school"."code" ASC, "program"."school" ASC, "program"."code" ASC, 1 ASC
           - uri: /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
             status: 200 OK
             headers:
@@ -16167,6 +16732,48 @@ tests:
                                     ON ("course_1"."credits" = "course_2"."credits")
                WHERE ("course_1"."credits" > 3)
                ORDER BY 1 ASC NULLS FIRST
+          - uri: /quotient(school,count(program)){kernel(),count(complement())}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | quotient(school,count(program))      |
+              -+--------------------------------------+-
+               | count(program) | count(complement()) |
+              -+----------------+---------------------+-
+               |              0 |                   2 |
+               |              1 |                   1 |
+               |              3 |                   1 |
+               |              5 |                   1 |
+               |              6 |                   1 |
+               |              7 |                   1 |
+               |              8 |                   1 |
+               |              9 |                   1 |
+                                               (8 rows)
+
+               ----
+               /quotient(school,count(program)){kernel(),count(complement())}
+               SELECT "school_1"."count",
+                      COALESCE("school_2"."count_1", 0)
+               FROM (SELECT COALESCE("program"."count", 0) AS "count"
+                     FROM "ad"."school" AS "school"
+                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                  "program"."school"
+                                           FROM "ad"."program" AS "program"
+                                           GROUP BY 2) AS "program"
+                                          ON ("school"."code" = "program"."school")
+                     GROUP BY 1) AS "school_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count_1",
+                                            COALESCE("program"."count", 0) AS "count_2"
+                                     FROM "ad"."school" AS "school"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "program"."school"
+                                                           FROM "ad"."program" AS "program"
+                                                           GROUP BY 2) AS "program"
+                                                          ON ("school"."code" = "program"."school")
+                                     GROUP BY 2) AS "school_2"
+                                    ON ("school_1"."count" = "school_2"."count_2")
+               ORDER BY 1 ASC
           - uri: /school.quotient(program, degree)
             status: 200 OK
             headers:
@@ -16304,6 +16911,85 @@ tests:
                                 GROUP BY 2, "program"."school", 1) AS "program"
                                ON ("department"."school" = "program"."code")
                ORDER BY "department"."code" ASC, 1 ASC NULLS FIRST
+          - uri: /quotient(program,degree).complement()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                                                                 |
+              -+-------------------------------------------------------------------------+-
+               | school | code     | title                            | degree | part_of |
+              -+--------+----------+----------------------------------+--------+---------+-
+               | art    | uhist    | Bachelor of Arts in Art History  | ba     |         |
+               | art    | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
+               | edu    | umath    | Bachelor of Arts in Math         | ba     |         |
+               :        :          : Education                        :        :         :
+               | edu    | usci     | Bachelor of Arts in Science      | ba     |         |
+               :        :          : Education                        :        :         :
+               | la     | uengl    | Bachelor of Arts in English      | ba     | gengl   |
+               | la     | uhist    | Bachelor of Arts in History      | ba     |         |
+               | la     | upolisci | Bachelor of Arts in Political    | ba     |         |
+               :        :          : Science                          :        :         :
+               | la     | upsych   | Bachelor of Arts in Psychology   | ba     |         |
+               | la     | uspan    | Bachelor of Arts in Spanish      | ba     |         |
+               | bus    | uacct    | B.S. in Accounting               | bs     |         |
+               | bus    | ubusad   | B.S. in Business Administration  | bs     |         |
+               | bus    | ucorpfi  | B.S. in Corporate Finance        | bs     |         |
+               | eng    | ubio     | B.S. in Bioengineering           | bs     | gbe     |
+               | eng    | ucompsci | B.S. in Computer Science         | bs     |         |
+               | eng    | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
+               | eng    | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
+               | ns     | gmth     | Masters of Science in            | bs     | pmth    |
+               :        :          : Mathematics                      :        :         :
+               | ns     | uastro   | Bachelor of Science in Astronomy | bs     |         |
+               | ns     | uchem    | Bachelor of Science in Chemistry | bs     |         |
+               | ns     | umth     | Bachelor of Science in           | bs     | gmth    |
+               :        :          : Mathematics                      :        :         :
+               | ns     | uphys    | Bachelor of Science in Physics   | bs     |         |
+               | bus    | pacc     | Graduate Certificate in          | ct     |         |
+               :        :          : Accounting                       :        :         :
+               | bus    | pcap     | Certificate in Capital Markets   | ct     |         |
+               | edu    | psci     | Certificate in Science Teaching  | ct     |         |
+               | la     | psciwri  | Science Writing                  | ct     |         |
+               | edu    | gedlead  | Master of Arts in Education      | ma     |         |
+               :        :          : Leadership                       :        :         :
+               | edu    | glited   | Master of Arts in Literacy       | ma     |         |
+               :        :          : Education                        :        :         :
+               | edu    | gtch     | Master of Arts in Teaching       | ma     |         |
+               | la     | gengl    | Master of Arts in English        | ma     |         |
+               | la     | glang    | Master of Arts in Modern         | ma     |         |
+               :        :          : Languages                        :        :         :
+               | la     | gscitch  | Master of Arts in Science        | ma     |         |
+               :        :          : Teaching                         :        :         :
+               | edu    | gedu     | M.S. in Education                | ms     |         |
+               | eng    | gbe      | M.S. in Bioengineering           | ms     |         |
+               | eng    | gbuseng  | M.S. in Business and Engineering | ms     |         |
+               | eng    | gee      | M.S. in Electrical Engineering   | ms     |         |
+               | eng    | gme      | M.S. in Mechanical Engineering   | ms     |         |
+               | art    | gart     | Post Baccalaureate in Art        | pb     |         |
+               :        :          : History                          :        :         :
+               | ns     | pmth     | Doctorate of Science in          | ph     |         |
+               :        :          : Mathematics                      :        :         :
+                                                                                 (38 rows)
+
+               ----
+               /quotient(program,degree).complement()
+               SELECT "program_2"."school",
+                      "program_2"."code",
+                      "program_2"."title",
+                      "program_2"."degree",
+                      "program_2"."part_of"
+               FROM (SELECT "program"."degree"
+                     FROM "ad"."program" AS "program"
+                     GROUP BY 1) AS "program_1"
+                    INNER JOIN (SELECT "program"."school",
+                                       "program"."code",
+                                       "program"."title",
+                                       "program"."degree",
+                                       "program"."part_of"
+                                FROM "ad"."program" AS "program") AS "program_2"
+                               ON ("program_1"."degree" = "program_2"."degree")
+               ORDER BY "program_1"."degree" ASC NULLS FIRST, 1 ASC, 2 ASC
   - include: test/input/format.yaml
     output:
       id: format
