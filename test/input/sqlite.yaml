@@ -10,12 +10,12 @@ output: test/output/sqlite.yaml
 tests:
 
 - title: Remove any existing regression database
-  id: cleanup-sqlite
+  id: drop-sqlite
   tests:
   - rmdir: build/regress/regress-sqlite
 
 - title: Deploy the regression database
-  id: setup-sqlite
+  id: create-sqlite
   tests:
   - mkdir: build/regress/regress-sqlite
   - connect: &connect

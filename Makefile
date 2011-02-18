@@ -1,7 +1,8 @@
 # This makefile provides various build, installation and testing tasks.
 
 .PHONY: default build install develop doc dist windist pypi clean \
-	test cleanup train train-routine train-sqlite train-pgsql purge-test lint \
+	test train train-routine train-sqlite train-pgsql purge-test lint \
+	create create-sqlite create-pgsql drop drop-sqlite drop-pgsql \
 	demo-htraf demo-ssi
 
 
@@ -31,13 +32,18 @@ default:
 	@echo
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
-	@echo "  cleanup: to drop users and databases deployed by regression tests"
 	@echo "  train: to run all HTSQL tests in the train mode"
 	@echo "  train-routine: to run tests for htsql-ctl tool in the train mode"
 	@echo "  train-sqlite: to run SQLite-specific tests in the train mode"
 	@echo "  train-pgsql: to run PostgreSQL-specific tests in the train mode"
 	@echo "  purge-test: to purge stale test output data"
 	@echo "  lint: detect errors in the source code"
+	@echo "  create: to install the regression databases"
+	@echo "	 create-sqlite: to install the test database for SQLite"
+	@echo "  create-pgsql: to install the test database for PostgreSQL"
+	@echo "  drop: to drop users and databases deployed by regression tests"
+	@echo "  drop-sqlite: to delete the test database for SQLite"
+	@echo "  drop-pgsql: to delete the test database for PostgreSQL"
 	@echo
 	@echo "  *** Shell and Server ***"
 	@echo "  shell-sqlite: to start an HTSQL shell on the SQLite test database"
@@ -100,10 +106,6 @@ clean:
 test:
 	htsql-ctl regress -i test/regress.yaml -q
 
-# Drop any users and databases deployed by the regression tests.
-cleanup:
-	htsql-ctl regress -i test/regress.yaml -q cleanup-pgsql cleanup-sqlite
-
 # Run HTSQL regression tests in the train mode.
 train:
 	htsql-ctl regress -i test/regress.yaml --train
@@ -127,6 +129,30 @@ purge-test:
 # Detect errors in the source code (requires PyFlakes)
 lint:
 	pyflakes src/htsql src/htsql_pgsql src/htsql_sqlite
+
+# Install the regression databases.
+create:
+	htsql-ctl regress -i test/regress.yaml -q create-sqlite create-pgsql
+
+# Install the regression database for SQLite.
+create-sqlite:
+	htsql-ctl regress -i test/regress.yaml -q create-sqlite
+
+# Install the regression database for PostgreSQL.
+create-pgsql:
+	htsql-ctl regress -i test/regress.yaml -q create-pgsql
+
+# Drop any users and databases deployed by the regression tests.
+drop:
+	htsql-ctl regress -i test/regress.yaml -q drop-sqlite drop-pgsql
+
+# Drop the regression database for SQLite
+drop-sqlite:
+	htsql-ctl regress -i test/regress.yaml -q drop-sqlite
+
+# Drop the regression database for PostgreSQL.
+drop-pgsql:
+	htsql-ctl regress -i test/regress.yaml -q drop-pgsql
 
 
 #
