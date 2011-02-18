@@ -12,15 +12,15 @@ tests:
 - title: Remove any existing regression database
   id: drop-sqlite
   tests:
-  - rmdir: build/regress/regress-sqlite
+  - rmdir: ${SQLITE_DIRECTORY}
 
 - title: Deploy the regression database
   id: create-sqlite
   tests:
-  - mkdir: build/regress/regress-sqlite
+  - mkdir: ${SQLITE_DIRECTORY}
   - connect: &connect
       engine: sqlite
-      database: build/regress/regress-sqlite/htsql_regress.sqlite
+      database: ${SQLITE_DIRECTORY}${SQLITE_DATABASE}
     sql-include: test/sql/regress-sqlite.sql
 
 - title: Run the test collection

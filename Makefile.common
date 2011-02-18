@@ -1,21 +1,64 @@
 # Common variables used by all makefiles.
 
-
-# Load configuration variables from `Makefile.env`.  There is a sample
-# file `Makefile.env.sample`; copy it to `Makefile.env` and edit it
-# to match your configuration.
+# Default values could be overriden in `Makefile.env`.  Copy the content
+# of a sample file `Makefile.env.sample` to `Makefile.env` and update
+# `Makefile.env` to match your configuration.
 -include Makefile.env
 
-# Path to Python executable.
+
+#
+# General configuration
+#
+
 PYTHON?=python
+HTSQL_CTL?=htsql-ctl
+SPHINX_BUILD?=sphinx-build
+PYFLAKES?=pyflakes
 
-# The connection URI for regression databases.
-SQLITE_REGRESS_DB?=sqlite:///build/regress/regress-sqlite/htsql_regress.sqlite
-PGSQL_ADDRESS?=${PGSQL_HOST}$(if ${PGSQL_PORT},:${PGSQL_PORT})
-PGSQL_REGRESS_DB?=pgsql://htsql_regress:secret@${PGSQL_ADDRESS}/htsql_regress
 
-# The HTTP server address.
+#
+# HTTP Server
+#
+
 HTSQL_HOST?=localhost
 HTSQL_PORT?=8080
+
+
+#
+# Regression database for SQLite
+#
+
+SQLITE_DIRECTORY?=build/regress/regress-sqlite
+SQLITE_DATABASE?=htsql_regress.sqlite
+
+SQLITE_URI?=sqlite:///$(if ${SQLITE_DIRECTORY},${SQLITE_DIRECTORY}/)${SQLITE_DATABASE}
+
+
+#
+# Regression database for PostgreSQL
+#
+
+PGSQL_ADMIN_USERNAME?=
+PGSQL_ADMIN_PASSWORD?=
+PGSQL_HOST?=
+PGSQL_PORT?=
+PGSQL_USERNAME?=htsql_regress
+PGSQL_PASSWORD?=secret
+PGSQL_DATABASE?=htsql_regress
+
+PGSQL_START?=
+PGSQL_STOP?=
+
+PGSQL_ADDRESS1?=$(if ${PGSQL_USERNAME},${PGSQL_USERNAME}$(if ${PGSQL_PASSWORD},:${PGSQL_PASSWORD})@)
+PGSQL_ADDRESS2?=$(if ${PGSQL_HOST},${PGSQL_HOST}$(if ${PGSQL_PORT},:${PGSQL_PORT}))
+PGSQL_ADDRESS?=${PGSQL_ADDRESS1}${PGSQL_ADDRESS2}
+PGSQL_URI?=pgsql://${PGSQL_ADDRESS}/${PGSQL_DATABASE}
+
+
+# Export the parameters as environment variables.
+export PYTHON HTSQL_CTL SQLITE_DIRECTORY SQLITE_DATABASE SQLITE_URI \
+	PGSQL_ADMIN_USERNAME PGSQL_ADMIN_PASSWORD PGSQL_HOST PGSQL_PORT \
+	PGSQL_USERNAME PGSQL_PASSWORD PGSQL_DATABASE PGSQL_START PGSQL_STOP \
+	PGSQL_URI
 
 

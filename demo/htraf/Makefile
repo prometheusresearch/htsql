@@ -3,7 +3,7 @@
 include ../../Makefile.common
 
 serve: build
-	${PYTHON} serve.py ${PGSQL_REGRESS_DB} ${HTSQL_HOST} ${HTSQL_PORT}
+	${PYTHON} serve.py ${PGSQL_URI} ${HTSQL_HOST} ${HTSQL_PORT}
 
 build: static/htraf
 

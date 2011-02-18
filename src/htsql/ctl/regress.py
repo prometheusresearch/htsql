@@ -2295,9 +2295,13 @@ class RegressYAMLLoader(BaseYAMLLoader):
         The YAML stream.
     """
 
-    # A pattern to match `!environ` nodes.
-    environ_pattern = r"""^ \$ \{ [a-zA-Z_][0-9a-zA-Z_.-]* \} $"""
+    # A pattern to match substitution variables in `!environ` nodes.
+    environ_pattern = r"""\$ \{ (?P<name> [a-zA-Z_][0-9a-zA-Z_.-]*) \}"""
     environ_regexp = re.compile(environ_pattern, re.X)
+    # A pattern for valid values of substitution variables.
+    environ_value_pattern = r"""^ [0-9A-Za-z~@#^&*_;:,./?=+-]* $"""
+    environ_value_regexp = re.compile(environ_value_pattern, re.X)
+
 
     def __init__(self, routine, with_input, with_output, stream):
         super(RegressYAMLLoader, self).__init__(stream)
@@ -2478,22 +2482,25 @@ class RegressYAMLLoader(BaseYAMLLoader):
         return record
 
     def construct_environ(self, node):
-        # Replace an `!environ` scalar with the value of the corresponding
-        # environment variable.
+        # Substitute environment variables in `!environ` scalars.
 
-        # Get the scalar value and check that it has the form ${...}.
+        def replace(match):
+            # Substitute environment variables with values.
+            name = match.group('name')
+            value = os.environ.get(name, '')
+            if not self.environ_value_regexp.match(value):
+                raise yaml.constructor.ConstructorError(None, None,
+                        "invalid value of environment variable %s: %r"
+                        % (name, value), node.start_mark)
+            return value
+
+        # Get the scalar value and replace all ${...} occurences with
+        # values of respective environment variables.
         value = self.construct_scalar(node)
         value = value.encode('utf-8')
-        if not (value.startswith('${') and value.endswith('}')):
-            raise yaml.constructor.ConstructorError(None, None,
-                    "invalid environment variable", node.start_mark)
+        value = self.environ_regexp.sub(replace, value)
 
-        # The name of the environment variable.
-        name = value[2:-1]
-
-        # Return the value of the environment variables.  Blank values
-        # are returned as `None`.
-        value = os.environ.get(name, '')
+        # Blank values are returned as `None`.
         if not value:
             return None
         return value

@@ -19,25 +19,25 @@ tests:
       password: ${PGSQL_ADMIN_PASSWORD}
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
-    sql: |
-        DROP DATABASE IF EXISTS "htsql_regress";
-        DROP ROLE IF EXISTS "htsql_regress";
+    sql: !environ |
+        DROP DATABASE IF EXISTS "${PGSQL_DATABASE}";
+        DROP ROLE IF EXISTS "${PGSQL_USERNAME}";
     autocommit: true
 
 - title: Deploy the regression database
   id: create-pgsql
   tests:
   - connect: *admin-connect
-    sql: |
-        CREATE DATABASE "htsql_regress" WITH ENCODING = 'UTF-8';
-        CREATE ROLE "htsql_regress" WITH LOGIN PASSWORD 'secret';
-        ALTER DATABASE "htsql_regress" OWNER TO "htsql_regress";
+    sql: !environ |
+        CREATE DATABASE "${PGSQL_DATABASE}" WITH ENCODING = 'UTF-8';
+        CREATE ROLE "${PGSQL_USERNAME}" WITH LOGIN PASSWORD '${PGSQL_PASSWORD}';
+        ALTER DATABASE "${PGSQL_DATABASE}" OWNER TO "${PGSQL_USERNAME}";
     autocommit: true
   - connect: &connect
       engine: pgsql
-      database: htsql_regress
-      username: htsql_regress
-      password: secret
+      database: ${PGSQL_DATABASE}
+      username: ${PGSQL_USERNAME}
+      password: ${PGSQL_PASSWORD}
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
     sql-include: test/sql/regress-pgsql.sql

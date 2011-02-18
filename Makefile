@@ -63,34 +63,34 @@ default:
 
 # Build the HTSQL packages.
 build:
-	python setup.py build
+	${PYTHON} setup.py build
 
 # Install the HTSQL packages.
 install:
-	python setup.py install
+	${PYTHON} setup.py install
 
 # Install the HTSQL packages in the development mode.
 develop:
-	python setup.py develop
+	${PYTHON} setup.py develop
 
 # Build the HTSQL documentation.
 doc:
-	sphinx-build -b html doc build/doc
+	${SPHINX_BUILD} -b html doc build/doc
 
 # Build a source and an EGG distributions.
 # FIXME: include HTML documentation; `dist_dir` is broken for `--bdist-deb`.
 # Note that `bdist_deb` requires `stdeb` package.
 dist:
 	rm -rf build
-	python setup.py sdist
-	python setup.py bdist_egg
+	${PYTHON} setup.py sdist
+	${PYTHON} setup.py bdist_egg
 	#python setup.py --command-packages=stdeb.command bdist_deb 
 
 # Register and upload the package to PyPI.
 # FIXME: include HTML documentation.
 pypi:
 	rm -rf build
-	python setup.py register sdist bdist_egg upload
+	${PYTHON} setup.py register sdist bdist_egg upload
 
 # Delete the build directory and object files.
 clean:
@@ -104,55 +104,55 @@ clean:
 
 # Run HTSQL regression tests.
 test:
-	htsql-ctl regress -i test/regress.yaml -q
+	${HTSQL_CTL} regress -i test/regress.yaml -q
 
 # Run HTSQL regression tests in the train mode.
 train:
-	htsql-ctl regress -i test/regress.yaml --train
+	${HTSQL_CTL} regress -i test/regress.yaml --train
 
 # Run regression tests for htsql-ctl tool in the train mode.
 train-routine:
-	htsql-ctl regress -i test/regress.yaml --train routine
+	${HTSQL_CTL} regress -i test/regress.yaml --train routine
 
 # Run SQLite-specific regression tests in the train mode.
 train-sqlite:
-	htsql-ctl regress -i test/regress.yaml --train sqlite
+	${HTSQL_CTL} regress -i test/regress.yaml --train sqlite
 
 # Run PostgreSQL-specific regression tests in the train mode.
 train-pgsql:
-	htsql-ctl regress -i test/regress.yaml --train pgsql
+	${HTSQL_CTL} regress -i test/regress.yaml --train pgsql
 
 # Purge stale output records from HTSQL regression tests.
 purge-test:
-	htsql-ctl regress -i test/regress.yaml -q --train --purge
+	${HTSQL_CTL} regress -i test/regress.yaml -q --train --purge
 
 # Detect errors in the source code (requires PyFlakes)
 lint:
-	pyflakes src/htsql src/htsql_pgsql src/htsql_sqlite
+	${PYFLAKES} src/htsql src/htsql_pgsql src/htsql_sqlite
 
 # Install the regression databases.
 create:
-	htsql-ctl regress -i test/regress.yaml -q create-sqlite create-pgsql
+	${HTSQL_CTL} regress -i test/regress.yaml -q create-sqlite create-pgsql
 
 # Install the regression database for SQLite.
 create-sqlite:
-	htsql-ctl regress -i test/regress.yaml -q create-sqlite
+	${HTSQL_CTL} regress -i test/regress.yaml -q create-sqlite
 
 # Install the regression database for PostgreSQL.
 create-pgsql:
-	htsql-ctl regress -i test/regress.yaml -q create-pgsql
+	${HTSQL_CTL} regress -i test/regress.yaml -q create-pgsql
 
 # Drop any users and databases deployed by the regression tests.
 drop:
-	htsql-ctl regress -i test/regress.yaml -q drop-sqlite drop-pgsql
+	${HTSQL_CTL} regress -i test/regress.yaml -q drop-sqlite drop-pgsql
 
 # Drop the regression database for SQLite
 drop-sqlite:
-	htsql-ctl regress -i test/regress.yaml -q drop-sqlite
+	${HTSQL_CTL} regress -i test/regress.yaml -q drop-sqlite
 
 # Drop the regression database for PostgreSQL.
 drop-pgsql:
-	htsql-ctl regress -i test/regress.yaml -q drop-pgsql
+	${HTSQL_CTL} regress -i test/regress.yaml -q drop-pgsql
 
 
 #
@@ -161,19 +161,19 @@ drop-pgsql:
 
 # Start an HTSQL shell on the SQLite regression database.
 shell-sqlite:
-	htsql-ctl shell ${SQLITE_REGRESS_DB}
+	${HTSQL_CTL} shell ${SQLITE_URI}
 
 # Start an HTSQL shell on the PostgreSQL regression database.
 shell-pgsql:
-	htsql-ctl shell ${PGSQL_REGRESS_DB}
+	${HTSQL_CTL} shell ${PGSQL_URI}
 
 # Start an HTTP/HTSQL server on the SQLite regression database.
 serve-sqlite:
-	htsql-ctl serve ${SQLITE_REGRESS_DB} ${HTSQL_HOST} ${HTSQL_PORT}
+	${HTSQL_CTL} serve ${SQLITE_URI} ${HTSQL_HOST} ${HTSQL_PORT}
 
 # Start an HTTP/HTSQL server on the PostgreSQL regression database.
 serve-pgsql:
-	htsql-ctl serve ${PGSQL_REGRESS_DB} ${HTSQL_HOST} ${HTSQL_PORT}
+	${HTSQL_CTL} serve ${PGSQL_URI} ${HTSQL_HOST} ${HTSQL_PORT}
 
 
 #
