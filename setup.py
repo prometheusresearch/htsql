@@ -61,12 +61,14 @@ ENTRY_POINTS = {
         'htsql.core = htsql.export:HTSQL_CORE',
         'engine.sqlite = htsql_sqlite.export:ENGINE_SQLITE',
         'engine.pgsql = htsql_pgsql.export:ENGINE_PGSQL',
+        'engine.mysql = htsql_mysql.export:ENGINE_MYSQL',
     ],
 }
 INSTALL_REQUIRES = [
     'setuptools>=0.6c9',
     'pyyaml>=3.07',
     'psycopg2>=2.0.10',
+    'MySQL-python>=1.2.2',
 ]
 
 setup(name=NAME,

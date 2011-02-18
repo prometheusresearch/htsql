@@ -1,9 +1,9 @@
 # This makefile provides various build, installation and testing tasks.
 
 .PHONY: default build install develop doc dist windist pypi clean \
-	test train train-routine train-sqlite train-pgsql purge-test lint \
-	create create-sqlite create-pgsql drop drop-sqlite drop-pgsql \
-	demo-htraf demo-ssi
+	test train train-routine train-sqlite train-pgsql train-mysql \
+	purge-test lint create create-sqlite create-pgsql create-mysql \
+	drop drop-sqlite drop-pgsql drop-mysql demo-htraf demo-ssi
 
 
 # Load configuration variables from `Makefile.common`.  Do not edit
@@ -36,20 +36,25 @@ default:
 	@echo "  train-routine: to run tests for htsql-ctl tool in the train mode"
 	@echo "  train-sqlite: to run SQLite-specific tests in the train mode"
 	@echo "  train-pgsql: to run PostgreSQL-specific tests in the train mode"
+	@echo "  train-mysql: to run MySQL-specific tests in the train mode"
 	@echo "  purge-test: to purge stale test output data"
 	@echo "  lint: detect errors in the source code"
 	@echo "  create: to install the regression databases"
 	@echo "	 create-sqlite: to install the test database for SQLite"
 	@echo "  create-pgsql: to install the test database for PostgreSQL"
+	@echo "  create-mysql: to install the test database for MySQL"
 	@echo "  drop: to drop users and databases deployed by regression tests"
 	@echo "  drop-sqlite: to delete the test database for SQLite"
 	@echo "  drop-pgsql: to delete the test database for PostgreSQL"
+	@echo "  drop-mysql: to delete the test database for MySQL"
 	@echo
 	@echo "  *** Shell and Server ***"
 	@echo "  shell-sqlite: to start an HTSQL shell on the SQLite test database"
 	@echo "  shell-pgsql: to start an HTSQL shell on the PostgreSQL test database"
+	@echo "  shell-mysql: to start an HTSQL shell on the MySQL test database"
 	@echo "  serve-sqlite: to start an HTTP server on the SQLite test database"
 	@echo "  serve-pgsql: to start an HTTP server on the PostgreSQL test database"
+	@echo "  serve-mysql: to start an HTTP server on the MySQL test database"
 	@echo
 	@echo "  *** Demos and Examples ***"
 	@echo "  demo-htraf: to run the HTRAF demo"
@@ -98,6 +103,7 @@ clean:
 	find . -name '*.pyc' -exec rm '{}' ';'
 	find . -name '*.pyo' -exec rm '{}' ';'
 
+
 #
 # Regression testing tasks.
 #
@@ -122,6 +128,10 @@ train-sqlite:
 train-pgsql:
 	${HTSQL_CTL} regress -i test/regress.yaml --train pgsql
 
+# Run MySQL-specific regression tests in the train mode.
+train-mysql:
+	${HTSQL_CTL} regress -i test/regress.yaml --train mysql
+
 # Purge stale output records from HTSQL regression tests.
 purge-test:
 	${HTSQL_CTL} regress -i test/regress.yaml -q --train --purge
@@ -132,7 +142,7 @@ lint:
 
 # Install the regression databases.
 create:
-	${HTSQL_CTL} regress -i test/regress.yaml -q create-sqlite create-pgsql
+	${HTSQL_CTL} regress -i test/regress.yaml -q create-sqlite create-pgsql create-mysql
 
 # Install the regression database for SQLite.
 create-sqlite:
@@ -142,9 +152,13 @@ create-sqlite:
 create-pgsql:
 	${HTSQL_CTL} regress -i test/regress.yaml -q create-pgsql
 
+# Install the regression database for MySQL.
+create-mysql:
+	${HTSQL_CTL} regress -i test/regress.yaml -q create-mysql
+
 # Drop any users and databases deployed by the regression tests.
 drop:
-	${HTSQL_CTL} regress -i test/regress.yaml -q drop-sqlite drop-pgsql
+	${HTSQL_CTL} regress -i test/regress.yaml -q drop-sqlite drop-pgsql drop-mysql
 
 # Drop the regression database for SQLite
 drop-sqlite:
@@ -153,6 +167,10 @@ drop-sqlite:
 # Drop the regression database for PostgreSQL.
 drop-pgsql:
 	${HTSQL_CTL} regress -i test/regress.yaml -q drop-pgsql
+
+# Drop the regression database for PostgreSQL.
+drop-mysql:
+	${HTSQL_CTL} regress -i test/regress.yaml -q drop-mysql
 
 
 #
@@ -167,6 +185,10 @@ shell-sqlite:
 shell-pgsql:
 	${HTSQL_CTL} shell ${PGSQL_URI}
 
+# Start an HTSQL shell on the MySQL regression database.
+shell-mysql:
+	${HTSQL_CTL} shell ${MYSQL_URI}
+
 # Start an HTTP/HTSQL server on the SQLite regression database.
 serve-sqlite:
 	${HTSQL_CTL} serve ${SQLITE_URI} ${HTSQL_HOST} ${HTSQL_PORT}
@@ -174,6 +196,10 @@ serve-sqlite:
 # Start an HTTP/HTSQL server on the PostgreSQL regression database.
 serve-pgsql:
 	${HTSQL_CTL} serve ${PGSQL_URI} ${HTSQL_HOST} ${HTSQL_PORT}
+
+# Start an HTTP/HTSQL server on the MySQL regression database.
+serve-mysql:
+	${HTSQL_CTL} serve ${MYSQL_URI} ${HTSQL_HOST} ${HTSQL_PORT}
 
 
 #

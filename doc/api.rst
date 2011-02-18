@@ -13,4 +13,5 @@ Contents:
    api/htsql.tr.fn
    api/htsql_pgsql
    api/htsql_sqlite
+   api/htsql_mysql
 

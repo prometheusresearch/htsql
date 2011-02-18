@@ -1,0 +1,63 @@
+#
+# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: MySQL regression tests
+id: mysql
+output: test/output/mysql.yaml
+tests:
+
+- title: Remove any existing regression database
+  id: drop-mysql
+  tests:
+  - connect: &admin-connect
+      engine: mysql
+      database: mysql
+      username: ${MYSQL_ADMIN_USERNAME}
+      password: ${MYSQL_ADMIN_PASSWORD}
+      host: ${MYSQL_HOST}
+      port: ${MYSQL_PORT}
+    sql: !environ |
+        DROP DATABASE `${MYSQL_DATABASE}`;
+    #autocommit: true
+    ignore: true
+  - connect: *admin-connect
+    sql: !environ |
+        DROP USER `${MYSQL_USERNAME}`;
+- title: Deploy the regression database
+  id: create-mysql
+  tests:
+  - connect: *admin-connect
+    sql: !environ |
+        CREATE DATABASE `${MYSQL_DATABASE}` CHARACTER SET utf8 COLLATE utf8_bin;
+        CREATE USER `${MYSQL_USERNAME}` IDENTIFIED BY '${MYSQL_PASSWORD}';
+        GRANT ALL PRIVILEGES ON `${MYSQL_DATABASE}`.* TO `${MYSQL_USERNAME}`;
+    #autocommit: true
+  - connect: &connect
+      engine: mysql
+      database: ${MYSQL_DATABASE}
+      username: ${MYSQL_USERNAME}
+      password: ${MYSQL_PASSWORD}
+      host: ${MYSQL_HOST}
+      port: ${MYSQL_PORT}
+    sql-include: test/sql/regress-mysql.sql
+
+- title: Run the test collection
+  id: test-mysql
+  skip: true
+  tests:
+  - define: mysql
+  - db: *connect
+  # The Regression Schema
+  - include: test/input/schema.yaml
+  # Examples from the Tutorial
+  - include: test/input/tutorial.yaml
+  # Standard Data Types, Functions, and Operations
+  - include: test/input/library.yaml
+  # Edge Cases of HTSQL-to-SQL Translation
+  - include: test/input/translation.yaml
+  # Formatting Output Data
+  - include: test/input/format.yaml
+

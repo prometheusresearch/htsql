@@ -6,76 +6,24 @@
 
 
 -- --------------------------------------------------------------------
--- The standard HTSQL regression schema for PostgreSQL
+-- The standard HTSQL regression schema for MySQL
 --
 
 
 -- --------------------------------------------------------------------
--- AD -- Administrative Directory
+-- Administrative Directory
 --
 
-CREATE SCHEMA ad;
-COMMENT ON SCHEMA ad IS $_$
-Administrative Directory
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is the basic 4-table schema used by the tutorial and regression
-tests.  It is designed to use limited data types (varchar, memo, and
-integer) as well as simple primary and foreign key relationships.
-
-There are two top-level tables, ``department`` and ``school`` having a
-single-column primary key ``code`` and a unique ``name``.  In this
-schema, we associate departments with exactly one school, although the
-``code`` for the department must be unique across schools.  Non-acedemic
-departments are modeled with a ``NULL`` for their ``school``.
-
-Two second-tier tables, ``course`` and ``program`` have compound primary
-keys, consisting of a parent table and a second column.  For ``course``
-table, we have an integer key, ``number`` which is a 3-digit course
-code, scoped by department.  Hence, ``mth.101`` is distinct from
-``eng.101`` even though they have the same course number.  The
-``degree`` column of ``program`` is an authority controlled field, with
-values ``ms``, ``bs`` and ``cert``; it is optional permitting programs
-which do not offer a degree.
-
-::
-
-  +--------------------+              +---------------------+
-  | DEPARTMENT         |              | SCHOOL              |
-  +--------------------+              +---------------------+
-  | code            PK |--\       /---| code             PK |----\
-  | school          FK |>-|------/    | name          NN,UK |    |
-  | name         NN,UK |  |    .      +---------------------+    |
-  +--------------------+  |     .                              . |
-                        . |  departments                      .  |
-       a department    .  |  belong to         a school          |
-       offers zero or .   |  at most one       administers zero  |
-       more courses       |  school            or more programs  |
-                          |                                      | 
-  +--------------------+  |           +---------------------+    | 
-  | COURSE             |  |           | PROGRAM             |    |
-  +--------------------+  |           +---------------------+    |
-  | department  FK,PK1 |>-/           | school       PK1,FK |>---/
-  | number         PK2 |              | code            PK2 |>---\    
-  | title           NN |              | title            NN |    |
-  | credits         NN |              | degree           CK |    |
-  | description        |              | part_of          FK |----/
-  +--------------------+              +---------------------+
-
-  PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint
-$_$;
-
-CREATE TABLE ad.school (
+CREATE TABLE school (
     code        VARCHAR(16) NOT NULL,
     name        VARCHAR(64) NOT NULL,
     CONSTRAINT school_pk
       PRIMARY KEY (code),
     CONSTRAINT name_uk
       UNIQUE (name)
-);
+) ENGINE=INNODB;
 
-CREATE TABLE ad.department (
+CREATE TABLE department (
     code        VARCHAR(16) NOT NULL,
     name        VARCHAR(64) NOT NULL,
     school      VARCHAR(16),
@@ -85,10 +33,10 @@ CREATE TABLE ad.department (
       UNIQUE (name),
     CONSTRAINT department_school_fk
       FOREIGN KEY (school)
-      REFERENCES ad.school(code)
-);
+      REFERENCES school(code)
+) ENGINE=INNODB;
 
-CREATE TABLE ad.program (
+CREATE TABLE program (
     school      VARCHAR(16) NOT NULL,
     code        VARCHAR(16) NOT NULL,
     title       VARCHAR(64) NOT NULL,
@@ -102,13 +50,13 @@ CREATE TABLE ad.program (
       CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
     CONSTRAINT program_school_fk
       FOREIGN KEY (school)
-      REFERENCES ad.school(code),
+      REFERENCES school(code),
    CONSTRAINT program_part_of_fk
       FOREIGN KEY (school, part_of)
-      REFERENCES ad.program(school, code)
-);
+      REFERENCES program(school, code)
+) ENGINE=INNODB;
 
-CREATE TABLE ad.course (
+CREATE TABLE course (
     department  VARCHAR(16) NOT NULL,
     number      INTEGER NOT NULL,
     title       VARCHAR(64) NOT NULL,
@@ -120,10 +68,10 @@ CREATE TABLE ad.course (
       UNIQUE (title),
     CONSTRAINT course_dept_fk
       FOREIGN KEY (department)
-      REFERENCES ad.department(code)
-);
+      REFERENCES department(code)
+) ENGINE=INNODB;
 
-INSERT INTO ad.school (code, name) VALUES
+INSERT INTO school (code, name) VALUES
     ('art', 'School of Art and Design'),
     ('bus', 'School of Business'),
     ('edu', 'College of Education'),
@@ -134,7 +82,7 @@ INSERT INTO ad.school (code, name) VALUES
     ('ph', 'Public Honorariums'),
     ('sc', 'School of Continuing Studies');
 
-INSERT INTO ad.department (code, name, school) VALUES
+INSERT INTO department (code, name, school) VALUES
     ('astro', 'Astronomy', 'ns'),
     ('chem', 'Chemistry', 'ns'),
     ('phys', 'Physics', 'ns'),
@@ -164,7 +112,7 @@ INSERT INTO ad.department (code, name, school) VALUES
     ('career', 'Career Development', NULL),
     ('parent', 'Parents & Alumni', NULL);
 
-INSERT INTO ad.program (school, code, title, degree, part_of) VALUES
+INSERT INTO program (school, code, title, degree, part_of) VALUES
     ('ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs', NULL),
     ('ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs', NULL),
     ('ns', 'uphys', 'Bachelor of Science in Physics', 'bs', NULL),
@@ -205,7 +153,7 @@ INSERT INTO ad.program (school, code, title, degree, part_of) VALUES
     ('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba', NULL),
     ('ph', 'phd', 'Honorary PhD', NULL, NULL);
 
-INSERT INTO ad.course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, number, title, credits, description) VALUES
     ('astro', 137, 'The Solar System', 3, 'Introductory survey of the solar system, including structure and motion of the planets, properties of the sun, and comparison to extrasolar systems.'),
     ('astro', 142, 'Solar System Lab', 2, 'Laboratory studies that complement the lecture course ASTRO 137.'),
     ('astro', 155, 'Telescope Workshop', 1, 'Introduction to correct use of the 8-inch Schmidt-Cassegrain type telescope. You will learn about magnification, how to locate an object, and how setting circles work.'),
@@ -309,61 +257,10 @@ INSERT INTO ad.course (department, number, title, credits, description) VALUES
 
 
 -- --------------------------------------------------------------------
--- ID -- Instructor Directory
+-- Instructor Directory
 --
 
-CREATE SCHEMA id;
-COMMENT ON SCHEMA id IS $_$
-Instructor Directory
-~~~~~~~~~~~~~~~~~~~~
-
-This schema introduces 3 tables, a top-level ``instructor`` table
-enumerating members of the university teaching staff, and two other
-tables: ``appointment`` and ``confidential``.   These tables provide an
-example of two concepts, a "cross product" (via ``appointment``) and
-"facet" (via ``confidential``).  A cross product is a relationship
-between two tables, in this case, ``department`` and ``instructor``.  A
-facet is a set of columns attached to another table, either to address
-permission differentiation or optionality.  Facets are useful for
-representing sets of mutually-mandatory fields.  In this example, the
-``confidential`` represents a table that is optionally present, and
-likely having different permission restrictions.
-
-This schema also introduces two data types.  The social security number,
-or ``SSN`` of each instructor is a character value of fixed width.  The
-``percent`` column of ``appointment`` table is a ``DECIMAL(3,2)``
-representing a number such as ``0.50`` for a half-time appointment of an
-instructor to a given department.
-
-::
-
-  +--------------------+              +---------------------+
-  | APPOINTMENT        |      /-------| DEPARTMENT          |
-  |--------------------|      |  .    +---------------------+
-  | department  FK,PK1 |>-----/   .
-  | instructor  FK,PK2 |>-----\     a department may have many
-  | percent            |      |     instructors with part-time
-  +--------------------+    . |     teaching appointments
-                           .  |
-    an instructor may have    |       +---------------------+
-    teaching appointments     |       | INSTRUCTOR          |
-    in many departments       |       +---------------------+
-                              \-- /---| code             PK |
-  +--------------------+          |   | title            NN |
-  | CONFIDENTIAL       |          |   | full_name        NN |
-  +--------------------+          |   | phone               |
-  | instructor   FK,PK |o-------- /   | email               |
-  | SSN             NN |   .          +---------------------+
-  | pay_grade       NN |    .
-  | home_phone         |      an instructor may have a record
-  +--------------------+      holding confidential information
-
-
-  PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint
-$_$;
-
-CREATE TABLE id.instructor (
+CREATE TABLE instructor (
     code        VARCHAR(16) NOT NULL,
     title       VARCHAR(4) NOT NULL,
     full_name   VARCHAR(64) NOT NULL,
@@ -373,9 +270,9 @@ CREATE TABLE id.instructor (
       PRIMARY KEY (code),
     CONSTRAINT instructor_title_ck
       CHECK (title IN ('mr', 'dr', 'prof', 'ms'))
-);
+) ENGINE=INNODB;
 
-CREATE TABLE id.confidential (
+CREATE TABLE confidential (
     instructor  VARCHAR(16) NOT NULL,
     SSN         CHAR(11) NOT NULL,
     pay_grade   DECIMAL(1,0) NOT NULL,
@@ -384,10 +281,10 @@ CREATE TABLE id.confidential (
       PRIMARY KEY (instructor),
     CONSTRAINT confidential_instructor_fk
       FOREIGN KEY (instructor)
-      REFERENCES id.instructor(code)
-);
+      REFERENCES instructor(code)
+) ENGINE=INNODB;
 
-CREATE TABLE id.appointment (
+CREATE TABLE appointment (
     department  VARCHAR(16) NOT NULL,
     instructor  VARCHAR(16) NOT NULL,
     percent     DECIMAL(3,2),
@@ -395,13 +292,13 @@ CREATE TABLE id.appointment (
       PRIMARY KEY (department, instructor),
     CONSTRAINT appointment_department_fk
       FOREIGN KEY (department)
-      REFERENCES ad.department(code),
+      REFERENCES department(code),
     CONSTRAINT appointment_instructor_fk
       FOREIGN KEY (instructor)
-      REFERENCES id.instructor(code)
-);
+      REFERENCES instructor(code)
+) ENGINE=INNODB;
 
-INSERT INTO id.instructor (code, title, full_name, phone, email) VALUES
+INSERT INTO instructor (code, title, full_name, phone, email) VALUES
     ('cfergus12', 'prof', 'Adam Ferguson', NULL, 'cfergus12@example.com'),
     ('evargas112', 'prof', 'Elena Vargas', '555-1572', 'evargas112@example.com'),
     ('afrenski', 'mr', 'Andre Frenski', '555-1723', 'afrenski@example.com'),
@@ -442,7 +339,7 @@ INSERT INTO id.instructor (code, title, full_name, phone, email) VALUES
     ('bsacks66', 'prof', 'Benjamin Sacks', '555-2212', 'bsacks66@example.com'),
     ('mscott51', 'prof', 'Mindy Scott', '555-3521', 'mscott51@example.com');
 
-INSERT INTO id.confidential (instructor, SSN, pay_grade, home_phone) VALUES
+INSERT INTO confidential (instructor, SSN, pay_grade, home_phone) VALUES
     ('cfergus12', '987-65-4320', 6, '702-555-1738'),
     ('afrenski', '987-65-4321', 4, NULL),
     ('wyu112', '987-65-4323', 5, '702-555-2954'),
@@ -480,7 +377,7 @@ INSERT INTO id.confidential (instructor, SSN, pay_grade, home_phone) VALUES
     ('bsacks66', '782-78-0000', 7, '202-555-7283'),
     ('mscott51', '126-33-0000', 7, '702-555-7819');
 
-INSERT INTO id.appointment (department, instructor, percent) VALUES
+INSERT INTO appointment (department, instructor, percent) VALUES
     ('stdart', 'acaspar', 1.00),
     ('phys', 'afrenski', 1.00),
     ('ee', 'alang42', 1.00),
@@ -525,91 +422,42 @@ INSERT INTO id.appointment (department, instructor, percent) VALUES
 -- CD -- Class Directory
 --
 
-CREATE SCHEMA cd;
-COMMENT ON SCHEMA cd IS $_$
-Class Directory
-~~~~~~~~~~~~~~~
-
-The principal purpose of this schema is to provide a highly linked table
-with many foreign key references.  The table here, ``class``, represents
-a ``course`` offering during a particular ``semester`` delivered by a
-given ``instructor``.  The ``semester`` table has a compound primary key
-of ``year`` and ``period``.  The ``class`` table has a 5 column primary
-key, 2 columns referencing a given course (by number), 2 columns
-referencing a semester, and finally, a 3-digit ``section`` number.
-
-Since the natural primary key is so large, a secondary candidate key
-``class_seq`` is provided.  This mandatory and unique column is then
-referenced by down-stream tables, such as student enrollment.
-
-::
-
-  +--------------------+              +---------------------+
-  | COURSE             |---\          | SEMESTER            |
-  +--------------------+   |          +---------------------+
-                         . |   /------| year            PK1 |
-    each course may be  .  |   |      | season          PK2 |
-    offered many times     |   |      | begin_date       NN |
-    in a given quarter     |   | .    | end_date         NN |
-                           |   |  .   +---------------------+
-  +--------------------+   |   |
-  | CLASS              |   |   |   each section of a class
-  +--------------------+   |   |   is tracked by semester
-  | department PK1,FK1 |\__/   |
-  | course     PK2,FK2 |/      |    classes are taught by
-  | year       PK3,FK1 |\______/    an instructor
-  | season     PK4,FK2 |/          .
-  | section        PK5 |          .   +---------------------+
-  | instructor     FK  |>-------------| INSTRUCTOR          |
-  | class_seq   NN,UK  |              +---------------------+
-  +--------------------+
-
-  PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint
-$_$;
-
-CREATE TYPE cd.season_t AS ENUM ('fall', 'spring', 'summer');
-
-CREATE DOMAIN cd.year_t AS DECIMAL(4,0);
-
-CREATE TABLE cd.semester (
-    year        cd.year_t NOT NULL,
-    season      cd.season_t NOT NULL,
+CREATE TABLE semester (
+    year        DECIMAL(4,0) NOT NULL,
+    season      ENUM('fall', 'spring', 'summer') NOT NULL,
     begin_date  DATE NOT NULL,
     end_date    DATE NOT NULL,
     CONSTRAINT semester_pk
       PRIMARY KEY (year, season)
-);
+) ENGINE=INNODB;
 
-CREATE SEQUENCE class_seq START 20001;
-
-CREATE TABLE cd.class (
+CREATE TABLE class (
     department  VARCHAR(16) NOT NULL,
     course      INTEGER NOT NULL,
-    year        cd.year_t NOT NULL,
-    season      cd.season_t NOT NULL,
+    year        DECIMAL(4,0) NOT NULL,
+    season      ENUM('fall', 'spring', 'summer') NOT NULL,
     section     CHAR(3) NOT NULL,
     instructor  VARCHAR(16),
-    class_seq   INTEGER NOT NULL DEFAULT nextval('class_seq'),
+    class_seq   INTEGER NOT NULL AUTO_INCREMENT,
     CONSTRAINT class_pk
       PRIMARY KEY (department, course, year, season, section),
     CONSTRAINT class_uk
       UNIQUE (class_seq),
     CONSTRAINT class_department_fk
       FOREIGN KEY (department)
-      REFERENCES ad.department(code),
+      REFERENCES department(code),
     CONSTRAINT class_course_fk
       FOREIGN KEY (department, course)
-      REFERENCES ad.course(department, number),
+      REFERENCES course(department, number),
     CONSTRAINT class_semester_fk
       FOREIGN KEY (year, season)
-      REFERENCES cd.semester(year, season),
+      REFERENCES semester(year, season),
     CONSTRAINT class_instructor_fk
       FOREIGN KEY (instructor)
-      REFERENCES id.instructor(code)
-);
+      REFERENCES instructor(code)
+) ENGINE=INNODB;
 
-INSERT INTO cd.semester (year, season, begin_date, end_date) VALUES
+INSERT INTO semester (year, season, begin_date, end_date) VALUES
     (2009, 'spring', '2010-01-01', '2010-05-15'),
     (2010, 'spring', '2011-01-01', '2011-05-15'),
     (2011, 'spring', '2012-01-01', '2012-05-15'),
@@ -623,7 +471,7 @@ INSERT INTO cd.semester (year, season, begin_date, end_date) VALUES
     (2011, 'summer', '2012-06-01', '2012-08-01'),
     (2012, 'summer', '2013-06-01', '2013-08-01');
 
-INSERT INTO cd.class (department, course, year, season, section, instructor, class_seq) VALUES
+INSERT INTO class (department, course, year, season, section, instructor, class_seq) VALUES
     ('astro', 137, 2009, 'fall', '001', 'egasner', 10001),
     ('astro', 142, 2009, 'spring', '001', 'asacco', 10002),
     ('astro', 155, 2010, 'fall', '001', 'cfergus12', 10003),
@@ -724,54 +572,10 @@ INSERT INTO cd.class (department, course, year, season, section, instructor, cla
 -- ED -- Enrollment Directory
 --
 
-CREATE SCHEMA ed;
-COMMENT ON SCHEMA ed IS $_$
-Enrollment Directory
-~~~~~~~~~~~~~~~~~~~~
-
-This schema provides a fact table for use in demonstrating aggregates in
-multiple dimensions.  The ``enrollment``, while only directly
-referencing ``class`` and ``student``, indirectly provides summary
-statics options by semester, course, program, department and other
-dimensions.  The ``enrollment`` table is also a cross-product table,
-reflecting a "membership" of a student within a given class.  Cross
-products are used in relational databases to model many-to-many
-relationships, in this case, the relationship has a few attribute
-columns: ``status`` and ``grade``.
-
-::
-
-  +--------------------+              +---------------------+
-  | CLASS              |---\          | PROGRAM             |----\
-  +--------------------+   |          +---------------------+    |
-                           |                                   . |
-    each class may have    |            students are admitted .  |
-    several student     .  |            into a school program    |
-    enrollments          . |                                     |
-                           |          +---------------------+    |
-  +--------------------+   |          | STUDENT             |    |
-  | ENROLLMENT         |   |          +---------------------+    |
-  +--------------------+   |     /----| number           PK |    |
-  | class       PK, FK |>--/     |    | name             NN |    |
-  | student     PK, FK |---------/    | gender           NN |    |
-  | status             |     .        | dob              NN |    |
-  | grade              |    .         | school          FK1 |\___/
-  +--------------------+   .          | program         FK2 |/
-                                      | start_date       NN |
-    students may enroll in            | is_active        NN |
-    one or more classes               +---------------------+
-
-  PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint
-$_$;
-
-CREATE TYPE ed.enrollment_status_t AS ENUM ('enr', 'inc', 'ngr');
-CREATE TYPE ed.student_gender_t AS ENUM ('f', 'i', 'm');
-
-CREATE TABLE ed.student (
+CREATE TABLE student (
     number      INTEGER NOT NULL,
     name        VARCHAR(64) NOT NULL,
-    gender      ed.student_gender_t NOT NULL,
+    gender      ENUM('f', 'i', 'm') NOT NULL,
     dob         DATE NOT NULL,
     school      VARCHAR(16),
     program     VARCHAR(16),
@@ -781,28 +585,28 @@ CREATE TABLE ed.student (
       PRIMARY KEY (number),
     CONSTRAINT student_school_fk
       FOREIGN KEY (school)
-      REFERENCES ad.school (code),
+      REFERENCES school (code),
     CONSTRAINT student_program_fk
       FOREIGN KEY (school, program)
-      REFERENCES ad.program (school, code)
-);
+      REFERENCES program (school, code)
+) ENGINE=INNODB;
 
-CREATE TABLE ed.enrollment (
+CREATE TABLE enrollment (
     student     INTEGER NOT NULL,
     class       INTEGER NOT NULL,
-    status      ed.enrollment_status_t NOT NULL,
+    status      ENUM('enr', 'inc', 'ngr') NOT NULL,
     grade       DECIMAL(3,2),
     CONSTRAINT enrollment_pk
       PRIMARY KEY (student, class),
     CONSTRAINT enrollment_student_fk
       FOREIGN KEY (student)
-      REFERENCES ed.student(number),
+      REFERENCES student(number),
     CONSTRAINT enrollment_class_fk
       FOREIGN KEY (class)
-      REFERENCES cd.class(class_seq)
-);
+      REFERENCES class(class_seq)
+) ENGINE=INNODB;
 
-INSERT INTO ed.student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
     ('25371', 'John L. Hanley', 'm', '1990-04-28', 'eng', 'gbuseng', '2009-07-15', TRUE),
     ('29878', 'Ellen Lansburgh', 'f', '1992-02-01', 'bus', 'uacct', '2008-01-05', TRUE),
     ('37278', 'Ming Wang', 'm', '1988-03-15', 'la', 'gengl', '2002-11-27', FALSE),
@@ -855,7 +659,7 @@ INSERT INTO ed.student (number, name, gender, dob, school, program, start_date, 
     ('27281', 'José N. Marteñes', 'm', '1993-11-19', 'eng', 'ucompsci', '2007-06-15', TRUE),
     ('27817', 'Niall Crawford', 'm', '1998-12-14', 'bus', 'pacc', '2010-01-02', TRUE);
 
-INSERT INTO ed.enrollment (student, class, status, grade) VALUES
+INSERT INTO enrollment (student, class, status, grade) VALUES
     ('25371', 10086, 'ngr', NULL),
     ('25371', 10051, 'enr', 3.7),
     ('29878', 10086, 'inc', NULL),
@@ -867,68 +671,7 @@ INSERT INTO ed.enrollment (student, class, status, grade) VALUES
 -- RD -- Requirement Directory
 --
 
-CREATE SCHEMA rd;
-COMMENT ON SCHEMA rd IS $_$
-Requirement Directory
-~~~~~~~~~~~~~~~~~~~~~
-
-This schema focuses on recursive and linked structures.  The
-``prerequisite`` cross-product table represents a many-to-many
-relationship from ``course`` onto itself.  The ``classification`` table
-represents a one-to-many self relationship, forming a a hierarchy.  The
-``course_classification`` table is simply another cross-product tables
-representing membership, associating a ``course`` with a
-``classification``.
-
-The classification table models distributional requirements, where a
-course may be tagged with a specific program requirement, such as
-``"art-history"`` which also acts as a broader distributional
-requirement, ``"humanities"``.
-
-A ``program_requirement`` table models an optional The hierarchy is
-interpreted to imply that a class tagged with the former also counts to
-fulfill requirements of the latter.
-
-::
-
-  +-----------------------+
-  | PREREQUISITE          |            two foreign keys denote a
-  +-----------------------+          . dependency *by* a course,
-  | by_department FK1,PK1 |\_______ .  such as chem.100, *on*
-  | by_course     FK2,PK2 |/       \   another, such as mth.101
-  | on_department FK1,PK3 |\______ |
-  | on_course     FK2,PK4 |/     | |  +---------------------+
-  +-----------------------+   /- \-\--| COURSE              |
-                              |       +---------------------+
-   a course can be a member   |
-   of several classifications |       +---------------------+
-                           .  |       | CLASSIFICATION      |
-  +-----------------------+ . |       +---------------------+
-  | COURSE_CLASSIFICATION |   | /- /--| code             PK |----\
-  +-----------------------+   | |  |  | type             NN |    |
-  | department    FK1,PK1 |\__/ |  |  | title            NN |    |
-  | course        FK2,PK2 |/    |  |  | description         |    |
-  | classification FK,PK3 |>----/  |  | part_of          FK |>---/
-  +-----------------------+  .     |  +---------------------+  .
-                            .      |                          .
-    a classification is used       |    a classification may be
-    to tag multiple courses   /----/    part of a broader category
-                              |
-  +-----------------------+   | . courses, by classification, are
-  | PROGRAM_REQUIREMENT   |   |.  required by a given program
-  +-----------------------+   |
-  | school        FK1,PK1 |\__|____     +---------------------+
-  | program       FK2,PK2 |/  |    `----| PROGRAM             |
-  | classification FK,PK3 |>--/   .     +---------------------+
-  | credit_hours       NN |      .
-  | rationale             |    programs require class credits
-  +-----------------------+    specified via classifications
-
-  PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint
-$_$;
-
-CREATE TABLE rd.prerequisite (
+CREATE TABLE prerequisite (
     of_department   VARCHAR(16) NOT NULL,
     of_course       INTEGER NOT NULL,
     on_department   VARCHAR(16) NOT NULL,
@@ -937,18 +680,15 @@ CREATE TABLE rd.prerequisite (
       PRIMARY KEY (of_department, of_course, on_department, on_course),
     CONSTRAINT prerequisite_on_course_fk
       FOREIGN KEY (on_department, on_course)
-      REFERENCES ad.course(department, number),
+      REFERENCES course(department, number),
     CONSTRAINT prerequisite_of_course_fk
       FOREIGN KEY (of_department, of_course)
-      REFERENCES ad.course(department, number)
-);
+      REFERENCES course(department, number)
+) ENGINE=INNODB;
 
-CREATE TYPE rd.classification_type_t
-  AS ENUM ('department', 'school', 'university');
-
-CREATE TABLE rd.classification (
+CREATE TABLE classification (
     code        VARCHAR(16) NOT NULL,
-    type        rd.classification_type_t,
+    type        ENUM('department', 'school', 'university'),
     title       VARCHAR(64) NOT NULL,
     description TEXT,
     part_of     VARCHAR(16),
@@ -958,10 +698,10 @@ CREATE TABLE rd.classification (
       UNIQUE (title),
     CONSTRAINT classification_part_of_fk
       FOREIGN KEY (part_of)
-      REFERENCES rd.classification(code)
-);
+      REFERENCES classification(code)
+) ENGINE=INNODB;
 
-CREATE TABLE rd.course_classification (
+CREATE TABLE course_classification (
     department      VARCHAR(16) NOT NULL,
     course          INTEGER NOT NULL,
     classification  VARCHAR(16) NOT NULL,
@@ -969,13 +709,13 @@ CREATE TABLE rd.course_classification (
       PRIMARY KEY (department, course, classification),
     CONSTRAINT course_classification_course_fk
       FOREIGN KEY (department, course)
-      REFERENCES ad.course(department, number),
+      REFERENCES course(department, number),
     CONSTRAINT course_classification_classification_fk
       FOREIGN KEY (classification)
-      REFERENCES rd.classification(code)
-);
+      REFERENCES classification(code)
+) ENGINE=INNODB;
 
-CREATE TABLE rd.program_requirement (
+CREATE TABLE program_requirement (
     school          VARCHAR(16) NOT NULL,
     program         VARCHAR(16) NOT NULL,
     classification  VARCHAR(16) NOT NULL,
@@ -985,13 +725,13 @@ CREATE TABLE rd.program_requirement (
       PRIMARY KEY (school, program, classification),
     CONSTRAINT program_classification_course_fk
       FOREIGN KEY (school, program)
-      REFERENCES ad.program(school, code),
+      REFERENCES program(school, code),
     CONSTRAINT program_classification_classification_fk
       FOREIGN KEY (classification)
-      REFERENCES rd.classification(code)
-);
+      REFERENCES classification(code)
+) ENGINE=INNODB;
 
-INSERT INTO rd.prerequisite (of_department, of_course, on_department, on_course) VALUES
+INSERT INTO prerequisite (of_department, of_course, on_department, on_course) VALUES
     ('astro', 142, 'astro', 137),
     ('chem', 314, 'chem', 115),
     ('chem', 110, 'chem', 100),
@@ -1014,7 +754,7 @@ INSERT INTO rd.prerequisite (of_department, of_course, on_department, on_course)
     ('acc', 527, 'acc', 200),
     ('capmrk', 818, 'acc', 315);
 
-INSERT INTO rd.classification (code, type, title, description, part_of) VALUES
+INSERT INTO classification (code, type, title, description, part_of) VALUES
     ('cross', NULL, 'Cross-Cutting Requirements', NULL, NULL),
       ('writing', 'university', 'Writing Intensive', 'Writing intensive courses involve 3 or more papers per semester; at least one of which is a research paper of 20 pages or more.', 'cross'),
       ('reasoning', 'university', 'Quantitative Reasoning', 'Quantitative resoning courses focus on numerical analysis to evaluate, describe and justify outcomes of complex decisions.', 'cross'),
@@ -1120,7 +860,7 @@ INSERT INTO rd.classification (code, type, title, description, part_of) VALUES
       ('management', 'school', 'Management', NULL, 'business'),
     ('remedial', 'university', 'Remedial Courses', 'Classes for which credit is not typically given for degree programs in the same school; e.g.  College Algebra courses do not earn credit for those in the School of Natural Science.', NULL);
 
-INSERT INTO rd.course_classification (department, course, classification) VALUES
+INSERT INTO course_classification (department, course, classification) VALUES
     ('astro', 137, 'astronomy'),
     ('astro', 142, 'astrolab'),
     ('astro', 155, 'observation'),
@@ -1235,7 +975,7 @@ INSERT INTO rd.course_classification (department, course, classification) VALUES
     ('capmrk', 818, 'institutional'),
     ('capmrk', 756, 'markets');
 
-INSERT INTO rd.program_requirement (school, program, classification, credit_hours, rationale) VALUES
+INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
     ('ns', 'uastro', 'astrolab', 8, 'Astronomy students are expected to take a minimum of 8 credit hours in the astronomy laboratory.'),
     ('ns', 'uastro', 'observation', 12, 'Undergraduate astronomy students will take a minimum of 12 credit hours of observational astronomy.'),
     ('ns', 'uastro', 'astrotheory', 24, 'Undergraduate astronomy students will take a minimum of 12 credit hours of coursework on astronomy theory.'),
