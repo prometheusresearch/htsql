@@ -55,6 +55,9 @@ default:
 	@echo "  serve-sqlite: to start an HTTP server on the SQLite test database"
 	@echo "  serve-pgsql: to start an HTTP server on the PostgreSQL test database"
 	@echo "  serve-mysql: to start an HTTP server on the MySQL test database"
+	@echo "	 client-sqlite: to start a native SQLite shell on the test database"
+	@echo "  client-pgsql: to start a native PostgreSQL shell on the test database"
+	@echo "  client-mysql: to start a native MySQL shell on the test database"
 	@echo
 	@echo "  *** Demos and Examples ***"
 	@echo "  demo-htraf: to run the HTRAF demo"
@@ -200,6 +203,18 @@ serve-pgsql:
 # Start an HTTP/HTSQL server on the MySQL regression database.
 serve-mysql:
 	${HTSQL_CTL} serve ${MYSQL_URI} ${HTSQL_HOST} ${HTSQL_PORT}
+
+# Start a native client on the SQLite regression database.
+client-sqlite:
+	${SQLITE_CLIENT}
+
+# Start a native client on the PostgreSQL regression database.
+client-pgsql:
+	${PGSQL_CLIENT}
+
+# Start a native client on the MySQL regression database.
+client-mysql:
+	${MYSQL_CLIENT}
 
 
 #
