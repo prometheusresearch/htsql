@@ -214,9 +214,9 @@ tests:
     expect: 400
   # Not a number
   - uri: /{integer(string('zero'))}
-    ifdef: sqlite
+    ifdef: [sqlite, mysql]
   - uri: /{float(string('zero'))}
-    ifdef: sqlite
+    ifdef: [sqlite, mysql]
   - uri: /{integer(string('cinq'))}
     expect: 409
     ignore: true
@@ -232,7 +232,7 @@ tests:
     ifdef: pgsql
   - uri: /{integer(4294967296.0),
            integer(1.8446744073709552e+19)}
-    ifdef: sqlite
+    ifdef: [sqlite, mysql]
 
   # Arithmetics
   - uri: /{+7, -7, +2.125, -2.125, +271828e-5, -271828e-5}
@@ -262,7 +262,7 @@ tests:
     ignore: true
     ifdef: pgsql
   - uri: /{7*2147483647, 9223372036854775807+1}
-    ifdef: sqlite
+    ifdef: [sqlite, mysql]
   # Division by zero
   - uri: /{7/0}
     expect: 409
@@ -277,7 +277,7 @@ tests:
     ignore: true
     ifdef: pgsql
   - uri: /{7/0, 7/0.0, 7/0e0}
-    ifdef: sqlite
+    ifdef: [sqlite, mysql]
 
   # Rounding
   - uri: /{round(3272.78125,2)}
@@ -380,7 +380,7 @@ tests:
     ifdef: pgsql
   - uri: /{date(string('birthday')),
            date(string('2010-13-07'))}
-    ifdef: sqlite
+    ifdef: [sqlite, mysql]
 
   # Construction
   - uri: /{today()}

@@ -20,7 +20,7 @@ tests:
   - mkdir: ${SQLITE_DIRECTORY}
   - connect: &connect
       engine: sqlite
-      database: ${SQLITE_DIRECTORY}${SQLITE_DATABASE}
+      database: ${SQLITE_DIRECTORY}/${SQLITE_DATABASE}
     sql-include: test/sql/regress-sqlite.sql
 
 - title: Run the test collection

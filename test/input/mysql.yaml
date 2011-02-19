@@ -31,9 +31,12 @@ tests:
   tests:
   - connect: *admin-connect
     sql: !environ |
-        CREATE DATABASE `${MYSQL_DATABASE}` CHARACTER SET utf8 COLLATE utf8_bin;
-        CREATE USER `${MYSQL_USERNAME}` IDENTIFIED BY '${MYSQL_PASSWORD}';
-        GRANT ALL PRIVILEGES ON `${MYSQL_DATABASE}`.* TO `${MYSQL_USERNAME}`;
+        CREATE DATABASE `${MYSQL_DATABASE}`
+            CHARACTER SET utf8 COLLATE utf8_general_ci;
+        CREATE USER `${MYSQL_USERNAME}`
+            IDENTIFIED BY '${MYSQL_PASSWORD}';
+        GRANT ALL PRIVILEGES
+            ON `${MYSQL_DATABASE}`.* TO `${MYSQL_USERNAME}`;
     #autocommit: true
   - connect: &connect
       engine: mysql
@@ -46,7 +49,6 @@ tests:
 
 - title: Run the test collection
   id: test-mysql
-  skip: true
   tests:
   - define: mysql
   - db: *connect

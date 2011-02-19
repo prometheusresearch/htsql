@@ -17,7 +17,12 @@ from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
 from htsql.domain import BooleanDomain, StringDomain, EnumDomain
-import MySQLdb
+import MySQLdb, MySQLdb.connections
+
+
+class Cursor(MySQLdb.connections.Connection.default_cursor):
+
+    _defer_warnings = True
 
 
 class MySQLError(DBError):
@@ -45,6 +50,7 @@ class ConnectMySQL(Connect):
         if db.password is not None:
             parameters['passwd'] = db.password
         parameters['charset'] = 'utf8'
+        parameters['cursorclass'] = Cursor
         connection = MySQLdb.connect(**parameters)
         return connection
 
