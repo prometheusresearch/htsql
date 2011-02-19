@@ -108,11 +108,8 @@ tests:
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
     - uri: /school{code,name,this(){code}?name!~'art',
                    root().school{code}?name!~'art'}
-      ifndef: sqlite    # no support for `~` operator yet
     - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
-      ifndef: sqlite    # no support for `~` operator yet
     - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
-      ifndef: sqlite    # no support for `~` operator yet
 
   - title: Table Expressions
     tests:

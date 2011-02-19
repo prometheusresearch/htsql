@@ -62,9 +62,7 @@ tests:
   # Comparison Operators
   - uri: /course?title='Drawing'
   - uri: /course?title~'lab'
-    ifndef: sqlite  # no support for `~` operator yet
   - uri: /course?title!~'lab'
-    ifndef: sqlite  # no support for `~` operator yet
   - uri: /course?title!='Organic Chemistry Laboratory I'
   - uri: /course{department,number,title}?number=101
   - uri: /course?department!={'arthis','stdart'}
