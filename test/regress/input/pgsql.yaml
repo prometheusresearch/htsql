@@ -6,7 +6,7 @@
 
 title: PostgreSQL regression tests
 id: pgsql
-output: test/output/pgsql.yaml
+output: test/regress/output/pgsql.yaml
 tests:
 
 - title: Remove any existing regression database
@@ -40,7 +40,7 @@ tests:
       password: ${PGSQL_PASSWORD}
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
-    sql-include: test/sql/regress-pgsql.sql
+    sql-include: test/regress/sql/regress-pgsql.sql
 
 - title: Run the test collection
   id: test-pgsql
@@ -48,13 +48,13 @@ tests:
   - define: pgsql
   - db: *connect
   # The Regression Schema
-  - include: test/input/schema.yaml
+  - include: test/regress/input/schema.yaml
   # Examples from the Tutorial
-  - include: test/input/tutorial.yaml
+  - include: test/regress/input/tutorial.yaml
   # Standard Data Types, Functions, and Operations
-  - include: test/input/library.yaml
+  - include: test/regress/input/library.yaml
   # Edge Cases of HTSQL-to-SQL Translation
-  - include: test/input/translation.yaml
+  - include: test/regress/input/translation.yaml
   # Formatting Output Data
-  - include: test/input/format.yaml
+  - include: test/regress/input/format.yaml
 

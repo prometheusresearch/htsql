@@ -7,7 +7,7 @@ id: pgsql
 tests:
 - id: test-pgsql
   tests:
-  - include: test/input/schema.yaml
+  - include: test/regress/input/schema.yaml
     output:
       id: schema
       tests:
@@ -3195,7 +3195,7 @@ tests:
                    AND ("program_requirement"."program" = 'uacct')
                    AND ("program_requirement"."classification" = 'accounting')
              ORDER BY "program_requirement"."school" ASC, "program_requirement"."program" ASC, "program_requirement"."classification" ASC
-  - include: test/input/tutorial.yaml
+  - include: test/regress/input/tutorial.yaml
     output:
       id: tutorial
       tests:
@@ -8723,7 +8723,7 @@ tests:
              ORDER BY 1 ASC, 2 ASC
              LIMIT 5
              OFFSET 20
-  - include: test/input/library.yaml
+  - include: test/regress/input/library.yaml
     output:
       id: library
       tests:
@@ -13277,7 +13277,7 @@ tests:
              FROM "ad"."course" AS "course"
              WHERE ("course"."department" = 'stdart')
              ORDER BY 1 DESC NULLS LAST, 2 ASC, "course"."department" ASC
-  - include: test/input/translation.yaml
+  - include: test/regress/input/translation.yaml
     output:
       id: translation
       tests:
@@ -17347,7 +17347,7 @@ tests:
                                      GROUP BY 2, 3) AS "student_3"
                                     ON (("student_1"."year" = "student_3"."year") AND ("student_1"."gender" = "student_3"."gender"))
                ORDER BY 1 ASC, 2 ASC
-  - include: test/input/format.yaml
+  - include: test/regress/input/format.yaml
     output:
       id: format
       tests:

@@ -6,7 +6,7 @@
 
 title: MySQL regression tests
 id: mysql
-output: test/output/mysql.yaml
+output: test/regress/output/mysql.yaml
 tests:
 
 - title: Remove any existing regression database
@@ -45,7 +45,7 @@ tests:
       password: ${MYSQL_PASSWORD}
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
-    sql-include: test/sql/regress-mysql.sql
+    sql-include: test/regress/sql/regress-mysql.sql
 
 - title: Run the test collection
   id: test-mysql
@@ -53,13 +53,13 @@ tests:
   - define: mysql
   - db: *connect
   # The Regression Schema
-  - include: test/input/schema.yaml
+  - include: test/regress/input/schema.yaml
   # Examples from the Tutorial
-  - include: test/input/tutorial.yaml
+  - include: test/regress/input/tutorial.yaml
   # Standard Data Types, Functions, and Operations
-  - include: test/input/library.yaml
+  - include: test/regress/input/library.yaml
   # Edge Cases of HTSQL-to-SQL Translation
-  - include: test/input/translation.yaml
+  - include: test/regress/input/translation.yaml
   # Formatting Output Data
-  - include: test/input/format.yaml
+  - include: test/regress/input/format.yaml
 

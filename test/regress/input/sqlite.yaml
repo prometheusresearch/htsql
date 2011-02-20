@@ -6,7 +6,7 @@
 
 title: SQLite regression tests
 id: sqlite
-output: test/output/sqlite.yaml
+output: test/regress/output/sqlite.yaml
 tests:
 
 - title: Remove any existing regression database
@@ -21,7 +21,7 @@ tests:
   - connect: &connect
       engine: sqlite
       database: ${SQLITE_DIRECTORY}/${SQLITE_DATABASE}
-    sql-include: test/sql/regress-sqlite.sql
+    sql-include: test/regress/sql/regress-sqlite.sql
 
 - title: Run the test collection
   id: test-sqlite
@@ -29,13 +29,13 @@ tests:
   - define: sqlite
   - db: *connect
   # The Regression Schema
-  - include: test/input/schema.yaml
+  - include: test/regress/input/schema.yaml
   # Examples from the Tutorial
-  - include: test/input/tutorial.yaml
+  - include: test/regress/input/tutorial.yaml
   # Standard Data Types, Functions, and Operations
-  - include: test/input/library.yaml
+  - include: test/regress/input/library.yaml
   # Edge Cases of HTSQL-to-SQL Translation
-  - include: test/input/translation.yaml
+  - include: test/regress/input/translation.yaml
   # Formatting Output Data
-  - include: test/input/format.yaml
+  - include: test/regress/input/format.yaml
 
