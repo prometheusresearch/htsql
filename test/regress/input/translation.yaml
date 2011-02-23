@@ -33,6 +33,11 @@ tests:
     - uri: /school{name}
     - uri: /department{school.*,*}
     - uri: /department{school.name+' - '+name}
+    # Empty selectors are broken
+    - uri: /{}
+      skip: true
+    - uri: /school{}
+      skip: true
 
   # Plural links and aggregates.
   - title: Aggregates
@@ -117,17 +122,17 @@ tests:
 
   - title: Assignments
     tests:
-    - uri: /school.let(c:=department.course.credits)
+    - uri: /school.define(c:=department.course.credits)
                 {code,min(c),max(c),sum(c),avg(c)}?exists(c)
-    - uri: /school.let(program:=(program?degree='bs')
-                                .let(student:=student?is_active))
+    - uri: /school.define(program:=(program?degree='bs')
+                                .define(student:=student?is_active))
                 {code,count(program),count(program.student)}?code='eng'
     # FIXME?
     - uri: /school{code,count(program.student),
-                   count((program.let(s:=student)?degree='bs').s),
-                   count((program?degree='bs').let(s:=student).s)}?code='eng'
-    - uri: /let(x:=2,y:=3,z:=x*y){x,y,z}
-    - uri: /let(x:=2,x:=x+x,x:=x*x){x}
+                   count((program.define(s:=student)?degree='bs').s),
+                   count((program?degree='bs').define(s:=student).s)}?code='eng'
+    - uri: /define(x:=2,y:=3,z:=x*y){x,y,z}
+    - uri: /define(x:=2,x:=x+x,x:=x*x){x}
 
   - title: Projections
     tests:
@@ -201,4 +206,11 @@ tests:
     - uri: /school{code,count(program),count(program^degree)}
     - uri: /(program^degree){*,count(^),count(^.student)}
     - uri: /(student^{year(dob),gender}){*,count(^),count(^?is_active)}
+    - uri: /count(program^degree)
+    - uri: /(school^{})
+      skip: true
+    - uri: /(school^{null()})
+      skip: true
+    - uri: /(school^{true()})
+      skip: true
 

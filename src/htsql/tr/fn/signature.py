@@ -304,7 +304,7 @@ class AssignmentSig(BinarySig):
     pass
 
 
-class LetSig(ConnectiveSig):
+class DefineSig(ConnectiveSig):
     pass
 
 

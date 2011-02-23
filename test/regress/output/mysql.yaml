@@ -15065,12 +15065,12 @@ tests:
                ORDER BY `school`.`code` ASC, 1 ASC
         - id: assignments
           tests:
-          - uri: /school.let(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
+          - uri: /school.define(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school.let(c:=department.course.credits)?exists(c))               |
+               | (school.define(c:=department.course.credits)?exists(c))            |
               -+--------------------------------------------------------------------+-
                | code | min(c) | max(c) | sum(c) | avg(c)                           |
               -+------+--------+--------+--------+----------------------------------+-
@@ -15083,7 +15083,7 @@ tests:
                                                                              (6 rows)
 
                ----
-               /school.let(c:=department.course.credits){code,min(c),max(c),sum(c),avg(c)}?exists(c)
+               /school.define(c:=department.course.credits){code,min(c),max(c),sum(c),avg(c)}?exists(c)
                SELECT `school`.`code`,
                       `course`.`min`,
                       `course`.`max`,
@@ -15107,21 +15107,21 @@ tests:
                             WHERE (`school`.`code` = `department`.`school`)
                                   AND (`course_1`.`credits` IS NOT NULL))
                ORDER BY 1 ASC
-          - uri: /school.let(program:=(program?degree='bs') .let(student:=student?is_active))
+          - uri: /school.define(program:=(program?degree='bs') .define(student:=student?is_active))
               {code,count(program),count(program.student)}?code='eng'
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school.let(program:=(program?degree='bs').let(student:=student?is_active))?code='eng') |
-              -+-----------------------------------------------------------------------------------------+-
-               | code               | count(program)               | count(program.student)              |
-              -+--------------------+------------------------------+-------------------------------------+-
-               | eng                |                            4 |                                   5 |
-                                                                                                   (1 row)
+               | (school.define(program:=(program?degree='bs').define(student:=student?is_active))?code='eng') |
+              -+-----------------------------------------------------------------------------------------------+-
+               | code                 | count(program)                 | count(program.student)                |
+              -+----------------------+--------------------------------+---------------------------------------+-
+               | eng                  |                              4 |                                     5 |
+                                                                                                         (1 row)
 
                ----
-               /school.let(program:=(program?degree='bs').let(student:=student?is_active)){code,count(program),count(program.student)}?code='eng'
+               /school.define(program:=(program?degree='bs').define(student:=student?is_active)){code,count(program),count(program.student)}?code='eng'
                SELECT `school`.`code`,
                       COALESCE(`program`.`count`, 0),
                       COALESCE(`student`.`count`, 0)
@@ -15143,21 +15143,21 @@ tests:
                                     ON (`school`.`code` = `student`.`school`)
                WHERE (`school`.`code` = 'eng')
                ORDER BY 1 ASC
-          - uri: /school{code,count(program.student), count((program.let(s:=student)?degree='bs').s),
-              count((program?degree='bs').let(s:=student).s)}?code='eng'
+          - uri: /school{code,count(program.student), count((program.define(s:=student)?degree='bs').s),
+              count((program?degree='bs').define(s:=student).s)}?code='eng'
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school?code='eng')                                                                                                             |
-              -+---------------------------------------------------------------------------------------------------------------------------------+-
-               | code | count(program.student) | count((program.let(s:=student)?degree='bs').s) | count((program?degree='bs').let(s:=student).s) |
-              -+------+------------------------+------------------------------------------------+------------------------------------------------+-
-               | eng  |                     14 |                                             14 |                                              6 |
-                                                                                                                                           (1 row)
+               | (school?code='eng')                                                                                                                   |
+              -+---------------------------------------------------------------------------------------------------------------------------------------+-
+               | code | count(program.student) | count((program.define(s:=student)?degree='bs').s) | count((program?degree='bs').define(s:=student).s) |
+              -+------+------------------------+---------------------------------------------------+---------------------------------------------------+-
+               | eng  |                     14 |                                                14 |                                                 6 |
+                                                                                                                                                 (1 row)
 
                ----
-               /school{code,count(program.student),count((program.let(s:=student)?degree='bs').s),count((program?degree='bs').let(s:=student).s)}?code='eng'
+               /school{code,count(program.student),count((program.define(s:=student)?degree='bs').s),count((program?degree='bs').define(s:=student).s)}?code='eng'
                SELECT `school`.`code`,
                       COALESCE(`student_1`.`count`, 0),
                       COALESCE(`student_1`.`count`, 0),
@@ -15180,37 +15180,37 @@ tests:
                                     ON (`school`.`code` = `student_2`.`school`)
                WHERE (`school`.`code` = 'eng')
                ORDER BY 1 ASC
-          - uri: /let(x:=2,y:=3,z:=x*y){x,y,z}
+          - uri: /define(x:=2,y:=3,z:=x*y){x,y,z}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | let(x:=2,y:=3,z:=x*y) |
-              -+-----------------------+-
-               | x     | y     | z     |
-              -+-------+-------+-------+-
-               |     2 |     3 |     6 |
-                                 (1 row)
+               | define(x:=2,y:=3,z:=x*y) |
+              -+--------------------------+-
+               | x      | y      | z      |
+              -+--------+--------+--------+-
+               |      2 |      3 |      6 |
+                                    (1 row)
 
                ----
-               /let(x:=2,y:=3,z:=x*y){x,y,z}
+               /define(x:=2,y:=3,z:=x*y){x,y,z}
                SELECT 2,
                       3,
                       (2 * 3)
-          - uri: /let(x:=2,x:=x+x,x:=x*x){x}
+          - uri: /define(x:=2,x:=x+x,x:=x*x){x}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | let(x:=2,x:=x+x,x:=x*x) |
-              -+-------------------------+-
-               | x                       |
-              -+-------------------------+-
-               |                      16 |
-                                   (1 row)
+               | define(x:=2,x:=x+x,x:=x*x) |
+              -+----------------------------+-
+               | x                          |
+              -+----------------------------+-
+               |                         16 |
+                                      (1 row)
 
                ----
-               /let(x:=2,x:=x+x,x:=x*x){x}
+               /define(x:=2,x:=x+x,x:=x*x){x}
                SELECT ((2 + 2) * (2 + 2))
         - id: projections
           tests:
@@ -17441,6 +17441,24 @@ tests:
                                      GROUP BY 2, 3) AS `student_3`
                                     ON ((`student_1`.`year` = `student_3`.`year`) AND (`student_1`.`gender` = `student_3`.`gender`))
                ORDER BY 1 ASC, 2 ASC
+          - uri: /count(program^degree)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               |                       |
+              -+-----------------------+-
+               | count(program^degree) |
+              -+-----------------------+-
+               |                     8 |
+                                 (1 row)
+
+               ----
+               /count(program^degree)
+               SELECT COUNT(TRUE)
+               FROM (SELECT TRUE AS `^`
+                     FROM `htsql_regress`.`program` AS `program`
+                     GROUP BY `program`.`degree`) AS `program`
   - include: test/regress/input/format.yaml
     output:
       id: format

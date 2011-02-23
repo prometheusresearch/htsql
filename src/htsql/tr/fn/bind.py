@@ -43,7 +43,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         QuotientSig, KernelSig, ComplementSig,
-                        AssignmentSig, LetSig)
+                        AssignmentSig, DefineSig)
 import sys
 
 
@@ -568,10 +568,10 @@ class BindAssignment(BindMacro):
         yield AssignmentBinding(name, rop, self.syntax)
 
 
-class BindLet(BindMacro):
+class BindDefine(BindMacro):
 
-    named('let')
-    signature = LetSig
+    named('define')
+    signature = DefineSig
 
     def expand(self, ops):
         binding = self.state.base
@@ -579,10 +579,9 @@ class BindLet(BindMacro):
             assignment = self.state.bind(op)
             if not isinstance(assignment, AssignmentBinding):
                 raise BindError("an assignment expected", op.mark)
-            replacement = self.state.bind(assignment.replacement,
-                                          base=binding)
+            body = self.state.bind(assignment.body, base=binding)
             binding = DefinitionBinding(binding, assignment.name,
-                                        replacement, self.syntax)
+                                        body, self.syntax)
         yield binding
 
 

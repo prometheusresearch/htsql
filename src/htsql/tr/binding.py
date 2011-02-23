@@ -333,12 +333,12 @@ class DefinitionBinding(ChainBinding):
 
 class AssignmentBinding(Binding):
 
-    def __init__(self, name, replacement, syntax):
+    def __init__(self, name, body, syntax):
         assert isinstance(name, str)
-        assert isinstance(replacement, Syntax)
+        assert isinstance(body, Syntax)
         super(AssignmentBinding, self).__init__(VoidDomain(), syntax)
         self.name = name
-        self.replacement = replacement
+        self.body = body
 
 
 class LiteralBinding(Binding):
