@@ -1,0 +1,73 @@
+; This is an answer file for Windows unattended installation.
+; It was tested with MS Windows Server 2003 SP1 and
+; MS Windows XP SP3.
+;
+; See http://technet.microsoft.com/en-us/library/cc785417(WS.10).aspx
+; for the documentation on unattended installation;
+; see http://technet.microsoft.com/en-us/library/cc757642(WS.10).aspx#w2k3tr_unatt_tools_trka
+; for the description of the sections and the settings.
+
+; Run unattended installation from CDROM; choose the partition automatically.
+[Data]
+    AutoPartition = 1
+    MsDosInitiated = 0
+    UnattendedInstall = Yes
+
+; Reformat the drive; copy the OEM directory to the hard drive.
+[Unattended]
+    UnattendMode = FullUnattended
+    OemSkipEula = Yes
+    OemPreinstall = Yes
+    TargetPath = "\WINDOWS"
+    UnattendSwitch = Yes
+    Repartition = Yes
+    WaitForReboot = No
+
+; Select the Administrator password; select the time zone: US/Eastern.
+; Perform auto-logon once to force execution of the post-installation script.
+[GuiUnattended]
+    AdminPassword = "Administrator"
+    EncryptedAdminPassword = No
+    OemSkipRegional = 1
+    TimeZone = 35
+    OemSkipWelcome = 1
+    AutoLogon = Yes
+    AutoLogonCount = 999
+    ServerWelcome = No
+
+; Here the value of the ProductKey parameter has to be replaced
+; with a real product key; the computer name is generated automatically.
+[UserData]
+    ProductKey = "#####-#####-#####-#####-#####"
+    FullName = "WINDOWS-VM"
+    OrgName = "WINDOWS-VM"
+    ComputerName = *
+
+; Regular workgroup settings.
+[Identification]
+    JoinWorkgroup = WORKGROUP
+
+; Regular networking settings.
+[Networking]
+    InstallDefaultComponents = Yes
+
+; Licensing model.
+[LicenseFilePrintData]
+    AutoMode = PerServer
+    AutoUsers = 5
+
+; Confirm changing display settings for Windows XP.
+[Display]
+    AutoConfirm = 1
+
+; Turn off the firewall.
+[WindowsFirewall]
+    Profiles = WindowsFirewall.TurnOffFirewall
+
+[WindowsFirewall.TurnOffFirewall]
+    Mode = 0
+
+; Run the post-installation script on the first logon.
+[GuiRunOnce]
+    "%systemdrive%\INSTALL\INSTALL.CMD"
+

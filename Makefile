@@ -2,8 +2,15 @@
 
 .PHONY: default build install develop doc dist windist pypi clean \
 	test train train-routine train-sqlite train-pgsql train-mysql \
-	purge-test lint create create-sqlite create-pgsql create-mysql \
-	drop drop-sqlite drop-pgsql drop-mysql demo-htraf demo-ssi
+	train-oracle train-mssql purge-test lint \
+	create-sqlite create-pgsql create-mysql create-oracle create-mssql \
+	drop-sqlite drop-pgsql drop-mysql drop-oracle drop-mssql \
+	build-all start-pgsql84 start-pgsql90 start-mysql51 start-oracle10g \
+	start-mssql2005 start-mssql2008 stop-pgsql84 stop-pgsql90 stop-mysql51 \
+	stop-oracle10 stop-mssql2005 stop-mssql2008 gdemo-htraf demo-ssi \
+	shell-sqlite shell-pgsql shell-mysql shell-oracle shell-mssql \
+	serve-sqlite serve-pgsql serve-mysql serve-oracle serve-mssql \
+	client-sqlite client-pgsql client-mysql client-oracle client-mssql
 
 
 # Load configuration variables from `Makefile.common`.  Do not edit
@@ -22,6 +29,7 @@ default:
 	@echo "Run 'make <target>', where <target> is one of:"
 	@echo
 	@echo "  *** Building and Installation ***"
+	@echo "  update: to update the HTSQL source code"
 	@echo "  build: to build the HTSQL packages"
 	@echo "  install: to install the HTSQL packages"
 	@echo "  develop: to install the HTSQL packages in the development mode"
@@ -33,31 +41,29 @@ default:
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
 	@echo "  train: to run all HTSQL tests in the train mode"
-	@echo "  train-routine: to run tests for htsql-ctl tool in the train mode"
-	@echo "  train-sqlite: to run SQLite-specific tests in the train mode"
-	@echo "  train-pgsql: to run PostgreSQL-specific tests in the train mode"
-	@echo "  train-mysql: to run MySQL-specific tests in the train mode"
+	@echo "  train-<suite>: to run a specific test suite in the train mode"
+	@echo "    where <suite> is one of:"
+	@echo "      routine, sqlite, pgsql, mysql, oracle, mssql"
 	@echo "  purge-test: to purge stale test output data"
+	@echo "	 create-<db>: to install the test database for a specific database"
+	@echo "  drop-<db>: to delete the test database for a specific database"
+	@echo "    where <db> is one of:"
+	@echo "        sqlite, pgsql, mysql, oracle, mssql"
 	@echo "  lint: detect errors in the source code"
-	@echo "  create: to install the regression databases"
-	@echo "	 create-sqlite: to install the test database for SQLite"
-	@echo "  create-pgsql: to install the test database for PostgreSQL"
-	@echo "  create-mysql: to install the test database for MySQL"
-	@echo "  drop: to drop users and databases deployed by regression tests"
-	@echo "  drop-sqlite: to delete the test database for SQLite"
-	@echo "  drop-pgsql: to delete the test database for PostgreSQL"
-	@echo "  drop-mysql: to delete the test database for MySQL"
+	@echo
+	@echo "  *** Integration Testing ***"
+	@echo "  build-all: to build all test benches"
+	@echo "  start-<bench>: to start the specified test bench"
+	@echo "  stop-<bench>: to stop the specified test bench"
+	@echo "    where <bench> is one of:"
+	@echo "      pgsql84, pgsql90, mysql51, oracle10g, mssql2005, mssql2008"
 	@echo
 	@echo "  *** Shell and Server ***"
-	@echo "  shell-sqlite: to start an HTSQL shell on the SQLite test database"
-	@echo "  shell-pgsql: to start an HTSQL shell on the PostgreSQL test database"
-	@echo "  shell-mysql: to start an HTSQL shell on the MySQL test database"
-	@echo "  serve-sqlite: to start an HTTP server on the SQLite test database"
-	@echo "  serve-pgsql: to start an HTTP server on the PostgreSQL test database"
-	@echo "  serve-mysql: to start an HTTP server on the MySQL test database"
-	@echo "	 client-sqlite: to start a native SQLite shell on the test database"
-	@echo "  client-pgsql: to start a native PostgreSQL shell on the test database"
-	@echo "  client-mysql: to start a native MySQL shell on the test database"
+	@echo "  shell-<db>: to start the HTSQL shell on the specified test database"
+	@echo "  serve-<db>: to start an HTTP server on the specified test database"
+	@echo "  client-<db> to start the native client for the specified test database"
+	@echo "    where <db> is one of:"
+	@echo "      sqlite, pgsql, mysql, oracle, mssql"
 	@echo
 	@echo "  *** Demos and Examples ***"
 	@echo "  demo-htraf: to run the HTRAF demo"
@@ -68,6 +74,11 @@ default:
 #
 # Building and installation tasks.
 #
+
+# Update the HTSQL source code.
+update:
+	hg pull
+	hg update
 
 # Build the HTSQL packages.
 build:
@@ -89,7 +100,7 @@ doc:
 # FIXME: include HTML documentation; `dist_dir` is broken for `--bdist-deb`.
 # Note that `bdist_deb` requires `stdeb` package.
 dist:
-	rm -rf build
+	rm -rf build/dist build/lib.* build/bdist.*
 	${PYTHON} setup.py sdist
 	${PYTHON} setup.py bdist_egg
 	#python setup.py --command-packages=stdeb.command bdist_deb 
@@ -97,7 +108,7 @@ dist:
 # Register and upload the package to PyPI.
 # FIXME: include HTML documentation.
 pypi:
-	rm -rf build
+	rm -rf build/dist build/lib.* build/bdist.*
 	${PYTHON} setup.py register sdist bdist_egg upload
 
 # Delete the build directory and object files.
@@ -135,6 +146,14 @@ train-pgsql:
 train-mysql:
 	${HTSQL_CTL} regress -i test/regress.yaml --train mysql
 
+# Run Oracle-specific regression tests in the train mode.
+train-oracle:
+	${HTSQL_CTL} regress -i test/regress.yaml --train oracle
+
+# Run MS SQL Server-specific regression tests in the train mode.
+train-mssql:
+	${HTSQL_CTL} regress -i test/regress.yaml --train mssql
+
 # Purge stale output records from HTSQL regression tests.
 purge-test:
 	${HTSQL_CTL} regress -i test/regress.yaml -q --train --purge
@@ -142,10 +161,6 @@ purge-test:
 # Detect errors in the source code (requires PyFlakes)
 lint:
 	${PYFLAKES} src/htsql src/htsql_pgsql src/htsql_sqlite
-
-# Install the regression databases.
-create:
-	${HTSQL_CTL} regress -i test/regress.yaml -q create-sqlite create-pgsql create-mysql
 
 # Install the regression database for SQLite.
 create-sqlite:
@@ -159,9 +174,13 @@ create-pgsql:
 create-mysql:
 	${HTSQL_CTL} regress -i test/regress.yaml -q create-mysql
 
-# Drop any users and databases deployed by the regression tests.
-drop:
-	${HTSQL_CTL} regress -i test/regress.yaml -q drop-sqlite drop-pgsql drop-mysql
+# Install the regression database for Oracle.
+create-oracle:
+	${HTSQL_CTL} regress -i test/regress.yaml -q create-oracle
+
+# Install the regression database for MS SQL Server.
+create-mssql:
+	${HTSQL_CTL} regress -i test/regress.yaml -q create-mssql
 
 # Drop the regression database for SQLite
 drop-sqlite:
@@ -171,9 +190,17 @@ drop-sqlite:
 drop-pgsql:
 	${HTSQL_CTL} regress -i test/regress.yaml -q drop-pgsql
 
-# Drop the regression database for PostgreSQL.
+# Drop the regression database for MySQL.
 drop-mysql:
 	${HTSQL_CTL} regress -i test/regress.yaml -q drop-mysql
+
+# Drop the regression database for Oracle.
+drop-oracle:
+	${HTSQL_CTL} regress -i test/regress.yaml -q drop-oracle
+
+# Drop the regression database for MS SQL Server.
+drop-mssql:
+	${HTSQL_CTL} regress -i test/regress.yaml -q drop-mssql
 
 
 #
@@ -192,6 +219,14 @@ shell-pgsql:
 shell-mysql:
 	${HTSQL_CTL} shell ${MYSQL_URI}
 
+# Start an HTSQL shell on the Oracle regression database.
+shell-oracle:
+	${HTSQL_CTL} shell ${ORACLE_URI}
+
+# Start an HTSQL shell on the MS SQL Server regression database.
+shell-mssql:
+	${HTSQL_CTL} shell ${MSSQL_URI}
+
 # Start an HTTP/HTSQL server on the SQLite regression database.
 serve-sqlite:
 	${HTSQL_CTL} serve ${SQLITE_URI} ${HTSQL_HOST} ${HTSQL_PORT}
@@ -204,6 +239,14 @@ serve-pgsql:
 serve-mysql:
 	${HTSQL_CTL} serve ${MYSQL_URI} ${HTSQL_HOST} ${HTSQL_PORT}
 
+# Start an HTTP/HTSQL server on the Oracle regression database.
+serve-oracle:
+	${HTSQL_CTL} serve ${ORACLE_URI} ${HTSQL_HOST} ${HTSQL_PORT}
+
+# Start an HTTP/HTSQL server on the MS SQL Server regression database.
+serve-mssql:
+	${HTSQL_CTL} serve ${MSSQL_URI} ${HTSQL_HOST} ${HTSQL_PORT}
+
 # Start a native client on the SQLite regression database.
 client-sqlite:
 	${SQLITE_CLIENT}
@@ -215,6 +258,47 @@ client-pgsql:
 # Start a native client on the MySQL regression database.
 client-mysql:
 	${MYSQL_CLIENT}
+
+# Start a native client on the Oracle regression database.
+client-oracle:
+	${ORACLE_CLIENT}
+
+# Start a native client on the MS SQL Server regression database.
+client-mssql:
+	${MSSQL_CLIENT}
+
+
+#
+# Integration testing.
+#
+
+# Build all the test benches.
+build-all:
+	./test/buildbot/bb.sh build
+
+# Start the test bench for PostgreSQL 8.4
+start-pgsql84:
+	./test/buildbot/bb.sh start pgsql84
+
+# Start the test bench for PostgreSQL 9.0
+start-pgsql90:
+	./test/buildbot/bb.sh start pgsql90
+
+# Start the test bench for MySQL 5.1
+start-mysql51:
+	./test/buildbot/bb.sh start mysql51
+
+# Start the test bench for Oracle 10g
+start-oracle10g:
+	./test/buildbot/bb.sh start oracle10g
+
+# Start the test bench for MS SQL Server 2005
+start-mssql2005:
+	./test/buildbot/bb.sh start mssql2005
+
+# Start the test bench for MS SQL Server 2008
+start-mssql2008:
+	./test/buildbot/bb.sh start mssql2008
 
 
 #
