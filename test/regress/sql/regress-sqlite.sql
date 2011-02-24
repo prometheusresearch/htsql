@@ -1849,3 +1849,5 @@ INSERT INTO program_requirement (school, program, classification, credit_hours, 
     ('art', 'ustudio', 'society', 6, 'All Studio Art undergraduate students must take a minimum of 6 hours of credit in Art & Society.');
 INSERT INTO program_requirement (school, program, classification, credit_hours, rationale) VALUES
     ('art', 'ustudio', 'digital', 6, 'All Studio Art undergraduate students must take a minimum of 6 hours of credit in Digital Art.');
+
+

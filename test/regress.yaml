@@ -24,4 +24,6 @@ tests:
 - include: test/regress/input/sqlite.yaml
 - include: test/regress/input/pgsql.yaml
 - include: test/regress/input/mysql.yaml
+#- include: test/regress/input/oracle.yaml
+- include: test/regress/input/mssql.yaml
 

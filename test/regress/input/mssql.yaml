@@ -1,0 +1,65 @@
+#
+# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Authors: Clark C. Evans <cce@clarkevans.com>,
+#          Kirill Simonov <xi@resolvent.net>
+#
+
+title: MS SQL Server regression tests
+id: mssql
+output: test/regress/output/mssql.yaml
+tests:
+
+- title: Remove any existing regression database
+  id: drop-mssql
+  tests:
+  - connect: &admin-connect
+      engine: mssql
+      database: master
+      username: ${MSSQL_ADMIN_USERNAME}
+      password: ${MSSQL_ADMIN_PASSWORD}
+      host: ${MSSQL_HOST}
+      port: ${MSSQL_PORT}
+    sql: !environ |
+        IF DB_ID('${MSSQL_DATABASE}') IS NOT NULL
+            DROP DATABASE [${MSSQL_DATABASE}];
+        IF SUSER_ID('${MSSQL_USERNAME}') IS NOT NULL
+            DROP LOGIN [${MSSQL_USERNAME}];
+    autocommit: true
+    ignore: true
+- title: Deploy the regression database
+  id: create-mssql
+  tests:
+  - connect: *admin-connect
+    sql: !environ |
+        CREATE DATABASE [${MSSQL_DATABASE}] COLLATE Latin1_General_CS_AI;
+        CREATE LOGIN [${MSSQL_USERNAME}] WITH PASSWORD = '${MSSQL_PASSWORD}', CHECK_POLICY = OFF;
+        USE [${MSSQL_DATABASE}];
+        CREATE USER [${MSSQL_USERNAME}] FOR LOGIN [${MSSQL_USERNAME}];
+        GRANT CONTROL TO [${MSSQL_USERNAME}] WITH GRANT OPTION;
+    autocommit: true
+  - connect: &connect
+      engine: mssql
+      database: ${MSSQL_DATABASE}
+      username: ${MSSQL_USERNAME}
+      password: ${MSSQL_PASSWORD}
+      host: ${MSSQL_HOST}
+      port: ${MSSQL_PORT}
+    sql-include: test/regress/sql/regress-mssql.sql
+
+- title: Run the test collection
+  id: test-mssql
+  skip: true
+  tests:
+  - define: mssql
+  - db: *connect
+  # The Regression Schema
+  - include: test/regress/input/schema.yaml
+  # Examples from the Tutorial
+  - include: test/regress/input/tutorial.yaml
+  # Standard Data Types, Functions, and Operations
+  - include: test/regress/input/library.yaml
+  # Edge Cases of HTSQL-to-SQL Translation
+  - include: test/regress/input/translation.yaml
+  # Formatting Output Data
+  - include: test/regress/input/format.yaml
+
