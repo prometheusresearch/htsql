@@ -69,10 +69,10 @@ ENTRY_POINTS = {
 INSTALL_REQUIRES = [
     'setuptools>=0.6c9',
     'pyyaml>=3.07',
-    'psycopg2>=2.0.10',
-    'MySQL-python>=1.2.2',
-    'cx_Oracle>=5.0',
-    'pymssql>=1.0.2',
+#    'psycopg2>=2.0.10',
+#    'MySQL-python>=1.2.2',
+#    'cx_Oracle>=5.0',
+#    'pymssql>=1.0.2',
 ]
 
 setup(name=NAME,
