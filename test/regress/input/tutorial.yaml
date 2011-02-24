@@ -14,8 +14,8 @@ tests:
   - uri: /school
   - uri: /program{school, code, title}
   - uri: /department{name-, school}
-  - uri: /course{department+, number, credits-, title}
-  - uri: /course{department+ :as 'Dept Code', number :as 'No.',
+  - uri: /course{department+, no, credits-, title}
+  - uri: /course{department+ :as 'Dept Code', no :as 'No.',
                  credits-, title}
   # Linking Data
   - uri: /program{school.name, title}
@@ -26,14 +26,14 @@ tests:
   - uri: /department?school='eng'
   - uri: /program?degree={'ba','bs'}
   - uri: /program?school='bus'&degree!='bs'
-  - uri: /course{department, number, title}
+  - uri: /course{department, no, title}
                 ?credits<3&department.school='ns'
   - uri: /(course?credits<3&department.school='ns')
-                {department, number, title}
+                {department, no, title}
   # Formatters
   - uri: /school/:json
   # Putting it All Together
-  - uri: /course{department{code, name},number,title+}
+  - uri: /course{department{code, name},no,title+}
                 ?department.school='bus'/:csv
 
 - title: Relating and Aggregating Data
@@ -48,10 +48,10 @@ tests:
   - uri: /max(course.credits)
   # Aggregate Expressions
   - uri: /school{name, count(program), count(department)}
-  - uri: /department{name, count(course?number>=400)}
+  - uri: /department{name, count(course?no>=400)}
   - uri: /school{name, avg(department.count(course))}
   - uri: /school{name, count(department?exists(course?credits>3))}
-  - uri: /department{name, avg((course?number>400).credits)}
+  - uri: /department{name, avg((course?no>400).credits)}
   - uri: /department{code, min(course.credits), max(course.credits),
                            avg(course.credits)}
   - uri: /department{name, avg(course.credits), count(course)}
@@ -64,7 +64,7 @@ tests:
   - uri: /course?title~'lab'
   - uri: /course?title!~'lab'
   - uri: /course?title!='Organic Chemistry Laboratory I'
-  - uri: /course{department,number,title}?number=101
+  - uri: /course{department,no,title}?no=101
   - uri: /course?department!={'arthis','stdart'}
   - uri: /course?credits>3
   - uri: /course?credits>=3
@@ -78,7 +78,7 @@ tests:
   - uri: /course?(department='arthis'|department='stdart')&credits>3
   - uri: /course?department='arthis'|department='stdart'&credits>3
   - uri: /course?description
-  - uri: /course{department, number, description}?!description
+  - uri: /course{department, no, description}?!description
 
 - title: Types and Functions
   tests:

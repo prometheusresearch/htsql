@@ -31,7 +31,7 @@ departments are modeled with a ``NULL`` for their ``school``.
 
 Two second-tier tables, ``course`` and ``program`` have compound primary
 keys, consisting of a parent table and a second column.  For ``course``
-table, we have an integer key, ``number`` which is a 3-digit course
+table, we have an integer key, ``no`` which is a 3-digit course
 code, scoped by department.  Hence, ``mth.101`` is distinct from
 ``eng.101`` even though they have the same course number.  The
 ``degree`` column of ``program`` is an authority controlled field, with
@@ -56,7 +56,7 @@ which do not offer a degree.
   | COURSE             |  |           | PROGRAM             |    |
   +--------------------+  |           +---------------------+    |
   | department  FK,PK1 |>-/           | school       PK1,FK |>---/
-  | number         PK2 |              | code            PK2 |>---\    
+  | no             PK2 |              | code            PK2 |>---\    
   | title           NN |              | title            NN |    |
   | credits         NN |              | degree           CK |    |
   | description        |              | part_of          FK |----/
@@ -110,12 +110,12 @@ CREATE TABLE ad.program (
 
 CREATE TABLE ad.course (
     department  VARCHAR(16) NOT NULL,
-    number      INTEGER NOT NULL,
+    no          INTEGER NOT NULL,
     title       VARCHAR(64) NOT NULL,
     credits     INTEGER,
     description TEXT,
     CONSTRAINT course_pk
-      PRIMARY KEY (department, number),
+      PRIMARY KEY (department, no),
     CONSTRAINT course_title_uk
       UNIQUE (title),
     CONSTRAINT course_dept_fk
@@ -205,7 +205,7 @@ INSERT INTO ad.program (school, code, title, degree, part_of) VALUES
     ('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba', NULL),
     ('ph', 'phd', 'Honorary PhD', NULL, NULL);
 
-INSERT INTO ad.course (department, number, title, credits, description) VALUES
+INSERT INTO ad.course (department, no, title, credits, description) VALUES
     ('astro', 137, 'The Solar System', 3, 'Introductory survey of the solar system, including structure and motion of the planets, properties of the sun, and comparison to extrasolar systems.'),
     ('astro', 142, 'Solar System Lab', 2, 'Laboratory studies that complement the lecture course ASTRO 137.'),
     ('astro', 155, 'Telescope Workshop', 1, 'Introduction to correct use of the 8-inch Schmidt-Cassegrain type telescope. You will learn about magnification, how to locate an object, and how setting circles work.'),
@@ -331,7 +331,7 @@ likely having different permission restrictions.
 
 This schema also introduces two data types.  The social security number,
 or ``SSN`` of each instructor is a character value of fixed width.  The
-``percent`` column of ``appointment`` table is a ``DECIMAL(3,2)``
+``fraction`` column of ``appointment`` table is a ``DECIMAL(3,2)``
 representing a number such as ``0.50`` for a half-time appointment of an
 instructor to a given department.
 
@@ -342,7 +342,7 @@ instructor to a given department.
   |--------------------|      |  .    +---------------------+
   | department  FK,PK1 |>-----/   .
   | instructor  FK,PK2 |>-----\     a department may have many
-  | percent            |      |     instructors with part-time
+  | fraction           |      |     instructors with part-time
   +--------------------+    . |     teaching appointments
                            .  |
     an instructor may have    |       +---------------------+
@@ -390,7 +390,7 @@ CREATE TABLE id.confidential (
 CREATE TABLE id.appointment (
     department  VARCHAR(16) NOT NULL,
     instructor  VARCHAR(16) NOT NULL,
-    percent     DECIMAL(3,2),
+    fraction    DECIMAL(3,2),
     CONSTRAINT appointment_pk
       PRIMARY KEY (department, instructor),
     CONSTRAINT appointment_department_fk
@@ -480,7 +480,7 @@ INSERT INTO id.confidential (instructor, SSN, pay_grade, home_phone) VALUES
     ('bsacks66', '782-78-0000', 7, '202-555-7283'),
     ('mscott51', '126-33-0000', 7, '702-555-7819');
 
-INSERT INTO id.appointment (department, instructor, percent) VALUES
+INSERT INTO id.appointment (department, instructor, fraction) VALUES
     ('stdart', 'acaspar', 1.00),
     ('phys', 'afrenski', 1.00),
     ('ee', 'alang42', 1.00),
@@ -600,7 +600,7 @@ CREATE TABLE cd.class (
       REFERENCES ad.department(code),
     CONSTRAINT class_course_fk
       FOREIGN KEY (department, course)
-      REFERENCES ad.course(department, number),
+      REFERENCES ad.course(department, no),
     CONSTRAINT class_semester_fk
       FOREIGN KEY (year, season)
       REFERENCES cd.semester(year, season),
@@ -751,7 +751,7 @@ columns: ``status`` and ``grade``.
                            |          +---------------------+    |
   +--------------------+   |          | STUDENT             |    |
   | ENROLLMENT         |   |          +---------------------+    |
-  +--------------------+   |     /----| number           PK |    |
+  +--------------------+   |     /----| id               PK |    |
   | class       PK, FK |>--/     |    | name             NN |    |
   | student     PK, FK |---------/    | gender           NN |    |
   | status             |     .        | dob              NN |    |
@@ -769,7 +769,7 @@ CREATE TYPE ed.enrollment_status_t AS ENUM ('enr', 'inc', 'ngr');
 CREATE TYPE ed.student_gender_t AS ENUM ('f', 'i', 'm');
 
 CREATE TABLE ed.student (
-    number      INTEGER NOT NULL,
+    id          INTEGER NOT NULL,
     name        VARCHAR(64) NOT NULL,
     gender      ed.student_gender_t NOT NULL,
     dob         DATE NOT NULL,
@@ -778,7 +778,7 @@ CREATE TABLE ed.student (
     start_date  DATE NOT NULL,
     is_active   BOOLEAN NOT NULL,
     CONSTRAINT student_pk
-      PRIMARY KEY (number),
+      PRIMARY KEY (id),
     CONSTRAINT student_school_fk
       FOREIGN KEY (school)
       REFERENCES ad.school (code),
@@ -796,13 +796,13 @@ CREATE TABLE ed.enrollment (
       PRIMARY KEY (student, class),
     CONSTRAINT enrollment_student_fk
       FOREIGN KEY (student)
-      REFERENCES ed.student(number),
+      REFERENCES ed.student(id),
     CONSTRAINT enrollment_class_fk
       FOREIGN KEY (class)
       REFERENCES cd.class(class_seq)
 );
 
-INSERT INTO ed.student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO ed.student (id, name, gender, dob, school, program, start_date, is_active) VALUES
     (25371, 'John L. Hanley', 'm', '1990-04-28', 'eng', 'gbuseng', '2009-07-15', TRUE),
     (29878, 'Ellen Lansburgh', 'f', '1992-02-01', 'bus', 'uacct', '2008-01-05', TRUE),
     (37278, 'Ming Wang', 'm', '1988-03-15', 'la', 'gengl', '2002-11-27', FALSE),
@@ -937,10 +937,10 @@ CREATE TABLE rd.prerequisite (
       PRIMARY KEY (of_department, of_course, on_department, on_course),
     CONSTRAINT prerequisite_on_course_fk
       FOREIGN KEY (on_department, on_course)
-      REFERENCES ad.course(department, number),
+      REFERENCES ad.course(department, no),
     CONSTRAINT prerequisite_of_course_fk
       FOREIGN KEY (of_department, of_course)
-      REFERENCES ad.course(department, number)
+      REFERENCES ad.course(department, no)
 );
 
 CREATE TYPE rd.classification_type_t
@@ -969,7 +969,7 @@ CREATE TABLE rd.course_classification (
       PRIMARY KEY (department, course, classification),
     CONSTRAINT course_classification_course_fk
       FOREIGN KEY (department, course)
-      REFERENCES ad.course(department, number),
+      REFERENCES ad.course(department, no),
     CONSTRAINT course_classification_classification_fk
       FOREIGN KEY (classification)
       REFERENCES rd.classification(code)

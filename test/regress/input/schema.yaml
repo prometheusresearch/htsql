@@ -65,16 +65,16 @@ tests:
   - uri: /(program?school='eng'&code='umech').program_requirement
 
   # Course -> Department (parental)
-  - uri: /(course?department='psych'&number=610).department
+  - uri: /(course?department='psych'&no=610).department
   # Course -> Class
-  - uri: /(course?department='psych'&number=610).class
+  - uri: /(course?department='psych'&no=610).class
   # Course -> Prerequisite
   # FIXME: broken! Cannot choose between on_course and of_course links;
   # need a mechanism to select a desired link among ambiguous links.
-  - uri: /(course?department='psych'&number=610).prerequisite
+  - uri: /(course?department='psych'&no=610).prerequisite
     expect: 400
   # Course -> Course Classification
-  - uri: /(course?department='psych'&number=610).course_classification
+  - uri: /(course?department='psych'&no=610).course_classification
 
   # Instructor -> Confidential (singular, optional)
   - uri: /(instructor?code='kcavallaro').confidential
@@ -109,11 +109,11 @@ tests:
   - uri: /(class?class_seq=10086).enrollment
 
   # Student -> School (singular, optional, via Program)
-  - uri: /(student?number=25371).school
+  - uri: /(student?id=25371).school
   # Student -> Program (singular, optional)
-  - uri: /(student?number=25371).program
+  - uri: /(student?id=25371).program
   # Student -> Enrollment
-  - uri: /(student?number=25371).enrollment
+  - uri: /(student?id=25371).enrollment
 
   # Enrollment -> Student (parental)
   - uri: /(enrollment?student=92039&class=10071).student

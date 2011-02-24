@@ -413,7 +413,7 @@ tests:
            every(course?department='str'),
            count(course?department='str')}
   # Applied to all-TRUE, all-FALSE, mixed sets
-  - uri: /course{department,number,credits,credits>3}
+  - uri: /course{department,no,credits,credits>3}
                 ?department={'me','mth','phys'}
   - uri: /{exists(course{credits>3}?department='me'),
            every(course{credits>3}?department='me'),
@@ -438,7 +438,7 @@ tests:
     expect: 400
 
   # Min, Max
-  - uri: /course{number,credits}?department='be'
+  - uri: /course{no,credits}?department='be'
   - uri: /{min(course{credits}?department='be'),
            max(course{credits}?department='be')}
   # Applied to an empty set
@@ -510,7 +510,7 @@ tests:
   - uri: /school.department.sort(code+)
   - uri: /school.sort(code+).department.sort(code+)
   # Multiple arguments
-  - uri: /course.sort(credits-,number+)?department='stdart'
+  - uri: /course.sort(credits-,no+)?department='stdart'
 
   # Limiting
   - uri: /course.limit(9)
@@ -518,7 +518,7 @@ tests:
   # Combined with sort
   - uri: /course.sort(credits+).limit(9)
   - uri: /course.limit(9).sort(credits+)
-  - uri: /course.sort(credits-).limit(9).sort(number-)
+  - uri: /course.sort(credits-).limit(9).sort(no-)
 
   # Selecting
   - uri: /school{name}
@@ -539,5 +539,5 @@ tests:
 
   # Direction decorator
   - uri: /school{name+}
-  - uri: /course{credits-, number+, title}?department='stdart'
+  - uri: /course{credits-, no+, title}?department='stdart'
 
