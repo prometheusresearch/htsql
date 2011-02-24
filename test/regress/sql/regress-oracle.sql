@@ -6,17 +6,19 @@
 
 
 -- --------------------------------------------------------------------
--- The standard HTSQL regression schema for SQLite
+-- The standard HTSQL regression schema for Oracle
 --
+
+ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';
 
 
 -- --------------------------------------------------------------------
--- Administrative Directory
+-- AD -- Administrative Directory
 --
 
 CREATE TABLE school (
-    code        VARCHAR(16) NOT NULL,
-    name        VARCHAR(64) NOT NULL,
+    code        VARCHAR2(16) NOT NULL,
+    name        VARCHAR2(64) NOT NULL,
     CONSTRAINT school_pk
       PRIMARY KEY (code),
     CONSTRAINT name_uk
@@ -24,9 +26,9 @@ CREATE TABLE school (
 );
 
 CREATE TABLE department (
-    code        VARCHAR(16) NOT NULL,
-    name        VARCHAR(64) NOT NULL,
-    school      VARCHAR(16),
+    code        VARCHAR2(16) NOT NULL,
+    name        VARCHAR2(64) NOT NULL,
+    school      VARCHAR2(16),
     CONSTRAINT department_pk
       PRIMARY KEY (code),
     CONSTRAINT department_name_uk
@@ -37,11 +39,11 @@ CREATE TABLE department (
 );
 
 CREATE TABLE program (
-    school      VARCHAR(16) NOT NULL,
-    code        VARCHAR(16) NOT NULL,
-    title       VARCHAR(64) NOT NULL,
+    school      VARCHAR2(16) NOT NULL,
+    code        VARCHAR2(16) NOT NULL,
+    title       VARCHAR2(64) NOT NULL,
     degree      CHAR(2),
-    part_of     VARCHAR(16),
+    part_of     VARCHAR2(16),
     CONSTRAINT program_pk
       PRIMARY KEY (school, code),
     CONSTRAINT program_title_uk
@@ -51,19 +53,19 @@ CREATE TABLE program (
     CONSTRAINT program_school_fk
       FOREIGN KEY (school)
       REFERENCES school(code),
-    CONSTRAINT program_part_of_fk
-      FOREIGN KEY (school, part_of )
+   CONSTRAINT program_part_of_fk
+      FOREIGN KEY (school, part_of)
       REFERENCES program(school, code)
 );
 
 CREATE TABLE course (
-    department  VARCHAR(16) NOT NULL,
-    number      INTEGER NOT NULL,
-    title       VARCHAR(64) NOT NULL,
-    credits     INTEGER,
-    description TEXT,
+    department  VARCHAR2(16) NOT NULL,
+    "NUMBER"    NUMBER(3) NOT NULL,
+    title       VARCHAR2(64) NOT NULL,
+    credits     NUMBER(1),
+    description CLOB,
     CONSTRAINT course_pk
-      PRIMARY KEY (department, number),
+      PRIMARY KEY (department, "NUMBER"),
     CONSTRAINT course_title_uk
       UNIQUE (title),
     CONSTRAINT course_dept_fk
@@ -225,218 +227,218 @@ INSERT INTO program (school, code, title, degree, part_of) VALUES
 INSERT INTO program (school, code, title, degree, part_of) VALUES
     ('ph', 'phd', 'Honorary PhD', NULL, NULL);
 
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('astro', 137, 'The Solar System', 3, 'Introductory survey of the solar system, including structure and motion of the planets, properties of the sun, and comparison to extrasolar systems.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('astro', 142, 'Solar System Lab', 2, 'Laboratory studies that complement the lecture course ASTRO 137.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('astro', 155, 'Telescope Workshop', 1, 'Introduction to correct use of the 8-inch Schmidt-Cassegrain type telescope. You will learn about magnification, how to locate an object, and how setting circles work.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('astro', 254, 'Life in the Universe', 3, 'Nature and origin of large numbers in the cosmos, the formation of planets, formation of life, and the anthropic principle.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('mth', 101, 'College Algebra', 5, 'This course, taken mostly by members from the School of Business is a primary graduate student funding vehicle for the the Department of Mathematics.  This is a 1000 person lecture reviews basic concepts taught in high school.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('chem', 100, 'Principles of Chemistry', 3, 'This course offers an introduction to the biological, inorganic, and chemical molecules, with an emphasis on basic principles of atomic and molecular electronic structure.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('chem', 110, 'Organic Chemistry I', 3, 'This course offers a practical introduction to organic chemistry, including a full set of problem sets with solutions. Focus is on the basic principles of understanding the structure and reactivity of organic molecules.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('chem', 115, 'Organic Chemistry Laboratory I', 2, 'Complements Organic Chemistry I. Practical laboratory experiments.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('chem', 314, 'Laboratory Chemistry', 3, 'Experimental chemistry for students who are planning to major in chemistry. Covers principles and applications of chemical laboratory techniques, including preparation and analysis of chemical materials.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('chem', 655, 'Protein Folding Problem', 3, 'Focuses on the mechanisms through which the amino acid sequence of polypeptide chains determine their three-dimensional conformation.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('phys', 211, 'General Physics I', 3, 'This course deals primarily with motions of objects and the forces that underlie these motions, including free fall, collisions between objects, rolling, and spinning.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('phys', 303, 'Relativity & Cosmology', 3, 'The course will describe developments that led to special relativity and its implications about the nature of space and time, as well as general relativity and quantum mechanics.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('phys', 388, 'Experimental Physics I', 2, 'In this course students will perform several experiments in different areas of physics. They will also learn fundamental experimental techniques and how to record and report results and perform analysis.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('phys', 512, 'Quantum Field Theory', 3, 'This course will cover the basic quantization of bosonic and fermionic fields, discrete spacetime symmetries, perturbative methods in QFT, definition of the S-matrix for scattering and decay processes.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('phys', 713, 'Quarks, Nuclei, and Cosmology', 3, 'General topics covered will include the structure of the nucleon, beta decay and weak interactions, and nucleon-nucleon interaction.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('phys', 819, 'Superconductivity', 3, 'This course provides a phenomenological approach to superconductivity, emphasizing super-conducting electronics.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('eng', 101, 'Introduction to Composition', 3, 'Provides students with the fundamental skills to read, interpret, and write critically at the college level.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('eng', 247, 'Boccaccio''s Decameron', 3, 'Follows of the arc of of the career Boccaccio with an emphasis on the Decameron, which is read in light of its cultural density and contextualized in terms of its antecedents, especially the Commedia of Dante.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('eng', 311, 'Writing Styles', 3, 'This practical course aids in understanding and writing non-fiction. We will look at some of the ways that prominent English writers have constructed their sentences and paragraphs. Students will write weekly exercises exploring these stylistic patterns.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('eng', 175, 'College Newspaper', 2, 'Students will perform journalistic writing exercises for publication in the college newspaper.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('eng', 276, 'Introduction to Science Writing', 3, 'This course provides an introduction to science writing. Students will learn about the business of science writing and will become familiar with the craft of making complex scientific research understandable for the general public.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('eng', 412, 'Ecology Writing Workshop', 2, 'This monthly workshop will focus on creation of a course assignment, a feature-length magazine article covering a complex topic in ecology.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('hist', 112, 'The United States in World History', 3, 'Examines the meaning of empire in relationship to the historical development of the United States of America.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('hist', 212, 'Historical Perspective on the Constitution', 3, 'This course covers the development of the constitutional doctrine from 1787 to the present. The Constitution as an experiment in Republicanism.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('hist', 415, 'History of the Family in Global Perspective', 3, 'Has the family really declined? What has changed in the last 1000 years? Drawing on cross-cultural examples, primarily from Latin America, the U.S. and Europe, this seminar explores the varieties of domestic forms.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('hist', 505, 'Science and History', 3, 'Introduces students to approaches and methods in the history of science, technology, and medicine');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('hist', 333, 'History of American Education', 3, 'A study of informal and formal education in American history leading to an understanding of present educational theory and practice.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('lang', 201, 'Introduction to Spanish', 4, 'Introduction to the Spanish language, with an emphasis on every day conversation and basic grammar.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('lang', 203, 'Intermediate Spanish', 3, 'Continuation of fundamental Spanish language learning, including verb tenses, reading skills, and basic conversation.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('lang', 304, 'Spanish Conversation Group', 2, 'Informal weekly conversation group designed to improve understanding of spoken Spanish. Suitable for both majors and casual speakers who wish to improve their skills for personal enjoyment or travel.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('lang', 207, 'Child Second Language Development', 3, 'Examines issues in child second language acquisition, including the critical period hypothesis and universal grammar.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('lang', 305, 'Second Language Syntax', 3, 'This course examines the form and acquisition of nonnative syntax. Consideration of whether nonnative grammars are fundamentally different than native grammars.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('psych', 102, 'General Psychology', 3, 'This course introduces the student to the major topics in scientific psychology as applied to human behavior. Applications of these principles will be made to the human experience.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('psych', 304, 'Introduction to Cognitive Psychology', 3, 'An introduction to the basic concepts of cognitive psychology, including areas such as perception, attention, memory, language, and thought.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('psych', 450, 'Laboratory in Applied Behavioral Science', 4, 'This course will provide students with hands-on training in the application of behavioral research technology to a clinical population.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('psych', 560, 'Examination of Real-Time Language Processing', 4, 'This lab course examines methods for the real-time examination of language processing in normal and disordered  language populations.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('psych', 610, 'Applied Child Psychology', 3, 'Introduction to major concepts and models used in psychological assessment and psychotherapeutic intervention of children. Several modalities of psychotherapy (individual, group, and family) will be reviewed along with research on their efficacy.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('poli', 113, 'American Government and Politics', 3, 'This course examines the structure, services, functions, and problems of government and politics at the national level.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('poli', 347, 'American Foreign Policy', 3, 'Theories, processes, and problem of American foreign policy and the craft of diplomacy, with special attention to contemporary issues.');
-INSERT INTO course (department, number, title, credits, description) VALUES
-    ('poli', 402, 'Government Internship: Semester in Washington', 4, 'Junior or seniors with a 3.0 grade point average or higher may apply for a limited number of internship opportunities in Washington, DC. Interns will live at University House on Capitol Hill and continue their normal class schedule at the DC Campus.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
+    ('poli', 402, 'Government Internship: Semester in Washington', 4, 'Junior or seniors with a 3.0 grade point average or higher may apply for a limited "NUMBER" of internship opportunities in Washington, DC. Interns will live at University House on Capitol Hill and continue their normal class schedule at the DC Campus.');
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('poli', 644, 'Research Seminar in Middle Eastern Affairs', 3, 'Government and Politics of the Middle East and North Africa Spring. Historical background, contemporary setting, political processes, and major problems of some of the countries of Middle East and North Africa.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('poli', 715, '#5 is the 50% Solution', 3, 'A history of the two-state solution and other approaches to Palestian Statehood');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('poli', 431, 'American Government and Corporate Interests', 3, 'This course will examine the methods by which American business exert influence over legislators and the legislative process.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('comp', 102, 'Introduction to Computer Science', 3, 'This course in an introduction to the discipline of computer science. Topics include algorithmic foundations, hardware concepts, virtual machine concepts, software systems, applications, and social issues.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('comp', 230, 'History of Computing', 3, 'This course will survey the history of the computing field from antiquity to the present, focusing on the era of the electronic digital computer. Topics will include historical developments in hardware, software, and the theoretical foundations of computer science.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('comp', 350, 'Introduction to Signal Processing', 3, 'This course covers the nature of information, signals, transforms, and applications. Topics include analog to digital and digital to analog conversion, data storage (such as the audio format MP3), data transforms, and filters.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('comp', 615, 'Introduction to Automata', 3, 'Theory of computing devices and the languages they recognize.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('comp', 710, 'Laboratory in Computer Science', 4, 'Independent research opportunity using the university computer lab. Requires instructor permission and may be repeated.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('comp', 810, 'Thesis Research', 3, 'Guided research leading to production of the thesis. Requires instructor permission and may be repeated.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('comp', 819, 'Advanced Algorithms in Bioinformatics', 3, 'This course is focused on fundamental algorithmic techniques in Bioinformatics, including classed methods such as dynamic programming, support vector machines and other statistical and learning optimization methods.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('ee', 107, 'Exploration of Electrical Engineering', 3, 'Exploration of electrical engineering through several hands-on activities that cover a broad spectrum of applications and fundamental concepts. ');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('ee', 202, 'Engineering Electromagnetics', 3, 'Static electric and magnetic fields; solutions to static field problems, electromagnetic waves, boundary conditions, engineering applications.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('ee', 412, 'Laboratory in Electrical Engineering', 4, 'Hands-on experience covering areas of optical transforms, electro-optics devices, signal processing, fiber optics transmission, and holography.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('ee', 505, 'Information Theory', 3, 'Mathematical measurement of information; information transfer in discrete systems; redundancy, efficiency, and channel capacity; encoding systems.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('ee', 615, 'Learning and Adaptive Systems', 3, 'Adaptive and learning control systems; system identification; performance indices; gradient, stochastic approximation, controlled random search methods; introduction to pattern recognition.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('me', 111, 'Introduction to Mechanical Engineering', 3, 'Topics include an overview of career opportunities, problem solving processes, an introduction to the basic engineering design process, professionalism, professional registration, and ethics.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('me', 344, 'Undergraduate Research', 4, 'Undergraduates will conduct independent research activities under the direction of their major adviser.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('me', 501, 'Advanced Welding', 3, 'Advanced applications of welding and machine tool technology. Computer numerical control, multi-axis machining set-up, gas tungsten arc welding, and gas metal arch welding.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('me', 627, 'Advanced Heating and Air Conditioning', 4, '');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('me', 712, 'Graphic Communication and Design', 3, 'Sketching and orthographic projection. Covers detail and assembly working drawings, dimensioning, tolerance specification, and design projects.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('be', 112, 'Introduction to Biomedical Engineering', 3, 'This course covers topics in multiple formats ranging from lectures by faculty or guest speakers to presentations by participating students.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('be', 308, 'Fundamentals of Biochemistry', 3, 'Fundamental aspects of human biochemistry are introduced in this course for students in the bioinstrumentation/biosensors, biomechanics, and medical-imaging tracks.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('be', 415, 'Internship in Biomedical Engineering', 8, 'The student will work twenty hours per week in an area firm to gain experience in the application of biomedical engineering principles in an industrial setting.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('be', 509, 'Systems of Drug Delivery', 3, 'The mathematics of diffusion through various types of biological media is discussed.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('arthis', 202, 'History of Art Criticism', 3, 'An introductory survey course on Prehistoric through late-Medieval art history.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('arthis', 712, 'Museum and Gallery Management', 4, 'Supervised independent field experience and practical work in all areas of Art Museum management in the university and greater metropolitan area communities.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('arthis', 340, 'Arts of Asia', 3, 'An introduction to the history and criticism of Far Eastern art, including the art of China and Japan, fine and decorative arts.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('arthis', 710, 'Methods in Art History', 3, 'This seminar focuses on basic types of art-historical method. Some meetings focus on a single author who exemplifies a particular approach.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('arthis', 809, 'Materials and Construction in European Art', 3, 'A scientific examination of the materials and manufacturing techniques employed in Europe over the last two centuries.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('arthis', 623, 'Contemporary Latin American Art', 3, 'A survey of the last twenty years of Latin American art with a focus on the Caribbean and Central America.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('stdart', 714, 'Peer Portfolio Review', 0, 'An opportunity to practice giving and receiving constructive criticism.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('stdart', 411, 'Underwater Basket Weaving', 4, 'This course provides a novel perspective on the traditional art of basketry as it is experienced in reduced gravity and in the context of fluid dynamics. Requires instructor permission and a valid c-card.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('stdart', 512, 'Art in Therapy', 3, 'Surveys methods and results of using art and craft therapy with developmentally disabled adults.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('stdart', 614, 'Drawing Master Class', 5, 'For fine arts majors only, an intensive studio study including field trips to local parks and museums and a final group art show.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('stdart', 509, 'Twentieth Century Printmaking', 4, 'Development of personalized concepts and individual aesthetic expression in printmaking with reference to various styles and trends in Twentieth Century printmaking.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('stdart', 333, 'Drawing', 3, 'Exploration of the structure and interrelationships of visual form in drawing, painting, and sculpture. Principal historical modes of drawing are examined.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('tched', 122, 'Theory and Practice of Early Childhood Education', 3, 'Emphasis on the skills and processes needed for the design and implementation of optimal learning environments. Exploration of issues related to societal and cultural influences on the education of young children.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('tched', 155, 'Methods of Early Science Education', 3, 'A study of the curriculum methods, concepts, techniques, and materials in the teaching of general science to children in the early grades.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('tched', 367, 'Problems in Education Management', 3, 'This course is designed to assist the student to prepare for management of educational organizations and programs. Emphasis will be placed upon identifying specific problems and developing specific techniques by which to solve them.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('tched', 501, 'Challenges of Teaching the Gifted and Talented', 3, 'The nature and needs of the talented and gifted in all areas of development are explored.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('tched', 609, 'Supervised Internship in Education', 4, 'Supervised Internship I provides on-site, supervised instructional experience within a public school setting under the leadership of an appropriate, competent professional.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('edpol', 202, 'Technology in the Classroom', 3, 'Theories and practice of using educational technologies to support problem-based learning.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('edpol', 551, 'Classroom Visit', NULL, 'Elective visit to a local classroom for observation.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('stdart', 119, 'Spring Basket Weaving Workshop', NULL, 'A just-for-fun chance to learn the basics of basket weaving.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('edpol', 313, 'Technology, Society and Schools', 3, 'Examination of theories and history of interaction of society and technology with implications for instructional technology and schooling. Resources for constructing personal definitions of technology.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('edpol', 505, 'Qualitative Research for Educators', 3, 'This course provides an introduction to qualitative research at the Master level.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('edpol', 617, 'Educational Policy Analysis', 3, 'Frameworks for analyzing, designing policy proposals, and implementing plans.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('corpfi', 234, 'Accounting Information Systems', 3, 'This course bridges the gap between two disciplines critical to business operations.  This course of study teaches students to design and deploy information technology to improve the accounting systems of an organization.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('corpfi', 404, 'Corporate Financial Management', 3, 'This course covers advanced topics in corporate financial management, including its role in corporate governance.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('corpfi', 601, 'Case Studies in Corporate Finance', 3, 'A course designed to use case studies and financial analysis to further knowledge and ability to make financial management decisions.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('acc', 100, 'Practical Bookkeeping', 2, NULL);
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('acc', 200, 'Principles of Accounting I', 3, 'The initial course in the theory and practice of financial accounting. Topics emphasized include the preparation, reporting, and analysis of financial data.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('acc', 315, 'Financial Accounting', 5, 'Integration of the conceptual and computational aspects of asset, liability and stockholders equity accounting.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('acc', 426, 'Corporate Taxation', 3, 'Concepts and methods of determining federal tax liability of corporations.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('acc', 527, 'Advanced Accounting', 3, 'Theory and practical applications of accounting for consolidated entities and partnerships; includes foreign currency transactions, hedging and derivatives.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('acc', 606, 'Corporate Financial Law', 3, 'Law governing business corporations; fiduciary duties of managers and directors in situations such as mergers, acquisitions, securities offerings, market domination, litigation.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('capmrk', 712, 'International Financial Markets', 3, 'Offers an understanding of the international financial structure and studies its impact on business and individuals in various nations.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('capmrk', 808, 'Principles of Portfolio Management', 3, 'Comprehensive coverage of the theory and practice of money management as well as in-depth analysis of the theory and practice involved when securities are combined into portfolios.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('capmrk', 818, 'Financial Statement Analysis', 3, 'This course presents techniques for analyzing current and projected financial statements for the purposes of credit analysis, security analysis, and internal financial analysis, and cash flow forecasting.');
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, "NUMBER", title, credits, description) VALUES
     ('capmrk', 756, 'Capital Risk Management', 3, 'This course introduces fundamental principles and techniques of financial risk management.');
 
 
 -- --------------------------------------------------------------------
--- Instructor Directory
+-- ID -- Instructor Directory
 --
 
 CREATE TABLE instructor (
-    code        VARCHAR(16) NOT NULL,
-    title       VARCHAR(4) NOT NULL,
-    full_name   VARCHAR(64) NOT NULL,
-    phone       VARCHAR(16),
-    email       VARCHAR(64),
+    code        VARCHAR2(16) NOT NULL,
+    title       VARCHAR2(4) NOT NULL,
+    full_name   VARCHAR2(64) NOT NULL,
+    phone       VARCHAR2(16),
+    email       VARCHAR2(64),
     CONSTRAINT instructor_pk
       PRIMARY KEY (code),
     CONSTRAINT instructor_title_ck
@@ -444,10 +446,10 @@ CREATE TABLE instructor (
 );
 
 CREATE TABLE confidential (
-    instructor  VARCHAR(16) NOT NULL,
+    instructor  VARCHAR2(16) NOT NULL,
     SSN         CHAR(11) NOT NULL,
-    pay_grade   INTEGER NOT NULL,
-    home_phone  VARCHAR(16),
+    pay_grade   NUMBER(1) NOT NULL,
+    home_phone  VARCHAR2(16),
     CONSTRAINT confidential_pk
       PRIMARY KEY (instructor),
     CONSTRAINT confidential_instructor_fk
@@ -456,9 +458,9 @@ CREATE TABLE confidential (
 );
 
 CREATE TABLE appointment (
-    department  VARCHAR(16) NOT NULL,
-    instructor  VARCHAR(16) NOT NULL,
-    percent     FLOAT,
+    department  VARCHAR2(16) NOT NULL,
+    instructor  VARCHAR2(16) NOT NULL,
+    percent     NUMBER(3,2),
     CONSTRAINT appointment_pk
       PRIMARY KEY (department, instructor),
     CONSTRAINT appointment_department_fk
@@ -700,12 +702,12 @@ INSERT INTO appointment (department, instructor, percent) VALUES
 
 
 -- --------------------------------------------------------------------
--- Class Directory
+-- CD -- Class Directory
 --
 
 CREATE TABLE semester (
-    year        INTEGER NOT NULL,
-    season      VARCHAR(6) NOT NULL,
+    year        NUMBER(4) NOT NULL,
+    season      VARCHAR2(6) NOT NULL,
     begin_date  DATE NOT NULL,
     end_date    DATE NOT NULL,
     CONSTRAINT semester_pk
@@ -714,33 +716,42 @@ CREATE TABLE semester (
       CHECK (season IN ('fall', 'spring', 'summer'))
 );
 
+CREATE SEQUENCE class_seq START WITH 20001;
+
 CREATE TABLE class (
-    department  VARCHAR(16) NOT NULL,
-    course      INTEGER NOT NULL,
-    year        INTEGER NOT NULL,
-    season      VARCHAR(6) NOT NULL,
+    department  VARCHAR2(16) NOT NULL,
+    course      NUMBER(3) NOT NULL,
+    year        NUMBER(4) NOT NULL,
+    season      VARCHAR2(6) NOT NULL,
     section     CHAR(3) NOT NULL,
-    instructor  VARCHAR(16),
-    class_seq   INTEGER NOT NULL,
+    instructor  VARCHAR2(16),
+    class_seq   NUMBER(38) NOT NULL,
     CONSTRAINT class_pk
       PRIMARY KEY (department, course, year, season, section),
     CONSTRAINT class_uk
-       UNIQUE (class_seq),
+      UNIQUE (class_seq),
     CONSTRAINT class_season_ck
        CHECK (season IN ('fall', 'spring', 'summer')),
     CONSTRAINT class_department_fk
-       FOREIGN KEY (department)
-       REFERENCES department(code),
+      FOREIGN KEY (department)
+      REFERENCES department(code),
     CONSTRAINT class_course_fk
-       FOREIGN KEY (department, course)
-       REFERENCES course(department, number),
+      FOREIGN KEY (department, course)
+      REFERENCES course(department, "NUMBER"),
     CONSTRAINT class_semester_fk
-       FOREIGN KEY (year, season)
-       REFERENCES semester(year, season),
+      FOREIGN KEY (year, season)
+      REFERENCES semester(year, season),
     CONSTRAINT class_instructor_fk
-       FOREIGN KEY (instructor)
-       REFERENCES instructor(code)
+      FOREIGN KEY (instructor)
+      REFERENCES instructor(code)
 );
+
+CREATE TRIGGER class_insert_trg
+    BEFORE INSERT ON class
+    FOR EACH ROW WHEN (NEW.class_seq IS NULL)
+BEGIN
+    SELECT class_seq.nextval INTO :NEW.class_seq FROM DUAL;
+END;
 
 INSERT INTO semester (year, season, begin_date, end_date) VALUES
     (2009, 'spring', '2010-01-01', '2010-05-15');
@@ -958,24 +969,24 @@ INSERT INTO class (department, course, year, season, section, instructor, class_
 
 
 -- --------------------------------------------------------------------
--- Enrollment Directory
+-- ED -- Enrollment Directory
 --
 
 CREATE TABLE student (
-    number      INTEGER NOT NULL,
-    name        VARCHAR(64) NOT NULL,
+    "NUMBER"    NUMBER(5) NOT NULL,
+    name        VARCHAR2(64) NOT NULL,
     gender      CHAR(1) NOT NULL,
     dob         DATE NOT NULL,
-    school      VARCHAR(16),
-    program     VARCHAR(16),
+    school      VARCHAR2(16),
+    program     VARCHAR2(16),
     start_date  DATE NOT NULL,
-    is_active   BOOLEAN NOT NULL,
+    is_active   NUMBER(1) NOT NULL,
     CONSTRAINT student_pk
-      PRIMARY KEY (number),
+      PRIMARY KEY ("NUMBER"),
     CONSTRAINT student_gender_ck
        CHECK (gender IN ('f', 'i', 'm')),
-    CONSTRAINT student_is_active_ck
-       CHECK (is_active IN (0, 1)),
+    CONSTRAINT is_active_ck
+      CHECK (is_active IN (0, 1)),
     CONSTRAINT student_school_fk
       FOREIGN KEY (school)
       REFERENCES school (code),
@@ -985,123 +996,123 @@ CREATE TABLE student (
 );
 
 CREATE TABLE enrollment (
-    student     INTEGER NOT NULL,
-    class       INTEGER NOT NULL,
+    student     NUMBER(5) NOT NULL,
+    class       NUMBER(38) NOT NULL,
     status      CHAR(3) NOT NULL,
-    grade       FLOAT,
+    grade       NUMBER(3,2),
     CONSTRAINT enrollment_pk
       PRIMARY KEY (student, class),
     CONSTRAINT enrollment_status_ck
        CHECK (status IN ('enr', 'inc', 'ngr')),
     CONSTRAINT enrollment_student_fk
       FOREIGN KEY (student)
-      REFERENCES student(number),
+      REFERENCES student("NUMBER"),
     CONSTRAINT enrollment_class_fk
       FOREIGN KEY (class)
       REFERENCES class(class_seq)
 );
 
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (25371, 'John L. Hanley', 'm', '1990-04-28', 'eng', 'gbuseng', '2009-07-15', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (29878, 'Ellen Lansburgh', 'f', '1992-02-01', 'bus', 'uacct', '2008-01-05', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (37278, 'Ming Wang', 'm', '1988-03-15', 'la', 'gengl', '2002-11-27', 0);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (92039, 'Syed Ishaq', 'm', '1992-10-23', 'art', 'gart', '2010-09-02', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (37283, 'Janine Sylvia', 'f', '1993-12-02', 'ns', 'uastro', '2009-08-14', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (17385, 'Valeria Rinaldi', 'f', '1985-09-02', 'bus', 'pcap', '2004-09-01', 0);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (28371, 'Ken Tanaka', 'm', '1992-11-03', 'art', 'gart', '2010-09-08', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (21837, 'Jalene Flambeau', 'f', '1989-03-23', 'art', 'gart', '2010-06-11', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (38187, 'Mary Ann Flenderson', 'f', '1993-05-16', 'ns', 'uphys', '2010-08-26', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (43278, 'Trina Wood Campbell', 'f', '1990-02-12', 'eng', 'gme', '2007-09-01', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (27138, 'Artem Karpov', 'm', '1991-10-16', 'eng', 'gbe', '2009-08-22', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (12837, 'Christine Leung', 'f', '1991-06-06', 'eng', 'gme', '2009-08-17', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (38721, 'Alicia Montez-Galliano', 'f', '1994-07-11', 'ns', 'uchem', '2010-09-10', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (37182, 'Amy Yang', 'f', '1992-12-17', 'ns', 'uphys', '2002-08-10', 0);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (32718, 'Raisa Antonova', 'f', '1992-12-09', 'eng', 'gbe', '2008-09-15', 0);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (32711, 'Peter Zajac Jr.', 'm', '1994-01-23', 'bus', 'ucorpfi', '2009-09-10', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (33278, 'Andrea Kaminski', 'f', '1981-04-20', 'bus', 'pcap', '2009-01-15', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (17283, 'Lucy Ryong', 'f', '1988-01-25', 'edu', 'gedu', '2009-01-27', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (12738, 'Helmut Dietmark', 'm', '1989-11-27', 'edu', 'psci', '2008-03-17', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (23817, 'Benjamin Wen', 'm', '1993-12-16', 'la', 'uhist', '2009-01-12', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (57382, 'Paul Duncan Ulam', 'm', '2001-05-05', 'la', 'uspan', '2009-05-21', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (13723, 'Narissa Maya', 'f', '1992-04-30', 'la', 'upsych', '2007-11-21', 0);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (31332, 'Dara Subramanya', 'f', '1994-11-16', 'la', 'upsych', '2008-09-10', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (35572, 'Corinna Ellis', 'f', '1995-07-22', 'edu', 'glited', '2007-05-14', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (12328, 'Karen Yuen', 'f', '1991-09-10', 'ns', 'uphys', '2007-05-16', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (32214, 'Joseph Tan', 'm', '1992-08-01', 'eng', 'gbuseng', '2008-01-06', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (22313, 'James Earl Sims III', 'm', '2002-07-06', 'eng', 'umech', '2004-08-16', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (24431, 'Annette Dupree', 'f', '1987-01-28', 'eng', 'umech', '2006-01-16', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (38794, 'Bailey Melvin', 'm', '1988-03-13', 'la', 'psciwri', '2005-04-20', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (37855, 'Amina N. Elsaeed', 'f', '1987-10-29', 'la', 'uhist', '2005-09-02', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (35523, 'Nikki Agbo', 'm', '1985-05-05', 'la', 'gengl', '2006-02-25', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (20927, 'Glenn L. McNair', 'm', '1987-12-13', 'eng', 'gee', '2009-08-23', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (35183, 'Teisha Worth Day', 'f', '1983-12-31', 'edu', 'gedlead', '2009-08-21', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (25723, 'Kumar Suresh', 'm', '1994-09-11', 'eng', 'ucompsci', '2009-08-23', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (24672, 'Mahesh Basa', 'm', '1995-08-21', 'eng', 'ucompsci', '2008-04-15', 0);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (23137, 'Rachel Feld', 'f', '1992-09-27', 'ns', 'uchem', '2008-12-23', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (35163, 'Nicola Ralls Jr.', 'f', '1993-06-02', 'bus', 'uacct', '2010-01-12', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (21135, 'Luis Riviera Espinoza', 'm', '1993-05-21', 'eng', 'gbe', '2010-02-19', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (31735, 'Demetrios Kanakis', 'm', '1995-04-17', 'eng', 'ucompsci', '2009-05-21', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (21166, 'Laura Elmer Long', 'f', '1991-02-14', 'ns', 'uastro', '2009-01-31', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (31331, 'Khadija Hamad Azzan', 'f', '1992-11-26', 'ns', 'uastro', '2008-09-21', 0);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (36446, 'Milton Mahanga', 'm', '1991-11-06', 'art', 'gart', '2009-05-05', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (26764, 'Bernard Careval', 'm', '1992-08-23', 'art', 'gart', '2008-07-30', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (26743, 'Ulf Knudsen', 'm', '1990-11-14', 'ns', 'uphys', '2008-04-27', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (31835, 'Paavo Kekkonen', 'm', '2000-09-08', 'ns', 'uphys', '2008-06-11', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (29301, 'Eduardo Serrano', 'm', '1991-09-09', 'art', 'uhist', '2006-01-14', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (21263, 'Ari Ben David', 'm', '1989-03-15', 'la', 'gengl', '2006-12-15', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (37744, 'Scott Blank', 'm', '1988-06-12', 'bus', 'ucorpfi', '2007-12-15', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (28382, 'Martha O''Mally', 'f', '1995-05-14', 'bus', 'pacc', '2005-01-01', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (27281, 'José N. Marteñes', 'm', '1993-11-19', 'eng', 'ucompsci', '2007-06-15', 1);
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student ("NUMBER", name, gender, dob, school, program, start_date, is_active) VALUES
     (27817, 'Niall Crawford', 'm', '1998-12-14', 'bus', 'pacc', '2010-01-02', 1);
 
 INSERT INTO enrollment (student, class, status, grade) VALUES
@@ -1117,30 +1128,30 @@ INSERT INTO enrollment (student, class, status, grade) VALUES
 
 
 -- --------------------------------------------------------------------
--- Requirement Directory
+-- RD -- Requirement Directory
 --
 
 CREATE TABLE prerequisite (
-    of_department   VARCHAR(16) NOT NULL,
-    of_course       INTEGER NOT NULL,
-    on_department   VARCHAR(16) NOT NULL,
-    on_course       INTEGER NOT NULL,
+    of_department   VARCHAR2(16) NOT NULL,
+    of_course       NUMBER(3) NOT NULL,
+    on_department   VARCHAR2(16) NOT NULL,
+    on_course       NUMBER(3) NOT NULL,
     CONSTRAINT prerequisite_pk
       PRIMARY KEY (of_department, of_course, on_department, on_course),
     CONSTRAINT prerequisite_on_course_fk
       FOREIGN KEY (on_department, on_course)
-      REFERENCES course(department, number),
+      REFERENCES course(department, "NUMBER"),
     CONSTRAINT prerequisite_of_course_fk
       FOREIGN KEY (of_department, of_course)
-      REFERENCES course(department, number)
+      REFERENCES course(department, "NUMBER")
 );
 
 CREATE TABLE classification (
-    code        VARCHAR(16) NOT NULL,
-    type        VARCHAR(10),
-    title       VARCHAR(64) NOT NULL,
-    description TEXT,
-    part_of     VARCHAR(16),
+    code        VARCHAR2(16) NOT NULL,
+    type        VARCHAR2(10),
+    title       VARCHAR2(64) NOT NULL,
+    description CLOB,
+    part_of     VARCHAR2(16),
     CONSTRAINT classification_pk
       PRIMARY KEY (code),
     CONSTRAINT classification_title_uk
@@ -1153,31 +1164,31 @@ CREATE TABLE classification (
 );
 
 CREATE TABLE course_classification (
-    department      VARCHAR(16) NOT NULL,
-    course          INTEGER NOT NULL,
-    classification  VARCHAR(16) NOT NULL,
+    department      VARCHAR2(16) NOT NULL,
+    course          NUMBER(3) NOT NULL,
+    classification  VARCHAR2(16) NOT NULL,
     CONSTRAINT course_classification_pk
       PRIMARY KEY (department, course, classification),
-    CONSTRAINT course_classification_course_fk
+    CONSTRAINT course_classification_cours_fk
       FOREIGN KEY (department, course)
-      REFERENCES course(department, number),
-    CONSTRAINT course_classification_classification_fk
+      REFERENCES course(department, "NUMBER"),
+    CONSTRAINT course_classification_class_fk
       FOREIGN KEY (classification)
       REFERENCES classification(code)
 );
 
 CREATE TABLE program_requirement (
-    school          VARCHAR(16) NOT NULL,
-    program         VARCHAR(16) NOT NULL,
-    classification  VARCHAR(16) NOT NULL,
-    credit_hours    INTEGER NOT NULL,
-    rationale       TEXT,
+    school          VARCHAR2(16) NOT NULL,
+    program         VARCHAR2(16) NOT NULL,
+    classification  VARCHAR2(16) NOT NULL,
+    credit_hours    NUMBER(2) NOT NULL,
+    rationale       CLOB,
     CONSTRAINT program_classification_pk
       PRIMARY KEY (school, program, classification),
-    CONSTRAINT program_classification_course_fk
+    CONSTRAINT program_classification_cour_fk
       FOREIGN KEY (school, program)
       REFERENCES program(school, code),
-    CONSTRAINT program_classification_classification_fk
+    CONSTRAINT program_classification_clas_fk
       FOREIGN KEY (classification)
       REFERENCES classification(code)
 );

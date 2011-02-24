@@ -7,7 +7,7 @@
 	drop-sqlite drop-pgsql drop-mysql drop-oracle drop-mssql \
 	build-all start-pgsql84 start-pgsql90 start-mysql51 start-oracle10g \
 	start-mssql2005 start-mssql2008 stop-pgsql84 stop-pgsql90 stop-mysql51 \
-	stop-oracle10 stop-mssql2005 stop-mssql2008 gdemo-htraf demo-ssi \
+	stop-oracle10g stop-mssql2005 stop-mssql2008 gdemo-htraf demo-ssi \
 	shell-sqlite shell-pgsql shell-mysql shell-oracle shell-mssql \
 	serve-sqlite serve-pgsql serve-mysql serve-oracle serve-mssql \
 	client-sqlite client-pgsql client-mysql client-oracle client-mssql
@@ -299,6 +299,30 @@ start-mssql2005:
 # Start the test bench for MS SQL Server 2008
 start-mssql2008:
 	./test/buildbot/bb.sh start mssql2008
+
+# Stop the test bench for PostgreSQL 8.4
+stop-pgsql84:
+	./test/buildbot/bb.sh stop pgsql84
+
+# Stop the test bench for PostgreSQL 9.0
+stop-pgsql90:
+	./test/buildbot/bb.sh stop pgsql90
+
+# Stop the test bench for MySQL 5.1
+stop-mysql51:
+	./test/buildbot/bb.sh stop mysql51
+
+# Stop the test bench for Oracle 10g
+stop-oracle10g:
+	./test/buildbot/bb.sh stop oracle10g
+
+# Stop the test bench for MS SQL Server 2005
+stop-mssql2005:
+	./test/buildbot/bb.sh stop mssql2005
+
+# Stop the test bench for MS SQL Server 2008
+stop-mssql2008:
+	./test/buildbot/bb.sh stop mssql2008
 
 
 #

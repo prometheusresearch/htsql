@@ -62,6 +62,7 @@ ENTRY_POINTS = {
         'engine.sqlite = htsql_sqlite.export:ENGINE_SQLITE',
         'engine.pgsql = htsql_pgsql.export:ENGINE_PGSQL',
         'engine.mysql = htsql_mysql.export:ENGINE_MYSQL',
+        'engine.oracle = htsql_oracle.export:ENGINE_ORACLE',
         'engine.mssql = htsql_mssql.export:ENGINE_MSSQL',
     ],
 }
@@ -70,6 +71,7 @@ INSTALL_REQUIRES = [
     'pyyaml>=3.07',
     'psycopg2>=2.0.10',
     'MySQL-python>=1.2.2',
+    'cx_Oracle>=5.0',
     'pymssql>=1.0.2',
 ]
 

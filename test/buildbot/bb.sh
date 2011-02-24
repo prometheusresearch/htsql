@@ -459,8 +459,6 @@ do_build() {
 do_start() {
     local LIST="$1"
 
-    prepare
-
     if found py25 "$LIST"; then
         start_linux_bench py25 :10022-:22
     fi
@@ -497,8 +495,6 @@ do_start() {
 
 do_stop() {
     local LIST="$1"
-
-    prepare
 
     for BENCH in $BENCHES; do
         if found $BENCH "$LIST"; then
