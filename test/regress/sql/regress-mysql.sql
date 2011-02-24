@@ -58,12 +58,12 @@ CREATE TABLE program (
 
 CREATE TABLE course (
     department  VARCHAR(16) NOT NULL,
-    number      INTEGER NOT NULL,
+    no          INTEGER NOT NULL,
     title       VARCHAR(64) NOT NULL,
     credits     INTEGER,
     description TEXT,
     CONSTRAINT course_pk
-      PRIMARY KEY (department, number),
+      PRIMARY KEY (department, no),
     CONSTRAINT course_title_uk
       UNIQUE (title),
     CONSTRAINT course_dept_fk
@@ -153,7 +153,7 @@ INSERT INTO program (school, code, title, degree, part_of) VALUES
     ('art', 'ustudio', 'Bachelor of Arts in Studio Art', 'ba', NULL),
     ('ph', 'phd', 'Honorary PhD', NULL, NULL);
 
-INSERT INTO course (department, number, title, credits, description) VALUES
+INSERT INTO course (department, no, title, credits, description) VALUES
     ('astro', 137, 'The Solar System', 3, 'Introductory survey of the solar system, including structure and motion of the planets, properties of the sun, and comparison to extrasolar systems.'),
     ('astro', 142, 'Solar System Lab', 2, 'Laboratory studies that complement the lecture course ASTRO 137.'),
     ('astro', 155, 'Telescope Workshop', 1, 'Introduction to correct use of the 8-inch Schmidt-Cassegrain type telescope. You will learn about magnification, how to locate an object, and how setting circles work.'),
@@ -287,7 +287,7 @@ CREATE TABLE confidential (
 CREATE TABLE appointment (
     department  VARCHAR(16) NOT NULL,
     instructor  VARCHAR(16) NOT NULL,
-    percent     DECIMAL(3,2),
+    fraction    DECIMAL(3,2),
     CONSTRAINT appointment_pk
       PRIMARY KEY (department, instructor),
     CONSTRAINT appointment_department_fk
@@ -377,7 +377,7 @@ INSERT INTO confidential (instructor, SSN, pay_grade, home_phone) VALUES
     ('bsacks66', '782-78-0000', 7, '202-555-7283'),
     ('mscott51', '126-33-0000', 7, '702-555-7819');
 
-INSERT INTO appointment (department, instructor, percent) VALUES
+INSERT INTO appointment (department, instructor, fraction) VALUES
     ('stdart', 'acaspar', 1.00),
     ('phys', 'afrenski', 1.00),
     ('ee', 'alang42', 1.00),
@@ -448,7 +448,7 @@ CREATE TABLE class (
       REFERENCES department(code),
     CONSTRAINT class_course_fk
       FOREIGN KEY (department, course)
-      REFERENCES course(department, number),
+      REFERENCES course(department, no),
     CONSTRAINT class_semester_fk
       FOREIGN KEY (year, season)
       REFERENCES semester(year, season),
@@ -573,7 +573,7 @@ INSERT INTO class (department, course, year, season, section, instructor, class_
 --
 
 CREATE TABLE student (
-    number      INTEGER NOT NULL,
+    id          INTEGER NOT NULL,
     name        VARCHAR(64) NOT NULL,
     gender      ENUM('f', 'i', 'm') NOT NULL,
     dob         DATE NOT NULL,
@@ -582,7 +582,7 @@ CREATE TABLE student (
     start_date  DATE NOT NULL,
     is_active   BOOLEAN NOT NULL,
     CONSTRAINT student_pk
-      PRIMARY KEY (number),
+      PRIMARY KEY (id),
     CONSTRAINT student_school_fk
       FOREIGN KEY (school)
       REFERENCES school (code),
@@ -600,13 +600,13 @@ CREATE TABLE enrollment (
       PRIMARY KEY (student, class),
     CONSTRAINT enrollment_student_fk
       FOREIGN KEY (student)
-      REFERENCES student(number),
+      REFERENCES student(id),
     CONSTRAINT enrollment_class_fk
       FOREIGN KEY (class)
       REFERENCES class(class_seq)
 ) ENGINE=INNODB;
 
-INSERT INTO student (number, name, gender, dob, school, program, start_date, is_active) VALUES
+INSERT INTO student (id, name, gender, dob, school, program, start_date, is_active) VALUES
     (25371, 'John L. Hanley', 'm', '1990-04-28', 'eng', 'gbuseng', '2009-07-15', TRUE),
     (29878, 'Ellen Lansburgh', 'f', '1992-02-01', 'bus', 'uacct', '2008-01-05', TRUE),
     (37278, 'Ming Wang', 'm', '1988-03-15', 'la', 'gengl', '2002-11-27', FALSE),
@@ -680,10 +680,10 @@ CREATE TABLE prerequisite (
       PRIMARY KEY (of_department, of_course, on_department, on_course),
     CONSTRAINT prerequisite_on_course_fk
       FOREIGN KEY (on_department, on_course)
-      REFERENCES course(department, number),
+      REFERENCES course(department, no),
     CONSTRAINT prerequisite_of_course_fk
       FOREIGN KEY (of_department, of_course)
-      REFERENCES course(department, number)
+      REFERENCES course(department, no)
 ) ENGINE=INNODB;
 
 CREATE TABLE classification (
@@ -709,7 +709,7 @@ CREATE TABLE course_classification (
       PRIMARY KEY (department, course, classification),
     CONSTRAINT course_classification_course_fk
       FOREIGN KEY (department, course)
-      REFERENCES course(department, number),
+      REFERENCES course(department, no),
     CONSTRAINT course_classification_classification_fk
       FOREIGN KEY (classification)
       REFERENCES classification(code)
