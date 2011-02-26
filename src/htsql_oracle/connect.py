@@ -16,7 +16,9 @@ This module implements the connection adapter for Oracle.
 from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
-from htsql.domain import BooleanDomain, StringDomain, DateDomain
+from htsql.domain import BooleanDomain, DecimalDomain, StringDomain, DateDomain
+import datetime
+import decimal
 import cx_Oracle
 
 
@@ -68,6 +70,16 @@ class NormalizeOracleBoolean(Normalize):
         if value is None:
             return None
         return (value != 0)
+
+
+class NormalizeOracleDecimal(Normalize):
+
+    adapts(DecimalDomain)
+
+    def __call__(self, value):
+        if value is None:
+            return None
+        return decimal.Decimal(value)
 
 
 class NormalizeOracleString(Normalize):

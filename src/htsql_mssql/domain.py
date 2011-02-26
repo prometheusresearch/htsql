@@ -45,9 +45,8 @@ class MSSQLDomain(Domain):
 
     def __eq__(self, other):
         # The generic domain comparison checks if the types of the domains
-        # and all their attributes are equal.  Since MySQL domains grow
-        # an extra attribute `name`, we need to update the comparison
-        # implementation.
+        # and all their attributes are equal.  Since we added extra attributes,
+        # we need to update the implementation.
         return (super(MSSQLDomain, self).__eq__(other) and
                 self.schema_name == other.schema_name and
                 self.name == other.name)
