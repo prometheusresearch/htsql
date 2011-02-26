@@ -59,7 +59,7 @@ class MySQLDumpDecimal(DumpDecimal):
         if 'E' in value:
             value = "CAST(%s AS DECIMAL(65,30))" % value
         elif '.' not in value:
-            value = "CAST(%s AS DECIMAL(65))" % value
+            value = "%s." % value
         self.write(value)
 
 

@@ -16,7 +16,8 @@ This module implements the connection adapter for MS SQL Server.
 from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
-from htsql.domain import BooleanDomain, StringDomain
+from htsql.domain import BooleanDomain, StringDomain, DateDomain
+import datetime
 import pymssql
 
 
@@ -78,6 +79,16 @@ class NormalizeMSSQLString(Normalize):
     def __call__(self, value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
+        return value
+
+
+class NormalizeMSSQLDate(Normalize):
+
+    adapts(DateDomain)
+
+    def __call__(self, value):
+        if isinstance(value, datetime.datetime):
+            value = value.date()
         return value
 
 

@@ -195,7 +195,7 @@ class IntegerDomain(NumberDomain):
     """
     Represents a binary integer data type.
 
-    Valid literal values: integers (in base 10) with an optional sign.
+    Valid literal values: integers (in base 2) with an optional sign.
 
     Valid native values: `int` or `long` objects.
 
