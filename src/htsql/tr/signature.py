@@ -432,3 +432,11 @@ class NotSig(UnarySig):
     """
 
 
+class ToPredicateSig(UnarySig):
+    pass
+
+
+class FromPredicateSig(UnarySig):
+    pass
+
+

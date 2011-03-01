@@ -29,6 +29,12 @@ tests:
   - uri: /{'', 'HTSQL', 'O''Reilly',
            '%ce%bb%cf%8c%ce%b3%ce%bf%cf%82',
            '$-b \pm \sqrt{b^2 - 4ac} \over 2a$'}
+    ifndef: mssql
+  # The regression database for MS SQL Server uses Latin1 locale and therefore
+  # is unable to represent greek characters.
+  - uri: /{'', 'HTSQL', 'O''Reilly', 'zo%c3%b6logy',
+           '$-b \pm \sqrt{b^2 - 4ac} \over 2a$'}
+    ifdef: mssql
   - uri: /{string('832040')}
 
   # Integer values
@@ -49,6 +55,7 @@ tests:
   - uri: /{decimal('1E-10')}
   # Arbitrary length
   - uri: /{4154781481226426191177580544000000.808017424794512875886459904961710757005754368000000000}
+    ifndef: mssql
   # Invalid decimal literals
   - uri: /{decimal('vingt-cinq')}
     expect: 400
@@ -220,16 +227,16 @@ tests:
   - uri: /{integer(string('cinq'))}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   # Integer overflow
   - uri: /{integer(4294967296.0)}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   - uri: /{integer(1.8446744073709552e+19)}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   - uri: /{integer(4294967296.0),
            integer(1.8446744073709552e+19)}
     ifdef: [sqlite, mysql]
@@ -256,26 +263,26 @@ tests:
   - uri: /{7*2147483647}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   - uri: /{9223372036854775807+1}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   - uri: /{7*2147483647, 9223372036854775807+1}
     ifdef: [sqlite, mysql]
   # Division by zero
   - uri: /{7/0}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   - uri: /{7/0.0}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   - uri: /{7/0e0}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifdef: [pgsql, mssql]
   - uri: /{7/0, 7/0.0, 7/0e0}
     ifdef: [sqlite, mysql]
 
@@ -286,8 +293,10 @@ tests:
   - uri: /{round(3272.78125), round(271828e-5)}
   # Coercion
   - uri: /{round(9973)}
+  # Bug in MSSQL 2008R2, see
+  # https://connect.microsoft.com/SQLServer/feedback/details/646516/bad-example-for-round
   - uri: /{round(9973,-2)}
-    ifndef: sqlite
+    ifndef: [sqlite, mssql]
   # Inadmissible operand
   - uri: /{round(271828e-5,2)}
     expect: 400
@@ -322,7 +331,14 @@ tests:
   # Contains
   - uri: /{'OMGWTFBBQ'~'wtf', 'OMGWTFBBQ'!~'LOL'}
   - uri: /{'OMGWTFBBQ'!~'wtf', 'OMGWTFBBQ'~'LOL'}
+  # Bug in MSSQL 2005, `SELECT (CASE WHEN ('LOL' LIKE NULL) THEN 1 END)`
+  # generates [<1>].
   - uri: /{null()~'LOL', 'LOL'~null(), null()~null()}
+    ifndef: mssql
+  - uri: /{null()~'LOL', null()~null()}
+    ifdef: mssql
+  - uri: /this(){true()}?'LOL'~null()
+    ifdef: mssql
 
   # Slicing
   - uri: /{head('OMGWTFBBQ'), head('OMGWTFBBQ',3), head('OMGWTFBBQ',-3)}
@@ -348,6 +364,13 @@ tests:
   - uri: /{replace('OMGWTFBBQ','WTF','LOL')}
   - uri: /{replace('OMGWTFBBQ','wtf','LOL'),
            replace('OMGWTFBBQ','WTF','lol')}
+    ifndef: mssql
+  # `REPLACE` in MSSQL respects the database collation, which is
+  # case-insensitive for the regression database.
+  - uri: /{replace('OMGWTFBBQ','wtf','LOL')}
+    ifdef: mssql
+  - uri: /{replace('OMGWTFBBQ','WTF','lol')}
+    ifdef: mssql
   - uri: /{replace('floccinaucinihilipilification','ili','LOL')}
   - uri: /{replace('OMGWTFBBQ','','LOL'),
            replace('OMGWTFBBQ','WTF','')}

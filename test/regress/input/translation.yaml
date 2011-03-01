@@ -67,7 +67,10 @@ tests:
     - uri: /school?!exists(department)
     - uri: /school{*,count(department)}
     - uri: /school{*,count(department?exists(course))}
+    # MSSQL does not allow the argument of an aggregate to contain
+    # a subquery.
     - uri: /school{*,count(department.exists(course))}
+      ifndef: mssql
     - uri: /school{code,count(department),count(program)}
     - uri: /school{code,exists(department),exists(program)}
       skip: true # broken until `reduce` is implemented

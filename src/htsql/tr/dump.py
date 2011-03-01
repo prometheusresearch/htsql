@@ -26,7 +26,8 @@ from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     FormulaPhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
-                        AndSig, OrSig, NotSig)
+                        AndSig, OrSig, NotSig, ToPredicateSig,
+                        FromPredicateSig)
 from .plan import Plan
 import StringIO
 import re
@@ -1868,6 +1869,22 @@ class DumpCompare(DumpBySignature):
         #   (<lop> (<|<=|>|>=) <rop>)
         self.format("({lop} {relation:pass} {rop})",
                     self.arguments, self.signature)
+
+
+class DumpToPredicate(DumpBySignature):
+
+    adapts(ToPredicateSig)
+
+    def __call__(self):
+        return self.state.dump(self.phrase.op)
+
+
+class DumpFromPredicate(DumpBySignature):
+
+    adapts(FromPredicateSig)
+
+    def __call__(self):
+        return self.state.dump(self.phrase.op)
 
 
 def serialize(clause, state=None):

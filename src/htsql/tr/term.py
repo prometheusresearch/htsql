@@ -584,6 +584,19 @@ class WrapperTerm(UnaryTerm):
         return "(%s)" % self.kid
 
 
+class PermanentTerm(WrapperTerm):
+    """
+    Represents a no-op operation.
+
+    A permanent term is never collapsed with the outer term.
+    """
+
+    def __str__(self):
+        # Display:
+        #   (!<kid>!)
+        return "(!%s!)" % self.kid
+
+
 class SegmentTerm(UnaryTerm):
     """
     Represents a segment term.

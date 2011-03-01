@@ -2499,7 +2499,7 @@ tests:
              FROM `htsql_regress`.`semester` AS `semester`
                   INNER JOIN `htsql_regress`.`class` AS `class`
                              ON ((`semester`.`year` = `class`.`year`) AND (`semester`.`season` = `class`.`season`))
-             WHERE (`semester`.`year` = CAST(2010 AS DECIMAL(65)))
+             WHERE (`semester`.`year` = 2010.)
                    AND (`semester`.`season` = 'fall')
              ORDER BY `semester`.`year` ASC, `semester`.`season` ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
         - uri: /(class?class_seq=10086).department
@@ -9415,7 +9415,7 @@ tests:
              ----
              /{7=0.7e1,'13'=13.0,'13'!=='13.0'}
              SELECT (7.0e0 = 7.0e0),
-                    (CAST(13 AS DECIMAL(65)) = 13.0),
+                    (13. = 13.0),
                     ('13' <> '13.0')
         - uri: /{true()=1}
           status: 400 Bad Request
@@ -9844,7 +9844,7 @@ tests:
 
              ----
              /{decimal(60),decimal(271828e-5)}
-             SELECT CAST(60 AS DECIMAL(65)),
+             SELECT 60.,
                     CAST(2.71828e0 AS DECIMAL(65,30))
         - uri: /{float(60), float(2.125)}
           status: 200 OK
@@ -10091,7 +10091,7 @@ tests:
 
              ----
              /{7920/9504,7.25/0.875,120205e-5/57721e-5}
-             SELECT (CAST(7920 AS DECIMAL(65)) / CAST(9504 AS DECIMAL(65))),
+             SELECT (7920. / 9504.),
                     (7.25 / 0.875),
                     (1.2020500000000001e0 / 0.57721e0)
         - uri: /{7+2.125, 7+271828e-5, 2.125+271828e-5}
@@ -10108,7 +10108,7 @@ tests:
 
              ----
              /{7+2.125,7+271828e-5,2.125+271828e-5}
-             SELECT (CAST(7 AS DECIMAL(65)) + 2.125),
+             SELECT (7. + 2.125),
                     (7.0e0 + 2.71828e0),
                     (2.125e0 + 2.71828e0)
         - uri: /{7-2.125, 7-271828e-5, 2.125-271828e-5}
@@ -10125,7 +10125,7 @@ tests:
 
              ----
              /{7-2.125,7-271828e-5,2.125-271828e-5}
-             SELECT (CAST(7 AS DECIMAL(65)) - 2.125),
+             SELECT (7. - 2.125),
                     (7.0e0 - 2.71828e0),
                     (2.125e0 - 2.71828e0)
         - uri: /{7*2.125, 7*271828e-5, 2.125*271828e-5}
@@ -10142,7 +10142,7 @@ tests:
 
              ----
              /{7*2.125,7*271828e-5,2.125*271828e-5}
-             SELECT (CAST(7 AS DECIMAL(65)) * 2.125),
+             SELECT (7. * 2.125),
                     (7.0e0 * 2.71828e0),
                     (2.125e0 * 2.71828e0)
         - uri: /{7/2.125, 7/271828e-5, 2.125/271828e-5}
@@ -10159,7 +10159,7 @@ tests:
 
              ----
              /{7/2.125,7/271828e-5,2.125/271828e-5}
-             SELECT (CAST(7 AS DECIMAL(65)) / 2.125),
+             SELECT (7. / 2.125),
                     (7.0e0 / 2.71828e0),
                     (2.125e0 / 2.71828e0)
         - uri: /{'cinq'+7}
@@ -10261,8 +10261,8 @@ tests:
 
              ----
              /{7/0,7/0.0,7/0e0}
-             SELECT (CAST(7 AS DECIMAL(65)) / CAST(0 AS DECIMAL(65))),
-                    (CAST(7 AS DECIMAL(65)) / 0.0),
+             SELECT (7. / 0.),
+                    (7. / 0.0),
                     (7.0e0 / 0.0e0)
         - uri: /{round(3272.78125,2)}
           status: 200 OK
@@ -10324,7 +10324,7 @@ tests:
 
              ----
              /{round(9973)}
-             SELECT ROUND(CAST(9973 AS DECIMAL(65)))
+             SELECT ROUND(9973.)
         - uri: /{round(9973,-2)}
           status: 200 OK
           headers:
@@ -10339,7 +10339,7 @@ tests:
 
              ----
              /{round(9973,-2)}
-             SELECT ROUND(CAST(9973 AS DECIMAL(65)), (- 2))
+             SELECT ROUND(9973., (- 2))
         - uri: /{round(271828e-5,2)}
           status: 400 Bad Request
           headers:
@@ -10606,8 +10606,8 @@ tests:
 
              ----
              /{head(null()),tail(null()),head('OMGWTFBBQ',null()),tail('OMGWTFBBQ',null())}
-             SELECT SUBSTRING(NULL FROM 1 FOR 1),
-                    SUBSTRING(NULL FROM (CASE WHEN (1 < 0) THEN (1 - 1) WHEN (1 <= CHARACTER_LENGTH(NULL)) THEN (CHARACTER_LENGTH(NULL) + (1 - 1)) ELSE 1 END)),
+             SELECT NULL,
+                    NULL,
                     SUBSTRING('OMGWTFBBQ' FROM 1 FOR 1),
                     SUBSTRING('OMGWTFBBQ' FROM (CASE WHEN (1 < 0) THEN (1 - 1) WHEN (1 <= CHARACTER_LENGTH('OMGWTFBBQ')) THEN (CHARACTER_LENGTH('OMGWTFBBQ') + (1 - 1)) ELSE 1 END))
         - uri: /{slice('OMGWTFBBQ',3,6), slice('OMGWTFBBQ',3,-3), slice('OMGWTFBBQ',-6,6),
@@ -10663,7 +10663,7 @@ tests:
 
              ----
              /{slice(null(),3,-3),slice('OMGWTGBBQ',null(),null()),slice('OMGWTFBBQ',-3,null()),slice('OMGWTFBBQ',null(),3)}
-             SELECT SUBSTRING(NULL FROM 4 FOR (CASE WHEN (4 < ((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH(NULL)) WHEN ((COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) >= 0) THEN COALESCE((- 3), CHARACTER_LENGTH(NULL)) WHEN ((COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) >= 0) THEN (COALESCE((- 3), CHARACTER_LENGTH(NULL)) + CHARACTER_LENGTH(NULL)) ELSE 0 END) + 1) - 4) ELSE 0 END)),
+             SELECT NULL,
                     SUBSTRING('OMGWTGBBQ' FROM 1),
                     SUBSTRING('OMGWTFBBQ' FROM ((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + CHARACTER_LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)),
                     SUBSTRING('OMGWTFBBQ' FROM 1 FOR 3)
@@ -10733,8 +10733,8 @@ tests:
 
              ----
              /{at(null(),3),at('OMGWTFBBQ',null(),3),at('OMGWTFBBQ',3,null())}
-             SELECT SUBSTRING(NULL FROM 4 FOR 1),
-                    SUBSTRING('OMGWTFBBQ' FROM NULL FOR 0),
+             SELECT NULL,
+                    NULL,
                     SUBSTRING('OMGWTFBBQ' FROM 4 FOR 1)
         - uri: /{upper('lol'), lower('LOL')}
           status: 200 OK

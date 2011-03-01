@@ -19,6 +19,7 @@ from .code import (Expression, QueryExpr, SegmentExpr, Space, ScalarSpace,
                    QuotientSpace, FilteredSpace, OrderedSpace,
                    Code, LiteralCode, CastCode, FormulaCode, Unit, ScalarUnit,
                    AggregateUnitBase, KernelUnit, ComplementUnit)
+from .signature import Signature
 
 
 class RewritingState(object):
@@ -188,9 +189,31 @@ class RewriteFormula(RewriteCode):
     adapts(FormulaCode)
 
     def __call__(self):
-        arguments = self.code.arguments.map(self.state.rewrite)
-        return FormulaCode(self.code.signature,
-                           self.code.domain,
+        rewrite = RewriteBySignature(self.code, self.state)
+        return rewrite()
+
+
+class RewriteBySignature(Adapter):
+
+    adapts(Signature)
+
+    @classmethod
+    def dispatch(interface, code, *args, **kwds):
+        assert isinstance(code, FormulaCode)
+        return (type(code.signature),)
+
+    def __init__(self, code, state):
+        assert isinstance(code, FormulaCode)
+        assert isinstance(state, RewritingState)
+        self.code = code
+        self.state = state
+        self.signature = code.signature
+        self.domain = code.domain
+        self.arguments = code.arguments
+
+    def __call__(self):
+        arguments = self.arguments.map(self.state.rewrite)
+        return FormulaCode(self.signature, self.domain,
                            self.code.binding, **arguments)
 
 

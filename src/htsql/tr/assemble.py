@@ -27,8 +27,10 @@ from .frame import (ScalarFrame, TableFrame, NestedFrame,
                     LiteralPhrase, TruePhrase, CastPhrase,
                     ColumnPhrase, ReferencePhrase, EmbeddingPhrase,
                     FormulaPhrase, Anchor, LeadingAnchor)
-from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsNullSig,
-                        NullIfSig, IfNullSig, AndSig)
+from .signature import (Signature, IsEqualSig, IsTotallyEqualSig, IsInSig,
+                        IsNullSig, NullIfSig, IfNullSig, CompareSig,
+                        AndSig, OrSig, NotSig, ToPredicateSig,
+                        FromPredicateSig)
 
 
 class Claim(Comparable, Printable):
@@ -416,7 +418,7 @@ class AssemblingState(object):
         phrase = evaluate()
         # Restore the original gate.
         self.pop_gate()
-        # Return the generate phrase.
+        # Return the generated phrase.
         return phrase
 
     def demand(self, claim):
@@ -450,6 +452,14 @@ class AssemblingState(object):
         assert claim not in self.phrase_by_claim
         # Save the phrase.
         self.phrase_by_claim[claim] = phrase
+
+    def to_predicate(self, phrase):
+        return FormulaPhrase(ToPredicateSig(), phrase.domain,
+                             phrase.is_nullable, phrase.expression, op=phrase)
+
+    def from_predicate(self, phrase):
+        return FormulaPhrase(FromPredicateSig(), phrase.domain,
+                             phrase.is_nullable, phrase.expression, op=phrase)
 
 
 class Assemble(Adapter):
@@ -772,8 +782,9 @@ class AssembleFilter(Assemble):
         # Assemble a `WHERE` clause.
         # Evaluate the `filter` expression (we expect all its claims
         # to be already satisfied).
-        return self.state.evaluate(self.term.filter,
-                                   router=self.term.kid)
+        phrase = self.state.evaluate(self.term.filter,
+                                     router=self.term.kid)
+        return self.state.to_predicate(phrase)
 
 
 class AssembleOrder(Assemble):
@@ -941,6 +952,7 @@ class AssembleJoin(Assemble):
                                       ops=equalities)
         elif self.term.is_left or self.term.is_right:
             condition = TruePhrase(self.term.expression)
+            condition = self.state.to_predicate(condition)
         # Generate a `JOIN` clause for the second subframe.
         ranchor = Anchor(rframe, condition,
                          self.term.is_left, self.term.is_right)
@@ -1292,34 +1304,29 @@ class EvaluateBySignature(Adapter):
                              **arguments)
 
 
-class EvaluateIsTotallyEqual(EvaluateBySignature):
+class EvaluateIsEqualBase(EvaluateBySignature):
+
+    adapts_many(IsEqualSig, IsInSig, CompareSig)
+
+    def __call__(self):
+        phrase = super(EvaluateIsEqualBase, self).__call__()
+        return self.state.from_predicate(phrase)
+
+
+class EvaluateIsTotallyEqualBase(EvaluateBySignature):
     """
     Evaluates the total equality (``==``) operator.
     """
 
-    adapts(IsTotallyEqualSig)
+    adapts_many(IsTotallyEqualSig, IsNullSig)
 
     def __call__(self):
         # Override the default implementation since the total equality
         # operator is not null-regular, and, in fact, always not nullable.
         arguments = self.arguments.map(self.state.evaluate)
-        return FormulaPhrase(self.signature, self.domain,
-                             False, self.code, **arguments)
-
-
-class EvaluateIsNull(EvaluateBySignature):
-    """
-    Evaluates the ``is_null()`` operator.
-    """
-
-    adapts(IsNullSig)
-
-    def __call__(self):
-        # Override the default implementation since the `is_null()`
-        # operator is not null-regular, and, in fact, always not nullable.
-        arguments = self.arguments.map(self.state.evaluate)
-        return FormulaPhrase(self.signature, self.domain,
-                             False, self.code, **arguments)
+        phrase = FormulaPhrase(self.signature, self.domain,
+                               False, self.code, **arguments)
+        return self.state.from_predicate(phrase)
 
 
 class EvaluateNullIf(EvaluateBySignature):
@@ -1352,6 +1359,22 @@ class EvaluateIfNull(EvaluateBySignature):
         is_nullable = all(cell.is_nullable for cell in arguments.cells())
         return FormulaPhrase(self.signature, self.domain,
                              is_nullable, self.code, **arguments)
+
+
+class EvaluateAndOrNot(EvaluateBySignature):
+
+    adapts_many(AndSig, OrSig, NotSig)
+
+    def __call__(self):
+        arguments = (self.arguments.map(self.state.evaluate)
+                                   .map(self.state.to_predicate))
+        is_nullable = any(cell.is_nullable for cell in arguments.cells())
+        phrase = FormulaPhrase(self.signature,
+                               self.domain,
+                               is_nullable,
+                               self.code,
+                               **arguments)
+        return self.state.from_predicate(phrase)
 
 
 class EvaluateUnit(Evaluate):

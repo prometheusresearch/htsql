@@ -31,7 +31,7 @@ tests:
   tests:
   - connect: *admin-connect
     sql: !environ |
-        CREATE DATABASE [${MSSQL_DATABASE}] COLLATE Latin1_General_CS_AI;
+        CREATE DATABASE [${MSSQL_DATABASE}] COLLATE Latin1_General_CI_AI;
         CREATE LOGIN [${MSSQL_USERNAME}] WITH PASSWORD = '${MSSQL_PASSWORD}', CHECK_POLICY = OFF;
         USE [${MSSQL_DATABASE}];
         CREATE USER [${MSSQL_USERNAME}] FOR LOGIN [${MSSQL_USERNAME}];
@@ -48,7 +48,6 @@ tests:
 
 - title: Run the test collection
   id: test-mssql
-  skip: true
   tests:
   - define: mssql
   - db: *connect

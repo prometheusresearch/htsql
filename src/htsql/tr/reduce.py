@@ -17,13 +17,15 @@ from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain, StringDomain
 from .coerce import coerce
 from .compile import ordering
+from .term import PermanentTerm
 from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
                     QueryFrame, Phrase, LiteralPhrase, NullPhrase,
                     TruePhrase, FalsePhrase, CastPhrase, FormulaPhrase,
                     ExportPhrase, ReferencePhrase, Anchor, LeadingAnchor)
 from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig,
-                        AndSig, OrSig, NotSig)
+                        AndSig, OrSig, NotSig, FromPredicateSig,
+                        ToPredicateSig)
 
 
 class ReducingState(object):
@@ -74,6 +76,18 @@ class ReducingState(object):
         # Realize and apply the `Collapse` adapter.
         collapse = Collapse(frame, self)
         return collapse()
+
+    def to_predicate(self, phrase):
+        phrase = FormulaPhrase(ToPredicateSig(), phrase.domain,
+                               phrase.is_nullable, phrase.expression,
+                               op=phrase)
+        return self.reduce(phrase)
+
+    def from_predicate(self, phrase):
+        phrase = FormulaPhrase(FromPredicateSig(), phrase.domain,
+                               phrase.is_nullable, phrase.expression,
+                               op=phrase)
+        return self.reduce(phrase)
 
 
 class Reduce(Adapter):
@@ -315,6 +329,10 @@ class CollapseBranch(Collapse):
         head = self.frame.include[0].frame
         # The rest of the `FROM` clause.
         tail = self.frame.include[1:]
+
+        # A frame corresponding to a permanent term is never collapsed down.
+        if isinstance(head.term, PermanentTerm):
+            return self.frame
 
         # Any subframe, including the head frame, is one of theses:
         # - a scalar frame, we could just discard it;
@@ -695,7 +713,8 @@ class ReduceIsEqual(ReduceBySignature):
         if isinstance(lop, NullPhrase) and isinstance(rop, NullPhrase):
             # Reduce:
             #   null()=null(), null()!=null() => null()
-            return NullPhrase(self.phrase.domain, self.phrase.expression)
+            return self.state.to_predicate(
+                    NullPhrase(self.phrase.domain, self.phrase.expression))
 
         # Now suppose one of the operands (`rop`) is `NULL`.
         if isinstance(lop, NullPhrase):
@@ -708,7 +727,8 @@ class ReduceIsEqual(ReduceBySignature):
             # aggregate expression).  So we only do that when `lop` is a
             # literal.
             if isinstance(lop, LiteralPhrase):
-                return NullPhrase(self.phrase.domain, self.phrase.expression)
+                return self.state.to_predicate(
+                        NullPhrase(self.phrase.domain, self.phrase.expression))
 
         # Check if both arguments are boolean literals.
         if (isinstance(lop, (TruePhrase, FalsePhrase)) and
@@ -723,9 +743,11 @@ class ReduceIsEqual(ReduceBySignature):
             if lop.value != rop.value:
                 polarity = -polarity
             if polarity > 0:
-                return TruePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        TruePhrase(self.phrase.expression))
             else:
-                return FalsePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        FalsePhrase(self.phrase.expression))
 
         # None of specific optimizations were applied, just return
         # the same operator with reduced operands.  Update the `is_nullable`
@@ -754,9 +776,11 @@ class ReduceIsTotallyEqual(ReduceBySignature):
             # Reduce:
             #   null()==null() => true, null()!==null() => false()
             if polarity > 0:
-                return TruePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        TruePhrase(self.phrase.expression))
             else:
-                return FalsePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        FalsePhrase(self.phrase.expression))
 
         # Now suppose one of the operands (`rop`) is `NULL`.
         if isinstance(lop, NullPhrase):
@@ -775,9 +799,11 @@ class ReduceIsTotallyEqual(ReduceBySignature):
             # optimization when `lop` is a literal.
             if isinstance(lop, LiteralPhrase):
                 if polarity > 0:
-                    return FalsePhrase(self.phrase.expression)
+                    return self.state.to_predicate(
+                            FalsePhrase(self.phrase.expression))
                 else:
-                    return TruePhrase(self.phrase.expression)
+                    return self.state.to_predicate(
+                            TruePhrase(self.phrase.expression))
             return FormulaPhrase(IsNullSig(polarity), self.domain,
                                  False, self.phrase.expression, op=lop)
 
@@ -791,9 +817,11 @@ class ReduceIsTotallyEqual(ReduceBySignature):
             # arbitrary type because we cannot precisely replicate the
             # database equality operator.
             if polarity * (-1 if (lop.value != rop.value) else +1):
-                return TruePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        TruePhrase(self.phrase.expression))
             else:
-                return FalsePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        FalsePhrase(self.phrase.expression))
 
         # When both operands are not nullable, we could replace a total
         # comparison operator with a regular one.
@@ -836,12 +864,14 @@ class ReduceIsIn(ReduceBySignature):
         # on the right are literals.
         if isinstance(lop, NullPhrase):
             if all(isinstance(rop, LiteralPhrase) for rop in rops):
-                return NullPhrase(self.domain, self.phrase.expression)
+                return self.state.to_predicate(
+                        NullPhrase(self.domain, self.phrase.expression))
         # Similarly, reduce:
         #   x={null(),null(),...}
         if all(isinstance(rop, NullPhrase) for rop in rops):
             if isinstance(lop, LiteralPhrase):
-                return NullPhrase(self.domain, self.phrase.expression)
+                return self.state.to_predicate(
+                        NullPhrase(self.domain, self.phrase.expression))
 
         # Reduce:
         #   x={y} => x=y
@@ -875,17 +905,21 @@ class ReduceIsNull(ReduceBySignature):
         #   !is_null(null()) => false()
         if isinstance(op, NullPhrase):
             if self.signature.polarity > 0:
-                return TruePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        TruePhrase(self.phrase.expression))
             else:
-                return FalsePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        FalsePhrase(self.phrase.expression))
         # If the operand is not nullable, we could reduce the operator
         # to a `TRUE` or a `FALSE` clause.  However it is only safe
         # to do for a literal operand.
         if isinstance(op, LiteralPhrase):
             if self.signature.polarity > 0:
-                return FalsePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        FalsePhrase(self.phrase.expression))
             else:
-                return TruePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        TruePhrase(self.phrase.expression))
 
         # Return the same operator with a reduced operand.
         return self.phrase.clone(op=op)
@@ -1001,7 +1035,7 @@ class ReduceAnd(ReduceBySignature):
         # Reduce:
         #   "&"() => true()
         if not ops:
-            return TruePhrase(self.phrase.expression)
+            return self.state.to_predicate(TruePhrase(self.phrase.expression))
         # Reduce:
         #   "&"(op) => op
         if len(ops) == 1:
@@ -1013,7 +1047,8 @@ class ReduceAnd(ReduceBySignature):
         # do that when all operands are literals.
         if any(isinstance(op, FalsePhrase) for op in ops):
             if all(isinstance(op, LiteralPhrase) for op in ops):
-                return FalsePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        FalsePhrase(self.phrase.expression))
 
         # Return the same operator with reduced operands.  Update
         # the `is_nullable` status since it could change after reducing
@@ -1060,7 +1095,7 @@ class ReduceOr(ReduceBySignature):
         # Reduce:
         #   "|"() => false()
         if not ops:
-            return FalsePhrase(self.phrase.expression)
+            return self.state.to_predicate(FalsePhrase(self.phrase.expression))
         # Reduce:
         #   "|"(op) => op
         if len(ops) == 1:
@@ -1072,7 +1107,8 @@ class ReduceOr(ReduceBySignature):
         # do that when all operands are literals.
         if any(isinstance(op, TruePhrase) for op in ops):
             if all(isinstance(op, LiteralPhrase) for op in ops):
-                return TruePhrase(self.phrase.expression)
+                return self.state.to_predicate(
+                        TruePhrase(self.phrase.expression))
 
         return self.phrase.clone(ops=ops)
         # Return the same operator with reduced operands.  Update
@@ -1100,11 +1136,12 @@ class ReduceNot(ReduceBySignature):
         #   !true() => false()
         #   !false() => true()
         if isinstance(op, NullPhrase):
-            return NullPhrase(self.phrase.domain, self.phrase.expression)
+            return self.state.to_predicate(
+                    NullPhrase(self.phrase.domain, self.phrase.expression))
         if isinstance(op, TruePhrase):
-            return FalsePhrase(self.phrase.expression)
+            return self.state.to_predicate(FalsePhrase(self.phrase.expression))
         if isinstance(op, FalsePhrase):
-            return TruePhrase(self.phrase.expression)
+            return self.state.to_predicate(TruePhrase(self.phrase.expression))
         # Reverse polarity of equality operators:
         #   !(lop=rop) => lop!=rop
         #   ...
@@ -1113,6 +1150,30 @@ class ReduceNot(ReduceBySignature):
 
         # Return the same operator with a reduced operand.
         return self.phrase.clone(is_nullable=op.is_nullable, op=op)
+
+
+class ReduceFromPredicate(ReduceBySignature):
+
+    adapts(FromPredicateSig)
+
+    def __call__(self):
+        #op = self.state.reduce(self.phrase.op)
+        #if isformula(op, ToPredicateSig):
+        #    return op.op
+        #return self.phrase.clone(is_nullable=op.is_nullable, op=op)
+        return self.state.reduce(self.phrase.op)
+
+
+class ReduceToPredicate(ReduceBySignature):
+
+    adapts(ToPredicateSig)
+
+    def __call__(self):
+        #op = self.state.reduce(self.phrase.op)
+        #if isformula(op, FromPredicateSig):
+        #    return op.op
+        #return self.phrase.clone(is_nullable=op.is_nullable, op=op)
+        return self.state.reduce(self.phrase.op)
 
 
 class ReduceExport(Reduce):
