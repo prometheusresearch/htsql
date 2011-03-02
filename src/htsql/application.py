@@ -62,6 +62,8 @@ class Application(object):
         self.component_registry = ComponentRegistry()
         # A cached copy of the introspected catalog (FIXME: catalog_registry?).
         self.cached_catalog = None
+        # A cached copy of the connection pool (FIXME: connection_pool?).
+        self.cached_pool = None
 
     def __enter__(self):
         """

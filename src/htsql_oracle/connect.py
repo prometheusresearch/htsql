@@ -33,6 +33,20 @@ class ConnectOracle(Connect):
     Implementation of the connection adapter for Oracle.
     """
 
+    @classmethod
+    def outconverter(cls, value):
+        value = value.replace(',', '.')
+        if '.' in value:
+            return decimal.Decimal(value)
+        return int(value)
+
+    @classmethod
+    def outputtypehandler(cls, cursor, name, defaultType,
+                          size, precision, scale):
+        if defaultType == cx_Oracle.NUMBER:
+            return cursor.var(str, 100, cursor.arraysize,
+                              outconverter=cls.outconverter)
+
     def open_connection(self, with_autocommit=False):
         db = context.app.db
         parameters = {}
@@ -49,6 +63,7 @@ class ConnectOracle(Connect):
         connection = cx_Oracle.connect(**parameters)
         if with_autocommit:
             connection.autocommit = True
+        connection.outputtypehandler = self.outputtypehandler
         return connection
 
     def normalize_error(self, exception):
@@ -88,7 +103,11 @@ class NormalizeOracleString(Normalize):
 
     def __call__(self, value):
         if isinstance(value, cx_Oracle.LOB):
-            value = value.read()
+            try:
+                value = value.read()
+            except cx_Oracle.Error, exc:
+                message = str(exc)
+                raise OracleError(message, exc)
         if isinstance(value, unicode):
             value = value.encode('utf-8')
         return value

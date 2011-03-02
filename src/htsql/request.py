@@ -109,28 +109,31 @@ class Request(Utility):
         profile = RequestProfile(plan)
         records = None
         if plan.sql:
-            try:
-                connect = Connect()
-                connection = connect()
-                cursor = connection.cursor()
-                cursor.execute(plan.sql)
-                rows = cursor.fetchall()
-                connection.close()
-            except DBError, exc:
-                raise EngineError("error while executing %r: %s"
-                                  % (plan.sql, exc), plan.mark)
-            records = []
             select = plan.frame.segment.select
             normalizers = []
             for phrase in select:
                 normalize = Normalize(phrase.domain)
                 normalizers.append(normalize)
-            for row in rows:
-                values = []
-                for item, normalize in zip(row, normalizers):
-                    value = normalize(item)
-                    values.append(value)
-                records.append((values))
+            connection = None
+            try:
+                connect = Connect()
+                connection = connect()
+                cursor = connection.cursor()
+                cursor.execute(plan.sql)
+                records = []
+                for row in cursor:
+                    values = []
+                    for item, normalize in zip(row, normalizers):
+                        value = normalize(item)
+                        values.append(value)
+                    records.append((values))
+                connection.release()
+            except DBError, exc:
+                raise EngineError("error while executing %r: %s"
+                                  % (plan.sql, exc), plan.mark)
+            except:
+                if connection is not None:
+                    connection.invalidate()
         return Product(profile, records)
 
     def render(self, environ):

@@ -14,8 +14,10 @@ This module declares the database connection adapter.
 
 
 from __future__ import with_statement
-from .adapter import Adapter, Utility, adapts
+from .adapter import Adapter, Utility, adapts, weigh
 from .domain import Domain
+from .context import context
+import threading
 
 
 class DBError(Exception):
@@ -118,6 +120,8 @@ class ConnectionProxy(object):
     def __init__(self, connection, guard):
         self.connection = connection
         self.guard = guard
+        self.is_busy = True
+        self.is_valid = True
 
     def cursor(self):
         """
@@ -147,8 +151,20 @@ class ConnectionProxy(object):
         """
         Close the connection.
         """
+        self.is_valid = False
         with self.guard:
             return self.connection.close()
+
+    def invalidate(self):
+        self.is_valid = False
+
+    def acquire(self):
+        assert not self.is_busy
+        self.is_busy = True
+
+    def release(self):
+        assert self.is_busy
+        self.is_busy = False
 
 
 class CursorProxy(object):
@@ -298,6 +314,37 @@ class Connect(Utility):
         """
         # The default implementation.
         return None
+
+
+class Pool(object):
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.items = []
+
+
+class PoolConnect(Connect):
+
+    weigh(1.0)
+
+    def __call__(self, with_autocommit=False):
+        if with_autocommit:
+            return super(PoolConnect, self).__call__(with_autocommit)
+        app = context.app
+        if app.cached_pool is None:
+            app.cached_pool = Pool()
+        pool = app.cached_pool
+        with pool.lock:
+            for connection in pool.items[:]:
+                if not connection.is_valid:
+                    pool.items.remove(connection)
+            for connection in pool.items:
+                if not connection.is_busy:
+                    connection.acquire()
+                    return connection
+            connection = super(PoolConnect, self).__call__(with_autocommit)
+            pool.items.append(connection)
+            return connection
 
 
 class Normalize(Adapter):

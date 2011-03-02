@@ -272,6 +272,16 @@ class Utility(Component):
         Hello, World!
     """
 
+    weight = 0.0
+
+    @classmethod
+    def dominates(component, other):
+        if issubclass(component, other):
+            return True
+        if component.weight > other.weight:
+            return True
+        return False
+
     @classmethod
     def matches(component, dispatch_key):
         # For an utility, the dispatch key is always a 0-tuple.
@@ -282,6 +292,12 @@ class Utility(Component):
     def dispatch(interface, *args, **kwds):
         # The dispatch key is always a 0-tuple.
         return ()
+
+
+def weigh(value):
+    assert isinstance(value, (int, float))
+    frame = sys._getframe(1)
+    frame.f_locals['weight'] = value
 
 
 class Adapter(Component):
