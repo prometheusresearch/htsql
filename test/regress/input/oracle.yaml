@@ -46,7 +46,6 @@ tests:
 
 - title: Run the test collection
   id: test-oracle
-  skip: true
   tests:
   - define: oracle
   - db: *connect

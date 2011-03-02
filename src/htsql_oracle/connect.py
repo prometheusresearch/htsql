@@ -64,6 +64,9 @@ class ConnectOracle(Connect):
         if with_autocommit:
             connection.autocommit = True
         connection.outputtypehandler = self.outputtypehandler
+        cursor = connection.cursor()
+        cursor.execute("ALTER SESSION SET NLS_SORT = BINARY_CI");
+        cursor.execute("ALTER SESSION SET NLS_COMP = LINGUISTIC");
         return connection
 
     def normalize_error(self, exception):

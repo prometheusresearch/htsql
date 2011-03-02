@@ -306,7 +306,7 @@ INSERT INTO course (department, no, title, credits, description) VALUES
 INSERT INTO course (department, no, title, credits, description) VALUES
     ('poli', 347, 'American Foreign Policy', 3, 'Theories, processes, and problem of American foreign policy and the craft of diplomacy, with special attention to contemporary issues.');
 INSERT INTO course (department, no, title, credits, description) VALUES
-    ('poli', 402, 'Government Internship: Semester in Washington', 4, 'Junior or seniors with a 3.0 grade point average or higher may apply for a limited no of internship opportunities in Washington, DC. Interns will live at University House on Capitol Hill and continue their normal class schedule at the DC Campus.');
+    ('poli', 402, 'Government Internship: Semester in Washington', 4, 'Junior or seniors with a 3.0 grade point average or higher may apply for a limited number of internship opportunities in Washington, DC. Interns will live at University House on Capitol Hill and continue their normal class schedule at the DC Campus.');
 INSERT INTO course (department, no, title, credits, description) VALUES
     ('poli', 644, 'Research Seminar in Middle Eastern Affairs', 3, 'Government and Politics of the Middle East and North Africa Spring. Historical background, contemporary setting, political processes, and major problems of some of the countries of Middle East and North Africa.');
 INSERT INTO course (department, no, title, credits, description) VALUES

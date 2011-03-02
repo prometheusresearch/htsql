@@ -49,6 +49,10 @@ tests:
   # Out of range
   - uri: /{18446744073709551616}
     expect: 400
+    ifndef: oracle
+  # Oracle does not have a range limitation for the `INTEGER` data type.
+  - uri: /{18446744073709551616, 340282366920938463463374607431768211456}
+    ifdef: oracle
 
   # Decimal values
   - uri: /{1.0, -2.5, 0.875}
@@ -364,13 +368,14 @@ tests:
   - uri: /{replace('OMGWTFBBQ','WTF','LOL')}
   - uri: /{replace('OMGWTFBBQ','wtf','LOL'),
            replace('OMGWTFBBQ','WTF','lol')}
-    ifndef: mssql
+    ifndef: [mssql, oracle]
   # `REPLACE` in MSSQL respects the database collation, which is
-  # case-insensitive for the regression database.
+  # case-insensitive for the regression database.  Same with Oracle
+  # when `NLS_SORT = BINARY_CI` and `NLS_COMP = LINGUISTIC`.
   - uri: /{replace('OMGWTFBBQ','wtf','LOL')}
-    ifdef: mssql
+    ifdef: [mssql, oracle]
   - uri: /{replace('OMGWTFBBQ','WTF','lol')}
-    ifdef: mssql
+    ifdef: [mssql, oracle]
   - uri: /{replace('floccinaucinihilipilification','ili','LOL')}
   - uri: /{replace('OMGWTFBBQ','','LOL'),
            replace('OMGWTFBBQ','WTF','')}
@@ -426,32 +431,44 @@ tests:
   tests:
 
   # Exists, Every, Count
+  # (Oracle cannot handle EXISTS and an aggregate in the same SELECT clause)
   - uri: /course?department='lang'
   - uri: /{exists(course?department='lang'),
            every(course?department='lang'),
            count(course?department='lang')}
+    ifndef: oracle
+  - uri: /{exists(course?department='lang'),
+           every(course?department='lang')}
+    ifdef: oracle
+  - uri: /{count(course?department='lang')}
+    ifdef: oracle
   # Applied to an empty set
   - uri: /course?department='str'
   - uri: /{exists(course?department='str'),
            every(course?department='str'),
            count(course?department='str')}
+    ifndef: oracle
   # Applied to all-TRUE, all-FALSE, mixed sets
   - uri: /course{department,no,credits,credits>3}
                 ?department={'me','mth','phys'}
   - uri: /{exists(course{credits>3}?department='me'),
            every(course{credits>3}?department='me'),
            count(course{credits>3}?department='me')}
+    ifndef: oracle
   - uri: /{exists(course{credits>3}?department='mth'),
            every(course{credits>3}?department='mth'),
            count(course{credits>3}?department='mth')}
+    ifndef: oracle
   - uri: /{exists(course{credits>3}?department='phys'),
            every(course{credits>3}?department='phys'),
            count(course{credits>3}?department='phys')}
+    ifndef: oracle
   # Coercion
   - uri: /department{code,school,boolean(school)}
   - uri: /{exists(department{school}),
            every(department{school}),
            count(department{school})}
+    ifndef: oracle
   # Singular operand
   - uri: /{exists(true())}
     expect: 400

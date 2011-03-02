@@ -48,6 +48,8 @@ tests:
     - uri: /count(school?exists(department))
     - uri: /{exists(school?!exists(department)),
              count(school?!exists(department))}
+      ifndef: oracle # Oracle cannot handle EXISTS and an aggregate in
+                     # the same SELECT clause.
     - uri: /{count(course),min(course.credits),
                            max(course.credits),
                            avg(course.credits)}

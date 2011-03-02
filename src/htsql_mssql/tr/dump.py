@@ -143,7 +143,7 @@ class MSSQLDumpInteger(DumpInteger):
             self.write("CAST(%s AS BIGINT)" % self.value)
 
 
-class MySQLDumpFloat(DumpFloat):
+class MSSQLDumpFloat(DumpFloat):
 
     def __call__(self):
         assert str(self.value) not in ['inf', '-inf', 'nan']
@@ -153,7 +153,7 @@ class MySQLDumpFloat(DumpFloat):
         self.write(value)
 
 
-class MySQLDumpDecimal(DumpDecimal):
+class MSSQLDumpDecimal(DumpDecimal):
 
     def __call__(self):
         assert self.value.is_finite()

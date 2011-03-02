@@ -324,6 +324,8 @@ class EncodeReplace(EncodeFunction):
         empty = LiteralCode('', old.domain, self.binding)
         old = FormulaCode(IfNullSig(), old.domain, self.binding,
                           lop=old, rop=empty)
+        new = FormulaCode(IfNullSig(), old.domain, self.binding,
+                          lop=new, rop=empty)
         return FormulaCode(self.signature, self.domain, self.binding,
                            op=op, old=old, new=new)
 

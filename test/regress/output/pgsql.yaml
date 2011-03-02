@@ -10762,14 +10762,14 @@ tests:
             -+-----------------------------------------------------------------------------------------------------+-
              | replace(null(),'WTF','LOL') | replace('OMGWTFBBQ',null(),'LOL') | replace('OMGWTFBBQ','WTF',null()) |
             -+-----------------------------+-----------------------------------+-----------------------------------+-
-             |                             | OMGWTFBBQ                         |                                   |
+             |                             | OMGWTFBBQ                         | OMGBBQ                            |
                                                                                                              (1 row)
 
              ----
              /{replace(null(),'WTF','LOL'),replace('OMGWTFBBQ',null(),'LOL'),replace('OMGWTFBBQ','WTF',null())}
              SELECT REPLACE(NULL, 'WTF', 'LOL'),
                     REPLACE('OMGWTFBBQ', '', 'LOL'),
-                    REPLACE('OMGWTFBBQ', 'WTF', NULL)
+                    REPLACE('OMGWTFBBQ', 'WTF', '')
       - id: date-functions-and-operators
         tests:
         - uri: /{date(null()), date('2010-04-15')}
