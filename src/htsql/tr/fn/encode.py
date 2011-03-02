@@ -32,6 +32,17 @@ class EncodeFunction(EncodeBySignature):
     adapts_none()
 
 
+class EncodeLength(EncodeFunction):
+
+    adapts(LengthSig)
+
+    def __call__(self):
+        code = super(EncodeLength, self).__call__()
+        zero = LiteralCode(0, code.domain, code.binding)
+        return FormulaCode(IfNullSig(), code.domain, code.binding,
+                           lop=code, rop=zero)
+
+
 class EncodeContains(EncodeFunction):
 
     adapts(ContainsSig)

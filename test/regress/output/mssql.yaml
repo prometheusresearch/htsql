@@ -10358,12 +10358,12 @@ tests:
             -+----------------+-
              | length(null()) |
             -+----------------+-
-             |                |
+             |              0 |
                         (1 row)
 
              ----
              /{length(null())}
-             SELECT LEN(NULL)
+             SELECT COALESCE(LEN(NULL), 0)
         - uri: /{length(date(2010-04-15))}
           status: 400 Bad Request
           headers:
