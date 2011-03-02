@@ -87,7 +87,7 @@ vm_launch() {
     kvm -name $VM -m $MEM -monitor unix:$CTL/$VM,server,nowait  \
         -drive file=$IMG/$VM.$FMT,cache=writeback               \
         -net nic,model=$NIC_MODEL -net user -vga $VGA_TYPE $VNC \
-        $OPTS
+        -rtc clock=vm $OPTS
 }
 
 
@@ -374,7 +374,7 @@ start_windows_bench() {
 
 	vm_launch $VM "-daemonize -loadvm $STATE"
     vm_forward $VM $PORTS
-    sleep 60
+    sleep 5
 
     echo "Forwarding ports $PORTS"
     echo "Starting a test bench '$NAME': DONE"
