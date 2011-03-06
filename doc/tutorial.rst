@@ -90,7 +90,7 @@ courses offered::
   | COURSE             |  |           +---------------------+    |
   +--------------------+  |           | PROGRAM             |    |
   | department  FK,PK1 |>-/           +---------------------+    |
-  | number         PK2 |              | school       PK1,FK |>---/
+  | no             PK2 |              | school       PK1,FK |>---/
   | title           NN |              | code            PK2 |
   | credits         NN |              | title            NN |
   | description        |              | degree           CK |
@@ -159,23 +159,23 @@ Using two ordering indicators will sort on labeled columns as they
 appear in the selector.  In the example below, we sort in ascending
 order on ``department`` and then descending on ``credits`` (A4_):
 
-.. htsql:: /course{department+, number, credits-, title}
+.. htsql:: /course{department+, no, credits-, title}
    :cut: 3
 
 .. _A4:
     http://demo.htsql.org
-    /course{department+, number, credits-, title}
+    /course{department+, no, credits-, title}
 
 To display friendlier names for the columns, use ``:as`` to rename a
 column's title (A5_):
 
-.. htsql:: /course{department+ :as 'Dept Code', number :as 'No.',
+.. htsql:: /course{department+ :as 'Dept Code', no :as 'No.',
                    credits-, title}
    :cut: 3
 
 .. _A5:
     http://demo.htsql.org
-    /course{department+%20:as%20'Dept%20Code',number%20:as%20'No.',
+    /course{department+%20:as%20'Dept%20Code',no%20:as%20'No.',
             credits-, title}
 
 Selectors let you choose, rearrange, and sort columns of interest.  They
@@ -281,13 +281,13 @@ Filters can be combined with selectors and links.  The following request
 returns courses, listing only department number and title, having less
 than 3 credits in the "School of Natural Science" (C4_):
 
-.. htsql:: /course{department, number, title}
+.. htsql:: /course{department, no, title}
             ?credits<3&department.school='ns'
    :cut: 4
 
 .. _C4:
     http://demo.htsql.org
-    /course{department, number, title}
+    /course{department, no, title}
        ?credits<3&department.school='ns'
 
 It is sometimes desirable to specify the filter before the selector.
@@ -295,14 +295,14 @@ Using a *table expression*, denoted by parenthesis, the previous request
 is equivalent to (C5_):
 
 .. htsql:: /(course?credits<3&department.school='ns')
-            {department, number, title}
+            {department, no, title}
    :cut: 4
    :hide:
 
 .. _C5:
     http://demo.htsql.org
     /(course?credits<3&department.school='ns')
-      {department, number, title}
+      {department, no, title}
 
 HTSQL supports a whole suite of functions and predicator operators.
 Further, through the plug-in mechanism, custom data types, operators,
@@ -335,13 +335,13 @@ filtered by all departments in the 'School of Business', sorted by
 ``course`` ``title``, including ``department``'s ``code`` and ``name``,
 and returned as a "Comma-Separated Values" (RFC 4180) (E1_):
 
-.. htsql:: /course{department{code,name},number,title+}?
+.. htsql:: /course{department{code,name},no,title+}?
             department.school='bus'/:csv
    :hide:
 
 .. _E1:
     http://demo.htsql.org
-    /course{department{code,name},number,title+}?
+    /course{department{code,name},no,title+}?
           department.school='bus'/:csv
 
 HTSQL requests are powerful without being complex.  They are easy to
@@ -449,12 +449,12 @@ Filters may be used within an aggregate expression.  For example, the
 following returns the number of courses, by department, that are at
 the 400 level or above (RB2_):
 
-.. htsql:: /department{name, count(course?number>=400)}
+.. htsql:: /department{name, count(course?no>=400)}
    :cut: 4
 
 .. _RB2:
     http://demo.htsql.org
-    /department{name, count(course?number>=400)}
+    /department{name, count(course?no>=400)}
 
 It's possible to nest aggregate expressions.  This request returns the
 average number of courses each department offers (RB3_):
@@ -479,12 +479,12 @@ school, departments offering 4 or more credits (RB4_):
 Filtering can be done on one column, with aggregation on another.  This
 example shows average credits from only high-level courses (RB5_):
 
-.. htsql:: /department{name, avg((course?number>400).credits)}
+.. htsql:: /department{name, avg((course?no>400).credits)}
    :cut: 4
 
 .. _RB5:
     http://demo.htsql.org
-    /department{name, avg((course?number>400).credits)}
+    /department{name, avg((course?no>400).credits)}
 
 Numerical aggregates are supported.  These requests compute some useful
 ``course.credit`` statistics (RB6_, RB7_):
@@ -577,12 +577,12 @@ To exclude a specific class, use the *not-equals* operator (PC4_):
 The *equality* (``=``) and *inequality* (``!=``) operators are
 straightforward when used with numbers (PC5_):
 
-.. htsql:: /course{department,number,title}?number=101
+.. htsql:: /course{department,no,title}?no=101
    :cut: 2
 
 .. _PC5:
     http://demo.htsql.org
-    /course{department,number,title}?number=101
+    /course{department,no,title}?no=101
 
 The *in* operator (``={}``) can be thought of as equality over a set.
 This example, we return courses that are in neither the "Art History"
@@ -729,11 +729,11 @@ The predicate ``?description`` is treated as a short-hand for
 ``?(!is_null(description)&description!='')``.  The negated variant of
 this shortcut is more illustrative (PA9_):
 
-.. htsql:: /course{department,number,description}? !description
+.. htsql:: /course{department,no,description}? !description
 
 .. _PA9:
     http://demo.htsql.org
-    /course{department,number,description}? !description
+    /course{department,no,description}? !description
 
 
 Types and Functions

@@ -251,7 +251,7 @@ HTSQL lets you filter results with arbitrary predicates.
    .. sourcecode:: sql
 
        SELECT "course"."department",
-              "course"."number",
+              "course"."no",
               "course"."title",
               "course"."credits",
               "course"."description"
@@ -283,7 +283,7 @@ Table operations such as sorting and paging could be freely combined.
    .. sourcecode:: sql
 
       SELECT "course"."department",
-             "course"."number",
+             "course"."no",
              "course"."title",
              "course"."credits",
              "course"."description"
