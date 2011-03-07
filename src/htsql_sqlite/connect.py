@@ -17,12 +17,7 @@ from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
 from htsql.domain import BooleanDomain, StringDomain, DateDomain
-# In Python 2.6, the `sqlite3` module is built-in, but
-# for Python 2.5, we need to import a third-party module.
-try:
-    import sqlite3
-except ImportError:
-    from pysqlite2 import dbapi2 as sqlite3
+import sqlite3
 
 
 class SQLiteError(DBError):

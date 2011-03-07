@@ -6,7 +6,7 @@ if [ "$BUILDBOT_DEBUG" = true ]; then
     set -x
 fi
 
-LINUX_BENCHES="pgsql84 pgsql90 mysql51 oracle10g"
+LINUX_BENCHES="py25 py26 pgsql84 pgsql90 mysql51 oracle10g"
 WINDOWS_BENCHES="mssql2005 mssql2008"
 BENCHES="$LINUX_BENCHES $WINDOWS_BENCHES"
 
@@ -128,18 +128,14 @@ vm_exec() {
     local VM="$1"
     local CMD="$2"
 
-    case $VM_TYPE in
-    linux)
-        local SSH_USER=root;;
-    windows)
-        local SSH_USER=Administrator;;
-    esac
-
     vm_forward $VM :10022-:22
     vm_ctl $VM "hostfwd_add tcp:127.0.0.1:10022-:22"
-    ssh -p 10022 -i $CTL/identity                   \
-        -o 'NoHostAuthenticationForLocalhost yes'   \
-        $SSH_USER@localhost "$CMD" >/dev/null 2>&1
+    case $BUILDBOT_DEBUG in
+    true)
+        ssh -F $CTL/ssh_config $VM_TYPE-vm "$CMD";;
+    *)
+        ssh -F $CTL/ssh_config $VM_TYPE-vm "$CMD" >/dev/null 2>&1;;
+    esac
     vm_unforward $VM :10022-:22
 }
 
@@ -157,9 +153,7 @@ vm_cp() {
     esac
 
     vm_forward $VM :10022-:22
-    scp -P 10022 -i $CTL/identity                   \
-        -o 'NoHostAuthenticationForLocalhost yes'   \
-        "$FROM" $SSH_USER@localhost:"$TO" >/dev/null 2>&1
+    scp -F $CTL/ssh_config "$FROM" $VM_TYPE-vm:"$TO" >/dev/null 2>&1
     vm_unforward $VM :10022-:22
 }
 
@@ -180,6 +174,10 @@ build_linux_vm() {
 
     if [ ! -f "$CTL/identity" ]; then
         ssh-keygen -q -N "" -f $CTL/identity
+    fi
+
+    if [ ! -f "$CTL/ssh_config" ]; then
+        sed -e s#\$BUILDBOT_ROOT#$BUILDBOT_ROOT# $DATA_ROOT/ssh_config >$CTL/ssh_config
     fi
 
     7z x $TMP/$LINUX_ISO -o$TMP/linux-vm-iso >/dev/null
@@ -461,10 +459,12 @@ do_start() {
 
     if found py25 "$LIST"; then
         start_linux_bench py25 :10022-:22
+        echo For remote shell, type \'ssh -F $CTL/ssh_config linux-vm\'
     fi
 
     if found py26 "$LIST"; then
         start_linux_bench py26 :10022-:22
+        echo For remote shell, type \'ssh -F $CTL/ssh_config linux-vm\'
     fi
 
     if found pgsql84 "$LIST"; then

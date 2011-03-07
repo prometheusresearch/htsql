@@ -12,6 +12,7 @@
 
 PYTHON?=python
 HTSQL_CTL?=htsql-ctl
+PIP?=pip
 SPHINX_BUILD?=sphinx-build
 PYFLAKES?=pyflakes
 

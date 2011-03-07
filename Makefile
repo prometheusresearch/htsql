@@ -1,15 +1,16 @@
 # This makefile provides various build, installation and testing tasks.
 
-.PHONY: default build install develop doc dist windist pypi clean \
-	test train train-routine train-sqlite train-pgsql train-mysql \
-	train-oracle train-mssql purge-test lint \
+.PHONY: default build install deps develop doc dist windist pypi clean \
+	test train test-routine train-routine test-sqlite train-sqlite \
+	test-pgsql train-pgsql test-mysql train-mysql test-oracle train-oracle \
+	test-mssql train-mssql purge-test lint \
 	create-sqlite create-pgsql create-mysql create-oracle create-mssql \
 	drop-sqlite drop-pgsql drop-mysql drop-oracle drop-mssql \
-	build-all start-pgsql84 start-pgsql90 start-mysql51 start-oracle10g \
-	start-mssql2005 start-mssql2008 stop-pgsql84 stop-pgsql90 stop-mysql51 \
-	stop-oracle10g stop-mssql2005 stop-mssql2008 gdemo-htraf demo-ssi \
-	shell-sqlite shell-pgsql shell-mysql shell-oracle shell-mssql \
-	serve-sqlite serve-pgsql serve-mysql serve-oracle serve-mssql \
+	build-all check-all start-pgsql84 start-pgsql90 start-mysql51 \
+	start-oracle10g start-mssql2005 start-mssql2008 stop-pgsql84 stop-pgsql90 \
+	stop-mysql51 stop-oracle10g stop-mssql2005 stop-mssql2008 \
+	demo-htraf demo-ssi shell-sqlite shell-pgsql shell-mysql shell-oracle \
+	shell-mssql serve-sqlite serve-pgsql serve-mysql serve-oracle serve-mssql \
 	client-sqlite client-pgsql client-mysql client-oracle client-mssql
 
 
@@ -32,6 +33,7 @@ default:
 	@echo "  update: to update the HTSQL source code"
 	@echo "  build: to build the HTSQL packages"
 	@echo "  install: to install the HTSQL packages"
+	@echo "  deps: to install database drivers"
 	@echo "  develop: to install the HTSQL packages in the development mode"
 	@echo "  doc: to build the HTSQL documentation"
 	@echo "  dist: to build a source and an EGG distribution"
@@ -41,6 +43,7 @@ default:
 	@echo "  *** Regression Testing ***"
 	@echo "  test: to run HTSQL regression tests"
 	@echo "  train: to run all HTSQL tests in the train mode"
+	@echo "  test-<suite>: to run a specific test suite"
 	@echo "  train-<suite>: to run a specific test suite in the train mode"
 	@echo "    where <suite> is one of:"
 	@echo "      routine, sqlite, pgsql, mysql, oracle, mssql"
@@ -53,10 +56,12 @@ default:
 	@echo
 	@echo "  *** Integration Testing ***"
 	@echo "  build-all: to build all test benches"
+	@echo "  check-all: run HTSQL regression tests on all supported platforms"
 	@echo "  start-<bench>: to start the specified test bench"
 	@echo "  stop-<bench>: to stop the specified test bench"
 	@echo "    where <bench> is one of:"
-	@echo "      pgsql84, pgsql90, mysql51, oracle10g, mssql2005, mssql2008"
+	@echo "      py25, py26, pgsql84, pgsql90, mysql51, oracle10g,"
+	@echo "      mssql2005, mssql2008"
 	@echo
 	@echo "  *** Shell and Server ***"
 	@echo "  shell-<db>: to start the HTSQL shell on the specified test database"
@@ -87,6 +92,21 @@ build:
 # Install the HTSQL packages.
 install:
 	${PYTHON} setup.py install
+
+# Install database drivers.
+deps:
+	#if ! ${PYTHON} -c 'import sqlite3' >/dev/null 2>&1 && \
+	#	! ${PYTHON} -c 'import pysqlite2' >/dev/null 2>&1; then \
+	#	${PIP} install pysqlite; fi
+	if ! ${PYTHON} -c 'import psycopg2'; then \
+		${PIP} install psycopg2; fi
+	if ! ${PYTHON} -c 'import MySQLdb'; then \
+		${PIP} install mysql-python; fi
+	if ! ${PYTHON} -c 'import pymssql'; then \
+		${PIP} install pymssql \
+		-f http://pypi.python.org/pypi/pymssql/ --no-index; fi
+	if ! ${PYTHON} -c 'import cx_Oracle'; then \
+		${PIP} install cx-oracle; fi
 
 # Install the HTSQL packages in the development mode.
 develop:
@@ -130,25 +150,49 @@ test:
 train:
 	${HTSQL_CTL} regress -i test/regress.yaml --train
 
+# Run regression tests for htsql-ctl tool.
+test-routine:
+	${HTSQL_CTL} regress -i test/regress.yaml -q routine
+
 # Run regression tests for htsql-ctl tool in the train mode.
 train-routine:
 	${HTSQL_CTL} regress -i test/regress.yaml --train routine
+
+# Run SQLite-specific regression tests.
+test-sqlite:
+	${HTSQL_CTL} regress -i test/regress.yaml -q sqlite
 
 # Run SQLite-specific regression tests in the train mode.
 train-sqlite:
 	${HTSQL_CTL} regress -i test/regress.yaml --train sqlite
 
+# Run PostgreSQL-specific regression tests.
+test-pgsql:
+	${HTSQL_CTL} regress -i test/regress.yaml -q pgsql
+
 # Run PostgreSQL-specific regression tests in the train mode.
 train-pgsql:
 	${HTSQL_CTL} regress -i test/regress.yaml --train pgsql
+
+# Run MySQL-specific regression tests.
+test-mysql:
+	${HTSQL_CTL} regress -i test/regress.yaml -q mysql
 
 # Run MySQL-specific regression tests in the train mode.
 train-mysql:
 	${HTSQL_CTL} regress -i test/regress.yaml --train mysql
 
+# Run Oracle-specific regression tests.
+test-oracle:
+	${HTSQL_CTL} regress -i test/regress.yaml -q oracle
+
 # Run Oracle-specific regression tests in the train mode.
 train-oracle:
 	${HTSQL_CTL} regress -i test/regress.yaml --train oracle
+
+# Run MS SQL Server-specific regression tests.
+test-mssql:
+	${HTSQL_CTL} regress -i test/regress.yaml -q mssql
 
 # Run MS SQL Server-specific regression tests in the train mode.
 train-mssql:
@@ -276,6 +320,18 @@ client-mssql:
 build-all:
 	./test/buildbot/bb.sh build
 
+# Run regression tests on all combinations of test benches.
+check-all:
+	./test/buildbot/bb.sh check
+
+# Start the test bench for Python 2.5
+start-py25:
+	./test/buildbot/bb.sh start py25
+
+# Start the test bench for Python 2.6
+start-py26:
+	./test/buildbot/bb.sh start py26
+
 # Start the test bench for PostgreSQL 8.4
 start-pgsql84:
 	./test/buildbot/bb.sh start pgsql84
@@ -299,6 +355,14 @@ start-mssql2005:
 # Start the test bench for MS SQL Server 2008
 start-mssql2008:
 	./test/buildbot/bb.sh start mssql2008
+
+# Stop the test bench for Python 2.5
+stop-py25:
+	./test/buildbot/bb.sh stop py25
+
+# Stop the test bench for Python 2.6
+stop-py26:
+	./test/buildbot/bb.sh stop py26
 
 # Stop the test bench for PostgreSQL 8.4
 stop-pgsql84:
