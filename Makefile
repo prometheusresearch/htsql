@@ -95,17 +95,14 @@ install:
 
 # Install database drivers.
 deps:
-	#if ! ${PYTHON} -c 'import sqlite3' >/dev/null 2>&1 && \
-	#	! ${PYTHON} -c 'import pysqlite2' >/dev/null 2>&1; then \
-	#	${PIP} install pysqlite; fi
-	if ! ${PYTHON} -c 'import psycopg2'; then \
+	if ! ${PYTHON} -c 'import psycopg2' >/dev/null 2>&1; then \
 		${PIP} install psycopg2; fi
-	if ! ${PYTHON} -c 'import MySQLdb'; then \
+	if ! ${PYTHON} -c 'import MySQLdb' >/dev/null 2>&1; then \
 		${PIP} install mysql-python; fi
-	if ! ${PYTHON} -c 'import pymssql'; then \
+	if ! ${PYTHON} -c 'import pymssql' >/dev/null 2>&1; then \
 		${PIP} install pymssql \
 		-f http://pypi.python.org/pypi/pymssql/ --no-index; fi
-	if ! ${PYTHON} -c 'import cx_Oracle'; then \
+	if ! ${PYTHON} -c 'import cx_Oracle' >/dev/null 2>&1; then \
 		${PIP} install cx-oracle; fi
 
 # Install the HTSQL packages in the development mode.
