@@ -1,0 +1,5 @@
+This is an example project for getting HTSQL to work under Django.
+
+This project uses ``twod.wsgi`` in order to run the HTSQL WSGI
+application under Django.  This module wraps Django's application
+object, so you can't use django's manager script.
