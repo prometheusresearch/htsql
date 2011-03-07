@@ -1,0 +1,15 @@
+
+Host linux-vm
+    Hostname localhost
+    User root
+    Port 10022
+    NoHostAuthenticationForLocalhost yes
+    IdentityFile $BUILDBOT_ROOT/ctl/identity
+
+Host windows-vm
+    Hostname localhost
+    User Administrator
+    Port 10022
+    NoHostAuthenticationForLocalhost yes
+    IdentityFile $BUILDBOT_ROOT/ctl/identity
+
