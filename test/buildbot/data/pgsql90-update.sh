@@ -1,8 +1,11 @@
 #/bin/sh
 
-# Post-installation script for the pgsql84 VM.
+# Post-installation script for the pgsql90 VM.
 
-# Install the PostgreSQL 8.4 server.
+# Update the hostname.
+echo pgsql90-vm >/etc/hostname
+
+# Install the PostgreSQL 9.0 server from backports.
 apt-get -y -t squeeze-backports install postgresql-9.0
 
 # Set the password of the user postgres to 'admin'.

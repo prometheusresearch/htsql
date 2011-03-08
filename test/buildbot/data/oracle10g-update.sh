@@ -2,6 +2,10 @@
 
 # Post-installation script for the oracle10g VM.
 
+# Update the hostname.
+echo oracle10g-vm >/etc/hostname
+
+# Register the Oracle repository.
 echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
 wget -q http://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
 apt-get update

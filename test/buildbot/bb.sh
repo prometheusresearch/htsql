@@ -129,7 +129,6 @@ vm_exec() {
     local CMD="$2"
 
     vm_forward $VM :10022-:22
-    vm_ctl $VM "hostfwd_add tcp:127.0.0.1:10022-:22"
     case $BUILDBOT_DEBUG in
     true)
         ssh -F $CTL/ssh_config $VM_TYPE-vm "$CMD";;
@@ -392,9 +391,32 @@ stop_bench() {
 }
 
 
+check() {
+    local NAME="$1"
+    local TARGET="$2"
+
+    local VM="$NAME-vm"
+    local CMD="cd src/htsql; make -s $TARGET"
+
+    vm_forward $VM :10022-:22
+
+    ssh -F $CTL/ssh_config linux-vm "$CMD" >$TMP/check-output 2>&1
+
+    if [ $? -ne 0 ]; then
+        echo "************************************************************"
+        cat $TMP/check-output
+        echo "************************************************************"
+    fi
+    rm $TMP/check-output
+
+    vm_unforward $VM :10022-:22
+}
+
+
 usage() {
     echo "Usage:"
     echo "  $0 build [<bench>...]"
+    echo "  $0 check [<bench>...]"
     echo "  $0 start [<bench>...]"
     echo "  $0 stop [<bench>...]"
     echo "where <bench> is one of:"
@@ -450,6 +472,99 @@ do_build() {
             build_windows_vm
             build_windows_bench $BENCH
         fi
+    done
+}
+
+
+do_check() {
+    local LIST="$1"
+
+    for CLIENT in py25 py26; do
+
+        if ! found $CLIENT "$LIST"; then
+            continue
+        fi
+
+        start_linux_bench $CLIENT :10022-:22 >/dev/null
+
+        echo " * Testing HTSQL/$CLIENT installation"
+        check $CLIENT update
+        check $CLIENT deps
+        check $CLIENT install
+        check $CLIENT test-routine
+
+        echo " * Testing HTSQL/$CLIENT on SQLite"
+        check $CLIENT test-sqlite
+
+        if found pgsql84 "$LIST"; then
+            echo " * Testing HTSQL/$CLIENT on Postgresql 8.4"
+            start_linux_bench pgsql84 :15432-:5432 >/dev/null
+            check $CLIENT "test-pgsql \
+                            PGSQL_HOST=10.0.2.2 \
+                            PGSQL_PORT=15432 \
+                            PGSQL_ADMIN_USERNAME=postgres \
+                            PGSQL_ADMIN_PASSWORD=admin"
+            stop_bench pgsql84 >/dev/null
+        fi
+
+        if found pgsql90 "$LIST"; then
+            echo " * Testing HTSQL/$CLIENT on PostgreSQL 9.0"
+            start_linux_bench pgsql90 :15432-:5432 >/dev/null
+            check $CLIENT "test-pgsql \
+                            PGSQL_HOST=10.0.2.2 \
+                            PGSQL_PORT=15432 \
+                            PGSQL_ADMIN_USERNAME=postgres \
+                            PGSQL_ADMIN_PASSWORD=admin"
+            stop_bench pgsql90 >/dev/null
+        fi
+
+        if found mysql51 "$LIST"; then
+            echo " * Testing HTSQL/$CLIENT on MySQL 5.1"
+            start_linux_bench mysql51 :13306-:3306 >/dev/null
+            check $CLIENT "test-mysql \
+                            MYSQL_HOST=10.0.2.2 \
+                            MYSQL_PORT=13306 \
+                            MYSQL_ADMIN_USERNAME=root \
+                            MYSQL_ADMIN_PASSWORD=admin"
+            stop_bench mysql51 >/dev/null
+        fi
+
+        if found oracle10g "$LIST"; then
+            echo " * Testing HTSQL/$CLIENT on Oracle 10g"
+            start_linux_bench oracle10g :11521-:1521 >/dev/null
+            check $CLIENT "test-oracle \
+                            ORACLE_SID=XE \
+                            ORACLE_HOST=10.0.2.2 \
+                            ORACLE_PORT=11521 \
+                            ORACLE_ADMIN_USERNAME=system \
+                            ORACLE_ADMIN_PASSWORD=admin"
+            stop_bench oracle10g >/dev/null
+        fi
+
+        if found mssql2005 "$LIST"; then
+            echo " * Testing HTSQL/$CLIENT on MS SQL Server 2005"
+            start_windows_bench mssql2005 :11433-:1433 >/dev/null
+            check $CLIENT "test-mssql \
+                            MSSQL_HOST=10.0.2.2 \
+                            MSSQL_PORT=11433 \
+                            MSSQL_ADMIN_USERNAME=sa \
+                            MSSQL_ADMIN_PASSWORD=admin"
+            stop_bench mssql2005 >/dev/null
+        fi
+
+        if found mssql2008 "$LIST"; then
+            echo " * Testing HTSQL/$CLIENT on MS SQL Server 2008"
+            start_windows_bench mssql2008 :11433-:1433 >/dev/null
+            check $CLIENT "test-mssql \
+                            MSSQL_HOST=10.0.2.2 \
+                            MSSQL_PORT=11433 \
+                            MSSQL_ADMIN_USERNAME=sa \
+                            MSSQL_ADMIN_PASSWORD=admin"
+            stop_bench mssql2008 >/dev/null
+        fi
+
+        stop_bench $CLIENT >/dev/null
+
     done
 }
 
@@ -529,6 +644,10 @@ main() {
 
     build)
         do_build "$ARGUMENTS"
+        return;;
+
+    check)
+        do_check "$ARGUMENTS"
         return;;
 
     start)

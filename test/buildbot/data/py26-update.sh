@@ -1,15 +1,52 @@
 #/bin/sh
 
-echo py25-vm >/etc/hostname
+# Post-installation script for the py26 VM.
 
-apt-get -qq install mercurial >/dev/null
+# Update the hostname.
+echo py26-vm >/etc/hostname
 
-apt-get -qq install python2.5 >/dev/null
-apt-get -qq install python-setuptools >/dev/null
-apt-get -qq install python-yaml >/dev/null
-apt-get -qq install python-pysqlite2 >/dev/null
-apt-get -qq install python-psycopg2 >/dev/null
-apt-get -qq install python-mysqldb >/dev/null
+# Register the Oracle repository.
+echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
+wget -q http://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
+apt-get update
 
-hg -q clone https://bitbucket.org/prometheus/htsql
+# Install Mercurial.
+apt-get -y install mercurial
+
+# Install Python 2.6 and required Python packages.
+apt-get -y install python2.6
+apt-get -y install python-setuptools
+apt-get -y install python-yaml
+apt-get -y install python-pip
+apt-get -y install python-virtualenv
+
+# Install development files for Python and database drivers.
+apt-get -y install python2.6-dev
+apt-get -y install libpq-dev
+apt-get -y install libmysqlclient-dev
+apt-get -y install freetds-dev
+apt-get -y install oracle-xe-client
+
+# Initialize Python virtual enviroment in `/root`.
+virtualenv -p python2.6 .
+
+# Download the source code of HTSQL.
+mkdir src
+hg -q clone https://bitbucket.org/prometheus/htsql src/htsql
+
+# Set the Oracle, FreeTDS and `virtualenv` environment variables on login.
+cat <<END >>/root/.bashrc
+
+export PATH=~/bin:\$PATH
+export LD_LIBRARY_PATH=~/lib
+
+export ORACLE_HOME=/usr/lib/oracle/xe/app/oracle/product/10.2.0/client
+export NLS_LANG=AMERICAN_AMERICA.AL32UTF8
+export SQLPATH=\$ORACLE_HOME/sqlplus
+export PATH=\$PATH:\$ORACLE_HOME/bin
+export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$ORACLE_HOME/lib
+
+export TDSVER=8.0
+
+END
 

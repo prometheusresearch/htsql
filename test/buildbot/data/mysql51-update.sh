@@ -2,6 +2,9 @@
 
 # Post-installation script for the mysql51 VM.
 
+# Update the hostname.
+echo mysql51-vm >/etc/hostname
+
 # Preset the password for the MySQL root user.
 echo "mysql-server-5.1 mysql-server/root_password password admin" | debconf-set-selections
 echo "mysql-server-5.1 mysql-server/root_password_again password admin" | debconf-set-selections
