@@ -26,6 +26,8 @@ tests:
   - connect: *admin-connect
     sql: !environ |
         DROP USER `${MYSQL_USERNAME}`;
+    #autocommit: true
+    ignore: true
 - title: Deploy the regression database
   id: create-mysql
   tests:
