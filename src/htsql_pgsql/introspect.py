@@ -21,6 +21,7 @@ from .domain import (PGBooleanDomain, PGIntegerDomain, PGFloatDomain,
                      PGDecimalDomain, PGCharDomain, PGVarCharDomain,
                      PGTextDomain, PGEnumDomain, PGDateDomain,
                      PGOpaqueDomain)
+import rulesparser
 from htsql.connect import Connect
 from htsql.util import Record
 
@@ -51,6 +52,7 @@ class Meta(object):
         self.pg_constraint = self.fetch(cursor, 'pg_catalog.pg_constraint')
         self.pg_constraint_by_class = self.group(self.pg_constraint,
                                                  self.pg_class, 'conrelid')
+        self.pg_rewrite = self.fetch(cursor, 'pg_rewrite')
 
     def fetch(self, cursor, table_name, key_names=('oid',)):
         rows = {}
@@ -89,12 +91,16 @@ class IntrospectPGSQL(Introspect):
     def __init__(self):
         super(IntrospectPGSQL, self).__init__()
         self.meta = Meta()
+        # maps for fast access
+        self.table_by_oid = {}
+        self.views_by_oid = {}
 
     def __call__(self):
         return self.introspect_catalog()
 
     def introspect_catalog(self):
         schemas = self.introspect_schemas()
+        self.introspect_views()
         return CatalogEntity(schemas)
 
     def permit_schema(self, schema_name):
@@ -123,6 +129,32 @@ class IntrospectPGSQL(Introspect):
         schemas.sort(key=(lambda s: s.name))
         return schemas
 
+    def introspect_views(self):
+        for oid in self.meta.pg_rewrite:
+            rule = self.meta.pg_rewrite[oid]
+            if rule.ev_type != '1' \
+                    or rule.ev_attr >= 0 \
+                    or not rule.is_instead \
+                    or rule.ev_qual != '<>':
+                continue
+
+            if not rule.ev_class in self.views_by_oid:
+                continue
+
+            view = self.views_by_oid[rule.ev_class]
+
+            ruletree = rulesparser.RuleTreeParser().parse(rule.ev_action)
+            for scenario in rulesparser.scenario_list:
+                if scenario.accepts(ruletree):
+                    for key in scenario.find_keys(ruletree, view, self.table_by_oid):
+                        if isinstance(key, PrimaryKeyEntity):
+                            view.unique_keys.append(key)
+                            view.primary_key = key
+                        if isinstance(key, ForeignKeyEntity):
+                            view.foreign_keys.append(key)
+                    break
+
+
     def introspect_tables(self, schema_oid):
         schema_name = self.meta.pg_namespace[schema_oid].nspname
         tables = []
@@ -139,6 +171,9 @@ class IntrospectPGSQL(Introspect):
             table = TableEntity(schema_name, name,
                                 columns, unique_keys, foreign_keys)
             tables.append(table)
+            self.table_by_oid[oid] = table
+            if rel.relkind == 'v':
+                self.views_by_oid[oid] = table
         tables.sort(key=(lambda t: t.name))
         return tables
 
