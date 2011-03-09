@@ -100,7 +100,7 @@ class IntrospectPGSQL(Introspect):
 
     def introspect_catalog(self):
         schemas = self.introspect_schemas()
-        self.introspect_views()
+#        self.introspect_views()
         return CatalogEntity(schemas)
 
     def permit_schema(self, schema_name):
