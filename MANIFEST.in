@@ -10,8 +10,11 @@ include Makefile Makefile.common Makefile.env.sample
 # Regression tests.
 recursive-include test *.yaml *.sql
 
+# Build bot.
+recursive-include test *.sh *.cmd *.cfg *.sif *_config
+
 # Documentation (source)
-recursive-include doc *.py *.rst
+recursive-include doc *.py *.rst *.png *.css *.js *.html
 
 # FIXME: how to include the HTML documentation?
 
