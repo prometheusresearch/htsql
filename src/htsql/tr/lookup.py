@@ -13,6 +13,7 @@ This module implements name resolution adapters.
 """
 
 
+from ..mark import EmptyMark
 from ..adapter import Adapter, adapts, adapts_many
 from ..context import context
 from ..introspect import Introspect
@@ -22,7 +23,9 @@ from .binding import (Binding, RootBinding, ChainBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, SieveBinding, WrapperBinding, SortBinding,
                       QuotientBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, AliasBinding)
+                      DefinitionBinding, RedirectBinding)
+from .recipe import (FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
+                     ComplementRecipe, KernelRecipe, SubstitutionRecipe)
 import re
 import unicodedata
 
@@ -148,35 +151,18 @@ class Itemize(Adapter, LookupItemizeMixin):
 
     adapts(Binding)
 
-    def __init__(self, binding, syntax):
-        assert isinstance(syntax, Syntax)
-        super(Itemize, self).__init__(binding)
-        self.syntax = syntax
 
-
-class GetComplement(Adapter):
+class GetComplement(Adapter, LookupItemizeMixin):
 
     adapts(Binding)
-
-    def __init__(self, binding, syntax):
-        assert isinstance(binding, Binding)
-        assert isinstance(syntax, Syntax)
-        self.binding = binding
-        self.syntax = syntax
 
     def __call__(self):
         return None
 
 
-class GetKernel(Adapter):
+class GetKernel(Adapter, LookupItemizeMixin):
 
     adapts(Binding)
-
-    def __init__(self, binding, syntax):
-        assert isinstance(binding, Binding)
-        assert isinstance(syntax, Syntax)
-        self.binding = binding
-        self.syntax = syntax
 
     def __call__(self):
         return None
@@ -194,9 +180,9 @@ class LookupRoot(Lookup):
 
     def __call__(self):
         # Check if we could find a table with the given name.
-        binding = self.lookup_table()
-        if binding is not None:
-            return binding
+        recipe = self.lookup_table()
+        if recipe is not None:
+            return recipe
         # No luck, report that we cannot find a member with the given name.
         return None
 
@@ -216,7 +202,7 @@ class LookupRoot(Lookup):
         # node for it.
         if len(candidates) == 1:
             table = candidates[0]
-            return FreeTableBinding(self.binding, table, self.identifier)
+            return FreeTableRecipe(table)
 
 
 class LookupItemizeTableMixin(object):
@@ -225,7 +211,7 @@ class LookupItemizeTableMixin(object):
     over :class:`htsql.tr.binding.TableBinding`.
     """
 
-    def find_link(self, column, syntax):
+    def find_link(self, column):
         # Determines if the column represents a link to another table.
 
         # A column may represent another table if it is a foreign key or
@@ -308,7 +294,7 @@ class LookupItemizeTableMixin(object):
                 join = DirectJoin(origin, target, fk)
                 joins.append(join)
             # Build and return the link binding.
-            return AttachedTableBinding(self.binding, target, joins, syntax)
+            return AttachedTableRecipe(joins)
 
 
 class LookupTable(Lookup, LookupItemizeTableMixin):
@@ -333,17 +319,17 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
 
     def __call__(self):
         # Check if we could find a column with the given name.
-        binding = self.lookup_column()
-        if binding is not None:
-            return binding
+        recipe = self.lookup_column()
+        if recipe is not None:
+            return recipe
         # If not, check for a referenced table with the given name.
-        binding = self.lookup_direct_join()
-        if binding is not None:
-            return binding
+        recipe = self.lookup_direct_join()
+        if recipe is not None:
+            return recipe
         # Finally, check for a referencing table with the given name.
-        binding = self.lookup_reverse_join()
-        if binding is not None:
-            return binding
+        recipe = self.lookup_reverse_join()
+        if recipe is not None:
+            return recipe
         # We are out of luck.
         return None
 
@@ -365,9 +351,8 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
             # We found a matching column, generate the corresponding
             # binding node.
             column = candidates[0]
-            link = self.find_link(column, self.identifier)
-            return ColumnBinding(self.binding, column, link,
-                                 self.identifier)
+            link = self.find_link(column)
+            return ColumnRecipe(column, link)
 
     def lookup_direct_join(self):
         # Finds a table referenced from the context table that matches
@@ -389,8 +374,7 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
             target_schema = self.catalog.schemas[foreign_key.target_schema_name]
             target = target_schema.tables[foreign_key.target_name]
             join = DirectJoin(origin, target, foreign_key)
-            return AttachedTableBinding(self.binding, target, [join],
-                                        self.identifier)
+            return AttachedTableRecipe([join])
 
     def lookup_reverse_join(self):
         # Finds a table with the given name that possesses a foreign key
@@ -420,8 +404,7 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
             target_schema = self.catalog.schemas[foreign_key.origin_schema_name]
             target = target_schema.tables[foreign_key.origin_name]
             join = ReverseJoin(origin, target, foreign_key)
-            return AttachedTableBinding(self.binding, target, [join],
-                                        self.identifier)
+            return AttachedTableRecipe([join])
 
 
 class ItemizeTable(Itemize, LookupItemizeTableMixin):
@@ -442,9 +425,10 @@ class ItemizeTable(Itemize, LookupItemizeTableMixin):
         for column in self.binding.table.columns:
             # Note that we create a "virtual" syntax node for each column,
             # and only use the `mark` attribute from the original syntax node.
-            identifier = IdentifierSyntax(column.name, self.syntax.mark)
-            link = self.find_link(column, identifier)
-            yield ColumnBinding(self.binding, column, link, identifier)
+            identifier = IdentifierSyntax(column.name, EmptyMark())
+            link = self.find_link(column)
+            recipe = ColumnRecipe(column, link)
+            yield (identifier, recipe)
 
 
 class LookupColumn(Lookup):
@@ -461,18 +445,9 @@ class LookupColumn(Lookup):
     def __call__(self):
         # If there is an associated link node, delegate the request to it.
         if self.binding.link is not None:
-            return self.lookup_link()
+            return lookup(self.binding.link, self.identifier)
         # Otherwise, no luck.
         return None
-
-    def lookup_link(self):
-        # Delegate the request to the associated link.
-        binding = lookup(self.binding.link, self.identifier)
-        # Reparent the result to the original node.
-        if binding is not None:
-            assert isinstance(binding, ChainBinding)
-            assert binding.base is self.binding.link
-            return binding.clone(base=self.binding)
 
 
 class ItemizeColumn(Itemize):
@@ -489,20 +464,9 @@ class ItemizeColumn(Itemize):
     def __call__(self):
         # If there is an associated link node, delegate the request to it.
         if self.binding.link is not None:
-            return self.itemize_link()
+            return itemize(self.binding.link)
         # Otherwise, no luck.
         return None
-
-    def itemize_link(self):
-        # Delegate the request to the associated link.
-        bindings = itemize(self.binding.link, self.syntax)
-        if bindings is None:
-            return None
-        # Reparent the produced binding nodes to the context node.
-        assert all(isinstance(binding, ChainBinding) and
-                   binding.base is self.binding.link
-                   for binding in bindings)
-        return (binding.clone(base=self.binding) for binding in bindings)
 
 
 class LookupWrapper(Lookup):
@@ -518,12 +482,7 @@ class LookupWrapper(Lookup):
 
     def __call__(self):
         # Delegate the request to the base node.
-        binding = lookup(self.binding.base, self.identifier)
-        # Reparent the result to the original node.
-        if binding is not None:
-            assert isinstance(binding, ChainBinding)
-            assert binding.base is self.binding.base
-            return binding.clone(base=self.binding)
+        return lookup(self.binding.base, self.identifier)
 
 
 class ItemizeWrapper(Itemize):
@@ -540,14 +499,7 @@ class ItemizeWrapper(Itemize):
 
     def __call__(self):
         # Delegate the request to the base node.
-        bindings = itemize(self.binding.base, self.syntax)
-        if bindings is None:
-            return None
-        # Reparent the produced binding nodes to the context node.
-        assert all(isinstance(binding, ChainBinding) and
-                   binding.base is self.binding.base
-                   for binding in bindings)
-        return (binding.clone(base=self.binding) for binding in bindings)
+        return itemize(self.binding.base)
 
 
 class GetComplementFromWrapper(GetComplement):
@@ -558,12 +510,7 @@ class GetComplementFromWrapper(GetComplement):
                 DefinitionBinding)
 
     def __call__(self):
-        binding = get_complement(self.binding.base, self.syntax)
-        if binding is None:
-            return None
-        assert isinstance(binding, ChainBinding)
-        assert binding.base is self.binding.base
-        return binding.clone(base=self.binding)
+        return get_complement(self.binding.base)
 
 
 class GetKernelFromWrapper(GetKernel):
@@ -574,13 +521,7 @@ class GetKernelFromWrapper(GetKernel):
                 DefinitionBinding)
 
     def __call__(self):
-        bindings = get_kernel(self.binding.base, self.syntax)
-        if bindings is None:
-            return None
-        assert all(isinstance(binding, ChainBinding) and
-                   binding.base is self.binding.base
-                   for binding in bindings)
-        return (binding.clone(base=self.binding) for binding in bindings)
+        return get_kernel(self.binding.base)
 
 
 class ItemizeQuotient(Itemize):
@@ -588,7 +529,7 @@ class ItemizeQuotient(Itemize):
     adapts(QuotientBinding)
 
     def __call__(self):
-        return get_kernel(self.binding, self.syntax)
+        return get_kernel(self.binding)
 
 
 class GetComplementFromQuotient(GetComplement):
@@ -596,9 +537,7 @@ class GetComplementFromQuotient(GetComplement):
     adapts(QuotientBinding)
 
     def __call__(self):
-        seed = self.binding.seed
-        return ComplementBinding(self.binding, seed,
-                                 seed.syntax.clone(mark=self.syntax.mark))
+        return ComplementRecipe(self.binding.seed)
 
 
 class GetKernelFromQuotient(GetKernel):
@@ -607,8 +546,9 @@ class GetKernelFromQuotient(GetKernel):
 
     def __call__(self):
         for index, binding in enumerate(self.binding.kernel):
-            yield KernelBinding(self.binding, index, binding.domain,
-                                binding.syntax.clone(mark=self.syntax.mark))
+            syntax = binding.syntax
+            recipe = KernelRecipe(self.binding.kernel, index)
+            yield (syntax, recipe)
 
 
 class LookupComplement(Lookup):
@@ -616,12 +556,7 @@ class LookupComplement(Lookup):
     adapts(ComplementBinding)
 
     def __call__(self):
-        binding = lookup(self.binding.seed, self.identifier)
-        if binding is None:
-            return None
-        assert isinstance(binding, ChainBinding)
-        assert binding.base is self.binding.seed
-        return binding.clone(base=self.binding)
+        return lookup(self.binding.seed, self.identifier)
 
 
 class ItemizeComplement(Itemize):
@@ -629,13 +564,7 @@ class ItemizeComplement(Itemize):
     adapts(ComplementBinding)
 
     def __call__(self):
-        bindings = itemize(self.binding.seed, self.syntax)
-        if bindings is None:
-            return None
-        assert all(isinstance(binding, ChainBinding) and
-                   binding.base is self.binding.seed
-                   for binding in bindings)
-        return (binding.clone(base=self.binding) for binding in bindings)
+        return itemize(self.binding.seed)
 
 
 class GetComplementFromComplement(GetComplement):
@@ -643,12 +572,7 @@ class GetComplementFromComplement(GetComplement):
     adapts(ComplementBinding)
 
     def __call__(self):
-        binding = get_complement(self.binding.seed, self.syntax)
-        if binding is None:
-            return None
-        assert isinstance(binding, ChainBinding)
-        assert binding.base is self.binding.seed
-        return binding.clone(base=self.binding)
+        return get_complement(self.binding.seed)
 
 
 class GetKernelFromComplement(GetKernel):
@@ -656,13 +580,7 @@ class GetKernelFromComplement(GetKernel):
     adapts(ComplementBinding)
 
     def __call__(self):
-        bindings = get_complement(self.binding.seed, self.syntax)
-        if bindings is None:
-            return None
-        assert all(isinstance(binding, ChainBinding) and
-                   binding.base is self.binding.seed
-                   for binding in bindings)
-        return (binding.clone(base=self.binding) for binding in bindings)
+        return get_complement(self.binding.seed)
 
 
 class LookupDefinition(LookupWrapper):
@@ -670,10 +588,42 @@ class LookupDefinition(LookupWrapper):
     adapts(DefinitionBinding)
 
     def __call__(self):
-        if self.key == normalize(self.binding.name):
-            return AliasBinding(self.binding, self.binding.binding,
-                                self.identifier)
+        if self.key == normalize(self.binding.assignment.name):
+            return SubstitutionRecipe(self.binding.base,
+                                      self.binding.assignment.body)
         return super(LookupDefinition, self).__call__()
+
+
+class LookupRedirect(Lookup):
+
+    adapts(RedirectBinding)
+
+    def __call__(self):
+        return lookup(self.binding.pointer, self.identifier)
+
+
+class ItemizeRedirect(Itemize):
+
+    adapts(RedirectBinding)
+
+    def __call__(self):
+        return itemize(self.binding.pointer)
+
+
+class GetComplementFromRedirect(GetComplement):
+
+    adapts(RedirectBinding)
+
+    def __call__(self):
+        return get_complement(self.binding.pointer)
+
+
+class GetKernelFromRedirect(GetKernel):
+
+    adapts(RedirectBinding)
+
+    def __call__(self):
+        return get_kernel(self.binding.pointer)
 
 
 def lookup(binding, identifier):
@@ -697,7 +647,7 @@ def lookup(binding, identifier):
     return binding
 
 
-def itemize(binding, syntax):
+def itemize(binding):
     """
     Produces all public members of the given binding.
 
@@ -707,12 +657,9 @@ def itemize(binding, syntax):
 
     `binding` (:class:`htsql.tr.binding.Binding`)
         The lookup context.
-
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
-        The syntax node that caused the operation.
     """
     # Realize and apply the `Itemize` adapter.
-    itemize = Itemize(binding, syntax)
+    itemize = Itemize(binding)
     bindings = itemize()
     # Convert a generator to a regular list.
     if bindings is not None:
@@ -720,67 +667,14 @@ def itemize(binding, syntax):
     return bindings
 
 
-class LookupAlias(Lookup):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        binding = lookup(self.binding.binding, self.identifier)
-        if binding is not None:
-            assert isinstance(binding, ChainBinding)
-            assert binding.base is self.binding.binding
-            return binding.clone(base=self.binding)
-
-
-class ItemizeAlias(Itemize):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        bindings = itemize(self.binding.binding, self.syntax)
-        if bindings is None:
-            return None
-        assert all(isinstance(binding, ChainBinding) and
-                   binding.base is self.binding.binding
-                   for binding in bindings)
-        return (binding.clone(base=self.binding) for binding in bindings)
-
-
-class GetComplementFromAlias(GetComplement):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        binding = get_complement(self.binding.binding, self.syntax)
-        if binding is None:
-            return None
-        assert isinstance(binding, ChainBinding)
-        assert binding.base is self.binding.binding
-        return binding.clone(base=self.binding)
-
-
-class GetKernelFromAlias(GetKernel):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        bindings = get_kernel(self.binding.binding, self.syntax)
-        if bindings is None:
-            return None
-        assert all(isinstance(binding, ChainBinding) and
-                   binding.base is self.binding.binding
-                   for binding in bindings)
-        return (binding.clone(base=self.binding) for binding in bindings)
-
-
-def get_complement(binding, syntax):
-    get_complement = GetComplement(binding, syntax)
+def get_complement(binding):
+    get_complement = GetComplement(binding)
     binding = get_complement()
     return binding
 
 
-def get_kernel(binding, syntax):
-    get_kernel = GetKernel(binding, syntax)
+def get_kernel(binding):
+    get_kernel = GetKernel(binding)
     bindings = get_kernel()
     if bindings is not None:
         bindings = list(bindings)

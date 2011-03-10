@@ -21,7 +21,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, Binding)
-from ..bind import BindByName, BindingState
+from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..lookup import lookup, get_complement, get_kernel
@@ -376,10 +376,11 @@ class BindFiber(BindMacro):
     def expand(self, table, image=None, counterimage=None):
         if not isinstance(table, IdentifierSyntax):
             raise BindError("an identifier expected", table.mark)
-        binding = lookup(self.state.root, table)
-        if binding is None:
+        recipe = lookup(self.state.root, table)
+        if recipe is None:
             raise BindError("unknown identifier", table.mark)
-        binding = binding.clone(base=self.state.base)
+        bind = BindByRecipe(recipe, table, self.state)
+        binding = bind()
         if image is None and counterimage is None:
             yield WrapperBinding(binding, self.syntax)
             return
@@ -442,15 +443,22 @@ class BindKernel(BindMacro):
                 index = int(index.value)
             except ValueError:
                 raise BindError("expected an integer value", index.mark)
-        bindings = get_kernel(self.state.base, self.syntax)
-        if bindings is None:
+        group = get_kernel(self.state.base)
+        if group is None:
             raise BindError("expected a quotient context", self.syntax.mark)
         if index is not None:
-            if not (0 <= index < len(bindings)):
+            if not (0 <= index < len(group)):
                 raise BindError("index is out of range", self.syntax.mark)
-            yield bindings[index]
+            syntax, recipe = group[index]
+            syntax = syntax.clone(mark=self.syntax.mark)
+            bind = BindByRecipe(recipe, syntax, self.state)
+            binding = bind()
+            yield binding
         else:
-            for binding in bindings:
+            for syntax, recipe in group:
+                syntax = syntax.clone(mark=self.syntax.mark)
+                bind = BindByRecipe(recipe, syntax, self.state)
+                binding = bind()
                 yield binding
 
 
@@ -460,9 +468,11 @@ class BindComplement(BindMacro):
     signature = ComplementSig
 
     def expand(self):
-        binding = get_complement(self.state.base, self.syntax)
-        if binding is None:
+        recipe = get_complement(self.state.base)
+        if recipe is None:
             raise BindError("expected a quotient context", self.syntax.mark)
+        bind = BindByRecipe(recipe, self.syntax, self.state)
+        binding = bind()
         yield binding
 
 
@@ -580,8 +590,7 @@ class BindDefine(BindMacro):
             if not isinstance(assignment, AssignmentBinding):
                 raise BindError("an assignment expected", op.mark)
             body = self.state.bind(assignment.body, base=binding)
-            binding = DefinitionBinding(binding, assignment.name,
-                                        body, self.syntax)
+            binding = DefinitionBinding(binding, assignment, self.syntax)
         yield binding
 
 

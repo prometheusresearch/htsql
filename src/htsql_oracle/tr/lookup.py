@@ -5,9 +5,10 @@
 #
 
 
+from htsql.mark import EmptyMark
 from htsql.tr.lookup import ItemizeTable
 from htsql.tr.syntax import IdentifierSyntax
-from htsql.tr.binding import ColumnBinding
+from htsql.tr.recipe import ColumnRecipe
 
 
 class OracleItemizeTable(ItemizeTable):
@@ -17,8 +18,9 @@ class OracleItemizeTable(ItemizeTable):
             name = column.name
             if name.isupper():
                 name = name.lower()
-            identifier = IdentifierSyntax(name, self.syntax.mark)
-            link = self.find_link(column, identifier)
-            yield ColumnBinding(self.binding, column, link, identifier)
+            identifier = IdentifierSyntax(name, EmptyMark())
+            link = self.find_link(column)
+            recipe = ColumnRecipe(column, link)
+            yield (identifier, recipe)
 
 

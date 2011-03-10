@@ -202,16 +202,16 @@ class AttachedTableBinding(TableBinding):
     """
     Represents an attached table binding.
 
-    An attached table is attached to its base using a sequence of joins.
+    An attached table is attached to its base with a join.
 
-    `joins` (a list of :class:`htsql.entity.Join`)
-        A sequence of joins that attach the table to its base.
+    `join` (:class:`htsql.entity.Join`)
+        The join attaching the table to its base.
     """
 
-    def __init__(self, base, table, joins, syntax):
-        assert isinstance(joins, listof(Join)) and len(joins) > 0
-        super(AttachedTableBinding, self).__init__(base, table, syntax)
-        self.joins = joins
+    def __init__(self, base, join, syntax):
+        assert isinstance(join, Join)
+        super(AttachedTableBinding, self).__init__(base, join.target, syntax)
+        self.join = join
 
 
 class SieveBinding(ChainBinding):
@@ -278,12 +278,6 @@ class ColumnBinding(ChainBinding):
         assert isinstance(link, maybe(AttachedTableBinding))
         super(ColumnBinding, self).__init__(base, column.domain, syntax)
         self.column = column
-        # FIXME: this is a hack to permit reparenting of a column binding.
-        # It is used when `Lookup` delegates the request to a base binding
-        # and then reparents the result.  Fixing this may require passing
-        # the expected base together with any `Lookup` request.
-        if link is not None and link.base is not base:
-            link = link.clone(base=base)
         self.link = link
 
 
@@ -321,16 +315,6 @@ class AliasBinding(ChainBinding):
         self.binding = binding
 
 
-class DefinitionBinding(ChainBinding):
-
-    def __init__(self, base, name, binding, syntax):
-        assert isinstance(name, str)
-        assert isinstance(binding, Binding)
-        super(DefinitionBinding, self).__init__(base, base.domain, syntax)
-        self.name = name
-        self.binding = binding
-
-
 class AssignmentBinding(Binding):
 
     def __init__(self, name, body, syntax):
@@ -339,6 +323,14 @@ class AssignmentBinding(Binding):
         super(AssignmentBinding, self).__init__(VoidDomain(), syntax)
         self.name = name
         self.body = body
+
+
+class DefinitionBinding(ChainBinding):
+
+    def __init__(self, base, assignment, syntax):
+        assert isinstance(assignment, AssignmentBinding)
+        super(DefinitionBinding, self).__init__(base, base.domain, syntax)
+        self.assignment = assignment
 
 
 class LiteralBinding(Binding):
@@ -479,5 +471,13 @@ class FormatBinding(WrapperBinding):
         assert isinstance(format, str)
         super(FormatBinding, self).__init__(base, syntax)
         self.format = format
+
+
+class RedirectBinding(WrapperBinding):
+
+    def __init__(self, base, pointer, syntax):
+        assert isinstance(pointer, Binding)
+        super(RedirectBinding, self).__init__(base, syntax)
+        self.pointer = pointer
 
 

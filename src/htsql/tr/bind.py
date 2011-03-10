@@ -23,9 +23,14 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      FunctionOperatorSyntax, FunctionCallSyntax, GroupSyntax,
                      SpecifierSyntax, IdentifierSyntax, WildcardSyntax,
                      ComplementSyntax, StringSyntax, NumberSyntax)
+from .recipe import (Recipe, FreeTableRecipe, AttachedTableRecipe,
+                     ColumnRecipe, ComplementRecipe, KernelRecipe,
+                     SubstitutionRecipe)
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
-                      WrapperBinding)
+                      WrapperBinding, FreeTableBinding, AttachedTableBinding,
+                      ColumnBinding, ComplementBinding, KernelBinding,
+                      RedirectBinding)
 from .lookup import lookup, itemize, get_kernel, get_complement
 from .coerce import coerce
 
@@ -276,10 +281,18 @@ class BindSegment(Bind):
             #   /base{*}
             # or as
             #   /{base}
-            bare_elements = itemize(base, base.syntax)
-            if bare_elements is None:
+            bare_elements = []
+            bare_group = itemize(base)
+            if bare_group is None:
                 bare_elements = [base]
                 base = self.state.base
+            else:
+                self.state.push_base(base)
+                for syntax, recipe in bare_group:
+                    syntax = syntax.clone(mark=base.mark)
+                    bind = BindByRecipe(recipe, syntax, self.state)
+                    bare_elements.append(bind())
+                self.state.pop_base()
         # Validate and specialize the domains of the elements.
         elements = []
         for element in bare_elements:
@@ -591,11 +604,12 @@ class BindIdentifier(Bind):
 
     def __call__(self):
         # Look for the identifier in the current lookup context.
-        binding = lookup(self.state.base, self.syntax)
-        if binding is None:
+        recipe = lookup(self.state.base, self.syntax)
+        if recipe is None:
             raise BindError("unable to resolve an identifier",
                             self.syntax.mark)
-        yield binding
+        bind = BindByRecipe(recipe, self.syntax, self.state)
+        yield bind()
 
 
 class BindWildcard(Bind):
@@ -607,12 +621,14 @@ class BindWildcard(Bind):
 
     def __call__(self):
         # Get all public descendants in the current lookup context.
-        bindings = itemize(self.state.base, self.syntax)
-        if bindings is None:
+        group = itemize(self.state.base)
+        if group is None:
             raise BindError("unable to resolve a wildcard",
                             self.syntax.mark)
-        for binding in bindings:
-            yield binding
+        for syntax, recipe in group:
+            syntax = syntax.clone(mark=self.syntax.mark)
+            bind = BindByRecipe(recipe, syntax, self.state)
+            yield bind()
 
 
 class BindComplement(Bind):
@@ -623,10 +639,11 @@ class BindComplement(Bind):
     adapts(ComplementSyntax)
 
     def __call__(self):
-        binding = get_complement(self.state.base, self.syntax)
-        if binding is None:
+        recipe = get_complement(self.state.base)
+        if recipe is None:
             raise BindError("expected a quotient context", self.syntax.mark)
-        yield binding
+        bind = BindByRecipe(recipe, self.syntax, self.state)
+        yield bind()
 
 
 class BindString(Bind):
@@ -675,6 +692,87 @@ class BindNumber(Bind):
             domain = coerce(IntegerDomain())
         binding = CastBinding(binding, domain, self.syntax)
         yield binding
+
+
+class BindByRecipe(Adapter):
+
+    adapts(Recipe)
+
+    def __init__(self, recipe, syntax, state):
+        assert isinstance(recipe, Recipe)
+        assert isinstance(syntax, Syntax)
+        assert isinstance(state, BindingState)
+        self.recipe = recipe
+        self.syntax = syntax
+        self.state = state
+
+    def __call__(self):
+        raise BindError("unable to bind a node", self.syntax.mark)
+
+
+class BindByFreeTable(BindByRecipe):
+
+    adapts(FreeTableRecipe)
+
+    def __call__(self):
+        return FreeTableBinding(self.state.base, self.recipe.table,
+                                self.syntax)
+
+
+class BindByAttachedTable(BindByRecipe):
+
+    adapts(AttachedTableRecipe)
+
+    def __call__(self):
+        binding = self.state.base
+        for join in self.recipe.joins:
+            binding = AttachedTableBinding(binding, join, self.syntax)
+        return binding
+
+
+class BindByColumn(BindByRecipe):
+
+    adapts(ColumnRecipe)
+
+    def __call__(self):
+        link = None
+        if self.recipe.link is not None:
+            bind = BindByRecipe(self.recipe.link, self.syntax, self.state)
+            link = bind()
+        return ColumnBinding(self.state.base, self.recipe.column,
+                             link, self.syntax)
+
+
+class BindByComplement(BindByRecipe):
+
+    adapts(ComplementRecipe)
+
+    def __call__(self):
+        syntax = self.recipe.seed.syntax.clone(mark=self.syntax.mark)
+        return ComplementBinding(self.state.base, self.recipe.seed, syntax)
+
+
+class BindByKernel(BindByRecipe):
+
+    adapts(KernelRecipe)
+
+    def __call__(self):
+        binding = self.recipe.kernel[self.recipe.index]
+        syntax = binding.syntax.clone(mark=self.syntax.mark)
+        return KernelBinding(self.state.base, self.recipe.index,
+                             binding.domain, syntax)
+
+
+class BindBySubstitution(BindByRecipe):
+
+    adapts(SubstitutionRecipe)
+
+    def __call__(self):
+        base = RedirectBinding(self.state.base, self.recipe.base,
+                               self.state.base.syntax)
+        binding = self.state.bind(self.recipe.body, base=base)
+        binding = WrapperBinding(binding, self.syntax)
+        return binding
 
 
 def bind_all(syntax, state=None, base=None):

@@ -15035,14 +15035,14 @@ tests:
               -+---------------------------------------------------------------------------------------------------------------------------------------+-
                | code | count(program.student) | count((program.define(s:=student)?degree='bs').s) | count((program?degree='bs').define(s:=student).s) |
               -+------+------------------------+---------------------------------------------------+---------------------------------------------------+-
-               | eng  |                     14 |                                                14 |                                                 6 |
+               | eng  |                     14 |                                                 6 |                                                 6 |
                                                                                                                                                  (1 row)
 
                ----
                /school{code,count(program.student),count((program.define(s:=student)?degree='bs').s),count((program?degree='bs').define(s:=student).s)}?code='eng'
                SELECT "SCHOOL"."CODE",
                       COALESCE("STUDENT_1"."count", 0),
-                      COALESCE("STUDENT_1"."count", 0),
+                      COALESCE("STUDENT_2"."count", 0),
                       COALESCE("STUDENT_2"."count", 0)
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",

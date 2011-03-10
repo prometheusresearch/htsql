@@ -335,12 +335,7 @@ class RelateAttachedTable(Relate):
     def __call__(self):
         # Generate a space node corresponding to the binding base.
         space = self.state.relate(self.binding.base)
-        # The binding is attached to its base by a series of joins.
-        # For each join, we produce a fiber product space:
-        #   `base . target1 . target2 . ...`.
-        for join in self.binding.joins:
-            space = FiberProductSpace(space, join, self.binding)
-        return space
+        return FiberProductSpace(space, self.binding.join, self.binding)
 
 
 class RelateSieve(Relate):

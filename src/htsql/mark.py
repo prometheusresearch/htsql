@@ -117,3 +117,9 @@ class Mark(object):
         return "<%s %s>" % (self.__class__.__name__, self)
 
 
+class EmptyMark(Mark):
+
+    def __init__(self):
+        super(EmptyMark, self).__init__("", 0, 0)
+
+
