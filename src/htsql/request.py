@@ -162,3 +162,13 @@ class Request(Utility):
         return self.render(environ)
 
 
+def render(environ):
+    request = Request.build(environ)
+    return request.render(environ)
+
+
+def produce(uri):
+    request = Request(uri)
+    return request.produce()
+
+

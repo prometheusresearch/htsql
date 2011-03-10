@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <title>List of schools</title>
+  </head>
+  <body>
+    <h1>List of schools</h1>
+    <table>
+      <tr><th>Name</th><th># of programs</th><th># of departments</th></tr>
+      {% for name, num_prog, num_dep in query('/school{name,count(program),count(department)}') %}
+        <tr><td>{{ name|e }}</td><td>{{ num_prog }}</td><td>{{ num_dep }}</td></tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

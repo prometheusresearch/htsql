@@ -9,9 +9,10 @@
 	build-all check-all start-pgsql84 start-pgsql90 start-mysql51 \
 	start-oracle10g start-mssql2005 start-mssql2008 stop-pgsql84 stop-pgsql90 \
 	stop-mysql51 stop-oracle10g stop-mssql2005 stop-mssql2008 \
-	demo-htraf demo-ssi shell-sqlite shell-pgsql shell-mysql shell-oracle \
-	shell-mssql serve-sqlite serve-pgsql serve-mysql serve-oracle serve-mssql \
-	client-sqlite client-pgsql client-mysql client-oracle client-mssql
+	demo-htraf demo-ssi demo-jinja shell-sqlite shell-pgsql shell-mysql \
+	shell-oracle shell-mssql serve-sqlite serve-pgsql serve-mysql serve-oracle \
+	serve-mssql	client-sqlite client-pgsql client-mysql client-oracle \
+	client-mssql
 
 
 # Load configuration variables from `Makefile.common`.  Do not edit
@@ -73,6 +74,7 @@ default:
 	@echo "  *** Demos and Examples ***"
 	@echo "  demo-htraf: to run the HTRAF demo"
 	@echo "  demo-ssi: to run the SSI demo"
+	@echo "  demo-jinja: to run the Jinja demo"
 	@echo
 
 
@@ -397,5 +399,9 @@ demo-htraf:
 # Start the SSI demo.
 demo-ssi:
 	cd demo/ssi; ${MAKE}
+
+# Start the Jinja demo.
+demo-jinja:
+	cd demo/jinja; ${MAKE}
 
 
