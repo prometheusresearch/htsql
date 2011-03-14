@@ -140,7 +140,10 @@ class SingleTableIdScenario(Scenario):
     def find_keys(self, rule_tree, view, tablemap):
         query = rule_tree[0]
         rtable = self.find_rtable(query)
-        o_table = tablemap[int(rtable.relid)]
+        relid = int(rtable.relid)
+        if relid not in tablemap:
+            return []
+        o_table = tablemap[relid]
         o_pkey = None
         for ukey in o_table.unique_keys:
             if ukey.is_primary:
