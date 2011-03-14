@@ -167,7 +167,7 @@ class SingleTableIdScenario(Scenario):
             try:
                 vcolname = view_columns[pkey_colname]
                 v_colnames.append(vcolname)
-            except ValueError:
+            except KeyError:
                 return []
         v_pkey = PrimaryKeyEntity(view.schema_name, view.name, v_colnames)
         v_fkey = ForeignKeyEntity(view.schema_name, view.name, v_colnames,
