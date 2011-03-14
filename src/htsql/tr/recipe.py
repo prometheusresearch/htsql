@@ -57,10 +57,21 @@ class KernelRecipe(Recipe):
 
 class SubstitutionRecipe(Recipe):
 
-    def __init__(self, base, body):
+    def __init__(self, base, subnames, arguments, body):
         assert isinstance(base, Binding)
+        assert isinstance(subnames, listof(str))
+        assert isinstance(arguments, maybe(listof(str)))
         assert isinstance(body, Syntax)
         self.base = base
+        self.subnames = subnames
         self.body = body
+        self.arguments = arguments
+
+
+class BindingRecipe(Recipe):
+
+    def __init__(self, binding):
+        assert isinstance(binding, Binding)
+        self.binding = binding
 
 

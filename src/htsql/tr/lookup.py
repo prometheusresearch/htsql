@@ -23,9 +23,10 @@ from .binding import (Binding, RootBinding, ChainBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, SieveBinding, WrapperBinding, SortBinding,
                       QuotientBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding)
+                      DefinitionBinding, RedirectBinding, AliasBinding)
 from .recipe import (FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
-                     ComplementRecipe, KernelRecipe, SubstitutionRecipe)
+                     ComplementRecipe, KernelRecipe, SubstitutionRecipe,
+                     BindingRecipe)
 import re
 import unicodedata
 
@@ -49,6 +50,59 @@ def normalize(name):
     name = re.sub(ur"(?u)^(?=\d)|\W", u"_", name)
     name = name.encode('utf-8')
     return name
+
+
+class Thing(object):
+    pass
+
+
+class AttributeThing(Thing):
+
+    def __init__(self, name):
+        name = name
+
+
+class FunctionThing(Thing):
+
+    def __init__(self, name, arity):
+        self.name = name
+        self.arity = arity
+
+
+class KernelThing(Thing):
+
+    def __init__(self, index=None):
+        self.index = index
+
+
+class ComplementThing(Thing):
+    pass
+
+
+class WildThing(Thing):
+
+    def __init__(self, index=None):
+        pass
+
+
+class DeepAttributeThing(AttributeThing):
+    pass
+
+
+class DeepFunctionThing(FunctionThing):
+    pass
+
+
+class _Lookup(Adapter):
+
+    adapts(Binding, Thing)
+
+    def __init__(self, binding, thing):
+        self.binding = binding
+        self.thing = thing
+
+    def __call__(self):
+        return None
 
 
 class LookupItemizeMixin(object):
@@ -166,6 +220,16 @@ class GetKernel(Adapter, LookupItemizeMixin):
 
     def __call__(self):
         return None
+
+
+class GetFunction(Adapter, LookupItemizeMixin):
+
+    adapts(Binding)
+
+    def __init__(self, binding, identifier, arity):
+        assert isinstance(identifier, IdentifierBinding)
+        assert isinstance(arity, int) and arity >= 0
+        super(GetFunction, self).__init__(binding, identifier, arity)
 
 
 class LookupRoot(Lookup):
@@ -495,6 +559,7 @@ class ItemizeWrapper(Itemize):
     adapts_many(WrapperBinding,
                 SieveBinding,
                 SortBinding,
+                AliasBinding,
                 DefinitionBinding)
 
     def __call__(self):
@@ -507,6 +572,7 @@ class GetComplementFromWrapper(GetComplement):
     adapts_many(WrapperBinding,
                 SieveBinding,
                 SortBinding,
+                AliasBinding,
                 DefinitionBinding)
 
     def __call__(self):
@@ -518,10 +584,22 @@ class GetKernelFromWrapper(GetKernel):
     adapts_many(WrapperBinding,
                 SieveBinding,
                 SortBinding,
+                AliasBinding,
                 DefinitionBinding)
 
     def __call__(self):
         return get_kernel(self.binding.base)
+
+
+class GetFunctionFromWrapper(GetFunction):
+
+    adapts_many(WrapperBinding,
+                SieveBinding,
+                SortBinding,
+                AliasBinding)
+
+    def __call__(self):
+        return get_function(self.binding.base)
 
 
 class ItemizeQuotient(Itemize):
@@ -583,14 +661,52 @@ class GetKernelFromComplement(GetKernel):
         return get_complement(self.binding.seed)
 
 
+class GetFunctionFromComplement(GetKernel):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        return get_function(self.binding.seed)
+
+
+class LookupAlias(LookupWrapper):
+
+    adapts(AliasBinding)
+
+    def __call__(self):
+        if self.key == normalize(self.binding.name):
+            return BindingRecipe(self.binding.binding)
+        return super(LookupAlias, self).__call__()
+
+
 class LookupDefinition(LookupWrapper):
 
     adapts(DefinitionBinding)
 
     def __call__(self):
-        if self.key == normalize(self.binding.assignment.name):
-            return SubstitutionRecipe(self.binding.base,
-                                      self.binding.assignment.body)
+        if self.key == normalize(self.binding.name):
+            if (self.binding.arguments is None or
+                    len(self.binding.subnames) > 0):
+                return SubstitutionRecipe(self.binding.base,
+                                          self.binding.subnames,
+                                          self.binding.arguments,
+                                          self.binding.body)
+        return super(LookupDefinition, self).__call__()
+
+
+class GetFunctionFromDefinition(GetFunctionFromWrapper):
+
+    adapts(DefinitionBinding)
+
+    def __call__(self):
+        if self.key == normalize(self.binding.name):
+            if (not self.binding.subnames and
+                    self.binding.arguments is not None and
+                    len(self.binding.arguments) == self.arity):
+                return SubstitutionRecipe(self.binding.base,
+                                          self.binding.subnames,
+                                          self.binding.arguments,
+                                          self.binding.body)
         return super(LookupDefinition, self).__call__()
 
 
@@ -624,6 +740,14 @@ class GetKernelFromRedirect(GetKernel):
 
     def __call__(self):
         return get_kernel(self.binding.pointer)
+
+
+class GetFunctionFromRedirect(GetKernel):
+
+    adapts(RedirectBinding)
+
+    def __call__(self):
+        return get_function(self.binding.pointer)
 
 
 def lookup(binding, identifier):
@@ -679,5 +803,11 @@ def get_kernel(binding):
     if bindings is not None:
         bindings = list(bindings)
     return bindings
+
+
+def get_function(binding):
+    get_function = GetFunction(binding)
+    binding = get_function()
+    return binding
 
 

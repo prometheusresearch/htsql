@@ -16,7 +16,7 @@ This module declares binding nodes.
 from ..util import maybe, listof, Clonable, Printable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
-from .syntax import Syntax
+from .syntax import Syntax, IdentifierSyntax
 from .signature import Signature, Bag, Formula
 
 
@@ -309,28 +309,39 @@ class KernelBinding(ChainBinding):
 
 class AliasBinding(ChainBinding):
 
-    def __init__(self, base, binding, syntax):
+    def __init__(self, base, name, binding, syntax):
+        assert isinstance(name, str)
         assert isinstance(binding, Binding)
-        super(AliasBinding, self).__init__(base, binding.domain, syntax)
+        super(AliasBinding, self).__init__(base, base.domain, syntax)
+        self.name = name
         self.binding = binding
 
 
 class AssignmentBinding(Binding):
 
-    def __init__(self, name, body, syntax):
-        assert isinstance(name, str)
+    def __init__(self, identifiers, arguments, body, syntax):
+        assert isinstance(identifiers, listof(IdentifierSyntax))
+        assert len(identifiers) > 0
+        assert isinstance(arguments, maybe(listof(IdentifierSyntax)))
         assert isinstance(body, Syntax)
         super(AssignmentBinding, self).__init__(VoidDomain(), syntax)
-        self.name = name
+        self.identifiers = identifiers
+        self.arguments = arguments
         self.body = body
 
 
 class DefinitionBinding(ChainBinding):
 
-    def __init__(self, base, assignment, syntax):
-        assert isinstance(assignment, AssignmentBinding)
+    def __init__(self, base, name, subnames, arguments, body, syntax):
+        assert isinstance(name, str)
+        assert isinstance(subnames, listof(str))
+        assert isinstance(arguments, maybe(listof(str)))
+        assert isinstance(body, Syntax)
         super(DefinitionBinding, self).__init__(base, base.domain, syntax)
-        self.assignment = assignment
+        self.name = name
+        self.subnames = subnames
+        self.arguments = arguments
+        self.body = body
 
 
 class LiteralBinding(Binding):

@@ -16,11 +16,13 @@ from ...adapter import Adapter, Component, adapts, adapts_many, named
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, EnumDomain)
-from ..syntax import NumberSyntax, StringSyntax, IdentifierSyntax
+from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
+                      SpecifierSyntax, FunctionCallSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
-                       AssignmentBinding, DefinitionBinding, Binding)
+                       AssignmentBinding, DefinitionBinding, AliasBinding,
+                       Binding)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -572,10 +574,32 @@ class BindAssignment(BindMacro):
     signature = AssignmentSig
 
     def expand(self, lop, rop):
-        if not isinstance(lop, IdentifierSyntax):
-            raise BindError("an identifier expected", lop.mark)
-        name = lop.value
-        yield AssignmentBinding(name, rop, self.syntax)
+        identifiers = []
+        arguments = []
+        syntax = lop
+        if isinstance(syntax, FunctionCallSyntax):
+            names.append(syntax.identifier)
+            for argument in syntax.arguments:
+                if not isinstance(argument, IdentifierSyntax):
+                    raise BindError("an identifier expected", argument.mark)
+                arguments.append(argument)
+            syntax = syntax.base
+        else:
+            arguments = None
+        while syntax is not None:
+            if isinstance(syntax, SpecifierSyntax):
+                if not isinstance(syntax.identifier, IdentifierSyntax):
+                    raise BindError("an identifier expected",
+                                    syntax.identifier.mark)
+                identifiers.append(syntax.identifier)
+                syntax = syntax.base
+            elif isinstance(syntax, IdentifierSyntax):
+                identifiers.append(syntax)
+                syntax = None
+            else:
+                raise BindError("an identifier expected", syntax.mark)
+        identifiers.reverse()
+        yield AssignmentBinding(identifiers, arguments, rop, self.syntax)
 
 
 class BindDefine(BindMacro):
@@ -589,8 +613,15 @@ class BindDefine(BindMacro):
             assignment = self.state.bind(op)
             if not isinstance(assignment, AssignmentBinding):
                 raise BindError("an assignment expected", op.mark)
-            body = self.state.bind(assignment.body, base=binding)
-            binding = DefinitionBinding(binding, assignment, self.syntax)
+            name = assignment.identifiers[0].value
+            subnames = [identifier.value
+                        for identifier in assignment.identifiers[1:]]
+            arguments = None
+            if assignment.arguments is not None:
+                arguments = [argument.value
+                             for argument in assignment.arguments]
+            binding = DefinitionBinding(binding, name, subnames, arguments,
+                                        assignment.body, self.syntax)
         yield binding
 
 

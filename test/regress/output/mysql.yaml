@@ -15210,6 +15210,89 @@ tests:
                ----
                /define(x:=2,x:=x+x,x:=x*x){x}
                SELECT ((2 + 2) * (2 + 2))
+          - uri: /define(program.student:=student?is_active) .program{code,count(student)}?school='bus'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (define(program.student:=student?is_active).program?school='bus') |
+              -+-------------------------------------------------------------------+-
+               | code                         | count(student)                     |
+              -+------------------------------+------------------------------------+-
+               | pacc                         |                                  2 |
+               | pcap                         |                                  1 |
+               | uacct                        |                                  2 |
+               | ubusad                       |                                  0 |
+               | ucorpfi                      |                                  2 |
+                                                                            (5 rows)
+
+               ----
+               /define(program.student:=student?is_active).program{code,count(student)}?school='bus'
+               SELECT `program`.`code`,
+                      COALESCE(`student`.`count`, 0)
+               FROM `htsql_regress`.`program` AS `program`
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                            `student`.`school`,
+                                            `student`.`program`
+                                     FROM `htsql_regress`.`student` AS `student`
+                                     WHERE `student`.`is_active`
+                                     GROUP BY 2, 3) AS `student`
+                                    ON ((`program`.`school` = `student`.`school`) AND (`program`.`code` = `student`.`program`))
+               WHERE (`program`.`school` = 'bus')
+               ORDER BY `program`.`school` ASC, 1 ASC
+          - uri: /define(school.program.student:=student?is_active) .count((school?code='bus').program.student)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               |                                                                                              |
+              -+----------------------------------------------------------------------------------------------+-
+               | define(school.program.student:=student?is_active).count((school?code='bus').program.student) |
+              -+----------------------------------------------------------------------------------------------+-
+               |                                                                                            7 |
+                                                                                                        (1 row)
+
+               ----
+               /define(school.program.student:=student?is_active).count((school?code='bus').program.student)
+               SELECT COUNT(TRUE)
+               FROM `htsql_regress`.`school` AS `school`
+                    INNER JOIN `htsql_regress`.`program` AS `program`
+                               ON (`school`.`code` = `program`.`school`)
+                    INNER JOIN `htsql_regress`.`student` AS `student`
+                               ON ((`program`.`school` = `student`.`school`) AND (`program`.`code` = `student`.`program`))
+               WHERE `student`.`is_active`
+                     AND (`school`.`code` = 'bus')
+          - uri: /define(school.department.course:=course?credits>2, school.department.course:=course?credits<5,
+              school.department:=department?code='acc') .school.department.course{department,no,title,credits}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | define(school.department.course:=course?credits>2,school.department.course:=course?credits<5,school.department:=department?code='acc').school.department.course |
+              -+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+-
+               | department                           | no                            | title                                                | credits                           |
+              -+--------------------------------------+-------------------------------+------------------------------------------------------+-----------------------------------+-
+               | acc                                  |                           200 | Principles of Accounting I                           |                                 3 |
+               | acc                                  |                           426 | Corporate Taxation                                   |                                 3 |
+               | acc                                  |                           527 | Advanced Accounting                                  |                                 3 |
+               | acc                                  |                           606 | Corporate Financial Law                              |                                 3 |
+                                                                                                                                                                          (4 rows)
+
+               ----
+               /define(school.department.course:=course?credits>2,school.department.course:=course?credits<5,school.department:=department?code='acc').school.department.course{department,no,title,credits}
+               SELECT `course`.`department`,
+                      `course`.`no`,
+                      `course`.`title`,
+                      `course`.`credits`
+               FROM `htsql_regress`.`school` AS `school`
+                    INNER JOIN `htsql_regress`.`department` AS `department`
+                               ON (`school`.`code` = `department`.`school`)
+                    INNER JOIN `htsql_regress`.`course` AS `course`
+                               ON (`department`.`code` = `course`.`department`)
+               WHERE (`course`.`credits` < 5)
+                     AND (`course`.`credits` > 2)
+                     AND (`department`.`code` = 'acc')
+               ORDER BY `school`.`code` ASC, `department`.`code` ASC, 1 ASC, 2 ASC
         - id: projections
           tests:
           - uri: /quotient(program, degree)

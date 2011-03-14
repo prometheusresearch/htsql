@@ -132,12 +132,19 @@ tests:
     - uri: /school.define(program:=(program?degree='bs')
                                 .define(student:=student?is_active))
                 {code,count(program),count(program.student)}?code='eng'
-    # FIXME?
     - uri: /school{code,count(program.student),
                    count((program.define(s:=student)?degree='bs').s),
                    count((program?degree='bs').define(s:=student).s)}?code='eng'
     - uri: /define(x:=2,y:=3,z:=x*y){x,y,z}
     - uri: /define(x:=2,x:=x+x,x:=x*x){x}
+    - uri: /define(program.student:=student?is_active)
+            .program{code,count(student)}?school='bus'
+    - uri: /define(school.program.student:=student?is_active)
+            .count((school?code='bus').program.student)
+    - uri: /define(school.department.course:=course?credits>2,
+                   school.department.course:=course?credits<5,
+                   school.department:=department?code='acc')
+            .school.department.course{department,no,title,credits}
 
   - title: Projections
     tests:

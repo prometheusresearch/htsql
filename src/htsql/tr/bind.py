@@ -25,12 +25,12 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      ComplementSyntax, StringSyntax, NumberSyntax)
 from .recipe import (Recipe, FreeTableRecipe, AttachedTableRecipe,
                      ColumnRecipe, ComplementRecipe, KernelRecipe,
-                     SubstitutionRecipe)
+                     SubstitutionRecipe, BindingRecipe)
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, ComplementBinding, KernelBinding,
-                      RedirectBinding)
+                      DefinitionBinding, RedirectBinding)
 from .lookup import lookup, itemize, get_kernel, get_complement
 from .coerce import coerce
 
@@ -589,9 +589,11 @@ class BindSpecifier(Bind):
             # FIXME: Will fail if `binding.syntax` is not an identifier
             # or a wildcard node.  Currently, `binding.syntax` is always
             # an identifier node, but that might change in the future.
-            binding_syntax = SpecifierSyntax(base.syntax, binding.syntax,
-                                             binding.mark)
-            binding = WrapperBinding(binding, binding_syntax)
+            binding_syntax = binding.syntax
+            if isinstance(binding_syntax, IdentifierSyntax):
+                binding_syntax = SpecifierSyntax(base.syntax, binding_syntax,
+                                                 binding.mark)
+                binding = WrapperBinding(binding, binding_syntax)
             yield binding
 
 
@@ -768,11 +770,34 @@ class BindBySubstitution(BindByRecipe):
     adapts(SubstitutionRecipe)
 
     def __call__(self):
+        if self.recipe.subnames:
+            recipe = lookup(self.recipe.base, self.syntax)
+            if recipe is None:
+                raise BindError("unable to resolve an identifier",
+                                self.syntax.mark)
+            bind = BindByRecipe(recipe, self.syntax, self.state)
+            binding = bind()
+            binding = DefinitionBinding(binding, self.recipe.subnames[0],
+                                        self.recipe.subnames[1:],
+                                        self.recipe.arguments,
+                                        self.recipe.body,
+                                        binding.syntax)
+            return binding
+        if self.recipe.arguments is not None:
+            assert False
         base = RedirectBinding(self.state.base, self.recipe.base,
                                self.state.base.syntax)
         binding = self.state.bind(self.recipe.body, base=base)
         binding = WrapperBinding(binding, self.syntax)
         return binding
+
+
+class BindByBinding(BindByRecipe):
+
+    adapts(BindingRecipe)
+
+    def __call__(self):
+        return self.recipe.binding
 
 
 def bind_all(syntax, state=None, base=None):

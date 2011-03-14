@@ -1005,7 +1005,7 @@ class EncodeAlias(Encode):
     adapts(AliasBinding)
 
     def __call__(self):
-        return self.state.encode(self.binding.binding)
+        return self.state.encode(self.binding.base)
 
 
 class RelateAlias(Relate):
@@ -1013,7 +1013,7 @@ class RelateAlias(Relate):
     adapts(AliasBinding)
 
     def __call__(self):
-        return self.state.relate(self.binding.binding)
+        return self.state.relate(self.binding.base)
 
 
 class DirectAlias(Direct):
@@ -1021,7 +1021,7 @@ class DirectAlias(Direct):
     adapts(AliasBinding)
 
     def __call__(self):
-        return self.state.direct(self.binding.binding)
+        return self.state.direct(self.binding.base)
 
 
 class DirectDirection(Direct):
