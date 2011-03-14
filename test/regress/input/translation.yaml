@@ -145,6 +145,11 @@ tests:
                    school.department.course:=course?credits<5,
                    school.department:=department?code='acc')
             .school.department.course{department,no,title,credits}
+    - uri: /define(double(x):=x*2){double(1),double(2),double(3)}
+    - uri: /define(student.age(date):=(date(date)-dob)/365:round(1),
+                   student.age():=age('2011-01-01'),
+                   inactive_student:=student?!is_active)
+            .inactive_student{name,dob,start_date,age(start_date),age()}
 
   - title: Projections
     tests:

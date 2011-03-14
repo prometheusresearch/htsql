@@ -227,9 +227,12 @@ class GetFunction(Adapter, LookupItemizeMixin):
     adapts(Binding)
 
     def __init__(self, binding, identifier, arity):
-        assert isinstance(identifier, IdentifierBinding)
+        assert isinstance(identifier, IdentifierSyntax)
         assert isinstance(arity, int) and arity >= 0
-        super(GetFunction, self).__init__(binding, identifier, arity)
+        super(GetFunction, self).__init__(binding)
+        self.identifier = identifier
+        self.key = normalize(identifier.value)
+        self.arity = arity
 
 
 class LookupRoot(Lookup):
@@ -599,7 +602,7 @@ class GetFunctionFromWrapper(GetFunction):
                 AliasBinding)
 
     def __call__(self):
-        return get_function(self.binding.base)
+        return get_function(self.binding.base, self.identifier, self.arity)
 
 
 class ItemizeQuotient(Itemize):
@@ -707,7 +710,7 @@ class GetFunctionFromDefinition(GetFunctionFromWrapper):
                                           self.binding.subnames,
                                           self.binding.arguments,
                                           self.binding.body)
-        return super(LookupDefinition, self).__call__()
+        return super(GetFunctionFromDefinition, self).__call__()
 
 
 class LookupRedirect(Lookup):
@@ -805,8 +808,8 @@ def get_kernel(binding):
     return bindings
 
 
-def get_function(binding):
-    get_function = GetFunction(binding)
+def get_function(binding, identifier, arity):
+    get_function = GetFunction(binding, identifier, arity)
     binding = get_function()
     return binding
 

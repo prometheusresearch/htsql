@@ -15159,6 +15159,52 @@ tests:
                      AND ("course"."credits" > 2)
                      AND ("department"."code" = 'acc')
                ORDER BY "school"."code" ASC, "department"."code" ASC, 1 ASC, 2 ASC
+          - uri: /define(double(x):=x*2){double(1),double(2),double(3)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | define(double(x):=x*2)            |
+              -+-----------------------------------+-
+               | double(1) | double(2) | double(3) |
+              -+-----------+-----------+-----------+-
+               |         2 |         4 |         6 |
+                                             (1 row)
+
+               ----
+               /define(double(x):=x*2){double(1),double(2),double(3)}
+               SELECT (1 * 2),
+                      (2 * 2),
+                      (3 * 2)
+          - uri: /define(student.age(date):=(date(date)-dob)/365:round(1), student.age():=age('2011-01-01'),
+              inactive_student:=student?!is_active) .inactive_student{name,dob,start_date,age(start_date),age()}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | define(student.age(date):=(date(date)-dob)/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student |
+              -+-------------------------------------------------------------------------------------------------------------------------------------------------+-
+               | name                               | dob                       | start_date               | age(start_date)               | age()               |
+              -+------------------------------------+---------------------------+--------------------------+-------------------------------+---------------------+-
+               | Narissa Maya                       | 1992-04-30                | 2007-11-21               |                          15.6 |                18.7 |
+               | Valeria Rinaldi                    | 1985-09-02                | 2004-09-01               |                          19.0 |                25.3 |
+               | Mahesh Basa                        | 1995-08-21                | 2008-04-15               |                          12.7 |                15.4 |
+               | Khadija Hamad Azzan                | 1992-11-26                | 2008-09-21               |                          15.8 |                18.1 |
+               | Raisa Antonova                     | 1992-12-09                | 2008-09-15               |                          15.8 |                18.1 |
+               | Amy Yang                           | 1992-12-17                | 2002-08-10               |                           9.7 |                18.1 |
+               | Ming Wang                          | 1988-03-15                | 2002-11-27               |                          14.7 |                22.8 |
+                                                                                                                                                          (7 rows)
+
+               ----
+               /define(student.age(date):=(date(date)-dob)/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student{name,dob,start_date,age(start_date),age()}
+               SELECT "student"."name",
+                      "student"."dob",
+                      "student"."start_date",
+                      ROUND((CAST(CAST(JULIANDAY("student"."start_date") - JULIANDAY("student"."dob") AS INTEGER) AS REAL) / 365.0), 1),
+                      ROUND((CAST(CAST(JULIANDAY('2011-01-01') - JULIANDAY("student"."dob") AS INTEGER) AS REAL) / 365.0), 1)
+               FROM "student" AS "student"
+               WHERE (NOT "student"."is_active")
+               ORDER BY "student"."id" ASC
         - id: projections
           tests:
           - uri: /quotient(program, degree)

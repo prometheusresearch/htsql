@@ -578,7 +578,7 @@ class BindAssignment(BindMacro):
         arguments = []
         syntax = lop
         if isinstance(syntax, FunctionCallSyntax):
-            names.append(syntax.identifier)
+            identifiers.append(syntax.identifier)
             for argument in syntax.arguments:
                 if not isinstance(argument, IdentifierSyntax):
                     raise BindError("an identifier expected", argument.mark)

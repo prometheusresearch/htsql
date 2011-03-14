@@ -30,8 +30,8 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding)
-from .lookup import lookup, itemize, get_kernel, get_complement
+                      DefinitionBinding, RedirectBinding, AliasBinding)
+from .lookup import lookup, itemize, get_kernel, get_complement, get_function
 from .coerce import coerce
 
 
@@ -163,6 +163,9 @@ class BindingState(object):
         # If passed, set the new lookup context.
         if base is not None:
             self.push_base(base)
+        # First, try to find the function in the local context.
+        recipe = get_function
+        # Otherwise, look for the global function.
         # Realize and apply `BindByName` protocol.
         bind = BindByName(syntax, self)
         bindings = list(bind())
@@ -409,7 +412,14 @@ class BindFunctionOperator(Bind):
         #   <lop> <identifier> <rop>
 
         # Find and bind the function.
-        return self.state.call(self.syntax)
+        recipe = get_function(self.state.base, self.syntax.identifier,
+                              len(self.syntax.arguments))
+        if recipe is not None:
+            bind = BindByRecipe(recipe, self.syntax, self.state)
+            bindings = [bind()]
+        else:
+            bindings = self.state.call(self.syntax)
+        return bindings
 
 
 class BindFunctionCall(Bind):
@@ -430,7 +440,16 @@ class BindFunctionCall(Bind):
         if self.syntax.base is not None:
             base = self.state.bind(self.syntax.base)
         # Find and bind the function.
-        return self.state.call(self.syntax, base)
+        self.state.push_base(base)
+        recipe = get_function(base, self.syntax.identifier,
+                              len(self.syntax.arguments))
+        if recipe is not None:
+            bind = BindByRecipe(recipe, self.syntax, self.state)
+            bindings = [bind()]
+        else:
+            bindings = self.state.call(self.syntax, base)
+        self.state.pop_base()
+        return bindings
 
 
 class BindByName(Protocol):
@@ -771,6 +790,7 @@ class BindBySubstitution(BindByRecipe):
 
     def __call__(self):
         if self.recipe.subnames:
+            assert isinstance(self.syntax, IdentifierSyntax)
             recipe = lookup(self.recipe.base, self.syntax)
             if recipe is None:
                 raise BindError("unable to resolve an identifier",
@@ -783,10 +803,15 @@ class BindBySubstitution(BindByRecipe):
                                         self.recipe.body,
                                         binding.syntax)
             return binding
-        if self.recipe.arguments is not None:
-            assert False
         base = RedirectBinding(self.state.base, self.recipe.base,
                                self.state.base.syntax)
+        if self.recipe.arguments is not None:
+            assert isinstance(self.syntax, CallSyntax)
+            assert len(self.syntax.arguments) == len(self.recipe.arguments)
+            for name, syntax in zip(self.recipe.arguments,
+                                    self.syntax.arguments):
+                binding = self.state.bind(syntax)
+                base = AliasBinding(base, name, binding, base.syntax)
         binding = self.state.bind(self.recipe.body, base=base)
         binding = WrapperBinding(binding, self.syntax)
         return binding
