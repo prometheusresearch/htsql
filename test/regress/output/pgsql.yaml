@@ -15245,6 +15245,55 @@ tests:
                FROM "ed"."student" AS "student"
                WHERE (NOT "student"."is_active")
                ORDER BY "student"."id" ASC
+          - uri: /school{code,{count(student), count(student?gender='m'), count(student?gender='f')}
+              :where(student:=student?is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                                        |
+              -+-------------------------------------------------------------------------------+-
+               | code | count(student) | count(student?gender='m') | count(student?gender='f') |
+              -+------+----------------+---------------------------+---------------------------+-
+               | art  |              6 |                         5 |                         1 |
+               | bus  |              7 |                         3 |                         4 |
+               | edu  |              4 |                         1 |                         3 |
+               | eng  |             12 |                         9 |                         3 |
+               | la   |              7 |                         5 |                         2 |
+               | mus  |              0 |                         0 |                         0 |
+               | ns   |              8 |                         2 |                         6 |
+               | ph   |              0 |                         0 |                         0 |
+               | sc   |              0 |                         0 |                         0 |
+                                                                                        (9 rows)
+
+               ----
+               /school{code,{count(student),count(student?gender='m'),count(student?gender='f')}:where(student:=student?is_active)}
+               SELECT "school"."code",
+                      COALESCE("student_1"."count", 0),
+                      COALESCE("student_2"."count", 0),
+                      COALESCE("student_3"."count", 0)
+               FROM "ad"."school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school"
+                                     FROM "ed"."student" AS "student"
+                                     WHERE "student"."is_active"
+                                     GROUP BY 2) AS "student_1"
+                                    ON ("school"."code" = "student_1"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school"
+                                     FROM "ed"."student" AS "student"
+                                     WHERE ("student"."gender" = 'm')
+                                           AND "student"."is_active"
+                                     GROUP BY 2) AS "student_2"
+                                    ON ("school"."code" = "student_2"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school"
+                                     FROM "ed"."student" AS "student"
+                                     WHERE ("student"."gender" = 'f')
+                                           AND "student"."is_active"
+                                     GROUP BY 2) AS "student_3"
+                                    ON ("school"."code" = "student_3"."school")
+               ORDER BY 1 ASC
         - id: projections
           tests:
           - uri: /quotient(program, degree)

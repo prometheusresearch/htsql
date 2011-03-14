@@ -12,7 +12,7 @@
 
 
 from ..signature import (Signature, Slot, NullarySig, UnarySig, BinarySig,
-                         PolarSig, ConnectiveSig)
+                         PolarSig, ConnectiveSig, NArySig)
 
 
 class FiberSig(Signature):
@@ -305,6 +305,10 @@ class AssignmentSig(BinarySig):
 
 
 class DefineSig(ConnectiveSig):
+    pass
+
+
+class WhereSig(NArySig):
     pass
 
 

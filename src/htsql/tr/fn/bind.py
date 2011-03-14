@@ -45,7 +45,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         QuotientSig, KernelSig, ComplementSig,
-                        AssignmentSig, DefineSig)
+                        AssignmentSig, DefineSig, WhereSig)
 import sys
 
 
@@ -623,6 +623,29 @@ class BindDefine(BindMacro):
             binding = DefinitionBinding(binding, name, subnames, arguments,
                                         assignment.body, self.syntax)
         yield binding
+
+
+class BindWhere(BindMacro):
+
+    named('where')
+    signature = WhereSig
+
+    def expand(self, lop, rops):
+        binding = self.state.base
+        for op in rops:
+            assignment = self.state.bind(op)
+            if not isinstance(assignment, AssignmentBinding):
+                raise BindError("an assignment expected", op.mark)
+            name = assignment.identifiers[0].value
+            subnames = [identifier.value
+                        for identifier in assignment.identifiers[1:]]
+            arguments = None
+            if assignment.arguments is not None:
+                arguments = [argument.value
+                             for argument in assignment.arguments]
+            binding = DefinitionBinding(binding, name, subnames, arguments,
+                                        assignment.body, self.syntax)
+        return self.state.bind_all(lop, base=binding)
 
 
 class BindCast(BindFunction):

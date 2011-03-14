@@ -150,6 +150,10 @@ tests:
                    student.age():=age('2011-01-01'),
                    inactive_student:=student?!is_active)
             .inactive_student{name,dob,start_date,age(start_date),age()}
+    - uri: /school{code,{count(student),
+                         count(student?gender='m'),
+                         count(student?gender='f')}
+                        :where(student:=student?is_active)}
 
   - title: Projections
     tests:

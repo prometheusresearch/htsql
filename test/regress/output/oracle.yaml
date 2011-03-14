@@ -15226,6 +15226,55 @@ tests:
                FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
                WHERE (NOT ("STUDENT"."IS_ACTIVE" <> 0))
                ORDER BY "STUDENT"."ID" ASC
+          - uri: /school{code,{count(student), count(student?gender='m'), count(student?gender='f')}
+              :where(student:=student?is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                                        |
+              -+-------------------------------------------------------------------------------+-
+               | code | count(student) | count(student?gender='m') | count(student?gender='f') |
+              -+------+----------------+---------------------------+---------------------------+-
+               | art  |              6 |                         5 |                         1 |
+               | bus  |              7 |                         3 |                         4 |
+               | edu  |              4 |                         1 |                         3 |
+               | eng  |             12 |                         9 |                         3 |
+               | la   |              7 |                         5 |                         2 |
+               | mus  |              0 |                         0 |                         0 |
+               | ns   |              8 |                         2 |                         6 |
+               | ph   |              0 |                         0 |                         0 |
+               | sc   |              0 |                         0 |                         0 |
+                                                                                        (9 rows)
+
+               ----
+               /school{code,{count(student),count(student?gender='m'),count(student?gender='f')}:where(student:=student?is_active)}
+               SELECT "SCHOOL"."CODE",
+                      COALESCE("STUDENT_1"."count", 0),
+                      COALESCE("STUDENT_2"."count", 0),
+                      COALESCE("STUDENT_3"."count", 0)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     WHERE ("STUDENT"."IS_ACTIVE" <> 0)
+                                     GROUP BY "STUDENT"."SCHOOL") "STUDENT_1"
+                                    ON ("SCHOOL"."CODE" = "STUDENT_1"."SCHOOL")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     WHERE ("STUDENT"."GENDER" = 'm')
+                                           AND ("STUDENT"."IS_ACTIVE" <> 0)
+                                     GROUP BY "STUDENT"."SCHOOL") "STUDENT_2"
+                                    ON ("SCHOOL"."CODE" = "STUDENT_2"."SCHOOL")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     WHERE ("STUDENT"."GENDER" = 'f')
+                                           AND ("STUDENT"."IS_ACTIVE" <> 0)
+                                     GROUP BY "STUDENT"."SCHOOL") "STUDENT_3"
+                                    ON ("SCHOOL"."CODE" = "STUDENT_3"."SCHOOL")
+               ORDER BY 1 ASC
         - id: projections
           tests:
           - uri: /quotient(program, degree)
