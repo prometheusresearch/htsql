@@ -160,7 +160,7 @@ class RewriteOrdered(RewriteSpace):
         if not self.space.is_expanding:
             return self.space.clone(order=order)
         base = self.state.rewrite(self.space.base)
-        return self.space.clone(base=base)
+        return self.space.clone(base=base, order=order)
 
 
 class RewriteCode(Rewrite):

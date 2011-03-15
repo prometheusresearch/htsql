@@ -103,6 +103,7 @@ tests:
     - uri: /program.school{code, root().program{code, degree},
                            count(root(){(program?degree='ba').school.department})}
                            ?code~'a'
+    - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
 
   - title: Root, This, Direct and Fiber functions
     tests:

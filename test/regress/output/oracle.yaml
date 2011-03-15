@@ -14641,6 +14641,62 @@ tests:
                                     ON (("PROGRAM"."SCHOOL" = "DEPARTMENT"."SCHOOL") AND ("PROGRAM"."CODE" = "DEPARTMENT"."CODE"))
                WHERE ("SCHOOL"."CODE" LIKE '%a%' ESCAPE '\')
                ORDER BY "PROGRAM"."SCHOOL" ASC, 2 ASC
+          - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (department?sum(course.credits))                                                         |
+              -+------------------------------------------------------------------------------------------+-
+               | name                   | sum(course.credits)- | avg(course.credits)                      |
+              -+------------------------+----------------------+------------------------------------------+-
+               | Computer Science       |                   22 | 3.14285714285714285714285714285714285714 |
+               | Accounting             |                   19 | 3.16666666666666666666666666666666666667 |
+               | Art History            |                   19 | 3.16666666666666666666666666666666666667 |
+               | Political Science      |                   19 | 3.16666666666666666666666666666666666667 |
+               | Studio Art             |                   19 | 3.16666666666666666666666666666666666667 |
+               | Bioengineering         |                   17 |                                     4.25 |
+               | Mechanical Engineering |                   17 |                                      3.4 |
+               | Physics                |                   17 | 2.83333333333333333333333333333333333333 |
+               | Psychology             |                   17 |                                      3.4 |
+               | Electrical Engineering |                   16 |                                      3.2 |
+               | English                |                   16 | 2.66666666666666666666666666666666666667 |
+               | Teacher Education      |                   16 |                                      3.2 |
+               | History                |                   15 |                                        3 |
+               | Foreign Languages      |                   15 |                                        3 |
+               | Chemistry              |                   14 |                                      2.8 |
+               | Capital Markets        |                   12 |                                        3 |
+               | Educational Policy     |                   12 |                                        3 |
+               | Astronomy              |                    9 |                                     2.25 |
+               | Corporate Finance      |                    9 |                                        3 |
+               | Mathematics            |                    5 |                                        5 |
+               | Bursar's Office        |                    0 |                                          |
+               | Career Development     |                    0 |                                          |
+               | Parents & Alumni       |                    0 |                                          |
+               | Piano                  |                    0 |                                          |
+               | Strings                |                    0 |                                          |
+               | Vocals                 |                    0 |                                          |
+               | Wind                   |                    0 |                                          |
+                                                                                                  (27 rows)
+
+               ----
+               /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
+               SELECT "DEPARTMENT"."NAME",
+                      COALESCE("COURSE_1"."sum", 0),
+                      "COURSE_2"."avg"
+               FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    LEFT OUTER JOIN (SELECT SUM("COURSE"."CREDITS") AS "sum",
+                                            "COURSE"."DEPARTMENT"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT") "COURSE_1"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT")
+                    LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
+                                            "COURSE"."DEPARTMENT"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT") "COURSE_2"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT")
+               WHERE (COALESCE("COURSE_1"."sum", 0) IS NOT NULL)
+               ORDER BY 2 DESC, "DEPARTMENT"."CODE" ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.fiber(department))}

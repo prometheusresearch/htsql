@@ -14665,6 +14665,62 @@ tests:
                                     ON (("program"."school" = "department"."school") AND ("program"."code" = "department"."code"))
                WHERE ("school"."code" ILIKE '%a%')
                ORDER BY "program"."school" ASC, 2 ASC
+          - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (department?sum(course.credits))                                    |
+              -+---------------------------------------------------------------------+-
+               | name                   | sum(course.credits)- | avg(course.credits) |
+              -+------------------------+----------------------+---------------------+-
+               | Computer Science       |                   22 |  3.1428571428571429 |
+               | Accounting             |                   19 |  3.1666666666666667 |
+               | Art History            |                   19 |  3.1666666666666667 |
+               | Political Science      |                   19 |  3.1666666666666667 |
+               | Studio Art             |                   19 |  3.1666666666666667 |
+               | Bioengineering         |                   17 |  4.2500000000000000 |
+               | Mechanical Engineering |                   17 |  3.4000000000000000 |
+               | Physics                |                   17 |  2.8333333333333333 |
+               | Psychology             |                   17 |  3.4000000000000000 |
+               | Electrical Engineering |                   16 |  3.2000000000000000 |
+               | English                |                   16 |  2.6666666666666667 |
+               | Teacher Education      |                   16 |  3.2000000000000000 |
+               | History                |                   15 |  3.0000000000000000 |
+               | Foreign Languages      |                   15 |  3.0000000000000000 |
+               | Chemistry              |                   14 |  2.8000000000000000 |
+               | Capital Markets        |                   12 |  3.0000000000000000 |
+               | Educational Policy     |                   12 |  3.0000000000000000 |
+               | Astronomy              |                    9 |  2.2500000000000000 |
+               | Corporate Finance      |                    9 |  3.0000000000000000 |
+               | Mathematics            |                    5 |  5.0000000000000000 |
+               | Bursar's Office        |                    0 |                     |
+               | Career Development     |                    0 |                     |
+               | Parents & Alumni       |                    0 |                     |
+               | Piano                  |                    0 |                     |
+               | Strings                |                    0 |                     |
+               | Vocals                 |                    0 |                     |
+               | Wind                   |                    0 |                     |
+                                                                             (27 rows)
+
+               ----
+               /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
+               SELECT "department"."name",
+                      COALESCE("course_1"."sum", 0),
+                      "course_2"."avg"
+               FROM "ad"."department" AS "department"
+                    LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum",
+                                            "course"."department"
+                                     FROM "ad"."course" AS "course"
+                                     GROUP BY 2) AS "course_1"
+                                    ON ("department"."code" = "course_1"."department")
+                    LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS NUMERIC)) AS "avg",
+                                            "course"."department"
+                                     FROM "ad"."course" AS "course"
+                                     GROUP BY 2) AS "course_2"
+                                    ON ("department"."code" = "course_2"."department")
+               WHERE (COALESCE("course_1"."sum", 0) IS NOT NULL)
+               ORDER BY 2 DESC, "department"."code" ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.fiber(department))}
