@@ -204,9 +204,9 @@ HTSQL queries typically start with a table.
     FROM "ad"."department" AS "department"
     ORDER BY 1 ASC
 
-This query (Q1_) returns all departments.
+`This query`__ returns all departments.
 
-.. _Q1: http://demo.htsql.org/department
+__ http://demo.htsql.org/department
 
 Selecting Columns
 -----------------
@@ -229,12 +229,11 @@ decorator sets the title.
       ON ("department"."school" = "school"."code")
       ORDER BY "department"."code" ASC
 
-This query (Q2_) returns, for each department, the name of the
+`This query`__ returns, for each department, the name of the
 associated school and the name of the department.
 
-.. _Q2:
-     http://demo.htsql.org
-     /department{school.name, name}
+__ http://demo.htsql.org
+        /department{school.name, name}
 
 Filtering Rows
 --------------
@@ -262,12 +261,11 @@ HTSQL lets you filter results with arbitrary predicates.
          AND ("department"."school" = 'eng')
        ORDER BY 1 ASC, 2 ASC
 
-This query (Q3_) returns courses from the school of
+`This query`__ returns courses from the school of
 engineering having more than 3 credits.
 
-.. _Q3:
-     http://demo.htsql.org
-     /course?department.school='eng'&credits>3
+__ http://demo.htsql.org
+        /course?department.school='eng'&credits>3
 
 Paging and Sorting
 ------------------
@@ -291,12 +289,11 @@ Table operations such as sorting and paging could be freely combined.
       ORDER BY 4 ASC NULLS FIRST, 1 ASC, 2 ASC
       LIMIT 10 OFFSET 20
 
-This query (Q4_) returns courses 21 to 30 in the course
+`This query`__ returns courses 21 to 30 in the course
 catalog as sorted by number of credits.
 
-.. _Q4:
-     http://demo.htsql.org
-     /course.sort(credits).limit(10,20)
+__ http://demo.htsql.org
+        /course.sort(credits).limit(10,20)
 
 Aggregating Data
 ----------------
@@ -339,14 +336,13 @@ In HTSQL, aggregates aren't a reason to run to the DBA.
       )
       ORDER BY "school"."code" ASC
 
-This query (Q5_) returns, for each school having a
+`This query`__ returns, for each school having a
 MS program, the average number of courses offered
 across its departments.
 
-.. _Q5:
-     http://demo.htsql.org
-     /school{name,avg(department.count(course))}?
-          exists(program.degree='ms')
+__ http://demo.htsql.org
+        /school{name,avg(department.count(course))}
+                ?exists(program.degree='ms')
 
 
 What's up Next?
@@ -364,7 +360,7 @@ HTSQL supports complex grouping operations.
 
    .. sourcecode:: htsql
 
-      /program{degree^, count()}
+      /program{^degree, count(^)}
 
    .. sourcecode:: sql
 
@@ -373,11 +369,10 @@ HTSQL supports complex grouping operations.
       GROUP BY 1
       ORDER BY 1;
 
-This query (N1_) returns the number of programs per degree.
+`This query`__ returns the number of programs per degree.
 
-.. _N1:
-     http://demo.htsql.com
-     /program{degree^,count()}
+__ http://demo.htsql.org
+        /(program^degree){*,count(^)}
 
 Hierarchical Output
 -------------------
@@ -410,12 +405,11 @@ HTSQL is not limited to tabular output.
       AS d ON (s.code = d.school)
       ORDER BY s.code,d.code;
 
-This query (N2_) returns programs and departments
+`This query`__ returns programs and departments
 in each school.
 
-.. _N2:
-     http://demo.htsql.com
-     /school{name}/(program{title};department{name})
+__ http://demo.htsql.com
+        /school{name}/(program{title};department{name})
 
 More Backends
 -------------
