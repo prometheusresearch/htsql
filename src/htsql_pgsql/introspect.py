@@ -36,7 +36,8 @@ class Meta(object):
         connection = connect()
         cursor = connection.cursor()
         self.pg_namespace = self.fetch(cursor, 'pg_catalog.pg_namespace')
-        self.pg_class = self.fetch(cursor, 'pg_catalog.pg_class')
+        self.pg_class = self.fetch(cursor, 'pg_catalog.pg_class',
+                    extra="HAS_TABLE_PRIVILEGE(oid, 'SELECT') AS has_access")
         self.pg_class_by_namespace = self.group(self.pg_class,
                                                 self.pg_namespace,
                                                 'relnamespace')
@@ -53,11 +54,21 @@ class Meta(object):
         self.pg_constraint_by_class = self.group(self.pg_constraint,
                                                  self.pg_class, 'conrelid')
         self.pg_rewrite = self.fetch(cursor, 'pg_rewrite')
+        self.skip_list = []
+        for oid in sorted(self.pg_class):
+            rel = self.pg_class[oid]
+            if not rel.has_access:
+                schema_name = self.pg_namespace[rel.relnamespace].nspname
+                table_name = rel.relname
+                self.skip_list.append((schema_name, table_name))
 
-    def fetch(self, cursor, table_name, key_names=('oid',)):
+    def fetch(self, cursor, table_name, key_names=('oid',), extra=None):
         rows = {}
-        cursor.execute("SELECT %s, * FROM %s" % (", ".join(key_names),
-                                                 table_name))
+        select = "%s, *" % ", ".join(key_names)
+        if extra is not None:
+            select += ", %s" % extra
+        sql ="SELECT %s FROM %s" % (select, table_name)
+        cursor.execute(sql)
         for items in cursor.fetchall():
             key = tuple(items[idx] for idx in range(len(key_names)))
             if len(key) == 1:
@@ -109,6 +120,8 @@ class IntrospectPGSQL(Introspect):
         return True
 
     def permit_table(self, schema_name, table_name):
+        if (schema_name, table_name) in self.meta.skip_list:
+            return False
         return True
 
     def permit_column(self, schema_name, table_name, column_name):

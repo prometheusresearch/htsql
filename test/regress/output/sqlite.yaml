@@ -2292,7 +2292,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unable to resolve an identifier:
+            bind error: ambiguous name:
                 /(course?department='psych'&no=610).prerequisite
                                                     ^^^^^^^^^^^^
         - uri: /(course?department='psych'&no=610).course_classification
@@ -2929,7 +2929,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unable to resolve an identifier:
+            bind error: ambiguous name:
                 /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).course
                                                                                                         ^^^^^^
         - uri: /(classification?code='modlanguage').part_of
