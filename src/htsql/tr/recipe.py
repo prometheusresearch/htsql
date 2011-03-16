@@ -75,3 +75,7 @@ class BindingRecipe(Recipe):
         self.binding = binding
 
 
+class AmbiguousRecipe(Recipe):
+    pass
+
+

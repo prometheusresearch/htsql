@@ -25,7 +25,7 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      ComplementSyntax, StringSyntax, NumberSyntax)
 from .recipe import (Recipe, FreeTableRecipe, AttachedTableRecipe,
                      ColumnRecipe, ComplementRecipe, KernelRecipe,
-                     SubstitutionRecipe, BindingRecipe)
+                     SubstitutionRecipe, BindingRecipe, AmbiguousRecipe)
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding, FreeTableBinding, AttachedTableBinding,
@@ -823,6 +823,14 @@ class BindByBinding(BindByRecipe):
 
     def __call__(self):
         return self.recipe.binding
+
+
+class BindByAmbiguous(BindByRecipe):
+
+    adapts(AmbiguousRecipe)
+
+    def __call__(self):
+        raise BindError("ambiguous name", self.syntax.mark)
 
 
 def bind_all(syntax, state=None, base=None):
