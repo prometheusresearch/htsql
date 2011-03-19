@@ -629,7 +629,7 @@ class Space(Expression):
                 # cardinality of its base.  We could skip this prefix
                 # and proceed further.
                 my_prefixes.pop()
-            elif (their_prefix.is_contrating and
+            elif (their_prefix.is_contracting and
                   their_prefix.is_expanding and
                   not their_prefix.is_axis):
                 # Same with the other prefix.
