@@ -120,6 +120,7 @@ class SingleTableIdScenario(Scenario):
         rtable = self.find_rtable(query)
         relid = int(rtable.relid)
         if relid not in tablemap:
+            # not introspected table
             return []
         o_table = tablemap[relid]
         o_pkey = None
@@ -235,6 +236,9 @@ class SelectFKScenario(Scenario):
                     and target.resorigtbl != '0' \
                     and target.resjunk != 'true':
                 colname = rtablemap[target.resorigtbl].eref.colnames[int(target.resorigcol) - 1].strip('"')
+                if int(target.resorigtbl) not in tablemap:
+                    # not introspected table
+                    continue
                 table_entity = tablemap[int(target.resorigtbl)]
                 ref_column = self.get_key_column(table_entity, colname)
                 item = ref_column
