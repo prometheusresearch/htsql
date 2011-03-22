@@ -66,6 +66,7 @@ ENTRY_POINTS = {
         'engine.mssql = htsql_mssql.export:ENGINE_MSSQL',
         'tweak.pgsql.timeout'
             ' = htsql_tweak.pgsql_timeout.export:TWEAK_PGSQL_TIMEOUT',
+        'tweak.autolimit = htsql_tweak.autolimit.export:TWEAK_AUTOLIMIT',
     ],
 }
 INSTALL_REQUIRES = [
