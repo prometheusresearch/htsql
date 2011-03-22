@@ -67,6 +67,7 @@ ENTRY_POINTS = {
         'tweak.pgsql.timeout'
             ' = htsql_tweak.pgsql_timeout.export:TWEAK_PGSQL_TIMEOUT',
         'tweak.autolimit = htsql_tweak.autolimit.export:TWEAK_AUTOLIMIT',
+        'tweak.schema = htsql_tweak.schema.export:TWEAK_SCHEMA',
     ],
 }
 INSTALL_REQUIRES = [
