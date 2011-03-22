@@ -823,7 +823,7 @@ def autoimport(name):
         The package name.
     """
     # Import the package itself.
-    package = __import__(name)
+    package = __import__(name, fromlist=['__name__'])
     # It must be the package we asked for.
     assert hasattr(package, '__name__') and package.__name__ == name
     # Make sure it is indeed a package (has `__name__`).

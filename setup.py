@@ -64,6 +64,8 @@ ENTRY_POINTS = {
         'engine.mysql = htsql_mysql.export:ENGINE_MYSQL',
         'engine.oracle = htsql_oracle.export:ENGINE_ORACLE',
         'engine.mssql = htsql_mssql.export:ENGINE_MSSQL',
+        'tweak.pgsql.timeout'
+            ' = htsql_tweak.pgsql_timeout.export:TWEAK_PGSQL_TIMEOUT',
     ],
 }
 INSTALL_REQUIRES = [
