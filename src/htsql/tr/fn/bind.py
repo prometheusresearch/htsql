@@ -15,7 +15,7 @@ from ...util import aresubclasses
 from ...adapter import Adapter, Component, adapts, adapts_many, named
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
-                       DateDomain, EnumDomain)
+                       DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
                       SpecifierSyntax, FunctionCallSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
@@ -38,7 +38,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         HeadSig, TailSig, SliceSig, AtSig, ReplaceSig,
                         UpperSig, LowerSig, TrimSig,
                         DateIncrementSig, SubtractSig, DateDecrementSig,
-                        DateDifferenceSig, TodaySig,
+                        DateDifferenceSig, TodaySig, NowSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
                         KeepPolaritySig, ReversePolaritySig,
                         RoundSig, RoundToSig, LengthSig,
@@ -1390,6 +1390,13 @@ class BindToday(BindMonoFunction):
     signature = TodaySig
     codomain = DateDomain()
     hint = """today() -> the current date"""
+
+
+class BindNow(BindMonoFunction):
+
+    named('now')
+    signature = NowSig
+    codomain = DateTimeDomain()
 
 
 class BindExtractYear(BindPolyFunction):

@@ -14,7 +14,8 @@ This module defines Oracle-specific data types.
 
 
 from htsql.domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
-                          FloatDomain, StringDomain, DateDomain, OpaqueDomain)
+                          FloatDomain, StringDomain, DateDomain, TimeDomain,
+                          DateTimeDomain, OpaqueDomain)
 
 
 class OracleDomain(Domain):
@@ -85,6 +86,14 @@ class OracleDateDomain(OracleDomain, DateDomain):
     """
     Represents an Oracle ``DATE`` data type.
     """
+
+
+class OracleTimeDomain(OracleDomain, TimeDomain):
+    pass
+
+
+class OracleDateTimeDomain(OracleDomain, DateTimeDomain):
+    pass
 
 
 class OracleOpaqueDomain(OracleDomain, OpaqueDomain):

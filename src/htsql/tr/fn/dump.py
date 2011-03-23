@@ -18,9 +18,10 @@ from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
                         ReversePolaritySig, RoundSig, RoundToSig,
                         LengthSig, LikeSig, ReplaceSig, SubstringSig,
-                        UpperSig, LowerSig, TrimSig, TodaySig, MakeDateSig,
-                        ExtractYearSig, ExtractMonthSig, ExtractDaySig,
-                        ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig)
+                        UpperSig, LowerSig, TrimSig, TodaySig, NowSig,
+                        MakeDateSig, ExtractYearSig, ExtractMonthSig,
+                        ExtractDaySig, ExistsSig, CountSig, MinMaxSig,
+                        SumSig, AvgSig)
 
 
 class DumpFunction(DumpBySignature):
@@ -196,6 +197,12 @@ class DumpToday(DumpFunction):
 
     adapts(TodaySig)
     template = "CURRENT_DATE"
+
+
+class DumpNow(DumpFunction):
+
+    adapts(NowSig)
+    template = "LOCALTIMESTAMP"
 
 
 class DumpMakeDate(DumpFunction):

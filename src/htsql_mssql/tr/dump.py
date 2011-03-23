@@ -26,8 +26,8 @@ from htsql.tr.dump import (FormatName, DumpBranch, DumpBySignature,
                            DumpToDate)
 from htsql.tr.fn.dump import (DumpRound, DumpRoundTo, DumpLength,
                               DumpConcatenate, DumpSubstring, DumpTrim,
-                              DumpToday, DumpExtractYear, DumpExtractMonth,
-                              DumpExtractDay, DumpMakeDate,
+                              DumpToday, DumpNow, DumpExtractYear,
+                              DumpExtractMonth, DumpExtractDay, DumpMakeDate,
                               DumpDateIncrement, DumpDateDecrement,
                               DumpDateDifference)
 from htsql.tr.signature import FromPredicateSig, ToPredicateSig
@@ -301,6 +301,11 @@ class MSSQLDumpTrim(DumpTrim):
 class MSSQLDumpToday(DumpToday):
 
     template = "CAST(FLOOR(CAST(GETDATE() AS FLOAT)) AS DATETIME)"
+
+
+class MSSQLDumpNow(DumpNow):
+
+    template = "GETDATE()"
 
 
 class MSSQLDumpExtractYear(DumpExtractYear):

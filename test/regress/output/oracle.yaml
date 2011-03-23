@@ -10952,6 +10952,24 @@ tests:
                     (DATE '2010-04-15' - 6813),
                     (DATE '2010-04-15' - DATE '1991-08-20')
              FROM DUAL "!"
+      - id: datetime-functions-and-operators
+        tests:
+        - uri: /{now()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                            |
+            -+----------------------------+-
+             | now()                      |
+            -+----------------------------+-
+             | 2011-03-02 00:12:09.550043 |
+                                    (1 row)
+
+             ----
+             /{now()}
+             SELECT LOCALTIMESTAMP
+             FROM DUAL "!"
       - id: aggregate-functions
         tests:
         - uri: /course?department='lang'

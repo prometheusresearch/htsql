@@ -10995,6 +10995,23 @@ tests:
              SELECT ADDDATE(DATE('1991-08-20'), 6813),
                     SUBDATE(DATE('2010-04-15'), 6813),
                     DATEDIFF(DATE('2010-04-15'), DATE('1991-08-20'))
+      - id: datetime-functions-and-operators
+        tests:
+        - uri: /{now()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                     |
+            -+---------------------+-
+             | now()               |
+            -+---------------------+-
+             | 2011-03-22 22:34:30 |
+                             (1 row)
+
+             ----
+             /{now()}
+             SELECT LOCALTIMESTAMP
       - id: aggregate-functions
         tests:
         - uri: /course?department='lang'

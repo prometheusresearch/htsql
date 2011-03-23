@@ -249,6 +249,10 @@ class TodaySig(NullarySig):
     pass
 
 
+class NowSig(NullarySig):
+    pass
+
+
 class AggregateSig(Signature):
 
     slots = [

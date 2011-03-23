@@ -17,6 +17,7 @@ import re
 import sys
 import urllib
 import pkgutil
+import datetime, time
 
 
 #
@@ -834,5 +835,83 @@ def autoimport(name):
     # Import the modules in the package.
     for importer, module_name, is_package in modules:
         __import__(module_name)
+
+
+#
+# Timezone implementations.
+#
+
+
+class UTC(datetime.tzinfo):
+
+    def utcoffset(self, dt):
+        return datetime.timedelta(0)
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+    def tzname(self, dt):
+        return "Z"
+
+
+class FixedTZ(datetime.tzinfo):
+
+    def __init__(self, offset):
+        self.offset = offset
+
+    def utcoffset(self, dt):
+        return datetime.timedelta(minutes=self.offset)
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+    def tzname(self, dt):
+        hour = abs(self.offset) / 60
+        minute = abs(self.offset) % 60
+        sign = '+'
+        if self.offset < 0:
+            sign = '-'
+        if minute:
+            return "%s%02d:%02d" % (sign, hour, minute)
+        else:
+            return "%s%d" % (sign, hour)
+
+
+class LocalTZ(datetime.tzinfo):
+
+    def utcoffset(self, dt):
+        if self.isdst(dt):
+            return datetime.timedelta(seconds=-time.altzone)
+        else:
+            return datetime.timedelta(seconds=-time.timezone)
+
+    def dst(self, dt):
+        if self.isdst(dt):
+            return datetime.timedelta(seconds=(time.timezone-time.altzone))
+        else:
+            return datetime.timedelta(0)
+
+    def tzname(self, dt):
+        if self.isdst(dt):
+            offset = -time.altzone/60
+        else:
+            offset = -time.timezone/60
+        hour = abs(offset) / 60
+        minute = abs(offset) % 60
+        sign = '+'
+        if offset < 0:
+            sign = '-'
+        if minute:
+            return "%s%02d:%02d" % (sign, hour, minute)
+        else:
+            return "%s%d" % (sign, hour)
+
+    def isdst(self, dt):
+        tt = (dt.year, dt.month, dt.day,
+              dt.hour, dt.minute, dt.second,
+              dt.weekday(), 0, 0)
+        stamp = time.mktime(tt)
+        tt = time.localtime(stamp)
+        return tt.tm_isdst > 0
 
 

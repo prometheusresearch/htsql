@@ -427,6 +427,15 @@ tests:
 
 ########################################################################
 
+- title: DateTime Functions and Operators
+  tests:
+
+  # Construction
+  - uri: /{now()}
+    ignore: true
+
+########################################################################
+
 - title: Aggregate functions
   tests:
 

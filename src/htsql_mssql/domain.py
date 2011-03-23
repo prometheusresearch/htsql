@@ -14,7 +14,8 @@ This module defines MS SQL Server-specific data types.
 
 
 from htsql.domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
-                          FloatDomain, StringDomain, DateDomain, OpaqueDomain)
+                          FloatDomain, StringDomain, DateDomain, TimeDomain,
+                          DateTimeDomain, OpaqueDomain)
 
 
 class MSSQLDomain(Domain):
@@ -89,6 +90,14 @@ class MSSQLDateDomain(MSSQLDomain, DateDomain):
     """
     Represents ``DATETIME`` and ``SMALLDATETIME`` data types.
     """
+
+
+class MSSQLTimeDomain(MSSQLDomain, TimeDomain):
+    pass
+
+
+class MSSQLDateTimeDomain(MSSQLDomain, DateTimeDomain):
+    pass
 
 
 class MSSQLOpaqueDomain(MSSQLDomain, OpaqueDomain):

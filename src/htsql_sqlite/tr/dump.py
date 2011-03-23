@@ -22,7 +22,7 @@ from htsql.tr.fn.dump import (DumpLength, DumpSubstring, DumpTrim,
                               DumpDateIncrement, DumpDateDecrement,
                               DumpDateDifference, DumpMakeDate,
                               DumpExtractYear, DumpExtractMonth,
-                              DumpExtractDay)
+                              DumpExtractDay, DumpToday, DumpNow)
 from htsql.tr.error import SerializeError
 
 
@@ -123,6 +123,16 @@ class SQLiteDumpTrim(DumpTrim):
             self.format("RTRIM({op})", self.arguments)
         else:
             self.format("TRIM({op})", self.arguments)
+
+
+class SQLiteDumpToday(DumpToday):
+
+    template = "DATE('now', 'localtime')"
+
+
+class SQLiteDumpNow(DumpNow):
+
+    template = "DATETIME('now', 'localtime')"
 
 
 class SQLiteDumpDateIncrement(DumpDateIncrement):

@@ -15,7 +15,7 @@ This module defines PostgreSQL-specific data types.
 
 from htsql.domain import (Domain, BooleanDomain, IntegerDomain, FloatDomain,
                           DecimalDomain, StringDomain, EnumDomain, DateDomain,
-                          OpaqueDomain)
+                          TimeDomain, DateTimeDomain, OpaqueDomain)
 
 
 class PGDomain(Domain):
@@ -105,6 +105,14 @@ class PGDateDomain(PGDomain, DateDomain):
     """
     Represents the ``DATE`` data type.
     """
+
+
+class PGTimeDomain(PGDomain, TimeDomain):
+    pass
+
+
+class PGDateTimeDomain(PGDomain, DateTimeDomain):
+    pass
 
 
 class PGOpaqueDomain(PGDomain, OpaqueDomain):

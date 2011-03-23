@@ -15,7 +15,7 @@ This module defines MySQL-specific data types.
 
 from htsql.domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                           FloatDomain, StringDomain, EnumDomain, DateDomain,
-                          OpaqueDomain)
+                          TimeDomain, DateTimeDomain, OpaqueDomain)
 
 
 class MySQLDomain(Domain):
@@ -93,6 +93,14 @@ class MySQLDateDomain(MySQLDomain, DateDomain):
     """
     Represents a MySQL ``DATE`` data type.
     """
+
+
+class MySQLTimeDomain(MySQLDomain, TimeDomain):
+    pass
+
+
+class MySQLDateTimeDomain(MySQLDomain, DateTimeDomain):
+    pass
 
 
 class MySQLOpaqueDomain(MySQLDomain, OpaqueDomain):

@@ -14,7 +14,8 @@ This module defines SQLite-specific data types.
 
 
 from htsql.domain import (Domain, BooleanDomain, IntegerDomain, FloatDomain,
-                          StringDomain, DateDomain, OpaqueDomain)
+                          StringDomain, DateDomain, TimeDomain, DateTimeDomain,
+                          OpaqueDomain)
 
 
 class SQLiteDomain(Domain):
@@ -81,6 +82,14 @@ class SQLiteDateDomain(SQLiteDomain, DateDomain):
     In SQL, date values are expressed as ``TEXT`` values
     of the form ``YYYY-MM-DD``.
     """
+
+
+class SQLiteTimeDomain(SQLiteDomain, TimeDomain):
+    pass
+
+
+class SQLiteDateTimeDomain(SQLiteDomain, DateTimeDomain):
+    pass
 
 
 class SQLiteOpaqueDomain(SQLiteDomain, OpaqueDomain):

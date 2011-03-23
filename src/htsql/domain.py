@@ -13,7 +13,7 @@ This module defines HTSQL domains.
 """
 
 
-from .util import maybe, oneof, listof
+from .util import maybe, oneof, listof, UTC, FixedTZ
 import re
 import decimal
 import datetime
@@ -473,7 +473,13 @@ class DateDomain(Domain):
     """
 
     # Regular expression to match YYYY-MM-DD.
-    pattern = r'^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})$'
+    pattern = r'''(?x)
+        ^ \s*
+        (?P<year> \d{4} )
+        - (?P<month> \d{2} )
+        - (?P<day> \d{2} )
+        \s* $
+    '''
     regexp = re.compile(pattern)
 
     def parse(self, data):
@@ -504,6 +510,168 @@ class DateDomain(Domain):
         if value is None:
             return None
         # `str` on `datetime.date` gives us the date in YYYY-MM-DD format.
+        return str(value)
+
+
+class TimeDomain(Domain):
+    """
+    Represents a time data type.
+
+    Valid literal values: valid time values in the form `HH:MM[:SS[.SSSSSS]]`.
+
+    Valid native values: `datetime.time` objects.
+    """
+
+    # Regular expression to match HH:MM:SS.SSSSSS.
+    pattern = r'''(?x)
+        ^ \s*
+        (?P<hour> \d{1,2} )
+        : (?P<minute> \d{2} )
+        (?: : (?P<second> \d{2} )
+            (?: \. (?P<microsecond> \d+ ) )? )?
+        \s* $
+    '''
+    regexp = re.compile(pattern)
+
+    def parse(self, data):
+        # Sanity check on the argument.
+        assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
+        if data is None:
+            return None
+        # Parse `data` as HH:MM:SS.SSS.
+        match = self.regexp.match(data)
+        if match is None:
+            raise ValueError("invalid time literal: expected a valid time"
+                             " in a 'HH:SS:MM.SSSSSS' format; got %r" % data)
+        hour = int(match.group('hour'))
+        minute = int(match.group('minute'))
+        second = match.group('second')
+        if second is not None:
+            second = int(second)
+        else:
+            second = 0
+        microsecond = match.group('microsecond')
+        if microsecond is not None:
+            if len(microsecond) < 6:
+                microsecond += '0'*(6-len(microsecond))
+            microsecond = microsecond[:6]
+            microsecond = int(microsecond)
+        else:
+            microsecond = 0
+        # Generate a `datetime.time` value; may fail if the time is not valid.
+        try:
+            value = datetime.time(hour, minute, second, microsecond)
+        except ValueError, exc:
+            raise ValueError("invalid time literal: %s" % exc)
+        return value
+
+    def dump(self, value):
+        # Sanity check on the argument.
+        assert isinstance(value, maybe(datetime.time))
+        # `None` represents `NULL` both in literal and native format.
+        if value is None:
+            return None
+        # `str` on `datetime.date` gives us the date in HH:MM:SS.SSSSSS format.
+        return str(value)
+
+
+class DateTimeDomain(Domain):
+    """
+    Represents a date and time data type.
+
+    Valid literal values: valid date and time values in the form
+    `YYYY-MM-DD HH:MM[:SS[.SSSSSS]]`.
+
+    Valid native values: `datetime.datetime` objects.
+    """
+
+    # Regular expression to match YYYY-MM-DD HH:MM:SS.SSSSSS.
+    pattern = r'''(?x)
+        ^ \s*
+        (?P<year> \d{4} )
+        - (?P<month> \d{2} )
+        - (?P<day> \d{2} )
+        (?:
+            (?: \s+ | [tT] )
+            (?P<hour> \d{1,2} )
+            : (?P<minute> \d{2} )
+            (?: : (?P<second> \d{2} )
+                (?: \. (?P<microsecond> \d+ ) )? )?
+        )?
+        (?:
+          \s*
+          (?: (?P<tz_utc> Z ) |
+              (?P<tz_sign> [+-] )
+              (?P<tz_hour> \d{1,2} )
+              (?: :
+                  (?P<tz_minute> \d{2} )
+              )? )
+        )?
+        \s* $
+    '''
+    regexp = re.compile(pattern)
+
+    def parse(self, data):
+        # Sanity check on the argument.
+        assert isinstance(data, maybe(str))
+        # `None` represents `NULL` both in literal and native format.
+        if data is None:
+            return None
+        # Parse `data` as YYYY-DD-MM HH:MM:SS.SSSSSS.
+        match = self.regexp.match(data)
+        if match is None:
+            raise ValueError("invalid datetime literal: expected a valid time"
+                             " in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format;"
+                             " got %r" % data)
+        year = int(match.group('year'))
+        month = int(match.group('month'))
+        day = int(match.group('day'))
+        hour = match.group('hour')
+        hour = int(hour) if hour is not None else 0
+        minute = match.group('minute')
+        minute = int(minute) if minute is not None else 0
+        second = match.group('second')
+        second = int(second) if second is not None else 0
+        microsecond = match.group('microsecond')
+        if microsecond is not None:
+            if len(microsecond) < 6:
+                microsecond += '0'*(6-len(microsecond))
+            microsecond = microsecond[:6]
+            microsecond = int(microsecond)
+        else:
+            microsecond = 0
+        tz_utc = match.group('tz_utc')
+        tz_sign = match.group('tz_sign')
+        tz_hour = match.group('tz_hour')
+        tz_minute = match.group('tz_minute')
+        if tz_utc is not None:
+            tz = UTC()
+        elif tz_sign is not None:
+            tz_hour = int(tz_hour)
+            tz_minute = int(tz_minute) if tz_minute is not None else 0
+            offset = tz_hour+60+tz_minute
+            if tz_sign == '-':
+                offset = -offset
+            tz = FixedTZ(offset)
+        else:
+            tz = None
+        # Generate a `datetime.datetime` value; may fail if the value is
+        # invalid.
+        try:
+            value = datetime.datetime(year, month, day, hour, minute, second,
+                                      microsecond, tz)
+        except ValueError, exc:
+            raise ValueError("invalid datetime literal: %s" % exc)
+        return value
+
+    def dump(self, value):
+        # Sanity check on the argument.
+        assert isinstance(value, maybe(datetime.datetime))
+        # `None` represents `NULL` both in literal and native format.
+        if value is None:
+            return None
+        # `str` on `datetime.datetime` gives us the date in ISO format.
         return str(value)
 
 

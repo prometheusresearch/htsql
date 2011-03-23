@@ -10901,6 +10901,23 @@ tests:
              SELECT ('1991-08-20'::DATE + 6813),
                     ('2010-04-15'::DATE - 6813),
                     ('2010-04-15'::DATE - '1991-08-20'::DATE)
+      - id: datetime-functions-and-operators
+        tests:
+        - uri: /{now()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                            |
+            -+----------------------------+-
+             | now()                      |
+            -+----------------------------+-
+             | 2011-03-22 22:34:15.476233 |
+                                    (1 row)
+
+             ----
+             /{now()}
+             SELECT LOCALTIMESTAMP
       - id: aggregate-functions
         tests:
         - uri: /course?department='lang'
