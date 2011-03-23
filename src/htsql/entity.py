@@ -141,6 +141,17 @@ class CatalogEntity(Entity):
     def __init__(self, schemas):
         # Sanity check on the argument.
         assert isinstance(schemas, listof(SchemaEntity))
+        name_to_schema = dict((schema.name, schema) for schema in schemas)
+        for origin_schema in schemas:
+            for origin_table in origin_schema.tables:
+                for fk in origin_table.foreign_keys:
+                    assert fk.target_schema_name in name_to_schema
+                    schema = name_to_schema[fk.target_schema_name]
+                    assert fk.target_name in schema.tables
+                    table = schema.tables[fk.target_name]
+                    assert (set(column.name for column in table.columns)
+                                .issuperset(set(fk.target_column_names)))
+
         # An ordered mapping: name -> schema.
         self.schemas = EntitySet(schemas)
 
@@ -195,9 +206,15 @@ class TableEntity(NamedEntity):
         assert isinstance(unique_keys, listof(UniqueKeyEntity))
         assert all((uk.origin_schema_name, uk.origin_name)
                         == (schema_name, name) for uk in unique_keys)
+        assert set(column.name for column in columns).issuperset(
+                set(column_name for uk in unique_keys
+                                for column_name in uk.origin_column_names))
         assert isinstance(foreign_keys, listof(ForeignKeyEntity))
         assert all((fk.origin_schema_name, fk.origin_name)
                         == (schema_name, name) for fk in foreign_keys)
+        assert set(column.name for column in columns).issuperset(
+                set(column_name for fk in foreign_keys
+                                for column_name in fk.origin_column_names))
 
         super(TableEntity, self).__init__(name)
         self.schema_name = schema_name
@@ -282,6 +299,7 @@ class UniqueKeyEntity(Entity):
         assert isinstance(origin_schema_name, str)
         assert isinstance(origin_name, str)
         assert isinstance(origin_column_names, listof(str))
+        assert len(origin_column_names) > 0
 
         self.origin_schema_name = origin_schema_name
         self.origin_name = origin_name
