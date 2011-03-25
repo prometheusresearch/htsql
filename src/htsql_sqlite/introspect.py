@@ -19,7 +19,7 @@ from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
                           ForeignKeyEntity)
 from .domain import (SQLiteBooleanDomain, SQLiteIntegerDomain,
                      SQLiteFloatDomain, SQLiteTextDomain, SQLiteDateDomain,
-                     SQLiteOpaqueDomain)
+                     SQLiteDateTimeDomain, SQLiteOpaqueDomain)
 from htsql.connect import Connect
 from htsql.util import Record
 
@@ -192,6 +192,8 @@ class IntrospectSQLite(Introspect):
             return SQLiteFloatDomain(name)
         if 'bool' in type_name:
             return SQLiteBooleanDomain(name)
+        if 'datetime' in type_name or 'timestamp' in type_name:
+            return SQLiteDateTimeDomain(name)
         if 'date' in type_name:
             return SQLiteDateDomain(name)
         return SQLiteOpaqueDomain(name)

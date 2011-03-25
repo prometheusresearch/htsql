@@ -19,7 +19,7 @@ from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
                           ForeignKeyEntity)
 from .domain import (OracleBooleanDomain, OracleIntegerDomain,
                      OracleDecimalDomain, OracleFloatDomain,
-                     OracleStringDomain, OracleDateDomain,
+                     OracleStringDomain, OracleDateTimeDomain,
                      OracleOpaqueDomain)
 from htsql.connect import Connect
 from htsql.util import Record
@@ -266,8 +266,8 @@ class IntrospectOracle(Introspect):
                                        scale=data_scale)
         elif data_type in ['BINARY_FLOAT', 'BINARY_DOUBLE']:
             return OracleFloatDomain(data_type)
-        elif data_type == 'DATE':
-            return OracleDateDomain(data_type)
+        elif data_type == 'DATE' or data_type.startswith('TIMESTAMP'):
+            return OracleDateTimeDomain(data_type)
         return OracleOpaqueDomain(data_type)
 
 

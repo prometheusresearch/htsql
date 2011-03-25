@@ -82,6 +82,22 @@ tests:
   - uri: /date('2010-13-07')
     expect: 400
 
+  # Time values
+  - uri: /{time('20:13'), time('20:13:04.5')}
+  # Invalid time
+  - uri: /{time('29:04')}
+    expect: 400
+
+  # Datetime values
+  - uri: /{datetime('2010-04-15'), datetime('2010-04-15 20:13'),
+           datetime('2010-04-15T20:13:04.5'),
+           datetime('2010-04-15 20:13:04.5 -0400')}
+  # Invalid Datetime value
+  - uri: /{datetime('2010-13-07 17:43')}
+    expect: 400
+  - uri: /{datetime('2010-06-05 29:04')}
+    expect: 400
+
 ########################################################################
 
 - title: Logical and Comparison Operators
@@ -107,14 +123,22 @@ tests:
   - uri: /{is_null(null()), is_null('NULL'), is_null(0)}
 
   # Equality
-  - uri: /{true()=true(), 1=1, 'HTSQL'='HTSQL',
-           date('2010-04-15')=date('2010-04-15')}
-  - uri: /{true()!=false(), 1!=0, 'HTSQL'!='PITA',
-           date('2010-04-15')!=date('1991-08-20')}
-  - uri: /{true()!=true(), 1!=1, 'HTSQL'!='HTSQL',
-           date('2010-04-15')!=date('2010-04-15')}
-  - uri: /{true()=false(), 1=0, 'HTSQL'='PITA',
-           date('2010-04-15')=date('1991-08-20')}
+  - uri: /{true()=true(), 1=1, 'HTSQL'='HTSQL'}
+  - uri: /{date('2010-04-15')=date('2010-04-15'),
+           time('20:13')=time('20:13'),
+           datetime('2010-04-15 20:13')=datetime('2010-04-15 20:13')}
+  - uri: /{true()!=false(), 1!=0, 'HTSQL'!='PITA'}
+  - uri: /{date('2010-04-15')!=date('1991-08-20'),
+           time('20:13')!=time('02:01'),
+           datetime('2010-04-15 20:13')!=datetime('1991-08-20 02:01')}
+  - uri: /{true()!=true(), 1!=1, 'HTSQL'!='HTSQL'}
+  - uri: /{date('2010-04-15')!=date('2010-04-15'),
+           time('20:13')!=time('20:13'),
+           datetime('2010-04-15 20:13')!=datetime('2010-04-15 20:13')}
+  - uri: /{true()=false(), 1=0, 'HTSQL'='PITA'}
+  - uri: /{date('2010-04-15')=date('1991-08-20'),
+           time('20:13')=time('02:01'),
+           datetime('2010-04-15 20:13')=datetime('1991-08-20 02:01')}
   # IN
   - uri: /{5={2,3,5,7}, 'HTSQL'!={'ISBL','SQUARE','QUEL'}}
   - uri: /{5!={2,3,5,7}, 'HTSQL'={'ISBL','SQUARE','QUEL'}}
@@ -134,12 +158,20 @@ tests:
     expect: 400
   - uri: /{date('2010-04-15')==1991}
     expect: 400
+  - uri: /{date('2010-04-15')=datetime('2010-04-15')}
+    expect: 400
+  - uri: /{datetime('2010-04-15 20:13')!==time('02:01')}
+    expect: 400
 
   # Comparison
-  - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha',
-           date('2010-04-15')>=date('1991-08-20')}
-  - uri: /{1>=10, 7.0>7.0, 'omega'<='alpha',
-           date('2010-04-15')<date('1991-08-20')}
+  - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha'}
+  - uri: /{date('2010-04-15')>=date('1991-08-20'),
+           time('02:01')<time('20:13'),
+           datetime('2010-04-15 20:13')>datetime('1991-08-20 02:01')}
+  - uri: /{1>=10, 7.0>7.0, 'omega'<='alpha'}
+  - uri: /{date('2010-04-15')<date('1991-08-20'),
+           time('02:01')>=time('20:13'),
+           datetime('2010-04-15 20:13')<=datetime('1991-08-20 02:01')}
   # NULL
   - uri: /{0<null(), ''>null(), null()>=null()}
   # Coercion
@@ -150,6 +182,8 @@ tests:
   - uri: /{'cinq'>4.9}
     expect: 400
   - uri: /{date('2010-04-15')>=1991}
+    expect: 400
+  - uri: /{datetime('2010-04-15 20:13')>time('02:01')}
     expect: 400
 
   # If NULL and NULL If
@@ -171,7 +205,7 @@ tests:
     expect: 400
   - uri: /{if_null(date('2010-04-15'),1991)}
     expect: 400
-  - uri: /{null_if(date('2010-04-15'),1991)}
+  - uri: /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
     expect: 400
 
   # If and Switch
@@ -231,7 +265,7 @@ tests:
   - uri: /{integer(string('cinq'))}
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    ifndef: [sqlite, mysql]
   # Integer overflow
   - uri: /{integer(4294967296.0)}
     expect: 409
@@ -243,7 +277,7 @@ tests:
     ifdef: [pgsql, mssql]
   - uri: /{integer(4294967296.0),
            integer(1.8446744073709552e+19)}
-    ifdef: [sqlite, mysql]
+    ifndef: [pgsql, mssql]
 
   # Arithmetics
   - uri: /{+7, -7, +2.125, -2.125, +271828e-5, -271828e-5}
@@ -273,22 +307,24 @@ tests:
     ignore: true
     ifdef: [pgsql, mssql]
   - uri: /{7*2147483647, 9223372036854775807+1}
-    ifdef: [sqlite, mysql]
+    ifndef: [pgsql, mssql]
   # Division by zero
   - uri: /{7/0}
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    ifndef: [sqlite, mysql]
   - uri: /{7/0.0}
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    ifndef: [sqlite, mysql]
   - uri: /{7/0e0}
     expect: 409
     ignore: true
-    ifdef: [pgsql, mssql]
+    ifndef: [sqlite, mysql, oracle]
   - uri: /{7/0, 7/0.0, 7/0e0}
     ifdef: [sqlite, mysql]
+  - uri: /{0e0/0e0, 7/0e0}
+    ifdef: [oracle]
 
   # Rounding
   - uri: /{round(3272.78125,2)}
@@ -316,6 +352,8 @@ tests:
   - uri: /{string(true()), string(false())}
   - uri: /{string(60), string(2.125), string(-57721e-5)}
   - uri: /{string(date('2010-04-15'))}
+  - uri: /{string(time('20:13'))}
+  - uri: /{string(datetime('2010-04-15 20:13'))}
 
   # Length
   - uri: /{length(''), length('OMGWTFBBQ')}
@@ -390,6 +428,8 @@ tests:
 
   # Conversion
   - uri: /{date(null()), date('2010-04-15')}
+  - uri: /{date(string('2010-04-15'))}
+  - uri: /{date(datetime('2010-04-15 20:13'))}
   # Inadmissible operand
   - uri: /{date('2010-13-07')}
     expect: 400
@@ -397,15 +437,17 @@ tests:
     expect: 400
   - uri: /{date(7)}
     expect: 400
+  - uri: /{date(time('20:13'))}
+    expect: 400
   # Not a date
   - uri: /{date(string('birthday'))}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifndef: [sqlite, mysql]
   - uri: /{date(string('2010-13-07'))}
     expect: 409
     ignore: true
-    ifdef: pgsql
+    ifndef: [sqlite, mysql]
   - uri: /{date(string('birthday')),
            date(string('2010-13-07'))}
     ifdef: [sqlite, mysql]
@@ -420,19 +462,103 @@ tests:
            month(date('2010-04-15')),
            day(date('2010-04-15'))}
 
-  # Arithmetics
+  # Arithmetics 
   - uri: /{date('1991-08-20')+6813,
            date('2010-04-15')-6813,
            date('2010-04-15')-date('1991-08-20')}
 
 ########################################################################
 
+- title: Time Functions and Operators
+  tests:
+
+  # Conversion
+  - uri: /{time(null()), time('20:13')}
+  - uri: /{time(string('20:13'))}
+    ifndef: oracle
+  - uri: /{time(string('20:13:00'))}
+    ifdef: oracle
+  - uri: /{time(datetime('2010-04-15 20:13'))}
+  # Inadmissible operand
+  - uri: /{time('29:04')}
+    expect: 400
+  - uri: /{time(true())}
+    expect: 400
+  - uri: /{time(7)}
+    expect: 400
+  - uri: /{time(date('2010-04-15'))}
+    expect: 400
+  # Not a datetime value
+  - uri: /{time(string('just a moment ago'))}
+    expect: 409
+    ignore: true
+    ifndef: [sqlite, mysql]
+  - uri: /{time(string('29:04'))}
+    expect: 409
+    ignore: true
+    ifndef: [sqlite, mysql]
+  - uri: /{time(string('just a moment ago')),
+           time(string('29:04'))}
+    ifdef: [sqlite, mysql]
+
+  # Components
+  - uri: /{hour(time('20:13:04.5')),
+           minute(time('20:13:04.5')),
+           second(time('20:13:04.5'))}
+
+########################################################################
+
 - title: DateTime Functions and Operators
   tests:
+
+  # Conversion
+  - uri: /{datetime(null()), datetime('2010-04-15 20:13')}
+  - uri: /{datetime(string('2010-04-15 20:13'))}
+    ifndef: oracle
+  - uri: /{datetime(string('2010-04-15 20:13:00'))}
+    ifdef: oracle
+  - uri: /{datetime(date('2010-04-15'))}
+  # Inadmissible operand
+  - uri: /{datetime('2010-13-07 17:43')}
+    expect: 400
+  - uri: /{datetime(true())}
+    expect: 400
+  - uri: /{datetime(7)}
+    expect: 400
+  - uri: /{datetime(time('20:13'))}
+    expect: 400
+  # Not a datetime value
+  - uri: /{datetime(string('just a moment ago'))}
+    expect: 409
+    ignore: true
+    ifndef: [sqlite, mysql]
+  - uri: /{datetime(string('2010-13-07 17:43'))}
+    expect: 409
+    ignore: true
+    ifndef: [sqlite, mysql]
+  - uri: /{datetime(string('just a moment ago')),
+           datetime(string('2010-13-07 17:43'))}
+    ifdef: [sqlite, mysql]
 
   # Construction
   - uri: /{now()}
     ignore: true
+  - uri: /{datetime(2010,4,15), datetime(2010,4,15,20,13),
+           datetime(2010,4,15,20,13,4.5)}
+  - uri: /{datetime(2010,3,46,25,-289,124.5)}
+  - uri: /{datetime(date('2010-04-15'),time('20:13'))}
+
+  # Components
+  - uri: /{year(datetime('2010-04-15 20:13:04.5')),
+           month(datetime('2010-04-15 20:13:04.5')),
+           day(datetime('2010-04-15 20:13:04.5'))}
+  - uri: /{hour(datetime('2010-04-15 20:13:04.5')),
+           minute(datetime('2010-04-15 20:13:04.5')),
+           second(datetime('2010-04-15 20:13:04.5'))}
+
+  # Arithmetics
+  - uri: /{datetime('1991-08-20 02:01')+6813.7583854166667,
+           datetime('2010-04-15 20:13:04.5')-6813.7583854166667}
 
 ########################################################################
 

@@ -16,13 +16,19 @@ This module adapts the SQL serializer for SQLite.
 from htsql.adapter import adapts
 from htsql.domain import BooleanDomain, StringDomain
 from htsql.tr.dump import (DumpTable, DumpBoolean, DumpDecimal, DumpDate,
+                           DumpTime, DumpDateTime,
                            DumpToFloat, DumpToDecimal, DumpToString,
-                           DumpToDate, DumpIsTotallyEqual)
+                           DumpToDate, DumpToTime, DumpToDateTime,
+                           DumpIsTotallyEqual)
 from htsql.tr.fn.dump import (DumpLength, DumpSubstring, DumpTrim,
-                              DumpDateIncrement, DumpDateDecrement,
+                              DumpDateIncrement, DumpDateTimeIncrement,
+                              DumpDateDecrement, DumpDateTimeDecrement,
                               DumpDateDifference, DumpMakeDate,
+                              DumpMakeDateTime, DumpCombineDateTime,
                               DumpExtractYear, DumpExtractMonth,
-                              DumpExtractDay, DumpToday, DumpNow)
+                              DumpExtractDay, DumpExtractHour,
+                              DumpExtractMinute, DumpExtractSecond,
+                              DumpToday, DumpNow)
 from htsql.tr.error import SerializeError
 
 
@@ -57,6 +63,20 @@ class SQLiteDumpDate(DumpDate):
         self.format("{value:literal}", value=str(self.value))
 
 
+class SQLiteDumpTime(DumpTime):
+
+    def __call__(self):
+        value = self.value.replace(tzinfo=None)
+        self.format("{value:literal}", value=str(value))
+
+
+class SQLiteDumpDateTime(DumpDateTime):
+
+    def __call__(self):
+        value = self.value.replace(tzinfo=None)
+        self.format("{value:literal}", value=str(value))
+
+
 class SQLiteDumpToFloat(DumpToFloat):
 
     def __call__(self):
@@ -89,6 +109,18 @@ class SQLiteDumpToDate(DumpToDate):
 
     def __call__(self):
         self.format("DATE({base})", base=self.base)
+
+
+class SQLiteDumpToTime(DumpToTime):
+
+    def __call__(self):
+        self.format("TIME({base})", base=self.base)
+
+
+class SQLiteDumpToDateTime(DumpToDateTime):
+
+    def __call__(self):
+        self.format("DATETIME({base})", base=self.base)
 
 
 class SQLiteDumpIsTotallyEqual(DumpIsTotallyEqual):
@@ -140,9 +172,19 @@ class SQLiteDumpDateIncrement(DumpDateIncrement):
     template = "DATE(JULIANDAY({lop}) + {rop})"
 
 
+class SQLiteDumpDateTimeIncrement(DumpDateTimeIncrement):
+
+    template = "DATETIME(JULIANDAY({lop}) + {rop})"
+
+
 class SQLiteDumpDateDecrement(DumpDateDecrement):
 
     template = "DATE(JULIANDAY({lop}) - {rop})"
+
+
+class SQLiteDumpDateTimeDecrement(DumpDateTimeDecrement):
+
+    template = "DATETIME(JULIANDAY({lop}) - {rop})"
 
 
 class SQLiteDumpDateDifference(DumpDateDifference):
@@ -154,6 +196,26 @@ class SQLiteDumpMakeDate(DumpMakeDate):
 
     template = ("DATE('0001-01-01', ({year} - 1) || ' years',"
                 " ({month} - 1) || ' months', ({day} - 1) || ' days')")
+
+
+class SQLiteDumpMakeDateTime(DumpMakeDateTime):
+
+    def __call__(self):
+        template = ("DATETIME('0001-01-01', ({year} - 1) || ' years',"
+                    " ({month} - 1) || ' months', ({day} - 1) || ' days'")
+        if self.phrase.hour is not None:
+            template += ", {hour} || ' hours'"
+        if self.phrase.minute is not None:
+            template += ", {minute} || ' minutes'"
+        if self.phrase.second is not None:
+            template += ", {second} || ' seconds'"
+        template += ")"
+        self.format(template, self.arguments)
+
+
+class SQLiteDumpCombineDateTime(DumpCombineDateTime):
+
+    template = "({date} || ' ' || {time})"
 
 
 class SQLiteDumpExtractYear(DumpExtractYear):
@@ -169,5 +231,20 @@ class SQLiteDumpExtractMonth(DumpExtractMonth):
 class SQLiteDumpExtractDay(DumpExtractDay):
 
     template = "CAST(STRFTIME('%d', {op}) AS INTEGER)"
+
+
+class SQLiteDumpExtractHour(DumpExtractHour):
+
+    template = "CAST(STRFTIME('%H', {op}) AS INTEGER)"
+
+
+class SQLiteDumpExtractMinute(DumpExtractMinute):
+
+    template = "CAST(STRFTIME('%M', {op}) AS INTEGER)"
+
+
+class SQLiteDumpExtractSecond(DumpExtractSecond):
+
+    template = "CAST(STRFTIME('%f', {op}) AS REAL)"
 
 

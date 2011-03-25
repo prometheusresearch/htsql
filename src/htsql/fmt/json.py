@@ -16,7 +16,8 @@ This module implements the JSON renderer.
 from ..adapter import Adapter, adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain)
+                      StringDomain, EnumDomain, DateDomain, TimeDomain,
+                      DateTimeDomain)
 from .entitle import entitle
 import re
 
@@ -161,6 +162,28 @@ class FormatDate(Format):
         return escape(str(value))
 
 
+class FormatTime(Format):
+
+    adapts(JSONRenderer, TimeDomain)
+
+    def __call__(self, value):
+        if value is None:
+            return "null"
+        return escape(str(value))
+
+
+class FormatDateTime(Format):
+
+    adapts(JSONRenderer, DateTimeDomain)
+
+    def __call__(self, value):
+        if value is None:
+            return "null"
+        if not value.time():
+            return escape(str(value.date()))
+        return escape(str(value))
+
+
 class EntitleDomain(Adapter):
 
     adapts(Domain)
@@ -201,6 +224,18 @@ class EntitleDate(EntitleDomain):
 
     adapts(DateDomain)
     name = "date"
+
+
+class EntitleTime(EntitleDomain):
+
+    adapts(TimeDomain)
+    name = "time"
+
+
+class EntitleDateTime(EntitleDomain):
+
+    adapts(DateTimeDomain)
+    name = "datetime"
 
 
 class Escape(object):

@@ -14,12 +14,13 @@ This module adapts the SQL serializer for PostgreSQL.
 
 
 from htsql.tr.dump import (FormatLiteral, DumpBranch, DumpFloat,
-                           DumpDecimal, DumpDate, DumpToDecimal, DumpToFloat,
-                           DumpToString)
+                           DumpDecimal, DumpDate, DumpTime, DumpDateTime,
+                           DumpToDecimal, DumpToFloat, DumpToString)
 from htsql.tr.fn.dump import (DumpLike, DumpDateIncrement,
                               DumpDateDecrement, DumpDateDifference,
                               DumpMakeDate, DumpExtractYear, DumpExtractMonth,
-                              DumpExtractDay)
+                              DumpExtractDay, DumpExtractHour,
+                              DumpExtractMinute)
 
 
 class PGSQLFormatLiteral(FormatLiteral):
@@ -70,6 +71,21 @@ class PGSQLDumpDate(DumpDate):
 
     def __call__(self):
         self.format("{value:literal}::DATE", value=str(self.value))
+
+
+class PGSQLDumpTime(DumpTime):
+
+    def __call__(self):
+        self.format("{value:literal}::TIME", value=str(self.value))
+
+
+class PGSQLDumpDateTime(DumpDateTime):
+
+    def __call__(self):
+        if self.value.tzinfo is None:
+            self.format("{value:literal}::TIMESTAMP", value=str(self.value))
+        else:
+            self.format("{value:literal}::TIMESTAMPTZ", value=str(self.value))
 
 
 class PGSQLDumpToFloat(DumpToFloat):
@@ -127,6 +143,16 @@ class PGSQLDumpExtractMonth(DumpExtractMonth):
 class PGSQLDumpExtractDay(DumpExtractDay):
 
     template = "CAST(EXTRACT(DAY FROM {op}) AS INTEGER)"
+
+
+class PGSQLDumpExtractHour(DumpExtractHour):
+
+    template = "CAST(EXTRACT(HOUR FROM {op}) AS INTEGER)"
+
+
+class PGSQLDumpExtractMinute(DumpExtractMinute):
+
+    template = "CAST(EXTRACT(MINUTE FROM {op}) AS INTEGER)"
 
 
 class PGSQLDumpLike(DumpLike):

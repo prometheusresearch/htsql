@@ -16,8 +16,9 @@ This module implements the connection adapter for MySQL.
 from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
-from htsql.domain import BooleanDomain, StringDomain, EnumDomain
+from htsql.domain import BooleanDomain, StringDomain, EnumDomain, TimeDomain
 import MySQLdb, MySQLdb.connections
+import datetime
 
 
 class Cursor(MySQLdb.connections.Connection.default_cursor):
@@ -96,5 +97,17 @@ class NormalizeMySQLEnum(Normalize):
             value = None
         return value
 
+
+class NormalizeMySQLTime(Normalize):
+
+    adapts(TimeDomain)
+
+    def __call__(self, value):
+        if isinstance(value, datetime.timedelta):
+            if value.days != 0:
+                value = None
+            else:
+                value = (datetime.datetime(2001,1,1) + value).time()
+        return value
 
 

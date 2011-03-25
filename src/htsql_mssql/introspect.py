@@ -19,7 +19,7 @@ from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
                           ForeignKeyEntity)
 from .domain import (MSSQLBooleanDomain, MSSQLIntegerDomain,
                      MSSQLDecimalDomain, MSSQLFloatDomain, MSSQLStringDomain,
-                     MSSQLDateDomain, MSSQLOpaqueDomain)
+                     MSSQLDateTimeDomain, MSSQLOpaqueDomain)
 from htsql.connect import Connect
 from htsql.util import Record
 
@@ -289,7 +289,7 @@ class IntrospectMySQL(Introspect):
             return MSSQLFloatDomain(schema_name, type_name,
                                     size=max_length*8)
         elif name in [('sys', 'datetime'), ('sys', 'smalldatetime')]:
-            return MSSQLDateDomain(schema_name, type_name)
+            return MSSQLDateTimeDomain(schema_name, type_name)
         return MSSQLOpaqueDomain(schema_name, type_name)
 
 

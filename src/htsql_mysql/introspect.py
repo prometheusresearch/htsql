@@ -19,7 +19,8 @@ from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
                           ForeignKeyEntity)
 from .domain import (MySQLBooleanDomain, MySQLIntegerDomain,
                      MySQLDecimalDomain, MySQLFloatDomain, MySQLStringDomain,
-                     MySQLEnumDomain, MySQLDateDomain, MySQLOpaqueDomain)
+                     MySQLEnumDomain, MySQLDateDomain, MySQLTimeDomain,
+                     MySQLDateTimeDomain, MySQLOpaqueDomain)
 from htsql.connect import Connect
 from htsql.util import Record
 
@@ -269,6 +270,10 @@ class IntrospectMySQL(Introspect):
             return MySQLFloatDomain(data_type)
         elif data_type == 'date':
             return MySQLDateDomain(data_type)
+        elif data_type == 'time':
+            return MySQLTimeDomain(data_type)
+        elif data_type in ['datetime', 'timestamp']:
+            return MySQLDateTimeDomain(data_type)
         return MySQLOpaqueDomain(data_type)
 
 

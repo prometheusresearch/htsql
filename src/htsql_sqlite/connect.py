@@ -16,8 +16,10 @@ This module implements the connection adapter for SQLite.
 from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
-from htsql.domain import BooleanDomain, StringDomain, DateDomain
+from htsql.domain import (BooleanDomain, StringDomain, DateDomain, TimeDomain,
+                          DateTimeDomain)
 import sqlite3
+import datetime
 
 
 class SQLiteError(DBError):
@@ -81,6 +83,37 @@ class NormalizeSQLiteDate(Normalize):
     def __call__(self, value):
         if isinstance(value, (str, unicode)):
             converter = sqlite3.converters['DATE']
+            value = converter(value)
+        return value
+
+
+class NormalizeSQLiteTime(Normalize):
+
+    adapts(TimeDomain)
+
+    def __call__(self, value):
+        if isinstance(value, (str, unicode)):
+            hour, minute, second = value.split(':')
+            hour = int(hour)
+            minute = int(minute)
+            if '.' in second:
+                second, microsecond = second.split('.')
+                second = int(second)
+                microsecond = int(microsecond)
+            else:
+                second = int(second)
+                microsecond = 0
+            value = datetime.time(hour, minute, second, microsecond)
+        return value
+
+
+class NormalizeSQLiteDateTime(Normalize):
+
+    adapts(DateTimeDomain)
+
+    def __call__(self, value):
+        if isinstance(value, (str, unicode)):
+            converter = sqlite3.converters['TIMESTAMP']
             value = converter(value)
         return value
 

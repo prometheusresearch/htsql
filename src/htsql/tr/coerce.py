@@ -17,7 +17,8 @@ from ..util import listof
 from ..adapter import Adapter, adapts, adapts_many
 from ..domain import (Domain, VoidDomain, TupleDomain, UntypedDomain,
                       BooleanDomain, IntegerDomain, DecimalDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain, OpaqueDomain)
+                      StringDomain, EnumDomain, DateDomain, TimeDomain,
+                      DateTimeDomain, OpaqueDomain)
 
 
 class UnaryCoerce(Adapter):
@@ -230,6 +231,32 @@ class BinaryCoerceDate(BinaryCoerce):
 
     def __call__(self):
         return DateDomain()
+
+
+class BinaryCoerceTime(BinaryCoerce):
+    """
+    Coerce to :class:`TimeDomain`.
+    """
+
+    adapts_many((TimeDomain, TimeDomain),
+                (TimeDomain, UntypedDomain),
+                (UntypedDomain, TimeDomain))
+
+    def __call__(self):
+        return TimeDomain()
+
+
+class BinaryCoerceDateTime(BinaryCoerce):
+    """
+    Coerce to :class:`DateTimeDomain`.
+    """
+
+    adapts_many((DateTimeDomain, DateTimeDomain),
+                (DateTimeDomain, UntypedDomain),
+                (UntypedDomain, DateTimeDomain))
+
+    def __call__(self):
+        return DateTimeDomain()
 
 
 class BinaryCoerceOpaque(BinaryCoerce):

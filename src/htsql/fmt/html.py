@@ -17,7 +17,8 @@ from ..adapter import adapts
 from .format import Format, Formatter, Renderer
 from .entitle import entitle
 from ..domain import (Domain, BooleanDomain, NumberDomain,
-                      StringDomain, EnumDomain, DateDomain)
+                      StringDomain, EnumDomain, DateDomain,
+                      TimeDomain, DateTimeDomain)
 import cgi
 
 
@@ -257,6 +258,28 @@ class FormatDate(Format):
     def __call__(self, value):
         if value is None:
             return self.format_null()
+        return str(value)
+
+
+class FormatTime(Format):
+
+    adapts(HTMLRenderer, TimeDomain)
+
+    def __call__(self, value):
+        if value is None:
+            return self.format_null()
+        return str(value)
+
+
+class FormatDateTime(Format):
+
+    adapts(HTMLRenderer, DateTimeDomain)
+
+    def __call__(self, value):
+        if value is None:
+            return self.format_null()
+        if not value.time():
+            return str(value.date())
         return str(value)
 
 

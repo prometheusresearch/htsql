@@ -18,12 +18,17 @@ from htsql.domain import (BooleanDomain, NumberDomain, IntegerDomain,
                           StringDomain)
 from htsql.tr.dump import (FormatName, FormatLiteral,
                            DumpBoolean, DumpDecimal, DumpFloat, DumpDate,
+                           DumpTime, DumpDateTime,
                            DumpToDomain, DumpToInteger, DumpToFloat,
-                           DumpToDecimal, DumpToString, DumpIsTotallyEqual)
+                           DumpToDecimal, DumpToString, DumpToDateTime,
+                           DumpIsTotallyEqual)
 from htsql.tr.fn.dump import (DumpLength, DumpSubstring, DumpTrim,
-                              DumpDateIncrement, DumpDateDecrement,
-                              DumpDateDifference, DumpConcatenate, DumpLike,
-                              DumpMakeDate, DumpSum)
+                              DumpDateIncrement, DumpDateTimeIncrement,
+                              DumpDateDecrement, DumpDateTimeDecrement,
+                              DumpDateDifference, DumpExtractSecond,
+                              DumpConcatenate, DumpLike,
+                              DumpMakeDate, DumpMakeDateTime,
+                              DumpCombineDateTime, DumpSum)
 
 
 class MySQLFormatName(FormatName):
@@ -69,6 +74,20 @@ class MySQLDumpDate(DumpDate):
         self.format("DATE({value:literal})", value=str(self.value))
 
 
+class MySQLDumpTime(DumpTime):
+
+    def __call__(self):
+        self.format("TIME({value:literal})", value=str(self.value))
+
+
+class MySQLDumpDateTime(DumpDateTime):
+
+    def __call__(self):
+        # MySQLdb driver does not handle datetime values with microseconds.
+        value = self.value.replace(microsecond=0, tzinfo=None)
+        self.format("TIMESTAMP({value:literal})", value=str(value))
+
+
 class MySQLDumpToInteger(DumpToInteger):
 
     def __call__(self):
@@ -95,6 +114,12 @@ class MySQLDumpToString(DumpToString):
 
     def __call__(self):
         self.format("CAST({base} AS CHAR)", base=self.base)
+
+
+class MySQLDumpToDateTime(DumpToDateTime):
+
+    def __call__(self):
+        self.format("CAST({base} AS DATETIME)", base=self.base)
 
 
 class MySQLDumpBooleanToString(DumpToDomain):
@@ -125,14 +150,29 @@ class MySQLDumpDateIncrement(DumpDateIncrement):
     template = "ADDDATE({lop}, {rop})"
 
 
+class MySQLDumpDateTimeIncrement(DumpDateTimeIncrement):
+
+    template = "ADDDATE({lop}, INTERVAL 86400 * {rop} SECOND)"
+
+
 class MySQLDumpDateDecrement(DumpDateDecrement):
 
     template = "SUBDATE({lop}, {rop})"
 
 
+class MySQLDumpDateTimeDecrement(DumpDateTimeDecrement):
+
+    template = "SUBDATE({lop}, INTERVAL 86400 * {rop} SECOND)"
+
+
 class MySQLDumpDateDifference(DumpDateDifference):
 
     template = "DATEDIFF({lop}, {rop})"
+
+
+class MySQLDumpExtractSecond(DumpExtractSecond):
+
+    template = "(1E0 * EXTRACT(SECOND FROM {op}))"
 
 
 class MySQLDumpConcatenate(DumpConcatenate):
@@ -153,6 +193,27 @@ class MySQLDumpMakeDate(DumpMakeDate):
                 " INTERVAL ({year} - 2001) YEAR),"
                 " INTERVAL ({month} - 1) MONTH),"
                 " INTERVAL ({day} - 1) DAY)")
+
+
+class MySQLDumpMakeDateTime(DumpMakeDateTime):
+
+    def __call__(self):
+        template = ("ADDDATE(ADDDATE(ADDDATE(TIMESTAMP('2001-01-01'),"
+                    " INTERVAL ({year} - 2001) YEAR),"
+                    " INTERVAL ({month} - 1) MONTH),"
+                    " INTERVAL ({day} - 1) DAY)")
+        if self.phrase.hour is not None:
+            template = "ADDDATE(%s, INTERVAL {hour} HOUR)" % template
+        if self.phrase.minute is not None:
+            template = "ADDDATE(%s, INTERVAL {minute} MINUTE)" % template
+        if self.phrase.second is not None:
+            template = "ADDDATE(%s, INTERVAL {second} SECOND)" % template
+        self.format(template, self.arguments)
+
+
+class MySQLDumpCombineDateTime(DumpCombineDateTime):
+
+    template = "ADDTIME(TIMESTAMP({date}), {time})"
 
 
 class MySQLDumpSum(DumpSum):

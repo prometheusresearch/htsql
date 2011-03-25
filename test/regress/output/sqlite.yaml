@@ -9021,6 +9021,65 @@ tests:
             encode error: invalid date literal: month must be in 1..12:
                 /date('2010-13-07')
                  ^^^^^^^^^^^^^^^^^^
+        - uri: /{time('20:13'), time('20:13:04.5')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                    |
+            -+------------------------------------+-
+             | time('20:13') | time('20:13:04.5') |
+            -+---------------+--------------------+-
+             | 20:13:00      | 20:13:04.500000    |
+                                            (1 row)
+
+             ----
+             /{time('20:13'),time('20:13:04.5')}
+             SELECT '20:13:00',
+                    '20:13:04.500000'
+        - uri: /{time('29:04')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid time literal: hour must be in 0..23:
+                /{time('29:04')}
+                  ^^^^^^^^^^^^^
+        - uri: /{datetime('2010-04-15'), datetime('2010-04-15 20:13'), datetime('2010-04-15T20:13:04.5'),
+            datetime('2010-04-15 20:13:04.5 -0400')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                     |
+            -+-------------------------------------------------------------------------------------------------------------------------------------+-
+             | datetime('2010-04-15') | datetime('2010-04-15 20:13') | datetime('2010-04-15T20:13:04.5') | datetime('2010-04-15 20:13:04.5 -0400') |
+            -+------------------------+------------------------------+-----------------------------------+-----------------------------------------+-
+             | 2010-04-15             | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 20:13:04.500000              |
+                                                                                                                                             (1 row)
+
+             ----
+             /{datetime('2010-04-15'),datetime('2010-04-15 20:13'),datetime('2010-04-15T20:13:04.5'),datetime('2010-04-15 20:13:04.5 -0400')}
+             SELECT '2010-04-15 00:00:00',
+                    '2010-04-15 20:13:00',
+                    '2010-04-15 20:13:04.500000',
+                    '2010-04-15 20:13:04.500000'
+        - uri: /{datetime('2010-13-07 17:43')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid datetime literal: month must be in 1..12:
+                /{datetime('2010-13-07 17:43')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{datetime('2010-06-05 29:04')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid datetime literal: hour must be in 0..23:
+                /{datetime('2010-06-05 29:04')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       - id: logical-and-comparison-operators
         tests:
         - uri: /{true(), false()}
@@ -9224,78 +9283,146 @@ tests:
              SELECT 1,
                     0,
                     0
-        - uri: /{true()=true(), 1=1, 'HTSQL'='HTSQL', date('2010-04-15')=date('2010-04-15')}
+        - uri: /{true()=true(), 1=1, 'HTSQL'='HTSQL'}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                                                |
-            -+--------------------------------------------------------------------------------+-
-             | true()=true() | 1=1  | 'HTSQL'='HTSQL' | date('2010-04-15')=date('2010-04-15') |
-            -+---------------+------+-----------------+---------------------------------------+-
-             | true          | true | true            | true                                  |
-                                                                                        (1 row)
+             |                                        |
+            -+----------------------------------------+-
+             | true()=true() | 1=1  | 'HTSQL'='HTSQL' |
+            -+---------------+------+-----------------+-
+             | true          | true | true            |
+                                                (1 row)
 
              ----
-             /{true()=true(),1=1,'HTSQL'='HTSQL',date('2010-04-15')=date('2010-04-15')}
+             /{true()=true(),1=1,'HTSQL'='HTSQL'}
              SELECT 1,
                     (1 = 1),
-                    ('HTSQL' = 'HTSQL'),
-                    ('2010-04-15' = '2010-04-15')
-        - uri: /{true()!=false(), 1!=0, 'HTSQL'!='PITA', date('2010-04-15')!=date('1991-08-20')}
+                    ('HTSQL' = 'HTSQL')
+        - uri: /{date('2010-04-15')=date('2010-04-15'), time('20:13')=time('20:13'),
+            datetime('2010-04-15 20:13')=datetime('2010-04-15 20:13')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                                                   |
-            -+-----------------------------------------------------------------------------------+-
-             | true()!=false() | 1!=0 | 'HTSQL'!='PITA' | date('2010-04-15')!=date('1991-08-20') |
-            -+-----------------+------+-----------------+----------------------------------------+-
-             | true            | true | true            | true                                   |
-                                                                                           (1 row)
+             |                                                                                                                                 |
+            -+---------------------------------------------------------------------------------------------------------------------------------+-
+             | date('2010-04-15')=date('2010-04-15') | time('20:13')=time('20:13') | datetime('2010-04-15 20:13')=datetime('2010-04-15 20:13') |
+            -+---------------------------------------+-----------------------------+-----------------------------------------------------------+-
+             | true                                  | true                        | true                                                      |
+                                                                                                                                         (1 row)
 
              ----
-             /{true()!=false(),1!=0,'HTSQL'!='PITA',date('2010-04-15')!=date('1991-08-20')}
+             /{date('2010-04-15')=date('2010-04-15'),time('20:13')=time('20:13'),datetime('2010-04-15 20:13')=datetime('2010-04-15 20:13')}
+             SELECT ('2010-04-15' = '2010-04-15'),
+                    ('20:13:00' = '20:13:00'),
+                    ('2010-04-15 20:13:00' = '2010-04-15 20:13:00')
+        - uri: /{true()!=false(), 1!=0, 'HTSQL'!='PITA'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                          |
+            -+------------------------------------------+-
+             | true()!=false() | 1!=0 | 'HTSQL'!='PITA' |
+            -+-----------------+------+-----------------+-
+             | true            | true | true            |
+                                                  (1 row)
+
+             ----
+             /{true()!=false(),1!=0,'HTSQL'!='PITA'}
              SELECT 1,
                     (1 <> 0),
-                    ('HTSQL' <> 'PITA'),
-                    ('2010-04-15' <> '1991-08-20')
-        - uri: /{true()!=true(), 1!=1, 'HTSQL'!='HTSQL', date('2010-04-15')!=date('2010-04-15')}
+                    ('HTSQL' <> 'PITA')
+        - uri: /{date('2010-04-15')!=date('1991-08-20'), time('20:13')!=time('02:01'),
+            datetime('2010-04-15 20:13')!=datetime('1991-08-20 02:01')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                                                    |
-            -+------------------------------------------------------------------------------------+-
-             | true()!=true() | 1!=1  | 'HTSQL'!='HTSQL' | date('2010-04-15')!=date('2010-04-15') |
-            -+----------------+-------+------------------+----------------------------------------+-
-             | false          | false | false            | false                                  |
-                                                                                            (1 row)
+             |                                                                                                                                    |
+            -+------------------------------------------------------------------------------------------------------------------------------------+-
+             | date('2010-04-15')!=date('1991-08-20') | time('20:13')!=time('02:01') | datetime('2010-04-15 20:13')!=datetime('1991-08-20 02:01') |
+            -+----------------------------------------+------------------------------+------------------------------------------------------------+-
+             | true                                   | true                         | true                                                       |
+                                                                                                                                            (1 row)
 
              ----
-             /{true()!=true(),1!=1,'HTSQL'!='HTSQL',date('2010-04-15')!=date('2010-04-15')}
+             /{date('2010-04-15')!=date('1991-08-20'),time('20:13')!=time('02:01'),datetime('2010-04-15 20:13')!=datetime('1991-08-20 02:01')}
+             SELECT ('2010-04-15' <> '1991-08-20'),
+                    ('20:13:00' <> '02:01:00'),
+                    ('2010-04-15 20:13:00' <> '1991-08-20 02:01:00')
+        - uri: /{true()!=true(), 1!=1, 'HTSQL'!='HTSQL'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                           |
+            -+-------------------------------------------+-
+             | true()!=true() | 1!=1  | 'HTSQL'!='HTSQL' |
+            -+----------------+-------+------------------+-
+             | false          | false | false            |
+                                                   (1 row)
+
+             ----
+             /{true()!=true(),1!=1,'HTSQL'!='HTSQL'}
              SELECT 0,
                     (1 <> 1),
-                    ('HTSQL' <> 'HTSQL'),
-                    ('2010-04-15' <> '2010-04-15')
-        - uri: /{true()=false(), 1=0, 'HTSQL'='PITA', date('2010-04-15')=date('1991-08-20')}
+                    ('HTSQL' <> 'HTSQL')
+        - uri: /{date('2010-04-15')!=date('2010-04-15'), time('20:13')!=time('20:13'),
+            datetime('2010-04-15 20:13')!=datetime('2010-04-15 20:13')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                                                 |
-            -+---------------------------------------------------------------------------------+-
-             | true()=false() | 1=0   | 'HTSQL'='PITA' | date('2010-04-15')=date('1991-08-20') |
-            -+----------------+-------+----------------+---------------------------------------+-
-             | false          | false | false          | false                                 |
-                                                                                         (1 row)
+             |                                                                                                                                    |
+            -+------------------------------------------------------------------------------------------------------------------------------------+-
+             | date('2010-04-15')!=date('2010-04-15') | time('20:13')!=time('20:13') | datetime('2010-04-15 20:13')!=datetime('2010-04-15 20:13') |
+            -+----------------------------------------+------------------------------+------------------------------------------------------------+-
+             | false                                  | false                        | false                                                      |
+                                                                                                                                            (1 row)
 
              ----
-             /{true()=false(),1=0,'HTSQL'='PITA',date('2010-04-15')=date('1991-08-20')}
+             /{date('2010-04-15')!=date('2010-04-15'),time('20:13')!=time('20:13'),datetime('2010-04-15 20:13')!=datetime('2010-04-15 20:13')}
+             SELECT ('2010-04-15' <> '2010-04-15'),
+                    ('20:13:00' <> '20:13:00'),
+                    ('2010-04-15 20:13:00' <> '2010-04-15 20:13:00')
+        - uri: /{true()=false(), 1=0, 'HTSQL'='PITA'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                         |
+            -+-----------------------------------------+-
+             | true()=false() | 1=0   | 'HTSQL'='PITA' |
+            -+----------------+-------+----------------+-
+             | false          | false | false          |
+                                                 (1 row)
+
+             ----
+             /{true()=false(),1=0,'HTSQL'='PITA'}
              SELECT 0,
                     (1 = 0),
-                    ('HTSQL' = 'PITA'),
-                    ('2010-04-15' = '1991-08-20')
+                    ('HTSQL' = 'PITA')
+        - uri: /{date('2010-04-15')=date('1991-08-20'), time('20:13')=time('02:01'),
+            datetime('2010-04-15 20:13')=datetime('1991-08-20 02:01')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                 |
+            -+---------------------------------------------------------------------------------------------------------------------------------+-
+             | date('2010-04-15')=date('1991-08-20') | time('20:13')=time('02:01') | datetime('2010-04-15 20:13')=datetime('1991-08-20 02:01') |
+            -+---------------------------------------+-----------------------------+-----------------------------------------------------------+-
+             | false                                 | false                       | false                                                     |
+                                                                                                                                         (1 row)
+
+             ----
+             /{date('2010-04-15')=date('1991-08-20'),time('20:13')=time('02:01'),datetime('2010-04-15 20:13')=datetime('1991-08-20 02:01')}
+             SELECT ('2010-04-15' = '1991-08-20'),
+                    ('20:13:00' = '02:01:00'),
+                    ('2010-04-15 20:13:00' = '1991-08-20 02:01:00')
         - uri: /{5={2,3,5,7}, 'HTSQL'!={'ISBL','SQUARE','QUEL'}}
           status: 200 OK
           headers:
@@ -9442,42 +9569,92 @@ tests:
             bind error: incompatible arguments:
                 /{date('2010-04-15')==1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
-        - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha', date('2010-04-15')>=date('1991-08-20')}
+        - uri: /{date('2010-04-15')=datetime('2010-04-15')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{date('2010-04-15')=datetime('2010-04-15')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{datetime('2010-04-15 20:13')!==time('02:01')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{datetime('2010-04-15 20:13')!==time('02:01')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha'}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                                            |
-            -+----------------------------------------------------------------------------+-
-             | 1<10 | 7.0<=7.0 | 'omega'>'alpha' | date('2010-04-15')>=date('1991-08-20') |
-            -+------+----------+-----------------+----------------------------------------+-
-             | true | true     | true            | true                                   |
-                                                                                    (1 row)
+             |                                   |
+            -+-----------------------------------+-
+             | 1<10 | 7.0<=7.0 | 'omega'>'alpha' |
+            -+------+----------+-----------------+-
+             | true | true     | true            |
+                                           (1 row)
 
              ----
-             /{1<10,7.0<=7.0,'omega'>'alpha',date('2010-04-15')>=date('1991-08-20')}
+             /{1<10,7.0<=7.0,'omega'>'alpha'}
              SELECT (1 < 10),
                     (7.0 <= 7.0),
-                    ('omega' > 'alpha'),
-                    ('2010-04-15' >= '1991-08-20')
-        - uri: /{1>=10, 7.0>7.0, 'omega'<='alpha', date('2010-04-15')<date('1991-08-20')}
+                    ('omega' > 'alpha')
+        - uri: /{date('2010-04-15')>=date('1991-08-20'), time('02:01')<time('20:13'),
+            datetime('2010-04-15 20:13')>datetime('1991-08-20 02:01')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |                                                                            |
-            -+----------------------------------------------------------------------------+-
-             | 1>=10 | 7.0>7.0 | 'omega'<='alpha' | date('2010-04-15')<date('1991-08-20') |
-            -+-------+---------+------------------+---------------------------------------+-
-             | false | false   | false            | false                                 |
-                                                                                    (1 row)
+             |                                                                                                                                  |
+            -+----------------------------------------------------------------------------------------------------------------------------------+-
+             | date('2010-04-15')>=date('1991-08-20') | time('02:01')<time('20:13') | datetime('2010-04-15 20:13')>datetime('1991-08-20 02:01') |
+            -+----------------------------------------+-----------------------------+-----------------------------------------------------------+-
+             | true                                   | true                        | true                                                      |
+                                                                                                                                          (1 row)
 
              ----
-             /{1>=10,7.0>7.0,'omega'<='alpha',date('2010-04-15')<date('1991-08-20')}
+             /{date('2010-04-15')>=date('1991-08-20'),time('02:01')<time('20:13'),datetime('2010-04-15 20:13')>datetime('1991-08-20 02:01')}
+             SELECT ('2010-04-15' >= '1991-08-20'),
+                    ('02:01:00' < '20:13:00'),
+                    ('2010-04-15 20:13:00' > '1991-08-20 02:01:00')
+        - uri: /{1>=10, 7.0>7.0, 'omega'<='alpha'}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                    |
+            -+------------------------------------+-
+             | 1>=10 | 7.0>7.0 | 'omega'<='alpha' |
+            -+-------+---------+------------------+-
+             | false | false   | false            |
+                                            (1 row)
+
+             ----
+             /{1>=10,7.0>7.0,'omega'<='alpha'}
              SELECT (1 >= 10),
                     (7.0 > 7.0),
-                    ('omega' <= 'alpha'),
-                    ('2010-04-15' < '1991-08-20')
+                    ('omega' <= 'alpha')
+        - uri: /{date('2010-04-15')<date('1991-08-20'), time('02:01')>=time('20:13'),
+            datetime('2010-04-15 20:13')<=datetime('1991-08-20 02:01')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                   |
+            -+-----------------------------------------------------------------------------------------------------------------------------------+-
+             | date('2010-04-15')<date('1991-08-20') | time('02:01')>=time('20:13') | datetime('2010-04-15 20:13')<=datetime('1991-08-20 02:01') |
+            -+---------------------------------------+------------------------------+------------------------------------------------------------+-
+             | false                                 | false                        | false                                                      |
+                                                                                                                                           (1 row)
+
+             ----
+             /{date('2010-04-15')<date('1991-08-20'),time('02:01')>=time('20:13'),datetime('2010-04-15 20:13')<=datetime('1991-08-20 02:01')}
+             SELECT ('2010-04-15' < '1991-08-20'),
+                    ('02:01:00' >= '20:13:00'),
+                    ('2010-04-15 20:13:00' <= '1991-08-20 02:01:00')
         - uri: /{0<null(), ''>null(), null()>=null()}
           status: 200 OK
           headers:
@@ -9535,6 +9712,14 @@ tests:
             bind error: incompatible arguments:
                 /{date('2010-04-15')>=1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{datetime('2010-04-15 20:13')>time('02:01')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{datetime('2010-04-15 20:13')>time('02:01')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if_null('Victor', 'William'), if_null(null(), 'William'), if_null('Victor',
             null()), if_null(null(), null())}
           status: 200 OK
@@ -9614,14 +9799,14 @@ tests:
             bind error: incompatible arguments:
                 /{if_null(date('2010-04-15'),1991)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        - uri: /{null_if(date('2010-04-15'),1991)}
+        - uri: /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             bind error: incompatible arguments:
-                /{null_if(date('2010-04-15'),1991)}
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if(true(), 'then'), if(false(), 'then'), if(null(), 'then')}
           status: 200 OK
           headers:
@@ -10303,6 +10488,36 @@ tests:
              ----
              /{string(date('2010-04-15'))}
              SELECT CAST('2010-04-15' AS TEXT)
+        - uri: /{string(time('20:13'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                       |
+            -+-----------------------+-
+             | string(time('20:13')) |
+            -+-----------------------+-
+             | 20:13:00              |
+                               (1 row)
+
+             ----
+             /{string(time('20:13'))}
+             SELECT CAST('20:13:00' AS TEXT)
+        - uri: /{string(datetime('2010-04-15 20:13'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                      |
+            -+--------------------------------------+-
+             | string(datetime('2010-04-15 20:13')) |
+            -+--------------------------------------+-
+             | 2010-04-15 20:13:00                  |
+                                              (1 row)
+
+             ----
+             /{string(datetime('2010-04-15 20:13'))}
+             SELECT CAST('2010-04-15 20:13:00' AS TEXT)
         - uri: /{length(''), length('OMGWTFBBQ')}
           status: 200 OK
           headers:
@@ -10755,6 +10970,36 @@ tests:
              /{date(null()),date('2010-04-15')}
              SELECT NULL,
                     '2010-04-15'
+        - uri: /{date(string('2010-04-15'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                            |
+            -+----------------------------+-
+             | date(string('2010-04-15')) |
+            -+----------------------------+-
+             | 2010-04-15                 |
+                                    (1 row)
+
+             ----
+             /{date(string('2010-04-15'))}
+             SELECT DATE('2010-04-15')
+        - uri: /{date(datetime('2010-04-15 20:13'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                    |
+            -+------------------------------------+-
+             | date(datetime('2010-04-15 20:13')) |
+            -+------------------------------------+-
+             | 2010-04-15                         |
+                                            (1 row)
+
+             ----
+             /{date(datetime('2010-04-15 20:13'))}
+             SELECT DATE('2010-04-15 20:13:00')
         - uri: /{date('2010-13-07')}
           status: 400 Bad Request
           headers:
@@ -10779,6 +11024,14 @@ tests:
             encode error: inadmissible conversion:
                 /{date(7)}
                   ^^^^^^^
+        - uri: /{date(time('20:13'))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{date(time('20:13'))}
+                  ^^^^^^^^^^^^^^^^^^^
         - uri: /{date(string('birthday')), date(string('2010-13-07'))}
           status: 200 OK
           headers:
@@ -10804,12 +11057,12 @@ tests:
             -+------------+-
              | today()    |
             -+------------+-
-             | 2010-12-10 |
+             | 2011-03-25 |
                     (1 row)
 
              ----
              /{today()}
-             SELECT CURRENT_DATE
+             SELECT DATE('now', 'localtime')
         - uri: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
           status: 200 OK
           headers:
@@ -10861,8 +11114,216 @@ tests:
              SELECT DATE(JULIANDAY('1991-08-20') + 6813),
                     DATE(JULIANDAY('2010-04-15') - 6813),
                     CAST(JULIANDAY('2010-04-15') - JULIANDAY('1991-08-20') AS INTEGER)
+      - id: time-functions-and-operators
+        tests:
+        - uri: /{time(null()), time('20:13')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                              |
+            -+------------------------------+-
+             | time(null()) | time('20:13') |
+            -+--------------+---------------+-
+             |              | 20:13:00      |
+                                      (1 row)
+
+             ----
+             /{time(null()),time('20:13')}
+             SELECT NULL,
+                    '20:13:00'
+        - uri: /{time(string('20:13'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                       |
+            -+-----------------------+-
+             | time(string('20:13')) |
+            -+-----------------------+-
+             | 20:13:00              |
+                               (1 row)
+
+             ----
+             /{time(string('20:13'))}
+             SELECT TIME('20:13')
+        - uri: /{time(datetime('2010-04-15 20:13'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                    |
+            -+------------------------------------+-
+             | time(datetime('2010-04-15 20:13')) |
+            -+------------------------------------+-
+             | 20:13:00                           |
+                                            (1 row)
+
+             ----
+             /{time(datetime('2010-04-15 20:13'))}
+             SELECT TIME('2010-04-15 20:13:00')
+        - uri: /{time('29:04')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid time literal: hour must be in 0..23:
+                /{time('29:04')}
+                  ^^^^^^^^^^^^^
+        - uri: /{time(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{time(true())}
+                  ^^^^^^^^^^^^
+        - uri: /{time(7)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{time(7)}
+                  ^^^^^^^
+        - uri: /{time(date('2010-04-15'))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{time(date('2010-04-15'))}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{time(string('just a moment ago')), time(string('29:04'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                           |
+            -+-----------------------------------------------------------+-
+             | time(string('just a moment ago')) | time(string('29:04')) |
+            -+-----------------------------------+-----------------------+-
+             |                                   |                       |
+                                                                   (1 row)
+
+             ----
+             /{time(string('just a moment ago')),time(string('29:04'))}
+             SELECT TIME('just a moment ago'),
+                    TIME('29:04')
+        - uri: /{hour(time('20:13:04.5')), minute(time('20:13:04.5')), second(time('20:13:04.5'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                    |
+            -+------------------------------------------------------------------------------------+-
+             | hour(time('20:13:04.5')) | minute(time('20:13:04.5')) | second(time('20:13:04.5')) |
+            -+--------------------------+----------------------------+----------------------------+-
+             |                       20 |                         13 |                        4.5 |
+                                                                                            (1 row)
+
+             ----
+             /{hour(time('20:13:04.5')),minute(time('20:13:04.5')),second(time('20:13:04.5'))}
+             SELECT CAST(STRFTIME('%H', '20:13:04.500000') AS INTEGER),
+                    CAST(STRFTIME('%M', '20:13:04.500000') AS INTEGER),
+                    CAST(STRFTIME('%f', '20:13:04.500000') AS REAL)
       - id: datetime-functions-and-operators
         tests:
+        - uri: /{datetime(null()), datetime('2010-04-15 20:13')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                 |
+            -+-------------------------------------------------+-
+             | datetime(null()) | datetime('2010-04-15 20:13') |
+            -+------------------+------------------------------+-
+             |                  | 2010-04-15 20:13:00          |
+                                                         (1 row)
+
+             ----
+             /{datetime(null()),datetime('2010-04-15 20:13')}
+             SELECT NULL,
+                    '2010-04-15 20:13:00'
+        - uri: /{datetime(string('2010-04-15 20:13'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                      |
+            -+--------------------------------------+-
+             | datetime(string('2010-04-15 20:13')) |
+            -+--------------------------------------+-
+             | 2010-04-15 20:13:00                  |
+                                              (1 row)
+
+             ----
+             /{datetime(string('2010-04-15 20:13'))}
+             SELECT DATETIME('2010-04-15 20:13')
+        - uri: /{datetime(date('2010-04-15'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                              |
+            -+------------------------------+-
+             | datetime(date('2010-04-15')) |
+            -+------------------------------+-
+             | 2010-04-15                   |
+                                      (1 row)
+
+             ----
+             /{datetime(date('2010-04-15'))}
+             SELECT DATETIME('2010-04-15')
+        - uri: /{datetime('2010-13-07 17:43')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid datetime literal: month must be in 1..12:
+                /{datetime('2010-13-07 17:43')}
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{datetime(true())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{datetime(true())}
+                  ^^^^^^^^^^^^^^^^
+        - uri: /{datetime(7)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{datetime(7)}
+                  ^^^^^^^^^^^
+        - uri: /{datetime(time('20:13'))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: inadmissible conversion:
+                /{datetime(time('20:13'))}
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /{datetime(string('just a moment ago')), datetime(string('2010-13-07
+            17:43'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                              |
+            -+------------------------------------------------------------------------------+-
+             | datetime(string('just a moment ago')) | datetime(string('2010-13-07 17:43')) |
+            -+---------------------------------------+--------------------------------------+-
+             |                                       |                                      |
+                                                                                      (1 row)
+
+             ----
+             /{datetime(string('just a moment ago')),datetime(string('2010-13-07 17:43'))}
+             SELECT DATETIME('just a moment ago'),
+                    DATETIME('2010-13-07 17:43')
         - uri: /{now()}
           status: 200 OK
           headers:
@@ -10872,12 +11333,112 @@ tests:
             -+---------------------+-
              | now()               |
             -+---------------------+-
-             | 2011-03-22 22:33:41 |
+             | 2011-03-25 03:16:58 |
                              (1 row)
 
              ----
              /{now()}
              SELECT DATETIME('now', 'localtime')
+        - uri: /{datetime(2010,4,15), datetime(2010,4,15,20,13), datetime(2010,4,15,20,13,4.5)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                 |
+            -+---------------------------------------------------------------------------------+-
+             | datetime(2010,4,15) | datetime(2010,4,15,20,13) | datetime(2010,4,15,20,13,4.5) |
+            -+---------------------+---------------------------+-------------------------------+-
+             | 2010-04-15          | 2010-04-15 20:13:00       | 2010-04-15 20:13:04           |
+                                                                                         (1 row)
+
+             ----
+             /{datetime(2010,4,15),datetime(2010,4,15,20,13),datetime(2010,4,15,20,13,4.5)}
+             SELECT DATETIME('0001-01-01', (2010 - 1) || ' years', (4 - 1) || ' months', (15 - 1) || ' days'),
+                    DATETIME('0001-01-01', (2010 - 1) || ' years', (4 - 1) || ' months', (15 - 1) || ' days', 20 || ' hours', 13 || ' minutes'),
+                    DATETIME('0001-01-01', (2010 - 1) || ' years', (4 - 1) || ' months', (15 - 1) || ' days', 20 || ' hours', 13 || ' minutes', 4.5 || ' seconds')
+        - uri: /{datetime(2010,3,46,25,-289,124.5)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                   |
+            -+-----------------------------------+-
+             | datetime(2010,3,46,25,-289,124.5) |
+            -+-----------------------------------+-
+             | 2010-04-15 20:13:04               |
+                                           (1 row)
+
+             ----
+             /{datetime(2010,3,46,25,-289,124.5)}
+             SELECT DATETIME('0001-01-01', (2010 - 1) || ' years', (3 - 1) || ' months', (46 - 1) || ' days', 25 || ' hours', (- 289) || ' minutes', 124.5 || ' seconds')
+        - uri: /{datetime(date('2010-04-15'),time('20:13'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                            |
+            -+--------------------------------------------+-
+             | datetime(date('2010-04-15'),time('20:13')) |
+            -+--------------------------------------------+-
+             | 2010-04-15 20:13:00                        |
+                                                    (1 row)
+
+             ----
+             /{datetime(date('2010-04-15'),time('20:13'))}
+             SELECT ('2010-04-15' || ' ' || '20:13:00')
+        - uri: /{year(datetime('2010-04-15 20:13:04.5')), month(datetime('2010-04-15
+            20:13:04.5')), day(datetime('2010-04-15 20:13:04.5'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                             |
+            -+-----------------------------------------------------------------------------------------------------------------------------+-
+             | year(datetime('2010-04-15 20:13:04.5')) | month(datetime('2010-04-15 20:13:04.5')) | day(datetime('2010-04-15 20:13:04.5')) |
+            -+-----------------------------------------+------------------------------------------+----------------------------------------+-
+             |                                    2010 |                                        4 |                                     15 |
+                                                                                                                                     (1 row)
+
+             ----
+             /{year(datetime('2010-04-15 20:13:04.5')),month(datetime('2010-04-15 20:13:04.5')),day(datetime('2010-04-15 20:13:04.5'))}
+             SELECT CAST(STRFTIME('%Y', '2010-04-15 20:13:04.500000') AS INTEGER),
+                    CAST(STRFTIME('%m', '2010-04-15 20:13:04.500000') AS INTEGER),
+                    CAST(STRFTIME('%d', '2010-04-15 20:13:04.500000') AS INTEGER)
+        - uri: /{hour(datetime('2010-04-15 20:13:04.5')), minute(datetime('2010-04-15
+            20:13:04.5')), second(datetime('2010-04-15 20:13:04.5'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                                                 |
+            -+---------------------------------------------------------------------------------------------------------------------------------+-
+             | hour(datetime('2010-04-15 20:13:04.5')) | minute(datetime('2010-04-15 20:13:04.5')) | second(datetime('2010-04-15 20:13:04.5')) |
+            -+-----------------------------------------+-------------------------------------------+-------------------------------------------+-
+             |                                      20 |                                        13 |                                       4.5 |
+                                                                                                                                         (1 row)
+
+             ----
+             /{hour(datetime('2010-04-15 20:13:04.5')),minute(datetime('2010-04-15 20:13:04.5')),second(datetime('2010-04-15 20:13:04.5'))}
+             SELECT CAST(STRFTIME('%H', '2010-04-15 20:13:04.500000') AS INTEGER),
+                    CAST(STRFTIME('%M', '2010-04-15 20:13:04.500000') AS INTEGER),
+                    CAST(STRFTIME('%f', '2010-04-15 20:13:04.500000') AS REAL)
+        - uri: /{datetime('1991-08-20 02:01')+6813.7583854166667, datetime('2010-04-15
+            20:13:04.5')-6813.7583854166667}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             |                                                                                                        |
+            -+--------------------------------------------------------------------------------------------------------+-
+             | datetime('1991-08-20 02:01')+6813.7583854166667 | datetime('2010-04-15 20:13:04.5')-6813.7583854166667 |
+            -+-------------------------------------------------+------------------------------------------------------+-
+             | 2010-04-15 20:13:04                             | 1991-08-20 02:01:00                                  |
+                                                                                                                (1 row)
+
+             ----
+             /{datetime('1991-08-20 02:01')+6813.7583854166667,datetime('2010-04-15 20:13:04.5')-6813.7583854166667}
+             SELECT DATETIME(JULIANDAY('1991-08-20 02:01:00') + 6813.7583854166669),
+                    DATETIME(JULIANDAY('2010-04-15 20:13:04.500000') - 6813.7583854166669)
       - id: aggregate-functions
         tests:
         - uri: /course?department='lang'
@@ -15249,27 +15810,27 @@ tests:
                SELECT (1 * 2),
                       (2 * 2),
                       (3 * 2)
-          - uri: /define(student.age(date):=(date(date)-dob)/365:round(1), student.age():=age('2011-01-01'),
+          - uri: /define(student.age(date):=(date(date)-date(dob))/365:round(1), student.age():=age('2011-01-01'),
               inactive_student:=student?!is_active) .inactive_student{name,dob,start_date,age(start_date),age()}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | define(student.age(date):=(date(date)-dob)/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student |
-              -+-------------------------------------------------------------------------------------------------------------------------------------------------+-
-               | name                               | dob                       | start_date               | age(start_date)               | age()               |
-              -+------------------------------------+---------------------------+--------------------------+-------------------------------+---------------------+-
-               | Narissa Maya                       | 1992-04-30                | 2007-11-21               |                          15.6 |                18.7 |
-               | Valeria Rinaldi                    | 1985-09-02                | 2004-09-01               |                          19.0 |                25.3 |
-               | Mahesh Basa                        | 1995-08-21                | 2008-04-15               |                          12.7 |                15.4 |
-               | Khadija Hamad Azzan                | 1992-11-26                | 2008-09-21               |                          15.8 |                18.1 |
-               | Raisa Antonova                     | 1992-12-09                | 2008-09-15               |                          15.8 |                18.1 |
-               | Amy Yang                           | 1992-12-17                | 2002-08-10               |                           9.7 |                18.1 |
-               | Ming Wang                          | 1988-03-15                | 2002-11-27               |                          14.7 |                22.8 |
-                                                                                                                                                          (7 rows)
+               | define(student.age(date):=(date(date)-date(dob))/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student |
+              -+-------------------------------------------------------------------------------------------------------------------------------------------------------+-
+               | name                                | dob                        | start_date                 | age(start_date)                | age()                |
+              -+-------------------------------------+----------------------------+----------------------------+--------------------------------+----------------------+-
+               | Narissa Maya                        | 1992-04-30                 | 2007-11-21                 |                           15.6 |                 18.7 |
+               | Valeria Rinaldi                     | 1985-09-02                 | 2004-09-01                 |                           19.0 |                 25.3 |
+               | Mahesh Basa                         | 1995-08-21                 | 2008-04-15                 |                           12.7 |                 15.4 |
+               | Khadija Hamad Azzan                 | 1992-11-26                 | 2008-09-21                 |                           15.8 |                 18.1 |
+               | Raisa Antonova                      | 1992-12-09                 | 2008-09-15                 |                           15.8 |                 18.1 |
+               | Amy Yang                            | 1992-12-17                 | 2002-08-10                 |                            9.7 |                 18.1 |
+               | Ming Wang                           | 1988-03-15                 | 2002-11-27                 |                           14.7 |                 22.8 |
+                                                                                                                                                                (7 rows)
 
                ----
-               /define(student.age(date):=(date(date)-dob)/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student{name,dob,start_date,age(start_date),age()}
+               /define(student.age(date):=(date(date)-date(dob))/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student{name,dob,start_date,age(start_date),age()}
                SELECT "student"."name",
                       "student"."dob",
                       "student"."start_date",
@@ -15577,38 +16138,6 @@ tests:
                WHERE (NULLIF("program"."degree", '') IS NOT NULL)
                GROUP BY 1
                HAVING (NULLIF("program"."degree", '') IS NOT NULL)
-               ORDER BY 1 ASC
-          - uri: /quotient(program, degree){kernel(),count(complement())}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program,degree)     |
-              -+------------------------------+-
-               | degree | count(complement()) |
-              -+--------+---------------------+-
-               |        |                   0 |
-               | ba     |                   9 |
-               | bs     |                  12 |
-               | ct     |                   4 |
-               | ma     |                   6 |
-               | ms     |                   5 |
-               | pb     |                   1 |
-               | ph     |                   1 |
-                                       (8 rows)
-
-               ----
-               /quotient(program,degree){kernel(),count(complement())}
-               SELECT "program_1"."degree",
-                      COALESCE("program_2"."count", 0)
-               FROM (SELECT "program"."degree"
-                     FROM "program" AS "program"
-                     GROUP BY 1) AS "program_1"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "program"."degree"
-                                     FROM "program" AS "program"
-                                     GROUP BY 2) AS "program_2"
-                                    ON ("program_1"."degree" = "program_2"."degree")
                ORDER BY 1 ASC
           - uri: /quotient(program, degree){kernel(),count(complement().student)}
             status: 200 OK

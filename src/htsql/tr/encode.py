@@ -16,7 +16,8 @@ This module implements the encoding process.
 from ..adapter import Adapter, adapts, adapts_many
 from ..domain import (Domain, UntypedDomain, TupleDomain, BooleanDomain,
                       NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain, OpaqueDomain)
+                      StringDomain, EnumDomain, DateDomain, TimeDomain,
+                      DateTimeDomain, OpaqueDomain)
 from .error import EncodeError
 from .coerce import coerce
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
@@ -621,7 +622,9 @@ class ConvertToItself(Convert):
                 (FloatDomain, FloatDomain),
                 (DecimalDomain, DecimalDomain),
                 (StringDomain, StringDomain),
-                (DateDomain, DateDomain))
+                (DateDomain, DateDomain),
+                (TimeDomain, TimeDomain),
+                (DateTimeDomain, DateTimeDomain))
     # FIXME: do we need `EnumDomain` here?
 
     def __call__(self):
@@ -688,6 +691,8 @@ class ConvertToBoolean(Convert):
     adapts_many((NumberDomain, BooleanDomain),
                 (EnumDomain, BooleanDomain),
                 (DateDomain, BooleanDomain),
+                (TimeDomain, BooleanDomain),
+                (DateTimeDomain, BooleanDomain),
                 (OpaqueDomain, BooleanDomain))
     # Note: we include the opaque domain here to ensure that any
     # data type could be converted to Boolean.  However this may
@@ -711,6 +716,8 @@ class ConvertToString(Convert):
                 (NumberDomain, StringDomain),
                 (EnumDomain, StringDomain),
                 (DateDomain, StringDomain),
+                (TimeDomain, StringDomain),
+                (DateTimeDomain, StringDomain),
                 (OpaqueDomain, StringDomain))
     # Note: we assume we could convert any opaque data type to string;
     # it is risky but convenient.
@@ -796,12 +803,39 @@ class ConvertToDate(Convert):
     Convert an expression to a date value.
     """
 
-    adapts(StringDomain, DateDomain)
+    adapts_many((StringDomain, DateDomain),
+                (DateTimeDomain, DateDomain))
 
     def __call__(self):
         # We leave conversion from literal values to the database
         # engine even though we could handle it here because the
         # conversion may be engine-specific.
+        return CastCode(self.state.encode(self.base), self.domain,
+                        self.binding)
+
+
+class ConvertToTime(Convert):
+    """
+    Convert an expression to a time value.
+    """
+
+    adapts_many((StringDomain, TimeDomain),
+                (DateTimeDomain, TimeDomain))
+
+    def __call__(self):
+        return CastCode(self.state.encode(self.base), self.domain,
+                        self.binding)
+
+
+class ConvertToDateTime(Convert):
+    """
+    Convert an expression to a datetime value.
+    """
+
+    adapts_many((StringDomain, DateTimeDomain),
+                (DateDomain, DateTimeDomain))
+
+    def __call__(self):
         return CastCode(self.state.encode(self.base), self.domain,
                         self.binding)
 

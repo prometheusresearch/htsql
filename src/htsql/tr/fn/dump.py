@@ -14,14 +14,16 @@
 from ...adapter import adapts, adapts_none
 from ..dump import DumpBySignature
 from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
-                        SubtractSig, DateDecrementSig, DateDifferenceSig,
+                        DateTimeIncrementSig, SubtractSig, DateDecrementSig,
+                        DateTimeDecrementSig, DateDifferenceSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
                         ReversePolaritySig, RoundSig, RoundToSig,
                         LengthSig, LikeSig, ReplaceSig, SubstringSig,
                         UpperSig, LowerSig, TrimSig, TodaySig, NowSig,
-                        MakeDateSig, ExtractYearSig, ExtractMonthSig,
-                        ExtractDaySig, ExistsSig, CountSig, MinMaxSig,
-                        SumSig, AvgSig)
+                        MakeDateSig, MakeDateTimeSig, CombineDateTimeSig,
+                        ExtractYearSig, ExtractMonthSig, ExtractDaySig,
+                        ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,
+                        ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig)
 
 
 class DumpFunction(DumpBySignature):
@@ -66,10 +68,22 @@ class DumpDateIncrement(DumpFunction):
     template = "CAST({lop} + {rop} * INTERVAL '1' DAY AS DATE)"
 
 
+class DumpDateTimeIncrement(DumpFunction):
+
+    adapts(DateTimeIncrementSig)
+    template = "({lop} + {rop} * INTERVAL '1' DAY)"
+
+
 class DumpDateDecrement(DumpFunction):
 
     adapts(DateDecrementSig)
     template = "CAST({lop} - {rop} * INTERVAL '1' DAY AS DATE)"
+
+
+class DumpDateTimeDecrement(DumpFunction):
+
+    adapts(DateTimeDecrementSig)
+    template = "({lop} - {rop} * INTERVAL '1' DAY)"
 
 
 class DumpDateDifference(DumpFunction):
@@ -213,6 +227,31 @@ class DumpMakeDate(DumpFunction):
                 " + ({day} - 1) * INTERVAL '1' DAY AS DATE)")
 
 
+class DumpMakeDateTime(DumpFunction):
+
+    adapts(MakeDateTimeSig)
+
+    def __call__(self):
+        template = ("(TIMESTAMP '2001-01-01 00:00:00'"
+                    " + ({year} - 2001) * INTERVAL '1' YEAR"
+                    " + ({month} - 1) * INTERVAL '1' MONTH"
+                    " + ({day} - 1) * INTERVAL '1' DAY")
+        if self.phrase.hour is not None:
+            template += " + {hour} * INTERVAL '1' HOUR"
+        if self.phrase.minute is not None:
+            template += " + {minute} * INTERVAL '1' MINUTE"
+        if self.phrase.second is not None:
+            template += " + {second} * INTERVAL '1' SECOND"
+        template += ")"
+        self.format(template, self.arguments)
+
+
+class DumpCombineDateTime(DumpFunction):
+
+    adapts(CombineDateTimeSig)
+    template = "({date} + {time})"
+
+
 class DumpExtractYear(DumpFunction):
 
     adapts(ExtractYearSig)
@@ -229,6 +268,24 @@ class DumpExtractDay(DumpFunction):
 
     adapts(ExtractDaySig)
     template = "EXTRACT(DAY FROM {op})"
+
+
+class DumpExtractHour(DumpFunction):
+
+    adapts(ExtractHourSig)
+    template = "EXTRACT(HOUR FROM {op})"
+
+
+class DumpExtractMinute(DumpFunction):
+
+    adapts(ExtractMinuteSig)
+    template = "EXTRACT(MINUTE FROM {op})"
+
+
+class DumpExtractSecond(DumpFunction):
+
+    adapts(ExtractSecondSig)
+    template = "EXTRACT(SECOND FROM {op})"
 
 
 class DumpExists(DumpFunction):

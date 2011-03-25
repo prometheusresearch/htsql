@@ -16,7 +16,7 @@ This module implements the connection adapter for MS SQL Server.
 from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
-from htsql.domain import BooleanDomain, StringDomain, DateDomain
+from htsql.domain import BooleanDomain, StringDomain, DateDomain, TimeDomain
 import datetime
 import pymssql
 
@@ -88,7 +88,21 @@ class NormalizeMSSQLDate(Normalize):
 
     def __call__(self, value):
         if isinstance(value, datetime.datetime):
+            assert not value.time()
             value = value.date()
+        return value
+
+
+class NormalizeMSSQLTime(Normalize):
+
+    adapts(TimeDomain)
+
+    def __call__(self, value):
+        if isinstance(value, float):
+            assert 0.0 <= value < 1.0
+            value = int(86400000000*value) * datetime.timedelta(0,0,1)
+            assert not value.days
+            value = (datetime.datetime(2001,1,1) + value).time()
         return value
 
 

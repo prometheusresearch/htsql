@@ -17,7 +17,8 @@ from ..util import listof, maybe
 from ..adapter import Adapter, Protocol, adapts, named
 from .error import SerializeError
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
-                      FloatDomain, StringDomain, EnumDomain, DateDomain)
+                      FloatDomain, StringDomain, EnumDomain, DateDomain,
+                      TimeDomain, DateTimeDomain)
 from .syntax import IdentifierSyntax, CallSyntax, LiteralSyntax
 from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     SegmentFrame, QueryFrame,
@@ -1537,6 +1538,32 @@ class DumpDate(DumpByDomain):
         self.format("DATE {value:literal}", value=str(self.value))
 
 
+class DumpTime(DumpByDomain):
+    """
+    Serializes a time literal.
+    """
+
+    adapts(TimeDomain)
+
+    def __call__(self):
+        self.format("TIME {value:literal}", value=str(self.value))
+
+
+class DumpDateTime(DumpByDomain):
+    """
+    Serializes a datetime literal.
+    """
+
+    adapts(DateTimeDomain)
+
+    def __call__(self):
+        if self.value.tzinfo is None:
+            self.format("TIMESTAMP {value:literal}", value=str(self.value))
+        else:
+            self.format("TIMESTAMP WITH TIME ZONE {value:literal}",
+                        value=str(self.value))
+
+
 class DumpCast(Dump):
     """
     Serializes a ``CAST`` clause.
@@ -1666,13 +1693,39 @@ class DumpToDate(DumpToDomain):
     """
     Serializes conversion to a date value.
 
-    Handles conversion from a string.
+    Handles conversion from a string and a datetime.
     """
 
     adapts(Domain, DateDomain)
 
     def __call__(self):
         self.format("CAST({base} AS DATE)", base=self.base)
+
+
+class DumpToTime(DumpToDomain):
+    """
+    Serializes conversion to a time value.
+
+    Handles conversion from a string and a datetime.
+    """
+
+    adapts(Domain, TimeDomain)
+
+    def __call__(self):
+        self.format("CAST({base} AS TIME)", base=self.base)
+
+
+class DumpToDateTime(DumpToDomain):
+    """
+    Serializes conversion to a datetime value.
+
+    Handles conversion from a string.
+    """
+
+    adapts(Domain, DateTimeDomain)
+
+    def __call__(self):
+        self.format("CAST({base} AS TIMESTAMP)", base=self.base)
 
 
 class DumpFormula(Dump):

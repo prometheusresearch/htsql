@@ -604,7 +604,7 @@ class DateTimeDomain(Domain):
           (?: (?P<tz_utc> Z ) |
               (?P<tz_sign> [+-] )
               (?P<tz_hour> \d{1,2} )
-              (?: :
+              (?: :?
                   (?P<tz_minute> \d{2} )
               )? )
         )?
@@ -650,7 +650,7 @@ class DateTimeDomain(Domain):
         elif tz_sign is not None:
             tz_hour = int(tz_hour)
             tz_minute = int(tz_minute) if tz_minute is not None else 0
-            offset = tz_hour+60+tz_minute
+            offset = tz_hour*60+tz_minute
             if tz_sign == '-':
                 offset = -offset
             tz = FixedTZ(offset)

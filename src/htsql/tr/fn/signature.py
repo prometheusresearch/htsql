@@ -75,6 +75,26 @@ class MakeDateSig(Signature):
     ]
 
 
+class MakeDateTimeSig(Signature):
+
+    slots = [
+            Slot('year'),
+            Slot('month'),
+            Slot('day'),
+            Slot('hour', is_mandatory=False),
+            Slot('minute', is_mandatory=False),
+            Slot('second', is_mandatory=False),
+    ]
+
+
+class CombineDateTimeSig(Signature):
+
+    slots = [
+            Slot('date'),
+            Slot('time'),
+    ]
+
+
 class ExtractSig(UnarySig):
     pass
 
@@ -91,6 +111,18 @@ class ExtractDaySig(ExtractSig):
     pass
 
 
+class ExtractHourSig(ExtractSig):
+    pass
+
+
+class ExtractMinuteSig(ExtractSig):
+    pass
+
+
+class ExtractSecondSig(ExtractSig):
+    pass
+
+
 class AddSig(BinarySig):
     pass
 
@@ -103,11 +135,19 @@ class DateIncrementSig(AddSig):
     pass
 
 
+class DateTimeIncrementSig(AddSig):
+    pass
+
+
 class SubtractSig(BinarySig):
     pass
 
 
 class DateDecrementSig(SubtractSig):
+    pass
+
+
+class DateTimeDecrementSig(SubtractSig):
     pass
 
 

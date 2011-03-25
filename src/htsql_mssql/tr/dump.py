@@ -15,20 +15,24 @@ This module adapts the SQL serializer for MS SQL Server.
 
 from htsql.adapter import adapts
 from htsql.domain import (BooleanDomain, StringDomain, IntegerDomain,
-                          DecimalDomain, DateDomain)
+                          DecimalDomain, DateDomain, TimeDomain, DateTimeDomain)
 from htsql.tr.error import SerializeError
 from htsql.tr.frame import ColumnPhrase, ReferencePhrase, LiteralPhrase
 from htsql.tr.dump import (FormatName, DumpBranch, DumpBySignature,
                            DumpFromPredicate, DumpToPredicate,
                            DumpIsTotallyEqual, DumpBoolean, DumpInteger,
-                           DumpDecimal, DumpFloat, DumpDate, DumpToInteger,
+                           DumpDecimal, DumpFloat, DumpDate, DumpTime,
+                           DumpDateTime, DumpToInteger,
                            DumpToFloat, DumpToDecimal, DumpToString,
-                           DumpToDate)
+                           DumpToDate, DumpToTime, DumpToDateTime)
 from htsql.tr.fn.dump import (DumpRound, DumpRoundTo, DumpLength,
                               DumpConcatenate, DumpSubstring, DumpTrim,
                               DumpToday, DumpNow, DumpExtractYear,
-                              DumpExtractMonth, DumpExtractDay, DumpMakeDate,
+                              DumpExtractMonth, DumpExtractDay,
+                              DumpExtractHour, DumpExtractMinute,
+                              DumpExtractSecond, DumpMakeDate, DumpMakeDateTime,
                               DumpDateIncrement, DumpDateDecrement,
+                              DumpDateTimeIncrement, DumpDateTimeDecrement,
                               DumpDateDifference)
 from htsql.tr.signature import FromPredicateSig, ToPredicateSig
 from htsql.tr.fn.signature import SortDirectionSig
@@ -172,6 +176,28 @@ class MSSQLDumpDate(DumpDate):
                     value=str(self.value))
 
 
+class MSSQLDumpTime(DumpTime):
+
+    def __call__(self):
+        value = (self.value.hour*3600 + self.value.minute*60 +
+                 self.value.second + self.value.microsecond/1000000.0) / 86400.0
+        value = repr(value)
+        if 'e' not in value and 'E' not in value:
+            value = value+'e0'
+        self.write(value)
+
+
+class MSSQLDumpDateTime(DumpDateTime):
+
+    def __call__(self):
+        value = self.value.replace(tzinfo=None)
+        if not value.microsecond:
+            value = str(value)
+        else:
+            value = str(value)[:-3]
+        self.format("CAST({value:literal} AS DATETIME)", value=value)
+
+
 class MSSQLDumpToInteger(DumpToInteger):
 
     def __call__(self):
@@ -223,14 +249,77 @@ class MSSQLDumpDateToString(DumpToString):
     adapts(DateDomain, StringDomain)
 
     def __call__(self):
-        self.format("SUBSTRING(CONVERT(VARCHAR, {base}, 20), 1, 10)",
+        self.format("SUBSTRING(CONVERT(VARCHAR, {base}, 21), 1, 10)",
                     base=self.base)
 
 
-class MSSQLDumpToDate(DumpToDate):
+class MSSQLDumpTimeToString(DumpToString):
+
+    adapts(TimeDomain, StringDomain)
+
+    def __call__(self):
+        self.format("SUBSTRING(CONVERT(VARCHAR, CAST({base} AS DATETIME), 21),"
+                    " 12, 12)", base=self.base)
+
+
+class MSSQLDumpDateTimeToString(DumpToString):
+
+    adapts(DateTimeDomain, StringDomain)
+
+    def __call__(self):
+        self.format("CONVERT(VARCHAR, {base}, 21)", base=self.base)
+
+
+class MSSQLDumpStringToDate(DumpToDate):
+
+    adapts(StringDomain, DateDomain)
+
+    def __call__(self):
+        self.format("CAST(FLOOR(CAST(CAST({base} AS DATETIME) AS FLOAT))"
+                    " AS DATETIME)", base=self.base)
+
+
+class MSSQLDumpDateTimeToDate(DumpToDate):
+
+    adapts(DateTimeDomain, DateDomain)
+
+    def __call__(self):
+        self.format("CAST(FLOOR(CAST({base} AS FLOAT)) AS DATETIME)",
+                    base=self.base)
+
+
+class MSSQLDumpStringToTime(DumpToTime):
+
+    adapts(StringDomain, TimeDomain)
+
+    def __call__(self):
+        self.format("CAST(CAST('1900-01-01 ' + {base} AS DATETIME) AS FLOAT)",
+                    base=self.base)
+
+
+class MSSQLDumpDateTimeToTime(DumpToTime):
+
+    adapts(DateTimeDomain, TimeDomain)
+
+    def __call__(self):
+        self.format("(CAST({base} AS FLOAT) - FLOOR(CAST({base} AS FLOAT)))",
+                    base=self.base)
+
+
+class MSSQLDumpStringToDateTime(DumpToDateTime):
+
+    adapts(StringDomain, DateTimeDomain)
 
     def __call__(self):
         self.format("CAST({base} AS DATETIME)", base=self.base)
+
+
+class MSSQLDumpDateToDateTime(DumpToDateTime):
+
+    adapts(DateDomain, DateTimeDomain)
+
+    def __call__(self):
+        self.format("{base}", base=self.base)
 
 
 class MSSQLDumpIsTotallyEqual(DumpIsTotallyEqual):
@@ -323,6 +412,22 @@ class MSSQLDumpExtractDay(DumpExtractDay):
     template = "DATEPART(DAY, {op})"
 
 
+class MSSQLDumpExtractHour(DumpExtractHour):
+
+    template = "DATEPART(HOUR, {op})"
+
+
+class MSSQLDumpExtractMinute(DumpExtractMinute):
+
+    template = "DATEPART(MINUTE, {op})"
+
+
+class MSSQLDumpExtractSecond(DumpExtractSecond):
+
+    template = ("(DATEPART(SECOND, {op}) +"
+                " DATEPART(MILLISECOND, {op}) / 1000e0)")
+
+
 class MSSQLDumpMakeDate(DumpMakeDate):
 
     template = ("DATEADD(DAY, {day} - 1,"
@@ -331,14 +436,40 @@ class MSSQLDumpMakeDate(DumpMakeDate):
                 " CAST('2001-01-01' AS DATETIME))))")
 
 
+class MSSQLDumpMakeDateTime(DumpMakeDateTime):
+
+    def __call__(self):
+        template = ("DATEADD(DAY, {day} - 1,"
+                    " DATEADD(MONTH, {month} - 1,"
+                    " DATEADD(YEAR, {year} - 2001,"
+                    " CAST('2001-01-01' AS DATETIME))))")
+        if self.phrase.hour is not None:
+            template = "DATEADD(HOUR, {hour}, %s)" % template
+        if self.phrase.minute is not None:
+            template = "DATEADD(MINUTE, {minute}, %s)" % template
+        if self.phrase.second is not None:
+            template = "DATEADD(MILLISECOND, 1000 * {second}, %s)" % template
+        self.format(template, self.arguments)
+
+
 class MSSQLDumpDateIncrement(DumpDateIncrement):
 
-    template = "DATEADD(DAY, {rop}, {lop})"
+    template = "({lop} + {rop})"
+
+
+class MSSQLDumpDateTimeIncrement(DumpDateTimeIncrement):
+
+    template = "({lop} + {rop})"
 
 
 class MSSQLDumpDateDecrement(DumpDateDecrement):
 
-    template = "DATEADD(DAY, -{rop}, {lop})"
+    template = "({lop} - {rop})"
+
+
+class MSSQLDumpDateTimeDecrement(DumpDateTimeDecrement):
+
+    template = "({lop} - {rop})"
 
 
 class MSSQLDumpDateDifference(DumpDateDifference):

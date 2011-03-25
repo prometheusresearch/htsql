@@ -32,12 +32,15 @@ from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
                          NotSig)
 from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
-                        SortSig, CastSig, MakeDateSig, ExtractYearSig,
-                        ExtractMonthSig, ExtractDaySig,
+                        SortSig, CastSig, MakeDateSig, MakeDateTimeSig,
+                        CombineDateTimeSig,
+                        ExtractYearSig, ExtractMonthSig, ExtractDaySig,
+                        ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,
                         AddSig, ConcatenateSig,
                         HeadSig, TailSig, SliceSig, AtSig, ReplaceSig,
                         UpperSig, LowerSig, TrimSig,
-                        DateIncrementSig, SubtractSig, DateDecrementSig,
+                        DateIncrementSig, DateTimeIncrementSig,
+                        SubtractSig, DateDecrementSig, DateTimeDecrementSig,
                         DateDifferenceSig, TodaySig, NowSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
                         KeepPolaritySig, ReversePolaritySig,
@@ -700,6 +703,18 @@ class BindDateCast(BindCast):
     hint = """date(expr) -> expression converted to date"""
 
 
+class BindTimeCast(BindCast):
+
+    named('time')
+    codomain = TimeDomain()
+
+
+class BindDateTimeCast(BindCast):
+
+    named('datetime')
+    codomain = DateTimeDomain()
+
+
 class BindMakeDate(BindMonoFunction):
 
     named(('date', 3))
@@ -707,6 +722,26 @@ class BindMakeDate(BindMonoFunction):
     domains = [IntegerDomain(), IntegerDomain(), IntegerDomain()]
     codomain = DateDomain()
     hint = """date(year, month, day) -> date value"""
+
+
+class BindMakeDateTime(BindMonoFunction):
+
+    named(('datetime', 3),
+          ('datetime', 4),
+          ('datetime', 5),
+          ('datetime', 6))
+    signature = MakeDateTimeSig
+    domains = [IntegerDomain(), IntegerDomain(), IntegerDomain(),
+               IntegerDomain(), IntegerDomain(), FloatDomain()]
+    codomain = DateTimeDomain()
+
+
+class BindCombineDateTime(BindMonoFunction):
+
+    named(('datetime', 2))
+    signature = CombineDateTimeSig
+    domains = [DateDomain(), TimeDomain()]
+    codomain = DateTimeDomain()
 
 
 class BindAmongBase(BindFunction):
@@ -873,7 +908,8 @@ class Comparable(Adapter):
 class ComparableDomains(Comparable):
 
     adapts_many(IntegerDomain, DecimalDomain, FloatDomain,
-                StringDomain, EnumDomain, DateDomain)
+                StringDomain, EnumDomain, DateDomain, TimeDomain,
+                DateTimeDomain)
 
     def __call__(self):
         return True
@@ -922,6 +958,16 @@ class CorrelateDateIncrement(CorrelateFunction):
     signature = DateIncrementSig
     domains = [DateDomain(), IntegerDomain()]
     codomain = DateDomain()
+
+
+class CorrelateDateTimeIncrement(CorrelateFunction):
+
+    correlates(AddSig, (DateTimeDomain, IntegerDomain),
+                       (DateTimeDomain, DecimalDomain),
+                       (DateTimeDomain, FloatDomain))
+    signature = DateTimeIncrementSig
+    domains = [DateTimeDomain(), FloatDomain()]
+    codomain = DateTimeDomain()
 
 
 class CorrelateConcatenate(CorrelateFunction):
@@ -978,6 +1024,16 @@ class CorrelateDateDecrement(CorrelateFunction):
     signature = DateDecrementSig
     domains = [DateDomain(), IntegerDomain()]
     codomain = DateDomain()
+
+
+class CorrelateDateTimeDecrement(CorrelateFunction):
+
+    correlates(SubtractSig, (DateTimeDomain, IntegerDomain),
+                            (DateTimeDomain, DecimalDomain),
+                            (DateTimeDomain, FloatDomain))
+    signature = DateTimeDecrementSig
+    domains = [DateTimeDomain(), FloatDomain()]
+    codomain = DateTimeDomain()
 
 
 class CorrelateDateDifference(CorrelateFunction):
@@ -1420,25 +1476,106 @@ class BindExtractDay(BindPolyFunction):
     hint = """day(date) -> the day of a given date"""
 
 
-class CorrelateExtractYear(CorrelateFunction):
+class BindExtractHour(BindPolyFunction):
+
+    named('hour')
+    signature = ExtractHourSig
+
+
+class BindExtractMinute(BindPolyFunction):
+
+    named('minute')
+    signature = ExtractMinuteSig
+
+
+class BindExtractSecond(BindPolyFunction):
+
+    named('second')
+    signature = ExtractSecondSig
+
+
+class CorrelateExtractYearFromDate(CorrelateFunction):
 
     correlates(ExtractYearSig, DateDomain)
     domains = [DateDomain()]
     codomain = IntegerDomain()
 
 
-class CorrelateExtractMonth(CorrelateFunction):
+class CorrelateExtractYearFromDateTime(CorrelateFunction):
+
+    correlates(ExtractYearSig, DateTimeDomain)
+    domains = [DateTimeDomain()]
+    codomain = IntegerDomain()
+
+
+class CorrelateExtractMonthFromDate(CorrelateFunction):
 
     correlates(ExtractMonthSig, DateDomain)
     domains = [DateDomain()]
     codomain = IntegerDomain()
 
 
-class CorrelateExtractDay(CorrelateFunction):
+class CorrelateExtractMonthFromDateTime(CorrelateFunction):
+
+    correlates(ExtractMonthSig, DateTimeDomain)
+    domains = [DateTimeDomain()]
+    codomain = IntegerDomain()
+
+
+class CorrelateExtractDayFromDate(CorrelateFunction):
 
     correlates(ExtractDaySig, DateDomain)
     domains = [DateDomain()]
     codomain = IntegerDomain()
+
+
+class CorrelateExtractDayFromDateTime(CorrelateFunction):
+
+    correlates(ExtractDaySig, DateTimeDomain)
+    domains = [DateTimeDomain()]
+    codomain = IntegerDomain()
+
+
+class CorrelateExtractHourFromTime(CorrelateFunction):
+
+    correlates(ExtractHourSig, TimeDomain)
+    domains = [TimeDomain()]
+    codomain = IntegerDomain()
+
+
+class CorrelateExtractHourFromDateTime(CorrelateFunction):
+
+    correlates(ExtractHourSig, DateTimeDomain)
+    domains = [DateTimeDomain()]
+    codomain = IntegerDomain()
+
+
+class CorrelateExtractMinuteFromTime(CorrelateFunction):
+
+    correlates(ExtractMinuteSig, TimeDomain)
+    domains = [TimeDomain()]
+    codomain = IntegerDomain()
+
+
+class CorrelateExtractMinuteFromDateTime(CorrelateFunction):
+
+    correlates(ExtractMinuteSig, DateTimeDomain)
+    domains = [DateTimeDomain()]
+    codomain = IntegerDomain()
+
+
+class CorrelateExtractSecondFromTime(CorrelateFunction):
+
+    correlates(ExtractSecondSig, TimeDomain)
+    domains = [TimeDomain()]
+    codomain = FloatDomain()
+
+
+class CorrelateExtractSecondFromDateTime(CorrelateFunction):
+
+    correlates(ExtractSecondSig, DateTimeDomain)
+    domains = [DateTimeDomain()]
+    codomain = FloatDomain()
 
 
 class CorrelateTrim(CorrelateFunction):
@@ -1699,6 +1836,22 @@ class CorrelateDateMinMax(CorrelateAggregate):
     signature = MinMaxSig
     domains = [DateDomain()]
     codomain = DateDomain()
+
+
+class CorrelateTimeMinMax(CorrelateAggregate):
+
+    correlates(MinMaxSig, TimeDomain)
+    signature = MinMaxSig
+    domains = [TimeDomain()]
+    codomain = TimeDomain()
+
+
+class CorrelateDateTimeMinMax(CorrelateAggregate):
+
+    correlates(MinMaxSig, DateTimeDomain)
+    signature = MinMaxSig
+    domains = [DateTimeDomain()]
+    codomain = DateTimeDomain()
 
 
 class BindSum(BindPolyAggregate):

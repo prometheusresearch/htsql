@@ -19,7 +19,7 @@ from .format import Format, Formatter, Renderer
 from .entitle import entitle
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
-                      DateDomain)
+                      DateDomain, TimeDomain, DateTimeDomain)
 import re
 import decimal
 import datetime
@@ -384,6 +384,42 @@ class FormatDate(Format):
         assert isinstance(value, maybe(datetime.date))
         if value is None:
             return self.format_null(width)
+        return ["%*s" % (-width, value)]
+
+
+class FormatTime(Format):
+
+    adapts(TextRenderer, TimeDomain)
+
+    def measure(self, value):
+        if value is None:
+            return 0
+        return len(str(value))
+
+    def __call__(self, value, width):
+        assert isinstance(value, maybe(datetime.time))
+        if value is None:
+            return self.format_null(width)
+        return ["%*s" % (-width, value)]
+
+
+class FormatDateTime(Format):
+
+    adapts(TextRenderer, DateTimeDomain)
+
+    def measure(self, value):
+        if value is None:
+            return 0
+        if not value.time():
+            return 10
+        return len(str(value))
+
+    def __call__(self, value, width):
+        assert isinstance(value, maybe(datetime.datetime))
+        if value is None:
+            return self.format_null(width)
+        if not value.time():
+            return ["%*s" % (-width, value.date())]
         return ["%*s" % (-width, value)]
 
 

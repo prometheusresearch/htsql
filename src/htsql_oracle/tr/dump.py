@@ -14,17 +14,20 @@ This module adapts the SQL serializer for Oracle.
 
 
 from htsql.adapter import adapts
-from htsql.domain import BooleanDomain, StringDomain, DateDomain
+from htsql.domain import (BooleanDomain, StringDomain, DateDomain, TimeDomain,
+                          DateTimeDomain)
 from htsql.tr.frame import ScalarFrame
 from htsql.tr.dump import (SerializeSegment, Dump, DumpBranch, DumpAnchor,
                            DumpLeadingAnchor, DumpFromPredicate,
                            DumpToPredicate, DumpBoolean, DumpInteger,
-                           DumpFloat, DumpToFloat, DumpToDecimal,
-                           DumpToString,
+                           DumpFloat, DumpTime, DumpDateTime,
+                           DumpToFloat, DumpToDecimal, DumpToString,
+                           DumpToDate, DumpToTime, DumpToDateTime,
                            DumpIsTotallyEqual, DumpBySignature)
 from htsql.tr.fn.dump import (DumpLength, DumpSubstring, DumpDateIncrement,
                               DumpDateDecrement, DumpDateDifference,
-                              DumpMakeDate)
+                              DumpMakeDate, DumpCombineDateTime,
+                              DumpExtractSecond)
 from .signature import RowNumSig
 
 
@@ -152,6 +155,18 @@ class OracleDumpFloat(DumpFloat):
         self.write(repr(self.value)+'D')
 
 
+class OracleDumpTime(DumpTime):
+
+    def __call__(self):
+        self.format("INTERVAL {value:literal} HOUR TO SECOND", value=str(self.value))
+
+
+class OracleDumpDateTime(DumpDateTime):
+
+    def __call__(self):
+        self.format("TIMESTAMP {value:literal}", value=str(self.value))
+
+
 class OracleDumpToFloat(DumpToFloat):
 
     def __call__(self):
@@ -190,6 +205,65 @@ class OracleDumpDateToString(DumpToString):
 
     def __call__(self):
         self.format("TO_CHAR({base}, 'YYYY-MM-DD')", base=self.base)
+
+
+class OracleDumpTimeToString(DumpToString):
+
+    adapts(TimeDomain, StringDomain)
+
+    def __call__(self):
+        self.format("TO_CHAR(TIMESTAMP '2001-01-01 00:00:00' + {base},"
+                    " 'HH24:MI:SS.FF')", base=self.base)
+
+
+class OracleDumpDateTimeToString(DumpToString):
+
+    adapts(DateTimeDomain, StringDomain)
+
+    def __call__(self):
+        self.format("TO_CHAR({base}, 'YYYY-MM-DD HH24:MI:SS.FF')",
+                    base=self.base)
+
+
+class OracleDumpStringToDate(DumpToDate):
+
+    adapts(StringDomain, DateDomain)
+
+    def __call__(self):
+        self.format("TO_DATE({base}, 'YYYY-MM-DD')", base=self.base)
+
+
+class OracleDumpDateTimeToDate(DumpToDate):
+
+    adapts(DateTimeDomain, DateDomain)
+
+    def __call__(self):
+        self.format("TRUNC({base}, 'DD')", base=self.base)
+
+
+class OracleDumpStringToTime(DumpToTime):
+
+    adapts(StringDomain, TimeDomain)
+
+    def __call__(self):
+        self.format("TO_DSINTERVAL('0 ' || {base})", base=self.base)
+
+
+class OracleDumpDateTimeToTime(DumpToTime):
+
+    adapts(DateTimeDomain, TimeDomain)
+
+    def __call__(self):
+        self.format("({base} - TRUNC({base}, 'DD'))", base=self.base)
+
+
+class OracleDumpStringToDateTime(DumpToDateTime):
+
+    adapts(StringDomain, DateTimeDomain)
+
+    def __call__(self):
+        self.format("TO_TIMESTAMP({base}, 'YYYY-MM-DD HH24:MI:SS')",
+                    base=self.base)
 
 
 class OracleDumpIsTotallyEqual(DumpIsTotallyEqual):
@@ -243,5 +317,15 @@ class OracleDumpMakeDate(DumpMakeDate):
     template = ("(DATE '2001-01-01' + ({year} - 2001) * INTERVAL '1' YEAR"
                 " + ({month} - 1) * INTERVAL '1' MONTH"
                 " + ({day} - 1) * INTERVAL '1' DAY)")
+
+
+class OracleDumpCombineDateTime(DumpCombineDateTime):
+
+    template = "(CAST({date} AS TIMESTAMP) + {time})"
+
+
+class OracleDumpExtractSecond(DumpExtractSecond):
+
+    template = "(1D * EXTRACT(SECOND FROM {op}))"
 
 

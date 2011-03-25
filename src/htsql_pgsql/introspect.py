@@ -20,7 +20,7 @@ from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
 from .domain import (PGBooleanDomain, PGIntegerDomain, PGFloatDomain,
                      PGDecimalDomain, PGCharDomain, PGVarCharDomain,
                      PGTextDomain, PGEnumDomain, PGDateDomain,
-                     PGOpaqueDomain)
+                     PGTimeDomain, PGDateTimeDomain, PGOpaqueDomain)
 import rulesparser
 from htsql.connect import Connect
 from htsql.util import Record
@@ -324,6 +324,10 @@ class IntrospectPGSQL(Introspect):
                 return PGTextDomain(schema_name, name)
             if base_name == 'date':
                 return PGDateDomain(schema_name, name)
+            if base_name in ['time', 'timetz']:
+                return PGTimeDomain(schema_name, name)
+            if base_name in ['timestamp', 'timestamptz']:
+                return PGDateTimeDomain(schema_name, name)
         return PGOpaqueDomain(schema_name, name)
 
 
