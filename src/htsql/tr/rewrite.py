@@ -157,9 +157,10 @@ class RewriteOrdered(RewriteSpace):
             order = [(self.state.rewrite(code, mask=self.space.base),
                       direction)
                      for code, direction in self.space.order]
-        if not self.space.is_expanding:
-            return self.space.clone(order=order)
-        base = self.state.rewrite(self.space.base)
+        if self.space.is_expanding:
+            base = self.state.rewrite(self.space.base)
+        else:
+            base = self.state.rewrite(self.space.base, mask=self.space.scalar)
         return self.space.clone(base=base, order=order)
 
 

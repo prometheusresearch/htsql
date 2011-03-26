@@ -235,4 +235,6 @@ tests:
       skip: true
     - uri: /(school^{true()})
       skip: true
+    # A bug `rewrite` is not applied to `base` of an ordered space.
+    - uri: /((program?school='art')^degree).limit(1)
 

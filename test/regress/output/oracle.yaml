@@ -18249,6 +18249,29 @@ tests:
                FROM (SELECT 1 AS "^"
                      FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                      GROUP BY "PROGRAM"."DEGREE") "PROGRAM"
+          - uri: /((program?school='art')^degree).limit(1)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | ((program?school='art')^degree).limit(1) |
+              -+------------------------------------------+-
+               | degree                                   |
+              -+------------------------------------------+-
+               | ba                                       |
+                                                    (1 row)
+
+               ----
+               /((program?school='art')^degree).limit(1)
+               SELECT "PROGRAM"."DEGREE"
+               FROM (SELECT "PROGRAM"."DEGREE"
+                     FROM (SELECT "PROGRAM"."DEGREE"
+                           FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                           WHERE ("PROGRAM"."SCHOOL" = 'art')
+                           GROUP BY "PROGRAM"."DEGREE"
+                           ORDER BY 1 ASC NULLS FIRST) "PROGRAM"
+                     WHERE (ROWNUM < 2)) "PROGRAM"
+               ORDER BY 1 ASC NULLS FIRST
   - include: test/regress/input/format.yaml
     output:
       id: format

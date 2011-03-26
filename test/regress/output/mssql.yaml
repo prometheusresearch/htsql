@@ -18176,6 +18176,26 @@ tests:
                FROM (SELECT 1 AS [^]
                      FROM [ad].[program] AS [program]
                      GROUP BY [program].[degree]) AS [program]
+          - uri: /((program?school='art')^degree).limit(1)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | ((program?school='art')^degree).limit(1) |
+              -+------------------------------------------+-
+               | degree                                   |
+              -+------------------------------------------+-
+               | ba                                       |
+                                                    (1 row)
+
+               ----
+               /((program?school='art')^degree).limit(1)
+               SELECT TOP 1
+                      [program].[degree]
+               FROM [ad].[program] AS [program]
+               WHERE ([program].[school] = 'art')
+               GROUP BY [program].[degree]
+               ORDER BY 1 ASC
   - include: test/regress/input/format.yaml
     output:
       id: format
