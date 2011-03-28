@@ -61,6 +61,7 @@ ENTRY_POINTS = {
         'htsql.core = htsql.export:HTSQL_CORE',
         'engine.sqlite = htsql_sqlite.export:ENGINE_SQLITE',
         'engine.pgsql = htsql_pgsql.export:ENGINE_PGSQL',
+        'engine.postgres = htsql_pgsql.export:ENGINE_PGSQL',
         'engine.mysql = htsql_mysql.export:ENGINE_MYSQL',
         'engine.oracle = htsql_oracle.export:ENGINE_ORACLE',
         'engine.mssql = htsql_mssql.export:ENGINE_MSSQL',
