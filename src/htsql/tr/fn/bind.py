@@ -385,7 +385,11 @@ class BindFiber(BindMacro):
         if recipe is None:
             raise BindError("unknown identifier", table.mark)
         bind = BindByRecipe(recipe, table, self.state)
-        binding = bind()
+        bindings = list(bind())
+        if len(bindings) != 1:
+            raise BindError("unexpected selector or wildcard expression",
+                            syntax.mark)
+        binding = bindings[0]
         if image is None and counterimage is None:
             yield WrapperBinding(binding, self.syntax)
             return
@@ -457,14 +461,14 @@ class BindKernel(BindMacro):
             syntax, recipe = group[index]
             syntax = syntax.clone(mark=self.syntax.mark)
             bind = BindByRecipe(recipe, syntax, self.state)
-            binding = bind()
-            yield binding
+            for binding in bind():
+                yield binding
         else:
             for syntax, recipe in group:
                 syntax = syntax.clone(mark=self.syntax.mark)
                 bind = BindByRecipe(recipe, syntax, self.state)
-                binding = bind()
-                yield binding
+                for binding in bind():
+                    yield binding
 
 
 class BindComplement(BindMacro):
@@ -477,8 +481,7 @@ class BindComplement(BindMacro):
         if recipe is None:
             raise BindError("expected a quotient context", self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
-        binding = bind()
-        yield binding
+        return bind()
 
 
 class BindAs(BindMacro):

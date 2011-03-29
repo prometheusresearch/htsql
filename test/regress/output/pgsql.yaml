@@ -15613,6 +15613,22 @@ tests:
                                ON ("school"."code" = "department"."school")
                WHERE ("school"."code" = 'art')
                ORDER BY "school"."code" ASC, 1 ASC
+          - uri: /{}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: empty selector:
+                  /{}
+                   ^^
+          - uri: /school{}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: empty selector:
+                  /school{}
+                   ^^^^^^^^
         - id: assignments
           tests:
           - uri: /school.define(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
@@ -15940,6 +15956,42 @@ tests:
                                      GROUP BY 2) AS "student_3"
                                     ON ("school"."code" = "student_3"."school")
                ORDER BY 1 ASC
+          - uri: /department.define(stats(c):={min(c.credits) :as min,max(c.credits)
+              :as max}) {stats(course), stats(course?no>=100&no<200)}?code='acc'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (department.define(stats(c):={min(c.credits):as(min),max(c.credits):as(max)})?code='acc') |
+              -+-------------------------------------------------------------------------------------------+-
+               | min                  | max                  | min                  | max                  |
+              -+----------------------+----------------------+----------------------+----------------------+-
+               |                    2 |                    5 |                    2 |                    2 |
+                                                                                                     (1 row)
+
+               ----
+               /department.define(stats(c):={min(c.credits):as(min),max(c.credits):as(max)}){stats(course),stats(course?no>=100&no<200)}?code='acc'
+               SELECT "course_1"."min",
+                      "course_1"."max",
+                      "course_2"."min",
+                      "course_2"."max"
+               FROM "ad"."department" AS "department"
+                    LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min",
+                                            MAX("course"."credits") AS "max",
+                                            "course"."department"
+                                     FROM "ad"."course" AS "course"
+                                     GROUP BY 3) AS "course_1"
+                                    ON ("department"."code" = "course_1"."department")
+                    LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min",
+                                            MAX("course"."credits") AS "max",
+                                            "course"."department"
+                                     FROM "ad"."course" AS "course"
+                                     WHERE ("course"."no" >= 100)
+                                           AND ("course"."no" < 200)
+                                     GROUP BY 3) AS "course_2"
+                                    ON ("department"."code" = "course_2"."department")
+               WHERE ("department"."code" = 'acc')
+               ORDER BY "department"."code" ASC
         - id: projections
           tests:
           - uri: /quotient(program, degree)

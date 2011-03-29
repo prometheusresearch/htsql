@@ -125,6 +125,11 @@ tests:
   - title: Table Expressions
     tests:
     - uri: /(school?code='art').department
+    # An empty segment
+    - uri: /{}
+      expect: 400
+    - uri: /school{}
+      expect: 400
 
   - title: Assignments
     tests:
@@ -155,6 +160,8 @@ tests:
                          count(student?gender='m'),
                          count(student?gender='f')}
                         :where(student:=student?is_active)}
+    - uri: /department.define(stats(c):={min(c.credits) :as min,max(c.credits) :as max})
+                {stats(course), stats(course?no>=100&no<200)}?code='acc'
 
   - title: Projections
     tests:

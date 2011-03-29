@@ -294,7 +294,7 @@ class BindSegment(Bind):
                 for syntax, recipe in bare_group:
                     syntax = syntax.clone(mark=base.mark)
                     bind = BindByRecipe(recipe, syntax, self.state)
-                    bare_elements.append(bind())
+                    bare_elements.extend(bind())
                 self.state.pop_base()
         # Validate and specialize the domains of the elements.
         elements = []
@@ -419,7 +419,7 @@ class BindFunctionOperator(Bind):
                               len(self.syntax.arguments))
         if recipe is not None:
             bind = BindByRecipe(recipe, self.syntax, self.state)
-            bindings = [bind()]
+            bindings = list(bind())
         else:
             bindings = self.state.call(self.syntax)
         return bindings
@@ -448,7 +448,7 @@ class BindFunctionCall(Bind):
                               len(self.syntax.arguments))
         if recipe is not None:
             bind = BindByRecipe(recipe, self.syntax, self.state)
-            bindings = [bind()]
+            bindings = list(bind())
         else:
             bindings = self.state.call(self.syntax, base)
         self.state.pop_base()
@@ -633,7 +633,7 @@ class BindIdentifier(Bind):
             raise BindError("unable to resolve an identifier",
                             self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
-        yield bind()
+        return bind()
 
 
 class BindWildcard(Bind):
@@ -652,7 +652,8 @@ class BindWildcard(Bind):
         for syntax, recipe in group:
             syntax = syntax.clone(mark=self.syntax.mark)
             bind = BindByRecipe(recipe, syntax, self.state)
-            yield bind()
+            for binding in bind():
+                yield binding
 
 
 class BindComplement(Bind):
@@ -667,7 +668,7 @@ class BindComplement(Bind):
         if recipe is None:
             raise BindError("expected a quotient context", self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
-        yield bind()
+        return bind()
 
 
 class BindString(Bind):
@@ -739,8 +740,8 @@ class BindByFreeTable(BindByRecipe):
     adapts(FreeTableRecipe)
 
     def __call__(self):
-        return FreeTableBinding(self.state.base, self.recipe.table,
-                                self.syntax)
+        yield FreeTableBinding(self.state.base, self.recipe.table,
+                               self.syntax)
 
 
 class BindByAttachedTable(BindByRecipe):
@@ -751,7 +752,7 @@ class BindByAttachedTable(BindByRecipe):
         binding = self.state.base
         for join in self.recipe.joins:
             binding = AttachedTableBinding(binding, join, self.syntax)
-        return binding
+        yield binding
 
 
 class BindByColumn(BindByRecipe):
@@ -762,9 +763,13 @@ class BindByColumn(BindByRecipe):
         link = None
         if self.recipe.link is not None:
             bind = BindByRecipe(self.recipe.link, self.syntax, self.state)
-            link = bind()
-        return ColumnBinding(self.state.base, self.recipe.column,
-                             link, self.syntax)
+            links = list(bind())
+            if len(links) != 1:
+                raise BindError("unexpected selector or wildcard expression",
+                                syntax.mark)
+            link = links[0]
+        yield ColumnBinding(self.state.base, self.recipe.column,
+                            link, self.syntax)
 
 
 class BindByComplement(BindByRecipe):
@@ -773,7 +778,7 @@ class BindByComplement(BindByRecipe):
 
     def __call__(self):
         syntax = self.recipe.seed.syntax.clone(mark=self.syntax.mark)
-        return ComplementBinding(self.state.base, self.recipe.seed, syntax)
+        yield ComplementBinding(self.state.base, self.recipe.seed, syntax)
 
 
 class BindByKernel(BindByRecipe):
@@ -783,8 +788,8 @@ class BindByKernel(BindByRecipe):
     def __call__(self):
         binding = self.recipe.kernel[self.recipe.index]
         syntax = binding.syntax.clone(mark=self.syntax.mark)
-        return KernelBinding(self.state.base, self.recipe.index,
-                             binding.domain, syntax)
+        yield KernelBinding(self.state.base, self.recipe.index,
+                            binding.domain, syntax)
 
 
 class BindBySubstitution(BindByRecipe):
@@ -799,13 +804,18 @@ class BindBySubstitution(BindByRecipe):
                 raise BindError("unable to resolve an identifier",
                                 self.syntax.mark)
             bind = BindByRecipe(recipe, self.syntax, self.state)
-            binding = bind()
+            bindings = list(bind())
+            if len(bindings) != 1:
+                raise BindError("unexpected selector or wildcard expression",
+                                syntax.mark)
+            binding = bindings[0]
             binding = DefinitionBinding(binding, self.recipe.subnames[0],
                                         self.recipe.subnames[1:],
                                         self.recipe.arguments,
                                         self.recipe.body,
                                         binding.syntax)
-            return binding
+            yield binding
+            return
         base = RedirectBinding(self.state.base, self.recipe.base,
                                self.state.base.syntax)
         if self.recipe.arguments is not None:
@@ -815,9 +825,9 @@ class BindBySubstitution(BindByRecipe):
                                     self.syntax.arguments):
                 binding = self.state.bind(syntax)
                 base = AliasBinding(base, name, binding, base.syntax)
-        binding = self.state.bind(self.recipe.body, base=base)
-        binding = WrapperBinding(binding, self.syntax)
-        return binding
+        for binding in self.state.bind_all(self.recipe.body, base=base):
+            binding = WrapperBinding(binding, self.syntax)
+            yield binding
 
 
 class BindByBinding(BindByRecipe):
@@ -825,7 +835,7 @@ class BindByBinding(BindByRecipe):
     adapts(BindingRecipe)
 
     def __call__(self):
-        return self.recipe.binding
+        yield self.recipe.binding
 
 
 class BindByAmbiguous(BindByRecipe):
