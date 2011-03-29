@@ -8,7 +8,8 @@ from json import loads
 
 
 class HTSQLDirective(Directive):
-    required_arguments = 1
+    optional_arguments = 1
+    has_content = True
     final_argument_whitespace = True
     option_spec = {
             'plain': directives.flag,
@@ -20,8 +21,15 @@ class HTSQLDirective(Directive):
 
     def run(self):
         env = self.state.document.settings.env
-        query = " ".join(line.strip()
-                         for line in self.arguments[0].split("\n"))
+        if self.arguments:
+            if self.content:
+                raise self.error("duplicate query")
+            query = " ".join(line.strip()
+                             for line in self.arguments[0].split("\n"))
+        elif self.content:
+            query = "\n".join(self.content)
+        else:
+            raise self.error("no query")
         query_node = nodes.literal_block(query, query)
         query_node['language'] = 'htsql'
         if not env.config.htsql_server:
