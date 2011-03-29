@@ -105,12 +105,18 @@ class IntrospectOracle(Introspect):
                            'CTXSYS', 'XDB', 'ANONYMOUS', 'MDSYS', 'HR',
                            'FLOWS_FILES', 'FLOWS_020100']:
             return False
+        if '$' in schema_name:
+            return False
         return True
 
     def permit_table(self, schema_name, table_name):
+        if '$' in schema_name or '$' in table_name:
+            return False
         return True
 
     def permit_column(self, schema_name, table_name, column_name):
+        if '$' in schema_name or '$' in table_name or '$' in column_name:
+            return False
         return True
 
     def introspect_schemas(self):
