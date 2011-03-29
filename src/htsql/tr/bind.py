@@ -304,6 +304,9 @@ class BindSegment(Bind):
                 raise BindError("invalid element type", element.mark)
             element = CastBinding(element, domain, element.syntax)
             elements.append(element)
+        # Currently we disallow an empty selector.
+        if not elements:
+            raise BindError("empty selector", self.syntax.mark)
         # Generate a segment binding.
         yield SegmentBinding(base, elements, self.syntax)
 
