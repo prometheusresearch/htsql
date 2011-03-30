@@ -66,6 +66,14 @@ class Meta(object):
                 name = kind[0]
                 if isinstance(item, unicode):
                     item = item.encode('utf-8')
+                # Workaround against extra quoting in
+                # PRAGMA foreign_key_list; column `table`.
+                # See `http://www.sqlite.org/cvstrac/tktview?tn=3800`
+                # and `http://www.sqlite.org/src/ci/600482d161`.
+                # The bug is fixed in SQLite 3.6.14.
+                if name == 'table' and (item.startswith('"') and
+                                        item.endswith('"')):
+                    item = item[1:-1].replace('""', '"')
                 attributes[name] = item
             record = Record(**attributes)
             rows.append(record)
