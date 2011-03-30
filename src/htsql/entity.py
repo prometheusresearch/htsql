@@ -145,12 +145,12 @@ class CatalogEntity(Entity):
         for origin_schema in schemas:
             for origin_table in origin_schema.tables:
                 for fk in origin_table.foreign_keys:
-                    assert fk.target_schema_name in name_to_schema
+                    assert fk.target_schema_name in name_to_schema, fk
                     schema = name_to_schema[fk.target_schema_name]
-                    assert fk.target_name in schema.tables
+                    assert fk.target_name in schema.tables, fk
                     table = schema.tables[fk.target_name]
                     assert (set(column.name for column in table.columns)
-                                .issuperset(set(fk.target_column_names)))
+                                .issuperset(set(fk.target_column_names))), fk
 
         # An ordered mapping: name -> schema.
         self.schemas = EntitySet(schemas)
@@ -202,19 +202,24 @@ class TableEntity(NamedEntity):
         assert isinstance(schema_name, str)
         assert isinstance(columns, listof(ColumnEntity))
         assert all((column.schema_name, column.table_name)
-                        == (schema_name, name) for column in columns)
+                        == (schema_name, name) for column in columns), \
+               (schema_name, name, columns)
         assert isinstance(unique_keys, listof(UniqueKeyEntity))
         assert all((uk.origin_schema_name, uk.origin_name)
-                        == (schema_name, name) for uk in unique_keys)
+                        == (schema_name, name) for uk in unique_keys), \
+               (schema_name, name, unique_keys)
         assert set(column.name for column in columns).issuperset(
                 set(column_name for uk in unique_keys
-                                for column_name in uk.origin_column_names))
+                                for column_name in uk.origin_column_names)), \
+               (schema_name, name, unique_keys)
         assert isinstance(foreign_keys, listof(ForeignKeyEntity))
         assert all((fk.origin_schema_name, fk.origin_name)
-                        == (schema_name, name) for fk in foreign_keys)
+                        == (schema_name, name) for fk in foreign_keys), \
+               (schema_name, name, foreign_keys)
         assert set(column.name for column in columns).issuperset(
                 set(column_name for fk in foreign_keys
-                                for column_name in fk.origin_column_names))
+                                for column_name in fk.origin_column_names)), \
+               (schema_name, name, foreign_keys)
 
         super(TableEntity, self).__init__(name)
         self.schema_name = schema_name
