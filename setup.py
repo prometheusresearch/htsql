@@ -71,6 +71,8 @@ ENTRY_POINTS = {
         'tweak.schema = htsql_tweak.schema.export:TWEAK_SCHEMA',
         'tweak.pgsql.catalog'
             ' = htsql_tweak.pgsql_catalog.export:TWEAK_PGSQL_CATALOG',
+        'tweak.pgsql.view'
+            ' = htsql_tweak.pgsql_view.export:TWEAK_PGSQL_VIEW',
     ],
 }
 INSTALL_REQUIRES = [
