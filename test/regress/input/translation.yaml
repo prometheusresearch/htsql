@@ -135,6 +135,19 @@ tests:
       skip: true
     - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
       skip: true
+    # The `home()` function.
+    # Empty selector
+    - uri: /home()
+      expect: 400
+    - uri: /home(){2+2}
+    - uri: /school.home(){2+2}
+    - uri: /school.home().school{root().school.*, *}
+    - uri: /(department?school='art').home().(department?school='la')
+                {root().(department?school='art').*, *}
+    - uri: /distinct(program{degree}?school='art').home().distinct(program{degree}?school='la')
+                {root().distinct(program{degree}?school='art').*, *}
+    - uri: /school{code,count(department)}
+                ?count(department)>avg(home().school.count(department))
 
   - title: Table Expressions
     tests:

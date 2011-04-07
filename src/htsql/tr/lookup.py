@@ -20,7 +20,7 @@ from ..context import context
 from ..introspect import Introspect
 from ..entity import DirectJoin, ReverseJoin
 from .syntax import Syntax, IdentifierSyntax
-from .binding import (Binding, RootBinding, ChainBinding,
+from .binding import (Binding, HomeBinding, RootBinding, ChainBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, SieveBinding, WrapperBinding, SortBinding,
                       QuotientBinding, ComplementBinding, KernelBinding,
@@ -122,8 +122,7 @@ class Lookup(Adapter):
         return None
 
 
-
-class LookupAttributeInRoot(Lookup):
+class LookupAttributeInHome(Lookup):
     """
     Finds an attribute with the given name in the root context.
 
@@ -131,7 +130,7 @@ class LookupAttributeInRoot(Lookup):
     they give rise to :class:`htsql.tr.binding.FreeTableBinding` instances).
     """
 
-    adapts(RootBinding, AttributeProbe)
+    adapts(HomeBinding, AttributeProbe)
 
     def __call__(self):
         # Check if we could find a table with the given name.
@@ -160,6 +159,16 @@ class LookupAttributeInRoot(Lookup):
             return FreeTableRecipe(table)
         if len(candidates) > 1:
             return AmbiguousRecipe()
+
+
+class ExpandHome(Lookup):
+
+    adapts(HomeBinding, ExpansionProbe)
+
+    def __call__(self):
+        if self.probe.is_hard:
+            return []
+        return None
 
 
 class LookupInTable(Lookup):

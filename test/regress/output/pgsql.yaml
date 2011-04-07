@@ -15709,6 +15709,257 @@ tests:
                                      WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
                                     ON ("school_1"."code" = "school_2"."code")
                ORDER BY "school_1"."code" ASC
+          - uri: /home()
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: empty selector:
+                  /home()
+                   ^^^^^^
+          - uri: /home(){2+2}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | home() |
+              -+--------+-
+               | 2+2    |
+              -+--------+-
+               |      4 |
+                  (1 row)
+
+               ----
+               /home(){2+2}
+               SELECT (2 + 2)
+          - uri: /school.home(){2+2}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | home() |
+              -+--------+-
+               | 2+2    |
+              -+--------+-
+               |      4 |
+               |      4 |
+               |      4 |
+               |      4 |
+               |      4 |
+               |      4 |
+               |      4 |
+               |      4 |
+               |      4 |
+                 (9 rows)
+
+               ----
+               /school.home(){2+2}
+               SELECT (2 + 2)
+               FROM "ad"."school" AS "school"
+               ORDER BY "school"."code" ASC
+          - uri: /school.home().school{root().school.*, *}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                                      |
+              -+-----------------------------------------------------------------------------+-
+               | code | name                          | code | name                          |
+              -+------+-------------------------------+------+-------------------------------+-
+               | art  | School of Art and Design      | art  | School of Art and Design      |
+               | art  | School of Art and Design      | bus  | School of Business            |
+               | art  | School of Art and Design      | edu  | College of Education          |
+               | art  | School of Art and Design      | eng  | School of Engineering         |
+               | art  | School of Art and Design      | la   | School of Arts and Humanities |
+               | art  | School of Art and Design      | mus  | School of Music & Dance       |
+               | art  | School of Art and Design      | ns   | School of Natural Sciences    |
+               | art  | School of Art and Design      | ph   | Public Honorariums            |
+               | art  | School of Art and Design      | sc   | School of Continuing Studies  |
+               | bus  | School of Business            | art  | School of Art and Design      |
+               | bus  | School of Business            | bus  | School of Business            |
+               | bus  | School of Business            | edu  | College of Education          |
+               | bus  | School of Business            | eng  | School of Engineering         |
+               | bus  | School of Business            | la   | School of Arts and Humanities |
+               | bus  | School of Business            | mus  | School of Music & Dance       |
+               | bus  | School of Business            | ns   | School of Natural Sciences    |
+               | bus  | School of Business            | ph   | Public Honorariums            |
+               | bus  | School of Business            | sc   | School of Continuing Studies  |
+               | edu  | College of Education          | art  | School of Art and Design      |
+               | edu  | College of Education          | bus  | School of Business            |
+               | edu  | College of Education          | edu  | College of Education          |
+               | edu  | College of Education          | eng  | School of Engineering         |
+               | edu  | College of Education          | la   | School of Arts and Humanities |
+               | edu  | College of Education          | mus  | School of Music & Dance       |
+               | edu  | College of Education          | ns   | School of Natural Sciences    |
+               | edu  | College of Education          | ph   | Public Honorariums            |
+               | edu  | College of Education          | sc   | School of Continuing Studies  |
+               | eng  | School of Engineering         | art  | School of Art and Design      |
+               | eng  | School of Engineering         | bus  | School of Business            |
+               | eng  | School of Engineering         | edu  | College of Education          |
+               | eng  | School of Engineering         | eng  | School of Engineering         |
+               | eng  | School of Engineering         | la   | School of Arts and Humanities |
+               | eng  | School of Engineering         | mus  | School of Music & Dance       |
+               | eng  | School of Engineering         | ns   | School of Natural Sciences    |
+               | eng  | School of Engineering         | ph   | Public Honorariums            |
+               | eng  | School of Engineering         | sc   | School of Continuing Studies  |
+               | la   | School of Arts and Humanities | art  | School of Art and Design      |
+               | la   | School of Arts and Humanities | bus  | School of Business            |
+               | la   | School of Arts and Humanities | edu  | College of Education          |
+               | la   | School of Arts and Humanities | eng  | School of Engineering         |
+               | la   | School of Arts and Humanities | la   | School of Arts and Humanities |
+               | la   | School of Arts and Humanities | mus  | School of Music & Dance       |
+               | la   | School of Arts and Humanities | ns   | School of Natural Sciences    |
+               | la   | School of Arts and Humanities | ph   | Public Honorariums            |
+               | la   | School of Arts and Humanities | sc   | School of Continuing Studies  |
+               | mus  | School of Music & Dance       | art  | School of Art and Design      |
+               | mus  | School of Music & Dance       | bus  | School of Business            |
+               | mus  | School of Music & Dance       | edu  | College of Education          |
+               | mus  | School of Music & Dance       | eng  | School of Engineering         |
+               | mus  | School of Music & Dance       | la   | School of Arts and Humanities |
+               | mus  | School of Music & Dance       | mus  | School of Music & Dance       |
+               | mus  | School of Music & Dance       | ns   | School of Natural Sciences    |
+               | mus  | School of Music & Dance       | ph   | Public Honorariums            |
+               | mus  | School of Music & Dance       | sc   | School of Continuing Studies  |
+               | ns   | School of Natural Sciences    | art  | School of Art and Design      |
+               | ns   | School of Natural Sciences    | bus  | School of Business            |
+               | ns   | School of Natural Sciences    | edu  | College of Education          |
+               | ns   | School of Natural Sciences    | eng  | School of Engineering         |
+               | ns   | School of Natural Sciences    | la   | School of Arts and Humanities |
+               | ns   | School of Natural Sciences    | mus  | School of Music & Dance       |
+               | ns   | School of Natural Sciences    | ns   | School of Natural Sciences    |
+               | ns   | School of Natural Sciences    | ph   | Public Honorariums            |
+               | ns   | School of Natural Sciences    | sc   | School of Continuing Studies  |
+               | ph   | Public Honorariums            | art  | School of Art and Design      |
+               | ph   | Public Honorariums            | bus  | School of Business            |
+               | ph   | Public Honorariums            | edu  | College of Education          |
+               | ph   | Public Honorariums            | eng  | School of Engineering         |
+               | ph   | Public Honorariums            | la   | School of Arts and Humanities |
+               | ph   | Public Honorariums            | mus  | School of Music & Dance       |
+               | ph   | Public Honorariums            | ns   | School of Natural Sciences    |
+               | ph   | Public Honorariums            | ph   | Public Honorariums            |
+               | ph   | Public Honorariums            | sc   | School of Continuing Studies  |
+               | sc   | School of Continuing Studies  | art  | School of Art and Design      |
+               | sc   | School of Continuing Studies  | bus  | School of Business            |
+               | sc   | School of Continuing Studies  | edu  | College of Education          |
+               | sc   | School of Continuing Studies  | eng  | School of Engineering         |
+               | sc   | School of Continuing Studies  | la   | School of Arts and Humanities |
+               | sc   | School of Continuing Studies  | mus  | School of Music & Dance       |
+               | sc   | School of Continuing Studies  | ns   | School of Natural Sciences    |
+               | sc   | School of Continuing Studies  | ph   | Public Honorariums            |
+               | sc   | School of Continuing Studies  | sc   | School of Continuing Studies  |
+                                                                                     (81 rows)
+
+               ----
+               /school.home().school{root().school.*,*}
+               SELECT "school_1"."code",
+                      "school_1"."name",
+                      "school_2"."code",
+                      "school_2"."name"
+               FROM "ad"."school" AS "school_1"
+                    CROSS JOIN "ad"."school" AS "school_2"
+               ORDER BY 1 ASC, 3 ASC
+          - uri: /(department?school='art').home().(department?school='la') {root().(department?school='art').*,
+              *}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                                         |
+              -+--------------------------------------------------------------------+-
+               | code   | name        | school | code  | name              | school |
+              -+--------+-------------+--------+-------+-------------------+--------+-
+               | arthis | Art History | art    | eng   | English           | la     |
+               | arthis | Art History | art    | hist  | History           | la     |
+               | arthis | Art History | art    | lang  | Foreign Languages | la     |
+               | arthis | Art History | art    | poli  | Political Science | la     |
+               | arthis | Art History | art    | psych | Psychology        | la     |
+               | stdart | Studio Art  | art    | eng   | English           | la     |
+               | stdart | Studio Art  | art    | hist  | History           | la     |
+               | stdart | Studio Art  | art    | lang  | Foreign Languages | la     |
+               | stdart | Studio Art  | art    | poli  | Political Science | la     |
+               | stdart | Studio Art  | art    | psych | Psychology        | la     |
+                                                                            (10 rows)
+
+               ----
+               /(department?school='art').home().(department?school='la'){root().(department?school='art').*,*}
+               SELECT "department_1"."code",
+                      "department_1"."name",
+                      "department_1"."school",
+                      "department_2"."code",
+                      "department_2"."name",
+                      "department_2"."school"
+               FROM "ad"."department" AS "department_1"
+                    CROSS JOIN "ad"."department" AS "department_2"
+               WHERE ("department_2"."school" = 'la')
+                     AND ("department_1"."school" = 'art')
+               ORDER BY 1 ASC, 4 ASC
+          - uri: /distinct(program{degree}?school='art').home().distinct(program{degree}?school='la')
+              {root().distinct(program{degree}?school='art').*, *}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree}?school='la') |
+              -+---------------------------------------+-
+               | degree            | degree            |
+              -+-------------------+-------------------+-
+               | ba                | ba                |
+               | ba                | ct                |
+               | ba                | ma                |
+               | pb                | ba                |
+               | pb                | ct                |
+               | pb                | ma                |
+                                                (6 rows)
+
+               ----
+               /distinct(program{degree}?school='art').home().distinct(program{degree}?school='la'){root().distinct(program{degree}?school='art').*,*}
+               SELECT "program_1"."degree",
+                      "program_2"."degree"
+               FROM (SELECT "program"."degree"
+                     FROM "ad"."program" AS "program"
+                     WHERE ("program"."school" = 'art')
+                     GROUP BY 1) AS "program_1"
+                    CROSS JOIN (SELECT "program"."degree"
+                                FROM "ad"."program" AS "program"
+                                WHERE ("program"."school" = 'la')
+                                GROUP BY 1) AS "program_2"
+               ORDER BY 1 ASC NULLS FIRST, 2 ASC NULLS FIRST
+          - uri: /school{code,count(department)} ?count(department)>avg(home().school.count(department))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                   |
+              -+--------------------------+-
+               | code | count(department) |
+              -+------+-------------------+-
+               | bus  |                 3 |
+               | eng  |                 4 |
+               | la   |                 5 |
+               | mus  |                 4 |
+               | ns   |                 4 |
+                                   (5 rows)
+
+               ----
+               /school{code,count(department)}?count(department)>avg(home().school.count(department))
+               SELECT "school_1"."code",
+                      COALESCE("department"."count", 0)
+               FROM "ad"."school" AS "school_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "department"."school"
+                                     FROM "ad"."department" AS "department"
+                                     GROUP BY 2) AS "department"
+                                    ON ("school_1"."code" = "department"."school")
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("department"."count", 0) AS NUMERIC)) AS "avg"
+                                     FROM "ad"."school" AS "school"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "department"."school"
+                                                           FROM "ad"."department" AS "department"
+                                                           GROUP BY 2) AS "department"
+                                                          ON ("school"."code" = "department"."school")) AS "school_2"
+                                    ON TRUE
+               WHERE (CAST(COALESCE("department"."count", 0) AS NUMERIC) > "school_2"."avg")
+               ORDER BY 1 ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

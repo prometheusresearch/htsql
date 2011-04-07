@@ -27,8 +27,9 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       SortBinding, CastBinding, WrapperBinding,
                       DefinitionBinding, AliasBinding,
                       DirectionBinding, FormulaBinding,
-                      SelectionBinding)
-from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
+                      SelectionBinding, HomeBinding)
+from .code import (RootSpace, ScalarSpace,
+                   DirectTableSpace, FiberTableSpace,
                    QuotientSpace, ComplementSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
@@ -282,7 +283,7 @@ class EncodeSegment(Encode):
             for element in elements:
                 units.extend(element.units)
             if not units:
-                space = ScalarSpace(None, self.binding)
+                space = RootSpace(None, self.binding)
             else:
                 spaces = []
                 for unit in units:
@@ -303,21 +304,30 @@ class RelateRoot(Relate):
     """
     Translates the root binding node to a space node.
 
-    Returns a scalar space node :class:`htsql.tr.code.ScalarSpace`.
+    Returns a scalar space node :class:`htsql.tr.code.RootSpace`.
     """
 
     adapts(RootBinding)
 
     def __call__(self):
         # The root binding always originates the scalar space `I`.
-        return ScalarSpace(None, self.binding)
+        return RootSpace(None, self.binding)
+
+
+class RelateHome(Relate):
+
+    adapts(HomeBinding)
+
+    def __call__(self):
+        base = self.state.relate(self.binding.base)
+        return ScalarSpace(base, self.binding)
 
 
 class RelateFreeTable(Relate):
     """
     Translates a free table binding to a space node.
 
-    Returns a direct product node :class:`htsql.tr.code.DirectProductSpace`.
+    Returns a direct table node :class:`htsql.tr.code.DirectTableSpace`.
     """
 
     adapts(FreeTableBinding)
@@ -325,16 +335,16 @@ class RelateFreeTable(Relate):
     def __call__(self):
         # Generate a space node corresponding to the binding base.
         base = self.state.relate(self.binding.base)
-        # Produce a direct product space between the base space and
+        # Produce a direct table space between the base space and
         # the binding table: `base * table`.
-        return DirectProductSpace(base, self.binding.table, self.binding)
+        return DirectTableSpace(base, self.binding.table, self.binding)
 
 
 class RelateAttachedTable(Relate):
     """
     Translates an attached table binding to a space node.
 
-    Returns a fiber product node :class:`htsql.tr.code.FiberProductSpace`.
+    Returns a fiber table node :class:`htsql.tr.code.FiberTableSpace`.
     """
 
     adapts(AttachedTableBinding)
@@ -342,7 +352,7 @@ class RelateAttachedTable(Relate):
     def __call__(self):
         # Generate a space node corresponding to the binding base.
         space = self.state.relate(self.binding.base)
-        return FiberProductSpace(space, self.binding.join, self.binding)
+        return FiberTableSpace(space, self.binding.join, self.binding)
 
 
 class RelateSieve(Relate):
@@ -431,7 +441,7 @@ class RelateColumn(Relate):
     """
     Translates a column binding to a space node.
 
-    Returns a fiber product node :class:`htsql.tr.code.FiberProductSpace` or
+    Returns a fiber table node :class:`htsql.tr.code.FiberTableSpace` or
     raises an error.
     """
 

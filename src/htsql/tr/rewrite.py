@@ -15,7 +15,7 @@ This module implements the rewriting process.
 
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain
-from .code import (Expression, QueryExpr, SegmentExpr, Space, ScalarSpace,
+from .code import (Expression, QueryExpr, SegmentExpr, Space, RootSpace,
                    QuotientSpace, FilteredSpace, OrderedSpace,
                    Code, LiteralCode, CastCode, FormulaCode, Unit, ScalarUnit,
                    AggregateUnitBase, KernelUnit, ComplementUnit)
@@ -25,22 +25,22 @@ from .signature import Signature
 class RewritingState(object):
 
     def __init__(self):
-        self.scalar = None
+        self.root = None
         self.mask = None
         self.mask_stack = []
 
-    def set_scalar(self, space):
-        assert isinstance(space, ScalarSpace)
-        assert self.scalar is None
+    def set_root(self, space):
+        assert isinstance(space, RootSpace)
+        assert self.root is None
         assert self.mask is None
-        self.scalar = space
+        self.root = space
         self.mask = space
 
     def flush(self):
-        assert self.scalar is not None
-        assert self.mask is self.scalar
+        assert self.root is not None
+        assert self.mask is self.root
         assert not self.mask_stack
-        self.scalar = None
+        self.root = None
         self.mask = None
 
     def push_mask(self, mask):
@@ -86,7 +86,7 @@ class RewriteSegment(Rewrite):
     adapts(SegmentExpr)
 
     def __call__(self):
-        self.state.set_scalar(self.expression.space.scalar)
+        self.state.set_root(self.expression.space.root)
         elements = [self.state.rewrite(element, mask=self.expression.space)
                     for element in self.expression.elements]
         space = self.state.rewrite(self.expression.space)
@@ -160,7 +160,7 @@ class RewriteOrdered(RewriteSpace):
         if self.space.is_expanding:
             base = self.state.rewrite(self.space.base)
         else:
-            base = self.state.rewrite(self.space.base, mask=self.space.scalar)
+            base = self.state.rewrite(self.space.base, mask=self.space.root)
         return self.space.clone(base=base, order=order)
 
 

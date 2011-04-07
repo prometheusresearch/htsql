@@ -17,8 +17,8 @@ from ..util import maybe, listof
 from ..adapter import Adapter, adapts
 from .error import CompileError
 from .syntax import IdentifierSyntax
-from .code import (Expression, Code, Space, ScalarSpace, ProductSpace,
-                   DirectProductSpace, FiberProductSpace,
+from .code import (Expression, Code, Space, RootSpace, ScalarSpace, TableSpace,
+                   DirectTableSpace, FiberTableSpace,
                    QuotientSpace, ComplementSpace,
                    FilteredSpace, OrderedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
@@ -36,8 +36,8 @@ class CompilingState(object):
 
     State attributes:
 
-    `scalar` (:class:`htsql.tr.code.ScalarSpace`)
-        The scalar space.
+    `root` (:class:`htsql.tr.code.RootSpace`)
+        The root space.
 
     `baseline` (:class:`htsql.tr.code.Space`)
         When compiling a new term, indicates the leftmost axis that must
@@ -52,8 +52,8 @@ class CompilingState(object):
     def __init__(self):
         # The next term tag to be produced by `tag`.
         self.next_tag = 1
-        # The scalar space.
-        self.scalar = None
+        # The root scalar space.
+        self.root = None
         # The stack of previous baseline spaces.
         self.baseline_stack = []
         # The current baseline space.
@@ -71,22 +71,22 @@ class CompilingState(object):
         self.next_tag += 1
         return tag
 
-    def set_scalar(self, space):
+    def set_root(self, space):
         """
-        Initializes the scalar, baseline and mask spaces.
+        Initializes the root, baseline and mask spaces.
 
-        This function must be called before state attributes `scalar`,
+        This function must be called before state attributes `root`,
         `baseline` and `mask` could be used.
 
-        `space` (:class:`htsql.tr.code.ScalarSpace`)
-            A scalar space.
+        `space` (:class:`htsql.tr.code.RootSpace`)
+            A root scalar space.
         """
-        assert isinstance(space, ScalarSpace)
+        assert isinstance(space, RootSpace)
         # Check that the state spaces are not yet initialized.
-        assert self.scalar is None
+        assert self.root is None
         assert self.baseline is None
         #assert self.mask is None
-        self.scalar = space
+        self.root = space
         self.baseline = space
         #self.mask = space
 
@@ -96,12 +96,12 @@ class CompilingState(object):
         """
         # Check that the state spaces are initialized and the space stacks
         # are exhausted.
-        assert self.scalar is not None
+        assert self.root is not None
         assert not self.baseline_stack
-        assert self.baseline is self.scalar
+        assert self.baseline is self.root
         #assert not self.mask_stack
-        #assert self.mask is self.scalar
-        self.scalar = None
+        #assert self.mask is self.root
+        self.root = None
         self.baseline = None
         #self.mask = None
 
@@ -317,7 +317,7 @@ class CompileBase(Adapter):
         assert isinstance(shoot_term, Term)
         # Verify that it is possible to join the terms without
         # changing the cardinality of the trunk.
-        assert (shoot_term.baseline.is_scalar or
+        assert (shoot_term.baseline.is_root or
                 trunk_term.space.spans(shoot_term.baseline.base))
 
         # There are two ways the ties are generated:
@@ -553,8 +553,8 @@ class CompileSegment(Compile):
     adapts(SegmentExpr)
 
     def __call__(self):
-        # Initialize the all state spaces with a scalar space.
-        self.state.set_scalar(self.expression.space.scalar)
+        # Initialize the all state spaces with a root scalar space.
+        self.state.set_root(self.expression.space.root)
         # Construct a term corresponding to the segment space.
         kid = self.state.compile(self.expression.space)
         # Get the ordering of the segment space.
@@ -763,12 +763,12 @@ class InjectSpace(Inject):
         return self.join_terms(self.term, space_term, extra_routes)
 
 
-class CompileScalar(CompileSpace):
+class CompileRoot(CompileSpace):
     """
-    Compiles a term corresponding to a scalar space.
+    Compiles a term corresponding to a root scalar space.
     """
 
-    adapts(ScalarSpace)
+    adapts(RootSpace)
 
     def __call__(self):
         # Generate a `ScalarTerm` instance.
@@ -777,12 +777,26 @@ class CompileScalar(CompileSpace):
         return ScalarTerm(tag, self.space, self.space, routes)
 
 
-class CompileProduct(CompileSpace):
+class CompileScalar(CompileSpace):
+
+    adapts(ScalarSpace)
+
+    def __call__(self):
+        if self.space == self.baseline:
+            tag = self.state.tag()
+            routes = {}
+            return ScalarTerm(tag, self.space, self.space, routes)
+        term = self.state.compile(self.space.base)
+        return WrapperTerm(self.state.tag(), term,
+                           self.space, term.baseline, term.routes)
+
+
+class CompileTable(CompileSpace):
     """
-    Compiles a term corresponding to a (direct or fiber) product space.
+    Compiles a term corresponding to a (direct or fiber) table space.
     """
 
-    adapts(ProductSpace)
+    adapts(TableSpace)
 
     def __call__(self):
         # We start with identifying and handling special cases, where
@@ -1085,8 +1099,8 @@ class CompileOrdered(CompileSpace):
         # Here we reset the current baseline and mask spaces to the
         # scalar space, which effectively disables any optimizations.
         kid = self.state.compile(self.space.base,
-                                  baseline=self.state.scalar,
-                                  mask=self.state.scalar)
+                                  baseline=self.state.root,
+                                  mask=self.state.root)
         # Extract the space ordering and make sure the base term is able
         # to produce the order expressions.
         order = ordering(self.space)
@@ -1678,20 +1692,29 @@ class TieSpace(Adapter):
         return []
 
 
-class OrderScalar(OrderSpace):
+class OrderRoot(OrderSpace):
 
-    adapts(ScalarSpace)
+    adapts(RootSpace)
 
     def __call__(self):
         return []
 
 
-class OrderProduct(OrderSpace):
+class OrderScalar(OrderSpace):
 
-    adapts(ProductSpace)
+    adapts(ScalarSpace)
 
     def __call__(self):
-        # A product space complements the weak ordering of its base with
+        return ordering(self.space.base, with_strong=self.with_strong,
+                                         with_weak=self.with_weak)
+
+
+class OrderTable(OrderSpace):
+
+    adapts(TableSpace)
+
+    def __call__(self):
+        # A table space complements the weak ordering of its base with
         # implicit table ordering.
 
         for code, direction in ordering(self.space.base,
@@ -1744,9 +1767,9 @@ class OrderProduct(OrderSpace):
                     yield (code, +1)
 
 
-class SpreadProduct(SpreadSpace):
+class SpreadTable(SpreadSpace):
 
-    adapts(ProductSpace)
+    adapts(TableSpace)
 
     def __call__(self):
         space = self.space.inflate()
@@ -1754,9 +1777,9 @@ class SpreadProduct(SpreadSpace):
             yield ColumnUnit(column, space, self.space.binding)
 
 
-class SewProduct(SewSpace):
+class SewTable(SewSpace):
 
-    adapts(ProductSpace)
+    adapts(TableSpace)
 
     def __call__(self):
         # Connect a table axis to itself using the primary key of the table.
@@ -1796,9 +1819,9 @@ class SewProduct(SewSpace):
             yield Joint(unit, unit)
 
 
-class TieFiberProduct(TieSpace):
+class TieFiberTable(TieSpace):
 
-    adapts(FiberProductSpace)
+    adapts(FiberTableSpace)
 
     def __call__(self):
         # Generate a list of joints corresponding to a connection by

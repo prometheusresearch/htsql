@@ -150,7 +150,13 @@ class ChainBinding(Binding):
         self.base = base
 
 
-class RootBinding(ChainBinding):
+class HomeBinding(ChainBinding):
+
+    def __init__(self, base, syntax):
+        super(HomeBinding, self).__init__(base, VoidDomain(), syntax)
+
+
+class RootBinding(HomeBinding):
     """
     Represents a root link binding.
 
@@ -163,7 +169,7 @@ class RootBinding(ChainBinding):
 
     def __init__(self, syntax):
         # Note: `self.base is self` for the root binding.
-        super(RootBinding, self).__init__(self, VoidDomain(), syntax)
+        super(RootBinding, self).__init__(self, syntax)
 
 
 class TableBinding(ChainBinding):

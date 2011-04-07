@@ -29,8 +29,8 @@ class OracleCompileOrdered(CompileOrdered):
             else:
                 right_limit = self.space.limit+1
         kid = self.state.compile(self.space.base,
-                                  baseline=self.state.scalar,
-                                  mask=self.state.scalar)
+                                  baseline=self.state.root,
+                                  mask=self.state.root)
         order = ordering(self.space)
         codes = [code for code, direction in order]
         kid = self.state.inject(kid, [code for code, direction in order])

@@ -617,7 +617,7 @@ class SegmentTerm(UnaryTerm):
     def __init__(self, tag, kid, elements, space, routes):
         assert isinstance(elements, listof(Code))
         super(SegmentTerm, self).__init__(tag, kid,
-                                          space, space.scalar, routes)
+                                          space, space.root, routes)
         self.elements = elements
 
     def __str__(self):

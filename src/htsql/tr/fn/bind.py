@@ -22,7 +22,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
-                       SelectionBinding, Binding)
+                       SelectionBinding, HomeBinding, Binding)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -376,6 +376,15 @@ class BindThis(BindMacro):
         return WrapperBinding(self.state.base, self.syntax)
 
 
+class BindHome(BindMacro):
+
+    named('home')
+    signature = NullarySig
+
+    def expand(self):
+        return HomeBinding(self.state.base, self.syntax)
+
+
 class BindFiber(BindMacro):
 
     named('fiber')
@@ -383,13 +392,8 @@ class BindFiber(BindMacro):
     hint = """base.fiber(T[, img][, cimg]) -> fiber product of base and T"""
 
     def expand(self, table, image=None, counterimage=None):
-        if not isinstance(table, IdentifierSyntax):
-            raise BindError("an identifier expected", table.mark)
-        recipe = lookup_attribute(self.state.root, table.value)
-        if recipe is None:
-            raise BindError("unknown identifier", table.mark)
-        bind = BindByRecipe(recipe, table, self.state)
-        binding = bind()
+        home = HomeBinding(self.state.base, self.syntax)
+        binding = self.state.bind(table, base=home)
         if image is None and counterimage is None:
             return WrapperBinding(binding, self.syntax)
         if image is None:
