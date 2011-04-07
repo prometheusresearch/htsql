@@ -23,7 +23,8 @@ from .binding import (Binding, RootBinding, ChainBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, SieveBinding, WrapperBinding, SortBinding,
                       QuotientBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding, AliasBinding)
+                      DefinitionBinding, RedirectBinding, AliasBinding,
+                      SelectionBinding, DirectionBinding)
 from .recipe import (FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                      ComplementRecipe, KernelRecipe, SubstitutionRecipe,
                      BindingRecipe, AmbiguousRecipe)
@@ -52,80 +53,56 @@ def normalize(name):
     return name
 
 
-class Thing(object):
+class Probe(object):
     pass
 
 
-class AttributeThing(Thing):
+class AttributeProbe(Probe):
 
     def __init__(self, name):
         name = name
+        self.key = normalize(name)
 
 
-class FunctionThing(Thing):
+class FunctionProbe(Probe):
 
     def __init__(self, name, arity):
         self.name = name
         self.arity = arity
+        self.key = normalize(name)
 
 
-class KernelThing(Thing):
-
-    def __init__(self, index=None):
-        self.index = index
-
-
-class ComplementThing(Thing):
+class ComplementProbe(Probe):
     pass
 
 
-class WildThing(Thing):
-
-    def __init__(self, index=None):
-        pass
-
-
-class DeepAttributeThing(AttributeThing):
+class DeepAttributeProbe(AttributeProbe):
     pass
 
 
-class DeepFunctionThing(FunctionThing):
+class DeepFunctionProbe(FunctionProbe):
     pass
 
 
-class _Lookup(Adapter):
+class ExpansionProbe(Probe):
 
-    adapts(Binding, Thing)
+    def __init__(self, is_hard=False):
+        self.is_hard = is_hard
 
-    def __init__(self, binding, thing):
+
+class DirectionProbe(Probe):
+    pass
+
+
+class Lookup(Adapter):
+
+    adapts(Binding, Probe)
+
+    def __init__(self, binding, probe):
+        assert isinstance(binding, Binding)
+        assert isinstance(probe, Probe)
         self.binding = binding
-        self.thing = thing
-
-    def __call__(self):
-        return None
-
-
-class LookupItemizeMixin(object):
-    """
-    Encapsulates common methods and attributes of the :class:`Lookup`
-    and :class:`Itemize` adapters.
-
-    This is a mixin class; see subclasses for concrete adapters.
-
-    Attributes:
-
-    `binding` (:class:`htsql.tr.binding.Binding`)
-        The lookup context.
-
-    `catalog` (:class:`htsql.entity.CatalogEntity`)
-        The database metadata.
-    """
-
-    # FIXME: a way to unite `Lookup` and `Itemize` adapters in a single class?
-
-    def __init__(self, binding):
-        # This is the lookup context to which both `Lookup` and `
-        self.binding = binding
+        self.probe = probe
         # Get the database metadata.  Check if it was loaded before;
         # if not, load it from the database and save it as an application
         # attribute.  FIXME: this is definitely not the place where
@@ -138,112 +115,19 @@ class LookupItemizeMixin(object):
         self.catalog = app.cached_catalog
 
     def __call__(self):
-        # By default, both `Lookup` and `Itemize` adapters return ``None``,
-        # which means the operation is not applicable to the given binding.
         return None
 
 
-class Lookup(Adapter, LookupItemizeMixin):
+
+class LookupAttributeInRoot(Lookup):
     """
-    Looks for a member with the given name in the specified binding.
-
-    This is an iterface adapter; see subclasses for implementations.
-
-    The :class:`Lookup` adapter has the following signature::
-
-        Lookup: (Binding, IdentifierSyntax) -> maybe(ChainBinding)
-
-    The first argument is a binding node that serves as a lookup context;
-    it is the polymorphic argument of the adapter.  The adapter finds
-    a member of the specified binding that matches the given identifier
-    and generates a corresponding binding node.  If there are no members
-    matching the identifier, or the `Lookup` operation is not applicable
-    to the specified binding, ``None`` is returned.
-
-    `binding` (:class:`htsql.tr.binding.Binding`)
-        The lookup context.
-
-    `identifier` (:class:`htsql.tr.syntax.IdentifierSyntax`)
-        The identifier to look for.
-    """
-
-    adapts(Binding)
-
-    def __init__(self, binding, identifier):
-        assert isinstance(identifier, IdentifierSyntax)
-        super(Lookup, self).__init__(binding)
-        self.identifier = identifier
-        # We are going to seek objects which normalized name coincides
-        # with the normalized (basically, converted to lower case) identifier.
-        # This is the value of the normalized identifier.
-        self.key = normalize(identifier.value)
-
-
-class Itemize(Adapter, LookupItemizeMixin):
-    """
-    Produces all public members of the specified binding.
-
-    This is an iterface adapter; see subclasses for implementations.
-
-    The :class:`Itemize` adapter has the following signature::
-
-        Itemize: (Binding, Syntax) -> maybe((ChainBinding, ...))
-
-    The first argument is a binding node that serves as a lookup context;
-    it is the polymorphic argument of the adapter.  The second argument
-    is only used for cosmetic purposes, it has no semantic meaning.
-    The adapter generates a sequence of bindings corresponding to all
-    public members of the given lookup context.  If the `Itemize` operation
-    is not applicable to the specified binding, ``None`` is returned.
-
-    `binding` (:class:`htsql.tr.binding.Binding`)
-        The lookup context.
-
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
-        The syntax node that caused the operation.
-    """
-
-    adapts(Binding)
-
-
-class GetComplement(Adapter, LookupItemizeMixin):
-
-    adapts(Binding)
-
-    def __call__(self):
-        return None
-
-
-class GetKernel(Adapter, LookupItemizeMixin):
-
-    adapts(Binding)
-
-    def __call__(self):
-        return None
-
-
-class GetFunction(Adapter, LookupItemizeMixin):
-
-    adapts(Binding)
-
-    def __init__(self, binding, identifier, arity):
-        assert isinstance(identifier, IdentifierSyntax)
-        assert isinstance(arity, int) and arity >= 0
-        super(GetFunction, self).__init__(binding)
-        self.identifier = identifier
-        self.key = normalize(identifier.value)
-        self.arity = arity
-
-
-class LookupRoot(Lookup):
-    """
-    Finds a member with the given name in the root context.
+    Finds an attribute with the given name in the root context.
 
     Members of the root context are free tables (that is,
     they give rise to :class:`htsql.tr.binding.FreeTableBinding` instances).
     """
 
-    adapts(RootBinding)
+    adapts(RootBinding, AttributeProbe)
 
     def __call__(self):
         # Check if we could find a table with the given name.
@@ -263,7 +147,7 @@ class LookupRoot(Lookup):
         # constructor).
         for schema in self.catalog.schemas:
             for table in schema.tables:
-                if normalize(table.name) == self.key:
+                if normalize(table.name) == self.probe.key:
                     candidates.append(table)
         # If we find one and only one matching table, generate a binding
         # node for it.
@@ -274,11 +158,9 @@ class LookupRoot(Lookup):
             return AmbiguousRecipe()
 
 
-class LookupItemizeTableMixin(object):
-    """
-    Encapsulates common operations between `Lookup` and `Itemize` adapters
-    over :class:`htsql.tr.binding.TableBinding`.
-    """
+class LookupInTable(Lookup):
+
+    adapts(TableBinding, Probe)
 
     def find_link(self, column):
         # Determines if the column represents a link to another table.
@@ -369,7 +251,7 @@ class LookupItemizeTableMixin(object):
             return AmbiguousRecipe()
 
 
-class LookupTable(Lookup, LookupItemizeTableMixin):
+class LookupAttributeInTable(Lookup):
     """
     Finds a member with the given name in a table context.
 
@@ -387,7 +269,7 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
     while table members give rise to :class:`AttachedTableBinding` instances.
     """
 
-    adapts(TableBinding)
+    adapts(TableBinding, AttributeProbe)
 
     def __call__(self):
         # Check if we could find a column with the given name.
@@ -415,7 +297,7 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
         candidates = []
         # FIXME: not very efficient.
         for column in table.columns:
-            if normalize(column.name) == self.key:
+            if normalize(column.name) == self.probe.key:
                 candidates.append(column)
         # FIXME: if there are more than one candidate, we should stop
         # the lookup process instead of passing to the next step.
@@ -437,7 +319,7 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
         # and a table matching the given name as the target.
         candidates = []
         for foreign_key in origin.foreign_keys:
-            if normalize(foreign_key.target_name) == self.key:
+            if normalize(foreign_key.target_name) == self.probe.key:
                 candidates.append(foreign_key)
         # FIXME: if there are more than one candidate, we should stop
         # the lookup process instead of passing to the next step.
@@ -465,7 +347,7 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
         # FIXME: very inefficient.
         for target_schema in self.catalog.schemas:
             for target in target_schema.tables:
-                if normalize(target.name) != self.key:
+                if normalize(target.name) != self.probe.key:
                     continue
                 # Add all foreign keys referencing the context table to the
                 # list of candidates.
@@ -485,16 +367,19 @@ class LookupTable(Lookup, LookupItemizeTableMixin):
             return AmbiguousRecipe()
 
 
-class ItemizeTable(Itemize, LookupItemizeTableMixin):
+class ExpandTable(Lookup):
     """
     Produces all public members of a table context.
 
     Public members of a table binding are the columns of the table.
     """
 
-    adapts(TableBinding)
+    adapts(TableBinding, ExpansionProbe)
 
     def __call__(self):
+        # Only expand on a hard probe.
+        if not self.probe.is_hard:
+            return super(ExpandTable, self).__call__()
         # Produce a list of column bindings.
         return self.itemize_columns()
 
@@ -509,7 +394,7 @@ class ItemizeTable(Itemize, LookupItemizeTableMixin):
             yield (identifier, recipe)
 
 
-class LookupColumn(Lookup):
+class LookupAttributeInColumn(Lookup):
     """
     Finds a member with the given name in a column context.
 
@@ -518,17 +403,17 @@ class LookupColumn(Lookup):
     the requests fail.
     """
 
-    adapts(ColumnBinding)
+    adapts(ColumnBinding, AttributeProbe)
 
     def __call__(self):
         # If there is an associated link node, delegate the request to it.
         if self.binding.link is not None:
-            return lookup(self.binding.link, self.identifier)
+            return lookup(self.binding.link, self.probe)
         # Otherwise, no luck.
         return None
 
 
-class ItemizeColumn(Itemize):
+class ExpandColumn(Lookup):
     """
     Produces all public members of a column context.
 
@@ -537,291 +422,168 @@ class ItemizeColumn(Itemize):
     the requests fail.
     """
 
-    adapts(ColumnBinding)
+    adapts(ColumnBinding, ExpansionProbe)
 
     def __call__(self):
         # If there is an associated link node, delegate the request to it.
         if self.binding.link is not None:
-            return itemize(self.binding.link)
+            return lookup(self.binding.link, self.probe)
         # Otherwise, no luck.
         return None
 
 
-class LookupWrapper(Lookup):
+class LookupInWrapper(Lookup):
     """
     Finds a member with the given name in a wrapper node.
 
     All requests are delegated to the base node.
     """
 
-    adapts_many(WrapperBinding,
-                SieveBinding,
-                SortBinding)
+    adapts_many((WrapperBinding, Probe),
+                (SieveBinding, Probe),
+                (SortBinding, Probe),
+                (AliasBinding, Probe),
+                (DefinitionBinding, Probe),
+                (SelectionBinding, Probe))
 
     def __call__(self):
         # Delegate the request to the base node.
-        return lookup(self.binding.base, self.identifier)
+        return lookup(self.binding.base, self.probe)
 
 
-class ItemizeWrapper(Itemize):
-    """
-    Produces all public members of a wrapper node.
+class ExpandSelection(Lookup):
 
-    All requests are delegated to the base node.
-    """
-
-    adapts_many(WrapperBinding,
-                SieveBinding,
-                SortBinding,
-                AliasBinding,
-                DefinitionBinding)
+    adapts(SelectionBinding, ExpansionProbe)
 
     def __call__(self):
-        # Delegate the request to the base node.
-        return itemize(self.binding.base)
+        for element in self.binding.elements:
+            syntax = element.syntax
+            recipe = BindingRecipe(element)
+            yield (syntax, recipe)
 
 
-class GetComplementFromWrapper(GetComplement):
+class LookupComplementInQuotient(Lookup):
 
-    adapts_many(WrapperBinding,
-                SieveBinding,
-                SortBinding,
-                AliasBinding,
-                DefinitionBinding)
-
-    def __call__(self):
-        return get_complement(self.binding.base)
-
-
-class GetKernelFromWrapper(GetKernel):
-
-    adapts_many(WrapperBinding,
-                SieveBinding,
-                SortBinding,
-                AliasBinding,
-                DefinitionBinding)
-
-    def __call__(self):
-        return get_kernel(self.binding.base)
-
-
-class GetFunctionFromWrapper(GetFunction):
-
-    adapts_many(WrapperBinding,
-                SieveBinding,
-                SortBinding,
-                AliasBinding)
-
-    def __call__(self):
-        return get_function(self.binding.base, self.identifier, self.arity)
-
-
-class ItemizeQuotient(Itemize):
-
-    adapts(QuotientBinding)
-
-    def __call__(self):
-        return get_kernel(self.binding)
-
-
-class GetComplementFromQuotient(GetComplement):
-
-    adapts(QuotientBinding)
+    adapts(QuotientBinding, ComplementProbe)
 
     def __call__(self):
         return ComplementRecipe(self.binding.seed)
 
 
-class GetKernelFromQuotient(GetKernel):
+class ExpandQuotient(Lookup):
 
-    adapts(QuotientBinding)
+    adapts(QuotientBinding, ExpansionProbe)
 
     def __call__(self):
+        if not self.probe.is_hard:
+            return
+        recipies = []
         for index, binding in enumerate(self.binding.kernel):
             syntax = binding.syntax
             recipe = KernelRecipe(self.binding.kernel, index)
-            yield (syntax, recipe)
+            recipies.append((syntax, recipe))
+        return recipies
 
 
-class LookupComplement(Lookup):
+class LookupInComplement(Lookup):
 
-    adapts(ComplementBinding)
-
-    def __call__(self):
-        return lookup(self.binding.seed, self.identifier)
-
-
-class ItemizeComplement(Itemize):
-
-    adapts(ComplementBinding)
+    adapts(ComplementBinding, Probe)
 
     def __call__(self):
-        return itemize(self.binding.seed)
+        return lookup(self.binding.seed, self.probe)
 
 
-class GetComplementFromComplement(GetComplement):
+class LookupAttributeInAlias(Lookup):
 
-    adapts(ComplementBinding)
-
-    def __call__(self):
-        return get_complement(self.binding.seed)
-
-
-class GetKernelFromComplement(GetKernel):
-
-    adapts(ComplementBinding)
+    adapts(AliasBinding, AttributeProbe)
 
     def __call__(self):
-        return get_complement(self.binding.seed)
-
-
-class GetFunctionFromComplement(GetKernel):
-
-    adapts(ComplementBinding)
-
-    def __call__(self):
-        return get_function(self.binding.seed)
-
-
-class LookupAlias(LookupWrapper):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        if self.key == normalize(self.binding.name):
+        if self.probe.key == normalize(self.binding.name):
             return BindingRecipe(self.binding.binding)
-        return super(LookupAlias, self).__call__()
+        return super(LookupAttributeInAlias, self).__call__()
 
 
-class LookupDefinition(LookupWrapper):
+class LookupAttributeInDefinition(Lookup):
 
-    adapts(DefinitionBinding)
+    adapts(DefinitionBinding, AttributeProbe)
 
     def __call__(self):
-        if self.key == normalize(self.binding.name):
+        if self.probe.key == normalize(self.binding.name):
             if (self.binding.arguments is None or
                     len(self.binding.subnames) > 0):
                 return SubstitutionRecipe(self.binding.base,
                                           self.binding.subnames,
                                           self.binding.arguments,
                                           self.binding.body)
-        return super(LookupDefinition, self).__call__()
+        return super(LookupAttributeInDefinition, self).__call__()
 
 
-class GetFunctionFromDefinition(GetFunctionFromWrapper):
+class LookupFunctionInDefinition(Lookup):
 
-    adapts(DefinitionBinding)
+    adapts(DefinitionBinding, FunctionProbe)
 
     def __call__(self):
-        if self.key == normalize(self.binding.name):
+        if self.probe.key == normalize(self.binding.name):
             if (not self.binding.subnames and
                     self.binding.arguments is not None and
-                    len(self.binding.arguments) == self.arity):
+                    len(self.binding.arguments) == self.probe.arity):
                 return SubstitutionRecipe(self.binding.base,
                                           self.binding.subnames,
                                           self.binding.arguments,
                                           self.binding.body)
-        return super(GetFunctionFromDefinition, self).__call__()
+        return super(LookupFunctionInDefinition, self).__call__()
 
 
-class LookupRedirect(Lookup):
+class LookupInRedirect(Lookup):
 
-    adapts(RedirectBinding)
-
-    def __call__(self):
-        return lookup(self.binding.pointer, self.identifier)
-
-
-class ItemizeRedirect(Itemize):
-
-    adapts(RedirectBinding)
+    adapts(RedirectBinding, Probe)
 
     def __call__(self):
-        return itemize(self.binding.pointer)
+        return lookup(self.binding.pointer, self.probe)
 
 
-class GetComplementFromRedirect(GetComplement):
+class DirectDirection(Lookup):
 
-    adapts(RedirectBinding)
-
-    def __call__(self):
-        return get_complement(self.binding.pointer)
-
-
-class GetKernelFromRedirect(GetKernel):
-
-    adapts(RedirectBinding)
+    adapts(DirectionBinding, DirectionProbe)
 
     def __call__(self):
-        return get_kernel(self.binding.pointer)
+        return self.binding.direction
 
 
-class GetFunctionFromRedirect(GetKernel):
-
-    adapts(RedirectBinding)
-
-    def __call__(self):
-        return get_function(self.binding.pointer)
+def lookup(binding, probe):
+    lookup = Lookup(binding, probe)
+    return lookup()
 
 
-def lookup(binding, identifier):
-    """
-    Looks for a member of the specified binding that matches
-    the given identifier.
-
-    The function returns an instance of :class:`htsql.tr.binding.ChainBinding`
-    attached to the given binding, or ``None`` if no matching members were
-    found.
-
-    `binding` (:class:`htsql.tr.binding.Binding`)
-        The lookup context.
-
-    `identifier` (:class:`htsql.tr.syntax.IdentifierSyntax`)
-        The identifier to look for.
-    """
-    # Realize and apply the `Lookup` adapter.
-    lookup = Lookup(binding, identifier)
-    binding = lookup()
-    return binding
+def lookup_attribute(binding, name):
+    probe = AttributeProbe(name)
+    return lookup(binding, probe)
 
 
-def itemize(binding):
-    """
-    Produces all public members of the given binding.
+def lookup_function(binding, name, arity):
+    probe = FunctionProbe(name, arity)
+    return lookup(binding, probe)
 
-    The function returns a list of :class:`htsql.tr.binding.ChainBinding`
-    instances attached to the given binding, or ``None`` if the operation
-    is not applicable to the given binding.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
-        The lookup context.
-    """
-    # Realize and apply the `Itemize` adapter.
-    itemize = Itemize(binding)
-    bindings = itemize()
-    # Convert a generator to a regular list.
+def lookup_complement(binding):
+    probe = ComplementProbe()
+    return lookup(binding, probe)
+
+
+def expand(binding, is_hard=False):
+    probe = ExpansionProbe(is_hard=is_hard)
+    bindings = lookup(binding, probe)
     if bindings is not None:
         bindings = list(bindings)
     return bindings
 
 
-def get_complement(binding):
-    get_complement = GetComplement(binding)
-    binding = get_complement()
-    return binding
+def direct(binding):
+    probe = DirectionProbe()
+    return lookup(binding, probe)
 
 
-def get_kernel(binding):
-    get_kernel = GetKernel(binding)
-    bindings = get_kernel()
-    if bindings is not None:
-        bindings = list(bindings)
-    return bindings
-
-
-def get_function(binding, identifier, arity):
-    get_function = GetFunction(binding, identifier, arity)
-    binding = get_function()
-    return binding
+def entitle(binding):
+    pass
 
 

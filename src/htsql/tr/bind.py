@@ -18,10 +18,10 @@ from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
 from .error import BindError
-from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
-                     SieveSyntax, CallSyntax, OperatorSyntax,
-                     FunctionOperatorSyntax, FunctionCallSyntax, GroupSyntax,
-                     SpecifierSyntax, IdentifierSyntax, WildcardSyntax,
+from .syntax import (Syntax, QuerySyntax, SegmentSyntax, FormatSyntax,
+                     SelectorSyntax, ApplicationSyntax, OperatorSyntax,
+                     SpecifierSyntax, TransformSyntax, FunctionSyntax,
+                     GroupSyntax, IdentifierSyntax, WildcardSyntax,
                      ComplementSyntax, StringSyntax, NumberSyntax)
 from .recipe import (Recipe, FreeTableRecipe, AttachedTableRecipe,
                      ColumnRecipe, ComplementRecipe, KernelRecipe,
@@ -30,8 +30,10 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding, AliasBinding)
-from .lookup import lookup, itemize, get_kernel, get_complement, get_function
+                      DefinitionBinding, RedirectBinding, AliasBinding,
+                      SelectionBinding, SortBinding)
+from .lookup import (lookup, lookup_attribute, lookup_function,
+                     lookup_complement, expand, direct)
 from .coerce import coerce
 
 
@@ -116,21 +118,6 @@ class BindingState(object):
         # Restore the prevous lookup context from the stack.
         self.base = self.base_stack.pop()
 
-    def bind_all(self, syntax, base=None):
-        """
-        Binds the given syntax node using the current binding state.
-
-        Returns a list of generated binding nodes.
-
-        `syntax` (:class:`htsql.tr.syntax.Syntax`)
-            The syntax node to bind.
-
-        `base` (:class:`htsql.tr.binding.Binding` or ``None``)
-            If set, the lookup context is set to `base` when
-            binding the syntax node.
-        """
-        return bind_all(syntax, self, base)
-
     def bind(self, syntax, base=None):
         """
         Binds the given syntax node using the current binding state.
@@ -163,17 +150,14 @@ class BindingState(object):
         # If passed, set the new lookup context.
         if base is not None:
             self.push_base(base)
-        # First, try to find the function in the local context.
-        recipe = get_function
-        # Otherwise, look for the global function.
         # Realize and apply `BindByName` protocol.
         bind = BindByName(syntax, self)
-        bindings = list(bind())
+        binding = bind()
         # Restore the old lookup context.
         if base is not None:
             self.pop_base()
-        # Return the generated binding nodes.
-        return bindings
+        # Return the generated binding node.
+        return binding
 
 
 class Bind(Adapter):
@@ -236,7 +220,7 @@ class BindQuery(Bind):
         # Shut down the lookup context stack.
         self.state.flush()
         # Construct and return the top-level binding node.
-        yield QueryBinding(root, segment, self.syntax)
+        return QueryBinding(root, segment, self.syntax)
 
 
 class BindSegment(Bind):
@@ -249,54 +233,19 @@ class BindSegment(Bind):
     adapts(SegmentSyntax)
 
     def __call__(self):
-        # To construct a segment binding, we determine its base and its
-        # elements.  Note that the selector node has the form:
-        #   /base{selector}?filter
-        # (where the selector and the filter nodes are optional) or
-        #   /{selector}
-        # Typically the base and the filter nodes are bound to construct
-        # the segment base and the selector is bound to construct the segment
-        # elements.
-
-        # If the syntax node has the form:
-        #   /{selector}
-        # we use the current lookup context as the segment base.
-        base = self.state.base
-        # Othewise, for queries `/base{selector}?filter` and `/base{selector}`
-        # we bind the nodes `(base?filter)` and `base` respectively
-        # to get the segment base.
-        if self.syntax.base is not None:
-            if self.syntax.filter is not None:
-                base_syntax = SieveSyntax(self.syntax.base, None,
-                                          self.syntax.filter, self.syntax.mark)
-                base_syntax = GroupSyntax(base_syntax, self.syntax.mark)
-                base = self.state.bind(base_syntax)
-            else:
-                base = self.state.bind(self.syntax.base)
-        # Bind the selector against the base to get the segment elements.
-        if self.syntax.selector is not None:
-            bare_elements = self.state.bind_all(self.syntax.selector, base)
+        base = self.state.bind(self.syntax.branch)
+        elements = []
+        recipies = expand(base, is_hard=True)
+        if recipies is None:
+            elements.append(base)
+            base = None
         else:
-            # No selector means that the segment has the form:
-            #   /base   or   /base?filter
-            # This is a special case: depending on whether the base is
-            # enumerable, it is interpreted either as
-            #   /base{*}
-            # or as
-            #   /{base}
-            bare_elements = []
-            bare_group = itemize(base)
-            if bare_group is None:
-                bare_elements = [base]
-                base = self.state.base
-            else:
-                self.state.push_base(base)
-                for syntax, recipe in bare_group:
-                    syntax = syntax.clone(mark=base.mark)
-                    bind = BindByRecipe(recipe, syntax, self.state)
-                    bare_elements.extend(bind())
-                self.state.pop_base()
-        # Validate and specialize the domains of the elements.
+            self.state.push_base(base)
+            for syntax, recipe in recipies:
+                bind = BindByRecipe(recipe, syntax, self.state)
+                elements.append(bind())
+            self.state.pop_base()
+        bare_elements = elements
         elements = []
         for element in bare_elements:
             domain = coerce(element.domain)
@@ -304,11 +253,9 @@ class BindSegment(Bind):
                 raise BindError("invalid element type", element.mark)
             element = CastBinding(element, domain, element.syntax)
             elements.append(element)
-        # Currently we disallow an empty selector.
         if not elements:
             raise BindError("empty selector", self.syntax.mark)
-        # Generate a segment binding.
-        yield SegmentBinding(base, elements, self.syntax)
+        return SegmentBinding(base, elements, self.syntax)
 
 
 class BindSelector(Bind):
@@ -321,71 +268,33 @@ class BindSelector(Bind):
     adapts(SelectorSyntax)
 
     def __call__(self):
-        # The selector node has the form:
-        #   {element,...}
-        # We iterate over the elements to bind them.
-        for element in self.syntax.elements:
-            for binding in self.state.bind_all(element):
-                yield binding
-
-
-class BindSieve(Bind):
-    """
-    Bind a :class:`htsql.tr.syntax.SieveSyntax` node.
-
-    Produces a sequence (possibly empty) of binding nodes.
-    """
-
-    adapts(SieveSyntax)
-
-    def __call__(self):
-        # A sieve node admits one of two forms.  The first form
-        #   /base?filer
-        # produces a sieve binding node.  The second form
-        #   /base{selector}?filter
-        # generates a sieve binding node and uses it as a lookup
-        # context when binding the selector.  The binding nodes
-        # produced by the selector are returned.
-
-        if self.syntax.selector is None:
-            # Handle the case `/base?filter`: generate and return
-            # a sieve binding.
-            base = self.state.bind(self.syntax.base)
-            # Note: this condition is always satisfied.
-            if self.syntax.filter is not None:
-                filter = self.state.bind(self.syntax.filter, base)
-                filter = CastBinding(filter, coerce(BooleanDomain()),
-                                     filter.syntax)
-                base = SieveBinding(base, filter, self.syntax)
-            yield base
-
-        else:
-            # Handle the cases `/base{selector}` and `/base{selector}?filter`:
-            # bind and return the selector using `base` or `base?filter` as
-            # the lookup context.
-
-            # Generate the new lookup context.
-            if self.syntax.filter is not None:
-                # Generate a new syntax node `(base?filter)` and bind it.
-                base_syntax = SieveSyntax(self.syntax.base, None,
-                                          self.syntax.filter, self.syntax.mark)
-                base_syntax = GroupSyntax(base_syntax, self.syntax.mark)
-                base = self.state.bind(base_syntax)
+        base = self.state.base
+        if self.syntax.lbranch is not None:
+            base = self.state.bind(self.syntax.lbranch)
+        self.state.push_base(base)
+        elements = []
+        for rbranch in self.syntax.rbranches:
+            element = self.state.bind(rbranch)
+            recipies = expand(element)
+            if recipies is not None:
+                for syntax, recipe in recipies:
+                    if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
+                        syntax = GroupSyntax(syntax, syntax.mark)
+                    syntax = SpecifierSyntax('.', element.syntax, syntax,
+                                             syntax.mark)
+                    bind = BindByRecipe(recipe, syntax, self.state)
+                    elements.append(bind())
             else:
-                base = self.state.bind(self.syntax.base)
-
-            # Bind and return the selector.
-            for binding in self.state.bind_all(self.syntax.selector, base):
-                # Wrap the binding nodes to change the associated syntax node.
-                # We replace `element` with `base{element}`.
-                selector_syntax = SelectorSyntax([binding.syntax],
-                                                 binding.mark)
-                binding_syntax = SieveSyntax(self.syntax.base,
-                                             selector_syntax,
-                                             self.syntax.filter,
-                                             binding.mark)
-                binding = WrapperBinding(binding, binding_syntax)
-                yield binding
+                elements.append(element)
+        self.state.pop_base()
+        order = []
+        for element in elements:
+            direction = direct(element)
+            if direction is not None:
+                order.append(element)
+        if order:
+            base = SortBinding(base, order, None, None, base.syntax)
+        return SelectionBinding(base, elements, base.syntax)
 
 
 class BindOperator(Bind):
@@ -403,34 +312,34 @@ class BindOperator(Bind):
         return self.state.call(self.syntax)
 
 
-class BindFunctionOperator(Bind):
+class BindTransform(Bind):
     """
-    Binds a :class:`htsql.tr.syntax.FunctionOperatorSyntax` node.
+    Binds a :class:`htsql.tr.syntax.TransformSyntax` node.
     """
 
-    adapts(FunctionOperatorSyntax)
+    adapts(TransformSyntax)
 
     def __call__(self):
         # A function operator node has the form:
         #   <lop> <identifier> <rop>
 
         # Find and bind the function.
-        recipe = get_function(self.state.base, self.syntax.identifier,
-                              len(self.syntax.arguments))
+        recipe = lookup_function(self.state.base, self.syntax.identifier.value,
+                                 len(self.syntax.arguments))
         if recipe is not None:
             bind = BindByRecipe(recipe, self.syntax, self.state)
-            bindings = list(bind())
+            binding = bind()
         else:
-            bindings = self.state.call(self.syntax)
-        return bindings
+            binding = self.state.call(self.syntax)
+        return binding
 
 
-class BindFunctionCall(Bind):
+class BindFunction(Bind):
     """
-    Binds a :class:`htsql.tr.syntax.FunctionCallSyntax` node.
+    Binds a :class:`htsql.tr.syntax.FunctionSyntax` node.
     """
 
-    adapts(FunctionCallSyntax)
+    adapts(FunctionSyntax)
 
     def __call__(self):
         # A function call has one of the forms:
@@ -440,19 +349,17 @@ class BindFunctionCall(Bind):
 
         # Get the lookup context of the function.
         base = self.state.base
-        if self.syntax.base is not None:
-            base = self.state.bind(self.syntax.base)
         # Find and bind the function.
         self.state.push_base(base)
-        recipe = get_function(base, self.syntax.identifier,
-                              len(self.syntax.arguments))
+        recipe = lookup_function(base, self.syntax.identifier.value,
+                                 len(self.syntax.arguments))
         if recipe is not None:
             bind = BindByRecipe(recipe, self.syntax, self.state)
-            bindings = list(bind())
+            binding = bind()
         else:
-            bindings = self.state.call(self.syntax, base)
+            binding = self.state.call(self.syntax, base)
         self.state.pop_base()
-        return bindings
+        return binding
 
 
 class BindByName(Protocol):
@@ -551,14 +458,14 @@ class BindByName(Protocol):
 
     @classmethod
     def dispatch(interface, syntax, *args, **kwds):
-        assert isinstance(syntax, CallSyntax)
+        assert isinstance(syntax, ApplicationSyntax)
         # We override `dispatch` since, as opposed to regular protocol
         # interfaces, we also want to take into account not only the
         # function name, but also the number of arguments.
         return (syntax.name, len(syntax.arguments))
 
     def __init__(self, syntax, state):
-        assert isinstance(syntax, CallSyntax)
+        assert isinstance(syntax, ApplicationSyntax)
         assert isinstance(state, BindingState)
         self.syntax = syntax
         self.state = state
@@ -585,10 +492,8 @@ class BindGroup(Bind):
 
         # Bind the expression and wrap the result to add parentheses
         # around the syntax node.
-        for binding in self.state.bind_all(self.syntax.expression):
-            binding_syntax = GroupSyntax(binding.syntax, binding.mark)
-            binding = WrapperBinding(binding, binding_syntax)
-            yield binding
+        binding = self.state.bind(self.syntax.branch)
+        return WrapperBinding(binding, self.syntax)
 
 
 class BindSpecifier(Bind):
@@ -604,19 +509,9 @@ class BindSpecifier(Bind):
 
         # Bind `base` and use it as the lookup context when binding
         # the identifier.
-        base = self.state.bind(self.syntax.base)
-        for binding in self.state.bind_all(self.syntax.identifier, base):
-            # Wrap the binding node to update the associated syntax node.
-            # Note `identifier` is replaced with `base.identifier`.
-            # FIXME: Will fail if `binding.syntax` is not an identifier
-            # or a wildcard node.  Currently, `binding.syntax` is always
-            # an identifier node, but that might change in the future.
-            binding_syntax = binding.syntax
-            if isinstance(binding_syntax, IdentifierSyntax):
-                binding_syntax = SpecifierSyntax(base.syntax, binding_syntax,
-                                                 binding.mark)
-                binding = WrapperBinding(binding, binding_syntax)
-            yield binding
+        base = self.state.bind(self.syntax.lbranch)
+        binding = self.state.bind(self.syntax.rbranch, base)
+        return WrapperBinding(binding, self.syntax)
 
 
 class BindIdentifier(Bind):
@@ -628,7 +523,7 @@ class BindIdentifier(Bind):
 
     def __call__(self):
         # Look for the identifier in the current lookup context.
-        recipe = lookup(self.state.base, self.syntax)
+        recipe = lookup_attribute(self.state.base, self.syntax.value)
         if recipe is None:
             raise BindError("unable to resolve an identifier",
                             self.syntax.mark)
@@ -645,15 +540,18 @@ class BindWildcard(Bind):
 
     def __call__(self):
         # Get all public descendants in the current lookup context.
-        group = itemize(self.state.base)
-        if group is None:
+        recipies = expand(self.state.base, is_hard=True)
+        if recipies is None:
             raise BindError("unable to resolve a wildcard",
                             self.syntax.mark)
-        for syntax, recipe in group:
+        elements = []
+        for syntax, recipe in recipies:
             syntax = syntax.clone(mark=self.syntax.mark)
             bind = BindByRecipe(recipe, syntax, self.state)
-            for binding in bind():
-                yield binding
+            element = bind()
+            elements.append(element)
+        return SelectionBinding(self.state.base, elements,
+                                self.state.base.syntax)
 
 
 class BindComplement(Bind):
@@ -664,7 +562,7 @@ class BindComplement(Bind):
     adapts(ComplementSyntax)
 
     def __call__(self):
-        recipe = get_complement(self.state.base)
+        recipe = lookup_complement(self.state.base)
         if recipe is None:
             raise BindError("expected a quotient context", self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
@@ -684,7 +582,7 @@ class BindString(Bind):
         binding = LiteralBinding(self.syntax.value,
                                  UntypedDomain(),
                                  self.syntax)
-        yield binding
+        return binding
 
 
 class BindNumber(Bind):
@@ -716,7 +614,7 @@ class BindNumber(Bind):
         else:
             domain = coerce(IntegerDomain())
         binding = CastBinding(binding, domain, self.syntax)
-        yield binding
+        return binding
 
 
 class BindByRecipe(Adapter):
@@ -740,8 +638,8 @@ class BindByFreeTable(BindByRecipe):
     adapts(FreeTableRecipe)
 
     def __call__(self):
-        yield FreeTableBinding(self.state.base, self.recipe.table,
-                               self.syntax)
+        return FreeTableBinding(self.state.base, self.recipe.table,
+                                self.syntax)
 
 
 class BindByAttachedTable(BindByRecipe):
@@ -752,7 +650,7 @@ class BindByAttachedTable(BindByRecipe):
         binding = self.state.base
         for join in self.recipe.joins:
             binding = AttachedTableBinding(binding, join, self.syntax)
-        yield binding
+        return binding
 
 
 class BindByColumn(BindByRecipe):
@@ -763,13 +661,9 @@ class BindByColumn(BindByRecipe):
         link = None
         if self.recipe.link is not None:
             bind = BindByRecipe(self.recipe.link, self.syntax, self.state)
-            links = list(bind())
-            if len(links) != 1:
-                raise BindError("unexpected selector or wildcard expression",
-                                syntax.mark)
-            link = links[0]
-        yield ColumnBinding(self.state.base, self.recipe.column,
-                            link, self.syntax)
+            link = bind()
+        return ColumnBinding(self.state.base, self.recipe.column,
+                             link, self.syntax)
 
 
 class BindByComplement(BindByRecipe):
@@ -778,7 +672,7 @@ class BindByComplement(BindByRecipe):
 
     def __call__(self):
         syntax = self.recipe.seed.syntax.clone(mark=self.syntax.mark)
-        yield ComplementBinding(self.state.base, self.recipe.seed, syntax)
+        return ComplementBinding(self.state.base, self.recipe.seed, syntax)
 
 
 class BindByKernel(BindByRecipe):
@@ -788,8 +682,8 @@ class BindByKernel(BindByRecipe):
     def __call__(self):
         binding = self.recipe.kernel[self.recipe.index]
         syntax = binding.syntax.clone(mark=self.syntax.mark)
-        yield KernelBinding(self.state.base, self.recipe.index,
-                            binding.domain, syntax)
+        return KernelBinding(self.state.base, self.recipe.index,
+                             binding.domain, syntax)
 
 
 class BindBySubstitution(BindByRecipe):
@@ -799,35 +693,29 @@ class BindBySubstitution(BindByRecipe):
     def __call__(self):
         if self.recipe.subnames:
             assert isinstance(self.syntax, IdentifierSyntax)
-            recipe = lookup(self.recipe.base, self.syntax)
+            recipe = lookup_attribute(self.recipe.base, self.syntax.value)
             if recipe is None:
                 raise BindError("unable to resolve an identifier",
                                 self.syntax.mark)
             bind = BindByRecipe(recipe, self.syntax, self.state)
-            bindings = list(bind())
-            if len(bindings) != 1:
-                raise BindError("unexpected selector or wildcard expression",
-                                syntax.mark)
-            binding = bindings[0]
+            binding = bind()
             binding = DefinitionBinding(binding, self.recipe.subnames[0],
                                         self.recipe.subnames[1:],
                                         self.recipe.arguments,
                                         self.recipe.body,
                                         binding.syntax)
-            yield binding
-            return
+            return binding
         base = RedirectBinding(self.state.base, self.recipe.base,
                                self.state.base.syntax)
         if self.recipe.arguments is not None:
-            assert isinstance(self.syntax, CallSyntax)
+            assert isinstance(self.syntax, ApplicationSyntax)
             assert len(self.syntax.arguments) == len(self.recipe.arguments)
             for name, syntax in zip(self.recipe.arguments,
                                     self.syntax.arguments):
                 binding = self.state.bind(syntax)
                 base = AliasBinding(base, name, binding, base.syntax)
-        for binding in self.state.bind_all(self.recipe.body, base=base):
-            binding = WrapperBinding(binding, self.syntax)
-            yield binding
+        binding = self.state.bind(self.recipe.body, base=base)
+        return WrapperBinding(binding, self.syntax)
 
 
 class BindByBinding(BindByRecipe):
@@ -835,7 +723,7 @@ class BindByBinding(BindByRecipe):
     adapts(BindingRecipe)
 
     def __call__(self):
-        yield self.recipe.binding
+        return WrapperBinding(self.recipe.binding, self.syntax)
 
 
 class BindByAmbiguous(BindByRecipe):
@@ -846,45 +734,9 @@ class BindByAmbiguous(BindByRecipe):
         raise BindError("ambiguous name", self.syntax.mark)
 
 
-def bind_all(syntax, state=None, base=None):
-    """
-    Binds the given syntax node.
-
-    Returns a list of generated binding nodes.
-
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
-        The syntax node to bind.
-
-    `state` (:class:`BindingState` or ``None``).
-        The binding state to use.  If not set, a new binding state
-        is created.
-
-    `base` (:class:`htsql.tr.binding.Binding` or ``None``)
-        If set, the lookup context is set to `base` when
-        binding the node.
-    """
-    # Create a new binding state if necessary.
-    if state is None:
-        state = BindingState()
-    # If passed, set the new lookup context.
-    if base is not None:
-        state.push_base(base)
-    # Realize and apply the `Bind` adapter.
-    bind = Bind(syntax, state)
-    bindings = list(bind())
-    # Restore the old lookup context.
-    if base is not None:
-        state.pop_base()
-    # Return the binding nodes.
-    return bindings
-
-
 def bind(syntax, state=None, base=None):
     """
     Binds the given syntax node.
-
-    Returns a binding node.  This function raises an error if no nodes
-    or more than one node are produced.
 
     `syntax` (:class:`htsql.tr.syntax.Syntax`)
         The syntax node to bind.
@@ -897,12 +749,19 @@ def bind(syntax, state=None, base=None):
         If set, the lookup context is set to `base` when binding
         the node.
     """
-    # Bind the syntax node.
-    bindings = bind_all(syntax, state, base)
-    # Ensure we got exactly one binding node back.
-    if len(bindings) != 1:
-        raise BindError("unexpected selector or wildcard expression",
-                        syntax.mark)
-    return bindings[0]
+    # Create a new binding state if necessary.
+    if state is None:
+        state = BindingState()
+    # If passed, set the new lookup context.
+    if base is not None:
+        state.push_base(base)
+    # Realize and apply the `Bind` adapter.
+    bind = Bind(syntax, state)
+    binding = bind()
+    # Restore the old lookup context.
+    if base is not None:
+        state.pop_base()
+    # Return the binding node.
+    return binding
 
 

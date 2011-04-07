@@ -19,7 +19,7 @@ from .error import SerializeError
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain)
-from .syntax import IdentifierSyntax, CallSyntax, LiteralSyntax
+from .syntax import IdentifierSyntax, ApplicationSyntax, LiteralSyntax
 from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     SegmentFrame, QueryFrame,
                     Phrase, NullPhrase, CastPhrase, LiteralPhrase,
@@ -922,7 +922,7 @@ class DubPhrase(Dub):
         if isinstance(syntax, IdentifierSyntax):
             return syntax.value
         # For a function call node, take the function name.
-        if isinstance(syntax, CallSyntax):
+        if isinstance(syntax, ApplicationSyntax):
             return syntax.name
         # For a literal node, take the value of the literal.
         if isinstance(syntax, LiteralSyntax):

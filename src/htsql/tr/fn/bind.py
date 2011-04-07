@@ -17,16 +17,16 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-                      SpecifierSyntax, FunctionCallSyntax)
+                      SpecifierSyntax, FunctionSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
-                       Binding)
+                       SelectionBinding, Binding)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
-from ..lookup import lookup, get_complement, get_kernel
+from ..lookup import lookup_attribute, lookup_complement, expand
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -94,24 +94,28 @@ class BindFunction(BindByName):
             bound_value = None
             if slot.is_singular:
                 if value is not None:
-                    bound_values = self.state.bind_all(value)
-                    if len(bound_values) > 1:
-                        raise BindError("unexpected list argument",
-                                        value.mark)
-                    if slot.is_mandatory and not bound_values:
-                        raise BindError("unexpected empty argument",
-                                        value.mark)
-                    if bound_values:
-                        [bound_value] = bound_values
+                    bound_value = self.state.bind(value)
+                    #if expand(bound_value) is not None:
+                    #    raise BindError("unexpected list argument",
+                    #                    value.mark)
             else:
                 if len(value) > 1:
                     bound_value = [self.state.bind(item) for item in value]
                 elif len(value) == 1:
                     [value] = value
-                    bound_value = self.state.bind_all(value)
-                    if slot.is_mandatory and not bound_value:
+                    bound_value = self.state.bind(value)
+                    recipies = expand(bound_value)
+                    if slot.is_mandatory and (recipies is not None and
+                                              not recipies):
                         raise BindError("missing argument %s" % name,
                                         value.mark)
+                    if recipies is None:
+                        bound_value = [bound_value]
+                    else:
+                        bound_value = []
+                        for syntax, recipe in recipies:
+                            bind = BindByRecipe(recipe, syntax, self.state)
+                            bound_value.append(bind())
                 else:
                     bound_value = []
             bound_arguments[name] = bound_value
@@ -122,7 +126,7 @@ class BindFunction(BindByName):
 
     def __call__(self):
         arguments = self.bind()
-        yield self.correlate(**arguments)
+        return self.correlate(**arguments)
 
 
 class BindMacro(BindFunction):
@@ -329,7 +333,7 @@ class BindNull(BindMacro):
     hint = """null() -> NULL"""
 
     def expand(self):
-        yield LiteralBinding(None, UntypedDomain(), self.syntax)
+        return LiteralBinding(None, UntypedDomain(), self.syntax)
 
 
 class BindTrue(BindMacro):
@@ -339,7 +343,7 @@ class BindTrue(BindMacro):
     hint = """true() -> TRUE"""
 
     def expand(self):
-        yield LiteralBinding(True, coerce(BooleanDomain()), self.syntax)
+        return LiteralBinding(True, coerce(BooleanDomain()), self.syntax)
 
 
 class BindFalse(BindMacro):
@@ -349,7 +353,7 @@ class BindFalse(BindMacro):
     hint = """false() -> FALSE"""
 
     def expand(self):
-        yield LiteralBinding(False, coerce(BooleanDomain()), self.syntax)
+        return LiteralBinding(False, coerce(BooleanDomain()), self.syntax)
 
 
 class BindRoot(BindMacro):
@@ -359,7 +363,7 @@ class BindRoot(BindMacro):
     hint = """base.root() -> the root space"""
 
     def expand(self):
-        yield WrapperBinding(self.state.root, self.syntax)
+        return WrapperBinding(self.state.root, self.syntax)
 
 
 class BindThis(BindMacro):
@@ -369,7 +373,7 @@ class BindThis(BindMacro):
     hint = """base.this() -> the current base space"""
 
     def expand(self):
-        yield WrapperBinding(self.state.base, self.syntax)
+        return WrapperBinding(self.state.base, self.syntax)
 
 
 class BindFiber(BindMacro):
@@ -381,18 +385,13 @@ class BindFiber(BindMacro):
     def expand(self, table, image=None, counterimage=None):
         if not isinstance(table, IdentifierSyntax):
             raise BindError("an identifier expected", table.mark)
-        recipe = lookup(self.state.root, table)
+        recipe = lookup_attribute(self.state.root, table.value)
         if recipe is None:
             raise BindError("unknown identifier", table.mark)
         bind = BindByRecipe(recipe, table, self.state)
-        bindings = list(bind())
-        if len(bindings) != 1:
-            raise BindError("unexpected selector or wildcard expression",
-                            syntax.mark)
-        binding = bindings[0]
+        binding = bind()
         if image is None and counterimage is None:
-            yield WrapperBinding(binding, self.syntax)
-            return
+            return WrapperBinding(binding, self.syntax)
         if image is None:
             image = counterimage
         if counterimage is None:
@@ -406,7 +405,7 @@ class BindFiber(BindMacro):
         child = CastBinding(child, domain, child.syntax)
         condition = FormulaBinding(IsEqualSig(+1), coerce(BooleanDomain()),
                                    self.syntax, lop=parent, rop=child)
-        yield SieveBinding(binding, condition, self.syntax)
+        return SieveBinding(binding, condition, self.syntax)
 
 
 class BindQuotient(BindMacro):
@@ -417,26 +416,24 @@ class BindQuotient(BindMacro):
     def expand(self, seed, kernel):
         seed_binding = self.state.bind(seed)
         kernel_bindings = []
+        self.state.push_base(seed_binding)
         for expression in kernel:
-            kernel_bindings.extend(self.state.bind_all(expression,
-                                                       base=seed_binding))
-        yield QuotientBinding(self.state.base, seed_binding, kernel_bindings,
-                              self.syntax)
+            expression = self.state.bind(expression)
+            recipies = expand(expression)
+            if recipies is not None:
+                for syntax, recipe in recipies:
+                    bind = BindByRecipe(recipe, syntax, self.state)
+                    kernel_bindings.append(bind())
+            else:
+                kernel_bindings.append(expression)
+        self.state.pop_base()
+        return QuotientBinding(self.state.base, seed_binding, kernel_bindings,
+                               self.syntax)
 
 
-class BindQuotientOperator(BindMacro):
+class BindQuotientOperator(BindQuotient):
 
     named('^')
-    signature = QuotientSig
-
-    def expand(self, seed, kernel):
-        seed_binding = self.state.bind(seed)
-        kernel_bindings = []
-        for expression in kernel:
-            kernel_bindings.extend(self.state.bind_all(expression,
-                                                       base=seed_binding))
-        yield QuotientBinding(self.state.base, seed_binding, kernel_bindings,
-                              self.syntax)
 
 
 class BindKernel(BindMacro):
@@ -452,23 +449,24 @@ class BindKernel(BindMacro):
                 index = int(index.value)
             except ValueError:
                 raise BindError("expected an integer value", index.mark)
-        group = get_kernel(self.state.base)
-        if group is None:
+        recipies = expand(self.state.base, is_hard=True)
+        if recipies is None:
             raise BindError("expected a quotient context", self.syntax.mark)
         if index is not None:
-            if not (0 <= index < len(group)):
+            if not (0 <= index < len(recipies)):
                 raise BindError("index is out of range", self.syntax.mark)
-            syntax, recipe = group[index]
+            syntax, recipe = recipies[index]
             syntax = syntax.clone(mark=self.syntax.mark)
             bind = BindByRecipe(recipe, syntax, self.state)
-            for binding in bind():
-                yield binding
-        else:
-            for syntax, recipe in group:
-                syntax = syntax.clone(mark=self.syntax.mark)
-                bind = BindByRecipe(recipe, syntax, self.state)
-                for binding in bind():
-                    yield binding
+            return bind()
+        elements = []
+        for syntax, recipe in recipies:
+            syntax = syntax.clone(mark=self.syntax.mark)
+            bind = BindByRecipe(recipe, syntax, self.state)
+            element = bind()
+            elements.append(element)
+        return SelectionBinding(self.state.base, elements,
+                                self.state.base.syntax)
 
 
 class BindComplement(BindMacro):
@@ -477,7 +475,7 @@ class BindComplement(BindMacro):
     signature = ComplementSig
 
     def expand(self):
-        recipe = get_complement(self.state.base)
+        recipe = lookup_complement(self.state.base)
         if recipe is None:
             raise BindError("expected a quotient context", self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
@@ -501,7 +499,19 @@ class BindAs(BindMacro):
             raise BindError("expected a string literal or an identifier",
                             title.mark)
         base = self.state.bind(base)
-        yield TitleBinding(base, title.value, self.syntax)
+        return TitleBinding(base, title.value, self.syntax)
+
+
+class BindSieve(BindMacro):
+
+    named('?')
+    signature = BinarySig
+
+    def expand(self, lop, rop):
+        base = self.state.bind(lop)
+        filter = self.state.bind(rop, base)
+        filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
+        return SieveBinding(base, filter, self.syntax)
 
 
 class BindDirectionBase(BindMacro):
@@ -510,8 +520,8 @@ class BindDirectionBase(BindMacro):
     direction = None
 
     def expand(self, base):
-        for base in self.state.bind_all(base):
-            yield DirectionBinding(base, self.direction, self.syntax)
+        base = self.state.bind(base)
+        return DirectionBinding(base, self.direction, self.syntax)
 
 
 class BindAscDir(BindDirectionBase):
@@ -552,7 +562,7 @@ class BindLimit(BindMacro):
         limit = self.parse(limit)
         if offset is not None:
             offset = self.parse(offset)
-        yield SortBinding(self.state.base, [], limit, offset, self.syntax)
+        return SortBinding(self.state.base, [], limit, offset, self.syntax)
 
 
 class BindSort(BindMacro):
@@ -564,14 +574,21 @@ class BindSort(BindMacro):
     def expand(self, order):
         bindings = []
         for item in order:
-            for binding in self.state.bind_all(item):
+            binding = self.state.bind(item)
+            recipies = expand(binding)
+            if recipies is None:
                 domain = coerce(binding.domain)
                 if domain is None:
                     raise BindError("incompatible expression type",
                                     binding.mark)
                 binding = CastBinding(binding, domain, binding.syntax)
                 bindings.append(binding)
-        yield SortBinding(self.state.base, bindings, None, None, self.syntax)
+            else:
+                for syntax, recipe in recipies:
+                    bind = BindByRecipe(recipe, syntax, self.state)
+                    binding = bind()
+                    bindings.append(binding)
+        return SortBinding(self.state.base, bindings, None, None, self.syntax)
 
 
 class BindAssignment(BindMacro):
@@ -581,31 +598,41 @@ class BindAssignment(BindMacro):
 
     def expand(self, lop, rop):
         identifiers = []
-        arguments = []
+        arguments = None
         syntax = lop
-        if isinstance(syntax, FunctionCallSyntax):
-            identifiers.append(syntax.identifier)
-            for argument in syntax.arguments:
-                if not isinstance(argument, IdentifierSyntax):
-                    raise BindError("an identifier expected", argument.mark)
-                arguments.append(argument)
-            syntax = syntax.base
+        head = None
+        tail = None
+        if isinstance(syntax, SpecifierSyntax):
+            head = syntax.rbranch
+            tail = syntax.lbranch
         else:
-            arguments = None
-        while syntax is not None:
-            if isinstance(syntax, SpecifierSyntax):
-                if not isinstance(syntax.identifier, IdentifierSyntax):
+            head = syntax
+        if isinstance(head, IdentifierSyntax):
+            identifiers.append(head)
+        elif isinstance(head, FunctionSyntax):
+            identifiers.append(head.identifier)
+            arguments = []
+            for argument in head.arguments:
+                if not isinstance(argument, IdentifierSyntax):
                     raise BindError("an identifier expected",
-                                    syntax.identifier.mark)
-                identifiers.append(syntax.identifier)
-                syntax = syntax.base
-            elif isinstance(syntax, IdentifierSyntax):
-                identifiers.append(syntax)
-                syntax = None
+                                    argument.mark)
+                arguments.append(argument)
+        else:
+            raise BindError("an identifier expected", head.mark)
+        while tail is not None:
+            if isinstance(tail, SpecifierSyntax):
+                if not isinstance(tail.rbranch, IdentifierSyntax):
+                    raise BindError("an identifier expected",
+                                    tail.rbranch.mark)
+                identifiers.append(tail.rbranch)
+                tail = tail.lbranch
+            elif isinstance(tail, IdentifierSyntax):
+                identifiers.append(tail)
+                tail = None
             else:
-                raise BindError("an identifier expected", syntax.mark)
+                raise BindError("an identifier expected", tail.mark)
         identifiers.reverse()
-        yield AssignmentBinding(identifiers, arguments, rop, self.syntax)
+        return AssignmentBinding(identifiers, arguments, rop, self.syntax)
 
 
 class BindDefine(BindMacro):
@@ -628,7 +655,7 @@ class BindDefine(BindMacro):
                              for argument in assignment.arguments]
             binding = DefinitionBinding(binding, name, subnames, arguments,
                                         assignment.body, self.syntax)
-        yield binding
+        return binding
 
 
 class BindWhere(BindMacro):
@@ -651,7 +678,7 @@ class BindWhere(BindMacro):
                              for argument in assignment.arguments]
             binding = DefinitionBinding(binding, name, subnames, arguments,
                                         assignment.body, self.syntax)
-        return self.state.bind_all(lop, base=binding)
+        return self.state.bind(lop, base=binding)
 
 
 class BindCast(BindFunction):
@@ -1715,9 +1742,19 @@ class BindExistsBase(BindFunction):
     polarity = None
 
     def correlate(self, op):
+        recipies = expand(op)
+        plural_base = None
+        if recipies is not None:
+            if len(recipies) != 1:
+                raise BindError("one operand is expected", op.mark)
+            plural_base = op
+            syntax, recipe = recipies[0]
+            bind = BindByRecipe(recipe, syntax, self.state)
+            op = bind()
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         return FormulaBinding(QuantifySig(self.polarity), op.domain,
-                              self.syntax, base=self.state.base, op=op)
+                              self.syntax, base=self.state.base,
+                              plural_base=plural_base, op=op)
 
 
 class BindExists(BindExistsBase):
@@ -1741,11 +1778,21 @@ class BindCount(BindFunction):
     hint = """base.count(p) -> the number of p such that p = TRUE"""
 
     def correlate(self, op):
+        recipies = expand(op)
+        plural_base = None
+        if recipies is not None:
+            if len(recipies) != 1:
+                raise BindError("one operand is expected", op.mark)
+            plural_base = op
+            syntax, recipe = recipies[0]
+            bind = BindByRecipe(recipe, syntax, self.state)
+            op = bind()
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         op = FormulaBinding(CountSig(), coerce(IntegerDomain()),
                             self.syntax, op=op)
         return FormulaBinding(AggregateSig(), op.domain, self.syntax,
-                              base=self.state.base, op=op)
+                              base=self.state.base, plural_base=plural_base,
+                              op=op)
 
 
 class BindPolyAggregate(BindPolyFunction):
@@ -1754,23 +1801,22 @@ class BindPolyAggregate(BindPolyFunction):
     codomain = UntypedDomain()
 
     def correlate(self, op):
+        recipies = expand(op)
+        plural_base = None
+        if recipies is not None:
+            if len(recipies) != 1:
+                raise BindError("one operand is expected", op.mark)
+            plural_base = op
+            syntax, recipe = recipies[0]
+            bind = BindByRecipe(recipe, syntax, self.state)
+            op = bind()
         binding = FormulaBinding(self.signature(), self.codomain, self.syntax,
                                  op=op)
         correlate = Correlate(binding, self.state)
-        return correlate()
-
-
-class CorrelateAggregate(CorrelateFunction):
-
-    correlates_none()
-    signature = None
-    domains = []
-    codomain = None
-
-    def __call__(self):
-        op = super(CorrelateAggregate, self).__call__()
-        return FormulaBinding(AggregateSig(), op.domain, op.syntax,
-                              base=self.state.base, op=op)
+        binding = correlate()
+        return FormulaBinding(AggregateSig(), binding.domain, binding.syntax,
+                              base=self.state.base, plural_base=plural_base,
+                              op=binding)
 
 
 class BindMinMaxBase(BindPolyAggregate):
@@ -1779,10 +1825,22 @@ class BindMinMaxBase(BindPolyAggregate):
     polarity = None
 
     def correlate(self, op):
+        recipies = expand(op)
+        plural_base = None
+        if recipies is not None:
+            if len(recipies) != 1:
+                raise BindError("one operand is expected", op.mark)
+            plural_base = op
+            syntax, recipe = recipies[0]
+            bind = BindByRecipe(recipe, syntax, self.state)
+            op = bind()
         binding = FormulaBinding(self.signature(self.polarity), self.codomain,
                                  self.syntax, op=op)
         correlate = Correlate(binding, self.state)
-        return correlate()
+        binding = correlate()
+        return FormulaBinding(AggregateSig(), binding.domain, binding.syntax,
+                              base=self.state.base, plural_base=plural_base,
+                              op=binding)
 
 
 class BindMinMaxBase(BindMinMaxBase):
@@ -1801,7 +1859,7 @@ class BindMinMaxBase(BindMinMaxBase):
     hint = """base.avg(x) -> the maximal value in the set of x"""
 
 
-class CorrelateIntegerMinMax(CorrelateAggregate):
+class CorrelateIntegerMinMax(CorrelateFunction):
 
     correlates(MinMaxSig, IntegerDomain)
     signature = MinMaxSig
@@ -1809,7 +1867,7 @@ class CorrelateIntegerMinMax(CorrelateAggregate):
     codomain = IntegerDomain()
 
 
-class CorrelateDecimalMinMax(CorrelateAggregate):
+class CorrelateDecimalMinMax(CorrelateFunction):
 
     correlates(MinMaxSig, DecimalDomain)
     signature = MinMaxSig
@@ -1817,7 +1875,7 @@ class CorrelateDecimalMinMax(CorrelateAggregate):
     codomain = DecimalDomain()
 
 
-class CorrelateFloatMinMax(CorrelateAggregate):
+class CorrelateFloatMinMax(CorrelateFunction):
 
     correlates(MinMaxSig, FloatDomain)
     signature = MinMaxSig
@@ -1825,7 +1883,7 @@ class CorrelateFloatMinMax(CorrelateAggregate):
     codomain = FloatDomain()
 
 
-class CorrelateStringMinMax(CorrelateAggregate):
+class CorrelateStringMinMax(CorrelateFunction):
 
     correlates(MinMaxSig, StringDomain)
     signature = MinMaxSig
@@ -1833,7 +1891,7 @@ class CorrelateStringMinMax(CorrelateAggregate):
     codomain = StringDomain()
 
 
-class CorrelateDateMinMax(CorrelateAggregate):
+class CorrelateDateMinMax(CorrelateFunction):
 
     correlates(MinMaxSig, DateDomain)
     signature = MinMaxSig
@@ -1841,7 +1899,7 @@ class CorrelateDateMinMax(CorrelateAggregate):
     codomain = DateDomain()
 
 
-class CorrelateTimeMinMax(CorrelateAggregate):
+class CorrelateTimeMinMax(CorrelateFunction):
 
     correlates(MinMaxSig, TimeDomain)
     signature = MinMaxSig
@@ -1849,7 +1907,7 @@ class CorrelateTimeMinMax(CorrelateAggregate):
     codomain = TimeDomain()
 
 
-class CorrelateDateTimeMinMax(CorrelateAggregate):
+class CorrelateDateTimeMinMax(CorrelateFunction):
 
     correlates(MinMaxSig, DateTimeDomain)
     signature = MinMaxSig
@@ -1864,7 +1922,7 @@ class BindSum(BindPolyAggregate):
     hint = """base.sum(x) -> the sum of x"""
 
 
-class CorrelateIntegerSum(CorrelateAggregate):
+class CorrelateIntegerSum(CorrelateFunction):
 
     correlates(SumSig, IntegerDomain)
     signature = SumSig
@@ -1872,7 +1930,7 @@ class CorrelateIntegerSum(CorrelateAggregate):
     codomain = IntegerDomain()
 
 
-class CorrelateDecimalSum(CorrelateAggregate):
+class CorrelateDecimalSum(CorrelateFunction):
 
     correlates(SumSig, DecimalDomain)
     signature = SumSig
@@ -1880,7 +1938,7 @@ class CorrelateDecimalSum(CorrelateAggregate):
     codomain = DecimalDomain()
 
 
-class CorrelateFloatSum(CorrelateAggregate):
+class CorrelateFloatSum(CorrelateFunction):
 
     correlates(SumSig, FloatDomain)
     signature = SumSig
@@ -1895,7 +1953,7 @@ class BindAvg(BindPolyAggregate):
     hint = """base.avg(x) -> the average value of x"""
 
 
-class CorrelateDecimalAvg(CorrelateAggregate):
+class CorrelateDecimalAvg(CorrelateFunction):
 
     correlates(AvgSig, IntegerDomain,
                        DecimalDomain)
@@ -1904,7 +1962,7 @@ class CorrelateDecimalAvg(CorrelateAggregate):
     codomain = DecimalDomain()
 
 
-class CorrelateFloatAvg(CorrelateAggregate):
+class CorrelateFloatAvg(CorrelateFunction):
 
     correlates(AvgSig, FloatDomain)
     signature = AvgSig

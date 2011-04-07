@@ -141,7 +141,7 @@ class Request(Utility):
         find_renderer = FindRenderer()
         format = product.profile.syntax.format
         if format is not None:
-            accept = set([format.value])
+            accept = set([format.identifier.value])
             renderer_class = find_renderer(accept)
             if renderer_class is None:
                 raise InvalidArgumentError("unknown format", format.mark)

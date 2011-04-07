@@ -6,12 +6,12 @@
 
 
 from htsql.mark import EmptyMark
-from htsql.tr.lookup import ItemizeTable
+from htsql.tr.lookup import ExpandTable
 from htsql.tr.syntax import IdentifierSyntax
 from htsql.tr.recipe import ColumnRecipe
 
 
-class OracleItemizeTable(ItemizeTable):
+class OracleExpandTable(ExpandTable):
 
     def itemize_columns(self):
         for column in self.binding.table.columns:

@@ -15,7 +15,8 @@ This module implements the entitle adapter.
 
 from ..adapter import Adapter, adapts, adapts_many
 from ..tr.binding import (Binding, RootBinding, SieveBinding, SortBinding,
-                          CastBinding, WrapperBinding, TitleBinding)
+                          CastBinding, WrapperBinding, TitleBinding,
+                          SegmentBinding, SelectionBinding, DefinitionBinding)
 
 
 class Entitle(Adapter):
@@ -35,14 +36,16 @@ class Entitle(Adapter):
 
 class EntitleWrapper(Entitle):
 
-    adapts_many(SieveBinding, SortBinding, WrapperBinding, CastBinding)
+    adapts_many(SieveBinding, SortBinding, WrapperBinding, CastBinding,
+                SelectionBinding, DefinitionBinding)
 
     def __call__(self):
-        if self.with_strong:
-            title = entitle(self.binding.base, with_weak=False)
-            if title is not None:
-                return title
-        return super(EntitleWrapper, self).__call__()
+        #if self.with_strong:
+        #    title = entitle(self.binding.base, with_weak=False)
+        #    if title is not None:
+        #        return title
+        #return super(EntitleWrapper, self).__call__()
+        return entitle(self.binding.base, self.with_strong, self.with_weak)
 
 
 class EntitleTitle(Entitle):
@@ -63,6 +66,18 @@ class EntitleRoot(Entitle):
         if self.with_weak:
             return ""
         return super(EntitleRoot, self).__call__()
+
+
+class EntitleSegment(Entitle):
+
+    adapts(SegmentBinding)
+
+    def __call__(self):
+        if self.binding.base is not None:
+            return entitle(self.binding.base, self.with_strong, self.with_weak)
+        if self.with_weak:
+            return ""
+        return super(EntitleSegment, self).__call__()
 
 
 def entitle(binding, with_strong=True, with_weak=True):

@@ -112,7 +112,7 @@ class SegmentBinding(Binding):
     """
 
     def __init__(self, base, elements, syntax):
-        assert isinstance(base, Binding)
+        assert isinstance(base, maybe(Binding))
         assert isinstance(elements, listof(Binding))
         super(SegmentBinding, self).__init__(VoidDomain(), syntax)
         self.base = base
@@ -258,6 +258,14 @@ class SortBinding(ChainBinding):
         self.order = order
         self.limit = limit
         self.offset = offset
+
+
+class SelectionBinding(ChainBinding):
+
+    def __init__(self, base, elements, syntax):
+        assert isinstance(elements, listof(Binding))
+        super(SelectionBinding, self).__init__(base, base.domain, syntax)
+        self.elements = elements
 
 
 class ColumnBinding(ChainBinding):

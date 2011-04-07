@@ -131,7 +131,7 @@ class HTMLRenderer(Renderer):
 
     def serialize_content(self, product):
         segment = product.profile.binding.segment
-        caption = entitle(segment.base)
+        caption = entitle(segment)
         headers = [entitle(element) for element in segment.elements]
         width = len(segment.elements)
         domains = [element.domain for element in segment.elements]

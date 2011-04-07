@@ -345,9 +345,18 @@ class EncodeAggregate(EncodeFunction):
 
     adapts(AggregateSig)
 
-    def aggregate(self, op, space):
+    def aggregate(self, op, space, plural_space):
         plural_units = [unit for unit in op.units
                              if not space.spans(unit.space)]
+        if plural_space is not None:
+            if space.spans(plural_space):
+                raise EncodeError("a plural operand is required", op.mark)
+            if not plural_space.spans(space):
+                raise EncodeError("invalid plural operand", op.mark)
+            if not all(plural_space.spans(unit.space)
+                       for unit in plural_units):
+                raise EncodeError("invalid plural operand", op.mark)
+            return plural_space
         if not plural_units:
             raise EncodeError("a plural operand is required", op.mark)
         plural_spaces = []
@@ -369,7 +378,10 @@ class EncodeAggregate(EncodeFunction):
     def __call__(self):
         op = self.state.encode(self.binding.op)
         space = self.state.relate(self.binding.base)
-        plural_space = self.aggregate(op, space)
+        plural_space = None
+        if self.binding.plural_base is not None:
+            plural_space = self.state.relate(self.binding.plural_base)
+        plural_space = self.aggregate(op, space, plural_space)
         aggregate = AggregateUnit(op, plural_space, space, self.binding)
         wrap = WrapAggregate(aggregate, self.state)
         wrapper = wrap()
@@ -433,7 +445,10 @@ class EncodeQuantify(EncodeAggregate):
     def __call__(self):
         op = self.state.encode(self.binding.op)
         space = self.state.relate(self.binding.base)
-        plural_space = self.aggregate(op, space)
+        plural_space = None
+        if self.binding.plural_base is not None:
+            plural_space = self.state.relate(self.binding.plural_base)
+        plural_space = self.aggregate(op, space, plural_space)
         if self.signature.polarity < 0:
             op = FormulaCode(NotSig(), op.domain, op.binding, op=op)
         plural_space = FilteredSpace(plural_space, op, self.binding)

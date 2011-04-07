@@ -26,7 +26,8 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       ColumnBinding, LiteralBinding, SieveBinding,
                       SortBinding, CastBinding, WrapperBinding,
                       DefinitionBinding, AliasBinding,
-                      DirectionBinding, FormulaBinding)
+                      DirectionBinding, FormulaBinding,
+                      SelectionBinding)
 from .code import (ScalarSpace, DirectProductSpace, FiberProductSpace,
                    QuotientSpace, ComplementSpace,
                    FilteredSpace, OrderedSpace,
@@ -267,29 +268,34 @@ class EncodeSegment(Encode):
     adapts(SegmentBinding)
 
     def __call__(self):
-        # The base is translated to the segment space.  Note that we still
-        # need to extract and apply direction modifiers.
-        space = self.state.relate(self.binding.base)
-        # A list of pairs `(code, dir)` that contains extracted direction
-        # modifiers and respective code nodes.
-        order = []
         # The list of segment elements.
         elements = []
-        # Encode each of the element binding at the same time extracting
-        # direction modifiers.
+        # Encode each of the element bindings.
         for binding in self.binding.elements:
             # Encode the node.
             element = self.state.encode(binding)
             elements.append(element)
-            # Extract the direction modifier.
-            direction = self.state.direct(binding)
-            if direction is not None:
-                order.append((element, direction))
-        # If any direction modifiers are found, augment the segment space
-        # by adding an explicit ordering node.
-        if order:
-            space = OrderedSpace(space, order, None, None, self.binding)
-        # Construct the expression node.
+        if self.binding.base is not None:
+            space = self.state.relate(self.binding.base)
+        else:
+            units = []
+            for element in elements:
+                units.extend(element.units)
+            if not units:
+                space = ScalarSpace(None, self.binding)
+            else:
+                spaces = []
+                for unit in units:
+                    if any(space.dominates(unit.space) for space in spaces):
+                        continue
+                    spaces = [space for space in spaces
+                                    if unit.space.dominates(space)]
+                    spaces.append(unit.space)
+                if len(spaces) > 1:
+                    raise EncodeError("invalid segment operand",
+                                      self.binding.mark)
+                else:
+                    space = spaces[0]
         return SegmentExpr(space, elements, self.binding)
 
 
@@ -1014,7 +1020,8 @@ class RelateWrapper(Relate):
     """
 
     adapts_many(WrapperBinding,
-                DefinitionBinding)
+                DefinitionBinding,
+                SelectionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.

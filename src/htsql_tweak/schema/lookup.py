@@ -6,15 +6,16 @@
 
 
 from htsql.entity import DirectJoin, ReverseJoin
-from htsql.tr.lookup import LookupRoot, LookupTable, normalize
+from htsql.tr.lookup import (LookupAttributeInRoot, LookupAttributeInTable,
+                             normalize)
 from htsql.tr.recipe import (FreeTableRecipe, AttachedTableRecipe,
                              AmbiguousRecipe)
 
 
-class SchemaLookupRoot(LookupRoot):
+class SchemaLookupAttributeInRoot(LookupAttributeInRoot):
 
     def __call__(self):
-        recipe = super(SchemaLookupRoot, self).__call__()
+        recipe = super(SchemaLookupAttributeInRoot, self).__call__()
         if recipe is not None:
             return recipe
         recipe = self.lookup_schema_table()
@@ -26,7 +27,7 @@ class SchemaLookupRoot(LookupRoot):
         candidates = []
         for schema in self.catalog.schemas:
             for table in schema.tables:
-                if normalize(schema.name+'_'+table.name) == self.key:
+                if normalize(schema.name+'_'+table.name) == self.probe.key:
                     candidates.append(table)
         if len(candidates) == 1:
             table = candidates[0]
@@ -35,17 +36,17 @@ class SchemaLookupRoot(LookupRoot):
             return AmbiguousRecipe()
 
 
-class SchemaLookupTable(LookupTable):
+class SchemaLookupAttributeInTable(LookupAttributeInTable):
 
     def lookup_direct_join(self):
-        recipe = super(SchemaLookupTable, self).lookup_direct_join()
+        recipe = super(SchemaLookupAttributeInTable, self).lookup_direct_join()
         if recipe is not None:
             return recipe
         origin = self.binding.table
         candidates = []
         for foreign_key in origin.foreign_keys:
             name = foreign_key.target_schema_name+'_'+foreign_key.target_name
-            if normalize(name) == self.key:
+            if normalize(name) == self.probe.key:
                 candidates.append(foreign_key)
         if len(candidates) == 1:
             foreign_key = candidates[0]
@@ -57,7 +58,7 @@ class SchemaLookupTable(LookupTable):
             return AmbiguousRecipe()
 
     def lookup_reverse_join(self):
-        recipe = super(SchemaLookupTable, self).lookup_reverse_join()
+        recipe = super(SchemaLookupAttributeInTable, self).lookup_reverse_join()
         if recipe is not None:
             return recipe
         origin = self.binding.table
@@ -65,7 +66,7 @@ class SchemaLookupTable(LookupTable):
         for target_schema in self.catalog.schemas:
             for target in target_schema.tables:
                 name = target.schema_name+'_'+target.name
-                if normalize(name) != self.key:
+                if normalize(name) != self.probe.key:
                     continue
                 for foreign_key in target.foreign_keys:
                     if (foreign_key.target_schema_name == origin.schema_name

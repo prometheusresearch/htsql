@@ -52,13 +52,13 @@ class QuerySyntax(Syntax):
     `segment` (:class:`SegmentSyntax` or ``None``)
         The segment expression.
 
-    `format` (:class:`IdentifierSyntax` or ``None``)
+    `format` (:class:`FormatSyntax` or ``None``)
         The format indicator.
     """
 
     def __init__(self, segment, format, mark):
         assert isinstance(segment, maybe(SegmentSyntax))
-        assert isinstance(format, maybe(IdentifierSyntax))
+        assert isinstance(format, maybe(FormatSyntax))
 
         super(QuerySyntax, self).__init__(mark)
         self.segment = segment
@@ -67,57 +67,42 @@ class QuerySyntax(Syntax):
     def __str__(self):
         # Generate an HTSQL query corresponding to the node.
         chunks = []
-        chunks.append('/')
         if self.segment is not None:
+            chunks.append('/')
             chunks.append(str(self.segment))
         if self.format is not None:
             chunks.append('/')
-            chunks.append(':')
             chunks.append(str(self.format))
+        if not chunks:
+            chunks.append('/')
         return ''.join(chunks)
 
 
 class SegmentSyntax(Syntax):
     """
     Represents a segment expression.
-
-    A segment expression consists of the base expression, the selector,
-    and the filter::
-
-        /base{selector}?filter
-
-    `base` (:class:`Syntax` or ``None``)
-        The base expression.
-
-    `selector` (:class:`SelectorSyntax` or ``None``)
-        The selector.
-
-    `filter` (:class:`Syntax` or ``None``)
-        The filter expression.
     """
 
-    def __init__(self, base, selector, filter, mark):
-        assert isinstance(base, maybe(Syntax))
-        assert isinstance(selector, maybe(SelectorSyntax))
-        assert isinstance(filter, maybe(Syntax))
+    def __init__(self, branch, mark):
+        assert isinstance(branch, Syntax)
 
         super(SegmentSyntax, self).__init__(mark)
-        self.base = base
-        self.selector = selector
-        self.filter = filter
+        self.branch = branch
 
     def __str__(self):
-        # Generate an HTSQL expression of the form:
-        #   base{selector}?filter
-        chunks = []
-        if self.base is not None:
-            chunks.append(str(self.base))
-        if self.selector is not None:
-            chunks.append(str(self.selector))
-        if self.filter is not None:
-            chunks.append('?')
-            chunks.append(str(self.filter))
-        return ''.join(chunks)
+        return str(self.branch)
+
+
+class FormatSyntax(Syntax):
+
+    def __init__(self, identifier, mark):
+        assert isinstance(identifier, IdentifierSyntax)
+
+        super(FormatSyntax, self).__init__(mark)
+        self.identifier = identifier
+
+    def __str__(self):
+        return ':%s' % self.identifier
 
 
 class SelectorSyntax(Syntax):
@@ -126,69 +111,39 @@ class SelectorSyntax(Syntax):
 
     A selector is a sequence of elements::
 
-        {element, ...}
+        {rbranch, ...}
+        lbranch{rbranch, ...}
 
-    `elements` (a list of :class:`Syntax`)
+    `lbranch` (:class:`Syntax` or ``None``)
+        The selector base.
+
+    `rbranches` (a list of :class:`Syntax`)
         The list of selector elements.
     """
 
-    def __init__(self, elements, mark):
-        assert isinstance(elements, listof(Syntax))
+    def __init__(self, lbranch, rbranches, mark):
+        assert isinstance(lbranch, maybe(Syntax))
+        assert isinstance(rbranches, listof(Syntax))
 
         super(SelectorSyntax, self).__init__(mark)
-        self.elements = elements
+        self.lbranch = lbranch
+        self.rbranches = rbranches
 
     def __str__(self):
         # Generate an expression of the form:
-        #   {element,...}
-        return '{%s}' % ','.join(str(element)
-                                 for element in self.elements)
-
-
-class SieveSyntax(Syntax):
-    """
-    Represents a sieve expression.
-
-    A sieve expression has the same shape as the segment expression.
-    It consists of the base, the selector and the filter::
-
-        base{selector}?filter
-
-    `base` (:class:`Syntax`)
-        The sieve base expression.
-
-    `selector` (:class:`SelectorSyntax` or ``None``)
-        The sieve selector.
-
-    `filter` (:class:`Syntax` or ``None``)
-        The sieve filter expression.
-    """
-
-    def __init__(self, base, selector, filter, mark):
-        assert isinstance(base, Syntax)
-        assert isinstance(selector, maybe(SelectorSyntax))
-        assert isinstance(filter, maybe(Syntax))
-        assert selector is not None or filter is not None
-
-        super(SieveSyntax, self).__init__(mark)
-        self.base = base
-        self.selector = selector
-        self.filter = filter
-
-    def __str__(self):
-        # Generate an expression of the form:
-        #   base{selector}?filter
+        #   {rbranch,...}
+        # or
+        #   lbranch{rbranch,...}
         chunks = []
-        chunks.append(str(self.base))
-        if self.selector is not None:
-            chunks.append(str(self.selector))
-        if self.filter is not None:
-            chunks.append('?')
-            chunks.append(str(self.filter))
+        if self.lbranch is not None:
+            chunks.append(str(self.lbranch))
+        chunks.append('{')
+        chunks.append(','.join(str(rbranch) for rbranch in self.rbranches))
+        chunks.append('}')
         return ''.join(chunks)
 
 
-class CallSyntax(Syntax):
+class ApplicationSyntax(Syntax):
     """
     Represents a function or an operator call.
 
@@ -205,20 +160,20 @@ class CallSyntax(Syntax):
 
     def __init__(self, name, arguments, mark):
         assert isinstance(arguments, listof(Syntax))
-        super(CallSyntax, self).__init__(mark)
+        super(ApplicationSyntax, self).__init__(mark)
         self.name = name
         self.arguments = arguments
 
 
-class OperatorSyntax(CallSyntax):
+class OperatorSyntax(ApplicationSyntax):
     """
     Represents an operator expression.
 
     An operator expression has one of the following forms::
 
-        larg <symbol> rarg
-        larg <symbol>
-        <symbol> rarg
+        lbranch <symbol> rbranch
+        lbranch <symbol>
+        <symbol> rbranch
 
     Note that for a binary operator, the name coincides with the `<symbol>`,
     for a prefix operator, the name has the form `<symbol>_`, for a postfix
@@ -227,134 +182,140 @@ class OperatorSyntax(CallSyntax):
     `symbol` (a string)
         The operator.
 
-    `left_argument` (:class:`Syntax` or ``None``)
-        The left argument.
+    `lbranch` (:class:`Syntax` or ``None``)
+        The left operand.
 
-    `right_argument` (:class:`Syntax` or ``None``)
-        The right argument.
+    `rbranch` (:class:`Syntax` or ``None``)
+        The right operand.
     """
 
-    def __init__(self, symbol, left_argument, right_argument, mark):
+    def __init__(self, symbol, lbranch, rbranch, mark):
         assert isinstance(symbol, str)
-        assert isinstance(left_argument, maybe(Syntax))
-        assert isinstance(right_argument, maybe(Syntax))
-        assert left_argument is not None or right_argument is not None
+        assert isinstance(lbranch, maybe(Syntax))
+        assert isinstance(rbranch, maybe(Syntax))
+        assert lbranch is not None or rbranch is not None
         # For a binary operator, the name is equal to `<symbol>`, for a prefix
         # operator, the name is equal to `<symbol>_`, for a postfix operator,
         # the name is equal to `_<symbol>`.  Thus `a+b`, `+b`, and `a+` are
         # operators with the names `+`, `+_` and `_+` respectively.
         name = symbol
-        if left_argument is None:
+        if lbranch is None:
             name = name+'_'
-        if right_argument is None:
+        if rbranch is None:
             name = '_'+name
         # Gather the arguments.  Both prefix and postfix operators have
         # one argument; since they have different names even when the
         # operator symbol is the same, we don't have to mark the argument
         # as left one or right one.
         arguments = []
-        if left_argument is not None:
-            arguments.append(left_argument)
-        if right_argument is not None:
-            arguments.append(right_argument)
+        if lbranch is not None:
+            arguments.append(lbranch)
+        if rbranch is not None:
+            arguments.append(rbranch)
         super(OperatorSyntax, self).__init__(name, arguments, mark)
         self.symbol = symbol
-        self.left_argument = left_argument
-        self.right_argument = right_argument
+        self.lbranch = lbranch
+        self.rbranch = rbranch
 
     def __str__(self):
         # Generate an expression of the form:
-        #   larg<symbol>rarg
+        #   lbranch<symbol>rbranch
         chunks = []
-        if self.left_argument is not None:
-            chunks.append(str(self.left_argument))
+        if self.lbranch is not None:
+            chunks.append(str(self.lbranch))
         chunks.append(self.symbol)
-        if self.right_argument is not None:
-            chunks.append(str(self.right_argument))
+        if self.rbranch is not None:
+            chunks.append(str(self.rbranch))
         return ''.join(chunks)
 
 
-class FunctionOperatorSyntax(CallSyntax):
+class SpecifierSyntax(OperatorSyntax):
+
+    def __init__(self, symbol, lbranch, rbranch, mark):
+        assert symbol == '.'
+        super(SpecifierSyntax, self).__init__(symbol, lbranch, rbranch, mark)
+
+
+class TransformSyntax(ApplicationSyntax):
     """
-    Represents a function call in the operator form.
+    Represents a function call in the infix or postfix form.
 
     This expression has one of the forms::
 
-        arg1 :identifier
-        arg1 :identifier arg2
-        arg1 :identifier (arg2, ...)
+        lbranch :identifier
+        lbranch :identifier rbranch
+        lbranch :identifier (rbranch, ...)
 
     and is equivalent to the expression::
 
-        identifier(arg1, arg2, ...)
+        identifier(lbranch, rbranch, ...)
 
     `identifier` (:class:`IdentifierSyntax`)
         The function name.
 
-    `arguments` (:class:`Syntax`)
-        The function arguments.
+    `lbranch` (:class:`Syntax`)
+        The left operand.
+
+    `rbranches` (a list of :class:`Syntax`)
+        The right operands.
     """
 
-    def __init__(self, identifier, arguments, mark):
+    def __init__(self, identifier, lbranch, rbranches, mark):
         assert isinstance(identifier, IdentifierSyntax)
-        assert isinstance(arguments, listof(Syntax))
-        assert len(arguments) > 0
+        assert isinstance(lbranch, Syntax)
+        assert isinstance(rbranches, listof(Syntax))
 
         name = identifier.value
-        super(FunctionOperatorSyntax, self).__init__(name, arguments, mark)
+        arguments = [lbranch] + rbranches
+        super(TransformSyntax, self).__init__(name, arguments, mark)
         self.identifier = identifier
+        self.lbranch = lbranch
+        self.rbranches = rbranches
 
     def __str__(self):
         # Generate an expression of the form:
-        #   arg1:identifier(arg2,...)
+        #   lbranch:identifier(rbranch,...)
         chunks = []
-        chunks.append(str(self.arguments[0]))
+        chunks.append(str(self.lbranch))
         chunks.append(':%s' % self.identifier)
-        if len(self.arguments) > 1:
-            chunks.append('(%s)' % ','.join(str(argument)
-                                            for argument in self.arguments[1:]))
+        if self.rbranches:
+            chunks.append('(%s)' % ','.join(str(rbranch)
+                                            for rbranch in self.rbranches))
         return ''.join(chunks)
 
 
-class FunctionCallSyntax(CallSyntax):
+class FunctionSyntax(ApplicationSyntax):
     """
     Represents a function or a method call.
 
-    This expression has one of the forms::
+    This expression has the form::
 
-        identifier(arguments)
-        base.identifier(arguments)
-
-    `base` (:class:`Syntax` or ``None``)
-        The method base.
+        identifier(branch,...)
 
     `identifier` (:class:`IdentifierSyntax`)
         The function name.
 
-    `arguments` (a list of :class:`Syntax`)
+    `branches` (a list of :class:`Syntax`)
         The list of arguments.
     """
 
-    def __init__(self, base, identifier, arguments, mark):
-        assert isinstance(base, maybe(Syntax))
+    def __init__(self, identifier, branches, mark):
         assert isinstance(identifier, IdentifierSyntax)
-        assert isinstance(arguments, listof(Syntax))
+        assert isinstance(branches, listof(Syntax))
 
         name = identifier.value
-        super(FunctionCallSyntax, self).__init__(name, arguments, mark)
-        self.base = base
+        arguments = branches
+        super(FunctionSyntax, self).__init__(name, arguments, mark)
         self.identifier = identifier
+        self.branches = branches
 
     def __str__(self):
         # Generate an expression of the form:
-        #   base.identifier(arguments)
+        #   identifier(arguments)
         chunks = []
-        if self.base is not None:
-            chunks.append(str(self.base))
-            chunks.append('.')
         chunks.append(str(self.identifier))
-        chunks.append('(%s)' % ','.join(str(argument)
-                                        for argument in self.arguments))
+        chunks.append('(%s)' % ','.join(str(branch)
+                                        for branch in self.branches))
         return ''.join(chunks)
 
 
@@ -362,51 +323,20 @@ class GroupSyntax(Syntax):
     """
     Represents an expression in parentheses.
 
-    `expression` (:class:`Syntax`)
-        The expression.
+    `branch` (:class:`Syntax`)
+        The branch.
     """
     # We keep the parentheses in the syntax tree to ease the reverse
     # translation from the syntax tree to an HTSQL query.
 
-    def __init__(self, expression, mark):
-        assert isinstance(expression, Syntax)
+    def __init__(self, branch, mark):
+        assert isinstance(branch, Syntax)
 
         super(GroupSyntax, self).__init__(mark)
-        self.expression = expression
+        self.branch = branch
 
     def __str__(self):
-        return '(%s)' % self.expression
-
-
-class SpecifierSyntax(Syntax):
-    """
-    Represents a specifier expression.
-
-    A specifier expression has one of the forms::
-
-        base.identifier
-        base.*
-
-    `base` (:class:`Syntax`)
-        The specifier base.
-
-    `identifier` (:class:`Syntax`)
-        The specifier identifier.
-    """
-
-    # FIXME: allow general `base.(expr)`?
-
-    def __init__(self, base, identifier, mark):
-        assert isinstance(base, Syntax)
-        assert isinstance(identifier, (IdentifierSyntax, WildcardSyntax,
-                                       ComplementSyntax))
-
-        super(SpecifierSyntax, self).__init__(mark)
-        self.base = base
-        self.identifier = identifier
-
-    def __str__(self):
-        return '%s.%s' % (self.base, self.identifier)
+        return '(%s)' % self.branch
 
 
 class IdentifierSyntax(Syntax):

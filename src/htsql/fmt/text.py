@@ -54,7 +54,7 @@ class TextRenderer(Renderer):
 
     def calculate_layout(self, product, formats):
         segment = product.profile.binding.segment
-        caption = entitle(segment.base).decode('utf-8')
+        caption = entitle(segment).decode('utf-8')
         headers = [entitle(element).decode('utf-8')
                    for element in segment.elements]
         column_widths = [len(header) for header in headers]

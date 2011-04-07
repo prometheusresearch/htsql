@@ -297,6 +297,7 @@ class AggregateSig(Signature):
 
     slots = [
             Slot('base'),
+            Slot('plural_base', is_mandatory=False),
             Slot('op'),
     ]
 
