@@ -269,6 +269,15 @@ tests:
     - uri: /(program^degree){*,count(^),count(^.student)}
     - uri: /(student^{year(dob),gender}){*,count(^),count(^?is_active)}
     - uri: /count(program^degree)
+
+    # The `distinct()` function.
+    - uri: /distinct(program{degree}){*,count(^),count(^.student)}
+    - uri: /distinct(program{degree}?school={'art','la'}){*,count(^),count(^.student)}
+    - uri: /distinct(program{degree}){*,count(^),count(^.student)}?kernel(0)
+    - uri: /(school?code={'art','la'}).distinct(program{degree}){*,count(^),count(^.student)}
+    - uri: /distinct(program{degree}?school={'art','la'}).^
+
+    # Known regressions.
     - uri: /(school^{})
       skip: true
     - uri: /(school^{null()})

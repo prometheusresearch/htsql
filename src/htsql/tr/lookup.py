@@ -13,6 +13,7 @@ This module implements name resolution adapters.
 """
 
 
+from ..util import Clonable
 from ..mark import EmptyMark
 from ..adapter import Adapter, adapts, adapts_many
 from ..context import context
@@ -53,8 +54,10 @@ def normalize(name):
     return name
 
 
-class Probe(object):
-    pass
+class Probe(Clonable):
+
+    def __init__(self):
+        pass
 
 
 class AttributeProbe(Probe):
@@ -86,7 +89,8 @@ class DeepFunctionProbe(FunctionProbe):
 
 class ExpansionProbe(Probe):
 
-    def __init__(self, is_hard=False):
+    def __init__(self, is_soft=True, is_hard=True):
+        self.is_soft = is_soft
         self.is_hard = is_hard
 
 
@@ -456,6 +460,11 @@ class ExpandSelection(Lookup):
     adapts(SelectionBinding, ExpansionProbe)
 
     def __call__(self):
+        if not self.probe.is_soft:
+            return lookup(self.binding.base, self.probe)
+        return self.itemize()
+
+    def itemize(self):
         for element in self.binding.elements:
             syntax = element.syntax
             recipe = BindingRecipe(element)
@@ -491,6 +500,17 @@ class LookupInComplement(Lookup):
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)
+
+
+class ExpandComplement(Lookup):
+
+    adapts(ComplementBinding, ExpansionProbe)
+
+    def __call__(self):
+        if not self.probe.is_hard:
+            return None
+        probe = self.probe.clone(is_soft=False)
+        return lookup(self.binding.seed, probe)
 
 
 class LookupAttributeInAlias(Lookup):
@@ -570,8 +590,8 @@ def lookup_complement(binding):
     return lookup(binding, probe)
 
 
-def expand(binding, is_hard=False):
-    probe = ExpansionProbe(is_hard=is_hard)
+def expand(binding, is_soft=True, is_hard=True):
+    probe = ExpansionProbe(is_soft=is_soft, is_hard=is_hard)
     bindings = lookup(binding, probe)
     if bindings is not None:
         bindings = list(bindings)

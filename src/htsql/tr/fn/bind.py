@@ -104,7 +104,7 @@ class BindFunction(BindByName):
                 elif len(value) == 1:
                     [value] = value
                     bound_value = self.state.bind(value)
-                    recipies = expand(bound_value)
+                    recipies = expand(bound_value, is_hard=False)
                     if slot.is_mandatory and (recipies is not None and
                                               not recipies):
                         raise BindError("missing argument %s" % name,
@@ -419,7 +419,7 @@ class BindQuotient(BindMacro):
         self.state.push_base(seed_binding)
         for expression in kernel:
             expression = self.state.bind(expression)
-            recipies = expand(expression)
+            recipies = expand(expression, is_hard=False)
             if recipies is not None:
                 for syntax, recipe in recipies:
                     bind = BindByRecipe(recipe, syntax, self.state)
@@ -436,6 +436,23 @@ class BindQuotientOperator(BindQuotient):
     named('^')
 
 
+class BindDistinct(BindMacro):
+
+    named('distinct')
+    signature = UnarySig
+
+    def expand(self, op):
+        seed = self.state.bind(op)
+        recipies = expand(seed, is_hard=False)
+        if recipies is None:
+            raise BindError("a selector is required", op.mark)
+        kernel = []
+        for syntax, recipe in recipies:
+            bind = BindByRecipe(recipe, syntax, self.state)
+            kernel.append(bind())
+        return QuotientBinding(self.state.base, seed, kernel, self.syntax)
+
+
 class BindKernel(BindMacro):
 
     named('kernel')
@@ -449,7 +466,7 @@ class BindKernel(BindMacro):
                 index = int(index.value)
             except ValueError:
                 raise BindError("expected an integer value", index.mark)
-        recipies = expand(self.state.base, is_hard=True)
+        recipies = expand(self.state.base)
         if recipies is None:
             raise BindError("expected a quotient context", self.syntax.mark)
         if index is not None:
@@ -534,7 +551,7 @@ class BindSelect(BindMacro):
         elements = []
         for op in ops:
             element = self.state.bind(op)
-            recipies = expand(element)
+            recipies = expand(element, is_hard=False)
             if recipies is not None:
                 for syntax, recipe in recipies:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
@@ -618,7 +635,7 @@ class BindSort(BindMacro):
         bindings = []
         for item in order:
             binding = self.state.bind(item)
-            recipies = expand(binding)
+            recipies = expand(binding, is_hard=False)
             if recipies is None:
                 domain = coerce(binding.domain)
                 if domain is None:
@@ -1785,7 +1802,7 @@ class BindExistsBase(BindFunction):
     polarity = None
 
     def correlate(self, op):
-        recipies = expand(op)
+        recipies = expand(op, is_hard=False)
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:
@@ -1821,7 +1838,7 @@ class BindCount(BindFunction):
     hint = """base.count(p) -> the number of p such that p = TRUE"""
 
     def correlate(self, op):
-        recipies = expand(op)
+        recipies = expand(op, is_hard=False)
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:
@@ -1844,7 +1861,7 @@ class BindPolyAggregate(BindPolyFunction):
     codomain = UntypedDomain()
 
     def correlate(self, op):
-        recipies = expand(op)
+        recipies = expand(op, is_hard=False)
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:
@@ -1868,7 +1885,7 @@ class BindMinMaxBase(BindPolyAggregate):
     polarity = None
 
     def correlate(self, op):
-        recipies = expand(op)
+        recipies = expand(op, is_hard=False)
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:

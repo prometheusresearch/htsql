@@ -18617,6 +18617,215 @@ tests:
                FROM (SELECT 1 AS [^]
                      FROM [ad].[program] AS [program]
                      GROUP BY [program].[degree]) AS [program]
+          - uri: /distinct(program{degree}){*,count(^),count(^.student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree})            |
+              -+--------------------------------------+-
+               | degree | count(^) | count(^.student) |
+              -+--------+----------+------------------+-
+               |        |        1 |                0 |
+               | ba     |        9 |                6 |
+               | bs     |       12 |               20 |
+               | ct     |        4 |                6 |
+               | ma     |        6 |                5 |
+               | ms     |        5 |                9 |
+               | pb     |        1 |                5 |
+               | ph     |        1 |                0 |
+                                               (8 rows)
+
+               ----
+               /distinct(program{degree}){*,count(^),count(^.student)}
+               SELECT [program_1].[degree],
+                      COALESCE([program_2].[count], 0),
+                      COALESCE([student].[count], 0)
+               FROM (SELECT [program].[degree]
+                     FROM [ad].[program] AS [program]
+                     GROUP BY [program].[degree]) AS [program_1]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                     GROUP BY [program].[degree]) AS [program_2]
+                                    ON ((CASE WHEN ([program_1].[degree] = [program_2].[degree]) OR ([program_1].[degree] IS NULL AND [program_2].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                          INNER JOIN [ed].[student] AS [student]
+                                                     ON (([program].[school] = [student].[school]) AND ([program].[code] = [student].[program]))
+                                     GROUP BY [program].[degree]) AS [student]
+                                    ON ((CASE WHEN ([program_1].[degree] = [student].[degree]) OR ([program_1].[degree] IS NULL AND [student].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+               ORDER BY 1 ASC
+          - uri: /distinct(program{degree}?school={'art','la'}){*,count(^),count(^.student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree}?school={'art','la'}) |
+              -+-----------------------------------------------+-
+               | degree    | count(^)    | count(^.student)    |
+              -+-----------+-------------+---------------------+-
+               | ba        |           7 |                   6 |
+               | ct        |           1 |                   1 |
+               | ma        |           3 |                   3 |
+               | pb        |           1 |                   5 |
+                                                        (4 rows)
+
+               ----
+               /distinct(program{degree}?school={'art','la'}){*,count(^),count(^.student)}
+               SELECT [program_1].[degree],
+                      COALESCE([program_2].[count], 0),
+                      COALESCE([student].[count], 0)
+               FROM (SELECT [program].[degree]
+                     FROM [ad].[program] AS [program]
+                     WHERE ([program].[school] IN ('art', 'la'))
+                     GROUP BY [program].[degree]) AS [program_1]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                     WHERE ([program].[school] IN ('art', 'la'))
+                                     GROUP BY [program].[degree]) AS [program_2]
+                                    ON ((CASE WHEN ([program_1].[degree] = [program_2].[degree]) OR ([program_1].[degree] IS NULL AND [program_2].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                          INNER JOIN [ed].[student] AS [student]
+                                                     ON (([program].[school] = [student].[school]) AND ([program].[code] = [student].[program]))
+                                     WHERE ([program].[school] IN ('art', 'la'))
+                                     GROUP BY [program].[degree]) AS [student]
+                                    ON ((CASE WHEN ([program_1].[degree] = [student].[degree]) OR ([program_1].[degree] IS NULL AND [student].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+               ORDER BY 1 ASC
+          - uri: /distinct(program{degree}){*,count(^),count(^.student)}?kernel(0)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree})            |
+              -+--------------------------------------+-
+               | degree | count(^) | count(^.student) |
+              -+--------+----------+------------------+-
+               | ba     |        9 |                6 |
+               | bs     |       12 |               20 |
+               | ct     |        4 |                6 |
+               | ma     |        6 |                5 |
+               | ms     |        5 |                9 |
+               | pb     |        1 |                5 |
+               | ph     |        1 |                0 |
+                                               (7 rows)
+
+               ----
+               /distinct(program{degree}){*,count(^),count(^.student)}?kernel(0)
+               SELECT [program_1].[degree],
+                      COALESCE([program_2].[count], 0),
+                      COALESCE([student].[count], 0)
+               FROM (SELECT [program].[degree]
+                     FROM [ad].[program] AS [program]
+                     GROUP BY [program].[degree]) AS [program_1]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                     GROUP BY [program].[degree]) AS [program_2]
+                                    ON ((CASE WHEN ([program_1].[degree] = [program_2].[degree]) OR ([program_1].[degree] IS NULL AND [program_2].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                          INNER JOIN [ed].[student] AS [student]
+                                                     ON (([program].[school] = [student].[school]) AND ([program].[code] = [student].[program]))
+                                     GROUP BY [program].[degree]) AS [student]
+                                    ON ((CASE WHEN ([program_1].[degree] = [student].[degree]) OR ([program_1].[degree] IS NULL AND [student].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+               WHERE (NULLIF([program_1].[degree], '') IS NOT NULL)
+               ORDER BY 1 ASC
+          - uri: /(school?code={'art','la'}).distinct(program{degree}){*,count(^),count(^.student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree})            |
+              -+--------------------------------------+-
+               | degree | count(^) | count(^.student) |
+              -+--------+----------+------------------+-
+               | ba     |        2 |                1 |
+               | pb     |        1 |                5 |
+               | ba     |        5 |                5 |
+               | ct     |        1 |                1 |
+               | ma     |        3 |                3 |
+                                               (5 rows)
+
+               ----
+               /(school?code={'art','la'}).distinct(program{degree}){*,count(^),count(^.student)}
+               SELECT [program_1].[degree],
+                      COALESCE([program_2].[count], 0),
+                      COALESCE([student].[count], 0)
+               FROM [ad].[school] AS [school]
+                    INNER JOIN (SELECT [program].[degree],
+                                       [program].[school]
+                                FROM [ad].[program] AS [program]
+                                GROUP BY [program].[school], [program].[degree]) AS [program_1]
+                               ON ([school].[code] = [program_1].[school])
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[school],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                     GROUP BY [program].[school], [program].[degree]) AS [program_2]
+                                    ON (([program_1].[school] = [program_2].[school]) AND ((CASE WHEN ([program_1].[degree] = [program_2].[degree]) OR ([program_1].[degree] IS NULL AND [program_2].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0))
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[school],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                          INNER JOIN [ed].[student] AS [student]
+                                                     ON (([program].[school] = [student].[school]) AND ([program].[code] = [student].[program]))
+                                     GROUP BY [program].[school], [program].[degree]) AS [student]
+                                    ON (([program_1].[school] = [student].[school]) AND ((CASE WHEN ([program_1].[degree] = [student].[degree]) OR ([program_1].[degree] IS NULL AND [student].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0))
+               WHERE ([school].[code] IN ('art', 'la'))
+               ORDER BY [school].[code] ASC, 1 ASC
+          - uri: /distinct(program{degree}?school={'art','la'}).^
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program{degree}?school={'art','la'}                                    |
+              -+------------------------------------------------------------------------+-
+               | school | code     | title                           | degree | part_of |
+              -+--------+----------+---------------------------------+--------+---------+-
+               | art    | uhist    | Bachelor of Arts in Art History | ba     |         |
+               | art    | ustudio  | Bachelor of Arts in Studio Art  | ba     |         |
+               | la     | uengl    | Bachelor of Arts in English     | ba     | gengl   |
+               | la     | uhist    | Bachelor of Arts in History     | ba     |         |
+               | la     | upolisci | Bachelor of Arts in Political   | ba     |         |
+               :        :          : Science                         :        :         :
+               | la     | upsych   | Bachelor of Arts in Psychology  | ba     |         |
+               | la     | uspan    | Bachelor of Arts in Spanish     | ba     |         |
+               | la     | psciwri  | Science Writing                 | ct     |         |
+               | la     | gengl    | Master of Arts in English       | ma     |         |
+               | la     | glang    | Master of Arts in Modern        | ma     |         |
+               :        :          : Languages                       :        :         :
+               | la     | gscitch  | Master of Arts in Science       | ma     |         |
+               :        :          : Teaching                        :        :         :
+               | art    | gart     | Post Baccalaureate in Art       | pb     |         |
+               :        :          : History                         :        :         :
+                                                                                (12 rows)
+
+               ----
+               /distinct(program{degree}?school={'art','la'}).^
+               SELECT [program_2].[school],
+                      [program_2].[code],
+                      [program_2].[title],
+                      [program_2].[degree],
+                      [program_2].[part_of]
+               FROM (SELECT [program].[degree]
+                     FROM [ad].[program] AS [program]
+                     WHERE ([program].[school] IN ('art', 'la'))
+                     GROUP BY [program].[degree]) AS [program_1]
+                    INNER JOIN (SELECT [program].[school],
+                                       [program].[code],
+                                       [program].[title],
+                                       [program].[degree],
+                                       [program].[part_of]
+                                FROM [ad].[program] AS [program]
+                                WHERE ([program].[school] IN ('art', 'la'))) AS [program_2]
+                               ON ((CASE WHEN ([program_1].[degree] = [program_2].[degree]) OR ([program_1].[degree] IS NULL AND [program_2].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+               ORDER BY [program_1].[degree] ASC, 1 ASC, 2 ASC
           - uri: /((program?school='art')^degree).limit(1)
             status: 200 OK
             headers:

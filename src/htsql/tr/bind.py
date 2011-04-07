@@ -235,7 +235,7 @@ class BindSegment(Bind):
     def __call__(self):
         base = self.state.bind(self.syntax.branch)
         elements = []
-        recipies = expand(base, is_hard=True)
+        recipies = expand(base)
         if recipies is None:
             elements.append(base)
             base = None
@@ -275,7 +275,7 @@ class BindSelector(Bind):
         elements = []
         for rbranch in self.syntax.rbranches:
             element = self.state.bind(rbranch)
-            recipies = expand(element)
+            recipies = expand(element, is_hard=False)
             if recipies is not None:
                 for syntax, recipe in recipies:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
@@ -540,7 +540,7 @@ class BindWildcard(Bind):
 
     def __call__(self):
         # Get all public descendants in the current lookup context.
-        recipies = expand(self.state.base, is_hard=True)
+        recipies = expand(self.state.base)
         if recipies is None:
             raise BindError("unable to resolve a wildcard",
                             self.syntax.mark)
