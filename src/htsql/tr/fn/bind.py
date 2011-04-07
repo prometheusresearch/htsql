@@ -17,7 +17,7 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-                      SpecifierSyntax, FunctionSyntax)
+                      SpecifierSyntax, FunctionSyntax, GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
@@ -26,7 +26,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
-from ..lookup import lookup_attribute, lookup_complement, expand
+from ..lookup import lookup_attribute, lookup_complement, direct, expand
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -48,7 +48,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         QuotientSig, KernelSig, ComplementSig,
-                        AssignmentSig, DefineSig, WhereSig)
+                        AssignmentSig, DefineSig, WhereSig, SelectSig)
 import sys
 
 
@@ -512,6 +512,49 @@ class BindSieve(BindMacro):
         filter = self.state.bind(rop, base)
         filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
         return SieveBinding(base, filter, self.syntax)
+
+
+class BindFilter(BindMacro):
+
+    named('filter')
+    signature = UnarySig
+
+    def expand(self, op):
+        filter = self.state.bind(op)
+        filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
+        return SieveBinding(self.state.base, filter, self.syntax)
+
+
+class BindSelect(BindMacro):
+
+    named('select')
+    signature = SelectSig
+
+    def expand(self, ops):
+        elements = []
+        for op in ops:
+            element = self.state.bind(op)
+            recipies = expand(element)
+            if recipies is not None:
+                for syntax, recipe in recipies:
+                    if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
+                        syntax = GroupSyntax(syntax, syntax.mark)
+                    syntax = SpecifierSyntax('.', element.syntax, syntax,
+                                             syntax.mark)
+                    bind = BindByRecipe(recipe, syntax, self.state)
+                    elements.append(bind())
+            else:
+                elements.append(element)
+        order = []
+        for element in elements:
+            direction = direct(element)
+            if direction is not None:
+                order.append(element)
+        base = self.state.base
+        if order:
+            base = SortBinding(base, order, None, None, base.syntax)
+        return SelectionBinding(base, elements, base.syntax)
+
 
 
 class BindDirectionBase(BindMacro):

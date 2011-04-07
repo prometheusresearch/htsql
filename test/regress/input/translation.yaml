@@ -26,6 +26,9 @@ tests:
     - uri: /semester?season='fall'
     # Using the same term for a filter and a selector
     - uri: /program{school.name,title}?school.code='art'
+    # Functional syntax
+    - uri: /school.filter(code='ns')
+    - uri: /department.filter(school.code={'art','la'})
 
   # Simple (non-aggregate) selectors.
   - title: Simple selectors
@@ -38,6 +41,9 @@ tests:
       skip: true
     - uri: /school{}
       skip: true
+    # Functional syntax
+    - uri: /school.select(name)
+    - uri: /department.select(school.*, *)
 
   # Plural links and aggregates.
   - title: Aggregates

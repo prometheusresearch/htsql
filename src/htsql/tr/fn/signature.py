@@ -59,6 +59,13 @@ class SortSig(Signature):
     ]
 
 
+class SelectSig(Signature):
+
+    slots = [
+            Slot('ops', is_mandatory=False, is_singular=False),
+    ]
+
+
 class CastSig(Signature):
 
     slots = [

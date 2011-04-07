@@ -14196,6 +14196,53 @@ tests:
                                ON ("PROGRAM"."SCHOOL" = "SCHOOL"."CODE")
                WHERE ("SCHOOL"."CODE" = 'art')
                ORDER BY "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC
+          - uri: /school.filter(code='ns')
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                            |
+              -+-----------------------------------+-
+               | code | name                       |
+              -+------+----------------------------+-
+               | ns   | School of Natural Sciences |
+                                             (1 row)
+
+               ----
+               /school.filter(code='ns')
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME"
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+               WHERE ("SCHOOL"."CODE" = 'ns')
+               ORDER BY 1 ASC
+          - uri: /department.filter(school.code={'art','la'})
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                          |
+              -+-------------------------------------+-
+               | code   | name              | school |
+              -+--------+-------------------+--------+-
+               | arthis | Art History       | art    |
+               | eng    | English           | la     |
+               | hist   | History           | la     |
+               | lang   | Foreign Languages | la     |
+               | poli   | Political Science | la     |
+               | psych  | Psychology        | la     |
+               | stdart | Studio Art        | art    |
+                                              (7 rows)
+
+               ----
+               /department.filter(school.code={'art','la'})
+               SELECT "DEPARTMENT"."CODE",
+                      "DEPARTMENT"."NAME",
+                      "DEPARTMENT"."SCHOOL"
+               FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL" = "SCHOOL"."CODE")
+               WHERE ("SCHOOL"."CODE" IN ('art', 'la'))
+               ORDER BY 1 ASC
         - id: simple-selectors
           tests:
           - uri: /school{name}
@@ -14337,6 +14384,80 @@ tests:
                     LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                                     ON ("DEPARTMENT"."SCHOOL" = "SCHOOL"."CODE")
                ORDER BY "DEPARTMENT"."CODE" ASC
+          - uri: /school.select(name)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                        |
+              -+-------------------------------+-
+               | name                          |
+              -+-------------------------------+-
+               | School of Art and Design      |
+               | School of Business            |
+               | College of Education          |
+               | School of Engineering         |
+               | School of Arts and Humanities |
+               | School of Music & Dance       |
+               | School of Natural Sciences    |
+               | Public Honorariums            |
+               | School of Continuing Studies  |
+                                        (9 rows)
+
+               ----
+               /school.select(name)
+               SELECT "SCHOOL"."NAME"
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+               ORDER BY "SCHOOL"."CODE" ASC
+          - uri: /department.select(school.*, *)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                                                      |
+              -+---------------------------------------------------------------------------------+-
+               | code | name                          | code   | name                   | school |
+              -+------+-------------------------------+--------+------------------------+--------+-
+               | bus  | School of Business            | acc    | Accounting             | bus    |
+               | art  | School of Art and Design      | arthis | Art History            | art    |
+               | ns   | School of Natural Sciences    | astro  | Astronomy              | ns     |
+               | eng  | School of Engineering         | be     | Bioengineering         | eng    |
+               |      |                               | bursar | Bursar's Office        |        |
+               | bus  | School of Business            | capmrk | Capital Markets        | bus    |
+               |      |                               | career | Career Development     |        |
+               | ns   | School of Natural Sciences    | chem   | Chemistry              | ns     |
+               | eng  | School of Engineering         | comp   | Computer Science       | eng    |
+               | bus  | School of Business            | corpfi | Corporate Finance      | bus    |
+               | edu  | College of Education          | edpol  | Educational Policy     | edu    |
+               | eng  | School of Engineering         | ee     | Electrical Engineering | eng    |
+               | la   | School of Arts and Humanities | eng    | English                | la     |
+               | la   | School of Arts and Humanities | hist   | History                | la     |
+               | la   | School of Arts and Humanities | lang   | Foreign Languages      | la     |
+               | eng  | School of Engineering         | me     | Mechanical Engineering | eng    |
+               | ns   | School of Natural Sciences    | mth    | Mathematics            | ns     |
+               |      |                               | parent | Parents & Alumni       |        |
+               | ns   | School of Natural Sciences    | phys   | Physics                | ns     |
+               | mus  | School of Music & Dance       | pia    | Piano                  | mus    |
+               | la   | School of Arts and Humanities | poli   | Political Science      | la     |
+               | la   | School of Arts and Humanities | psych  | Psychology             | la     |
+               | art  | School of Art and Design      | stdart | Studio Art             | art    |
+               | mus  | School of Music & Dance       | str    | Strings                | mus    |
+               | edu  | College of Education          | tched  | Teacher Education      | edu    |
+               | mus  | School of Music & Dance       | voc    | Vocals                 | mus    |
+               | mus  | School of Music & Dance       | win    | Wind                   | mus    |
+                                                                                         (27 rows)
+
+               ----
+               /department.select(school.*,*)
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME",
+                      "DEPARTMENT"."CODE",
+                      "DEPARTMENT"."NAME",
+                      "DEPARTMENT"."SCHOOL"
+               FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                                    ON ("DEPARTMENT"."SCHOOL" = "SCHOOL"."CODE")
+               ORDER BY 3 ASC
         - id: aggregates
           tests:
           - uri: /exists(school)
