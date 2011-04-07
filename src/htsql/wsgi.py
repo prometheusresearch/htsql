@@ -33,6 +33,11 @@ class WSGI(Utility):
         """
         Implements the WSGI entry point.
         """
+        # Pass GET requests only.
+        method = environ['REQUEST_METHOD']
+        if method != 'GET':
+            start_response('400 Bad Request', [('Content-Type', 'text/plain')])
+            return ["%s requests are not permitted.\n" % method]
         # Process the query.
         request = Request.build(environ)
         try:
