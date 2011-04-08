@@ -73,6 +73,8 @@ ENTRY_POINTS = {
             ' = htsql_tweak.pgsql_catalog.export:TWEAK_PGSQL_CATALOG',
         'tweak.pgsql.view'
             ' = htsql_tweak.pgsql_view.export:TWEAK_PGSQL_VIEW',
+        'tweak.pgsql.inet'
+            ' = htsql_tweak.pgsql_inet.export:TWEAK_PGSQL_INET',
     ],
 }
 INSTALL_REQUIRES = [
