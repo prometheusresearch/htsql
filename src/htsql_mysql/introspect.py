@@ -237,6 +237,8 @@ class IntrospectMySQL(Introspect):
         character_maximum_length = record.character_maximum_length
         if isinstance(character_maximum_length, long):
             character_maximum_length = int(character_maximum_length)
+            if isinstance(character_maximum_length, long): # LONGTEXT
+                character_maximum_length = None
         numeric_precision = record.numeric_precision
         if isinstance(numeric_precision, long):
             numeric_precision = int(numeric_precision)
