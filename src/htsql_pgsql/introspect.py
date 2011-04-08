@@ -53,6 +53,8 @@ class Meta(object):
         self.pg_constraint_by_class = self.group(self.pg_constraint,
                                                  self.pg_class, 'conrelid')
         self.pg_rewrite = self.fetch(cursor, 'pg_rewrite')
+        cursor.execute("SELECT CURRENT_SCHEMAS(TRUE)")
+        self.search_path = cursor.fetchone()[0]
         self.skip_list = []
         for oid in sorted(self.pg_class):
             rel = self.pg_class[oid]
@@ -134,7 +136,11 @@ class IntrospectPGSQL(Introspect):
             if not self.permit_schema(name):
                 continue
             tables = self.introspect_tables(oid)
-            schema = SchemaEntity(name, tables)
+            priority = 0
+            if name in self.meta.search_path:
+                priority = (len(self.meta.search_path)
+                            - self.meta.search_path.index(name))
+            schema = SchemaEntity(name, tables, priority)
             schemas.append(schema)
         schemas.sort(key=(lambda s: s.name))
         return schemas

@@ -52,6 +52,8 @@ class Meta(object):
                 ['table_schema', 'table_name',
                  'constraint_schema', 'constraint_name',
                  'ordinal_position'])
+        cursor.execute("SELECT DATABASE()")
+        self.current_database = cursor.fetchone()[0]
         self.tables_by_schema = self.group(self.tables, self.schemata)
         self.columns_by_table = self.group(self.columns, self.tables)
         self.constraints_by_table = self.group(self.constraints, self.tables)
@@ -126,7 +128,10 @@ class IntrospectMySQL(Introspect):
             if not self.permit_schema(name):
                 continue
             tables = self.introspect_tables(key)
-            schema = SchemaEntity(name, tables)
+            priority = 0
+            if name == self.meta.current_database:
+                priority = 1
+            schema = SchemaEntity(name, tables, priority)
             schemas.append(schema)
         schemas.sort(key=(lambda s: s.name))
         return schemas

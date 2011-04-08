@@ -167,14 +167,16 @@ class SchemaEntity(NamedEntity):
         A list of tables in the schema.
     """
 
-    def __init__(self, name, tables):
+    def __init__(self, name, tables, priority=0):
         # Sanity check on the arguments.
         assert isinstance(tables, listof(TableEntity))
         assert all(table.schema_name == name for table in tables)
+        assert isinstance(priority, int)
 
         super(SchemaEntity, self).__init__(name)
         # An ordered mapping: name -> table.
         self.tables = EntitySet(tables)
+        self.priority = priority
 
 
 class TableEntity(NamedEntity):

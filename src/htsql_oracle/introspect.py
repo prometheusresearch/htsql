@@ -45,6 +45,8 @@ class Meta(object):
         self.key_columns = self.fetch(cursor, 'all_cons_columns',
                                       ['owner', 'constraint_name',
                                        'position'])
+        cursor.execute("SELECT USER FROM DUAL")
+        self.current_user = cursor.fetchone()[0]
         self.tables_by_user = self.group(self.tables, self.users,
                                          ['owner'])
         self.columns_by_table = self.group(self.columns, self.tables,
@@ -127,7 +129,10 @@ class IntrospectOracle(Introspect):
             if not self.permit_schema(name):
                 continue
             tables = self.introspect_tables(key)
-            schema = SchemaEntity(name, tables)
+            priority = 0
+            if name == self.meta.current_user:
+                priority = 1
+            schema = SchemaEntity(name, tables, priority)
             schemas.append(schema)
         schemas.sort(key=(lambda s: s.name))
         return schemas

@@ -50,6 +50,10 @@ class Meta(object):
         self.foreign_key_columns = self.fetch(cursor, 'sys.foreign_key_columns',
                                               ['constraint_object_id',
                                                'constraint_column_id'])
+        cursor.execute("SELECT DEFAULT_SCHEMA_NAME"
+                       " FROM SYS.DATABASE_PRINCIPALS"
+                       " WHERE PRINCIPAL_ID = USER_ID()")
+        self.default_schema = cursor.fetchone()[0]
         self.objects_by_schema = self.group(self.objects, self.schemas,
                                             ['schema_id'])
         self.columns_by_object = self.group(self.columns, self.objects,
@@ -95,13 +99,13 @@ class Meta(object):
         return groups
 
 
-class IntrospectMySQL(Introspect):
+class IntrospectMSSQL(Introspect):
     """
-    Implements the introspection adapter for MySQL.
+    Implements the introspection adapter for MSSQL.
     """
 
     def __init__(self):
-        super(IntrospectMySQL, self).__init__()
+        super(IntrospectMSSQL, self).__init__()
         self.meta = Meta()
 
     def __call__(self):
@@ -112,7 +116,7 @@ class IntrospectMySQL(Introspect):
         return CatalogEntity(schemas)
 
     def permit_schema(self, schema_name):
-        if schema_name in ['dbo', 'guest', 'INFORMATION_SCHEMA', 'sys']:
+        if schema_name in ['guest', 'INFORMATION_SCHEMA', 'sys']:
             return False
         if schema_name.startswith('db_'):
             return False
@@ -132,7 +136,10 @@ class IntrospectMySQL(Introspect):
             if not self.permit_schema(name):
                 continue
             tables = self.introspect_tables(key)
-            schema = SchemaEntity(name, tables)
+            priority = 0
+            if name == self.meta.default_schema:
+                priority = 1
+            schema = SchemaEntity(name, tables, priority)
             schemas.append(schema)
         schemas.sort(key=(lambda s: s.name))
         return schemas

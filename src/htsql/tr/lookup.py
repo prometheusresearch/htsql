@@ -219,6 +219,14 @@ class LookupAttributeInHome(Lookup):
             for table in schema.tables:
                 if normalize(table.name) == self.probe.key:
                     candidates.append(table)
+        # Keep only the schemas with the highest priority.
+        if candidates:
+            priority = max(self.catalog.schemas[table.schema_name].priority
+                           for table in candidates)
+            candidates = [table
+                          for table in candidates
+                          if self.catalog.schemas[table.schema_name].priority
+                                                                == priority]
         # If we find one and only one matching table, generate a binding
         # node for it.
         if len(candidates) == 1:
