@@ -62,6 +62,8 @@ class Meta(object):
                 schema_name = self.pg_namespace[rel.relnamespace].nspname
                 table_name = rel.relname
                 self.skip_list.append((schema_name, table_name))
+        connection.commit()
+        connection.release()
 
     def fetch(self, cursor, table_name, key_names=('oid',), extra=None):
         rows = {}

@@ -54,6 +54,8 @@ class Meta(object):
             rows = self.fetch(cursor, """PRAGMA foreign_key_list(%s)""",
                               row.name)
             self.foreign_key_list[row.name] = rows
+        connection.commit()
+        connection.release()
 
     def fetch(self, cursor, query, name=None):
         if name is not None:

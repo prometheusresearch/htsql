@@ -127,6 +127,7 @@ class Request(Utility):
                         value = normalize(item)
                         values.append(value)
                     records.append((values))
+                connection.commit()
                 connection.release()
             except DBError, exc:
                 raise EngineError("error while executing %r: %s"

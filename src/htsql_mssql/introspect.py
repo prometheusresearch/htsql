@@ -69,6 +69,8 @@ class Meta(object):
         self.columns_by_foreign_key = self.group(self.foreign_key_columns,
                                                  self.foreign_keys,
                                                  ['constraint_object_id'])
+        connection.commit()
+        connection.release()
 
     def fetch(self, cursor, table_name, id_names):
         rows = {}
