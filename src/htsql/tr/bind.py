@@ -25,12 +25,14 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, FormatSyntax,
                      ComplementSyntax, StringSyntax, NumberSyntax)
 from .recipe import (Recipe, FreeTableRecipe, AttachedTableRecipe,
                      ColumnRecipe, ComplementRecipe, KernelRecipe,
-                     SubstitutionRecipe, BindingRecipe, AmbiguousRecipe)
+                     SubstitutionRecipe, BindingRecipe, PinnedRecipe,
+                     AmbiguousRecipe)
 from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding, AliasBinding,
+                      DefinitionBinding, RedirectBinding,
+                      ReverseRedirectBinding, AliasBinding,
                       SelectionBinding, SortBinding)
 from .lookup import (lookup, lookup_attribute, lookup_function,
                      lookup_complement, expand, direct)
@@ -715,7 +717,8 @@ class BindBySubstitution(BindByRecipe):
                 binding = self.state.bind(syntax)
                 base = AliasBinding(base, name, binding, base.syntax)
         binding = self.state.bind(self.recipe.body, base=base)
-        return WrapperBinding(binding, self.syntax)
+        binding = ReverseRedirectBinding(binding, self.state.base, self.syntax)
+        return binding
 
 
 class BindByBinding(BindByRecipe):
@@ -724,6 +727,18 @@ class BindByBinding(BindByRecipe):
 
     def __call__(self):
         return WrapperBinding(self.recipe.binding, self.syntax)
+
+
+class BindByPinned(BindByRecipe):
+
+    adapts(PinnedRecipe)
+
+    def __call__(self):
+        self.state.push_base(self.recipe.base)
+        bind = BindByRecipe(self.recipe.recipe, self.syntax, self.state)
+        binding = bind()
+        self.state.pop_base()
+        return binding
 
 
 class BindByAmbiguous(BindByRecipe):

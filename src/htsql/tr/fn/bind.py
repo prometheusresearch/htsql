@@ -22,7 +22,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
-                       SelectionBinding, HomeBinding, Binding)
+                       SelectionBinding, HomeBinding, FlatBinding, Binding)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -383,6 +383,15 @@ class BindHome(BindMacro):
 
     def expand(self):
         return HomeBinding(self.state.base, self.syntax)
+
+
+class BindMix(BindMacro):
+
+    named('mix')
+    signature = NullarySig
+
+    def expand(self):
+        return FlatBinding(self.state.base, self.syntax)
 
 
 class BindFiber(BindMacro):

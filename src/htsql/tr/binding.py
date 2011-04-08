@@ -506,3 +506,14 @@ class RedirectBinding(WrapperBinding):
         self.pointer = pointer
 
 
+class ReverseRedirectBinding(WrapperBinding):
+
+    def __init__(self, base, pointer, syntax):
+        super(ReverseRedirectBinding, self).__init__(base, syntax)
+        self.pointer = pointer
+
+
+class FlatBinding(WrapperBinding):
+    pass
+
+

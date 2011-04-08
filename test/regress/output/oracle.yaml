@@ -16051,6 +16051,129 @@ tests:
                                     ON (1 <> 0)
                WHERE (CAST(COALESCE("DEPARTMENT"."count", 0) AS NUMBER) > "SCHOOL_2"."avg")
                ORDER BY 1 ASC
+          - uri: /school.program{mix(){name+,title+}}.limit(10)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                                                     |
+              -+-------------------------------------------------------------+-
+               | name                     | title                            |
+              -+--------------------------+----------------------------------+-
+               | College of Education     | Bachelor of Arts in Math         |
+               :                          : Education                        :
+               | College of Education     | Bachelor of Arts in Science      |
+               :                          : Education                        :
+               | College of Education     | Certificate in Science Teaching  |
+               | College of Education     | M.S. in Education                |
+               | College of Education     | Master of Arts in Education      |
+               :                          : Leadership                       :
+               | College of Education     | Master of Arts in Literacy       |
+               :                          : Education                        :
+               | College of Education     | Master of Arts in Teaching       |
+               | Public Honorariums       | Honorary PhD                     |
+               | School of Art and Design | Bachelor of Arts in Art History  |
+               | School of Art and Design | Bachelor of Arts in Studio Art   |
+                                                                     (10 rows)
+
+               ----
+               /school.program{mix(){name+,title+}}.limit(10)
+               SELECT "PROGRAM"."NAME",
+                      "PROGRAM"."TITLE"
+               FROM (SELECT "PROGRAM"."NAME",
+                            "PROGRAM"."TITLE",
+                            "PROGRAM"."CODE_1",
+                            "PROGRAM"."SCHOOL",
+                            "PROGRAM"."CODE_2"
+                     FROM (SELECT "SCHOOL"."NAME",
+                                  "PROGRAM"."TITLE",
+                                  "SCHOOL"."CODE" AS "CODE_1",
+                                  "PROGRAM"."SCHOOL",
+                                  "PROGRAM"."CODE" AS "CODE_2"
+                           FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                                INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                           ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
+                           ORDER BY 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC) "PROGRAM"
+                     WHERE (ROWNUM < 11)) "PROGRAM"
+               ORDER BY 1 ASC, 2 ASC, "PROGRAM"."CODE_1" ASC, "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE_2" ASC
+          - uri: /define(students_by_year(y) := student?year(dob)=mix().y) .students_by_year(1990)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | student                                                                                       |
+              -+-----------------------------------------------------------------------------------------------+-
+               | id    | name                | gender | dob        | school | program | start_date | is_active |
+              -+-------+---------------------+--------+------------+--------+---------+------------+-----------+-
+               | 25371 | John L. Hanley      | m      | 1990-04-28 | eng    | gbuseng | 2009-07-15 | true      |
+               | 26743 | Ulf Knudsen         | m      | 1990-11-14 | ns     | uphys   | 2008-04-27 | true      |
+               | 43278 | Trina Wood Campbell | f      | 1990-02-12 | eng    | gme     | 2007-09-01 | true      |
+                                                                                                        (3 rows)
+
+               ----
+               /define(students_by_year(y):=student?year(dob)=mix().y).students_by_year(1990)
+               SELECT "STUDENT"."ID",
+                      "STUDENT"."NAME",
+                      "STUDENT"."GENDER",
+                      "STUDENT"."DOB",
+                      "STUDENT"."SCHOOL",
+                      "STUDENT"."PROGRAM",
+                      "STUDENT"."START_DATE",
+                      "STUDENT"."IS_ACTIVE"
+               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+               WHERE (EXTRACT(YEAR FROM "STUDENT"."DOB") = 1990)
+               ORDER BY 1 ASC
+          - uri: /define(students_by_year(y) := student?year(dob)=mix().y, students_by_ym(y,m)
+              := students_by_year(y)?month(dob)=mix().m) .students_by_ym(1990,2)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | student                                                                                       |
+              -+-----------------------------------------------------------------------------------------------+-
+               | id    | name                | gender | dob        | school | program | start_date | is_active |
+              -+-------+---------------------+--------+------------+--------+---------+------------+-----------+-
+               | 43278 | Trina Wood Campbell | f      | 1990-02-12 | eng    | gme     | 2007-09-01 | true      |
+                                                                                                         (1 row)
+
+               ----
+               /define(students_by_year(y):=student?year(dob)=mix().y,students_by_ym(y,m):=students_by_year(y)?month(dob)=mix().m).students_by_ym(1990,2)
+               SELECT "STUDENT"."ID",
+                      "STUDENT"."NAME",
+                      "STUDENT"."GENDER",
+                      "STUDENT"."DOB",
+                      "STUDENT"."SCHOOL",
+                      "STUDENT"."PROGRAM",
+                      "STUDENT"."START_DATE",
+                      "STUDENT"."IS_ACTIVE"
+               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+               WHERE (EXTRACT(MONTH FROM "STUDENT"."DOB") = 2)
+                     AND (EXTRACT(YEAR FROM "STUDENT"."DOB") = 1990)
+               ORDER BY 1 ASC
+          - uri: /define(p:=this(), q:=1){p{mix().q}}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               |       |
+              -+-------+-
+               | 1     |
+              -+-------+-
+               |     1 |
+                 (1 row)
+
+               ----
+               /define(p:=this(),q:=1){p{mix().q}}
+               SELECT 1
+               FROM DUAL "!"
+          - uri: /define(p:=this(), q:=1){p{q}}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: unable to resolve an identifier:
+                  /define(p:=this(), q:=1){p{q}}
+                                             ^
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

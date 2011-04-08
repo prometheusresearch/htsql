@@ -24,11 +24,12 @@ from .binding import (Binding, HomeBinding, RootBinding, ChainBinding,
                       TableBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, SieveBinding, WrapperBinding, SortBinding,
                       QuotientBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding, AliasBinding,
-                      SelectionBinding, DirectionBinding)
+                      DefinitionBinding, RedirectBinding,
+                      ReverseRedirectBinding, AliasBinding,
+                      SelectionBinding, DirectionBinding, FlatBinding)
 from .recipe import (FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                      ComplementRecipe, KernelRecipe, SubstitutionRecipe,
-                     BindingRecipe, AmbiguousRecipe)
+                     BindingRecipe, PinnedRecipe, AmbiguousRecipe)
 import re
 import unicodedata
 
@@ -63,7 +64,7 @@ class Probe(Clonable):
 class AttributeProbe(Probe):
 
     def __init__(self, name):
-        name = name
+        self.name = name
         self.key = normalize(name)
 
 
@@ -120,6 +121,72 @@ class Lookup(Adapter):
 
     def __call__(self):
         return None
+
+
+class LookupDeep(Lookup):
+
+    adapts_many((HomeBinding, DeepAttributeProbe),
+                (HomeBinding, DeepFunctionProbe),
+                (TableBinding, DeepAttributeProbe),
+                (TableBinding, DeepFunctionProbe),
+                (ColumnBinding, DeepAttributeProbe),
+                (ColumnBinding, DeepFunctionProbe),
+                (QuotientBinding, DeepAttributeProbe),
+                (QuotientBinding, DeepFunctionProbe),
+                (ComplementBinding, DeepAttributeProbe),
+                (ComplementBinding, DeepFunctionProbe))
+
+    def __call__(self):
+        recipe = super(LookupDeep, self).__call__()
+        if recipe is not None:
+            return recipe
+        if self.binding is not self.binding.base:
+            recipe = lookup(self.binding.base, self.probe)
+            if recipe is not None:
+                return PinnedRecipe(self.binding.base, recipe)
+        return None
+
+
+class LookupDeepAttributeInReverseRedirect(Lookup):
+
+    adapts(ReverseRedirectBinding, DeepAttributeProbe)
+
+    def __call__(self):
+        probe = self.probe.clone_to(AttributeProbe)
+        recipe = lookup(self.binding.base, probe)
+        if recipe is not None:
+            return recipe
+        return lookup(self.binding.pointer, self.probe)
+
+
+class LookupDeepFunctionInReverseRedirect(Lookup):
+
+    adapts(ReverseRedirectBinding, DeepFunctionProbe)
+
+    def __call__(self):
+        probe = self.probe.clone_to(FunctionProbe)
+        recipe = lookup(self.binding.base, probe)
+        if recipe is not None:
+            return recipe
+        return lookup(self.binding.pointer, self.probe)
+
+
+class LookupAttributeInFlat(Lookup):
+
+    adapts(FlatBinding, AttributeProbe)
+
+    def __call__(self):
+        probe = self.probe.clone_to(DeepAttributeProbe)
+        return lookup(self.binding.base, probe)
+
+
+class LookupFunctionInFlat(Lookup):
+
+    adapts(FlatBinding, FunctionProbe)
+
+    def __call__(self):
+        probe = self.probe.clone_to(DeepFunctionProbe)
+        return lookup(self.binding.base, probe)
 
 
 class LookupAttributeInHome(Lookup):

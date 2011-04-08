@@ -75,6 +75,15 @@ class BindingRecipe(Recipe):
         self.binding = binding
 
 
+class PinnedRecipe(Recipe):
+
+    def __init__(self, base, recipe):
+        assert isinstance(base, Binding)
+        assert isinstance(recipe, Recipe)
+        self.base = base
+        self.recipe = recipe
+
+
 class AmbiguousRecipe(Recipe):
     pass
 

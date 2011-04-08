@@ -148,6 +148,18 @@ tests:
                 {root().distinct(program{degree}?school='art').*, *}
     - uri: /school{code,count(department)}
                 ?count(department)>avg(home().school.count(department))
+    # The `mix()` namespace.
+    - uri: /school.program{mix(){name+,title+}}.limit(10)
+    - uri: /define(students_by_year(y) := student?year(dob)=mix().y)
+            .students_by_year(1990)
+    - uri: /define(students_by_year(y) := student?year(dob)=mix().y,
+                   students_by_ym(y,m) := students_by_year(y)?month(dob)=mix().m)
+            .students_by_ym(1990,2)
+    - uri: /define(p:=this(), q:=1){p{mix().q}}
+    # Lookup error because `q` is not available in the context where `p`
+    # is evaluated.
+    - uri: /define(p:=this(), q:=1){p{q}}
+      expect: 400
 
   - title: Table Expressions
     tests:
