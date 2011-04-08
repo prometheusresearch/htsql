@@ -16071,6 +16071,47 @@ tests:
               bind error: unable to resolve an identifier:
                   /define(p:=this(), q:=1){p{q}}
                                              ^
+          - uri: /school.program{title, mix().name}.limit(10)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                                                     |
+              -+-------------------------------------------------------------+-
+               | title                            | name                     |
+              -+----------------------------------+--------------------------+-
+               | Post Baccalaureate in Art        | School of Art and Design |
+               : History                          :                          :
+               | Bachelor of Arts in Art History  | School of Art and Design |
+               | Bachelor of Arts in Studio Art   | School of Art and Design |
+               | Graduate Certificate in          | School of Business       |
+               : Accounting                       :                          :
+               | Certificate in Capital Markets   | School of Business       |
+               | B.S. in Accounting               | School of Business       |
+               | B.S. in Business Administration  | School of Business       |
+               | B.S. in Corporate Finance        | School of Business       |
+               | Master of Arts in Education      | College of Education     |
+               : Leadership                       :                          :
+               | M.S. in Education                | College of Education     |
+                                                                     (10 rows)
+
+               ----
+               /school.program{title,mix().name}.limit(10)
+               SELECT "program"."title",
+                      "school"."name"
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program"
+                               ON ("school"."code" = "program"."school")
+               ORDER BY "school"."code" ASC, "program"."school" ASC, "program"."code" ASC
+               LIMIT 10
+          - uri: /define(p:=school.program).p{title, mix().name}.limit(10)
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: unable to resolve an identifier:
+                  /define(p:=school.program).p{title, mix().name}.limit(10)
+                                                            ^^^^
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

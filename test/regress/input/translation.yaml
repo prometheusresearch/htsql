@@ -160,6 +160,10 @@ tests:
     # is evaluated.
     - uri: /define(p:=this(), q:=1){p{q}}
       expect: 400
+    - uri: /school.program{title, mix().name}.limit(10)
+    # Lookup error because deep lookup does not go through the definition body.
+    - uri: /define(p:=school.program).p{title, mix().name}.limit(10)
+      expect: 400
 
   - title: Table Expressions
     tests:
