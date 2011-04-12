@@ -510,7 +510,7 @@ class SeqVal(Validator):
             # by ending the loop prematurely.
             while start < len(value):
                 # Fetch the next token.
-                match = self.regexp.match(value)
+                match = self.regexp.match(value, start)
                 if match is None:
                     break
                 # A simple state machine.  The `is_comma_expected` variable
