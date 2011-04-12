@@ -661,7 +661,7 @@ class MapVal(Validator):
             # by ending the loop prematurely.
             while start < len(value):
                 # Fetch the next token.
-                match = self.regexp.match(value)
+                match = self.regexp.match(value, start)
                 if match is None:
                     break
                 # This loop represents a simple state machine.  The
