@@ -69,6 +69,7 @@ ENTRY_POINTS = {
             ' = htsql_tweak.pgsql_timeout.export:TWEAK_PGSQL_TIMEOUT',
         'tweak.autolimit = htsql_tweak.autolimit.export:TWEAK_AUTOLIMIT',
         'tweak.schema = htsql_tweak.schema.export:TWEAK_SCHEMA',
+        'tweak.cors = htsql_tweak.cors.export:TWEAK_CORS',
         'tweak.pgsql.catalog'
             ' = htsql_tweak.pgsql_catalog.export:TWEAK_PGSQL_CATALOG',
         'tweak.pgsql.view'
