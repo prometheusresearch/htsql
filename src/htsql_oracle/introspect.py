@@ -23,7 +23,10 @@ from .domain import (OracleBooleanDomain, OracleIntegerDomain,
                      OracleOpaqueDomain)
 from htsql.connect import Connect
 from htsql.util import Record
-import re
+import sys, re
+
+if sys.version_info >= (2, 6):
+    from collections import namedtuple
 
 
 class Meta(object):
@@ -31,15 +34,23 @@ class Meta(object):
     Loads raw meta-data from `information_schema`.
     """
 
+    ignored_owners = ['SYS', 'SYSTEM', 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP',
+                      'CTXSYS', 'XDB', 'ANONYMOUS', 'MDSYS', 'HR',
+                      'FLOWS_FILES', 'FLOWS_020100']
+
     def __init__(self):
         connect = Connect()
         connection = connect()
         cursor = connection.cursor()
+        # not very elegant to address actual cursor through proxy
+        cursor.cursor.arraysize = 1000
         self.users = self.fetch(cursor, 'all_users', ['username'])
         self.tables = self.fetch(cursor, 'all_catalog',
                                  ['owner', 'table_name'])
         self.columns = self.fetch(cursor, 'all_tab_columns',
-                                  ['owner', 'table_name', 'column_id'])
+                                  ['owner', 'table_name', 'column_id'],
+                                  ['owner', 'table_name', 'column_id', 'column_name', 'nullable', 'data_default',
+                                   'data_type', 'data_length', 'data_precision', 'data_scale'])
         self.constraints = self.fetch(cursor, 'all_constraints',
                                       ['owner', 'constraint_name'])
         self.key_columns = self.fetch(cursor, 'all_cons_columns',
@@ -58,19 +69,40 @@ class Meta(object):
         connection.commit()
         connection.release()
 
-    def fetch(self, cursor, table_name, id_names):
+    def encode(self, item):
+        if isinstance(item, unicode):
+            return item.encode('utf-8')
+        else:
+            return item
+
+    def fetch(self, cursor, table_name, id_names, cnames=None):
         rows = {}
-        cursor.execute("SELECT * FROM %s" % table_name)
-        for items in cursor.fetchall():
-            attributes = {}
-            for kind, item in zip(cursor.description, items):
-                name = kind[0].lower()
-                if isinstance(item, unicode):
-                    item = item.encode('utf-8')
-                attributes[name] = item
-            key = tuple(attributes[name] for name in id_names)
-            record = Record(**attributes)
-            rows[key] = record
+        if cnames is not None:
+            sql = "SELECT " + ",".join(cnames) + " FROM %s"
+        else:
+            sql = "SELECT * FROM %s "
+        if 'owner' in id_names:
+            sql += " WHERE owner NOT IN ('%s')" % "','".join(self.ignored_owners)
+        cursor.execute(sql % table_name)
+        column_names = tuple(kind[0].lower() for kind in cursor.description)
+
+        if sys.version_info < (2, 6):
+            for items in cursor.fetchall():
+                attributes = {}
+                for name, item in zip(column_names, items):
+                    if isinstance(item, unicode):
+                        item = item.encode('utf-8')
+                    attributes[name] = item
+                key = tuple(attributes[name] for name in id_names)
+                record = Record(**attributes)
+                rows[key] = record
+        else:
+            Row = namedtuple('Row', column_names)
+            for items in cursor.fetchall():
+                record = Row._make(self.encode(item) for item in items)
+                key = tuple(getattr(record, name) for name in id_names)
+                rows[key] = record
+
         return rows
 
     def group(self, targets, bases, id_names):
@@ -105,10 +137,10 @@ class IntrospectOracle(Introspect):
         return CatalogEntity(schemas)
 
     def permit_schema(self, schema_name):
-        if schema_name in ['SYS', 'SYSTEM', 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP',
-                           'CTXSYS', 'XDB', 'ANONYMOUS', 'MDSYS', 'HR',
-                           'FLOWS_FILES', 'FLOWS_020100']:
-            return False
+#        if schema_name in ['SYS', 'SYSTEM', 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP',
+#                           'CTXSYS', 'XDB', 'ANONYMOUS', 'MDSYS', 'HR',
+#                           'FLOWS_FILES', 'FLOWS_020100']:
+#            return False
         if '$' in schema_name:
             return False
         return True
