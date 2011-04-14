@@ -26,7 +26,8 @@ from .binding import (Binding, HomeBinding, RootBinding, ChainBinding,
                       QuotientBinding, ComplementBinding, KernelBinding,
                       DefinitionBinding, RedirectBinding,
                       ReverseRedirectBinding, AliasBinding,
-                      SelectionBinding, DirectionBinding, FlatBinding)
+                      SelectionBinding, DirectionBinding, FlatBinding,
+                      LinkBinding)
 from .recipe import (FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                      ComplementRecipe, KernelRecipe, SubstitutionRecipe,
                      BindingRecipe, PinnedRecipe, AmbiguousRecipe)
@@ -134,7 +135,9 @@ class LookupDeep(Lookup):
                 (QuotientBinding, DeepAttributeProbe),
                 (QuotientBinding, DeepFunctionProbe),
                 (ComplementBinding, DeepAttributeProbe),
-                (ComplementBinding, DeepFunctionProbe))
+                (ComplementBinding, DeepFunctionProbe),
+                (LinkBinding, DeepAttributeProbe),
+                (LinkBinding, DeepFunctionProbe))
 
     def __call__(self):
         recipe = super(LookupDeep, self).__call__()
@@ -581,6 +584,14 @@ class ExpandQuotient(Lookup):
 class LookupInComplement(Lookup):
 
     adapts(ComplementBinding, Probe)
+
+    def __call__(self):
+        return lookup(self.binding.seed, self.probe)
+
+
+class LookupInLink(Lookup):
+
+    adapts(LinkBinding, Probe)
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)

@@ -66,6 +66,14 @@ class SelectSig(Signature):
     ]
 
 
+class LinkSig(Signature):
+
+    slots = [
+            Slot('seed'),
+            Slot('condition', is_mandatory=False),
+    ]
+
+
 class CastSig(Signature):
 
     slots = [

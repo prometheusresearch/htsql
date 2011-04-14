@@ -16,9 +16,9 @@ This module implements the rewriting process.
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain
 from .code import (Expression, QueryExpr, SegmentExpr, Space, RootSpace,
-                   QuotientSpace, FilteredSpace, OrderedSpace,
+                   QuotientSpace, AliasSpace, FilteredSpace, OrderedSpace,
                    Code, LiteralCode, CastCode, FormulaCode, Unit, ScalarUnit,
-                   AggregateUnitBase, KernelUnit, ComplementUnit)
+                   AggregateUnitBase, KernelUnit, ComplementUnit, AliasUnit)
 from .signature import Signature
 
 
@@ -119,6 +119,16 @@ class RewriteQuotient(RewriteSpace):
         seed = self.state.rewrite(self.space.family.seed, mask=self.space.base)
         base = self.state.rewrite(self.space.base)
         return self.space.clone(base=base, seed=seed, kernel=kernel)
+
+
+class RewriteAlias(RewriteSpace):
+
+    adapts(AliasSpace)
+
+    def __call__(self):
+        seed = self.state.rewrite(self.space.seed, mask=self.space.base)
+        base = self.state.rewrite(self.space.base)
+        return self.space.clone(base=base, seed=seed)
 
 
 class RewriteFiltered(RewriteSpace):
@@ -278,6 +288,17 @@ class RewriteComplement(RewriteUnit):
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
                                   mask=self.unit.space.base.family.seed)
+        space = self.state.rewrite(self.unit.space)
+        return self.unit.clone(space=space, code=code)
+
+
+class RewriteAliasUnit(RewriteUnit):
+
+    adapts(AliasUnit)
+
+    def __call__(self):
+        code = self.state.rewrite(self.unit.code,
+                                  mask=self.unit.space.seed)
         space = self.state.rewrite(self.unit.space)
         return self.unit.clone(space=space, code=code)
 

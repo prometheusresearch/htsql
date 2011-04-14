@@ -22,7 +22,8 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
-                       SelectionBinding, HomeBinding, FlatBinding, Binding)
+                       SelectionBinding, HomeBinding, FlatBinding,
+                       LinkBinding, Binding)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -48,7 +49,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         QuotientSig, KernelSig, ComplementSig,
-                        AssignmentSig, DefineSig, WhereSig, SelectSig)
+                        AssignmentSig, DefineSig, WhereSig, SelectSig, LinkSig)
 import sys
 
 
@@ -585,6 +586,19 @@ class BindSelect(BindMacro):
             base = SortBinding(base, order, None, None, base.syntax)
         return SelectionBinding(base, elements, base.syntax)
 
+
+class BindLink(BindMacro):
+
+    named('link')
+    signature = LinkSig
+
+    def expand(self, seed, condition=None):
+        seed = self.state.bind(seed)
+        if condition is not None:
+            condition = self.state.bind(condition)
+            condition = CastBinding(condition, coerce(BooleanDomain()),
+                                    condition.syntax)
+        return LinkBinding(self.state.base, seed, condition, self.syntax)
 
 
 class BindDirectionBase(BindMacro):

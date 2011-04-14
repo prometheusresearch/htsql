@@ -889,6 +889,33 @@ class ComplementSpace(Space):
         self.extra_codes = extra_codes
 
 
+class AliasSpace(Space):
+
+    is_axis = True
+
+    def __init__(self, base, seed, binding, extra_codes=None):
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
+        assert seed.spans(base)
+        #assert not base.spans(seed)
+        seed_baseline = seed
+        while not seed_baseline.is_axis:
+            seed_baseline = seed_baseline.base
+        if not base.spans(seed_baseline):
+            while not base.spans(seed_baseline.base):
+                seed_baseline = seed_baseline.base
+        super(AliasSpace, self).__init__(
+                    base=base,
+                    family=seed.family,
+                    is_contracting=base.spans(seed),
+                    is_expanding=seed.dominates(base),
+                    binding=binding,
+                    equality_vector=(base, seed))
+        self.seed = seed
+        self.seed_baseline = seed_baseline
+        self.extra_codes = extra_codes
+
+
 class FilteredSpace(Space):
     """
     Represents a filtered space.
@@ -1380,6 +1407,18 @@ class ComplementUnit(CompoundUnit):
                     domain=code.domain,
                     binding=binding,
                     equality_vector=(code, space))
+
+
+class AliasUnit(CompoundUnit):
+
+    def __init__(self, code, space, binding):
+        assert isinstance(space, AliasSpace)
+        super(AliasUnit, self).__init__(
+                code=code,
+                space=space,
+                domain=code.domain,
+                binding=binding,
+                equality_vector=(code, space))
 
 
 class BatchExpr(Expression):

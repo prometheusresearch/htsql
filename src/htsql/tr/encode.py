@@ -27,10 +27,10 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       SortBinding, CastBinding, WrapperBinding,
                       DefinitionBinding, AliasBinding,
                       DirectionBinding, FormulaBinding,
-                      SelectionBinding, HomeBinding)
+                      SelectionBinding, HomeBinding, LinkBinding)
 from .code import (RootSpace, ScalarSpace,
                    DirectTableSpace, FiberTableSpace,
-                   QuotientSpace, ComplementSpace,
+                   QuotientSpace, ComplementSpace, AliasSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
                    CastCode, ColumnUnit, ScalarUnit, KernelUnit)
@@ -481,6 +481,19 @@ class RelateComplement(Relate):
     def __call__(self):
         space = self.state.relate(self.binding.base)
         return ComplementSpace(space, self.binding)
+
+
+class RelateLink(Relate):
+
+    adapts(LinkBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        seed = self.state.relate(self.binding.seed)
+        if self.binding.condition is not None:
+            filter = self.state.encode(self.binding.condition)
+            seed = FilteredSpace(seed, filter, self.binding)
+        return AliasSpace(space, seed, self.binding)
 
 
 class EncodeKernel(Encode):

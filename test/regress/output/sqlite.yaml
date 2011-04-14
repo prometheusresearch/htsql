@@ -16060,6 +16060,606 @@ tests:
               bind error: unable to resolve an identifier:
                   /define(p:=school.program).p{title, mix().name}.limit(10)
                                                             ^^^^
+        - id: link-and-fork
+          tests:
+          - uri: /school.link(department)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | link(department)                         |
+              -+------------------------------------------+-
+               | code   | name                   | school |
+              -+--------+------------------------+--------+-
+               | arthis | Art History            | art    |
+               | stdart | Studio Art             | art    |
+               | acc    | Accounting             | bus    |
+               | capmrk | Capital Markets        | bus    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | tched  | Teacher Education      | edu    |
+               | be     | Bioengineering         | eng    |
+               | comp   | Computer Science       | eng    |
+               | ee     | Electrical Engineering | eng    |
+               | me     | Mechanical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | pia    | Piano                  | mus    |
+               | str    | Strings                | mus    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | astro  | Astronomy              | ns     |
+               | chem   | Chemistry              | ns     |
+               | mth    | Mathematics            | ns     |
+               | phys   | Physics                | ns     |
+                                                  (24 rows)
+
+               ----
+               /school.link(department)
+               SELECT "department"."code",
+                      "department"."name",
+                      "department"."school"
+               FROM "school" AS "school"
+                    INNER JOIN "department" AS "department"
+                               ON ("school"."code" = "department"."school")
+               ORDER BY "school"."code" ASC, 1 ASC
+          - uri: /school{code, count(link(department))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                         |
+              -+--------------------------------+-
+               | code | count(link(department)) |
+              -+------+-------------------------+-
+               | art  |                       2 |
+               | bus  |                       3 |
+               | edu  |                       2 |
+               | eng  |                       4 |
+               | la   |                       5 |
+               | mus  |                       4 |
+               | ns   |                       4 |
+               | ph   |                       0 |
+               | sc   |                       0 |
+                                         (9 rows)
+
+               ----
+               /school{code,count(link(department))}
+               SELECT "school"."code",
+                      COALESCE("department"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "department"."school"
+                                     FROM "department" AS "department"
+                                     GROUP BY 2) AS "department"
+                                    ON ("school"."code" = "department"."school")
+               ORDER BY 1 ASC
+          - uri: /school.link(home().department)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | link(home().department)                  |
+              -+------------------------------------------+-
+               | code   | name                   | school |
+              -+--------+------------------------+--------+-
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+                                                 (243 rows)
+
+               ----
+               /school.link(home().department)
+               SELECT "department"."code",
+                      "department"."name",
+                      "department"."school"
+               FROM "school" AS "school"
+                    CROSS JOIN "department" AS "department"
+               ORDER BY "school"."code" ASC, 1 ASC
+          - uri: /school{code, count(link(home().department))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                |
+              -+---------------------------------------+-
+               | code | count(link(home().department)) |
+              -+------+--------------------------------+-
+               | art  |                             27 |
+               | bus  |                             27 |
+               | edu  |                             27 |
+               | eng  |                             27 |
+               | la   |                             27 |
+               | mus  |                             27 |
+               | ns   |                             27 |
+               | ph   |                             27 |
+               | sc   |                             27 |
+                                                (9 rows)
+
+               ----
+               /school{code,count(link(home().department))}
+               SELECT "school"."code",
+                      COALESCE("department"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                     FROM "department" AS "department") AS "department"
+                                    ON 1
+               ORDER BY 1 ASC
+          - uri: /school.link(home().department, code=home().department.school)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | link(home().department,code=home().department.school) |
+              -+-------------------------------------------------------+-
+               | code        | name                       | school     |
+              -+-------------+----------------------------+------------+-
+               | arthis      | Art History                | art        |
+               | stdart      | Studio Art                 | art        |
+               | acc         | Accounting                 | bus        |
+               | capmrk      | Capital Markets            | bus        |
+               | corpfi      | Corporate Finance          | bus        |
+               | edpol       | Educational Policy         | edu        |
+               | tched       | Teacher Education          | edu        |
+               | be          | Bioengineering             | eng        |
+               | comp        | Computer Science           | eng        |
+               | ee          | Electrical Engineering     | eng        |
+               | me          | Mechanical Engineering     | eng        |
+               | eng         | English                    | la         |
+               | hist        | History                    | la         |
+               | lang        | Foreign Languages          | la         |
+               | poli        | Political Science          | la         |
+               | psych       | Psychology                 | la         |
+               | pia         | Piano                      | mus        |
+               | str         | Strings                    | mus        |
+               | voc         | Vocals                     | mus        |
+               | win         | Wind                       | mus        |
+               | astro       | Astronomy                  | ns         |
+               | chem        | Chemistry                  | ns         |
+               | mth         | Mathematics                | ns         |
+               | phys        | Physics                    | ns         |
+                                                               (24 rows)
+
+               ----
+               /school.link(home().department,code=home().department.school)
+               SELECT "department"."code",
+                      "department"."name",
+                      "department"."school"
+               FROM "school" AS "school"
+                    CROSS JOIN "department" AS "department"
+               WHERE ("school"."code" = "department"."school")
+               ORDER BY "school"."code" ASC, 1 ASC
+          - uri: /school{code, count(link(home().department, code=home().department.school))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                              |
+              -+---------------------------------------------------------------------+-
+               | code | count(link(home().department,code=home().department.school)) |
+              -+------+--------------------------------------------------------------+-
+               | art  |                                                            2 |
+               | bus  |                                                            3 |
+               | edu  |                                                            2 |
+               | eng  |                                                            4 |
+               | la   |                                                            5 |
+               | mus  |                                                            4 |
+               | ns   |                                                            4 |
+               | ph   |                                                            0 |
+               | sc   |                                                            0 |
+                                                                              (9 rows)
+
+               ----
+               /school{code,count(link(home().department,code=home().department.school))}
+               SELECT "school"."code",
+                      COALESCE("department"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "school"."code"
+                                     FROM "school" AS "school"
+                                          CROSS JOIN "department" AS "department"
+                                     WHERE ("school"."code" = "department"."school")
+                                     GROUP BY 2) AS "department"
+                                    ON ("school"."code" = "department"."code")
+               ORDER BY 1 ASC
+          - uri: /(school?code='art').link(department)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | link(department)              |
+              -+-------------------------------+-
+               | code   | name        | school |
+              -+--------+-------------+--------+-
+               | arthis | Art History | art    |
+               | stdart | Studio Art  | art    |
+                                        (2 rows)
+
+               ----
+               /(school?code='art').link(department)
+               SELECT "department"."code",
+                      "department"."name",
+                      "department"."school"
+               FROM "school" AS "school"
+                    INNER JOIN (SELECT "department"."code",
+                                       "department"."name",
+                                       "department"."school"
+                                FROM "department" AS "department") AS "department"
+                               ON ("school"."code" = "department"."school")
+               WHERE ("school"."code" = 'art')
+               ORDER BY "school"."code" ASC, 1 ASC
+          - uri: /(school?code='art'){code, count(link(department))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                         |
+              -+--------------------------------+-
+               | code | count(link(department)) |
+              -+------+-------------------------+-
+               | art  |                       2 |
+                                          (1 row)
+
+               ----
+               /(school?code='art'){code,count(link(department))}
+               SELECT "school"."code",
+                      COALESCE("department"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "department"."school"
+                                     FROM "department" AS "department"
+                                     GROUP BY 2) AS "department"
+                                    ON ("school"."code" = "department"."school")
+               WHERE ("school"."code" = 'art')
+               ORDER BY 1 ASC
+          - uri: /(school?code='art').link(home().department)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | link(home().department)                  |
+              -+------------------------------------------+-
+               | code   | name                   | school |
+              -+--------+------------------------+--------+-
+               | acc    | Accounting             | bus    |
+               | arthis | Art History            | art    |
+               | astro  | Astronomy              | ns     |
+               | be     | Bioengineering         | eng    |
+               | bursar | Bursar's Office        |        |
+               | capmrk | Capital Markets        | bus    |
+               | career | Career Development     |        |
+               | chem   | Chemistry              | ns     |
+               | comp   | Computer Science       | eng    |
+               | corpfi | Corporate Finance      | bus    |
+               | edpol  | Educational Policy     | edu    |
+               | ee     | Electrical Engineering | eng    |
+               | eng    | English                | la     |
+               | hist   | History                | la     |
+               | lang   | Foreign Languages      | la     |
+               | me     | Mechanical Engineering | eng    |
+               | mth    | Mathematics            | ns     |
+               | parent | Parents & Alumni       |        |
+               | phys   | Physics                | ns     |
+               | pia    | Piano                  | mus    |
+               | poli   | Political Science      | la     |
+               | psych  | Psychology             | la     |
+               | stdart | Studio Art             | art    |
+               | str    | Strings                | mus    |
+               | tched  | Teacher Education      | edu    |
+               | voc    | Vocals                 | mus    |
+               | win    | Wind                   | mus    |
+                                                  (27 rows)
+
+               ----
+               /(school?code='art').link(home().department)
+               SELECT "department"."code",
+                      "department"."name",
+                      "department"."school"
+               FROM "school" AS "school"
+                    CROSS JOIN (SELECT "department"."code",
+                                       "department"."name",
+                                       "department"."school"
+                                FROM "department" AS "department") AS "department"
+               WHERE ("school"."code" = 'art')
+               ORDER BY "school"."code" ASC, 1 ASC
+          - uri: /(school?code='art'){code, count(link(home().department, code=home().department.school))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                              |
+              -+---------------------------------------------------------------------+-
+               | code | count(link(home().department,code=home().department.school)) |
+              -+------+--------------------------------------------------------------+-
+               | art  |                                                            2 |
+                                                                               (1 row)
+
+               ----
+               /(school?code='art'){code,count(link(home().department,code=home().department.school))}
+               SELECT "school"."code",
+                      COALESCE("department"."count", 0)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "school"."code"
+                                     FROM "school" AS "school"
+                                          CROSS JOIN "department" AS "department"
+                                     WHERE ("school"."code" = "department"."school")
+                                     GROUP BY 2) AS "department"
+                                    ON ("school"."code" = "department"."code")
+               WHERE ("school"."code" = 'art')
+               ORDER BY 1 ASC
+          - uri: /{link(this()){count(school)}, link(this(),true()){count(school)},
+              link(this(),false()){count(school)}}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               |                                               |
+              -+-----------------------------------------------+-
+               | count(school) | count(school) | count(school) |
+              -+---------------+---------------+---------------+-
+               |             9 |             9 |               |
+                                                         (1 row)
+
+               ----
+               /{link(this()){count(school)},link(this(),true()){count(school)},link(this(),false()){count(school)}}
+               SELECT COALESCE("school"."count", 0),
+                      COALESCE("school"."count", 0),
+                      "!_2"."count"
+               FROM (SELECT 1 AS "!") AS "!_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                     FROM "school" AS "school") AS "school"
+                                    ON 1
+                    LEFT OUTER JOIN (SELECT COALESCE("school"."count", 0) AS "count"
+                                     FROM (SELECT 1 AS "!") AS "!"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                                           FROM "school" AS "school") AS "school"
+                                                          ON 1
+                                     WHERE 0) AS "!_2"
+                                    ON 1
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department
@@ -17666,6 +18266,39 @@ tests:
                                      GROUP BY 2, 3) AS "student"
                                     ON (("program"."school" = "student"."school") AND (CASE WHEN ("program"."degree" = "student"."degree") OR ("program"."degree" IS NULL AND "student"."degree" IS NULL) THEN 1 ELSE 0 END))
                ORDER BY "school"."code" ASC, 1 ASC
+          - uri: /(school?code='art').(program^degree).^{title+,degree}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                                  |
+              -+------------------------------------------+-
+               | title                           | degree |
+              -+---------------------------------+--------+-
+               | Bachelor of Arts in Art History | ba     |
+               | Bachelor of Arts in Studio Art  | ba     |
+               | Post Baccalaureate in Art       | pb     |
+               : History                         :        :
+                                                   (3 rows)
+
+               ----
+               /(school?code='art').(program^degree).^{title+,degree}
+               SELECT "program_2"."title",
+                      "program_2"."degree"
+               FROM "school" AS "school"
+                    INNER JOIN (SELECT "program"."degree",
+                                       "program"."school"
+                                FROM "program" AS "program"
+                                GROUP BY 2, 1) AS "program_1"
+                               ON ("school"."code" = "program_1"."school")
+                    INNER JOIN (SELECT "program"."title",
+                                       "program"."degree",
+                                       "program"."school",
+                                       "program"."code"
+                                FROM "program" AS "program") AS "program_2"
+                               ON (("program_1"."school" = "program_2"."school") AND (CASE WHEN ("program_1"."degree" = "program_2"."degree") OR ("program_1"."degree" IS NULL AND "program_2"."degree" IS NULL) THEN 1 ELSE 0 END))
+               WHERE ("school"."code" = 'art')
+               ORDER BY 1 ASC, "school"."code" ASC, "program_1"."degree" ASC, "program_2"."school" ASC, "program_2"."code" ASC
           - uri: /school.program .quotient(student, year(dob), gender)
             status: 200 OK
             headers:

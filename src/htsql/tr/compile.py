@@ -19,10 +19,10 @@ from .error import CompileError
 from .syntax import IdentifierSyntax
 from .code import (Expression, Code, Space, RootSpace, ScalarSpace, TableSpace,
                    DirectTableSpace, FiberTableSpace,
-                   QuotientSpace, ComplementSpace,
+                   QuotientSpace, ComplementSpace, AliasSpace,
                    FilteredSpace, OrderedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
-                   KernelUnit, ComplementUnit,
+                   KernelUnit, ComplementUnit, AliasUnit,
                    QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
                    AggregateBatchExpr)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
@@ -1016,6 +1016,90 @@ class CompileComplement(CompileSpace):
                         is_left, is_right, self.space, lkid.baseline, routes)
 
 
+class CompileAlias(CompileSpace):
+
+    adapts(AliasSpace)
+
+    def __call__(self):
+        if (self.space.seed_baseline.base is not None and
+            self.space.base.conforms(self.space.seed_baseline.base) and
+            not self.space.base.spans(self.space.seed_baseline)):
+            baseline = self.space.seed_baseline
+            if not (baseline.is_inflated and
+                    self.space == self.state.baseline):
+                while not self.state.baseline.concludes(baseline):
+                    baseline = baseline.base
+            seed_term = self.state.compile(self.space.seed, baseline=baseline)
+            if self.space.extra_codes is not None:
+                seed_term = self.state.inject(seed_term,
+                                              self.space.extra_codes)
+            if seed_term.baseline != self.space.seed_baseline:
+                space = self.space.base
+                seed_term = self.state.inject(seed_term, [space])
+                while not seed_term.baseline.concludes(space):
+                    seed_term = self.state.inject(seed_term, [space])
+                    space = space.base
+            seed_term = WrapperTerm(self.state.tag(), seed_term,
+                                    seed_term.space, seed_term.baseline,
+                                    seed_term.routes.copy())
+            baseline = seed_term.baseline
+            if baseline == self.space.seed_baseline:
+                baseline = self.space
+            routes = {}
+            for unit in seed_term.routes:
+                if self.space.base.spans(unit.space):
+                    routes[unit] = seed_term.routes[unit]
+                seed_unit = AliasUnit(unit, self.space, unit.binding)
+                routes[seed_unit] = seed_term.tag
+                seed_unit = AliasUnit(unit, self.backbone, unit.binding)
+                routes[seed_unit] = seed_term.tag
+            if self.space.extra_codes is not None:
+                for code in self.space.extra_codes:
+                    unit = AliasUnit(code, self.space, code.binding)
+                    routes[unit] = seed_term.tag
+                    unit = AliasUnit(code, self.backbone, code.binding)
+                    routes[unit] = seed_term.tag
+            for unit in spread(self.space.seed):
+                seed_unit = unit.clone(space=self.space)
+                routes[seed_unit] = seed_term.routes[unit]
+                seed_unit = unit.clone(space=self.backbone)
+                routes[seed_unit] = seed_term.routes[unit]
+            term = WrapperTerm(self.state.tag(), seed_term,
+                               self.space, baseline, routes)
+            return term
+        baseline = self.state.baseline
+        if baseline == self.space:
+            baseline = baseline.base
+        trunk_term = self.state.compile(self.space.base, baseline=baseline)
+        seed_term = self.compile_shoot(self.space.seed, trunk_term,
+                                        self.space.extra_codes)
+        seed_term = WrapperTerm(self.state.tag(), seed_term,
+                                seed_term.space, seed_term.baseline,
+                                seed_term.routes)
+        joints = self.tie_terms(trunk_term, seed_term)
+        trunk_term = self.inject_ties(trunk_term, joints)
+        routes = trunk_term.routes.copy()
+        for unit in seed_term.routes:
+            seed_unit = AliasUnit(unit, self.space, unit.binding)
+            routes[seed_unit] = seed_term.tag
+            seed_unit = AliasUnit(unit, self.backbone, unit.binding)
+            routes[seed_unit] = seed_term.tag
+        if self.space.extra_codes is not None:
+            for code in self.space.extra_codes:
+                unit = AliasUnit(code, self.space, code.binding)
+                routes[unit] = seed_term.tag
+                unit = AliasUnit(code, self.backbone, code.binding)
+                routes[unit] = seed_term.tag
+        for unit in spread(self.space.seed):
+            seed_unit = unit.clone(space=self.space)
+            routes[seed_unit] = seed_term.routes[unit]
+            seed_unit = unit.clone(space=self.backbone)
+            routes[seed_unit] = seed_term.routes[unit]
+        return JoinTerm(self.state.tag(), trunk_term, seed_term,
+                        joints, False, False,
+                        self.space, trunk_term.baseline, routes)
+
+
 class CompileFiltered(CompileSpace):
     """
     Compiles a term corresponding to a filtered space.
@@ -1324,6 +1408,26 @@ class InjectKernel(Inject):
 class InjectComplement(Inject):
 
     adapts(ComplementUnit)
+
+    def __call__(self):
+        if self.unit in self.term.routes:
+            return self.term
+        if not self.term.space.spans(self.space):
+            raise CompileError("expected a singular expression",
+                               self.unit.mark)
+        space = self.space.clone(extra_codes=[self.unit.code])
+        baseline = space
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        unit_term = self.state.compile(space, baseline=baseline)
+        assert self.unit in unit_term.routes
+        extra_routes = { self.unit: unit_term.routes[self.unit] }
+        return self.join_terms(self.term, unit_term, extra_routes)
+
+
+class InjectAlias(Inject):
+
+    adapts(AliasUnit)
 
     def __call__(self):
         if self.unit in self.term.routes:
@@ -1952,6 +2056,67 @@ class TieComplement(TieSpace):
             lop = KernelUnit(code, space.base, code.binding)
             rop = ComplementUnit(code, space, code.binding)
             yield Joint(lop=lop, rop=rop, is_total=True)
+
+
+class OrderAlias(OrderSpace):
+
+    adapts(AliasSpace)
+
+    def __call__(self):
+        for code, direction in ordering(self.space.base,
+                                        with_strong=self.with_strong,
+                                        with_weak=self.with_weak):
+            yield (code, direction)
+        if self.with_weak:
+            space = self.space.inflate()
+            for code, direction in ordering(self.space.seed):
+                if any(not self.space.base.spans(unit.space)
+                       for unit in code.units):
+                    code = AliasUnit(code, space, code.binding)
+                    yield (code, direction)
+
+
+class SpreadAlias(SpreadSpace):
+
+    adapts(AliasSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        seed = self.space.seed.inflate()
+        for unit in spread(seed):
+            yield unit.clone(space=space)
+
+
+class SewAlias(SewSpace):
+
+    adapts(AliasSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        seed = self.space.seed.inflate()
+        baseline = self.space.seed_baseline.inflate()
+        axes = []
+        axis = seed
+        while axis is not None and axis.concludes(baseline):
+            axes.append(axis)
+            axis = axis.base
+        axes.reverse()
+        for axis in axes:
+            if not axis.is_contracting or axis == baseline:
+                for joint in sew(axis):
+                    op = AliasUnit(joint.lop, space, joint.lop.binding)
+                    yield joint.clone(lop=op, rop=op)
+
+
+class TieAlias(TieSpace):
+
+    adapts(AliasSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        for joint in tie(space.seed_baseline):
+            rop = AliasUnit(joint.rop, space, joint.rop.binding)
+            yield joint.clone(rop=rop)
 
 
 class OrderOrdered(OrderSpace):

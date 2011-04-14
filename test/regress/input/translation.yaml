@@ -165,6 +165,20 @@ tests:
     - uri: /define(p:=school.program).p{title, mix().name}.limit(10)
       expect: 400
 
+  - title: Link and Fork
+    tests:
+    - uri: /school.link(department)
+    - uri: /school{code, count(link(department))}
+    - uri: /school.link(home().department)
+    - uri: /school{code, count(link(home().department))}
+    - uri: /school.link(home().department, code=home().department.school)
+    - uri: /school{code, count(link(home().department, code=home().department.school))}
+    - uri: /(school?code='art').link(department)
+    - uri: /(school?code='art'){code, count(link(department))}
+    - uri: /(school?code='art').link(home().department)
+    - uri: /(school?code='art'){code, count(link(home().department, code=home().department.school))}
+    - uri: /{link(this()){count(school)}, link(this(),true()){count(school)}, link(this(),false()){count(school)}}
+
   - title: Table Expressions
     tests:
     - uri: /(school?code='art').department
@@ -256,6 +270,7 @@ tests:
     - uri: /school.quotient(program?degree, degree)?kernel(0)
     - uri: /school.quotient(program, degree){kernel(),count(complement())}
     - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
+    - uri: /(school?code='art').(program^degree).^{title+,degree}
 
     - uri: /school.program
             .quotient(student, year(dob), gender)

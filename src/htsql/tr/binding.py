@@ -313,6 +313,16 @@ class ComplementBinding(ChainBinding):
         self.seed = seed
 
 
+class LinkBinding(ChainBinding):
+
+    def __init__(self, base, seed, condition, syntax):
+        assert isinstance(seed, Binding)
+        assert isinstance(condition, maybe(Binding))
+        super(LinkBinding, self).__init__(base, seed.domain, syntax)
+        self.seed = seed
+        self.condition = condition
+
+
 class KernelBinding(ChainBinding):
 
     def __init__(self, base, index, domain, syntax):
