@@ -23,8 +23,10 @@ from .domain import (OracleBooleanDomain, OracleIntegerDomain,
                      OracleOpaqueDomain)
 from htsql.connect import Connect
 from htsql.util import Record
-import re
-import datetime
+import sys, re
+
+if sys.version_info >= (2, 6):
+    from collections import namedtuple
 
 
 class Meta(object):
@@ -67,27 +69,40 @@ class Meta(object):
         connection.commit()
         connection.release()
 
-    def fetch(self, cursor, table_name, id_names, col_names=None):
+    def encode(self, item):
+        if isinstance(item, unicode):
+            return item.encode('utf-8')
+        else:
+            return item
+
+    def fetch(self, cursor, table_name, id_names, cnames=None):
         rows = {}
-        if col_names is not None:
-            sql = "SELECT " + ",".join(col_names) + " FROM %s"
+        if cnames is not None:
+            sql = "SELECT " + ",".join(cnames) + " FROM %s"
         else:
             sql = "SELECT * FROM %s "
         if 'owner' in id_names:
             sql += " WHERE owner NOT IN ('%s')" % "','".join(self.ignored_owners)
         cursor.execute(sql % table_name)
-        column_names = []
-        for kind in cursor.description:
-            column_names.append(kind[0].lower())
-        for items in cursor.fetchall():
-            attributes = {}
-            for name, item in zip(column_names, items):
-                if isinstance(item, unicode):
-                    item = item.encode('utf-8')
-                attributes[name] = item
-            key = tuple(attributes[name] for name in id_names)
-            record = Record(**attributes)
-            rows[key] = record
+        column_names = tuple(kind[0].lower() for kind in cursor.description)
+
+        if sys.version_info < (2, 6):
+            for items in cursor.fetchall():
+                attributes = {}
+                for name, item in zip(column_names, items):
+                    if isinstance(item, unicode):
+                        item = item.encode('utf-8')
+                    attributes[name] = item
+                key = tuple(attributes[name] for name in id_names)
+                record = Record(**attributes)
+                rows[key] = record
+        else:
+            Row = namedtuple('Row', column_names)
+            for items in cursor.fetchall():
+                record = Row._make(self.encode(item) for item in items)
+                key = tuple(getattr(record, name) for name in id_names)
+                rows[key] = record
+
         return rows
 
     def group(self, targets, bases, id_names):
