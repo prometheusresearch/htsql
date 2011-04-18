@@ -19,10 +19,10 @@ from .error import CompileError
 from .syntax import IdentifierSyntax
 from .code import (Expression, Code, Space, RootSpace, ScalarSpace, TableSpace,
                    DirectTableSpace, FiberTableSpace,
-                   QuotientSpace, ComplementSpace, AliasSpace,
+                   QuotientSpace, ComplementSpace, AliasSpace, ForkedSpace,
                    FilteredSpace, OrderedSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
-                   KernelUnit, ComplementUnit, AliasUnit,
+                   KernelUnit, ComplementUnit, AliasUnit, ForkedUnit,
                    QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
                    AggregateBatchExpr)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
@@ -1100,6 +1100,97 @@ class CompileAlias(CompileSpace):
                         self.space, trunk_term.baseline, routes)
 
 
+class CompileForked(CompileSpace):
+
+    adapts(ForkedSpace)
+
+    def __call__(self):
+        seed = self.space.seed
+        baseline = seed
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        seed_term = self.state.compile(seed, baseline=baseline)
+        extra_codes = self.space.kernel[:]
+        if self.space.extra_codes is not None:
+            extra_codes.extend(self.space.extra_codes)
+        seed_term = self.state.inject(seed_term, extra_codes)
+        seed_term = WrapperTerm(self.state.tag(), seed_term,
+                                seed_term.space, seed_term.baseline,
+                                seed_term.routes.copy())
+        if (self.state.baseline == self.space and
+                seed_term.baseline == self.space.seed_baseline):
+            routes = {}
+            for unit in seed_term.routes:
+                seed_unit = ForkedUnit(unit, self.space, unit.binding)
+                routes[seed_unit] = seed_term.tag
+                seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
+                routes[seed_unit] = seed_term.tag
+            extra_codes = self.space.kernel[:]
+            if self.space.extra_codes is not None:
+                extra_codes.extend(self.space.extra_codes)
+            for code in extra_codes:
+                unit = ForkedUnit(code, self.space, code.binding)
+                routes[unit] = seed_term.tag
+                unit = ForkedUnit(code, self.backbone, code.binding)
+                routes[unit] = seed_term.tag
+            for unit in spread(self.space.seed):
+                seed_unit = unit.clone(space=self.space)
+                routes[seed_unit] = seed_term.routes[unit]
+                seed_unit = unit.clone(space=self.backbone)
+                routes[seed_unit] = seed_term.routes[unit]
+            term = WrapperTerm(self.state.tag(), seed_term,
+                               self.space, self.space, routes)
+            return term
+        baseline = self.state.baseline
+        if baseline == self.space:
+            baseline = baseline.base
+        trunk_term = self.state.compile(self.space.base, baseline=baseline)
+        joints = []
+        assert (trunk_term.baseline.concludes(seed_term.baseline) or
+                seed_term.baseline.concludes(trunk_term.baseline))
+        axes = []
+        axis = trunk_term.backbone
+        while axis != seed_term.baseline:
+            axis = axis.base
+            if not axis.is_contracting or axis == seed_term.baseline:
+                axes.append(axis)
+        axes.reverse()
+        if axes:
+            for axis in axes:
+                joints.extend(sew(axis))
+        else:
+            for joint in tie(trunk_term.backbone):
+                joint = joint.clone(lop=joint.rop)
+                joints.append(joint)
+        for code in self.space.kernel:
+            joint = Joint(code, code, is_total=True)
+            joints.append(joint)
+        units = [lunit for lunit, runit in joints]
+        trunk_term = self.state.inject(trunk_term, units)
+        routes = trunk_term.routes.copy()
+        for unit in seed_term.routes:
+            seed_unit = ForkedUnit(unit, self.space, unit.binding)
+            routes[seed_unit] = seed_term.tag
+            seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
+            routes[seed_unit] = seed_term.tag
+        extra_codes = self.space.kernel[:]
+        if self.space.extra_codes is not None:
+            extra_codes.extend(self.space.extra_codes)
+        for code in extra_codes:
+            unit = ForkedUnit(code, self.space, code.binding)
+            routes[unit] = seed_term.tag
+            unit = ForkedUnit(code, self.backbone, code.binding)
+            routes[unit] = seed_term.tag
+        for unit in spread(self.space.seed):
+            seed_unit = unit.clone(space=self.space)
+            routes[seed_unit] = seed_term.routes[unit]
+            seed_unit = unit.clone(space=self.backbone)
+            routes[seed_unit] = seed_term.routes[unit]
+        return JoinTerm(self.state.tag(), trunk_term, seed_term,
+                        joints, False, False,
+                        self.space, trunk_term.baseline, routes)
+
+
 class CompileFiltered(CompileSpace):
     """
     Compiles a term corresponding to a filtered space.
@@ -1428,6 +1519,26 @@ class InjectComplement(Inject):
 class InjectAlias(Inject):
 
     adapts(AliasUnit)
+
+    def __call__(self):
+        if self.unit in self.term.routes:
+            return self.term
+        if not self.term.space.spans(self.space):
+            raise CompileError("expected a singular expression",
+                               self.unit.mark)
+        space = self.space.clone(extra_codes=[self.unit.code])
+        baseline = space
+        while not baseline.is_inflated:
+            baseline = baseline.base
+        unit_term = self.state.compile(space, baseline=baseline)
+        assert self.unit in unit_term.routes
+        extra_routes = { self.unit: unit_term.routes[self.unit] }
+        return self.join_terms(self.term, unit_term, extra_routes)
+
+
+class InjectForked(Inject):
+
+    adapts(ForkedUnit)
 
     def __call__(self):
         if self.unit in self.term.routes:
@@ -2117,6 +2228,62 @@ class TieAlias(TieSpace):
         for joint in tie(space.seed_baseline):
             rop = AliasUnit(joint.rop, space, joint.rop.binding)
             yield joint.clone(rop=rop)
+
+
+class OrderForked(OrderSpace):
+
+    adapts(ForkedSpace)
+
+    def __call__(self):
+        for code, direction in ordering(self.space.base,
+                                        with_strong=self.with_strong,
+                                        with_weak=self.with_weak):
+            yield (code, direction)
+        if self.with_weak and not self.space.is_contracting:
+            space = self.seed.inflate()
+            for code, direction in ordering(self.space.seed):
+                code = ForkedUnit(code, space, code.binding)
+                yield (code, direction)
+
+
+class SpreadForked(SpreadSpace):
+
+    adapts(ForkedSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        seed = self.space.seed.inflate()
+        for unit in spread(seed):
+            yield unit.clone(space=space)
+
+
+class SewForked(SewSpace):
+
+    adapts(ForkedSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        seed = self.space.seed.inflate()
+        for joint in sew(seed):
+            op = ForkedUnit(joint.lop, space, joint.lop.binding)
+            yield joint.clone(lop=op, rop=op)
+
+
+class TieForked(TieSpace):
+
+    adapts(ForkedSpace)
+
+    def __call__(self):
+        space = self.space.inflate()
+        seed = self.space.seed.inflate()
+        for joint in tie(seed):
+            lop = joint.rop
+            rop = ForkedUnit(lop, space, lop.binding)
+            yield joint.clone(lop=lop, rop=rop)
+        for code in self.space.kernel:
+            lop = code
+            rop = ForkedUnit(code, space, code.binding)
+            yield Joint(lop, rop, is_total=True)
 
 
 class OrderOrdered(OrderSpace):

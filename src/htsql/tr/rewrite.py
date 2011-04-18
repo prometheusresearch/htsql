@@ -16,9 +16,11 @@ This module implements the rewriting process.
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain
 from .code import (Expression, QueryExpr, SegmentExpr, Space, RootSpace,
-                   QuotientSpace, AliasSpace, FilteredSpace, OrderedSpace,
+                   QuotientSpace, AliasSpace, ForkedSpace,
+                   FilteredSpace, OrderedSpace,
                    Code, LiteralCode, CastCode, FormulaCode, Unit, ScalarUnit,
-                   AggregateUnitBase, KernelUnit, ComplementUnit, AliasUnit)
+                   AggregateUnitBase, KernelUnit, ComplementUnit,
+                   AliasUnit, ForkedUnit)
 from .signature import Signature
 
 
@@ -129,6 +131,21 @@ class RewriteAlias(RewriteSpace):
         seed = self.state.rewrite(self.space.seed, mask=self.space.base)
         base = self.state.rewrite(self.space.base)
         return self.space.clone(base=base, seed=seed)
+
+
+class RewriteForked(RewriteSpace):
+
+    adapts(ForkedSpace)
+
+    def __call__(self):
+        seed_mask = self.space.base
+        while not seed_mask.is_axis:
+            seed_mask = seed_mask.base
+        seed = self.state.rewrite(self.space.seed, mask=seed_mask)
+        kernel = [self.state.rewrite(code, mask=self.space.base)
+                  for code in self.space.kernel]
+        base = self.state.rewrite(self.space.base)
+        return self.space.clone(base=base, seed=seed, kernel=kernel)
 
 
 class RewriteFiltered(RewriteSpace):
@@ -299,6 +316,17 @@ class RewriteAliasUnit(RewriteUnit):
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
                                   mask=self.unit.space.seed)
+        space = self.state.rewrite(self.unit.space)
+        return self.unit.clone(space=space, code=code)
+
+
+class RewriteForkedUnit(RewriteUnit):
+
+    adapts(ForkedUnit)
+
+    def __call__(self):
+        code = self.state.rewrite(self.unit.code,
+                                  mask=self.unit.space.base)
         space = self.state.rewrite(self.unit.space)
         return self.unit.clone(space=space, code=code)
 

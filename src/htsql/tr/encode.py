@@ -27,10 +27,10 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       SortBinding, CastBinding, WrapperBinding,
                       DefinitionBinding, AliasBinding,
                       DirectionBinding, FormulaBinding,
-                      SelectionBinding, HomeBinding, LinkBinding)
+                      SelectionBinding, HomeBinding, LinkBinding, ForkBinding)
 from .code import (RootSpace, ScalarSpace,
                    DirectTableSpace, FiberTableSpace,
-                   QuotientSpace, ComplementSpace, AliasSpace,
+                   QuotientSpace, ComplementSpace, AliasSpace, ForkedSpace,
                    FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
                    CastCode, ColumnUnit, ScalarUnit, KernelUnit)
@@ -494,6 +494,20 @@ class RelateLink(Relate):
             filter = self.state.encode(self.binding.condition)
             seed = FilteredSpace(seed, filter, self.binding)
         return AliasSpace(space, seed, self.binding)
+
+
+class RelateFork(Relate):
+
+    adapts(ForkBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        kernel = [self.state.encode(binding)
+                  for binding in self.binding.kernel]
+        for code in kernel:
+            if not all(space.spans(unit.space) for unit in code.units):
+                raise EncodeError("a singular operand is required", code.mark)
+        return ForkedSpace(space, space, kernel, self.binding)
 
 
 class EncodeKernel(Encode):

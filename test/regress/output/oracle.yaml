@@ -16826,6 +16826,478 @@ tests:
                                                           ON (1 <> 0)
                                      WHERE (0 <> 0)) "!_2"
                                     ON (1 <> 0)
+          - uri: /course{department,no,credits}?credits=max(fork().credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                     |
+              -+----------------------------+-
+               | department | no  | credits |
+              -+------------+-----+---------+-
+               | be         | 415 |       8 |
+                                      (1 row)
+
+               ----
+               /course{department,no,credits}?credits=max(fork().credits)
+               SELECT "COURSE_1"."DEPARTMENT",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS"
+               FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
+                                    ON (1 <> 0)
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /course{department,no,credits}?credits=max(fork(department).credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                     |
+              -+----------------------------+-
+               | department | no  | credits |
+              -+------------+-----+---------+-
+               | acc        | 315 |       5 |
+               | arthis     | 712 |       4 |
+               | astro      | 137 |       3 |
+               | astro      | 254 |       3 |
+               | be         | 415 |       8 |
+               | capmrk     | 712 |       3 |
+               | capmrk     | 756 |       3 |
+               | capmrk     | 808 |       3 |
+               | capmrk     | 818 |       3 |
+               | chem       | 100 |       3 |
+               | chem       | 110 |       3 |
+               | chem       | 314 |       3 |
+               | chem       | 655 |       3 |
+               | comp       | 710 |       4 |
+               | corpfi     | 234 |       3 |
+               | corpfi     | 404 |       3 |
+               | corpfi     | 601 |       3 |
+               | edpol      | 202 |       3 |
+               | edpol      | 313 |       3 |
+               | edpol      | 505 |       3 |
+               | edpol      | 617 |       3 |
+               | ee         | 412 |       4 |
+               | eng        | 101 |       3 |
+               | eng        | 247 |       3 |
+               | eng        | 276 |       3 |
+               | eng        | 311 |       3 |
+               | hist       | 112 |       3 |
+               | hist       | 212 |       3 |
+               | hist       | 333 |       3 |
+               | hist       | 415 |       3 |
+               | hist       | 505 |       3 |
+               | lang       | 201 |       4 |
+               | me         | 344 |       4 |
+               | me         | 627 |       4 |
+               | mth        | 101 |       5 |
+               | phys       | 211 |       3 |
+               | phys       | 303 |       3 |
+               | phys       | 512 |       3 |
+               | phys       | 713 |       3 |
+               | phys       | 819 |       3 |
+               | poli       | 402 |       4 |
+               | psych      | 450 |       4 |
+               | psych      | 560 |       4 |
+               | stdart     | 614 |       5 |
+               | tched      | 609 |       4 |
+                                    (45 rows)
+
+               ----
+               /course{department,no,credits}?credits=max(fork(department).credits)
+               SELECT "COURSE_1"."DEPARTMENT",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS"
+               FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            "COURSE"."DEPARTMENT"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT") "COURSE_2"
+                                    ON ("COURSE_1"."DEPARTMENT" = "COURSE_2"."DEPARTMENT")
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /department.course{department,no,credits}?credits=max(fork().credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                     |
+              -+----------------------------+-
+               | department | no  | credits |
+              -+------------+-----+---------+-
+               | acc        | 315 |       5 |
+               | arthis     | 712 |       4 |
+               | astro      | 137 |       3 |
+               | astro      | 254 |       3 |
+               | be         | 415 |       8 |
+               | capmrk     | 712 |       3 |
+               | capmrk     | 756 |       3 |
+               | capmrk     | 808 |       3 |
+               | capmrk     | 818 |       3 |
+               | chem       | 100 |       3 |
+               | chem       | 110 |       3 |
+               | chem       | 314 |       3 |
+               | chem       | 655 |       3 |
+               | comp       | 710 |       4 |
+               | corpfi     | 234 |       3 |
+               | corpfi     | 404 |       3 |
+               | corpfi     | 601 |       3 |
+               | edpol      | 202 |       3 |
+               | edpol      | 313 |       3 |
+               | edpol      | 505 |       3 |
+               | edpol      | 617 |       3 |
+               | ee         | 412 |       4 |
+               | eng        | 101 |       3 |
+               | eng        | 247 |       3 |
+               | eng        | 276 |       3 |
+               | eng        | 311 |       3 |
+               | hist       | 112 |       3 |
+               | hist       | 212 |       3 |
+               | hist       | 333 |       3 |
+               | hist       | 415 |       3 |
+               | hist       | 505 |       3 |
+               | lang       | 201 |       4 |
+               | me         | 344 |       4 |
+               | me         | 627 |       4 |
+               | mth        | 101 |       5 |
+               | phys       | 211 |       3 |
+               | phys       | 303 |       3 |
+               | phys       | 512 |       3 |
+               | phys       | 713 |       3 |
+               | phys       | 819 |       3 |
+               | poli       | 402 |       4 |
+               | psych      | 450 |       4 |
+               | psych      | 560 |       4 |
+               | stdart     | 614 |       5 |
+               | tched      | 609 |       4 |
+                                    (45 rows)
+
+               ----
+               /department.course{department,no,credits}?credits=max(fork().credits)
+               SELECT "COURSE_1"."DEPARTMENT",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS"
+               FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                               ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT")
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            "COURSE"."DEPARTMENT"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT") "COURSE_2"
+                                    ON ("COURSE_1"."DEPARTMENT" = "COURSE_2"."DEPARTMENT")
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY "DEPARTMENT"."CODE" ASC, 1 ASC, 2 ASC
+          - uri: /course{department,no,credits,count(class)}?credits=max(fork(count(class)).credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                                    |
+              -+-------------------------------------------+-
+               | department | no  | credits | count(class) |
+              -+------------+-----+---------+--------------+-
+               | be         | 415 |       8 |            1 |
+               | mth        | 101 |       5 |            0 |
+                                                    (2 rows)
+
+               ----
+               /course{department,no,credits,count(class)}?credits=max(fork(count(class)).credits)
+               SELECT "COURSE_1"."DEPARTMENT",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS",
+                      COALESCE("CLASS"."count", 0)
+               FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "CLASS"."DEPARTMENT",
+                                            "CLASS"."COURSE"
+                                     FROM "HTSQL_REGRESS"."CLASS" "CLASS"
+                                     GROUP BY "CLASS"."DEPARTMENT", "CLASS"."COURSE") "CLASS"
+                                    ON (("COURSE_1"."DEPARTMENT" = "CLASS"."DEPARTMENT") AND ("COURSE_1"."NO" = "CLASS"."COURSE"))
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            COALESCE("CLASS"."count", 0) AS "count"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "CLASS"."DEPARTMENT",
+                                                                  "CLASS"."COURSE"
+                                                           FROM "HTSQL_REGRESS"."CLASS" "CLASS"
+                                                           GROUP BY "CLASS"."DEPARTMENT", "CLASS"."COURSE") "CLASS"
+                                                          ON (("COURSE"."DEPARTMENT" = "CLASS"."DEPARTMENT") AND ("COURSE"."NO" = "CLASS"."COURSE"))
+                                     GROUP BY COALESCE("CLASS"."count", 0)) "COURSE_2"
+                                    ON (COALESCE("CLASS"."count", 0) = "COURSE_2"."count")
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | art    | gart     |              5 |
+               | bus    | pacc     |              2 |
+               | bus    | pcap     |              2 |
+               | bus    | uacct    |              2 |
+               | bus    | ucorpfi  |              2 |
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+               | la     | uhist    |              2 |
+               | la     | upsych   |              2 |
+               | ns     | uastro   |              3 |
+               | ns     | uchem    |              2 |
+               | ns     | uphys    |              5 |
+                                            (16 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+               SELECT "PROGRAM_1"."SCHOOL",
+                      "PROGRAM_1"."CODE",
+                      COALESCE("STUDENT"."count", 0)
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL",
+                                            "STUDENT"."PROGRAM"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                    ON (("PROGRAM_1"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("STUDENT"."count", 0) AS NUMBER)) AS "avg"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "STUDENT"."SCHOOL",
+                                                                  "STUDENT"."PROGRAM"
+                                                           FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                           GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                                          ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))) "PROGRAM_2"
+                                    ON (1 <> 0)
+               WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | art    | gart     |              5 |
+               | bus    | pacc     |              2 |
+               | bus    | pcap     |              2 |
+               | bus    | uacct    |              2 |
+               | bus    | ucorpfi  |              2 |
+               | edu    | gedlead  |              1 |
+               | edu    | gedu     |              1 |
+               | edu    | glited   |              1 |
+               | edu    | psci     |              1 |
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+               | la     | uhist    |              2 |
+               | la     | upsych   |              2 |
+               | ns     | uastro   |              3 |
+               | ns     | uchem    |              2 |
+               | ns     | uphys    |              5 |
+                                            (20 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+               SELECT "PROGRAM_1"."SCHOOL",
+                      "PROGRAM_1"."CODE",
+                      COALESCE("STUDENT"."count", 0)
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL",
+                                            "STUDENT"."PROGRAM"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                    ON (("PROGRAM_1"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("STUDENT"."count", 0) AS NUMBER)) AS "avg",
+                                            "PROGRAM"."SCHOOL"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "STUDENT"."SCHOOL",
+                                                                  "STUDENT"."PROGRAM"
+                                                           FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                           GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                                          ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
+                                     GROUP BY "PROGRAM"."SCHOOL") "PROGRAM_2"
+                                    ON ("PROGRAM_1"."SCHOOL" = "PROGRAM_2"."SCHOOL")
+               WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /school.program{school,code,count(student)}?count(student)>avg(fork().count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | art    | gart     |              5 |
+               | bus    | pacc     |              2 |
+               | bus    | pcap     |              2 |
+               | bus    | uacct    |              2 |
+               | bus    | ucorpfi  |              2 |
+               | edu    | gedlead  |              1 |
+               | edu    | gedu     |              1 |
+               | edu    | glited   |              1 |
+               | edu    | psci     |              1 |
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+               | la     | uhist    |              2 |
+               | la     | upsych   |              2 |
+               | ns     | uastro   |              3 |
+               | ns     | uchem    |              2 |
+               | ns     | uphys    |              5 |
+                                            (20 rows)
+
+               ----
+               /school.program{school,code,count(student)}?count(student)>avg(fork().count(student))
+               SELECT "PROGRAM_1"."SCHOOL",
+                      "PROGRAM_1"."CODE",
+                      COALESCE("STUDENT"."count", 0)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                               ON ("SCHOOL"."CODE" = "PROGRAM_1"."SCHOOL")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL",
+                                            "STUDENT"."PROGRAM"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                    ON (("PROGRAM_1"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("STUDENT"."count", 0) AS NUMBER)) AS "avg",
+                                            "PROGRAM"."SCHOOL"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "STUDENT"."SCHOOL",
+                                                                  "STUDENT"."PROGRAM"
+                                                           FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                           GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                                          ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
+                                     GROUP BY "PROGRAM"."SCHOOL") "PROGRAM_2"
+                                    ON ("PROGRAM_1"."SCHOOL" = "PROGRAM_2"."SCHOOL")
+               WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
+               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+              :where program := program?school='eng'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+                                             (5 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork().count(student)):where(program:=program?school='eng')
+               SELECT "PROGRAM_1"."SCHOOL",
+                      "PROGRAM_1"."CODE",
+                      COALESCE("STUDENT"."count", 0)
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL",
+                                            "STUDENT"."PROGRAM"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                    ON (("PROGRAM_1"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("STUDENT"."count", 0) AS NUMBER)) AS "avg"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "STUDENT"."SCHOOL",
+                                                                  "STUDENT"."PROGRAM"
+                                                           FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                           GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                                          ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
+                                     WHERE ("PROGRAM"."SCHOOL" = 'eng')) "PROGRAM_2"
+                                    ON (1 <> 0)
+               WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
+                     AND ("PROGRAM_1"."SCHOOL" = 'eng')
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+              :where program := program.limit(10,15)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+                                             (6 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork(school).count(student)):where(program:=program.limit(10,15))
+               SELECT "PROGRAM_1"."SCHOOL",
+                      "PROGRAM_1"."CODE",
+                      COALESCE("STUDENT"."count", 0)
+               FROM (SELECT "PROGRAM"."SCHOOL",
+                            "PROGRAM"."CODE",
+                            ROWNUM AS "limit"
+                     FROM (SELECT "PROGRAM"."SCHOOL",
+                                  "PROGRAM"."CODE"
+                           FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                           ORDER BY 1 ASC, 2 ASC) "PROGRAM"
+                     WHERE (ROWNUM < 26)) "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL",
+                                            "STUDENT"."PROGRAM"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                    ON (("PROGRAM_1"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("STUDENT"."count", 0) AS NUMBER)) AS "avg",
+                                            "PROGRAM_1"."SCHOOL",
+                                            "PROGRAM_1"."CODE"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                                          INNER JOIN (SELECT "PROGRAM"."SCHOOL",
+                                                             "PROGRAM"."CODE"
+                                                      FROM (SELECT "PROGRAM"."SCHOOL",
+                                                                   "PROGRAM"."CODE",
+                                                                   ROWNUM AS "limit"
+                                                            FROM (SELECT "PROGRAM"."SCHOOL",
+                                                                         "PROGRAM"."CODE"
+                                                                  FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                                                  ORDER BY 1 ASC, 2 ASC) "PROGRAM"
+                                                            WHERE (ROWNUM < 26)) "PROGRAM"
+                                                      WHERE ("PROGRAM"."limit" >= 16)) "PROGRAM_2"
+                                                     ON ("PROGRAM_1"."SCHOOL" = "PROGRAM_2"."SCHOOL")
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "STUDENT"."SCHOOL",
+                                                                  "STUDENT"."PROGRAM"
+                                                           FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                           GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM") "STUDENT"
+                                                          ON (("PROGRAM_2"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM_2"."CODE" = "STUDENT"."PROGRAM"))
+                                     GROUP BY "PROGRAM_1"."SCHOOL", "PROGRAM_1"."CODE") "PROGRAM_2"
+                                    ON (("PROGRAM_1"."SCHOOL" = "PROGRAM_2"."SCHOOL") AND ("PROGRAM_1"."CODE" = "PROGRAM_2"."CODE"))
+               WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
+                     AND ("PROGRAM_1"."limit" >= 16)
+               ORDER BY 1 ASC, 2 ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

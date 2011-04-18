@@ -16712,6 +16712,509 @@ tests:
                                                           ON TRUE
                                      WHERE FALSE) AS "!_2"
                                     ON TRUE
+          - uri: /course{department,no,credits}?credits=max(fork().credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                     |
+              -+----------------------------+-
+               | department | no  | credits |
+              -+------------+-----+---------+-
+               | be         | 415 |       8 |
+                                      (1 row)
+
+               ----
+               /course{department,no,credits}?credits=max(fork().credits)
+               SELECT "course_1"."department",
+                      "course_1"."no",
+                      "course_1"."credits"
+               FROM "ad"."course" AS "course_1"
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max"
+                                     FROM "ad"."course" AS "course") AS "course_2"
+                                    ON TRUE
+               WHERE ("course_1"."credits" = "course_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /course{department,no,credits}?credits=max(fork(department).credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                     |
+              -+----------------------------+-
+               | department | no  | credits |
+              -+------------+-----+---------+-
+               | acc        | 315 |       5 |
+               | arthis     | 712 |       4 |
+               | astro      | 137 |       3 |
+               | astro      | 254 |       3 |
+               | be         | 415 |       8 |
+               | capmrk     | 712 |       3 |
+               | capmrk     | 756 |       3 |
+               | capmrk     | 808 |       3 |
+               | capmrk     | 818 |       3 |
+               | chem       | 100 |       3 |
+               | chem       | 110 |       3 |
+               | chem       | 314 |       3 |
+               | chem       | 655 |       3 |
+               | comp       | 710 |       4 |
+               | corpfi     | 234 |       3 |
+               | corpfi     | 404 |       3 |
+               | corpfi     | 601 |       3 |
+               | edpol      | 202 |       3 |
+               | edpol      | 313 |       3 |
+               | edpol      | 505 |       3 |
+               | edpol      | 617 |       3 |
+               | ee         | 412 |       4 |
+               | eng        | 101 |       3 |
+               | eng        | 247 |       3 |
+               | eng        | 276 |       3 |
+               | eng        | 311 |       3 |
+               | hist       | 112 |       3 |
+               | hist       | 212 |       3 |
+               | hist       | 333 |       3 |
+               | hist       | 415 |       3 |
+               | hist       | 505 |       3 |
+               | lang       | 201 |       4 |
+               | me         | 344 |       4 |
+               | me         | 627 |       4 |
+               | mth        | 101 |       5 |
+               | phys       | 211 |       3 |
+               | phys       | 303 |       3 |
+               | phys       | 512 |       3 |
+               | phys       | 713 |       3 |
+               | phys       | 819 |       3 |
+               | poli       | 402 |       4 |
+               | psych      | 450 |       4 |
+               | psych      | 560 |       4 |
+               | stdart     | 614 |       5 |
+               | tched      | 609 |       4 |
+                                    (45 rows)
+
+               ----
+               /course{department,no,credits}?credits=max(fork(department).credits)
+               SELECT "course_1"."department",
+                      "course_1"."no",
+                      "course_1"."credits"
+               FROM "ad"."course" AS "course_1"
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                            "course"."department"
+                                     FROM "ad"."course" AS "course"
+                                     GROUP BY 2) AS "course_2"
+                                    ON ("course_1"."department" = "course_2"."department")
+               WHERE ("course_1"."credits" = "course_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /department.course{department,no,credits}?credits=max(fork().credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                     |
+              -+----------------------------+-
+               | department | no  | credits |
+              -+------------+-----+---------+-
+               | acc        | 315 |       5 |
+               | arthis     | 712 |       4 |
+               | astro      | 137 |       3 |
+               | astro      | 254 |       3 |
+               | be         | 415 |       8 |
+               | capmrk     | 712 |       3 |
+               | capmrk     | 756 |       3 |
+               | capmrk     | 808 |       3 |
+               | capmrk     | 818 |       3 |
+               | chem       | 100 |       3 |
+               | chem       | 110 |       3 |
+               | chem       | 314 |       3 |
+               | chem       | 655 |       3 |
+               | comp       | 710 |       4 |
+               | corpfi     | 234 |       3 |
+               | corpfi     | 404 |       3 |
+               | corpfi     | 601 |       3 |
+               | edpol      | 202 |       3 |
+               | edpol      | 313 |       3 |
+               | edpol      | 505 |       3 |
+               | edpol      | 617 |       3 |
+               | ee         | 412 |       4 |
+               | eng        | 101 |       3 |
+               | eng        | 247 |       3 |
+               | eng        | 276 |       3 |
+               | eng        | 311 |       3 |
+               | hist       | 112 |       3 |
+               | hist       | 212 |       3 |
+               | hist       | 333 |       3 |
+               | hist       | 415 |       3 |
+               | hist       | 505 |       3 |
+               | lang       | 201 |       4 |
+               | me         | 344 |       4 |
+               | me         | 627 |       4 |
+               | mth        | 101 |       5 |
+               | phys       | 211 |       3 |
+               | phys       | 303 |       3 |
+               | phys       | 512 |       3 |
+               | phys       | 713 |       3 |
+               | phys       | 819 |       3 |
+               | poli       | 402 |       4 |
+               | psych      | 450 |       4 |
+               | psych      | 560 |       4 |
+               | stdart     | 614 |       5 |
+               | tched      | 609 |       4 |
+                                    (45 rows)
+
+               ----
+               /department.course{department,no,credits}?credits=max(fork().credits)
+               SELECT "course_1"."department",
+                      "course_1"."no",
+                      "course_1"."credits"
+               FROM "ad"."department" AS "department"
+                    INNER JOIN "ad"."course" AS "course_1"
+                               ON ("department"."code" = "course_1"."department")
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                            "course"."department"
+                                     FROM "ad"."course" AS "course"
+                                     GROUP BY 2) AS "course_2"
+                                    ON ("course_1"."department" = "course_2"."department")
+               WHERE ("course_1"."credits" = "course_2"."max")
+               ORDER BY "department"."code" ASC, 1 ASC, 2 ASC
+          - uri: /course{department,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                                    |
+              -+-------------------------------------------+-
+               | department | no  | credits | count(class) |
+              -+------------+-----+---------+--------------+-
+               | be         | 415 |       8 |            1 |
+               | mth        | 101 |       5 |            0 |
+                                                    (2 rows)
+
+               ----
+               /course{department,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
+               SELECT "course_1"."department",
+                      "course_1"."no",
+                      "course_1"."credits",
+                      COALESCE("class"."count", 0)
+               FROM "ad"."course" AS "course_1"
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                            EXISTS(SELECT TRUE
+                                                   FROM "cd"."class" AS "class"
+                                                   WHERE ("course"."department" = "class"."department")
+                                                         AND ("course"."no" = "class"."course")) AS "exists"
+                                     FROM "ad"."course" AS "course"
+                                     GROUP BY 2) AS "course_2"
+                                    ON (EXISTS(SELECT TRUE
+                                               FROM "cd"."class" AS "class_1"
+                                               WHERE ("course_1"."department" = "class_1"."department")
+                                                     AND ("course_1"."no" = "class_1"."course")) = "course_2"."exists")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "class"."department",
+                                            "class"."course"
+                                     FROM "cd"."class" AS "class"
+                                     GROUP BY 2, 3) AS "class"
+                                    ON (("course_1"."department" = "class"."department") AND ("course_1"."no" = "class"."course"))
+               WHERE ("course_1"."credits" = "course_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /course{department,no,credits,count(class)}?credits=max(fork(count(class)).credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                                    |
+              -+-------------------------------------------+-
+               | department | no  | credits | count(class) |
+              -+------------+-----+---------+--------------+-
+               | be         | 415 |       8 |            1 |
+               | mth        | 101 |       5 |            0 |
+                                                    (2 rows)
+
+               ----
+               /course{department,no,credits,count(class)}?credits=max(fork(count(class)).credits)
+               SELECT "course_1"."department",
+                      "course_1"."no",
+                      "course_1"."credits",
+                      COALESCE("class"."count", 0)
+               FROM "ad"."course" AS "course_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "class"."department",
+                                            "class"."course"
+                                     FROM "cd"."class" AS "class"
+                                     GROUP BY 2, 3) AS "class"
+                                    ON (("course_1"."department" = "class"."department") AND ("course_1"."no" = "class"."course"))
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                            COALESCE("class"."count", 0) AS "count"
+                                     FROM "ad"."course" AS "course"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "class"."department",
+                                                                  "class"."course"
+                                                           FROM "cd"."class" AS "class"
+                                                           GROUP BY 2, 3) AS "class"
+                                                          ON (("course"."department" = "class"."department") AND ("course"."no" = "class"."course"))
+                                     GROUP BY 2) AS "course_2"
+                                    ON (COALESCE("class"."count", 0) = "course_2"."count")
+               WHERE ("course_1"."credits" = "course_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | art    | gart     |              5 |
+               | bus    | pacc     |              2 |
+               | bus    | pcap     |              2 |
+               | bus    | uacct    |              2 |
+               | bus    | ucorpfi  |              2 |
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+               | la     | uhist    |              2 |
+               | la     | upsych   |              2 |
+               | ns     | uastro   |              3 |
+               | ns     | uchem    |              2 |
+               | ns     | uphys    |              5 |
+                                            (16 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+               SELECT "program_1"."school",
+                      "program_1"."code",
+                      COALESCE("student"."count", 0)
+               FROM "ad"."program" AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program_1"."school" = "student"."school") AND ("program_1"."code" = "student"."program"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("student"."count", 0) AS NUMERIC)) AS "avg"
+                                     FROM "ad"."program" AS "program"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "student"."school",
+                                                                  "student"."program"
+                                                           FROM "ed"."student" AS "student"
+                                                           GROUP BY 2, 3) AS "student"
+                                                          ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))) AS "program_2"
+                                    ON TRUE
+               WHERE (CAST(COALESCE("student"."count", 0) AS NUMERIC) > "program_2"."avg")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | art    | gart     |              5 |
+               | bus    | pacc     |              2 |
+               | bus    | pcap     |              2 |
+               | bus    | uacct    |              2 |
+               | bus    | ucorpfi  |              2 |
+               | edu    | gedlead  |              1 |
+               | edu    | gedu     |              1 |
+               | edu    | glited   |              1 |
+               | edu    | psci     |              1 |
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+               | la     | uhist    |              2 |
+               | la     | upsych   |              2 |
+               | ns     | uastro   |              3 |
+               | ns     | uchem    |              2 |
+               | ns     | uphys    |              5 |
+                                            (20 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+               SELECT "program_1"."school",
+                      "program_1"."code",
+                      COALESCE("student"."count", 0)
+               FROM "ad"."program" AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program_1"."school" = "student"."school") AND ("program_1"."code" = "student"."program"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("student"."count", 0) AS NUMERIC)) AS "avg",
+                                            "program"."school"
+                                     FROM "ad"."program" AS "program"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "student"."school",
+                                                                  "student"."program"
+                                                           FROM "ed"."student" AS "student"
+                                                           GROUP BY 2, 3) AS "student"
+                                                          ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("program_1"."school" = "program_2"."school")
+               WHERE (CAST(COALESCE("student"."count", 0) AS NUMERIC) > "program_2"."avg")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /school.program{school,code,count(student)}?count(student)>avg(fork().count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | art    | gart     |              5 |
+               | bus    | pacc     |              2 |
+               | bus    | pcap     |              2 |
+               | bus    | uacct    |              2 |
+               | bus    | ucorpfi  |              2 |
+               | edu    | gedlead  |              1 |
+               | edu    | gedu     |              1 |
+               | edu    | glited   |              1 |
+               | edu    | psci     |              1 |
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+               | la     | uhist    |              2 |
+               | la     | upsych   |              2 |
+               | ns     | uastro   |              3 |
+               | ns     | uchem    |              2 |
+               | ns     | uphys    |              5 |
+                                            (20 rows)
+
+               ----
+               /school.program{school,code,count(student)}?count(student)>avg(fork().count(student))
+               SELECT "program_1"."school",
+                      "program_1"."code",
+                      COALESCE("student"."count", 0)
+               FROM "ad"."school" AS "school"
+                    INNER JOIN "ad"."program" AS "program_1"
+                               ON ("school"."code" = "program_1"."school")
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program_1"."school" = "student"."school") AND ("program_1"."code" = "student"."program"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("student"."count", 0) AS NUMERIC)) AS "avg",
+                                            "program"."school"
+                                     FROM "ad"."program" AS "program"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "student"."school",
+                                                                  "student"."program"
+                                                           FROM "ed"."student" AS "student"
+                                                           GROUP BY 2, 3) AS "student"
+                                                          ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("program_1"."school" = "program_2"."school")
+               WHERE (CAST(COALESCE("student"."count", 0) AS NUMERIC) > "program_2"."avg")
+               ORDER BY "school"."code" ASC, 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+              :where program := program?school='eng'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+                                             (5 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork().count(student)):where(program:=program?school='eng')
+               SELECT "program_1"."school",
+                      "program_1"."code",
+                      COALESCE("student"."count", 0)
+               FROM "ad"."program" AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program_1"."school" = "student"."school") AND ("program_1"."code" = "student"."program"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("student"."count", 0) AS NUMERIC)) AS "avg"
+                                     FROM "ad"."program" AS "program"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "student"."school",
+                                                                  "student"."program"
+                                                           FROM "ed"."student" AS "student"
+                                                           GROUP BY 2, 3) AS "student"
+                                                          ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     WHERE ("program"."school" = 'eng')) AS "program_2"
+                                    ON TRUE
+               WHERE (CAST(COALESCE("student"."count", 0) AS NUMERIC) > "program_2"."avg")
+                     AND ("program_1"."school" = 'eng')
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+              :where program := program.limit(10,15)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                            |
+              -+------------------------------------+-
+               | school | code     | count(student) |
+              -+--------+----------+----------------+-
+               | eng    | gbe      |              3 |
+               | eng    | gbuseng  |              2 |
+               | eng    | gme      |              2 |
+               | eng    | ucompsci |              4 |
+               | eng    | umech    |              2 |
+               | la     | gengl    |              3 |
+                                             (6 rows)
+
+               ----
+               /program{school,code,count(student)}?count(student)>avg(fork(school).count(student)):where(program:=program.limit(10,15))
+               SELECT "program_1"."school",
+                      "program_1"."code",
+                      COALESCE("student"."count", 0)
+               FROM (SELECT "program"."school",
+                            "program"."code"
+                     FROM "ad"."program" AS "program"
+                     ORDER BY 1 ASC, 2 ASC
+                     LIMIT 10
+                     OFFSET 15) AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "student"."school",
+                                            "student"."program"
+                                     FROM "ed"."student" AS "student"
+                                     GROUP BY 2, 3) AS "student"
+                                    ON (("program_1"."school" = "student"."school") AND ("program_1"."code" = "student"."program"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("student"."count", 0) AS NUMERIC)) AS "avg",
+                                            "program_1"."school",
+                                            "program_1"."code"
+                                     FROM "ad"."program" AS "program_1"
+                                          INNER JOIN (SELECT "program"."school",
+                                                             "program"."code"
+                                                      FROM "ad"."program" AS "program"
+                                                      ORDER BY 1 ASC, 2 ASC
+                                                      LIMIT 10
+                                                      OFFSET 15) AS "program_2"
+                                                     ON ("program_1"."school" = "program_2"."school")
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "student"."school",
+                                                                  "student"."program"
+                                                           FROM "ed"."student" AS "student"
+                                                           GROUP BY 2, 3) AS "student"
+                                                          ON (("program_2"."school" = "student"."school") AND ("program_2"."code" = "student"."program"))
+                                     GROUP BY 2, 3) AS "program_2"
+                                    ON (("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code"))
+               WHERE (CAST(COALESCE("student"."count", 0) AS NUMERIC) > "program_2"."avg")
+               ORDER BY 1 ASC, 2 ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

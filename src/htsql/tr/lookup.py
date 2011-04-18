@@ -27,7 +27,7 @@ from .binding import (Binding, HomeBinding, RootBinding, ChainBinding,
                       DefinitionBinding, RedirectBinding,
                       ReverseRedirectBinding, AliasBinding,
                       SelectionBinding, DirectionBinding, FlatBinding,
-                      LinkBinding)
+                      LinkBinding, ForkBinding)
 from .recipe import (FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                      ComplementRecipe, KernelRecipe, SubstitutionRecipe,
                      BindingRecipe, PinnedRecipe, AmbiguousRecipe)
@@ -137,7 +137,9 @@ class LookupDeep(Lookup):
                 (ComplementBinding, DeepAttributeProbe),
                 (ComplementBinding, DeepFunctionProbe),
                 (LinkBinding, DeepAttributeProbe),
-                (LinkBinding, DeepFunctionProbe))
+                (LinkBinding, DeepFunctionProbe),
+                (ForkBinding, DeepAttributeProbe),
+                (ForkBinding, DeepFunctionProbe))
 
     def __call__(self):
         recipe = super(LookupDeep, self).__call__()
@@ -595,6 +597,14 @@ class LookupInLink(Lookup):
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)
+
+
+class LookupInFork(Lookup):
+
+    adapts(ForkBinding, Probe)
+
+    def __call__(self):
+        return lookup(self.binding.base, self.probe)
 
 
 class ExpandComplement(Lookup):

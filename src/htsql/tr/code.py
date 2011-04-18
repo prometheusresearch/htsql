@@ -916,6 +916,35 @@ class AliasSpace(Space):
         self.extra_codes = extra_codes
 
 
+class ForkedSpace(Space):
+
+    is_axis = True
+
+    def __init__(self, base, seed, kernel, binding, extra_codes=None):
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
+        assert isinstance(kernel, listof(Code))
+        assert base.spans(seed) and seed.spans(base)
+        assert base.family == seed.family
+        assert all(base.spans(unit.space) for code in kernel
+                                          for unit in code.units)
+        assert isinstance(extra_codes, maybe(listof(Code)))
+        seed_baseline = seed
+        while not seed_baseline.is_axis:
+            seed_baseline = seed_baseline.base
+        super(ForkedSpace, self).__init__(
+                    base=base,
+                    family=base.family,
+                    is_contracting=seed_baseline.is_contracting,
+                    is_expanding=seed.dominates(base),
+                    binding=binding,
+                    equality_vector=(base, seed, tuple(kernel)))
+        self.seed = seed
+        self.seed_baseline = seed_baseline
+        self.kernel = kernel
+        self.extra_codes = extra_codes
+
+
 class FilteredSpace(Space):
     """
     Represents a filtered space.
@@ -1414,6 +1443,18 @@ class AliasUnit(CompoundUnit):
     def __init__(self, code, space, binding):
         assert isinstance(space, AliasSpace)
         super(AliasUnit, self).__init__(
+                code=code,
+                space=space,
+                domain=code.domain,
+                binding=binding,
+                equality_vector=(code, space))
+
+
+class ForkedUnit(CompoundUnit):
+
+    def __init__(self, code, space, binding):
+        assert isinstance(space, ForkedSpace)
+        super(ForkedUnit, self).__init__(
                 code=code,
                 space=space,
                 domain=code.domain,

@@ -167,6 +167,7 @@ tests:
 
   - title: Link and Fork
     tests:
+    # link()
     - uri: /school.link(department)
     - uri: /school{code, count(link(department))}
     - uri: /school.link(home().department)
@@ -178,6 +179,20 @@ tests:
     - uri: /(school?code='art').link(home().department)
     - uri: /(school?code='art'){code, count(link(home().department, code=home().department.school))}
     - uri: /{link(this()){count(school)}, link(this(),true()){count(school)}, link(this(),false()){count(school)}}
+    # fork()
+    - uri: /course{department,no,credits}?credits=max(fork().credits)
+    - uri: /course{department,no,credits}?credits=max(fork(department).credits)
+    - uri: /department.course{department,no,credits}?credits=max(fork().credits)
+    - uri: /course{department,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
+      ifndef: [oracle, mssql] # subqueries are not permitted in the GROUP BY clause
+    - uri: /course{department,no,credits,count(class)}?credits=max(fork(count(class)).credits)
+    - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+    - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+    - uri: /school.program{school,code,count(student)}?count(student)>avg(fork().count(student))
+    - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
+            :where program := program?school='eng'
+    - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+            :where program := program.limit(10,15)
 
   - title: Table Expressions
     tests:

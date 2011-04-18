@@ -23,7 +23,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
                        SelectionBinding, HomeBinding, FlatBinding,
-                       LinkBinding, Binding)
+                       LinkBinding, ForkBinding, Binding)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -599,6 +599,29 @@ class BindLink(BindMacro):
             condition = CastBinding(condition, coerce(BooleanDomain()),
                                     condition.syntax)
         return LinkBinding(self.state.base, seed, condition, self.syntax)
+
+
+class BindFork(BindMacro):
+
+    named('fork')
+    signature = SelectSig
+
+    def expand(self, ops):
+        elements = []
+        for op in ops:
+            element = self.state.bind(op)
+            recipies = expand(element, is_hard=False)
+            if recipies is not None:
+                for syntax, recipe in recipies:
+                    if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
+                        syntax = GroupSyntax(syntax, syntax.mark)
+                    syntax = SpecifierSyntax('.', element.syntax, syntax,
+                                             syntax.mark)
+                    bind = BindByRecipe(recipe, syntax, self.state)
+                    elements.append(bind())
+            else:
+                elements.append(element)
+        return ForkBinding(self.state.base, elements, self.syntax)
 
 
 class BindDirectionBase(BindMacro):

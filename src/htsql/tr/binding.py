@@ -323,6 +323,14 @@ class LinkBinding(ChainBinding):
         self.condition = condition
 
 
+class ForkBinding(ChainBinding):
+
+    def __init__(self, base, kernel, syntax):
+        assert isinstance(kernel, listof(Binding))
+        super(ForkBinding, self).__init__(base, base.domain, syntax)
+        self.kernel = kernel
+
+
 class KernelBinding(ChainBinding):
 
     def __init__(self, base, index, domain, syntax):
