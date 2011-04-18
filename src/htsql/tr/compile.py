@@ -1492,7 +1492,7 @@ class InjectKernel(Inject):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
         term = self.state.inject(self.term, [self.space])
-        assert self.unit in term
+        assert self.unit in term.routes
         return term
 
 
