@@ -14,12 +14,14 @@ This module implements the `server` routine.
 
 
 from .routine import Argument, Routine
-from .option import QuietOption, ExtensionsOption
+from .option import QuietOption, PasswordOption, ExtensionsOption
+from ..util import DB
 from ..validator import StrVal, IntVal, DBVal
 import socket
 import SocketServer
 import wsgiref.simple_server
 import binascii
+import getpass
 
 
 class HTSQLServer(SocketServer.ThreadingMixIn,
@@ -98,6 +100,7 @@ class ServerRoutine(Routine):
                      hint="""the port number (by default, 8080)"""),
     ]
     options = [
+            PasswordOption,
             ExtensionsOption,
             QuietOption,
     ]
@@ -132,9 +135,22 @@ class ServerRoutine(Routine):
     """
 
     def run(self):
+        # The database URI.
+        db = self.db
+
+        # Ask for the database password if necessary.
+        if self.password:
+            db = DB(engine=db.engine,
+                    username=db.username,
+                    password=getpass.getpass(),
+                    host=db.host,
+                    port=db.port,
+                    database=db.database,
+                    options=db.options)
+
         # Create the HTSQL application and the HTTP server.
         from htsql.application import Application
-        app = Application(self.db, *self.extensions)
+        app = Application(db, *self.extensions)
         httpd = HTSQLServer(self)
         httpd.set_app(app)
 

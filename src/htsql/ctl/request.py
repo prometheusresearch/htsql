@@ -15,17 +15,18 @@ This module implements the `get` and `post` routines.
 
 from .error import ScriptError
 from .routine import Argument, Routine
-from .option import (InputOption, OutputOption,
+from .option import (InputOption, OutputOption, PasswordOption,
                      RemoteUserOption, WithHeadersOption,
                      ContentTypeOption, ExtensionsOption)
 from ..validator import DBVal, StrVal
-from ..util import maybe, oneof, listof, tupleof, dictof, filelike
+from ..util import DB, maybe, oneof, listof, tupleof, dictof, filelike
 import sys
 import wsgiref.util
 import urllib
 import traceback
 import StringIO
 import mimetypes
+import getpass
 
 
 class Request(object):
@@ -266,6 +267,7 @@ class GetPostBaseRoutine(Routine):
     # These are common options for both routines.  The `post` routine
     # adds some extra options.
     options = [
+            PasswordOption,
             ExtensionsOption,
             RemoteUserOption,
             OutputOption,
@@ -275,9 +277,22 @@ class GetPostBaseRoutine(Routine):
     method = None
 
     def run(self):
+        # The database URI.
+        db = self.db
+
+        # Ask for the database password if necessary.
+        if self.password:
+            db = DB(engine=db.engine,
+                    username=db.username,
+                    password=getpass.getpass(),
+                    host=db.host,
+                    port=db.port,
+                    database=db.database,
+                    options=db.options)
+
         # Create the HTSQL application.
         from htsql.application import Application
-        app = Application(self.db, *self.extensions)
+        app = Application(db, *self.extensions)
 
         # Prepare a WSGI `environ` variable.
         if self.method == 'GET':

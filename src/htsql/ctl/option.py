@@ -177,6 +177,12 @@ OutputOption = Option(
         validator=StrVal(),
         hint="""set output file to FILE""")
 
+PasswordOption = Option(
+        attribute='password',
+        short_name='-p',
+        long_name='--password',
+        hint="""ask for the database password""")
+
 ExtensionsOption = Option(
         attribute='extensions',
         short_name='-E',

@@ -15,10 +15,10 @@ This module implements the `shell` routine.
 
 from .error import ScriptError
 from .routine import Argument, Routine
-from .option import ExtensionsOption
+from .option import PasswordOption, ExtensionsOption
 from .request import Request
 from ..validator import DBVal
-from ..util import listof, trim_doc
+from ..util import DB, listof, trim_doc
 import traceback
 import StringIO
 import mimetypes
@@ -26,6 +26,7 @@ import sys
 import os, os.path
 import re
 import subprocess
+import getpass
 try:
     import readline
 except ImportError:
@@ -490,6 +491,7 @@ class ShellRoutine(Routine):
                      hint="""the connection URI"""),
     ]
     options = [
+            PasswordOption,
             ExtensionsOption,
     ]
     hint = """start an HTSQL shell"""
@@ -673,9 +675,22 @@ class ShellRoutine(Routine):
                 pass
 
     def run(self):
+        # The database URI.
+        db = self.db
+
+        # Ask for the database password if necessary.
+        if self.password:
+            db = DB(engine=db.engine,
+                    username=db.username,
+                    password=getpass.getpass(),
+                    host=db.host,
+                    port=db.port,
+                    database=db.database,
+                    options=db.options)
+
         # Create the HTSQL application.
         from htsql.application import Application
-        app = Application(self.db, *self.extensions)
+        app = Application(db, *self.extensions)
 
         # Display the welcome notice; load the history.
         self.setup(app)
