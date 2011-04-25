@@ -337,8 +337,10 @@ class GetPostBaseCmd(Cmd):
         # Check if the argument of the command looks like an HTSQL query.
         if not self.argument:
             self.ctl.out("** a query is expected")
+            return
         if self.argument[0] != '/':
             self.ctl.out("** a query is expected; got %r" % self.argument)
+            return
 
         # Prepare the WSGI `environ` for a GET request.
         if self.method == 'GET':
@@ -457,6 +459,82 @@ class PostCmd(GetPostBaseCmd):
     method = 'POST'
 
 
+class RunCmd(Cmd):
+    """
+    Implements the `run` command.
+    """
+
+    name = 'run'
+    signature = """run filename.htsql"""
+    hint = """run an HTSQL query from a file"""
+    help = """
+    Type `run filename.htsql` to load and execute an HTSQL query from a file.
+
+    The command reads an HTSQL query from the given file and executes it as
+    a GET request.
+
+    The output of the query is dumped to the console.  When the pager is
+    enabled and the number of lines in the response body exceeds the height
+    of the terminal, the output is displayed via the pager.  Use `pager off`
+    to disable the pager.
+
+    By default, the command does not dump the response status line and the
+    headers.  To enable displaying the status line and the headers along
+    with the response body, use `headers on`.
+    """
+
+    # FIXME: duplicates `GetPostBaseCmd.execute()`.
+    def execute(self, app):
+        # Check if the argument is suppied and is a valid filename.
+        if not self.argument:
+            self.ctl.out("** a file name is expected")
+            return
+        if not os.path.isfile(self.argument):
+            self.ctl.out("** file %r does not exist" % self.argument)
+            return
+
+        # Read the file, check if it looks like valid HTSQL.
+        stream = open(self.argument)
+        query = stream.read().strip()
+        stream.close()
+        if not query or query[0] != '/':
+            self.ctl.out("** file %r does not contain a valid HTSQL query"
+                         % self.argument)
+
+        # Prepare and execute a WSGI request.
+        request = Request.prepare('GET', query=query,
+                                  remote_user=self.state.remote_user)
+        response = request.execute(app)
+
+        # Check for exceptions and incomplete responses.
+        if response.exc_info is not None:
+            exc_type, exc_value, exc_traceback = response.exc_info
+            traceback.print_exception(exc_type, exc_value, exc_traceback,
+                                      file=self.ctl.stderr)
+            return
+        if not response.complete():
+            self.ctl.out("** incomplete response")
+            return
+
+        # Check if we need to use the pager.
+        length = response.body.count('\n')
+        if (self.state.with_pager
+                and length > self.routine.pager_line_threshold):
+            # Pipe the response to the pager.
+            stream = StringIO.StringIO()
+            response.dump(stream, self.state.with_headers)
+            output = stream.getvalue()
+            process = subprocess.Popen(self.routine.pager,
+                                       stdin=subprocess.PIPE)
+            try:
+                process.communicate(output)
+            except IOError, exc:
+                self.ctl.out(exc)
+        else:
+            # Dump the response.
+            response.dump(self.ctl.stdout, self.state.with_headers)
+
+
 class ShellState(object):
     """
     Holds mutable shell parameters.
@@ -533,6 +611,7 @@ class ShellRoutine(Routine):
             PagerCmd,
             GetCmd,
             PostCmd,
+            RunCmd,
     ]
 
     # A notice displayed when the shell is started.
