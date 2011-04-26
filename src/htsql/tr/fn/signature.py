@@ -349,17 +349,6 @@ class QuotientSig(Signature):
     ]
 
 
-class KernelSig(NullarySig):
-
-    slots = [
-            Slot('index', is_mandatory=False),
-    ]
-
-
-class ComplementSig(NullarySig):
-    pass
-
-
 class AssignmentSig(BinarySig):
     pass
 

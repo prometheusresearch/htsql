@@ -17746,352 +17746,265 @@ tests:
                ORDER BY "DEPARTMENT"."CODE" ASC
         - id: projections
           tests:
-          - uri: /quotient(program, degree)
+          - uri: /distinct(program{degree})
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               |                          |
-               | ba                       |
-               | bs                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | pb                       |
-               | ph                       |
-                                   (8 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               |                           |
+               | ba                        |
+               | bs                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | pb                        |
+               | ph                        |
+                                    (8 rows)
 
                ----
-               /quotient(program,degree)
+               /distinct(program{degree})
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                GROUP BY "PROGRAM"."DEGREE"
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree){*}
+          - uri: /distinct(program{degree}){*}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               |                          |
-               | ba                       |
-               | bs                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | pb                       |
-               | ph                       |
-                                   (8 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               |                           |
+               | ba                        |
+               | bs                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | pb                        |
+               | ph                        |
+                                    (8 rows)
 
                ----
-               /quotient(program,degree){*}
+               /distinct(program{degree}){*}
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                GROUP BY "PROGRAM"."DEGREE"
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree){kernel()}
+          - uri: /distinct(program{degree})?false()
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               |                          |
-               | ba                       |
-               | bs                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | pb                       |
-               | ph                       |
-                                   (8 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+                                   (no rows)
 
                ----
-               /quotient(program,degree){kernel()}
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-               GROUP BY "PROGRAM"."DEGREE"
-               ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree)?false()
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-                                  (no rows)
-
-               ----
-               /quotient(program,degree)?false()
+               /distinct(program{degree})?false()
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                GROUP BY "PROGRAM"."DEGREE"
                HAVING (0 <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree){kernel()}?false()
+          - uri: /distinct(program{degree})?*1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-                                  (no rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | bs                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | pb                        |
+               | ph                        |
+                                    (7 rows)
 
                ----
-               /quotient(program,degree){kernel()}?false()
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-               GROUP BY "PROGRAM"."DEGREE"
-               HAVING (0 <> 0)
-               ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree)?kernel()
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | (quotient(program,degree)?kernel()) |
-              -+-------------------------------------+-
-               | degree                              |
-              -+-------------------------------------+-
-               | ba                                  |
-               | bs                                  |
-               | ct                                  |
-               | ma                                  |
-               | ms                                  |
-               | pb                                  |
-               | ph                                  |
-                                              (7 rows)
-
-               ----
-               /quotient(program,degree)?kernel()
+               /distinct(program{degree})?*1
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                GROUP BY "PROGRAM"."DEGREE"
                HAVING ("PROGRAM"."DEGREE" IS NOT NULL)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree)?kernel(0)
+          - uri: /distinct(program{degree}){*}?*1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | bs                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | pb                       |
-               | ph                       |
-                                   (7 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | bs                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | pb                        |
+               | ph                        |
+                                    (7 rows)
 
                ----
-               /quotient(program,degree)?kernel(0)
+               /distinct(program{degree}){*}?*1
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                GROUP BY "PROGRAM"."DEGREE"
                HAVING ("PROGRAM"."DEGREE" IS NOT NULL)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree){kernel()}?kernel()
+          - uri: /distinct(program{degree}?false())
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (quotient(program,degree)?kernel()) |
-              -+-------------------------------------+-
-               | degree                              |
-              -+-------------------------------------+-
-               | ba                                  |
-               | bs                                  |
-               | ct                                  |
-               | ma                                  |
-               | ms                                  |
-               | pb                                  |
-               | ph                                  |
-                                              (7 rows)
+               | distinct(program{degree}?false()) |
+              -+-----------------------------------+-
+               | degree                            |
+              -+-----------------------------------+-
+                                           (no rows)
 
                ----
-               /quotient(program,degree){kernel()}?kernel()
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-               GROUP BY "PROGRAM"."DEGREE"
-               HAVING ("PROGRAM"."DEGREE" IS NOT NULL)
-               ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree){kernel()}?kernel(0)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | bs                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | pb                       |
-               | ph                       |
-                                   (7 rows)
-
-               ----
-               /quotient(program,degree){kernel()}?kernel(0)
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-               GROUP BY "PROGRAM"."DEGREE"
-               HAVING ("PROGRAM"."DEGREE" IS NOT NULL)
-               ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program?false(), degree)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program?false(),degree) |
-              -+----------------------------------+-
-               | degree                           |
-              -+----------------------------------+-
-                                          (no rows)
-
-               ----
-               /quotient(program?false(),degree)
+               /distinct(program{degree}?false())
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                WHERE (0 <> 0)
                GROUP BY "PROGRAM"."DEGREE"
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program?degree, degree)
+          - uri: /distinct(program{degree}?degree)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program?degree,degree) |
-              -+---------------------------------+-
-               | degree                          |
-              -+---------------------------------+-
-               | ba                              |
-               | bs                              |
-               | ct                              |
-               | ma                              |
-               | ms                              |
-               | pb                              |
-               | ph                              |
-                                          (7 rows)
+               | distinct(program{degree}?degree) |
+              -+----------------------------------+-
+               | degree                           |
+              -+----------------------------------+-
+               | ba                               |
+               | bs                               |
+               | ct                               |
+               | ma                               |
+               | ms                               |
+               | pb                               |
+               | ph                               |
+                                           (7 rows)
 
                ----
-               /quotient(program?degree,degree)
+               /distinct(program{degree}?degree)
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
                GROUP BY "PROGRAM"."DEGREE"
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program?false(), degree)?false()
+          - uri: /distinct(program{degree}?false())?false()
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program?false(),degree) |
-              -+----------------------------------+-
-               | degree                           |
-              -+----------------------------------+-
-                                          (no rows)
+               | distinct(program{degree}?false()) |
+              -+-----------------------------------+-
+               | degree                            |
+              -+-----------------------------------+-
+                                           (no rows)
 
                ----
-               /quotient(program?false(),degree)?false()
+               /distinct(program{degree}?false())?false()
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                WHERE (0 <> 0)
                GROUP BY "PROGRAM"."DEGREE"
                HAVING (0 <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program?degree, degree)?kernel()
+          - uri: /distinct(program{degree}?degree)?*1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (quotient(program?degree,degree)?kernel()) |
-              -+--------------------------------------------+-
-               | degree                                     |
-              -+--------------------------------------------+-
-               | ba                                         |
-               | bs                                         |
-               | ct                                         |
-               | ma                                         |
-               | ms                                         |
-               | pb                                         |
-               | ph                                         |
-                                                     (7 rows)
+               | distinct(program{degree}?degree) |
+              -+----------------------------------+-
+               | degree                           |
+              -+----------------------------------+-
+               | ba                               |
+               | bs                               |
+               | ct                               |
+               | ma                               |
+               | ms                               |
+               | pb                               |
+               | ph                               |
+                                           (7 rows)
 
                ----
-               /quotient(program?degree,degree)?kernel()
+               /distinct(program{degree}?degree)?*1
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
                GROUP BY "PROGRAM"."DEGREE"
                HAVING ("PROGRAM"."DEGREE" IS NOT NULL)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program?degree, degree)?kernel(0)
+          - uri: /distinct(program{degree}){*, count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program?degree,degree) |
-              -+---------------------------------+-
-               | degree                          |
-              -+---------------------------------+-
-               | ba                              |
-               | bs                              |
-               | ct                              |
-               | ma                              |
-               | ms                              |
-               | pb                              |
-               | ph                              |
-                                          (7 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree     | count(^)     |
+              -+------------+--------------+-
+               |            |            1 |
+               | ba         |            9 |
+               | bs         |           12 |
+               | ct         |            4 |
+               | ma         |            6 |
+               | ms         |            5 |
+               | pb         |            1 |
+               | ph         |            1 |
+                                    (8 rows)
 
                ----
-               /quotient(program?degree,degree)?kernel(0)
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-               WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-               GROUP BY "PROGRAM"."DEGREE"
-               HAVING ("PROGRAM"."DEGREE" IS NOT NULL)
+               /distinct(program{degree}){*,count(^)}
+               SELECT "PROGRAM_1"."DEGREE",
+                      COALESCE("PROGRAM_2"."count", 0)
+               FROM (SELECT "PROGRAM"."DEGREE"
+                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                     GROUP BY "PROGRAM"."DEGREE") "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "PROGRAM"."DEGREE"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                     GROUP BY "PROGRAM"."DEGREE") "PROGRAM_2"
+                                    ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "PROGRAM_2"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(program, degree){kernel(),count(complement().student)}
+          - uri: /distinct(program{degree}){*, count(^.student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree)             |
-              -+--------------------------------------+-
-               | degree | count(complement().student) |
-              -+--------+-----------------------------+-
-               |        |                           0 |
-               | ba     |                           6 |
-               | bs     |                          20 |
-               | ct     |                           6 |
-               | ma     |                           5 |
-               | ms     |                           9 |
-               | pb     |                           5 |
-               | ph     |                           0 |
-                                               (8 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree | count(^.student) |
+              -+--------+------------------+-
+               |        |                0 |
+               | ba     |                6 |
+               | bs     |               20 |
+               | ct     |                6 |
+               | ma     |                5 |
+               | ms     |                9 |
+               | pb     |                5 |
+               | ph     |                0 |
+                                    (8 rows)
 
                ----
-               /quotient(program,degree){kernel(),count(complement().student)}
+               /distinct(program{degree}){*,count(^.student)}
                SELECT "PROGRAM"."DEGREE",
                       COALESCE("STUDENT"."count", 0)
                FROM (SELECT "PROGRAM"."DEGREE"
@@ -18105,100 +18018,56 @@ tests:
                                      GROUP BY "PROGRAM"."DEGREE") "STUDENT"
                                     ON ((CASE WHEN ("PROGRAM"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(student, year(dob), gender)
+          - uri: /distinct(student{year(dob),gender})
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(student,year(dob),gender) |
-              -+------------------------------------+-
-               | year(dob)         | gender         |
-              -+-------------------+----------------+-
-               |              1981 | f              |
-               |              1983 | f              |
-               |              1985 | f              |
-               |              1985 | m              |
-               |              1987 | f              |
-               |              1987 | m              |
-               |              1988 | f              |
-               |              1988 | m              |
-               |              1989 | f              |
-               |              1989 | m              |
-               |              1990 | f              |
-               |              1990 | m              |
-               |              1991 | f              |
-               |              1991 | m              |
-               |              1992 | f              |
-               |              1992 | m              |
-               |              1993 | f              |
-               |              1993 | m              |
-               |              1994 | f              |
-               |              1994 | m              |
-               |              1995 | f              |
-               |              1995 | m              |
-               |              1998 | m              |
-               |              2000 | m              |
-               |              2001 | m              |
-               |              2002 | m              |
-                                            (26 rows)
+               | distinct(student{year(dob),gender}) |
+              -+-------------------------------------+-
+               | year(dob)          | gender         |
+              -+--------------------+----------------+-
+               |               1981 | f              |
+               |               1983 | f              |
+               |               1985 | f              |
+               |               1985 | m              |
+               |               1987 | f              |
+               |               1987 | m              |
+               |               1988 | f              |
+               |               1988 | m              |
+               |               1989 | f              |
+               |               1989 | m              |
+               |               1990 | f              |
+               |               1990 | m              |
+               |               1991 | f              |
+               |               1991 | m              |
+               |               1992 | f              |
+               |               1992 | m              |
+               |               1993 | f              |
+               |               1993 | m              |
+               |               1994 | f              |
+               |               1994 | m              |
+               |               1995 | f              |
+               |               1995 | m              |
+               |               1998 | m              |
+               |               2000 | m              |
+               |               2001 | m              |
+               |               2002 | m              |
+                                             (26 rows)
 
                ----
-               /quotient(student,year(dob),gender)
+               /distinct(student{year(dob),gender})
                SELECT EXTRACT(YEAR FROM "STUDENT"."DOB"),
                       "STUDENT"."GENDER"
                FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
                GROUP BY EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER"
                ORDER BY 1 ASC, 2 ASC
-          - uri: /quotient(student, {year(dob), gender})
+          - uri: /distinct(student{year(dob),gender}){*, *1, *2}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(student,{year(dob),gender}) |
-              -+--------------------------------------+-
-               | year(dob)          | gender          |
-              -+--------------------+-----------------+-
-               |               1981 | f               |
-               |               1983 | f               |
-               |               1985 | f               |
-               |               1985 | m               |
-               |               1987 | f               |
-               |               1987 | m               |
-               |               1988 | f               |
-               |               1988 | m               |
-               |               1989 | f               |
-               |               1989 | m               |
-               |               1990 | f               |
-               |               1990 | m               |
-               |               1991 | f               |
-               |               1991 | m               |
-               |               1992 | f               |
-               |               1992 | m               |
-               |               1993 | f               |
-               |               1993 | m               |
-               |               1994 | f               |
-               |               1994 | m               |
-               |               1995 | f               |
-               |               1995 | m               |
-               |               1998 | m               |
-               |               2000 | m               |
-               |               2001 | m               |
-               |               2002 | m               |
-                                              (26 rows)
-
-               ----
-               /quotient(student,{year(dob),gender})
-               SELECT EXTRACT(YEAR FROM "STUDENT"."DOB"),
-                      "STUDENT"."GENDER"
-               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-               GROUP BY EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER"
-               ORDER BY 1 ASC, 2 ASC
-          - uri: /quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(student,{year(dob),gender})    |
+               | distinct(student{year(dob),gender})     |
               -+-----------------------------------------+-
                | year(dob) | gender | year(dob) | gender |
               -+-----------+--------+-----------+--------+-
@@ -18231,7 +18100,7 @@ tests:
                                                  (26 rows)
 
                ----
-               /quotient(student,{year(dob),gender}){kernel(),kernel(0),kernel(1)}
+               /distinct(student{year(dob),gender}){*,*1,*2}
                SELECT EXTRACT(YEAR FROM "STUDENT"."DOB"),
                       "STUDENT"."GENDER",
                       EXTRACT(YEAR FROM "STUDENT"."DOB"),
@@ -18239,45 +18108,45 @@ tests:
                FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
                GROUP BY EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER"
                ORDER BY 1 ASC, 2 ASC
-          - uri: /quotient(student, {year(dob), gender}){kernel(),count(complement())}
+          - uri: /distinct(student{year(dob),gender}){*,count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(student,{year(dob),gender})     |
-              -+------------------------------------------+-
-               | year(dob) | gender | count(complement()) |
-              -+-----------+--------+---------------------+-
-               |      1981 | f      |                   1 |
-               |      1983 | f      |                   1 |
-               |      1985 | f      |                   1 |
-               |      1985 | m      |                   1 |
-               |      1987 | f      |                   2 |
-               |      1987 | m      |                   1 |
-               |      1988 | f      |                   1 |
-               |      1988 | m      |                   3 |
-               |      1989 | f      |                   1 |
-               |      1989 | m      |                   2 |
-               |      1990 | f      |                   1 |
-               |      1990 | m      |                   2 |
-               |      1991 | f      |                   3 |
-               |      1991 | m      |                   3 |
-               |      1992 | f      |                   6 |
-               |      1992 | m      |                   4 |
-               |      1993 | f      |                   3 |
-               |      1993 | m      |                   3 |
-               |      1994 | f      |                   2 |
-               |      1994 | m      |                   2 |
-               |      1995 | f      |                   2 |
-               |      1995 | m      |                   2 |
-               |      1998 | m      |                   1 |
-               |      2000 | m      |                   1 |
-               |      2001 | m      |                   1 |
-               |      2002 | m      |                   1 |
-                                                  (26 rows)
+               | distinct(student{year(dob),gender}) |
+              -+-------------------------------------+-
+               | year(dob)   | gender   | count(^)   |
+              -+-------------+----------+------------+-
+               |        1981 | f        |          1 |
+               |        1983 | f        |          1 |
+               |        1985 | f        |          1 |
+               |        1985 | m        |          1 |
+               |        1987 | f        |          2 |
+               |        1987 | m        |          1 |
+               |        1988 | f        |          1 |
+               |        1988 | m        |          3 |
+               |        1989 | f        |          1 |
+               |        1989 | m        |          2 |
+               |        1990 | f        |          1 |
+               |        1990 | m        |          2 |
+               |        1991 | f        |          3 |
+               |        1991 | m        |          3 |
+               |        1992 | f        |          6 |
+               |        1992 | m        |          4 |
+               |        1993 | f        |          3 |
+               |        1993 | m        |          3 |
+               |        1994 | f        |          2 |
+               |        1994 | m        |          2 |
+               |        1995 | f        |          2 |
+               |        1995 | m        |          2 |
+               |        1998 | m        |          1 |
+               |        2000 | m        |          1 |
+               |        2001 | m        |          1 |
+               |        2002 | m        |          1 |
+                                             (26 rows)
 
                ----
-               /quotient(student,{year(dob),gender}){kernel(),count(complement())}
+               /distinct(student{year(dob),gender}){*,count(^)}
                SELECT "STUDENT_1"."year",
                       "STUDENT_1"."GENDER",
                       COALESCE("STUDENT_2"."count", 0)
@@ -18292,22 +18161,21 @@ tests:
                                      GROUP BY EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER") "STUDENT_2"
                                     ON (("STUDENT_1"."year" = "STUDENT_2"."year") AND ("STUDENT_1"."GENDER" = "STUDENT_2"."GENDER"))
                ORDER BY 1 ASC, 2 ASC
-          - uri: /quotient(quotient(student, year(dob)).complement(), gender) {kernel(),
-              count(complement()), count(complement().is_active)}
+          - uri: /distinct(distinct(student{year(dob)}).^{gender}) {*, count(^), count(^.is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(quotient(student,year(dob)).complement(),gender)    |
-              -+--------------------------------------------------------------+-
-               | gender | count(complement()) | count(complement().is_active) |
-              -+--------+---------------------+-------------------------------+-
-               | f      |                  24 |                            19 |
-               | m      |                  27 |                            25 |
-                                                                       (2 rows)
+               | distinct(distinct(student{year(dob)}).^{gender}) |
+              -+--------------------------------------------------+-
+               | gender     | count(^)    | count(^.is_active)    |
+              -+------------+-------------+-----------------------+-
+               | f          |          24 |                    19 |
+               | m          |          27 |                    25 |
+                                                           (2 rows)
 
                ----
-               /quotient(quotient(student,year(dob)).complement(),gender){kernel(),count(complement()),count(complement().is_active)}
+               /distinct(distinct(student{year(dob)}).^{gender}){*,count(^),count(^.is_active)}
                SELECT "STUDENT_1"."GENDER",
                       COALESCE("STUDENT_2"."count_1", 0),
                       COALESCE("STUDENT_2"."count_2", 0)
@@ -18334,36 +18202,36 @@ tests:
                                      GROUP BY "STUDENT_2"."GENDER") "STUDENT_2"
                                     ON ("STUDENT_1"."GENDER" = "STUDENT_2"."GENDER")
                ORDER BY 1 ASC
-          - uri: /quotient(quotient(student, year(dob), gender), kernel(0)) {kernel(),
-              count(complement()), count(complement().complement()), count(complement().complement().is_active)}
+          - uri: /distinct(distinct(student{year(dob), gender}){*1}) {*, count(^),
+              count(^.^), count(^.^.is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(quotient(student,year(dob),gender),kernel(0))                                                          |
-              -+-----------------------------------------------------------------------------------------------------------------+-
-               | year(dob) | count(complement()) | count(complement().complement()) | count(complement().complement().is_active) |
-              -+-----------+---------------------+----------------------------------+--------------------------------------------+-
-               |      1981 |                   1 |                                1 |                                          1 |
-               |      1983 |                   1 |                                1 |                                          1 |
-               |      1985 |                   2 |                                2 |                                          1 |
-               |      1987 |                   2 |                                3 |                                          3 |
-               |      1988 |                   2 |                                4 |                                          3 |
-               |      1989 |                   2 |                                3 |                                          3 |
-               |      1990 |                   2 |                                3 |                                          3 |
-               |      1991 |                   2 |                                6 |                                          6 |
-               |      1992 |                   2 |                               10 |                                          6 |
-               |      1993 |                   2 |                                6 |                                          6 |
-               |      1994 |                   2 |                                4 |                                          4 |
-               |      1995 |                   2 |                                4 |                                          3 |
-               |      1998 |                   1 |                                1 |                                          1 |
-               |      2000 |                   1 |                                1 |                                          1 |
-               |      2001 |                   1 |                                1 |                                          1 |
-               |      2002 |                   1 |                                1 |                                          1 |
-                                                                                                                         (16 rows)
+               | distinct(distinct(student{year(dob),gender}){*1})        |
+              -+----------------------------------------------------------+-
+               | year(dob) | count(^) | count(^.^) | count(^.^.is_active) |
+              -+-----------+----------+------------+----------------------+-
+               |      1981 |        1 |          1 |                    1 |
+               |      1983 |        1 |          1 |                    1 |
+               |      1985 |        2 |          2 |                    1 |
+               |      1987 |        2 |          3 |                    3 |
+               |      1988 |        2 |          4 |                    3 |
+               |      1989 |        2 |          3 |                    3 |
+               |      1990 |        2 |          3 |                    3 |
+               |      1991 |        2 |          6 |                    6 |
+               |      1992 |        2 |         10 |                    6 |
+               |      1993 |        2 |          6 |                    6 |
+               |      1994 |        2 |          4 |                    4 |
+               |      1995 |        2 |          4 |                    3 |
+               |      1998 |        1 |          1 |                    1 |
+               |      2000 |        1 |          1 |                    1 |
+               |      2001 |        1 |          1 |                    1 |
+               |      2002 |        1 |          1 |                    1 |
+                                                                  (16 rows)
 
                ----
-               /quotient(quotient(student,year(dob),gender),kernel(0)){kernel(),count(complement()),count(complement().complement()),count(complement().complement().is_active)}
+               /distinct(distinct(student{year(dob),gender}){*1}){*,count(^),count(^.^),count(^.^.is_active)}
                SELECT "STUDENT_1"."year",
                       COALESCE("STUDENT_2"."count", 0),
                       COALESCE("STUDENT_3"."count_1", 0),
@@ -18395,35 +18263,35 @@ tests:
                                      GROUP BY "STUDENT_1"."year") "STUDENT_3"
                                     ON ("STUDENT_1"."year" = "STUDENT_3"."year")
                ORDER BY 1 ASC
-          - uri: /school.quotient(program, degree)
+          - uri: /school.distinct(program{degree})
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | pb                       |
-               | bs                       |
-               | ct                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | bs                       |
-               | ms                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | bs                       |
-               | ph                       |
-               |                          |
-                                  (16 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | pb                        |
+               | bs                        |
+               | ct                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | bs                        |
+               | ms                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | bs                        |
+               | ph                        |
+               |                           |
+                                   (16 rows)
 
                ----
-               /school.quotient(program,degree)
+               /school.distinct(program{degree})
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18432,35 +18300,35 @@ tests:
                                 GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree){*}
+          - uri: /school.distinct(program{degree}){*}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | pb                       |
-               | bs                       |
-               | ct                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | bs                       |
-               | ms                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | bs                       |
-               | ph                       |
-               |                          |
-                                  (16 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | pb                        |
+               | bs                        |
+               | ct                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | bs                        |
+               | ms                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | bs                        |
+               | ph                        |
+               |                           |
+                                   (16 rows)
 
                ----
-               /school.quotient(program,degree){*}
+               /school.distinct(program{degree}){*}
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18469,56 +18337,19 @@ tests:
                                 GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree){kernel()}
+          - uri: /school.distinct(program{degree})?false()
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | pb                       |
-               | bs                       |
-               | ct                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | bs                       |
-               | ms                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | bs                       |
-               | ph                       |
-               |                          |
-                                  (16 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+                                   (no rows)
 
                ----
-               /school.quotient(program,degree){kernel()}
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN (SELECT "PROGRAM"."DEGREE",
-                                       "PROGRAM"."SCHOOL"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
-                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree)?false()
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-                                  (no rows)
-
-               ----
-               /school.quotient(program,degree)?false()
+               /school.distinct(program{degree})?false()
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18528,56 +18359,34 @@ tests:
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                WHERE (0 <> 0)
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree){kernel()}?false()
+          - uri: /school.distinct(program{degree})?*1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-                                  (no rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | pb                        |
+               | bs                        |
+               | ct                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | bs                        |
+               | ms                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | bs                        |
+               | ph                        |
+                                   (15 rows)
 
                ----
-               /school.quotient(program,degree){kernel()}?false()
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN (SELECT "PROGRAM"."DEGREE",
-                                       "PROGRAM"."SCHOOL"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
-                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-               WHERE (0 <> 0)
-               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree)?kernel()
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | (school.quotient(program,degree)?kernel()) |
-              -+--------------------------------------------+-
-               | degree                                     |
-              -+--------------------------------------------+-
-               | ba                                         |
-               | pb                                         |
-               | bs                                         |
-               | ct                                         |
-               | ba                                         |
-               | ct                                         |
-               | ma                                         |
-               | ms                                         |
-               | bs                                         |
-               | ms                                         |
-               | ba                                         |
-               | ct                                         |
-               | ma                                         |
-               | bs                                         |
-               | ph                                         |
-                                                    (15 rows)
-
-               ----
-               /school.quotient(program,degree)?kernel()
+               /school.distinct(program{degree})?*1
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18587,34 +18396,34 @@ tests:
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree)?kernel(0)
+          - uri: /school.distinct(program{degree}){*}?*1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | pb                       |
-               | bs                       |
-               | ct                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | bs                       |
-               | ms                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | bs                       |
-               | ph                       |
-                                  (15 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | pb                        |
+               | bs                        |
+               | ct                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | bs                        |
+               | ms                        |
+               | ba                        |
+               | ct                        |
+               | ma                        |
+               | bs                        |
+               | ph                        |
+                                   (15 rows)
 
                ----
-               /school.quotient(program,degree)?kernel(0)
+               /school.distinct(program{degree}){*}?*1
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18624,93 +18433,19 @@ tests:
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree){kernel()}?kernel()
+          - uri: /school.distinct(program{degree}?false())
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school.quotient(program,degree)?kernel()) |
-              -+--------------------------------------------+-
-               | degree                                     |
-              -+--------------------------------------------+-
-               | ba                                         |
-               | pb                                         |
-               | bs                                         |
-               | ct                                         |
-               | ba                                         |
-               | ct                                         |
-               | ma                                         |
-               | ms                                         |
-               | bs                                         |
-               | ms                                         |
-               | ba                                         |
-               | ct                                         |
-               | ma                                         |
-               | bs                                         |
-               | ph                                         |
-                                                    (15 rows)
+               | distinct(program{degree}?false()) |
+              -+-----------------------------------+-
+               | degree                            |
+              -+-----------------------------------+-
+                                           (no rows)
 
                ----
-               /school.quotient(program,degree){kernel()}?kernel()
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN (SELECT "PROGRAM"."DEGREE",
-                                       "PROGRAM"."SCHOOL"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
-                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-               WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree){kernel()}?kernel(0)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | pb                       |
-               | bs                       |
-               | ct                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | bs                       |
-               | ms                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | bs                       |
-               | ph                       |
-                                  (15 rows)
-
-               ----
-               /school.quotient(program,degree){kernel()}?kernel(0)
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN (SELECT "PROGRAM"."DEGREE",
-                                       "PROGRAM"."SCHOOL"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
-                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-               WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program?false(), degree)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program?false(),degree) |
-              -+----------------------------------+-
-               | degree                           |
-              -+----------------------------------+-
-                                          (no rows)
-
-               ----
-               /school.quotient(program?false(),degree)
+               /school.distinct(program{degree}?false())
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18720,34 +18455,34 @@ tests:
                                 GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program?degree, degree)
+          - uri: /school.distinct(program{degree}?degree)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program?degree,degree) |
-              -+---------------------------------+-
-               | degree                          |
-              -+---------------------------------+-
-               | ba                              |
-               | pb                              |
-               | bs                              |
-               | ct                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ms                              |
-               | bs                              |
-               | ms                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | bs                              |
-               | ph                              |
-                                         (15 rows)
+               | distinct(program{degree}?degree) |
+              -+----------------------------------+-
+               | degree                           |
+              -+----------------------------------+-
+               | ba                               |
+               | pb                               |
+               | bs                               |
+               | ct                               |
+               | ba                               |
+               | ct                               |
+               | ma                               |
+               | ms                               |
+               | bs                               |
+               | ms                               |
+               | ba                               |
+               | ct                               |
+               | ma                               |
+               | bs                               |
+               | ph                               |
+                                          (15 rows)
 
                ----
-               /school.quotient(program?degree,degree)
+               /school.distinct(program{degree}?degree)
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18757,19 +18492,19 @@ tests:
                                 GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program?false(), degree)?false()
+          - uri: /school.distinct(program{degree}?false())?false()
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program?false(),degree) |
-              -+----------------------------------+-
-               | degree                           |
-              -+----------------------------------+-
-                                          (no rows)
+               | distinct(program{degree}?false()) |
+              -+-----------------------------------+-
+               | degree                            |
+              -+-----------------------------------+-
+                                           (no rows)
 
                ----
-               /school.quotient(program?false(),degree)?false()
+               /school.distinct(program{degree}?false())?false()
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18780,34 +18515,34 @@ tests:
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                WHERE (0 <> 0)
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program?degree, degree)?kernel()
+          - uri: /school.distinct(program{degree}?degree)?*1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school.quotient(program?degree,degree)?kernel()) |
-              -+---------------------------------------------------+-
-               | degree                                            |
-              -+---------------------------------------------------+-
-               | ba                                                |
-               | pb                                                |
-               | bs                                                |
-               | ct                                                |
-               | ba                                                |
-               | ct                                                |
-               | ma                                                |
-               | ms                                                |
-               | bs                                                |
-               | ms                                                |
-               | ba                                                |
-               | ct                                                |
-               | ma                                                |
-               | bs                                                |
-               | ph                                                |
-                                                           (15 rows)
+               | distinct(program{degree}?degree) |
+              -+----------------------------------+-
+               | degree                           |
+              -+----------------------------------+-
+               | ba                               |
+               | pb                               |
+               | bs                               |
+               | ct                               |
+               | ba                               |
+               | ct                               |
+               | ma                               |
+               | ms                               |
+               | bs                               |
+               | ms                               |
+               | ba                               |
+               | ct                               |
+               | ma                               |
+               | bs                               |
+               | ph                               |
+                                          (15 rows)
 
                ----
-               /school.quotient(program?degree,degree)?kernel()
+               /school.distinct(program{degree}?degree)?*1
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -18818,73 +18553,35 @@ tests:
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program?degree, degree)?kernel(0)
+          - uri: /school.distinct(program{degree}){*, count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program?degree,degree) |
-              -+---------------------------------+-
-               | degree                          |
-              -+---------------------------------+-
-               | ba                              |
-               | pb                              |
-               | bs                              |
-               | ct                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ms                              |
-               | bs                              |
-               | ms                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | bs                              |
-               | ph                              |
-                                         (15 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree     | count(^)     |
+              -+------------+--------------+-
+               | ba         |            2 |
+               | pb         |            1 |
+               | bs         |            3 |
+               | ct         |            2 |
+               | ba         |            2 |
+               | ct         |            1 |
+               | ma         |            3 |
+               | ms         |            1 |
+               | bs         |            4 |
+               | ms         |            4 |
+               | ba         |            5 |
+               | ct         |            1 |
+               | ma         |            3 |
+               | bs         |            5 |
+               | ph         |            1 |
+               |            |            1 |
+                                   (16 rows)
 
                ----
-               /school.quotient(program?degree,degree)?kernel(0)
-               SELECT "PROGRAM"."DEGREE"
-               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN (SELECT "PROGRAM"."DEGREE",
-                                       "PROGRAM"."SCHOOL"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-                                GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
-                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-               WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree){kernel(),count(complement())}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(program,degree)     |
-              -+------------------------------+-
-               | degree | count(complement()) |
-              -+--------+---------------------+-
-               | ba     |                   2 |
-               | pb     |                   1 |
-               | bs     |                   3 |
-               | ct     |                   2 |
-               | ba     |                   2 |
-               | ct     |                   1 |
-               | ma     |                   3 |
-               | ms     |                   1 |
-               | bs     |                   4 |
-               | ms     |                   4 |
-               | ba     |                   5 |
-               | ct     |                   1 |
-               | ma     |                   3 |
-               | bs     |                   5 |
-               | ph     |                   1 |
-               |        |                   1 |
-                                      (16 rows)
-
-               ----
-               /school.quotient(program,degree){kernel(),count(complement())}
+               /school.distinct(program{degree}){*,count(^)}
                SELECT "PROGRAM_1"."DEGREE",
                       COALESCE("PROGRAM_2"."count", 0)
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
@@ -18900,35 +18597,35 @@ tests:
                                      GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM_2"
                                     ON (("PROGRAM_1"."SCHOOL" = "PROGRAM_2"."SCHOOL") AND ((CASE WHEN ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "PROGRAM_2"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0))
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
+          - uri: /school.distinct(program{degree}){*, count(^.student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree)             |
-              -+--------------------------------------+-
-               | degree | count(complement().student) |
-              -+--------+-----------------------------+-
-               | ba     |                           1 |
-               | pb     |                           5 |
-               | bs     |                           4 |
-               | ct     |                           4 |
-               | ba     |                           0 |
-               | ct     |                           1 |
-               | ma     |                           2 |
-               | ms     |                           1 |
-               | bs     |                           6 |
-               | ms     |                           8 |
-               | ba     |                           5 |
-               | ct     |                           1 |
-               | ma     |                           3 |
-               | bs     |                          10 |
-               | ph     |                           0 |
-               |        |                           0 |
-                                              (16 rows)
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree | count(^.student) |
+              -+--------+------------------+-
+               | ba     |                1 |
+               | pb     |                5 |
+               | bs     |                4 |
+               | ct     |                4 |
+               | ba     |                0 |
+               | ct     |                1 |
+               | ma     |                2 |
+               | ms     |                1 |
+               | bs     |                6 |
+               | ms     |                8 |
+               | ba     |                5 |
+               | ct     |                1 |
+               | ma     |                3 |
+               | bs     |               10 |
+               | ph     |                0 |
+               |        |                0 |
+                                   (16 rows)
 
                ----
-               /school.quotient(program,degree){kernel(),count(complement().student)}
+               /school.distinct(program{degree}){*,count(^.student)}
                SELECT "PROGRAM"."DEGREE",
                       COALESCE("STUDENT"."count", 0)
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
@@ -18946,7 +18643,7 @@ tests:
                                      GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "STUDENT"
                                     ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ((CASE WHEN ("PROGRAM"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0))
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /(school?code='art').(program^degree).^{title+,degree}
+          - uri: /(school?code='art').(program^degree).^{title+, degree}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -18979,67 +18676,67 @@ tests:
                                ON (("PROGRAM_1"."SCHOOL" = "PROGRAM_2"."SCHOOL") AND ((CASE WHEN ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "PROGRAM_2"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0))
                WHERE ("SCHOOL"."CODE" = 'art')
                ORDER BY 1 ASC, "SCHOOL"."CODE" ASC, "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_2"."SCHOOL" ASC, "PROGRAM_2"."CODE" ASC
-          - uri: /school.program .quotient(student, year(dob), gender)
+          - uri: /school.program.distinct(student{year(dob),gender})
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(student,year(dob),gender) |
-              -+------------------------------------+-
-               | year(dob)         | gender         |
-              -+-------------------+----------------+-
-               |              1989 | f              |
-               |              1991 | m              |
-               |              1992 | m              |
-               |              1991 | m              |
-               |              1995 | f              |
-               |              1998 | m              |
-               |              1981 | f              |
-               |              1985 | f              |
-               |              1992 | f              |
-               |              1993 | f              |
-               |              1988 | m              |
-               |              1994 | m              |
-               |              1983 | f              |
-               |              1988 | f              |
-               |              1995 | f              |
-               |              1989 | m              |
-               |              1991 | m              |
-               |              1992 | f              |
-               |              1993 | m              |
-               |              1990 | m              |
-               |              1992 | m              |
-               |              1987 | m              |
-               |              1990 | f              |
-               |              1991 | f              |
-               |              1993 | m              |
-               |              1994 | m              |
-               |              1995 | m              |
-               |              1987 | f              |
-               |              2002 | m              |
-               |              1985 | m              |
-               |              1988 | m              |
-               |              1989 | m              |
-               |              1988 | m              |
-               |              1987 | f              |
-               |              1993 | m              |
-               |              1992 | f              |
-               |              1994 | f              |
-               |              2001 | m              |
-               |              1991 | f              |
-               |              1992 | f              |
-               |              1993 | f              |
-               |              1992 | f              |
-               |              1994 | f              |
-               |              1990 | m              |
-               |              1991 | f              |
-               |              1992 | f              |
-               |              1993 | f              |
-               |              2000 | m              |
-                                            (48 rows)
+               | distinct(student{year(dob),gender}) |
+              -+-------------------------------------+-
+               | year(dob)          | gender         |
+              -+--------------------+----------------+-
+               |               1989 | f              |
+               |               1991 | m              |
+               |               1992 | m              |
+               |               1991 | m              |
+               |               1995 | f              |
+               |               1998 | m              |
+               |               1981 | f              |
+               |               1985 | f              |
+               |               1992 | f              |
+               |               1993 | f              |
+               |               1988 | m              |
+               |               1994 | m              |
+               |               1983 | f              |
+               |               1988 | f              |
+               |               1995 | f              |
+               |               1989 | m              |
+               |               1991 | m              |
+               |               1992 | f              |
+               |               1993 | m              |
+               |               1990 | m              |
+               |               1992 | m              |
+               |               1987 | m              |
+               |               1990 | f              |
+               |               1991 | f              |
+               |               1993 | m              |
+               |               1994 | m              |
+               |               1995 | m              |
+               |               1987 | f              |
+               |               2002 | m              |
+               |               1985 | m              |
+               |               1988 | m              |
+               |               1989 | m              |
+               |               1988 | m              |
+               |               1987 | f              |
+               |               1993 | m              |
+               |               1992 | f              |
+               |               1994 | f              |
+               |               2001 | m              |
+               |               1991 | f              |
+               |               1992 | f              |
+               |               1993 | f              |
+               |               1992 | f              |
+               |               1994 | f              |
+               |               1990 | m              |
+               |               1991 | f              |
+               |               1992 | f              |
+               |               1993 | f              |
+               |               2000 | m              |
+                                             (48 rows)
 
                ----
-               /school.program.quotient(student,year(dob),gender)
+               /school.program.distinct(student{year(dob),gender})
                SELECT "STUDENT"."year",
                       "STUDENT"."GENDER"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
@@ -19053,86 +18750,12 @@ tests:
                                 GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM", EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER") "STUDENT"
                                ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
                ORDER BY "SCHOOL"."CODE" ASC, "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC, 1 ASC, 2 ASC
-          - uri: /school.program .quotient(student, {year(dob), gender})
+          - uri: /school.program.distinct(student{year(dob),gender}){*, *1, *2}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(student,{year(dob),gender}) |
-              -+--------------------------------------+-
-               | year(dob)          | gender          |
-              -+--------------------+-----------------+-
-               |               1989 | f               |
-               |               1991 | m               |
-               |               1992 | m               |
-               |               1991 | m               |
-               |               1995 | f               |
-               |               1998 | m               |
-               |               1981 | f               |
-               |               1985 | f               |
-               |               1992 | f               |
-               |               1993 | f               |
-               |               1988 | m               |
-               |               1994 | m               |
-               |               1983 | f               |
-               |               1988 | f               |
-               |               1995 | f               |
-               |               1989 | m               |
-               |               1991 | m               |
-               |               1992 | f               |
-               |               1993 | m               |
-               |               1990 | m               |
-               |               1992 | m               |
-               |               1987 | m               |
-               |               1990 | f               |
-               |               1991 | f               |
-               |               1993 | m               |
-               |               1994 | m               |
-               |               1995 | m               |
-               |               1987 | f               |
-               |               2002 | m               |
-               |               1985 | m               |
-               |               1988 | m               |
-               |               1989 | m               |
-               |               1988 | m               |
-               |               1987 | f               |
-               |               1993 | m               |
-               |               1992 | f               |
-               |               1994 | f               |
-               |               2001 | m               |
-               |               1991 | f               |
-               |               1992 | f               |
-               |               1993 | f               |
-               |               1992 | f               |
-               |               1994 | f               |
-               |               1990 | m               |
-               |               1991 | f               |
-               |               1992 | f               |
-               |               1993 | f               |
-               |               2000 | m               |
-                                              (48 rows)
-
-               ----
-               /school.program.quotient(student,{year(dob),gender})
-               SELECT "STUDENT"."year",
-                      "STUDENT"."GENDER"
-               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-                    INNER JOIN (SELECT EXTRACT(YEAR FROM "STUDENT"."DOB") AS "year",
-                                       "STUDENT"."GENDER",
-                                       "STUDENT"."SCHOOL",
-                                       "STUDENT"."PROGRAM"
-                                FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM", EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER") "STUDENT"
-                               ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
-               ORDER BY "SCHOOL"."CODE" ASC, "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC, 1 ASC, 2 ASC
-          - uri: /school.program .quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(student,{year(dob),gender})    |
+               | distinct(student{year(dob),gender})     |
               -+-----------------------------------------+-
                | year(dob) | gender | year(dob) | gender |
               -+-----------+--------+-----------+--------+-
@@ -19187,7 +18810,7 @@ tests:
                                                  (48 rows)
 
                ----
-               /school.program.quotient(student,{year(dob),gender}){kernel(),kernel(0),kernel(1)}
+               /school.program.distinct(student{year(dob),gender}){*,*1,*2}
                SELECT "STUDENT"."year",
                       "STUDENT"."GENDER",
                       "STUDENT"."year",
@@ -19203,67 +18826,67 @@ tests:
                                 GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM", EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER") "STUDENT"
                                ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
                ORDER BY "SCHOOL"."CODE" ASC, "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC, 1 ASC, 2 ASC
-          - uri: /school.program .quotient(student, {year(dob), gender}){kernel(),count(complement())}
+          - uri: /school.program.distinct(student{year(dob),gender}){*, count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(student,{year(dob),gender})     |
-              -+------------------------------------------+-
-               | year(dob) | gender | count(complement()) |
-              -+-----------+--------+---------------------+-
-               |      1989 | f      |                   1 |
-               |      1991 | m      |                   1 |
-               |      1992 | m      |                   3 |
-               |      1991 | m      |                   1 |
-               |      1995 | f      |                   1 |
-               |      1998 | m      |                   1 |
-               |      1981 | f      |                   1 |
-               |      1985 | f      |                   1 |
-               |      1992 | f      |                   1 |
-               |      1993 | f      |                   1 |
-               |      1988 | m      |                   1 |
-               |      1994 | m      |                   1 |
-               |      1983 | f      |                   1 |
-               |      1988 | f      |                   1 |
-               |      1995 | f      |                   1 |
-               |      1989 | m      |                   1 |
-               |      1991 | m      |                   1 |
-               |      1992 | f      |                   1 |
-               |      1993 | m      |                   1 |
-               |      1990 | m      |                   1 |
-               |      1992 | m      |                   1 |
-               |      1987 | m      |                   1 |
-               |      1990 | f      |                   1 |
-               |      1991 | f      |                   1 |
-               |      1993 | m      |                   1 |
-               |      1994 | m      |                   1 |
-               |      1995 | m      |                   2 |
-               |      1987 | f      |                   1 |
-               |      2002 | m      |                   1 |
-               |      1985 | m      |                   1 |
-               |      1988 | m      |                   1 |
-               |      1989 | m      |                   1 |
-               |      1988 | m      |                   1 |
-               |      1987 | f      |                   1 |
-               |      1993 | m      |                   1 |
-               |      1992 | f      |                   1 |
-               |      1994 | f      |                   1 |
-               |      2001 | m      |                   1 |
-               |      1991 | f      |                   1 |
-               |      1992 | f      |                   1 |
-               |      1993 | f      |                   1 |
-               |      1992 | f      |                   1 |
-               |      1994 | f      |                   1 |
-               |      1990 | m      |                   1 |
-               |      1991 | f      |                   1 |
-               |      1992 | f      |                   1 |
-               |      1993 | f      |                   1 |
-               |      2000 | m      |                   1 |
-                                                  (48 rows)
+               | distinct(student{year(dob),gender}) |
+              -+-------------------------------------+-
+               | year(dob)   | gender   | count(^)   |
+              -+-------------+----------+------------+-
+               |        1989 | f        |          1 |
+               |        1991 | m        |          1 |
+               |        1992 | m        |          3 |
+               |        1991 | m        |          1 |
+               |        1995 | f        |          1 |
+               |        1998 | m        |          1 |
+               |        1981 | f        |          1 |
+               |        1985 | f        |          1 |
+               |        1992 | f        |          1 |
+               |        1993 | f        |          1 |
+               |        1988 | m        |          1 |
+               |        1994 | m        |          1 |
+               |        1983 | f        |          1 |
+               |        1988 | f        |          1 |
+               |        1995 | f        |          1 |
+               |        1989 | m        |          1 |
+               |        1991 | m        |          1 |
+               |        1992 | f        |          1 |
+               |        1993 | m        |          1 |
+               |        1990 | m        |          1 |
+               |        1992 | m        |          1 |
+               |        1987 | m        |          1 |
+               |        1990 | f        |          1 |
+               |        1991 | f        |          1 |
+               |        1993 | m        |          1 |
+               |        1994 | m        |          1 |
+               |        1995 | m        |          2 |
+               |        1987 | f        |          1 |
+               |        2002 | m        |          1 |
+               |        1985 | m        |          1 |
+               |        1988 | m        |          1 |
+               |        1989 | m        |          1 |
+               |        1988 | m        |          1 |
+               |        1987 | f        |          1 |
+               |        1993 | m        |          1 |
+               |        1992 | f        |          1 |
+               |        1994 | f        |          1 |
+               |        2001 | m        |          1 |
+               |        1991 | f        |          1 |
+               |        1992 | f        |          1 |
+               |        1993 | f        |          1 |
+               |        1992 | f        |          1 |
+               |        1994 | f        |          1 |
+               |        1990 | m        |          1 |
+               |        1991 | f        |          1 |
+               |        1992 | f        |          1 |
+               |        1993 | f        |          1 |
+               |        2000 | m        |          1 |
+                                             (48 rows)
 
                ----
-               /school.program.quotient(student,{year(dob),gender}){kernel(),count(complement())}
+               /school.program.distinct(student{year(dob),gender}){*,count(^)}
                SELECT "STUDENT_1"."year",
                       "STUDENT_1"."GENDER",
                       COALESCE("STUDENT_2"."count", 0)
@@ -19286,50 +18909,50 @@ tests:
                                      GROUP BY "STUDENT"."SCHOOL", "STUDENT"."PROGRAM", EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER") "STUDENT_2"
                                     ON (("STUDENT_1"."SCHOOL" = "STUDENT_2"."SCHOOL") AND ("STUDENT_1"."PROGRAM" = "STUDENT_2"."PROGRAM") AND ("STUDENT_1"."year" = "STUDENT_2"."year") AND ("STUDENT_1"."GENDER" = "STUDENT_2"."GENDER"))
                ORDER BY "SCHOOL"."CODE" ASC, "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC, 1 ASC, 2 ASC
-          - uri: /school.program .quotient(quotient(student, year(dob)).complement(),
-              gender) {kernel(), count(complement()), count(complement().is_active)}
+          - uri: /school.program.distinct(distinct(student{year(dob)}).^{gender})
+              {*, count(^), count(^.is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(quotient(student,year(dob)).complement(),gender)    |
-              -+--------------------------------------------------------------+-
-               | gender | count(complement()) | count(complement().is_active) |
-              -+--------+---------------------+-------------------------------+-
-               | f      |                   1 |                             1 |
-               | m      |                   4 |                             4 |
-               | m      |                   1 |                             1 |
-               | f      |                   1 |                             1 |
-               | m      |                   1 |                             1 |
-               | f      |                   2 |                             1 |
-               | f      |                   2 |                             2 |
-               | m      |                   2 |                             2 |
-               | f      |                   1 |                             1 |
-               | f      |                   1 |                             1 |
-               | f      |                   1 |                             1 |
-               | m      |                   1 |                             1 |
-               | f      |                   1 |                             0 |
-               | m      |                   2 |                             2 |
-               | m      |                   2 |                             2 |
-               | m      |                   1 |                             1 |
-               | f      |                   2 |                             2 |
-               | m      |                   4 |                             3 |
-               | f      |                   1 |                             1 |
-               | m      |                   1 |                             1 |
-               | m      |                   3 |                             2 |
-               | m      |                   1 |                             1 |
-               | f      |                   1 |                             1 |
-               | m      |                   1 |                             1 |
-               | f      |                   2 |                             1 |
-               | m      |                   1 |                             1 |
-               | f      |                   3 |                             2 |
-               | f      |                   2 |                             2 |
-               | f      |                   3 |                             2 |
-               | m      |                   2 |                             2 |
-                                                                      (30 rows)
+               | distinct(distinct(student{year(dob)}).^{gender}) |
+              -+--------------------------------------------------+-
+               | gender     | count(^)    | count(^.is_active)    |
+              -+------------+-------------+-----------------------+-
+               | f          |           1 |                     1 |
+               | m          |           4 |                     4 |
+               | m          |           1 |                     1 |
+               | f          |           1 |                     1 |
+               | m          |           1 |                     1 |
+               | f          |           2 |                     1 |
+               | f          |           2 |                     2 |
+               | m          |           2 |                     2 |
+               | f          |           1 |                     1 |
+               | f          |           1 |                     1 |
+               | f          |           1 |                     1 |
+               | m          |           1 |                     1 |
+               | f          |           1 |                     0 |
+               | m          |           2 |                     2 |
+               | m          |           2 |                     2 |
+               | m          |           1 |                     1 |
+               | f          |           2 |                     2 |
+               | m          |           4 |                     3 |
+               | f          |           1 |                     1 |
+               | m          |           1 |                     1 |
+               | m          |           3 |                     2 |
+               | m          |           1 |                     1 |
+               | f          |           1 |                     1 |
+               | m          |           1 |                     1 |
+               | f          |           2 |                     1 |
+               | m          |           1 |                     1 |
+               | f          |           3 |                     2 |
+               | f          |           2 |                     2 |
+               | f          |           3 |                     2 |
+               | m          |           2 |                     2 |
+                                                          (30 rows)
 
                ----
-               /school.program.quotient(quotient(student,year(dob)).complement(),gender){kernel(),count(complement()),count(complement().is_active)}
+               /school.program.distinct(distinct(student{year(dob)}).^{gender}){*,count(^),count(^.is_active)}
                SELECT "STUDENT_1"."GENDER",
                       COALESCE("STUDENT_2"."count_1", 0),
                       COALESCE("STUDENT_2"."count_2", 0)
@@ -19372,68 +18995,68 @@ tests:
                                      GROUP BY "STUDENT_1"."SCHOOL", "STUDENT_1"."PROGRAM", "STUDENT_2"."GENDER") "STUDENT_2"
                                     ON (("STUDENT_1"."SCHOOL" = "STUDENT_2"."SCHOOL") AND ("STUDENT_1"."PROGRAM" = "STUDENT_2"."PROGRAM") AND ("STUDENT_1"."GENDER" = "STUDENT_2"."GENDER"))
                ORDER BY "SCHOOL"."CODE" ASC, "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC, 1 ASC
-          - uri: /school.program .quotient(quotient(student, year(dob), gender), kernel(0))
-              {kernel(), count(complement()), count(complement().complement()), count(complement().complement().is_active)}
+          - uri: /school.program.distinct(distinct(student{year(dob), gender}){*1})
+              {*, count(^), count(^.^), count(^.^.is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(quotient(student,year(dob),gender),kernel(0))                                                          |
-              -+-----------------------------------------------------------------------------------------------------------------+-
-               | year(dob) | count(complement()) | count(complement().complement()) | count(complement().complement().is_active) |
-              -+-----------+---------------------+----------------------------------+--------------------------------------------+-
-               |      1989 |                   1 |                                1 |                                          1 |
-               |      1991 |                   1 |                                1 |                                          1 |
-               |      1992 |                   1 |                                3 |                                          3 |
-               |      1991 |                   1 |                                1 |                                          1 |
-               |      1995 |                   1 |                                1 |                                          1 |
-               |      1998 |                   1 |                                1 |                                          1 |
-               |      1981 |                   1 |                                1 |                                          1 |
-               |      1985 |                   1 |                                1 |                                          0 |
-               |      1992 |                   1 |                                1 |                                          1 |
-               |      1993 |                   1 |                                1 |                                          1 |
-               |      1988 |                   1 |                                1 |                                          1 |
-               |      1994 |                   1 |                                1 |                                          1 |
-               |      1983 |                   1 |                                1 |                                          1 |
-               |      1988 |                   1 |                                1 |                                          1 |
-               |      1995 |                   1 |                                1 |                                          1 |
-               |      1989 |                   1 |                                1 |                                          1 |
-               |      1991 |                   1 |                                1 |                                          1 |
-               |      1992 |                   1 |                                1 |                                          0 |
-               |      1993 |                   1 |                                1 |                                          1 |
-               |      1990 |                   1 |                                1 |                                          1 |
-               |      1992 |                   1 |                                1 |                                          1 |
-               |      1987 |                   1 |                                1 |                                          1 |
-               |      1990 |                   1 |                                1 |                                          1 |
-               |      1991 |                   1 |                                1 |                                          1 |
-               |      1993 |                   1 |                                1 |                                          1 |
-               |      1994 |                   1 |                                1 |                                          1 |
-               |      1995 |                   1 |                                2 |                                          1 |
-               |      1987 |                   1 |                                1 |                                          1 |
-               |      2002 |                   1 |                                1 |                                          1 |
-               |      1985 |                   1 |                                1 |                                          1 |
-               |      1988 |                   1 |                                1 |                                          0 |
-               |      1989 |                   1 |                                1 |                                          1 |
-               |      1988 |                   1 |                                1 |                                          1 |
-               |      1987 |                   1 |                                1 |                                          1 |
-               |      1993 |                   1 |                                1 |                                          1 |
-               |      1992 |                   1 |                                1 |                                          0 |
-               |      1994 |                   1 |                                1 |                                          1 |
-               |      2001 |                   1 |                                1 |                                          1 |
-               |      1991 |                   1 |                                1 |                                          1 |
-               |      1992 |                   1 |                                1 |                                          0 |
-               |      1993 |                   1 |                                1 |                                          1 |
-               |      1992 |                   1 |                                1 |                                          1 |
-               |      1994 |                   1 |                                1 |                                          1 |
-               |      1990 |                   1 |                                1 |                                          1 |
-               |      1991 |                   1 |                                1 |                                          1 |
-               |      1992 |                   1 |                                1 |                                          0 |
-               |      1993 |                   1 |                                1 |                                          1 |
-               |      2000 |                   1 |                                1 |                                          1 |
-                                                                                                                         (48 rows)
+               | distinct(distinct(student{year(dob),gender}){*1})        |
+              -+----------------------------------------------------------+-
+               | year(dob) | count(^) | count(^.^) | count(^.^.is_active) |
+              -+-----------+----------+------------+----------------------+-
+               |      1989 |        1 |          1 |                    1 |
+               |      1991 |        1 |          1 |                    1 |
+               |      1992 |        1 |          3 |                    3 |
+               |      1991 |        1 |          1 |                    1 |
+               |      1995 |        1 |          1 |                    1 |
+               |      1998 |        1 |          1 |                    1 |
+               |      1981 |        1 |          1 |                    1 |
+               |      1985 |        1 |          1 |                    0 |
+               |      1992 |        1 |          1 |                    1 |
+               |      1993 |        1 |          1 |                    1 |
+               |      1988 |        1 |          1 |                    1 |
+               |      1994 |        1 |          1 |                    1 |
+               |      1983 |        1 |          1 |                    1 |
+               |      1988 |        1 |          1 |                    1 |
+               |      1995 |        1 |          1 |                    1 |
+               |      1989 |        1 |          1 |                    1 |
+               |      1991 |        1 |          1 |                    1 |
+               |      1992 |        1 |          1 |                    0 |
+               |      1993 |        1 |          1 |                    1 |
+               |      1990 |        1 |          1 |                    1 |
+               |      1992 |        1 |          1 |                    1 |
+               |      1987 |        1 |          1 |                    1 |
+               |      1990 |        1 |          1 |                    1 |
+               |      1991 |        1 |          1 |                    1 |
+               |      1993 |        1 |          1 |                    1 |
+               |      1994 |        1 |          1 |                    1 |
+               |      1995 |        1 |          2 |                    1 |
+               |      1987 |        1 |          1 |                    1 |
+               |      2002 |        1 |          1 |                    1 |
+               |      1985 |        1 |          1 |                    1 |
+               |      1988 |        1 |          1 |                    0 |
+               |      1989 |        1 |          1 |                    1 |
+               |      1988 |        1 |          1 |                    1 |
+               |      1987 |        1 |          1 |                    1 |
+               |      1993 |        1 |          1 |                    1 |
+               |      1992 |        1 |          1 |                    0 |
+               |      1994 |        1 |          1 |                    1 |
+               |      2001 |        1 |          1 |                    1 |
+               |      1991 |        1 |          1 |                    1 |
+               |      1992 |        1 |          1 |                    0 |
+               |      1993 |        1 |          1 |                    1 |
+               |      1992 |        1 |          1 |                    1 |
+               |      1994 |        1 |          1 |                    1 |
+               |      1990 |        1 |          1 |                    1 |
+               |      1991 |        1 |          1 |                    1 |
+               |      1992 |        1 |          1 |                    0 |
+               |      1993 |        1 |          1 |                    1 |
+               |      2000 |        1 |          1 |                    1 |
+                                                                  (48 rows)
 
                ----
-               /school.program.quotient(quotient(student,year(dob),gender),kernel(0)){kernel(),count(complement()),count(complement().complement()),count(complement().complement().is_active)}
+               /school.program.distinct(distinct(student{year(dob),gender}){*1}){*,count(^),count(^.^),count(^.^.is_active)}
                SELECT "STUDENT_1"."year",
                       COALESCE("STUDENT_2"."count", 0),
                       COALESCE("STUDENT_3"."count_1", 0),
@@ -19483,22 +19106,22 @@ tests:
                                      GROUP BY "STUDENT_1"."SCHOOL", "STUDENT_1"."PROGRAM", "STUDENT_1"."year") "STUDENT_3"
                                     ON (("STUDENT_1"."SCHOOL" = "STUDENT_3"."SCHOOL") AND ("STUDENT_1"."PROGRAM" = "STUDENT_3"."PROGRAM") AND ("STUDENT_1"."year" = "STUDENT_3"."year"))
                ORDER BY "SCHOOL"."CODE" ASC, "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC, 1 ASC
-          - uri: /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
+          - uri: /(program^degree){*, count(^)}?count(^)>5
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree)     |
-              -+------------------------------+-
-               | degree | count(complement()) |
-              -+--------+---------------------+-
-               | ba     |                   9 |
-               | bs     |                  12 |
-               | ma     |                   6 |
-                                       (3 rows)
+               | program^degree    |
+              -+-------------------+-
+               | degree | count(^) |
+              -+--------+----------+-
+               | ba     |        9 |
+               | bs     |       12 |
+               | ma     |        6 |
+                            (3 rows)
 
                ----
-               /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
+               /(program^degree){*,count(^)}?count(^)>5
                SELECT "PROGRAM_1"."DEGREE",
                       COALESCE("PROGRAM_2"."count", 0)
                FROM (SELECT "PROGRAM"."DEGREE"
@@ -19511,114 +19134,67 @@ tests:
                                     ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "PROGRAM_2"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                WHERE (COALESCE("PROGRAM_2"."count", 0) > 5)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(course,credits)?kernel()>3
+          - uri: /(course^credits)?*1>3
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (quotient(course,credits)?kernel()>3) |
-              -+---------------------------------------+-
-               | credits                               |
-              -+---------------------------------------+-
-               |                                     4 |
-               |                                     5 |
-               |                                     8 |
-                                                (3 rows)
+               | course^credits |
+              -+----------------+-
+               | credits        |
+              -+----------------+-
+               |              4 |
+               |              5 |
+               |              8 |
+                         (3 rows)
 
                ----
-               /quotient(course,credits)?kernel()>3
+               /(course^credits)?*1>3
                SELECT "COURSE"."CREDITS"
                FROM "HTSQL_REGRESS"."COURSE" "COURSE"
                GROUP BY "COURSE"."CREDITS"
                HAVING ("COURSE"."CREDITS" > 3)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(course,credits)?kernel(0)>3
+          - uri: /(course^credits){*1-}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(course,credits) |
-              -+--------------------------+-
-               | credits                  |
-              -+--------------------------+-
-               |                        4 |
-               |                        5 |
-               |                        8 |
-                                   (3 rows)
+               | course^credits |
+              -+----------------+-
+               | credits        |
+              -+----------------+-
+               |              8 |
+               |              5 |
+               |              4 |
+               |              3 |
+               |              2 |
+               |              1 |
+               |              0 |
+               |                |
+                         (8 rows)
 
                ----
-               /quotient(course,credits)?kernel(0)>3
-               SELECT "COURSE"."CREDITS"
-               FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-               GROUP BY "COURSE"."CREDITS"
-               HAVING ("COURSE"."CREDITS" > 3)
-               ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(course,credits){kernel()-}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(course,credits) |
-              -+--------------------------+-
-               | kernel()-                |
-              -+--------------------------+-
-               |                        8 |
-               |                        5 |
-               |                        4 |
-               |                        3 |
-               |                        2 |
-               |                        1 |
-               |                        0 |
-               |                          |
-                                   (8 rows)
-
-               ----
-               /quotient(course,credits){kernel()-}
+               /(course^credits){*1-}
                SELECT "COURSE"."CREDITS"
                FROM "HTSQL_REGRESS"."COURSE" "COURSE"
                GROUP BY "COURSE"."CREDITS"
                ORDER BY 1 DESC NULLS LAST
-          - uri: /quotient(course,credits){kernel(0)-}
+          - uri: /(((department?code='stdart').course^credits)?*1>3) {*, count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(course,credits) |
-              -+--------------------------+-
-               | credits                  |
-              -+--------------------------+-
-               |                        8 |
-               |                        5 |
-               |                        4 |
-               |                        3 |
-               |                        2 |
-               |                        1 |
-               |                        0 |
-               |                          |
-                                   (8 rows)
+               | (department?code='stdart').course^credits |
+              -+-------------------------------------------+-
+               | credits             | count(^)            |
+              -+---------------------+---------------------+-
+               |                   4 |                   2 |
+               |                   5 |                   1 |
+                                                    (2 rows)
 
                ----
-               /quotient(course,credits){kernel(0)-}
-               SELECT "COURSE"."CREDITS"
-               FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-               GROUP BY "COURSE"."CREDITS"
-               ORDER BY 1 DESC NULLS LAST
-          - uri: /(quotient((department?code='stdart').course,credits)?kernel()>3)
-              {*,count(complement())}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | (quotient((department?code='stdart').course,credits)?kernel()>3) |
-              -+------------------------------------------------------------------+-
-               | credits                   | count(complement())                  |
-              -+---------------------------+--------------------------------------+-
-               |                         4 |                                    2 |
-               |                         5 |                                    1 |
-                                                                           (2 rows)
-
-               ----
-               /(quotient((department?code='stdart').course,credits)?kernel()>3){*,count(complement())}
+               /(((department?code='stdart').course^credits)?*1>3){*,count(^)}
                SELECT "COURSE_1"."CREDITS",
                       COALESCE("COURSE_2"."count", 0)
                FROM (SELECT "COURSE"."CREDITS"
@@ -19637,61 +19213,27 @@ tests:
                                     ON ((CASE WHEN ("COURSE_1"."CREDITS" = "COURSE_2"."CREDITS") OR ("COURSE_1"."CREDITS" IS NULL AND "COURSE_2"."CREDITS" IS NULL) THEN 1 ELSE 0 END) <> 0)
                WHERE ("COURSE_1"."CREDITS" > 3)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /(quotient((department?code='stdart').course,credits)?kernel(0)>3)
-              {*,count(complement())}
+          - uri: /(school^count(program)){*, count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient((department?code='stdart').course,credits) |
-              -+-----------------------------------------------------+-
-               | credits            | count(complement())            |
-              -+--------------------+--------------------------------+-
-               |                  4 |                              2 |
-               |                  5 |                              1 |
-                                                              (2 rows)
+               | school^count(program)     |
+              -+---------------------------+-
+               | count(program) | count(^) |
+              -+----------------+----------+-
+               |              0 |        2 |
+               |              1 |        1 |
+               |              3 |        1 |
+               |              5 |        1 |
+               |              6 |        1 |
+               |              7 |        1 |
+               |              8 |        1 |
+               |              9 |        1 |
+                                    (8 rows)
 
                ----
-               /(quotient((department?code='stdart').course,credits)?kernel(0)>3){*,count(complement())}
-               SELECT "COURSE_1"."CREDITS",
-                      COALESCE("COURSE_2"."count", 0)
-               FROM (SELECT "COURSE"."CREDITS"
-                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                          INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                                     ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT")
-                     WHERE ("DEPARTMENT"."CODE" = 'stdart')
-                     GROUP BY "COURSE"."CREDITS") "COURSE_1"
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "COURSE"."CREDITS"
-                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                          INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                     ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT")
-                                     WHERE ("DEPARTMENT"."CODE" = 'stdart')
-                                     GROUP BY "COURSE"."CREDITS") "COURSE_2"
-                                    ON ((CASE WHEN ("COURSE_1"."CREDITS" = "COURSE_2"."CREDITS") OR ("COURSE_1"."CREDITS" IS NULL AND "COURSE_2"."CREDITS" IS NULL) THEN 1 ELSE 0 END) <> 0)
-               WHERE ("COURSE_1"."CREDITS" > 3)
-               ORDER BY 1 ASC NULLS FIRST
-          - uri: /quotient(school,count(program)){kernel(),count(complement())}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | quotient(school,count(program))      |
-              -+--------------------------------------+-
-               | count(program) | count(complement()) |
-              -+----------------+---------------------+-
-               |              0 |                   2 |
-               |              1 |                   1 |
-               |              3 |                   1 |
-               |              5 |                   1 |
-               |              6 |                   1 |
-               |              7 |                   1 |
-               |              8 |                   1 |
-               |              9 |                   1 |
-                                               (8 rows)
-
-               ----
-               /quotient(school,count(program)){kernel(),count(complement())}
+               /(school^count(program)){*,count(^)}
                SELECT "SCHOOL_1"."count",
                       COALESCE("SCHOOL_2"."count_1", 0)
                FROM (SELECT COALESCE("PROGRAM"."count", 0) AS "count"
@@ -19713,35 +19255,35 @@ tests:
                                      GROUP BY COALESCE("PROGRAM"."count", 0)) "SCHOOL_2"
                                     ON ("SCHOOL_1"."count" = "SCHOOL_2"."count_2")
                ORDER BY 1 ASC
-          - uri: /school.quotient(program, degree)
+          - uri: /school.(program^degree)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree) |
-              -+--------------------------+-
-               | degree                   |
-              -+--------------------------+-
-               | ba                       |
-               | pb                       |
-               | bs                       |
-               | ct                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | ms                       |
-               | bs                       |
-               | ms                       |
-               | ba                       |
-               | ct                       |
-               | ma                       |
-               | bs                       |
-               | ph                       |
-               |                          |
-                                  (16 rows)
+               | program^degree |
+              -+----------------+-
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | pb             |
+               | bs             |
+               | ct             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ms             |
+               | bs             |
+               | ms             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | bs             |
+               | ph             |
+               |                |
+                        (16 rows)
 
                ----
-               /school.quotient(program,degree)
+               /school.(program^degree)
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -19750,68 +19292,68 @@ tests:
                                 GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /department.quotient(school.program, degree)
+          - uri: /department.(school.program^degree)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(school.program,degree) |
-              -+---------------------------------+-
-               | degree                          |
-              -+---------------------------------+-
-               | bs                              |
-               | ct                              |
-               | ba                              |
-               | pb                              |
-               | bs                              |
-               | ph                              |
-               | bs                              |
-               | ms                              |
-               | bs                              |
-               | ct                              |
-               | bs                              |
-               | ph                              |
-               | bs                              |
-               | ms                              |
-               | bs                              |
-               | ct                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ms                              |
-               | bs                              |
-               | ms                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | bs                              |
-               | ms                              |
-               | bs                              |
-               | ph                              |
-               | bs                              |
-               | ph                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ba                              |
-               | pb                              |
-               | ba                              |
-               | ct                              |
-               | ma                              |
-               | ms                              |
-                                         (49 rows)
+               | school.program^degree |
+              -+-----------------------+-
+               | degree                |
+              -+-----------------------+-
+               | bs                    |
+               | ct                    |
+               | ba                    |
+               | pb                    |
+               | bs                    |
+               | ph                    |
+               | bs                    |
+               | ms                    |
+               | bs                    |
+               | ct                    |
+               | bs                    |
+               | ph                    |
+               | bs                    |
+               | ms                    |
+               | bs                    |
+               | ct                    |
+               | ba                    |
+               | ct                    |
+               | ma                    |
+               | ms                    |
+               | bs                    |
+               | ms                    |
+               | ba                    |
+               | ct                    |
+               | ma                    |
+               | ba                    |
+               | ct                    |
+               | ma                    |
+               | ba                    |
+               | ct                    |
+               | ma                    |
+               | bs                    |
+               | ms                    |
+               | bs                    |
+               | ph                    |
+               | bs                    |
+               | ph                    |
+               | ba                    |
+               | ct                    |
+               | ma                    |
+               | ba                    |
+               | ct                    |
+               | ma                    |
+               | ba                    |
+               | pb                    |
+               | ba                    |
+               | ct                    |
+               | ma                    |
+               | ms                    |
+                               (49 rows)
 
                ----
-               /department.quotient(school.program,degree)
+               /department.(school.program^degree)
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
                     LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
@@ -19822,23 +19364,23 @@ tests:
                                 GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
                ORDER BY "DEPARTMENT"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /department.quotient((school?code='art').program, degree)
+          - uri: /department.((school?code='art').program^degree)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient((school?code='art').program,degree) |
-              -+----------------------------------------------+-
-               | degree                                       |
-              -+----------------------------------------------+-
-               | ba                                           |
-               | pb                                           |
-               | ba                                           |
-               | pb                                           |
-                                                       (4 rows)
+               | (school?code='art').program^degree |
+              -+------------------------------------+-
+               | degree                             |
+              -+------------------------------------+-
+               | ba                                 |
+               | pb                                 |
+               | ba                                 |
+               | pb                                 |
+                                             (4 rows)
 
                ----
-               /department.quotient((school?code='art').program,degree)
+               /department.((school?code='art').program^degree)
                SELECT "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
                     INNER JOIN (SELECT "PROGRAM"."DEGREE",
@@ -19850,7 +19392,7 @@ tests:
                                 GROUP BY "SCHOOL"."CODE", "PROGRAM"."SCHOOL", "PROGRAM"."DEGREE") "PROGRAM"
                                ON ("DEPARTMENT"."SCHOOL" = "PROGRAM"."CODE")
                ORDER BY "DEPARTMENT"."CODE" ASC, 1 ASC NULLS FIRST
-          - uri: /quotient(program,degree).complement()
+          - uri: /(program^degree).^
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -19913,7 +19455,7 @@ tests:
                                                                                  (39 rows)
 
                ----
-               /quotient(program,degree).complement()
+               /(program^degree).^
                SELECT "PROGRAM_2"."SCHOOL",
                       "PROGRAM_2"."CODE",
                       "PROGRAM_2"."TITLE",
@@ -19930,7 +19472,7 @@ tests:
                                 FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
                                ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "PROGRAM_2"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, 1 ASC, 2 ASC
-          - uri: /quotient(program.sort(count(student)),degree).complement() {*, count(student)}
+          - uri: /(program.sort(count(student))^degree).^ {*, count(student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -19993,7 +19535,7 @@ tests:
                                                                                                   (39 rows)
 
                ----
-               /quotient(program.sort(count(student)),degree).complement(){*,count(student)}
+               /(program.sort(count(student))^degree).^{*,count(student)}
                SELECT "PROGRAM_2"."SCHOOL",
                       "PROGRAM_2"."CODE",
                       "PROGRAM_2"."TITLE",
@@ -20028,27 +19570,27 @@ tests:
                                                      ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))) "PROGRAM_3"
                                ON (("PROGRAM_2"."SCHOOL" = "PROGRAM_3"."SCHOOL") AND ("PROGRAM_2"."CODE" = "PROGRAM_3"."CODE"))
                ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_3"."count" ASC, 1 ASC, 2 ASC
-          - uri: /quotient(program,degree){*,exists(complement()),count(complement())}
+          - uri: /(program^degree){*, exists(^), count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | quotient(program,degree)                            |
-              -+-----------------------------------------------------+-
-               | degree | exists(complement()) | count(complement()) |
-              -+--------+----------------------+---------------------+-
-               |        | true                 |                   1 |
-               | ba     | true                 |                   9 |
-               | bs     | true                 |                  12 |
-               | ct     | true                 |                   4 |
-               | ma     | true                 |                   6 |
-               | ms     | true                 |                   5 |
-               | pb     | true                 |                   1 |
-               | ph     | true                 |                   1 |
-                                                              (8 rows)
+               | program^degree                |
+              -+-------------------------------+-
+               | degree | exists(^) | count(^) |
+              -+--------+-----------+----------+-
+               |        | true      |        1 |
+               | ba     | true      |        9 |
+               | bs     | true      |       12 |
+               | ct     | true      |        4 |
+               | ma     | true      |        6 |
+               | ms     | true      |        5 |
+               | pb     | true      |        1 |
+               | ph     | true      |        1 |
+                                        (8 rows)
 
                ----
-               /quotient(program,degree){*,exists(complement()),count(complement())}
+               /(program^degree){*,exists(^),count(^)}
                SELECT "PROGRAM_1"."DEGREE",
                       (CASE WHEN EXISTS(SELECT 1
                                         FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
@@ -20064,28 +19606,28 @@ tests:
                                      GROUP BY "PROGRAM"."DEGREE") "PROGRAM_2"
                                     ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "PROGRAM_2"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /school{code,count(program),count(quotient(program,degree))}
+          - uri: /school{code, count(program), count(distinct(program{degree}))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                  |
-              -+---------------------------------------------------------+-
-               | code | count(program) | count(quotient(program,degree)) |
-              -+------+----------------+---------------------------------+-
-               | art  |              3 |                               2 |
-               | bus  |              5 |                               2 |
-               | edu  |              7 |                               4 |
-               | eng  |              8 |                               2 |
-               | la   |              9 |                               3 |
-               | mus  |              0 |                               0 |
-               | ns   |              6 |                               2 |
-               | ph   |              1 |                               1 |
-               | sc   |              0 |                               0 |
-                                                                  (9 rows)
+               | school                                                   |
+              -+----------------------------------------------------------+-
+               | code | count(program) | count(distinct(program{degree})) |
+              -+------+----------------+----------------------------------+-
+               | art  |              3 |                                2 |
+               | bus  |              5 |                                2 |
+               | edu  |              7 |                                4 |
+               | eng  |              8 |                                2 |
+               | la   |              9 |                                3 |
+               | mus  |              0 |                                0 |
+               | ns   |              6 |                                2 |
+               | ph   |              1 |                                1 |
+               | sc   |              0 |                                0 |
+                                                                   (9 rows)
 
                ----
-               /school{code,count(program),count(quotient(program,degree))}
+               /school{code,count(program),count(distinct(program{degree}))}
                SELECT "SCHOOL"."CODE",
                       COALESCE("PROGRAM_1"."count", 0),
                       COALESCE("PROGRAM_2"."count", 0)
@@ -20103,7 +19645,7 @@ tests:
                                      GROUP BY "PROGRAM"."SCHOOL") "PROGRAM_2"
                                     ON ("SCHOOL"."CODE" = "PROGRAM_2"."SCHOOL")
                ORDER BY 1 ASC
-          - uri: /school{code,count(program),count(program^degree)}
+          - uri: /school{code, count(program), count(program^degree)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20142,7 +19684,7 @@ tests:
                                      GROUP BY "PROGRAM"."SCHOOL") "PROGRAM_2"
                                     ON ("SCHOOL"."CODE" = "PROGRAM_2"."SCHOOL")
                ORDER BY 1 ASC
-          - uri: /(program^degree){*,count(^),count(^.student)}
+          - uri: /(program^degree){*, count(^), count(^.student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20182,7 +19724,7 @@ tests:
                                      GROUP BY "PROGRAM"."DEGREE") "STUDENT"
                                     ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /(student^{year(dob),gender}){*,count(^),count(^?is_active)}
+          - uri: /(student^{year(dob),gender}){*, count(^), count(^?is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20261,7 +19803,7 @@ tests:
                FROM (SELECT 1 AS "^"
                      FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                      GROUP BY "PROGRAM"."DEGREE") "PROGRAM"
-          - uri: /distinct(program{degree}){*,count(^),count(^.student)}
+          - uri: /distinct(program{degree}) {*, count(^), count(^.student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20301,7 +19843,7 @@ tests:
                                      GROUP BY "PROGRAM"."DEGREE") "STUDENT"
                                     ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /distinct(program{degree}?school={'art','la'}){*,count(^),count(^.student)}
+          - uri: /distinct(program{degree}?school={'art','la'}) {*, count(^), count(^.student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20340,7 +19882,7 @@ tests:
                                      GROUP BY "PROGRAM"."DEGREE") "STUDENT"
                                     ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /distinct(program{degree}){*,count(^),count(^.student)}?kernel(0)
+          - uri: /distinct(program{degree}) {*, count(^), count(^.student)}?*1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20359,7 +19901,7 @@ tests:
                                                (7 rows)
 
                ----
-               /distinct(program{degree}){*,count(^),count(^.student)}?kernel(0)
+               /distinct(program{degree}){*,count(^),count(^.student)}?*1
                SELECT "PROGRAM_1"."DEGREE",
                       COALESCE("PROGRAM_2"."count", 0),
                       COALESCE("STUDENT"."count", 0)
@@ -20380,7 +19922,8 @@ tests:
                                     ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
                WHERE ("PROGRAM_1"."DEGREE" IS NOT NULL)
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /(school?code={'art','la'}).distinct(program{degree}){*,count(^),count(^.student)}
+          - uri: /(school?code={'art','la'}).distinct(program{degree}) {*, count(^),
+              count(^.student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]

@@ -123,8 +123,9 @@ class QueryParser(Parser):
         assignment      ::= specifier ( ':=' test )?
         specifier       ::= selection ( '.' selection )*
         selection       ::= atom selector?
-        atom            ::= '*' | '^' | selector | group |
+        atom            ::= '*' index? | '^' | selector | group |
                             identifier call? | literal
+        index           ::= NUMBER | '(' NUMBER ')'
 
         group           ::= '(' test ')'
         call            ::= '(' tests? ')'
@@ -548,14 +549,26 @@ class AtomParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Parses the productions:
-        #   atom            ::= '*' | '^' | selector | group |
+        #   atom            ::= '*' index? | '^' | selector | group |
         #                       identifier call? | literal
+        #   index           ::= NUMBER | '(' NUMBER ')'
         #   call            ::= '(' tests? ')'
         #   tests           ::= test ( ',' test )* ','?
         #   literal         ::= STRING | NUMBER
         if tokens.peek(SymbolToken, ['*']):
             symbol_token = tokens.pop(SymbolToken, ['*'])
-            wildcard = WildcardSyntax(symbol_token.mark)
+            index = None
+            if tokens.peek(NumberToken):
+                index_token = tokens.pop(NumberToken)
+                index = NumberSyntax(index_token.value, index_token.mark)
+            elif tokens.peek(SymbolToken, ['(']):
+                open_token = tokens.pop(SymbolToken, '(')
+                index_token = tokens.pop(NumberToken)
+                close_token = tokens.pop(SymbolToken, ')')
+                mark = Mark.union(open_token, close_token)
+                index = NumberSyntax(index_token.value, mark)
+            mark = Mark.union(symbol_token, index)
+            wildcard = WildcardSyntax(index, mark)
             return wildcard
         if tokens.peek(SymbolToken, ['^']):
             symbol_token = tokens.pop(SymbolToken, ['^'])
