@@ -74,39 +74,41 @@ class Mark(object):
         self.start = start
         self.end = end
 
-    def pointer(self):
+    def excerpt(self):
         """
-        Returns a string consisting of space and ``^`` characters that
-        could be used for underlining the mark in the original query.
-
-        For instance, assume the query is::
-
-            /{2+2}
-
-        and the mark points to the expression ``2+2``.  In this case,
-        the method will produce the string::
-
-            '  ^^^'
-
-        If we print the query and the pointer on two subsequent lines,
-        we get::
-
-            /{2+2}
-              ^^^
+        Returns a list of lines that consists an except of the original
+        query with ``^`` characters underlining the mark.
         """
+        # Find the line that contains the mark.
+        excerpt_start = self.input.rfind('\n', 0, self.start)+1
+        excerpt_end = self.input.find('\n', excerpt_start)
+        if excerpt_end == -1:
+            excerpt_end = len(self.input)
+
+        # Assuming that the mark could be multiline, find the
+        # beginning and the end of the mark in the selected excerpt.
+        pointer_start = max(self.start, excerpt_start)
+        pointer_end = min(self.end, excerpt_end)
+
         # For the pointer to be displayed properly, the lengths of
         # the indent and of the underline should be measured in Unicode
         # characters.
         try:
-            indent_length = len(self.input[:self.start].decode('utf-8'))
-            line_length = len(self.input[self.start:self.end].decode('utf-8'))
+            pointer_indent = len(self.input[excerpt_start:pointer_start]
+                                                        .decode('utf-8'))
+            pointer_length = len(self.input[pointer_start:pointer_end]
+                                                        .decode('utf-8'))
         except UnicodeDecodeError:
             # It might happen that the query is not UTF-8 encoded, in
             # which case we could only approximate.
-            indent_length = self.start
-            line_length = self.end-self.start
-        pointer = ' '*indent_length + '^'*max(line_length, 1)
-        return pointer
+            pointer_indent = pointer_start-excerpt_start
+            pointer_length = pointer_end-pointer_start
+
+        # Generate the exerpt and the pointer lines.
+        lines = []
+        lines.append(self.input[excerpt_start:excerpt_end])
+        lines.append(' '*pointer_indent + '^'*max(pointer_length, 1))
+        return lines
 
     def __str__(self):
         return "%r >>> %r <<< %r" % (self.input[:self.start],

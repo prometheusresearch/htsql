@@ -67,7 +67,8 @@ class HTTPError(Exception):
         return [str(self), "\n"]
 
     def __str__(self):
-        mark_detail = "    %s\n    %s" % (self.mark.input, self.mark.pointer())
+        lines = self.mark.excerpt()
+        mark_detail = "\n".join("    "+line for line in lines)
         return "%s: %s:\n%s" % (self.kind, self.detail, mark_detail)
 
     def __repr__(self):
