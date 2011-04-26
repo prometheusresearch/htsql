@@ -193,6 +193,8 @@ tests:
             :where program := program?school='eng'
     - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
             :where program := program.limit(10,15)
+    # fork() with projections
+    - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
 
   - title: Table Expressions
     tests:

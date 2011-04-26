@@ -17298,6 +17298,45 @@ tests:
                WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
                      AND ("PROGRAM_1"."limit" >= 16)
                ORDER BY 1 ASC, 2 ASC
+          - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program^degree |
+              -+----------------+-
+               | degree         |
+              -+----------------+-
+               | bs             |
+                          (1 row)
+
+               ----
+               /(program^degree)?count(^.student)=max(fork().count(^.student))
+               SELECT "PROGRAM_1"."DEGREE"
+               FROM (SELECT "PROGRAM"."DEGREE"
+                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                     GROUP BY "PROGRAM"."DEGREE") "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "PROGRAM"."DEGREE"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                          INNER JOIN "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                     ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
+                                     GROUP BY "PROGRAM"."DEGREE") "STUDENT"
+                                    ON ((CASE WHEN ("PROGRAM_1"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM_1"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)
+                    LEFT OUTER JOIN (SELECT MAX(COALESCE("STUDENT"."count", 0)) AS "max"
+                                     FROM (SELECT "PROGRAM"."DEGREE"
+                                           FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                           GROUP BY "PROGRAM"."DEGREE") "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "PROGRAM"."DEGREE"
+                                                           FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                                                INNER JOIN "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                                           ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
+                                                           GROUP BY "PROGRAM"."DEGREE") "STUDENT"
+                                                          ON ((CASE WHEN ("PROGRAM"."DEGREE" = "STUDENT"."DEGREE") OR ("PROGRAM"."DEGREE" IS NULL AND "STUDENT"."DEGREE" IS NULL) THEN 1 ELSE 0 END) <> 0)) "PROGRAM_2"
+                                    ON (1 <> 0)
+               WHERE (COALESCE("STUDENT"."count", 0) = "PROGRAM_2"."max")
+               ORDER BY 1 ASC NULLS FIRST
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

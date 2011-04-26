@@ -17198,6 +17198,45 @@ tests:
                      AND ([program_1].[limit] >= 16)
                      AND ([program_1].[limit] < 26)
                ORDER BY 1 ASC, 2 ASC
+          - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program^degree |
+              -+----------------+-
+               | degree         |
+              -+----------------+-
+               | bs             |
+                          (1 row)
+
+               ----
+               /(program^degree)?count(^.student)=max(fork().count(^.student))
+               SELECT [program_1].[degree]
+               FROM (SELECT [program].[degree]
+                     FROM [ad].[program] AS [program]
+                     GROUP BY [program].[degree]) AS [program_1]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[degree]
+                                     FROM [ad].[program] AS [program]
+                                          INNER JOIN [ed].[student] AS [student]
+                                                     ON (([program].[school] = [student].[school]) AND ([program].[code] = [student].[program]))
+                                     GROUP BY [program].[degree]) AS [student]
+                                    ON ((CASE WHEN ([program_1].[degree] = [student].[degree]) OR ([program_1].[degree] IS NULL AND [student].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)
+                    LEFT OUTER JOIN (SELECT MAX(COALESCE([student].[count], 0)) AS [max]
+                                     FROM (SELECT [program].[degree]
+                                           FROM [ad].[program] AS [program]
+                                           GROUP BY [program].[degree]) AS [program]
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                                  [program].[degree]
+                                                           FROM [ad].[program] AS [program]
+                                                                INNER JOIN [ed].[student] AS [student]
+                                                                           ON (([program].[school] = [student].[school]) AND ([program].[code] = [student].[program]))
+                                                           GROUP BY [program].[degree]) AS [student]
+                                                          ON ((CASE WHEN ([program].[degree] = [student].[degree]) OR ([program].[degree] IS NULL AND [student].[degree] IS NULL) THEN 1 ELSE 0 END) <> 0)) AS [program_2]
+                                    ON (1 <> 0)
+               WHERE (COALESCE([student].[count], 0) = [program_2].[max])
+               ORDER BY 1 ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

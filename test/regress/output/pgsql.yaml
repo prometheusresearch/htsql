@@ -17215,6 +17215,45 @@ tests:
                                     ON (("program_1"."school" = "program_2"."school") AND ("program_1"."code" = "program_2"."code"))
                WHERE (CAST(COALESCE("student"."count", 0) AS NUMERIC) > "program_2"."avg")
                ORDER BY 1 ASC, 2 ASC
+          - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program^degree |
+              -+----------------+-
+               | degree         |
+              -+----------------+-
+               | bs             |
+                          (1 row)
+
+               ----
+               /(program^degree)?count(^.student)=max(fork().count(^.student))
+               SELECT "program_1"."degree"
+               FROM (SELECT "program"."degree"
+                     FROM "ad"."program" AS "program"
+                     GROUP BY 1) AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                            "program"."degree"
+                                     FROM "ad"."program" AS "program"
+                                          INNER JOIN "ed"."student" AS "student"
+                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                     GROUP BY 2) AS "student"
+                                    ON ("program_1"."degree" IS NOT DISTINCT FROM "student"."degree")
+                    LEFT OUTER JOIN (SELECT MAX(COALESCE("student"."count", 0)) AS "max"
+                                     FROM (SELECT "program"."degree"
+                                           FROM "ad"."program" AS "program"
+                                           GROUP BY 1) AS "program"
+                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                                                  "program"."degree"
+                                                           FROM "ad"."program" AS "program"
+                                                                INNER JOIN "ed"."student" AS "student"
+                                                                           ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
+                                                           GROUP BY 2) AS "student"
+                                                          ON ("program"."degree" IS NOT DISTINCT FROM "student"."degree")) AS "program_2"
+                                    ON TRUE
+               WHERE (COALESCE("student"."count", 0) = "program_2"."max")
+               ORDER BY 1 ASC NULLS FIRST
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department
