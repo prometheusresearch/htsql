@@ -2116,26 +2116,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | part_of                                                           |
-            -+-------------------------------------------------------------------+-
-             | school | code | title                          | degree | part_of |
-            -+--------+------+--------------------------------+--------+---------+-
-             | eng    | gme  | M.S. in Mechanical Engineering | ms     |         |
-                                                                           (1 row)
+             |         |
+            -+---------+-
+             | part_of |
+            -+---------+-
+             | gme     |
+                 (1 row)
 
              ----
              /(program?school='eng'&code='umech').part_of
-             SELECT "PROGRAM_2"."SCHOOL",
-                    "PROGRAM_2"."CODE",
-                    "PROGRAM_2"."TITLE",
-                    "PROGRAM_2"."DEGREE",
-                    "PROGRAM_2"."PART_OF"
-             FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
-                  INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM_2"
-                             ON (("PROGRAM_1"."SCHOOL" = "PROGRAM_2"."SCHOOL") AND ("PROGRAM_1"."PART_OF" = "PROGRAM_2"."CODE"))
-             WHERE ("PROGRAM_1"."SCHOOL" = 'eng')
-                   AND ("PROGRAM_1"."CODE" = 'umech')
-             ORDER BY "PROGRAM_1"."SCHOOL" ASC, "PROGRAM_1"."CODE" ASC
+             SELECT "PROGRAM"."PART_OF"
+             FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+             WHERE ("PROGRAM"."SCHOOL" = 'eng')
+                   AND ("PROGRAM"."CODE" = 'umech')
+             ORDER BY "PROGRAM"."SCHOOL" ASC, "PROGRAM"."CODE" ASC
         - uri: /(program?school='eng'&code='umech').program
           status: 200 OK
           headers:
@@ -2521,10 +2515,8 @@ tests:
                     "DEPARTMENT"."NAME",
                     "DEPARTMENT"."SCHOOL"
              FROM "HTSQL_REGRESS"."CLASS" "CLASS"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("CLASS"."DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("CLASS"."COURSE" = "COURSE"."NO"))
                   INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                             ON ("COURSE"."DEPARTMENT" = "DEPARTMENT"."CODE")
+                             ON ("CLASS"."DEPARTMENT" = "DEPARTMENT"."CODE")
              WHERE ("CLASS"."CLASS_SEQ" = 10086)
              ORDER BY "CLASS"."DEPARTMENT" ASC, "CLASS"."COURSE" ASC, "CLASS"."YEAR" ASC, "CLASS"."SEASON" ASC, "CLASS"."SECTION" ASC
         - uri: /(class?class_seq=10086).course
@@ -2532,30 +2524,19 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course                                                                                     |
-            -+--------------------------------------------------------------------------------------------+-
-             | department | no  | title                      | credits | description                      |
-            -+------------+-----+----------------------------+---------+----------------------------------+-
-             | acc        | 200 | Principles of Accounting I |       3 | The initial course in the theory |
-             :            :     :                            :         : and practice of financial        :
-             :            :     :                            :         : accounting. Topics emphasized    :
-             :            :     :                            :         : include the preparation,         :
-             :            :     :                            :         : reporting, and analysis of       :
-             :            :     :                            :         : financial data.                  :
-                                                                                                    (1 row)
+             |        |
+            -+--------+-
+             | course |
+            -+--------+-
+             |    200 |
+                (1 row)
 
              ----
              /(class?class_seq=10086).course
-             SELECT "COURSE"."DEPARTMENT",
-                    "COURSE"."NO",
-                    "COURSE"."TITLE",
-                    "COURSE"."CREDITS",
-                    "COURSE"."DESCRIPTION"
+             SELECT "CLASS"."COURSE"
              FROM "HTSQL_REGRESS"."CLASS" "CLASS"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("CLASS"."DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("CLASS"."COURSE" = "COURSE"."NO"))
              WHERE ("CLASS"."CLASS_SEQ" = 10086)
-             ORDER BY "CLASS"."DEPARTMENT" ASC, "CLASS"."COURSE" ASC, "CLASS"."YEAR" ASC, "CLASS"."SEASON" ASC, "CLASS"."SECTION" ASC
+             ORDER BY "CLASS"."DEPARTMENT" ASC, 1 ASC, "CLASS"."YEAR" ASC, "CLASS"."SEASON" ASC, "CLASS"."SECTION" ASC
         - uri: /(class?class_seq=10086).semester
           status: 200 OK
           headers:
@@ -2570,52 +2551,6 @@ tests:
 
              ----
              /(class?class_seq=10086).semester
-             SELECT "SEMESTER"."YEAR",
-                    "SEMESTER"."SEASON",
-                    "SEMESTER"."BEGIN_DATE",
-                    "SEMESTER"."END_DATE"
-             FROM "HTSQL_REGRESS"."CLASS" "CLASS"
-                  INNER JOIN "HTSQL_REGRESS"."SEMESTER" "SEMESTER"
-                             ON (("CLASS"."YEAR" = "SEMESTER"."YEAR") AND ("CLASS"."SEASON" = "SEMESTER"."SEASON"))
-             WHERE ("CLASS"."CLASS_SEQ" = 10086)
-             ORDER BY "CLASS"."DEPARTMENT" ASC, "CLASS"."COURSE" ASC, "CLASS"."YEAR" ASC, "CLASS"."SEASON" ASC, "CLASS"."SECTION" ASC
-        - uri: /(class?class_seq=10086).year
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | year                                    |
-            -+-----------------------------------------+-
-             | year | season | begin_date | end_date   |
-            -+------+--------+------------+------------+-
-             | 2010 | summer | 2011-06-01 | 2011-08-01 |
-                                                 (1 row)
-
-             ----
-             /(class?class_seq=10086).year
-             SELECT "SEMESTER"."YEAR",
-                    "SEMESTER"."SEASON",
-                    "SEMESTER"."BEGIN_DATE",
-                    "SEMESTER"."END_DATE"
-             FROM "HTSQL_REGRESS"."CLASS" "CLASS"
-                  INNER JOIN "HTSQL_REGRESS"."SEMESTER" "SEMESTER"
-                             ON (("CLASS"."YEAR" = "SEMESTER"."YEAR") AND ("CLASS"."SEASON" = "SEMESTER"."SEASON"))
-             WHERE ("CLASS"."CLASS_SEQ" = 10086)
-             ORDER BY "CLASS"."DEPARTMENT" ASC, "CLASS"."COURSE" ASC, "CLASS"."YEAR" ASC, "CLASS"."SEASON" ASC, "CLASS"."SECTION" ASC
-        - uri: /(class?class_seq=10086).season
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | season                                  |
-            -+-----------------------------------------+-
-             | year | season | begin_date | end_date   |
-            -+------+--------+------------+------------+-
-             | 2010 | summer | 2011-06-01 | 2011-08-01 |
-                                                 (1 row)
-
-             ----
-             /(class?class_seq=10086).season
              SELECT "SEMESTER"."YEAR",
                     "SEMESTER"."SEASON",
                     "SEMESTER"."BEGIN_DATE",
@@ -2690,10 +2625,8 @@ tests:
              SELECT "SCHOOL"."CODE",
                     "SCHOOL"."NAME"
              FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                  INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                             ON (("STUDENT"."SCHOOL" = "PROGRAM"."SCHOOL") AND ("STUDENT"."PROGRAM" = "PROGRAM"."CODE"))
                   INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                             ON ("PROGRAM"."SCHOOL" = "SCHOOL"."CODE")
+                             ON ("STUDENT"."SCHOOL" = "SCHOOL"."CODE")
              WHERE ("STUDENT"."ID" = 25371)
              ORDER BY "STUDENT"."ID" ASC
         - uri: /(student?id=25371).program
@@ -2701,23 +2634,17 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                |
-            -+------------------------------------------------------------------------+-
-             | school | code    | title                            | degree | part_of |
-            -+--------+---------+----------------------------------+--------+---------+-
-             | eng    | gbuseng | M.S. in Business and Engineering | ms     |         |
-                                                                                (1 row)
+             |         |
+            -+---------+-
+             | program |
+            -+---------+-
+             | gbuseng |
+                 (1 row)
 
              ----
              /(student?id=25371).program
-             SELECT "PROGRAM"."SCHOOL",
-                    "PROGRAM"."CODE",
-                    "PROGRAM"."TITLE",
-                    "PROGRAM"."DEGREE",
-                    "PROGRAM"."PART_OF"
+             SELECT "STUDENT"."PROGRAM"
              FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                  INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                             ON (("STUDENT"."SCHOOL" = "PROGRAM"."SCHOOL") AND ("STUDENT"."PROGRAM" = "PROGRAM"."CODE"))
              WHERE ("STUDENT"."ID" = 25371)
              ORDER BY "STUDENT"."ID" ASC
         - uri: /(student?id=25371).enrollment
@@ -2804,55 +2731,43 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | of_department                     |
-            -+-----------------------------------+-
-             | code   | name            | school |
-            -+--------+-----------------+--------+-
-             | capmrk | Capital Markets | bus    |
-                                           (1 row)
+             |               |
+            -+---------------+-
+             | of_department |
+            -+---------------+-
+             | capmrk        |
+                       (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).of_department
-             SELECT "DEPARTMENT"."CODE",
-                    "DEPARTMENT"."NAME",
-                    "DEPARTMENT"."SCHOOL"
+             SELECT "PREREQUISITE"."OF_DEPARTMENT"
              FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("PREREQUISITE"."OF_DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("PREREQUISITE"."OF_COURSE" = "COURSE"."NO"))
-                  INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                             ON ("COURSE"."DEPARTMENT" = "DEPARTMENT"."CODE")
              WHERE ("PREREQUISITE"."OF_DEPARTMENT" = 'capmrk')
                    AND ("PREREQUISITE"."OF_COURSE" = 818)
                    AND ("PREREQUISITE"."ON_DEPARTMENT" = 'acc')
                    AND ("PREREQUISITE"."ON_COURSE" = 315)
-             ORDER BY "PREREQUISITE"."OF_DEPARTMENT" ASC, "PREREQUISITE"."OF_COURSE" ASC, "PREREQUISITE"."ON_DEPARTMENT" ASC, "PREREQUISITE"."ON_COURSE" ASC
+             ORDER BY 1 ASC, "PREREQUISITE"."OF_COURSE" ASC, "PREREQUISITE"."ON_DEPARTMENT" ASC, "PREREQUISITE"."ON_COURSE" ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).on_department
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | on_department              |
-            -+----------------------------+-
-             | code | name       | school |
-            -+------+------------+--------+-
-             | acc  | Accounting | bus    |
-                                    (1 row)
+             |               |
+            -+---------------+-
+             | on_department |
+            -+---------------+-
+             | acc           |
+                       (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).on_department
-             SELECT "DEPARTMENT"."CODE",
-                    "DEPARTMENT"."NAME",
-                    "DEPARTMENT"."SCHOOL"
+             SELECT "PREREQUISITE"."ON_DEPARTMENT"
              FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("PREREQUISITE"."ON_DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("PREREQUISITE"."ON_COURSE" = "COURSE"."NO"))
-                  INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                             ON ("COURSE"."DEPARTMENT" = "DEPARTMENT"."CODE")
              WHERE ("PREREQUISITE"."OF_DEPARTMENT" = 'capmrk')
                    AND ("PREREQUISITE"."OF_COURSE" = 818)
                    AND ("PREREQUISITE"."ON_DEPARTMENT" = 'acc')
                    AND ("PREREQUISITE"."ON_COURSE" = 315)
-             ORDER BY "PREREQUISITE"."OF_DEPARTMENT" ASC, "PREREQUISITE"."OF_COURSE" ASC, "PREREQUISITE"."ON_DEPARTMENT" ASC, "PREREQUISITE"."ON_COURSE" ASC
+             ORDER BY "PREREQUISITE"."OF_DEPARTMENT" ASC, "PREREQUISITE"."OF_COURSE" ASC, 1 ASC, "PREREQUISITE"."ON_COURSE" ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).department
           status: 400 Bad Request
           headers:
@@ -2866,64 +2781,43 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | of_course                                                                                    |
-            -+----------------------------------------------------------------------------------------------+-
-             | department | no  | title                        | credits | description                      |
-            -+------------+-----+------------------------------+---------+----------------------------------+-
-             | capmrk     | 818 | Financial Statement Analysis |       3 | This course presents techniques  |
-             :            :     :                              :         : for analyzing current and        :
-             :            :     :                              :         : projected financial statements   :
-             :            :     :                              :         : for the purposes of credit       :
-             :            :     :                              :         : analysis, security analysis, and :
-             :            :     :                              :         : internal financial analysis, and :
-             :            :     :                              :         : cash flow forecasting.           :
-                                                                                                      (1 row)
+             |           |
+            -+-----------+-
+             | of_course |
+            -+-----------+-
+             |       818 |
+                   (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).of_course
-             SELECT "COURSE"."DEPARTMENT",
-                    "COURSE"."NO",
-                    "COURSE"."TITLE",
-                    "COURSE"."CREDITS",
-                    "COURSE"."DESCRIPTION"
+             SELECT "PREREQUISITE"."OF_COURSE"
              FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("PREREQUISITE"."OF_DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("PREREQUISITE"."OF_COURSE" = "COURSE"."NO"))
              WHERE ("PREREQUISITE"."OF_DEPARTMENT" = 'capmrk')
                    AND ("PREREQUISITE"."OF_COURSE" = 818)
                    AND ("PREREQUISITE"."ON_DEPARTMENT" = 'acc')
                    AND ("PREREQUISITE"."ON_COURSE" = 315)
-             ORDER BY "PREREQUISITE"."OF_DEPARTMENT" ASC, "PREREQUISITE"."OF_COURSE" ASC, "PREREQUISITE"."ON_DEPARTMENT" ASC, "PREREQUISITE"."ON_COURSE" ASC
+             ORDER BY "PREREQUISITE"."OF_DEPARTMENT" ASC, 1 ASC, "PREREQUISITE"."ON_DEPARTMENT" ASC, "PREREQUISITE"."ON_COURSE" ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).on_course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | on_course                                                                            |
-            -+--------------------------------------------------------------------------------------+-
-             | department | no  | title                | credits | description                      |
-            -+------------+-----+----------------------+---------+----------------------------------+-
-             | acc        | 315 | Financial Accounting |       5 | Integration of the conceptual    |
-             :            :     :                      :         : and computational aspects of     :
-             :            :     :                      :         : asset, liability and             :
-             :            :     :                      :         : stockholders equity accounting.  :
-                                                                                              (1 row)
+             |           |
+            -+-----------+-
+             | on_course |
+            -+-----------+-
+             |       315 |
+                   (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).on_course
-             SELECT "COURSE"."DEPARTMENT",
-                    "COURSE"."NO",
-                    "COURSE"."TITLE",
-                    "COURSE"."CREDITS",
-                    "COURSE"."DESCRIPTION"
+             SELECT "PREREQUISITE"."ON_COURSE"
              FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("PREREQUISITE"."ON_DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("PREREQUISITE"."ON_COURSE" = "COURSE"."NO"))
              WHERE ("PREREQUISITE"."OF_DEPARTMENT" = 'capmrk')
                    AND ("PREREQUISITE"."OF_COURSE" = 818)
                    AND ("PREREQUISITE"."ON_DEPARTMENT" = 'acc')
                    AND ("PREREQUISITE"."ON_COURSE" = 315)
-             ORDER BY "PREREQUISITE"."OF_DEPARTMENT" ASC, "PREREQUISITE"."OF_COURSE" ASC, "PREREQUISITE"."ON_DEPARTMENT" ASC, "PREREQUISITE"."ON_COURSE" ASC
+             ORDER BY "PREREQUISITE"."OF_DEPARTMENT" ASC, "PREREQUISITE"."OF_COURSE" ASC, "PREREQUISITE"."ON_DEPARTMENT" ASC, 1 ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).course
           status: 400 Bad Request
           headers:
@@ -3039,57 +2933,41 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department                     |
-            -+--------------------------------+-
-             | code | name           | school |
-            -+------+----------------+--------+-
-             | be   | Bioengineering | eng    |
-                                        (1 row)
+             |            |
+            -+------------+-
+             | department |
+            -+------------+-
+             | be         |
+                    (1 row)
 
              ----
              /(course_classification?department='be'&course=112&classification='begeneral').department
-             SELECT "DEPARTMENT"."CODE",
-                    "DEPARTMENT"."NAME",
-                    "DEPARTMENT"."SCHOOL"
+             SELECT "COURSE_CLASSIFICATION"."DEPARTMENT"
              FROM "HTSQL_REGRESS"."COURSE_CLASSIFICATION" "COURSE_CLASSIFICATION"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("COURSE_CLASSIFICATION"."DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("COURSE_CLASSIFICATION"."COURSE" = "COURSE"."NO"))
-                  INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                             ON ("COURSE"."DEPARTMENT" = "DEPARTMENT"."CODE")
              WHERE ("COURSE_CLASSIFICATION"."DEPARTMENT" = 'be')
                    AND ("COURSE_CLASSIFICATION"."COURSE" = 112)
                    AND ("COURSE_CLASSIFICATION"."CLASSIFICATION" = 'begeneral')
-             ORDER BY "COURSE_CLASSIFICATION"."DEPARTMENT" ASC, "COURSE_CLASSIFICATION"."COURSE" ASC, "COURSE_CLASSIFICATION"."CLASSIFICATION" ASC
+             ORDER BY 1 ASC, "COURSE_CLASSIFICATION"."COURSE" ASC, "COURSE_CLASSIFICATION"."CLASSIFICATION" ASC
         - uri: /(course_classification?department='be'&course=112 &classification='begeneral').course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course                                                                                     |
-            -+--------------------------------------------------------------------------------------------+-
-             | department | no  | title                      | credits | description                      |
-            -+------------+-----+----------------------------+---------+----------------------------------+-
-             | be         | 112 | Introduction to Biomedical |       3 | This course covers topics in     |
-             :            :     : Engineering                :         : multiple formats ranging from    :
-             :            :     :                            :         : lectures by faculty or guest     :
-             :            :     :                            :         : speakers to presentations by     :
-             :            :     :                            :         : participating students.          :
-                                                                                                    (1 row)
+             |        |
+            -+--------+-
+             | course |
+            -+--------+-
+             |    112 |
+                (1 row)
 
              ----
              /(course_classification?department='be'&course=112&classification='begeneral').course
-             SELECT "COURSE"."DEPARTMENT",
-                    "COURSE"."NO",
-                    "COURSE"."TITLE",
-                    "COURSE"."CREDITS",
-                    "COURSE"."DESCRIPTION"
+             SELECT "COURSE_CLASSIFICATION"."COURSE"
              FROM "HTSQL_REGRESS"."COURSE_CLASSIFICATION" "COURSE_CLASSIFICATION"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON (("COURSE_CLASSIFICATION"."DEPARTMENT" = "COURSE"."DEPARTMENT") AND ("COURSE_CLASSIFICATION"."COURSE" = "COURSE"."NO"))
              WHERE ("COURSE_CLASSIFICATION"."DEPARTMENT" = 'be')
                    AND ("COURSE_CLASSIFICATION"."COURSE" = 112)
                    AND ("COURSE_CLASSIFICATION"."CLASSIFICATION" = 'begeneral')
-             ORDER BY "COURSE_CLASSIFICATION"."DEPARTMENT" ASC, "COURSE_CLASSIFICATION"."COURSE" ASC, "COURSE_CLASSIFICATION"."CLASSIFICATION" ASC
+             ORDER BY "COURSE_CLASSIFICATION"."DEPARTMENT" ASC, 1 ASC, "COURSE_CLASSIFICATION"."CLASSIFICATION" ASC
         - uri: /(course_classification?department='be'&course=112 &classification='begeneral').classification
           status: 200 OK
           headers:
@@ -3121,52 +2999,41 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                    |
-            -+---------------------------+-
-             | code | name               |
-            -+------+--------------------+-
-             | bus  | School of Business |
-                                   (1 row)
+             |        |
+            -+--------+-
+             | school |
+            -+--------+-
+             | bus    |
+                (1 row)
 
              ----
              /(program_requirement?school='bus'&program='uacct'&classification='accounting').school
-             SELECT "SCHOOL"."CODE",
-                    "SCHOOL"."NAME"
+             SELECT "PROGRAM_REQUIREMENT"."SCHOOL"
              FROM "HTSQL_REGRESS"."PROGRAM_REQUIREMENT" "PROGRAM_REQUIREMENT"
-                  INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                             ON (("PROGRAM_REQUIREMENT"."SCHOOL" = "PROGRAM"."SCHOOL") AND ("PROGRAM_REQUIREMENT"."PROGRAM" = "PROGRAM"."CODE"))
-                  INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                             ON ("PROGRAM"."SCHOOL" = "SCHOOL"."CODE")
              WHERE ("PROGRAM_REQUIREMENT"."SCHOOL" = 'bus')
                    AND ("PROGRAM_REQUIREMENT"."PROGRAM" = 'uacct')
                    AND ("PROGRAM_REQUIREMENT"."CLASSIFICATION" = 'accounting')
-             ORDER BY "PROGRAM_REQUIREMENT"."SCHOOL" ASC, "PROGRAM_REQUIREMENT"."PROGRAM" ASC, "PROGRAM_REQUIREMENT"."CLASSIFICATION" ASC
+             ORDER BY 1 ASC, "PROGRAM_REQUIREMENT"."PROGRAM" ASC, "PROGRAM_REQUIREMENT"."CLASSIFICATION" ASC
         - uri: /(program_requirement?school='bus'&program='uacct' &classification='accounting').program
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                |
-            -+--------------------------------------------------------+-
-             | school | code  | title              | degree | part_of |
-            -+--------+-------+--------------------+--------+---------+-
-             | bus    | uacct | B.S. in Accounting | bs     |         |
-                                                                (1 row)
+             |         |
+            -+---------+-
+             | program |
+            -+---------+-
+             | uacct   |
+                 (1 row)
 
              ----
              /(program_requirement?school='bus'&program='uacct'&classification='accounting').program
-             SELECT "PROGRAM"."SCHOOL",
-                    "PROGRAM"."CODE",
-                    "PROGRAM"."TITLE",
-                    "PROGRAM"."DEGREE",
-                    "PROGRAM"."PART_OF"
+             SELECT "PROGRAM_REQUIREMENT"."PROGRAM"
              FROM "HTSQL_REGRESS"."PROGRAM_REQUIREMENT" "PROGRAM_REQUIREMENT"
-                  INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                             ON (("PROGRAM_REQUIREMENT"."SCHOOL" = "PROGRAM"."SCHOOL") AND ("PROGRAM_REQUIREMENT"."PROGRAM" = "PROGRAM"."CODE"))
              WHERE ("PROGRAM_REQUIREMENT"."SCHOOL" = 'bus')
                    AND ("PROGRAM_REQUIREMENT"."PROGRAM" = 'uacct')
                    AND ("PROGRAM_REQUIREMENT"."CLASSIFICATION" = 'accounting')
-             ORDER BY "PROGRAM_REQUIREMENT"."SCHOOL" ASC, "PROGRAM_REQUIREMENT"."PROGRAM" ASC, "PROGRAM_REQUIREMENT"."CLASSIFICATION" ASC
+             ORDER BY "PROGRAM_REQUIREMENT"."SCHOOL" ASC, 1 ASC, "PROGRAM_REQUIREMENT"."CLASSIFICATION" ASC
         - uri: /(program_requirement?school='bus'&program='uacct' &classification='accounting').classification
           status: 200 OK
           headers:

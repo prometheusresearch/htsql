@@ -2115,26 +2115,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | part_of                                                           |
-            -+-------------------------------------------------------------------+-
-             | school | code | title                          | degree | part_of |
-            -+--------+------+--------------------------------+--------+---------+-
-             | eng    | gme  | M.S. in Mechanical Engineering | ms     |         |
-                                                                           (1 row)
+             |         |
+            -+---------+-
+             | part_of |
+            -+---------+-
+             | gme     |
+                 (1 row)
 
              ----
              /(program?school='eng'&code='umech').part_of
-             SELECT `program_2`.`school`,
-                    `program_2`.`code`,
-                    `program_2`.`title`,
-                    `program_2`.`degree`,
-                    `program_2`.`part_of`
-             FROM `htsql_regress`.`program` AS `program_1`
-                  INNER JOIN `htsql_regress`.`program` AS `program_2`
-                             ON ((`program_1`.`school` = `program_2`.`school`) AND (`program_1`.`part_of` = `program_2`.`code`))
-             WHERE (`program_1`.`school` = 'eng')
-                   AND (`program_1`.`code` = 'umech')
-             ORDER BY `program_1`.`school` ASC, `program_1`.`code` ASC
+             SELECT `program`.`part_of`
+             FROM `htsql_regress`.`program` AS `program`
+             WHERE (`program`.`school` = 'eng')
+                   AND (`program`.`code` = 'umech')
+             ORDER BY `program`.`school` ASC, `program`.`code` ASC
         - uri: /(program?school='eng'&code='umech').program
           status: 200 OK
           headers:
@@ -2520,10 +2514,8 @@ tests:
                     `department`.`name`,
                     `department`.`school`
              FROM `htsql_regress`.`class` AS `class`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`class`.`department` = `course`.`department`) AND (`class`.`course` = `course`.`no`))
                   INNER JOIN `htsql_regress`.`department` AS `department`
-                             ON (`course`.`department` = `department`.`code`)
+                             ON (`class`.`department` = `department`.`code`)
              WHERE (`class`.`class_seq` = 10086)
              ORDER BY `class`.`department` ASC, `class`.`course` ASC, `class`.`year` ASC, `class`.`season` ASC, `class`.`section` ASC
         - uri: /(class?class_seq=10086).course
@@ -2531,30 +2523,19 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course                                                                                     |
-            -+--------------------------------------------------------------------------------------------+-
-             | department | no  | title                      | credits | description                      |
-            -+------------+-----+----------------------------+---------+----------------------------------+-
-             | acc        | 200 | Principles of Accounting I |       3 | The initial course in the theory |
-             :            :     :                            :         : and practice of financial        :
-             :            :     :                            :         : accounting. Topics emphasized    :
-             :            :     :                            :         : include the preparation,         :
-             :            :     :                            :         : reporting, and analysis of       :
-             :            :     :                            :         : financial data.                  :
-                                                                                                    (1 row)
+             |        |
+            -+--------+-
+             | course |
+            -+--------+-
+             |    200 |
+                (1 row)
 
              ----
              /(class?class_seq=10086).course
-             SELECT `course`.`department`,
-                    `course`.`no`,
-                    `course`.`title`,
-                    `course`.`credits`,
-                    `course`.`description`
+             SELECT `class`.`course`
              FROM `htsql_regress`.`class` AS `class`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`class`.`department` = `course`.`department`) AND (`class`.`course` = `course`.`no`))
              WHERE (`class`.`class_seq` = 10086)
-             ORDER BY `class`.`department` ASC, `class`.`course` ASC, `class`.`year` ASC, `class`.`season` ASC, `class`.`section` ASC
+             ORDER BY `class`.`department` ASC, 1 ASC, `class`.`year` ASC, `class`.`season` ASC, `class`.`section` ASC
         - uri: /(class?class_seq=10086).semester
           status: 200 OK
           headers:
@@ -2569,52 +2550,6 @@ tests:
 
              ----
              /(class?class_seq=10086).semester
-             SELECT `semester`.`year`,
-                    `semester`.`season`,
-                    `semester`.`begin_date`,
-                    `semester`.`end_date`
-             FROM `htsql_regress`.`class` AS `class`
-                  INNER JOIN `htsql_regress`.`semester` AS `semester`
-                             ON ((`class`.`year` = `semester`.`year`) AND (`class`.`season` = `semester`.`season`))
-             WHERE (`class`.`class_seq` = 10086)
-             ORDER BY `class`.`department` ASC, `class`.`course` ASC, `class`.`year` ASC, `class`.`season` ASC, `class`.`section` ASC
-        - uri: /(class?class_seq=10086).year
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | year                                    |
-            -+-----------------------------------------+-
-             | year | season | begin_date | end_date   |
-            -+------+--------+------------+------------+-
-             | 2010 | summer | 2011-06-01 | 2011-08-01 |
-                                                 (1 row)
-
-             ----
-             /(class?class_seq=10086).year
-             SELECT `semester`.`year`,
-                    `semester`.`season`,
-                    `semester`.`begin_date`,
-                    `semester`.`end_date`
-             FROM `htsql_regress`.`class` AS `class`
-                  INNER JOIN `htsql_regress`.`semester` AS `semester`
-                             ON ((`class`.`year` = `semester`.`year`) AND (`class`.`season` = `semester`.`season`))
-             WHERE (`class`.`class_seq` = 10086)
-             ORDER BY `class`.`department` ASC, `class`.`course` ASC, `class`.`year` ASC, `class`.`season` ASC, `class`.`section` ASC
-        - uri: /(class?class_seq=10086).season
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | season                                  |
-            -+-----------------------------------------+-
-             | year | season | begin_date | end_date   |
-            -+------+--------+------------+------------+-
-             | 2010 | summer | 2011-06-01 | 2011-08-01 |
-                                                 (1 row)
-
-             ----
-             /(class?class_seq=10086).season
              SELECT `semester`.`year`,
                     `semester`.`season`,
                     `semester`.`begin_date`,
@@ -2689,10 +2624,8 @@ tests:
              SELECT `school`.`code`,
                     `school`.`name`
              FROM `htsql_regress`.`student` AS `student`
-                  INNER JOIN `htsql_regress`.`program` AS `program`
-                             ON ((`student`.`school` = `program`.`school`) AND (`student`.`program` = `program`.`code`))
                   INNER JOIN `htsql_regress`.`school` AS `school`
-                             ON (`program`.`school` = `school`.`code`)
+                             ON (`student`.`school` = `school`.`code`)
              WHERE (`student`.`id` = 25371)
              ORDER BY `student`.`id` ASC
         - uri: /(student?id=25371).program
@@ -2700,23 +2633,17 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                |
-            -+------------------------------------------------------------------------+-
-             | school | code    | title                            | degree | part_of |
-            -+--------+---------+----------------------------------+--------+---------+-
-             | eng    | gbuseng | M.S. in Business and Engineering | ms     |         |
-                                                                                (1 row)
+             |         |
+            -+---------+-
+             | program |
+            -+---------+-
+             | gbuseng |
+                 (1 row)
 
              ----
              /(student?id=25371).program
-             SELECT `program`.`school`,
-                    `program`.`code`,
-                    `program`.`title`,
-                    `program`.`degree`,
-                    `program`.`part_of`
+             SELECT `student`.`program`
              FROM `htsql_regress`.`student` AS `student`
-                  INNER JOIN `htsql_regress`.`program` AS `program`
-                             ON ((`student`.`school` = `program`.`school`) AND (`student`.`program` = `program`.`code`))
              WHERE (`student`.`id` = 25371)
              ORDER BY `student`.`id` ASC
         - uri: /(student?id=25371).enrollment
@@ -2803,55 +2730,43 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | of_department                     |
-            -+-----------------------------------+-
-             | code   | name            | school |
-            -+--------+-----------------+--------+-
-             | capmrk | Capital Markets | bus    |
-                                           (1 row)
+             |               |
+            -+---------------+-
+             | of_department |
+            -+---------------+-
+             | capmrk        |
+                       (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).of_department
-             SELECT `department`.`code`,
-                    `department`.`name`,
-                    `department`.`school`
+             SELECT `prerequisite`.`of_department`
              FROM `htsql_regress`.`prerequisite` AS `prerequisite`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`prerequisite`.`of_department` = `course`.`department`) AND (`prerequisite`.`of_course` = `course`.`no`))
-                  INNER JOIN `htsql_regress`.`department` AS `department`
-                             ON (`course`.`department` = `department`.`code`)
              WHERE (`prerequisite`.`of_department` = 'capmrk')
                    AND (`prerequisite`.`of_course` = 818)
                    AND (`prerequisite`.`on_department` = 'acc')
                    AND (`prerequisite`.`on_course` = 315)
-             ORDER BY `prerequisite`.`of_department` ASC, `prerequisite`.`of_course` ASC, `prerequisite`.`on_department` ASC, `prerequisite`.`on_course` ASC
+             ORDER BY 1 ASC, `prerequisite`.`of_course` ASC, `prerequisite`.`on_department` ASC, `prerequisite`.`on_course` ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).on_department
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | on_department              |
-            -+----------------------------+-
-             | code | name       | school |
-            -+------+------------+--------+-
-             | acc  | Accounting | bus    |
-                                    (1 row)
+             |               |
+            -+---------------+-
+             | on_department |
+            -+---------------+-
+             | acc           |
+                       (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).on_department
-             SELECT `department`.`code`,
-                    `department`.`name`,
-                    `department`.`school`
+             SELECT `prerequisite`.`on_department`
              FROM `htsql_regress`.`prerequisite` AS `prerequisite`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`prerequisite`.`on_department` = `course`.`department`) AND (`prerequisite`.`on_course` = `course`.`no`))
-                  INNER JOIN `htsql_regress`.`department` AS `department`
-                             ON (`course`.`department` = `department`.`code`)
              WHERE (`prerequisite`.`of_department` = 'capmrk')
                    AND (`prerequisite`.`of_course` = 818)
                    AND (`prerequisite`.`on_department` = 'acc')
                    AND (`prerequisite`.`on_course` = 315)
-             ORDER BY `prerequisite`.`of_department` ASC, `prerequisite`.`of_course` ASC, `prerequisite`.`on_department` ASC, `prerequisite`.`on_course` ASC
+             ORDER BY `prerequisite`.`of_department` ASC, `prerequisite`.`of_course` ASC, 1 ASC, `prerequisite`.`on_course` ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).department
           status: 400 Bad Request
           headers:
@@ -2865,64 +2780,43 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | of_course                                                                                    |
-            -+----------------------------------------------------------------------------------------------+-
-             | department | no  | title                        | credits | description                      |
-            -+------------+-----+------------------------------+---------+----------------------------------+-
-             | capmrk     | 818 | Financial Statement Analysis |       3 | This course presents techniques  |
-             :            :     :                              :         : for analyzing current and        :
-             :            :     :                              :         : projected financial statements   :
-             :            :     :                              :         : for the purposes of credit       :
-             :            :     :                              :         : analysis, security analysis, and :
-             :            :     :                              :         : internal financial analysis, and :
-             :            :     :                              :         : cash flow forecasting.           :
-                                                                                                      (1 row)
+             |           |
+            -+-----------+-
+             | of_course |
+            -+-----------+-
+             |       818 |
+                   (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).of_course
-             SELECT `course`.`department`,
-                    `course`.`no`,
-                    `course`.`title`,
-                    `course`.`credits`,
-                    `course`.`description`
+             SELECT `prerequisite`.`of_course`
              FROM `htsql_regress`.`prerequisite` AS `prerequisite`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`prerequisite`.`of_department` = `course`.`department`) AND (`prerequisite`.`of_course` = `course`.`no`))
              WHERE (`prerequisite`.`of_department` = 'capmrk')
                    AND (`prerequisite`.`of_course` = 818)
                    AND (`prerequisite`.`on_department` = 'acc')
                    AND (`prerequisite`.`on_course` = 315)
-             ORDER BY `prerequisite`.`of_department` ASC, `prerequisite`.`of_course` ASC, `prerequisite`.`on_department` ASC, `prerequisite`.`on_course` ASC
+             ORDER BY `prerequisite`.`of_department` ASC, 1 ASC, `prerequisite`.`on_department` ASC, `prerequisite`.`on_course` ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).on_course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | on_course                                                                            |
-            -+--------------------------------------------------------------------------------------+-
-             | department | no  | title                | credits | description                      |
-            -+------------+-----+----------------------+---------+----------------------------------+-
-             | acc        | 315 | Financial Accounting |       5 | Integration of the conceptual    |
-             :            :     :                      :         : and computational aspects of     :
-             :            :     :                      :         : asset, liability and             :
-             :            :     :                      :         : stockholders equity accounting.  :
-                                                                                              (1 row)
+             |           |
+            -+-----------+-
+             | on_course |
+            -+-----------+-
+             |       315 |
+                   (1 row)
 
              ----
              /(prerequisite?of_department='capmrk'&of_course=818&on_department='acc'&on_course=315).on_course
-             SELECT `course`.`department`,
-                    `course`.`no`,
-                    `course`.`title`,
-                    `course`.`credits`,
-                    `course`.`description`
+             SELECT `prerequisite`.`on_course`
              FROM `htsql_regress`.`prerequisite` AS `prerequisite`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`prerequisite`.`on_department` = `course`.`department`) AND (`prerequisite`.`on_course` = `course`.`no`))
              WHERE (`prerequisite`.`of_department` = 'capmrk')
                    AND (`prerequisite`.`of_course` = 818)
                    AND (`prerequisite`.`on_department` = 'acc')
                    AND (`prerequisite`.`on_course` = 315)
-             ORDER BY `prerequisite`.`of_department` ASC, `prerequisite`.`of_course` ASC, `prerequisite`.`on_department` ASC, `prerequisite`.`on_course` ASC
+             ORDER BY `prerequisite`.`of_department` ASC, `prerequisite`.`of_course` ASC, `prerequisite`.`on_department` ASC, 1 ASC
         - uri: /(prerequisite?of_department='capmrk'&of_course=818 &on_department='acc'&on_course=315).course
           status: 400 Bad Request
           headers:
@@ -3038,57 +2932,41 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department                     |
-            -+--------------------------------+-
-             | code | name           | school |
-            -+------+----------------+--------+-
-             | be   | Bioengineering | eng    |
-                                        (1 row)
+             |            |
+            -+------------+-
+             | department |
+            -+------------+-
+             | be         |
+                    (1 row)
 
              ----
              /(course_classification?department='be'&course=112&classification='begeneral').department
-             SELECT `department`.`code`,
-                    `department`.`name`,
-                    `department`.`school`
+             SELECT `course_classification`.`department`
              FROM `htsql_regress`.`course_classification` AS `course_classification`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`course_classification`.`department` = `course`.`department`) AND (`course_classification`.`course` = `course`.`no`))
-                  INNER JOIN `htsql_regress`.`department` AS `department`
-                             ON (`course`.`department` = `department`.`code`)
              WHERE (`course_classification`.`department` = 'be')
                    AND (`course_classification`.`course` = 112)
                    AND (`course_classification`.`classification` = 'begeneral')
-             ORDER BY `course_classification`.`department` ASC, `course_classification`.`course` ASC, `course_classification`.`classification` ASC
+             ORDER BY 1 ASC, `course_classification`.`course` ASC, `course_classification`.`classification` ASC
         - uri: /(course_classification?department='be'&course=112 &classification='begeneral').course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course                                                                                     |
-            -+--------------------------------------------------------------------------------------------+-
-             | department | no  | title                      | credits | description                      |
-            -+------------+-----+----------------------------+---------+----------------------------------+-
-             | be         | 112 | Introduction to Biomedical |       3 | This course covers topics in     |
-             :            :     : Engineering                :         : multiple formats ranging from    :
-             :            :     :                            :         : lectures by faculty or guest     :
-             :            :     :                            :         : speakers to presentations by     :
-             :            :     :                            :         : participating students.          :
-                                                                                                    (1 row)
+             |        |
+            -+--------+-
+             | course |
+            -+--------+-
+             |    112 |
+                (1 row)
 
              ----
              /(course_classification?department='be'&course=112&classification='begeneral').course
-             SELECT `course`.`department`,
-                    `course`.`no`,
-                    `course`.`title`,
-                    `course`.`credits`,
-                    `course`.`description`
+             SELECT `course_classification`.`course`
              FROM `htsql_regress`.`course_classification` AS `course_classification`
-                  INNER JOIN `htsql_regress`.`course` AS `course`
-                             ON ((`course_classification`.`department` = `course`.`department`) AND (`course_classification`.`course` = `course`.`no`))
              WHERE (`course_classification`.`department` = 'be')
                    AND (`course_classification`.`course` = 112)
                    AND (`course_classification`.`classification` = 'begeneral')
-             ORDER BY `course_classification`.`department` ASC, `course_classification`.`course` ASC, `course_classification`.`classification` ASC
+             ORDER BY `course_classification`.`department` ASC, 1 ASC, `course_classification`.`classification` ASC
         - uri: /(course_classification?department='be'&course=112 &classification='begeneral').classification
           status: 200 OK
           headers:
@@ -3120,52 +2998,41 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                    |
-            -+---------------------------+-
-             | code | name               |
-            -+------+--------------------+-
-             | bus  | School of Business |
-                                   (1 row)
+             |        |
+            -+--------+-
+             | school |
+            -+--------+-
+             | bus    |
+                (1 row)
 
              ----
              /(program_requirement?school='bus'&program='uacct'&classification='accounting').school
-             SELECT `school`.`code`,
-                    `school`.`name`
+             SELECT `program_requirement`.`school`
              FROM `htsql_regress`.`program_requirement` AS `program_requirement`
-                  INNER JOIN `htsql_regress`.`program` AS `program`
-                             ON ((`program_requirement`.`school` = `program`.`school`) AND (`program_requirement`.`program` = `program`.`code`))
-                  INNER JOIN `htsql_regress`.`school` AS `school`
-                             ON (`program`.`school` = `school`.`code`)
              WHERE (`program_requirement`.`school` = 'bus')
                    AND (`program_requirement`.`program` = 'uacct')
                    AND (`program_requirement`.`classification` = 'accounting')
-             ORDER BY `program_requirement`.`school` ASC, `program_requirement`.`program` ASC, `program_requirement`.`classification` ASC
+             ORDER BY 1 ASC, `program_requirement`.`program` ASC, `program_requirement`.`classification` ASC
         - uri: /(program_requirement?school='bus'&program='uacct' &classification='accounting').program
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                |
-            -+--------------------------------------------------------+-
-             | school | code  | title              | degree | part_of |
-            -+--------+-------+--------------------+--------+---------+-
-             | bus    | uacct | B.S. in Accounting | bs     |         |
-                                                                (1 row)
+             |         |
+            -+---------+-
+             | program |
+            -+---------+-
+             | uacct   |
+                 (1 row)
 
              ----
              /(program_requirement?school='bus'&program='uacct'&classification='accounting').program
-             SELECT `program`.`school`,
-                    `program`.`code`,
-                    `program`.`title`,
-                    `program`.`degree`,
-                    `program`.`part_of`
+             SELECT `program_requirement`.`program`
              FROM `htsql_regress`.`program_requirement` AS `program_requirement`
-                  INNER JOIN `htsql_regress`.`program` AS `program`
-                             ON ((`program_requirement`.`school` = `program`.`school`) AND (`program_requirement`.`program` = `program`.`code`))
              WHERE (`program_requirement`.`school` = 'bus')
                    AND (`program_requirement`.`program` = 'uacct')
                    AND (`program_requirement`.`classification` = 'accounting')
-             ORDER BY `program_requirement`.`school` ASC, `program_requirement`.`program` ASC, `program_requirement`.`classification` ASC
+             ORDER BY `program_requirement`.`school` ASC, 1 ASC, `program_requirement`.`classification` ASC
         - uri: /(program_requirement?school='bus'&program='uacct' &classification='accounting').classification
           status: 200 OK
           headers:
