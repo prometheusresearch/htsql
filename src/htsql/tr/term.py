@@ -21,14 +21,12 @@ from .code import Expression, Space, Code, Unit, QueryExpr
 
 class Joint(Comparable, Clonable, Printable):
 
-    def __init__(self, lop, rop, is_total=False):
+    def __init__(self, lop, rop):
         assert isinstance(lop, Code)
         assert isinstance(rop, Code)
-        assert isinstance(is_total, bool)
-        super(Joint, self).__init__(equality_vector=(lop, rop, is_total))
+        super(Joint, self).__init__(equality_vector=(lop, rop))
         self.lop = lop
         self.rop = rop
-        self.is_total = is_total
 
     def __iter__(self):
         return iter([self.lop, self.rop])

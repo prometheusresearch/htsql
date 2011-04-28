@@ -195,6 +195,8 @@ tests:
             :where program := program.limit(10,15)
     # fork() with projections
     - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+    # fork() with nullable kernel
+    - uri: /program.fork(part_of){root().program{school, code, part_of}, school, code, part_of}
 
   - title: Table Expressions
     tests:
@@ -242,14 +244,15 @@ tests:
     - uri: /distinct(program{degree})
     - uri: /distinct(program{degree}){*}
     - uri: /distinct(program{degree})?false()
-    - uri: /distinct(program{degree})?*1
-    - uri: /distinct(program{degree}){*}?*1
+    - uri: /distinct(program{degree})?head(*1)='b'
+    - uri: /distinct(program{degree}){*}?head(*1)='b'
     - uri: /distinct(program{degree}?false())
-    - uri: /distinct(program{degree}?degree)
+    - uri: /distinct(program{degree}?tail(*1)='a')
     - uri: /distinct(program{degree}?false())?false()
-    - uri: /distinct(program{degree}?degree)?*1
+    - uri: /distinct(program{degree}?tail(*1)='a')?head(*1)='b'
     - uri: /distinct(program{degree}){*, count(^)}
     - uri: /distinct(program{degree}){*, count(^.student)}
+    - uri: /distinct(program{degree :if_null '--'})
     - uri: /distinct(student{year(dob),gender})
     - uri: /distinct(student{year(dob),gender}){*, *1, *2}
     - uri: /distinct(student{year(dob),gender}){*,count(^)}
@@ -261,14 +264,15 @@ tests:
     - uri: /school.distinct(program{degree})
     - uri: /school.distinct(program{degree}){*}
     - uri: /school.distinct(program{degree})?false()
-    - uri: /school.distinct(program{degree})?*1
-    - uri: /school.distinct(program{degree}){*}?*1
+    - uri: /school.distinct(program{degree})?head(*1)='b'
+    - uri: /school.distinct(program{degree}){*}?head(*1)='b'
     - uri: /school.distinct(program{degree}?false())
-    - uri: /school.distinct(program{degree}?degree)
+    - uri: /school.distinct(program{degree}?tail(*1)='a')
     - uri: /school.distinct(program{degree}?false())?false()
-    - uri: /school.distinct(program{degree}?degree)?*1
+    - uri: /school.distinct(program{degree}?tail(*1)='a')?head(*1)='b'
     - uri: /school.distinct(program{degree}){*, count(^)}
     - uri: /school.distinct(program{degree}){*, count(^.student)}
+    - uri: /school.distinct(program{degree :if_null '--'})
 
     - uri: /(school?code='art').(program^degree).^{title+, degree}
 
