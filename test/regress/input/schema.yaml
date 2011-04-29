@@ -54,6 +54,7 @@ tests:
   # Program -> School (parental)
   - uri: /(program?school='eng'&code='umech').school
   # Program -> Program (singular, self-referencial)
+  # FIXME: broken! Does not work as a link.
   - uri: /(program?school='eng'&code='umech').part_of
   # Program -> Program (reverse self-referential)
   # FIXME: broken! No way to indicate a reverse self-referential link.
@@ -94,15 +95,13 @@ tests:
   # Semester -> Class
   - uri: /(semester?year=2010&season='fall').class
 
-  # Class -> Department (grand-parental, via Course)
+  # Class -> Department (parental)
   - uri: /(class?class_seq=10086).department
   # Class -> Course (parental)
+  # FIXME: a column shadows a table with the same name.
   - uri: /(class?class_seq=10086).course
   # Class -> Semester (parental)
   - uri: /(class?class_seq=10086).semester
-  # Aliases for Class -> Semester
-  - uri: /(class?class_seq=10086).year
-  - uri: /(class?class_seq=10086).season
   # Class -> Instructor (singular, optional)
   - uri: /(class?class_seq=10086).instructor
   # Class -> Enrollment
@@ -111,6 +110,7 @@ tests:
   # Student -> School (singular, optional, via Program)
   - uri: /(student?id=25371).school
   # Student -> Program (singular, optional)
+  # FIXME: a column shadows a table with the same name.
   - uri: /(student?id=25371).program
   # Student -> Enrollment
   - uri: /(student?id=25371).enrollment
@@ -121,9 +121,11 @@ tests:
   - uri: /(enrollment?student=92039&class=10071).class
 
   # Prerequisite -> Department (grand-parental, via Course, using of_department)
+  # FIXME?: grand-parental links no longer supported.
   - uri: /(prerequisite?of_department='capmrk'&of_course=818
                        &on_department='acc'&on_course=315).of_department
   # Prerequisite -> Department (grand-parental, via Course, using on_department)
+  # FIXME?: grand-parental links no longer supported.
   - uri: /(prerequisite?of_department='capmrk'&of_course=818
                        &on_department='acc'&on_course=315).on_department
   # Prerequisite -> Department (ambiguous)
@@ -131,9 +133,11 @@ tests:
                        &on_department='acc'&on_course=315).department
     expect: 400
   # Prerequisite -> Course (parental, using of_course)
+  # FIXME: no way to indicate an ambiguous link with a multi-column FK.
   - uri: /(prerequisite?of_department='capmrk'&of_course=818
                        &on_department='acc'&on_course=315).of_course
   # Prerequisite -> Course (parental, using on_course)
+  # FIXME: no way to indicate an ambiguous link with a multi-column FK.
   - uri: /(prerequisite?of_department='capmrk'&of_course=818
                        &on_department='acc'&on_course=315).on_course
   # Prerequisite -> Course (ambiguous)
@@ -153,9 +157,11 @@ tests:
   - uri: /(classification?code='modlanguage').program_requirement
 
   # Course Classification -> Department (grand-parental, via Course)
+  # FIXME?: grand-parental links no longer supported.
   - uri: /(course_classification?department='be'&course=112
                                 &classification='begeneral').department
   # Course Classification -> Course (parental)
+  # FIXME: a column shadows a table with the same name.
   - uri: /(course_classification?department='be'&course=112
                                 &classification='begeneral').course
   # Course Classification -> Classification (parental)
@@ -163,9 +169,11 @@ tests:
                                 &classification='begeneral').classification
 
   # Program Requirement -> School (grand-parental, via Program)
+  # FIXME?: grand-parental links no longer supported.
   - uri: /(program_requirement?school='bus'&program='uacct'
                               &classification='accounting').school
   # Program Requirement -> Program (parental)
+  # FIXME: a column shadows a table with the same name.
   - uri: /(program_requirement?school='bus'&program='uacct'
                               &classification='accounting').program
   # Program Requirement -> Classification (parental)

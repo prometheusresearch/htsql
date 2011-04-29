@@ -15,8 +15,11 @@ This module implements the compiling process.
 
 from ..util import maybe, listof
 from ..adapter import Adapter, adapts
+from ..domain import BooleanDomain
 from .error import CompileError
 from .syntax import IdentifierSyntax
+from .coerce import coerce
+from .signature import IsNullSig, AndSig
 from .code import (Expression, Code, Space, RootSpace, ScalarSpace, TableSpace,
                    DirectTableSpace, FiberTableSpace,
                    QuotientSpace, ComplementSpace, AliasSpace, ForkedSpace,
@@ -24,7 +27,7 @@ from .code import (Expression, Code, Space, RootSpace, ScalarSpace, TableSpace,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    KernelUnit, ComplementUnit, AliasUnit, ForkedUnit,
                    QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
-                   AggregateBatchExpr)
+                   AggregateBatchExpr, FormulaCode)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, SegmentTerm, QueryTerm, Joint)
@@ -882,7 +885,21 @@ class CompileQuotient(CompileSpace):
         while not baseline.is_inflated:
             baseline = baseline.base
         seed_term = self.state.compile(self.space.seed, baseline=baseline)
-        seed_term = self.state.inject(seed_term, self.space.kernel)
+        if self.space.kernel:
+            seed_term = self.state.inject(seed_term, self.space.kernel)
+            filters = []
+            for code in self.space.kernel:
+                filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
+                                     code.binding, op=code)
+                filters.append(filter)
+            if len(filters) == 1:
+                [filter] = filters
+            else:
+                filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
+                                     self.space.binding, ops=filters)
+            seed_term = FilterTerm(self.state.tag(), seed_term, filter,
+                                   seed_term.space, seed_term.baseline,
+                                   seed_term.routes.copy())
         if (self.space == self.baseline and
                 seed_term.baseline == self.space.seed_baseline):
             tag = self.state.tag()
@@ -954,6 +971,20 @@ class CompileComplement(CompileSpace):
         seed_term = self.state.inject(seed_term, family.kernel)
         if self.space.extra_codes is not None:
             seed_term = self.state.inject(seed_term, self.space.extra_codes)
+        if family.kernel:
+            filters = []
+            for code in family.kernel:
+                filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
+                                     code.binding, op=code)
+                filters.append(filter)
+            if len(filters) == 1:
+                [filter] = filters
+            else:
+                filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
+                                     self.space.binding, ops=filters)
+            seed_term = FilterTerm(self.state.tag(), seed_term, filter,
+                                   seed_term.space, seed_term.baseline,
+                                   seed_term.routes.copy())
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.space, seed_term.baseline,
                                 seed_term.routes.copy())
@@ -1163,7 +1194,7 @@ class CompileForked(CompileSpace):
                 joint = joint.clone(lop=joint.rop)
                 joints.append(joint)
         for code in self.space.kernel:
-            joint = Joint(code, code, is_total=True)
+            joint = Joint(code, code)
             joints.append(joint)
         units = [lunit for lunit, runit in joints]
         trunk_term = self.state.inject(trunk_term, units)
@@ -2089,7 +2120,7 @@ class SewQuotient(SewSpace):
             yield joint.clone(lop=op, rop=op)
         for code in space.family.kernel:
             unit = KernelUnit(code, space, code.binding)
-            yield Joint(unit, unit, is_total=True)
+            yield Joint(unit, unit)
 
 
 class TieQuotient(TieSpace):
@@ -2166,7 +2197,7 @@ class TieComplement(TieSpace):
         for code in space.base.family.kernel:
             lop = KernelUnit(code, space.base, code.binding)
             rop = ComplementUnit(code, space, code.binding)
-            yield Joint(lop=lop, rop=rop, is_total=True)
+            yield Joint(lop=lop, rop=rop)
 
 
 class OrderAlias(OrderSpace):
@@ -2240,7 +2271,7 @@ class OrderForked(OrderSpace):
                                         with_weak=self.with_weak):
             yield (code, direction)
         if self.with_weak and not self.space.is_contracting:
-            space = self.seed.inflate()
+            space = self.space.inflate()
             for code, direction in ordering(self.space.seed):
                 code = ForkedUnit(code, space, code.binding)
                 yield (code, direction)
@@ -2283,7 +2314,7 @@ class TieForked(TieSpace):
         for code in self.space.kernel:
             lop = code
             rop = ForkedUnit(code, space, code.binding)
-            yield Joint(lop, rop, is_total=True)
+            yield Joint(lop, rop)
 
 
 class OrderOrdered(OrderSpace):

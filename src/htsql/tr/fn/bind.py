@@ -48,8 +48,8 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         RoundSig, RoundToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
-                        QuotientSig, KernelSig, ComplementSig,
-                        AssignmentSig, DefineSig, WhereSig, SelectSig, LinkSig)
+                        QuotientSig, AssignmentSig, DefineSig,
+                        WhereSig, SelectSig, LinkSig)
 import sys
 
 
@@ -424,7 +424,7 @@ class BindFiber(BindMacro):
 
 class BindQuotient(BindMacro):
 
-    named('quotient')
+    named('^')
     signature = QuotientSig
 
     def expand(self, seed, kernel):
@@ -445,11 +445,6 @@ class BindQuotient(BindMacro):
                                self.syntax)
 
 
-class BindQuotientOperator(BindQuotient):
-
-    named('^')
-
-
 class BindDistinct(BindMacro):
 
     named('distinct')
@@ -465,52 +460,6 @@ class BindDistinct(BindMacro):
             bind = BindByRecipe(recipe, syntax, self.state)
             kernel.append(bind())
         return QuotientBinding(self.state.base, seed, kernel, self.syntax)
-
-
-class BindKernel(BindMacro):
-
-    named('kernel')
-    signature = KernelSig
-
-    def expand(self, index=None):
-        if index is not None:
-            if not isinstance(index, NumberSyntax):
-                raise BindError("expected a numeric literal", index.mark)
-            try:
-                index = int(index.value)
-            except ValueError:
-                raise BindError("expected an integer value", index.mark)
-        recipies = expand(self.state.base)
-        if recipies is None:
-            raise BindError("expected a quotient context", self.syntax.mark)
-        if index is not None:
-            if not (0 <= index < len(recipies)):
-                raise BindError("index is out of range", self.syntax.mark)
-            syntax, recipe = recipies[index]
-            syntax = syntax.clone(mark=self.syntax.mark)
-            bind = BindByRecipe(recipe, syntax, self.state)
-            return bind()
-        elements = []
-        for syntax, recipe in recipies:
-            syntax = syntax.clone(mark=self.syntax.mark)
-            bind = BindByRecipe(recipe, syntax, self.state)
-            element = bind()
-            elements.append(element)
-        return SelectionBinding(self.state.base, elements,
-                                self.state.base.syntax)
-
-
-class BindComplement(BindMacro):
-
-    named('complement')
-    signature = ComplementSig
-
-    def expand(self):
-        recipe = lookup_complement(self.state.base)
-        if recipe is None:
-            raise BindError("expected a quotient context", self.syntax.mark)
-        bind = BindByRecipe(recipe, self.syntax, self.state)
-        return bind()
 
 
 class BindAs(BindMacro):

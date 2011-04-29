@@ -925,7 +925,8 @@ class ForkedSpace(Space):
         assert isinstance(seed, Space)
         assert isinstance(kernel, listof(Code))
         assert base.spans(seed) and seed.spans(base)
-        assert base.family == seed.family
+        # FIXME: this condition could be violated after the rewrite step:
+        #assert base.family == seed.family
         assert all(base.spans(unit.space) for code in kernel
                                           for unit in code.units)
         assert isinstance(extra_codes, maybe(listof(Code)))

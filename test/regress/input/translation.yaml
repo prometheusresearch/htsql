@@ -193,6 +193,10 @@ tests:
             :where program := program?school='eng'
     - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
             :where program := program.limit(10,15)
+    # fork() with projections
+    - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+    # fork() with nullable kernel
+    - uri: /program.fork(part_of){root().program{school, code, part_of}, school, code, part_of}
 
   - title: Table Expressions
     tests:
@@ -237,103 +241,77 @@ tests:
 
   - title: Projections
     tests:
-    - uri: /quotient(program, degree)
-    - uri: /quotient(program, degree){*}
-    - uri: /quotient(program, degree){kernel()}
-    - uri: /quotient(program, degree)?false()
-    - uri: /quotient(program, degree){kernel()}?false()
-    - uri: /quotient(program, degree)?kernel()
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /quotient(program, degree)?kernel(0)
-    - uri: /quotient(program, degree){kernel()}?kernel()
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /quotient(program, degree){kernel()}?kernel(0)
-    - uri: /quotient(program?false(), degree)
-    - uri: /quotient(program?degree, degree)
-    - uri: /quotient(program?false(), degree)?false()
-    - uri: /quotient(program?degree, degree)?kernel()
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /quotient(program?degree, degree)?kernel(0)
-    - uri: /quotient(program, degree){kernel(),count(complement())}
-      skip: true
-    - uri: /quotient(program, degree){kernel(),count(complement().student)}
-    - uri: /quotient(student, year(dob), gender)
-    - uri: /quotient(student, {year(dob), gender})
-    - uri: /quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
-    - uri: /quotient(student, {year(dob), gender}){kernel(),count(complement())}
-    - uri: /quotient(quotient(student, year(dob)).complement(), gender)
-                {kernel(), count(complement()), count(complement().is_active)}
-    - uri: /quotient(quotient(student, year(dob), gender), kernel(0))
-                {kernel(), count(complement()), count(complement().complement()),
-                 count(complement().complement().is_active)}
-    - uri: /school.quotient(program, degree)
-    - uri: /school.quotient(program, degree){*}
-    - uri: /school.quotient(program, degree){kernel()}
-    - uri: /school.quotient(program, degree)?false()
-    - uri: /school.quotient(program, degree){kernel()}?false()
-    - uri: /school.quotient(program, degree)?kernel()
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /school.quotient(program, degree)?kernel(0)
-    - uri: /school.quotient(program, degree){kernel()}?kernel()
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /school.quotient(program, degree){kernel()}?kernel(0)
-    - uri: /school.quotient(program?false(), degree)
-    - uri: /school.quotient(program?degree, degree)
-    - uri: /school.quotient(program?false(), degree)?false()
-    - uri: /school.quotient(program?degree, degree)?kernel()
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /school.quotient(program?degree, degree)?kernel(0)
-    - uri: /school.quotient(program, degree){kernel(),count(complement())}
-    - uri: /school.quotient(program, degree){kernel(),count(complement().student)}
-    - uri: /(school?code='art').(program^degree).^{title+,degree}
+    - uri: /distinct(program{degree})
+    - uri: /distinct(program{degree}){*}
+    - uri: /distinct(program{degree})?false()
+    - uri: /distinct(program{degree})?head(*1)='b'
+    - uri: /distinct(program{degree}){*}?head(*1)='b'
+    - uri: /distinct(program{degree}?false())
+    - uri: /distinct(program{degree}?tail(*1)='a')
+    - uri: /distinct(program{degree}?false())?false()
+    - uri: /distinct(program{degree}?tail(*1)='a')?head(*1)='b'
+    - uri: /distinct(program{degree}){*, count(^)}
+    - uri: /distinct(program{degree}){*, count(^.student)}
+    - uri: /distinct(program{degree :if_null '--'})
+    - uri: /distinct(student{year(dob),gender})
+    - uri: /distinct(student{year(dob),gender}){*, *1, *2}
+    - uri: /distinct(student{year(dob),gender}){*,count(^)}
+    - uri: /distinct(distinct(student{year(dob)}).^{gender})
+                {*, count(^), count(^.is_active)}
+    - uri: /distinct(distinct(student{year(dob), gender}){*1})
+                {*, count(^), count(^.^), count(^.^.is_active)}
 
-    - uri: /school.program
-            .quotient(student, year(dob), gender)
-    - uri: /school.program
-            .quotient(student, {year(dob), gender})
-    - uri: /school.program
-            .quotient(student, {year(dob), gender}){kernel(),kernel(0),kernel(1)}
-    - uri: /school.program
-            .quotient(student, {year(dob), gender}){kernel(),count(complement())}
-    - uri: /school.program
-            .quotient(quotient(student, year(dob)).complement(), gender)
-                {kernel(), count(complement()), count(complement().is_active)}
-    - uri: /school.program
-            .quotient(quotient(student, year(dob), gender), kernel(0))
-                {kernel(), count(complement()), count(complement().complement()),
-                 count(complement().complement().is_active)}
+    - uri: /school.distinct(program{degree})
+    - uri: /school.distinct(program{degree}){*}
+    - uri: /school.distinct(program{degree})?false()
+    - uri: /school.distinct(program{degree})?head(*1)='b'
+    - uri: /school.distinct(program{degree}){*}?head(*1)='b'
+    - uri: /school.distinct(program{degree}?false())
+    - uri: /school.distinct(program{degree}?tail(*1)='a')
+    - uri: /school.distinct(program{degree}?false())?false()
+    - uri: /school.distinct(program{degree}?tail(*1)='a')?head(*1)='b'
+    - uri: /school.distinct(program{degree}){*, count(^)}
+    - uri: /school.distinct(program{degree}){*, count(^.student)}
+    - uri: /school.distinct(program{degree :if_null '--'})
 
-    - uri: /quotient(program,degree){kernel(),count(complement())}?count(complement())>5
-    - uri: /quotient(course,credits)?kernel()>3
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /quotient(course,credits)?kernel(0)>3
-    - uri: /quotient(course,credits){kernel()-}
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /quotient(course,credits){kernel(0)-}
-    - uri: /(quotient((department?code='stdart').course,credits)?kernel()>3)
-                {*,count(complement())}
-      skip: true # no longer works with new selector semantics, use `kernel(0)`
-    - uri: /(quotient((department?code='stdart').course,credits)?kernel(0)>3)
-                {*,count(complement())}
-    - uri: /quotient(school,count(program)){kernel(),count(complement())}
-    - uri: /school.quotient(program, degree)
-    - uri: /department.quotient(school.program, degree)
-    - uri: /department.quotient((school?code='art').program, degree)
-    - uri: /quotient(program,degree).complement()
-    - uri: /quotient(program.sort(count(student)),degree).complement()
+    - uri: /(school?code='art').(program^degree).^{title+, degree}
+
+    - uri: /school.program.distinct(student{year(dob),gender})
+    - uri: /school.program.distinct(student{year(dob),gender}){*, *1, *2}
+    - uri: /school.program.distinct(student{year(dob),gender}){*, count(^)}
+    - uri: /school.program.distinct(distinct(student{year(dob)}).^{gender})
+                {*, count(^), count(^.is_active)}
+    - uri: /school.program.distinct(distinct(student{year(dob), gender}){*1})
+                {*, count(^), count(^.^), count(^.^.is_active)}
+
+    - uri: /(program^degree){*, count(^)}?count(^)>5
+    - uri: /(course^credits)?*1>3
+    - uri: /(course^credits){*1-}
+    - uri: /(((department?code='stdart').course^credits)?*1>3)
+                {*, count(^)}
+    - uri: /(school^count(program)){*, count(^)}
+    - uri: /school.(program^degree)
+    - uri: /department.(school.program^degree)
+    - uri: /department.((school?code='art').program^degree)
+    - uri: /(program^degree).^
+    - uri: /(program.sort(count(student))^degree).^
                 {*, count(student)}
-    - uri: /quotient(program,degree){*,exists(complement()),count(complement())}
-    - uri: /school{code,count(program),count(quotient(program,degree))}
-    - uri: /school{code,count(program),count(program^degree)}
-    - uri: /(program^degree){*,count(^),count(^.student)}
-    - uri: /(student^{year(dob),gender}){*,count(^),count(^?is_active)}
+    - uri: /(program^degree){*, exists(^), count(^)}
+    - uri: /school{code, count(program), count(distinct(program{degree}))}
+    - uri: /school{code, count(program), count(program^degree)}
+    - uri: /(program^degree){*, count(^), count(^.student)}
+    - uri: /(student^{year(dob),gender}){*, count(^), count(^?is_active)}
     - uri: /count(program^degree)
 
     # The `distinct()` function.
-    - uri: /distinct(program{degree}){*,count(^),count(^.student)}
-    - uri: /distinct(program{degree}?school={'art','la'}){*,count(^),count(^.student)}
-    - uri: /distinct(program{degree}){*,count(^),count(^.student)}?kernel(0)
-    - uri: /(school?code={'art','la'}).distinct(program{degree}){*,count(^),count(^.student)}
+    - uri: /distinct(program{degree})
+                {*, count(^), count(^.student)}
+    - uri: /distinct(program{degree}?school={'art','la'})
+                {*, count(^), count(^.student)}
+    - uri: /distinct(program{degree})
+                {*, count(^), count(^.student)}?*1
+    - uri: /(school?code={'art','la'}).distinct(program{degree})
+                {*, count(^), count(^.student)}
     - uri: /distinct(program{degree}?school={'art','la'}).^
 
     # Known regressions.

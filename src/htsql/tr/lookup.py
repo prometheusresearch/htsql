@@ -256,89 +256,34 @@ class LookupInTable(Lookup):
     adapts(TableBinding, Probe)
 
     def find_link(self, column):
-        # Determines if the column represents a link to another table.
+        # Determines if the column may represents a link to another table.
+        # This is the case when the column is associated with a foreign key.
 
-        # A column may represent another table if it is a foreign key or
-        # a part of a multi-column foreign key.  Then the column represents
-        # the referenced table chained to the referencing table by the
-        # join condition imposed by the key.  Moreover, if the referenced
-        # column is also part of some foreign key, the link could be extended
-        # include the next referenced table.
-        #
-        # More formally, consider a directed graph with vertices corresponding
-        # to table columns and arcs corresponding to foreign keys.  A single
-        # column foreign key generates a single arc between the referencing
-        # and the referenced columns, while a multi-column foreign key
-        # generates an arc per each pair of referencing and referenced columns.
-        #
-        # Each path in the graph represents a link between two tables:
-        # the table of the start column and the table of the end column.
-        # The tables are linked by the join conditions corresponding to
-        # the foreign keys that compose the path.
-        #
-        # If for the given column, there are no outgoing arcs, the column
-        # does not represent a link.  Otherwise consider all paths starting
-        # from the given column vertex.  If there exists a unique longest
-        # path, it is used to generate the link; otherwise it is assumed
-        # that the link cannot be established without ambiguity.
-
-        # A list of chains of foreign keys that originate in the given column.
+        # Get a list of foreign keys associated with the given column.
         candidates = []
-        # A list of pairs `(path, column)` where `path` represents a chain
-        # of foreign keys and `column` is the referenced column of the trailing
-        # foreign key.  The list contains chains which we will try to extend.
-        # We start with an empty path originated from the given column.
-        queue = [([], column)]
-        # Continue while we have potential chains to extend.
-        while queue:
-            # Get a potential chain.  We are going to find all its extensions.
-            path, column = queue.pop(0)
-            # Get the table entity of the target column.
-            schema = self.catalog.schemas[column.schema_name]
-            table = schema.tables[column.table_name]
-            # Go through all the foreign keys that include the column.
-            for fk in table.foreign_keys:
-                if column.name not in fk.origin_column_names:
-                    continue
-                # Find the referenced column.
-                target_schema = self.catalog.schemas[fk.target_schema_name]
-                target = target_schema.tables[fk.target_name]
-                idx = fk.origin_column_names.index(column.name)
-                target_column_name = fk.target_column_names[idx]
-                target_column = target.columns[target_column_name]
-                # Ignore the case whan the column points to itself.  This may
-                # actually happen when the foreign key is multicolumn
-                # self-referential link.
-                if target_column is column:
-                    continue
-                # We got a chain extension.  Add it to the list of candidate
-                # chains and to the queue of potentially extendable chains.
-                candidate = path+[fk]
-                candidates.append(candidate)
-                queue.append((candidate, target_column))
+        schema = self.catalog.schemas[column.schema_name]
+        table = schema.tables[column.table_name]
+        for fk in table.foreign_keys:
+            if fk.origin_column_names != [column.name]:
+                continue
+            candidates.append(fk)
 
-        # Return immediately if there are no candidate chains.
+        # Return immediately if there are no candidate keys.
         if not candidates:
             return None
-        # Leave only the longest chains.
-        max_length = max(len(candidate) for candidate in candidates)
-        candidates = [candidate for candidate in candidates
-                                if len(candidate) == max_length]
 
-        # If there's only one longest chain, we got our link.
+        # We got an unambiguous link if there's only one foreign key
+        # associated with the column,
         if len(candidates) == 1:
-            # Generate the link joins.
-            foreign_keys = candidates[0]
-            joins = []
-            for fk in foreign_keys:
-                origin_schema = self.catalog.schemas[fk.origin_schema_name]
-                origin = origin_schema.tables[fk.origin_name]
-                target_schema = self.catalog.schemas[fk.target_schema_name]
-                target = target_schema.tables[fk.target_name]
-                join = DirectJoin(origin, target, fk)
-                joins.append(join)
+            # Generate the link join.
+            fk = candidates[0]
+            origin_schema = self.catalog.schemas[fk.origin_schema_name]
+            origin = origin_schema.tables[fk.origin_name]
+            target_schema = self.catalog.schemas[fk.target_schema_name]
+            target = target_schema.tables[fk.target_name]
+            join = DirectJoin(origin, target, fk)
             # Build and return the link binding.
-            return AttachedTableRecipe(joins)
+            return AttachedTableRecipe([join])
 
         if len(candidates) > 1:
             return AmbiguousRecipe()

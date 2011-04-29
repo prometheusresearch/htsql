@@ -360,9 +360,22 @@ class IdentifierSyntax(Syntax):
 class WildcardSyntax(Syntax):
     """
     Represents a wildcard.
+
+    `index` (:class:`NumberSyntax` or ``None``)
+        The index in a wildcard expression.
     """
 
+    def __init__(self, index, mark):
+        assert isinstance(index, maybe(NumberSyntax))
+
+        super(WildcardSyntax, self).__init__(mark)
+        self.index = index
+
     def __str__(self):
+        # FIXME: wrap the index with parentheses to avoid
+        # interpreting a trailing `.` as a decimal point?
+        if self.index is not None:
+            return '*%s' % self.index
         return '*'
 
 
@@ -410,6 +423,7 @@ class NumberSyntax(LiteralSyntax):
     """
 
     def __str__(self):
+        # FIXME: what is the number is a base of a specifier?
         return self.value
 
 

@@ -546,6 +546,20 @@ class BindWildcard(Bind):
         if recipies is None:
             raise BindError("unable to resolve a wildcard",
                             self.syntax.mark)
+        if self.syntax.index is not None:
+            try:
+                index = int(self.syntax.index.value)
+            except ValueError:
+                raise BindError("an integer value is expected",
+                                self.syntax.mark)
+            index -= 1
+            if not (0 <= index < len(recipies)):
+                raise BindError("index is out of range",
+                                self.syntax.mark)
+            syntax, recipe = recipies[index]
+            syntax = syntax.clone(mark=self.syntax.mark)
+            bind = BindByRecipe(recipe, syntax, self.state)
+            return bind()
         elements = []
         for syntax, recipe in recipies:
             syntax = syntax.clone(mark=self.syntax.mark)

@@ -936,10 +936,7 @@ class AssembleJoin(Assemble):
             lop = self.state.evaluate(joint.lop, router=self.term.lkid)
             rop = self.state.evaluate(joint.rop, router=self.term.rkid)
             is_nullable = (lop.is_nullable or rop.is_nullable)
-            if joint.is_total and lop.is_nullable and rop.is_nullable:
-                signature = IsTotallyEqualSig(+1)
-            else:
-                signature = IsEqualSig(+1)
+            signature = IsEqualSig(+1)
             equality = FormulaPhrase(signature, coerce(BooleanDomain()),
                                      is_nullable, self.term.expression,
                                      lop=lop, rop=rop)
@@ -1096,10 +1093,7 @@ class AssembleCorrelation(Assemble):
             rop = self.state.evaluate(joint.rop, router=self.term.kid)
             # An individual condition.
             is_nullable = (lop.is_nullable or rop.is_nullable)
-            if joint.is_total and lop.is_nullable and rop.is_nullable:
-                signature = IsTotallyEqualSig(+1)
-            else:
-                signature = IsEqualSig(+1)
+            signature = IsEqualSig(+1)
             equality = FormulaPhrase(signature, coerce(BooleanDomain()),
                                      is_nullable, self.term.expression,
                                      lop=lop, rop=rop)
