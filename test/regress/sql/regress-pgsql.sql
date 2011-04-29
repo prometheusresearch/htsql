@@ -43,7 +43,7 @@ which do not offer a degree.
   +--------------------+              +---------------------+
   | DEPARTMENT         |              | SCHOOL              |
   +--------------------+              +---------------------+
-  | code            PK |--\       /---| code             PK |----\
+  | code            PK |--\       /--o| code             PK |----\
   | school          FK |>-|------/    | name          NN,UK |    |
   | name         NN,UK |  |    .      +---------------------+    |
   +--------------------+  |     .                              . |
@@ -56,10 +56,10 @@ which do not offer a degree.
   | COURSE             |  |           | PROGRAM             |    |
   +--------------------+  |           +---------------------+    |
   | department  FK,PK1 |>-/           | school       PK1,FK |>---/
-  | no             PK2 |              | code            PK2 |>---\    
+  | no             PK2 |              | code            PK2 |----\    
   | title           NN |              | title            NN |    |
   | credits         NN |              | degree           CK |    |
-  | description        |              | part_of          FK |----/
+  | description        |              | part_of          FK |>---/
   +--------------------+              +---------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key

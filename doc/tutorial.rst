@@ -82,18 +82,18 @@ courses offered::
   | name         NN,UK |  |    .      +---------------------+    |
   +--------------------+  |     .                              . |
                         . |  departments                      .  |
-       a department    .  |  may belong                      .   |
-       offers zero or .   |  to at most        a school          |
-       more courses       |  one school        administers zero  |
-                          |                    or more programs  |
-  +--------------------+  |                                      |
-  | COURSE             |  |           +---------------------+    |
-  +--------------------+  |           | PROGRAM             |    |
-  | department  FK,PK1 |>-/           +---------------------+    |
-  | no             PK2 |              | school       PK1,FK |>---/
-  | title           NN |              | code            PK2 |
-  | credits         NN |              | title            NN |
-  | description        |              | degree           CK |
+       a department    .  |  may belong      a school        .   |
+       offers zero or .   |  to at most      administers zero    |
+       more courses       |  one school      or more programs    | 
+                          |                                      | 
+  +--------------------+  |           +---------------------+    |
+  | COURSE             |  |           | PROGRAM             |    |
+  +--------------------+  |           +---------------------+    |
+  | department  FK,PK1 |>-/           | school       PK1,FK |>---/
+  | no             PK2 |              | code            PK2 |----\     
+  | title           NN |              | title            NN |    |
+  | credits         NN |              | degree           CK |    |
+  | description        |              | part_of          FK |>---/ 
   +--------------------+              +---------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
@@ -104,14 +104,12 @@ degree-granting programs.  Departments are associated with a school
 and offer courses.  Further on in the tutorial we will introduce
 other tables such as student, instructor and enrollment.
 
-Selecting Data
---------------
 
-HTSQL requests typically begin with a table name.  You can browse the
-contents of a table, search for specific data, and select the columns
-you want to see in the results.
+Basic Expressions
+-----------------
 
-The most basic HTSQL request (A1_) returns everything from a table:
+Every HTSQL request starts with a forward-slash ``/``.  To return all
+rows from a table, simply write the table name (A1_):
 
 .. sourcecode:: htsql
 
@@ -122,227 +120,333 @@ The most basic HTSQL request (A1_) returns everything from a table:
 The result set is a list of schools in the university, including all
 columns, sorted by the primary key for the table:
 
-====  =============================
-code  name
-====  =============================
-art   School of Art and Design
-bus   School of Business
-edu   College of Education
-egn   School of Engineering
-la    School of Arts and Humanities
-mus   School of Music & Dance
-ns    School of Natural Sciences
-ph    Public Honorariums
-sc    School of Continuing Studies
-====  =============================
+ ====  =============================
+ code  name
+ ====  =============================
+ art   School of Art and Design
+ bus   School of Business
+ edu   College of Education
+ egn   School of Engineering
+ la    School of Arts and Humanities
+ mus   School of Music & Dance
+ ns    School of Natural Sciences
+ ph    Public Honorariums
+ sc    School of Continuing Studies
+ ====  =============================
 
+Scalar expressions, including arithmetic and boolean operations, can be
+written directly (A2_):
 
-Not all columns are useful for every context.  Use a *selector* to
-choose columns for display (A2_):
+.. htsql:: /(3+4)*6
+
+.. _A2: http://demo.htsql.org/(3+4)*6
+
+HTSQL has many built-in functions.  For instance you could use the
+function ``count()`` to get the number of rows in a table (A3_):
+
+.. htsql:: /count(school)
+
+.. _A3: http://demo.htsql.org/count(school)
+
+HTSQL uses a regular and intuitive syntax for expressions ranging from
+table selection to complex calculation.
+
+Choosing Columns
+----------------
+
+Use a *selector* to specify more than one output column (B1_):
+
+.. htsql:: /{count(school), count(program), count(department)}
+
+.. _B1: http://demo.htsql.org/{count(school),count(program),count(department)}
+
+When returning data from a table, use a selector to choose columns for
+display (B2_):
 
 .. htsql:: /program{school, code, title}
    :cut: 4
 
-.. _A2: http://demo.htsql.org/program{school,code,title}
+.. _B2: http://demo.htsql.org/program{school,code,title}
 
-Add a plus (``+``) sign to the column name to sort the column in
-ascending order.  Use a minus sign (``-``) for descending order.  For
-example, this request (A3_) returns departments in descending order:
+In addition to table attributes, you could select arbitrary expressions.
+The following example displays, for each of the school records, the
+school's name and the number of associated departments (B3_):
 
-.. htsql:: /department{name-, school}
+.. htsql:: /school{name, count(department)}
    :cut: 4
 
-.. _A3:
-    http://demo.htsql.org/department{name-,school}
+.. _B3: http://demo.htsql.org/school{name, count(department)}
 
-Using two ordering indicators will sort on labeled columns as they
-appear in the selector.  In the example below, we sort in ascending
-order on ``department`` and then descending on ``credits`` (A4_):
+To title an output column, use the ``:as`` decorator (B4_):
 
-.. htsql:: /course{department+, no, credits-, title}
-   :cut: 3
+.. htsql:: /school{name, count(department) :as '%23 of Dept.'}
+   :query: /school{name,count(department):as%20'%23%20of%20Dept.'}
+   :cut: 4
 
-.. _A4:
-    http://demo.htsql.org
-    /course{department+, no, credits-, title}
+.. _B4: http://demo.htsql.org
+        /school{name,count(department):as%20'%23%20of%20Dept.'}
 
-To display friendlier names for the columns, use ``:as`` to rename a
-column's title (A5_):
+Since HTSQL is a web query language, there are two characters that have
+special meaning: ``%`` is used to encode reserved and unprintable
+characters as hexadecimal UTF-8 octets; ``#`` represents query fragments
+that can be truncated by your browser.   Hence, these characters must be
+percent-encoded in HTSQL queries: ``%`` is written ``%25``; ``#`` is
+written ``%23``.  Depending upon the browser, other characters may be
+percent-encoded, for example, the space `` `` may show up as ``%20``.
 
-.. htsql:: /course{department+ :as 'Dept Code', no :as 'No.',
-                   credits-, title}
-   :cut: 3
-
-.. _A5:
-    http://demo.htsql.org
-    /course{department+%20:as%20'Dept%20Code',no%20:as%20'No.',
-            credits-, title}
-
-Selectors let you choose, rearrange, and sort columns of interest.  They
-are an easy way to exclude data that isn't meaningful to your report.
 
 Linking Data
 ------------
 
 In our example schema, each ``program`` is administered by a ``school``.
 Since the HTSQL processor knows about this relationship, it is possible
-to link data accordingly (B1_):
+to link data accordingly (C1_):
 
 .. htsql:: /program{school.name, title}
    :cut: 4
 
-.. _B1:
+.. _C1:
     http://demo.htsql.org
     /program{school.name, title}
 
-This request joins the ``program`` and ``school`` tables by the foreign
-key from ``program{school}`` to ``school{code}``.  This is called a
-*singular* relationship, since for every ``program``, there is exactly
-one ``school``.
-
-It is possible to join through multiple foreign keys; since ``course``
-is offered by a ``department`` which belongs to a ``school``, we can
-list courses including school and department name (B2_):
+It is possible to link data through several relationships.  Since
+``course`` is offered by a ``department`` which belongs to a ``school``,
+we can write (C2_):
 
 .. htsql:: /course{department.school.name, department.name, title}
    :cut: 4
 
-.. _B2:
+.. _C2:
     http://demo.htsql.org
-    /course{department.school.name, department.name, title}
+    /course{department.school.name,department.name,title}
 
 This request can be shortened a bit by collapsing the duplicate mention
-of ``department``; the resulting request is equivalent (B3_):
+of ``department``; the resulting request is equivalent (C3_):
 
 .. htsql:: /course{department{school.name, name}, title}
    :cut: 4
    :hide:
 
-.. _B3:
+.. _C3:
     http://demo.htsql.org
-    /course{department{school.name, name}, title}
+    /course{department{school.name,name},title}
 
 For cases where you don't wish to specify each column explicitly, use
 the wildcard ``*`` selector.  The request below returns all columns from
-``department`` and all columns from its correlated ``school`` (B4_):
+``department`` and all columns from its correlated ``school`` (C4_):
 
-.. htsql:: /department{*,school.*}
+.. htsql:: /department{*, school.*}
    :cut: 4
 
-.. _B4:
-    http://demo.htsql.org
-    /department{*,school.*}
+.. _C4:
+    http://demo.htsql.org/department{*,school.*}
 
 Since the HTSQL processor knows about relationships between tables in
-your relational database, joining tables in your reports is trivial.
+your relational database, linking tables in your reports is trivial.
+
 
 Filtering Data
 --------------
 
-Predicate expressions in HTSQL follow the question mark ``?``.
-For example, to return departments in the 'School of Engineering'
-we write (C1_):
+Use the filter operator ``?`` to show only data that satisfies some
+criteria. For example, to return departments in the School of
+Engineering we can write (D1_):
 
 .. htsql:: /department?school='eng'
    :cut: 4
 
-.. _C1:
+.. _D1:
     http://demo.htsql.org
     /department?school='eng'
 
-The request above returns all rows in the ``department`` table where the
-column ``school`` is equal to ``'eng'``.   In HTSQL, *literal* values are
-single quoted, in this way we know ``'eng'`` isn't the name of a column.
+This request returns all records in the ``department`` table where the
+column ``school`` is equal to ``'eng'``.  In HTSQL, *literal* values are
+single quoted so that ``'eng'`` isn't confused with a column name.
+
+For a case-insensitive substring match, use the ``~`` operator (D2_):
+
+.. htsql:: /program?title~'lit'
+   :cut: 3
+
+.. _D2:
+    http://demo.htsql.org
+    /program?title~'lit'
 
 Often times we want to compare a column against values from a list.  The
 next example returns rows from the ``program`` table for the "Bachelors
-of Arts" (``'ba'``) or "Bachelors of Science" (``'bs'``) degrees (C2_):
+of Arts" (``'ba'``) or "Bachelors of Science" (``'bs'``) degrees (D3_):
 
 .. htsql:: /program?degree={'ba','bs'}
    :cut: 3
 
-.. _C2:
+.. _D3:
     http://demo.htsql.org
     /program?degree={'ba','bs'}
 
 Complex filters can be created using boolean connectors, such as the
-conjunction (``&``) and alternation (``|``) operators .  The following
-request returns programs in the "School of Business" that do not
-grant a "Bachelor of Science" degree (C3_):
+conjunction (``&``), alternation (``|``), and negation (``!``)
+operators.  The following request returns programs in the "School of
+Business" that do not grant a "Bachelor of Science" degree (D4_):
 
 .. htsql:: /program?school='bus'&degree!='bs'
    :cut: 3
 
-.. _C3:
+.. _D4:
     http://demo.htsql.org
     /program?school='bus'&degree!='bs'
 
 Filters can be combined with selectors and links.  The following request
 returns courses, listing only department number and title, having less
-than 3 credits in the "School of Natural Science" (C4_):
+than 3 credits in the "School of Natural Science" (D5_):
 
 .. htsql:: /course{department, no, title}
             ?credits<3&department.school='ns'
    :cut: 4
 
-.. _C4:
+.. _D5:
     http://demo.htsql.org
     /course{department, no, title}
        ?credits<3&department.school='ns'
 
-It is sometimes desirable to specify the filter before the selector.
-Using a *table expression*, denoted by parenthesis, the previous request
-is equivalent to (C5_):
 
-.. htsql:: /(course?credits<3&department.school='ns')
-            {department, no, title}
+Sorting & Truncating
+--------------------
+
+By default, with a simple table expression such as ``/school``, all rows
+are returned in the order of the primary key columns.  To override the
+sort order, you can use ``sort()`` function (E1_):
+
+.. htsql:: /school.sort(name)
    :cut: 4
-   :hide:
 
-.. _C5:
-    http://demo.htsql.org
-    /(course?credits<3&department.school='ns')
-      {department, no, title}
+.. _E1: http://demo.htsql.org/school.sort(name)
 
-HTSQL supports a whole suite of functions and predicator operators.
-Further, through the plug-in mechanism, custom data types, operators,
-and functions may be integrated to support domain specific needs.
+Sort direction can be specified explicitly using ``+`` for ascending and
+``-`` for descending order.  Also, you can sort by multiple columns. The
+following example sorts courses in ascending order by department and
+then in descending order by number of credits (E2_):
 
-Formatters
-----------
+.. htsql:: /course.sort(department+, credits-)
+   :cut: 3
 
-Once data is selected, linked and filtered, it is formatted for the
-response.  By default, HTSQL uses the ``Accept`` header to negotiate the
-output format with the user agent.  This can be overridden with a format
-command, such as ``/:json``.  For example, results in JSON format (RFC
-4627) can be requested as follows (D1_):
+.. _E2:
+    http://demo.htsql.org/course.sort(department+,credits-)
+
+When sorting by a selected output column, you could use a shortcut
+syntax which combines column selection and sorting (E3_):
+
+.. htsql:: /course{department+, no, credits-, title}
+   :cut: 5
+
+.. _E3:
+    http://demo.htsql.org/course{department+,no,credits-,title}
+
+To list a range of rows, the ``limit()`` function takes one or two
+arguments.  The first argument is the number of rows to return, the
+optional second argument is the starting offset.  The next example
+returns 5 records from the program table, skipping first 10 rows (E4_):
+
+.. htsql:: /program.limit(5,10)
+
+.. _E4:
+    http://demo.htsql.org/program.limit(5,10)
+
+
+Formatting Output
+-----------------
+
+By default, HTSQL tries to guess the desired output format depending
+upon the browser or the tool used to make the request.  This can be
+overridden with a format decorator, such as ``/:json``.  For example,
+results in JSON format can be requested as follows (F1_):
 
 .. htsql:: /school/:json
    :plain:
 
-.. _D1:
+.. _F1:
     http://demo.htsql.org
     /school/:json
 
-Other formats include ``/:txt`` for plain-text formatting, ``/:html`` for
-display in web browsers, and ``/:csv`` for data exchange.
+Other formats include ``/:txt`` for plain-text formatting, ``/:html``
+for display in web browsers, and ``/:csv`` for data exchange. 
 
-Putting it All Together
------------------------
 
-The following request selects records from the ``course`` table,
-filtered by all departments in the 'School of Business', sorted by
-``course`` ``title``, including ``department``'s ``code`` and ``name``,
-and returned as a "Comma-Separated Values" (RFC 4180) (E1_):
+Putting it Together
+-------------------
 
-.. htsql:: /course{department{code,name},no,title+}?
-            department.school='bus'/:csv
-   :hide:
+HTSQL is a composable language where individual query fragments can be
+combined into more complex expressions.  For example, a selection on the
+course table such as ``/course{department, no, title}`` and a filter on
+the course table, ``/course?credits<3`` can be combined in either of the
+following two forms (G1_ & G2_):
 
-.. _E1:
+.. htsql:: /course{department, no, title}?credits<3
+   :cut: 3 
+
+.. _G1:
     http://demo.htsql.org
-    /course{department{code,name},no,title+}?
-          department.school='bus'/:csv
+    /course{department,no,title}?credits<3
+
+.. htsql:: /(course?credits<3){department, no, title}
+   :cut: 3 
+
+.. _G2:
+    http://demo.htsql.org
+    /(course?credits<3){department,no,title}
+
+Note that the order in which selection and filter operators are applied
+doesn't affect the output. You could also use a functional form (G3_):
+
+.. htsql:: /course.filter(credits<3).select(department, no, title)
+   :hide:
+   :cut: 3 
+
+.. _G3:
+    http://demo.htsql.org
+    /course.filter(credits<3).select(department,no,title)
+
+For the following two equivalent examples, we combine 3 operators --
+sorting, truncating, and selection (G4_ & G5_):
+
+.. htsql:: /course.sort(credits-).limit(10){department, no, credits}
+   :cut: 3 
+
+.. _G4:
+    http://demo.htsql.org
+    /course.sort(credits-).limit(10){department,no,credits}
+
+.. htsql:: /course{department, no, credits-}.limit(10)
+   :cut: 3 
+
+.. _G5:
+    http://demo.htsql.org
+    /course{department,no,credits-}.limit(10)
+
+The relative position of sort and limit matter, switching the positions
+will change the output (G6_):
+
+.. htsql:: /course.limit(10).sort(credits-){department, no, credits}
+   :cut: 3 
+
+.. _G6:
+    http://demo.htsql.org
+    /course.limit(10).sort(credits-){department,no,credits}
+
+
+The following example requests the top 5 departments from schools with
+``'art'`` in their name, sorted in descending order by the number of
+courses.  The output columns include the corresponding school name, the
+name of the department itself, and the number of courses.  The output
+format is "Comma-Separated Values" suitable for consumption by
+spreadsheet or statistical analysis packages (G7_):
+
+.. htsql:: /department{school.name, name, count(course)-}
+           .filter(school.name~'art').limit(5)/:csv
+
+.. _G7:
+    http://demo.htsql.org
+    /department{school.name,name,count(course)-}
+    .filter(school.name~'art').limit(5)/:csv
 
 HTSQL requests are powerful without being complex.  They are easy to
 read and modify.  They adapt to changes in the database.  These
