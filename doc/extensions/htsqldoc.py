@@ -8,6 +8,16 @@ from cgi import escape
 from json import loads
 
 
+class HTSQLServerDirective(Directive):
+    required_arguments = 1
+    has_content = False
+
+    def run(self):
+        env = self.state.document.settings.env
+        env.htsql_server = self.arguments[0]
+        return []
+
+
 class HTSQLDirective(Directive):
     optional_arguments = 1
     has_content = True
@@ -34,13 +44,13 @@ class HTSQLDirective(Directive):
             raise self.error("no query")
         query_node = htsql_block(query, query)
         query_node['language'] = 'htsql'
-        if not env.config.htsql_server:
+        if not hasattr(env, 'htsql_server') or not env.htsql_server:
             raise self.error("htsql_server is not set")
         if 'query' not in self.options:
             query = quote(query, safe=self.htsql_safe)
         else:
             query = self.options['query']
-        uri = env.config.htsql_server+query
+        uri = env.htsql_server+query
         query_node['uri'] = uri
         query_node['hide'] = ('hide' in self.options)
         if not hasattr(env, 'htsql_uris'):
@@ -79,6 +89,56 @@ class VSplitDirective(Directive):
         node[1]['classes'].append('vsplit-right')
         node += nodes.container(classes=['vsplit-clear'])
         return [node]
+
+
+def purge_htsql_server(app, env, docname):
+    if hasattr(env, 'htsql_server'):
+        del env.htsql_server
+    if env.config.htsql_server:
+        env.htsql_server = env.config.htsql_server
+
+
+class htsql_block(nodes.literal_block):
+    pass
+
+
+def visit_htsql_block(self, node):
+    # Adapted from `visit_literal_block()`
+    if node.rawsource != node.astext():
+        return self.visit_literal_block(self, node)
+    lang = self.highlightlang
+    linenos = node.rawsource.count('\n') >= \
+              self.highlightlinenothreshold - 1
+    if node.has_key('language'):
+        lang = node['language']
+    if node.has_key('linenos'):
+        linenos = node['linenos']
+    def warner(msg):
+        self.builder.warn(msg, (self.builder.current_docname, node.line))
+    self.highlighter.fmter[False].nowrap = True
+    self.highlighter.fmter[True].nowrap = True
+    highlighted = self.highlighter.highlight_block(
+        node.rawsource, lang, linenos, warn=warner)
+    self.highlighter.fmter[False].nowrap = False
+    self.highlighter.fmter[True].nowrap = False
+    if node.has_key('uri'):
+        highlighted = '<a href="%s" target="_new" class="htsql-link">%s</a>' \
+                % (escape(node['uri'], True), highlighted)
+    toggle = "[-]"
+    if node.has_key('hide') and node['hide']:
+        toggle = "[+]"
+    highlighted = '<span class="htsql-toggle">%s</span>%s' \
+            % (toggle, highlighted)
+    highlighted = '<pre>%s</pre>' % highlighted
+    highlighted = '<div class="highlight">%s</div>' % highlighted
+    starttag = self.starttag(node, 'div', suffix='',
+                             CLASS='highlight-%s' % lang)
+    self.body.append(starttag + highlighted + '</div>\n')
+    raise nodes.SkipNode
+
+
+def depart_htsql_block(self, node):
+    self.depart_literal_block(node)
 
 
 def load_uri(uri, error=False):
@@ -165,53 +225,12 @@ def build_result(line, content_type, content, cut=None):
     return result_node
 
 
-class htsql_block(nodes.literal_block):
-    pass
-
-
-def visit_htsql_block(self, node):
-    # Adapted from `visit_literal_block()`
-    if node.rawsource != node.astext():
-        return self.visit_literal_block(self, node)
-    lang = self.highlightlang
-    linenos = node.rawsource.count('\n') >= \
-              self.highlightlinenothreshold - 1
-    if node.has_key('language'):
-        lang = node['language']
-    if node.has_key('linenos'):
-        linenos = node['linenos']
-    def warner(msg):
-        self.builder.warn(msg, (self.builder.current_docname, node.line))
-    self.highlighter.fmter[False].nowrap = True
-    self.highlighter.fmter[True].nowrap = True
-    highlighted = self.highlighter.highlight_block(
-        node.rawsource, lang, linenos, warn=warner)
-    self.highlighter.fmter[False].nowrap = False
-    self.highlighter.fmter[True].nowrap = False
-    if node.has_key('uri'):
-        highlighted = '<a href="%s" target="_new" class="htsql-link">%s</a>' \
-                % (escape(node['uri'], True), highlighted)
-    toggle = "[-]"
-    if node.has_key('hide') and node['hide']:
-        toggle = "[+]"
-    highlighted = '<span class="htsql-toggle">%s</span>%s' \
-            % (toggle, highlighted)
-    highlighted = '<pre>%s</pre>' % highlighted
-    highlighted = '<div class="highlight">%s</div>' % highlighted
-    starttag = self.starttag(node, 'div', suffix='',
-                             CLASS='highlight-%s' % lang)
-    self.body.append(starttag + highlighted + '</div>\n')
-    raise nodes.SkipNode
-
-
-def depart_htsql_block(self, node):
-    self.depart_literal_block(node)
-
-
 def setup(app):
     app.add_config_value('htsql_server', None, '')
+    app.add_directive('htsql-server', HTSQLServerDirective)
     app.add_directive('htsql', HTSQLDirective)
     app.add_directive('vsplit', VSplitDirective)
+    app.connect('env-purge-doc', purge_htsql_server)
     app.add_node(htsql_block,
                  html=(visit_htsql_block, depart_htsql_block))
     app.add_stylesheet('htsqldoc.css')
