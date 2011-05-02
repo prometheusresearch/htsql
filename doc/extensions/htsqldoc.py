@@ -19,6 +19,7 @@ class HTSQLDirective(Directive):
             'hide': directives.flag,
             'cut': directives.positive_int,
     }
+    htsql_safe = "~`!@$^&*()={[}]|:;\"'<,>?/"
 
     def run(self):
         env = self.state.document.settings.env
@@ -36,7 +37,7 @@ class HTSQLDirective(Directive):
         if not env.config.htsql_server:
             raise self.error("htsql_server is not set")
         if 'query' not in self.options:
-            query = quote(query)
+            query = quote(query, safe=self.htsql_safe)
         else:
             query = self.options['query']
         uri = env.config.htsql_server+query
