@@ -440,8 +440,10 @@ name of the department itself, and the number of courses.  The output
 format is "Comma-Separated Values" suitable for consumption by
 spreadsheet or statistical analysis packages (G7_):
 
-.. htsql:: /department{school.name, name, count(course)-}
-           .filter(school.name~'art').limit(5)/:csv
+.. htsql::
+
+   /department{school.name, name, count(course)-}
+              .filter(school.name~'art').limit(5)/:csv
 
 .. _G7:
     http://demo.htsql.org
@@ -615,12 +617,132 @@ either lack correlated ``course`` records or where every one of those
 .. htsql:: /department{name, avg(course.credits)}
             ?every(course.credits=3)
    :cut: 4
-   :hide:
 
 .. _RB8:
     http://demo.htsql.org
     /department{name, avg(course.credits)}
       ?every(course.credits=3)
+
+Projections 
+===========
+
+So far we have shown queries that produce either scalar values or rows
+that correspond to records from a table.  Ocassionally, you may want to
+return all unique values of some expression.  For example, to return
+distinct values of ``degree`` from the ``program`` table, write (JA1_):
+
+.. htsql:: /program^degree
+
+.. _JA1:
+    http://demo.htsql.org/program^degree
+
+In HTSQL, we call this a *projection*.  This construct creates a virtual
+table of all unique records from a set of expressions.
+
+
+Distinct Expressions
+--------------------
+
+The following example lists values from the degree column for each
+record of the program table.  Observe that you get duplicate rows
+corresponding to different records from the program table that share the
+same degree (JB1_): 
+
+.. htsql:: /program{degree}
+   :cut: 4
+
+.. _JB1:
+    http://demo.htsql.org/program{degree}
+
+
+To get unique rows from the example above, the ``distinct()`` function
+can be used (JB2_):
+
+.. htsql:: /distinct(program{degree})
+   :cut: 3
+
+.. _JB2:
+    http://demo.htsql.org/distinct(program{degree})
+
+Equivalently, this could be written using the ``^`` operator (JB3_):
+
+.. htsql:: /program^degree
+   :cut: 3
+
+.. _JB3:
+    http://demo.htsql.org/program^degree
+
+Note that the projection operator skips *NULL*.  Thus, even though there
+are rows in the program without a degree, ``program^degree`` doesn't
+contain a *NULL*.
+
+You could use projections anywhere that a regular table expression is
+permitted.  For instance, to get the number of distinct degrees offered
+at the university, write (JB4_):
+
+.. htsql:: /count(program^degree)
+
+.. _JB4:
+    http://demo.htsql.org/count(program^degree)
+
+Or, one could count distinct degrees by school (JB5_):
+
+.. htsql:: /school{name, count(program^degree)}
+   :cut: 3
+
+.. _JB5:
+    http://demo.htsql.org/school{name,count(program^degree)}
+
+Projections arn't limited to table attributes.  Let's define course
+level as the first digit of the course number.  Then, hence following
+expression returns distinct course levels (JB6_):
+
+.. htsql:: /course^round(no/100)
+   :cut: 3
+
+.. _JB6:
+    http://demo.htsql.org/course^round(no/100)
+
+If you wish to project by more than one expression, use a selector
+``{}`` to group the expressions.  The following example returns
+distinct combinations of course level and credits (JB7_):
+
+.. htsql:: /course^{round(no/100),credits}
+   :cut: 5
+
+.. _JB7:
+    http://demo.htsql.org/course^{round(no/100),credits}
+
+..
+    Filtering & Selection
+    ---------------------
+
+
+    student^{a,b}
+    (table?filter)^kernel
+    (table^keren){ \*1, expr(\*1) }
+    (table^kernel)?filter
+
+    Complement Linking
+    -------------------
+
+    (table^kernel){count(^)}
+    (table^kernel){aggr(^.col)}
+    (table^kernel){aggr(^.sum(y.z))}
+    (table^kernel)?aggr(^.sum(y.z))
+
+
+    Pathalogical Cases
+    ------------------
+
+    Just for fun, this query query first calculates the number of distinct
+    degrees for each school, and then reports unique values from that list
+    (JB6_):
+
+    .. htsql:: /school^count(program^degree)
+
+    .. _JB6:
+        http://demo.htsql.org/school^count(program^degree)
 
 
 Logical Expressions
@@ -882,21 +1004,4 @@ a ``NULL`` for the field tested (WN3_):
 .. _WN3:
     http://demo.htsql.org
     /department?school!=='art'
-
-
-
-
-Odds & Ends
-===========
-
-There are a few more items that are important to know about, but for
-which we don't document yet (but will before release candidate).
-
-* untyped literals, ``/{1='1'}``
-* single-quote escaping, ``/{'Bursar''s Office'}``
-* percent-encoding, ``/{'%25'}``
-* functions vs methods
-* sort expression, ``/course.sort(credits)``
-* limit/offset, ``/course.limit(5,20)``
-
 
