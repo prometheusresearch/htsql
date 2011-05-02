@@ -32,8 +32,21 @@ div.htsql-hide {
   display: none;
 }
 
-div.htsql-toggle {
+span.htsql-toggle {
   float: right;
   cursor: pointer
+}
+
+a.htsql-link {
+  color: inherit;
+  background-color: inherit;
+  text-decoration: none;
+}
+
+a.htsql-link:hover {
+  color: inherit;
+  background-color: inherit;
+  text-decoration: none;
+  opacity: 0.7;
 }
 
