@@ -52,9 +52,9 @@ class HTSQLDirective(Directive):
             return [doc.reporter.error("config option `htsql_server`"
                                        " is not set", lineno=self.lineno)]
         if 'query' not in self.options:
-            query = quote(query, safe=self.htsql_safe)
+            query = quote(query.encode('utf-8'), safe=self.htsql_safe)
         else:
-            query = self.options['query']
+            query = self.options['query'].encode('utf-8')
         uri = env.htsql_server+query
         query_node['uri'] = uri
         query_node['hide'] = ('hide' in self.options)
@@ -226,6 +226,13 @@ def build_result(line, content_type, content, cut=None):
                 para_node += text_node
         result_node = table_node
     else:
+        content = content.decode('utf-8', 'replace')
+        if cut and content.count('\n') > cut:
+            start = 0
+            while cut:
+                start = content.find('\n', start)+1
+                cut -= 1
+            content = content[:start]+u"\u2026\n"
         result_node = nodes.literal_block(content, content)
         result_node['language'] = 'text'
     return result_node
