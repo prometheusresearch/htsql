@@ -2,6 +2,7 @@
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
+from sphinx.util.osutil import ensuredir
 from subprocess import Popen, PIPE
 import os, os.path, tempfile, shutil
 
@@ -109,6 +110,7 @@ def execute(cmdline, input=None, env=None):
 def visit_diagram(self, node):
     href = "%s/%s" % (self.builder.imgpath, node['name'])
     filename = os.path.join(self.builder.outdir, '_images', node['name'])
+    ensuredir(os.path.dirname(filename))
     open(filename, 'wb').write(node['data'])
     if (isinstance(node.parent, nodes.TextElement) or
         (isinstance(node.parent, nodes.reference) and
