@@ -32,20 +32,25 @@ class HTSQLDirective(Directive):
     htsql_safe = "~`!@$^&*()={[}]|:;\"'<,>?/"
 
     def run(self):
-        env = self.state.document.settings.env
+        doc = self.state.document
+        env = doc.settings.env
         if self.arguments:
             if self.content:
-                raise self.error("duplicate query")
+                return [doc.reporter.error("directive cannot have both"
+                                           " content and an argument",
+                                           lineno=self.lineno)]
             query = " ".join(line.strip()
                              for line in self.arguments[0].split("\n"))
         elif self.content:
             query = "\n".join(self.content).strip()
         else:
-            raise self.error("no query")
+            return [doc.reporter.error("directive must have either content"
+                                       " or an argument", lineno=self.lineno)]
         query_node = htsql_block(query, query)
         query_node['language'] = 'htsql'
         if not hasattr(env, 'htsql_server') or not env.htsql_server:
-            raise self.error("htsql_server is not set")
+            return [doc.reporter.error("config option `htsql_server`"
+                                       " is not set", lineno=self.lineno)]
         if 'query' not in self.options:
             query = quote(query, safe=self.htsql_safe)
         else:
@@ -58,7 +63,8 @@ class HTSQLDirective(Directive):
         if uri not in env.htsql_uris:
             result = load_uri(uri, 'error' in self.options)
             if not result:
-                raise self.error("failed to load %s" % uri)
+                return [doc.reporter.error("failed to load: %s" % uri,
+                                           line=self.lineno)]
             env.htsql_uris[uri] = result
         content_type, content = env.htsql_uris[uri]
         if 'plain' in self.options:
@@ -226,7 +232,7 @@ def build_result(line, content_type, content, cut=None):
 
 
 def setup(app):
-    app.add_config_value('htsql_server', None, '')
+    app.add_config_value('htsql_server', None, 'env')
     app.add_directive('htsql-server', HTSQLServerDirective)
     app.add_directive('htsql', HTSQLDirective)
     app.add_directive('vsplit', VSplitDirective)
