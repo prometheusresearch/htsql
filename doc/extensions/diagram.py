@@ -54,7 +54,12 @@ def render_diagram(env, filename):
     name = stem + '.png'
     temp = tempfile.mkdtemp()
     try:
-        texinputs = ':'.join([directory]+env.config.diagram_texinputs)+':'
+        texinputs = [directory]
+        for texdir in env.config.diagram_texinputs:
+            texdir = os.path.join(env.srcdir, texdir)
+            texinputs.append(texdir)
+        texinputs.append('')
+        texinputs = ':'.join(texinputs)
         environ = os.environ.copy()
         environ['TEXINPUTS'] = texinputs
         cmdline = [env.config.diagram_pdflatex,
@@ -133,7 +138,7 @@ def setup(app):
     app.add_config_value('diagram_pnmcrop', 'pnmcrop', 'env')
     app.add_config_value('diagram_pnmtopng', 'pnmtopng', 'env')
     app.add_config_value('diagram_texinputs', [], 'env')
-    app.add_config_value('diagram_resolution', 105, 'env')
+    app.add_config_value('diagram_resolution', 110, 'env')
     app.add_directive('diagram', DiagramDirective)
     app.add_node(diagram,
                  html=(visit_diagram, depart_diagram))

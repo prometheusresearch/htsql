@@ -1,0 +1,134 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\newenvironment{columns}%
+    {\begin{tabular*}{4cm}{@{\extracolsep{\fill}}l>{\small\color{black!70}}r}}%
+    {\end{tabular*}}
+
+\begin{document}
+
+\tikzset{
+    > = triangle 45,
+    table/.style = {draw, rectangle split, rectangle split parts=2,
+                    every text node part/.style={font=\bfseries}},
+    relation/.style = {text width=2cm, font=\small\itshape},
+    information/.style = {rounded corners, inner sep=1ex,
+                          fill=blue!5, font=\small\color{black!70}}
+}
+
+\begin{tikzpicture}
+
+\node[table] (department)
+{
+    Department
+    \nodepart{second}
+    \begin{columns}
+        code        & PK        \\
+        school      & FK        \\
+        name        & NN,UK     \\
+    \end{columns}
+};
+
+\node[table] (school) [right=3 of department.south east, anchor=south west]
+{
+    School
+    \nodepart{second}
+    \begin{columns}
+        code        & PK        \\
+        name        & NN,UK     \\
+    \end{columns}
+};
+
+\node[table] (course) [below=3 of department]
+{
+    Course
+    \nodepart{second}
+    \begin{columns}
+        department  & PK1,FK    \\
+        no          & PK2       \\
+        title       & NN        \\
+        credits     & NN        \\
+        description &           \\
+    \end{columns}
+};
+
+\node[table] (program) [right=3 of course]
+{
+    Program
+    \nodepart{second}
+    \begin{columns}
+        school      & PK1,FK    \\
+        code        & PK2       \\
+        title       & NN        \\
+        degree      & CK        \\
+        part\_of    & FK        \\
+    \end{columns}
+};
+
+\node[information] [below=.5 of course.south west, anchor=north west]
+{
+    \begin{tabular}{lll}
+        PK -- Primary Key       &
+        UK -- Unique Key        &
+        FK -- Foreign Key       \\
+        NN -- Not Null          &
+        CK -- Check Constraint  &
+                                \\
+    \end{tabular}
+};
+
+\coordinate (department/school)
+    at ($ (department.text split east)!.5!(department.second split east) $);
+\coordinate (school/department/l)
+    at (department/school -| school.second west);
+
+\coordinate (course/department)
+    at ($ (course.text split west)!.1!(course.second split west) $);
+\coordinate (department/code)
+    at ($ (department.text split west)!.167!(department.second split west) $);
+
+\coordinate (program/school) at
+    ($ (program.text split east)!.1!(program.second split east) $);
+\coordinate (school/code/r)
+    at ($ (school.text split east)!.25!(school.second split east) $);
+
+\coordinate (program/part of)
+    at ($ (program.text split west)!.9!(program.second split west) $);
+\coordinate (program/code)
+    at ($ (program.text split west)!.3!(program.second split west) $);
+
+\draw[o->]
+    (department/school)
+    -- node[relation, below]
+        {departments may belong to at most one school}
+    (school/department/l);
+
+\draw[*->]
+    (course/department)
+    --
+    +(-1,0)
+    |- node[relation, right, near start]
+        {a department offers zero or more courses}
+    (department/code);
+
+\draw[*->]
+    (program/school)
+    --
+    +(1,0)
+    |- node[relation, left, near start]
+        {a school administers zero or more programs}
+    (school/code/r);
+
+\draw[o->]
+    (program/part of)
+    --
+    +(-1,0)
+    |-
+    (program/code);
+
+\end{tikzpicture}
+
+\end{document}
+

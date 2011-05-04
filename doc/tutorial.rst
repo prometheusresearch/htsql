@@ -23,22 +23,11 @@ easy, safe database access for power users.
 HTSQL is a schema-driven URI-to-SQL translator that takes a request over
 HTTP, converts it to a set of SQL queries, executes these queries in a
 single transaction, and returns the results in a format (CSV, HTML,
-JSON, etc.) requested by the user agent::
+JSON, etc.) requested by the user agent:
 
-  /----------------\                   /------------------------\
-  | USER AGENT     |                   |   HTSQL WEB SERVICE    |
-  *----------------*  HTTP Request     *------------------------*
-  |                | >---------------> -.                       |
-  | * Web Browsers |  URI, headers,    | \      .---> Generated |
-  |   HTML, TEXT   |  post/put body    |  v    /      SQL Query |
-  |                |                   |  HTSQL          |      |
-  | * Applications |                   |  PROCESSOR      v      |
-  |   JSON, XML    |  HTTP Response    | /   ^.       SECURED   |
-  |                | <---------------< -.      \      DATABASE  |
-  | * Spreadsheets |  status, header,  |     Query       .      |
-  |   CSV, XML     |  csv/html/json    |     Results <---/      |
-  |                |  result body      |                        |
-  \----------------/                   \------------------------/
+.. diagram:: dia/htsql-web-service.tex
+   :alt: HTSQL as a web service
+   :align: center
 
 The HTSQL query processor does heavy lifting for you.  Using
 relationships between tables as permitted links, the HTSQL processor
@@ -72,32 +61,11 @@ data access layer for application development.
 We'll use a fictional university that maintains a database for its
 student enrollment system.  There are four tables that describe the
 business units of the university and their relationship to the
-courses offered::
+courses offered:
 
-  +--------------------+              +---------------------+
-  | DEPARTMENT         |              | SCHOOL              |
-  +--------------------+              +---------------------+
-  | code            PK |--\       /--o| code             PK |----\
-  | school          FK |>-|------/    | name          NN,UK |    |
-  | name         NN,UK |  |    .      +---------------------+    |
-  +--------------------+  |     .                              . |
-                        . |  departments                      .  |
-       a department    .  |  may belong      a school        .   |
-       offers zero or .   |  to at most      administers zero    |
-       more courses       |  one school      or more programs    | 
-                          |                                      | 
-  +--------------------+  |           +---------------------+    |
-  | COURSE             |  |           | PROGRAM             |    |
-  +--------------------+  |           +---------------------+    |
-  | department  FK,PK1 |>-/           | school       PK1,FK |>---/
-  | no             PK2 |              | code            PK2 |----\     
-  | title           NN |              | title            NN |    |
-  | credits         NN |              | degree           CK |    |
-  | description        |              | part_of          FK |>---/ 
-  +--------------------+              +---------------------+
-
-  PK - Primary Key   UK - Unique Key         FK - Foreign Key
-  NN - Not Null      CK - Check Constraint
+.. diagram:: dia/administrative-directory-schema.tex
+   :alt: Administrative Directory schema
+   :align: center
 
 The university consists of schools, which administer one or more
 degree-granting programs.  Departments are associated with a school

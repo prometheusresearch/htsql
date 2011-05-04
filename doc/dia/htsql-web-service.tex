@@ -1,0 +1,67 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    > = stealth',
+    client/.style = {rectangle, text width=2.5cm, text centered},
+    server/.style = {rectangle, text width=2cm, text centered},
+    network/.style = {coordinate},
+    envelope/.style = {rectangle, draw=blue!50, rounded corners},
+    envelope header/.style = {font=\bfseries},
+    message/.style = {font=\small\itshape}
+}
+
+\begin{tikzpicture}
+
+\node[client] (browser)
+    {Web Browsers HTML, TEXT};
+\node[client] (application) [below=of browser]
+    {Applications JSON, XML};
+\node[client] (spreadsheet) [below=of application]
+    {Spreadsheets CSV, XML};
+
+\node[network] (send request) [above right=1 and .2 of application] {};
+\node[network] (receive response) [below right=1 and .2 of application] {};
+\node[network] (receive request) [right=4 of send request] {};
+\node[network] (send response) [right=4 of receive response] {};
+
+\node[server] (processor) [below right=1 and .2 of receive request]
+    {HTSQL Processor};
+\node[server] (query) [above right=1 and 0.5 of processor]
+    {Generated SQL Query};
+\node[server] (database) [below right=1 and 0.5 of query]
+    {Secured Database};
+\node[server] (result) [below left=1 and 0.5 of database]
+    {Query Results};
+
+\node[envelope] (client) [fit=(browser) (application) (spreadsheet)] {};
+\node[envelope] (server) [fit=(processor) (query) (database) (result)] {};
+
+\node[envelope header] at (client.north) [above]
+    {User Agent};
+\node[envelope header] at (server.north) [above]
+    {HTSQL Web Service};
+
+\draw[>-] (send request)
+          to node[message,above] {HTTP Request}
+          (receive request);
+
+\draw[->,bend left] (receive request) to (processor);
+\draw[->,bend left] (processor) to (query);
+\draw[->,bend left] (query) to (database);
+\draw[->,bend left] (database) to (result);
+\draw[->,bend left] (result) to (processor);
+\draw[bend left] (processor) to (send response);
+
+\draw[->] (send response)
+          to node[message,above] {HTTP Response}
+          (receive response);
+
+\end{tikzpicture}
+
+\end{document}
+
