@@ -39,14 +39,16 @@ class HTSQLDirective(Directive):
                 return [doc.reporter.error("directive cannot have both"
                                            " content and an argument",
                                            lineno=self.lineno)]
-            query = " ".join(line.strip()
-                             for line in self.arguments[0].split("\n"))
+            query_content  = " ".join(line.strip()
+                                      for line in self.arguments[0].split("\n"))
+            query = query_content
         elif self.content:
-            query = "\n".join(self.content).strip()
+            query_content = "\n".join(self.content).strip()
+            query =  " ".join(line.strip() for line in self.content)
         else:
             return [doc.reporter.error("directive must have either content"
                                        " or an argument", lineno=self.lineno)]
-        query_node = htsql_block(query, query)
+        query_node = htsql_block(query_content, query_content)
         query_node['language'] = 'htsql'
         if not hasattr(env, 'htsql_server') or not env.htsql_server:
             return [doc.reporter.error("config option `htsql_server`"
