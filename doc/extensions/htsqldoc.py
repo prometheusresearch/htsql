@@ -129,6 +129,9 @@ def visit_htsql_block(self, node):
         node.rawsource, lang, linenos, warn=warner)
     self.highlighter.fmter[False].nowrap = False
     self.highlighter.fmter[True].nowrap = False
+    if highlighted.startswith('<pre>') and highlighted.endswith('</pre>\n'):
+        # may happen if the language is not detected correctly
+        highlighted = highlighted[5:-7]
     if node.has_key('uri'):
         highlighted = '<a href="%s" target="_new" class="htsql-link">%s</a>' \
                 % (escape(node['uri'], True), highlighted)
