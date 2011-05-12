@@ -15,8 +15,8 @@
 --
 
 CREATE TABLE school (
-    code        VARCHAR2(16) NOT NULL,
-    name        VARCHAR2(64) NOT NULL,
+    code                VARCHAR2(16) NOT NULL,
+    name                VARCHAR2(64) NOT NULL,
     CONSTRAINT school_pk
       PRIMARY KEY (code),
     CONSTRAINT name_uk
@@ -24,50 +24,50 @@ CREATE TABLE school (
 );
 
 CREATE TABLE department (
-    code        VARCHAR2(16) NOT NULL,
-    name        VARCHAR2(64) NOT NULL,
-    school      VARCHAR2(16),
+    code                VARCHAR2(16) NOT NULL,
+    name                VARCHAR2(64) NOT NULL,
+    school_code         VARCHAR2(16),
     CONSTRAINT department_pk
       PRIMARY KEY (code),
     CONSTRAINT department_name_uk
       UNIQUE (name),
     CONSTRAINT department_school_fk
-      FOREIGN KEY (school)
+      FOREIGN KEY (school_code)
       REFERENCES school(code)
 );
 
 CREATE TABLE program (
-    school      VARCHAR2(16) NOT NULL,
-    code        VARCHAR2(16) NOT NULL,
-    title       VARCHAR2(64) NOT NULL,
-    degree      CHAR(2),
-    part_of     VARCHAR2(16),
+    school_code         VARCHAR2(16) NOT NULL,
+    code                VARCHAR2(16) NOT NULL,
+    title               VARCHAR2(64) NOT NULL,
+    degree              CHAR(2),
+    part_of             VARCHAR2(16),
     CONSTRAINT program_pk
-      PRIMARY KEY (school, code),
+      PRIMARY KEY (school_code, code),
     CONSTRAINT program_title_uk
       UNIQUE (title),
     CONSTRAINT program_degree_ck
       CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
     CONSTRAINT program_school_fk
-      FOREIGN KEY (school)
+      FOREIGN KEY (school_code)
       REFERENCES school(code),
    CONSTRAINT program_part_of_fk
-      FOREIGN KEY (school, part_of)
-      REFERENCES program(school, code)
+      FOREIGN KEY (school_code, part_of)
+      REFERENCES program(school_code, code)
 );
 
 CREATE TABLE course (
-    department  VARCHAR2(16) NOT NULL,
-    no          NUMBER(3) NOT NULL,
-    title       VARCHAR2(64) NOT NULL,
-    credits     NUMBER(1),
-    description CLOB,
+    department_code     VARCHAR2(16) NOT NULL,
+    no                  NUMBER(3) NOT NULL,
+    title               VARCHAR2(64) NOT NULL,
+    credits             NUMBER(1),
+    description         CLOB,
     CONSTRAINT course_pk
-      PRIMARY KEY (department, no),
+      PRIMARY KEY (department_code, no),
     CONSTRAINT course_title_uk
       UNIQUE (title),
     CONSTRAINT course_dept_fk
-      FOREIGN KEY (department)
+      FOREIGN KEY (department_code)
       REFERENCES department(code)
 );
 
@@ -77,11 +77,11 @@ CREATE TABLE course (
 --
 
 CREATE TABLE instructor (
-    code        VARCHAR2(16) NOT NULL,
-    title       VARCHAR2(4) NOT NULL,
-    full_name   VARCHAR2(64) NOT NULL,
-    phone       VARCHAR2(16),
-    email       VARCHAR2(64),
+    code                VARCHAR2(16) NOT NULL,
+    title               VARCHAR2(4) NOT NULL,
+    full_name           VARCHAR2(64) NOT NULL,
+    phone               VARCHAR2(16),
+    email               VARCHAR2(64),
     CONSTRAINT instructor_pk
       PRIMARY KEY (code),
     CONSTRAINT instructor_title_ck
@@ -89,28 +89,28 @@ CREATE TABLE instructor (
 );
 
 CREATE TABLE confidential (
-    instructor  VARCHAR2(16) NOT NULL,
-    SSN         CHAR(11) NOT NULL,
-    pay_grade   NUMBER(1) NOT NULL,
-    home_phone  VARCHAR2(16),
+    instructor_code     VARCHAR2(16) NOT NULL,
+    SSN                 CHAR(11) NOT NULL,
+    pay_grade           NUMBER(1) NOT NULL,
+    home_phone          VARCHAR2(16),
     CONSTRAINT confidential_pk
-      PRIMARY KEY (instructor),
+      PRIMARY KEY (instructor_code),
     CONSTRAINT confidential_instructor_fk
-      FOREIGN KEY (instructor)
+      FOREIGN KEY (instructor_code)
       REFERENCES instructor(code)
 );
 
 CREATE TABLE appointment (
-    department  VARCHAR2(16) NOT NULL,
-    instructor  VARCHAR2(16) NOT NULL,
-    fraction    NUMBER(3,2),
+    department_code     VARCHAR2(16) NOT NULL,
+    instructor_code     VARCHAR2(16) NOT NULL,
+    fraction            NUMBER(3,2),
     CONSTRAINT appointment_pk
-      PRIMARY KEY (department, instructor),
+      PRIMARY KEY (department_code, instructor_code),
     CONSTRAINT appointment_department_fk
-      FOREIGN KEY (department)
+      FOREIGN KEY (department_code)
       REFERENCES department(code),
     CONSTRAINT appointment_instructor_fk
-      FOREIGN KEY (instructor)
+      FOREIGN KEY (instructor_code)
       REFERENCES instructor(code)
 );
 
@@ -120,10 +120,10 @@ CREATE TABLE appointment (
 --
 
 CREATE TABLE semester (
-    year        NUMBER(4) NOT NULL,
-    season      VARCHAR2(6) NOT NULL,
-    begin_date  DATE NOT NULL,
-    end_date    DATE NOT NULL,
+    year                NUMBER(4) NOT NULL,
+    season              VARCHAR2(6) NOT NULL,
+    begin_date          DATE NOT NULL,
+    end_date            DATE NOT NULL,
     CONSTRAINT semester_pk
       PRIMARY KEY (year, season),
     CONSTRAINT semester_season_ck
@@ -133,30 +133,27 @@ CREATE TABLE semester (
 CREATE SEQUENCE class_seq START WITH 20001;
 
 CREATE TABLE class (
-    department  VARCHAR2(16) NOT NULL,
-    course      NUMBER(3) NOT NULL,
-    year        NUMBER(4) NOT NULL,
-    season      VARCHAR2(6) NOT NULL,
-    section     CHAR(3) NOT NULL,
-    instructor  VARCHAR2(16),
-    class_seq   NUMBER(38) NOT NULL,
+    department_code     VARCHAR2(16) NOT NULL,
+    course_no           NUMBER(3) NOT NULL,
+    year                NUMBER(4) NOT NULL,
+    season              VARCHAR2(6) NOT NULL,
+    section             CHAR(3) NOT NULL,
+    instructor_code     VARCHAR2(16),
+    class_seq           NUMBER(38) NOT NULL,
     CONSTRAINT class_pk
-      PRIMARY KEY (department, course, year, season, section),
+      PRIMARY KEY (department_code, course_no, year, season, section),
     CONSTRAINT class_uk
       UNIQUE (class_seq),
     CONSTRAINT class_season_ck
        CHECK (season IN ('fall', 'spring', 'summer')),
-    CONSTRAINT class_department_fk
-      FOREIGN KEY (department)
-      REFERENCES department(code),
     CONSTRAINT class_course_fk
-      FOREIGN KEY (department, course)
-      REFERENCES course(department, no),
+      FOREIGN KEY (department_code, course_no)
+      REFERENCES course(department_code, no),
     CONSTRAINT class_semester_fk
       FOREIGN KEY (year, season)
       REFERENCES semester(year, season),
     CONSTRAINT class_instructor_fk
-      FOREIGN KEY (instructor)
+      FOREIGN KEY (instructor_code)
       REFERENCES instructor(code)
 );
 
@@ -173,42 +170,39 @@ END;
 --
 
 CREATE TABLE student (
-    id          NUMBER(38) NOT NULL,
-    name        VARCHAR2(64) NOT NULL,
-    gender      CHAR(1) NOT NULL,
-    dob         DATE NOT NULL,
-    school      VARCHAR2(16),
-    program     VARCHAR2(16),
-    start_date  DATE NOT NULL,
-    is_active   NUMBER(1) NOT NULL,
+    id                  NUMBER(38) NOT NULL,
+    name                VARCHAR2(64) NOT NULL,
+    gender              CHAR(1) NOT NULL,
+    dob                 DATE NOT NULL,
+    school_code         VARCHAR2(16),
+    program_code        VARCHAR2(16),
+    start_date          DATE NOT NULL,
+    is_active           NUMBER(1) NOT NULL,
     CONSTRAINT student_pk
       PRIMARY KEY (id),
     CONSTRAINT student_gender_ck
        CHECK (gender IN ('f', 'i', 'm')),
     CONSTRAINT is_active_ck
       CHECK (is_active IN (0, 1)),
-    CONSTRAINT student_school_fk
-      FOREIGN KEY (school)
-      REFERENCES school (code),
     CONSTRAINT student_program_fk
-      FOREIGN KEY (school, program)
-      REFERENCES program (school, code)
+      FOREIGN KEY (school_code, program_code)
+      REFERENCES program (school_code, code)
 );
 
 CREATE TABLE enrollment (
-    student     NUMBER(38) NOT NULL,
-    class       NUMBER(38) NOT NULL,
-    status      CHAR(3) NOT NULL,
-    grade       NUMBER(3,2),
+    student_id          NUMBER(38) NOT NULL,
+    class_seq           NUMBER(38) NOT NULL,
+    status              CHAR(3) NOT NULL,
+    grade               NUMBER(3,2),
     CONSTRAINT enrollment_pk
-      PRIMARY KEY (student, class),
+      PRIMARY KEY (student_id, class_seq),
     CONSTRAINT enrollment_status_ck
        CHECK (status IN ('enr', 'inc', 'ngr')),
     CONSTRAINT enrollment_student_fk
-      FOREIGN KEY (student)
+      FOREIGN KEY (student_id)
       REFERENCES student(id),
     CONSTRAINT enrollment_class_fk
-      FOREIGN KEY (class)
+      FOREIGN KEY (class_seq)
       REFERENCES class(class_seq)
 );
 
@@ -218,26 +212,27 @@ CREATE TABLE enrollment (
 --
 
 CREATE TABLE prerequisite (
-    of_department   VARCHAR2(16) NOT NULL,
-    of_course       NUMBER(3) NOT NULL,
-    on_department   VARCHAR2(16) NOT NULL,
-    on_course       NUMBER(3) NOT NULL,
+    of_department_code  VARCHAR2(16) NOT NULL,
+    of_course_no        NUMBER(3) NOT NULL,
+    on_department_code  VARCHAR2(16) NOT NULL,
+    on_course_no        NUMBER(3) NOT NULL,
     CONSTRAINT prerequisite_pk
-      PRIMARY KEY (of_department, of_course, on_department, on_course),
+      PRIMARY KEY (of_department_code, of_course_no,
+                   on_department_code, on_course_no),
     CONSTRAINT prerequisite_on_course_fk
-      FOREIGN KEY (on_department, on_course)
-      REFERENCES course(department, no),
+      FOREIGN KEY (on_department_code, on_course_no)
+      REFERENCES course(department_code, no),
     CONSTRAINT prerequisite_of_course_fk
-      FOREIGN KEY (of_department, of_course)
-      REFERENCES course(department, no)
+      FOREIGN KEY (of_department_code, of_course_no)
+      REFERENCES course(department_code, no)
 );
 
 CREATE TABLE classification (
-    code        VARCHAR2(16) NOT NULL,
-    type        VARCHAR2(10),
-    title       VARCHAR2(64) NOT NULL,
-    description CLOB,
-    part_of     VARCHAR2(16),
+    code                VARCHAR2(16) NOT NULL,
+    type                VARCHAR2(10),
+    title               VARCHAR2(64) NOT NULL,
+    description         CLOB,
+    part_of             VARCHAR2(16),
     CONSTRAINT classification_pk
       PRIMARY KEY (code),
     CONSTRAINT classification_title_uk
@@ -250,32 +245,32 @@ CREATE TABLE classification (
 );
 
 CREATE TABLE course_classification (
-    department      VARCHAR2(16) NOT NULL,
-    course          NUMBER(3) NOT NULL,
-    classification  VARCHAR2(16) NOT NULL,
+    department_code     VARCHAR2(16) NOT NULL,
+    course_no           NUMBER(3) NOT NULL,
+    classification_code VARCHAR2(16) NOT NULL,
     CONSTRAINT course_classification_pk
-      PRIMARY KEY (department, course, classification),
+      PRIMARY KEY (department_code, course_no, classification_code),
     CONSTRAINT course_classification_cours_fk
-      FOREIGN KEY (department, course)
-      REFERENCES course(department, no),
+      FOREIGN KEY (department_code, course_no)
+      REFERENCES course(department_code, no),
     CONSTRAINT course_classification_class_fk
-      FOREIGN KEY (classification)
+      FOREIGN KEY (classification_code)
       REFERENCES classification(code)
 );
 
 CREATE TABLE program_requirement (
-    school          VARCHAR2(16) NOT NULL,
-    program         VARCHAR2(16) NOT NULL,
-    classification  VARCHAR2(16) NOT NULL,
-    credit_hours    NUMBER(2) NOT NULL,
-    rationale       CLOB,
+    school_code         VARCHAR2(16) NOT NULL,
+    program_code        VARCHAR2(16) NOT NULL,
+    classification_code VARCHAR2(16) NOT NULL,
+    credit_hours        NUMBER(2) NOT NULL,
+    rationale           CLOB,
     CONSTRAINT program_classification_pk
-      PRIMARY KEY (school, program, classification),
+      PRIMARY KEY (school_code, program_code, classification_code),
     CONSTRAINT program_classification_cour_fk
-      FOREIGN KEY (school, program)
-      REFERENCES program(school, code),
+      FOREIGN KEY (school_code, program_code)
+      REFERENCES program(school_code, code),
     CONSTRAINT program_classification_clas_fk
-      FOREIGN KEY (classification)
+      FOREIGN KEY (classification_code)
       REFERENCES classification(code)
 );
 

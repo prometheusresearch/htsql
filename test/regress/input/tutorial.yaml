@@ -12,10 +12,10 @@ tests:
   tests:
   # Selecting Data
   - uri: /school
-  - uri: /program{school, code, title}
-  - uri: /department{name-, school}
-  - uri: /course{department+, no, credits-, title}
-  - uri: /course{department+ :as 'Dept Code', no :as 'No.',
+  - uri: /program{school_code, code, title}
+  - uri: /department{name-, school_code}
+  - uri: /course{department_code+, no, credits-, title}
+  - uri: /course{department_code+ :as 'Dept Code', no :as 'No.',
                  credits-, title}
   # Linking Data
   - uri: /program{school.name, title}
@@ -23,18 +23,18 @@ tests:
   - uri: /course{department{school.name, name}, title}
   - uri: /department{*,school.*}
   # Filtering Data
-  - uri: /department?school='eng'
+  - uri: /department?school_code='eng'
   - uri: /program?degree={'ba','bs'}
-  - uri: /program?school='bus'&degree!='bs'
-  - uri: /course{department, no, title}
-                ?credits<3&department.school='ns'
-  - uri: /(course?credits<3&department.school='ns')
-                {department, no, title}
+  - uri: /program?school.code='bus'&degree!='bs'
+  - uri: /course{department_code, no, title}
+                ?credits<3&department.school.code='ns'
+  - uri: /(course?credits<3&department.school.code='ns')
+                {department_code, no, title}
   # Formatters
   - uri: /school/:json
   # Putting it All Together
   - uri: /course{department{code, name},no,title+}
-                ?department.school='bus'/:csv
+                ?department.school.code='bus'/:csv
 
 - title: Relating and Aggregating Data
   tests:
@@ -64,28 +64,28 @@ tests:
   - uri: /course?title~'lab'
   - uri: /course?title!~'lab'
   - uri: /course?title!='Organic Chemistry Laboratory I'
-  - uri: /course{department,no,title}?no=101
-  - uri: /course?department!={'arthis','stdart'}
+  - uri: /course{department_code,no,title}?no=101
+  - uri: /course?department_code!={'arthis','stdart'}
   - uri: /course?credits>3
   - uri: /course?credits>=3
   - uri: /department?code>'me'
   # Boolean Expressions
   - uri: /{true(), false(), null(), ''}
-  - uri: /department{code, name}?is_null(school)
-  - uri: /department{code, name}?!is_null(school)
-  - uri: /course?department='acc'&credits<3
+  - uri: /department{code, name}?is_null(school_code)
+  - uri: /department{code, name}?!is_null(school_code)
+  - uri: /course?department_code='acc'&credits<3
   - uri: /course?credits>4|credits<3
-  - uri: /course?(department='arthis'|department='stdart')&credits>3
-  - uri: /course?department='arthis'|department='stdart'&credits>3
+  - uri: /course?(department_code='arthis'|department_code='stdart')&credits>3
+  - uri: /course?department_code='arthis'|department_code='stdart'&credits>3
   - uri: /course?description
-  - uri: /course{department, no, description}?!description
+  - uri: /course{department_code, no, description}?!description
 
 - title: Types and Functions
   tests:
   # Working with NULLs
-  - uri: /department?school=null()
-  - uri: /department?school==null()
-  - uri: /department?school!=='art'
+  - uri: /department?school_code=null()
+  - uri: /department?school_code==null()
+  - uri: /department?school_code!=='art'
 
 - title: Odds & Ends
   tests:

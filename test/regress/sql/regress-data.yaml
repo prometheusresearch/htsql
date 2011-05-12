@@ -21,7 +21,7 @@
   ]
 
 - table: ad.department
-  columns: [code, name, school]
+  columns: [code, name, school_code]
   data: [
     ['astro', 'Astronomy', 'ns'],
     ['chem', 'Chemistry', 'ns'],
@@ -54,7 +54,7 @@
   ]
 
 - table: ad.program
-  columns: [school, code, title, degree, part_of]
+  columns: [school_code, code, title, degree, part_of]
   data: [
     ['ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs', null],
     ['ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs', null],
@@ -98,7 +98,7 @@
   ]
 
 - table: ad.course
-  columns: [department, 'no', title, credits, description]
+  columns: [department_code, 'no', title, credits, description]
   data: [
     ['astro', 137, 'The Solar System', 3, 'Introductory survey of the solar system, including structure and motion of the planets, properties of the sun, and comparison to extrasolar systems.'],
     ['astro', 142, 'Solar System Lab', 2, 'Laboratory studies that complement the lecture course ASTRO 137.'],
@@ -247,7 +247,7 @@
   ]
 
 - table: id.confidential
-  columns: [instructor, ssn, pay_grade, home_phone]
+  columns: [instructor_code, ssn, pay_grade, home_phone]
   data: [
     ['cfergus12', '987-65-4320', 6, '702-555-1738'],
     ['afrenski', '987-65-4321', 4, null],
@@ -288,7 +288,7 @@
   ]
 
 - table: id.appointment
-  columns: [department, instructor, fraction]
+  columns: [department_code, instructor_code, fraction]
   data: [
     ['stdart', 'acaspar', 1.00],
     ['phys', 'afrenski', 1.00],
@@ -348,7 +348,7 @@
   ]
 
 - table: cd.class
-  columns: [department, course, year, season, section, instructor, class_seq]
+  columns: [department_code, course_no, year, season, section, instructor_code, class_seq]
   data: [
     ['astro', 137, 2009, 'fall', '001', 'egasner', 10001],
     ['astro', 142, 2009, 'spring', '001', 'asacco', 10002],
@@ -447,7 +447,7 @@
   ]
 
 - table: ed.student
-  columns: [id, name, gender, dob, school, program, start_date, is_active]
+  columns: [id, name, gender, dob, school_code, program_code, start_date, is_active]
   data: [
     [25371, 'John L. Hanley', 'm', '1990-04-28', 'eng', 'gbuseng', '2009-07-15', true],
     [29878, 'Ellen Lansburgh', 'f', '1992-02-01', 'bus', 'uacct', '2008-01-05', true],
@@ -503,7 +503,7 @@
   ]
 
 - table: ed.enrollment
-  columns: [student, class, status, grade]
+  columns: [student_id, class_seq, status, grade]
   data: [
     [25371, 10086, 'ngr', null],
     [25371, 10051, 'enr', 3.7],
@@ -513,7 +513,7 @@
   ]
 
 - table: rd.prerequisite
-  columns: [of_department, of_course, on_department, on_course]
+  columns: [of_department_code, of_course_no, on_department_code, on_course_no]
   data: [
     ['astro', 142, 'astro', 137],
     ['chem', 314, 'chem', 115],
@@ -637,7 +637,7 @@
         ['edresearch', 'department', 'Educational Research', null, 'edpol'],
     ['business', 'university', 'Business', null, null],
       ['ethics', 'school', 'Business Ethics', null, 'business'],
-      ['financial', 'school', 'Financial Analysis', null, 'financial'],
+      ['financial', 'school', 'Financial Analysis', null, 'business'],
         ['accounting', 'department', 'Accounting', null, 'financial'],
         ['investment', 'department', 'Investment', null, 'financial'],
           ['personal', 'department', 'Personal Investment', null, 'investment'],
@@ -648,7 +648,7 @@
   ]
 
 - table: rd.course_classification
-  columns: [department, course, classification]
+  columns: [department_code, course_no, classification_code]
   data: [
     ['astro', 137, 'astronomy'],
     ['astro', 142, 'astrolab'],
@@ -766,7 +766,7 @@
   ]
 
 - table: rd.program_requirement
-  columns: [school, program, classification, credit_hours, rationale]
+  columns: [school_code, program_code, classification_code, credit_hours, rationale]
   data: [
     ['ns', 'uastro', 'astrolab', 8, 'Astronomy students are expected to take a minimum of 8 credit hours in the astronomy laboratory.'],
     ['ns', 'uastro', 'observation', 12, 'Undergraduate astronomy students will take a minimum of 12 credit hours of observational astronomy.'],

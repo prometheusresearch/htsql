@@ -26,8 +26,8 @@ integer) as well as simple primary and foreign key relationships.
 There are two top-level tables, ``department`` and ``school`` having a
 single-column primary key ``code`` and a unique ``name``.  In this
 schema, we associate departments with exactly one school, although the
-``code`` for the department must be unique across schools.  Non-acedemic
-departments are modeled with a ``NULL`` for their ``school``.
+``code`` for the department must be unique across schools.  Non-academic
+departments are modeled with a ``NULL`` for their ``school_code``.
 
 Two second-tier tables, ``course`` and ``program`` have compound primary
 keys, consisting of a parent table and a second column.  For ``course``
@@ -40,35 +40,35 @@ which do not offer a degree.
 
 ::
 
-  +--------------------+              +---------------------+
-  | DEPARTMENT         |              | SCHOOL              |
-  +--------------------+              +---------------------+
-  | code            PK |--\       /--o| code             PK |----\
-  | school          FK |>-|------/    | name          NN,UK |    |
-  | name         NN,UK |  |    .      +---------------------+    |
-  +--------------------+  |     .                              . |
-                        . |  departments                      .  |
-       a department    .  |  belong to         a school          |
-       offers zero or .   |  at most one       administers zero  |
-       more courses       |  school            or more programs  |
-                          |                                      | 
-  +--------------------+  |           +---------------------+    | 
-  | COURSE             |  |           | PROGRAM             |    |
-  +--------------------+  |           +---------------------+    |
-  | department  FK,PK1 |>-/           | school       PK1,FK |>---/
-  | no             PK2 |              | code            PK2 |----\    
-  | title           NN |              | title            NN |    |
-  | credits         NN |              | degree           CK |    |
-  | description        |              | part_of          FK |>---/
-  +--------------------+              +---------------------+
+  +-------------------------+              +---------------------+
+  | DEPARTMENT              |              | SCHOOL              |
+  +-------------------------+              +---------------------+
+  | code                 PK |--\       /--o| code             PK |----\
+  | school               FK |>-|------/    | name          NN,UK |    |
+  | name              NN,UK |  |    .      +---------------------+    |
+  +-------------------------+  |     .                              . |
+                             . |  departments                      .  |
+            a department    .  |  belong to         a school          |
+            offers zero or .   |  at most one       administers zero  |
+            more courses       |  school            or more programs  |
+                               |                                      | 
+  +-------------------------+  |           +---------------------+    | 
+  | COURSE                  |  |           | PROGRAM             |    |
+  +-------------------------+  |           +---------------------+    |
+  | department_code  FK,PK1 |>-/           | school_code  PK1,FK |>---/
+  | no                  PK2 |              | code            PK2 |----\    
+  | title                NN |              | title            NN |    |
+  | credits              NN |              | degree           CK |    |
+  | description             |              | part_of          FK |>---/
+  +-------------------------+              +---------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
   NN - Not Null      CK - Check Constraint
 $_$;
 
 CREATE TABLE ad.school (
-    code        VARCHAR(16) NOT NULL,
-    name        VARCHAR(64) NOT NULL,
+    code                VARCHAR(16) NOT NULL,
+    name                VARCHAR(64) NOT NULL,
     CONSTRAINT school_pk
       PRIMARY KEY (code),
     CONSTRAINT name_uk
@@ -76,50 +76,50 @@ CREATE TABLE ad.school (
 );
 
 CREATE TABLE ad.department (
-    code        VARCHAR(16) NOT NULL,
-    name        VARCHAR(64) NOT NULL,
-    school      VARCHAR(16),
+    code                VARCHAR(16) NOT NULL,
+    name                VARCHAR(64) NOT NULL,
+    school_code         VARCHAR(16),
     CONSTRAINT department_pk
       PRIMARY KEY (code),
     CONSTRAINT department_name_uk
       UNIQUE (name),
     CONSTRAINT department_school_fk
-      FOREIGN KEY (school)
+      FOREIGN KEY (school_code)
       REFERENCES ad.school(code)
 );
 
 CREATE TABLE ad.program (
-    school      VARCHAR(16) NOT NULL,
-    code        VARCHAR(16) NOT NULL,
-    title       VARCHAR(64) NOT NULL,
-    degree      CHAR(2),
-    part_of     VARCHAR(16),
+    school_code         VARCHAR(16) NOT NULL,
+    code                VARCHAR(16) NOT NULL,
+    title               VARCHAR(64) NOT NULL,
+    degree              CHAR(2),
+    part_of             VARCHAR(16),
     CONSTRAINT program_pk
-      PRIMARY KEY (school, code),
+      PRIMARY KEY (school_code, code),
     CONSTRAINT program_title_uk
       UNIQUE (title),
     CONSTRAINT program_degree_ck
       CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
     CONSTRAINT program_school_fk
-      FOREIGN KEY (school)
+      FOREIGN KEY (school_code)
       REFERENCES ad.school(code),
    CONSTRAINT program_part_of_fk
-      FOREIGN KEY (school, part_of)
-      REFERENCES ad.program(school, code)
+      FOREIGN KEY (school_code, part_of)
+      REFERENCES ad.program(school_code, code)
 );
 
 CREATE TABLE ad.course (
-    department  VARCHAR(16) NOT NULL,
-    no          INTEGER NOT NULL,
-    title       VARCHAR(64) NOT NULL,
-    credits     INTEGER,
-    description TEXT,
+    department_code     VARCHAR(16) NOT NULL,
+    no                  INTEGER NOT NULL,
+    title               VARCHAR(64) NOT NULL,
+    credits             INTEGER,
+    description         TEXT,
     CONSTRAINT course_pk
-      PRIMARY KEY (department, no),
+      PRIMARY KEY (department_code, no),
     CONSTRAINT course_title_uk
       UNIQUE (title),
     CONSTRAINT course_dept_fk
-      FOREIGN KEY (department)
+      FOREIGN KEY (department_code)
       REFERENCES ad.department(code)
 );
 
@@ -153,26 +153,26 @@ instructor to a given department.
 
 ::
 
-  +--------------------+              +---------------------+
-  | APPOINTMENT        |      /-------| DEPARTMENT          |
-  |--------------------|      |  .    +---------------------+
-  | department  FK,PK1 |>-----/   .
-  | instructor  FK,PK2 |>-----\     a department may have many
-  | fraction           |      |     instructors with part-time
-  +--------------------+    . |     teaching appointments
-                           .  |
-    an instructor may have    |       +---------------------+
-    teaching appointments     |       | INSTRUCTOR          |
-    in many departments       |       +---------------------+
-                              \-- /---| code             PK |
-  +--------------------+          |   | title            NN |
-  | CONFIDENTIAL       |          |   | full_name        NN |
-  +--------------------+          |   | phone               |
-  | instructor   FK,PK |o-------- /   | email               |
-  | SSN             NN |   .          +---------------------+
-  | pay_grade       NN |    .
-  | home_phone         |      an instructor may have a record
-  +--------------------+      holding confidential information
+  +-------------------------+              +---------------------+
+  | APPOINTMENT             |      /-------| DEPARTMENT          |
+  |-------------------------|      |  .    +---------------------+
+  | department_code  FK,PK1 |>-----/   .
+  | instructor_code  FK,PK2 |>-----\     a department may have many
+  | fraction                |      |     instructors with part-time
+  +-------------------------+    . |     teaching appointments
+                                .  |
+         an instructor may have    |       +---------------------+
+         teaching appointments     |       | INSTRUCTOR          |
+         in many departments       |       +---------------------+
+                                   \-- /---| code             PK |
+  +-------------------------+          |   | title            NN |
+  | CONFIDENTIAL            |          |   | full_name        NN |
+  +-------------------------+          |   | phone               |
+  | instructor_code   FK,PK |o-------- /   | email               |
+  | SSN                  NN |   .          +---------------------+
+  | pay_grade            NN |    .
+  | home_phone              |      an instructor may have a record
+  +-------------------------+      holding confidential information
 
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
@@ -180,11 +180,11 @@ instructor to a given department.
 $_$;
 
 CREATE TABLE id.instructor (
-    code        VARCHAR(16) NOT NULL,
-    title       VARCHAR(4) NOT NULL,
-    full_name   VARCHAR(64) NOT NULL,
-    phone       VARCHAR(16),
-    email       VARCHAR(64),
+    code                VARCHAR(16) NOT NULL,
+    title               VARCHAR(4) NOT NULL,
+    full_name           VARCHAR(64) NOT NULL,
+    phone               VARCHAR(16),
+    email               VARCHAR(64),
     CONSTRAINT instructor_pk
       PRIMARY KEY (code),
     CONSTRAINT instructor_title_ck
@@ -192,28 +192,28 @@ CREATE TABLE id.instructor (
 );
 
 CREATE TABLE id.confidential (
-    instructor  VARCHAR(16) NOT NULL,
-    SSN         CHAR(11) NOT NULL,
-    pay_grade   DECIMAL(1,0) NOT NULL,
-    home_phone  VARCHAR(16),
+    instructor_code     VARCHAR(16) NOT NULL,
+    SSN                 CHAR(11) NOT NULL,
+    pay_grade           DECIMAL(1,0) NOT NULL,
+    home_phone          VARCHAR(16),
     CONSTRAINT confidential_pk
-      PRIMARY KEY (instructor),
+      PRIMARY KEY (instructor_code),
     CONSTRAINT confidential_instructor_fk
-      FOREIGN KEY (instructor)
+      FOREIGN KEY (instructor_code)
       REFERENCES id.instructor(code)
 );
 
 CREATE TABLE id.appointment (
-    department  VARCHAR(16) NOT NULL,
-    instructor  VARCHAR(16) NOT NULL,
-    fraction    DECIMAL(3,2),
+    department_code     VARCHAR(16) NOT NULL,
+    instructor_code     VARCHAR(16) NOT NULL,
+    fraction            DECIMAL(3,2),
     CONSTRAINT appointment_pk
-      PRIMARY KEY (department, instructor),
+      PRIMARY KEY (department_code, instructor_code),
     CONSTRAINT appointment_department_fk
-      FOREIGN KEY (department)
+      FOREIGN KEY (department_code)
       REFERENCES ad.department(code),
     CONSTRAINT appointment_instructor_fk
-      FOREIGN KEY (instructor)
+      FOREIGN KEY (instructor_code)
       REFERENCES id.instructor(code)
 );
 
@@ -241,25 +241,25 @@ referenced by down-stream tables, such as student enrollment.
 
 ::
 
-  +--------------------+              +---------------------+
-  | COURSE             |---\          | SEMESTER            |
-  +--------------------+   |          +---------------------+
-                         . |   /------| year            PK1 |
-    each course may be  .  |   |      | season          PK2 |
-    offered many times     |   |      | begin_date       NN |
-    in a given quarter     |   | .    | end_date         NN |
-                           |   |  .   +---------------------+
-  +--------------------+   |   |
-  | CLASS              |   |   |   each section of a class
-  +--------------------+   |   |   is tracked by semester
-  | department PK1,FK1 |\__/   |
-  | course     PK2,FK2 |/      |    classes are taught by
-  | year       PK3,FK1 |\______/    an instructor
-  | season     PK4,FK2 |/          .
-  | section        PK5 |          .   +---------------------+
-  | instructor     FK  |>-------------| INSTRUCTOR          |
-  | class_seq   NN,UK  |              +---------------------+
-  +--------------------+
+  +--------------------------+              +---------------------+
+  | COURSE                   |---\          | SEMESTER            |
+  +--------------------------+   |          +---------------------+
+                               . |   /------| year            PK1 |
+          each course may be  .  |   |      | season          PK2 |
+          offered many times     |   |      | begin_date       NN |
+          in a given quarter     |   | .    | end_date         NN |
+                                 |   |  .   +---------------------+
+  +--------------------------+   |   |
+  | CLASS                    |   |   |   each section of a class
+  +--------------------------+   |   |   is tracked by semester
+  | department_code  PK1,FK1 |\__/   |
+  | course_no        PK2,FK2 |/      |    classes are taught by
+  | year             PK3,FK1 |\______/    an instructor
+  | season           PK4,FK2 |/          .
+  | section              PK5 |          .   +---------------------+
+  | instructor_code      FK  |>-------------| INSTRUCTOR          |
+  | class_seq   NN,UK        |              +---------------------+
+  +--------------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
   NN - Not Null      CK - Check Constraint
@@ -270,10 +270,10 @@ CREATE TYPE cd.season_t AS ENUM ('fall', 'spring', 'summer');
 CREATE DOMAIN cd.year_t AS DECIMAL(4,0);
 
 CREATE TABLE cd.semester (
-    year        cd.year_t NOT NULL,
-    season      cd.season_t NOT NULL,
-    begin_date  DATE NOT NULL,
-    end_date    DATE NOT NULL,
+    year                cd.year_t NOT NULL,
+    season              cd.season_t NOT NULL,
+    begin_date          DATE NOT NULL,
+    end_date            DATE NOT NULL,
     CONSTRAINT semester_pk
       PRIMARY KEY (year, season)
 );
@@ -281,28 +281,25 @@ CREATE TABLE cd.semester (
 CREATE SEQUENCE class_seq START 20001;
 
 CREATE TABLE cd.class (
-    department  VARCHAR(16) NOT NULL,
-    course      INTEGER NOT NULL,
-    year        cd.year_t NOT NULL,
-    season      cd.season_t NOT NULL,
-    section     CHAR(3) NOT NULL,
-    instructor  VARCHAR(16),
-    class_seq   INTEGER NOT NULL DEFAULT nextval('class_seq'),
+    department_code     VARCHAR(16) NOT NULL,
+    course_no           INTEGER NOT NULL,
+    year                cd.year_t NOT NULL,
+    season              cd.season_t NOT NULL,
+    section             CHAR(3) NOT NULL,
+    instructor_code     VARCHAR(16),
+    class_seq           INTEGER NOT NULL DEFAULT nextval('class_seq'),
     CONSTRAINT class_pk
-      PRIMARY KEY (department, course, year, season, section),
+      PRIMARY KEY (department_code, course_no, year, season, section),
     CONSTRAINT class_uk
       UNIQUE (class_seq),
-    CONSTRAINT class_department_fk
-      FOREIGN KEY (department)
-      REFERENCES ad.department(code),
     CONSTRAINT class_course_fk
-      FOREIGN KEY (department, course)
-      REFERENCES ad.course(department, no),
+      FOREIGN KEY (department_code, course_no)
+      REFERENCES ad.course(department_code, no),
     CONSTRAINT class_semester_fk
       FOREIGN KEY (year, season)
       REFERENCES cd.semester(year, season),
     CONSTRAINT class_instructor_fk
-      FOREIGN KEY (instructor)
+      FOREIGN KEY (instructor_code)
       REFERENCES id.instructor(code)
 );
 
@@ -339,11 +336,11 @@ columns: ``status`` and ``grade``.
   +--------------------+   |          | STUDENT             |    |
   | ENROLLMENT         |   |          +---------------------+    |
   +--------------------+   |     /----| id               PK |    |
-  | class       PK, FK |>--/     |    | name             NN |    |
-  | student     PK, FK |---------/    | gender           NN |    |
+  | class_seq   PK, FK |>--/     |    | name             NN |    |
+  | student_id  PK, FK |---------/    | gender           NN |    |
   | status             |     .        | dob              NN |    |
-  | grade              |    .         | school          FK1 |\___/
-  +--------------------+   .          | program         FK2 |/
+  | grade              |    .         | school_code     FK1 |\___/
+  +--------------------+   .          | program_code    FK2 |/
                                       | start_date       NN |
     students may enroll in            | is_active        NN |
     one or more classes               +---------------------+
@@ -356,36 +353,33 @@ CREATE TYPE ed.enrollment_status_t AS ENUM ('enr', 'inc', 'ngr');
 CREATE TYPE ed.student_gender_t AS ENUM ('f', 'i', 'm');
 
 CREATE TABLE ed.student (
-    id          INTEGER NOT NULL,
-    name        VARCHAR(64) NOT NULL,
-    gender      ed.student_gender_t NOT NULL,
-    dob         DATE NOT NULL,
-    school      VARCHAR(16),
-    program     VARCHAR(16),
-    start_date  DATE NOT NULL,
-    is_active   BOOLEAN NOT NULL,
+    id                  INTEGER NOT NULL,
+    name                VARCHAR(64) NOT NULL,
+    gender              ed.student_gender_t NOT NULL,
+    dob                 DATE NOT NULL,
+    school_code         VARCHAR(16),
+    program_code        VARCHAR(16),
+    start_date          DATE NOT NULL,
+    is_active           BOOLEAN NOT NULL,
     CONSTRAINT student_pk
       PRIMARY KEY (id),
-    CONSTRAINT student_school_fk
-      FOREIGN KEY (school)
-      REFERENCES ad.school (code),
     CONSTRAINT student_program_fk
-      FOREIGN KEY (school, program)
-      REFERENCES ad.program (school, code)
+      FOREIGN KEY (school_code, program_code)
+      REFERENCES ad.program(school_code, code)
 );
 
 CREATE TABLE ed.enrollment (
-    student     INTEGER NOT NULL,
-    class       INTEGER NOT NULL,
-    status      ed.enrollment_status_t NOT NULL,
-    grade       DECIMAL(3,2),
+    student_id          INTEGER NOT NULL,
+    class_seq           INTEGER NOT NULL,
+    status              ed.enrollment_status_t NOT NULL,
+    grade               DECIMAL(3,2),
     CONSTRAINT enrollment_pk
-      PRIMARY KEY (student, class),
+      PRIMARY KEY (student_id, class_seq),
     CONSTRAINT enrollment_student_fk
-      FOREIGN KEY (student)
+      FOREIGN KEY (student_id)
       REFERENCES ed.student(id),
     CONSTRAINT enrollment_class_fk
-      FOREIGN KEY (class)
+      FOREIGN KEY (class_seq)
       REFERENCES cd.class(class_seq)
 );
 
@@ -418,67 +412,68 @@ fulfill requirements of the latter.
 
 ::
 
-  +-----------------------+
-  | PREREQUISITE          |            two foreign keys denote a
-  +-----------------------+          . dependency *by* a course,
-  | by_department FK1,PK1 |\_______ .  such as chem.100, *on*
-  | by_course     FK2,PK2 |/       \   another, such as mth.101
-  | on_department FK1,PK3 |\______ |
-  | on_course     FK2,PK4 |/     | |  +---------------------+
-  +-----------------------+   /- \-\--| COURSE              |
-                              |       +---------------------+
-   a course can be a member   |
-   of several classifications |       +---------------------+
-                           .  |       | CLASSIFICATION      |
-  +-----------------------+ . |       +---------------------+
-  | COURSE_CLASSIFICATION |   | /- /--| code             PK |----\
-  +-----------------------+   | |  |  | type             NN |    |
-  | department    FK1,PK1 |\__/ |  |  | title            NN |    |
-  | course        FK2,PK2 |/    |  |  | description         |    |
-  | classification FK,PK3 |>----/  |  | part_of          FK |>---/
-  +-----------------------+  .     |  +---------------------+  .
-                            .      |                          .
-    a classification is used       |    a classification may be
-    to tag multiple courses   /----/    part of a broader category
-                              |
-  +-----------------------+   | . courses, by classification, are
-  | PROGRAM_REQUIREMENT   |   |.  required by a given program
-  +-----------------------+   |
-  | school        FK1,PK1 |\__|____     +---------------------+
-  | program       FK2,PK2 |/  |    `----| PROGRAM             |
-  | classification FK,PK3 |>--/   .     +---------------------+
-  | credit_hours       NN |      .
-  | rationale             |    programs require class credits
-  +-----------------------+    specified via classifications
+  +-----------------------------+
+  | PREREQUISITE                |            two foreign keys denote a
+  +-----------------------------+          . dependency *by* a course,
+  | by_department_code  FK1,PK1 |\_______ .  such as chem.100, *on*
+  | by_course_no     F   K2,PK2 |/       \   another, such as mth.101
+  | on_department_code  FK1,PK3 |\______ |
+  | on_course_no        FK2,PK4 |/     | |  +---------------------+
+  +-----------------------------+   /- \-\--| COURSE              |
+                                    |       +---------------------+
+         a course can be a member   |
+         of several classifications |       +---------------------+
+                                 .  |       | CLASSIFICATION      |
+  +-----------------------------+ . |       +---------------------+
+  | COURSE_CLASSIFICATION       |   | /- /--| code             PK |----\
+  +-----------------------------+   | |  |  | type             NN |    |
+  | department_code     FK1,PK1 |\__/ |  |  | title            NN |    |
+  | course_no           FK2,PK2 |/    |  |  | description         |    |
+  | classification_code  FK,PK3 |>----/  |  | part_of          FK |>---/
+  +-----------------------------+  .     |  +---------------------+  .
+                                  .      |                          .
+          a classification is used       |    a classification may be
+          to tag multiple courses   /----/    part of a broader category
+                                    |
+  +-----------------------------+   | . courses, by classification, are
+  | PROGRAM_REQUIREMENT         |   |.  required by a given program
+  +-----------------------------+   |
+  | school_code         FK1,PK1 |\__|____     +---------------------+
+  | program_code        FK2,PK2 |/  |    `----| PROGRAM             |
+  | classification_code  FK,PK3 |>--/   .     +---------------------+
+  | credit_hours             NN |      .
+  | rationale                   |    programs require class credits
+  +-----------------------------+    specified via classifications
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
   NN - Not Null      CK - Check Constraint
 $_$;
 
 CREATE TABLE rd.prerequisite (
-    of_department   VARCHAR(16) NOT NULL,
-    of_course       INTEGER NOT NULL,
-    on_department   VARCHAR(16) NOT NULL,
-    on_course       INTEGER NOT NULL,
+    of_department_code  VARCHAR(16) NOT NULL,
+    of_course_no        INTEGER NOT NULL,
+    on_department_code  VARCHAR(16) NOT NULL,
+    on_course_no        INTEGER NOT NULL,
     CONSTRAINT prerequisite_pk
-      PRIMARY KEY (of_department, of_course, on_department, on_course),
+      PRIMARY KEY (of_department_code, of_course_no,
+                   on_department_code, on_course_no),
     CONSTRAINT prerequisite_on_course_fk
-      FOREIGN KEY (on_department, on_course)
-      REFERENCES ad.course(department, no),
+      FOREIGN KEY (on_department_code, on_course_no)
+      REFERENCES ad.course(department_code, no),
     CONSTRAINT prerequisite_of_course_fk
-      FOREIGN KEY (of_department, of_course)
-      REFERENCES ad.course(department, no)
+      FOREIGN KEY (of_department_code, of_course_no)
+      REFERENCES ad.course(department_code, no)
 );
 
 CREATE TYPE rd.classification_type_t
   AS ENUM ('department', 'school', 'university');
 
 CREATE TABLE rd.classification (
-    code        VARCHAR(16) NOT NULL,
-    type        rd.classification_type_t,
-    title       VARCHAR(64) NOT NULL,
-    description TEXT,
-    part_of     VARCHAR(16),
+    code                VARCHAR(16) NOT NULL,
+    type                rd.classification_type_t,
+    title               VARCHAR(64) NOT NULL,
+    description         TEXT,
+    part_of             VARCHAR(16),
     CONSTRAINT classification_pk
       PRIMARY KEY (code),
     CONSTRAINT classification_title_uk
@@ -489,32 +484,32 @@ CREATE TABLE rd.classification (
 );
 
 CREATE TABLE rd.course_classification (
-    department      VARCHAR(16) NOT NULL,
-    course          INTEGER NOT NULL,
-    classification  VARCHAR(16) NOT NULL,
+    department_code     VARCHAR(16) NOT NULL,
+    course_no           INTEGER NOT NULL,
+    classification_code VARCHAR(16) NOT NULL,
     CONSTRAINT course_classification_pk
-      PRIMARY KEY (department, course, classification),
+      PRIMARY KEY (department_code, course_no, classification_code),
     CONSTRAINT course_classification_course_fk
-      FOREIGN KEY (department, course)
-      REFERENCES ad.course(department, no),
+      FOREIGN KEY (department_code, course_no)
+      REFERENCES ad.course(department_code, no),
     CONSTRAINT course_classification_classification_fk
-      FOREIGN KEY (classification)
+      FOREIGN KEY (classification_code)
       REFERENCES rd.classification(code)
 );
 
 CREATE TABLE rd.program_requirement (
-    school          VARCHAR(16) NOT NULL,
-    program         VARCHAR(16) NOT NULL,
-    classification  VARCHAR(16) NOT NULL,
-    credit_hours    INTEGER NOT NULL,
-    rationale       TEXT,
+    school_code         VARCHAR(16) NOT NULL,
+    program_code        VARCHAR(16) NOT NULL,
+    classification_code VARCHAR(16) NOT NULL,
+    credit_hours        INTEGER NOT NULL,
+    rationale           TEXT,
     CONSTRAINT program_classification_pk
-      PRIMARY KEY (school, program, classification),
+      PRIMARY KEY (school_code, program_code, classification_code),
     CONSTRAINT program_classification_course_fk
-      FOREIGN KEY (school, program)
-      REFERENCES ad.program(school, code),
+      FOREIGN KEY (school_code, program_code)
+      REFERENCES ad.program(school_code, code),
     CONSTRAINT program_classification_classification_fk
-      FOREIGN KEY (classification)
+      FOREIGN KEY (classification_code)
       REFERENCES rd.classification(code)
 );
 

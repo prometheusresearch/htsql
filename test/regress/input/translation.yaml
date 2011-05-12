@@ -120,10 +120,10 @@ tests:
     - uri: /{count(school)*count(department),count(school.fiber(department))}
     # Custom joins.
     - uri: /{count(school.department),
-             count(school.fiber(department)?school=root().school.code),
+             count(school.fiber(department)?school_code=root().school.code),
              count(school.fiber(department,code,school.code))}
     - uri: /school{code,count(department)}?count(department)=max(fiber(school).count(department))
-    - uri: /school.program{school,code,count(student)}?count(student)=max(fiber(program,school).count(student))
+    - uri: /school.program{school_code,code,count(student)}?count(student)=max(fiber(program,school_code).count(student))
     # Lifting a unit to a dominating space
     # (broken due to changed selector semantics)
     - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
@@ -142,10 +142,10 @@ tests:
     - uri: /home(){2+2}
     - uri: /school.home(){2+2}
     - uri: /school.home().school{root().school.*, *}
-    - uri: /(department?school='art').home().(department?school='la')
-                {root().(department?school='art').*, *}
-    - uri: /distinct(program{degree}?school='art').home().distinct(program{degree}?school='la')
-                {root().distinct(program{degree}?school='art').*, *}
+    - uri: /(department?school.code='art').home().(department?school.code='la')
+                {root().(department?school.code='art').*, *}
+    - uri: /distinct(program{degree}?school.code='art').home().distinct(program{degree}?school.code='la')
+                {root().distinct(program{degree}?school.code='art').*, *}
     - uri: /school{code,count(department)}
                 ?count(department)>avg(home().school.count(department))
     # The `mix()` namespace.
@@ -172,31 +172,31 @@ tests:
     - uri: /school{code, count(link(department))}
     - uri: /school.link(home().department)
     - uri: /school{code, count(link(home().department))}
-    - uri: /school.link(home().department, code=home().department.school)
-    - uri: /school{code, count(link(home().department, code=home().department.school))}
+    - uri: /school.link(home().department, code=home().department.school_code)
+    - uri: /school{code, count(link(home().department, code=home().department.school_code))}
     - uri: /(school?code='art').link(department)
     - uri: /(school?code='art'){code, count(link(department))}
     - uri: /(school?code='art').link(home().department)
-    - uri: /(school?code='art'){code, count(link(home().department, code=home().department.school))}
+    - uri: /(school?code='art'){code, count(link(home().department, code=home().department.school_code))}
     - uri: /{link(this()){count(school)}, link(this(),true()){count(school)}, link(this(),false()){count(school)}}
     # fork()
-    - uri: /course{department,no,credits}?credits=max(fork().credits)
-    - uri: /course{department,no,credits}?credits=max(fork(department).credits)
-    - uri: /department.course{department,no,credits}?credits=max(fork().credits)
-    - uri: /course{department,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
+    - uri: /course{department.code,no,credits}?credits=max(fork().credits)
+    - uri: /course{department.code,no,credits}?credits=max(fork(department_code).credits)
+    - uri: /department.course{department.code,no,credits}?credits=max(fork().credits)
+    - uri: /course{department.code,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
       ifndef: [oracle, mssql] # subqueries are not permitted in the GROUP BY clause
-    - uri: /course{department,no,credits,count(class)}?credits=max(fork(count(class)).credits)
-    - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
-    - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
-    - uri: /school.program{school,code,count(student)}?count(student)>avg(fork().count(student))
-    - uri: /program{school,code,count(student)}?count(student)>avg(fork().count(student))
-            :where program := program?school='eng'
-    - uri: /program{school,code,count(student)}?count(student)>avg(fork(school).count(student))
+    - uri: /course{department.code,no,credits,count(class)}?credits=max(fork(count(class)).credits)
+    - uri: /program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
+    - uri: /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
+    - uri: /school.program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
+    - uri: /program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
+            :where program := program?school_code='eng'
+    - uri: /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
             :where program := program.limit(10,15)
     # fork() with projections
     - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
     # fork() with nullable kernel
-    - uri: /program.fork(part_of){root().program{school, code, part_of}, school, code, part_of}
+    - uri: /program.fork(part_of){root().program{school.code, code, part_of}, school.code, code, part_of}
 
   - title: Table Expressions
     tests:
@@ -220,13 +220,13 @@ tests:
     - uri: /define(x:=2,y:=3,z:=x*y){x,y,z}
     - uri: /define(x:=2,x:=x+x,x:=x*x){x}
     - uri: /define(program.student:=student?is_active)
-            .program{code,count(student)}?school='bus'
+            .program{code,count(student)}?school.code='bus'
     - uri: /define(school.program.student:=student?is_active)
             .count((school?code='bus').program.student)
     - uri: /define(school.department.course:=course?credits>2,
                    school.department.course:=course?credits<5,
                    school.department:=department?code='acc')
-            .school.department.course{department,no,title,credits}
+            .school.department.course{department.code,no,title,credits}
     - uri: /define(double(x):=x*2){double(1),double(2),double(3)}
     - uri: /define(student.age(date):=(date(date)-date(dob))/365:round(1),
                    student.age():=age('2011-01-01'),
@@ -235,7 +235,7 @@ tests:
     - uri: /school{code,{count(student),
                          count(student?gender='m'),
                          count(student?gender='f')}
-                        :where(student:=student?is_active)}
+                        :where(student:=program.student?is_active)}
     - uri: /department.define(stats(c):={min(c.credits) :as min,max(c.credits) :as max})
                 {stats(course), stats(course?no>=100&no<200)}?code='acc'
 
@@ -306,13 +306,13 @@ tests:
     # The `distinct()` function.
     - uri: /distinct(program{degree})
                 {*, count(^), count(^.student)}
-    - uri: /distinct(program{degree}?school={'art','la'})
+    - uri: /distinct(program{degree}?school.code={'art','la'})
                 {*, count(^), count(^.student)}
     - uri: /distinct(program{degree})
                 {*, count(^), count(^.student)}?*1
     - uri: /(school?code={'art','la'}).distinct(program{degree})
                 {*, count(^), count(^.student)}
-    - uri: /distinct(program{degree}?school={'art','la'}).^
+    - uri: /distinct(program{degree}?school.code={'art','la'}).^
 
     # Known regressions.
     - uri: /(school^{})
@@ -322,5 +322,5 @@ tests:
     - uri: /(school^{true()})
       skip: true
     # A bug `rewrite` is not applied to `base` of an ordered space.
-    - uri: /((program?school='art')^degree).limit(1)
+    - uri: /((program?school_code='art')^degree).limit(1)
 

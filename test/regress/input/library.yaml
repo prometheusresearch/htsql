@@ -567,39 +567,39 @@ tests:
 
   # Exists, Every, Count
   # (Oracle cannot handle EXISTS and an aggregate in the same SELECT clause)
-  - uri: /course?department='lang'
-  - uri: /{exists(course?department='lang'),
-           every(course?department='lang'),
-           count(course?department='lang')}
+  - uri: /course?department_code='lang'
+  - uri: /{exists(course?department_code='lang'),
+           every(course?department_code='lang'),
+           count(course?department_code='lang')}
     ifndef: oracle
-  - uri: /{exists(course?department='lang'),
-           every(course?department='lang')}
+  - uri: /{exists(course?department_code='lang'),
+           every(course?department_code='lang')}
     ifdef: oracle
-  - uri: /{count(course?department='lang')}
+  - uri: /{count(course?department_code='lang')}
     ifdef: oracle
   # Applied to an empty set
-  - uri: /course?department='str'
-  - uri: /{exists(course?department='str'),
-           every(course?department='str'),
-           count(course?department='str')}
+  - uri: /course?department_code='str'
+  - uri: /{exists(course?department_code='str'),
+           every(course?department_code='str'),
+           count(course?department_code='str')}
     ifndef: oracle
   # Applied to all-TRUE, all-FALSE, mixed sets
-  - uri: /course{department,no,credits,credits>3}
-                ?department={'me','mth','phys'}
-  - uri: /{exists(course{credits>3}?department='me'),
-           every(course{credits>3}?department='me'),
-           count(course{credits>3}?department='me')}
+  - uri: /course{department_code,no,credits,credits>3}
+                ?department_code={'me','mth','phys'}
+  - uri: /{exists(course{credits>3}?department_code='me'),
+           every(course{credits>3}?department_code='me'),
+           count(course{credits>3}?department_code='me')}
     ifndef: oracle
-  - uri: /{exists(course{credits>3}?department='mth'),
-           every(course{credits>3}?department='mth'),
-           count(course{credits>3}?department='mth')}
+  - uri: /{exists(course{credits>3}?department_code='mth'),
+           every(course{credits>3}?department_code='mth'),
+           count(course{credits>3}?department_code='mth')}
     ifndef: oracle
-  - uri: /{exists(course{credits>3}?department='phys'),
-           every(course{credits>3}?department='phys'),
-           count(course{credits>3}?department='phys')}
+  - uri: /{exists(course{credits>3}?department_code='phys'),
+           every(course{credits>3}?department_code='phys'),
+           count(course{credits>3}?department_code='phys')}
     ifndef: oracle
   # Coercion
-  - uri: /department{code,school,boolean(school)}
+  - uri: /department{code,school.code,boolean(school)}
   - uri: /{exists(department{school}),
            every(department{school}),
            count(department{school})}
@@ -613,13 +613,13 @@ tests:
     expect: 400
 
   # Min, Max
-  - uri: /course{no,credits}?department='be'
-  - uri: /{min(course{credits}?department='be'),
-           max(course{credits}?department='be')}
+  - uri: /course{no,credits}?department_code='be'
+  - uri: /{min(course{credits}?department_code='be'),
+           max(course{credits}?department_code='be')}
   # Applied to an empty set
-  - uri: /course?department='str'
-  - uri: /{min(course{credits}?department='str'),
-           max(course{credits}?department='str')}
+  - uri: /course?department_code='str'
+  - uri: /{min(course{credits}?department_code='str'),
+           max(course{credits}?department_code='str')}
   # Non-numeric operands
   - uri: /{min(student.dob), max(student.dob)}
   - uri: /{min(student.name), max(student.name)}
@@ -628,13 +628,13 @@ tests:
     expect: 400
 
   # Sum, Avg
-  - uri: /{sum(course{credits}?department='be'),
-           count(course{credits}?department='be'),
-           avg(course{credits}?department='be')}
+  - uri: /{sum(course{credits}?department_code='be'),
+           count(course{credits}?department_code='be'),
+           avg(course{credits}?department_code='be')}
   # Applied to an empty set
-  - uri: /{sum(course{credits}?department='str'),
-           count(course{credits}?department='str'),
-           avg(course{credits}?department='str')}
+  - uri: /{sum(course{credits}?department_code='str'),
+           count(course{credits}?department_code='str'),
+           avg(course{credits}?department_code='str')}
   # Inadmissible operands
   - uri: /{sum(student.dob)}
     expect: 400
@@ -659,7 +659,7 @@ tests:
   # Cross join
   - uri: /school.fiber(school)
   # Fiber join
-  - uri: /department.fiber(program,school)
+  - uri: /department.fiber(program,school_code)
   - uri: /classification.fiber(classification,code,part_of)
             {part_of, code}
   # Context
@@ -679,13 +679,13 @@ tests:
   - uri: /department.sort(name+)
   - uri: /department.sort(name-)
   # NULL
-  - uri: /department.sort(school+)
-  - uri: /department.sort(school-)
+  - uri: /department.sort(school.code+)
+  - uri: /department.sort(school.code-)
   # Combined with joining
   - uri: /school.department.sort(code+)
   - uri: /school.sort(code+).department.sort(code+)
   # Multiple arguments
-  - uri: /course.sort(credits-,no+)?department='stdart'
+  - uri: /course.sort(credits-,no+)?department_code='stdart'
 
   # Limiting
   - uri: /course.limit(9)
@@ -714,5 +714,5 @@ tests:
 
   # Direction decorator
   - uri: /school{name+}
-  - uri: /course{credits-, no+, title}?department='stdart'
+  - uri: /course{credits-, no+, title}?department_code='stdart'
 
