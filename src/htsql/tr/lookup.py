@@ -77,6 +77,13 @@ class FunctionProbe(Probe):
         self.key = normalize(name)
 
 
+class ReferenceProbe(Probe):
+
+    def __init__(self, name):
+        self.name = name
+        self.key = normalize(name)
+
+
 class ComplementProbe(Probe):
     pass
 
@@ -150,6 +157,14 @@ class LookupDeep(Lookup):
             if recipe is not None:
                 return PinnedRecipe(self.binding.base, recipe)
         return None
+
+
+class LookupReferenceInReverseRedirect(Lookup):
+
+    adapts(ReverseRedirectBinding, ReferenceProbe)
+
+    def __call__(self):
+        return lookup(self.binding.pointer, self.probe)
 
 
 class LookupDeepAttributeInReverseRedirect(Lookup):
@@ -470,6 +485,22 @@ class ExpandColumn(Lookup):
         return None
 
 
+class LookupReferenceInChain(Lookup):
+
+    adapts_many((HomeBinding, ReferenceProbe),
+                (TableBinding, ReferenceProbe),
+                (ColumnBinding, ReferenceProbe),
+                (QuotientBinding, ReferenceProbe),
+                (ComplementBinding, ReferenceProbe),
+                (LinkBinding, ReferenceProbe),
+                (ForkBinding, ReferenceProbe),
+                (KernelBinding, ReferenceProbe))
+
+    def __call__(self):
+        if self.binding is not self.binding.base:
+            return lookup(self.binding.base, self.probe)
+
+
 class LookupInWrapper(Lookup):
     """
     Finds a member with the given name in a wrapper node.
@@ -568,8 +599,20 @@ class LookupAttributeInAlias(Lookup):
     adapts(AliasBinding, AttributeProbe)
 
     def __call__(self):
-        if self.probe.key == normalize(self.binding.name):
-            return BindingRecipe(self.binding.binding)
+        if (not self.binding.is_reference and
+                self.probe.key == normalize(self.binding.name)):
+            return self.binding.recipe
+        return super(LookupAttributeInAlias, self).__call__()
+
+
+class LookupReferenceInAlias(Lookup):
+
+    adapts(AliasBinding, ReferenceProbe)
+
+    def __call__(self):
+        if (self.binding.is_reference and
+                self.probe.key == normalize(self.binding.name)):
+            return self.binding.recipe
         return super(LookupAttributeInAlias, self).__call__()
 
 
@@ -632,6 +675,11 @@ def lookup_attribute(binding, name):
 
 def lookup_function(binding, name, arity):
     probe = FunctionProbe(name, arity)
+    return lookup(binding, probe)
+
+
+def lookup_reference(binding, name):
+    probe = ReferenceProbe(name)
     return lookup(binding, probe)
 
 

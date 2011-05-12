@@ -17,13 +17,15 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-                      SpecifierSyntax, FunctionSyntax, GroupSyntax)
+                      ReferenceSyntax, SpecifierSyntax, FunctionSyntax,
+                      GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrapperBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
                        SelectionBinding, HomeBinding, FlatBinding,
                        LinkBinding, ForkBinding, Binding)
+from ..recipe import BindingRecipe
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -666,13 +668,16 @@ class BindAssignment(BindMacro):
             tail = syntax.lbranch
         else:
             head = syntax
-        if isinstance(head, IdentifierSyntax):
+        if isinstance(head, ReferenceSyntax) and tail is None:
+            identifiers.append(head)
+        elif isinstance(head, IdentifierSyntax):
             identifiers.append(head)
         elif isinstance(head, FunctionSyntax):
             identifiers.append(head.identifier)
             arguments = []
             for argument in head.arguments:
-                if not isinstance(argument, IdentifierSyntax):
+                if not isinstance(argument, (IdentifierSyntax,
+                                             ReferenceSyntax)):
                     raise BindError("an identifier expected",
                                     argument.mark)
                 arguments.append(argument)
@@ -702,18 +707,29 @@ class BindDefine(BindMacro):
     def expand(self, ops):
         binding = self.state.base
         for op in ops:
-            assignment = self.state.bind(op)
+            assignment = self.state.bind(op, base=binding)
             if not isinstance(assignment, AssignmentBinding):
                 raise BindError("an assignment expected", op.mark)
-            name = assignment.identifiers[0].value
-            subnames = [identifier.value
-                        for identifier in assignment.identifiers[1:]]
-            arguments = None
-            if assignment.arguments is not None:
-                arguments = [argument.value
-                             for argument in assignment.arguments]
-            binding = DefinitionBinding(binding, name, subnames, arguments,
-                                        assignment.body, self.syntax)
+            identifier = assignment.identifiers[0]
+            if isinstance(identifier, ReferenceSyntax):
+                name = identifier.identifier.value
+                body = self.state.bind(assignment.body, base=binding)
+                recipe = BindingRecipe(body)
+                binding = AliasBinding(binding, name, True, recipe, self.syntax)
+            else:
+                name = identifier.value
+                subnames = [identifier.value
+                            for identifier in assignment.identifiers[1:]]
+                arguments = None
+                if assignment.arguments is not None:
+                    arguments = []
+                    for syntax in assignment.arguments:
+                        if isinstance(syntax, IdentifierSyntax):
+                            arguments.append((syntax.value, False))
+                        elif isinstance(syntax, ReferenceSyntax):
+                            arguments.append((syntax.identifier.value, True))
+                binding = DefinitionBinding(binding, name, subnames, arguments,
+                                            assignment.body, self.syntax)
         return binding
 
 
@@ -725,18 +741,29 @@ class BindWhere(BindMacro):
     def expand(self, lop, rops):
         binding = self.state.base
         for op in rops:
-            assignment = self.state.bind(op)
+            assignment = self.state.bind(op, base=binding)
             if not isinstance(assignment, AssignmentBinding):
                 raise BindError("an assignment expected", op.mark)
-            name = assignment.identifiers[0].value
-            subnames = [identifier.value
-                        for identifier in assignment.identifiers[1:]]
-            arguments = None
-            if assignment.arguments is not None:
-                arguments = [argument.value
-                             for argument in assignment.arguments]
-            binding = DefinitionBinding(binding, name, subnames, arguments,
-                                        assignment.body, self.syntax)
+            identifier = assignment.identifiers[0]
+            if isinstance(identifier, ReferenceSyntax):
+                name = identifier.identifier.value
+                body = self.state.bind(assignment.body, base=binding)
+                recipe = BindingRecipe(body)
+                binding = AliasBinding(binding, name, True, recipe, self.syntax)
+            else:
+                name = identifier.value
+                subnames = [identifier.value
+                            for identifier in assignment.identifiers[1:]]
+                arguments = None
+                if assignment.arguments is not None:
+                    arguments = []
+                    for syntax in assignment.arguments:
+                        if isinstance(syntax, IdentifierSyntax):
+                            arguments.append((syntax.value, False))
+                        elif isinstance(syntax, ReferenceSyntax):
+                            arguments.append((syntax.identifier.value, True))
+                binding = DefinitionBinding(binding, name, subnames, arguments,
+                                            assignment.body, self.syntax)
         return self.state.bind(lop, base=binding)
 
 

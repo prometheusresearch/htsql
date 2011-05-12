@@ -13,10 +13,10 @@ This module declares binding nodes.
 """
 
 
-from ..util import maybe, listof, Clonable, Printable
+from ..util import maybe, listof, oneof, tupleof, Clonable, Printable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
-from .syntax import Syntax, IdentifierSyntax
+from .syntax import Syntax, IdentifierSyntax, ReferenceSyntax
 from .signature import Signature, Bag, Formula
 
 
@@ -341,20 +341,24 @@ class KernelBinding(ChainBinding):
 
 class AliasBinding(ChainBinding):
 
-    def __init__(self, base, name, binding, syntax):
+    def __init__(self, base, name, is_reference, recipe, syntax):
         assert isinstance(name, str)
-        assert isinstance(binding, Binding)
+        assert isinstance(is_reference, bool)
+        #assert isinstance(recipe, Recipe)
         super(AliasBinding, self).__init__(base, base.domain, syntax)
         self.name = name
-        self.binding = binding
+        self.is_reference = is_reference
+        self.recipe = recipe
 
 
 class AssignmentBinding(Binding):
 
     def __init__(self, identifiers, arguments, body, syntax):
-        assert isinstance(identifiers, listof(IdentifierSyntax))
+        assert isinstance(identifiers, listof(oneof(IdentifierSyntax,
+                                                    ReferenceSyntax)))
         assert len(identifiers) > 0
-        assert isinstance(arguments, maybe(listof(IdentifierSyntax)))
+        assert isinstance(arguments, maybe(listof(oneof(IdentifierSyntax,
+                                                        ReferenceSyntax))))
         assert isinstance(body, Syntax)
         super(AssignmentBinding, self).__init__(VoidDomain(), syntax)
         self.identifiers = identifiers
@@ -367,7 +371,7 @@ class DefinitionBinding(ChainBinding):
     def __init__(self, base, name, subnames, arguments, body, syntax):
         assert isinstance(name, str)
         assert isinstance(subnames, listof(str))
-        assert isinstance(arguments, maybe(listof(str)))
+        assert isinstance(arguments, maybe(listof(tupleof(str, bool))))
         assert isinstance(body, Syntax)
         super(DefinitionBinding, self).__init__(base, base.domain, syntax)
         self.name = name

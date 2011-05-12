@@ -388,6 +388,23 @@ class ComplementSyntax(Syntax):
         return '^'
 
 
+class ReferenceSyntax(Syntax):
+    """
+    Represents a reference.
+
+    `identifier` (:class:`IdentifierSyntax`)
+        The name of the reference.
+    """
+
+    def __init__(self, identifier, mark):
+        assert isinstance(identifier, IdentifierSyntax)
+        super(ReferenceSyntax, self).__init__(mark)
+        self.identifier = identifier
+
+    def __str__(self):
+        return "$%s" % self.identifier
+
+
 class LiteralSyntax(Syntax):
     """
     Represents a literal expression.

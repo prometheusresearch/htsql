@@ -22,7 +22,8 @@ from .syntax import (Syntax, QuerySyntax, SegmentSyntax, FormatSyntax,
                      SelectorSyntax, ApplicationSyntax, OperatorSyntax,
                      SpecifierSyntax, TransformSyntax, FunctionSyntax,
                      GroupSyntax, IdentifierSyntax, WildcardSyntax,
-                     ComplementSyntax, StringSyntax, NumberSyntax)
+                     ReferenceSyntax, ComplementSyntax, StringSyntax,
+                     NumberSyntax)
 from .recipe import (Recipe, FreeTableRecipe, AttachedTableRecipe,
                      ColumnRecipe, ComplementRecipe, KernelRecipe,
                      SubstitutionRecipe, BindingRecipe, PinnedRecipe,
@@ -35,7 +36,7 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       ReverseRedirectBinding, AliasBinding,
                       SelectionBinding, SortBinding)
 from .lookup import (lookup, lookup_attribute, lookup_function,
-                     lookup_complement, expand, direct)
+                     lookup_reference, lookup_complement, expand, direct)
 from .coerce import coerce
 
 
@@ -570,6 +571,23 @@ class BindWildcard(Bind):
                                 self.state.base.syntax)
 
 
+class BindReference(Bind):
+    """
+    Binds an :class:`htsql.tr.syntax.ReferenceSyntax` node.
+    """
+
+    adapts(ReferenceSyntax)
+
+    def __call__(self):
+        recipe = lookup_reference(self.state.base,
+                                  self.syntax.identifier.value)
+        if recipe is None:
+            raise BindError("unable to resolve a reference",
+                            self.syntax.mark)
+        bind = BindByRecipe(recipe, self.syntax, self.state)
+        return bind()
+
+
 class BindComplement(Bind):
     """
     Bind a :class:`htsql.tr.syntax.ComplementSyntax` node.
@@ -726,10 +744,12 @@ class BindBySubstitution(BindByRecipe):
         if self.recipe.arguments is not None:
             assert isinstance(self.syntax, ApplicationSyntax)
             assert len(self.syntax.arguments) == len(self.recipe.arguments)
-            for name, syntax in zip(self.recipe.arguments,
-                                    self.syntax.arguments):
+            for (name, is_reference), syntax in zip(self.recipe.arguments,
+                                                    self.syntax.arguments):
                 binding = self.state.bind(syntax)
-                base = AliasBinding(base, name, binding, base.syntax)
+                recipe = BindingRecipe(binding)
+                base = AliasBinding(base, name, is_reference, recipe,
+                                    base.syntax)
         binding = self.state.bind(self.recipe.body, base=base)
         binding = ReverseRedirectBinding(binding, self.state.base, self.syntax)
         return binding

@@ -19,8 +19,8 @@ from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
 from .syntax import (QuerySyntax, SegmentSyntax, FormatSyntax, SelectorSyntax,
                      OperatorSyntax, SpecifierSyntax, TransformSyntax,
                      FunctionSyntax, GroupSyntax, IdentifierSyntax,
-                     WildcardSyntax, ComplementSyntax, StringSyntax,
-                     NumberSyntax)
+                     WildcardSyntax, ComplementSyntax, ReferenceSyntax,
+                     StringSyntax, NumberSyntax)
 
 
 class Parser(object):
@@ -119,18 +119,20 @@ class QueryParser(Parser):
         factor          ::= ( '+' | '-' ) factor | quotient   
         quotient        ::= sieve ( '^' sieve )?
 
-        sieve           ::= assignment ( '?' or_test )?
+        sieve           ::= link ( '?' or_test )?
+        link            ::= assignment ( '->' assignment )
         assignment      ::= specifier ( ':=' test )?
         specifier       ::= selection ( '.' selection )*
         selection       ::= atom selector?
         atom            ::= '*' index? | '^' | selector | group |
-                            identifier call? | literal
+                            identifier call? | reference | literal
         index           ::= NUMBER | '(' NUMBER ')'
 
         group           ::= '(' test ')'
         call            ::= '(' tests? ')'
         selector        ::= '{' tests? '}'
         tests           ::= test ( ',' test )* ','?
+        reference       ::= '$' identifier
 
         identifier      ::= NAME
         literal         ::= STRING | NUMBER
@@ -462,8 +464,8 @@ class SieveParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Parses the production:
-        #   sieve           ::= assignment ( '?' or_test )?
-        sieve = AssignmentParser << tokens
+        #   sieve           ::= link ( '?' or_test )?
+        sieve = LinkParser << tokens
         if tokens.peek(SymbolToken, ['?']):
             symbol_token = tokens.pop(SymbolToken, ['?'])
             symbol = symbol_token.value
@@ -472,6 +474,26 @@ class SieveParser(Parser):
             mark = Mark.union(lbranch, rbranch)
             sieve = OperatorSyntax(symbol, lbranch, rbranch, mark)
         return sieve
+
+
+class LinkParser(Parser):
+    """
+    Parses a `link` production.
+    """
+
+    @classmethod
+    def process(cls, tokens):
+        # Parses the production:
+        #   link            ::= assignment ( '->' assignment )
+        link = AssignmentParser << tokens
+        if tokens.peek(SymbolToken, ['->']):
+            symbol_token = tokens.pop(SymbolToken, ['->'])
+            symbol = symbol_token.value
+            lbranch = link
+            rbranch = AssignmentParser << tokens
+            mark = Mark.union(lbranch, rbranch)
+            link = OperatorSyntax(symbol, lbranch, rbranch, mark)
+        return link
 
 
 class AssignmentParser(Parser):
@@ -550,10 +572,11 @@ class AtomParser(Parser):
     def process(cls, tokens):
         # Parses the productions:
         #   atom            ::= '*' index? | '^' | selector | group |
-        #                       identifier call? | literal
+        #                       identifier call? | reference | literal
         #   index           ::= NUMBER | '(' NUMBER ')'
         #   call            ::= '(' tests? ')'
         #   tests           ::= test ( ',' test )* ','?
+        #   reference       ::= '$' identifier
         #   literal         ::= STRING | NUMBER
         if tokens.peek(SymbolToken, ['*']):
             symbol_token = tokens.pop(SymbolToken, ['*'])
@@ -596,6 +619,12 @@ class AtomParser(Parser):
                 return function
             else:
                 return identifier
+        elif tokens.peek(SymbolToken, ['$']):
+            head_token = tokens.pop(SymbolToken, ['$'])
+            identifier = IdentifierParser << tokens
+            mark = Mark.union(head_token, identifier)
+            reference = ReferenceSyntax(identifier, mark)
+            return reference
         elif tokens.peek(StringToken):
             token = tokens.pop(StringToken)
             return StringSyntax(token.value, token.mark)

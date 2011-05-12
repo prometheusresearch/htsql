@@ -17472,6 +17472,119 @@ tests:
                                     ON (`department`.`code` = `course_2`.`department_code`)
                WHERE (`department`.`code` = 'acc')
                ORDER BY `department`.`code` ASC
+          - uri: /school.define($school_name:=name).filter(code='eng') .department{$school_name,
+              name}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                     |
+              -+------------------------------------------------+-
+               | name                  | name                   |
+              -+-----------------------+------------------------+-
+               | School of Engineering | Bioengineering         |
+               | School of Engineering | Computer Science       |
+               | School of Engineering | Electrical Engineering |
+               | School of Engineering | Mechanical Engineering |
+                                                         (4 rows)
+
+               ----
+               /school.define($school_name:=name).filter(code='eng').department{$school_name,name}
+               SELECT `school`.`name`,
+                      `department`.`name`
+               FROM `htsql_regress`.`school` AS `school`
+                    INNER JOIN `htsql_regress`.`department` AS `department`
+                               ON (`school`.`code` = `department`.`school_code`)
+               WHERE (`school`.`code` = 'eng')
+               ORDER BY `school`.`code` ASC, `department`.`code` ASC
+          - uri: /school.define(student_by_year($year) := program.student?year(dob)=$year)
+              {code, count(student_by_year(1990)), count(student_by_year(1991)), count(student_by_year(1992)),
+              count(student_by_year(1993))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                                                                                           |
+              -+----------------------------------------------------------------------------------------------------------------------------------+-
+               | code | count(student_by_year(1990)) | count(student_by_year(1991)) | count(student_by_year(1992)) | count(student_by_year(1993)) |
+              -+------+------------------------------+------------------------------+------------------------------+------------------------------+-
+               | art  |                            0 |                            2 |                            3 |                            0 |
+               | bus  |                            0 |                            0 |                            1 |                            1 |
+               | edu  |                            0 |                            0 |                            0 |                            0 |
+               | eng  |                            2 |                            2 |                            2 |                            2 |
+               | la   |                            0 |                            0 |                            1 |                            1 |
+               | mus  |                            0 |                            0 |                            0 |                            0 |
+               | ns   |                            1 |                            2 |                            3 |                            2 |
+               | ph   |                            0 |                            0 |                            0 |                            0 |
+               | sc   |                            0 |                            0 |                            0 |                            0 |
+                                                                                                                                           (9 rows)
+
+               ----
+               /school.define(student_by_year($year):=program.student?year(dob)=$year){code,count(student_by_year(1990)),count(student_by_year(1991)),count(student_by_year(1992)),count(student_by_year(1993))}
+               SELECT `school`.`code`,
+                      COALESCE(`student_1`.`count`, 0),
+                      COALESCE(`student_2`.`count`, 0),
+                      COALESCE(`student_3`.`count`, 0),
+                      COALESCE(`student_4`.`count`, 0)
+               FROM `htsql_regress`.`school` AS `school`
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                            `program`.`school_code`
+                                     FROM `htsql_regress`.`program` AS `program`
+                                          INNER JOIN `htsql_regress`.`student` AS `student`
+                                                     ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+                                     WHERE (EXTRACT(YEAR FROM `student`.`dob`) = 1990)
+                                     GROUP BY 2) AS `student_1`
+                                    ON (`school`.`code` = `student_1`.`school_code`)
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                            `program`.`school_code`
+                                     FROM `htsql_regress`.`program` AS `program`
+                                          INNER JOIN `htsql_regress`.`student` AS `student`
+                                                     ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+                                     WHERE (EXTRACT(YEAR FROM `student`.`dob`) = 1991)
+                                     GROUP BY 2) AS `student_2`
+                                    ON (`school`.`code` = `student_2`.`school_code`)
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                            `program`.`school_code`
+                                     FROM `htsql_regress`.`program` AS `program`
+                                          INNER JOIN `htsql_regress`.`student` AS `student`
+                                                     ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+                                     WHERE (EXTRACT(YEAR FROM `student`.`dob`) = 1992)
+                                     GROUP BY 2) AS `student_3`
+                                    ON (`school`.`code` = `student_3`.`school_code`)
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                            `program`.`school_code`
+                                     FROM `htsql_regress`.`program` AS `program`
+                                          INNER JOIN `htsql_regress`.`student` AS `student`
+                                                     ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+                                     WHERE (EXTRACT(YEAR FROM `student`.`dob`) = 1993)
+                                     GROUP BY 2) AS `student_4`
+                                    ON (`school`.`code` = `student_4`.`school_code`)
+               ORDER BY 1 ASC
+          - uri: /school.define(student_by_year($year) := program.student?year(dob)=$year)
+              {code, student_by_year(1990).$year}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: unable to resolve a reference:
+                  /school.define(student_by_year($year) := program.student?year(dob)=$year) {code, student_by_year(1990).$year}
+                                                                                                                         ^^^^^
+          - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               |           |
+              -+-----------+-
+               | 21 | $x*2 |
+              -+----+------+-
+               | 21 |   42 |
+                     (1 row)
+
+               ----
+               /define(f($x):=$x*2){{$x,f($x)}:where($x:=21)}
+               SELECT 21,
+                      (21 * 2)
         - id: projections
           tests:
           - uri: /distinct(program{degree})

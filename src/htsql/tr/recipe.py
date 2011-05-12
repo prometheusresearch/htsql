@@ -5,7 +5,7 @@
 #
 
 
-from ..util import maybe, listof
+from ..util import maybe, listof, tupleof
 from ..entity import TableEntity, ColumnEntity, Join
 from .binding import Binding
 from .syntax import Syntax
@@ -60,7 +60,7 @@ class SubstitutionRecipe(Recipe):
     def __init__(self, base, subnames, arguments, body):
         assert isinstance(base, Binding)
         assert isinstance(subnames, listof(str))
-        assert isinstance(arguments, maybe(listof(str)))
+        assert isinstance(arguments, maybe(listof(tupleof(str, bool))))
         assert isinstance(body, Syntax)
         self.base = base
         self.subnames = subnames
