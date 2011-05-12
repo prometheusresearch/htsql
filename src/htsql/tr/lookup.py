@@ -103,6 +103,10 @@ class ExpansionProbe(Probe):
         self.is_hard = is_hard
 
 
+class GuessNameProbe(Probe):
+    pass
+
+
 class DirectionProbe(Probe):
     pass
 
@@ -501,6 +505,22 @@ class LookupReferenceInChain(Lookup):
             return lookup(self.binding.base, self.probe)
 
 
+class GuessNameInChain(Lookup):
+
+    adapts_many((HomeBinding, GuessNameProbe),
+                (TableBinding, GuessNameProbe),
+                (ColumnBinding, GuessNameProbe),
+                (QuotientBinding, GuessNameProbe),
+                (ComplementBinding, GuessNameProbe),
+                (LinkBinding, GuessNameProbe),
+                (ForkBinding, GuessNameProbe),
+                (KernelBinding, GuessNameProbe))
+
+    def __call__(self):
+        if isinstance(self.binding.syntax, IdentifierSyntax):
+            return self.binding.syntax.value
+
+
 class LookupInWrapper(Lookup):
     """
     Finds a member with the given name in a wrapper node.
@@ -517,6 +537,21 @@ class LookupInWrapper(Lookup):
 
     def __call__(self):
         # Delegate the request to the base node.
+        return lookup(self.binding.base, self.probe)
+
+
+class GuessNameInWrapper(Lookup):
+
+    adapts_many((WrapperBinding, GuessNameProbe),
+                (SieveBinding, GuessNameProbe),
+                (SortBinding, GuessNameProbe),
+                (AliasBinding, GuessNameProbe),
+                (DefinitionBinding, GuessNameProbe),
+                (SelectionBinding, GuessNameProbe))
+
+    def __call__(self):
+        if isinstance(self.binding.syntax, IdentifierSyntax):
+            return self.binding.syntax.value
         return lookup(self.binding.base, self.probe)
 
 
@@ -613,7 +648,7 @@ class LookupReferenceInAlias(Lookup):
         if (self.binding.is_reference and
                 self.probe.key == normalize(self.binding.name)):
             return self.binding.recipe
-        return super(LookupAttributeInAlias, self).__call__()
+        return super(LookupReferenceInAlias, self).__call__()
 
 
 class LookupAttributeInDefinition(Lookup):
@@ -694,6 +729,11 @@ def expand(binding, is_soft=True, is_hard=True):
     if bindings is not None:
         bindings = list(bindings)
     return bindings
+
+
+def guess_name(binding):
+    probe = GuessNameProbe()
+    return lookup(binding, probe)
 
 
 def direct(binding):

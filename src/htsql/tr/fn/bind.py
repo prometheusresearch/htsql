@@ -25,11 +25,12 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
                        SelectionBinding, HomeBinding, FlatBinding,
                        LinkBinding, ForkBinding, Binding)
-from ..recipe import BindingRecipe
+from ..recipe import BindingRecipe, ComplementRecipe, KernelRecipe
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
-from ..lookup import lookup_attribute, lookup_complement, direct, expand
+from ..lookup import (lookup_attribute, lookup_complement, direct, expand,
+                      guess_name)
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -443,8 +444,20 @@ class BindQuotient(BindMacro):
             else:
                 kernel_bindings.append(expression)
         self.state.pop_base()
-        return QuotientBinding(self.state.base, seed_binding, kernel_bindings,
-                               self.syntax)
+        binding = QuotientBinding(self.state.base, seed_binding,
+                                  kernel_bindings, self.syntax)
+        name = guess_name(seed_binding)
+        if name is not None:
+            recipe = ComplementRecipe(seed_binding)
+            binding = AliasBinding(binding, name, False, recipe,
+                                   binding.syntax)
+        for index in range(len(kernel_bindings)):
+            name = guess_name(kernel_bindings[index])
+            if name is not None:
+                recipe = KernelRecipe(kernel_bindings, index)
+                binding = AliasBinding(binding, name, False, recipe,
+                                       binding.syntax)
+        return binding
 
 
 class BindDistinct(BindMacro):
@@ -453,15 +466,28 @@ class BindDistinct(BindMacro):
     signature = UnarySig
 
     def expand(self, op):
-        seed = self.state.bind(op)
-        recipies = expand(seed, is_hard=False)
+        seed_binding = self.state.bind(op)
+        recipies = expand(seed_binding, is_hard=False)
         if recipies is None:
             raise BindError("a selector is required", op.mark)
-        kernel = []
+        kernel_bindings = []
         for syntax, recipe in recipies:
             bind = BindByRecipe(recipe, syntax, self.state)
-            kernel.append(bind())
-        return QuotientBinding(self.state.base, seed, kernel, self.syntax)
+            kernel_bindings.append(bind())
+        binding = QuotientBinding(self.state.base, seed_binding,
+                                  kernel_bindings, self.syntax)
+        name = guess_name(seed_binding)
+        if name is not None:
+            recipe = ComplementRecipe(seed_binding)
+            binding = AliasBinding(binding, name, False, recipe,
+                                   binding.syntax)
+        for index in range(len(kernel_bindings)):
+            name = guess_name(kernel_bindings[index])
+            if name is not None:
+                recipe = KernelRecipe(kernel_bindings, index)
+                binding = AliasBinding(binding, name, False, recipe,
+                                       binding.syntax)
+        return binding
 
 
 class BindAs(BindMacro):

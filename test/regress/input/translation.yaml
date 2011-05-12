@@ -256,19 +256,25 @@ tests:
     tests:
     - uri: /distinct(program{degree})
     - uri: /distinct(program{degree}){*}
+    - uri: /distinct(program{degree}){degree}
     - uri: /distinct(program{degree})?false()
     - uri: /distinct(program{degree})?head(*1)='b'
+    - uri: /distinct(program{degree})?head(degree)='b'
     - uri: /distinct(program{degree}){*}?head(*1)='b'
     - uri: /distinct(program{degree}?false())
     - uri: /distinct(program{degree}?tail(*1)='a')
     - uri: /distinct(program{degree}?false())?false()
     - uri: /distinct(program{degree}?tail(*1)='a')?head(*1)='b'
     - uri: /distinct(program{degree}){*, count(^)}
+    - uri: /distinct(program{degree}){degree, count(program)}
     - uri: /distinct(program{degree}){*, count(^.student)}
+    - uri: /distinct(program{degree}){degree, count(program.student)}
     - uri: /distinct(program{degree :if_null '--'})
     - uri: /distinct(student{year(dob),gender})
     - uri: /distinct(student{year(dob),gender}){*, *1, *2}
     - uri: /distinct(student{year(dob),gender}){*,count(^)}
+    - uri: /distinct(student{y_dob:=year(dob),gender})
+                {y_dob,gender,count(student)}
     - uri: /distinct(distinct(student{year(dob)}).^{gender})
                 {*, count(^), count(^.is_active)}
     - uri: /distinct(distinct(student{year(dob), gender}){*1})
@@ -314,6 +320,8 @@ tests:
     - uri: /school{code, count(program), count(program^degree)}
     - uri: /(program^degree){*, count(^), count(^.student)}
     - uri: /(student^{year(dob),gender}){*, count(^), count(^?is_active)}
+    - uri: /(student^{y_dob:=year(dob),gender})
+                {*, count(student), count(student?is_active)}
     - uri: /count(program^degree)
 
     # The `distinct()` function.

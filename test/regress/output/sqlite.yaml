@@ -17662,6 +17662,31 @@ tests:
                WHERE ("program"."degree" IS NOT NULL)
                GROUP BY 1
                ORDER BY 1 ASC
+          - uri: /distinct(program{degree}){degree}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | bs                        |
+               | ct                        |
+               | ma                        |
+               | ms                        |
+               | pb                        |
+               | ph                        |
+                                    (7 rows)
+
+               ----
+               /distinct(program{degree}){degree}
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               WHERE ("program"."degree" IS NOT NULL)
+               GROUP BY 1
+               ORDER BY 1 ASC
           - uri: /distinct(program{degree})?false()
             status: 200 OK
             headers:
@@ -17696,6 +17721,27 @@ tests:
 
                ----
                /distinct(program{degree})?head(*1)='b'
+               SELECT "program"."degree"
+               FROM "program" AS "program"
+               WHERE ("program"."degree" IS NOT NULL)
+               GROUP BY 1
+               HAVING (SUBSTR("program"."degree", 1, 1) = 'b')
+               ORDER BY 1 ASC
+          - uri: /distinct(program{degree})?head(degree)='b'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree                    |
+              -+---------------------------+-
+               | ba                        |
+               | bs                        |
+                                    (2 rows)
+
+               ----
+               /distinct(program{degree})?head(degree)='b'
                SELECT "program"."degree"
                FROM "program" AS "program"
                WHERE ("program"."degree" IS NOT NULL)
@@ -17837,6 +17883,39 @@ tests:
                                      GROUP BY 2) AS "program_2"
                                     ON ("program_1"."degree" = "program_2"."degree")
                ORDER BY 1 ASC
+          - uri: /distinct(program{degree}){degree, count(program)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree}) |
+              -+---------------------------+-
+               | degree  | count(program)  |
+              -+---------+-----------------+-
+               | ba      |               9 |
+               | bs      |              12 |
+               | ct      |               4 |
+               | ma      |               6 |
+               | ms      |               5 |
+               | pb      |               1 |
+               | ph      |               1 |
+                                    (7 rows)
+
+               ----
+               /distinct(program{degree}){degree,count(program)}
+               SELECT "program_1"."degree",
+                      COALESCE("program_2"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "program" AS "program"
+                     WHERE ("program"."degree" IS NOT NULL)
+                     GROUP BY 1) AS "program_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."degree"
+                                     FROM "program" AS "program"
+                                     WHERE ("program"."degree" IS NOT NULL)
+                                     GROUP BY 2) AS "program_2"
+                                    ON ("program_1"."degree" = "program_2"."degree")
+               ORDER BY 1 ASC
           - uri: /distinct(program{degree}){*, count(^.student)}
             status: 200 OK
             headers:
@@ -17857,6 +17936,41 @@ tests:
 
                ----
                /distinct(program{degree}){*,count(^.student)}
+               SELECT "program"."degree",
+                      COALESCE("student"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "program" AS "program"
+                     WHERE ("program"."degree" IS NOT NULL)
+                     GROUP BY 1) AS "program"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."degree"
+                                     FROM "program" AS "program"
+                                          INNER JOIN "student" AS "student"
+                                                     ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+                                     WHERE ("program"."degree" IS NOT NULL)
+                                     GROUP BY 2) AS "student"
+                                    ON ("program"."degree" = "student"."degree")
+               ORDER BY 1 ASC
+          - uri: /distinct(program{degree}){degree, count(program.student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(program{degree})       |
+              -+---------------------------------+-
+               | degree | count(program.student) |
+              -+--------+------------------------+-
+               | ba     |                      6 |
+               | bs     |                     20 |
+               | ct     |                      6 |
+               | ma     |                      5 |
+               | ms     |                      9 |
+               | pb     |                      5 |
+               | ph     |                      0 |
+                                          (7 rows)
+
+               ----
+               /distinct(program{degree}){degree,count(program.student)}
                SELECT "program"."degree",
                       COALESCE("student"."count", 0)
                FROM (SELECT "program"."degree"
@@ -18031,6 +18145,63 @@ tests:
 
                ----
                /distinct(student{year(dob),gender}){*,count(^)}
+               SELECT "student_1"."year",
+                      "student_1"."gender",
+                      COALESCE("student_2"."count", 0)
+               FROM (SELECT CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year",
+                            "student"."gender"
+                     FROM "student" AS "student"
+                     WHERE (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                           AND ("student"."gender" IS NOT NULL)
+                     GROUP BY 1, 2) AS "student_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year",
+                                            "student"."gender"
+                                     FROM "student" AS "student"
+                                     WHERE (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                                           AND ("student"."gender" IS NOT NULL)
+                                     GROUP BY 2, 3) AS "student_2"
+                                    ON (("student_1"."year" = "student_2"."year") AND ("student_1"."gender" = "student_2"."gender"))
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /distinct(student{y_dob:=year(dob),gender}) {y_dob,gender,count(student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | distinct(student{y_dob:=year(dob),gender}) |
+              -+--------------------------------------------+-
+               | y_dob     | gender     | count(student)    |
+              -+-----------+------------+-------------------+-
+               |      1981 | f          |                 1 |
+               |      1983 | f          |                 1 |
+               |      1985 | f          |                 1 |
+               |      1985 | m          |                 1 |
+               |      1987 | f          |                 2 |
+               |      1987 | m          |                 1 |
+               |      1988 | f          |                 1 |
+               |      1988 | m          |                 3 |
+               |      1989 | f          |                 1 |
+               |      1989 | m          |                 2 |
+               |      1990 | f          |                 1 |
+               |      1990 | m          |                 2 |
+               |      1991 | f          |                 3 |
+               |      1991 | m          |                 3 |
+               |      1992 | f          |                 6 |
+               |      1992 | m          |                 4 |
+               |      1993 | f          |                 3 |
+               |      1993 | m          |                 3 |
+               |      1994 | f          |                 2 |
+               |      1994 | m          |                 2 |
+               |      1995 | f          |                 2 |
+               |      1995 | m          |                 2 |
+               |      1998 | m          |                 1 |
+               |      2000 | m          |                 1 |
+               |      2001 | m          |                 1 |
+               |      2002 | m          |                 1 |
+                                                    (26 rows)
+
+               ----
+               /distinct(student{y_dob:=year(dob),gender}){y_dob,gender,count(student)}
                SELECT "student_1"."year",
                       "student_1"."gender",
                       COALESCE("student_2"."count", 0)
@@ -19719,6 +19890,73 @@ tests:
 
                ----
                /(student^{year(dob),gender}){*,count(^),count(^?is_active)}
+               SELECT "student_1"."year",
+                      "student_1"."gender",
+                      COALESCE("student_2"."count", 0),
+                      COALESCE("student_3"."count", 0)
+               FROM (SELECT CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year",
+                            "student"."gender"
+                     FROM "student" AS "student"
+                     WHERE (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                           AND ("student"."gender" IS NOT NULL)
+                     GROUP BY 1, 2) AS "student_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year",
+                                            "student"."gender"
+                                     FROM "student" AS "student"
+                                     WHERE (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                                           AND ("student"."gender" IS NOT NULL)
+                                     GROUP BY 2, 3) AS "student_2"
+                                    ON (("student_1"."year" = "student_2"."year") AND ("student_1"."gender" = "student_2"."gender"))
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year",
+                                            "student"."gender"
+                                     FROM "student" AS "student"
+                                     WHERE "student"."is_active"
+                                           AND (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                                           AND ("student"."gender" IS NOT NULL)
+                                     GROUP BY 2, 3) AS "student_3"
+                                    ON (("student_1"."year" = "student_3"."year") AND ("student_1"."gender" = "student_3"."gender"))
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /(student^{y_dob:=year(dob),gender}) {*, count(student), count(student?is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | student^{y_dob:=year(dob),gender}                          |
+              -+------------------------------------------------------------+-
+               | y_dob | gender | count(student) | count(student?is_active) |
+              -+-------+--------+----------------+--------------------------+-
+               |  1981 | f      |              1 |                        1 |
+               |  1983 | f      |              1 |                        1 |
+               |  1985 | f      |              1 |                        0 |
+               |  1985 | m      |              1 |                        1 |
+               |  1987 | f      |              2 |                        2 |
+               |  1987 | m      |              1 |                        1 |
+               |  1988 | f      |              1 |                        1 |
+               |  1988 | m      |              3 |                        2 |
+               |  1989 | f      |              1 |                        1 |
+               |  1989 | m      |              2 |                        2 |
+               |  1990 | f      |              1 |                        1 |
+               |  1990 | m      |              2 |                        2 |
+               |  1991 | f      |              3 |                        3 |
+               |  1991 | m      |              3 |                        3 |
+               |  1992 | f      |              6 |                        2 |
+               |  1992 | m      |              4 |                        4 |
+               |  1993 | f      |              3 |                        3 |
+               |  1993 | m      |              3 |                        3 |
+               |  1994 | f      |              2 |                        2 |
+               |  1994 | m      |              2 |                        2 |
+               |  1995 | f      |              2 |                        2 |
+               |  1995 | m      |              2 |                        1 |
+               |  1998 | m      |              1 |                        1 |
+               |  2000 | m      |              1 |                        1 |
+               |  2001 | m      |              1 |                        1 |
+               |  2002 | m      |              1 |                        1 |
+                                                                    (26 rows)
+
+               ----
+               /(student^{y_dob:=year(dob),gender}){*,count(student),count(student?is_active)}
                SELECT "student_1"."year",
                       "student_1"."gender",
                       COALESCE("student_2"."count", 0),
