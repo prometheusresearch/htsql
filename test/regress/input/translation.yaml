@@ -247,6 +247,10 @@ tests:
                   {code, student_by_year(1990).$year}
       expect: 400
     - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
+    - uri: /school{code, num_dept := count(department)}?num_dept>3
+    - uri: /school{code, $num_dept := count(department)}?$num_dept>3
+    - uri: /school{code, program.num_stud := count(student)}
+      expect: 400
 
   - title: Projections
     tests:

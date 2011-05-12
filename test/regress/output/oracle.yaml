@@ -15913,7 +15913,7 @@ tests:
             body: |2
                |       |
               -+-------+-
-               | 1     |
+               | q     |
               -+-------+-
                |     1 |
                  (1 row)
@@ -17305,12 +17305,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |             |
-              -+-------------+-
-               | 2 | 3 | x*y |
-              -+---+---+-----+-
-               | 2 | 3 |   6 |
-                       (1 row)
+               |           |
+              -+-----------+-
+               | x | y | z |
+              -+---+---+---+-
+               | 2 | 3 | 6 |
+                     (1 row)
 
                ----
                /define(x:=2,y:=3,z:=x*y){x,y,z}
@@ -17325,7 +17325,7 @@ tests:
             body: |2
                |       |
               -+-------+-
-               | x*x   |
+               | x     |
               -+-------+-
                |    16 |
                  (1 row)
@@ -17445,7 +17445,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | student                                                                                                                   |
+               | inactive_student                                                                                                          |
               -+---------------------------------------------------------------------------------------------------------------------------+-
                | name                | dob        | start_date | (date(date)-date(dob))/365:round(1) | (date(date)-date(dob))/365:round(1) |
               -+---------------------+------------+------------+-------------------------------------+-------------------------------------+-
@@ -17567,7 +17567,7 @@ tests:
             body: |2
                | department                                     |
               -+------------------------------------------------+-
-               | name                  | name                   |
+               | $school_name          | name                   |
               -+-----------------------+------------------------+-
                | School of Engineering | Bioengineering         |
                | School of Engineering | Computer Science       |
@@ -17663,7 +17663,7 @@ tests:
             body: |2
                |           |
               -+-----------+-
-               | 21 | $x*2 |
+               | $x | $x*2 |
               -+----+------+-
                | 21 |   42 |
                      (1 row)
@@ -17673,6 +17673,68 @@ tests:
                SELECT 21,
                       (21 * 2)
                FROM DUAL "!"
+          - uri: /school{code, num_dept := count(department)}?num_dept>3
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school          |
+              -+-----------------+-
+               | code | num_dept |
+              -+------+----------+-
+               | eng  |        4 |
+               | la   |        5 |
+               | mus  |        4 |
+               | ns   |        4 |
+                          (4 rows)
+
+               ----
+               /school{code,num_dept:=count(department)}?num_dept>3
+               SELECT "SCHOOL"."CODE",
+                      COALESCE("DEPARTMENT"."count", 0)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "DEPARTMENT"."SCHOOL_CODE"
+                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               WHERE (COALESCE("DEPARTMENT"."count", 0) > 3)
+               ORDER BY 1 ASC
+          - uri: /school{code, $num_dept := count(department)}?$num_dept>3
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school           |
+              -+------------------+-
+               | code | $num_dept |
+              -+------+-----------+-
+               | eng  |         4 |
+               | la   |         5 |
+               | mus  |         4 |
+               | ns   |         4 |
+                           (4 rows)
+
+               ----
+               /school{code,$num_dept:=count(department)}?$num_dept>3
+               SELECT "SCHOOL"."CODE",
+                      COALESCE("DEPARTMENT"."count", 0)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "DEPARTMENT"."SCHOOL_CODE"
+                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               WHERE (COALESCE("DEPARTMENT"."count", 0) > 3)
+               ORDER BY 1 ASC
+          - uri: /school{code, program.num_stud := count(student)}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              bind error: invalid selector assignment:
+                  /school{code, program.num_stud := count(student)}
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - id: projections
           tests:
           - uri: /distinct(program{degree})

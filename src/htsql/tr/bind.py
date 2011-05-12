@@ -32,7 +32,7 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       LiteralBinding, SieveBinding, CastBinding,
                       WrapperBinding, FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding,
+                      DefinitionBinding, RedirectBinding, AssignmentBinding,
                       ReverseRedirectBinding, AliasBinding,
                       SelectionBinding, SortBinding)
 from .lookup import (lookup, lookup_attribute, lookup_function,
@@ -278,6 +278,28 @@ class BindSelector(Bind):
         elements = []
         for rbranch in self.syntax.rbranches:
             element = self.state.bind(rbranch)
+            if isinstance(element, AssignmentBinding):
+                if (len(element.identifiers) != 1 or
+                        element.arguments is not None):
+                    raise BindError("invalid selector assignment",
+                                    element.mark)
+                identifier = element.identifiers[0]
+                if isinstance(identifier, ReferenceSyntax):
+                    name = identifier.identifier.value
+                    body = self.state.bind(element.body)
+                    recipe = BindingRecipe(body)
+                    base = AliasBinding(base, name, True, recipe,
+                                        element.syntax)
+                elif isinstance(identifier, IdentifierSyntax):
+                    name = identifier.value
+                    recipe = SubstitutionRecipe(base, [], None, element.body)
+                    base = DefinitionBinding(base, name, [], None,
+                                             element.body, element.syntax)
+                bind = BindByRecipe(recipe, identifier, self.state)
+                element = bind()
+                element = WrapperBinding(element, identifier)
+                self.state.pop_base()
+                self.state.push_base(base)
             recipies = expand(element, is_hard=False)
             if recipies is not None:
                 for syntax, recipe in recipies:
@@ -531,7 +553,8 @@ class BindIdentifier(Bind):
             raise BindError("unable to resolve an identifier",
                             self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
-        return bind()
+        binding = bind()
+        return WrapperBinding(binding, self.syntax)
 
 
 class BindWildcard(Bind):
@@ -585,7 +608,8 @@ class BindReference(Bind):
             raise BindError("unable to resolve a reference",
                             self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
-        return bind()
+        binding = bind()
+        return WrapperBinding(binding, self.syntax)
 
 
 class BindComplement(Bind):
