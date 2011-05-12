@@ -23,6 +23,7 @@ tests:
         DROP USER ${ORACLE_USERNAME} CASCADE;
     autocommit: true
     ignore: true
+
 - title: Deploy the regression database
   id: create-oracle
   tests:
@@ -43,6 +44,8 @@ tests:
       host: ${ORACLE_HOST}
       port: ${ORACLE_PORT}
     sql-include: test/regress/sql/regress-oracle.sql
+  - db: *connect
+  - py-include: test/regress/sql/regress-load.py
 
 - title: Run the test collection
   id: test-oracle

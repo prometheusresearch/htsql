@@ -5,6 +5,10 @@
 
 id: sqlite
 tests:
+- id: create-sqlite
+  tests:
+  - py-include: test/regress/sql/regress-load.py
+    stdout: ''
 - id: test-sqlite
   tests:
   - include: test/regress/input/schema.yaml

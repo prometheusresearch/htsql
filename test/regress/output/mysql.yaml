@@ -5,6 +5,10 @@
 
 id: mysql
 tests:
+- id: create-mysql
+  tests:
+  - py-include: test/regress/sql/regress-load.py
+    stdout: ''
 - id: test-mysql
   tests:
   - include: test/regress/input/schema.yaml

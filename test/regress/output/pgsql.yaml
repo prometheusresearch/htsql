@@ -5,6 +5,10 @@
 
 id: pgsql
 tests:
+- id: create-pgsql
+  tests:
+  - py-include: test/regress/sql/regress-load.py
+    stdout: ''
 - id: test-pgsql
   tests:
   - include: test/regress/input/schema.yaml

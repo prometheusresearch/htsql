@@ -1826,15 +1826,19 @@ class PythonCodeTestCase(RunAndCompareTestCase):
         sys.stdin = StringIO.StringIO(self.input.stdin)
         sys.stdout = StringIO.StringIO()
         sys.stderr = sys.stdout
+        # Prepare the code.
+        code = self.load()
+        context = {'state': self.state}
         # Execute the code.
         exc_info = None
         try:
-            exec self.input.code in {}
+            exec code in context
         except:
             exc_info = sys.exc_info()
         # Make new output record.
-        new_output = self.make_output(py=self.input.py,
-                                      stdout=sys.stdout.getvalue())
+        key = self.input.fields[0].attribute
+        new_output = self.make_output(stdout=sys.stdout.getvalue(),
+                                      **{key: getattr(self.input, key)})
         # Restore old standard streams.
         sys.stdin = old_stdin
         sys.stdout = old_stdout
@@ -1853,6 +1857,50 @@ class PythonCodeTestCase(RunAndCompareTestCase):
             if self.input.expect is not None:
                 return self.out("*** an expected exception did not occur")
         return new_output
+
+    def load(self):
+        # Get the script source code.
+        return self.input.code
+
+
+class PythonCodeIncludeTestCase(PythonCodeTestCase):
+    """
+    Executes arbitrary Python code loaded from a file.
+    """
+
+    name = "python-include"
+    hint = """load and execute Python code"""
+    help = """
+    This test case allows you to execute arbitrary Python code
+    loaded from a file.
+    """
+
+    class Input(TestData):
+        fields = [
+                Field('py_include', StrVal(),
+                      hint="""the file containing Python code"""),
+                Field('stdin', StrVal(), '',
+                      hint="""the content of the standard input"""),
+                Field('expect', StrVal(), None,
+                      hint="""the name of an exception to expect"""),
+                Field('ignore', BoolVal(), False,
+                      hint="""ignore the standard output"""),
+        ] + SkipTestCase.Input.fields
+
+    class Output(TestData):
+        fields = [
+                Field('py_include', StrVal(),
+                      hint="""the file containing Python code"""),
+                Field('stdout', StrVal(),
+                      hint="""the content of the standard output"""),
+        ]
+
+    def load(self):
+        # Get the script code from the given file
+        stream = open(self.input.py_include, 'rb')
+        code = stream.read()
+        stream.close()
+        return code
 
 
 class SQLTestCase(SkipTestCase):
@@ -2707,6 +2755,7 @@ class RegressRoutine(Routine):
             StartCtlTestCase,
             EndCtlTestCase,
             PythonCodeTestCase,
+            PythonCodeIncludeTestCase,
             SQLTestCase,
             SQLIncludeTestCase,
             WriteToFileTestCase,

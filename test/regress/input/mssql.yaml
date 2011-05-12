@@ -26,6 +26,7 @@ tests:
             DROP LOGIN [${MSSQL_USERNAME}];
     autocommit: true
     ignore: true
+
 - title: Deploy the regression database
   id: create-mssql
   tests:
@@ -45,6 +46,8 @@ tests:
       host: ${MSSQL_HOST}
       port: ${MSSQL_PORT}
     sql-include: test/regress/sql/regress-mssql.sql
+  - db: *connect
+  - py-include: test/regress/sql/regress-load.py
 
 - title: Run the test collection
   id: test-mssql

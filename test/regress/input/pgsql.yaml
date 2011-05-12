@@ -41,6 +41,8 @@ tests:
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
     sql-include: test/regress/sql/regress-pgsql.sql
+  - db: *connect
+  - py-include: test/regress/sql/regress-load.py
 
 - title: Run the test collection
   id: test-pgsql

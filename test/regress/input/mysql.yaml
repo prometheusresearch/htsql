@@ -28,6 +28,7 @@ tests:
         DROP USER `${MYSQL_USERNAME}`;
     #autocommit: true
     ignore: true
+
 - title: Deploy the regression database
   id: create-mysql
   tests:
@@ -48,6 +49,8 @@ tests:
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
     sql-include: test/regress/sql/regress-mysql.sql
+  - db: *connect
+  - py-include: test/regress/sql/regress-load.py
 
 - title: Run the test collection
   id: test-mysql

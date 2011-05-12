@@ -5,6 +5,10 @@
 
 id: oracle
 tests:
+- id: create-oracle
+  tests:
+  - py-include: test/regress/sql/regress-load.py
+    stdout: ''
 - id: test-oracle
   tests:
   - include: test/regress/input/schema.yaml

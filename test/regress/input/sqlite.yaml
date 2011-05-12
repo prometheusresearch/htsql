@@ -22,6 +22,8 @@ tests:
       engine: sqlite
       database: ${SQLITE_DIRECTORY}/${SQLITE_DATABASE}
     sql-include: test/regress/sql/regress-sqlite.sql
+  - db: *connect
+  - py-include: test/regress/sql/regress-load.py
 
 - title: Run the test collection
   id: test-sqlite

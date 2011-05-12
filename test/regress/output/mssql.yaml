@@ -5,6 +5,10 @@
 
 id: mssql
 tests:
+- id: create-mssql
+  tests:
+  - py-include: test/regress/sql/regress-load.py
+    stdout: ''
 - id: test-mssql
   tests:
   - include: test/regress/input/schema.yaml
