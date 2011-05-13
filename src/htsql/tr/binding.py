@@ -313,12 +313,12 @@ class ComplementBinding(ChainBinding):
         self.seed = seed
 
 
-class LinkBinding(ChainBinding):
+class MonikerBinding(ChainBinding):
 
     def __init__(self, base, seed, condition, syntax):
         assert isinstance(seed, Binding)
         assert isinstance(condition, maybe(Binding))
-        super(LinkBinding, self).__init__(base, seed.domain, syntax)
+        super(MonikerBinding, self).__init__(base, seed.domain, syntax)
         self.seed = seed
         self.condition = condition
 
@@ -329,6 +329,19 @@ class ForkBinding(ChainBinding):
         assert isinstance(kernel, listof(Binding))
         super(ForkBinding, self).__init__(base, base.domain, syntax)
         self.kernel = kernel
+
+
+class LinkBinding(ChainBinding):
+
+    def __init__(self, base, seed, kernel, counter_kernel, syntax):
+        assert isinstance(seed, Binding)
+        assert isinstance(kernel, listof(Binding))
+        assert isinstance(counter_kernel, listof(Binding))
+        assert len(kernel) == len(counter_kernel)
+        super(LinkBinding, self).__init__(base, seed.domain, syntax)
+        self.seed = seed
+        self.kernel = kernel
+        self.counter_kernel = counter_kernel
 
 
 class KernelBinding(ChainBinding):

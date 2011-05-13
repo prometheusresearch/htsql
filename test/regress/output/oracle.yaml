@@ -2101,6 +2101,66 @@ tests:
              WHERE ("PROGRAM_1"."SCHOOL_CODE" = 'eng')
                    AND ("PROGRAM_1"."CODE" = 'umech')
              ORDER BY "PROGRAM_1"."SCHOOL_CODE" ASC, "PROGRAM_1"."CODE" ASC
+        - uri: /(program?school_code='eng'&code='umech') .({school_code,part_of} ->
+            program{school_code,code})
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | {school_code,part_of}->program{school_code,code}                       |
+            -+------------------------------------------------------------------------+-
+             | school_code | code | title                          | degree | part_of |
+            -+-------------+------+--------------------------------+--------+---------+-
+             | eng         | gme  | M.S. in Mechanical Engineering | ms     |         |
+                                                                                (1 row)
+
+             ----
+             /(program?school_code='eng'&code='umech').({school_code,part_of}->program{school_code,code})
+             SELECT "PROGRAM_2"."SCHOOL_CODE",
+                    "PROGRAM_2"."CODE",
+                    "PROGRAM_2"."TITLE",
+                    "PROGRAM_2"."DEGREE",
+                    "PROGRAM_2"."PART_OF"
+             FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                  INNER JOIN (SELECT "PROGRAM"."SCHOOL_CODE",
+                                     "PROGRAM"."CODE",
+                                     "PROGRAM"."TITLE",
+                                     "PROGRAM"."DEGREE",
+                                     "PROGRAM"."PART_OF"
+                              FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
+                             ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."PART_OF" = "PROGRAM_2"."CODE"))
+             WHERE ("PROGRAM_1"."SCHOOL_CODE" = 'eng')
+                   AND ("PROGRAM_1"."CODE" = 'umech')
+             ORDER BY "PROGRAM_1"."SCHOOL_CODE" ASC, "PROGRAM_1"."CODE" ASC, 1 ASC, 2 ASC
+        - uri: /(program?school_code='eng'&code='umech') .({school_code,code} -> program{school_code,part_of})
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | {school_code,code}->program{school_code,part_of} |
+            -+--------------------------------------------------+-
+             | school_code  | code  | title  | degree | part_of |
+            -+--------------+-------+--------+--------+---------+-
+                                                        (no rows)
+
+             ----
+             /(program?school_code='eng'&code='umech').({school_code,code}->program{school_code,part_of})
+             SELECT "PROGRAM_2"."SCHOOL_CODE",
+                    "PROGRAM_2"."CODE",
+                    "PROGRAM_2"."TITLE",
+                    "PROGRAM_2"."DEGREE",
+                    "PROGRAM_2"."PART_OF"
+             FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                  INNER JOIN (SELECT "PROGRAM"."SCHOOL_CODE",
+                                     "PROGRAM"."CODE",
+                                     "PROGRAM"."TITLE",
+                                     "PROGRAM"."DEGREE",
+                                     "PROGRAM"."PART_OF"
+                              FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
+                             ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "PROGRAM_2"."PART_OF"))
+             WHERE ("PROGRAM_1"."SCHOOL_CODE" = 'eng')
+                   AND ("PROGRAM_1"."CODE" = 'umech')
+             ORDER BY "PROGRAM_1"."SCHOOL_CODE" ASC, "PROGRAM_1"."CODE" ASC, 1 ASC, 2 ASC
         - uri: /(program?school_code='eng'&code='umech').student
           status: 200 OK
           headers:
@@ -2235,6 +2295,62 @@ tests:
             bind error: ambiguous name:
                 /(course?department_code='psych'&no=610).prerequisite
                                                          ^^^^^^^^^^^^
+        - uri: /(course?department_code='psych'&no=610) .({department_code,no} ->
+            prerequisite{on_department_code,on_course_no})
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | {department_code,no}->prerequisite{on_department_code,on_course_no}   |
+            -+-----------------------------------------------------------------------+-
+             | of_department_code | of_course_no | on_department_code | on_course_no |
+            -+--------------------+--------------+--------------------+--------------+-
+                                                                             (no rows)
+
+             ----
+             /(course?department_code='psych'&no=610).({department_code,no}->prerequisite{on_department_code,on_course_no})
+             SELECT "PREREQUISITE"."OF_DEPARTMENT_CODE",
+                    "PREREQUISITE"."OF_COURSE_NO",
+                    "PREREQUISITE"."ON_DEPARTMENT_CODE",
+                    "PREREQUISITE"."ON_COURSE_NO"
+             FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                  INNER JOIN (SELECT "PREREQUISITE"."OF_DEPARTMENT_CODE",
+                                     "PREREQUISITE"."OF_COURSE_NO",
+                                     "PREREQUISITE"."ON_DEPARTMENT_CODE",
+                                     "PREREQUISITE"."ON_COURSE_NO"
+                              FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE") "PREREQUISITE"
+                             ON (("COURSE"."DEPARTMENT_CODE" = "PREREQUISITE"."ON_DEPARTMENT_CODE") AND ("COURSE"."NO" = "PREREQUISITE"."ON_COURSE_NO"))
+             WHERE ("COURSE"."DEPARTMENT_CODE" = 'psych')
+                   AND ("COURSE"."NO" = 610)
+             ORDER BY "COURSE"."DEPARTMENT_CODE" ASC, "COURSE"."NO" ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC
+        - uri: /(course?department_code='psych'&no=610) .({department_code,no} ->
+            prerequisite{of_department_code,of_course_no})
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | {department_code,no}->prerequisite{of_department_code,of_course_no}   |
+            -+-----------------------------------------------------------------------+-
+             | of_department_code | of_course_no | on_department_code | on_course_no |
+            -+--------------------+--------------+--------------------+--------------+-
+                                                                             (no rows)
+
+             ----
+             /(course?department_code='psych'&no=610).({department_code,no}->prerequisite{of_department_code,of_course_no})
+             SELECT "PREREQUISITE"."OF_DEPARTMENT_CODE",
+                    "PREREQUISITE"."OF_COURSE_NO",
+                    "PREREQUISITE"."ON_DEPARTMENT_CODE",
+                    "PREREQUISITE"."ON_COURSE_NO"
+             FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                  INNER JOIN (SELECT "PREREQUISITE"."OF_DEPARTMENT_CODE",
+                                     "PREREQUISITE"."OF_COURSE_NO",
+                                     "PREREQUISITE"."ON_DEPARTMENT_CODE",
+                                     "PREREQUISITE"."ON_COURSE_NO"
+                              FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE") "PREREQUISITE"
+                             ON (("COURSE"."DEPARTMENT_CODE" = "PREREQUISITE"."OF_DEPARTMENT_CODE") AND ("COURSE"."NO" = "PREREQUISITE"."OF_COURSE_NO"))
+             WHERE ("COURSE"."DEPARTMENT_CODE" = 'psych')
+                   AND ("COURSE"."NO" = 610)
+             ORDER BY "COURSE"."DEPARTMENT_CODE" ASC, "COURSE"."NO" ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC
         - uri: /(course?department_code='psych'&no=610).course_classification
           status: 200 OK
           headers:
@@ -2675,6 +2791,45 @@ tests:
                    AND ("PREREQUISITE"."ON_DEPARTMENT_CODE" = 'acc')
                    AND ("PREREQUISITE"."ON_COURSE_NO" = 315)
              ORDER BY "PREREQUISITE"."OF_DEPARTMENT_CODE" ASC, 1 ASC, "PREREQUISITE"."ON_DEPARTMENT_CODE" ASC, "PREREQUISITE"."ON_COURSE_NO" ASC
+        - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315)
+            .({of_department_code,of_course_no} -> course{department_code,no})
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | {of_department_code,of_course_no}->course{department_code,no}                                     |
+            -+---------------------------------------------------------------------------------------------------+-
+             | department_code | no  | title                        | credits | description                      |
+            -+-----------------+-----+------------------------------+---------+----------------------------------+-
+             | capmrk          | 818 | Financial Statement Analysis |       3 | This course presents techniques  |
+             :                 :     :                              :         : for analyzing current and        :
+             :                 :     :                              :         : projected financial statements   :
+             :                 :     :                              :         : for the purposes of credit       :
+             :                 :     :                              :         : analysis, security analysis, and :
+             :                 :     :                              :         : internal financial analysis, and :
+             :                 :     :                              :         : cash flow forecasting.           :
+                                                                                                           (1 row)
+
+             ----
+             /(prerequisite?of_department_code='capmrk'&of_course_no=818&on_department_code='acc'&on_course_no=315).({of_department_code,of_course_no}->course{department_code,no})
+             SELECT "COURSE"."DEPARTMENT_CODE",
+                    "COURSE"."NO",
+                    "COURSE"."TITLE",
+                    "COURSE"."CREDITS",
+                    "COURSE"."DESCRIPTION"
+             FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE"
+                  INNER JOIN (SELECT "COURSE"."DEPARTMENT_CODE",
+                                     "COURSE"."NO",
+                                     "COURSE"."TITLE",
+                                     "COURSE"."CREDITS",
+                                     "COURSE"."DESCRIPTION"
+                              FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE"
+                             ON (("PREREQUISITE"."OF_DEPARTMENT_CODE" = "COURSE"."DEPARTMENT_CODE") AND ("PREREQUISITE"."OF_COURSE_NO" = "COURSE"."NO"))
+             WHERE ("PREREQUISITE"."OF_DEPARTMENT_CODE" = 'capmrk')
+                   AND ("PREREQUISITE"."OF_COURSE_NO" = 818)
+                   AND ("PREREQUISITE"."ON_DEPARTMENT_CODE" = 'acc')
+                   AND ("PREREQUISITE"."ON_COURSE_NO" = 315)
+             ORDER BY "PREREQUISITE"."OF_DEPARTMENT_CODE" ASC, "PREREQUISITE"."OF_COURSE_NO" ASC, "PREREQUISITE"."ON_DEPARTMENT_CODE" ASC, "PREREQUISITE"."ON_COURSE_NO" ASC, 1 ASC, 2 ASC
         - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).on_course_no
           status: 200 OK
           headers:
@@ -2696,6 +2851,42 @@ tests:
                    AND ("PREREQUISITE"."ON_DEPARTMENT_CODE" = 'acc')
                    AND ("PREREQUISITE"."ON_COURSE_NO" = 315)
              ORDER BY "PREREQUISITE"."OF_DEPARTMENT_CODE" ASC, "PREREQUISITE"."OF_COURSE_NO" ASC, "PREREQUISITE"."ON_DEPARTMENT_CODE" ASC, 1 ASC
+        - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315)
+            .({on_department_code,on_course_no} -> course{department_code,no})
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | {on_department_code,on_course_no}->course{department_code,no}                             |
+            -+-------------------------------------------------------------------------------------------+-
+             | department_code | no  | title                | credits | description                      |
+            -+-----------------+-----+----------------------+---------+----------------------------------+-
+             | acc             | 315 | Financial Accounting |       5 | Integration of the conceptual    |
+             :                 :     :                      :         : and computational aspects of     :
+             :                 :     :                      :         : asset, liability and             :
+             :                 :     :                      :         : stockholders equity accounting.  :
+                                                                                                   (1 row)
+
+             ----
+             /(prerequisite?of_department_code='capmrk'&of_course_no=818&on_department_code='acc'&on_course_no=315).({on_department_code,on_course_no}->course{department_code,no})
+             SELECT "COURSE"."DEPARTMENT_CODE",
+                    "COURSE"."NO",
+                    "COURSE"."TITLE",
+                    "COURSE"."CREDITS",
+                    "COURSE"."DESCRIPTION"
+             FROM "HTSQL_REGRESS"."PREREQUISITE" "PREREQUISITE"
+                  INNER JOIN (SELECT "COURSE"."DEPARTMENT_CODE",
+                                     "COURSE"."NO",
+                                     "COURSE"."TITLE",
+                                     "COURSE"."CREDITS",
+                                     "COURSE"."DESCRIPTION"
+                              FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE"
+                             ON (("PREREQUISITE"."ON_DEPARTMENT_CODE" = "COURSE"."DEPARTMENT_CODE") AND ("PREREQUISITE"."ON_COURSE_NO" = "COURSE"."NO"))
+             WHERE ("PREREQUISITE"."OF_DEPARTMENT_CODE" = 'capmrk')
+                   AND ("PREREQUISITE"."OF_COURSE_NO" = 818)
+                   AND ("PREREQUISITE"."ON_DEPARTMENT_CODE" = 'acc')
+                   AND ("PREREQUISITE"."ON_COURSE_NO" = 315)
+             ORDER BY "PREREQUISITE"."OF_DEPARTMENT_CODE" ASC, "PREREQUISITE"."OF_COURSE_NO" ASC, "PREREQUISITE"."ON_DEPARTMENT_CODE" ASC, "PREREQUISITE"."ON_COURSE_NO" ASC, 1 ASC, 2 ASC
         - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).course
           status: 400 Bad Request
           headers:
@@ -2752,6 +2943,37 @@ tests:
                              ON ("CLASSIFICATION_1"."PART_OF" = "CLASSIFICATION_2"."CODE")
              WHERE ("CLASSIFICATION_1"."CODE" = 'modlanguage')
              ORDER BY "CLASSIFICATION_1"."CODE" ASC
+        - uri: /(classification?code='modlanguage') .(code -> classification{part_of})
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | code->classification{part_of}                              |
+            -+------------------------------------------------------------+-
+             | code    | type       | title   | description | part_of     |
+            -+---------+------------+---------+-------------+-------------+-
+             | french  | department | French  |             | modlanguage |
+             | german  | department | German  |             | modlanguage |
+             | spanish | department | Spanish |             | modlanguage |
+                                                                   (3 rows)
+
+             ----
+             /(classification?code='modlanguage').(code->classification{part_of})
+             SELECT "CLASSIFICATION_2"."CODE",
+                    "CLASSIFICATION_2"."TYPE",
+                    "CLASSIFICATION_2"."TITLE",
+                    "CLASSIFICATION_2"."DESCRIPTION",
+                    "CLASSIFICATION_2"."PART_OF"
+             FROM "HTSQL_REGRESS"."CLASSIFICATION" "CLASSIFICATION_1"
+                  INNER JOIN (SELECT "CLASSIFICATION"."CODE",
+                                     "CLASSIFICATION"."TYPE",
+                                     "CLASSIFICATION"."TITLE",
+                                     "CLASSIFICATION"."DESCRIPTION",
+                                     "CLASSIFICATION"."PART_OF"
+                              FROM "HTSQL_REGRESS"."CLASSIFICATION" "CLASSIFICATION") "CLASSIFICATION_2"
+                             ON ("CLASSIFICATION_1"."CODE" = "CLASSIFICATION_2"."PART_OF")
+             WHERE ("CLASSIFICATION_1"."CODE" = 'modlanguage')
+             ORDER BY "CLASSIFICATION_1"."CODE" ASC, 1 ASC
         - uri: /(classification?code='modlanguage').course_classification
           status: 200 OK
           headers:
@@ -16582,6 +16804,331 @@ tests:
                                                           ON (1 <> 0)
                                      WHERE (0 <> 0)) "!_2"
                                     ON (1 <> 0)
+          - uri: /school.(code -> department{school_code})
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | code->department{school_code}                 |
+              -+-----------------------------------------------+-
+               | code   | name                   | school_code |
+              -+--------+------------------------+-------------+-
+               | arthis | Art History            | art         |
+               | stdart | Studio Art             | art         |
+               | acc    | Accounting             | bus         |
+               | capmrk | Capital Markets        | bus         |
+               | corpfi | Corporate Finance      | bus         |
+               | edpol  | Educational Policy     | edu         |
+               | tched  | Teacher Education      | edu         |
+               | be     | Bioengineering         | eng         |
+               | comp   | Computer Science       | eng         |
+               | ee     | Electrical Engineering | eng         |
+               | me     | Mechanical Engineering | eng         |
+               | eng    | English                | la          |
+               | hist   | History                | la          |
+               | lang   | Foreign Languages      | la          |
+               | poli   | Political Science      | la          |
+               | psych  | Psychology             | la          |
+               | pia    | Piano                  | mus         |
+               | str    | Strings                | mus         |
+               | voc    | Vocals                 | mus         |
+               | win    | Wind                   | mus         |
+               | astro  | Astronomy              | ns          |
+               | chem   | Chemistry              | ns          |
+               | mth    | Mathematics            | ns          |
+               | phys   | Physics                | ns          |
+                                                       (24 rows)
+
+               ----
+               /school.(code->department{school_code})
+               SELECT "DEPARTMENT"."CODE",
+                      "DEPARTMENT"."NAME",
+                      "DEPARTMENT"."SCHOOL_CODE"
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    INNER JOIN (SELECT "DEPARTMENT"."CODE",
+                                       "DEPARTMENT"."NAME",
+                                       "DEPARTMENT"."SCHOOL_CODE"
+                                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT") "DEPARTMENT"
+                               ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC
+          - uri: /(school?code='art').(code -> department{school_code}){code, count(course)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | code->department{school_code} |
+              -+-------------------------------+-
+               | code       | count(course)    |
+              -+------------+------------------+-
+               | arthis     |                6 |
+               | stdart     |                7 |
+                                        (2 rows)
+
+               ----
+               /(school?code='art').(code->department{school_code}){code,count(course)}
+               SELECT "DEPARTMENT"."CODE",
+                      COALESCE("COURSE"."count", 0)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    INNER JOIN (SELECT "DEPARTMENT"."CODE",
+                                       "DEPARTMENT"."SCHOOL_CODE"
+                                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT") "DEPARTMENT"
+                               ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "COURSE"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
+               WHERE ("SCHOOL"."CODE" = 'art')
+               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC
+          - uri: /school{code, count(code -> department{school_code}), avg((code ->
+              department{school_code}).sum(course.credits))}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                                                                 |
+              -+--------------------------------------------------------------------------------------------------------+-
+               | code | count(code->department{school_code}) | avg((code->department{school_code}).sum(course.credits)) |
+              -+------+--------------------------------------+----------------------------------------------------------+-
+               | art  |                                    2 |                                                       19 |
+               | bus  |                                    3 |                13.33333333333333333333333333333333333333 |
+               | edu  |                                    2 |                                                       14 |
+               | eng  |                                    4 |                                                       18 |
+               | la   |                                    5 |                                                     16.4 |
+               | mus  |                                    4 |                                                        0 |
+               | ns   |                                    4 |                                                    11.25 |
+               | ph   |                                    0 |                                                          |
+               | sc   |                                    0 |                                                          |
+                                                                                                                 (9 rows)
+
+               ----
+               /school{code,count(code->department{school_code}),avg((code->department{school_code}).sum(course.credits))}
+               SELECT "SCHOOL"."CODE",
+                      COALESCE("DEPARTMENT"."count", 0),
+                      "DEPARTMENT"."avg"
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            AVG(COALESCE("COURSE"."sum", 0)) AS "avg",
+                                            "DEPARTMENT"."SCHOOL_CODE"
+                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                                          LEFT OUTER JOIN (SELECT SUM("COURSE"."CREDITS") AS "sum",
+                                                                  "COURSE"."DEPARTMENT_CODE"
+                                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                           GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
+                                                          ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               ORDER BY 1 ASC
+          - uri: /school{code, count(code -> department{school_code}), avg((code ->
+              department{school_code}).sum(course.credits))}?code='art'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                                                                                 |
+              -+--------------------------------------------------------------------------------------------------------+-
+               | code | count(code->department{school_code}) | avg((code->department{school_code}).sum(course.credits)) |
+              -+------+--------------------------------------+----------------------------------------------------------+-
+               | art  |                                    2 |                                                       19 |
+                                                                                                                  (1 row)
+
+               ----
+               /school{code,count(code->department{school_code}),avg((code->department{school_code}).sum(course.credits))}?code='art'
+               SELECT "SCHOOL"."CODE",
+                      COALESCE("DEPARTMENT"."count", 0),
+                      "DEPARTMENT"."avg"
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            AVG(COALESCE("COURSE"."sum", 0)) AS "avg",
+                                            "DEPARTMENT"."SCHOOL_CODE"
+                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                                          LEFT OUTER JOIN (SELECT SUM("COURSE"."CREDITS") AS "sum",
+                                                                  "COURSE"."DEPARTMENT_CODE"
+                                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                           GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
+                                                          ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
+                                    ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+               WHERE ("SCHOOL"."CODE" = 'art')
+               ORDER BY 1 ASC
+          - uri: /(school?code='art').define($school_code:=code) .(({} -> department)?code='be'){$school_code,
+              code}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | {}->department      |
+              -+---------------------+-
+               | $school_code | code |
+              -+--------------+------+-
+               | art          | be   |
+                               (1 row)
+
+               ----
+               /(school?code='art').define($school_code:=code).(({}->department)?code='be'){$school_code,code}
+               SELECT "SCHOOL"."CODE",
+                      "DEPARTMENT"."CODE"
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    CROSS JOIN (SELECT "DEPARTMENT"."CODE"
+                                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT") "DEPARTMENT"
+               WHERE ("DEPARTMENT"."CODE" = 'be')
+                     AND ("SCHOOL"."CODE" = 'art')
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /school{code, count({} -> department)}?code='art'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                       |
+              -+------------------------------+-
+               | code | count({}->department) |
+              -+------+-----------------------+-
+               | art  |                    27 |
+                                        (1 row)
+
+               ----
+               /school{code,count({}->department)}?code='art'
+               SELECT "SCHOOL"."CODE",
+                      COALESCE("DEPARTMENT"."count", 0)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count"
+                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT") "DEPARTMENT"
+                                    ON (1 <> 0)
+               WHERE ("SCHOOL"."CODE" = 'art')
+               ORDER BY 1 ASC
+          - uri: /course{department.code,no,credits}?credits=max(({} -> course).credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course               |
+              -+----------------------+-
+               | code | no  | credits |
+              -+------+-----+---------+-
+               | be   | 415 |       8 |
+                                (1 row)
+
+               ----
+               /course{department.code,no,credits}?credits=max(({}->course).credits)
+               SELECT "DEPARTMENT"."CODE",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS"
+               FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
+                                    ON (1 <> 0)
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
+          - uri: /course{department.code,no,credits,count(class)} ?credits=max((count(class)
+              -> course).credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                              |
+              -+-------------------------------------+-
+               | code | no  | credits | count(class) |
+              -+------+-----+---------+--------------+-
+               | be   | 415 |       8 |            1 |
+               | mth  | 101 |       5 |            0 |
+                                              (2 rows)
+
+               ----
+               /course{department.code,no,credits,count(class)}?credits=max((count(class)->course).credits)
+               SELECT "DEPARTMENT"."CODE",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS",
+                      COALESCE("CLASS"."count", 0)
+               FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "CLASS"."DEPARTMENT_CODE",
+                                            "CLASS"."COURSE_NO"
+                                     FROM "HTSQL_REGRESS"."CLASS" "CLASS"
+                                     GROUP BY "CLASS"."DEPARTMENT_CODE", "CLASS"."COURSE_NO") "CLASS"
+                                    ON (("COURSE_1"."DEPARTMENT_CODE" = "CLASS"."DEPARTMENT_CODE") AND ("COURSE_1"."NO" = "CLASS"."COURSE_NO"))
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            COALESCE("CLASS"."count", 0) AS "count"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "CLASS"."DEPARTMENT_CODE",
+                                                                  "CLASS"."COURSE_NO"
+                                                           FROM "HTSQL_REGRESS"."CLASS" "CLASS"
+                                                           GROUP BY "CLASS"."DEPARTMENT_CODE", "CLASS"."COURSE_NO") "CLASS"
+                                                          ON (("COURSE"."DEPARTMENT_CODE" = "CLASS"."DEPARTMENT_CODE") AND ("COURSE"."NO" = "CLASS"."COURSE_NO"))
+                                     GROUP BY COALESCE("CLASS"."count", 0)) "COURSE_2"
+                                    ON (COALESCE("CLASS"."count", 0) = "COURSE_2"."count")
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
+          - uri: /program{school.code, code, degree, num_parts := count({school_code,code}
+              -> program{school_code,part_of})} ?num_parts=max(fork().num_parts)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                           |
+              -+-----------------------------------+-
+               | code | code  | degree | num_parts |
+              -+------+-------+--------+-----------+-
+               | eng  | gbe   | ms     |         1 |
+               | eng  | gee   | ms     |         1 |
+               | eng  | gme   | ms     |         1 |
+               | la   | gengl | ma     |         1 |
+               | ns   | gmth  | bs     |         1 |
+               | ns   | pmth  | ph     |         1 |
+                                            (6 rows)
+
+               ----
+               /program{school.code,code,degree,num_parts:=count({school_code,code}->program{school_code,part_of})}?num_parts=max(fork().num_parts)
+               SELECT "SCHOOL"."CODE",
+                      "PROGRAM_1"."CODE",
+                      "PROGRAM_1"."DEGREE",
+                      COALESCE("PROGRAM_2"."count", 0)
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "PROGRAM"."SCHOOL_CODE",
+                                            "PROGRAM"."PART_OF"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                     GROUP BY "PROGRAM"."SCHOOL_CODE", "PROGRAM"."PART_OF") "PROGRAM_2"
+                                    ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "PROGRAM_2"."PART_OF"))
+                    LEFT OUTER JOIN (SELECT MAX(COALESCE("PROGRAM_2"."count", 0)) AS "max"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "PROGRAM"."SCHOOL_CODE",
+                                                                  "PROGRAM"."PART_OF"
+                                                           FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                                           GROUP BY "PROGRAM"."SCHOOL_CODE", "PROGRAM"."PART_OF") "PROGRAM_2"
+                                                          ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "PROGRAM_2"."PART_OF"))) "PROGRAM_3"
+                                    ON (1 <> 0)
+                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                               ON ("PROGRAM_1"."SCHOOL_CODE" = "SCHOOL"."CODE")
+               WHERE (COALESCE("PROGRAM_2"."count", 0) = "PROGRAM_3"."max")
+               ORDER BY "PROGRAM_1"."SCHOOL_CODE" ASC, 2 ASC
+          - uri: /'art'->school{code}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | 'art'->school{code}             |
+              -+---------------------------------+-
+               | code | name                     |
+              -+------+--------------------------+-
+               | art  | School of Art and Design |
+                                           (1 row)
+
+               ----
+               /'art'->school{code}
+               SELECT "SCHOOL"."CODE",
+                      "SCHOOL"."NAME"
+               FROM DUAL "!"
+                    INNER JOIN (SELECT "SCHOOL"."CODE",
+                                       "SCHOOL"."NAME"
+                                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL") "SCHOOL"
+                               ON ('art' = "SCHOOL"."CODE")
+               ORDER BY 1 ASC
           - uri: /course{department.code,no,credits}?credits=max(fork().credits)
             status: 200 OK
             headers:

@@ -16,11 +16,11 @@ This module implements the rewriting process.
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain
 from .code import (Expression, QueryExpr, SegmentExpr, Space, RootSpace,
-                   QuotientSpace, AliasSpace, ForkedSpace,
+                   QuotientSpace, MonikerSpace, ForkedSpace, LinkedSpace,
                    FilteredSpace, OrderedSpace,
                    Code, LiteralCode, CastCode, FormulaCode, Unit, ScalarUnit,
                    AggregateUnitBase, KernelUnit, ComplementUnit,
-                   AliasUnit, ForkedUnit)
+                   MonikerUnit, ForkedUnit, LinkedUnit)
 from .signature import Signature
 
 
@@ -123,9 +123,9 @@ class RewriteQuotient(RewriteSpace):
         return self.space.clone(base=base, seed=seed, kernel=kernel)
 
 
-class RewriteAlias(RewriteSpace):
+class RewriteMoniker(RewriteSpace):
 
-    adapts(AliasSpace)
+    adapts(MonikerSpace)
 
     def __call__(self):
         seed = self.state.rewrite(self.space.seed, mask=self.space.base)
@@ -146,6 +146,21 @@ class RewriteForked(RewriteSpace):
                   for code in self.space.kernel]
         base = self.state.rewrite(self.space.base)
         return self.space.clone(base=base, seed=seed, kernel=kernel)
+
+
+class RewriteLinked(RewriteSpace):
+
+    adapts(LinkedSpace)
+
+    def __call__(self):
+        base = self.state.rewrite(self.space.base)
+        seed = self.state.rewrite(self.space.seed, mask=self.space.base)
+        kernel = [self.state.rewrite(code, mask=self.space.seed)
+                  for code in self.space.kernel]
+        counter_kernel = [self.state.rewrite(code, mask=self.space.base)
+                          for code in self.space.counter_kernel]
+        return self.space.clone(base=base, seed=seed, kernel=kernel,
+                                counter_kernel=counter_kernel)
 
 
 class RewriteFiltered(RewriteSpace):
@@ -309,9 +324,9 @@ class RewriteComplement(RewriteUnit):
         return self.unit.clone(space=space, code=code)
 
 
-class RewriteAliasUnit(RewriteUnit):
+class RewriteMonikerUnit(RewriteUnit):
 
-    adapts(AliasUnit)
+    adapts(MonikerUnit)
 
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
@@ -327,6 +342,17 @@ class RewriteForkedUnit(RewriteUnit):
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
                                   mask=self.unit.space.base)
+        space = self.state.rewrite(self.unit.space)
+        return self.unit.clone(space=space, code=code)
+
+
+class RewriteLinkedUnit(RewriteUnit):
+
+    adapts(LinkedUnit)
+
+    def __call__(self):
+        code = self.state.rewrite(self.unit.code,
+                                  mask=self.unit.space.seed)
         space = self.state.rewrite(self.unit.space)
         return self.unit.clone(space=space, code=code)
 

@@ -27,11 +27,12 @@ from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
                       SortBinding, CastBinding, WrapperBinding,
                       DefinitionBinding, AliasBinding,
                       DirectionBinding, FormulaBinding,
-                      SelectionBinding, HomeBinding, LinkBinding, ForkBinding)
+                      SelectionBinding, HomeBinding, MonikerBinding,
+                      ForkBinding, LinkBinding)
 from .code import (RootSpace, ScalarSpace,
                    DirectTableSpace, FiberTableSpace,
-                   QuotientSpace, ComplementSpace, AliasSpace, ForkedSpace,
-                   FilteredSpace, OrderedSpace,
+                   QuotientSpace, ComplementSpace, MonikerSpace, ForkedSpace,
+                   LinkedSpace, FilteredSpace, OrderedSpace,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
                    CastCode, ColumnUnit, ScalarUnit, KernelUnit)
 from .signature import Signature, IsNullSig, NullIfSig
@@ -483,9 +484,9 @@ class RelateComplement(Relate):
         return ComplementSpace(space, self.binding)
 
 
-class RelateLink(Relate):
+class RelateMoniker(Relate):
 
-    adapts(LinkBinding)
+    adapts(MonikerBinding)
 
     def __call__(self):
         space = self.state.relate(self.binding.base)
@@ -493,7 +494,7 @@ class RelateLink(Relate):
         if self.binding.condition is not None:
             filter = self.state.encode(self.binding.condition)
             seed = FilteredSpace(seed, filter, self.binding)
-        return AliasSpace(space, seed, self.binding)
+        return MonikerSpace(space, seed, self.binding)
 
 
 class RelateFork(Relate):
@@ -508,6 +509,26 @@ class RelateFork(Relate):
             if not all(space.spans(unit.space) for unit in code.units):
                 raise EncodeError("a singular operand is required", code.mark)
         return ForkedSpace(space, space, kernel, self.binding)
+
+
+class RelateLink(Relate):
+
+    adapts(LinkBinding)
+
+    def __call__(self):
+        space = self.state.relate(self.binding.base)
+        seed = self.state.relate(self.binding.seed)
+        kernel = [self.state.encode(binding)
+                  for binding in self.binding.kernel]
+        counter_kernel = [self.state.encode(binding)
+                          for binding in self.binding.counter_kernel]
+        for code in kernel:
+            if not all(seed.spans(unit.space) for unit in code.units):
+                raise EncodeError("a singular operand is required", code.mark)
+        for code in counter_kernel:
+            if not all(space.spans(unit.space) for unit in code.units):
+                raise EncodeError("a singular operand is required", code.mark)
+        return LinkedSpace(space, seed, kernel, counter_kernel, self.binding)
 
 
 class EncodeKernel(Encode):

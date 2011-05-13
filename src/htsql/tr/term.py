@@ -379,7 +379,8 @@ class JoinTerm(BinaryTerm):
         #   (<lkid> ++ <rkid> | <lop>=<rop>, ...)
         # or, for left outer join:
         #   (<lkid> +* <rkid> | <lop>=<rop>, ...)
-        conditions = ", ".join("%s=%s" % joint for joint in self.joints)
+        conditions = ", ".join("%s=%s" % (lop, rop)
+                               for lop, rop in self.joints)
         if conditions:
             conditions = " | %s" % conditions
         symbol = ""

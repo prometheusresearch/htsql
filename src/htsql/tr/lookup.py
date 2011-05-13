@@ -27,7 +27,7 @@ from .binding import (Binding, HomeBinding, RootBinding, ChainBinding,
                       DefinitionBinding, RedirectBinding,
                       ReverseRedirectBinding, AliasBinding,
                       SelectionBinding, DirectionBinding, FlatBinding,
-                      LinkBinding, ForkBinding)
+                      MonikerBinding, ForkBinding, LinkBinding)
 from .recipe import (FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                      ComplementRecipe, KernelRecipe, SubstitutionRecipe,
                      BindingRecipe, PinnedRecipe, AmbiguousRecipe)
@@ -147,10 +147,12 @@ class LookupDeep(Lookup):
                 (QuotientBinding, DeepFunctionProbe),
                 (ComplementBinding, DeepAttributeProbe),
                 (ComplementBinding, DeepFunctionProbe),
-                (LinkBinding, DeepAttributeProbe),
-                (LinkBinding, DeepFunctionProbe),
+                (MonikerBinding, DeepAttributeProbe),
+                (MonikerBinding, DeepFunctionProbe),
                 (ForkBinding, DeepAttributeProbe),
-                (ForkBinding, DeepFunctionProbe))
+                (ForkBinding, DeepFunctionProbe),
+                (LinkBinding, DeepAttributeProbe),
+                (LinkBinding, DeepFunctionProbe))
 
     def __call__(self):
         recipe = super(LookupDeep, self).__call__()
@@ -496,8 +498,9 @@ class LookupReferenceInChain(Lookup):
                 (ColumnBinding, ReferenceProbe),
                 (QuotientBinding, ReferenceProbe),
                 (ComplementBinding, ReferenceProbe),
-                (LinkBinding, ReferenceProbe),
+                (MonikerBinding, ReferenceProbe),
                 (ForkBinding, ReferenceProbe),
+                (LinkBinding, ReferenceProbe),
                 (KernelBinding, ReferenceProbe))
 
     def __call__(self):
@@ -512,8 +515,9 @@ class GuessNameInChain(Lookup):
                 (ColumnBinding, GuessNameProbe),
                 (QuotientBinding, GuessNameProbe),
                 (ComplementBinding, GuessNameProbe),
-                (LinkBinding, GuessNameProbe),
+                (MonikerBinding, GuessNameProbe),
                 (ForkBinding, GuessNameProbe),
+                (LinkBinding, GuessNameProbe),
                 (KernelBinding, GuessNameProbe))
 
     def __call__(self):
@@ -602,9 +606,9 @@ class LookupInComplement(Lookup):
         return lookup(self.binding.seed, self.probe)
 
 
-class LookupInLink(Lookup):
+class LookupInMoniker(Lookup):
 
-    adapts(LinkBinding, Probe)
+    adapts(MonikerBinding, Probe)
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)
@@ -618,9 +622,28 @@ class LookupInFork(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
+class LookupInLink(Lookup):
+
+    adapts(LinkBinding, Probe)
+
+    def __call__(self):
+        return lookup(self.binding.seed, self.probe)
+
+
 class ExpandComplement(Lookup):
 
     adapts(ComplementBinding, ExpansionProbe)
+
+    def __call__(self):
+        if not self.probe.is_hard:
+            return None
+        probe = self.probe.clone(is_soft=False)
+        return lookup(self.binding.seed, probe)
+
+
+class ExpandLink(Lookup):
+
+    adapts(LinkBinding, ExpansionProbe)
 
     def __call__(self):
         if not self.probe.is_hard:

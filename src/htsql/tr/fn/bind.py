@@ -24,7 +24,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
                        SelectionBinding, HomeBinding, FlatBinding,
-                       LinkBinding, ForkBinding, Binding)
+                       MonikerBinding, ForkBinding, LinkBinding, Binding)
 from ..recipe import BindingRecipe, ComplementRecipe, KernelRecipe
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
@@ -425,6 +425,62 @@ class BindFiber(BindMacro):
         return SieveBinding(binding, condition, self.syntax)
 
 
+class BindLink(BindMacro):
+
+    named('->')
+    signature = BinarySig
+
+    def expand(self, lop, rop):
+        counter_kernel = []
+        binding = self.state.bind(lop)
+        recipies = expand(binding, is_hard=False)
+        if recipies is not None:
+            self.state.push_base(binding)
+            for syntax, recipe in recipies:
+                bind = BindByRecipe(recipe, syntax, self.state)
+                counter_kernel.append(bind())
+            self.state.pop_base()
+        else:
+            counter_kernel = [binding]
+        home = HomeBinding(self.state.base, self.syntax)
+        seed = self.state.bind(rop, base=home)
+        kernel = []
+        recipies = expand(seed, is_hard=False)
+        if recipies is not None:
+            self.state.push_base(seed)
+            for syntax, recipe in recipies:
+                bind = BindByRecipe(recipe, syntax, self.state)
+                kernel.append(bind())
+            self.state.pop_base()
+        else:
+            binding = self.state.bind(lop, base=seed)
+            recipies = expand(binding, is_hard=False)
+            if recipies is not None:
+                self.state.push_base(binding)
+                for syntax, recipe in recipies:
+                    bind = BindByRecipe(recipe, syntax, self.state)
+                    kernel.append(bind())
+                self.state.pop_base()
+            else:
+                kernel.append(binding)
+        if len(kernel) != len(counter_kernel):
+            raise BindError("unbalanced link", self.syntax.mark)
+        pairs = []
+        for lop, rop in zip(kernel, counter_kernel):
+            domain = coerce(lop.domain, rop.domain)
+            if domain is None:
+                raise BindError("incompatible arguments", self.syntax.mark)
+            lop = CastBinding(lop, domain, lop.syntax)
+            rop = CastBinding(rop, domain, rop.syntax)
+            pairs.append((lop, rop))
+        if pairs:
+            kernel, counter_kernel = zip(*pairs)
+            kernel = list(kernel)
+            counter_kernel = list(counter_kernel)
+        return LinkBinding(self.state.base, seed, kernel, counter_kernel,
+                           self.syntax)
+
+
 class BindQuotient(BindMacro):
 
     named('^')
@@ -564,7 +620,7 @@ class BindSelect(BindMacro):
         return SelectionBinding(base, elements, base.syntax)
 
 
-class BindLink(BindMacro):
+class BindMoniker(BindMacro):
 
     named('link')
     signature = LinkSig
@@ -575,7 +631,7 @@ class BindLink(BindMacro):
             condition = self.state.bind(condition)
             condition = CastBinding(condition, coerce(BooleanDomain()),
                                     condition.syntax)
-        return LinkBinding(self.state.base, seed, condition, self.syntax)
+        return MonikerBinding(self.state.base, seed, condition, self.syntax)
 
 
 class BindFork(BindMacro):

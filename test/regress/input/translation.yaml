@@ -179,6 +179,23 @@ tests:
     - uri: /(school?code='art').link(home().department)
     - uri: /(school?code='art'){code, count(link(home().department, code=home().department.school_code))}
     - uri: /{link(this()){count(school)}, link(this(),true()){count(school)}, link(this(),false()){count(school)}}
+    # linking operator
+    - uri: /school.(code -> department{school_code})
+    - uri: /(school?code='art').(code -> department{school_code}){code, count(course)}
+    - uri: /school{code, count(code -> department{school_code}),
+                         avg((code -> department{school_code}).sum(course.credits))}
+    - uri: /school{code, count(code -> department{school_code}),
+                         avg((code -> department{school_code}).sum(course.credits))}?code='art'
+    - uri: /(school?code='art').define($school_code:=code)
+            .(({} -> department)?code='be'){$school_code, code}
+    - uri: /school{code, count({} -> department)}?code='art'
+    - uri: /course{department.code,no,credits}?credits=max(({} -> course).credits)
+    - uri: /course{department.code,no,credits,count(class)}
+                  ?credits=max((count(class) -> course).credits)
+    - uri: /program{school.code, code, degree,
+                    num_parts := count({school_code,code} -> program{school_code,part_of})}
+                   ?num_parts=max(fork().num_parts)
+    - uri: /'art'->school{code}
     # fork()
     - uri: /course{department.code,no,credits}?credits=max(fork().credits)
     - uri: /course{department.code,no,credits}?credits=max(fork(department_code).credits)

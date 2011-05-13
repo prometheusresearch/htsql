@@ -889,7 +889,7 @@ class ComplementSpace(Space):
         self.extra_codes = extra_codes
 
 
-class AliasSpace(Space):
+class MonikerSpace(Space):
 
     is_axis = True
 
@@ -904,7 +904,7 @@ class AliasSpace(Space):
         if not base.spans(seed_baseline):
             while not base.spans(seed_baseline.base):
                 seed_baseline = seed_baseline.base
-        super(AliasSpace, self).__init__(
+        super(MonikerSpace, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=base.spans(seed),
@@ -943,6 +943,42 @@ class ForkedSpace(Space):
         self.seed = seed
         self.seed_baseline = seed_baseline
         self.kernel = kernel
+        self.extra_codes = extra_codes
+
+
+class LinkedSpace(Space):
+
+    is_axis = True
+
+    def __init__(self, base, seed, kernel, counter_kernel,
+                 binding, extra_codes=None):
+        assert isinstance(base, Space)
+        assert isinstance(seed, Space)
+        assert seed.spans(base)
+        assert not base.spans(seed)
+        assert isinstance(kernel, listof(Code))
+        assert isinstance(counter_kernel, listof(Code))
+        assert len(kernel) == len(counter_kernel)
+        assert all(seed.spans(unit.space) for code in kernel
+                                          for unit in code.units)
+        assert all(base.spans(unit.space) for code in counter_kernel
+                                          for unit in code.units)
+        seed_baseline = seed
+        if not base.spans(seed_baseline):
+            while not base.spans(seed_baseline.base):
+                seed_baseline = seed_baseline.base
+        super(LinkedSpace, self).__init__(
+                    base=base,
+                    family=seed.family,
+                    is_contracting=False,
+                    is_expanding=False,
+                    binding=binding,
+                    equality_vector=(base, seed, tuple(kernel),
+                                     tuple(counter_kernel)))
+        self.seed = seed
+        self.seed_baseline = seed_baseline
+        self.kernel = kernel
+        self.counter_kernel = counter_kernel
         self.extra_codes = extra_codes
 
 
@@ -1439,11 +1475,11 @@ class ComplementUnit(CompoundUnit):
                     equality_vector=(code, space))
 
 
-class AliasUnit(CompoundUnit):
+class MonikerUnit(CompoundUnit):
 
     def __init__(self, code, space, binding):
-        assert isinstance(space, AliasSpace)
-        super(AliasUnit, self).__init__(
+        assert isinstance(space, MonikerSpace)
+        super(MonikerUnit, self).__init__(
                 code=code,
                 space=space,
                 domain=code.domain,
@@ -1456,6 +1492,18 @@ class ForkedUnit(CompoundUnit):
     def __init__(self, code, space, binding):
         assert isinstance(space, ForkedSpace)
         super(ForkedUnit, self).__init__(
+                code=code,
+                space=space,
+                domain=code.domain,
+                binding=binding,
+                equality_vector=(code, space))
+
+
+class LinkedUnit(CompoundUnit):
+
+    def __init__(self, code, space, binding):
+        assert isinstance(space, LinkedSpace)
+        super(LinkedUnit, self).__init__(
                 code=code,
                 space=space,
                 domain=code.domain,
