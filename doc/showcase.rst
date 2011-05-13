@@ -66,18 +66,18 @@ HTSQL is an Advanced Query Language
       FROM "ad"."school" AS "school"
       LEFT OUTER JOIN (
         SELECT COUNT(TRUE) AS "count",
-               "program"."school"
+               "program"."school_code"
         FROM "ad"."program" AS "program"
         GROUP BY 2
       ) AS "program"
-      ON ("school"."code" = "program"."school")
+      ON ("school"."code" = "program"."school_code")
       LEFT OUTER JOIN (
         SELECT COUNT(TRUE) AS "count",
-               "department"."school"
+               "department"."school_code"
         FROM "ad"."department" AS "department"
         GROUP BY 2
       ) AS "department"
-      ON ("school"."code" = "department"."school")
+      ON ("school"."code" = "department"."school_code")
       ORDER BY "school"."code" ASC
 
 HTSQL is a compact, high-level query language.  Often times,
@@ -102,7 +102,7 @@ HTSQL Makes Dashboarding Easy
         data-htsql="/school{code, name}"></select>
       <div style="width: 500px; height: 350px;"
         data-htsql="/program{title, count(student)}
-                    ?school=$school&count(student)>0"
+                    ?school_code=$school&count(student)>0"
         data-type="pie"
         data-widget="chart"
         data-title="Percent of Students by Program"></div>
@@ -110,7 +110,7 @@ HTSQL Makes Dashboarding Easy
       <p>Filter by name: <input id="department_name"/></p>
       <table id="department" data-hide-column-0="yes"
         data-htsql="/department{code, name, school.name}
-                    ?school=$school&name~$department_name">
+                    ?school_code=$school&name~$department_name">
       </table>
       <p>
         The selected department:
@@ -121,7 +121,7 @@ HTSQL Makes Dashboarding Easy
       </p>
       <h3>Courses</h3>
       <table id="course" 
-        data-htsql="/course?department=$department">
+        data-htsql="/course?department_code=$department">
       </table>
       </body>
 
@@ -166,19 +166,10 @@ Database Introspection
 ----------------------
 
 On startup, HTSQL examines tables, primary keys, and foreign keys
-to construct a navigational graph of your database.  For example::
+to construct a navigational graph of your database.  For example:
 
-         +------------+               +------------+
-    /---+| DEPARTMENT |>-------------o|   SCHOOL   |+---\
-    |.   +------------+        .      +------------+   .|
-    |  .                     .                       .  |
-    |   department       department        school may   |
-    |   offers           may be part       offer some   |
-    |   courses          of school         programs     |
-    |                                                   |
-    |    +------------+               +------------+    |
-    \---<|   COURSE   |               |  PROGRAM   |>---/
-         +------------+               +------------+
+.. diagram:: dia/administrative-directory-small-schema.tex
+   :align: center
 
 This university schema is used in the examples below.  The data model
 has two top-level tables, ``school`` and ``department``, where
@@ -200,7 +191,7 @@ HTSQL queries typically start with a table.
 
     SELECT "department"."code",
            "department"."name",
-           "department"."school"
+           "department"."school_code"
     FROM "ad"."department" AS "department"
     ORDER BY 1 ASC
 
@@ -226,7 +217,7 @@ decorator sets the title.
              "department"."name"
       FROM "ad"."department" AS "department"
       LEFT OUTER JOIN "ad"."school" AS "school"
-      ON ("department"."school" = "school"."code")
+      ON ("department"."school_code" = "school"."code")
       ORDER BY "department"."code" ASC
 
 `This query`__ returns, for each department, the name of the
@@ -245,21 +236,23 @@ HTSQL lets you filter results with arbitrary predicates.
    .. sourcecode:: htsql
 
       /course?credits>3
-             &department.school='eng'
+             &department.school.code='eng'
 
    .. sourcecode:: sql
 
-       SELECT "course"."department",
-              "course"."no",
-              "course"."title",
-              "course"."credits",
-              "course"."description"
-       FROM "ad"."course" AS "course"
-       INNER JOIN "ad"."department" AS "department"
-       ON ("course"."department" = "department"."code")
-       WHERE ("course"."credits" > 3)
-         AND ("department"."school" = 'eng')
-       ORDER BY 1 ASC, 2 ASC
+      SELECT "course"."department_code",
+             "course"."no",
+             "course"."title",
+             "course"."credits",
+             "course"."description"
+      FROM "ad"."course" AS "course"
+      INNER JOIN "ad"."department" AS "department"
+      ON ("course"."department_code" = "department"."code")
+      LEFT OUTER JOIN "ad"."school" AS "school"
+      ON ("department"."school_code" = "school"."code")
+      WHERE ("course"."credits" > 3)
+        AND ("school"."code" = 'eng')
+      ORDER BY 1 ASC, 2 ASC
 
 `This query`__ returns courses from the school of
 engineering having more than 3 credits.
@@ -280,7 +273,7 @@ Table operations such as sorting and paging could be freely combined.
 
    .. sourcecode:: sql
 
-      SELECT "course"."department",
+      SELECT "course"."department_code",
              "course"."no",
              "course"."title",
              "course"."credits",
@@ -316,22 +309,22 @@ In HTSQL, aggregates aren't a reason to run to the DBA.
       LEFT OUTER JOIN (
         SELECT AVG(CAST(COALESCE("course"."count", 0)
                         AS NUMERIC)) AS "avg",
-               "department"."school"
+               "department"."school_code"
         FROM "ad"."department" AS "department"
         LEFT OUTER JOIN (
           SELECT COUNT(TRUE) AS "count",
-                 "course"."department"
+                 "course"."department_code"
           FROM "ad"."course" AS "course"
           GROUP BY 2
         ) AS "course"
-        ON ("department"."code" = "course"."department")
+        ON ("department"."code" = "course"."department_code")
         GROUP BY 2
       ) AS "department"
-      ON ("school"."code" = "department"."school")
+      ON ("school"."code" = "department"."school_code")
       WHERE EXISTS(
         SELECT TRUE
         FROM "ad"."program" AS "program"
-        WHERE ("school"."code" = "program"."school")
+        WHERE ("school"."code" = "program"."school_code")
           AND ("program"."degree" = 'ms')
       )
       ORDER BY "school"."code" ASC
@@ -360,12 +353,13 @@ HTSQL supports complex grouping operations.
 
    .. sourcecode:: htsql
 
-      /program{^degree, count(^)}
+      /(program^degree){degree, count(program)}
 
    .. sourcecode:: sql
 
       SELECT degree, COUNT(TRUE)
       FROM ad.program
+      WHERE degree IS NOT NULL
       GROUP BY 1
       ORDER BY 1;
 

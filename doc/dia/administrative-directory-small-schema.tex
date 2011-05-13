@@ -1,0 +1,41 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    > = triangle 45,
+    node distance = 2.5cm and 3.5cm,
+    table/.style = {draw, rectangle,
+                    minimum width=2.5cm, minimum height=1cm,
+                    text height=1.5ex, text depth=.25ex},
+    link/.style = {text width=2cm, font=\small\itshape}
+}
+
+\begin{tikzpicture}
+
+\node[table] (department)
+    {department};
+\node[table] (school) [right=of department]
+    {school};
+\node[table] (course) [below=of department]
+    {course};
+\node[table] (program) [below=of school]
+    {program};
+
+\draw[o->] (department)
+           -- node[link, above] {department may be a part of school}
+           (school);
+\draw[*->] (course)
+           -- node[link, left] {department offers courses}
+           (department);
+\draw[*->] (program)
+           -- node[link, right] {school may offer some programs}
+           (school);
+
+\end{tikzpicture}
+
+\end{document}
+

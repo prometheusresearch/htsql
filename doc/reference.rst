@@ -443,6 +443,105 @@ For a comprehensive description built-in operators see the respective
 section.
 
 
+Data Model and Query Semantics
+==============================
+
+In this section we describe how HTSQL represents information in the
+database and how the HTSQL translator interprets the queries.
+
+Data Model
+----------
+
+HTSQL wraps an existing relational database, but the model of data
+HTSQL presents to the users differs from relational.  Therefore to
+describe how HTSQL stores information, we describe the logical model
+of HTSQL and how relational/SQL model is translated to HTSQL.
+
+(diagram: users <=> HTSQL translator <=> SQL Database Server)
+
+We start with explaining the logical layer --- how HTSQL presents
+data to the users.
+
+Model and Instances
+-------------------
+
+HTSQL differentiates between *a database model* and *a database instance*.
+The former describe how the data is structured in the database,
+the latter contains the actual data, which must satisfy the constraints
+of the database model.
+
+The difference between a database model and a database instance
+is the difference between the structure of the data and the data itself.
+
+The database model describe the kinds of entities the database contains
+and relationships between different kinds of entities.
+
+For instance, the model may indicate that the database contains
+school and department, that each school entity has an attribute
+called `code` which uniquely identifies the entity and an attribute
+`name`, and contains zero, one or more departments while each
+department may belong to at most one school.
+
+Then a concrete instance of this model may contains entities for School
+of Art and Design, School of Business, etc.
+
+Classes and Links
+-----------------
+
+HTSQL structures the data with *classes* and *links*, which together
+form *a model graph*.  Classes, which are nodes in the model graph,
+represents types of entities of information.  Links, which are arcs
+in the model graph, describe relations between entities.  Both classes
+and links have a name.
+
+Among classes, we distinguish *domain classes* such as `boolean`, `integer`,
+`string`, `date`, which represent scalar values and *record classes*
+such as `school`, `department`, `course`, which represent business
+entities modeled by the database.
+
+A link from an entity class to a domain class indicates that an entity
+from this class have an attribute of type of the domain class.  For
+instance, class `school` have two links to class `string` called
+`code` and `name` --- this means that `class` entities have string
+attributes called `code` and `name`.
+
+A link between two entity classes indicates that entities of these
+two classes in a relationship such that "has", "is contained in"
+and so on.  For instance, a link from `department` to `school`
+indicates that a department entity may belong to a school entity.
+
+Links may be *total*, *singular* and *unique*, these properties
+impose additional conditions on relationships.
+
+(diagram)
+
+Sets and Relations
+------------------
+
+A database instance is a collection of all information in the database.
+A database instance must satisfy all conditions imposed by the
+database schema.
+
+To each class of the model, the instance contains a set of elements.
+We often say that a class contains class elements, or an element belongs
+to a class.
+For domain classes, the respective sets contain all values of the class.
+For entity classes, the set contains the respective entities.
+
+(diagram: boolean => {true, false}, integer => {...,-2,-1,0,1,2,...},
+school => {[art], [bus], [edu], ...})
+
+
+
+
+Note that the HTSQL model is very close to the traditional network
+database model.  The primary difference between them is that HTSQL is
+not limited to predefined classes and links.  HTSQL allows a user
+to define *derived* classes and links on the fly using a rich
+set of *flow operators*.
+
+
+
 Data Types
 ==========
 

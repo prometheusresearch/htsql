@@ -25,9 +25,9 @@
     Department
     \nodepart{second}
     \begin{columns}
-        code        & PK        \\
-        school      & FK        \\
-        name        & NN,UK     \\
+        code                & PK        \\
+        school\_code        & FK        \\
+        name                & NN,UK     \\
     \end{columns}
 };
 
@@ -36,8 +36,8 @@
     School
     \nodepart{second}
     \begin{columns}
-        code        & PK        \\
-        name        & NN,UK     \\
+        code                & PK        \\
+        name                & NN,UK     \\
     \end{columns}
 };
 
@@ -46,11 +46,11 @@
     Course
     \nodepart{second}
     \begin{columns}
-        department  & PK1,FK    \\
-        no          & PK2       \\
-        title       & NN        \\
-        credits     & NN        \\
-        description &           \\
+        department\_code    & PK1,FK    \\
+        no                  & PK2       \\
+        title               & NN        \\
+        credits             & NN        \\
+        description         &           \\
     \end{columns}
 };
 
@@ -59,11 +59,11 @@
     Program
     \nodepart{second}
     \begin{columns}
-        school      & PK1,FK    \\
-        code        & PK2       \\
-        title       & NN        \\
-        degree      & CK        \\
-        part\_of    & FK        \\
+        school\_code        & PK1,FK    \\
+        code                & PK2       \\
+        title               & NN        \\
+        degree              & CK        \\
+        part\_of            & FK        \\
     \end{columns}
 };
 

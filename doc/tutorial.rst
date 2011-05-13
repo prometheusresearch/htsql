@@ -126,7 +126,7 @@ Use a *selector* to specify more than one output column:
 When returning data from a table, use a selector to choose columns for
 display:
 
-.. htsql:: /program{school, code, title}
+.. htsql:: /program{school_code, code, title}
    :cut: 4
 
 In addition to table attributes, you could select arbitrary expressions.
@@ -193,12 +193,13 @@ Use the filter operator ``?`` to show only data that satisfies some
 criteria. For example, to return departments in the School of
 Engineering we can write:
 
-.. htsql:: /department?school='eng'
+.. htsql:: /department?school_code='eng'
    :cut: 4
 
 This request returns all records in the ``department`` table where the
-column ``school`` is equal to ``'eng'``.  In HTSQL, *literal* values are
-single quoted so that ``'eng'`` isn't confused with a column name.
+column ``school_code`` is equal to ``'eng'``.  In HTSQL, *literal*
+values are single quoted so that ``'eng'`` isn't confused with a column
+name.
 
 For a case-insensitive substring match, use the ``~`` operator:
 
@@ -217,15 +218,15 @@ conjunction (``&``), alternation (``|``), and negation (``!``)
 operators.  The following request returns programs in the "School of
 Business" that do not grant a "Bachelor of Science" degree:
 
-.. htsql:: /program?school='bus'&degree!='bs'
+.. htsql:: /program?school_code='bus'&degree!='bs'
    :cut: 3
 
 Filters can be combined with selectors and links.  The following request
 returns courses, listing only department number and title, having less
 than 3 credits in the "School of Natural Science":
 
-.. htsql:: /course{department, no, title}
-            ?credits<3&department.school='ns'
+.. htsql:: /course{department_code, no, title}
+            ?credits<3&department.school.code='ns'
    :cut: 4
 
 
@@ -244,13 +245,13 @@ Sort direction can be specified explicitly using ``+`` for ascending and
 following example sorts courses in ascending order by department and
 then in descending order by number of credits:
 
-.. htsql:: /course.sort(department+, credits-)
+.. htsql:: /course.sort(department_code+, credits-)
    :cut: 3
 
 When sorting by a selected output column, you could use a shortcut
 syntax which combines column selection and sorting:
 
-.. htsql:: /course{department+, no, credits-, title}
+.. htsql:: /course{department_code+, no, credits-, title}
    :cut: 5
 
 To list a range of rows, the ``limit()`` function takes one or two
@@ -285,33 +286,33 @@ course table such as ``/course{department, no, title}`` and a filter on
 the course table, ``/course?credits<3`` can be combined in either of the
 following two forms:
 
-.. htsql:: /course{department, no, title}?credits<3
+.. htsql:: /course{department_code, no, title}?credits<3
    :cut: 3 
 
-.. htsql:: /(course?credits<3){department, no, title}
+.. htsql:: /(course?credits<3){department_code, no, title}
    :cut: 3 
 
 Note that the order in which selection and filter operators are applied
 doesn't affect the output. You could also use a functional form:
 
-.. htsql:: /course.filter(credits<3).select(department, no, title)
+.. htsql:: /course.filter(credits<3).select(department_code, no, title)
    :hide:
    :cut: 3 
 
 For the following two equivalent examples, we combine 3 operators --
 sorting, truncating, and selection:
 
-.. htsql:: /course.sort(credits-).limit(10){department, no, credits}
+.. htsql:: /course.sort(credits-).limit(10){department_code, no, credits}
    :cut: 3 
 
-.. htsql:: /course{department, no, credits-}.limit(10)
+.. htsql:: /course{department_code, no, credits-}.limit(10)
    :cut: 3 
 
 The relative position of sort and limit matter, switching the positions
 will change the output:
 
-.. htsql:: /course.limit(10).sort(credits-){department, no, credits}
-   :cut: 3 
+.. htsql:: /course.limit(10).sort(credits-){department_code, no, credits}
+   :cut: 3
 
 
 The following example requests the top 5 departments from schools with
@@ -581,14 +582,14 @@ To exclude a specific class, use the *not-equals* operator:
 The *equality* (``=``) and *inequality* (``!=``) operators are
 straightforward when used with numbers:
 
-.. htsql:: /course{department,no,title}?no=101
+.. htsql:: /course{department_code, no, title}?no=101
    :cut: 2
 
 The *in* operator (``={}``) can be thought of as equality over a set.
 This example, we return courses that are in neither the "Art History"
 nor the "Studio Art" department:
 
-.. htsql:: /course?department!={'arthis','stdart'}
+.. htsql:: /course?department_code!={'arthis','stdart'}
    :cut: 4
    :hide:
 
@@ -625,21 +626,21 @@ while the empty string is presented as a double-quoted pair:
 
 The ``is_null()`` function returns ``true()`` if it's operand is
 ``null()``.  In our schema, non-academic ``department`` records with
-a ``NULL`` ``school`` can be listed:
+a ``NULL`` ``school_code`` can be listed:
 
-.. htsql:: /department{code, name}?is_null(school)
+.. htsql:: /department{code, name}?is_null(school_code)
 
 The *negation* operator (``!``) is ``true()`` when it's operand is
 ``false()``.   To skip non-academic ``department`` records:
 
-.. htsql:: /department{code, name}?!is_null(school)
+.. htsql:: /department{code, name}?!is_null(school_code)
    :cut: 4
 
 The *conjunction* (``&``) operator is ``true()`` only if both of its
 operands are ``true()``.   This example asks for courses in the
 ``'Accounting'`` department having less than 3 credits:
 
-.. htsql:: /course?department='acc'&credits<3
+.. htsql:: /course?department_code='acc'&credits<3
 
 The *alternation* (``|``) operator is ``true()`` if either of its
 operands is ``true()``.  For example, we could list courses having
@@ -655,13 +656,13 @@ default grouping rule or to better clarify intent.  The next example
 returns courses that are in "Art History" or "Studio Art" departments
 that have more than three credits:
 
-.. htsql:: /course?(department='arthis'|department='stdart')&credits>3
+.. htsql:: /course?(department_code='arthis'|department_code='stdart')&credits>3
    :cut: 4
 
 Without the parenthesis, the expression above would show all courses
 from ``'arthis'`` regardless of credits:
 
-.. htsql:: /course?department='arthis'|department='stdart'&credits>3
+.. htsql:: /course?department_code='arthis'|department_code='stdart'&credits>3
    :cut: 3
 
 When a non-boolean is used in a logical expression, it is implicitly
@@ -681,7 +682,7 @@ The predicate ``?description`` is treated as a short-hand for
 ``?(!is_null(description)&description!='')``.  The negated variant of
 this shortcut is more illustrative:
 
-.. htsql:: /course{department,no,description}? !description
+.. htsql:: /course{department_code,no,description}? !description
 
 
 Types and Functions
@@ -700,19 +701,19 @@ equality operator (``=``) is null-regular, that is, if either operand is
 ``null()`` the result is ``null()``.  The following request always
 returns 0 rows:
 
-.. htsql:: /department?school=null()
+.. htsql:: /department?school_code=null()
 
 While you wouldn't directly write that query, it could be the final
 result after parameter substitution for a templatized query such as
 ``/department?school=$var``.  For cases like this, use *total equality*
 operator (``==``) which treats ``NULL`` values as equivalent:
 
-.. htsql:: /department?school==null()
+.. htsql:: /department?school_code==null()
 
 The ``!==`` operator lists distinct values, including records with
 a ``NULL`` for the field tested:
 
-.. htsql:: /department?school!=='art'
+.. htsql:: /department?school_code!=='art'
    :cut: 5
 
 
