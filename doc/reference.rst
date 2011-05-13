@@ -415,7 +415,7 @@ the latter *non-associative*.
     `x +` and `x -` are two sorting decorators indicating ascending and
     descending order respectively.
 
-    .. htsql:: /course.sort(department+,credits-)
+    .. htsql:: /course.sort(department_code+,credits-)
        :cut: 3
        :hide:
 
