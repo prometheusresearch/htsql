@@ -121,14 +121,13 @@ doc:
 dist:
 	rm -rf build/dist build/lib.* build/bdist.*
 	${PYTHON} setup.py sdist
-	${PYTHON} setup.py bdist_egg
 	#python setup.py --command-packages=stdeb.command bdist_deb 
 
 # Register and upload the package to PyPI.
 # FIXME: include HTML documentation.
 pypi:
 	rm -rf build/dist build/lib.* build/bdist.*
-	${PYTHON} setup.py register sdist bdist_egg upload
+	${PYTHON} setup.py register sdist upload
 
 # Delete the build directory and object files.
 clean:
