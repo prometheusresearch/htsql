@@ -1,6 +1,6 @@
-=======================================================
-HTSQL -- A Query Language for the Accidental Programmer
-=======================================================
+***********************************************************
+  HTSQL -- A Query Language for the Accidental Programmer
+***********************************************************
 
 HTSQL ("Hyper Text Structured Query Language") is a high-level query
 language for relational databases.   The target audience for HTSQL is

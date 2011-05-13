@@ -2,6 +2,44 @@ List of Changes
 ===============
 
 
+2.1.0 beta 3 (2011-05-13)
+-------------------------
+
+* Added a fiber linking operator: `{x,y} -> T{x,y}`.
+* Provide named attributes for kernel expressions and the complement
+  link in a quotient scope: `(program^degree)` generates attribute
+  `degree` as an alias for `*1` and `program` as an alias for `^`.
+* Added in-selector definitions: `{attr := expr}` is de-sugared to
+  `define(attr := expr){attr}`.
+* Added `$reference` syntax for inter-scope references.
+* Added flow method `fork()`: clone the last node in the flow, e.g.
+  `/course?credits=max(fork().credits)`.
+* Added flow methods `.filter()` and `.select()` as aliases to `?`
+  and `{}` operators.
+* Added method `distinct()`: `distinct(table{kernel})` produces
+  a flow of unique values of `kernel` as it runs over `table`;
+  it is equivalent to `table^kernel`.  `distinct()` and `^` operators
+  now filter out NULL values in the kernel.
+* Changed semantics of `.` and `{}` expressions: specifier (`.`)
+  now allows arbitrary expressions on both sides, selector (`{}`)
+  now sets the output columns in the current scope.
+* Added syntax `*N`, where `N` is an integer literal, to get the value
+  of the `N`-th output column.
+* Added addon `tweak.cors`: append `Access-Control-Allow-Origin: *`
+  to every HTTP response.
+* Added addon `tweak.pgsql.inet`: basic manipulations on values
+  of `INET` data type.
+* Added addon `tweak.pgsql.view`: determine foreign key relationships
+  for views in Postgresql.
+* Use `search_path` or its analogues to choose a table when
+  the table name is ambiguous.
+* Optimized introspection for Oracle.
+* Added option `-p` to ask for a password on startup.
+* Added shell command `run filename.htsql` to load and execute
+  an HTSQL query from a file.
+* Many other fixes and documentation updates.
+
+
 2.1.0 beta 2 (2011-03-29)
 -------------------------
 
