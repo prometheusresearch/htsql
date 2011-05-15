@@ -448,6 +448,51 @@ either lack correlated ``course`` records or where every one of those
    :cut: 4
 
 
+Compositional Navigation
+------------------------
+
+Suppose you have an HTSQL query that returns the school of engineering.
+
+.. htsql:: /school.filter(code='eng')
+   :hide:
+
+Now you'd like to return departments associated with this school.  This
+could be written as:
+
+.. htsql:: /department?school.code='eng'
+   :cut: 4
+
+However, if you want to re-use the existing (and working!) query
+fragment, ``school.filter(code='eng')``, you could write:
+
+.. htsql:: /school.filter(code='eng').department
+   :cut: 4
+
+Continuing this chain, you may choose the Department of Electrical
+Engineering and then list associated courses.
+
+.. htsql::
+   :cut: 4
+
+   /school.filter(code='eng')
+   .department.filter(code='ee')
+   .course
+
+Drill-down navigation trims unrelated rows and preserves the order of
+prior links. Consider the following two queries.
+
+.. htsql:: /department
+   :cut: 5
+
+.. htsql:: /school.department
+   :cut: 5
+
+Although the latter query also returns records from the department
+table, it differs from the former in two ways.  First, it skips
+departments lacking an associated school.  Second, it orders the result
+first by school code and then on department code.
+
+
 Projections 
 ===========
 
