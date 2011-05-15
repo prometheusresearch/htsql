@@ -529,13 +529,13 @@ Equivalently, this could be written using the ``^`` operator:
 .. htsql:: /program^degree
    :cut: 3
 
-Note that the projection operator skips *NULL*.  Thus, even though there
-are rows in the program without a degree, ``program^degree`` doesn't
-contain a *NULL*.
+Note that the projection operator skips rows containing a *NULL*.
+Hence, even though there are rows in the program without a degree,
+``program^degree`` doesn't contain a *NULL*.
 
-You could use projections anywhere that a regular table expression is
-permitted.  For instance, to get the number of distinct degrees offered
-at the university, write:
+You could use projections anywhere a table expression is permitted. 
+For instance, to get the number of distinct degrees offered at the
+university, write:
 
 .. htsql:: /count(program^degree)
 
@@ -544,7 +544,7 @@ Or, one could count distinct degrees by school:
 .. htsql:: /school{name, count(program^degree)}
    :cut: 3
 
-Projections arn't limited to table attributes.  Let's define course
+Projections arn't limited to table attributes.  Let's assume course
 level as the first digit of the course number.  Then, hence following
 expression returns distinct course levels:
 
@@ -552,39 +552,61 @@ expression returns distinct course levels:
    :cut: 3
 
 If you wish to project by more than one expression, use a selector
-``{}`` to group the expressions.  The following example returns
-distinct combinations of course level and credits:
+``{}`` to group the expressions.  In this example we return distinct
+combinations of course level and credits.
 
-.. htsql:: /course^{round(no/100),credits}
+.. htsql:: /course^{round(no/100), credits}
    :cut: 5
 
+Just as tables are sorted by default using the table's primary key,
+projected expressions are also sorted using the distinct columns.
 
-..
-    Filtering & Selection
-    ---------------------
-
-
-    student^{a,b}
-    (table?filter)^kernel
-    (table^keren){ \*1, expr(\*1) }
-    (table^kernel)?filter
-
-    Complement Linking
-    -------------------
-
-    (table^kernel){count(^)}
-    (table^kernel){aggr(^.col)}
-    (table^kernel){aggr(^.sum(y.z))}
-    (table^kernel)?aggr(^.sum(y.z))
+Note: HTSQL currently lacks ``trunc()`` function, which should be used
+above instead of ``round()`` to get the correct course level.
 
 
-    Pathalogical Cases
-    ------------------
+Working with Projections
+------------------------
 
-    Just for fun, this query query first calculates the number of distinct
-    degrees for each school, and then reports unique values from that list:
+Each projection is a virtual table with its own attributes and links to
+other tables.  For instance, ``program^degree`` has two attributes, a
+column ``degree`` and a plural link ``program`` to records of the
+program table having that degree.  In the query below, we return
+distinct degrees with the number of corresponding programs.
 
-    .. htsql:: /school^count(program^degree)
+.. htsql:: /(program^degree){degree, count(program)}
+   :cut: 5
+
+We may want to filter the base table before projecting.  For example,
+listing only distinct degrees in the School of Engineering.
+
+.. htsql:: /(program?school_code='eng')^degree
+   :cut: 5
+
+Or, we could filter the expression after the projection has happened.
+In the next query we return only degrees having more than 5
+corresponding programs.
+
+.. htsql:: /(program^degree)?count(program)>5
+   :cut: 5
+
+Usually HTSQL automatically assigns names to projected columns, however,
+in cases where you have an expression, you have to name them.  In the
+following example, we return distinct course level and credits
+combinations sorted in descending order by level and credits.
+
+.. htsql:: /(course^{level:=round(no/100),credits}){level-, credits-}
+   :cut: 5
+
+Sometimes HTSQL cannot assign a name linking to the base of the
+projection.  In these cases, you may use ``^`` to refer to it.
+Additionally ``*`` can be used to return all columns of the projection.
+Thus, the first example of this section could be written:
+
+.. htsql:: /(program^degree){*, count(^)}
+   :cut: 5
+
+.. **
 
 
 Logical Expressions
