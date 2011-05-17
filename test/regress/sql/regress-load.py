@@ -10,7 +10,10 @@
 from __future__ import with_statement
 from htsql.util import listof
 from htsql.connect import Connect
-import yaml
+import yaml, sys
+
+sys.path.append('test/regress/sql/datagen')
+import data_generator
 
 REGRESS_DATA = 'test/regress/sql/regress-data.yaml'
 
@@ -80,6 +83,9 @@ with state.app:
         cursor.executemany(sql, data)
 
     connection.commit()
+
+    data_generator.generate(connection, False)
+
     connection.release()
 
 

@@ -1,23 +1,9 @@
 
-import random, psycopg2, csv, datetime, math
+import random, csv, datetime, math
+import os
 
 INSERT = True
 RANDOM_SEED = 0
-
-""" Database connection settings """
-DB = "htsql_regress"
-HOST = "81.23.112.175"
-PORT = "5432"
-USER = "htsql_regress"
-PASSWORD = "secret"
-
-""" Decrease male grades using this rate
-According the request:
-'Women on average receive higher grades than men'
-"""
-MALE_MISFORTUNE = 0.95
- 
-""" SQL queries """
 
 
 class NameGenerator(object):
@@ -41,9 +27,13 @@ class StatNameGenerator(NameGenerator):
     LAST_NAMES_FILE = "dist.all.last"       # last name statistics file
 
     def __init__(self):
-        (self.man_names, self.man_total) = self.load_names(self.MAN_NAMES_FILE)
-        (self.woman_names, self.woman_total) = self.load_names(self.WOMAN_NAMES_FILE)
-        (self.last_names, self.last_total) = self.load_names(self.LAST_NAMES_FILE)
+        basedir = os.path.dirname(__file__)
+        fname = os.path.join(basedir, self.MAN_NAMES_FILE)
+        (self.man_names, self.man_total) = self.load_names(fname)
+        fname = os.path.join(basedir, self.WOMAN_NAMES_FILE)
+        (self.woman_names, self.woman_total) = self.load_names(fname)
+        fname = os.path.join(basedir, self.LAST_NAMES_FILE)
+        (self.last_names, self.last_total) = self.load_names(fname)
 
     def load_names(self, file_name):
         names = []
@@ -238,7 +228,7 @@ class BaseDataGenerator(object):
             cursor.execute(sql)
         return sql
 
-    def run(self, connection):
+    def run(self, connection, verbose=True):
         pass
 
 
@@ -326,7 +316,7 @@ class InstructorGenerator(BaseDataGenerator):
             "fraction": fraction
         }
 
-    def run(self, connection):
+    def run(self, connection, verbose=True):
         cursor = connection.cursor()
         for (depcode, total_courses) in self.meta.departments:
             load = random.uniform(self.COURSES_PER_INSTRUCTOR[0], self.COURSES_PER_INSTRUCTOR[1])
@@ -342,7 +332,8 @@ class InstructorGenerator(BaseDataGenerator):
                 self.dep_app[depcode].append(appointment)
                 self.insertFromDict(cursor, self.APPOINTMENT_TABLE, appointment)
         connection.commit()
-        print(str(len(self.instructors)) + ' instructors generated.')
+        if (verbose):
+            print(str(len(self.instructors)) + ' instructors generated.')
 
 
 class ClassGenerator(BaseDataGenerator):
@@ -369,7 +360,7 @@ class ClassGenerator(BaseDataGenerator):
             'instructor_code': inst
         }
 
-    def run(self, connection):
+    def run(self, connection, verbose=True):
         cursor = connection.cursor()
         counter = 0
         for depcode in self.dep_app:
@@ -398,12 +389,18 @@ class ClassGenerator(BaseDataGenerator):
                                     self.generate_class(app['instructor_code'], course, semester))
                             counter += 1
         connection.commit()
-        print(str(counter) + ' classes generated.')
+        if verbose:
+            print(str(counter) + ' classes generated.')
 
 
 class EnrollmentGenerator(BaseDataGenerator):
 
     CREDITS_PER_SEMESTER = (15, 25)
+    """ Decrease male grades using this rate
+    According the request:
+    'Women on average receive higher grades than men'
+    """
+    MALE_MISFORTUNE = 0.95
     SELECT_CLASSES_BY_SEMESTER = """SELECT class_seq, department_code, course_no FROM cd.class WHERE
     year=%s AND season=%s and section='001' """
     ENROLLMENT_STATUS = ['enr', 'inc', 'ngr']
@@ -531,7 +528,7 @@ class EnrollmentGenerator(BaseDataGenerator):
 #            val = val * 2
         if self.student['gender'] == 'm':
             """ Women on average receive higher grades than men """
-            val = val * MALE_MISFORTUNE
+            val = val * self.MALE_MISFORTUNE
         return round(val, 1)
 
     def generate_enrollment(self, class_id, semester):
@@ -556,7 +553,7 @@ class EnrollmentGenerator(BaseDataGenerator):
             self.insertFromDict(cursor, self.ENROLLMENT_TABLE, enr)
             self.counter += 1
 
-    def run(self, connection):
+    def run(self, connection, verbose=True):
         self.fill_required_courses()
         self.distribute_courses()
         level = 0
@@ -582,8 +579,7 @@ class EnrollmentGenerator(BaseDataGenerator):
 class StudentGenerator(BaseDataGenerator):
 
     """ Generate students """
-    ADMISSION_SIZE = (60, 90)
-#    ADMISSION_SIZE = (1, 1)
+    ADMISSION_SIZE = (30, 50)
     ADMISSION_AGE = (18, 25)
     STUDENT_ID_OFFSET = 1000
     STUDENT_TABLE = "ed.student"
@@ -635,7 +631,7 @@ class StudentGenerator(BaseDataGenerator):
 #                res.extend(self.get_prereq(req_course_key))
 #        return res
 
-    def run(self, connection):
+    def run(self, connection, verbose=True):
         cursor = connection.cursor()
         for semester in self.meta.semesters:
             if semester["season"] == 'fall' and semester["begin_date"] <= self.curdate:
@@ -646,30 +642,30 @@ class StudentGenerator(BaseDataGenerator):
                     self.students.append(student)
                     self.insertFromDict(cursor, self.STUDENT_TABLE, student)
         connection.commit()
-        print(str(self.student_counter) + ' students generated.')
+        if verbose:
+            print(str(self.student_counter) + ' students generated.')
 
 
-def get_connection(db, host, port, user, password):
-    return psycopg2.connect(database = db, host = host, port = port,
-        user = user, password = password)
+#def get_connection(db, host, port, user, password):
+#    return psycopg2.connect(database = db, host = host, port = port,
+#        user = user, password = password)
 
-def generate():
-    connection = get_connection(DB, HOST, PORT, USER, PASSWORD)
-    print("Connection successful")
+def generate(connection, verbose=True):
+#    connection = get_connection(DB, HOST, PORT, USER, PASSWORD)
+#    print("Connection successful")
     m = Meta()
     m.load(connection.cursor())
     random.seed(RANDOM_SEED)
     instgen = InstructorGenerator(StatNameGenerator(), m)
-    instgen.run(connection)
+    instgen.run(connection, verbose)
     classgen = ClassGenerator(m, instgen.dep_app)
-    classgen.run(connection)
+    classgen.run(connection, verbose)
     studgen = StudentGenerator(StatNameGenerator(), m)
-    studgen.run(connection)
+    studgen.run(connection, verbose)
     enr_counter = 0
     for student in studgen.students:
         enrgen = EnrollmentGenerator(m, student)
-        enrgen.run(connection)
+        enrgen.run(connection, verbose)
         enr_counter += enrgen.counter
-    print(str(enr_counter) + ' enrollments generated.')
-
-generate()
+    if verbose:
+        print(str(enr_counter) + ' enrollments generated.')
