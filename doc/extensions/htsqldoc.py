@@ -3,7 +3,7 @@
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 
-from urllib2 import quote, urlopen, Request, HTTPError
+from urllib2 import quote, urlopen, Request, HTTPError, URLError
 from cgi import escape
 from json import loads
 
@@ -164,6 +164,8 @@ def load_uri(uri, error=False):
             return None
         content_type = response.headers.gettype()
         content = response.read()
+    except URLError:
+        return None
     return (content_type, content)
 
 
