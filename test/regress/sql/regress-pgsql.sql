@@ -44,14 +44,14 @@ which do not offer a degree.
   | DEPARTMENT              |              | SCHOOL              |
   +-------------------------+              +---------------------+
   | code                 PK |--\       /--o| code             PK |----\
-  | school               FK |>-|------/    | name          NN,UK |    |
-  | name              NN,UK |  |    .      +---------------------+    |
-  +-------------------------+  |     .                              . |
-                             . |  departments                      .  |
-            a department    .  |  belong to         a school          |
-            offers zero or .   |  at most one       administers zero  |
-            more courses       |  school            or more programs  |
-                               |                                      | 
+  | school_code          FK |>-|------/    | name          NN,UK |    |
+  | name              NN,UK |  |   .       | campus              |    |
+  +-------------------------+  |    .      +---------------------+    |
+                             . |     .                              . |
+            a department    .  |   departments      a school       .  |
+            offers zero or .   |   belong to        administers zero  |
+            more courses       |   at most one      or more programs  |
+                               |   school                             | 
   +-------------------------+  |           +---------------------+    | 
   | COURSE                  |  |           | PROGRAM             |    |
   +-------------------------+  |           +---------------------+    |
@@ -69,6 +69,9 @@ $_$;
 CREATE TABLE ad.school (
     code                VARCHAR(16) NOT NULL,
     name                VARCHAR(64) NOT NULL,
+    campus              VARCHAR(5),
+    CONSTRAINT school_campus_ck
+      CHECK (campus IN ('old', 'north', 'south')),
     CONSTRAINT school_pk
       PRIMARY KEY (code),
     CONSTRAINT name_uk
