@@ -17,10 +17,13 @@
 CREATE TABLE school (
     code                VARCHAR2(16) NOT NULL,
     name                VARCHAR2(64) NOT NULL,
+    campus              VARCHAR2(5),
     CONSTRAINT school_pk
       PRIMARY KEY (code),
     CONSTRAINT name_uk
-      UNIQUE (name)
+      UNIQUE (name),
+    CONSTRAINT school_campus_ck
+      CHECK (campus IN ('old', 'north', 'south'))
 );
 
 CREATE TABLE department (
@@ -47,7 +50,7 @@ CREATE TABLE program (
     CONSTRAINT program_title_uk
       UNIQUE (title),
     CONSTRAINT program_degree_ck
-      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
+      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms', 'ph')),
     CONSTRAINT program_school_fk
       FOREIGN KEY (school_code)
       REFERENCES school(code),

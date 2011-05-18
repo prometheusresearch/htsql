@@ -70,12 +70,12 @@ CREATE TABLE ad.school (
     code                VARCHAR(16) NOT NULL,
     name                VARCHAR(64) NOT NULL,
     campus              VARCHAR(5),
-    CONSTRAINT school_campus_ck
-      CHECK (campus IN ('old', 'north', 'south')),
     CONSTRAINT school_pk
       PRIMARY KEY (code),
     CONSTRAINT name_uk
-      UNIQUE (name)
+      UNIQUE (name),
+    CONSTRAINT school_campus_ck
+      CHECK (campus IN ('old', 'north', 'south'))
 );
 
 CREATE TABLE ad.department (
@@ -102,7 +102,7 @@ CREATE TABLE ad.program (
     CONSTRAINT program_title_uk
       UNIQUE (title),
     CONSTRAINT program_degree_ck
-      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms','ph')),
+      CHECK (degree IN ('bs', 'pb', 'ma', 'ba', 'ct', 'ms', 'ph')),
     CONSTRAINT program_school_fk
       FOREIGN KEY (school_code)
       REFERENCES ad.school(code),
