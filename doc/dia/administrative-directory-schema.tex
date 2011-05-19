@@ -31,13 +31,14 @@
     \end{columns}
 };
 
-\node[table] (school) [right=3 of department.south east, anchor=south west]
+\node[table] (school) [right=3 of department]
 {
     School
     \nodepart{second}
     \begin{columns}
         code                & PK        \\
         name                & NN,UK     \\
+        campus              &           \\
     \end{columns}
 };
 
@@ -82,7 +83,7 @@
 \coordinate (department/school)
     at ($ (department.text split east)!.5!(department.second split east) $);
 \coordinate (school/department/l)
-    at (department/school -| school.second west);
+    at ($ (school.text split west)!.167!(school.second split west) $);
 
 \coordinate (course/department)
     at ($ (course.text split west)!.1!(course.second split west) $);
@@ -92,7 +93,7 @@
 \coordinate (program/school) at
     ($ (program.text split east)!.1!(program.second split east) $);
 \coordinate (school/code/r)
-    at ($ (school.text split east)!.25!(school.second split east) $);
+    at ($ (school.text split east)!.167!(school.second split east) $);
 
 \coordinate (program/part of)
     at ($ (program.text split west)!.9!(program.second split west) $);
@@ -101,8 +102,10 @@
 
 \draw[o->]
     (department/school)
-    -- node[relation, below]
+    -- node[relation, below, near start, anchor=north west]
         {departments may belong to at most one school}
+    +(1.5,0)
+    |-
     (school/department/l);
 
 \draw[*->]

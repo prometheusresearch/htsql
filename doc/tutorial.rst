@@ -88,19 +88,19 @@ columns, sorted by the primary key for the table:
 
 __ http://demo.htsql.org/school
 
- ====  =============================
- code  name
- ====  =============================
- art   School of Art and Design
- bus   School of Business
- edu   College of Education
- egn   School of Engineering
- la    School of Arts and Humanities
- mus   School of Music & Dance
- ns    School of Natural Sciences
+ ====  ============================= ======
+ code  name                          campus
+ ====  ============================= ======
+ art   School of Art and Design      old
+ bus   School of Business            south
+ edu   College of Education          old
+ egn   School of Engineering         north
+ la    School of Arts and Humanities old
+ mus   School of Music & Dance       south
+ ns    School of Natural Sciences    old
  ph    Public Honorariums
  sc    School of Continuing Studies
- ====  =============================
+ ====  ============================= ======
 
 Scalar expressions, including arithmetic and boolean operations, can be
 written directly:
