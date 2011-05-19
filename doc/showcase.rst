@@ -41,7 +41,8 @@ HTSQL is a Relational Database Gateway
    .. sourcecode:: sql
 
       SELECT "school"."code",
-             "school"."name"
+             "school"."name",
+             "school"."campus"
       FROM "ad"."school" AS "school"
       ORDER BY 1 ASC
 
@@ -347,13 +348,14 @@ of them are already implemented in our internal 1.X branch).
 Projections
 -----------
 
-HTSQL supports complex grouping operations.
+HTSQL will support complex grouping operations.
 
 .. vsplit::
 
    .. sourcecode:: htsql
 
-      /(program^degree){degree, count(program)}
+      /(program^degree){degree,
+                        count(program)}
 
    .. sourcecode:: sql
 
@@ -366,12 +368,12 @@ HTSQL supports complex grouping operations.
 `This query`__ returns the number of programs per degree.
 
 __ http://demo.htsql.org
-        /(program^degree){*,count(^)}
+        /(program^degree){degree,count(program)}
 
 Hierarchical Output
 -------------------
 
-HTSQL is not limited to tabular output.
+HTSQL is not to be limited to tabular output.
 
 .. vsplit::
 
@@ -399,11 +401,9 @@ HTSQL is not limited to tabular output.
       AS d ON (s.code = d.school)
       ORDER BY s.code,d.code;
 
-`This query`__ returns programs and departments
-in each school.
+This query will return all schools with associated programs and
+departments.
 
-__ http://demo.htsql.com
-        /school{name}/(program{title};department{name})
 
 More Backends
 -------------

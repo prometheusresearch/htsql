@@ -13,23 +13,23 @@ tests:
   # Administrative Directory
   - uri: /school
   - uri: /department
-  - uri: /program
-  - uri: /course
+  - uri: /program.limit(50)
+  - uri: /course.limit(50)
   # Instructor Directory
-  - uri: /instructor
-  - uri: /confidential
-  - uri: /appointment
+  - uri: /instructor.limit(50)
+  - uri: /confidential.limit(50)
+  - uri: /appointment.limit(50)
   # Class Directory
   - uri: /semester
-  - uri: /class
+  - uri: /class.limit(50)
   # Enrollment Directory
-  - uri: /student
-  - uri: /enrollment
+  - uri: /student.limit(50)
+  - uri: /enrollment.limit(50)
   # Requirement Directory
-  - uri: /prerequisite
-  - uri: /classification
-  - uri: /course_classification
-  - uri: /program_requirement
+  - uri: /prerequisite.limit(50)
+  - uri: /classification.limit(50)
+  - uri: /course_classification.limit(50)
+  - uri: /program_requirement.limit(50)
 
 - title: Links
   tests:
@@ -84,43 +84,43 @@ tests:
   - uri: /(course?department_code='psych'&no=610).course_classification
 
   # Instructor -> Confidential (singular, optional)
-  - uri: /(instructor?code='kcavallaro').confidential
+  - uri: /(instructor?code='afoster').confidential
   # Instructor -> Appointment
-  - uri: /(instructor?code='kcavallaro').appointment
+  - uri: /(instructor?code='afoster').appointment
   # Instructor -> Class
-  - uri: /(instructor?code='kcavallaro').class
+  - uri: /(instructor?code='afoster').class
 
   # Confidential -> Instructor
-  - uri: /(confidential?instructor_code='tobrien21').instructor
+  - uri: /(confidential?instructor_code='bkelley').instructor
 
   # Appointment -> Department (parental)
   - uri: /(appointment?department_code='eng'
-                      &instructor_code='wyu112').department
+                      &instructor_code='cbernal').department
   # Appointment -> Instructor (parental)
   - uri: /(appointment?department_code='eng'
-                      &instructor_code='wyu112').instructor
+                      &instructor_code='cbernal').instructor
 
   # Semester -> Class
-  - uri: /(semester?year=2010&season='fall').class
+  - uri: /(semester?year=2010&season='fall').class.limit(50)
 
   # Class -> Course (parental)
-  - uri: /(class?class_seq=10086).course
+  - uri: /(class?class_seq=20024).course
   # Class -> Semester (parental)
-  - uri: /(class?class_seq=10086).semester
+  - uri: /(class?class_seq=20024).semester
   # Class -> Instructor (singular, optional)
-  - uri: /(class?class_seq=10086).instructor
+  - uri: /(class?class_seq=20024).instructor
   # Class -> Enrollment
-  - uri: /(class?class_seq=10086).enrollment
+  - uri: /(class?class_seq=20024).enrollment
 
   # Student -> Program (singular, optional)
-  - uri: /(student?id=25371).program
+  - uri: /(student?id=1010).program
   # Student -> Enrollment
-  - uri: /(student?id=25371).enrollment
+  - uri: /(student?id=1010).enrollment.limit(50)
 
   # Enrollment -> Student (parental)
-  - uri: /(enrollment?student_id=92039&class_seq=10071).student
+  - uri: /(enrollment?student_id=1098&class_seq=20045).student
   # Enrollment -> Class (parental)
-  - uri: /(enrollment?student_id=92039&class_seq=10071).class
+  - uri: /(enrollment?student_id=1098&class_seq=20045).class
 
   # Prerequisite -> Department (ambiguous)
   - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818
