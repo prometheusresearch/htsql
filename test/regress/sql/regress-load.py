@@ -47,6 +47,30 @@ if state.app.db.engine == 'oracle':
     prelude = ["ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD'"]
 
 
+def insert_table_data(line, cursor):
+    assert (isinstance(line, dict) and
+            set(line) == set(['table', 'columns', 'data']))
+    table = line['table']
+    assert isinstance(table, str)
+    columns = line['columns']
+    assert isinstance(columns, listof(str))
+    data = line['data']
+    assert isinstance(data, listof(list))
+    data = [tuple(converter(item) for item in record)
+            for record in data]
+    if not with_schema:
+        table = table[table.find('.')+1:]
+    arguments = ", ".join(columns)
+    parameters = ", ".join(["?"]*len(columns))
+    if with_pyparams:
+        parameters = ", ".join(["%s"]*len(columns))
+    if with_numparams:
+        parameters = ", ".join(":"+str(idx+1) for idx in range(len(columns)))
+    sql = "INSERT INTO %s (%s) VALUES (%s)" \
+          % (table, arguments, parameters)
+    cursor.executemany(sql, data)
+
+
 with state.app:
 
     connect = Connect()
@@ -60,31 +84,13 @@ with state.app:
         cursor.execute(sql)
 
     for line in content:
-        assert (isinstance(line, dict) and
-                set(line) == set(['table', 'columns', 'data']))
-        table = line['table']
-        assert isinstance(table, str)
-        columns = line['columns']
-        assert isinstance(columns, listof(str))
-        data = line['data']
-        assert isinstance(data, listof(list))
-        data = [tuple(converter(item) for item in record)
-                for record in data]
-        if not with_schema:
-            table = table[table.find('.')+1:]
-        arguments = ", ".join(columns)
-        parameters = ", ".join(["?"]*len(columns))
-        if with_pyparams:
-            parameters = ", ".join(["%s"]*len(columns))
-        if with_numparams:
-            parameters = ", ".join(":"+str(idx+1) for idx in range(len(columns)))
-        sql = "INSERT INTO %s (%s) VALUES (%s)" \
-              % (table, arguments, parameters)
-        cursor.executemany(sql, data)
+        insert_table_data(line, cursor)
+        connection.commit()
 
-    connection.commit()
-
-    data_generator.generate(connection, False)
+    generated_content = data_generator.generate(content)
+    for line in generated_content:
+        insert_table_data(line, cursor)
+        connection.commit()
 
     connection.release()
 
