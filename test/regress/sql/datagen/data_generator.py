@@ -4,6 +4,8 @@ import os, sys
 
 INSERT = True
 RANDOM_SEED = 0
+INSTRUCTOR_NAME_SEED = 100
+STUDENT_NAME_SEED = 200
 
 
 class NameGenerator(object):
@@ -51,9 +53,9 @@ class StatNameData(object):
 
 class StatNameGenerator(NameGenerator):
 
-    def __init__(self, name_data):
+    def __init__(self, name_data, seed=0):
         self.name_data = name_data
-        self.rg = random.Random(RANDOM_SEED)
+        self.rg = random.Random(seed)
 
     def binary_search(self, names, value, high, low):
         if high == low or (high - low == 1):
@@ -775,11 +777,13 @@ def generate(content):
     dictionary = CollectionDictionaryLoader().load(content)
     random.seed(RANDOM_SEED)
     name_data = StatNameData()
-    instgen = InstructorGenerator(StatNameGenerator(name_data), dictionary)
+    inst_namegen = StatNameGenerator(name_data, INSTRUCTOR_NAME_SEED)
+    instgen = InstructorGenerator(inst_namegen, dictionary)
     result = instgen.generate_content()
     classgen = ClassGenerator(dictionary, instgen.dep_app)
     result.extend(classgen.generate_content())
-    studgen = StudentGenerator(StatNameGenerator(name_data), dictionary)
+    stud_namegen = StatNameGenerator(name_data, STUDENT_NAME_SEED)
+    studgen = StudentGenerator(stud_namegen, dictionary)
     result.extend(studgen.generate_content())
     for student in studgen.student_data:
         enrgen = EnrollmentGenerator(dictionary, student, classgen.class_data)
