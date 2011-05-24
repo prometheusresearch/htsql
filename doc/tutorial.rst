@@ -493,11 +493,242 @@ departments lacking an associated school.  Second, it orders the result
 first by school code and then on department code.
 
 
+Calculations & References
+=========================
+
+
+Calculated Attributes
+---------------------
+
+Suppose that you're returning schools along with the number of
+associated departments, and we want to list only schools with
+more than 3 departments.
+
+.. htsql::
+   :cut: 3
+
+   /school{name, count(department)}? count(department)>3
+
+In this query we have to repeat the expression ``count(department)``
+twice; once to select the value for output, and the other as part of
+filter criteria.  It is possible to avoid this duplication by defining a
+calculated attribute ``num_dept``.
+
+.. htsql::
+   :hide:
+   :cut: 3
+
+   /school.define(num_dept:=count(department))
+     {name, num_dept}? num_dept>3
+
+As syntax sugar, you could combine definition and selection.
+
+.. htsql::
+   :hide:
+   :cut: 3
+
+   /school{name, num_dept:=count(department)}? num_dept>3
+
+All three of these examples return the same result. 
+
+
+Calculated Links
+----------------
+
+In the prior example ``num_dept`` was a scalar value with respect to each
+school.  It's possible to define links as well.  Suppose we'd like to
+calculate a set of statistics by department on 200 level courses typically
+taken by sophomores.
+
+.. htsql::
+   :cut: 3
+
+   /department{name, count(course?no>=200&no<300),
+                     max((course?no>=200&no<300).credits),
+                     min((course?no>=200&no<300).credits),
+                     avg((course?no>=200&no<300).credits)}
+
+Here the link expression ``(course?no>=200&no<300)`` is duplicated.  We can
+define a ``sophomore`` link to these courses as follows.
+
+.. htsql::
+   :cut: 3
+   :hide:
+
+   /department.define(sophomore := course?no>=200&no<300)
+              {name, count(sophomore),
+                     max(sophomore.credits),
+                     min(sophomore.credits),
+                     avg(sophomore.credits)}
+
+For readability, it is helpful to put definitions at the end of an
+expression where it is used.  In the following example the usage of
+``sophomore`` precedes its definition.
+
+.. htsql::
+   :cut: 3
+   :hide:
+
+   /department{name,
+                {count(sophomore),
+                 max(sophomore.credits),
+                 min(sophomore.credits),
+                 avg(sophomore.credits)
+                } :where(sophomore := course?no>=200&no<300)}
+
+In this example we use infix notation to call the ``where()`` function.
+Generally, any function call ``f(x,y)`` could be written ``x :f y``.
+
+
+Parameterized Calculations
+--------------------------
+
+Suppose we want to expand the previous example, by calculating the same set
+of statistics over 4 sets of courses: 100's, 200's, 300's and 400's. 
+
+.. htsql::
+   :cut: 3
+   :hide:
+
+   /department.define(freshman := course?no>=100&no<200,
+                      sophomore := course?no>=200&no<300,
+                      junior := course?no>=300&no<400,
+                      senior := course?no>=400&no<500)
+              {name, count(freshman),
+                     max(freshman.credits),
+                     min(freshman.credits),
+                     avg(freshman.credits),
+                     count(sophomore), 
+                     max(sophomore.credits),
+                     min(sophomore.credits),
+                     avg(sophomore.credits),
+                     count(junior), 
+                     max(junior.credits),
+                     min(junior.credits), 
+                     avg(junior.credits),
+                     count(senior), 
+                     max(senior.credits),
+                     min(senior.credits),
+                     avg(senior.credits)}
+
+In the above examples, we repeat the same group of aggregates four times,
+but each time with different set of courses.  We could write this more
+concisely defining a calculation with a parameter.
+
+.. htsql::
+   :hide:
+   :cut: 3
+
+   /department.define(freshman := course?no>=100&no<200,
+                      sophomore := course?no>=200&no<300,
+                      junior := course?no>=300&no<400,
+                      senior := course?no>=400&no<500,
+                      stats(set) := {count(set),
+                                     max(set.credits),
+                                     min(set.credits),
+                                     avg(set.credits)})
+              {name, stats(freshman),
+                     stats(sophomore), 
+                     stats(junior),
+                     stats(senior)}
+
+Here the parameter ``set`` is bound to a subset of courses for each grade
+level.  The calculation returns a set of columns that appear in the output.
+
+
+Argument References
+-------------------
+
+Instead of defining four different subsets of courses, we may want to define
+a parameterized calculation which takes a the course level and produces
+courses of this level.  Naively, we could write:
+
+.. htsql::
+   :hide:
+   :error:
+
+   /department.define(course(level) := course?no>=level*100
+                                             &no<(level+1)*100)
+              {name, count(course(1)),
+                     count(course(2)),
+                     count(course(3)),
+                     count(course(4))}
+
+Here we have a problem with the definition of ``course(level)``.  In the
+body of the calculation, ``course`` introduces a new naming scope with
+attributes from the course table, such as the course ``no``.  Names from the
+previous scope, such as ``level``, are not available.  To overcome this
+deliberate limitation, we mark ``level`` with a dollar sign to indicate that
+it can be referenced from nested scopes.
+
+.. htsql::
+   :hide:
+   :cut: 3
+
+   /department.define(course($level) := course?no>=$level*100
+                                              &no<($level+1)*100)
+              {name, count(course(1)),
+                     count(course(2)),
+                     count(course(3)),
+                     count(course(4))}
+
+Using this technique, we could rewrite the last example from the previous
+section as:
+
+.. htsql::
+   :hide:
+   :cut: 3
+
+   /department.define(
+                 stats($level) := {count(set),
+                                   max(set.credits),
+                                   min(set.credits),
+                                   avg(set.credits)
+                                   } :where set :=
+                                    course?no>=$level*100
+                                          &no<($level+1)*100)
+              {name, stats(1),
+                     stats(2),
+                     stats(3),
+                     stats(4)}
+
+
+Defined References
+------------------
+
+References are not limited to parameters of calculations, they could be
+defined separately.  In the following example ``$avg_credits`` defines the
+average number of credits per course.  This reference is then used to return
+courses with more credits than average.
+
+.. htsql::
+   :cut: 3
+
+   /define($avg_credits := avg(course.credits))
+   .course?credits>$avg_credits
+
+This same request can be written using ``where``.
+
+.. htsql::
+   :cut: 3
+
+   /course?credits>$avg_credits
+   :where $avg_credits := avg(course.credits)
+
+Suppose that we'd like to return courses that have more than average
+credits for their given department.  We could write this as follows.
+
+.. htsql::
+   :cut: 3
+   /department.define($avg_credits:=avg(course.credits))
+   .course?credits>$avg_credits
+   
+
 Projections 
 ===========
 
 So far we have shown queries that produce either scalar values or rows
-that correspond to records from a table.  Ocassionally, you may want to
+that correspond to records from a table.  Occasionally, you may want to
 return all unique values of some expression.  For example, to return
 distinct values of ``degree`` from the ``program`` table, write:
 
@@ -544,7 +775,7 @@ Or, one could count distinct degrees by school:
 .. htsql:: /school{name, count(program^degree)}
    :cut: 3
 
-Projections arn't limited to table attributes.  Let's assume course
+Projections aren't limited to table attributes.  Let's assume course
 level as the first digit of the course number.  Then, hence following
 expression returns distinct course levels:
 
