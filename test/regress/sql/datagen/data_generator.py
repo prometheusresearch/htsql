@@ -20,7 +20,7 @@ class NameGenerator(object):
         else:
             return self.generate_female()
 
-class StatNameGenerator(NameGenerator):
+class StatNameData(object):
 
     MAN_NAMES_FILE = "dist.male.first"      # male first name statistics file
     WOMAN_NAMES_FILE = "dist.female.first"  # female first name statistics file
@@ -48,6 +48,13 @@ class StatNameGenerator(NameGenerator):
         total = names[len(names) - 1]["bound"]
         return names, total
 
+
+class StatNameGenerator(NameGenerator):
+
+    def __init__(self, name_data):
+        self.name_data = name_data
+        self.rg = random.Random(RANDOM_SEED)
+
     def binary_search(self, names, value, high, low):
         if high == low or (high - low == 1):
             return names[high]["name"]
@@ -59,17 +66,21 @@ class StatNameGenerator(NameGenerator):
             return self.binary_search(names, value, shift, low)
 
     def get_random_name(self, names, total):
-        value = random.uniform(0, float(total))
+        value = self.rg.uniform(0, float(total))
         return self.binary_search(names, value, len(names) - 1, 0)
 
     def generate_female(self):
-        first = self.get_random_name(self.woman_names, self.woman_total).capitalize()
-        last = self.get_random_name(self.last_names, self.last_total).capitalize()
+        first = self.get_random_name(self.name_data.woman_names,
+                                     self.name_data.woman_total).capitalize()
+        last = self.get_random_name(self.name_data.last_names,
+                                    self.name_data.last_total).capitalize()
         return first + " " + last
 
     def generate_male(self):
-        first = self.get_random_name(self.man_names, self.man_total).capitalize()
-        last = self.get_random_name(self.last_names, self.last_total).capitalize()
+        first = self.get_random_name(self.name_data.man_names,
+                                     self.name_data.man_total).capitalize()
+        last = self.get_random_name(self.name_data.last_names,
+                                    self.name_data.last_total).capitalize()
         return first + " " + last
 
 
@@ -253,17 +264,17 @@ class BaseDataGenerator(object):
             i += 1
         return (code + str(i))
 
-    def generate_gender(self):
-        if random.randint(1,100) <= self.MAN_WOMAN_BORDER:
+    def generate_gender(self, gen):
+        if gen.randint(1,100) <= self.MAN_WOMAN_BORDER:
             return "m"
         return "f"
 
-    def get_rand_item(self, arr):
-        return arr[random.randint(0, len(arr) - 1)]
+    def get_rand_item(self, arr, gen):
+        return arr[gen.randint(0, len(arr) - 1)]
 
-    def generate_date(self, start, end):
+    def generate_date(self, start, end, gen):
         delta = end - start
-        return start + datetime.timedelta(random.randint(1, delta.days))
+        return start + datetime.timedelta(gen.randint(1, delta.days))
 
     def insert(self, cursor, table, columns, record):
         """Take dictionary object dict and produce sql for
@@ -308,16 +319,23 @@ class InstructorGenerator(BaseDataGenerator):
         self.dictionary = dictionary
         self.instructors = set()
         self.dep_app = {}
+        self.gender_gen = random.Random(RANDOM_SEED)
+        self.title_gen = random.Random(RANDOM_SEED)
+        self.phone_gen = random.Random(RANDOM_SEED)
+        self.email_gen = random.Random(RANDOM_SEED)
+        self.ssn_gen = random.Random(RANDOM_SEED)
+        self.paygrade_gen = random.Random(RANDOM_SEED)
+        self.fraction_gen = random.Random(RANDOM_SEED)
 
     def generate_phone(self):
-        if random.randint(1,100) <= self.NULL_PERCENT:
+        if self.phone_gen.randint(1,100) <= self.NULL_PERCENT:
             return None
         # 7-digit phone
-        tel = str(random.randint(1000000, 9999999))
+        tel = str(self.phone_gen.randint(1000000, 9999999))
         return tel[:3] + '-' + tel[3:]
 
     def generate_email(self, code):
-        if random.randint(1,100) <= self.NULL_PERCENT:
+        if self.email_gen.randint(1,100) <= self.NULL_PERCENT:
             return None
         return code + '@example.com'
 
@@ -331,7 +349,7 @@ class InstructorGenerator(BaseDataGenerator):
 
     def generate_ssn(self):
         # 9-digit ssn
-        ssn = str(random.randint(100000000, 999999999))
+        ssn = str(self.ssn_gen.randint(100000000, 999999999))
         return ssn[:3] + '-' + ssn[3:5] + '-' + ssn[5:]
 
     def generate_home_phone(self):
@@ -341,13 +359,13 @@ class InstructorGenerator(BaseDataGenerator):
         return None
 
     def generate_instructor(self):
-        gender = self.generate_gender()
+        gender = self.generate_gender(self.gender_gen)
         full_name = self.name_generator.generate(gender)
         code = self.generate_code(full_name)
-        title = self.get_rand_item(self.INSTRUCTOR_TITLES)
+        title = self.get_rand_item(self.INSTRUCTOR_TITLES, self.title_gen)
         while (title == 'mr' and gender == 'f') \
                 or (title == 'ms' and gender == 'm'):
-            title = self.get_rand_item(self.INSTRUCTOR_TITLES)
+            title = self.get_rand_item(self.INSTRUCTOR_TITLES, self.title_gen)
         record = [
             code,
             full_name,
@@ -361,14 +379,14 @@ class InstructorGenerator(BaseDataGenerator):
         return [
             instructor_code,
             self.generate_ssn(),
-            random.randint(4,8),
+            self.paygrade_gen.randint(4,8),
             self.generate_home_phone()
         ]
 
     def generate_appointment(self, instructor_code, depcode):
         fraction = None
-        if random.randint(1,100) > self.NULL_PERCENT:
-            if random.randint(1,100) <= self.HALF_TIME_PERCENT:
+        if self.fraction_gen.randint(1,100) > self.NULL_PERCENT:
+            if self.fraction_gen.randint(1,100) <= self.HALF_TIME_PERCENT:
                 fraction = 0.50
             else:
                 fraction = 1.00
@@ -382,8 +400,9 @@ class InstructorGenerator(BaseDataGenerator):
         instructor_data = []
         confidential_data = []
         appointment_data = []
+        load_gen = random.Random(RANDOM_SEED)
         for depcode in self.dictionary.departments.iterkeys():
-            load = random.uniform(self.COURSES_PER_INSTRUCTOR[0], self.COURSES_PER_INSTRUCTOR[1])
+            load = load_gen.uniform(self.COURSES_PER_INSTRUCTOR[0], self.COURSES_PER_INSTRUCTOR[1])
             total_courses = self.dictionary.departments[depcode]
             count = int(math.ceil(total_courses / load))
             if depcode not in self.dep_app:
@@ -416,10 +435,12 @@ class ClassGenerator(BaseDataGenerator):
         self.curdate = datetime.date.today()
         self.class_data = []
         self.class_seq = self.CLASS_SEQ_OFFSET
+        self.instructor_gen = random.Random(RANDOM_SEED)
+        self.course_gen = random.Random(RANDOM_SEED)
 
     def generate_class(self, inst_code, course_key, semester):
         # instructor is nullable ?!
-        if random.randint(1,100) <= self.NULL_PERCENT:
+        if self.instructor_gen.randint(1,100) <= self.NULL_PERCENT:
             inst = None
         else:
             inst = inst_code
@@ -457,7 +478,7 @@ class ClassGenerator(BaseDataGenerator):
                 i = 0
                 while i < class_count and len(dep_courses) > 0:
                     i += 1
-                    course = self.get_rand_item(dep_courses)
+                    course = self.get_rand_item(dep_courses, self.course_gen)
                     dep_courses.remove(course)
                     for semester in self.dictionary.semesters:
                         if semester['begin_date'] < self.curdate \
@@ -483,6 +504,10 @@ class EnrollmentGenerator(BaseDataGenerator):
 
     ENROLLMENT_TABLE = 'ed.enrollment'
     ENROLLMENT_COLUMNS = ['class_seq', 'student_id', 'status', 'grade']
+
+    GRADE_GEN = random.Random(RANDOM_SEED)
+    COURSE_GEN = random.Random(RANDOM_SEED)
+    STATUS_GEN = random.Random(RANDOM_SEED)
 
     def __init__(self, dictionary, student, classes):
         self.dictionary = dictionary
@@ -511,7 +536,7 @@ class EnrollmentGenerator(BaseDataGenerator):
             if course not in self.taken_courses:
                 candidate_list.append(course)
         if len(candidate_list) > 0:
-            return self.get_rand_item(candidate_list)
+            return self.get_rand_item(candidate_list, self.COURSE_GEN)
         else:
             for child in self.dictionary.classification_tree[classification]:
                 return self.get_course_by_classification(child)
@@ -585,15 +610,15 @@ class EnrollmentGenerator(BaseDataGenerator):
 
     def choose_course(self, level):
         if level in self.courses_by_semester and len(self.courses_by_semester[level]) > 0:
-            res = self.get_rand_item(self.courses_by_semester[level])
+            res = self.get_rand_item(self.courses_by_semester[level], self.COURSE_GEN)
             self.courses_by_semester[level].remove(res)
             return res
         if len(self.free_courses) > 0:
-            res = self.get_rand_item(self.free_courses)
+            res = self.get_rand_item(self.free_courses, self.COURSE_GEN)
             self.free_courses.remove(res)
             return res
         while True:
-            res = self.get_rand_item(self.dictionary.courses.keys())
+            res = self.get_rand_item(self.dictionary.courses.keys(), self.COURSE_GEN)
             if self.can_take(res):
                 self.taken_courses.append(res)
                 return res
@@ -601,20 +626,23 @@ class EnrollmentGenerator(BaseDataGenerator):
     def get_random_grade(self, semester):
         if self.curdate < semester['end_date']:
             return None
-        if random.randint(1,100) <= self.NULL_PERCENT:
+        if self.GRADE_GEN.randint(1,100) <= self.NULL_PERCENT:
             return None
-        val = random.triangular(0.0, 4.0, 2.5)
-#        if val < 2.0:
-#            """ Average course grade should be between 2 and 3, so
-#            small grades are increased accordingly. """
-#            val = val * 2
+        # since python 2.6
+#        val = self.grade_gen.triangular(0.0, 4.0, 2.5)
+        val = self.GRADE_GEN.normalvariate(2.5, 1.3)
+        # cut both ends
+        if val < 0:
+            val = 0
+        if val > 4:
+            val = 4
         if self.student['gender'] == 'm':
             """ Women on average receive higher grades than men """
             val = val * self.MALE_MISFORTUNE
         return round(val, 1)
 
     def generate_enrollment(self, class_id, semester):
-        status = self.get_rand_item(self.ENROLLMENT_STATUS)
+        status = self.get_rand_item(self.ENROLLMENT_STATUS, self.STATUS_GEN)
         return [
             class_id,
             self.student['id'],
@@ -641,12 +669,13 @@ class EnrollmentGenerator(BaseDataGenerator):
         self.fill_required_courses()
         self.distribute_courses()
         level = 0
+        credits_gen = random.Random(RANDOM_SEED)
         for semester in self.dictionary.semesters:
             study_time = (semester["end_date"] - self.student["start_date"]).days
             if study_time > 0 and study_time < 4 * 356 \
                     and semester['season'] != 'summer' \
                     and semester["begin_date"] < self.curdate:
-                credits = random.uniform(self.CREDITS_PER_SEMESTER[0], self.CREDITS_PER_SEMESTER[1])
+                credits = credits_gen.uniform(self.CREDITS_PER_SEMESTER[0], self.CREDITS_PER_SEMESTER[1])
                 semester_courses = []
                 credits_taken = 0
                 while credits_taken < credits:
@@ -682,19 +711,24 @@ class StudentGenerator(BaseDataGenerator):
         self.cur_year = datetime.datetime.now().year
         self.curdate = datetime.date.today()
         self.student_data = []
+        self.gender_gen = random.Random(RANDOM_SEED)
+        self.dob_gen = random.Random(RANDOM_SEED)
+        self.active_gen = random.Random(RANDOM_SEED)
+        self.school_gen = random.Random(RANDOM_SEED)
+        self.program_gen = random.Random(RANDOM_SEED)
 
     def generate_student(self, semester):
-        gender = self.generate_gender()
+        gender = self.generate_gender(self.gender_gen)
         full_name = self.name_generator.generate(gender)
         dob_end = datetime.date(semester["year"] - self.ADMISSION_AGE[0], 12, 31)
         dob_start = datetime.date(semester["year"] - self.ADMISSION_AGE[1], 1, 1)
-        dob = self.generate_date(dob_start, dob_end)
-        school = self.get_rand_item(self.dictionary.school_programs.keys())
-        program = self.get_rand_item(self.dictionary.school_programs[school])
+        dob = self.generate_date(dob_start, dob_end, self.dob_gen)
+        school = self.get_rand_item(self.dictionary.school_programs.keys(), self.school_gen)
+        program = self.get_rand_item(self.dictionary.school_programs[school], self.program_gen)
         self.student_counter += 1
         # what about masters and doctors?
         active = (self.curdate - semester["begin_date"]).days < 4 * 365
-        if active and random.randint(1,100) <= self.INACTIVE_PERCENT:
+        if active and self.active_gen.randint(1,100) <= self.INACTIVE_PERCENT:
             active = False
         return [
             self.STUDENT_ID_OFFSET + self.student_counter,
@@ -724,10 +758,11 @@ class StudentGenerator(BaseDataGenerator):
 #        return res
 
     def generate_content(self):
+        admission_gen = random.Random(RANDOM_SEED)
         for semester in self.dictionary.semesters:
             if semester["season"] == 'fall' and semester["begin_date"] <= self.curdate:
                 # make admission
-                student_count = random.randint(self.ADMISSION_SIZE[0], self.ADMISSION_SIZE[1])
+                student_count = admission_gen.randint(self.ADMISSION_SIZE[0], self.ADMISSION_SIZE[1])
                 for i in range (0, student_count):
                     student = self.generate_student(semester)
                     self.student_data.append(student)
@@ -739,11 +774,12 @@ class StudentGenerator(BaseDataGenerator):
 def generate(content):
     dictionary = CollectionDictionaryLoader().load(content)
     random.seed(RANDOM_SEED)
-    instgen = InstructorGenerator(StatNameGenerator(), dictionary)
+    name_data = StatNameData()
+    instgen = InstructorGenerator(StatNameGenerator(name_data), dictionary)
     result = instgen.generate_content()
     classgen = ClassGenerator(dictionary, instgen.dep_app)
     result.extend(classgen.generate_content())
-    studgen = StudentGenerator(StatNameGenerator(), dictionary)
+    studgen = StudentGenerator(StatNameGenerator(name_data), dictionary)
     result.extend(studgen.generate_content())
     for student in studgen.student_data:
         enrgen = EnrollmentGenerator(dictionary, student, classgen.class_data)
