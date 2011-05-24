@@ -48,69 +48,69 @@ tests:
   - uri: /(department?code='ee').appointment
 
   # Program -> School (parental)
-  - uri: /(program?school_code='eng'&code='umech').school
+  - uri: /(program?school_code='la'&code='uengl').school
   # Program -> Program (singular, self-referencial)
   # FIXME: broken! Does not work as a link.
-  - uri: /(program?school_code='eng'&code='umech').part_of
+  - uri: /(program?school_code='la'&code='uengl').part_of
   # FIXME: should `program` generate an ambiguous name error?
-  - uri: /(program?school_code='eng'&code='umech').program
+  - uri: /(program?school_code='la'&code='uengl').program
   # FIXME: need a name for the link.
-  - uri: /(program?school_code='eng'&code='umech')
+  - uri: /(program?school_code='la'&code='uengl')
           .({school_code,part_of} -> program{school_code,code})
   # Program -> Program (reverse self-referential)
   # FIXME: no name for a reverse self-referential link.
-  - uri: /(program?school_code='eng'&code='umech')
+  - uri: /(program?school_code='la'&code='uengl')
           .({school_code,code} -> program{school_code,part_of})
   # Program -> Student
-  - uri: /(program?school_code='eng'&code='umech').student
+  - uri: /(program?school_code='la'&code='uengl').student
   # Program -> Program Requirement
-  - uri: /(program?school_code='eng'&code='umech').program_requirement
+  - uri: /(program?school_code='la'&code='uengl').program_requirement
 
   # Course -> Department (parental)
-  - uri: /(course?department_code='psych'&no=610).department
+  - uri: /(course?department_code='eng'&no=276).department
   # Course -> Class
-  - uri: /(course?department_code='psych'&no=610).class
+  - uri: /(course?department_code='eng'&no=276).class
   # Course -> Prerequisite
   # FIXME: cannot choose between on_course and of_course links.
-  - uri: /(course?department_code='psych'&no=610).prerequisite
+  - uri: /(course?department_code='eng'&no=276).prerequisite
     expect: 400
   # FIXME: need a name for the links.
   # FIXME: not enough data in the table.
-  - uri: /(course?department_code='psych'&no=610)
+  - uri: /(course?department_code='eng'&no=276)
           .({department_code,no} -> prerequisite{on_department_code,on_course_no})
-  - uri: /(course?department_code='psych'&no=610)
+  - uri: /(course?department_code='eng'&no=276)
           .({department_code,no} -> prerequisite{of_department_code,of_course_no})
   # Course -> Course Classification
-  - uri: /(course?department_code='psych'&no=610).course_classification
+  - uri: /(course?department_code='eng'&no=276).course_classification
 
   # Instructor -> Confidential (singular, optional)
-  - uri: /(instructor?code='afoster').confidential
+  - uri: /(instructor?code='arobinson').confidential
   # Instructor -> Appointment
-  - uri: /(instructor?code='afoster').appointment
+  - uri: /(instructor?code='arobinson').appointment
   # Instructor -> Class
-  - uri: /(instructor?code='afoster').class
+  - uri: /(instructor?code='arobinson').class
 
   # Confidential -> Instructor
-  - uri: /(confidential?instructor_code='bkelley').instructor
+  - uri: /(confidential?instructor_code='bdoyle').instructor
 
   # Appointment -> Department (parental)
   - uri: /(appointment?department_code='eng'
-                      &instructor_code='cbernal').department
+                      &instructor_code='cbutler').department
   # Appointment -> Instructor (parental)
   - uri: /(appointment?department_code='eng'
-                      &instructor_code='cbernal').instructor
+                      &instructor_code='cbutler').instructor
 
   # Semester -> Class
   - uri: /(semester?year=2010&season='fall').class.limit(50)
 
   # Class -> Course (parental)
-  - uri: /(class?class_seq=20024).course
+  - uri: /(class?class_seq=1025).course
   # Class -> Semester (parental)
-  - uri: /(class?class_seq=20024).semester
+  - uri: /(class?class_seq=1025).semester
   # Class -> Instructor (singular, optional)
-  - uri: /(class?class_seq=20024).instructor
+  - uri: /(class?class_seq=1025).instructor
   # Class -> Enrollment
-  - uri: /(class?class_seq=20024).enrollment
+  - uri: /(class?class_seq=1025).enrollment
 
   # Student -> Program (singular, optional)
   - uri: /(student?id=1010).program
@@ -118,9 +118,9 @@ tests:
   - uri: /(student?id=1010).enrollment.limit(50)
 
   # Enrollment -> Student (parental)
-  - uri: /(enrollment?student_id=1098&class_seq=20045).student
+  - uri: /(enrollment?student_id=1005&class_seq=1610).student
   # Enrollment -> Class (parental)
-  - uri: /(enrollment?student_id=1098&class_seq=20045).class
+  - uri: /(enrollment?student_id=1005&class_seq=1610).class
 
   # Prerequisite -> Department (ambiguous)
   - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818
