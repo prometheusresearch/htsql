@@ -588,7 +588,6 @@ of statistics over 4 sets of courses: 100's, 200's, 300's and 400's.
 
 .. htsql::
    :cut: 3
-   :hide:
 
    /department.define(freshman := course?no>=100&no<200,
                       sophomore := course?no>=200&no<300,
@@ -662,7 +661,6 @@ deliberate limitation, we mark ``level`` with a dollar sign to indicate that
 it can be referenced from nested scopes.
 
 .. htsql::
-   :hide:
    :cut: 3
 
    /department.define(course($level) := course?no>=$level*100
@@ -710,6 +708,7 @@ courses with more credits than average.
 This same request can be written using ``where``.
 
 .. htsql::
+   :hide:
    :cut: 3
 
    /course?credits>$avg_credits
@@ -720,6 +719,7 @@ credits for their given department.  We could write this as follows.
 
 .. htsql::
    :cut: 3
+
    /department.define($avg_credits:=avg(course.credits))
    .course?credits>$avg_credits
    
