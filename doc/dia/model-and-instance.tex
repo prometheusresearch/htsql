@@ -1,0 +1,76 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    > = stealth',
+    class/.style = {rectangle, text width=2cm, text centered},
+    record/.style = {rectangle, text width=2cm, text centered},
+    link/.style = {font=\small\itshape},
+    envelope/.style = {rectangle, draw=blue!50, rounded corners},
+    envelope header/.style = {font=\bfseries},
+}
+
+\begin{tikzpicture}
+
+\node[class] (school)
+    {Schools};
+\node[class] (department) [left=3 of school]
+    {Departments};
+\node[class] (program) [below=5 of school.north, anchor=south]
+    {Programs};
+\node[class] (course) [left=3 of program]
+    {Courses};
+
+\draw[->]
+    (department)
+    to node[link,below] {associated with}
+    (school);
+\draw[->]
+    (program)
+    to node[link,sloped,above] {administered by}
+    (school);
+\draw[->]
+    (course)
+    to node[link,sloped,above] {offered by}
+    (department);
+
+\node[envelope] (model) [fit=(school) (department) (program) (course)] {};
+
+\node[envelope header] at (model.north) [above]
+    {Model};
+
+\node[record] (comp) [right=1 of school.north east, anchor=north west]
+    {Department of Computer Science};
+\node[record] (ee) [below=5 of comp.north, anchor=south]
+    {Department of Electrical Engineering};
+\node[record] (eng) [right=5 of comp.north, anchor=north]
+    {School of Engineering};
+\node[record] (ucompsci) [below=5 of eng.north, anchor=south]
+    {B.S. in Computer Science};
+
+\draw[->]
+    (comp)
+    to node[link,above] {associated with}
+    (comp -| eng.west);
+\draw[->]
+    (ee)
+    to node[link,sloped,above] {associated with}
+    (eng);
+\draw[->]
+    (ucompsci)
+    to node[link,sloped,above] {administered by}
+    (eng);
+
+\node[envelope] (instance) [fit=(eng) (comp) (ee) (ucompsci)] {};
+
+\node[envelope header] at (instance.north) [above]
+    {Instance};
+
+\end{tikzpicture}
+
+\end{document}
+

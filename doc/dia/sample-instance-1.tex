@@ -1,0 +1,26 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    node distance = 1.5cm,
+    class/.style = {draw, rectangle split, rectangle split parts=2,
+                    text width=4cm, text centered}
+}
+
+\begin{tikzpicture}
+
+\node[class] (school)
+    {school \nodepart{second} \texttt{[eng]}, \texttt{[la]}, \texttt{[ns]}, \ldots};
+\node[class] (boolean) [right=of school]
+    {boolean \nodepart{second} \texttt{false}, \texttt{true}};
+\node[class] (integer) [right=of boolean]
+    {integer \nodepart{second} \ldots, \texttt{-1}, \texttt{0}, \texttt{1}, \ldots};
+
+\end{tikzpicture}
+
+\end{document}
+

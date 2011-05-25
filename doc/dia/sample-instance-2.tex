@@ -1,0 +1,46 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    node distance = 0.5cm,
+    class/.style = {draw, rectangle split, rectangle split parts=2,
+                    text width=4cm, text centered}
+}
+
+\begin{tikzpicture}
+
+\node[class] (department)
+    {department \nodepart{second} \texttt{[comp]}, \texttt{[ee]}, \ldots};
+\node[class] (school) [right=of department]
+    {school \nodepart{second} \texttt{[eng]}, \ldots};
+\node[class, text width=6cm] (string) [right=of school]
+    {string \nodepart{second} \ldots, \texttt{'School of Engineering'}, \ldots};
+
+\coordinate (department/comp)
+    at ($ (department.south) +(-25pt,3pt) $);
+\coordinate (department/ee)
+    at ($ (department.south) +(10pt,3pt) $);
+\coordinate (school/eng/from/ee)
+    at ($ (school.south) +(-15pt,3pt) $);
+\coordinate (school/eng/from/comp)
+    at ($ (school.south) +(-10pt,3pt) $);
+\coordinate (school/eng/to/string)
+    at ($ (school.south) +(-5pt,3pt) $);
+\coordinate (string/eng)
+    at ($ (string.south) +(0pt,3pt) $);
+
+\draw[->,bend right]
+    (department/comp) to (school/eng/from/comp);
+\draw[->,bend right]
+    (department/ee) to (school/eng/from/ee);
+\draw[->,bend right]
+    (school/eng/to/string) to (string/eng);
+
+\end{tikzpicture}
+
+\end{document}
+

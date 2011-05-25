@@ -1,0 +1,52 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    > = stealth', shorten > = 5pt, shorten < = 5pt,
+    node distance = .5cm and 2.5cm,
+    class/.style = {draw, rectangle,
+                    minimum width=2.5cm, minimum height=1cm,
+                    text height=1.5ex, text depth=.25ex},
+    link/.style = {font=\small\itshape}
+}
+
+\begin{tikzpicture}
+
+\node[class,ultra thick] (school)
+    {school};
+\node[class] (string) [right=of school]
+    {string};
+\node[class] (department) [above left=of school]
+    {department};
+\node[class] (program) [below left=of school]
+    {program};
+
+\draw[->,bend left]
+    (school)
+    to node[link,above] {code}
+    (string);
+\draw[->]
+    (school)
+    to node[link,above] {name}
+    (string);
+\draw[->,bend right]
+    (school)
+    to node[link,above] {campus}
+    (string);
+\draw[->]
+    (department)
+    to node[link,sloped,above] {school}
+    (school);
+\draw[->]
+    (program)
+    to node[link,sloped,above] {school}
+    (school);
+
+\end{tikzpicture}
+
+\end{document}
+

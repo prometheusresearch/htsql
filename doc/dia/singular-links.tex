@@ -1,0 +1,67 @@
+
+\documentclass{article}
+
+\include{prelude}
+
+\begin{document}
+
+\tikzset{
+    > = stealth', shorten > = 1pt, shorten < = 1pt,
+    node distance = 2.5cm and .5cm,
+    class/.style = {draw, rectangle},
+    item/.style = {fill, circle},
+    header/.style = {font=\bfseries},
+}
+
+\begin{tikzpicture}
+
+\node[item] (a1) {};
+\node[item] (a2) [right=of a1] {};
+\node[item] (a3) [right=of a2] {};
+\node[item] (a4) [right=of a3] {};
+\node[item] (a5) [right=of a4] {};
+
+\node[item] (b1) [below=of a1] {};
+\node[item] (b2) [right=of b1] {};
+\node[item] (b3) [right=of b2] {};
+\node[item] (b4) [right=of b3] {};
+\node[item] (b5) [right=of b4] {};
+
+\node[item] (c1) [right=2.5 of a5] {};
+\node[item] (c2) [right=of c1] {};
+\node[item] (c3) [right=of c2] {};
+\node[item] (c4) [right=of c3] {};
+\node[item] (c5) [right=of c4] {};
+
+\node[item] (d1) [below=of c1] {};
+\node[item] (d2) [right=of d1] {};
+\node[item] (d3) [right=of d2] {};
+\node[item] (d4) [right=of d3] {};
+\node[item] (d5) [right=of d4] {};
+
+\node[class] (A) [fit=(a1) (a2) (a3) (a4) (a5)] {};
+\node[class] (B) [fit=(b1) (b2) (b3) (b4) (b5)] {};
+\node[class] (C) [fit=(c1) (c2) (c3) (c4) (c5)] {};
+\node[class] (D) [fit=(d1) (d2) (d3) (d4) (d5)] {};
+
+\node[header] at (A.north) [above]
+    {Singular};
+\node[header] at (C.north) [above]
+    {Plural};
+
+\draw[->] (a1) to (b2);
+\draw[->] (a2) to (b3);
+\draw[->] (a3) to (b3);
+\draw[->] (a5) to (b4);
+
+\draw[->] (c1) to (d2);
+\draw[->] (c2) to (d2);
+\draw[->] (c2) to (d3);
+\draw[->] (c3) to (d3);
+\draw[->] (c5) to (d4);
+\draw[->] (c5) to (d5);
+
+\end{tikzpicture}
+
+\end{document}
+
