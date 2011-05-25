@@ -238,6 +238,8 @@ class FormatString(Format):
     def __call__(self, value):
         if value is None:
             return self.format_null()
+        if value == "":
+            return "&nbsp;"
         return cgi.escape(value)
 
 
