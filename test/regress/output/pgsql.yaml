@@ -3665,8 +3665,8 @@ tests:
         - uri: /school/:json
           status: 200 OK
           headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, attachment; filename="(school).json"]
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="(school).js"]
           body: |
             {
               "meta": [
@@ -20282,8 +20282,8 @@ tests:
         - uri: /school/:json
           status: 200 OK
           headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, attachment; filename="(school).json"]
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="(school).js"]
           body: |
             {
               "meta": [
@@ -20409,8 +20409,8 @@ tests:
         - uri: /school
           status: 200 OK
           headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, attachment; filename="(school).json"]
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="(school).js"]
           body: |
             {
               "meta": [
@@ -20529,9 +20529,9 @@ tests:
             '# of Departments'} /:json
           status: 200 OK
           headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, 'attachment; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
-              of Departments'')}).json"']
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, 'inline; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
+              of Departments'')}).js"']
           body: |
             {
               "meta": [
@@ -20656,8 +20656,8 @@ tests:
             /:json
           status: 200 OK
           headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15'')}).json"']
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, 'inline; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15'')}).js"']
           body: |
             {
               "meta": [
@@ -20758,8 +20758,8 @@ tests:
         - uri: /school?false()/:json
           status: 200 OK
           headers:
-          - [Content-Type, application/json]
-          - [Content-Disposition, 'attachment; filename="(school?false()).json"']
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, 'inline; filename="(school?false()).js"']
           body: |
             {
               "meta": [

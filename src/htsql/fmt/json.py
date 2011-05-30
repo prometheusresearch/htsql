@@ -24,9 +24,11 @@ import re
 
 class JSONRenderer(Renderer):
 
-    # Note: see `http://www.ietf.org/rfc/rfc4627.txt`.
-    name = 'application/json'
-    aliases = ['json', 'jsonex']
+    # The specification `http://www.ietf.org/rfc/rfc4627.txt` recommends
+    # `application/json`, but we use `application/javascript` to prevent
+    # the browser from opening "Save As" window.
+    name = 'application/javascript'
+    aliases = ['js', 'application/json', 'json']
 
     def render(self, product):
         status = self.generate_status(product)
@@ -40,9 +42,9 @@ class JSONRenderer(Renderer):
     def generate_headers(self, product):
         filename = str(product.profile.segment.syntax)
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
-        return [('Content-Type', 'application/json'),
+        return [('Content-Type', 'application/javascript'),
                 ('Content-Disposition',
-                 'attachment; filename="(%s).json"' % filename)]
+                 'inline; filename="(%s).js"' % filename)]
 
     def generate_body(self, product):
         titles = [escape(entitle(element.binding))
