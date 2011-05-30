@@ -104,26 +104,27 @@ HTSQL Makes Dashboarding Easy
       <div style="width: 500px; height: 350px;"
         data-htsql="/program{title, count(student)}
                     ?school_code=$school&count(student)>0"
-        data-type="pie"
-        data-widget="chart"
+        data-ref="school" data-type="pie" data-widget="chart"
         data-title="Percent of Students by Program"></div>
       <h3>Departments</h3>
       <p>Filter by name: <input id="department_name"/></p>
       <table id="department" data-hide-column-0="yes"
         data-htsql="/department{code, name, school.name}
-                    ?school_code=$school&name~$department_name">
-      </table>
+                    ?school_code=$school&name~$department_name"
+        data-ref="school department_name"></table>
       <p>
         The selected department:
-        <em data-htsql="/department{name}?code=$department"></em> <br/>
+        <em data-htsql="/department{name}?code=$department"
+            data-ref="department"></em> <br/>
         The number of courses in the selected department:
         <strong data-htsql="/department{count(course)}
-                            ?code=$department"></strong>
+                            ?code=$department"
+                data-ref="department"></strong>
       </p>
       <h3>Courses</h3>
       <table id="course" 
-        data-htsql="/course?department_code=$department">
-      </table>
+        data-htsql="/course?department_code=$department"
+        data-ref="department"></table>
       </body>
 
    .. image:: img/htraf_screenshot.png
