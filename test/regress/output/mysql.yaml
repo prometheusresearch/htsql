@@ -458,7 +458,6 @@ tests:
              | dmitchell | ms    | Deloris Mitchell   | 651-4958 | dmitchell@example.com |
              | ethompson | ms    | Ethel Thompson     | 289-5188 | ethompson@example.com |
              | ewillis   | prof  | Elizabeth Willis   | 984-5069 | ewillis@example.com   |
-             | fhaynes   | mr    | Francisco Haynes   | 408-0812 |                       |
              | gcampbell | ms    | Geraldine Campbell | 712-5302 | gcampbell@example.com |
              | gmckinley | dr    | Gerald Mckinley    | 314-7543 | gmckinley@example.com |
              | gtipton   | ms    | Guadalupe Tipton   | 140-7106 | gtipton@example.com   |
@@ -474,11 +473,9 @@ tests:
              | lkilgore  | dr    | Linda Kilgore      | 756-8485 | lkilgore@example.com  |
              | mgarza    | prof  | Marsha Garza       | 505-5067 | mgarza@example.com    |
              | mgoode    | dr    | Mamie Goode        | 645-7045 | mgoode@example.com    |
-             | mjohnson  | dr    | Marie Johnson      | 257-3375 | mjohnson@example.com  |
              | mpena     | ms    | Mabel Pena         | 628-8553 | mpena@example.com     |
              | mpowell   | ms    | Marisa Powell      | 190-6310 | mpowell@example.com   |
              | mtriplett | prof  | Michelle Triplett  | 392-6839 | mtriplett@example.com |
-             | myoung    | ms    | Margaret Young     | 557-7401 | myoung@example.com    |
              | nwagner   | ms    | Nancy Wagner       | 782-1589 | nwagner@example.com   |
              | rbeaver   | prof  | Rosa Beaver        | 734-7550 | rbeaver@example.com   |
              | rflores   | mr    | Roger Flores       | 667-1326 | rflores@example.com   |
@@ -491,7 +488,7 @@ tests:
              | vmills    | dr    | Vera Mills         | 625-0438 | vmills@example.com    |
              | wbradshaw | mr    | William Bradshaw   | 298-7463 |                       |
              | wmyers    | dr    | Whitney Myers      | 205-4208 | wmyers@example.com    |
-                                                                                 (43 rows)
+                                                                                 (40 rows)
 
              ----
              /instructor.limit(50)
@@ -522,7 +519,6 @@ tests:
              | dmitchell       | 829-19-5512 |         8 | 702-528-8778 |
              | ethompson       | 824-52-5044 |         8 | 702-943-2722 |
              | ewillis         | 560-14-7249 |         6 | 702-911-9493 |
-             | fhaynes         | 101-02-8537 |         4 | 702-637-1122 |
              | gcampbell       | 969-94-5730 |         8 |              |
              | gmckinley       | 353-65-4059 |         5 | 702-822-8615 |
              | gtipton         | 921-70-9947 |         8 | 702-919-0144 |
@@ -538,11 +534,9 @@ tests:
              | lkilgore        | 464-44-0723 |         6 | 702-715-5855 |
              | mgarza          | 715-58-5538 |         7 | 702-996-6320 |
              | mgoode          | 529-30-8798 |         6 | 702-452-0884 |
-             | mjohnson        | 544-22-0079 |         6 | 702-468-9148 |
              | mpena           | 918-77-1630 |         8 | 702-636-6581 |
              | mpowell         | 805-41-8730 |         7 | 702-649-7982 |
              | mtriplett       | 554-21-8170 |         6 | 702-271-9603 |
-             | myoung          | 880-84-2497 |         8 | 702-421-4365 |
              | nwagner         | 859-97-9666 |         8 | 702-333-0250 |
              | rbeaver         | 756-84-8573 |         7 | 702-830-4658 |
              | rflores         | 190-63-1087 |         4 | 702-318-7320 |
@@ -555,7 +549,7 @@ tests:
              | vmills          | 478-51-4422 |         6 | 702-554-2181 |
              | wbradshaw       | 112-63-7530 |         4 | 702-415-2645 |
              | wmyers          | 490-75-4651 |         6 | 702-815-1246 |
-                                                                (43 rows)
+                                                                (40 rows)
 
              ----
              /confidential.limit(50)
@@ -575,50 +569,47 @@ tests:
             -+----------------------------------------------+-
              | department_code | instructor_code | fraction |
             -+-----------------+-----------------+----------+-
-             | acc             | gcampbell       |     1.00 |
-             | acc             | mgoode          |     1.00 |
-             | arthis          | hhumphrey       |     1.00 |
-             | arthis          | mgarza          |     1.00 |
-             | astro           | rflores         |     1.00 |
-             | astro           | vbarber         |     1.00 |
-             | be              | sjackson        |     1.00 |
-             | be              | wbradshaw       |     1.00 |
-             | capmrk          | jfreeman        |     1.00 |
-             | capmrk          | mpena           |     1.00 |
-             | chem            | jreeves         |     1.00 |
-             | chem            | ljames          |     1.00 |
+             | acc             | nwagner         |     1.00 |
+             | acc             | tshepherd       |     1.00 |
+             | arthis          | csilva          |     1.00 |
+             | arthis          | vmills          |     1.00 |
+             | astro           | ewillis         |     1.00 |
+             | astro           | lkilgore        |     1.00 |
+             | be              | dbuckley        |     1.00 |
+             | be              | mpowell         |     1.00 |
+             | capmrk          | cbutler         |     1.00 |
+             | capmrk          | slee            |     1.00 |
+             | chem            | jbelanger       |     1.00 |
+             | chem            | mtriplett       |     1.00 |
              | comp            | arobinson       |     1.00 |
              | comp            | gmckinley       |     0.50 |
-             | comp            | jjackson        |     1.00 |
-             | corpfi          | gwhite          |          |
-             | corpfi          | rbeaver         |     1.00 |
-             | edpol           | cmoran          |     1.00 |
-             | edpol           | fhaynes         |     1.00 |
-             | ee              | jbelanger       |     1.00 |
-             | ee              | mtriplett       |     1.00 |
-             | eng             | cbutler         |     1.00 |
-             | eng             | dbuckley        |     1.00 |
-             | eng             | slee            |     1.00 |
-             | hist            | csilva          |     1.00 |
-             | hist            | vmills          |     1.00 |
-             | lang            | nwagner         |     1.00 |
-             | lang            | tshepherd       |     1.00 |
+             | corpfi          | jfreeman        |     1.00 |
+             | corpfi          | jjackson        |     1.00 |
+             | edpol           | cfriedman       |     0.50 |
+             | edpol           | mpena           |     1.00 |
+             | ee              | bdoyle          |     1.00 |
+             | ee              | dmitchell       |     1.00 |
+             | eng             | gwhite          |          |
+             | eng             | rbeaver         |     1.00 |
+             | hist            | hhumphrey       |     1.00 |
+             | hist            | mgarza          |     1.00 |
+             | lang            | rflores         |     1.00 |
+             | lang            | vbarber         |     1.00 |
              | me              | sfrost          |     1.00 |
              | me              | wmyers          |     0.50 |
              | mth             | gtipton         |     0.50 |
-             | phys            | ewillis         |     1.00 |
-             | phys            | lkilgore        |     1.00 |
-             | phys            | mpowell         |     1.00 |
-             | poli            | mjohnson        |     1.00 |
-             | poli            | myoung          |     1.00 |
-             | psych           | hchapman        |     1.00 |
-             | psych           | rmejia          |     1.00 |
-             | stdart          | bdoyle          |     1.00 |
-             | stdart          | cfriedman       |     0.50 |
-             | stdart          | dmitchell       |     1.00 |
-             | tched           | ethompson       |     1.00 |
-             | tched           | jmcgrath        |     1.00 |
-                                                    (43 rows)
+             | phys            | gcampbell       |     1.00 |
+             | phys            | mgoode          |     1.00 |
+             | phys            | rmejia          |     1.00 |
+             | poli            | ethompson       |     1.00 |
+             | poli            | hchapman        |     1.00 |
+             | psych           | jmcgrath        |     1.00 |
+             | psych           | wbradshaw       |     1.00 |
+             | stdart          | jreeves         |     1.00 |
+             | stdart          | sjackson        |     1.00 |
+             | tched           | cmoran          |     1.00 |
+             | tched           | ljames          |     1.00 |
+                                                    (40 rows)
 
              ----
              /appointment.limit(50)
@@ -674,56 +665,56 @@ tests:
             -+-------------------------------------------------------------------------------------+-
              | department_code | course_no | year | season | section | instructor_code | class_seq |
             -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
-             | acc             |       100 | 2007 | fall   | 001     | mgoode          |      1745 |
-             | acc             |       100 | 2007 | spring | 001     | mgoode          |      1746 |
-             | acc             |       100 | 2008 | fall   | 001     | mgoode          |      1747 |
-             | acc             |       100 | 2008 | spring | 001     | mgoode          |      1748 |
-             | acc             |       100 | 2009 | fall   | 001     | mgoode          |      1749 |
-             | acc             |       100 | 2009 | spring | 001     | mgoode          |      1750 |
-             | acc             |       100 | 2010 | fall   | 001     | mgoode          |      1751 |
-             | acc             |       100 | 2010 | spring | 001     | mgoode          |      1752 |
-             | acc             |       200 | 2007 | fall   | 001     | gcampbell       |      1705 |
-             | acc             |       200 | 2007 | spring | 001     | gcampbell       |      1706 |
-             | acc             |       200 | 2008 | fall   | 001     | gcampbell       |      1707 |
-             | acc             |       200 | 2008 | spring | 001     | gcampbell       |      1708 |
-             | acc             |       200 | 2009 | fall   | 001     | gcampbell       |      1709 |
-             | acc             |       200 | 2009 | spring | 001     | gcampbell       |      1710 |
-             | acc             |       200 | 2010 | fall   | 001     | gcampbell       |      1711 |
-             | acc             |       200 | 2010 | spring | 001     | gcampbell       |      1712 |
-             | acc             |       315 | 2007 | fall   | 001     | mgoode          |      1737 |
-             | acc             |       315 | 2007 | spring | 001     | mgoode          |      1738 |
-             | acc             |       315 | 2008 | fall   | 001     | mgoode          |      1739 |
-             | acc             |       315 | 2008 | spring | 001     |                 |      1740 |
-             | acc             |       315 | 2009 | fall   | 001     |                 |      1741 |
-             | acc             |       315 | 2009 | spring | 001     | mgoode          |      1742 |
-             | acc             |       315 | 2010 | fall   | 001     | mgoode          |      1743 |
-             | acc             |       315 | 2010 | spring | 001     | mgoode          |      1744 |
-             | acc             |       426 | 2007 | fall   | 001     | gcampbell       |      1713 |
-             | acc             |       426 | 2007 | spring | 001     | gcampbell       |      1714 |
-             | acc             |       426 | 2008 | fall   | 001     | gcampbell       |      1715 |
-             | acc             |       426 | 2008 | spring | 001     | gcampbell       |      1716 |
-             | acc             |       426 | 2009 | fall   | 001     | gcampbell       |      1717 |
-             | acc             |       426 | 2009 | spring | 001     | gcampbell       |      1718 |
-             | acc             |       426 | 2010 | fall   | 001     | gcampbell       |      1719 |
-             | acc             |       426 | 2010 | spring | 001     | gcampbell       |      1720 |
-             | acc             |       527 | 2007 | fall   | 001     | mgoode          |      1729 |
-             | acc             |       527 | 2007 | spring | 001     | mgoode          |      1730 |
-             | acc             |       527 | 2008 | fall   | 001     | mgoode          |      1731 |
-             | acc             |       527 | 2008 | spring | 001     | mgoode          |      1732 |
-             | acc             |       527 | 2009 | fall   | 001     | mgoode          |      1733 |
-             | acc             |       527 | 2009 | spring | 001     | mgoode          |      1734 |
-             | acc             |       527 | 2010 | fall   | 001     | mgoode          |      1735 |
-             | acc             |       527 | 2010 | spring | 001     | mgoode          |      1736 |
-             | acc             |       606 | 2007 | fall   | 001     | gcampbell       |      1721 |
-             | acc             |       606 | 2007 | spring | 001     |                 |      1722 |
-             | acc             |       606 | 2008 | fall   | 001     | gcampbell       |      1723 |
-             | acc             |       606 | 2008 | spring | 001     |                 |      1724 |
-             | acc             |       606 | 2009 | fall   | 001     | gcampbell       |      1725 |
-             | acc             |       606 | 2009 | spring | 001     | gcampbell       |      1726 |
-             | acc             |       606 | 2010 | fall   | 001     | gcampbell       |      1727 |
-             | acc             |       606 | 2010 | spring | 001     | gcampbell       |      1728 |
-             | arthis          |       202 | 2007 | fall   | 001     | hhumphrey       |      1417 |
-             | arthis          |       202 | 2007 | spring | 001     | hhumphrey       |      1418 |
+             | acc             |       100 | 2007 | fall   | 001     | tshepherd       |      1025 |
+             | acc             |       100 | 2007 | spring | 001     | tshepherd       |      1026 |
+             | acc             |       100 | 2008 | fall   | 001     | tshepherd       |      1027 |
+             | acc             |       100 | 2008 | spring | 001     | tshepherd       |      1028 |
+             | acc             |       100 | 2009 | fall   | 001     | tshepherd       |      1029 |
+             | acc             |       100 | 2009 | spring | 001     | tshepherd       |      1030 |
+             | acc             |       100 | 2010 | fall   | 001     | tshepherd       |      1031 |
+             | acc             |       200 | 2007 | fall   | 001     | nwagner         |      1017 |
+             | acc             |       200 | 2007 | spring | 001     | nwagner         |      1018 |
+             | acc             |       200 | 2008 | fall   | 001     | nwagner         |      1019 |
+             | acc             |       200 | 2008 | spring | 001     | nwagner         |      1020 |
+             | acc             |       200 | 2009 | fall   | 001     | nwagner         |      1021 |
+             | acc             |       200 | 2009 | spring | 001     | nwagner         |      1022 |
+             | acc             |       200 | 2010 | fall   | 001     | nwagner         |      1023 |
+             | acc             |       200 | 2010 | spring | 001     | nwagner         |      1024 |
+             | acc             |       315 | 2007 | fall   | 001     | tshepherd       |      1039 |
+             | acc             |       315 | 2007 | spring | 001     | tshepherd       |      1040 |
+             | acc             |       315 | 2008 | fall   | 001     |                 |      1041 |
+             | acc             |       315 | 2008 | spring | 001     | tshepherd       |      1042 |
+             | acc             |       315 | 2009 | fall   | 001     | tshepherd       |      1043 |
+             | acc             |       315 | 2009 | spring | 001     | tshepherd       |      1044 |
+             | acc             |       315 | 2010 | fall   | 001     | tshepherd       |      1045 |
+             | acc             |       315 | 2010 | spring | 001     | tshepherd       |      1046 |
+             | acc             |       426 | 2007 | fall   | 001     | nwagner         |      1009 |
+             | acc             |       426 | 2007 | spring | 001     | nwagner         |      1010 |
+             | acc             |       426 | 2008 | fall   | 001     | nwagner         |      1011 |
+             | acc             |       426 | 2008 | spring | 001     | nwagner         |      1012 |
+             | acc             |       426 | 2009 | fall   | 001     | nwagner         |      1013 |
+             | acc             |       426 | 2009 | spring | 001     | nwagner         |      1014 |
+             | acc             |       426 | 2010 | fall   | 001     | nwagner         |      1015 |
+             | acc             |       426 | 2010 | spring | 001     | nwagner         |      1016 |
+             | acc             |       527 | 2007 | fall   | 001     | tshepherd       |      1032 |
+             | acc             |       527 | 2007 | spring | 001     | tshepherd       |      1033 |
+             | acc             |       527 | 2008 | fall   | 001     | tshepherd       |      1034 |
+             | acc             |       527 | 2009 | fall   | 001     | tshepherd       |      1035 |
+             | acc             |       527 | 2009 | spring | 001     |                 |      1036 |
+             | acc             |       527 | 2010 | fall   | 001     | tshepherd       |      1037 |
+             | acc             |       527 | 2010 | spring | 001     | tshepherd       |      1038 |
+             | acc             |       606 | 2007 | fall   | 001     | nwagner         |      1001 |
+             | acc             |       606 | 2007 | spring | 001     | nwagner         |      1002 |
+             | acc             |       606 | 2008 | fall   | 001     | nwagner         |      1003 |
+             | acc             |       606 | 2008 | spring | 001     | nwagner         |      1004 |
+             | acc             |       606 | 2009 | fall   | 001     | nwagner         |      1005 |
+             | acc             |       606 | 2009 | spring | 001     | nwagner         |      1006 |
+             | acc             |       606 | 2010 | fall   | 001     | nwagner         |      1007 |
+             | acc             |       606 | 2010 | spring | 001     | nwagner         |      1008 |
+             | arthis          |       202 | 2007 | fall   | 001     | csilva          |      1087 |
+             | arthis          |       202 | 2007 | spring | 001     | csilva          |      1088 |
+             | arthis          |       202 | 2008 | fall   | 001     | csilva          |      1089 |
+             | arthis          |       202 | 2008 | spring | 001     | csilva          |      1090 |
                                                                                            (50 rows)
 
              ----
@@ -821,56 +812,56 @@ tests:
             -+-----------------------------------------+-
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
-             |       1001 |      1008 | ngr    |  2.30 |
-             |       1001 |      1016 | inc    |       |
-             |       1001 |      1029 | enr    |  3.80 |
-             |       1001 |      1044 | inc    |  2.50 |
-             |       1001 |      1051 | ngr    |  0.10 |
-             |       1001 |      1061 | inc    |  2.00 |
-             |       1001 |      1078 | inc    |  4.00 |
-             |       1001 |      1091 | ngr    |  2.30 |
-             |       1001 |      1099 | ngr    |  1.90 |
-             |       1001 |      1116 | inc    |  0.90 |
-             |       1001 |      1128 | inc    |  1.20 |
-             |       1001 |      1129 | enr    |  4.00 |
-             |       1001 |      1152 | inc    |  1.00 |
-             |       1001 |      1166 | inc    |  4.00 |
-             |       1001 |      1175 | inc    |  3.30 |
-             |       1001 |      1177 | ngr    |  1.30 |
-             |       1001 |      1194 | inc    |  1.90 |
-             |       1001 |      1207 | enr    |  3.70 |
-             |       1001 |      1218 | ngr    |  2.00 |
-             |       1001 |      1228 | enr    |  0.80 |
-             |       1001 |      1235 | ngr    |  1.90 |
-             |       1001 |      1271 | ngr    |  2.90 |
-             |       1001 |      1276 | enr    |  0.00 |
-             |       1001 |      1302 | inc    |  1.90 |
-             |       1001 |      1316 | inc    |  2.90 |
-             |       1001 |      1321 | inc    |  3.40 |
-             |       1001 |      1346 | enr    |  3.50 |
-             |       1001 |      1375 | ngr    |  1.90 |
-             |       1001 |      1381 | inc    |  4.00 |
-             |       1001 |      1388 | ngr    |  1.90 |
-             |       1001 |      1405 | ngr    |  1.70 |
-             |       1001 |      1471 | ngr    |  3.90 |
-             |       1001 |      1488 | inc    |  3.60 |
-             |       1001 |      1498 | ngr    |  1.10 |
-             |       1001 |      1505 | enr    |  1.70 |
-             |       1001 |      1526 | inc    |  4.00 |
-             |       1001 |      1549 | enr    |  2.90 |
-             |       1001 |      1558 | enr    |  2.70 |
-             |       1001 |      1566 | enr    |  1.90 |
-             |       1001 |      1570 | inc    |  3.80 |
-             |       1001 |      1591 | ngr    |  1.20 |
-             |       1001 |      1593 | inc    |  3.20 |
-             |       1001 |      1605 | ngr    |  0.70 |
-             |       1001 |      1609 | enr    |  2.00 |
-             |       1001 |      1621 | enr    |  0.00 |
-             |       1001 |      1625 | inc    |  2.60 |
-             |       1001 |      1638 | ngr    |  3.70 |
-             |       1001 |      1649 | inc    |  3.50 |
-             |       1001 |      1664 | ngr    |  0.40 |
-             |       1001 |      1691 | enr    |  1.10 |
+             |       1001 |      1013 | enr    |  2.30 |
+             |       1001 |      1020 | ngr    |  3.40 |
+             |       1001 |      1029 | enr    |  2.60 |
+             |       1001 |      1048 | enr    |  3.70 |
+             |       1001 |      1086 | ngr    |  1.60 |
+             |       1001 |      1089 | enr    |  3.00 |
+             |       1001 |      1101 | ngr    |  2.10 |
+             |       1001 |      1107 | ngr    |  4.00 |
+             |       1001 |      1114 | ngr    |  2.90 |
+             |       1001 |      1116 | inc    |  2.70 |
+             |       1001 |      1131 | inc    |  3.50 |
+             |       1001 |      1142 | ngr    |  0.90 |
+             |       1001 |      1165 | enr    |  3.20 |
+             |       1001 |      1168 | inc    |  2.80 |
+             |       1001 |      1179 | enr    |  2.00 |
+             |       1001 |      1188 | inc    |  2.90 |
+             |       1001 |      1224 | ngr    |  0.70 |
+             |       1001 |      1234 | ngr    |  1.90 |
+             |       1001 |      1259 | inc    |  3.20 |
+             |       1001 |      1270 | ngr    |  1.40 |
+             |       1001 |      1283 | enr    |  2.70 |
+             |       1001 |      1287 | inc    |  2.00 |
+             |       1001 |      1299 | ngr    |  1.20 |
+             |       1001 |      1306 | enr    |  1.70 |
+             |       1001 |      1309 | ngr    |  2.60 |
+             |       1001 |      1324 | enr    |  3.50 |
+             |       1001 |      1338 | inc    |  3.40 |
+             |       1001 |      1342 | ngr    |  0.70 |
+             |       1001 |      1350 | inc    |  0.60 |
+             |       1001 |      1375 | ngr    |  3.80 |
+             |       1001 |      1379 | enr    |       |
+             |       1001 |      1381 | ngr    |  2.30 |
+             |       1001 |      1426 | ngr    |  1.80 |
+             |       1001 |      1434 | enr    |  1.40 |
+             |       1001 |      1438 | ngr    |  3.10 |
+             |       1001 |      1442 | enr    |  2.60 |
+             |       1001 |      1456 | ngr    |  2.30 |
+             |       1001 |      1464 | enr    |  1.70 |
+             |       1001 |      1474 | enr    |  2.40 |
+             |       1001 |      1483 | ngr    |  4.00 |
+             |       1001 |      1488 | enr    |  3.50 |
+             |       1001 |      1502 | ngr    |  2.80 |
+             |       1001 |      1508 | inc    |  4.00 |
+             |       1001 |      1527 | enr    |  1.70 |
+             |       1001 |      1547 | enr    |  3.90 |
+             |       1001 |      1553 | enr    |  1.50 |
+             |       1001 |      1570 | ngr    |  2.60 |
+             |       1001 |      1581 | enr    |  1.90 |
+             |       1001 |      1587 | inc    |  4.00 |
+             |       1001 |      1594 | ngr    |  2.90 |
                                                (50 rows)
 
              ----
@@ -1455,8 +1446,8 @@ tests:
             -+----------------------------------------------+-
              | department_code | instructor_code | fraction |
             -+-----------------+-----------------+----------+-
-             | ee              | jbelanger       |     1.00 |
-             | ee              | mtriplett       |     1.00 |
+             | ee              | bdoyle          |     1.00 |
+             | ee              | dmitchell       |     1.00 |
                                                      (2 rows)
 
              ----
@@ -1699,14 +1690,14 @@ tests:
             -+-------------------------------------------------------------------------------------+-
              | department_code | course_no | year | season | section | instructor_code | class_seq |
             -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
-             | eng             |       276 | 2007 | fall   | 001     | dbuckley        |      1169 |
-             | eng             |       276 | 2007 | spring | 001     |                 |      1170 |
-             | eng             |       276 | 2008 | fall   | 001     | dbuckley        |      1171 |
-             | eng             |       276 | 2008 | spring | 001     | dbuckley        |      1172 |
-             | eng             |       276 | 2009 | fall   | 001     |                 |      1173 |
-             | eng             |       276 | 2009 | spring | 001     | dbuckley        |      1174 |
-             | eng             |       276 | 2010 | fall   | 001     | dbuckley        |      1175 |
-             | eng             |       276 | 2010 | spring | 001     | dbuckley        |      1176 |
+             | eng             |       276 | 2007 | fall   | 001     | rbeaver         |      1360 |
+             | eng             |       276 | 2007 | spring | 001     | rbeaver         |      1361 |
+             | eng             |       276 | 2008 | fall   | 001     | rbeaver         |      1362 |
+             | eng             |       276 | 2008 | spring | 001     | rbeaver         |      1363 |
+             | eng             |       276 | 2009 | fall   | 001     | rbeaver         |      1364 |
+             | eng             |       276 | 2009 | spring | 001     | rbeaver         |      1365 |
+             | eng             |       276 | 2010 | fall   | 001     | rbeaver         |      1366 |
+             | eng             |       276 | 2010 | spring | 001     | rbeaver         |      1367 |
                                                                                             (8 rows)
 
              ----
@@ -1811,7 +1802,7 @@ tests:
              WHERE (`course`.`department_code` = 'eng')
                    AND (`course`.`no` = 276)
              ORDER BY `course`.`department_code` ASC, `course`.`no` ASC, 1 ASC, 2 ASC, 3 ASC
-        - uri: /(instructor?code='arobinson').confidential
+        - uri: /(instructor?code='jfreeman').confidential
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -1820,11 +1811,11 @@ tests:
             -+----------------------------------------------------------+-
              | instructor_code | SSN         | pay_grade | home_phone   |
             -+-----------------+-------------+-----------+--------------+-
-             | arobinson       | 780-22-3783 |         7 | 702-557-1465 |
+             | jfreeman        | 325-45-5707 |         5 | 702-967-4546 |
                                                                   (1 row)
 
              ----
-             /(instructor?code='arobinson').confidential
+             /(instructor?code='jfreeman').confidential
              SELECT `confidential`.`instructor_code`,
                     `confidential`.`SSN`,
                     `confidential`.`pay_grade`,
@@ -1832,9 +1823,9 @@ tests:
              FROM `htsql_regress`.`instructor` AS `instructor`
                   INNER JOIN `htsql_regress`.`confidential` AS `confidential`
                              ON (`instructor`.`code` = `confidential`.`instructor_code`)
-             WHERE (`instructor`.`code` = 'arobinson')
+             WHERE (`instructor`.`code` = 'jfreeman')
              ORDER BY `instructor`.`code` ASC
-        - uri: /(instructor?code='arobinson').appointment
+        - uri: /(instructor?code='jfreeman').appointment
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -1843,20 +1834,20 @@ tests:
             -+----------------------------------------------+-
              | department_code | instructor_code | fraction |
             -+-----------------+-----------------+----------+-
-             | comp            | arobinson       |     1.00 |
+             | corpfi          | jfreeman        |     1.00 |
                                                       (1 row)
 
              ----
-             /(instructor?code='arobinson').appointment
+             /(instructor?code='jfreeman').appointment
              SELECT `appointment`.`department_code`,
                     `appointment`.`instructor_code`,
                     `appointment`.`fraction`
              FROM `htsql_regress`.`instructor` AS `instructor`
                   INNER JOIN `htsql_regress`.`appointment` AS `appointment`
                              ON (`instructor`.`code` = `appointment`.`instructor_code`)
-             WHERE (`instructor`.`code` = 'arobinson')
+             WHERE (`instructor`.`code` = 'jfreeman')
              ORDER BY `instructor`.`code` ASC, 1 ASC, 2 ASC
-        - uri: /(instructor?code='arobinson').class
+        - uri: /(instructor?code='jfreeman').class
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -1865,18 +1856,17 @@ tests:
             -+-------------------------------------------------------------------------------------+-
              | department_code | course_no | year | season | section | instructor_code | class_seq |
             -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
-             | comp            |       810 | 2007 | fall   | 001     | arobinson       |      1297 |
-             | comp            |       810 | 2007 | spring | 001     | arobinson       |      1298 |
-             | comp            |       810 | 2008 | fall   | 001     | arobinson       |      1299 |
-             | comp            |       810 | 2008 | spring | 001     | arobinson       |      1300 |
-             | comp            |       810 | 2009 | fall   | 001     | arobinson       |      1301 |
-             | comp            |       810 | 2009 | spring | 001     | arobinson       |      1302 |
-             | comp            |       810 | 2010 | fall   | 001     | arobinson       |      1303 |
-             | comp            |       810 | 2010 | spring | 001     | arobinson       |      1304 |
-                                                                                            (8 rows)
+             | corpfi          |       404 | 2007 | fall   | 001     | jfreeman        |      1261 |
+             | corpfi          |       404 | 2007 | spring | 001     | jfreeman        |      1262 |
+             | corpfi          |       404 | 2008 | fall   | 001     | jfreeman        |      1263 |
+             | corpfi          |       404 | 2008 | spring | 001     | jfreeman        |      1264 |
+             | corpfi          |       404 | 2009 | fall   | 001     | jfreeman        |      1265 |
+             | corpfi          |       404 | 2009 | spring | 001     | jfreeman        |      1266 |
+             | corpfi          |       404 | 2010 | spring | 001     | jfreeman        |      1268 |
+                                                                                            (7 rows)
 
              ----
-             /(instructor?code='arobinson').class
+             /(instructor?code='jfreeman').class
              SELECT `class`.`department_code`,
                     `class`.`course_no`,
                     `class`.`year`,
@@ -1887,7 +1877,7 @@ tests:
              FROM `htsql_regress`.`instructor` AS `instructor`
                   INNER JOIN `htsql_regress`.`class` AS `class`
                              ON (`instructor`.`code` = `class`.`instructor_code`)
-             WHERE (`instructor`.`code` = 'arobinson')
+             WHERE (`instructor`.`code` = 'jfreeman')
              ORDER BY `instructor`.`code` ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC, 5 ASC
         - uri: /(confidential?instructor_code='bdoyle').instructor
           status: 200 OK
@@ -1913,30 +1903,30 @@ tests:
                              ON (`confidential`.`instructor_code` = `instructor`.`code`)
              WHERE (`confidential`.`instructor_code` = 'bdoyle')
              ORDER BY `confidential`.`instructor_code` ASC
-        - uri: /(appointment?department_code='eng' &instructor_code='cbutler').department
+        - uri: /(appointment?department_code='capmrk' &instructor_code='cbutler').department
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department                   |
-            -+------------------------------+-
-             | code | name    | school_code |
-            -+------+---------+-------------+-
-             | eng  | English | la          |
-                                      (1 row)
+             | department                             |
+            -+----------------------------------------+-
+             | code   | name            | school_code |
+            -+--------+-----------------+-------------+-
+             | capmrk | Capital Markets | bus         |
+                                                (1 row)
 
              ----
-             /(appointment?department_code='eng'&instructor_code='cbutler').department
+             /(appointment?department_code='capmrk'&instructor_code='cbutler').department
              SELECT `department`.`code`,
                     `department`.`name`,
                     `department`.`school_code`
              FROM `htsql_regress`.`appointment` AS `appointment`
                   INNER JOIN `htsql_regress`.`department` AS `department`
                              ON (`appointment`.`department_code` = `department`.`code`)
-             WHERE (`appointment`.`department_code` = 'eng')
+             WHERE (`appointment`.`department_code` = 'capmrk')
                    AND (`appointment`.`instructor_code` = 'cbutler')
              ORDER BY `appointment`.`department_code` ASC, `appointment`.`instructor_code` ASC
-        - uri: /(appointment?department_code='eng' &instructor_code='cbutler').instructor
+        - uri: /(appointment?department_code='capmrk' &instructor_code='cbutler').instructor
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -1949,7 +1939,7 @@ tests:
                                                                          (1 row)
 
              ----
-             /(appointment?department_code='eng'&instructor_code='cbutler').instructor
+             /(appointment?department_code='capmrk'&instructor_code='cbutler').instructor
              SELECT `instructor`.`code`,
                     `instructor`.`title`,
                     `instructor`.`full_name`,
@@ -1958,7 +1948,7 @@ tests:
              FROM `htsql_regress`.`appointment` AS `appointment`
                   INNER JOIN `htsql_regress`.`instructor` AS `instructor`
                              ON (`appointment`.`instructor_code` = `instructor`.`code`)
-             WHERE (`appointment`.`department_code` = 'eng')
+             WHERE (`appointment`.`department_code` = 'capmrk')
                    AND (`appointment`.`instructor_code` = 'cbutler')
              ORDER BY `appointment`.`department_code` ASC, `appointment`.`instructor_code` ASC
         - uri: /(semester?year=2010&season='fall').class.limit(50)
@@ -1970,56 +1960,56 @@ tests:
             -+-------------------------------------------------------------------------------------+-
              | department_code | course_no | year | season | section | instructor_code | class_seq |
             -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
-             | acc             |       100 | 2010 | fall   | 001     | mgoode          |      1751 |
-             | acc             |       200 | 2010 | fall   | 001     | gcampbell       |      1711 |
-             | acc             |       315 | 2010 | fall   | 001     | mgoode          |      1743 |
-             | acc             |       426 | 2010 | fall   | 001     | gcampbell       |      1719 |
-             | acc             |       527 | 2010 | fall   | 001     | mgoode          |      1735 |
-             | acc             |       606 | 2010 | fall   | 001     | gcampbell       |      1727 |
-             | arthis          |       202 | 2010 | fall   | 001     | hhumphrey       |      1423 |
-             | arthis          |       340 | 2010 | fall   | 001     | mgarza          |      1447 |
-             | arthis          |       623 | 2010 | fall   | 001     | mgarza          |      1455 |
-             | arthis          |       710 | 2010 | fall   | 001     | hhumphrey       |      1439 |
-             | arthis          |       712 | 2010 | fall   | 001     | mgarza          |      1463 |
-             | arthis          |       809 | 2010 | fall   | 001     | hhumphrey       |      1431 |
-             | astro           |       137 | 2010 | fall   | 001     | vbarber         |      1055 |
-             | astro           |       142 | 2010 | fall   | 001     | vbarber         |      1047 |
-             | astro           |       155 | 2010 | fall   | 001     | rflores         |      1071 |
-             | astro           |       254 | 2010 | fall   | 001     | rflores         |      1063 |
-             | be              |       112 | 2010 | fall   | 001     | sjackson        |      1655 |
-             | be              |       308 | 2010 | fall   | 001     | sjackson        |      1663 |
-             | be              |       415 | 2010 | fall   | 001     | wbradshaw       |      1647 |
-             | be              |       509 | 2010 | fall   | 001     | wbradshaw       |      1639 |
-             | capmrk          |       712 | 2010 | fall   | 001     | mpena           |      1335 |
-             | capmrk          |       756 | 2010 | fall   | 001     | mpena           |      1327 |
-             | capmrk          |       808 | 2010 | fall   | 001     | jfreeman        |      1319 |
-             | capmrk          |       818 | 2010 | fall   | 001     |                 |      1311 |
-             | chem            |       100 | 2010 | fall   | 001     | ljames          |      1103 |
-             | chem            |       110 | 2010 | fall   | 001     | jreeves         |      1079 |
-             | chem            |       115 | 2010 | fall   | 001     | jreeves         |      1087 |
-             | chem            |       314 | 2010 | fall   | 001     | ljames          |      1111 |
-             | chem            |       655 | 2010 | fall   | 001     | jreeves         |      1095 |
-             | comp            |       102 | 2010 | fall   | 001     | gmckinley       |      1295 |
-             | comp            |       230 | 2010 | fall   | 001     | gmckinley       |      1255 |
-             | comp            |       350 | 2010 | fall   | 001     | gmckinley       |      1271 |
-             | comp            |       615 | 2010 | fall   | 001     | gmckinley       |      1279 |
-             | comp            |       710 | 2010 | fall   | 001     | gmckinley       |      1287 |
-             | comp            |       810 | 2010 | fall   | 001     | arobinson       |      1303 |
-             | comp            |       819 | 2010 | fall   | 001     | gmckinley       |      1263 |
-             | corpfi          |       234 | 2010 | fall   | 001     | rbeaver         |      1399 |
-             | corpfi          |       404 | 2010 | fall   | 001     | rbeaver         |      1407 |
-             | corpfi          |       601 | 2010 | fall   | 001     | rbeaver         |      1415 |
-             | edpol           |       202 | 2010 | fall   | 001     | fhaynes         |      1623 |
-             | edpol           |       313 | 2010 | fall   | 001     | cmoran          |      1607 |
-             | edpol           |       505 | 2010 | fall   | 001     | cmoran          |      1615 |
-             | edpol           |       551 | 2010 | fall   | 001     | fhaynes         |      1631 |
-             | edpol           |       617 | 2010 | fall   | 001     | cmoran          |      1599 |
-             | ee              |       107 | 2010 | fall   | 001     | jbelanger       |      1231 |
-             | ee              |       202 | 2010 | fall   | 001     | mtriplett       |      1239 |
-             | ee              |       412 | 2010 | fall   | 001     | mtriplett       |      1247 |
-             | ee              |       505 | 2010 | fall   | 001     | jbelanger       |      1215 |
-             | ee              |       615 | 2010 | fall   | 001     | jbelanger       |      1223 |
-             | eng             |       101 | 2010 | fall   | 001     | dbuckley        |      1167 |
+             | acc             |       100 | 2010 | fall   | 001     | tshepherd       |      1031 |
+             | acc             |       200 | 2010 | fall   | 001     | nwagner         |      1023 |
+             | acc             |       315 | 2010 | fall   | 001     | tshepherd       |      1045 |
+             | acc             |       426 | 2010 | fall   | 001     | nwagner         |      1015 |
+             | acc             |       527 | 2010 | fall   | 001     | tshepherd       |      1037 |
+             | acc             |       606 | 2010 | fall   | 001     | nwagner         |      1007 |
+             | arthis          |       202 | 2010 | fall   | 001     | csilva          |      1093 |
+             | arthis          |       340 | 2010 | fall   | 001     | vmills          |      1061 |
+             | arthis          |       623 | 2010 | fall   | 001     | vmills          |      1069 |
+             | arthis          |       710 | 2010 | fall   | 001     | csilva          |      1077 |
+             | arthis          |       712 | 2010 | fall   | 001     | vmills          |      1053 |
+             | arthis          |       809 | 2010 | fall   | 001     | csilva          |      1085 |
+             | astro           |       137 | 2010 | fall   | 001     | lkilgore        |      1115 |
+             | astro           |       142 | 2010 | fall   | 001     | ewillis         |      1100 |
+             | astro           |       155 | 2010 | fall   | 001     | lkilgore        |      1110 |
+             | be              |       308 | 2010 | fall   | 001     | dbuckley        |      1137 |
+             | be              |       415 | 2010 | fall   | 001     | mpowell         |      1129 |
+             | be              |       509 | 2010 | fall   | 001     | mpowell         |      1121 |
+             | capmrk          |       712 | 2010 | fall   | 001     | cbutler         |      1173 |
+             | capmrk          |       756 | 2010 | fall   | 001     | slee            |      1151 |
+             | capmrk          |       818 | 2010 | fall   | 001     | slee            |      1158 |
+             | chem            |       100 | 2010 | fall   | 001     | jbelanger       |      1188 |
+             | chem            |       110 | 2010 | fall   | 001     | mtriplett       |      1204 |
+             | chem            |       115 | 2010 | fall   | 001     | jbelanger       |      1181 |
+             | chem            |       314 | 2010 | fall   | 001     | jbelanger       |      1193 |
+             | comp            |       102 | 2010 | fall   | 001     | gmckinley       |      1248 |
+             | comp            |       230 | 2010 | fall   | 001     | gmckinley       |      1225 |
+             | comp            |       615 | 2010 | fall   | 001     | gmckinley       |      1240 |
+             | comp            |       710 | 2010 | fall   | 001     | gmckinley       |      1232 |
+             | comp            |       810 | 2010 | fall   | 001     | gmckinley       |      1218 |
+             | corpfi          |       234 | 2010 | fall   | 001     | jjackson        |      1259 |
+             | corpfi          |       404 | 2010 | fall   | 001     |                 |      1267 |
+             | corpfi          |       601 | 2010 | fall   | 001     | jjackson        |      1252 |
+             | edpol           |       202 | 2010 | fall   | 001     | mpena           |      1275 |
+             | edpol           |       313 | 2010 | fall   | 001     | cfriedman       |      1295 |
+             | edpol           |       505 | 2010 | fall   | 001     | mpena           |      1282 |
+             | edpol           |       551 | 2010 | fall   | 001     | mpena           |      1271 |
+             | edpol           |       617 | 2010 | fall   | 001     | cfriedman       |      1290 |
+             | ee              |       107 | 2010 | fall   | 001     | dmitchell       |      1315 |
+             | ee              |       412 | 2010 | fall   | 001     | bdoyle          |      1328 |
+             | ee              |       505 | 2010 | fall   | 001     | bdoyle          |      1323 |
+             | ee              |       615 | 2010 | fall   | 001     | dmitchell       |      1307 |
+             | eng             |       175 | 2010 | fall   | 001     | rbeaver         |      1346 |
+             | eng             |       247 | 2010 | fall   | 001     | rbeaver         |      1358 |
+             | eng             |       276 | 2010 | fall   | 001     | rbeaver         |      1366 |
+             | eng             |       311 | 2010 | fall   | 001     | rbeaver         |      1340 |
+             | eng             |       412 | 2010 | fall   | 001     | rbeaver         |      1335 |
+             | hist            |       112 | 2010 | fall   | 001     | hhumphrey       |      1379 |
+             | hist            |       212 | 2010 | fall   | 001     | mgarza          |      1400 |
+             | hist            |       333 | 2010 | fall   | 001     | hhumphrey       |      1386 |
                                                                                            (50 rows)
 
              ----
@@ -2043,18 +2033,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course                                                                                          |
-            -+-------------------------------------------------------------------------------------------------+-
-             | department_code | no  | title                      | credits | description                      |
-            -+-----------------+-----+----------------------------+---------+----------------------------------+-
-             | lang            | 304 | Spanish Conversation Group |       2 | Informal weekly conversation     |
-             :                 :     :                            :         : group designed to improve        :
-             :                 :     :                            :         : understanding of spoken Spanish. :
-             :                 :     :                            :         : Suitable for both majors and     :
-             :                 :     :                            :         : casual speakers who wish to      :
-             :                 :     :                            :         : improve their skills for         :
-             :                 :     :                            :         : personal enjoyment or travel.    :
-                                                                                                         (1 row)
+             | course                                                                |
+            -+-----------------------------------------------------------------------+-
+             | department_code | no  | title                 | credits | description |
+            -+-----------------+-----+-----------------------+---------+-------------+-
+             | acc             | 100 | Practical Bookkeeping |       2 |             |
+                                                                               (1 row)
 
              ----
              /(class?class_seq=1025).course
@@ -2124,12 +2108,15 @@ tests:
             -+-----------------------------------------+-
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
-             |       1009 |      1025 | inc    |  2.30 |
-             |       1014 |      1025 | enr    |  1.60 |
-             |       1015 |      1025 | inc    |       |
-             |       1026 |      1025 | inc    |  3.10 |
-             |       1033 |      1025 | inc    |  2.20 |
-                                                (5 rows)
+             |       1011 |      1025 | inc    |  0.50 |
+             |       1016 |      1025 | enr    |  1.90 |
+             |       1017 |      1025 | enr    |  2.40 |
+             |       1027 |      1025 | inc    |  0.50 |
+             |       1028 |      1025 | enr    |  2.70 |
+             |       1033 |      1025 | enr    |  1.90 |
+             |       1037 |      1025 | enr    |  2.60 |
+             |       1041 |      1025 | inc    |  3.80 |
+                                                (8 rows)
 
              ----
              /(class?class_seq=1025).enrollment
@@ -2176,56 +2163,56 @@ tests:
             -+-----------------------------------------+-
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
-             |       1010 |      1001 | ngr    |  4.00 |
-             |       1010 |      1034 | inc    |  1.20 |
-             |       1010 |      1064 | enr    |  2.70 |
-             |       1010 |      1070 | enr    |  3.80 |
-             |       1010 |      1092 | inc    |  1.80 |
-             |       1010 |      1104 | enr    |  0.70 |
-             |       1010 |      1118 | inc    |  1.80 |
-             |       1010 |      1123 | ngr    |  2.30 |
-             |       1010 |      1130 | enr    |  1.80 |
-             |       1010 |      1140 | inc    |  1.10 |
-             |       1010 |      1160 | inc    |  3.00 |
-             |       1010 |      1184 | inc    |  2.90 |
-             |       1010 |      1199 | inc    |  3.20 |
-             |       1010 |      1209 | enr    |  2.60 |
-             |       1010 |      1221 | inc    |  1.80 |
-             |       1010 |      1231 | ngr    |  2.30 |
-             |       1010 |      1233 | inc    |       |
-             |       1010 |      1249 | ngr    |  0.40 |
-             |       1010 |      1266 | enr    |  2.50 |
-             |       1010 |      1293 | inc    |  1.80 |
-             |       1010 |      1317 | inc    |  4.00 |
-             |       1010 |      1325 | enr    |  4.00 |
-             |       1010 |      1333 | enr    |  2.90 |
-             |       1010 |      1346 | ngr    |  0.60 |
-             |       1010 |      1354 | inc    |  0.90 |
-             |       1010 |      1367 | ngr    |  3.10 |
-             |       1010 |      1398 | inc    |  0.90 |
-             |       1010 |      1403 | inc    |  2.40 |
-             |       1010 |      1412 | inc    |  4.00 |
-             |       1010 |      1417 | inc    |  4.00 |
-             |       1010 |      1428 | inc    |  1.50 |
-             |       1010 |      1442 | inc    |  2.90 |
-             |       1010 |      1451 | ngr    |  3.50 |
-             |       1010 |      1457 | inc    |  2.30 |
-             |       1010 |      1467 | inc    |  1.50 |
-             |       1010 |      1480 | inc    |       |
-             |       1010 |      1487 | inc    |  4.00 |
-             |       1010 |      1491 | enr    |  3.30 |
-             |       1010 |      1519 | enr    |  1.50 |
-             |       1010 |      1525 | enr    |  2.60 |
-             |       1010 |      1532 | enr    |       |
-             |       1010 |      1578 | ngr    |  1.70 |
-             |       1010 |      1599 | enr    |  3.70 |
-             |       1010 |      1610 | inc    |  1.50 |
-             |       1010 |      1624 | inc    |       |
-             |       1010 |      1671 | ngr    |  3.60 |
-             |       1010 |      1673 | ngr    |  4.00 |
-             |       1010 |      1696 | enr    |  3.40 |
-             |       1010 |      1699 | ngr    |  1.20 |
-             |       1010 |      1710 | enr    |  2.20 |
+             |       1010 |      1007 | inc    |  3.30 |
+             |       1010 |      1031 | enr    |  0.20 |
+             |       1010 |      1047 | ngr    |  3.90 |
+             |       1010 |      1067 | inc    |  3.00 |
+             |       1010 |      1082 | inc    |  3.70 |
+             |       1010 |      1105 | ngr    |  0.90 |
+             |       1010 |      1108 | ngr    |  3.00 |
+             |       1010 |      1116 | inc    |  4.00 |
+             |       1010 |      1133 | ngr    |  4.00 |
+             |       1010 |      1147 | inc    |  2.70 |
+             |       1010 |      1166 | enr    |  1.30 |
+             |       1010 |      1184 | inc    |  2.00 |
+             |       1010 |      1200 | enr    |  1.20 |
+             |       1010 |      1213 | ngr    |  2.40 |
+             |       1010 |      1221 | inc    |  3.10 |
+             |       1010 |      1233 | inc    |  4.00 |
+             |       1010 |      1240 | inc    |  2.20 |
+             |       1010 |      1247 | ngr    |  3.70 |
+             |       1010 |      1255 | ngr    |       |
+             |       1010 |      1265 | enr    |  3.10 |
+             |       1010 |      1275 | enr    |  2.20 |
+             |       1010 |      1290 | ngr    |  3.30 |
+             |       1010 |      1299 | ngr    |  3.70 |
+             |       1010 |      1302 | ngr    |  0.40 |
+             |       1010 |      1310 | ngr    |  0.50 |
+             |       1010 |      1320 | inc    |  3.80 |
+             |       1010 |      1333 | ngr    |  4.00 |
+             |       1010 |      1337 | enr    |  1.50 |
+             |       1010 |      1351 | inc    |  1.30 |
+             |       1010 |      1361 | enr    |  4.00 |
+             |       1010 |      1371 | inc    |  1.60 |
+             |       1010 |      1384 | inc    |  4.00 |
+             |       1010 |      1389 | inc    |  0.00 |
+             |       1010 |      1429 | inc    |  0.00 |
+             |       1010 |      1433 | ngr    |  1.00 |
+             |       1010 |      1439 | ngr    |  3.30 |
+             |       1010 |      1445 | ngr    |  2.40 |
+             |       1010 |      1450 | ngr    |  2.50 |
+             |       1010 |      1459 | enr    |  2.10 |
+             |       1010 |      1490 | inc    |       |
+             |       1010 |      1492 | ngr    |  4.00 |
+             |       1010 |      1515 | inc    |  2.50 |
+             |       1010 |      1517 | ngr    |  2.90 |
+             |       1010 |      1546 | inc    |  3.80 |
+             |       1010 |      1556 | enr    |  2.10 |
+             |       1010 |      1577 | ngr    |  3.60 |
+             |       1010 |      1582 | enr    |  4.00 |
+             |       1010 |      1590 | enr    |  1.70 |
+             |       1010 |      1596 | ngr    |       |
+             |       1010 |      1602 | enr    |  1.90 |
                                                (50 rows)
 
              ----
@@ -2240,19 +2227,20 @@ tests:
              WHERE (`student`.`id` = 1010)
              ORDER BY `student`.`id` ASC, 1 ASC, 2 ASC
              LIMIT 50
-        - uri: /(enrollment?student_id=1005&class_seq=1610).student
+        - uri: /(enrollment?student_id=1005&class_seq=1080).student
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | student                                                                        |
-            -+--------------------------------------------------------------------------------+-
-             | id | name | gender | dob | school_code | program_code | start_date | is_active |
-            -+----+------+--------+-----+-------------+--------------+------------+-----------+-
-                                                                                      (no rows)
+             | student                                                                                          |
+            -+--------------------------------------------------------------------------------------------------+-
+             | id   | name          | gender | dob        | school_code | program_code | start_date | is_active |
+            -+------+---------------+--------+------------+-------------+--------------+------------+-----------+-
+             | 1005 | Helen Johnson | f      | 1986-02-03 | la          | gengl        | 2007-08-15 | true      |
+                                                                                                          (1 row)
 
              ----
-             /(enrollment?student_id=1005&class_seq=1610).student
+             /(enrollment?student_id=1005&class_seq=1080).student
              SELECT `student`.`id`,
                     `student`.`name`,
                     `student`.`gender`,
@@ -2265,9 +2253,9 @@ tests:
                   INNER JOIN `htsql_regress`.`student` AS `student`
                              ON (`enrollment`.`student_id` = `student`.`id`)
              WHERE (`enrollment`.`student_id` = 1005)
-                   AND (`enrollment`.`class_seq` = 1610)
+                   AND (`enrollment`.`class_seq` = 1080)
              ORDER BY `enrollment`.`student_id` ASC, `enrollment`.`class_seq` ASC
-        - uri: /(enrollment?student_id=1005&class_seq=1610).class
+        - uri: /(enrollment?student_id=1005&class_seq=1080).class
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -2276,10 +2264,11 @@ tests:
             -+-------------------------------------------------------------------------------------+-
              | department_code | course_no | year | season | section | instructor_code | class_seq |
             -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
-                                                                                           (no rows)
+             | arthis          |       809 | 2007 | spring | 001     | csilva          |      1080 |
+                                                                                             (1 row)
 
              ----
-             /(enrollment?student_id=1005&class_seq=1610).class
+             /(enrollment?student_id=1005&class_seq=1080).class
              SELECT `class`.`department_code`,
                     `class`.`course_no`,
                     `class`.`year`,
@@ -2291,7 +2280,7 @@ tests:
                   INNER JOIN `htsql_regress`.`class` AS `class`
                              ON (`enrollment`.`class_seq` = `class`.`class_seq`)
              WHERE (`enrollment`.`student_id` = 1005)
-                   AND (`enrollment`.`class_seq` = 1610)
+                   AND (`enrollment`.`class_seq` = 1080)
              ORDER BY `enrollment`.`student_id` ASC, `enrollment`.`class_seq` ASC
         - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).department
           status: 400 Bad Request
@@ -11717,7 +11706,6 @@ tests:
              | dmitchell       | 829-19-5512 |         8 | 702-528-8778 |
              | ethompson       | 824-52-5044 |         8 | 702-943-2722 |
              | ewillis         | 560-14-7249 |         6 | 702-911-9493 |
-             | fhaynes         | 101-02-8537 |         4 | 702-637-1122 |
              | gcampbell       | 969-94-5730 |         8 |              |
              | gmckinley       | 353-65-4059 |         5 | 702-822-8615 |
              | gtipton         | 921-70-9947 |         8 | 702-919-0144 |
@@ -11733,11 +11721,9 @@ tests:
              | lkilgore        | 464-44-0723 |         6 | 702-715-5855 |
              | mgarza          | 715-58-5538 |         7 | 702-996-6320 |
              | mgoode          | 529-30-8798 |         6 | 702-452-0884 |
-             | mjohnson        | 544-22-0079 |         6 | 702-468-9148 |
              | mpena           | 918-77-1630 |         8 | 702-636-6581 |
              | mpowell         | 805-41-8730 |         7 | 702-649-7982 |
              | mtriplett       | 554-21-8170 |         6 | 702-271-9603 |
-             | myoung          | 880-84-2497 |         8 | 702-421-4365 |
              | nwagner         | 859-97-9666 |         8 | 702-333-0250 |
              | rbeaver         | 756-84-8573 |         7 | 702-830-4658 |
              | rflores         | 190-63-1087 |         4 | 702-318-7320 |
@@ -11750,7 +11736,7 @@ tests:
              | vmills          | 478-51-4422 |         6 | 702-554-2181 |
              | wbradshaw       | 112-63-7530 |         4 | 702-415-2645 |
              | wmyers          | 490-75-4651 |         6 | 702-815-1246 |
-                                                                (43 rows)
+                                                                (40 rows)
 
              ----
              /instructor.confidential
@@ -11781,7 +11767,6 @@ tests:
              | dmitchell | ms    | Deloris Mitchell   | 651-4958 | dmitchell@example.com |
              | ethompson | ms    | Ethel Thompson     | 289-5188 | ethompson@example.com |
              | ewillis   | prof  | Elizabeth Willis   | 984-5069 | ewillis@example.com   |
-             | fhaynes   | mr    | Francisco Haynes   | 408-0812 |                       |
              | gcampbell | ms    | Geraldine Campbell | 712-5302 | gcampbell@example.com |
              | gmckinley | dr    | Gerald Mckinley    | 314-7543 | gmckinley@example.com |
              | gtipton   | ms    | Guadalupe Tipton   | 140-7106 | gtipton@example.com   |
@@ -11797,11 +11782,9 @@ tests:
              | lkilgore  | dr    | Linda Kilgore      | 756-8485 | lkilgore@example.com  |
              | mgarza    | prof  | Marsha Garza       | 505-5067 | mgarza@example.com    |
              | mgoode    | dr    | Mamie Goode        | 645-7045 | mgoode@example.com    |
-             | mjohnson  | dr    | Marie Johnson      | 257-3375 | mjohnson@example.com  |
              | mpena     | ms    | Mabel Pena         | 628-8553 | mpena@example.com     |
              | mpowell   | ms    | Marisa Powell      | 190-6310 | mpowell@example.com   |
              | mtriplett | prof  | Michelle Triplett  | 392-6839 | mtriplett@example.com |
-             | myoung    | ms    | Margaret Young     | 557-7401 | myoung@example.com    |
              | nwagner   | ms    | Nancy Wagner       | 782-1589 | nwagner@example.com   |
              | rbeaver   | prof  | Rosa Beaver        | 734-7550 | rbeaver@example.com   |
              | rflores   | mr    | Roger Flores       | 667-1326 | rflores@example.com   |
@@ -11814,7 +11797,7 @@ tests:
              | vmills    | dr    | Vera Mills         | 625-0438 | vmills@example.com    |
              | wbradshaw | mr    | William Bradshaw   | 298-7463 |                       |
              | wmyers    | dr    | Whitney Myers      | 205-4208 | wmyers@example.com    |
-                                                                                 (43 rows)
+                                                                                 (40 rows)
 
              ----
              /confidential.instructor
@@ -16487,12 +16470,21 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | course                              |
-              -+-------------------------------------+-
-               | code | no  | credits | count(class) |
-              -+------+-----+---------+--------------+-
-               | be   | 415 |       8 |            8 |
-                                               (1 row)
+               | course                                |
+              -+---------------------------------------+-
+               | code   | no  | credits | count(class) |
+              -+--------+-----+---------+--------------+-
+               | be     | 415 |       8 |            8 |
+               | corpfi | 601 |       3 |            3 |
+               | ee     | 202 |       3 |            5 |
+               | ee     | 412 |       4 |            4 |
+               | lang   | 201 |       4 |            4 |
+               | lang   | 305 |       3 |            2 |
+               | me     | 627 |       4 |            4 |
+               | mth    | 101 |       5 |            6 |
+               | poli   | 644 |       3 |            2 |
+               | stdart | 614 |       5 |            7 |
+                                               (10 rows)
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max((count(class)->course).credits)
@@ -16804,12 +16796,21 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | course                              |
-              -+-------------------------------------+-
-               | code | no  | credits | count(class) |
-              -+------+-----+---------+--------------+-
-               | be   | 415 |       8 |            8 |
-                                               (1 row)
+               | course                                |
+              -+---------------------------------------+-
+               | code   | no  | credits | count(class) |
+              -+--------+-----+---------+--------------+-
+               | be     | 415 |       8 |            8 |
+               | corpfi | 601 |       3 |            3 |
+               | ee     | 202 |       3 |            5 |
+               | ee     | 412 |       4 |            4 |
+               | lang   | 201 |       4 |            4 |
+               | lang   | 305 |       3 |            2 |
+               | me     | 627 |       4 |            4 |
+               | mth    | 101 |       5 |            6 |
+               | poli   | 644 |       3 |            2 |
+               | stdart | 614 |       5 |            7 |
+                                               (10 rows)
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max(fork(count(class)).credits)

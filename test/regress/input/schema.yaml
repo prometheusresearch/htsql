@@ -84,20 +84,20 @@ tests:
   - uri: /(course?department_code='eng'&no=276).course_classification
 
   # Instructor -> Confidential (singular, optional)
-  - uri: /(instructor?code='arobinson').confidential
+  - uri: /(instructor?code='jfreeman').confidential
   # Instructor -> Appointment
-  - uri: /(instructor?code='arobinson').appointment
+  - uri: /(instructor?code='jfreeman').appointment
   # Instructor -> Class
-  - uri: /(instructor?code='arobinson').class
+  - uri: /(instructor?code='jfreeman').class
 
   # Confidential -> Instructor
   - uri: /(confidential?instructor_code='bdoyle').instructor
 
   # Appointment -> Department (parental)
-  - uri: /(appointment?department_code='eng'
+  - uri: /(appointment?department_code='capmrk'
                       &instructor_code='cbutler').department
   # Appointment -> Instructor (parental)
-  - uri: /(appointment?department_code='eng'
+  - uri: /(appointment?department_code='capmrk'
                       &instructor_code='cbutler').instructor
 
   # Semester -> Class
@@ -118,9 +118,9 @@ tests:
   - uri: /(student?id=1010).enrollment.limit(50)
 
   # Enrollment -> Student (parental)
-  - uri: /(enrollment?student_id=1005&class_seq=1610).student
+  - uri: /(enrollment?student_id=1005&class_seq=1080).student
   # Enrollment -> Class (parental)
-  - uri: /(enrollment?student_id=1005&class_seq=1610).class
+  - uri: /(enrollment?student_id=1005&class_seq=1080).class
 
   # Prerequisite -> Department (ambiguous)
   - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818
