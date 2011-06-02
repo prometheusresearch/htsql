@@ -110,7 +110,8 @@ class HTMLRenderer(Renderer):
 
     def serialize_body(self, product):
         title = str(product.profile.syntax)
-        yield "<table class=\"page\" summary=\"%s\">\n" % cgi.escape(title)
+        yield "<table class=\"page\" summary=\"%s\">\n" \
+                % cgi.escape(title, True)
         yield "<tr>\n"
         yield "<td class=\"content\">\n"
         if product:
@@ -138,7 +139,8 @@ class HTMLRenderer(Renderer):
         tool = HTMLFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         colspan = " colspan=\"%s\"" % width if width > 1 else ""
-        yield "<table class=\"chart\" summary=\"%s\">\n" % cgi.escape(caption)
+        yield "<table class=\"chart\" summary=\"%s\">\n" \
+                % cgi.escape(caption, True)
         yield "<tr class=\"caption\">"
         yield ("<th%s><div class=\"tab\">%s</div></th>"
                 % (colspan, cgi.escape(caption)))
