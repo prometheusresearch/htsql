@@ -3,11 +3,37 @@
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx.util.osutil import copyfile
+from pygments.lexer import RegexLexer
+from pygments.token import Punctuation, Text, Operator, Name, String, Number
 
 import os, os.path
 from urllib2 import quote, urlopen, Request, HTTPError, URLError
 from cgi import escape
 from json import loads
+
+
+class HtsqlLexer(RegexLexer):
+
+    name = 'HTSQL'
+    aliases = ['htsql']
+    filenames = ['*.htsql']
+    mimetypes = ['text/x-htsql', 'application/x-htsql']
+
+    tokens = {
+        'root': [
+            (r'\s+', Text),
+            (r'(?<=:)(?!\d)\w+', Name.Function),
+            (r'(?!\d)\w+(?=\s*\()', Name.Function),
+            (r'(?!\d)\w+', Name.Builtin),
+            (r'(?:\d*\.)?\d+[eE][+-]?\d+|\d*\.\d+|\d+\.?', Number),
+            (r'\'(?:[^\']|\'\')*\'', String),
+            (r'=~~|=~|\^~~|\^~|\$~~|\$~|~~|~|'
+             r'!=~~|!=~|!\^~~|!\^~|!\$~~|!\$~|!~~|!~|'
+             r'<=|<|>=|>|==|=|!==|!=|!|'
+             r'&|\||->|\?|\^|/|\*|\+|-', Operator),
+            (r'\.|,|\(|\)|\{|\}|\[|\]|:|\$', Punctuation),
+        ]
+    }
 
 
 class HTSQLServerDirective(Directive):
@@ -271,5 +297,6 @@ def setup(app):
                  html=(visit_htsql_block, depart_htsql_block))
     app.add_stylesheet('htsqldoc.css')
     app.add_javascript('htsqldoc.js')
+    app.add_lexer('htsql', HtsqlLexer())
 
 
