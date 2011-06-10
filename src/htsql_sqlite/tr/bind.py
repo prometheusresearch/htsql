@@ -1,7 +1,6 @@
 # Copyright (c) 2006-2011, Prometheus Research, LLC
 # Authors: Clark C. Evans <cce@clarkevans.com>,
-#          Kirill Simonov <xi@resolvent.net>
-#
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 
 
 """

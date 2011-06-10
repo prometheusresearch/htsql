@@ -1,7 +1,6 @@
 #
 # Copyright (c) 2006-2011, Prometheus Research, LLC
-# Authors: Clark C. Evans <cce@clarkevans.com>,
-#          Kirill Simonov <xi@resolvent.net>
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 # The setup script for HTSQL; requires setuptools to run.
@@ -46,6 +45,7 @@ CLASSIFIERS = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 2.5",
     "Programming Language :: Python :: 2.6",
+    "Programming Language :: Python :: 2.7",
     "Programming Language :: SQL",
     "Topic :: Database :: Front-Ends",
     "Topic :: Internet :: WWW/HTTP :: WSGI",
