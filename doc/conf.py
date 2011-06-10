@@ -22,8 +22,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-sys.path.append(os.path.abspath('extensions'))
-extensions = ['sphinx.ext.autodoc', 'htsqldoc', 'diagram']
+extensions = ['sphinx.ext.autodoc', 'sphinxext_htsqldoc', 'sphinxext_texdiag']
 
 # The default URL of an HTSQL service.
 htsql_server = 'http://demo.htsql.org'
@@ -35,7 +34,7 @@ keep_warnings = True
 autodoc_member_order = 'bysource'
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['templates']
+#templates_path = ['templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -136,7 +135,7 @@ html_theme_options = {}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['static']
+#html_static_path = ['static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

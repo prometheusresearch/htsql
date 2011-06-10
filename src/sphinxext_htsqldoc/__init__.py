@@ -2,7 +2,9 @@
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
+from sphinx.util.osutil import copyfile
 
+import os, os.path
 from urllib2 import quote, urlopen, Request, HTTPError, URLError
 from cgi import escape
 from json import loads
@@ -245,12 +247,26 @@ def build_result(line, content_type, content, cut=None):
     return result_node
 
 
+def copy_static(app, exception):
+    if app.builder.name != 'html' or exception:
+        return
+    src_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static')
+    dst_dir = os.path.join(app.builder.outdir, '_static')
+    for filename in os.listdir(src_dir):
+        src = os.path.join(src_dir, filename)
+        if not os.path.isfile(src):
+            continue
+        dst = os.path.join(dst_dir, filename)
+        copyfile(src, dst)
+
+
 def setup(app):
     app.add_config_value('htsql_server', None, 'env')
     app.add_directive('htsql-server', HTSQLServerDirective)
     app.add_directive('htsql', HTSQLDirective)
     app.add_directive('vsplit', VSplitDirective)
     app.connect('env-purge-doc', purge_htsql_server)
+    app.connect('build-finished', copy_static)
     app.add_node(htsql_block,
                  html=(visit_htsql_block, depart_htsql_block))
     app.add_stylesheet('htsqldoc.css')

@@ -55,6 +55,7 @@ KEYWORDS = "sql http uri relational database"
 PACKAGES = find_packages('src')
 PACKAGE_DIR = {'': 'src'}
 INCLUDE_PACKAGE_DATA = True
+ZIP_SAFE = False
 ENTRY_POINTS = {
     'console_scripts': ['htsql-ctl = htsql.ctl:main'],
     'htsql.addons': [
@@ -101,6 +102,7 @@ setup(name=NAME,
       packages=PACKAGES,
       package_dir=PACKAGE_DIR,
       include_package_data=INCLUDE_PACKAGE_DATA,
+      zip_safe=ZIP_SAFE,
       entry_points=ENTRY_POINTS,
       install_requires=INSTALL_REQUIRES,
 )

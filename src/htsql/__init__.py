@@ -10,7 +10,9 @@
 
 :copyright: 2006-2011, Prometheus Research, LLC
 :authors: Clark C. Evans <cce@clarkevans.com>,
-          Kirill Simonov <xi@resolvent.net>
+          Kirill Simonov <xi@resolvent.net>;
+          see ``AUTHORS`` file in the source distribution
+          for the full list of contributors
 :license: See ``LICENSE`` file in the source distribution
 
 This package provides HTSQL, a query language for the accidental programmer.
