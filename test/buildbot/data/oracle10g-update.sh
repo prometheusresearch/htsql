@@ -2,8 +2,8 @@
 
 # Post-installation script for the oracle10g VM.
 
-# Update the hostname.
-echo oracle10g-vm >/etc/hostname
+## Update the hostname.
+#echo oracle10g-vm >/etc/hostname
 
 # Register the Oracle repository.
 echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list

@@ -14,7 +14,7 @@ IMG=$BUILDBOT_ROOT/img
 CTL=$BUILDBOT_ROOT/ctl
 TMP=$BUILDBOT_ROOT/tmp
 
-LINUX_ISO_URL=http://cdimage.debian.org/debian-cd/6.0.0/i386/iso-cd/debian-6.0.0-i386-netinst.iso
+LINUX_ISO_URL=http://cdimage.debian.org/debian-cd/6.0.1a/i386/iso-cd/debian-6.0.1a-i386-netinst.iso
 LINUX_ISO=`basename $LINUX_ISO_URL`
 
 WGET_URL=http://downloads.sourceforge.net/gnuwin32/wget-1.11.4-1-setup.exe
@@ -71,7 +71,7 @@ vm_launch() {
     case $VM_TYPE in
     linux)
         local NIC_MODEL=virtio
-        local VGA_TYPE=vmware;;
+        local VGA_TYPE=cirrus;;
     windows)
         local NIC_MODEL=rtl8139
         local VGA_TYPE=cirrus;;
