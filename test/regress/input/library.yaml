@@ -82,7 +82,7 @@ tests:
     expect: 400
 
   # Time values
-  - uri: /{time('20:13'), time('20:13:04.5')}
+  - uri: /{time('20:03'), time('20:13:04.5')}
   # Invalid time
   - uri: /{time('29:04')}
     expect: 400
@@ -124,19 +124,19 @@ tests:
   # Equality
   - uri: /{true()=true(), 1=1, 'HTSQL'='HTSQL'}
   - uri: /{date('2010-04-15')=date('2010-04-15'),
-           time('20:13')=time('20:13'),
+           time('20:03')=time('20:03'),
            datetime('2010-04-15 20:13')=datetime('2010-04-15 20:13')}
   - uri: /{true()!=false(), 1!=0, 'HTSQL'!='PITA'}
   - uri: /{date('2010-04-15')!=date('1991-08-20'),
-           time('20:13')!=time('02:01'),
+           time('20:03')!=time('20:13:04.5'),
            datetime('2010-04-15 20:13')!=datetime('1991-08-20 02:01')}
   - uri: /{true()!=true(), 1!=1, 'HTSQL'!='HTSQL'}
   - uri: /{date('2010-04-15')!=date('2010-04-15'),
-           time('20:13')!=time('20:13'),
+           time('20:03')!=time('20:03'),
            datetime('2010-04-15 20:13')!=datetime('2010-04-15 20:13')}
   - uri: /{true()=false(), 1=0, 'HTSQL'='PITA'}
   - uri: /{date('2010-04-15')=date('1991-08-20'),
-           time('20:13')=time('02:01'),
+           time('20:03')=time('20:13:04.5'),
            datetime('2010-04-15 20:13')=datetime('1991-08-20 02:01')}
   # IN
   - uri: /{5={2,3,5,7}, 'HTSQL'!={'ISBL','SQUARE','QUEL'}}
@@ -165,11 +165,11 @@ tests:
   # Comparison
   - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha'}
   - uri: /{date('2010-04-15')>=date('1991-08-20'),
-           time('02:01')<time('20:13'),
+           time('20:03')<time('20:13:04.5'),
            datetime('2010-04-15 20:13')>datetime('1991-08-20 02:01')}
   - uri: /{1>=10, 7.0>7.0, 'omega'<='alpha'}
   - uri: /{date('2010-04-15')<date('1991-08-20'),
-           time('02:01')>=time('20:13'),
+           time('20:03')>=time('20:13:04.5'),
            datetime('2010-04-15 20:13')<=datetime('1991-08-20 02:01')}
   # NULL
   - uri: /{0<null(), ''>null(), null()>=null()}
@@ -280,10 +280,10 @@ tests:
 
   # Arithmetics
   - uri: /{+7, -7, +2.125, -2.125, +271828e-5, -271828e-5}
-  - uri: /{7920+9504, 7.25+0.875, 120205e-5+57721e-5}
-  - uri: /{7920-9504, 7.25-0.875, 120205e-5-57721e-5}
-  - uri: /{7920*9504, 7.25*0.875, 120205e-5*57721e-5}
-  - uri: /{7920/9504, 7.25/0.875, 120205e-5/57721e-5}
+  - uri: /{7920+9504, 7.25+0.875, 120207e-5+57721e-5}
+  - uri: /{7920-9504, 7.25-0.875, 120207e-5-57721e-5}
+  - uri: /{7920*9504, 7.25*0.875, 120207e-5*57721e-5}
+  - uri: /{7920/9504, 7.25/0.875, 120207e-5/57721e-5}
   # Coercion
   - uri: /{7+2.125, 7+271828e-5, 2.125+271828e-5}
   - uri: /{7-2.125, 7-271828e-5, 2.125-271828e-5}
@@ -351,7 +351,7 @@ tests:
   - uri: /{string(true()), string(false())}
   - uri: /{string(60), string(2.125), string(-57721e-5)}
   - uri: /{string(date('2010-04-15'))}
-  - uri: /{string(time('20:13'))}
+  - uri: /{string(time('20:03'))}
   - uri: /{string(datetime('2010-04-15 20:13'))}
 
   # Length
@@ -472,10 +472,10 @@ tests:
   tests:
 
   # Conversion
-  - uri: /{time(null()), time('20:13')}
-  - uri: /{time(string('20:13'))}
+  - uri: /{time(null()), time('20:03')}
+  - uri: /{time(string('20:03'))}
     ifndef: oracle
-  - uri: /{time(string('20:13:00'))}
+  - uri: /{time(string('20:03:00'))}
     ifdef: oracle
   - uri: /{time(datetime('2010-04-15 20:13'))}
   # Inadmissible operand
@@ -545,7 +545,7 @@ tests:
   - uri: /{datetime(2010,4,15), datetime(2010,4,15,20,13),
            datetime(2010,4,15,20,13,4.5)}
   - uri: /{datetime(2010,3,46,25,-289,124.5)}
-  - uri: /{datetime(date('2010-04-15'),time('20:13'))}
+  - uri: /{datetime(date('2010-04-15'),time('20:03'))}
 
   # Components
   - uri: /{year(datetime('2010-04-15 20:13:04.5')),
@@ -556,8 +556,8 @@ tests:
            second(datetime('2010-04-15 20:13:04.5'))}
 
   # Arithmetics
-  - uri: /{datetime('1991-08-20 02:01')+6813.7583854166667,
-           datetime('2010-04-15 20:13:04.5')-6813.7583854166667}
+  - uri: /{datetime('1991-08-20 02:01')+6813.75838544,
+           datetime('2010-04-15 20:13:04.5')-6813.75838544}
 
 ########################################################################
 
