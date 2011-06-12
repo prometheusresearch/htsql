@@ -61,7 +61,7 @@ default:
 	@echo "  start-<bench>: to start the specified test bench"
 	@echo "  stop-<bench>: to stop the specified test bench"
 	@echo "    where <bench> is one of:"
-	@echo "      py25, py26, pgsql84, pgsql90, mysql51, oracle10g,"
+	@echo "      py25, py26, py27, pgsql84, pgsql90, mysql51, oracle10g,"
 	@echo "      mssql2005, mssql2008"
 	@echo
 	@echo "  *** Shell and Server ***"
@@ -330,6 +330,10 @@ start-py25:
 start-py26:
 	./test/buildbot/bb.sh start py26
 
+# Start the test bench for Python 2.7
+start-py27:
+	./test/buildbot/bb.sh start py27
+
 # Start the test bench for PostgreSQL 8.4
 start-pgsql84:
 	./test/buildbot/bb.sh start pgsql84
@@ -361,6 +365,10 @@ stop-py25:
 # Stop the test bench for Python 2.6
 stop-py26:
 	./test/buildbot/bb.sh stop py26
+
+# Stop the test bench for Python 2.7
+stop-py27:
+	./test/buildbot/bb.sh stop py27
 
 # Stop the test bench for PostgreSQL 8.4
 stop-pgsql84:

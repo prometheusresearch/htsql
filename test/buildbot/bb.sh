@@ -6,7 +6,7 @@ if [ "$BUILDBOT_DEBUG" = true ]; then
     set -x
 fi
 
-LINUX_BENCHES="py25 py26 pgsql84 pgsql90 mysql51 oracle10g"
+LINUX_BENCHES="py25 py26 py27 pgsql84 pgsql90 mysql51 oracle10g"
 WINDOWS_BENCHES="mssql2005 mssql2008"
 BENCHES="$LINUX_BENCHES $WINDOWS_BENCHES"
 
@@ -479,7 +479,7 @@ do_build() {
 do_check() {
     local LIST="$1"
 
-    for CLIENT in py25 py26; do
+    for CLIENT in py25 py26 py27; do
 
         if ! found $CLIENT "$LIST"; then
             continue
@@ -579,6 +579,11 @@ do_start() {
 
     if found py26 "$LIST"; then
         start_linux_bench py26 :10022-:22
+        echo For remote shell, type \'ssh -F $CTL/ssh_config linux-vm\'
+    fi
+
+    if found py27 "$LIST"; then
+        start_linux_bench py27 :10022-:22
         echo For remote shell, type \'ssh -F $CTL/ssh_config linux-vm\'
     fi
 
