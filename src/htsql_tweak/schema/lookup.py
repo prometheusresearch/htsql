@@ -14,7 +14,7 @@ from htsql.tr.recipe import (FreeTableRecipe, AttachedTableRecipe,
 class SchemaLookupAttributeInHome(LookupAttributeInHome):
 
     def __call__(self):
-        recipe = super(SchemaLookupAttributeInRoot, self).__call__()
+        recipe = super(SchemaLookupAttributeInHome, self).__call__()
         if recipe is not None:
             return recipe
         recipe = self.lookup_schema_table()
