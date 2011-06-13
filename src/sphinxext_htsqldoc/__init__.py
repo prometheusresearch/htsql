@@ -288,6 +288,7 @@ def copy_static(app, exception):
 
 def setup(app):
     app.add_config_value('htsql_server', None, 'env')
+    app.add_config_value('build_website', False, 'env')
     app.add_directive('htsql-server', HTSQLServerDirective)
     app.add_directive('htsql', HTSQLDirective)
     app.add_directive('vsplit', VSplitDirective)

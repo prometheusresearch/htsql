@@ -20,9 +20,13 @@ import sys, os
 
 # -- General configuration -----------------------------------------------------
 
+# Set when building documentation for htsql.org.
+build_website = False
+
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinxext_htsqldoc', 'sphinxext_texdiag']
+extensions = ['sphinx.ext.ifconfig', 'sphinx.ext.autodoc',
+              'sphinxext_htsqldoc', 'sphinxext_texdiag']
 
 # The default URL of an HTSQL service.
 htsql_server = 'http://demo.htsql.org'
