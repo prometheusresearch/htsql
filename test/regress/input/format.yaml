@@ -11,6 +11,7 @@ tests:
   tests:
   - uri: /school/:json
   - uri: /school/:csv
+  - uri: /school/:tsv
   - uri: /school/:txt
   - uri: /school/:html
   - uri: /school/:unknown
@@ -24,6 +25,9 @@ tests:
   - uri: /school
     headers:
       Accept: text/csv
+  - uri: /school
+    headers:
+      Accept: text/tab-separated-values
   - uri: /school
     headers:
       Accept: text/plain
@@ -41,6 +45,9 @@ tests:
             /:csv
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
+            /:tsv
+    - uri: /(school :as 'List of Schools')
+            {name :as Name, count(department) :as '# of Departments'}
             /:txt
     - uri: /(school :as 'List of Schools')
             {name :as Name, count(department) :as '# of Departments'}
@@ -48,19 +55,45 @@ tests:
 
 - title: Data Types
   tests:
-  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+           date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:json
-  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+           date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:csv
-  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+           date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
+          /:tsv
+  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+           date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:txt
-  - uri: /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15')}
+  - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL',
+           date('2010-04-15'), time('20:13:04.5'), datetime('2010-04-15 20:13')}
           /:html
 
 - title: No Rows
   tests:
   - uri: /school?false()/:json
   - uri: /school?false()/:csv
+  - uri: /school?false()/:tsv
   - uri: /school?false()/:txt
   - uri: /school?false()/:html
+
+- title: Special Characters
+  tests:
+  - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
+           '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
+           '%CE%BE', '\/%25''"&<>#', ''}/:json
+  - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
+           '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
+           '%CE%BE', '\/%25''"&<>#', ''}/:csv
+  - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
+           '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
+           '%CE%BE', '\/%25''"&<>#', ''}/:tsv
+  - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
+           '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
+           '%CE%BE', '\/%25''"&<>#', ''}/:txt
+  - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',
+           '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
+           '%CE%BE', '\/%25''"&<>#', ''}/:html
 

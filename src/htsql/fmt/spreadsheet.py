@@ -8,7 +8,7 @@
 :mod:`htsql.fmt.spreadsheet`
 ============================
 
-This module implements the CSV renderer.
+This module implements the CSV and TSV renderers.
 """
 
 
@@ -26,6 +26,9 @@ class CSVRenderer(Renderer):
 
     name = 'text/csv'
     aliases = ['csv']
+    content_type = 'text/csv'
+    extension = 'csv'
+    dialect = 'excel'
 
     def render(self, product):
         status = self.generate_status(product)
@@ -39,9 +42,10 @@ class CSVRenderer(Renderer):
     def generate_headers(self, product):
         filename = str(product.profile.segment.syntax)
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
-        return [('Content-Type', 'text/csv; charset=UTF-8'),
+        return [('Content-Type', '%s; charset=UTF-8' % self.content_type),
                 ('Content-Disposition',
-                 'attachment; filename="(%s).csv"' % filename)]
+                 'attachment; filename="(%s).%s"'
+                 % (filename, self.extension))]
 
     def generate_body(self, product):
         if not product:
@@ -53,7 +57,7 @@ class CSVRenderer(Renderer):
         tool = Formatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         output = cStringIO.StringIO()
-        writer = csv.writer(output)
+        writer = csv.writer(output, dialect=self.dialect)
         writer.writerow(titles)
         yield output.getvalue()
         output.seek(0)
@@ -67,9 +71,23 @@ class CSVRenderer(Renderer):
             output.truncate()
 
 
+class TSVRenderer(CSVRenderer):
+
+    name = 'text/tab-separated-values'
+    aliases = ['tsv']
+    content_type = 'text/tab-separated-values'
+    extension = 'tsv'
+    dialect = 'excel-tab'
+
+
 class CSVFormatter(Formatter):
 
     adapts(CSVRenderer)
+
+
+class TSVFormatter(Formatter):
+
+    adapts(TSVRenderer)
 
 
 class FormatDomain(Format):
