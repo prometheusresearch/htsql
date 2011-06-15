@@ -1,6 +1,6 @@
-*************************
-  Introduction to HTSQL
-*************************
+******************
+  HTSQL Tutorial
+******************
 
 *A query language for the accidental programmer*
 
