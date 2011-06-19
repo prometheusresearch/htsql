@@ -182,7 +182,7 @@ def depart_htsql_block(self, node):
 
 def load_uri(uri, error=False):
     try:
-        headers = { 'Accept': 'application/json' }
+        headers = { 'Accept': 'application/javascript' }
         request = Request(uri, headers=headers)
         response = urlopen(request)
         content_type = response.info().gettype()
@@ -198,7 +198,7 @@ def load_uri(uri, error=False):
 
 
 def build_result(line, content_type, content, cut=None):
-    if content_type == 'application/json':
+    if content_type == 'application/javascript':
         data = loads(content)
         if isinstance(data, dict):
             data = [[meta['title'] for meta in data['meta']]] + data['data']
