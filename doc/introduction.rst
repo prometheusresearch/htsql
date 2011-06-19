@@ -76,7 +76,7 @@ Relational algebra has proven to be inadequate for encoding business
 inquiries --- elementary set operations simply do not correspond to
 meaningful data transformations.  The SQL language itself is tedious,
 verbose, and provides poor means of abstraction.  Yet, the relational
-database is an excellent tool for data modeling, storage and retrival.
+database is an excellent tool for data modeling, storage and retrieval.
 
 HTSQL reimagines what it means to query a database.  The combination of
 a *navigational model* with *data flows* enables expressions that
@@ -157,7 +157,7 @@ the linking of ``course`` to ``department`` with the filter criteria.
     GROUP BY d.name;
 
 In a common optimization, the correlated subquery is replaced with a
-``GROUP BY`` projection.  This encoding further obfucates the business
+``GROUP BY`` projection.  This encoding further obfuscates the business
 inquiry by conflating in two ways --- row/column and link/filter.
 
 .. htsql::
@@ -289,7 +289,7 @@ This business inquiry asks us to do the following:
 
 Not only is this SQL encoding is hard to read, it took several passes to
 get right --- without the ``COALESCE`` you get results that look
-correct, but arn't.
+correct, but aren't.
 
 .. htsql::
    :cut: 4
@@ -298,16 +298,21 @@ correct, but arn't.
      /(school?exists(program))
        {name, avg(department.count(course?credits>3))}
 
-Each syntatic component of the HTSQL query is self-contained; when
+Each syntactic component of the HTSQL query is self-contained; when
 assembled, they form a cohesive translation of the business inquiry.
 
 
-Show me this HTSQL!
+HTSQL in a Nutshell
 ===================
 
 HTSQL was designed from the ground up as a self-serve reporting tool
 for data analysts.  With HTSQL, the easy stuff is truly easy; and,
 the complex stuff is easy too.
+
+In this section we introduce the fundamentals of HTSQL syntax and
+semantics.  For a more incremental approach, please read the
+:doc:`tutorial`.
+
 
 Scalar Expressions
 ------------------
@@ -324,28 +329,28 @@ Predicate expressions:
 
 .. htsql:: /(7<13)&(1=0|1!=0)
 
+
 Navigation
 ----------
 
-Navigational operations produce data flows.
-
-Selecting a table produces a flow of all records from the table:
+A table name by itself produces all records from that table:
 
 .. htsql:: /school
    :cut: 4
 
 In the scope of ``school`` table, ``department`` is a link to
-associated records from ``department`` table:
+associated records from ``department`` table.  The following query
+returns ``department`` records via navigation though ``school``:
 
 .. htsql:: /school.department
    :cut: 4
 
 This query works as follows:
 
-* ``school`` generates a flow of all records from ``school`` table;
-* for each ``school`` record, ``department`` generates a subflow of
+* ``school`` generates all records from ``school`` table;
+* for each ``school`` record, ``department`` generates
   associated ``department`` records;
-* the output is produced by merging all ``department`` subflows.
+
 
 Filtering
 ---------
@@ -354,14 +359,15 @@ Sieve operator produces records satisfying the specified condition:
 
 .. htsql:: /school?campus='south'
 
-Sorting operator reorders records in the flow:
+Sorting operator reorders records:
 
 .. htsql:: /school.sort(campus)
    :cut: 4
 
-Truncating operator takes a slice of the flow:
+Truncating operator takes a slice from the record sequence:
 
 .. htsql:: /school.limit(2)
+
 
 Selection & Definition
 ----------------------
@@ -391,6 +397,7 @@ References carry over values across nested scopes:
    /define($avg_credits := avg(course.credits))
     .course{title, credits}?credits>$avg_credits
 
+
 Aggregation
 -----------
 
@@ -404,7 +411,7 @@ Nested aggregates:
 
 .. htsql:: /avg(school.count(department))
 
-Different aggregation operations:
+Various aggregation operations:
 
 .. htsql::
    :cut: 4
@@ -414,11 +421,12 @@ Different aggregation operations:
                      sum(course.credits),
                      avg(course.credits)}?exists(course)
 
+
 Projection
 ----------
 
-Projection operator defines a flow of all distinct values of the given
-expression:
+Projection operator returns distinct values.  This example returns
+distinct ``campus`` values from the ``school`` table:
 
 .. htsql:: /school^campus
 
@@ -426,6 +434,7 @@ In the scope of the projection, ``school`` refers to all records from
 ``school`` table having the same value of ``campus`` attribute:
 
 .. htsql:: /(school^campus){campus, count(school)}
+
 
 Linking
 -------
@@ -463,8 +472,18 @@ query could be written as:
 What's up Next?
 ===============
 
-While HTSQL already demonstrates unprecedented query power, we are going
-to add even more amazing features.
+We intend to add to HTSQL many more features in the future.
+
+Usability
+---------
+
+Currently, the HTSQL processor is not quite user friendly.  In the next
+major release we will focus on filling these gaps:
+
+* helpful error messages 
+* ability to list tables & columns
+* syntax highlighting & completion
+* installers & deployment documentation 
 
 Hierarchical Output
 -------------------
@@ -478,8 +497,8 @@ HTSQL should not be limited to tabular output.
            /department{name}}
 
 This query is to generate a tree-shaped output: for each school, it
-produces the school name, a list of titles of associated programs, and
-a list of names of associated departments.
+produces the school name, a list of titles of associated programs, 
+and a list of names of associated departments.
 
 Analytical Processing
 ---------------------
@@ -501,7 +520,7 @@ relationships.
 
 .. sourcecode:: htsql
 
-   /program{title, /close(part_of){title}}
+   /program{title, /recurse(part_of){title}}
 
 This query is to return programs together with a list of all
 dependent subprograms.
