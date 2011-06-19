@@ -101,6 +101,10 @@ SQL Conflates Rows & Columns
     *"For each department, please show the department name and the
     corresponding school's campus."*
 
+This business inquiry clearly separates the requested rows (*each
+department*) and columns (*department name* and *corresponding school's
+campus*), but this separation is lost when the query is encoded in SQL:
+
 .. sourcecode:: sql
 
     SELECT d.name, s.campus
@@ -108,14 +112,10 @@ SQL Conflates Rows & Columns
     LEFT JOIN ad.school AS s
            ON (d.school_code = s.code);
 
-The business inquiry clearly separates the requested rows (*each
-department*) and columns (*department name* and *corresponding school's
-campus*), but this separation is lost when the query is encoded in SQL.
-
-In this SQL query, the ``FROM`` clause not just picks target rows, but
-also includes extra tables required to produce output columns, making it
-difficult to determine business entities represented by each row of the
-output.
+In this SQL query, the ``FROM`` clause not only picks target rows, but
+also includes extra tables required to produce output columns.  This
+conflation makes it difficult to determine business entities represented
+by each row of the output.
 
 .. htsql::
    :cut: 4
@@ -127,11 +127,15 @@ The HTSQL translation separates the row definition from the column
 selection.  The linking is implicit, and correct.  The encoded query can
 be read aloud as a verbal inquiry.
 
+
 SQL Conflates Filters & Links
 -----------------------------
 
     *"For each department, return the department's name and number of
     courses having more than 2 credit hours."*
+
+This business inquiry returns *department* records, and for each record
+summarizes associated courses meeting a particular criteria.
 
 .. sourcecode:: sql
 
@@ -140,9 +144,8 @@ SQL Conflates Filters & Links
                            AND c.credits > 2)
     FROM ad.department AS d;
 
-For the SQL encoding of this inquiry we use a subquery to avoid row and
-column conflation.  However, ``WHERE`` clause in the subquery conflates
-logic filter with the glue linking ``department`` and ``course``.
+For this SQL encoding, the ``WHERE`` clause of the subquery conflates
+the linking of ``course`` to ``department`` with the filter criteria.
 
 .. sourcecode:: sql
 
@@ -153,9 +156,9 @@ logic filter with the glue linking ``department`` and ``course``.
                AND c.credits > 2)
     GROUP BY d.name;
 
-In a common optimization of this query, we replace the correlated
-subquery with a ``GROUP BY`` projection.  This gives us both row/column
-and link/filter conflation, further obfuscating the business inquiry.
+In a common optimization, the correlated subquery is replaced with a
+``GROUP BY`` projection.  This encoding further obfucates the business
+inquiry by conflating in two ways --- row/column and link/filter.
 
 .. htsql::
    :cut: 4
@@ -163,14 +166,21 @@ and link/filter conflation, further obfuscating the business inquiry.
 
     /department{name, count(course?credits>2)}
 
-The HTSQL translation keeps the business condition separate from linking
+The HTSQL translation keeps the filter criteria separate from linking
 and the row definition separate from output columns.  The query adheres
 the form of the original business inquiry.
+
 
 Conflating Projection with Aggregation
 --------------------------------------
 
     *"How many departments by campus?"*
+
+This business inquiry asks for rows corresponding to each campus, and
+for each row, the number of correlated departments.  In the schema,
+there isn't a ``campus`` table, so we have to take *distinct* values of
+``campus`` column from the ``school`` table.  This operation is called
+*projection*.
 
 .. sourcecode:: sql
 
@@ -181,10 +191,10 @@ Conflating Projection with Aggregation
     WHERE s.campus IS NOT NULL
     GROUP BY s.campus;
 
-In the schema, there isn't a ``campus`` table, so you have to take
-*distinct* values of ``campus`` column from the ``school`` table.  The
-``GROUP BY`` clause combines two functions: choosing output row set and
-evaluating the aggregate ``COUNT()``.
+For this SQL encoding, the ``GROUP BY`` clause combines two operations:
+projection and evaluating the aggregate ``COUNT()``.  This conflation
+causes a reader of the query some effort determining what sort of rows
+are returned and how the aggregate is related to those rows.
 
 .. htsql::
    :cut: 4
@@ -197,11 +207,15 @@ operator), then we select correlated columns.  This way, the aggregation
 is indicated separately as part of the column selector rather than being
 conflated with the row definition.
 
-SQL Lacks Means of Decomposition
+
+SQL Lacks Means of Encapsulation
 --------------------------------
 
     *"For each department, return the department name and the number of
     offered 100's, 200's, 300's and 400's courses."*
+
+In this business inquiry, we are asked to evaluate the same statistic 
+across multiple ranges.
 
 .. sourcecode:: sql
 
@@ -222,15 +236,18 @@ provides no way to factor the repetitive expression ``COUNT(...)``.
    :cut: 4
    :hide:
 
-    /department.define(course_num($level) := count(course?no>=$level*100
-                                                         &no<($level+1)*100))
-      {name, course_num(1),
-             course_num(2),
-             course_num(3),
-             course_num(4)}
+    /department.define(
+         count_courses($level) := count(course?no>=$level*100
+                                              &no<($level+1)*100))
+      {name, count_courses(1),
+             count_courses(2),
+             count_courses(3),
+             count_courses(4)}
 
-The HTSQL translation avoids this problem by defining a calculated
-attribute ``course_num($level)`` on the ``department`` table.
+The HTSQL translation avoids this duplication by defining a calculated
+attribute ``count_courses($level)`` on the ``department`` table and
+then evaluating it for each course level.
+
 
 In SQL, Modest Complexity is Painful
 ------------------------------------
@@ -238,6 +255,19 @@ In SQL, Modest Complexity is Painful
     *"For each school with a degree program, return the school's name,
     and the average number of high-credit (>3) courses its departments
     have."*
+
+This business inquiry asks us to do the following:
+
+* pick records from the ``school`` table
+
+* keep only those with an associated degree program
+
+* for each school record, compute average of:
+
+  - for each associated department, count:
+
+    - associated courses with credits>3
+
 
 .. sourcecode:: sql
 
@@ -256,9 +286,10 @@ In SQL, Modest Complexity is Painful
     ) AS o ON (o.school_code = s.code)
     GROUP BY s.name, o.avg_over_3;
 
-Not only this query is hard to read, it took several passes to get
-correct --- without the ``COALESCE`` you get results that look correct,
-but arn't.
+
+Not only is this SQL encoding is hard to read, it took several passes to
+get right --- without the ``COALESCE`` you get results that look
+correct, but arn't.
 
 .. htsql::
    :cut: 4
@@ -267,7 +298,8 @@ but arn't.
      /(school?exists(program))
        {name, avg(department.count(course?credits>3))}
 
-This HTSQL query takes less characters than the business inquiry itself.
+Each syntatic component of the HTSQL query is self-contained; when
+assembled, they form a cohesive translation of the business inquiry.
 
 
 How do I use HTSQL?
