@@ -6,7 +6,7 @@
 .. toctree::
    :maxdepth: 2
 
-   showcase
+   introduction
    tutorial
    reference
    install
