@@ -549,8 +549,8 @@ class BindIdentifier(Bind):
         # Look for the identifier in the current lookup context.
         recipe = lookup_attribute(self.state.base, self.syntax.value)
         if recipe is None:
-            raise BindError("unable to resolve an identifier",
-                            self.syntax.mark)
+            raise BindError("unable to resolve an identifier: %s"
+                            % self.syntax, self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
         binding = bind()
         return WrapperBinding(binding, self.syntax)
@@ -604,8 +604,8 @@ class BindReference(Bind):
         recipe = lookup_reference(self.state.base,
                                   self.syntax.identifier.value)
         if recipe is None:
-            raise BindError("unable to resolve a reference",
-                            self.syntax.mark)
+            raise BindError("unable to resolve a reference: %s"
+                            % self.syntax, self.syntax.mark)
         bind = BindByRecipe(recipe, self.syntax, self.state)
         binding = bind()
         return WrapperBinding(binding, self.syntax)
@@ -752,8 +752,8 @@ class BindBySubstitution(BindByRecipe):
             assert isinstance(self.syntax, IdentifierSyntax)
             recipe = lookup_attribute(self.recipe.base, self.syntax.value)
             if recipe is None:
-                raise BindError("unable to resolve an identifier",
-                                self.syntax.mark)
+                raise BindError("unable to resolve an identifier: %s"
+                                % self.syntax, self.syntax.mark)
             bind = BindByRecipe(recipe, self.syntax, self.state)
             binding = bind()
             binding = DefinitionBinding(binding, self.recipe.subnames[0],

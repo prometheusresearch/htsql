@@ -2287,7 +2287,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unable to resolve an identifier:
+            bind error: unable to resolve an identifier: department:
                 /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).department
                                                                                                                         ^^^^^^^^^^
         - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).of_course_no
@@ -12327,7 +12327,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unable to resolve an identifier:
+            bind error: unable to resolve an identifier: instructor:
                 /student.instructor
                          ^^^^^^^^^^
         - uri: /school?code='mus'
@@ -15603,7 +15603,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: unable to resolve an identifier:
+              bind error: unable to resolve an identifier: q:
                   /define(p:=this(), q:=1){p{q}}
                                              ^
           - uri: /school.program{title, mix().name}.limit(10)
@@ -15644,7 +15644,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: unable to resolve an identifier:
+              bind error: unable to resolve an identifier: name:
                   /define(p:=school.program).p{title, mix().name}.limit(10)
                                                             ^^^^
         - id: link-and-fork
@@ -17653,7 +17653,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: unable to resolve a reference:
+              bind error: unable to resolve a reference: $year:
                   /school.define(student_by_year($year) := program.student?year(dob)=$year) {code, student_by_year(1990).$year}
                                                                                                                          ^^^^^
           - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
