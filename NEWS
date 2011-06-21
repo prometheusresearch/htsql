@@ -7,8 +7,9 @@ List of Changes
 
 * Added `/:tsv` formatter that generates output in tab-separated format
   (thank to Andrey Popp).
-* A lot of updates to the tutorial, reference and other documentation.
-* Minor updates and bug fixes.
+* A lot of updates to the tutorial, the reference and other
+  documentation.
+* Minor code updates and bug fixes.
 
 
 2.1.0 beta 3 (2011-05-13)
