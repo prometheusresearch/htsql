@@ -213,6 +213,9 @@ tests:
     - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
     # fork() with nullable kernel
     - uri: /program.fork(part_of){root().program{school.code, code, part_of}, school.code, code, part_of}
+    # fork().fork() is inefficient
+    - uri: /school.fork().fork().fork()
+      skip: true
 
   - title: Table Expressions
     tests:

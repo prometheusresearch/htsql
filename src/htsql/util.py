@@ -785,6 +785,16 @@ class Comparable(object):
         # is assumed.  Note that `A is B` <=> `id(A) == id(B)`.
         if equality_vector is None:
             equality_vector = id(self)
+        # Flatten the vector.
+        if isinstance(equality_vector, tuple):
+            elements = []
+            for element in equality_vector:
+                if isinstance(element, Comparable):
+                    elements.append((element.__class__, element.hash,
+                                     element.equality_vector))
+                else:
+                    elements.append(element)
+            equality_vector = tuple(elements)
         self.equality_vector = equality_vector
         self.hash = hash(equality_vector)
 
