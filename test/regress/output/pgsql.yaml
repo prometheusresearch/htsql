@@ -3666,7 +3666,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
-          - [Content-Disposition, inline; filename="(school).js"]
+          - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
               "meta": [
@@ -3690,7 +3690,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
-          - [Content-Disposition, 'attachment; filename="(course{department{code,name},no,title+}?department.school.code=''bus'').csv"']
+          - [Content-Disposition, attachment; filename="course.csv"]
           body: "code,name,no,title\r\ncorpfi,Corporate Finance,234,Accounting Information
             Systems\r\nacc,Accounting,527,Advanced Accounting\r\ncapmrk,Capital Markets,756,Capital
             Risk Management\r\ncorpfi,Corporate Finance,601,Case Studies in Corporate
@@ -20283,7 +20283,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
-          - [Content-Disposition, inline; filename="(school).js"]
+          - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
               "meta": [
@@ -20307,7 +20307,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
-          - [Content-Disposition, attachment; filename="(school).csv"]
+          - [Content-Disposition, attachment; filename="school.csv"]
           body: "code,name,campus\r\nart,School of Art and Design,old\r\nbus,School
             of Business,south\r\nedu,College of Education,old\r\neng,School of Engineering,north\r\nla,School
             of Arts and Humanities,old\r\nmus,School of Music & Dance,south\r\nns,School
@@ -20317,7 +20317,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
-          - [Content-Disposition, attachment; filename="(school).tsv"]
+          - [Content-Disposition, attachment; filename="school.tsv"]
           body: "code\tname\tcampus\r\nart\tSchool of Art and Design\told\r\nbus\tSchool
             of Business\tsouth\r\nedu\tCollege of Education\told\r\neng\tSchool of
             Engineering\tnorth\r\nla\tSchool of Arts and Humanities\told\r\nmus\tSchool
@@ -20420,7 +20420,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
-          - [Content-Disposition, inline; filename="(school).js"]
+          - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
               "meta": [
@@ -20444,7 +20444,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
-          - [Content-Disposition, attachment; filename="(school).csv"]
+          - [Content-Disposition, attachment; filename="school.csv"]
           body: "code,name,campus\r\nart,School of Art and Design,old\r\nbus,School
             of Business,south\r\nedu,College of Education,old\r\neng,School of Engineering,north\r\nla,School
             of Arts and Humanities,old\r\nmus,School of Music & Dance,south\r\nns,School
@@ -20454,7 +20454,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
-          - [Content-Disposition, attachment; filename="(school).tsv"]
+          - [Content-Disposition, attachment; filename="school.tsv"]
           body: "code\tname\tcampus\r\nart\tSchool of Art and Design\told\r\nbus\tSchool
             of Business\tsouth\r\nedu\tCollege of Education\told\r\neng\tSchool of
             Engineering\tnorth\r\nla\tSchool of Arts and Humanities\told\r\nmus\tSchool
@@ -20550,8 +20550,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
-          - [Content-Disposition, 'inline; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
-              of Departments'')}).js"']
+          - [Content-Disposition, inline; filename="List of Schools.js"]
           body: |
             {
               "meta": [
@@ -20575,8 +20574,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
-          - [Content-Disposition, 'attachment; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
-              of Departments'')}).csv"']
+          - [Content-Disposition, attachment; filename="List of Schools.csv"]
           body: "Name,# of Departments\r\nSchool of Art and Design,2\r\nSchool of
             Business,3\r\nCollege of Education,2\r\nSchool of Engineering,4\r\nSchool
             of Arts and Humanities,5\r\nSchool of Music & Dance,4\r\nSchool of Natural
@@ -20586,8 +20584,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
-          - [Content-Disposition, 'attachment; filename="((school:as(''List of Schools'')){name:as(Name),count(department):as(''#
-              of Departments'')}).tsv"']
+          - [Content-Disposition, attachment; filename="List of Schools.tsv"]
           body: "Name\t# of Departments\r\nSchool of Art and Design\t2\r\nSchool of
             Business\t3\r\nCollege of Education\t2\r\nSchool of Engineering\t4\r\nSchool
             of Arts and Humanities\t5\r\nSchool of Music & Dance\t4\r\nSchool of Natural
@@ -20688,8 +20685,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
-          - [Content-Disposition, 'inline; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15''),time(''20:13:04.5''),datetime(''2010-04-15
-              20:13'')}).js"']
+          - [Content-Disposition, inline; filename="_.js"]
           body: |
             {
               "meta": [
@@ -20713,8 +20709,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
-          - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15''),time(''20:13:04.5''),datetime(''2010-04-15
-              20:13'')}).csv"']
+          - [Content-Disposition, attachment; filename="_.csv"]
           body: "null(),true(),false(),60,2.125,271828e-5,'HTSQL','2010-04-15','20:13:04.5','2010-04-15
             20:13'\r\n,true,false,60,2.125,2.71828,HTSQL,2010-04-15,20:13:04.500000,2010-04-15
             20:13:00\r\n"
@@ -20723,8 +20718,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
-          - [Content-Disposition, 'attachment; filename="({null(),true(),false(),60,2.125,271828e-5,''HTSQL'',date(''2010-04-15''),time(''20:13:04.5''),datetime(''2010-04-15
-              20:13'')}).tsv"']
+          - [Content-Disposition, attachment; filename="_.tsv"]
           body: "null()\ttrue()\tfalse()\t60\t2.125\t271828e-5\t'HTSQL'\t'2010-04-15'\t'20:13:04.5'\t'2010-04-15
             20:13'\r\n\ttrue\tfalse\t60\t2.125\t2.71828\tHTSQL\t2010-04-15\t20:13:04.500000\t2010-04-15
             20:13:00\r\n"
@@ -20808,7 +20802,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
-          - [Content-Disposition, 'inline; filename="(school?false()).js"']
+          - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
               "meta": [
@@ -20823,13 +20817,13 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
-          - [Content-Disposition, 'attachment; filename="(school?false()).csv"']
+          - [Content-Disposition, attachment; filename="school.csv"]
           body: "code,name,campus\r\n"
         - uri: /school?false()/:tsv
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
-          - [Content-Disposition, 'attachment; filename="(school?false()).tsv"']
+          - [Content-Disposition, attachment; filename="school.tsv"]
           body: "code\tname\tcampus\r\n"
         - uri: /school?false()/:txt
           status: 200 OK
@@ -20904,7 +20898,7 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, application/javascript]
-          - [Content-Disposition, "inline; filename=\"({'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\\\/%25''\\\"&<>#',''}).js\""]
+          - [Content-Disposition, inline; filename="_.js"]
           body: "{\n  \"meta\": [\n    {\"title\": \"'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\",
             \"domain\": \"string\"},\n    {\"title\": \"'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\",
             \"domain\": \"string\"},\n    {\"title\": \"'\u03BE'\", \"domain\": \"string\"},\n
@@ -20918,14 +20912,14 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
-          - [Content-Disposition, "attachment; filename=\"({'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\\\/%25''\\\"&<>#',''}).csv\""]
+          - [Content-Disposition, attachment; filename="_.csv"]
           body: "'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE',\"'\\/%25''\"\"&<>#'\",''\r\n\"\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10\",\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F,\u03BE,\"\\/%'\"\"&<>#\",\r\n"
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
             '%CE%BE', '\/%25''"&<>#', ''}/:tsv
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
-          - [Content-Disposition, "attachment; filename=\"({'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\\\/%25''\\\"&<>#',''}).tsv\""]
+          - [Content-Disposition, attachment; filename="_.tsv"]
           body: "'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\t'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\t'\u03BE'\t\"'\\/%25''\"\"&<>#'\"\t''\r\n\"\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10\"\t\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F\t\u03BE\t\"\\/%'\"\"&<>#\"\t\r\n"
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
             '%CE%BE', '\/%25''"&<>#', ''}/:txt

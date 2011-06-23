@@ -40,11 +40,13 @@ class CSVRenderer(Renderer):
         return "200 OK"
 
     def generate_headers(self, product):
-        filename = str(product.profile.segment.syntax)
+        filename = entitle(product.profile.binding.segment)
+        if not filename:
+            filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
         return [('Content-Type', '%s; charset=UTF-8' % self.content_type),
                 ('Content-Disposition',
-                 'attachment; filename="(%s).%s"'
+                 'attachment; filename="%s.%s"'
                  % (filename, self.extension))]
 
     def generate_body(self, product):

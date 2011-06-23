@@ -19,7 +19,7 @@ from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, FormatSyntax,
                      SelectorSyntax, ApplicationSyntax, OperatorSyntax,
-                     SpecifierSyntax, TransformSyntax, FunctionSyntax,
+                     SpecifierSyntax, MappingSyntax, FunctionSyntax,
                      GroupSyntax, IdentifierSyntax, WildcardSyntax,
                      ReferenceSyntax, ComplementSyntax, StringSyntax,
                      NumberSyntax)
@@ -304,7 +304,7 @@ class BindSelector(Bind):
                 for syntax, recipe in recipies:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
                         syntax = GroupSyntax(syntax, syntax.mark)
-                    syntax = SpecifierSyntax('.', element.syntax, syntax,
+                    syntax = SpecifierSyntax(element.syntax, syntax,
                                              syntax.mark)
                     bind = BindByRecipe(recipe, syntax, self.state)
                     elements.append(bind())
@@ -336,12 +336,12 @@ class BindOperator(Bind):
         return self.state.call(self.syntax)
 
 
-class BindTransform(Bind):
+class BindMapping(Bind):
     """
     Binds a :class:`htsql.tr.syntax.TransformSyntax` node.
     """
 
-    adapts(TransformSyntax)
+    adapts(MappingSyntax)
 
     def __call__(self):
         # A function operator node has the form:

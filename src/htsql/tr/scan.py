@@ -5,8 +5,8 @@
 
 
 """
-:mod:`htsql.tr.scanner`
-=======================
+:mod:`htsql.tr.scan`
+====================
 
 This module implements the HTSQL scanner.
 """
@@ -27,7 +27,7 @@ class TokenStream(object):
     :class:`TokenStream` wraps a list of tokens with a convenient interface
     for consumption and look-ahead.
 
-    `tokens` (a list of :`class:htsql.tr.token.Token` objects)
+    `tokens` (a list of :class:`htsql.tr.token.Token` objects)
         A list of tokens.
     """
 
@@ -51,13 +51,13 @@ class TokenStream(object):
         instance of the given class.  When `values` is set, the method
         checks if the token value belongs to the given list of values.
         If any of the checks fail, the method either raises
-        :exc:`htsql.error.tr.ParseError` or returns ``None`` depending
+        :exc:`htsql.tr.error.ParseError` or returns ``None`` depending
         on the value of the `do_force` parameter.
 
         This method advances the active pointer to the next token if
         `do_pop` is enabled.
 
-        `token_class` (a subclass of :class:`htsql.token.Token` or ``None``)
+        `token_class` (a subclass of :class:`htsql.tr.token.Token` or ``None``)
             If not ``None``, the method checks that the returned token
             is an instance of `token_class`.
 
@@ -74,7 +74,7 @@ class TokenStream(object):
         `do_force` (Boolean)
             This flag affects the method behavior when any of the token
             checks fail.  If set, the method will raise
-            :exc:`htsql.error.tr.ParseError`; otherwise it will return
+            :exc:`htsql.tr.error.ParseError`; otherwise it will return
             ``None``.
         """
         # Sanity check on the arguments.
@@ -135,9 +135,9 @@ class TokenStream(object):
         instance of the given class.  When `values` is set, the method
         checks if the token value belongs to the given list of values.
         If any of the checks fail, the method raises
-        :exc:`htsql.error.tr.ParseError`.
+        :exc:`htsql.tr.error.ParseError`.
 
-        `token_class` (a subclass of :class:`htsql.token.Token` or ``None``)
+        `token_class` (a subclass of :class:`htsql.tr.token.Token` or ``None``)
             If not ``None``, the method checks that the active token
             is an instance of `token_class`.
 
@@ -179,19 +179,20 @@ class Scanner(object):
 
         *comparison operators*
             ``=``, ``!=``, ``==``, ``!==``, ``~``, ``!~``,
-            ``~~``, ``!~~``, ``^~``, ``!^~``, ``^~~``, ``!^~~``,
-            ``$~``, ``!$~``, ``$~~``, ``!$~~``, ``=~``, ``!=~``,
-            ``=~~``, ``!=~~``. ``<``, ``<=``, ``>``, ``>=``.
+            ``<``, ``<=``, ``>``, ``>=``.
 
         *logical operators*
-            ``!``, ``&``, ``|``, ``->``, ``?``.
+            ``!``, ``&``, ``|``, ``?``.
 
         *arithmetic operators*
             ``+``, ``-``, ``*``, ``/``, ``^``.
 
+        *assignment operator*
+            ``:=``.
+
         *punctuation*
             ``(``, ``)``, ``[``, ``]``, ``{``, ``}``,
-            ``.``, ``,``, ``/``, ``:``.
+            ``.``, ``,``, ``->``, ``/``, ``:``, ``$``.
 
     There are also two special token types:
 
@@ -273,7 +274,7 @@ class Scanner(object):
         """
         Tokenizes the query; returns a :class:`TokenStream` instance.
 
-        In case of syntax errors, raises :exc:`htsql.error.tr.ScanError`.
+        In case of syntax errors, raises :exc:`htsql.tr.error.ScanError`.
         """
         # Decode %-escape sequences.
         unquoted_input = self.unquote(self.input)
@@ -289,10 +290,10 @@ class Scanner(object):
 
         # The beginning of the next token.
         start = 0
-        # The beginning of the mark slice.  Note that both `start` and
-        # `mark_start` point to the same position in the query string;
-        # however `start` is measured in Unicode characters while
-        # `mark_start` is measured in octets.
+        # The beginning of the mark slice.  Both `start` and `mark_start`
+        # point to the same position in the query string; however `start`
+        # is measured in Unicode characters while `mark_start` is measured
+        # in octets.
         mark_start = 0
         # Have we reached the final token?
         is_end = False
@@ -347,7 +348,7 @@ def scan(input):
     
     Returns a stream of tokens (a :class:`TokenStream` instance).
 
-    In case of syntax errors, raises :exc:`htsql.error.tr.ScanError`.
+    In case of syntax errors, raises :exc:`htsql.tr.error.ScanError`.
     """
     scanner = Scanner(input)
     return scanner.scan()

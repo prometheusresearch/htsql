@@ -602,7 +602,7 @@ class BindSelect(BindMacro):
                 for syntax, recipe in recipies:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
                         syntax = GroupSyntax(syntax, syntax.mark)
-                    syntax = SpecifierSyntax('.', element.syntax, syntax,
+                    syntax = SpecifierSyntax(element.syntax, syntax,
                                              syntax.mark)
                     bind = BindByRecipe(recipe, syntax, self.state)
                     elements.append(bind())
@@ -647,7 +647,7 @@ class BindFork(BindMacro):
                 for syntax, recipe in recipies:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
                         syntax = GroupSyntax(syntax, syntax.mark)
-                    syntax = SpecifierSyntax('.', element.syntax, syntax,
+                    syntax = SpecifierSyntax(element.syntax, syntax,
                                              syntax.mark)
                     bind = BindByRecipe(recipe, syntax, self.state)
                     elements.append(bind())

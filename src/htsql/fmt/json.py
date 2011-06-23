@@ -39,11 +39,13 @@ class JSONRenderer(Renderer):
         return "200 OK"
 
     def generate_headers(self, product):
-        filename = str(product.profile.segment.syntax)
+        filename = entitle(product.profile.binding.segment)
+        if not filename:
+            filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
         return [('Content-Type', 'application/javascript'),
                 ('Content-Disposition',
-                 'inline; filename="(%s).js"' % filename)]
+                 'inline; filename="%s.js"' % filename)]
 
     def generate_body(self, product):
         titles = [escape(entitle(element.binding))
