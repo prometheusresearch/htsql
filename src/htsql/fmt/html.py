@@ -14,7 +14,7 @@ This module implements the HTML renderer.
 
 from ..adapter import adapts
 from .format import Format, Formatter, Renderer
-from .entitle import entitle
+from .entitle import entitle, guess_title
 from ..domain import (Domain, BooleanDomain, NumberDomain,
                       StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain)
@@ -75,26 +75,20 @@ class HTMLRenderer(Renderer):
         yield "table { border-collapse: collapse;"
         yield " margin: 0.5em auto; width: 100% }\n"
         yield "table, tr { border-style: solid; border-width: 0 }\n"
-        yield "td, th { padding: 0.2em 0.5em; vertical-align: top;"
-        yield " text-align: left }\n"
-        yield "div.tab { position: relative; left: -1px; margin-right: 60%;"
-        yield " padding: 0.2em 0.5em; background: #ffffff;"
-        yield " border-style: solid; border-width: 5px 1px 0;"
-        yield " border-top-left-radius: 10px; border-top-right-radius: 10px;"
-        yield " -moz-border-radius-topleft: 10px;"
-        yield " -moz-border-radius-topright: 10px;"
-        yield " -webkit-border-top-left-radius: 10px;"
-        yield " -webkit-border-top-right-radius: 10px }\n"
+        yield "td, th { padding: 0.2em 0.5em; text-align: left }\n"
+        yield "td { vertical-align: top }\n"
+        yield "th { vertical-align: bottom }\n"
         yield "table.page { border: 0; padding: 1em; width: auto }\n"
         yield "tr.content { padding: 1em 1em 0.5em }\n"
         yield "tr.footer { padding: 0 1em 1em; text-align: left;"
         yield " font-style: italic }\n"
-        yield "table.chart .number { text-align: right }\n"
-        yield "tr.caption { font-size: 105%; background: transparent }\n"
-        yield "tr.caption th { padding: 0 }\n"
-        yield "div.tab { border-color: #6f9ad3 #c3c3c3 }\n"
+        yield "table.list .number { text-align: right }\n"
+        yield "table.list td, table.list th { border-color: #c3c3c3;"
+        yield " border-width: 0 1px; border-style: solid }\n"
         yield "tr.header { background: #dae3ea; border-color: #c3c3c3;"
         yield " border-width: 1px 1px 0 }\n"
+        yield "tr.header th.spanning { text-align: center; font-size: 105%;"
+        yield " background: transparent }\n"
         yield "tr.odd { background: #ffffff; border-color: #c3c3c3;"
         yield " border-width: 0 1px }\n"
         yield "tr.even { background: #f2f2f2; border-color: #c3c3c3;"
@@ -103,7 +97,7 @@ class HTMLRenderer(Renderer):
         yield "tr.total { background: transparent;"
         yield "border-color: #c3c3c3; border-width: 1px 0 0 }\n"
         yield "tr.total td { text-align: right; font-size: 75%;"
-        yield " font-style: italic; padding: 0.3em 0.5em 0 }\n"
+        yield " font-style: italic; padding: 0.3em 0.5em 0; border-width: 0 }\n"
         yield "table.void { text-align: center;"
         yield" border-color: #c3c3c3; border-width: 1px 0 }\n"
 
@@ -132,24 +126,45 @@ class HTMLRenderer(Renderer):
     def serialize_content(self, product):
         segment = product.profile.binding.segment
         caption = entitle(segment)
-        headers = [entitle(element) for element in segment.elements]
+        headers = [guess_title(element) for element in segment.elements]
+        height = max(len(header) for header in headers)
         width = len(segment.elements)
         domains = [element.domain for element in segment.elements]
         tool = HTMLFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         colspan = " colspan=\"%s\"" % width if width > 1 else ""
-        yield "<table class=\"chart\" summary=\"%s\">\n" \
+        yield "<table class=\"list\" summary=\"%s\">\n" \
                 % cgi.escape(caption, True)
-        yield "<tr class=\"caption\">"
-        yield ("<th%s><div class=\"tab\">%s</div></th>"
-                % (colspan, cgi.escape(caption)))
-        yield "</tr>\n"
-        if width:
+        for line in range(height):
             yield "<tr class=\"header\">"
-            for (header, format) in zip(headers, formats):
-                style = (" class=\"%s\"" % format.style
-                         if format.style is not None else "")
-                yield "<th%s>%s</th>" % (style, cgi.escape(header))
+            index = 0
+            while index < width:
+                while index < width and len(headers[index]) <= line:
+                    index += 1
+                if index == width:
+                    break
+                is_spanning = (len(headers[index]) > line+1)
+                colspan = 1
+                if is_spanning:
+                    while (index+colspan < width and
+                           len(headers[index+colspan]) > line+1 and
+                           headers[index][:line+1] ==
+                               headers[index+colspan][:line+1]):
+                        colspan += 1
+                rowspan = 1
+                if len(headers[index]) == line+1:
+                    rowspan = height-line
+                chunks = ["th"]
+                if is_spanning:
+                    chunks.append("class=\"spanning\"")
+                if colspan > 1:
+                    chunks.append("colspan=\"%s\"" % colspan)
+                if rowspan > 1:
+                    chunks.append("rowspan=\"%s\"" % rowspan)
+                tag = " ".join(chunks)
+                title = cgi.escape(headers[index][line])
+                yield "<%s>%s</th>" % (tag, title)
+                index += colspan
             yield "</tr>\n"
         is_odd = False
         total = 0
@@ -174,6 +189,7 @@ class HTMLRenderer(Renderer):
             total = "(1 row)"
         else:
             total = "(%s rows)" % total
+        colspan = " colspan=\"%s\"" % width if width > 1 else ""
         yield "<tr class=\"total\"><td%s>%s</td></tr>" % (colspan, total)
         yield "</table>"
 

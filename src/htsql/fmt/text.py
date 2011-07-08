@@ -15,7 +15,7 @@ This module implements the plain text renderer.
 from ..adapter import adapts
 from ..util import maybe, oneof
 from .format import Format, Formatter, Renderer
-from .entitle import entitle
+from .entitle import guess_title
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
                       DateDomain, TimeDomain, DateTimeDomain)
@@ -24,13 +24,21 @@ import decimal
 import datetime
 
 
+class HeaderLayout(object):
+
+    def __init__(self, text, row, column, colspan, rowspan):
+        self.text = text
+        self.row = row
+        self.column = column
+        self.colspan = colspan
+        self.rowspan = rowspan
+
+
 class Layout(object):
 
-    def __init__(self, caption, headers, total, table_width, column_widths):
-        self.caption = caption
+    def __init__(self, headers, total, column_widths):
         self.headers = headers
         self.total = total
-        self.table_width = table_width
         self.column_widths = column_widths
 
 
@@ -51,42 +59,70 @@ class TextRenderer(Renderer):
     def generate_headers(self, product):
         return [('Content-Type', 'text/plain; charset=UTF-8')]
 
+    def calculate_header_layout(self, segment):
+        headers = [guess_title(element) for element in segment.elements]
+        layouts = []
+        height = max(len(header) for header in headers)
+        width = len(segment.elements)
+        for line in range(height):
+            index = 0
+            while index < width:
+                while index < width and len(headers[index]) <= line:
+                    index += 1
+                if index == width:
+                    break
+                colspan = 1
+                if len(headers[index]) > line+1:
+                    while (index+colspan < width and
+                           len(headers[index+colspan]) > line+1 and
+                           headers[index][:line+1] ==
+                               headers[index+colspan][:line+1]):
+                        colspan += 1
+                rowspan = 1
+                if len(headers[index]) == line+1:
+                    rowspan = height-line
+                title = headers[index][line]
+                layout = HeaderLayout(title, line, index, colspan, rowspan)
+                layouts.append(layout)
+                index += colspan
+        return layouts
+
     def calculate_layout(self, product, formats):
         segment = product.profile.binding.segment
-        caption = entitle(segment).decode('utf-8')
-        headers = [entitle(element).decode('utf-8')
-                   for element in segment.elements]
-        column_widths = [len(header) for header in headers]
+        headers = self.calculate_header_layout(segment)
+        column_widths = [1 for element in segment.elements]
         total = 0
         for record in product:
             for idx, (format, value) in enumerate(zip(formats, record)):
                 width = format.measure(value)
                 column_widths[idx] = max(column_widths[idx], width)
             total += 1
-        table_width = len(caption)
         if total == 0:
-            total = u"(no rows)"
+            total = "(no rows)"
         elif total == 1:
-            total = u"(1 row)"
+            total = "(1 row)"
         else:
-            total = u"(%s rows)" % total
-        table_width = max(table_width, len(total)-2)
-        if formats:
-            columns_width = sum(column_widths)+3*(len(formats)-1)
-            table_width = max(table_width, columns_width)
-            if columns_width < table_width:
-                extra = table_width-columns_width
-                inc = extra/len(formats)
-                rem = extra - inc*len(formats)
-                for idx in range(len(formats)):
-                    column_widths[idx] += inc
-                    if idx < rem:
-                        column_widths[idx] += 1
-        caption = (u"%*s" % (-table_width, caption)).encode('utf-8')
-        headers = [(u"%*s" % (-width, header)).encode('utf-8')
-                   for width, header in zip(column_widths, headers)]
-        total = (u"%*s" % (table_width+4, total)).encode('utf-8')
-        return Layout(caption, headers, total, table_width, column_widths)
+            total = "(%s rows)" % total
+        constraints = []
+        constraints.append((0, len(segment.elements), len(total)-4))
+        for header in headers:
+            constraints.append((header.column, header.column+header.colspan,
+                                len(header.text.decode('utf-8'))))
+        constraints.reverse()
+        for start, end, width in constraints:
+            current_width = (end-start-1)*3
+            for index in range(start, end):
+                current_width += column_widths[index]
+            if width <= current_width:
+                continue
+            extra = width-current_width
+            inc = extra/(end-start)
+            rem = extra - inc*(end-start)
+            for index in range(start, end):
+                column_widths[index] += inc
+                if index < start+rem:
+                    column_widths[index] += 1
+        return Layout(headers, total, column_widths)
 
     def generate_body(self, product):
         request_title = str(product.profile.syntax)
@@ -101,12 +137,50 @@ class TextRenderer(Renderer):
         tool = TextFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         layout = self.calculate_layout(product, formats)
-        yield " | " + layout.caption + " |\n"
-        yield "-+-" + "-"*layout.table_width + "-+-\n"
         if product.profile.segment.elements:
-            yield (" | " +
-                   " | ".join(header for header in layout.headers) +
-                   " |\n")
+            height = max(header.row+header.rowspan
+                         for header in layout.headers)
+            for line in range(height):
+                cells = []
+                borders = []
+                is_prior_solid = False
+                is_solid = False
+                idx = 0
+                while idx < len(layout.column_widths):
+                    headers = [header for header in layout.headers
+                               if header.row <= line
+                                             < header.row+header.rowspan and
+                                  header.column == idx]
+                    assert len(headers) == 1, headers
+                    header = headers[0]
+                    cell_width = (header.colspan-1)*3
+                    for width in layout.column_widths[idx:idx+header.colspan]:
+                        cell_width += width
+                    if line < header.row+header.rowspan-1:
+                        cell = " "*cell_width
+                        border = " "*(cell_width+2)
+                        is_solid = False
+                    else:
+                        cell = u"%-*s" % (cell_width,
+                                          header.text.decode('utf-8'))
+                        cell = cell.encode('utf-8')
+                        border = "-"*(cell_width+2)
+                        is_solid = True
+                    cells.append(cell)
+                    if is_prior_solid or is_solid:
+                        borders.append("+")
+                    else:
+                        borders.append("|")
+                    borders.append(border)
+                    is_prior_solid = is_solid
+                    idx += header.colspan
+                if is_prior_solid:
+                    borders.append("+")
+                else:
+                    borders.append("|")
+                yield " | " + " | ".join(cells) + " |\n"
+                if line < height-1:
+                    yield " " + "".join(borders) + "\n"
             yield ("-+-" +
                    "-+-".join("-"*width for width in layout.column_widths) +
                    "-+-\n")
@@ -131,7 +205,10 @@ class TextRenderer(Renderer):
                         yield " | " + " | ".join(cells) + " |\n"
                     else:
                         yield " : " + " : ".join(cells) + " :\n"
-        yield " " + layout.total + "\n"
+        table_width = len(layout.column_widths)*3+1
+        for width in layout.column_widths:
+            table_width += width
+        yield " " + "%*s" % (table_width, layout.total) + "\n"
         yield "\n"
         yield " ----\n"
         yield " %s\n" % request_title
