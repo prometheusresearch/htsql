@@ -4,10 +4,9 @@
 #
 
 
-from htsql.mark import EmptyMark
 from htsql.tr.lookup import ExpandTable
 from htsql.tr.syntax import IdentifierSyntax
-from htsql.tr.recipe import ColumnRecipe
+from htsql.tr.binding import ColumnRecipe
 
 
 class OracleExpandTable(ExpandTable):
@@ -17,7 +16,7 @@ class OracleExpandTable(ExpandTable):
             name = column.name
             if name.isupper():
                 name = name.lower()
-            identifier = IdentifierSyntax(name, EmptyMark())
+            identifier = IdentifierSyntax(name, self.binding.mark)
             link = self.find_link(column)
             recipe = ColumnRecipe(column, link)
             yield (identifier, recipe)

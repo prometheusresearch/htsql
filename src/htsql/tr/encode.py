@@ -19,15 +19,14 @@ from ..domain import (Domain, UntypedDomain, TupleDomain, BooleanDomain,
                       DateTimeDomain, OpaqueDomain)
 from .error import EncodeError
 from .coerce import coerce
-from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
-                      FreeTableBinding, AttachedTableBinding,
-                      QuotientBinding, ComplementBinding, KernelBinding,
-                      ColumnBinding, LiteralBinding, SieveBinding,
-                      SortBinding, CastBinding, WrapperBinding,
-                      DefinitionBinding, AliasBinding,
-                      DirectionBinding, FormulaBinding,
-                      SelectionBinding, HomeBinding, MonikerBinding,
-                      ForkBinding, LinkBinding)
+from .binding import (Binding, QueryBinding, SegmentBinding, WrappingBinding,
+                      HomeBinding, RootBinding, FreeTableBinding,
+                      AttachedTableBinding, ColumnBinding,
+                      QuotientBinding, KernelBinding, ComplementBinding,
+                      CoverBinding, ForkBinding, LinkBinding, SieveBinding,
+                      SortBinding, CastBinding, RescopingBinding,
+                      LiteralBinding, FormulaBinding)
+from .lookup import direct
 from .code import (RootSpace, ScalarSpace,
                    DirectTableSpace, FiberTableSpace,
                    QuotientSpace, ComplementSpace, MonikerSpace, ForkedSpace,
@@ -112,22 +111,6 @@ class EncodingState(object):
             return self.binding_to_space[binding]
         # Caching is disabled; return a new instance every time.
         return relate(binding, self)
-
-    def direct(self, binding):
-        """
-        Extracts a direction modifier from the given binding.
-
-        A direction modifier is set by post-fix ``+`` and ``-`` operators.
-        The function returns ``+1`` for the ``+`` modifier (ascending order),
-        ``-1`` for the ``-`` modifier (descending order), ``None`` if there
-        are no modifiers.
-
-        `binding` (:class:`htsql.tr.binding.Binding`)
-            The binding node.
-        """
-        # FIXME: `Direct` does not really depend on the state, should
-        # it still accept it?
-        return direct(binding, self)
 
 
 class EncodeBase(Adapter):
@@ -214,33 +197,6 @@ class Relate(EncodeBase):
                           self.binding.mark)
 
 
-class Direct(EncodeBase):
-    """
-    Extracts a direction modifier from the given binding.
-
-    A direction modifier is set by post-fix ``+`` and ``-`` operators.
-    The function returns ``+1`` for the ``+`` modifier (ascending order),
-    ``-1`` for the ``-`` modifier (descending order), ``None`` if there
-    are no modifiers.
-
-    This is an interface adapter; see subclasses for implementations.
-
-    The :class:`Direct` adapter has the following signature::
-
-        Direct: (Binding, EncodingState) -> +1 or -1 or None
-
-    The adapter is polymorphic on the `Binding` argument.
-
-    The adapter unwraps binding nodes looking for instances of
-    :class:`htsql.tr.binding.DirectionBinding`, which represent
-    direction modifiers.
-    """
-
-    def __call__(self):
-        # The default implementation produces no modifier.
-        return None
-
-
 class EncodeQuery(Encode):
     """
     Encodes the top-level binding node :class:`htsql.tr.binding.QueryBinding`.
@@ -276,8 +232,8 @@ class EncodeSegment(Encode):
             # Encode the node.
             element = self.state.encode(binding)
             elements.append(element)
-        if self.binding.base is not None:
-            space = self.state.relate(self.binding.base)
+        if self.binding.seed is not None:
+            space = self.state.relate(self.binding.seed)
         else:
             units = []
             for element in elements:
@@ -373,22 +329,6 @@ class RelateSieve(Relate):
         return FilteredSpace(space, filter, self.binding)
 
 
-class DirectSieve(Direct):
-    """
-    Extracts the direction modifier from a sieve binding.
-    """
-
-    adapts(SieveBinding)
-
-    def __call__(self):
-        # We delegate the adapter to the binding base, ignoring the filter.
-        # FIXME: It is controversal, but matches the `entitle` adapter.
-        # Perhaps, we need to add a class attribute `is_passthrough`
-        # (or a mixin class `PassthroughBinding`) to indicate bindings
-        # that could delegate modifier extraction adapters?
-        return self.state.direct(self.binding.base)
-
-
 class RelateSort(Relate):
     """
     Translates a sort binding to a space node.
@@ -409,7 +349,7 @@ class RelateSort(Relate):
             # Encode the binding.
             code = self.state.encode(binding)
             # Extract the direction modifier; assume `+` if none.
-            direction = self.state.direct(binding)
+            direction = direct(binding)
             if direction is None:
                 direction = +1
             order.append((code, direction))
@@ -470,7 +410,7 @@ class RelateQuotient(Relate):
             raise EncodeError("invalid plural operand",
                               seed_space.mark)
         kernel = [self.state.encode(binding)
-                  for binding in self.binding.kernel]
+                  for binding in self.binding.kernels]
         return QuotientSpace(space, seed_space, kernel, self.binding)
 
 
@@ -485,14 +425,11 @@ class RelateComplement(Relate):
 
 class RelateMoniker(Relate):
 
-    adapts(MonikerBinding)
+    adapts(CoverBinding)
 
     def __call__(self):
         space = self.state.relate(self.binding.base)
         seed = self.state.relate(self.binding.seed)
-        if self.binding.condition is not None:
-            filter = self.state.encode(self.binding.condition)
-            seed = FilteredSpace(seed, filter, self.binding)
         return MonikerSpace(space, seed, self.binding)
 
 
@@ -503,7 +440,7 @@ class RelateFork(Relate):
     def __call__(self):
         space = self.state.relate(self.binding.base)
         kernel = [self.state.encode(binding)
-                  for binding in self.binding.kernel]
+                  for binding in self.binding.kernels]
         for code in kernel:
             if not all(space.spans(unit.space) for unit in code.units):
                 raise EncodeError("a singular operand is required", code.mark)
@@ -517,15 +454,17 @@ class RelateLink(Relate):
     def __call__(self):
         space = self.state.relate(self.binding.base)
         seed = self.state.relate(self.binding.seed)
-        kernel = [self.state.encode(binding)
-                  for binding in self.binding.kernel]
-        counter_kernel = [self.state.encode(binding)
-                          for binding in self.binding.counter_kernel]
+        kernel = [self.state.encode(rimage)
+                  for limage, rimage in self.binding.images]
+        counter_kernel = [self.state.encode(limage)
+                          for limage, rimage in self.binding.images]
         for code in kernel:
             if not all(seed.spans(unit.space) for unit in code.units):
+                print "!!!"
                 raise EncodeError("a singular operand is required", code.mark)
         for code in counter_kernel:
             if not all(space.spans(unit.space) for unit in code.units):
+                print "???"
                 raise EncodeError("a singular operand is required", code.mark)
         return LinkedSpace(space, seed, kernel, counter_kernel, self.binding)
 
@@ -568,20 +507,6 @@ class EncodeCast(Encode):
         # Delegate it to the `Convert` adapter.
         convert = Convert(self.binding, self.state)
         return convert()
-
-
-class DirectCast(Direct):
-    """
-    Extracts a direction modifier from a cast binding.
-    """
-
-    adapts(CastBinding)
-
-    def __call__(self):
-        # The adapter is delegated to the binding base; we have to do it
-        # because many expressions (including segment elements) are wrapped
-        # with implicit cast nodes, which otherwise would mask any decorators.
-        return self.state.direct(self.binding.base)
 
 
 class Convert(Adapter):
@@ -935,22 +860,6 @@ class RelateFormula(Relate):
         return relate()
 
 
-class DirectFormula(Direct):
-    """
-    Extracts a direction modifier from a formula binding.
-
-    The extration is specific to the formula signature and is implemented
-    by the :class:`DirectBySignature` adapter.
-    """
-
-    adapts(FormulaBinding)
-
-    def __call__(self):
-        # Delegate the extraction to the `DirectBySignature` adapter.
-        direct = DirectBySignature(self.binding, self.state)
-        return direct()
-
-
 class EncodeBySignatureBase(Adapter):
     """
     Translates a formula node.
@@ -1041,30 +950,12 @@ class RelateBySignature(EncodeBySignatureBase):
                           self.binding.mark)
 
 
-class DirectBySignature(EncodeBySignatureBase):
-    """
-    Extracts a direction modifier from a formula node.
-
-    This is an auxiliary adapter used to extract direction modifiers
-    from class:`htsql.tr.binding.FormulaBinding` nodes.  The adapter is
-    polymorphic on the formula signature.
-
-    Unless overridden, the adapter returns no direction modifier.
-    """
-
-    def __call__(self):
-        # Override in subclasses for formulas which may export non-trivial
-        # direction modifier.
-        return None
-
-
 class EncodeWrapper(Encode):
     """
     Translates a wrapper binding to a code node.
     """
 
-    adapts_many(WrapperBinding,
-                DefinitionBinding)
+    adapts_many(WrappingBinding, RescopingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -1076,69 +967,11 @@ class RelateWrapper(Relate):
     Translates a wrapper binding to a space node.
     """
 
-    adapts_many(WrapperBinding,
-                DefinitionBinding,
-                SelectionBinding)
+    adapts_many(WrappingBinding, RescopingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
         return self.state.relate(self.binding.base)
-
-
-class DirectWrapper(Direct):
-    """
-    Extracts a direction modifier from a wrapper binding.
-    """
-
-    adapts_many(WrapperBinding,
-                DefinitionBinding)
-
-    def __call__(self):
-        # Delegate the adapter to the wrapped binding.
-        return self.state.direct(self.binding.base)
-
-
-class EncodeAlias(Encode):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        return self.state.encode(self.binding.base)
-
-
-class RelateAlias(Relate):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        return self.state.relate(self.binding.base)
-
-
-class DirectAlias(Direct):
-
-    adapts(AliasBinding)
-
-    def __call__(self):
-        return self.state.direct(self.binding.base)
-
-
-class DirectDirection(Direct):
-    """
-    Extracts a direction modifier from a direction decorator.
-    """
-
-    adapts(DirectionBinding)
-
-    def __call__(self):
-        # The direction modifier specified by the decorator.
-        direction = self.binding.direction
-        # Here we handle nested decorators: `++` and `--` are
-        # translated to `+`; `+-` and `-+` are translated to `-`.
-        base_direction = self.state.direct(self.binding.base)
-        if base_direction is not None:
-            direction *= base_direction
-        # Return the combined direction.
-        return direction
 
 
 def encode(binding, state=None):
@@ -1182,30 +1015,5 @@ def relate(binding, state=None):
     # Realize and apply the `Relate` adapter.
     relate = Relate(binding, state)
     return relate()
-
-
-def direct(binding, state=None):
-    """
-    Extracts a direction modifier from the given binding.
-
-    Returns
-
-    - ``+1`` for the ``+`` modifier (ascending order);
-    - ``-1`` for the ``-`` modifier (descending order);
-    - ``None`` if there are no modifiers.
-
-    `binding` (:class:`htsql.tr.binding.Binding`)
-        The binding node.
-
-    `state` (:class:`EncodingState` or ``None``)
-        The encoding state to use.  If not set, a new encoding state
-        is instantiated.
-    """
-    # Create a new encoding state if necessary.
-    if state is None:
-        state = EncodingState()
-    # Realize and apply the `Direct` adapter.
-    direct = Direct(binding, state)
-    return direct()
 
 

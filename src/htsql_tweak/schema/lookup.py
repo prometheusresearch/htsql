@@ -7,8 +7,8 @@
 from htsql.entity import DirectJoin, ReverseJoin
 from htsql.tr.lookup import (LookupAttributeInHome, LookupAttributeInTable,
                              normalize)
-from htsql.tr.recipe import (FreeTableRecipe, AttachedTableRecipe,
-                             AmbiguousRecipe)
+from htsql.tr.binding import (FreeTableRecipe, AttachedTableRecipe,
+                              AmbiguousRecipe)
 
 
 class SchemaLookupAttributeInHome(LookupAttributeInHome):

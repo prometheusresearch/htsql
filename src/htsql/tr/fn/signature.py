@@ -69,7 +69,6 @@ class LinkSig(Signature):
 
     slots = [
             Slot('seed'),
-            Slot('condition', is_mandatory=False),
     ]
 
 
@@ -310,7 +309,6 @@ class NowSig(NullarySig):
 class AggregateSig(Signature):
 
     slots = [
-            Slot('base'),
             Slot('plural_base', is_mandatory=False),
             Slot('op'),
     ]

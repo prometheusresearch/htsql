@@ -15,9 +15,10 @@ This module implements the entitle adapter.
 from ..adapter import Adapter, adapts, adapts_many
 from ..tr.syntax import IdentifierSyntax, ReferenceSyntax, ApplicationSyntax
 from ..tr.binding import (Binding, RootBinding, SieveBinding, SortBinding,
-                          CastBinding, WrapperBinding, TitleBinding,
+                          CastBinding, WrappingBinding, TitleBinding,
                           SegmentBinding, SelectionBinding, DefinitionBinding,
                           AliasBinding)
+from ..tr.lookup import guess_title
 
 
 class Entitle(Adapter):
@@ -37,7 +38,7 @@ class Entitle(Adapter):
 
 class EntitleWrapper(Entitle):
 
-    adapts_many(SieveBinding, SortBinding, WrapperBinding, CastBinding,
+    adapts_many(SieveBinding, SortBinding, WrappingBinding, CastBinding,
                 SelectionBinding, DefinitionBinding, AliasBinding)
 
     def __call__(self):
@@ -76,15 +77,20 @@ class EntitleSegment(Entitle):
     adapts(SegmentBinding)
 
     def __call__(self):
-        if self.binding.base is not None:
-            return entitle(self.binding.base, self.with_strong, self.with_weak)
+        if self.binding.seed is not None:
+            return entitle(self.binding.seed, self.with_strong, self.with_weak)
         if self.with_weak:
             return ""
         return super(EntitleSegment, self).__call__()
 
 
 def entitle(binding, with_strong=True, with_weak=True):
-    entitle = Entitle(binding, with_strong, with_weak)
-    return entitle()
+    headers = guess_title(binding)
+    if headers:
+        return headers[-1]
+    else:
+        return ""
+    #entitle = Entitle(binding, with_strong, with_weak)
+    #return entitle()
 
 

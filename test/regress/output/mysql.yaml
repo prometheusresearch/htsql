@@ -1533,7 +1533,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | {school_code,part_of}->program{school_code,code}                   |
+             | program                                                            |
             -+--------------------------------------------------------------------+-
              | school_code | code  | title                     | degree | part_of |
             -+-------------+-------+---------------------------+--------+---------+-
@@ -1563,11 +1563,11 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | {school_code,code}->program{school_code,part_of} |
-            -+--------------------------------------------------+-
-             | school_code  | code  | title  | degree | part_of |
-            -+--------------+-------+--------+--------+---------+-
-                                                        (no rows)
+             | program                                       |
+            -+-----------------------------------------------+-
+             | school_code | code | title | degree | part_of |
+            -+-------------+------+-------+--------+---------+-
+                                                     (no rows)
 
              ----
              /(program?school_code='la'&code='uengl').({school_code,code}->program{school_code,part_of})
@@ -1728,7 +1728,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | {department_code,no}->prerequisite{on_department_code,on_course_no}   |
+             | prerequisite                                                          |
             -+-----------------------------------------------------------------------+-
              | of_department_code | of_course_no | on_department_code | on_course_no |
             -+--------------------+--------------+--------------------+--------------+-
@@ -1756,7 +1756,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | {department_code,no}->prerequisite{of_department_code,of_course_no}   |
+             | prerequisite                                                          |
             -+-----------------------------------------------------------------------+-
              | of_department_code | of_course_no | on_department_code | on_course_no |
             -+--------------------+--------------+--------------------+--------------+-
@@ -2287,7 +2287,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unable to resolve an identifier: department:
+            bind error: unknown attribute 'department':
                 /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).department
                                                                                                                         ^^^^^^^^^^
         - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).of_course_no
@@ -2317,7 +2317,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | {of_department_code,of_course_no}->course{department_code,no}                                     |
+             | course                                                                                            |
             -+---------------------------------------------------------------------------------------------------+-
              | department_code | no  | title                        | credits | description                      |
             -+-----------------+-----+------------------------------+---------+----------------------------------+-
@@ -2377,7 +2377,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | {on_department_code,on_course_no}->course{department_code,no}                             |
+             | course                                                                                    |
             -+-------------------------------------------------------------------------------------------+-
              | department_code | no  | title                | credits | description                      |
             -+-----------------+-----+----------------------+---------+----------------------------------+-
@@ -2468,7 +2468,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | code->classification{part_of}                              |
+             | classification                                             |
             -+------------------------------------------------------------+-
              | code    | type       | title   | description | part_of     |
             -+---------+------------+---------+-------------+-------------+-
@@ -11810,7 +11810,7 @@ tests:
                   INNER JOIN `htsql_regress`.`instructor` AS `instructor`
                              ON (`confidential`.`instructor_code` = `instructor`.`code`)
              ORDER BY `confidential`.`instructor_code` ASC
-        - uri: /school.fiber(school)
+        - uri: /school.({} -> school)
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -11903,14 +11903,17 @@ tests:
                                                      (81 rows)
 
              ----
-             /school.fiber(school)
+             /school.({}->school)
              SELECT `school_2`.`code`,
                     `school_2`.`name`,
                     `school_2`.`campus`
              FROM `htsql_regress`.`school` AS `school_1`
-                  CROSS JOIN `htsql_regress`.`school` AS `school_2`
+                  CROSS JOIN (SELECT `school`.`code`,
+                                     `school`.`name`,
+                                     `school`.`campus`
+                              FROM `htsql_regress`.`school` AS `school`) AS `school_2`
              ORDER BY `school_1`.`code` ASC, 1 ASC
-        - uri: /department.fiber(program,school_code)
+        - uri: /department.(school_code -> program)
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -12098,17 +12101,22 @@ tests:
                                                                                    (136 rows)
 
              ----
-             /department.fiber(program,school_code)
+             /department.(school_code->program)
              SELECT `program`.`school_code`,
                     `program`.`code`,
                     `program`.`title`,
                     `program`.`degree`,
                     `program`.`part_of`
              FROM `htsql_regress`.`department` AS `department`
-                  CROSS JOIN `htsql_regress`.`program` AS `program`
-             WHERE (`department`.`school_code` = `program`.`school_code`)
+                  INNER JOIN (SELECT `program`.`school_code`,
+                                     `program`.`code`,
+                                     `program`.`title`,
+                                     `program`.`degree`,
+                                     `program`.`part_of`
+                              FROM `htsql_regress`.`program` AS `program`) AS `program`
+                             ON (`department`.`school_code` = `program`.`school_code`)
              ORDER BY `department`.`code` ASC, 1 ASC, 2 ASC
-        - uri: /classification.fiber(classification,code,part_of) {part_of, code}
+        - uri: /classification.(code -> classification{part_of}) {part_of, code}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -12216,14 +12224,16 @@ tests:
                                          (96 rows)
 
              ----
-             /classification.fiber(classification,code,part_of){part_of,code}
+             /classification.(code->classification{part_of}){part_of,code}
              SELECT `classification_2`.`part_of`,
                     `classification_2`.`code`
              FROM `htsql_regress`.`classification` AS `classification_1`
-                  CROSS JOIN `htsql_regress`.`classification` AS `classification_2`
-             WHERE (`classification_1`.`code` = `classification_2`.`part_of`)
+                  INNER JOIN (SELECT `classification`.`part_of`,
+                                     `classification`.`code`
+                              FROM `htsql_regress`.`classification` AS `classification`) AS `classification_2`
+                             ON (`classification_1`.`code` = `classification_2`.`part_of`)
              ORDER BY `classification_1`.`code` ASC, 2 ASC
-        - uri: /school.fiber(school){root().school.code, this().code}
+        - uri: /school.({} -> school){root().school.code, this().code}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -12316,18 +12326,19 @@ tests:
                    (81 rows)
 
              ----
-             /school.fiber(school){root().school.code,this().code}
+             /school.({}->school){root().school.code,this().code}
              SELECT `school_1`.`code`,
                     `school_2`.`code`
              FROM `htsql_regress`.`school` AS `school_1`
-                  CROSS JOIN `htsql_regress`.`school` AS `school_2`
+                  CROSS JOIN (SELECT `school`.`code`
+                              FROM `htsql_regress`.`school` AS `school`) AS `school_2`
              ORDER BY 1 ASC, 2 ASC
         - uri: /student.instructor
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unable to resolve an identifier: instructor:
+            bind error: unknown attribute 'instructor':
                 /student.instructor
                          ^^^^^^^^^^
         - uri: /school?code='mus'
@@ -14949,20 +14960,20 @@ tests:
                ORDER BY 2 DESC, `department`.`code` ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
-          - uri: /{count(school)*count(department),count(school.fiber(department))}
+          - uri: /{count(school)*count(department),count(school.({} -> department))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |                                                                   |
-              -+-------------------------------------------------------------------+-
-               | count(school)*count(department) | count(school.fiber(department)) |
-              -+---------------------------------+---------------------------------+-
-               |                             243 |                             243 |
-                                                                             (1 row)
+               |                                                                  |
+              -+------------------------------------------------------------------+-
+               | count(school)*count(department) | count(school.({}->department)) |
+              -+---------------------------------+--------------------------------+-
+               |                             243 |                            243 |
+                                                                            (1 row)
 
                ----
-               /{count(school)*count(department),count(school.fiber(department))}
+               /{count(school)*count(department),count(school.({}->department))}
                SELECT (`school`.`count` * `department_1`.`count`),
                       `department_2`.`count`
                FROM (SELECT COUNT(TRUE) AS `count`
@@ -14971,22 +14982,23 @@ tests:
                                 FROM `htsql_regress`.`department` AS `department`) AS `department_1`
                     CROSS JOIN (SELECT COUNT(TRUE) AS `count`
                                 FROM `htsql_regress`.`school` AS `school`
-                                     CROSS JOIN `htsql_regress`.`department` AS `department`) AS `department_2`
-          - uri: /{count(school.department), count(school.fiber(department)?school_code=root().school.code),
-              count(school.fiber(department,code,school.code))}
+                                     CROSS JOIN (SELECT TRUE AS `->`
+                                                 FROM `htsql_regress`.`department` AS `department`) AS `department`) AS `department_2`
+          - uri: /{count(school.department), count(school.({} -> department)?school_code=root().school.code),
+              count(school.(code -> department{school.code}))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |                                                                                                                                              |
-              -+----------------------------------------------------------------------------------------------------------------------------------------------+-
-               | count(school.department) | count(school.fiber(department)?school_code=root().school.code) | count(school.fiber(department,code,school.code)) |
-              -+--------------------------+----------------------------------------------------------------+--------------------------------------------------+-
-               |                       24 |                                                             24 |                                               24 |
-                                                                                                                                                        (1 row)
+               |                                                                                                                                          |
+              -+------------------------------------------------------------------------------------------------------------------------------------------+-
+               | count(school.department) | count(school.({}->department)?school_code=root().school.code) | count(school.(code->department{school.code})) |
+              -+--------------------------+---------------------------------------------------------------+-----------------------------------------------+-
+               |                       24 |                                                            24 |                                            24 |
+                                                                                                                                                    (1 row)
 
                ----
-               /{count(school.department),count(school.fiber(department)?school_code=root().school.code),count(school.fiber(department,code,school.code))}
+               /{count(school.department),count(school.({}->department)?school_code=root().school.code),count(school.(code->department{school.code}))}
                SELECT `department_1`.`count`,
                       `department_2`.`count`,
                       `department_3`.`count`
@@ -14996,15 +15008,17 @@ tests:
                                      ON (`school`.`code` = `department`.`school_code`)) AS `department_1`
                     CROSS JOIN (SELECT COUNT(TRUE) AS `count`
                                 FROM `htsql_regress`.`school` AS `school`
-                                     CROSS JOIN `htsql_regress`.`department` AS `department`
+                                     CROSS JOIN (SELECT `department`.`school_code`
+                                                 FROM `htsql_regress`.`department` AS `department`) AS `department`
                                 WHERE (`department`.`school_code` = `school`.`code`)) AS `department_2`
                     CROSS JOIN (SELECT COUNT(TRUE) AS `count`
-                                FROM `htsql_regress`.`school` AS `school_1`
-                                     CROSS JOIN `htsql_regress`.`department` AS `department`
-                                     LEFT OUTER JOIN `htsql_regress`.`school` AS `school_2`
-                                                     ON (`department`.`school_code` = `school_2`.`code`)
-                                WHERE (`school_1`.`code` = `school_2`.`code`)) AS `department_3`
-          - uri: /school{code,count(department)}?count(department)=max(fiber(school).count(department))
+                                FROM `htsql_regress`.`school` AS `school`
+                                     INNER JOIN (SELECT `school`.`code`
+                                                 FROM `htsql_regress`.`department` AS `department`
+                                                      LEFT OUTER JOIN `htsql_regress`.`school` AS `school`
+                                                                      ON (`department`.`school_code` = `school`.`code`)) AS `department`
+                                                ON (`school`.`code` = `department`.`code`)) AS `department_3`
+          - uri: /school{code,count(department)} ?count(department)=max(({} -> school).count(department))
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -15017,7 +15031,7 @@ tests:
                                     (1 row)
 
                ----
-               /school{code,count(department)}?count(department)=max(fiber(school).count(department))
+               /school{code,count(department)}?count(department)=max(({}->school).count(department))
                SELECT `school_1`.`code`,
                       COALESCE(`department`.`count`, 0)
                FROM `htsql_regress`.`school` AS `school_1`
@@ -15036,7 +15050,8 @@ tests:
                                     ON TRUE
                WHERE (COALESCE(`department`.`count`, 0) = `school_2`.`max`)
                ORDER BY 1 ASC
-          - uri: /school.program{school_code,code,count(student)}?count(student)=max(fiber(program,school_code).count(student))
+          - uri: /school.program{school_code,code,count(student)} ?count(student)=max((school_code
+              -> program).count(student))
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -15055,7 +15070,7 @@ tests:
                                                  (7 rows)
 
                ----
-               /school.program{school_code,code,count(student)}?count(student)=max(fiber(program,school_code).count(student))
+               /school.program{school_code,code,count(student)}?count(student)=max((school_code->program).count(student))
                SELECT `program_1`.`school_code`,
                       `program_1`.`code`,
                       COALESCE(`student`.`count`, 0)
@@ -15069,19 +15084,16 @@ tests:
                                      GROUP BY 2, 3) AS `student`
                                     ON ((`program_1`.`school_code` = `student`.`school_code`) AND (`program_1`.`code` = `student`.`program_code`))
                     LEFT OUTER JOIN (SELECT MAX(COALESCE(`student`.`count`, 0)) AS `max`,
-                                            `program_1`.`school_code`,
-                                            `program_1`.`code`
-                                     FROM `htsql_regress`.`program` AS `program_1`
-                                          CROSS JOIN `htsql_regress`.`program` AS `program_2`
+                                            `program`.`school_code`
+                                     FROM `htsql_regress`.`program` AS `program`
                                           LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                                                   `student`.`school_code`,
                                                                   `student`.`program_code`
                                                            FROM `htsql_regress`.`student` AS `student`
                                                            GROUP BY 2, 3) AS `student`
-                                                          ON ((`program_2`.`school_code` = `student`.`school_code`) AND (`program_2`.`code` = `student`.`program_code`))
-                                     WHERE (`program_1`.`school_code` = `program_2`.`school_code`)
-                                     GROUP BY 2, 3) AS `program_2`
-                                    ON ((`program_1`.`school_code` = `program_2`.`school_code`) AND (`program_1`.`code` = `program_2`.`code`))
+                                                          ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+                                     GROUP BY 2) AS `program_2`
+                                    ON (`program_1`.`school_code` = `program_2`.`school_code`)
                WHERE (COALESCE(`student`.`count`, 0) = `program_2`.`max`)
                ORDER BY `school`.`code` ASC, 1 ASC, 2 ASC
           - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
@@ -15231,12 +15243,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | home() |
-              -+--------+-
-               | 2+2    |
-              -+--------+-
-               |      4 |
-                  (1 row)
+               |       |
+              -+-------+-
+               | 2+2   |
+              -+-------+-
+               |     4 |
+                 (1 row)
 
                ----
                /home(){2+2}
@@ -15246,7 +15258,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | home() |
+               |        |
               -+--------+-
                | 2+2    |
               -+--------+-
@@ -15481,180 +15493,14 @@ tests:
                                     ON TRUE
                WHERE (CAST(COALESCE(`department`.`count`, 0) AS DECIMAL(65,30)) > `school_2`.`avg`)
                ORDER BY 1 ASC
-          - uri: /school.program{mix(){name+,title+}}.limit(10)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | program                                                     |
-              -+-------------------------------------------------------------+-
-               | name                     | title                            |
-              -+--------------------------+----------------------------------+-
-               | College of Education     | Bachelor of Arts in Math         |
-               :                          : Education                        :
-               | College of Education     | Bachelor of Arts in Science      |
-               :                          : Education                        :
-               | College of Education     | Certificate in Science Teaching  |
-               | College of Education     | M.S. in Education                |
-               | College of Education     | Master of Arts in Education      |
-               :                          : Leadership                       :
-               | College of Education     | Master of Arts in Literacy       |
-               :                          : Education                        :
-               | College of Education     | Master of Arts in Teaching       |
-               | Public Honorariums       | Honorary PhD                     |
-               | School of Art and Design | Bachelor of Arts in Art History  |
-               | School of Art and Design | Bachelor of Arts in Studio Art   |
-                                                                     (10 rows)
-
-               ----
-               /school.program{mix(){name+,title+}}.limit(10)
-               SELECT `school`.`name`,
-                      `program`.`title`
-               FROM `htsql_regress`.`school` AS `school`
-                    INNER JOIN `htsql_regress`.`program` AS `program`
-                               ON (`school`.`code` = `program`.`school_code`)
-               ORDER BY 1 ASC, 2 ASC, `school`.`code` ASC, `program`.`school_code` ASC, `program`.`code` ASC
-               LIMIT 10
-          - uri: /define(students_by_year(y) := student?year(dob)=mix().y) .students_by_year(1990)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | student                                                                                               |
-              -+-------------------------------------------------------------------------------------------------------+-
-               | id   | name               | gender | dob        | school_code | program_code | start_date | is_active |
-              -+------+--------------------+--------+------------+-------------+--------------+------------+-----------+-
-               | 1050 | Annie Harris       | f      | 1990-09-28 | ns          | umth         | 2008-08-15 | true      |
-               | 1056 | Maria Hendrix      | f      | 1990-06-18 | ns          | umth         | 2008-08-15 | true      |
-               | 1063 | Catherine Robinson | f      | 1990-09-17 | ns          | umth         | 2008-08-15 | true      |
-               | 1078 | Alma Cruz          | f      | 1990-01-06 | ns          | umth         | 2008-08-15 | true      |
-               | 1079 | Pat Williams       | f      | 1990-05-22 | ns          | umth         | 2008-08-15 | true      |
-               | 1081 | Karen Hamilton     | f      | 1990-03-09 | ns          | umth         | 2008-08-15 | true      |
-               | 1082 | Ashley Stein       | f      | 1990-05-21 | ns          | umth         | 2008-08-15 | true      |
-               | 1089 | Juanita Morrow     | f      | 1990-02-28 | ns          | umth         | 2008-08-15 | true      |
-               | 1091 | Maria Crockett     | f      | 1990-08-07 | ns          | umth         | 2008-08-15 | true      |
-               | 1097 | Latasha Richards   | f      | 1990-05-07 | ph          | phd          | 2009-08-15 | true      |
-               | 1102 | Terri Castro       | f      | 1990-10-05 | ph          | phd          | 2009-08-15 | true      |
-               | 1107 | Louise Esposito    | f      | 1990-05-10 | ph          | phd          | 2009-08-15 | true      |
-               | 1109 | Juanita Knight     | f      | 1990-07-12 | ph          | phd          | 2009-08-15 | true      |
-               | 1138 | Michelle Bullock   | f      | 1990-03-06 | edu         | gedlead      | 2010-08-15 | true      |
-               | 1147 | Annie Thompson     | f      | 1990-11-08 | ph          | phd          | 2010-08-15 | true      |
-               | 1151 | Patricia Cortes    | f      | 1990-05-20 | edu         | gedlead      | 2010-08-15 | true      |
-               | 1154 | Kristina Cooper    | f      | 1990-05-31 | edu         | gedlead      | 2010-08-15 | true      |
-                                                                                                               (17 rows)
-
-               ----
-               /define(students_by_year(y):=student?year(dob)=mix().y).students_by_year(1990)
-               SELECT `student`.`id`,
-                      `student`.`name`,
-                      `student`.`gender`,
-                      `student`.`dob`,
-                      `student`.`school_code`,
-                      `student`.`program_code`,
-                      `student`.`start_date`,
-                      `student`.`is_active`
-               FROM `htsql_regress`.`student` AS `student`
-               WHERE (EXTRACT(YEAR FROM `student`.`dob`) = 1990)
-               ORDER BY 1 ASC
-          - uri: /define(students_by_year(y) := student?year(dob)=mix().y, students_by_ym(y,m)
-              := students_by_year(y)?month(dob)=mix().m) .students_by_ym(1990,2)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | student                                                                                           |
-              -+---------------------------------------------------------------------------------------------------+-
-               | id   | name           | gender | dob        | school_code | program_code | start_date | is_active |
-              -+------+----------------+--------+------------+-------------+--------------+------------+-----------+-
-               | 1089 | Juanita Morrow | f      | 1990-02-28 | ns          | umth         | 2008-08-15 | true      |
-                                                                                                             (1 row)
-
-               ----
-               /define(students_by_year(y):=student?year(dob)=mix().y,students_by_ym(y,m):=students_by_year(y)?month(dob)=mix().m).students_by_ym(1990,2)
-               SELECT `student`.`id`,
-                      `student`.`name`,
-                      `student`.`gender`,
-                      `student`.`dob`,
-                      `student`.`school_code`,
-                      `student`.`program_code`,
-                      `student`.`start_date`,
-                      `student`.`is_active`
-               FROM `htsql_regress`.`student` AS `student`
-               WHERE (EXTRACT(MONTH FROM `student`.`dob`) = 2)
-                     AND (EXTRACT(YEAR FROM `student`.`dob`) = 1990)
-               ORDER BY 1 ASC
-          - uri: /define(p:=this(), q:=1){p{mix().q}}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               |       |
-              -+-------+-
-               | q     |
-              -+-------+-
-               |     1 |
-                 (1 row)
-
-               ----
-               /define(p:=this(),q:=1){p{mix().q}}
-               SELECT 1
-          - uri: /define(p:=this(), q:=1){p{q}}
-            status: 400 Bad Request
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |
-              bind error: unable to resolve an identifier: q:
-                  /define(p:=this(), q:=1){p{q}}
-                                             ^
-          - uri: /school.program{title, mix().name}.limit(10)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | program                                                     |
-              -+-------------------------------------------------------------+-
-               | title                            | name                     |
-              -+----------------------------------+--------------------------+-
-               | Post Baccalaureate in Art        | School of Art and Design |
-               : History                          :                          :
-               | Bachelor of Arts in Art History  | School of Art and Design |
-               | Bachelor of Arts in Studio Art   | School of Art and Design |
-               | Graduate Certificate in          | School of Business       |
-               : Accounting                       :                          :
-               | Certificate in Capital Markets   | School of Business       |
-               | B.S. in Accounting               | School of Business       |
-               | B.S. in Business Administration  | School of Business       |
-               | B.S. in Corporate Finance        | School of Business       |
-               | Master of Arts in Education      | College of Education     |
-               : Leadership                       :                          :
-               | M.S. in Education                | College of Education     |
-                                                                     (10 rows)
-
-               ----
-               /school.program{title,mix().name}.limit(10)
-               SELECT `program`.`title`,
-                      `school`.`name`
-               FROM `htsql_regress`.`school` AS `school`
-                    INNER JOIN `htsql_regress`.`program` AS `program`
-                               ON (`school`.`code` = `program`.`school_code`)
-               ORDER BY `school`.`code` ASC, `program`.`school_code` ASC, `program`.`code` ASC
-               LIMIT 10
-          - uri: /define(p:=school.program).p{title, mix().name}.limit(10)
-            status: 400 Bad Request
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |
-              bind error: unable to resolve an identifier: name:
-                  /define(p:=school.program).p{title, mix().name}.limit(10)
-                                                            ^^^^
         - id: link-and-fork
           tests:
-          - uri: /school.link(department)
+          - uri: /school.moniker(department)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | link(department)                              |
+               | moniker(department)                           |
               -+-----------------------------------------------+-
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
@@ -15685,7 +15531,7 @@ tests:
                                                        (24 rows)
 
                ----
-               /school.link(department)
+               /school.moniker(department)
                SELECT `department`.`code`,
                       `department`.`name`,
                       `department`.`school_code`
@@ -15693,28 +15539,28 @@ tests:
                     INNER JOIN `htsql_regress`.`department` AS `department`
                                ON (`school`.`code` = `department`.`school_code`)
                ORDER BY `school`.`code` ASC, 1 ASC
-          - uri: /school{code, count(link(department))}
+          - uri: /school{code, count(moniker(department))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                         |
-              -+--------------------------------+-
-               | code | count(link(department)) |
-              -+------+-------------------------+-
-               | art  |                       2 |
-               | bus  |                       3 |
-               | edu  |                       2 |
-               | eng  |                       4 |
-               | la   |                       5 |
-               | mus  |                       4 |
-               | ns   |                       4 |
-               | ph   |                       0 |
-               | sc   |                       0 |
-                                         (9 rows)
+               | school                            |
+              -+-----------------------------------+-
+               | code | count(moniker(department)) |
+              -+------+----------------------------+-
+               | art  |                          2 |
+               | bus  |                          3 |
+               | edu  |                          2 |
+               | eng  |                          4 |
+               | la   |                          5 |
+               | mus  |                          4 |
+               | ns   |                          4 |
+               | ph   |                          0 |
+               | sc   |                          0 |
+                                            (9 rows)
 
                ----
-               /school{code,count(link(department))}
+               /school{code,count(moniker(department))}
                SELECT `school`.`code`,
                       COALESCE(`department`.`count`, 0)
                FROM `htsql_regress`.`school` AS `school`
@@ -15724,12 +15570,12 @@ tests:
                                      GROUP BY 2) AS `department`
                                     ON (`school`.`code` = `department`.`school_code`)
                ORDER BY 1 ASC
-          - uri: /school.link(home().department)
+          - uri: /school.moniker(home().department)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | link(home().department)                       |
+               | moniker(home().department)                    |
               -+-----------------------------------------------+-
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
@@ -15979,35 +15825,35 @@ tests:
                                                       (243 rows)
 
                ----
-               /school.link(home().department)
+               /school.moniker(home().department)
                SELECT `department`.`code`,
                       `department`.`name`,
                       `department`.`school_code`
                FROM `htsql_regress`.`school` AS `school`
                     CROSS JOIN `htsql_regress`.`department` AS `department`
                ORDER BY `school`.`code` ASC, 1 ASC
-          - uri: /school{code, count(link(home().department))}
+          - uri: /school{code, count(moniker(home().department))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                |
-              -+---------------------------------------+-
-               | code | count(link(home().department)) |
-              -+------+--------------------------------+-
-               | art  |                             27 |
-               | bus  |                             27 |
-               | edu  |                             27 |
-               | eng  |                             27 |
-               | la   |                             27 |
-               | mus  |                             27 |
-               | ns   |                             27 |
-               | ph   |                             27 |
-               | sc   |                             27 |
-                                                (9 rows)
+               | school                                   |
+              -+------------------------------------------+-
+               | code | count(moniker(home().department)) |
+              -+------+-----------------------------------+-
+               | art  |                                27 |
+               | bus  |                                27 |
+               | edu  |                                27 |
+               | eng  |                                27 |
+               | la   |                                27 |
+               | mus  |                                27 |
+               | ns   |                                27 |
+               | ph   |                                27 |
+               | sc   |                                27 |
+                                                   (9 rows)
 
                ----
-               /school{code,count(link(home().department))}
+               /school{code,count(moniker(home().department))}
                SELECT `school`.`code`,
                       COALESCE(`department`.`count`, 0)
                FROM `htsql_regress`.`school` AS `school`
@@ -16015,89 +15861,12 @@ tests:
                                      FROM `htsql_regress`.`department` AS `department`) AS `department`
                                     ON TRUE
                ORDER BY 1 ASC
-          - uri: /school.link(home().department, code=home().department.school_code)
+          - uri: /(school?code='art').moniker(department)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | link(home().department,code=home().department.school_code) |
-              -+------------------------------------------------------------+-
-               | code        | name                       | school_code     |
-              -+-------------+----------------------------+-----------------+-
-               | arthis      | Art History                | art             |
-               | stdart      | Studio Art                 | art             |
-               | acc         | Accounting                 | bus             |
-               | capmrk      | Capital Markets            | bus             |
-               | corpfi      | Corporate Finance          | bus             |
-               | edpol       | Educational Policy         | edu             |
-               | tched       | Teacher Education          | edu             |
-               | be          | Bioengineering             | eng             |
-               | comp        | Computer Science           | eng             |
-               | ee          | Electrical Engineering     | eng             |
-               | me          | Mechanical Engineering     | eng             |
-               | eng         | English                    | la              |
-               | hist        | History                    | la              |
-               | lang        | Foreign Languages          | la              |
-               | poli        | Political Science          | la              |
-               | psych       | Psychology                 | la              |
-               | pia         | Piano                      | mus             |
-               | str         | Strings                    | mus             |
-               | voc         | Vocals                     | mus             |
-               | win         | Wind                       | mus             |
-               | astro       | Astronomy                  | ns              |
-               | chem        | Chemistry                  | ns              |
-               | mth         | Mathematics                | ns              |
-               | phys        | Physics                    | ns              |
-                                                                    (24 rows)
-
-               ----
-               /school.link(home().department,code=home().department.school_code)
-               SELECT `department`.`code`,
-                      `department`.`name`,
-                      `department`.`school_code`
-               FROM `htsql_regress`.`school` AS `school`
-                    CROSS JOIN `htsql_regress`.`department` AS `department`
-               WHERE (`school`.`code` = `department`.`school_code`)
-               ORDER BY `school`.`code` ASC, 1 ASC
-          - uri: /school{code, count(link(home().department, code=home().department.school_code))}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | school                                                                   |
-              -+--------------------------------------------------------------------------+-
-               | code | count(link(home().department,code=home().department.school_code)) |
-              -+------+-------------------------------------------------------------------+-
-               | art  |                                                                 2 |
-               | bus  |                                                                 3 |
-               | edu  |                                                                 2 |
-               | eng  |                                                                 4 |
-               | la   |                                                                 5 |
-               | mus  |                                                                 4 |
-               | ns   |                                                                 4 |
-               | ph   |                                                                 0 |
-               | sc   |                                                                 0 |
-                                                                                   (9 rows)
-
-               ----
-               /school{code,count(link(home().department,code=home().department.school_code))}
-               SELECT `school`.`code`,
-                      COALESCE(`department`.`count`, 0)
-               FROM `htsql_regress`.`school` AS `school`
-                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                            `school`.`code`
-                                     FROM `htsql_regress`.`school` AS `school`
-                                          CROSS JOIN `htsql_regress`.`department` AS `department`
-                                     WHERE (`school`.`code` = `department`.`school_code`)
-                                     GROUP BY 2) AS `department`
-                                    ON (`school`.`code` = `department`.`code`)
-               ORDER BY 1 ASC
-          - uri: /(school?code='art').link(department)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | link(department)                   |
+               | moniker(department)                |
               -+------------------------------------+-
                | code   | name        | school_code |
               -+--------+-------------+-------------+-
@@ -16106,7 +15875,7 @@ tests:
                                              (2 rows)
 
                ----
-               /(school?code='art').link(department)
+               /(school?code='art').moniker(department)
                SELECT `department`.`code`,
                       `department`.`name`,
                       `department`.`school_code`
@@ -16118,20 +15887,20 @@ tests:
                                ON (`school`.`code` = `department`.`school_code`)
                WHERE (`school`.`code` = 'art')
                ORDER BY `school`.`code` ASC, 1 ASC
-          - uri: /(school?code='art'){code, count(link(department))}
+          - uri: /(school?code='art'){code, count(moniker(department))}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                         |
-              -+--------------------------------+-
-               | code | count(link(department)) |
-              -+------+-------------------------+-
-               | art  |                       2 |
-                                          (1 row)
+               | school                            |
+              -+-----------------------------------+-
+               | code | count(moniker(department)) |
+              -+------+----------------------------+-
+               | art  |                          2 |
+                                             (1 row)
 
                ----
-               /(school?code='art'){code,count(link(department))}
+               /(school?code='art'){code,count(moniker(department))}
                SELECT `school`.`code`,
                       COALESCE(`department`.`count`, 0)
                FROM `htsql_regress`.`school` AS `school`
@@ -16142,12 +15911,12 @@ tests:
                                     ON (`school`.`code` = `department`.`school_code`)
                WHERE (`school`.`code` = 'art')
                ORDER BY 1 ASC
-          - uri: /(school?code='art').link(home().department)
+          - uri: /(school?code='art').moniker(home().department)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | link(home().department)                       |
+               | moniker(home().department)                    |
               -+-----------------------------------------------+-
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
@@ -16181,7 +15950,7 @@ tests:
                                                        (27 rows)
 
                ----
-               /(school?code='art').link(home().department)
+               /(school?code='art').moniker(home().department)
                SELECT `department`.`code`,
                       `department`.`name`,
                       `department`.`school_code`
@@ -16192,34 +15961,8 @@ tests:
                                 FROM `htsql_regress`.`department` AS `department`) AS `department`
                WHERE (`school`.`code` = 'art')
                ORDER BY `school`.`code` ASC, 1 ASC
-          - uri: /(school?code='art'){code, count(link(home().department, code=home().department.school_code))}
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | school                                                                   |
-              -+--------------------------------------------------------------------------+-
-               | code | count(link(home().department,code=home().department.school_code)) |
-              -+------+-------------------------------------------------------------------+-
-               | art  |                                                                 2 |
-                                                                                    (1 row)
-
-               ----
-               /(school?code='art'){code,count(link(home().department,code=home().department.school_code))}
-               SELECT `school`.`code`,
-                      COALESCE(`department`.`count`, 0)
-               FROM `htsql_regress`.`school` AS `school`
-                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                            `school`.`code`
-                                     FROM `htsql_regress`.`school` AS `school`
-                                          CROSS JOIN `htsql_regress`.`department` AS `department`
-                                     WHERE (`school`.`code` = `department`.`school_code`)
-                                     GROUP BY 2) AS `department`
-                                    ON (`school`.`code` = `department`.`code`)
-               WHERE (`school`.`code` = 'art')
-               ORDER BY 1 ASC
-          - uri: /{link(this()){count(school)}, link(this(),true()){count(school)},
-              link(this(),false()){count(school)}}
+          - uri: /{moniker(this()){count(school)}, moniker(this()?true()){count(school)},
+              moniker(this()?false()){count(school)}}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -16232,7 +15975,7 @@ tests:
                                                          (1 row)
 
                ----
-               /{link(this()){count(school)},link(this(),true()){count(school)},link(this(),false()){count(school)}}
+               /{moniker(this()){count(school)},moniker(this()?true()){count(school)},moniker(this()?false()){count(school)}}
                SELECT COALESCE(`school`.`count`, 0),
                       COALESCE(`school`.`count`, 0),
                       `!_2`.`count`
@@ -16252,7 +15995,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | code->department{school_code}                 |
+               | department                                    |
               -+-----------------------------------------------+-
                | code   | name                   | school_code |
               -+--------+------------------------+-------------+-
@@ -16299,13 +16042,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | code->department{school_code} |
-              -+-------------------------------+-
-               | code       | count(course)    |
-              -+------------+------------------+-
-               | arthis     |                6 |
-               | stdart     |                7 |
-                                        (2 rows)
+               | department             |
+              -+------------------------+-
+               | code   | count(course) |
+              -+--------+---------------+-
+               | arthis |             6 |
+               | stdart |             7 |
+                                 (2 rows)
 
                ----
                /(school?code='art').(code->department{school_code}){code,count(course)}
@@ -16400,7 +16143,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | {}->department      |
+               | department          |
               -+---------------------+-
                | $school_code | code |
               -+--------------+------+-
@@ -16563,7 +16306,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | 'art'->school{code}                      |
+               | school                                   |
               -+------------------------------------------+-
                | code | name                     | campus |
               -+------+--------------------------+--------+-
@@ -17426,12 +17169,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |                 |
-              -+-----------------+-
-               | x*2 | x*2 | x*2 |
-              -+-----+-----+-----+-
-               |   2 |   4 |   6 |
-                           (1 row)
+               |                                   |
+              -+-----------------------------------+-
+               | double(1) | double(2) | double(3) |
+              -+-----------+-----------+-----------+-
+               |         2 |         4 |         6 |
+                                             (1 row)
 
                ----
                /define(double(x):=x*2){double(1),double(2),double(3)}
@@ -17444,19 +17187,19 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | inactive_student                                                                                                        |
-              -+-------------------------------------------------------------------------------------------------------------------------+-
-               | name              | dob        | start_date | (date(date)-date(dob))/365:round(1) | (date(date)-date(dob))/365:round(1) |
-              -+-------------------+------------+------------+-------------------------------------+-------------------------------------+-
-               | Jonathan Bouchard | 1982-02-12 | 2007-08-15 |                                25.5 |                                28.9 |
-               | Lowell Cooper     | 1982-01-05 | 2007-08-15 |                                25.6 |                                29.0 |
-               | John Miller       | 1984-05-13 | 2009-08-15 |                                25.3 |                                26.7 |
-               | John Johnson      | 1984-03-19 | 2009-08-15 |                                25.4 |                                26.8 |
-               | Charles Olson     | 1984-04-17 | 2009-08-15 |                                25.3 |                                26.7 |
-               | Albert Miller     | 1984-03-05 | 2009-08-15 |                                25.5 |                                26.8 |
-               | Richard Nguyen    | 1985-03-09 | 2010-08-15 |                                25.5 |                                25.8 |
-               | Prince Gray       | 1985-04-27 | 2010-08-15 |                                25.3 |                                25.7 |
-                                                                                                                                  (8 rows)
+               | inactive_student                                                      |
+              -+-----------------------------------------------------------------------+-
+               | name              | dob        | start_date | age(start_date) | age() |
+              -+-------------------+------------+------------+-----------------+-------+-
+               | Jonathan Bouchard | 1982-02-12 | 2007-08-15 |            25.5 |  28.9 |
+               | Lowell Cooper     | 1982-01-05 | 2007-08-15 |            25.6 |  29.0 |
+               | John Miller       | 1984-05-13 | 2009-08-15 |            25.3 |  26.7 |
+               | John Johnson      | 1984-03-19 | 2009-08-15 |            25.4 |  26.8 |
+               | Charles Olson     | 1984-04-17 | 2009-08-15 |            25.3 |  26.7 |
+               | Albert Miller     | 1984-03-05 | 2009-08-15 |            25.5 |  26.8 |
+               | Richard Nguyen    | 1985-03-09 | 2010-08-15 |            25.5 |  25.8 |
+               | Prince Gray       | 1985-04-27 | 2010-08-15 |            25.3 |  25.7 |
+                                                                                (8 rows)
 
                ----
                /define(student.age(date):=(date(date)-date(dob))/365:round(1),student.age():=age('2011-01-01'),inactive_student:=student?!is_active).inactive_student{name,dob,start_date,age(start_date),age()}
@@ -17661,12 +17404,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |           |
-              -+-----------+-
-               | $x | $x*2 |
-              -+----+------+-
-               | 21 |   42 |
-                     (1 row)
+               |            |
+              -+------------+-
+               | $x | f($x) |
+              -+----+-------+-
+               | 21 |    42 |
+                      (1 row)
 
                ----
                /define(f($x):=$x*2){{$x,f($x)}:where($x:=21)}
@@ -18802,7 +18545,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program                                  |
+               | ^                                        |
               -+------------------------------------------+-
                | title                           | degree |
               -+---------------------------------+--------+-
@@ -19540,7 +19283,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program                                                                      |
+               | ^                                                                            |
               -+------------------------------------------------------------------------------+-
                | school_code | code     | title                            | degree | part_of |
               -+-------------+----------+----------------------------------+--------+---------+-
@@ -19621,7 +19364,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program.sort(count(student))                                                                  |
+               | ^                                                                                             |
               -+-----------------------------------------------------------------------------------------------+-
                | school_code | code     | title                            | degree | part_of | count(student) |
               -+-------------+----------+----------------------------------+--------+---------+----------------+-
@@ -20190,7 +19933,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program{degree}?school.code={'art','la'}                                    |
+               | ^                                                                           |
               -+-----------------------------------------------------------------------------+-
                | school_code | code     | title                           | degree | part_of |
               -+-------------+----------+---------------------------------+--------+---------+-

@@ -12,30 +12,32 @@ This module implements the binding process.
 """
 
 
-from ..util import tupleof
+from ..util import maybe, tupleof
 from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, FormatSyntax,
                      SelectorSyntax, ApplicationSyntax, OperatorSyntax,
+                     QuotientSyntax, SieveSyntax, LinkSyntax, AssignmentSyntax,
                      SpecifierSyntax, MappingSyntax, FunctionSyntax,
                      GroupSyntax, IdentifierSyntax, WildcardSyntax,
                      ReferenceSyntax, ComplementSyntax, StringSyntax,
                      NumberSyntax)
-from .recipe import (Recipe, FreeTableRecipe, AttachedTableRecipe,
-                     ColumnRecipe, ComplementRecipe, KernelRecipe,
-                     SubstitutionRecipe, BindingRecipe, PinnedRecipe,
-                     AmbiguousRecipe)
-from .binding import (Binding, RootBinding, QueryBinding, SegmentBinding,
-                      LiteralBinding, SieveBinding, CastBinding,
-                      WrapperBinding, FreeTableBinding, AttachedTableBinding,
-                      ColumnBinding, ComplementBinding, KernelBinding,
-                      DefinitionBinding, RedirectBinding, AssignmentBinding,
-                      ReverseRedirectBinding, AliasBinding,
-                      SelectionBinding, SortBinding)
-from .lookup import (lookup, lookup_attribute, lookup_function,
-                     lookup_reference, lookup_complement, expand, direct)
+from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
+                      RootBinding, HomeBinding, FreeTableBinding,
+                      AttachedTableBinding, ColumnBinding, QuotientBinding,
+                      KernelBinding, ComplementBinding, LinkBinding,
+                      SieveBinding, SortBinding, CastBinding, RescopingBinding,
+                      AssignmentBinding, DefinitionBinding, SelectionBinding,
+                      RerouteBinding, ReferenceRerouteBinding, AliasBinding,
+                      LiteralBinding,
+                      Recipe, FreeTableRecipe, AttachedTableRecipe,
+                      ColumnRecipe, KernelRecipe, ComplementRecipe,
+                      SubstitutionRecipe, BindingRecipe, ClosedRecipe,
+                      PinnedRecipe, InvalidRecipe, AmbiguousRecipe)
+from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
+                     expand, direct, guess_name)
 from .coerce import coerce
 
 
@@ -46,136 +48,164 @@ class BindingState(object):
     State attributes:
 
     `root` (:class:`htsql.tr.binding.RootBinding`)
+        The root naming scope.
 
-    `base` (:class:`htsql.tr.binding.Binding`)
-        The current lookup context.
+    `scope` (:class:`htsql.tr.binding.Binding`)
+        The current naming scope.
     """
 
     def __init__(self):
-        # The root lookup context.
+        # The root lookup scope.
         self.root = None
-        # The current lookup context.
-        self.base = None
-        # The stack of previous lookup contexts.
-        self.base_stack = []
+        # The current lookup scope.
+        self.scope = None
+        # The stack of previous lookup scopes.
+        self.scope_stack = []
 
     def set_root(self, root):
         """
         Sets the root lookup context.
 
         This function initializes the lookup context stack and must be
-        called before any calls of :meth:`push_base` and :meth:`pop_base`.
+        called before any calls of :meth:`push_scope` and :meth:`pop_scope`.
 
         `root` (:class:`htsql.tr.binding.RootBinding`)
-            The root lookup context.
+            The root lookup scope.
         """
         # Check that the lookup stack is not initialized.
         assert self.root is None
-        assert self.base is None
+        assert self.scope is None
         assert isinstance(root, RootBinding)
         self.root = root
-        self.base = root
+        self.scope = root
 
     def flush(self):
         """
-        Clears the lookup context.
+        Clears the lookup scopes.
         """
-        # We expect the lookup context stack being empty and the current
-        # context to coincide with the root context.
+        # We expect the lookup scope stack to be empty and the current
+        # scope to coincide with the root scope.
         assert self.root is not None
-        assert not self.base_stack
-        assert self.root is self.base
+        assert not self.scope_stack
+        assert self.root is self.scope
         self.root = None
-        self.base = None
+        self.scope = None
 
-    def push_base(self, base):
+    def push_scope(self, scope):
         """
-        Sets the new lookup context.
+        Sets the new lookup scope.
 
-        This function stores the current context in the stack and makes
-        the given binding `base` the new lookup context.  Use the
-        :attr:`base` attribute to get the current context; :meth:`pop_base`
-        to restore the previous context.
+        This function stores the current scope in the stack and makes
+        the given binding the new lookup scope.  Use the :attr:`scope`
+        attribute to get the current scope; :meth:`pop_scope` to restore
+        the previous scope.
 
-        `base` (:class:`htsql.tr.binding.Binding`)
-            The new lookup context.
+        `scope` (:class:`htsql.tr.binding.Binding`)
+            The new lookup scope.
         """
         # Sanity check on the argument.
-        assert isinstance(base, Binding)
-        # Ensure that the root context was set.
+        assert isinstance(scope, Binding)
+        # Ensure that the root scope was set.
         assert self.root is not None
-        # Save the current lookup context.
-        self.base_stack.append(self.base)
-        # Assign the new lookup context.
-        self.base = base
+        # Save the current lookup scope.
+        self.scope_stack.append(self.scope)
+        # Assign the new lookup scope.
+        self.scope = scope
 
-    def pop_base(self):
+    def pop_scope(self):
         """
-        Restores the previous lookup context.
+        Restores the previous lookup scope.
 
-        This functions restores the previous lookup context from the stack.
-        Use the :attr:`base` attribute to get the current context;
-        :meth:`push_base` to change the current context.
+        This functions restores the previous lookup scope from the stack.
+        Use the :attr:`scope` attribute to get the current scope;
+        :meth:`push_scope` to change the current scope.
         """
-        # Restore the prevous lookup context from the stack.
-        self.base = self.base_stack.pop()
+        # Restore the prevous lookup scope from the stack.
+        self.scope = self.scope_stack.pop()
 
-    def bind(self, syntax, base=None):
+    def bind(self, syntax, scope=None):
         """
         Binds the given syntax node using the current binding state.
 
-        Returns a binding node.  This function raises an error if none
-        or more than one node are produced.
+        Returns a binding node.
 
         `syntax` (:class:`htsql.tr.syntax.Syntax`)
             The syntax node to bind.
 
-        `base` (:class:`htsql.tr.binding.Binding` or ``None``)
-            If set, the lookup context is set to `base` when
+        `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+            If set, the lookup scope is set to `scope` when
             binding the syntax node.
         """
-        return bind(syntax, self, base)
+        return bind(syntax, self, scope)
 
-    def call(self, syntax, base=None):
+    def use(self, recipe, syntax, scope=None):
         """
-        Binds the given function call node using the current binding state.
+        Applies a recipe to produce a binding node.
 
-        Returns a list of binding nodes.
+        Returns a binding node.
 
-        `syntax` (:class:`htsql.tr.syntax.CallSyntax`)
+        `recipe` (:class:`htsql.tr.binding.Recipe`)
+            The recipe to apply.
+
+        `syntax` (:class:`htsql.tr.syntax.Syntax`)
+            The syntax node associated with the recipe.
+
+        `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+            If set, the lookup scope is set to `scope` when
+            binding the syntax node.
+        """
+        # If passed, set the new lookup scope.
+        if scope is not None:
+            self.push_scope(scope)
+        # Realize and apply `BindByRecipe` adapter.
+        bind = BindByRecipe(recipe, syntax, self)
+        binding = bind()
+        # Restore the old lookup scope.
+        if scope is not None:
+            self.pop_scope()
+        # Return the generated binding node.
+        return binding
+
+
+    def call(self, syntax, scope=None):
+        """
+        Binds a global function or a global identifier.
+
+        Returns a binding node.
+
+        `syntax` (:class:`htsql.tr.syntax.Syntax`)
             The syntax node to bind.
 
-        `base` (:class:`htsql.tr.binding.Binding` or ``None``)
-            If set, the lookup context is set to `base` when
+        `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+            If set, the lookup context is set to `scope` when
             binding the syntax node.
         """
-        # If passed, set the new lookup context.
-        if base is not None:
-            self.push_base(base)
+        # If passed, set the new lookup scope.
+        if scope is not None:
+            self.push_scope(scope)
         # Realize and apply `BindByName` protocol.
         bind = BindByName(syntax, self)
         binding = bind()
-        # Restore the old lookup context.
-        if base is not None:
-            self.pop_base()
+        # Restore the old lookup scope.
+        if scope is not None:
+            self.pop_scope()
         # Return the generated binding node.
         return binding
 
 
 class Bind(Adapter):
     """
-    Translates a syntax node to a sequence of binding nodes.
+    Translates a syntax node to a binding node.
 
     This is an interface adapter; see subclasses for implementations.
 
-    The binding process translates a syntax tree to a binding tree.  The
-    primary purpose of binding is to resolve identifiers against database
-    objects, resolve an validate function and operator calls and determine
-    types of all expressions.
+    The binding process resolves identifiers against database objects,
+    resolves and validates operators and function calls, and determine
+    types of all expression.
 
     The :class:`Bind` adapter has the following signature::
 
-        Bind: (Syntax, BindingState) -> (Binding ...)
+        Bind: (Syntax, BindingState) -> Binding
 
     The adapter is polymorphic on the `Syntax` argument.
 
@@ -201,210 +231,473 @@ class Bind(Adapter):
 
 
 class BindQuery(Bind):
-    """
-    Binds the top-level syntax node :class:`htsql.tr.syntax.QuerySyntax`.
-
-    Produces a :class:`htsql.tr.binding.QueryBinding` node.
-    """
 
     adapts(QuerySyntax)
 
     def __call__(self):
-        # Initialize the lookup context stack with a root context, which
-        # represents a scalar context with `lookup` implemented as table
-        # lookup.
+        # Initialize the lookup scope with a root node.
         root = RootBinding(self.syntax)
         self.state.set_root(root)
         # Bind the segment node if it is available.
         segment = None
         if self.syntax.segment is not None:
             segment = self.state.bind(self.syntax.segment)
-        # Shut down the lookup context stack.
+        # Shut down the lookup scope stack.
         self.state.flush()
         # Construct and return the top-level binding node.
         return QueryBinding(root, segment, self.syntax)
 
 
 class BindSegment(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.SegmentSyntax` node.
-
-    Produces a :class:`htsql.tr.binding.SegmentBinding` node.
-    """
 
     adapts(SegmentSyntax)
 
     def __call__(self):
-        base = self.state.bind(self.syntax.branch)
-        elements = []
-        recipies = expand(base)
-        if recipies is None:
-            elements.append(base)
-            base = None
+        # Bind the segment expression.
+        seed = self.state.bind(self.syntax.branch)
+        # Extract output flow and columns.
+        bindings = []
+        recipes = expand(seed)
+        if recipes is None:
+            bindings.append(seed)
+            seed = None
         else:
-            self.state.push_base(base)
-            for syntax, recipe in recipies:
-                bind = BindByRecipe(recipe, syntax, self.state)
-                elements.append(bind())
-            self.state.pop_base()
-        bare_elements = elements
+            for syntax, recipe in recipes:
+                binding = self.state.use(recipe, syntax, scope=seed)
+                binding = RescopingBinding(binding, seed, binding.syntax)
+                bindings.append(binding)
+        # Validate the types of the output columns.
         elements = []
-        for element in bare_elements:
-            domain = coerce(element.domain)
+        for binding in bindings:
+            domain = coerce(binding.domain)
             if domain is None:
-                raise BindError("invalid element type", element.mark)
-            element = CastBinding(element, domain, element.syntax)
+                raise BindError("invalid element type", binding.mark)
+            element = CastBinding(binding, domain, binding.syntax)
             elements.append(element)
+        # Complain on an empty selector.
+        # FIXME: an empty selector should be valid.
         if not elements:
             raise BindError("empty selector", self.syntax.mark)
-        return SegmentBinding(base, elements, self.syntax)
+        # Generate a binding node.
+        return SegmentBinding(self.state.scope, seed, elements, self.syntax)
 
 
 class BindSelector(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.SelectorSyntax` node.
-
-    Produces a sequence (possibly empty) of binding nodes.
-    """
 
     adapts(SelectorSyntax)
 
     def __call__(self):
-        base = self.state.base
+        # Determine the base of the selection.
+        scope = self.state.scope
         if self.syntax.lbranch is not None:
-            base = self.state.bind(self.syntax.lbranch)
-        self.state.push_base(base)
+            scope = self.state.bind(self.syntax.lbranch)
+        self.state.push_scope(scope)
+        # Extract selector elements.
         elements = []
-        for rbranch in self.syntax.rbranches:
-            element = self.state.bind(rbranch)
-            if isinstance(element, AssignmentBinding):
-                if (len(element.identifiers) != 1 or
-                        element.arguments is not None):
+        for branch in self.syntax.rbranches:
+            binding = self.state.bind(branch)
+            # Handle in-selector assignments.
+            if isinstance(binding, AssignmentBinding):
+                if len(binding.terms) != 1 or binding.parameters is not None:
                     raise BindError("invalid selector assignment",
-                                    element.mark)
-                identifier = element.identifiers[0]
-                if isinstance(identifier, ReferenceSyntax):
-                    name = identifier.identifier.value
-                    body = self.state.bind(element.body)
-                    recipe = BindingRecipe(body)
-                    base = AliasBinding(base, name, True, recipe,
-                                        element.syntax)
-                elif isinstance(identifier, IdentifierSyntax):
-                    name = identifier.value
-                    recipe = SubstitutionRecipe(base, [], None, element.body)
-                    base = DefinitionBinding(base, name, [], None,
-                                             element.body, element.syntax)
-                bind = BindByRecipe(recipe, identifier, self.state)
-                element = bind()
-                element = WrapperBinding(element, identifier)
-                self.state.pop_base()
-                self.state.push_base(base)
-            recipies = expand(element, is_hard=False)
+                                    binding.mark)
+                name, is_reference = binding.terms[0]
+                if is_reference:
+                    recipe = BindingRecipe(self.state.bind(binding.body))
+                else:
+                    recipe = SubstitutionRecipe(scope, [],
+                                                None, binding.body)
+                recipe = ClosedRecipe(recipe)
+                syntax = binding.syntax
+                if isinstance(syntax, AssignmentSyntax):
+                    syntax = syntax.lbranch
+                binding = self.state.use(recipe, syntax)
+                scope = DefinitionBinding(scope, name, is_reference,
+                                          None, recipe, scope.syntax)
+                self.state.pop_scope()
+                self.state.push_scope(scope)
+            # Extract nested selectors, if any.
+            bindings = []
+            recipies = expand(binding, is_hard=False)
             if recipies is not None:
+                seed = binding
                 for syntax, recipe in recipies:
-                    if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
-                        syntax = GroupSyntax(syntax, syntax.mark)
-                    syntax = SpecifierSyntax(element.syntax, syntax,
-                                             syntax.mark)
-                    bind = BindByRecipe(recipe, syntax, self.state)
-                    elements.append(bind())
+                    binding = self.state.use(recipe, syntax)
+                    binding = RescopingBinding(binding, seed, binding.syntax)
+                    bindings.append(binding)
             else:
-                elements.append(element)
-        self.state.pop_base()
-        order = []
-        for element in elements:
-            direction = direct(element)
-            if direction is not None:
-                order.append(element)
-        if order:
-            base = SortBinding(base, order, None, None, base.syntax)
-        return SelectionBinding(base, elements, base.syntax)
+                bindings.append(binding)
+            # Handle in-selector direction decorators.
+            order = []
+            for binding in bindings:
+                direction = direct(binding)
+                if direction is not None:
+                    order.append(binding)
+            if order:
+                scope = SortBinding(scope, order, None, None, scope.syntax)
+                self.state.pop_scope()
+                self.state.push_scope(scope)
+            elements.extend(bindings)
+        self.state.pop_scope()
+        # Generate a selection scope.
+        return SelectionBinding(scope, elements, self.syntax)
 
 
-class BindOperator(Bind):
-    """
-    Binds an :class:`htsql.tr.syntax.OperatorSyntax` node.
-    """
+class BindApplication(Bind):
 
-    adapts(OperatorSyntax)
-
-    def __call__(self):
-        # The operator node has one of the forms:
-        #   <lop><symbol><rop>, <lop><symbol>, <symbol><rop>.
-
-        # Find and bind the operator.
-        return self.state.call(self.syntax)
-
-
-class BindMapping(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.TransformSyntax` node.
-    """
-
-    adapts(MappingSyntax)
+    adapts(ApplicationSyntax)
 
     def __call__(self):
-        # A function operator node has the form:
-        #   <lop> <identifier> <rop>
-
-        # Find and bind the function.
-        recipe = lookup_function(self.state.base, self.syntax.identifier.value,
-                                 len(self.syntax.arguments))
+        # Look for the parameterized attribute in the current local scope.
+        recipe = lookup_attribute(self.state.scope,
+                                  self.syntax.name, len(self.syntax.arguments))
         if recipe is not None:
-            bind = BindByRecipe(recipe, self.syntax, self.state)
-            binding = bind()
+            binding = self.state.use(recipe, self.syntax)
+        # If not found, look for a global function.
         else:
             binding = self.state.call(self.syntax)
         return binding
 
 
-class BindFunction(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.FunctionSyntax` node.
-    """
+class BindOperator(Bind):
 
-    adapts(FunctionSyntax)
+    adapts(OperatorSyntax)
 
     def __call__(self):
-        # A function call has one of the forms:
-        #   `identifier(argument,...)` or `base.identifier(argument,...)`.
-        # When `base` is set, it is used as the lookup context when binding
-        # the function and its arguments.
+        # Look for the operator in the global scope.  We skip the local scope
+        # as there is no way to add an operator to a local scope.
+        return self.state.call(self.syntax)
 
-        # Get the lookup context of the function.
-        base = self.state.base
-        # Find and bind the function.
-        self.state.push_base(base)
-        recipe = lookup_function(base, self.syntax.identifier.value,
-                                 len(self.syntax.arguments))
-        if recipe is not None:
-            bind = BindByRecipe(recipe, self.syntax, self.state)
-            binding = bind()
+
+class BindQuotient(Bind):
+
+    adapts(QuotientSyntax)
+
+    def __call__(self):
+        # Get the seed of the quotient.
+        seed = self.state.bind(self.syntax.lbranch)
+        # get the kernel expressions.
+        elements = []
+        binding = self.state.bind(self.syntax.rbranch, scope=seed)
+        recipes = expand(binding, is_hard=False)
+        if recipes is not None:
+            for syntax, recipe in recipes:
+                element = self.state.use(recipe, syntax, scope=binding)
+                element = RescopingBinding(element, binding, element.syntax)
+                elements.append(element)
         else:
-            binding = self.state.call(self.syntax, base)
-        self.state.pop_base()
+            elements.append(binding)
+        # Validate types of the kernel expressions.
+        kernels = []
+        for element in elements:
+            domain = coerce(element.domain)
+            if domain is None:
+                raise BindError("invalid element type", element.mark)
+            kernel = CastBinding(element, domain, element.syntax)
+            kernels.append(kernel)
+        # Generate the quotient scope.
+        quotient = QuotientBinding(self.state.scope, seed, kernels,
+                                   self.syntax)
+        # Assign names to the kernel and the complement links when possible.
+        binding = quotient
+        name = guess_name(seed)
+        if name is not None:
+            recipe = ComplementRecipe(quotient)
+            recipe = ClosedRecipe(recipe)
+            binding = DefinitionBinding(binding, name, False, None, recipe,
+                                        self.syntax)
+        for index, kernel in enumerate(kernels):
+            name = guess_name(kernel)
+            if name is not None:
+                recipe = KernelRecipe(quotient, index)
+                recipe = ClosedRecipe(recipe)
+                binding = DefinitionBinding(binding, name, False, None, recipe,
+                                            self.syntax)
+        return binding
+
+
+class BindSieve(Bind):
+
+    adapts(SieveSyntax)
+
+    def __call__(self):
+        # Get the sieve base.
+        base = self.state.bind(self.syntax.lbranch)
+        # Bind the filter and force the Boolean type on it.
+        filter = self.state.bind(self.syntax.rbranch, scope=base)
+        filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
+        # Produce a sieve scope.
+        return SieveBinding(base, filter, self.syntax)
+
+
+class BindLink(Bind):
+
+    adapts(LinkSyntax)
+
+    def __call__(self):
+        # Bind the origin images.
+        origin_images = []
+        binding = self.state.bind(self.syntax.lbranch)
+        recipes = expand(binding, is_hard=False)
+        if recipes is not None:
+            for syntax, recipe in recipes:
+                element = self.state.use(recipe, syntax)
+                element = RescopingBinding(element, binding, element.syntax)
+                origin_images.append(element)
+        else:
+            origin_images.append(binding)
+        # Bind the target scope.
+        home = HomeBinding(self.state.scope, self.syntax)
+        seed = self.state.bind(self.syntax.rbranch, scope=home)
+        # Bind the target images; if not provided, reuse the syntax node
+        # of the origin images.
+        binding = seed
+        target_images = []
+        recipes = expand(seed, is_hard=False)
+        if recipes is None:
+            binding = self.state.bind(self.syntax.lbranch, scope=seed)
+            recipes = expand(binding, is_hard=False)
+        if recipes is not None:
+            for syntax, recipe in recipes:
+                element = self.state.use(recipe, syntax, scope=seed)
+                element = RescopingBinding(element, binding, element.syntax)
+                target_images.append(element)
+        else:
+            target_images.append(binding)
+        # Correlate origin and target images.
+        if len(origin_images) != len(target_images):
+            raise BindError("unbalanced link", self.syntax.mark)
+        images = []
+        for origin_image, target_image in zip(origin_images, target_images):
+            domain = coerce(origin_image.domain, target_image.domain)
+            if domain is None:
+                raise BindError("incompatible images", self.syntax.mark)
+            origin_image = CastBinding(origin_image, domain,
+                                       origin_image.syntax)
+            target_image = CastBinding(target_image, domain,
+                                       target_image.syntax)
+            images.append((origin_image, target_image))
+        # Generate a link scope.
+        return LinkBinding(self.state.scope, seed, images, self.syntax)
+
+
+class BindAssignment(Bind):
+
+    adapts(AssignmentSyntax)
+
+    def __call__(self):
+        # Parse the left side of the assignment.  It takes one of the forms:
+        #   $reference := ...
+        #   identifier := ...
+        #   identifier(parameter,...) := ...
+        #   parent. ... .identifier(parameter,...) := ...
+
+        # The dot-separated names and reference indicators.
+        terms = []
+        parameters = None
+        syntax = self.syntax.lbranch
+        # Is it a reference?
+        if isinstance(syntax, ReferenceSyntax):
+            terms.append((syntax.identifier.value, True))
+        # Otherwise, it is a dot-separated list of identifiers followed
+        # by an optional function call.
+        else:
+            # Dot-separated identifiers.
+            head = None
+            # An identifier or a function call.
+            tail = syntax
+            if isinstance(syntax, SpecifierSyntax):
+                head = syntax.lbranch
+                tail = syntax.rbranch
+            # Parse and validate the qualifier.
+            if head is not None:
+                while isinstance(head, SpecifierSyntax):
+                    syntax = head.rbranch
+                    if not isinstance(syntax, IdentifierSyntax):
+                        raise BindError("an identifier is expected",
+                                        syntax.mark)
+                    terms.insert(0, (syntax.value, False))
+                    head = head.lbranch
+                if not isinstance(head, IdentifierSyntax):
+                    raise BindError("an identifier is expected", head.mark)
+                terms.insert(0, (head.value, False))
+            # Parse and validate the target identifier or function call.
+            if isinstance(tail, IdentifierSyntax):
+                terms.append((tail.value, False))
+            elif isinstance(tail, FunctionSyntax):
+                terms.append((tail.name, False))
+                parameters = []
+                for argument in tail.arguments:
+                    if isinstance(argument, IdentifierSyntax):
+                        parameters.append((argument.value, False))
+                    elif isinstance(argument, ReferenceSyntax):
+                        parameters.append((argument.identifier.value, True))
+                    else:
+                        raise BindError("an identifier is expected",
+                                        argument.mark)
+            else:
+                raise BindError("an identifier is expected", tail.mark)
+        # The right side of the assignment expression.
+        body = self.syntax.rbranch
+        # Generate an assignment node.
+        return AssignmentBinding(self.state.scope, terms, parameters, body,
+                                 self.syntax)
+
+
+class BindSpecifier(Bind):
+
+    adapts(SpecifierSyntax)
+
+    def __call__(self):
+        # Expression:
+        #   parent . child
+        # evaluates `child` in the scope of `parent`.
+        scope = self.state.bind(self.syntax.lbranch)
+        binding = self.state.bind(self.syntax.rbranch, scope=scope)
+        return binding
+
+
+class BindGroup(Bind):
+
+    adapts(GroupSyntax)
+
+    def __call__(self):
+        # Bind the expression in parenthesis, then wrap the result
+        # to attach the original syntax node.
+        binding = self.state.bind(self.syntax.branch)
+        return WrappingBinding(binding, self.syntax)
+
+
+class BindIdentifier(Bind):
+
+    adapts(IdentifierSyntax)
+
+    def __call__(self):
+        # Look for the identifier in the current lookup scope.
+        recipe = lookup_attribute(self.state.scope, self.syntax.value)
+        if recipe is not None:
+            binding = self.state.use(recipe, self.syntax)
+        # If not found, try the global scope.
+        else:
+            binding = self.state.call(self.syntax)
+        return binding
+
+
+class BindWildcard(Bind):
+
+    adapts(WildcardSyntax)
+
+    def __call__(self):
+        # Get all public columns in the current lookup scope.
+        recipies = expand(self.state.scope)
+        if recipies is None:
+            raise BindError("unable to resolve a wildcard",
+                            self.syntax.mark)
+        # If a position is given, extract a specific element.
+        if self.syntax.index is not None:
+            try:
+                index = int(self.syntax.index.value)
+            except ValueError:
+                raise BindError("an integer value is expected",
+                                self.syntax.mark)
+            index -= 1
+            if not (0 <= index < len(recipies)):
+                raise BindError("index is out of range",
+                                self.syntax.mark)
+            syntax, recipe = recipies[index]
+            syntax = syntax.clone(mark=self.syntax.mark)
+            return self.state.use(recipe, syntax)
+        # Otherwise, generate a selection node.
+        elements = []
+        for syntax, recipe in recipies:
+            syntax = syntax.clone(mark=self.syntax.mark)
+            element = self.state.use(recipe, syntax)
+            elements.append(element)
+        return SelectionBinding(self.state.scope, elements, self.syntax)
+
+
+class BindReference(Bind):
+
+    adapts(ReferenceSyntax)
+
+    def __call__(self):
+        # Look for a reference, complain if not found.
+        recipe = lookup_reference(self.state.scope,
+                                  self.syntax.identifier.value)
+        if recipe is None:
+            raise BindError("unable to resolve a reference: %s"
+                            % self.syntax, self.syntax.mark)
+        return self.state.use(recipe, self.syntax)
+
+
+class BindComplement(Bind):
+
+    adapts(ComplementSyntax)
+
+    def __call__(self):
+        # Look for a complement, complain if not found.
+        recipe = lookup_complement(self.state.scope)
+        if recipe is None:
+            raise BindError("expected a quotient context", self.syntax.mark)
+        return self.state.use(recipe, self.syntax)
+
+
+class BindString(Bind):
+
+    adapts(StringSyntax)
+
+    def __call__(self):
+        # Bind a quoted literal.  Note that a quoted literal not necessarily
+        # represents a string value; its initial domain is untyped.
+        binding = LiteralBinding(self.state.scope,
+                                 self.syntax.value,
+                                 UntypedDomain(),
+                                 self.syntax)
+        return binding
+
+
+class BindNumber(Bind):
+
+    adapts(NumberSyntax)
+
+    def __call__(self):
+        # Bind an unquoted (numeric) literal.
+
+        # Create an untyped literal binding.
+        binding = LiteralBinding(self.state.scope,
+                                 self.syntax.value,
+                                 UntypedDomain(),
+                                 self.syntax)
+
+        # Cast the binding to an appropriate numeric type.
+        if self.syntax.is_exponential:
+            domain = coerce(FloatDomain())
+        elif self.syntax.is_decimal:
+            domain = coerce(DecimalDomain())
+        elif self.syntax.is_integer:
+            domain = coerce(IntegerDomain())
+        binding = CastBinding(binding, domain, self.syntax)
         return binding
 
 
 class BindByName(Protocol):
     """
-    Binds a call node.
+    Binds a application node.
 
     This is an abstract protocol interface that provides a mechanism
-    for name-based dispatch of call syntax nodes.
+    for name-based dispatch of application syntax nodes.
 
     The :class:`BindByName` interface has the following signature::
 
-        BindByName: (CallSyntax, BindingState) -> listof(Binding)
+        BindByName: (ApplicationSyntax, BindingState) -> Binding
+        BindByName: (IdentifierSyntax, BindingState) -> Binding
 
-    The protocol is polymorphic on `name` and `len(arguments)`, where
-    `name` and `arguments` are attributes of the call node.
+    The protocol is polymorphic on the name and the number of arguments
+    of the syntax node.
 
     To add an implementation of the interface, define a subclass
     of :class:`BindByName` and specify its name and expected number
     of arguments using function :func:`named`.
-
-    For more implementations of the interface, see :mod:`htsql.tr.fn.bind`.
 
     Class attributes:
 
@@ -412,7 +705,8 @@ class BindByName(Protocol):
         List of names the component matches.
 
         Here `name` is a non-empty string, `length` is an integer or
-        ``None``.
+        ``None``, where ``-1`` indicates any number of arguments, ``None``
+        means no arguments are accepted.
     """
 
     names = []
@@ -435,17 +729,17 @@ class BindByName(Protocol):
         # arguments while the latter accepts a node with any
         # number of arguments.
         for name in component.names:
-            arity = None
+            arity = -1
             if isinstance(name, tuple):
                 name, arity = name
             name = name.lower()
             for other_name in other.names:
-                other_arity = None
+                other_arity = -1
                 if isinstance(other_name, tuple):
                     other_name, other_arity = other_name
                 other_name = other_name.lower()
                 if name == other_name:
-                    if arity is not None and other_arity is None:
+                    if arity != -1 and other_arity == -1:
                         return True
 
         return False
@@ -454,7 +748,7 @@ class BindByName(Protocol):
     def matches(component, dispatch_key):
         # Check if the component matches the given function name
         # and the number of arguments.
-        assert isinstance(dispatch_key, tupleof(str, int))
+        assert isinstance(dispatch_key, tupleof(str, maybe(int)))
 
         # The name and the number of arguments of the call node.
         key_name, key_arity = dispatch_key
@@ -468,13 +762,14 @@ class BindByName(Protocol):
             # `name` could be either a string or a pair of a string
             # and an integer.  The former assumes that the component
             # accepts call nodes with any number of arguments.
-            arity = None
+            arity = -1
             if isinstance(name, tuple):
                 name, arity = name
             name = name.lower()
             # Check if the component name matches the node name.
             if name == key_name:
-                if arity is None or arity == key_arity:
+                if ((arity == key_arity) or
+                        (arity == -1 and key_arity is not None)):
                     return True
 
         # None of the names matched the dispatch key.
@@ -482,199 +777,62 @@ class BindByName(Protocol):
 
     @classmethod
     def dispatch(interface, syntax, *args, **kwds):
-        assert isinstance(syntax, ApplicationSyntax)
+        assert isinstance(syntax, (ApplicationSyntax, IdentifierSyntax))
         # We override `dispatch` since, as opposed to regular protocol
         # interfaces, we also want to take into account not only the
         # function name, but also the number of arguments.
-        return (syntax.name, len(syntax.arguments))
+        if isinstance(syntax, ApplicationSyntax):
+            name = syntax.name
+            arity = len(syntax.arguments)
+        elif isinstance(syntax, IdentifierSyntax):
+            name = syntax.value
+            arity = None
+        return (name, arity)
 
     def __init__(self, syntax, state):
-        assert isinstance(syntax, ApplicationSyntax)
+        assert isinstance(syntax, (ApplicationSyntax, IdentifierSyntax))
         assert isinstance(state, BindingState)
         self.syntax = syntax
         self.state = state
         # Extract commonly accessed attributes of the call node.
-        self.name = syntax.name
-        self.arguments = syntax.arguments
+        if isinstance(syntax, ApplicationSyntax):
+            self.name = syntax.name
+            self.arguments = syntax.arguments
+        elif isinstance(syntax, IdentifierSyntax):
+            self.name = syntax.value
+            self.arguments = None
 
     def __call__(self):
         # The default implementation; override in subclasses.
-        raise BindError("unknown function %s" % self.name,
-                        self.syntax.mark)
-
-
-class BindGroup(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.GroupSyntax` node.
-    """
-
-    adapts(GroupSyntax)
-
-    def __call__(self):
-        # A group node has the form:
-        #   ( expression )
-
-        # Bind the expression and wrap the result to add parentheses
-        # around the syntax node.
-        binding = self.state.bind(self.syntax.branch)
-        return WrapperBinding(binding, self.syntax)
-
-
-class BindSpecifier(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.SpecifierSyntax` node.
-    """
-
-    adapts(SpecifierSyntax)
-
-    def __call__(self):
-        # A specifier node has the form:
-        #   `base.identifier` or `base.*`
-
-        # Bind `base` and use it as the lookup context when binding
-        # the identifier.
-        base = self.state.bind(self.syntax.lbranch)
-        binding = self.state.bind(self.syntax.rbranch, base)
-        return WrapperBinding(binding, self.syntax)
-
-
-class BindIdentifier(Bind):
-    """
-    Binds an :class:`htsql.tr.syntax.IdentifierSyntax` node.
-    """
-
-    adapts(IdentifierSyntax)
-
-    def __call__(self):
-        # Look for the identifier in the current lookup context.
-        recipe = lookup_attribute(self.state.base, self.syntax.value)
-        if recipe is None:
-            raise BindError("unable to resolve an identifier: %s"
-                            % self.syntax, self.syntax.mark)
-        bind = BindByRecipe(recipe, self.syntax, self.state)
-        binding = bind()
-        return WrapperBinding(binding, self.syntax)
-
-
-class BindWildcard(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.WildcardSyntax` node.
-    """
-
-    adapts(WildcardSyntax)
-
-    def __call__(self):
-        # Get all public descendants in the current lookup context.
-        recipies = expand(self.state.base)
-        if recipies is None:
-            raise BindError("unable to resolve a wildcard",
+        if isinstance(self.syntax, ApplicationSyntax):
+            raise BindError("unknown function %r" % self.name,
                             self.syntax.mark)
-        if self.syntax.index is not None:
-            try:
-                index = int(self.syntax.index.value)
-            except ValueError:
-                raise BindError("an integer value is expected",
-                                self.syntax.mark)
-            index -= 1
-            if not (0 <= index < len(recipies)):
-                raise BindError("index is out of range",
-                                self.syntax.mark)
-            syntax, recipe = recipies[index]
-            syntax = syntax.clone(mark=self.syntax.mark)
-            bind = BindByRecipe(recipe, syntax, self.state)
-            return bind()
-        elements = []
-        for syntax, recipe in recipies:
-            syntax = syntax.clone(mark=self.syntax.mark)
-            bind = BindByRecipe(recipe, syntax, self.state)
-            element = bind()
-            elements.append(element)
-        return SelectionBinding(self.state.base, elements,
-                                self.state.base.syntax)
-
-
-class BindReference(Bind):
-    """
-    Binds an :class:`htsql.tr.syntax.ReferenceSyntax` node.
-    """
-
-    adapts(ReferenceSyntax)
-
-    def __call__(self):
-        recipe = lookup_reference(self.state.base,
-                                  self.syntax.identifier.value)
-        if recipe is None:
-            raise BindError("unable to resolve a reference: %s"
-                            % self.syntax, self.syntax.mark)
-        bind = BindByRecipe(recipe, self.syntax, self.state)
-        binding = bind()
-        return WrapperBinding(binding, self.syntax)
-
-
-class BindComplement(Bind):
-    """
-    Bind a :class:`htsql.tr.syntax.ComplementSyntax` node.
-    """
-
-    adapts(ComplementSyntax)
-
-    def __call__(self):
-        recipe = lookup_complement(self.state.base)
-        if recipe is None:
-            raise BindError("expected a quotient context", self.syntax.mark)
-        bind = BindByRecipe(recipe, self.syntax, self.state)
-        return bind()
-
-
-class BindString(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.StringSyntax` node.
-    """
-
-    adapts(StringSyntax)
-
-    def __call__(self):
-        # Bind a quoted literal.  Note that a quoted literal not necessarily
-        # represents a string value; its initial domain is untyped.
-        binding = LiteralBinding(self.syntax.value,
-                                 UntypedDomain(),
-                                 self.syntax)
-        return binding
-
-
-class BindNumber(Bind):
-    """
-    Binds a :class:`htsql.tr.syntax.NumberSyntax` node.
-    """
-
-    adapts(NumberSyntax)
-
-    def __call__(self):
-        # Bind an unquoted (numeric) literal.
-
-        # Create an untyped literal binding.
-        binding = LiteralBinding(self.syntax.value,
-                                 UntypedDomain(),
-                                 self.syntax)
-
-        # Cast the binding to an appropriate numeric type.
-        value = self.syntax.value
-        # If the literal uses the exponential notation, assume it's
-        # a float number.
-        if 'e' in value or 'E' in value:
-            domain = coerce(FloatDomain())
-        # If the literal uses the decimal notation, assume it's
-        # a decimal number.
-        elif '.' in value:
-            domain = coerce(DecimalDomain())
-        # Otherwise, it's an integer.
-        else:
-            domain = coerce(IntegerDomain())
-        binding = CastBinding(binding, domain, self.syntax)
-        return binding
+        if isinstance(self.syntax, IdentifierSyntax):
+            raise BindError("unknown attribute %r" % self.name,
+                            self.syntax.mark)
 
 
 class BindByRecipe(Adapter):
+    """
+    Applies a recipe to generate a binding node.
+
+    This is an abstract adapter that generates new binding nodes
+    from binding recipes.  The :class:`BindByRecipe` interface
+    has the following signature::
+
+        BindByName: (Recipe, Syntax, BindingState) -> Binding
+
+    The adapter is polymorphic by the first argument.
+
+    `recipe` (:class:`htsql.tr.binding.Recipe`)
+        A recipe to apply.
+
+    `syntax` (:class:`htsql.tr.syntax.Syntax`)
+        The syntax node associated with the recipe.
+
+    `state` (:class:`BindingState`)
+        The current binding state.
+    """
 
     adapts(Recipe)
 
@@ -687,6 +845,7 @@ class BindByRecipe(Adapter):
         self.state = state
 
     def __call__(self):
+        # The default implementation should not be reachable.
         raise BindError("unable to bind a node", self.syntax.mark)
 
 
@@ -695,7 +854,9 @@ class BindByFreeTable(BindByRecipe):
     adapts(FreeTableRecipe)
 
     def __call__(self):
-        return FreeTableBinding(self.state.base, self.recipe.table,
+        # Produce a free table scope.
+        return FreeTableBinding(self.state.scope,
+                                self.recipe.table,
                                 self.syntax)
 
 
@@ -704,7 +865,8 @@ class BindByAttachedTable(BindByRecipe):
     adapts(AttachedTableRecipe)
 
     def __call__(self):
-        binding = self.state.base
+        # Produce a sequence of joined tables.
+        binding = self.state.scope
         for join in self.recipe.joins:
             binding = AttachedTableBinding(binding, join, self.syntax)
         return binding
@@ -715,21 +877,13 @@ class BindByColumn(BindByRecipe):
     adapts(ColumnRecipe)
 
     def __call__(self):
+        # Generate a link associated with the column.
         link = None
         if self.recipe.link is not None:
-            bind = BindByRecipe(self.recipe.link, self.syntax, self.state)
-            link = bind()
-        return ColumnBinding(self.state.base, self.recipe.column,
+            link = self.state.use(self.recipe.link, self.syntax)
+        # Produce a column scope.
+        return ColumnBinding(self.state.scope, self.recipe.column,
                              link, self.syntax)
-
-
-class BindByComplement(BindByRecipe):
-
-    adapts(ComplementRecipe)
-
-    def __call__(self):
-        syntax = self.recipe.seed.syntax.clone(mark=self.syntax.mark)
-        return ComplementBinding(self.state.base, self.recipe.seed, syntax)
 
 
 class BindByKernel(BindByRecipe):
@@ -737,10 +891,19 @@ class BindByKernel(BindByRecipe):
     adapts(KernelRecipe)
 
     def __call__(self):
-        binding = self.recipe.kernel[self.recipe.index]
-        syntax = binding.syntax.clone(mark=self.syntax.mark)
-        return KernelBinding(self.state.base, self.recipe.index,
-                             binding.domain, syntax)
+        # Generate a kernel expression of a quotient scope.
+        return KernelBinding(self.state.scope, self.recipe.quotient,
+                             self.recipe.index, self.syntax)
+
+
+class BindByComplement(BindByRecipe):
+
+    adapts(ComplementRecipe)
+
+    def __call__(self):
+        # Generate a complement link to a quotient scope.
+        return ComplementBinding(self.state.scope,
+                                 self.recipe.quotient, self.syntax)
 
 
 class BindBySubstitution(BindByRecipe):
@@ -748,33 +911,53 @@ class BindBySubstitution(BindByRecipe):
     adapts(SubstitutionRecipe)
 
     def __call__(self):
-        if self.recipe.subnames:
+        # Bind the given syntax node in place of an identifier
+        # or a function call.
+
+        # Check if the recipe has a qualifier.
+        if self.recipe.terms:
+            # Find the same identifier in the base scope.
             assert isinstance(self.syntax, IdentifierSyntax)
+            name, is_reference = self.recipe.terms[0]
+            arity = None
+            if (len(self.recipe.terms) == 1 and
+                    self.recipe.parameters is not None):
+                arity = len(self.recipe.parameters)
             recipe = lookup_attribute(self.recipe.base, self.syntax.value)
             if recipe is None:
-                raise BindError("unable to resolve an identifier: %s"
-                                % self.syntax, self.syntax.mark)
-            bind = BindByRecipe(recipe, self.syntax, self.state)
-            binding = bind()
-            binding = DefinitionBinding(binding, self.recipe.subnames[0],
-                                        self.recipe.subnames[1:],
-                                        self.recipe.arguments,
-                                        self.recipe.body,
-                                        binding.syntax)
+                raise BindError("unknown attribute %r" % self.syntax,
+                                self.syntax.mark)
+            binding = self.state.use(recipe, self.syntax)
+            # Augment the scope with the tail of the recipe.
+            recipe = SubstitutionRecipe(binding, self.recipe.terms[1:],
+                                        self.recipe.parameters,
+                                        self.recipe.body)
+            recipe = ClosedRecipe(recipe)
+            binding = DefinitionBinding(binding, name, is_reference, arity,
+                                        recipe, self.syntax)
             return binding
-        base = RedirectBinding(self.state.base, self.recipe.base,
-                               self.state.base.syntax)
-        if self.recipe.arguments is not None:
+
+        # Otherwise, bind the syntax node associated with the recipe.
+        # Bind against the current scope, but route all lookup requests
+        # to the scope where the recipe was defined.
+        scope = self.state.scope
+        scope = RerouteBinding(scope, self.recipe.base, scope.syntax)
+        # Bind the parameters.
+        if self.recipe.parameters is not None:
             assert isinstance(self.syntax, ApplicationSyntax)
-            assert len(self.syntax.arguments) == len(self.recipe.arguments)
-            for (name, is_reference), syntax in zip(self.recipe.arguments,
+            assert len(self.syntax.arguments) == len(self.recipe.parameters)
+            for (name, is_reference), syntax in zip(self.recipe.parameters,
                                                     self.syntax.arguments):
                 binding = self.state.bind(syntax)
                 recipe = BindingRecipe(binding)
-                base = AliasBinding(base, name, is_reference, recipe,
-                                    base.syntax)
-        binding = self.state.bind(self.recipe.body, base=base)
-        binding = ReverseRedirectBinding(binding, self.state.base, self.syntax)
+                recipe = ClosedRecipe(recipe)
+                scope = DefinitionBinding(scope, name, is_reference, None,
+                                          recipe, scope.syntax)
+        # Bind the syntax node associated with the recipe..
+        binding = self.state.bind(self.recipe.body, scope=scope)
+        # Hide all referenced defined there.
+        binding = ReferenceRerouteBinding(binding, self.state.scope,
+                                          binding.syntax)
         return binding
 
 
@@ -783,7 +966,18 @@ class BindByBinding(BindByRecipe):
     adapts(BindingRecipe)
 
     def __call__(self):
-        return WrapperBinding(self.recipe.binding, self.syntax)
+        return self.recipe.binding
+
+
+class BindByClosed(BindByRecipe):
+
+    adapts(ClosedRecipe)
+
+    def __call__(self):
+        # Generate a binding from the given recipe.
+        binding = self.state.use(self.recipe.recipe, self.syntax)
+        # Force the current syntax node to the binding.
+        return AliasBinding(binding, self.syntax)
 
 
 class BindByPinned(BindByRecipe):
@@ -791,10 +985,9 @@ class BindByPinned(BindByRecipe):
     adapts(PinnedRecipe)
 
     def __call__(self):
-        self.state.push_base(self.recipe.base)
-        bind = BindByRecipe(self.recipe.recipe, self.syntax, self.state)
-        binding = bind()
-        self.state.pop_base()
+        # Bind the given recipe in the specified scope.
+        binding = self.state.use(self.recipe.recipe, self.syntax,
+                                 scope=self.recipe.scope)
         return binding
 
 
@@ -806,7 +999,7 @@ class BindByAmbiguous(BindByRecipe):
         raise BindError("ambiguous name", self.syntax.mark)
 
 
-def bind(syntax, state=None, base=None):
+def bind(syntax, state=None, scope=None):
     """
     Binds the given syntax node.
 
@@ -817,22 +1010,22 @@ def bind(syntax, state=None, base=None):
         The binding state to use.  If not set, a new binding state
         is created.
 
-    `base` (:class:`htsql.tr.binding.Binding` or ``None``)
-        If set, the lookup context is set to `base` when binding
+    `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+        If specified, updates the lookup scope when binding
         the node.
     """
     # Create a new binding state if necessary.
     if state is None:
         state = BindingState()
-    # If passed, set the new lookup context.
-    if base is not None:
-        state.push_base(base)
+    # If passed, set the new lookup scope.
+    if scope is not None:
+        state.push_scope(scope)
     # Realize and apply the `Bind` adapter.
     bind = Bind(syntax, state)
     binding = bind()
-    # Restore the old lookup context.
-    if base is not None:
-        state.pop_base()
+    # Restore the old lookup scope.
+    if scope is not None:
+        state.pop_scope()
     # Return the binding node.
     return binding
 

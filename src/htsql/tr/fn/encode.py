@@ -15,7 +15,7 @@ from ...domain import UntypedDomain, BooleanDomain, IntegerDomain
 from ..encode import EncodeBySignature, EncodingState
 from ..error import EncodeError
 from ..coerce import coerce
-from ..binding import LiteralBinding, CastBinding
+from ..binding import RootBinding, LiteralBinding, CastBinding
 from ..code import (LiteralCode, ScalarUnit, CorrelatedUnit,
                     AggregateUnit, FilteredSpace, FormulaCode)
 from ..signature import Signature, NotSig, NullIfSig, IfNullSig, CompareSig
@@ -428,7 +428,8 @@ class WrapCountSum(WrapAggregate):
     adapts_many(CountSig, SumSig)
 
     def __call__(self):
-        zero_literal = LiteralBinding('0', UntypedDomain(),
+        root = RootBinding(self.unit.syntax)
+        zero_literal = LiteralBinding(root, '0', UntypedDomain(),
                                       self.unit.syntax)
         zero_literal = CastBinding(zero_literal, self.unit.domain,
                                    self.unit.syntax)

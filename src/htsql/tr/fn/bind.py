@@ -16,15 +16,16 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-                      ReferenceSyntax, SpecifierSyntax, FunctionSyntax,
-                      GroupSyntax)
+                      ReferenceSyntax, SpecifierSyntax, ApplicationSyntax,
+                      FunctionSyntax, GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
-                       FormulaBinding, CastBinding, WrapperBinding,
+                       FormulaBinding, CastBinding, WrappingBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
-                       SelectionBinding, HomeBinding, FlatBinding,
-                       MonikerBinding, ForkBinding, LinkBinding, Binding)
-from ..recipe import BindingRecipe, ComplementRecipe, KernelRecipe
+                       SelectionBinding, HomeBinding, RescopingBinding,
+                       CoverBinding, ForkBinding, LinkBinding, Binding,
+                       BindingRecipe, ComplementRecipe, KernelRecipe,
+                       SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
@@ -63,8 +64,11 @@ class BindFunction(BindByName):
 
     def match(self):
         assert self.signature is not None
-        operands = self.syntax.arguments[:]
         arguments = {}
+        if isinstance(self.syntax, ApplicationSyntax):
+            operands = self.syntax.arguments[:]
+        else:
+            operands = []
         for index, slot in enumerate(self.signature.slots):
             name = slot.name
             value = None
@@ -163,8 +167,9 @@ class BindMonoFunction(BindFunction):
                 value = [CastBinding(item, domain, item.syntax)
                          for item in value]
             cast_arguments[name] = value
-        return FormulaBinding(self.signature(), coerce(self.codomain),
-                               self.syntax, **cast_arguments)
+        return FormulaBinding(self.state.scope,
+                              self.signature(), coerce(self.codomain),
+                              self.syntax, **cast_arguments)
 
 
 class BindHomoFunction(BindFunction):
@@ -200,8 +205,9 @@ class BindHomoFunction(BindFunction):
             codomain = domain
         else:
             codomain = coerce(self.codomain)
-        return FormulaBinding(self.signature, codomain, self.syntax,
-                               **cast_arguments)
+        return FormulaBinding(self.state.scope,
+                              self.signature, codomain, self.syntax,
+                              **cast_arguments)
 
 
 class Correlate(Component):
@@ -313,7 +319,8 @@ class CorrelateFunction(Correlate):
         domain = self.binding.domain
         if self.codomain is not None:
             domain = coerce(self.codomain)
-        return FormulaBinding(signature, domain, self.binding.syntax,
+        return FormulaBinding(self.state.scope,
+                              signature, domain, self.binding.syntax,
                               **arguments)
 
 
@@ -323,7 +330,8 @@ class BindPolyFunction(BindFunction):
     codomain = UntypedDomain()
 
     def correlate(self, **arguments):
-        binding = FormulaBinding(self.signature(), self.codomain, self.syntax,
+        binding = FormulaBinding(self.state.scope,
+                                 self.signature(), self.codomain, self.syntax,
                                  **arguments)
         correlate = Correlate(binding, self.state)
         return correlate()
@@ -331,32 +339,35 @@ class BindPolyFunction(BindFunction):
 
 class BindNull(BindMacro):
 
-    named('null')
+    named('null', ('null', None))
     signature = NullarySig
     hint = """null() -> NULL"""
 
     def expand(self):
-        return LiteralBinding(None, UntypedDomain(), self.syntax)
+        return LiteralBinding(self.state.scope,
+                              None, UntypedDomain(), self.syntax)
 
 
 class BindTrue(BindMacro):
 
-    named('true')
+    named('true', ('true', None))
     signature = NullarySig
     hint = """true() -> TRUE"""
 
     def expand(self):
-        return LiteralBinding(True, coerce(BooleanDomain()), self.syntax)
+        return LiteralBinding(self.state.scope,
+                              True, coerce(BooleanDomain()), self.syntax)
 
 
 class BindFalse(BindMacro):
 
-    named('false')
+    named('false', ('false', None))
     signature = NullarySig
     hint = """false() -> FALSE"""
 
     def expand(self):
-        return LiteralBinding(False, coerce(BooleanDomain()), self.syntax)
+        return LiteralBinding(self.state.scope,
+                              False, coerce(BooleanDomain()), self.syntax)
 
 
 class BindRoot(BindMacro):
@@ -366,7 +377,7 @@ class BindRoot(BindMacro):
     hint = """base.root() -> the root space"""
 
     def expand(self):
-        return WrapperBinding(self.state.root, self.syntax)
+        return WrappingBinding(self.state.root, self.syntax)
 
 
 class BindThis(BindMacro):
@@ -376,7 +387,7 @@ class BindThis(BindMacro):
     hint = """base.this() -> the current base space"""
 
     def expand(self):
-        return WrapperBinding(self.state.base, self.syntax)
+        return WrappingBinding(self.state.scope, self.syntax)
 
 
 class BindHome(BindMacro):
@@ -385,134 +396,7 @@ class BindHome(BindMacro):
     signature = NullarySig
 
     def expand(self):
-        return HomeBinding(self.state.base, self.syntax)
-
-
-class BindMix(BindMacro):
-
-    named('mix')
-    signature = NullarySig
-
-    def expand(self):
-        return FlatBinding(self.state.base, self.syntax)
-
-
-class BindFiber(BindMacro):
-
-    named('fiber')
-    signature = FiberSig
-    hint = """base.fiber(T[, img][, cimg]) -> fiber product of base and T"""
-
-    def expand(self, table, image=None, counterimage=None):
-        home = HomeBinding(self.state.base, self.syntax)
-        binding = self.state.bind(table, base=home)
-        if image is None and counterimage is None:
-            return WrapperBinding(binding, self.syntax)
-        if image is None:
-            image = counterimage
-        if counterimage is None:
-            counterimage = image
-        parent = self.state.bind(image)
-        child = self.state.bind(counterimage, base=binding)
-        domain = coerce(parent.domain, child.domain)
-        if domain is None:
-            raise BindError("incompatible images", self.syntax.mark)
-        parent = CastBinding(parent, domain, parent.syntax)
-        child = CastBinding(child, domain, child.syntax)
-        condition = FormulaBinding(IsEqualSig(+1), coerce(BooleanDomain()),
-                                   self.syntax, lop=parent, rop=child)
-        return SieveBinding(binding, condition, self.syntax)
-
-
-class BindLink(BindMacro):
-
-    named('->')
-    signature = BinarySig
-
-    def expand(self, lop, rop):
-        counter_kernel = []
-        binding = self.state.bind(lop)
-        recipies = expand(binding, is_hard=False)
-        if recipies is not None:
-            self.state.push_base(binding)
-            for syntax, recipe in recipies:
-                bind = BindByRecipe(recipe, syntax, self.state)
-                counter_kernel.append(bind())
-            self.state.pop_base()
-        else:
-            counter_kernel = [binding]
-        home = HomeBinding(self.state.base, self.syntax)
-        seed = self.state.bind(rop, base=home)
-        kernel = []
-        recipies = expand(seed, is_hard=False)
-        if recipies is not None:
-            self.state.push_base(seed)
-            for syntax, recipe in recipies:
-                bind = BindByRecipe(recipe, syntax, self.state)
-                kernel.append(bind())
-            self.state.pop_base()
-        else:
-            binding = self.state.bind(lop, base=seed)
-            recipies = expand(binding, is_hard=False)
-            if recipies is not None:
-                self.state.push_base(binding)
-                for syntax, recipe in recipies:
-                    bind = BindByRecipe(recipe, syntax, self.state)
-                    kernel.append(bind())
-                self.state.pop_base()
-            else:
-                kernel.append(binding)
-        if len(kernel) != len(counter_kernel):
-            raise BindError("unbalanced link", self.syntax.mark)
-        pairs = []
-        for lop, rop in zip(kernel, counter_kernel):
-            domain = coerce(lop.domain, rop.domain)
-            if domain is None:
-                raise BindError("incompatible arguments", self.syntax.mark)
-            lop = CastBinding(lop, domain, lop.syntax)
-            rop = CastBinding(rop, domain, rop.syntax)
-            pairs.append((lop, rop))
-        if pairs:
-            kernel, counter_kernel = zip(*pairs)
-            kernel = list(kernel)
-            counter_kernel = list(counter_kernel)
-        return LinkBinding(self.state.base, seed, kernel, counter_kernel,
-                           self.syntax)
-
-
-class BindQuotient(BindMacro):
-
-    named('^')
-    signature = QuotientSig
-
-    def expand(self, seed, kernel):
-        seed_binding = self.state.bind(seed)
-        kernel_bindings = []
-        self.state.push_base(seed_binding)
-        for expression in kernel:
-            expression = self.state.bind(expression)
-            recipies = expand(expression, is_hard=False)
-            if recipies is not None:
-                for syntax, recipe in recipies:
-                    bind = BindByRecipe(recipe, syntax, self.state)
-                    kernel_bindings.append(bind())
-            else:
-                kernel_bindings.append(expression)
-        self.state.pop_base()
-        binding = QuotientBinding(self.state.base, seed_binding,
-                                  kernel_bindings, self.syntax)
-        name = guess_name(seed_binding)
-        if name is not None:
-            recipe = ComplementRecipe(seed_binding)
-            binding = AliasBinding(binding, name, False, recipe,
-                                   binding.syntax)
-        for index in range(len(kernel_bindings)):
-            name = guess_name(kernel_bindings[index])
-            if name is not None:
-                recipe = KernelRecipe(kernel_bindings, index)
-                binding = AliasBinding(binding, name, False, recipe,
-                                       binding.syntax)
-        return binding
+        return HomeBinding(self.state.scope, self.syntax)
 
 
 class BindDistinct(BindMacro):
@@ -521,27 +405,35 @@ class BindDistinct(BindMacro):
     signature = UnarySig
 
     def expand(self, op):
-        seed_binding = self.state.bind(op)
-        recipies = expand(seed_binding, is_hard=False)
-        if recipies is None:
+        seed = self.state.bind(op)
+        recipes = expand(seed, is_hard=False)
+        if recipes is None:
             raise BindError("a selector is required", op.mark)
-        kernel_bindings = []
-        for syntax, recipe in recipies:
-            bind = BindByRecipe(recipe, syntax, self.state)
-            kernel_bindings.append(bind())
-        binding = QuotientBinding(self.state.base, seed_binding,
-                                  kernel_bindings, self.syntax)
-        name = guess_name(seed_binding)
+        kernels = []
+        for syntax, recipe in recipes:
+            element = self.state.use(recipe, syntax, scope=seed)
+            element = RescopingBinding(element, seed, element.syntax)
+            domain = coerce(element.domain)
+            if domain is None:
+                raise BindError("invalid element type", element.mark)
+            element = CastBinding(element, domain, element.syntax)
+            kernels.append(element)
+        quotient = QuotientBinding(self.state.scope, seed, kernels,
+                                   self.syntax)
+        binding = quotient
+        name = guess_name(seed)
         if name is not None:
-            recipe = ComplementRecipe(seed_binding)
-            binding = AliasBinding(binding, name, False, recipe,
-                                   binding.syntax)
-        for index in range(len(kernel_bindings)):
-            name = guess_name(kernel_bindings[index])
+            recipe = ComplementRecipe(quotient)
+            recipe = ClosedRecipe(recipe)
+            binding = DefinitionBinding(binding, name, False, None, recipe,
+                                        self.syntax)
+        for index, kernel in enumerate(kernels):
+            name = guess_name(kernel)
             if name is not None:
-                recipe = KernelRecipe(kernel_bindings, index)
-                binding = AliasBinding(binding, name, False, recipe,
-                                       binding.syntax)
+                recipe = KernelRecipe(quotient, index)
+                recipe = ClosedRecipe(recipe)
+                binding = DefinitionBinding(binding, name, False, None, recipe,
+                                            self.syntax)
         return binding
 
 
@@ -585,7 +477,7 @@ class BindFilter(BindMacro):
     def expand(self, op):
         filter = self.state.bind(op)
         filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
-        return SieveBinding(self.state.base, filter, self.syntax)
+        return SieveBinding(self.state.scope, filter, self.syntax)
 
 
 class BindSelect(BindMacro):
@@ -613,7 +505,7 @@ class BindSelect(BindMacro):
             direction = direct(element)
             if direction is not None:
                 order.append(element)
-        base = self.state.base
+        base = self.state.scope
         if order:
             base = SortBinding(base, order, None, None, base.syntax)
         return SelectionBinding(base, elements, base.syntax)
@@ -621,16 +513,12 @@ class BindSelect(BindMacro):
 
 class BindMoniker(BindMacro):
 
-    named('link')
+    named('moniker')
     signature = LinkSig
 
-    def expand(self, seed, condition=None):
+    def expand(self, seed):
         seed = self.state.bind(seed)
-        if condition is not None:
-            condition = self.state.bind(condition)
-            condition = CastBinding(condition, coerce(BooleanDomain()),
-                                    condition.syntax)
-        return MonikerBinding(self.state.base, seed, condition, self.syntax)
+        return CoverBinding(self.state.scope, seed, self.syntax)
 
 
 class BindFork(BindMacro):
@@ -653,7 +541,7 @@ class BindFork(BindMacro):
                     elements.append(bind())
             else:
                 elements.append(element)
-        return ForkBinding(self.state.base, elements, self.syntax)
+        return ForkBinding(self.state.scope, elements, self.syntax)
 
 
 class BindDirectionBase(BindMacro):
@@ -704,7 +592,7 @@ class BindLimit(BindMacro):
         limit = self.parse(limit)
         if offset is not None:
             offset = self.parse(offset)
-        return SortBinding(self.state.base, [], limit, offset, self.syntax)
+        return SortBinding(self.state.scope, [], limit, offset, self.syntax)
 
 
 class BindSort(BindMacro):
@@ -730,54 +618,7 @@ class BindSort(BindMacro):
                     bind = BindByRecipe(recipe, syntax, self.state)
                     binding = bind()
                     bindings.append(binding)
-        return SortBinding(self.state.base, bindings, None, None, self.syntax)
-
-
-class BindAssignment(BindMacro):
-
-    named(':=')
-    signature = AssignmentSig
-
-    def expand(self, lop, rop):
-        identifiers = []
-        arguments = None
-        syntax = lop
-        head = None
-        tail = None
-        if isinstance(syntax, SpecifierSyntax):
-            head = syntax.rbranch
-            tail = syntax.lbranch
-        else:
-            head = syntax
-        if isinstance(head, ReferenceSyntax) and tail is None:
-            identifiers.append(head)
-        elif isinstance(head, IdentifierSyntax):
-            identifiers.append(head)
-        elif isinstance(head, FunctionSyntax):
-            identifiers.append(head.identifier)
-            arguments = []
-            for argument in head.arguments:
-                if not isinstance(argument, (IdentifierSyntax,
-                                             ReferenceSyntax)):
-                    raise BindError("an identifier expected",
-                                    argument.mark)
-                arguments.append(argument)
-        else:
-            raise BindError("an identifier expected", head.mark)
-        while tail is not None:
-            if isinstance(tail, SpecifierSyntax):
-                if not isinstance(tail.rbranch, IdentifierSyntax):
-                    raise BindError("an identifier expected",
-                                    tail.rbranch.mark)
-                identifiers.append(tail.rbranch)
-                tail = tail.lbranch
-            elif isinstance(tail, IdentifierSyntax):
-                identifiers.append(tail)
-                tail = None
-            else:
-                raise BindError("an identifier expected", tail.mark)
-        identifiers.reverse()
-        return AssignmentBinding(identifiers, arguments, rop, self.syntax)
+        return SortBinding(self.state.scope, bindings, None, None, self.syntax)
 
 
 class BindDefine(BindMacro):
@@ -786,31 +627,27 @@ class BindDefine(BindMacro):
     signature = DefineSig
 
     def expand(self, ops):
-        binding = self.state.base
+        binding = self.state.scope
         for op in ops:
-            assignment = self.state.bind(op, base=binding)
+            assignment = self.state.bind(op, scope=binding)
             if not isinstance(assignment, AssignmentBinding):
                 raise BindError("an assignment expected", op.mark)
-            identifier = assignment.identifiers[0]
-            if isinstance(identifier, ReferenceSyntax):
-                name = identifier.identifier.value
-                body = self.state.bind(assignment.body, base=binding)
+            name, is_reference = assignment.terms[0]
+            arity = None
+            if is_reference:
+                body = self.state.bind(assignment.body, scope=binding)
                 recipe = BindingRecipe(body)
-                binding = AliasBinding(binding, name, True, recipe, self.syntax)
+                recipe = ClosedRecipe(recipe)
             else:
-                name = identifier.value
-                subnames = [identifier.value
-                            for identifier in assignment.identifiers[1:]]
-                arguments = None
-                if assignment.arguments is not None:
-                    arguments = []
-                    for syntax in assignment.arguments:
-                        if isinstance(syntax, IdentifierSyntax):
-                            arguments.append((syntax.value, False))
-                        elif isinstance(syntax, ReferenceSyntax):
-                            arguments.append((syntax.identifier.value, True))
-                binding = DefinitionBinding(binding, name, subnames, arguments,
-                                            assignment.body, self.syntax)
+                if (len(assignment.terms) == 1 and
+                        assignment.parameters is not None):
+                    arity = len(assignment.parameters)
+                recipe = SubstitutionRecipe(binding, assignment.terms[1:],
+                                            assignment.parameters,
+                                            assignment.body)
+                recipe = ClosedRecipe(recipe)
+            binding = DefinitionBinding(binding, name, is_reference, arity,
+                                        recipe, self.syntax)
         return binding
 
 
@@ -820,32 +657,28 @@ class BindWhere(BindMacro):
     signature = WhereSig
 
     def expand(self, lop, rops):
-        binding = self.state.base
+        binding = self.state.scope
         for op in rops:
-            assignment = self.state.bind(op, base=binding)
+            assignment = self.state.bind(op, scope=binding)
             if not isinstance(assignment, AssignmentBinding):
                 raise BindError("an assignment expected", op.mark)
-            identifier = assignment.identifiers[0]
-            if isinstance(identifier, ReferenceSyntax):
-                name = identifier.identifier.value
-                body = self.state.bind(assignment.body, base=binding)
+            name, is_reference = assignment.terms[0]
+            arity = None
+            if is_reference:
+                body = self.state.bind(assignment.body, scope=binding)
                 recipe = BindingRecipe(body)
-                binding = AliasBinding(binding, name, True, recipe, self.syntax)
+                recipe = ClosedRecipe(recipe)
             else:
-                name = identifier.value
-                subnames = [identifier.value
-                            for identifier in assignment.identifiers[1:]]
-                arguments = None
-                if assignment.arguments is not None:
-                    arguments = []
-                    for syntax in assignment.arguments:
-                        if isinstance(syntax, IdentifierSyntax):
-                            arguments.append((syntax.value, False))
-                        elif isinstance(syntax, ReferenceSyntax):
-                            arguments.append((syntax.identifier.value, True))
-                binding = DefinitionBinding(binding, name, subnames, arguments,
-                                            assignment.body, self.syntax)
-        return self.state.bind(lop, base=binding)
+                if (len(assignment.terms) == 1 and
+                        assignment.parameters is not None):
+                    arity = len(assignment.parameters)
+                recipe = SubstitutionRecipe(binding, assignment.terms[1:],
+                                            assignment.parameters,
+                                            assignment.body)
+                recipe = ClosedRecipe(recipe)
+            binding = DefinitionBinding(binding, name, is_reference, arity,
+                                        recipe, self.syntax)
+        return self.state.bind(lop, scope=binding)
 
 
 class BindCast(BindFunction):
@@ -953,11 +786,13 @@ class BindAmongBase(BindFunction):
         lop = CastBinding(lop, domain, lop.syntax)
         rops = [CastBinding(rop, domain, rop.syntax) for rop in rops]
         if len(rops) == 1:
-            return FormulaBinding(IsEqualSig(self.polarity),
+            return FormulaBinding(self.state.scope,
+                                  IsEqualSig(self.polarity),
                                   coerce(BooleanDomain()),
                                   self.syntax, lop=lop, rop=rops[0])
         else:
-            return FormulaBinding(self.signature(self.polarity),
+            return FormulaBinding(self.state.scope,
+                                  self.signature(self.polarity),
                                   coerce(BooleanDomain()),
                                   self.syntax, lop=lop, rops=rops)
 
@@ -987,7 +822,8 @@ class BindTotallyEqualBase(BindFunction):
             raise BindError("incompatible arguments", self.syntax.mark)
         lop = CastBinding(lop, domain, lop.syntax)
         rop = CastBinding(rop, domain, rop.syntax)
-        return FormulaBinding(IsTotallyEqualSig(self.polarity),
+        return FormulaBinding(self.state.scope,
+                              IsTotallyEqualSig(self.polarity),
                               coerce(BooleanDomain()), self.syntax,
                               lop=lop, rop=rop)
 
@@ -1016,7 +852,8 @@ class BindAnd(BindFunction):
         domain = coerce(BooleanDomain())
         lop = CastBinding(lop, domain, lop.syntax)
         rop = CastBinding(rop, domain, rop.syntax)
-        return FormulaBinding(AndSig(), domain, self.syntax, ops=[lop, rop])
+        return FormulaBinding(self.state.scope,
+                              AndSig(), domain, self.syntax, ops=[lop, rop])
 
 
 class BindOr(BindFunction):
@@ -1029,7 +866,8 @@ class BindOr(BindFunction):
         domain = coerce(BooleanDomain())
         lop = CastBinding(lop, domain, lop.syntax)
         rop = CastBinding(rop, domain, rop.syntax)
-        return FormulaBinding(OrSig(), domain, self.syntax, ops=[lop, rop])
+        return FormulaBinding(self.state.scope,
+                              OrSig(), domain, self.syntax, ops=[lop, rop])
 
 
 class BindNot(BindFunction):
@@ -1041,7 +879,8 @@ class BindNot(BindFunction):
     def correlate(self, op):
         domain = coerce(BooleanDomain())
         op = CastBinding(op, domain, op.syntax)
-        return FormulaBinding(self.signature(), domain, self.syntax, op=op)
+        return FormulaBinding(self.state.scope,
+                              self.signature(), domain, self.syntax, op=op)
 
 
 class BindCompare(BindFunction):
@@ -1058,7 +897,8 @@ class BindCompare(BindFunction):
         comparable = Comparable(domain)
         if not comparable():
             raise BindError("uncomparable arguments", self.syntax.mark)
-        return FormulaBinding(self.signature(self.relation),
+        return FormulaBinding(self.state.scope,
+                              self.signature(self.relation),
                               coerce(BooleanDomain()),
                               self.syntax, lop=lop, rop=rop)
 
@@ -1432,7 +1272,8 @@ class BindContainsBase(BindPolyFunction):
     polarity = None
 
     def correlate(self, **arguments):
-        binding = FormulaBinding(self.signature(self.polarity),
+        binding = FormulaBinding(self.state.scope,
+                                 self.signature(self.polarity),
                                  self.codomain, self.syntax, **arguments)
         correlate = Correlate(binding, self.state)
         return correlate()
@@ -1470,7 +1311,8 @@ class BindHeadTailBase(BindPolyFunction):
     def correlate(self, op, length):
         if length is not None:
             length = CastBinding(length, coerce(IntegerDomain()), length.syntax)
-        binding = FormulaBinding(self.signature(), UntypedDomain(),
+        binding = FormulaBinding(self.state.scope,
+                                 self.signature(), UntypedDomain(),
                                  self.syntax, op=op, length=length)
         correlate = Correlate(binding, self.state)
         return correlate()
@@ -1517,7 +1359,8 @@ class BindSlice(BindPolyFunction):
             left = CastBinding(left, coerce(IntegerDomain()), left.syntax)
         if right is not None:
             right = CastBinding(right, coerce(IntegerDomain()), right.syntax)
-        binding = FormulaBinding(self.signature(), UntypedDomain(),
+        binding = FormulaBinding(self.state.scope,
+                                 self.signature(), UntypedDomain(),
                                  self.syntax, op=op, left=left, right=right)
         correlate = Correlate(binding, self.state)
         return correlate()
@@ -1542,7 +1385,8 @@ class BindAt(BindPolyFunction):
         if length is not None:
             length = CastBinding(length, coerce(IntegerDomain()),
                                  length.syntax)
-        binding = FormulaBinding(self.signature(), UntypedDomain(),
+        binding = FormulaBinding(self.state.scope,
+                                 self.signature(), UntypedDomain(),
                                  self.syntax, op=op, index=index, length=length)
         correlate = Correlate(binding, self.state)
         return correlate()
@@ -1610,7 +1454,8 @@ class BindTrimBase(BindPolyFunction):
     def correlate(self, op):
         signature = self.signature(is_left=self.is_left,
                                    is_right=self.is_right)
-        binding = FormulaBinding(signature, UntypedDomain(), self.syntax, op=op)
+        binding = FormulaBinding(self.state.scope,
+                                 signature, UntypedDomain(), self.syntax, op=op)
         correlate = Correlate(binding, self.state)
         return correlate()
 
@@ -1844,10 +1689,11 @@ class BindIf(BindFunction):
                        for consequent in consequents]
         if alternative is not None:
             alternative = CastBinding(alternative, domain, consequent.syntax)
-        return FormulaBinding(self.signature(), domain, self.syntax,
-                               predicates=predicates,
-                               consequents=consequents,
-                               alternative=alternative)
+        return FormulaBinding(self.state.scope,
+                              self.signature(), domain, self.syntax,
+                              predicates=predicates,
+                              consequents=consequents,
+                              alternative=alternative)
 
 
 class BindSwitch(BindFunction):
@@ -1896,11 +1742,12 @@ class BindSwitch(BindFunction):
                        for consequent in consequents]
         if alternative is not None:
             alternative = CastBinding(alternative, domain, consequent.syntax)
-        return FormulaBinding(self.signature(), domain, self.syntax,
-                               variable=variable,
-                               variants=variants,
-                               consequents=consequents,
-                               alternative=alternative)
+        return FormulaBinding(self.state.scope,
+                              self.signature(), domain, self.syntax,
+                              variable=variable,
+                              variants=variants,
+                              consequents=consequents,
+                              alternative=alternative)
 
 
 class BindExistsBase(BindFunction):
@@ -1919,9 +1766,9 @@ class BindExistsBase(BindFunction):
             bind = BindByRecipe(recipe, syntax, self.state)
             op = bind()
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
-        return FormulaBinding(QuantifySig(self.polarity), op.domain,
-                              self.syntax, base=self.state.base,
-                              plural_base=plural_base, op=op)
+        return FormulaBinding(self.state.scope,
+                              QuantifySig(self.polarity), op.domain,
+                              self.syntax, plural_base=plural_base, op=op)
 
 
 class BindExists(BindExistsBase):
@@ -1955,11 +1802,12 @@ class BindCount(BindFunction):
             bind = BindByRecipe(recipe, syntax, self.state)
             op = bind()
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
-        op = FormulaBinding(CountSig(), coerce(IntegerDomain()),
+        op = FormulaBinding(self.state.scope,
+                            CountSig(), coerce(IntegerDomain()),
                             self.syntax, op=op)
-        return FormulaBinding(AggregateSig(), op.domain, self.syntax,
-                              base=self.state.base, plural_base=plural_base,
-                              op=op)
+        return FormulaBinding(self.state.scope,
+                              AggregateSig(), op.domain, self.syntax,
+                              plural_base=plural_base, op=op)
 
 
 class BindPolyAggregate(BindPolyFunction):
@@ -1977,13 +1825,14 @@ class BindPolyAggregate(BindPolyFunction):
             syntax, recipe = recipies[0]
             bind = BindByRecipe(recipe, syntax, self.state)
             op = bind()
-        binding = FormulaBinding(self.signature(), self.codomain, self.syntax,
+        binding = FormulaBinding(self.state.scope,
+                                 self.signature(), self.codomain, self.syntax,
                                  op=op)
         correlate = Correlate(binding, self.state)
         binding = correlate()
-        return FormulaBinding(AggregateSig(), binding.domain, binding.syntax,
-                              base=self.state.base, plural_base=plural_base,
-                              op=binding)
+        return FormulaBinding(self.state.scope,
+                              AggregateSig(), binding.domain, binding.syntax,
+                              plural_base=plural_base, op=binding)
 
 
 class BindMinMaxBase(BindPolyAggregate):
@@ -2001,13 +1850,14 @@ class BindMinMaxBase(BindPolyAggregate):
             syntax, recipe = recipies[0]
             bind = BindByRecipe(recipe, syntax, self.state)
             op = bind()
-        binding = FormulaBinding(self.signature(self.polarity), self.codomain,
+        binding = FormulaBinding(self.state.scope,
+                                 self.signature(self.polarity), self.codomain,
                                  self.syntax, op=op)
         correlate = Correlate(binding, self.state)
         binding = correlate()
-        return FormulaBinding(AggregateSig(), binding.domain, binding.syntax,
-                              base=self.state.base, plural_base=plural_base,
-                              op=binding)
+        return FormulaBinding(self.state.scope,
+                              AggregateSig(), binding.domain, binding.syntax,
+                              plural_base=plural_base, op=binding)
 
 
 class BindMinMaxBase(BindMinMaxBase):

@@ -21,6 +21,9 @@ class Syntax(Printable, Clonable):
     """
     Represents a syntax node.
 
+    The syntax tree expresses the structure of the input HTSQL query, with each
+    node corresponding to some rule in the HTSQL grammar.
+
     `mark` (:class:`htsql.mark.Mark`)
         The location of the node in the original query.
     """

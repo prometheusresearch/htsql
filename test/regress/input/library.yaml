@@ -656,13 +656,13 @@ tests:
   - uri: /instructor.confidential
   - uri: /confidential.instructor
   # Cross join
-  - uri: /school.fiber(school)
+  - uri: /school.({} -> school)
   # Fiber join
-  - uri: /department.fiber(program,school_code)
-  - uri: /classification.fiber(classification,code,part_of)
+  - uri: /department.(school_code -> program)
+  - uri: /classification.(code -> classification{part_of})
             {part_of, code}
   # Context
-  - uri: /school.fiber(school){root().school.code, this().code}
+  - uri: /school.({} -> school){root().school.code, this().code}
   # Invalid link
   - uri: /student.instructor
     expect: 400
