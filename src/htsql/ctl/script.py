@@ -483,10 +483,13 @@ class Script(object):
 
         # Prefill the dictionary with default values.
         for option in routine_class.options:
-            if option.with_value:
-                value = option.default
+            if not option.is_list:
+                if option.with_value:
+                    value = option.default
+                else:
+                    value = False
             else:
-                value = False
+                value = []
             attributes[option.attribute] = value
 
         # The set of options we already encountered.
@@ -497,7 +500,7 @@ class Script(object):
             option = self.option_by_name[name]
             if option not in routine_class.options:
                 raise ScriptError("unexpected option %r" % name)
-            if option in duplicates:
+            if option in duplicates and not option.is_list:
                 raise ScriptError("duplicate option %r" % name)
             duplicates.add(option)
             if option.with_value:
@@ -508,7 +511,10 @@ class Script(object):
                                       % (option.attribute, exc))
             else:
                 value = True
-            attributes[option.attribute] = value
+            if not option.is_list:
+                attributes[option.attribute] = value
+            else:
+                attributes[option.attribute].append(value)
 
         return attributes
 

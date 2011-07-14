@@ -596,7 +596,7 @@ class ShellRoutine(Routine):
     database name followed by `$`.  Type an HTSQL query and press ENTER to
     execute it.  Type a command with any arguments and press ENTER to
     execute the command.  In particular, use `help` to get a list of shell
-    commands, `help <command>` to describe of a command.
+    commands, `help <command>` to describe a command.
 
     Type `exit` or Ctrl-D to exit the shell.
     """

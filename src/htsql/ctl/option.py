@@ -42,7 +42,12 @@ class Option(object):
         The validator for the option parameter.
 
     `default`
-        The default value of the parameter.
+        The default value of the parameter; ``None`` if not set.
+
+    `is_list` (Boolean)
+        If set, the option could be specified more than one time.
+        The combined values are stored as a list; the default
+        value for a list option is ``[]``.
 
     `hint` (a string or ``None``)
         A one-line description of the option.
@@ -64,7 +69,7 @@ class Option(object):
                  short_name=None, long_name=None,
                  with_value=False, value_name=None,
                  validator=None, default=None,
-                 hint=None):
+                 is_list=False, hint=None):
         # Sanity check on the arguments.
         assert isinstance(attribute, str)
         assert re.match(r'^[a-zA-Z_][0-9a-zA-Z_]*$', attribute)
@@ -84,6 +89,9 @@ class Option(object):
             assert value_name is None
             assert validator is None
             assert default is None
+        assert isinstance(is_list, bool)
+        if is_list:
+            assert default is None
         assert isinstance(hint, maybe(str))
 
         self.attribute = attribute
@@ -93,6 +101,7 @@ class Option(object):
         self.value_name = value_name
         self.validator = validator
         self.default = default
+        self.is_list = is_list
         self.hint = hint
 
     def get_hint(self):
@@ -110,6 +119,7 @@ class Option(object):
         #   {long_name} {PARAMETER}
         # or 
         #   {short_name} [{long_name}] {PARAMETER}
+        # A trailing `[+]` is added for repeatable options.
         if self.short_name is not None:
             signature = self.short_name
             if self.long_name is not None:
@@ -123,6 +133,8 @@ class Option(object):
                 parameter = self.attribute
             parameter = parameter.replace('_', '-').upper()
             signature = "%s %s" % (signature, parameter)
+        if self.is_list:
+            signature = "%s [+]" % signature
         return signature
 
 
@@ -185,12 +197,21 @@ PasswordOption = Option(
 ExtensionsOption = Option(
         attribute='extensions',
         short_name='-E',
-        long_name='--extensions',
+        long_name='--extension',
         with_value=True,
-        default=[],
-        value_name="addons",
-        validator=SeqVal(StrVal()),
+        value_name="ext",
+        validator=StrVal(),
+        is_list=True,
         hint="""include extra extensions""")
+
+ConfigOption = Option(
+        attribute='config',
+        short_name='-C',
+        long_name='--config',
+        with_value=True,
+        value_name="file",
+        validator=StrVal(),
+        hint="""read HTSQL configuration from FILE""")
 
 TrainOption = Option(
         attribute='train',
