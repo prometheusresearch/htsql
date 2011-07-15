@@ -460,11 +460,9 @@ class RelateLink(Relate):
                           for limage, rimage in self.binding.images]
         for code in kernel:
             if not all(seed.spans(unit.space) for unit in code.units):
-                print "!!!"
                 raise EncodeError("a singular operand is required", code.mark)
         for code in counter_kernel:
             if not all(space.spans(unit.space) for unit in code.units):
-                print "???"
                 raise EncodeError("a singular operand is required", code.mark)
         return LinkedSpace(space, seed, kernel, counter_kernel, self.binding)
 

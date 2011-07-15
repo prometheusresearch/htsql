@@ -218,7 +218,7 @@ conjunction (``&``), alternation (``|``), and negation (``!``)
 operators.  The following request returns programs in the "School of
 Business" that do not grant a "Bachelor of Science" degree:
 
-.. htsql:: /program?school_code='bus'&degree!='bs'
+.. htsql:: /program?school.code='bus'&degree!='bs'
    :cut: 3
 
 Filters can be combined with selectors and links.  The following request
@@ -853,54 +853,54 @@ Comparison Operators
 The quality operator (``=``) is overloaded to support various types.
 For character strings, this depends upon the underlying database's
 collation rules but typically is case-sensitive.  For example, to return
-a ``course`` by ``title``:
+a ``department`` by ``name``:
 
-.. htsql:: /course?title='Drawing'
+.. htsql:: /department?name='Economics'
 
-If you're not sure of the exact course title, use the case-insensitive
-*contains* operator (``~``).  The example below returns all ``course``
-records that contain the substring ``'lab'``:
+If you're not sure of the exact department name, use the case-insensitive
+*contains* operator (``~``).  The example below returns all ``department``
+records that contain the substring ``'engineering'``:
 
-.. htsql:: /course?title~'lab'
+.. htsql:: /department?name~'engineering'
    :cut: 4
 
 Use the *not-contains* operator (``!~``) to exclude all courses with
-physics in the title:
+*science* in the name:
 
-.. htsql:: /course?title!~'lab'
+.. htsql:: /department?name!~'science'
    :cut: 4
    :hide:
 
-To exclude a specific class, use the *not-equals* operator:
+To exclude a specific department, use the *not-equals* operator:
 
-.. htsql:: /course?title!='Organic Chemistry Laboratory I'
+.. htsql:: /department?name!='Management & Marketing'
    :cut: 4
    :hide:
 
 The *equality* (``=``) and *inequality* (``!=``) operators are
 straightforward when used with numbers:
 
-.. htsql:: /course{department_code, no, title}?no=101
+.. htsql:: /department?count(course)!=0
    :cut: 2
 
 The *in* operator (``={}``) can be thought of as equality over a set.
-This example, we return courses that are in neither the "Art History"
-nor the "Studio Art" department:
+This example, we return departments that do not belong neither to
+the School of Engineering nor to the School of Natural Sciences:
 
-.. htsql:: /course?department_code!={'arthis','stdart'}
+.. htsql:: /department?school_code!={'eng','ns'}
    :cut: 4
    :hide:
 
-Use the *greater-than* (``>``) operator to request courses with more
-than 3 credits:
+Use the *greater-than* (``>``) operator to request departments with
+more than 20 offered courses:
 
-.. htsql:: /course?credits>3
-   :cut: 2
+.. htsql:: /department?count(course)>20
+   :cut: 4
 
-Use the *greater-than-or-equal-to* (``>=``) operator request courses
-that have three credits or more:
+Use the *greater-than-or-equal-to* (``>=``) operator to request
+departments with 20 courses or more:
 
-.. htsql:: /course?credits>=3
+.. htsql:: /department?count(course)>=20
    :cut: 4
    :hide:
 
@@ -944,7 +944,7 @@ The *alternation* (``|``) operator is ``true()`` if either of its
 operands is ``true()``.  For example, we could list courses having
 anomalous number of credits:
 
-.. htsql:: /course?credits>4|credits<3
+.. htsql:: /course?credits>5|credits<3
    :cut: 4
 
 The precedence rules for boolean operators follow typical programming

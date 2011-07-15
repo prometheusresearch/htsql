@@ -651,7 +651,7 @@ tests:
   - uri: /school.department
   # N - 1
   - uri: /program.school
-  - uri: /department.school
+  - uri: /department
   # 1 - 1
   - uri: /instructor.confidential
   - uri: /confidential.instructor
