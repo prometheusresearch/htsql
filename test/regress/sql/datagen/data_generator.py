@@ -781,7 +781,9 @@ class StudentGenerator(BaseDataGenerator):
         self.dob_gen = random.Random(RANDOM_SEED)
         self.active_gen = random.Random(RANDOM_SEED)
         self.school_gen = random.Random(RANDOM_SEED)
-        self.program_gen = random.Random(RANDOM_SEED)
+        self.program_gen = {}
+        for school_code in self.dictionary.school_programs.keys():
+            self.program_gen[school_code] = random.Random(RANDOM_SEED)
 
     def generate_student(self, semester):
         gender = self.generate_gender(self.gender_gen)
@@ -790,7 +792,7 @@ class StudentGenerator(BaseDataGenerator):
         dob_start = datetime.date(semester["year"] - self.ADMISSION_AGE[1], 1, 1)
         dob = self.generate_date(dob_start, dob_end, self.dob_gen)
         school = self.get_rand_item(self.dictionary.school_programs.keys(), self.school_gen)
-        program = self.get_rand_item(self.dictionary.school_programs[school], self.program_gen)
+        program = self.get_rand_item(self.dictionary.school_programs[school], self.program_gen[school])
         self.student_counter += 1
         # what about masters and doctors?
         active = (CURDATE - semester["begin_date"]).days < 4 * 365
