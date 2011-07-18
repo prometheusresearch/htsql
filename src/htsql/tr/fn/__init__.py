@@ -12,3 +12,6 @@ This package implements HTSQL functions.
 """
 
 
+from . import assemble, bind, dump, encode, reduce, rewrite, signature
+
+

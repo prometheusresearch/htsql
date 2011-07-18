@@ -12,3 +12,13 @@ This package provides HTSQL for Oracle.
 """
 
 
+from . import connect, domain, introspect, split_sql, tr
+from htsql.addon import Addon
+
+
+class EngineOracleAddon(Addon):
+
+    name = 'engine.oracle'
+    packages = ['.', '.tr']
+
+

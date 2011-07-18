@@ -4,7 +4,7 @@
 #
 
 
-from htsql_pgsql.connect import ConnectPGSQL
+from htsql_engine.pgsql.connect import ConnectPGSQL
 
 
 class TimeoutConnectPGSQL(ConnectPGSQL):

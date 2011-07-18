@@ -4,3 +4,12 @@
 #
 
 
+from . import wsgi
+from htsql.addon import Addon
+
+
+class TweakCORSAddon(Addon):
+
+    name = 'tweak.cors'
+
+

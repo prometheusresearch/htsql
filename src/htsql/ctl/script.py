@@ -460,8 +460,13 @@ class Script(object):
             else:
                 if values:
                     value = values.pop(0)
+                    if value == '-':
+                        is_default = True
                 else:
                     is_default = True
+            if is_default and argument.is_mandatory:
+                raise ScriptError("parameter %r is mandatory"
+                                  % argument.attribute)
             assert not argument.is_mandatory or not is_default
             if is_default:
                 value = argument.default
@@ -504,11 +509,14 @@ class Script(object):
                 raise ScriptError("duplicate option %r" % name)
             duplicates.add(option)
             if option.with_value:
-                try:
-                    value = option.validator(value)
-                except ValueError, exc:
-                    raise ScriptError("invalid parameter %r: %s"
-                                      % (option.attribute, exc))
+                if value != '-':
+                    try:
+                        value = option.validator(value)
+                    except ValueError, exc:
+                        raise ScriptError("invalid parameter %r: %s"
+                                          % (option.attribute, exc))
+                else:
+                    value = option.default
             else:
                 value = True
             if not option.is_list:

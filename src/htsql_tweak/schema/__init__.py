@@ -4,3 +4,12 @@
 #
 
 
+from . import lookup
+from htsql.addon import Addon
+
+
+class TweakSchemaAddon(Addon):
+
+    name = 'tweak.schema'
+
+

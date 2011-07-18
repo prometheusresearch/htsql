@@ -5,10 +5,18 @@
 
 
 """
-:mod:`htsql_engine.htsql_pgsql`
-===============================
+:mod:`htsql_engine`
+===================
 
 This package contains adapters for various database engines.
 """
+
+
+from htsql.addon import Addon
+
+
+class EngineAddon(Addon):
+
+    name = 'engine'
 
 

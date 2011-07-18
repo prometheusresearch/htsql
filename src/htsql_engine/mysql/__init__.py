@@ -12,3 +12,13 @@ This package provides HTSQL for MySQL.
 """
 
 
+from . import connect, domain, introspect, split_sql, tr
+from htsql.addon import Addon
+
+
+class EngineMySQLAddon(Addon):
+
+    name = 'engine.mysql'
+    packages = ['.', '.tr']
+
+

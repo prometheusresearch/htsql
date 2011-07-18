@@ -12,3 +12,13 @@ This package provides HTSQL for SQLite.
 """
 
 
+from . import connect, domain, introspect, split_sql, tr
+from htsql.addon import Addon
+
+
+class EngineSQLiteAddon(Addon):
+
+    name = 'engine.sqlite'
+    packages = ['.', '.tr']
+
+

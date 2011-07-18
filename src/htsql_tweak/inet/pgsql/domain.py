@@ -6,7 +6,7 @@
 
 from htsql.util import maybe
 from htsql.domain import Domain
-from htsql_pgsql.domain import PGDomain
+from htsql_engine.pgsql.domain import PGDomain
 import socket
 
 

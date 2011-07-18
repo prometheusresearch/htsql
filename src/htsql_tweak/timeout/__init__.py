@@ -4,3 +4,11 @@
 #
 
 
+from htsql.addon import Addon
+
+
+class TweakTimeoutAddon(Addon):
+
+    name = 'tweak.timeout'
+
+

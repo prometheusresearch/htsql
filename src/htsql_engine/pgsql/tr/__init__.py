@@ -12,3 +12,6 @@ This package adapts the HTSQL-to-SQL translator for PostgreSQL.
 """
 
 
+from . import dump
+
+

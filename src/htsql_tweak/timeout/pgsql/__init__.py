@@ -4,3 +4,12 @@
 #
 
 
+from . import connect
+from htsql.addon import Addon
+
+
+class TweakTimeoutPGSQLAddon(Addon):
+
+    name = 'tweak.timeout.pgsql'
+
+

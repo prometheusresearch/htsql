@@ -4,3 +4,12 @@
 #
 
 
+from . import encode
+from htsql.addon import Addon
+
+
+class TweakAutolimitAddon(Addon):
+
+    name = 'tweak.autolimit'
+
+

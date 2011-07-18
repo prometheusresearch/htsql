@@ -12,3 +12,14 @@ This package provides HTSQL for MS SQL Server.
 """
 
 
+
+from . import connect, domain, introspect, split_sql, tr
+from htsql.addon import Addon
+
+
+class EngineMSSQLAddon(Addon):
+
+    name = 'engine.mssql'
+    packages = ['.', '.tr']
+
+

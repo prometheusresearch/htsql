@@ -4,7 +4,7 @@
 #
 
 
-from htsql_pgsql.introspect import IntrospectPGSQL
+from htsql_engine.pgsql.introspect import IntrospectPGSQL
 from htsql.entity import PrimaryKeyEntity, ForeignKeyEntity
 
 

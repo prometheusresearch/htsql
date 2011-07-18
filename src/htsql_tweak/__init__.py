@@ -4,3 +4,11 @@
 #
 
 
+from htsql.addon import Addon
+
+
+class TweakAddon(Addon):
+
+    name = 'tweak'
+
+

@@ -4,14 +4,11 @@
 #
 
 
-from htsql.util import autoimport
 from htsql.addon import Addon
 
 
-autoimport('htsql_tweak.pgsql_timeout')
+class TweakINetAddon(Addon):
 
-
-class TWEAK_PGSQL_TIMEOUT(Addon):
-    pass
+    name = 'tweak.inet'
 
 

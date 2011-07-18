@@ -12,6 +12,11 @@ This module declares HTSQL addons.
 """
 
 
+from .util import maybe
+from .validator import Validator
+import re
+
+
 class Parameter(object):
 
     def __init__(self, attribute, validator, default=None,
@@ -59,6 +64,9 @@ class Addon(object):
     parameters = []
     hint = None
     help = None
+
+    packages = ['.']
+    dependencies = ['htsql']
 
     @classmethod
     def get_hint(cls):

@@ -59,24 +59,26 @@ ZIP_SAFE = False
 ENTRY_POINTS = {
     'console_scripts': ['htsql-ctl = htsql.ctl:main'],
     'htsql.addons': [
-        'htsql.core = htsql.export:HTSQL_CORE',
-        'engine.sqlite = htsql_engine.sqlite.export:ENGINE_SQLITE',
-        'engine.pgsql = htsql_engine.pgsql.export:ENGINE_PGSQL',
-        'engine.postgres = htsql_engine.pgsql.export:ENGINE_PGSQL',
-        'engine.mysql = htsql_engine.mysql.export:ENGINE_MYSQL',
-        'engine.oracle = htsql_engine.oracle.export:ENGINE_ORACLE',
-        'engine.mssql = htsql_engine.mssql.export:ENGINE_MSSQL',
-        'tweak.pgsql.timeout'
-            ' = htsql_tweak.pgsql_timeout.export:TWEAK_PGSQL_TIMEOUT',
-        'tweak.autolimit = htsql_tweak.autolimit.export:TWEAK_AUTOLIMIT',
-        'tweak.schema = htsql_tweak.schema.export:TWEAK_SCHEMA',
-        'tweak.cors = htsql_tweak.cors.export:TWEAK_CORS',
-        'tweak.pgsql.catalog'
-            ' = htsql_tweak.pgsql_catalog.export:TWEAK_PGSQL_CATALOG',
-        'tweak.pgsql.view'
-            ' = htsql_tweak.pgsql_view.export:TWEAK_PGSQL_VIEW',
-        'tweak.pgsql.inet'
-            ' = htsql_tweak.pgsql_inet.export:TWEAK_PGSQL_INET',
+        'htsql = htsql:HTSQLAddon',
+        'engine = htsql_engine.EngineAddon',
+        'engine.sqlite = htsql_engine.sqlite:EngineSQLiteAddon',
+        'engine.pgsql = htsql_engine.pgsql:EnginePGSQLAddon',
+        'engine.mysql = htsql_engine.mysql:EngineMySQLAddon',
+        'engine.oracle = htsql_engine.oracle:EngineOracleAddon',
+        'engine.mssql = htsql_engine.mssql:EngineMSSQLAddon',
+        'tweak = htsql_tweak:TweakAddon',
+        'tweak.autolimit = htsql_tweak.autolimit:TweakAutolimitAddon',
+        'tweak.cors = htsql_tweak.cors:TweakCORSAddon',
+        'tweak.inet = htsql_tweak.inet:TweakINetAddon',
+        'tweak.inet.pgsql = htsql_tweak.inet.pgsql:TweakINetPGSQLAddon',
+        'tweak.schema = htsql_tweak.schema:TweakSchemaAddon',
+        'tweak.system = htsql_tweak.system:TweakSystemAddon',
+        'tweak.system.pgsql = htsql_tweak.system.pgsql:TweakSystemPGSQLAddon',
+        'tweak.timeout = htsql_tweak.timeout:TweakTimeoutAddon',
+        'tweak.timeout.pgsql'
+            ' = htsql_tweak.timeout.pgsql:TweakTimeoutPGSQLAddon',
+        'tweak.view = htsql_tweak.view:TweakViewAddon',
+        'tweak.view.pgsql = htsql_tweak.view.pgsql:TweakViewPGSQLAddon',
     ],
 }
 INSTALL_REQUIRES = [

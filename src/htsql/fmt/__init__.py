@@ -12,6 +12,7 @@ This package implements product formatters.
 """
 
 
+from . import entitle, format, html, json, spreadsheet, text
 from .format import FindRenderer
 from .json import JSONRenderer
 from .spreadsheet import CSVRenderer, TSVRenderer

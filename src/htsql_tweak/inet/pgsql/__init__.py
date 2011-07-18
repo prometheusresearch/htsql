@@ -4,14 +4,12 @@
 #
 
 
-from htsql.util import autoimport
+from . import bind, coerce, domain, dump, encode
 from htsql.addon import Addon
 
 
-autoimport('htsql_tweak.schema')
+class TweakINetPGSQLAddon(Addon):
 
-
-class TWEAK_SCHEMA(Addon):
-    pass
+    name = 'tweak.inet.pgsql'
 
 

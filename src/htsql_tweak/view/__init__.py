@@ -4,14 +4,11 @@
 #
 
 
-from htsql.util import autoimport
 from htsql.addon import Addon
 
 
-autoimport('htsql_tweak.autolimit')
+class TweakViewAddon(Addon):
 
-
-class TWEAK_AUTOLIMIT(Addon):
-    pass
+    name = 'tweak.view'
 
 

@@ -47,6 +47,25 @@ To execute a WSGI request, run
 __version__ = '2.1.0rc1'
 
 
+from . import (adapter, addon, application, connect, context, domain, entity,
+               error, introspect, mark, request, split_sql, tr, util,
+               validator, wsgi)
+from .validator import DBVal
+from .addon import Addon, Parameter
+
 from .application import Application as HTSQL
+
+
+class HTSQLAddon(Addon):
+    """
+    Declares the `htsql` addon.
+    """
+
+    name = 'htsql'
+    parameters = [
+            Parameter('db', DBVal()),
+    ]
+
+    packages = ['.', '.fmt', '.tr', '.tr.fn']
 
 

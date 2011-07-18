@@ -12,3 +12,13 @@ This package provides HTSQL for PostgreSQL.
 """
 
 
+from . import connect, domain, introspect, split_sql, tr
+from htsql.addon import Addon
+
+
+class EnginePGSQLAddon(Addon):
+
+    name = 'engine.pgsql'
+    packages = ['.', '.tr']
+
+

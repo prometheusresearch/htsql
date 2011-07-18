@@ -4,14 +4,12 @@
 #
 
 
-from htsql.util import autoimport
+from . import introspect, rulesparser
 from htsql.addon import Addon
 
 
-autoimport('htsql_tweak.pgsql_catalog')
+class TweakViewPGSQLAddon(Addon):
 
-
-class TWEAK_PGSQL_CATALOG(Addon):
-    pass
+    name = 'tweak.view.pgsql'
 
 

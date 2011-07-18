@@ -50,8 +50,6 @@ class Component(object):
         for addon in context.app.addons:
             # An addon exports all modules defined in the same package.
             package = addon.__module__
-            if '.' in package:
-                package = package.rsplit('.', 1)[0]
             for module in sys.modules:
                 if module == package or module.startswith(package+'.'):
                     modules.add(module)

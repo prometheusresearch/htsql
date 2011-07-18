@@ -12,3 +12,6 @@ This package adapts the HTSQL-to-SQL translator for MS SQL Server.
 """
 
 
+from . import compile, dump, encode, reduce, signature
+
+

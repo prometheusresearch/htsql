@@ -37,7 +37,7 @@ class Application(object):
         self.db = DB.parse(db)
         # Generate the list of addon names.
         addon_names = []
-        addon_names.append('htsql.core')
+        addon_names.append('htsql')
         addon_names.append('engine.%s' % self.db.engine)
         addon_names.extend(extensions)
         # Import addons from the entry point group `htsql.addons`.

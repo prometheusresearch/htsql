@@ -12,3 +12,6 @@ This package adapts the HTSQL-to-SQL translator for Oracle.
 """
 
 
+from . import compile, dump, lookup, reduce, rewrite, signature
+
+
