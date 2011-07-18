@@ -45,14 +45,32 @@ class Component(object):
         # A shortcut: return cached components.
         if registry.components is not None:
             return registry.components
-        # All modules exported by the addons of the active application.
-        modules = set()
+        # Packages exported by the addons of the active application.
+        packages = set()
         for addon in context.app.addons:
-            # An addon exports all modules defined in the same package.
-            package = addon.__module__
-            for module in sys.modules:
-                if module == package or module.startswith(package+'.'):
-                    modules.add(module)
+            # In Python 2.6+:
+            # root_package = sys.modules[addon.__module__].__package__
+            root_package = addon.__module__
+            if not hasattr(sys.modules[root_package], '__path__'):
+                root_package = root_package.rsplit('.', 1)[0]
+            # An addon exports packages defined in `packages` attribute.
+            for package in addon.packages:
+                # Resolve relative package names.
+                if package == '.':
+                    package = root_package
+                elif package.startswith('.'):
+                    package = root_package+package
+                packages.add(package)
+        # All modules exported by the addons.
+        modules = set()
+        for module in sorted(sys.modules):
+            # In Python 2.6+:
+            # package = sys.modules[module].__package__
+            package = module
+            if not hasattr(sys.modules[package], '__path__'):
+                package = package.rsplit('.', 1)[0]
+            if package in packages:
+                modules.add(module)
         # A list of `Component` subclasses defined in the `modules`.
         components = [Component]
         idx = 0
