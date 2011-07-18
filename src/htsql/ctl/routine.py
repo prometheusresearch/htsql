@@ -65,7 +65,7 @@ class Argument(object):
 
     def get_hint(self):
         """
-        Returns a short one-line description of the option.
+        Returns a short one-line description of the argument.
         """
         return self.hint
 

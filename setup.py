@@ -60,12 +60,12 @@ ENTRY_POINTS = {
     'console_scripts': ['htsql-ctl = htsql.ctl:main'],
     'htsql.addons': [
         'htsql.core = htsql.export:HTSQL_CORE',
-        'engine.sqlite = htsql_sqlite.export:ENGINE_SQLITE',
-        'engine.pgsql = htsql_pgsql.export:ENGINE_PGSQL',
-        'engine.postgres = htsql_pgsql.export:ENGINE_PGSQL',
-        'engine.mysql = htsql_mysql.export:ENGINE_MYSQL',
-        'engine.oracle = htsql_oracle.export:ENGINE_ORACLE',
-        'engine.mssql = htsql_mssql.export:ENGINE_MSSQL',
+        'engine.sqlite = htsql_engine.sqlite.export:ENGINE_SQLITE',
+        'engine.pgsql = htsql_engine.pgsql.export:ENGINE_PGSQL',
+        'engine.postgres = htsql_engine.pgsql.export:ENGINE_PGSQL',
+        'engine.mysql = htsql_engine.mysql.export:ENGINE_MYSQL',
+        'engine.oracle = htsql_engine.oracle.export:ENGINE_ORACLE',
+        'engine.mssql = htsql_engine.mssql.export:ENGINE_MSSQL',
         'tweak.pgsql.timeout'
             ' = htsql_tweak.pgsql_timeout.export:TWEAK_PGSQL_TIMEOUT',
         'tweak.autolimit = htsql_tweak.autolimit.export:TWEAK_AUTOLIMIT',
