@@ -57,7 +57,7 @@ PACKAGE_DIR = {'': 'src'}
 INCLUDE_PACKAGE_DATA = True
 ZIP_SAFE = False
 ENTRY_POINTS = {
-    'console_scripts': ['htsql-ctl = htsql.ctl:main'],
+    'console_scripts': ['htsql-ctl = htsql_ctl:main'],
     'htsql.addons': [
         'htsql = htsql:HTSQLAddon',
         'engine = htsql_engine:EngineAddon',

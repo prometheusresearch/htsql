@@ -5,15 +5,15 @@
 
 
 """
-:mod:`htsql.ctl.option`
+:mod:`htsql_ctl.option`
 =======================
 
 This module defines script options.
 """
 
 
-from ..util import maybe
-from ..validator import Validator, StrVal, SeqVal, ExtensionVal
+from htsql.util import maybe
+from htsql.validator import Validator, StrVal, SeqVal, ExtensionVal
 import re
 
 

@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.default`
+:mod:`htsql_ctl.default`
 ========================
 
 This module implements the default routine.

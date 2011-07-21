@@ -24,19 +24,19 @@ with_pyparams = False
 with_numparams = False
 prelude = []
 
-if state.app.db.engine == 'sqlite':
+if state.app.htsql.db.engine == 'sqlite':
     with_schema = False
-if state.app.db.engine == 'pgsql':
+if state.app.htsql.db.engine == 'pgsql':
     with_pyparams = True
-if state.app.db.engine == 'mysql':
+if state.app.htsql.db.engine == 'mysql':
     with_schema = False
     with_pyparams = True
-if state.app.db.engine == 'mssql':
+if state.app.htsql.db.engine == 'mssql':
     converter = (lambda item: 'TRUE' if item is True else
                               'FALSE' if item is False else item)
     with_pyparams = True
     prelude = ["SET IDENTITY_INSERT cd.class ON"]
-if state.app.db.engine == 'oracle':
+if state.app.htsql.db.engine == 'oracle':
     converter = (lambda item: 1 if item is True else
                               0 if item is False else
                               item.encode('utf-8')

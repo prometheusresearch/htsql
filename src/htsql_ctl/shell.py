@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.shell`
+:mod:`htsql_ctl.shell`
 ======================
 
 This module implements the `shell` routine.
@@ -16,8 +16,8 @@ from .error import ScriptError
 from .routine import Argument, Routine
 from .option import PasswordOption, ExtensionsOption
 from .request import Request
-from ..validator import DBVal
-from ..util import DB, listof, trim_doc
+from htsql.validator import DBVal
+from htsql.util import DB, listof, trim_doc
 import traceback
 import StringIO
 import mimetypes

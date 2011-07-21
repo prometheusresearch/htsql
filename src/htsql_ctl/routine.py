@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.routine`
+:mod:`htsql_ctl.routine`
 ========================
 
 This module defines basic classes for implementing script routines.
@@ -13,8 +13,8 @@ This module defines basic classes for implementing script routines.
 
 
 from .error import ScriptError
-from ..validator import Validator
-from ..util import maybe, trim_doc
+from htsql.validator import Validator
+from htsql.util import maybe, trim_doc
 import re
 
 

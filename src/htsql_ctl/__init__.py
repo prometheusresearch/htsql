@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl`
+:mod:`htsql_ctl`
 ================
 
 This package implements the ``htsql-ctl`` script.

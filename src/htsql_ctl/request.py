@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.request`
+:mod:`htsql_ctl.request`
 ========================
 
 This module implements the `get` and `post` routines.
@@ -17,8 +17,8 @@ from .routine import Argument, Routine
 from .option import (InputOption, OutputOption, PasswordOption,
                      RemoteUserOption, WithHeadersOption,
                      ContentTypeOption, ExtensionsOption)
-from ..validator import DBVal, StrVal
-from ..util import DB, maybe, oneof, listof, tupleof, dictof, filelike
+from htsql.util import DB, maybe, oneof, listof, tupleof, dictof, filelike
+from htsql.validator import DBVal, StrVal
 import sys
 import wsgiref.util
 import urllib

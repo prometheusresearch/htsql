@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.server`
+:mod:`htsql_ctl.server`
 =======================
 
 This module implements the `server` routine.
@@ -14,8 +14,8 @@ This module implements the `server` routine.
 
 from .routine import Argument, Routine
 from .option import QuietOption, PasswordOption, ExtensionsOption
-from ..util import DB
-from ..validator import StrVal, IntVal, DBVal
+from htsql.util import DB
+from htsql.validator import StrVal, IntVal, DBVal
 import socket
 import SocketServer
 import wsgiref.simple_server

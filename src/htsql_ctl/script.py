@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.script`
+:mod:`htsql_ctl.script`
 =======================
 
 This module implements a command-line application with subcommands.
@@ -15,7 +15,7 @@ This module implements a command-line application with subcommands.
 from .error import ScriptError
 from .routine import Argument, Routine
 from .option import Option
-from ..util import listof, trim_doc
+from htsql.util import listof, trim_doc
 
 
 class Script(object):

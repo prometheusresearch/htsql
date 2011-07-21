@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.regress`
+:mod:`htsql_ctl.regress`
 ========================
 
 This module implements the `regress` routine.
@@ -18,10 +18,10 @@ from .routine import Argument, Routine
 from .option import (InputOption, TrainOption, PurgeOption,
                      ForceOption, QuietOption)
 from .request import Request
-from ..validator import (Validator, BoolVal, StrVal, WordVal,
-                         ChoiceVal, IntVal, UFloatVal, DBVal, SeqVal,
-                         MapVal, ClassVal)
-from ..util import maybe, trim_doc, DB
+from htsql.validator import (Validator, BoolVal, StrVal, WordVal,
+                             ChoiceVal, IntVal, UFloatVal, DBVal, SeqVal,
+                             MapVal, ClassVal)
+from htsql.util import maybe, trim_doc, DB
 import traceback
 import StringIO
 import sys

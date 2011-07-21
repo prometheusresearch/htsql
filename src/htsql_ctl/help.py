@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql.ctl.help`
+:mod:`htsql_ctl.help`
 =====================
 
 This module implements the `help` routine.
@@ -14,7 +14,7 @@ This module implements the `help` routine.
 
 from .error import ScriptError
 from .routine import Routine, Argument
-from ..validator import WordVal
+from htsql.validator import WordVal
 import os
 
 
