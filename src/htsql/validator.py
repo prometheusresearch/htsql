@@ -12,7 +12,7 @@ This module provides utilities for data validation and conversion.
 """
 
 
-from util import DB, maybe, oneof, listof
+from util import DB, maybe, oneof, listof, tupleof, dictof
 import re
 
 
@@ -757,6 +757,202 @@ class MapVal(Validator):
         value = dict(pairs)
 
         # Here `value` is a mapping with normalized keys and items.
+        return value
+
+
+class ExtensionVal(Validator):
+
+    pattern = r"""
+        (?P<space> \s+ ) |
+        (?P<comma> , ) |
+        (?P<colon> : ) |
+        (?P<equal> = ) |
+        (?P<item> [^ \t\r\n',:=]+ | ' (?: [^'] | '')* ' )
+    """
+    regexp = re.compile(pattern, re.X)
+    name_pattern = r"""
+        ^
+        [a-zA-Z_-][0-9a-zA-Z_-]*
+        $
+    """
+    name_regexp = re.compile(name_pattern, re.X)
+    dotted_name_pattern = r"""
+        ^
+        [a-zA-Z_-][0-9a-zA-Z_-]*
+        (?: \. [a-zA-Z_-][0-9a-zA-Z_-]* )*
+        $
+    """
+    dotted_name_regexp = re.compile(dotted_name_pattern, re.X)
+
+    def __init__(self, is_nullable=False):
+        # Sanity check on the arguments.
+        assert isinstance(is_nullable, bool)
+        self.is_nullable = is_nullable
+
+    def __call__(self, value):
+        # `None` is allowed if the `is_nullable` flag is set.
+        if value is None:
+            if self.is_nullable:
+                return None
+            else:
+                raise ValueError("the null value is not permitted")
+
+        # Translate Unicode strings to UTF-8 encoded byte strings.
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+
+        # If the value is a string, parse it and extract the elements.
+        if isinstance(value, str):
+
+            # The dotted name of the section.
+            section = None
+            # List of `(key, item)` pairs.
+            pairs = []
+            # The beginning of the next token.
+            start = 0
+            # The current parsing state.
+            is_section_expected = True
+            is_key_expected = False
+            is_colon_expected = False
+            is_equal_expected = False
+            is_item_expected = False
+            is_comma_expected = False
+            # Keeps the current key till we extract the corresponding item.
+            current_key = None
+
+            # Parse the string till it ends.  Error conditions are signalled
+            # by ending the loop prematurely.
+            while start < len(value):
+                # Fetch the next token.
+                match = self.regexp.match(value, start)
+                if match is None:
+                    break
+                # This loop represents a simple state machine.  The
+                # `is_section/colon/key/equal/item/comma_expected` variables
+                # keep the current state; the token type represents conditions.
+                # The transition table:
+                #   state is 'section':
+                #       token type is 'space' => no-op
+                #       token type is 'colon' => ERROR
+                #       token type is 'equal' => ERROR
+                #       token type is 'comma' => ERROR
+                #       token type is 'item'  => extract the section name,
+                #                                set state to 'colon'
+                #       token type is 'end'   => ERROR
+                #   state is 'key':
+                #       token type is 'space' => no-op
+                #       token type is 'colon' => ERROR
+                #       token type is 'equal' => ERROR
+                #       token type is 'comma' => ERROR
+                #       token type is 'item'  => extract the key,
+                #                                set state to 'equal'
+                #       token type is 'end'   => DONE
+                #   state is 'colon':
+                #       token type is 'space' => no-op
+                #       token type is 'colon' => set state to 'key'
+                #       token type is 'equal' => ERROR
+                #       token type is 'comma' => ERROR
+                #       token type is 'item'  => ERROR
+                #       token type is 'end'   => DONE
+                #   state is 'equal':
+                #       token type is 'space' => no-op
+                #       token type is 'colon' => ERROR
+                #       token type is 'equal' => set state to 'value'
+                #       token type is 'comma' => ERROR
+                #       token type is 'item'  => ERROR
+                #       token type is 'end'   => ERROR
+                #   state is 'item':
+                #       token type is 'space' => no-op
+                #       token type is 'colon' => ERROR
+                #       token type is 'equal' => ERROR
+                #       token type is 'comma' => ERROR
+                #       token type is 'item'  => extract the element
+                #                                as the item corresponding
+                #                                to the current key,
+                #                                set state to 'comma'
+                #       token type is 'end'   => ERROR
+                #   state is 'comma':
+                #       token type is 'space' => no-op
+                #       token type is 'colon' => ERROR
+                #       token type is 'equal' => ERROR
+                #       token type is 'comma' => set state to 'key'
+                #       token type is 'item'  => ERROR
+                #       token type is 'end'   => DONE
+                # The final state must be 'colon', 'comma' or 'key'.
+                if match.group('item') is not None:
+                    item = match.group('item')
+                    if item[0] == item[-1] == '\'':
+                        item = item[1:-1].replace('\'\'', '\'')
+                    if is_section_expected:
+                        section = item
+                        is_section_expected = False
+                        is_colon_expected = True
+                    elif is_key_expected:
+                        current_key = item
+                        is_key_expected = False
+                        is_equal_expected = True
+                    elif is_item_expected:
+                        pairs.append((current_key, item))
+                        current_key = None
+                        is_item_expected = False
+                        is_comma_expected = True
+                    else:
+                        break
+                elif match.group('colon') is not None:
+                    if not is_colon_expected:
+                        break
+                    is_colon_expected = False
+                    is_key_expected = True
+                elif match.group('equal') is not None:
+                    if not is_equal_expected:
+                        break
+                    is_equal_expected = False
+                    is_item_expected = True
+                elif match.group('comma') is not None:
+                    if not is_comma_expected:
+                        break
+                    is_comma_expected = False
+                    is_key_expected = True
+                # Move to the next token.
+                start = match.end()
+
+            # Check if the parsing loop ended prematurely, or if the final
+            # state is invalid.
+            if start < len(value) or is_equal_expected or is_item_expected:
+                raise ValueError("a value of the form section:key=value,..."
+                                 " is expected; got %r" % value)
+
+            # Now `value` is a pair of the section and a dictionary of
+            # key and value pairs.
+            value = (section, dict(pairs))
+
+        # By this time `value` must be a pair of section name and a mapping
+        # of parameters.
+        if not isinstance(value, tupleof(str, dictof(str, object))):
+            raise ValueError("a pair of a section name and a dictionary"
+                             " is expected; got %r" % value)
+
+        # Validate and normalize the section name and the mapping keys.
+        # Note that we need to check for duplicate keys since normalization
+        # may convert two distinct keys to the same normalized key.
+        section, parameters = value
+        if not self.dotted_name_regexp.match(section):
+            raise ValueError("a dotted name is expected, got %r" % section)
+        pairs = []
+        key_set = set()
+        for key in sorted(parameters):
+            item = parameters[key]
+            if not self.name_regexp.match(key):
+                raise ValueError("a name is expected, got %r" % key)
+            key = key.replace('-', '_')
+            if key in key_set:
+                raise ValueError("duplicate mapping key %r" % key)
+            key_set.add(key)
+            pairs.append((key, item))
+        value = (section, dict(pairs))
+
+        # Here `value` is a pair of the extension name and a mapping of
+        # parameters.
         return value
 
 

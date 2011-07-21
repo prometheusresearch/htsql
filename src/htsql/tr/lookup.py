@@ -246,11 +246,11 @@ class Lookup(Adapter):
         # attribute.
         # FIXME: move it to a more appropriate place.
         app = context.app
-        if app.cached_catalog is None:
+        if app.htsql.cached_catalog is None:
             introspect = Introspect()
             catalog = introspect()
-            app.cached_catalog = catalog
-        self.catalog = app.cached_catalog
+            app.htsql.cached_catalog = catalog
+        self.catalog = app.htsql.cached_catalog
 
     def __call__(self):
         # `None` means the lookup request failed.

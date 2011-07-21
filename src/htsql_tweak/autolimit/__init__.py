@@ -5,11 +5,17 @@
 
 
 from . import encode
-from htsql.addon import Addon
+from htsql.addon import Addon, Parameter
+from htsql.validator import PIntVal
 
 
 class TweakAutolimitAddon(Addon):
 
     name = 'tweak.autolimit'
+
+    parameters = [
+            Parameter('limit', PIntVal(is_nullable=True),
+                      default=10000),
+    ]
 
 

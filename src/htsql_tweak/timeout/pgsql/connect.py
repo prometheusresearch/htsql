@@ -4,20 +4,21 @@
 #
 
 
+from htsql.context import context
 from htsql_engine.pgsql.connect import ConnectPGSQL
 
 
 class TimeoutConnectPGSQL(ConnectPGSQL):
 
-    statement_timeout = 60
-
     def open_connection(self, with_autocommit=False):
         connection = super(TimeoutConnectPGSQL, self).open_connection(
                                     with_autocommit=with_autocommit)
-        cursor = connection.cursor()
-        cursor.execute("""
-            SET SESSION STATEMENT_TIMEOUT TO %s
-        """ % (self.statement_timeout*1000))
+        timeout = context.app.tweak.timeout.timeout
+        if timeout is not None:
+            cursor = connection.cursor()
+            cursor.execute("""
+                SET SESSION STATEMENT_TIMEOUT TO %s
+            """ % (timeout*1000))
         return connection
 
 

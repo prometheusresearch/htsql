@@ -21,4 +21,9 @@ class EngineOracleAddon(Addon):
     name = 'engine.oracle'
     packages = ['.', '.tr']
 
+    def __init__(self, app, attributes):
+        if app.htsql.db.engine != 'oracle':
+            raise ImportError("oracle engine is expected")
+        super(EngineOracleAddon, self).__init__(app, attributes)
+
 

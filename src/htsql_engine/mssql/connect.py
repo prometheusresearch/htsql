@@ -32,7 +32,7 @@ class ConnectMSSQL(Connect):
     """
 
     def open_connection(self, with_autocommit=False):
-        db = context.app.db
+        db = context.app.htsql.db
         parameters = {}
         parameters['database'] = db.database
         if db.host is not None:

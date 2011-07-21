@@ -36,7 +36,7 @@ class ConnectSQLite(Connect):
         # FIXME: should we complain if the database address or
         # authentications parameters are not `None`?
         # Get the path to the database file.
-        db = context.app.db
+        db = context.app.htsql.db
         # Generate and return the DBAPI connection.
         if with_autocommit:
             connection = sqlite3.connect(db.database, isolation_level=None)

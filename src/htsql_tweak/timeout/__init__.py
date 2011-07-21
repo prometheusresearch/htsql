@@ -4,11 +4,21 @@
 #
 
 
-from htsql.addon import Addon
+from htsql.validator import PIntVal
+from htsql.addon import Addon, Parameter
 
 
 class TweakTimeoutAddon(Addon):
 
     name = 'tweak.timeout'
+
+    parameters = [
+            Parameter('timeout', PIntVal(is_nullable=True),
+                      default=60),
+    ]
+
+    @classmethod
+    def get_extension(cls, app, attributes):
+        return 'tweak.timeout.%s' % app.htsql.db.engine
 
 

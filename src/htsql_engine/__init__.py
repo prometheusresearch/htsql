@@ -19,4 +19,7 @@ class EngineAddon(Addon):
 
     name = 'engine'
 
+    @classmethod
+    def get_extension(cls, app, attributes):
+        return 'engine.%s' % app.htsql.db.engine
 

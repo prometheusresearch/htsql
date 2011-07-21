@@ -11,4 +11,8 @@ class TweakSystemAddon(Addon):
 
     name = 'tweak.system'
 
+    @classmethod
+    def get_extension(cls, app, attributes):
+        return 'tweak.system.%s' % app.htsql.db.engine
+
 

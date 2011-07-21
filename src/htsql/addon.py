@@ -66,7 +66,8 @@ class Addon(object):
     help = None
 
     packages = ['.']
-    dependencies = ['htsql']
+    prerequisites = ['htsql']
+    postrequisites = []
 
     @classmethod
     def get_hint(cls):
@@ -84,7 +85,34 @@ class Addon(object):
             return None
         return trim_doc(cls.help)
 
-    def __init__(self, attributes):
+    @classmethod
+    def get_prerequisites(cls):
+        prerequisites = cls.prerequisites[:]
+        name = cls.name
+        while '.' in name:
+            name = name.rsplit('.', 1)[0]
+            prerequisites.append(name)
+        return prerequisites
+
+    @classmethod
+    def get_postrequisites(cls):
+        return cls.postrequisites
+
+    @classmethod
+    def get_extension(cls, app, attributes):
+        return {}
+
+    def __init__(self, app, attributes):
+        names = self.name.split('.')
+        parent_names = names[:-1]
+        name = names[-1]
+        parent = app
+        for parent_name in parent_names:
+            assert hasattr(parent, parent_name)
+            parent = getattr(parent, parent_name)
+            assert isinstance(parent, Addon)
+        assert not hasattr(parent, name)
+        setattr(parent, name, self)
         for name in attributes:
             setattr(self, name, attributes[name])
 

@@ -21,4 +21,9 @@ class EnginePGSQLAddon(Addon):
     name = 'engine.pgsql'
     packages = ['.', '.tr']
 
+    def __init__(self, app, attributes):
+        if app.htsql.db.engine != 'pgsql':
+            raise ImportError("pgsql engine is expected")
+        super(EnginePGSQLAddon, self).__init__(app, attributes)
+
 

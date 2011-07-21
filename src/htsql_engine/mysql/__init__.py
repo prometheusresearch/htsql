@@ -21,4 +21,9 @@ class EngineMySQLAddon(Addon):
     name = 'engine.mysql'
     packages = ['.', '.tr']
 
+    def __init__(self, app, attributes):
+        if app.htsql.db.engine != 'mysql':
+            raise ImportError("mysql engine is expected")
+        super(EngineMySQLAddon, self).__init__(app, attributes)
+
 

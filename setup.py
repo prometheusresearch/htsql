@@ -60,7 +60,7 @@ ENTRY_POINTS = {
     'console_scripts': ['htsql-ctl = htsql.ctl:main'],
     'htsql.addons': [
         'htsql = htsql:HTSQLAddon',
-        'engine = htsql_engine.EngineAddon',
+        'engine = htsql_engine:EngineAddon',
         'engine.sqlite = htsql_engine.sqlite:EngineSQLiteAddon',
         'engine.pgsql = htsql_engine.pgsql:EnginePGSQLAddon',
         'engine.mysql = htsql_engine.mysql:EngineMySQLAddon',

@@ -11,5 +11,6 @@ from htsql.addon import Addon
 class TweakTimeoutPGSQLAddon(Addon):
 
     name = 'tweak.timeout.pgsql'
+    prerequisites = ['engine.pgsql']
 
 

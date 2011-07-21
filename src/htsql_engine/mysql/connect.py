@@ -38,7 +38,7 @@ class ConnectMySQL(Connect):
 
     def open_connection(self, with_autocommit=False):
         # Note: `with_autocommit` is ignored.
-        db = context.app.db
+        db = context.app.htsql.db
         parameters = {}
         parameters['db'] = db.database
         if db.host is not None:

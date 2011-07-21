@@ -11,5 +11,6 @@ from htsql.addon import Addon
 class TweakViewPGSQLAddon(Addon):
 
     name = 'tweak.view.pgsql'
+    prerequisites = ['engine.pgsql']
 
 

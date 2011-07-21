@@ -11,4 +11,8 @@ class TweakINetAddon(Addon):
 
     name = 'tweak.inet'
 
+    @classmethod
+    def get_extension(cls, app, attributes):
+        return 'tweak.inet.%s' % app.htsql.db.engine
+
 

@@ -330,9 +330,9 @@ class PoolConnect(Connect):
         if with_autocommit:
             return super(PoolConnect, self).__call__(with_autocommit)
         app = context.app
-        if app.cached_pool is None:
-            app.cached_pool = Pool()
-        pool = app.cached_pool
+        if app.htsql.cached_pool is None:
+            app.htsql.cached_pool = Pool()
+        pool = app.htsql.cached_pool
         with pool.lock:
             for connection in pool.items[:]:
                 if not connection.is_valid:

@@ -13,7 +13,7 @@ This module defines script options.
 
 
 from ..util import maybe
-from ..validator import Validator, StrVal, SeqVal
+from ..validator import Validator, StrVal, SeqVal, ExtensionVal
 import re
 
 
@@ -200,7 +200,7 @@ ExtensionsOption = Option(
         long_name='--extension',
         with_value=True,
         value_name="ext",
-        validator=StrVal(),
+        validator=ExtensionVal(),
         is_list=True,
         hint="""include extra extensions""")
 

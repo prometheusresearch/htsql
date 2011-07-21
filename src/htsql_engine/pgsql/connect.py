@@ -29,8 +29,8 @@ class ConnectPGSQL(Connect):
     """
 
     def open_connection(self, with_autocommit=False):
-        # Prepare and execute the `pgsql2.connect()` call.
-        db = context.app.db
+        # Prepare and execute the `psycopg2.connect()` call.
+        db = context.app.htsql.db
         parameters = {}
         parameters['database'] = db.database
         if db.host is not None:

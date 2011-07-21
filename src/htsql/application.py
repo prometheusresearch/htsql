@@ -16,7 +16,7 @@ from __future__ import with_statement
 from .context import context
 from .addon import Addon
 from .adapter import ComponentRegistry
-from .util import DB
+from .util import maybe, oneof, listof, dictof, tupleof
 from .wsgi import WSGI
 import pkg_resources
 
@@ -33,36 +33,117 @@ class Application(object):
     """
 
     def __init__(self, db, *extensions):
-        # Parse the connection URI.
-        self.db = DB.parse(db)
-        # Generate the list of addon names.
-        addon_names = []
-        addon_names.append('htsql')
-        addon_names.append('engine.%s' % self.db.engine)
-        addon_names.extend(extensions)
-        # Import addons from the entry point group `htsql.addons`.
+        assert isinstance(list(extensions),
+                listof(oneof(str,
+                             tupleof(str, maybe(dictof(str, object))),
+                             dictof(str, maybe(dictof(str, object))))))
         self.addons = []
-        for name in addon_names:
-            entry_points = list(pkg_resources.iter_entry_points('htsql.addons',
-                                                                name))
-            if len(entry_points) == 0:
-                raise ImportError("unknown entry point %r" % name)
-            elif len(entry_points) > 1:
-                raise ImportError("ambiguous entry point %r" % name)
-            entry_point = entry_points[0]
-            addon_class = entry_point.load()
-            if not (isinstance(addon_class, type) and
-                    issubclass(addon_class, Addon)):
-                raise ImportError("invalid entry point %r" % name)
-            self.addons.append(addon_class)
-        # TODO: the rest of the attributes should be defined
-        # in the `htsql.core` addon.
-        # Initialize the adapter registry.
-        self.component_registry = ComponentRegistry()
-        # A cached copy of the introspected catalog (FIXME: catalog_registry?).
-        self.cached_catalog = None
-        # A cached copy of the connection pool (FIXME: connection_pool?).
-        self.cached_pool = None
+        htsql_extension = {'htsql': {} }
+        if db is not None:
+            htsql_extension['htsql']['db'] = db
+        extensions = [htsql_extension] + list(extensions)
+        configuration = {}
+        dependencies = {}
+        addon_class_by_name = {}
+        addon_instance_by_name = {}
+        while extensions:
+            while extensions:
+                extension = extensions.pop()
+                if isinstance(extension, str):
+                    extension = { extension: None }
+                elif isinstance(extension, tuple):
+                    extension = dict([extension])
+                for addon_name in sorted(extension):
+                    addon_parameters = extension[addon_name]
+                    addon_name = addon_name.replace('-', '_')
+                    if addon_parameters is None:
+                        addon_parameters = {}
+                    if addon_name in addon_instance_by_name:
+                        if addon_parameters:
+                            raise ImportError("invalid addon dependency at %r"
+                                              % addon_name)
+                        continue
+                    configuration.setdefault(addon_name, {})
+                    for key in sorted(addon_parameters):
+                        value = addon_parameters[key]
+                        key = key.replace('-', '_')
+                        if key not in configuration[addon_name]:
+                            configuration[addon_name][key] = value
+                    if addon_name not in addon_class_by_name:
+                        entry_points = list(pkg_resources.iter_entry_points(
+                                                'htsql.addons', addon_name))
+                        if len(entry_points) == 0:
+                            raise ImportError("unknown entry point %r"
+                                              % addon_name)
+                        elif len(entry_points) > 1:
+                            raise ImportError("ambiguous entry point %r"
+                                              % addon_name)
+                        [entry_point] = entry_points
+                        addon_class = entry_point.load()
+                        if not (isinstance(addon_class, type) and
+                                issubclass(addon_class, Addon) and
+                                addon_class.name == addon_name):
+                            raise ImportError("invalid entry point %r"
+                                              % addon_name)
+                        addon_class_by_name[addon_name] = addon_class
+                        prerequisites = addon_class.get_prerequisites()
+                        postrequisites = addon_class.get_postrequisites()
+                        requisites_extension = dict((name, {})
+                                    for name in prerequisites+postrequisites)
+                        if requisites_extension:
+                            extensions.append(requisites_extension)
+                        dependencies.setdefault(addon_name, [])
+                        for name in prerequisites:
+                            name = name.replace('-', '_')
+                            dependencies[addon_name].append(name)
+                        for name in postrequisites:
+                            name = name.replace('-', '_')
+                            dependencies.setdefault(name, [])
+                            dependencies[name].append(addon_name)
+            while not extensions and (len(addon_instance_by_name)
+                                        < len(addon_class_by_name)):
+                for addon_name in sorted(dependencies):
+                    dependencies[addon_name] = [name
+                                for name in dependencies[addon_name]
+                                if name not in addon_instance_by_name]
+                candidates = [addon_name
+                            for addon_name in sorted(addon_class_by_name)
+                            if addon_name not in addon_instance_by_name]
+                for addon_name in candidates:
+                    if not dependencies[addon_name]:
+                        break
+                else:
+                    raise ImportError("circular addon dependency at %r"
+                                      % candidates[0])
+                addon_class = addon_class_by_name[addon_name]
+                attributes = {}
+                valid_attributes = set()
+                for parameter in addon_class.parameters:
+                    valid_attributes.add(parameter.attribute)
+                for key in sorted(configuration[addon_name]):
+                    if key not in valid_attributes:
+                        raise ImportError("uknown parameter %r of addon %r"
+                                          % (key, addon_name))
+                for parameter in addon_class.parameters:
+                    if parameter.attribute in configuration[addon_name]:
+                        value = configuration[addon_name][parameter.attribute]
+                        try:
+                            value = parameter.validator(value)
+                        except ValueError, exc:
+                            raise ImportError("invalid parameter %r"
+                                              " of addon %r: %s"
+                                              % (parameter.attribute,
+                                                 addon_name, exc))
+                    else:
+                        value = parameter.default
+                    attributes[parameter.attribute] = value
+                extension = addon_class.get_extension(self, attributes)
+                if extension:
+                    extensions.append(extension)
+                addon_instance = addon_class(self, attributes)
+                addon_instance_by_name[addon_name] = addon_instance
+        for addon_name in sorted(addon_instance_by_name):
+            self.addons.append(addon_instance_by_name[addon_name])
 
     def __enter__(self):
         """

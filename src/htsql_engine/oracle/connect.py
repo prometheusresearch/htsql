@@ -48,7 +48,7 @@ class ConnectOracle(Connect):
                               outconverter=cls.outconverter)
 
     def open_connection(self, with_autocommit=False):
-        db = context.app.db
+        db = context.app.htsql.db
         parameters = {}
         parameters['user'] = db.username or ''
         parameters['password'] = db.password or ''

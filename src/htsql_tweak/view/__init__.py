@@ -11,4 +11,8 @@ class TweakViewAddon(Addon):
 
     name = 'tweak.view'
 
+    @classmethod
+    def get_extension(cls, app, attributes):
+        return 'tweak.view.%s' % app.htsql.db.engine
+
 

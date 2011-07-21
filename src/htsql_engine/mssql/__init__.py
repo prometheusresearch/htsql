@@ -22,4 +22,9 @@ class EngineMSSQLAddon(Addon):
     name = 'engine.mssql'
     packages = ['.', '.tr']
 
+    def __init__(self, app, attributes):
+        if app.htsql.db.engine != 'mssql':
+            raise ImportError("mssql engine is expected")
+        super(EngineMSSQLAddon, self).__init__(app, attributes)
+
 

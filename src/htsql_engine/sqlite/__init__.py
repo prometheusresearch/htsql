@@ -21,4 +21,9 @@ class EngineSQLiteAddon(Addon):
     name = 'engine.sqlite'
     packages = ['.', '.tr']
 
+    def __init__(self, app, attributes):
+        if app.htsql.db.engine != 'sqlite':
+            raise ImportError("sqlite engine is expected")
+        super(EngineSQLiteAddon, self).__init__(app, attributes)
+
 

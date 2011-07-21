@@ -52,6 +52,7 @@ from . import (adapter, addon, application, connect, context, domain, entity,
                validator, wsgi)
 from .validator import DBVal
 from .addon import Addon, Parameter
+from .adapter import ComponentRegistry
 
 from .application import Application as HTSQL
 
@@ -67,5 +68,16 @@ class HTSQLAddon(Addon):
     ]
 
     packages = ['.', '.fmt', '.tr', '.tr.fn']
+    prerequisites = []
+    postrequisites = ['engine']
+    parameters = [
+            Parameter('db', DBVal()),
+    ]
+
+    def __init__(self, app, attributes):
+        self.component_registry = ComponentRegistry()
+        self.cached_catalog = None
+        self.cached_pool = None
+        super(HTSQLAddon, self).__init__(app, attributes)
 
 
