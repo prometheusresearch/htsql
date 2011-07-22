@@ -20,7 +20,7 @@ from .option import (InputOption, TrainOption, PurgeOption,
 from .request import Request
 from htsql.validator import (Validator, BoolVal, StrVal, WordVal,
                              ChoiceVal, IntVal, UFloatVal, DBVal, SeqVal,
-                             MapVal, ClassVal)
+                             MapVal, ClassVal, AnyVal)
 from htsql.util import maybe, trim_doc, DB
 import traceback
 import StringIO
@@ -879,7 +879,9 @@ class AppTestCase(SkipTestCase):
         fields = [
                 Field('db', DBVal(),
                       hint="""the connection URI"""),
-                Field('extensions', SeqVal(StrVal()), default=[],
+                Field('extensions', MapVal(StrVal(),
+                                           MapVal(StrVal(), AnyVal())),
+                      default=[],
                       hint="""include extra extensions"""),
         ] + SkipTestCase.Input.fields
 
@@ -920,7 +922,7 @@ class AppTestCase(SkipTestCase):
         self.state.app = None
         try:
             self.state.app = Application(self.input.db,
-                                         *self.input.extensions)
+                                         self.input.extensions)
         except Exception:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"

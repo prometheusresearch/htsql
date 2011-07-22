@@ -14,8 +14,8 @@ This module implements the `shell` routine.
 
 from .error import ScriptError
 from .routine import Argument, Routine
-from .option import PasswordOption, ExtensionsOption
-from .request import Request
+from .option import PasswordOption, ExtensionsOption, ConfigOption
+from .request import Request, ConfigYAMLLoader
 from htsql.validator import DBVal
 from htsql.util import DB, listof, trim_doc
 import traceback
@@ -30,6 +30,7 @@ try:
     import readline
 except ImportError:
     readline = None
+import yaml
 
 
 class Cmd(object):
@@ -564,12 +565,13 @@ class ShellRoutine(Routine):
     name = 'shell'
     aliases = ['sh']
     arguments = [
-            Argument('db', DBVal(),
+            Argument('db', DBVal(), default=None,
                      hint="""the connection URI"""),
     ]
     options = [
             PasswordOption,
             ExtensionsOption,
+            ConfigOption,
     ]
     hint = """start an HTSQL shell"""
     help = """
@@ -757,7 +759,7 @@ class ShellRoutine(Routine):
         db = self.db
 
         # Ask for the database password if necessary.
-        if self.password:
+        if self.password and db is not None:
             db = DB(engine=db.engine,
                     username=db.username,
                     password=getpass.getpass(),
@@ -766,9 +768,24 @@ class ShellRoutine(Routine):
                     database=db.database,
                     options=db.options)
 
+        # Load addon configuration.
+        extensions = self.extensions
+        if self.config is not None:
+            stream = open(self.config, 'rb')
+            loader = ConfigYAMLLoader(stream)
+            try:
+                config_extension = loader.load()
+            except yaml.YAMLError, exc:
+                raise ScriptError("failed to load application configuration:"
+                                  " %s" % exc)
+            extensions = extensions + [config_extension]
+
         # Create the HTSQL application.
-        from htsql.application import Application
-        app = Application(db, *self.extensions)
+        from htsql import HTSQL
+        try:
+            app = HTSQL(db, *extensions)
+        except ImportError, exc:
+            raise ScriptError("failed to construct application: %s" % exc)
 
         # Display the welcome notice; load the history.
         self.setup(app)
@@ -803,7 +820,7 @@ class ShellRoutine(Routine):
         # Display the prompt and read the command from the console.
         # On EOF, exit the loop.
         if self.is_interactive:
-            prompt = "%s$ " % self.db.database
+            prompt = "%s$ " % app.htsql.db.database
             try:
                 line = raw_input(prompt)
             except EOFError:

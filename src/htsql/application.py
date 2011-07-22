@@ -48,7 +48,7 @@ class Application(object):
         addon_instance_by_name = {}
         while extensions:
             while extensions:
-                extension = extensions.pop()
+                extension = extensions.pop(0)
                 if isinstance(extension, str):
                     extension = { extension: None }
                 elif isinstance(extension, tuple):

@@ -16,7 +16,7 @@ from .error import ScriptError
 from .routine import Argument, Routine
 from .option import (InputOption, OutputOption, PasswordOption,
                      RemoteUserOption, WithHeadersOption,
-                     ContentTypeOption, ExtensionsOption)
+                     ContentTypeOption, ExtensionsOption, ConfigOption)
 from htsql.util import DB, maybe, oneof, listof, tupleof, dictof, filelike
 from htsql.validator import DBVal, StrVal
 import sys
@@ -26,6 +26,66 @@ import traceback
 import StringIO
 import mimetypes
 import getpass
+import re
+import yaml, yaml.constructor
+
+
+BaseYAMLLoader = yaml.SafeLoader
+if hasattr(yaml, 'CSafeLoader'):
+    BaseYAMLLoader = yaml.CSafeLoader
+
+
+class ConfigYAMLLoader(BaseYAMLLoader):
+
+    name_pattern = ur"""
+        ^
+        [a-zA-Z_-][0-9a-zA-Z_-]*
+        $
+    """
+    name_regexp = re.compile(name_pattern, re.X)
+    dotted_name_pattern = ur"""
+        ^
+        [a-zA-Z_-][0-9a-zA-Z_-]*
+        (?: \. [a-zA-Z_-][0-9a-zA-Z_-]* )*
+        $
+    """
+    dotted_name_regexp = re.compile(dotted_name_pattern, re.X)
+
+    def load(self):
+        return self.get_single_data()
+
+    def construct_document(self, node):
+        document_node = node
+        if (not (isinstance(document_node, yaml.ScalarNode) and
+                document_node.tag == u'tag:yaml.org,2002:null') and
+            not (isinstance(document_node, yaml.MappingNode) and
+                 document_node.tag == u'tag:yaml.org,2002:map')):
+            raise yaml.constructor.ConstructorError(None, None,
+                    "invalid structure of configuration file",
+                    document_node.start_mark)
+        if isinstance(document_node, yaml.MappingNode):
+            for name_node, addon_node in document_node.value:
+                if not (isinstance(name_node, yaml.ScalarNode) and
+                        name_node.tag == u'tag:yaml.org,2002:str' and
+                        self.dotted_name_regexp.match(name_node.value)):
+                    raise yaml.constructor.ConstructorError(None, None,
+                            "invalid addon name", name_node.start_mark)
+            if (not (isinstance(addon_node, yaml.ScalarNode) and
+                    addon_node.tag == u'tag:yaml.org,2002:null') and
+                not (isinstance(addon_node, yaml.MappingNode) and
+                     addon_node.tag == u'tag:yaml.org,2002:map')):
+                raise yaml.constructor.ConstructorError(None, None,
+                        "invalid addon configuration", addon_node.start_mark)
+                if isinstance(addon_node, yaml.MappingNode):
+                    for attribute_node, value_node in addon_node.value:
+                        if not (isinstance(attribute_node, yaml.ScalarNode) and
+                                attribute_node.tag
+                                    == u'tag:yaml.org,2002:str' and
+                                self.name_regexp.match(attribute_node.value)):
+                            raise yaml.constructor.ConstructorError(None, None,
+                                    "invalid parameter name",
+                                    attribute_node.start_mark)
+        return super(ConfigYAMLLoader, self).construct_document(document_node)
 
 
 class Request(object):
@@ -268,6 +328,7 @@ class GetPostBaseRoutine(Routine):
     options = [
             PasswordOption,
             ExtensionsOption,
+            ConfigOption,
             RemoteUserOption,
             OutputOption,
             WithHeadersOption,
@@ -280,7 +341,7 @@ class GetPostBaseRoutine(Routine):
         db = self.db
 
         # Ask for the database password if necessary.
-        if self.password:
+        if self.password and db is not None:
             db = DB(engine=db.engine,
                     username=db.username,
                     password=getpass.getpass(),
@@ -289,9 +350,24 @@ class GetPostBaseRoutine(Routine):
                     database=db.database,
                     options=db.options)
 
+        # Load addon configuration.
+        extensions = self.extensions
+        if self.config is not None:
+            stream = open(self.config, 'rb')
+            loader = ConfigYAMLLoader(stream)
+            try:
+                config_extension = loader.load()
+            except yaml.YAMLError, exc:
+                raise ScriptError("failed to load application configuration:"
+                                  " %s" % exc)
+            extensions = extensions + [config_extension]
+
         # Create the HTSQL application.
-        from htsql.application import Application
-        app = Application(db, *self.extensions)
+        from htsql import HTSQL
+        try:
+            app = HTSQL(db, *extensions)
+        except ImportError, exc:
+            raise ScriptError("failed to construct application: %s" % exc)
 
         # Prepare a WSGI `environ` variable.
         if self.method == 'GET':

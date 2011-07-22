@@ -12,8 +12,10 @@ This module implements the `server` routine.
 """
 
 
+from .error import ScriptError
 from .routine import Argument, Routine
-from .option import QuietOption, PasswordOption, ExtensionsOption
+from .option import QuietOption, PasswordOption, ExtensionsOption, ConfigOption
+from .request import ConfigYAMLLoader
 from htsql.util import DB
 from htsql.validator import StrVal, IntVal, DBVal
 import socket
@@ -21,6 +23,7 @@ import SocketServer
 import wsgiref.simple_server
 import binascii
 import getpass
+import yaml
 
 
 class HTSQLServer(SocketServer.ThreadingMixIn,
@@ -91,7 +94,7 @@ class ServerRoutine(Routine):
     name = 'server'
     aliases = ['serve', 's']
     arguments = [
-            Argument('db', DBVal(),
+            Argument('db', DBVal(), None,
                      hint="""the connection URI"""),
             Argument('host', StrVal(), '',
                      hint="""the host address (by default, *)"""),
@@ -101,6 +104,7 @@ class ServerRoutine(Routine):
     options = [
             PasswordOption,
             ExtensionsOption,
+            ConfigOption,
             QuietOption,
     ]
     hint = """start an HTTP server handling HTSQL requests"""
@@ -138,7 +142,7 @@ class ServerRoutine(Routine):
         db = self.db
 
         # Ask for the database password if necessary.
-        if self.password:
+        if self.password and db is not None:
             db = DB(engine=db.engine,
                     username=db.username,
                     password=getpass.getpass(),
@@ -147,9 +151,24 @@ class ServerRoutine(Routine):
                     database=db.database,
                     options=db.options)
 
+        # Load addon configuration.
+        extensions = self.extensions
+        if self.config is not None:
+            stream = open(self.config, 'rb')
+            loader = ConfigYAMLLoader(stream)
+            try:
+                config_extension = loader.load()
+            except yaml.YAMLError, exc:
+                raise ScriptError("failed to load application configuration:"
+                                  " %s" % exc)
+            extensions = extensions + [config_extension]
+
         # Create the HTSQL application and the HTTP server.
-        from htsql.application import Application
-        app = Application(db, *self.extensions)
+        from htsql import HTSQL
+        try:
+            app = HTSQL(db, *extensions)
+        except ImportError, exc:
+            raise ScriptError("failed to construct application: %s" % exc)
         httpd = HTSQLServer(self)
         httpd.set_app(app)
 
@@ -157,7 +176,7 @@ class ServerRoutine(Routine):
         if not self.quiet:
             host = self.host or socket.gethostname()
             self.ctl.out("Starting an HTSQL server on %s:%s over %s"
-                         % (host, self.port, self.db))
+                         % (host, self.port, app.htsql.db.database))
 
         # Start the server.
         httpd.serve_forever()
