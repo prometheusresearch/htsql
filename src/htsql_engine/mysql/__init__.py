@@ -19,6 +19,17 @@ from htsql.addon import Addon
 class EngineMySQLAddon(Addon):
 
     name = 'engine.mysql'
+    hint = """implements HTSQL for MySQL"""
+    help = """
+    This extension implements HTSQL for MySQL.  MySQL version 5.1 or
+    later is required.
+
+    This extension does not work well with MyISAM engine, InnoDB engine
+    is preferred.
+
+    This extension is loaded automatically when the engine of
+    the database URI is set to `mysql`.
+    """
     packages = ['.', '.tr']
 
     def __init__(self, app, attributes):

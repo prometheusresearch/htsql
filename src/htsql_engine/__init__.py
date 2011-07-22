@@ -18,6 +18,11 @@ from htsql.addon import Addon
 class EngineAddon(Addon):
 
     name = 'engine'
+    hint = """provides implementations of HTSQL for specific servers"""
+    help = """
+    This extension implements HTSQL translator for specific
+    database servers.
+    """
 
     @classmethod
     def get_extension(cls, app, attributes):

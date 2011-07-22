@@ -63,16 +63,36 @@ class HTSQLAddon(Addon):
     """
 
     name = 'htsql'
+    hint = """HTSQL translator and HTTP service"""
+    help = """
+    This extension implements the HTSQL translator and HTTP service.
+    It is included to every HTSQL application.
+
+    The parameter `DB` specifies parameters of the database connection;
+    it must have the form:
+
+        ENGINE://USERNAME:PASSWORD@HOST:PORT/DATABASE
+
+    Here,
+
+      - ENGINE is the type of the database server; possible values
+        are `sqlite`, `pgsql`, `mysql`, `oracle` or `mssql`.
+      - USERNAME:PASSWORD are used for authentication to the database
+        server.
+      - HOST:PORT is the address of the database server.
+      - DATABASE is the name of the database, or, for file-based
+        backends, the path to the file containing the database.
+    """
+
     parameters = [
-            Parameter('db', DBVal()),
+            Parameter('db', DBVal(),
+                      value_name="""engine:database""",
+                      hint="""the connection URI"""),
     ]
 
     packages = ['.', '.fmt', '.tr', '.tr.fn']
     prerequisites = []
     postrequisites = ['engine']
-    parameters = [
-            Parameter('db', DBVal()),
-    ]
 
     def __init__(self, app, attributes):
         self.component_registry = ComponentRegistry()

@@ -12,7 +12,7 @@ This module declares HTSQL addons.
 """
 
 
-from .util import maybe
+from .util import maybe, trim_doc
 from .validator import Validator
 import re
 
@@ -47,7 +47,7 @@ class Parameter(object):
         attribute = self.attribute.replace('_', '-')
         value_name = self.value_name
         if value_name is None:
-            value_name = signature
+            value_name = attribute
         value_name = value_name.upper()
         return "%s=%s" % (attribute, value_name)
 
@@ -74,7 +74,7 @@ class Addon(object):
         """
         Returns a short one-line description of the addon.
         """
-        return self.hint
+        return cls.hint
 
     @classmethod
     def get_help(cls):
