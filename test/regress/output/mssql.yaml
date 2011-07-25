@@ -21487,6 +21487,34 @@ tests:
                     INNER JOIN [ad].[school] AS [school_2]
                                ON ([program_2].[school_code] = [school_2].[code])
                ORDER BY [program_1].[school_code] ASC, 2 ASC, [program_2].[school_code] ASC, 5 ASC
+          - uri: /school.fork().fork().fork().limit(1)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | fork()                                   |
+               +------------------------------------------+
+               | code | name                     | campus |
+              -+------+--------------------------+--------+-
+               | art  | School of Art and Design | old    |
+                                                    (1 row)
+
+               ----
+               /school.fork().fork().fork().limit(1)
+               SELECT TOP 1
+                      [school_4].[code],
+                      [school_4].[name],
+                      [school_4].[campus]
+               FROM [ad].[school] AS [school_1]
+                    CROSS JOIN (SELECT [school].[code]
+                                FROM [ad].[school] AS [school]) AS [school_2]
+                    CROSS JOIN (SELECT [school].[code]
+                                FROM [ad].[school] AS [school]) AS [school_3]
+                    CROSS JOIN (SELECT [school].[code],
+                                       [school].[name],
+                                       [school].[campus]
+                                FROM [ad].[school] AS [school]) AS [school_4]
+               ORDER BY [school_1].[code] ASC, [school_2].[code] ASC, [school_3].[code] ASC, 1 ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

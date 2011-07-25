@@ -2378,6 +2378,9 @@ class OrderForked(OrderSpace):
         if self.with_weak and not self.space.is_contracting:
             space = self.space.inflate()
             for code, direction in ordering(self.space.seed):
+                if all(self.space.seed_baseline.base.spans(unit.space)
+                       for unit in code.units):
+                    continue
                 code = ForkedUnit(code, space, code.binding)
                 yield (code, direction)
 

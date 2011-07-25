@@ -944,6 +944,10 @@ class ForkedSpace(Space):
         self.kernel = kernel
         self.extra_codes = extra_codes
 
+    def __str__(self):
+        return "%s . fork({%s})" \
+                % (self.base, ", ".join(str(code) for code in self.kernel))
+
 
 class LinkedSpace(Space):
 

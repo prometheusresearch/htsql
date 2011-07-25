@@ -21725,6 +21725,47 @@ tests:
                     INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_2"
                                ON ("PROGRAM_2"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
                ORDER BY "PROGRAM_1"."SCHOOL_CODE" ASC, 2 ASC, "PROGRAM_2"."SCHOOL_CODE" ASC, 5 ASC
+          - uri: /school.fork().fork().fork().limit(1)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | fork()                                   |
+               +------------------------------------------+
+               | code | name                     | campus |
+              -+------+--------------------------+--------+-
+               | art  | School of Art and Design | old    |
+                                                    (1 row)
+
+               ----
+               /school.fork().fork().fork().limit(1)
+               SELECT "SCHOOL"."CODE_1",
+                      "SCHOOL"."NAME",
+                      "SCHOOL"."CAMPUS"
+               FROM (SELECT "SCHOOL"."CODE_1",
+                            "SCHOOL"."NAME",
+                            "SCHOOL"."CAMPUS",
+                            "SCHOOL"."CODE_2",
+                            "SCHOOL"."CODE_3",
+                            "SCHOOL"."CODE_4"
+                     FROM (SELECT "SCHOOL_4"."CODE" AS "CODE_1",
+                                  "SCHOOL_4"."NAME",
+                                  "SCHOOL_4"."CAMPUS",
+                                  "SCHOOL_1"."CODE" AS "CODE_2",
+                                  "SCHOOL_2"."CODE" AS "CODE_3",
+                                  "SCHOOL_3"."CODE" AS "CODE_4"
+                           FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
+                                CROSS JOIN (SELECT "SCHOOL"."CODE"
+                                            FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL") "SCHOOL_2"
+                                CROSS JOIN (SELECT "SCHOOL"."CODE"
+                                            FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL") "SCHOOL_3"
+                                CROSS JOIN (SELECT "SCHOOL"."CODE",
+                                                   "SCHOOL"."NAME",
+                                                   "SCHOOL"."CAMPUS"
+                                            FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL") "SCHOOL_4"
+                           ORDER BY 4 ASC, 5 ASC, 6 ASC, 1 ASC) "SCHOOL"
+                     WHERE (ROWNUM < 2)) "SCHOOL"
+               ORDER BY "SCHOOL"."CODE_2" ASC, "SCHOOL"."CODE_3" ASC, "SCHOOL"."CODE_4" ASC, 1 ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

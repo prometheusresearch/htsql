@@ -199,8 +199,7 @@ tests:
     # fork() with nullable kernel
     - uri: /program.fork(part_of){root().program{school.code, code, part_of}, school.code, code, part_of}
     # fork().fork() is inefficient
-    - uri: /school.fork().fork().fork()
-      skip: true
+    - uri: /school.fork().fork().fork().limit(1)
 
   - title: Table Expressions
     tests:
