@@ -16,8 +16,8 @@ from ..encode import EncodeBySignature, EncodingState
 from ..error import EncodeError
 from ..coerce import coerce
 from ..binding import RootBinding, LiteralBinding, CastBinding
-from ..code import (LiteralCode, ScalarUnit, CorrelatedUnit,
-                    AggregateUnit, FilteredSpace, FormulaCode)
+from ..flow import (LiteralCode, ScalarUnit, CorrelatedUnit,
+                    AggregateUnit, FilteredFlow, FormulaCode)
 from ..signature import Signature, NotSig, NullIfSig, IfNullSig, CompareSig
 from .signature import (ExistsSig, AggregateSig, QuantifySig,
                         CountSig, SumSig, ReplaceSig, ConcatenateSig,
@@ -344,47 +344,47 @@ class EncodeAggregate(EncodeFunction):
 
     adapts(AggregateSig)
 
-    def aggregate(self, op, space, plural_space):
+    def aggregate(self, op, flow, plural_flow):
         plural_units = [unit for unit in op.units
-                             if not space.spans(unit.space)]
-        if plural_space is not None:
-            if space.spans(plural_space):
+                             if not flow.spans(unit.flow)]
+        if plural_flow is not None:
+            if flow.spans(plural_flow):
                 raise EncodeError("a plural operand is required", op.mark)
-            if not plural_space.spans(space):
+            if not plural_flow.spans(flow):
                 raise EncodeError("invalid plural operand", op.mark)
-            if not all(plural_space.spans(unit.space)
+            if not all(plural_flow.spans(unit.flow)
                        for unit in plural_units):
                 raise EncodeError("invalid plural operand", op.mark)
-            return plural_space
+            return plural_flow
         if not plural_units:
             raise EncodeError("a plural operand is required", op.mark)
-        plural_spaces = []
+        plural_flows = []
         for unit in plural_units:
-            if any(plural_space.dominates(unit.space)
-                   for plural_space in plural_spaces):
+            if any(plural_flow.dominates(unit.flow)
+                   for plural_flow in plural_flows):
                 continue
-            plural_spaces = [plural_space
-                             for plural_space in plural_spaces
-                             if not unit.space.dominates(plural_space)]
-            plural_spaces.append(unit.space)
-        if len(plural_spaces) > 1:
+            plural_flows = [plural_flow
+                             for plural_flow in plural_flows
+                             if not unit.flow.dominates(plural_flow)]
+            plural_flows.append(unit.flow)
+        if len(plural_flows) > 1:
             raise EncodeError("invalid plural operand", op.mark)
-        plural_space = plural_spaces[0]
-        if not plural_space.spans(space):
+        plural_flow = plural_flows[0]
+        if not plural_flow.spans(flow):
             raise EncodeError("invalid plural operand", op.mark)
-        return plural_space
+        return plural_flow
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
-        space = self.state.relate(self.binding.base)
-        plural_space = None
+        flow = self.state.relate(self.binding.base)
+        plural_flow = None
         if self.binding.plural_base is not None:
-            plural_space = self.state.relate(self.binding.plural_base)
-        plural_space = self.aggregate(op, space, plural_space)
-        aggregate = AggregateUnit(op, plural_space, space, self.binding)
+            plural_flow = self.state.relate(self.binding.plural_base)
+        plural_flow = self.aggregate(op, flow, plural_flow)
+        aggregate = AggregateUnit(op, plural_flow, flow, self.binding)
         wrap = WrapAggregate(aggregate, self.state)
         wrapper = wrap()
-        wrapper = ScalarUnit(wrapper, space, self.binding)
+        wrapper = ScalarUnit(wrapper, flow, self.binding)
         return wrapper
 
 
@@ -444,23 +444,23 @@ class EncodeQuantify(EncodeAggregate):
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
-        space = self.state.relate(self.binding.base)
-        plural_space = None
+        flow = self.state.relate(self.binding.base)
+        plural_flow = None
         if self.binding.plural_base is not None:
-            plural_space = self.state.relate(self.binding.plural_base)
-        plural_space = self.aggregate(op, space, plural_space)
+            plural_flow = self.state.relate(self.binding.plural_base)
+        plural_flow = self.aggregate(op, flow, plural_flow)
         if self.signature.polarity < 0:
             op = FormulaCode(NotSig(), op.domain, op.binding, op=op)
-        plural_space = FilteredSpace(plural_space, op, self.binding)
+        plural_flow = FilteredFlow(plural_flow, op, self.binding)
         true_literal = LiteralCode(True, coerce(BooleanDomain()), self.binding)
-        aggregate = CorrelatedUnit(true_literal, plural_space, space,
+        aggregate = CorrelatedUnit(true_literal, plural_flow, flow,
                                    self.binding)
         wrapper = FormulaCode(ExistsSig(), op.domain, self.binding,
                               op=aggregate)
         if self.signature.polarity < 0:
             wrapper = FormulaCode(NotSig(), wrapper.domain, wrapper.binding,
                                   op=wrapper)
-        wrapper = ScalarUnit(wrapper, space, self.binding)
+        wrapper = ScalarUnit(wrapper, flow, self.binding)
         return wrapper
 
 

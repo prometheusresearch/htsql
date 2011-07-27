@@ -27,10 +27,10 @@ from .binding import (Binding, QueryBinding, SegmentBinding, WrappingBinding,
                       SortBinding, CastBinding, RescopingBinding,
                       LiteralBinding, FormulaBinding)
 from .lookup import direct
-from .code import (RootSpace, ScalarSpace,
-                   DirectTableSpace, FiberTableSpace,
-                   QuotientSpace, ComplementSpace, MonikerSpace, ForkedSpace,
-                   LinkedSpace, FilteredSpace, OrderedSpace,
+from .flow import (RootFlow, ScalarFlow,
+                   DirectTableFlow, FiberTableFlow,
+                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
+                   LinkedFlow, FilteredFlow, OrderedFlow,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
                    CastCode, ColumnUnit, ScalarUnit, KernelUnit)
 from .signature import Signature, IsNullSig, NullIfSig
@@ -43,7 +43,7 @@ class EncodingState(object):
 
     Currently encoding is a stateless process, but we will likely add
     extra state in the future.  The state is also used to store the
-    cache of binding to space and binding to code translations.
+    cache of binding to flow and binding to code translations.
     """
 
     # Indicates whether results of `encode` or `relate` are cached.
@@ -62,7 +62,7 @@ class EncodingState(object):
         # A mapping of cached results of `encode()`.
         self.binding_to_code = {}
         # A mapping of cached results of `relate()`.
-        self.binding_to_space = {}
+        self.binding_to_flow = {}
 
     def flush(self):
         """
@@ -75,8 +75,8 @@ class EncodingState(object):
         """
         Encodes the given binding node to a code expression node.
 
-        Returns a :class:`htsql.tr.code.Code` node (in some cases,
-        a :class:`htsql.tr.code.Expression` node).
+        Returns a :class:`htsql.tr.flow.Code` node (in some cases,
+        a :class:`htsql.tr.flow.Expression` node).
 
         `binding` (:class:`htsql.tr.binding.Binding`)
             The binding node to encode.
@@ -94,9 +94,9 @@ class EncodingState(object):
 
     def relate(self, binding):
         """
-        Encodes the given binding node to a space expression node.
+        Encodes the given binding node to a flow expression node.
 
-        Returns a :class:`htsql.tr.code.Space` node.
+        Returns a :class:`htsql.tr.flow.Flow` node.
 
         `binding` (:class:`htsql.tr.binding.Binding`)
             The binding node to encode.
@@ -105,10 +105,10 @@ class EncodingState(object):
         # already encoded.  If not, we encode it and save the
         # result.
         if self.with_cache:
-            if binding not in self.binding_to_space:
-                space = relate(binding, self)
-                self.binding_to_space[binding] = space
-            return self.binding_to_space[binding]
+            if binding not in self.binding_to_flow:
+                flow = relate(binding, self)
+                self.binding_to_flow[binding] = flow
+            return self.binding_to_flow[binding]
         # Caching is disabled; return a new instance every time.
         return relate(binding, self)
 
@@ -121,11 +121,11 @@ class EncodeBase(Adapter):
     :class:`Relate`, :class:`Direct`; it encapsulates methods and
     attributes shared between these adapters.
 
-    The encoding process translates binding nodes to space and code
-    nodes.  Space nodes represent ordered sets of rows; code nodes
-    represent functions on spaces.  See :class:`htsql.tr.binding.Binding`,
-    :class:`htsql.tr.code.Expression`, :class:`htsql.tr.code.Space`,
-    :class:`htsql.tr.code.Code` for more details on the respective
+    The encoding process translates binding nodes to flow and code
+    nodes.  Flow nodes represent ordered sets of rows; code nodes
+    represent functions on flows.  See :class:`htsql.tr.binding.Binding`,
+    :class:`htsql.tr.flow.Expression`, :class:`htsql.tr.flow.Flow`,
+    :class:`htsql.tr.flow.Code` for more details on the respective
     node types.
 
     `binding` (:class:`htsql.tr.binding.Binding`)
@@ -156,8 +156,8 @@ class Encode(EncodeBase):
 
     The adapter is polymorphic on the `Binding` argument.
 
-    See :class:`htsql.tr.binding.Binding`, :class:`htsql.tr.code.Expression`,
-    :class:`htsql.tr.code.Code` for detail on the respective nodes.
+    See :class:`htsql.tr.binding.Binding`, :class:`htsql.tr.flow.Expression`,
+    :class:`htsql.tr.flow.Code` for detail on the respective nodes.
 
     This adapter provides non-trivial implementation for binding
     nodes representing HTSQL functions and operators.
@@ -172,28 +172,28 @@ class Encode(EncodeBase):
 
 class Relate(EncodeBase):
     """
-    Translates a binding node to a space expression node.
+    Translates a binding node to a flow expression node.
 
     This is an interface adapter; see subclasses for implementations.
 
     The :class:`Relate` adapter has the following signature::
 
-        Relate: (Binding, EncodingState) -> Space
+        Relate: (Binding, EncodingState) -> Flow
 
     The adapter is polymorphic on the `Binding` argument.
 
-    See :class:`htsql.tr.binding.Binding` and :class:`htsql.tr.code.Space`
+    See :class:`htsql.tr.binding.Binding` and :class:`htsql.tr.flow.Flow`
     for detail on the respective nodes.
 
     The adapter provides non-trivial implementations for subclasses
     of :class:`htsql.tr.binding.ChainBinding`; the `base` attributes
-    are used to restore the structure of the space.
+    are used to restore the structure of the flow.
     """
 
     def __call__(self):
         # The default implementation generates an error.
         # FIXME: a better error message?
-        raise EncodeError("expected a valid space expression",
+        raise EncodeError("expected a valid flow expression",
                           self.binding.mark)
 
 
@@ -201,7 +201,7 @@ class EncodeQuery(Encode):
     """
     Encodes the top-level binding node :class:`htsql.tr.binding.QueryBinding`.
 
-    Produces an instance of :class:`htsql.tr.code.QueryExpr`.
+    Produces an instance of :class:`htsql.tr.flow.QueryExpr`.
     """
 
     adapts(QueryBinding)
@@ -219,7 +219,7 @@ class EncodeSegment(Encode):
     """
     Encodes a segment binding node :class:`htsql.tr.binding.SegmentBinding`.
 
-    Produces an instance of :class:`htsql.tr.code.SegmentExpr`.
+    Produces an instance of :class:`htsql.tr.flow.SegmentExpr`.
     """
 
     adapts(SegmentBinding)
@@ -233,41 +233,41 @@ class EncodeSegment(Encode):
             element = self.state.encode(binding)
             elements.append(element)
         if self.binding.seed is not None:
-            space = self.state.relate(self.binding.seed)
+            flow = self.state.relate(self.binding.seed)
         else:
             units = []
             for element in elements:
                 units.extend(element.units)
             if not units:
-                space = RootSpace(None, self.binding)
+                flow = RootFlow(None, self.binding)
             else:
-                spaces = []
+                flows = []
                 for unit in units:
-                    if any(space.dominates(unit.space) for space in spaces):
+                    if any(flow.dominates(unit.flow) for flow in flows):
                         continue
-                    spaces = [space for space in spaces
-                                    if unit.space.dominates(space)]
-                    spaces.append(unit.space)
-                if len(spaces) > 1:
+                    flows = [flow for flow in flows
+                                    if unit.flow.dominates(flow)]
+                    flows.append(unit.flow)
+                if len(flows) > 1:
                     raise EncodeError("invalid segment operand",
                                       self.binding.mark)
                 else:
-                    space = spaces[0]
-        return SegmentExpr(space, elements, self.binding)
+                    flow = flows[0]
+        return SegmentExpr(flow, elements, self.binding)
 
 
 class RelateRoot(Relate):
     """
-    Translates the root binding node to a space node.
+    Translates the root binding node to a flow node.
 
-    Returns a scalar space node :class:`htsql.tr.code.RootSpace`.
+    Returns a scalar flow node :class:`htsql.tr.flow.RootFlow`.
     """
 
     adapts(RootBinding)
 
     def __call__(self):
-        # The root binding always originates the scalar space `I`.
-        return RootSpace(None, self.binding)
+        # The root binding always originates the scalar flow `I`.
+        return RootFlow(None, self.binding)
 
 
 class RelateHome(Relate):
@@ -276,73 +276,73 @@ class RelateHome(Relate):
 
     def __call__(self):
         base = self.state.relate(self.binding.base)
-        return ScalarSpace(base, self.binding)
+        return ScalarFlow(base, self.binding)
 
 
 class RelateFreeTable(Relate):
     """
-    Translates a free table binding to a space node.
+    Translates a free table binding to a flow node.
 
-    Returns a direct table node :class:`htsql.tr.code.DirectTableSpace`.
+    Returns a direct table node :class:`htsql.tr.flow.DirectTableFlow`.
     """
 
     adapts(FreeTableBinding)
 
     def __call__(self):
-        # Generate a space node corresponding to the binding base.
+        # Generate a flow node corresponding to the binding base.
         base = self.state.relate(self.binding.base)
-        # Produce a direct table space between the base space and
+        # Produce a direct table flow between the base flow and
         # the binding table: `base * table`.
-        return DirectTableSpace(base, self.binding.table, self.binding)
+        return DirectTableFlow(base, self.binding.table, self.binding)
 
 
 class RelateAttachedTable(Relate):
     """
-    Translates an attached table binding to a space node.
+    Translates an attached table binding to a flow node.
 
-    Returns a fiber table node :class:`htsql.tr.code.FiberTableSpace`.
+    Returns a fiber table node :class:`htsql.tr.flow.FiberTableFlow`.
     """
 
     adapts(AttachedTableBinding)
 
     def __call__(self):
-        # Generate a space node corresponding to the binding base.
-        space = self.state.relate(self.binding.base)
-        return FiberTableSpace(space, self.binding.join, self.binding)
+        # Generate a flow node corresponding to the binding base.
+        flow = self.state.relate(self.binding.base)
+        return FiberTableFlow(flow, self.binding.join, self.binding)
 
 
 class RelateSieve(Relate):
     """
-    Translates a sieve binding to a space node.
+    Translates a sieve binding to a flow node.
 
-    Returns a filtered space node :class:`htsql.tr.code.FilteredSpace`.
+    Returns a filtered flow node :class:`htsql.tr.flow.FilteredFlow`.
     """
 
     adapts(SieveBinding)
 
     def __call__(self):
-        # Generate a space node corresponding to the binding base.
-        space = self.state.relate(self.binding.base)
+        # Generate a flow node corresponding to the binding base.
+        flow = self.state.relate(self.binding.base)
         # Encode the predicate expression.
         filter = self.state.encode(self.binding.filter)
-        # Augment the base space with a filter: `base ? filter`.
-        return FilteredSpace(space, filter, self.binding)
+        # Augment the base flow with a filter: `base ? filter`.
+        return FilteredFlow(flow, filter, self.binding)
 
 
 class RelateSort(Relate):
     """
-    Translates a sort binding to a space node.
+    Translates a sort binding to a flow node.
 
-    Returns an ordered space node :class:`htsql.tr.code.OrderedSpace`.
+    Returns an ordered flow node :class:`htsql.tr.flow.OrderedFlow`.
     """
 
     adapts(SortBinding)
 
     def __call__(self):
-        # Generate a space node corresponding to the binding base.
-        space = self.state.relate(self.binding.base)
+        # Generate a flow node corresponding to the binding base.
+        flow = self.state.relate(self.binding.base)
         # A list of pairs `(code, direction)` containing the expressions
-        # by which the space is sorted and respective direction indicators.
+        # by which the flow is sorted and respective direction indicators.
         order = []
         # Iterate over ordering binding nodes.
         for binding in self.binding.order:
@@ -356,32 +356,32 @@ class RelateSort(Relate):
         # The slice indicators.
         limit = self.binding.limit
         offset = self.binding.offset
-        # Produce an ordered space node over the base space:
+        # Produce an ordered flow node over the base flow:
         #   `base [e,...;offset:offset+limit]`.
-        return OrderedSpace(space, order, limit, offset, self.binding)
+        return OrderedFlow(flow, order, limit, offset, self.binding)
 
 
 class EncodeColumn(Encode):
     """
     Translates a column binding to a code node.
 
-    Returns a column unit node :class:`htsql.tr.code.ColumnUnit`.
+    Returns a column unit node :class:`htsql.tr.flow.ColumnUnit`.
     """
 
     adapts(ColumnBinding)
 
     def __call__(self):
-        # The binding base is translated to the space of the unit node.
-        space = self.state.relate(self.binding.base)
+        # The binding base is translated to the flow of the unit node.
+        flow = self.state.relate(self.binding.base)
         # Generate a column unit node.
-        return ColumnUnit(self.binding.column, space, self.binding)
+        return ColumnUnit(self.binding.column, flow, self.binding)
 
 
 class RelateColumn(Relate):
     """
-    Translates a column binding to a space node.
+    Translates a column binding to a flow node.
 
-    Returns a fiber table node :class:`htsql.tr.code.FiberTableSpace` or
+    Returns a fiber table node :class:`htsql.tr.flow.FiberTableFlow` or
     raises an error.
     """
 
@@ -401,17 +401,17 @@ class RelateQuotient(Relate):
     adapts(QuotientBinding)
 
     def __call__(self):
-        space = self.state.relate(self.binding.base)
-        seed_space = self.state.relate(self.binding.seed)
-        if space.spans(seed_space):
+        flow = self.state.relate(self.binding.base)
+        seed_flow = self.state.relate(self.binding.seed)
+        if flow.spans(seed_flow):
             raise EncodeError("a plural operand is required",
-                              seed_space.mark)
-        if not seed_space.spans(space):
+                              seed_flow.mark)
+        if not seed_flow.spans(flow):
             raise EncodeError("invalid plural operand",
-                              seed_space.mark)
+                              seed_flow.mark)
         kernel = [self.state.encode(binding)
                   for binding in self.binding.kernels]
-        return QuotientSpace(space, seed_space, kernel, self.binding)
+        return QuotientFlow(flow, seed_flow, kernel, self.binding)
 
 
 class RelateComplement(Relate):
@@ -419,8 +419,8 @@ class RelateComplement(Relate):
     adapts(ComplementBinding)
 
     def __call__(self):
-        space = self.state.relate(self.binding.base)
-        return ComplementSpace(space, self.binding)
+        flow = self.state.relate(self.binding.base)
+        return ComplementFlow(flow, self.binding)
 
 
 class RelateMoniker(Relate):
@@ -428,9 +428,9 @@ class RelateMoniker(Relate):
     adapts(CoverBinding)
 
     def __call__(self):
-        space = self.state.relate(self.binding.base)
+        flow = self.state.relate(self.binding.base)
         seed = self.state.relate(self.binding.seed)
-        return MonikerSpace(space, seed, self.binding)
+        return MonikerFlow(flow, seed, self.binding)
 
 
 class RelateFork(Relate):
@@ -438,13 +438,13 @@ class RelateFork(Relate):
     adapts(ForkBinding)
 
     def __call__(self):
-        space = self.state.relate(self.binding.base)
+        flow = self.state.relate(self.binding.base)
         kernel = [self.state.encode(binding)
                   for binding in self.binding.kernels]
         for code in kernel:
-            if not all(space.spans(unit.space) for unit in code.units):
+            if not all(flow.spans(unit.flow) for unit in code.units):
                 raise EncodeError("a singular operand is required", code.mark)
-        return ForkedSpace(space, space, kernel, self.binding)
+        return ForkedFlow(flow, flow, kernel, self.binding)
 
 
 class RelateLink(Relate):
@@ -452,19 +452,19 @@ class RelateLink(Relate):
     adapts(LinkBinding)
 
     def __call__(self):
-        space = self.state.relate(self.binding.base)
+        flow = self.state.relate(self.binding.base)
         seed = self.state.relate(self.binding.seed)
         kernel = [self.state.encode(rimage)
                   for limage, rimage in self.binding.images]
         counter_kernel = [self.state.encode(limage)
                           for limage, rimage in self.binding.images]
         for code in kernel:
-            if not all(seed.spans(unit.space) for unit in code.units):
+            if not all(seed.spans(unit.flow) for unit in code.units):
                 raise EncodeError("a singular operand is required", code.mark)
         for code in counter_kernel:
-            if not all(space.spans(unit.space) for unit in code.units):
+            if not all(flow.spans(unit.flow) for unit in code.units):
                 raise EncodeError("a singular operand is required", code.mark)
-        return LinkedSpace(space, seed, kernel, counter_kernel, self.binding)
+        return LinkedFlow(flow, seed, kernel, counter_kernel, self.binding)
 
 
 class EncodeKernel(Encode):
@@ -472,16 +472,16 @@ class EncodeKernel(Encode):
     adapts(KernelBinding)
 
     def __call__(self):
-        space = self.state.relate(self.binding.base)
-        code = space.family.kernel[self.binding.index]
-        return KernelUnit(code, space, self.binding)
+        flow = self.state.relate(self.binding.base)
+        code = flow.family.kernel[self.binding.index]
+        return KernelUnit(code, flow, self.binding)
 
 
 class EncodeLiteral(Encode):
     """
     Encodes a literal binding.
 
-    Returns a literal code node :class:`htsql.tr.code.LiteralCode`.
+    Returns a literal code node :class:`htsql.tr.flow.LiteralCode`.
     """
 
     adapts(LiteralBinding)
@@ -523,7 +523,7 @@ class Convert(Adapter):
     - handles conversion from the special types:
       :class:`htsql.domain.UntypedDomain` and :class:`htsql.domain.TupleDomain`;
     - when possible, expresses the cast in terms of other operations; otherwise,
-      generates a new :class:`htsql.tr.code.CastCode` node.
+      generates a new :class:`htsql.tr.flow.CastCode` node.
 
     `binding` (:class:`htsql.tr.binding.CastBinding`)
         The binding node to encode.
@@ -627,18 +627,18 @@ class ConvertTupleToBoolean(Convert):
 
     def __call__(self):
         # When the binding domain is tuple, we assume that the binding
-        # represents some space.  In this case, Boolean cast produces
-        # an expression which is `FALSE` when the space is empty and
+        # represents some flow.  In this case, Boolean cast produces
+        # an expression which is `FALSE` when the flow is empty and
         # `TRUE` otherwise.  The actual expression is:
         #   `!is_null(unit)`,
-        # where `unit` is some non-nullable function on the space.
+        # where `unit` is some non-nullable function on the flow.
 
-        # Translate the operand to a space node.
-        space = self.state.relate(self.base)
+        # Translate the operand to a flow node.
+        flow = self.state.relate(self.base)
         # A `TRUE` literal.
         true_literal = LiteralCode(True, coerce(BooleanDomain()), self.binding)
-        # A `TRUE` constant as a function on the space.
-        unit = ScalarUnit(true_literal, space, self.binding)
+        # A `TRUE` constant as a function on the flow.
+        unit = ScalarUnit(true_literal, flow, self.binding)
         # Return `!is_null(unit)`.
         return FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
                            self.binding, op=unit)
@@ -844,7 +844,7 @@ class EncodeFormula(Encode):
 
 class RelateFormula(Relate):
     """
-    Translates a formula binding to a space node.
+    Translates a formula binding to a flow node.
 
     The translation is specific to the formula signature and is implemented
     by the :class:`RelateBySignature` adapter.
@@ -933,7 +933,7 @@ class EncodeBySignature(EncodeBySignatureBase):
 
 class RelateBySignature(EncodeBySignatureBase):
     """
-    Translates a formula binding to a space node.
+    Translates a formula binding to a flow node.
 
     This is an auxiliary adapter used to relate
     class:`htsql.tr.binding.FormulaBinding` nodes.  The adapter is
@@ -943,8 +943,8 @@ class RelateBySignature(EncodeBySignatureBase):
     """
 
     def __call__(self):
-        # Override in subclasses for formulas that generate space nodes.
-        raise EncodeError("expected a valid space expression",
+        # Override in subclasses for formulas that generate flow nodes.
+        raise EncodeError("expected a valid flow expression",
                           self.binding.mark)
 
 
@@ -962,7 +962,7 @@ class EncodeWrapper(Encode):
 
 class RelateWrapper(Relate):
     """
-    Translates a wrapper binding to a space node.
+    Translates a wrapper binding to a flow node.
     """
 
     adapts_many(WrappingBinding, RescopingBinding)
@@ -976,8 +976,8 @@ def encode(binding, state=None):
     """
     Encodes the given binding to a code expression node.
 
-    Returns a :class:`htsql.tr.code.Code` instance (in some cases,
-    a :class:`htsql.tr.code.Expression` instance).
+    Returns a :class:`htsql.tr.flow.Code` instance (in some cases,
+    a :class:`htsql.tr.flow.Expression` instance).
 
     `binding` (:class:`htsql.tr.binding.Binding`)
         The binding node to encode.
@@ -996,9 +996,9 @@ def encode(binding, state=None):
 
 def relate(binding, state=None):
     """
-    Encodes the given binding to a space expression node.
+    Encodes the given binding to a flow expression node.
 
-    Returns a :class:`htsql.tr.code.Space` instance.
+    Returns a :class:`htsql.tr.flow.Flow` instance.
 
     `binding` (:class:`htsql.tr.binding.Binding`)
         The binding node to encode.

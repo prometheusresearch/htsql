@@ -19,10 +19,10 @@ from .error import CompileError
 from .syntax import IdentifierSyntax
 from .coerce import coerce
 from .signature import IsNullSig, AndSig
-from .code import (Expression, Code, Space, RootSpace, ScalarSpace, TableSpace,
-                   DirectTableSpace, FiberTableSpace,
-                   QuotientSpace, ComplementSpace, MonikerSpace, ForkedSpace,
-                   LinkedSpace, FilteredSpace, OrderedSpace,
+from .flow import (Expression, Code, Flow, RootFlow, ScalarFlow, TableFlow,
+                   DirectTableFlow, FiberTableFlow,
+                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
+                   LinkedFlow, FilteredFlow, OrderedFlow,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
                    KernelUnit, ComplementUnit, MonikerUnit, ForkedUnit,
                    LinkedUnit,
@@ -39,31 +39,31 @@ class CompilingState(object):
 
     State attributes:
 
-    `root` (:class:`htsql.tr.code.RootSpace`)
-        The root space.
+    `root` (:class:`htsql.tr.flow.RootFlow`)
+        The root flow.
 
-    `baseline` (:class:`htsql.tr.code.Space`)
+    `baseline` (:class:`htsql.tr.flow.Flow`)
         When compiling a new term, indicates the leftmost axis that must
-        exported by the term.  Note that the baseline space is always
+        exported by the term.  Note that the baseline flow is always
         inflated.
 
-    `mask` (:class:`htsql.tr.code.Space`)
+    `mask` (:class:`htsql.tr.flow.Flow`)
         When compiling a new term, indicates that the term is going to be
-        attached to a term that represents the `mask` space.
+        attached to a term that represents the `mask` flow.
     """
 
     def __init__(self):
         # The next term tag to be produced by `tag`.
         self.next_tag = 1
-        # The root scalar space.
+        # The root scalar flow.
         self.root = None
-        # The stack of previous baseline spaces.
+        # The stack of previous baseline flows.
         self.baseline_stack = []
-        # The current baseline space.
+        # The current baseline flow.
         self.baseline = None
-        ## The stack of previous mask spaces.
+        ## The stack of previous mask flows.
         #self.mask_stack = []
-        ## The current mask space.
+        ## The current mask flow.
         #self.mask = None
 
     def tag(self):
@@ -74,30 +74,30 @@ class CompilingState(object):
         self.next_tag += 1
         return tag
 
-    def set_root(self, space):
+    def set_root(self, flow):
         """
-        Initializes the root, baseline and mask spaces.
+        Initializes the root, baseline and mask flows.
 
         This function must be called before state attributes `root`,
         `baseline` and `mask` could be used.
 
-        `space` (:class:`htsql.tr.code.RootSpace`)
-            A root scalar space.
+        `flow` (:class:`htsql.tr.flow.RootFlow`)
+            A root scalar flow.
         """
-        assert isinstance(space, RootSpace)
-        # Check that the state spaces are not yet initialized.
+        assert isinstance(flow, RootFlow)
+        # Check that the state flows are not yet initialized.
         assert self.root is None
         assert self.baseline is None
         #assert self.mask is None
-        self.root = space
-        self.baseline = space
-        #self.mask = space
+        self.root = flow
+        self.baseline = flow
+        #self.mask = flow
 
     def flush(self):
         """
-        Clears the state spaces.
+        Clears the state flows.
         """
-        # Check that the state spaces are initialized and the space stacks
+        # Check that the state flows are initialized and the flow stacks
         # are exhausted.
         assert self.root is not None
         assert not self.baseline_stack
@@ -110,42 +110,42 @@ class CompilingState(object):
 
     def push_baseline(self, baseline):
         """
-        Sets a new baseline space.
+        Sets a new baseline flow.
 
-        This function masks the current baseline space.  To restore
-        the previous baseline space, use :meth:`pop_baseline`.
+        This function masks the current baseline flow.  To restore
+        the previous baseline flow, use :meth:`pop_baseline`.
 
-        `baseline` (:class:`htsql.tr.code.Space`)
-            The new baseline space.  Note that the baseline space
+        `baseline` (:class:`htsql.tr.flow.Flow`)
+            The new baseline flow.  Note that the baseline flow
             must be inflated.
         """
-        assert isinstance(baseline, Space) and baseline.is_inflated
+        assert isinstance(baseline, Flow) and baseline.is_inflated
         self.baseline_stack.append(self.baseline)
         self.baseline = baseline
 
     def pop_baseline(self):
         """
-        Restores the previous baseline space.
+        Restores the previous baseline flow.
         """
         self.baseline = self.baseline_stack.pop()
 
     def push_mask(self, mask):
         """
-        Sets a new mask space.
+        Sets a new mask flow.
 
-        This function hides the current mask space.  To restore the
-        previous mask space, use :meth:`pop_mask`.
+        This function hides the current mask flow.  To restore the
+        previous mask flow, use :meth:`pop_mask`.
 
-        `mask` (:class:`htsql.tr.code.Space`)
-            The new mask space.
+        `mask` (:class:`htsql.tr.flow.Flow`)
+            The new mask flow.
         """
-        #assert isinstance(mask, Space)
+        #assert isinstance(mask, Flow)
         #self.mask_stack.append(self.mask)
         #self.mask = mask
 
     def pop_mask(self):
         """
-        Restores the previous mask space.
+        Restores the previous mask flow.
         """
         #self.mask = self.mask_stack.pop()
 
@@ -153,34 +153,34 @@ class CompilingState(object):
         """
         Compiles a new term node for the given expression.
 
-        `expression` (:class:`htsql.tr.code.Expression`)
+        `expression` (:class:`htsql.tr.flow.Expression`)
             An expression node.
 
-        `baseline` (:class:`htsql.tr.code.Space` or ``None``)
-            The baseline space.  Specifies an axis space that the compiled
-            term must export.  If not set, the current baseline space of
+        `baseline` (:class:`htsql.tr.flow.Flow` or ``None``)
+            The baseline flow.  Specifies an axis flow that the compiled
+            term must export.  If not set, the current baseline flow of
             the state is used.
 
-            When `expression` is a space, the generated term must
-            export the space itself as well as all inflated prefixes
-            up to the `baseline` space.  It may (but it is not required)
+            When `expression` is a flow, the generated term must
+            export the flow itself as well as all inflated prefixes
+            up to the `baseline` flow.  It may (but it is not required)
             export other axes as well.
 
-        `mask` (:class:`htsql.tr.code.Space` or ``None``)
-            The mask space.  Specifies the mask space against which
-            a new term is compiled.  When not set, the current mask space
+        `mask` (:class:`htsql.tr.flow.Flow` or ``None``)
+            The mask flow.  Specifies the mask flow against which
+            a new term is compiled.  When not set, the current mask flow
             of the state is used.
 
             A mask indicates that the new term is going to be attached
-            to a term that represent the mask space.  Therefore the
+            to a term that represent the mask flow.  Therefore the
             compiler could ignore any non-axis operations that are
-            already enforced by the mask space.
+            already enforced by the mask flow.
         """
         # FIXME: potentially, we could implement a cache of `expression`
         # -> `term` to avoid generating the same term node more than once.
         # There are several complications though.  First, the term depends
         # not only on the expression, but also on the current baseline
-        # and mask spaces.  Second, each compiled term must have a unique
+        # and mask flows.  Second, each compiled term must have a unique
         # tag, therefore we'd have to replace the tags and route tables
         # of the cached term node.
         return compile(expression, self, baseline=baseline, mask=mask)
@@ -200,13 +200,13 @@ class CompilingState(object):
         `term` (:class:`htsql.tr.term.Term`)
             A term node.
 
-        `expression` (a list of :class:`htsql.tr.code.Expression`)
+        `expression` (a list of :class:`htsql.tr.flow.Expression`)
             A list of expressions to inject into the given term.
         """
         assert isinstance(term, Term)
         assert isinstance(expressions, listof(Expression))
         # Screen out expressions that the term could already export.
-        # This filter only works with spaces and non-column units,
+        # This filter only works with flows and non-column units,
         # therefore the filtered list could still contain some
         # exportable expressions.
         expressions = [expression for expression in expressions
@@ -237,61 +237,61 @@ class CompileBase(Adapter):
 
     # Utility functions used by implementations.
 
-    def compile_shoot(self, space, trunk_term, codes=None):
+    def compile_shoot(self, flow, trunk_term, codes=None):
         """
-        Compiles a term corresponding to the given space.
+        Compiles a term corresponding to the given flow.
 
         The compiled term is called *a shoot term* (relatively to
         the given *trunk term*).
 
-        `space` (:class:`htsql.tr.code.Space`)
-            A space node, for which the we compile a term.
+        `flow` (:class:`htsql.tr.flow.Flow`)
+            A flow node, for which the we compile a term.
 
         `trunk_term` (:class:`htsql.tr.term.Term`)
            Expresses a promise that the compiled term will be
            (eventually) joined to `trunk_term` (see :meth:`join_terms`).
 
-        `codes` (a list of :class:`htsql.tr.code.Expression` or ``None``)
+        `codes` (a list of :class:`htsql.tr.flow.Expression` or ``None``)
            If provided, a list of expressions to be injected
            into the compiled term.
         """
 
         # Sanity check on the arguments.
-        assert isinstance(space, Space)
+        assert isinstance(flow, Flow)
         assert isinstance(trunk_term, Term)
         assert isinstance(codes, maybe(listof(Expression)))
 
-        # Determine the longest prefix of the space that either
+        # Determine the longest prefix of the flow that either
         # contains no non-axis operations or has all its non-axis
-        # operations enforced by the trunk space.  This prefix will
+        # operations enforced by the trunk flow.  This prefix will
         # be used as the baseline of the compiled term (that is,
         # we ask the compiler not to generate any axes under
         # the baseline).
 
-        ## Start with removing any filters enforced by the trunk space.
-        #baseline = space.prune(trunk_term.space)
-        baseline = space
-        assert baseline == space.prune(trunk_term.space)
+        ## Start with removing any filters enforced by the trunk flow.
+        #baseline = flow.prune(trunk_term.flow)
+        baseline = flow
+        assert baseline == flow.prune(trunk_term.flow)
 
         # Now find the longest prefix that does not contain any
         # non-axis operations.
         while not baseline.is_inflated:
             baseline = baseline.base
-        # Handle the case when the given space is not spanned by the
-        # trunk space -- it happens when we construct a plural term
+        # Handle the case when the given flow is not spanned by the
+        # trunk flow -- it happens when we construct a plural term
         # for an aggregate unit.  In this case, before joining it
         # to the trunk term, the shoot term will be projected to some
-        # singular prefix of the given space.  To enable such projection,
+        # singular prefix of the given flow.  To enable such projection,
         # at least the base of the shoot baseline must be spanned by
-        # the trunk space (then, we can project on the columns of
+        # the trunk flow (then, we can project on the columns of
         # a foreign key that attaches the baseline to its base).
-        if not trunk_term.space.spans(baseline):
-            while not trunk_term.space.spans(baseline.base):
+        if not trunk_term.flow.spans(baseline):
+            while not trunk_term.flow.spans(baseline.base):
                 baseline = baseline.base
 
-        # Compile the term, use the found baseline and the trunk space
+        # Compile the term, use the found baseline and the trunk flow
         # as the mask.
-        term = self.state.compile(space,
+        term = self.state.compile(flow,
                                   baseline=baseline)
 
         # If provided, inject the given expressions.
@@ -321,11 +321,11 @@ class CompileBase(Adapter):
         # Verify that it is possible to join the terms without
         # changing the cardinality of the trunk.
         assert (shoot_term.baseline.is_root or
-                trunk_term.space.spans(shoot_term.baseline.base))
+                trunk_term.flow.spans(shoot_term.baseline.base))
 
         # There are two ways the ties are generated:
         #
-        # - when the shoot baseline is an axis of the trunk space,
+        # - when the shoot baseline is an axis of the trunk flow,
         #   in this case we join the terms using parallel ties on
         #   the common axes;
         # - otherwise, join the terms using a serial tie between
@@ -333,17 +333,17 @@ class CompileBase(Adapter):
 
         # Ties to attach the shoot to the trunk.
         joints = []
-        # Check if the shoot baseline is an axis of the trunk space.
+        # Check if the shoot baseline is an axis of the trunk flow.
         if trunk_term.backbone.concludes(shoot_term.baseline):
             # In this case, we join the terms by all axes of the trunk
-            # space that are exported by the shoot term.
+            # flow that are exported by the shoot term.
             # Find the first inflated axis of the trunk exported
             # by the shoot.
             axis = trunk_term.backbone
             while not shoot_term.backbone.concludes(axis):
                 axis = axis.base
             # Now the axes between `axis` and `baseline` are common axes
-            # of the trunk space and the shoot term.  For each of them,
+            # of the trunk flow and the shoot term.  For each of them,
             # generate a parallel tie.  Note that we do not verify
             # (and, in general, it is not required) that these axes
             # are exported by the trunk term.  Apply `inject_ties()` on
@@ -360,11 +360,11 @@ class CompileBase(Adapter):
             for axis in axes:
                 joints.extend(sew(axis))
         else:
-            # When the shoot does not touch the trunk space, we attach it
+            # When the shoot does not touch the trunk flow, we attach it
             # using a serial tie between the shoot baseline and its base.
             # Note that we do not verify (and it is not required) that
-            # the trunk term export the base space.  Apply `inject_ties()`
-            # on the trunk term to inject any necessary spaces before
+            # the trunk term export the base flow.  Apply `inject_ties()`
+            # on the trunk term to inject any necessary flows before
             # joining the terms using the ties.
             joints = tie(shoot_term.baseline)
 
@@ -397,7 +397,7 @@ class CompileBase(Adapter):
         """
         Attaches a shoot term to a trunk term.
 
-        The produced join term uses the space and the routing
+        The produced join term uses the flow and the routing
         table of the trunk term, but also includes the given
         extra routes.
 
@@ -409,16 +409,16 @@ class CompileBase(Adapter):
 
             The shoot term must be singular relatively to the trunk term.
 
-        `extra_routes` (a mapping from a unit/space to a term tag)
+        `extra_routes` (a mapping from a unit/flow to a term tag)
             Any extra routes provided by the join.
         """
         # Sanity check on the arguments.
         assert isinstance(trunk_term, Term)
         assert isinstance(shoot_term, Term)
         # FIXME: Unfortunately, we cannot properly verify that the trunk
-        # space spans the shoot space since the term space is generated
+        # flow spans the shoot flow since the term flow is generated
         # incorrectly for projection terms.
-        #assert trunk_term.space.dominates(shoot_term.space)
+        #assert trunk_term.flow.dominates(shoot_term.flow)
         assert isinstance(extra_routes, dict)
 
         # Ties that combine the terms.
@@ -428,12 +428,12 @@ class CompileBase(Adapter):
         # Determine if we could use an inner join to attach the shoot
         # to the trunk.  We could do it if the inner join does not
         # decrease cardinality of the trunk.
-        # FIXME: The condition that the shoot space dominates the
-        # trunk space is sufficient, but not really necessary.
-        # In general, we can use the inner join if the shoot space
-        # dominates the prefix of the trunk space cut at the longest
-        # common axis of trunk and the shoot spaces.
-        is_left = (not shoot_term.space.dominates(trunk_term.space))
+        # FIXME: The condition that the shoot flow dominates the
+        # trunk flow is sufficient, but not really necessary.
+        # In general, we can use the inner join if the shoot flow
+        # dominates the prefix of the trunk flow cut at the longest
+        # common axis of trunk and the shoot flows.
+        is_left = (not shoot_term.flow.dominates(trunk_term.flow))
         is_right = False
         # Use the routing table of the trunk term, but also add
         # the given extra routes.
@@ -442,7 +442,7 @@ class CompileBase(Adapter):
         # Generate and return a join term.
         return JoinTerm(self.state.tag(), trunk_term, shoot_term,
                         joints, is_left, is_right,
-                        trunk_term.space, trunk_term.baseline, routes)
+                        trunk_term.flow, trunk_term.baseline, routes)
 
 
 class Compile(CompileBase):
@@ -457,7 +457,7 @@ class Compile(CompileBase):
     - top-level expressions such as the whole query and the query segment,
       for which it builds respective top-level term nodes;
 
-    - spaces, for which the adapter builds a corresponding relational
+    - flows, for which the adapter builds a corresponding relational
       algebraic expression.
 
     After a term is built, it is typically augmented using the
@@ -469,7 +469,7 @@ class Compile(CompileBase):
 
     The adapter is polymorphic on the `Expression` argument.
 
-    `expression` (:class:`htsql.tr.code.Expression`)
+    `expression` (:class:`htsql.tr.flow.Expression`)
         An expression node.
 
     `state` (:class:`CompilingState`)
@@ -507,7 +507,7 @@ class Inject(CompileBase):
 
     The adapter is polymorphic on the `Expression` argument.
 
-    `expression` (:class:`htsql.tr.code.Expression`)
+    `expression` (:class:`htsql.tr.flow.Expression`)
         An expression node to inject.
 
     `term` (:class:`htsql.tr.term.Term`)
@@ -556,89 +556,89 @@ class CompileSegment(Compile):
     adapts(SegmentExpr)
 
     def __call__(self):
-        # Initialize the all state spaces with a root scalar space.
-        self.state.set_root(self.expression.space.root)
-        # Construct a term corresponding to the segment space.
-        kid = self.state.compile(self.expression.space)
-        # Get the ordering of the segment space.
-        order = ordering(self.expression.space)
+        # Initialize the all state flows with a root scalar flow.
+        self.state.set_root(self.expression.flow.root)
+        # Construct a term corresponding to the segment flow.
+        kid = self.state.compile(self.expression.flow)
+        # Get the ordering of the segment flow.
+        order = ordering(self.expression.flow)
         # List of expressions we need the term to export.
         codes = self.expression.elements + [code for code, direction in order]
         # Inject the expressions into the term.
         kid = self.state.inject(kid, codes)
         # The compiler does not guarantee that the produced term respects
-        # the space ordering, so it is our responsitibity to wrap the term
+        # the flow ordering, so it is our responsitibity to wrap the term
         # with an order node.
         if order:
             kid = OrderTerm(self.state.tag(), kid, order, None, None,
-                            kid.space, kid.baseline, kid.routes.copy())
-        # Shut down the state spaces.
+                            kid.flow, kid.baseline, kid.routes.copy())
+        # Shut down the state flows.
         self.state.flush()
         # Construct a segment term.
         return SegmentTerm(self.state.tag(), kid, self.expression.elements,
-                           kid.space, kid.routes.copy())
+                           kid.flow, kid.routes.copy())
 
 
-class CompileSpace(Compile):
+class CompileFlow(Compile):
     """
-    Compile a term corresponding to a space node.
+    Compile a term corresponding to a flow node.
 
     This is an abstract class; see subclasses for implementations.
 
-    The general algorithm for compiling a term node for the given space
+    The general algorithm for compiling a term node for the given flow
     looks as follows:
 
-    - compile a term for the base space;
+    - compile a term for the base flow;
     - inject any necessary expressions;
-    - build a new term node that represents the space operation.
+    - build a new term node that represents the flow operation.
 
     When compiling terms, the following optimizations are applied:
 
-    Removing unnecessary non-axis operations.  The current `mask` space
+    Removing unnecessary non-axis operations.  The current `mask` flow
     expresses a promise that the generated term will be attached to
-    a term representing the mask space.  Therefore the compiler
+    a term representing the mask flow.  Therefore the compiler
     could skip any non-axis filters that are already enforced by
-    the mask space.
+    the mask flow.
 
-    Removing unnecessary axis operations.  The current `baseline` space
+    Removing unnecessary axis operations.  The current `baseline` flow
     denotes the leftmost axis that the term should be able to export.
     The compiler may (but does not have to) omit any axes nested under
     the `baseline` axis.
 
     Because of these optimizations, the shape and cardinality of the
-    term rows may differ from that of the space.  Additionally, the
-    term is not required to respect the ordering of its space.
+    term rows may differ from that of the flow.  Additionally, the
+    term is not required to respect the ordering of its flow.
 
     Constructor arguments:
 
-    `space` (:class:`htsql.tr.code.Space`)
-        A space node.
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        A flow node.
 
     `state` (:class:`CompilingState`)
         The current state of the compiling process.
 
     Other attributes:
 
-    `backbone` (:class:`htsql.tr.code.Space`)
-        The inflation of the given space.
+    `backbone` (:class:`htsql.tr.flow.Flow`)
+        The inflation of the given flow.
 
-    `baseline` (:class:`htsql.tr.code.Space`)
+    `baseline` (:class:`htsql.tr.flow.Flow`)
         An alias to `state.baseline`.
 
-    `mask` (:class:`htsql.tr.code.Space`)
+    `mask` (:class:`htsql.tr.flow.Flow`)
         An alias to `state.mask`.
     """
 
-    adapts(Space)
+    adapts(Flow)
 
-    def __init__(self, space, state):
-        assert isinstance(space, Space)
-        # The inflation of the space.
-        backbone = space.inflate()
-        # Check that the baseline space is an axis of the given space.
-        assert space.concludes(state.baseline)
-        super(CompileSpace, self).__init__(space, state)
-        self.space = space
+    def __init__(self, flow, state):
+        assert isinstance(flow, Flow)
+        # The inflation of the flow.
+        backbone = flow.inflate()
+        # Check that the baseline flow is an axis of the given flow.
+        assert flow.concludes(state.baseline)
+        super(CompileFlow, self).__init__(flow, state)
+        self.flow = flow
         self.state = state
         self.backbone = backbone
         # Extract commonly used state properties.
@@ -646,81 +646,81 @@ class CompileSpace(Compile):
         #self.mask = state.mask
 
 
-class InjectSpace(Inject):
+class InjectFlow(Inject):
     """
-    Augments the term to make it produce the given space.
+    Augments the term to make it produce the given flow.
 
-    `space` (:class:`htsql.tr.code.Space`)
-        A space node to inject.
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        A flow node to inject.
 
     `term` (:class:`htsql.tr.term.Term`)
         A term node to inject into.
 
-        The term space must span the given space.
+        The term flow must span the given flow.
 
     `state` (:class:`CompilingState`)
         The current state of the compiling process.
     """
 
-    adapts(Space)
+    adapts(Flow)
 
-    def __init__(self, space, term, state):
-        assert isinstance(space, Space)
-        # It is a bug if we get the `space` plural for the `term` here.
+    def __init__(self, flow, term, state):
+        assert isinstance(flow, Flow)
+        # It is a bug if we get the `flow` plural for the `term` here.
         # It is a responsibility of `InjectUnit` to guard against unexpected
         # plural expressions and to issue an appropriate HTSQL error.
-        assert term.space.spans(space)
-        super(InjectSpace, self).__init__(space, term, state)
-        self.space = space
+        assert term.flow.spans(flow)
+        super(InjectFlow, self).__init__(flow, term, state)
+        self.flow = flow
         self.term = term
         self.state = state
 
     def __call__(self):
-        # Note that this function works for all space classes universally.
+        # Note that this function works for all flow classes universally.
         # We start with checking for and handling several special cases;
-        # if none of them apply, we grow a shoot term for the given space
+        # if none of them apply, we grow a shoot term for the given flow
         # and attach it to the main term.
 
-        # Check if the space is already exported.
-        if all(unit.clone(space=self.space) in self.term.routes
-               for unit in spread(self.space)):
+        # Check if the flow is already exported.
+        if all(unit.clone(flow=self.flow) in self.term.routes
+               for unit in spread(self.flow)):
             return self.term
 
-        ## Remove any non-axis filters that are enforced by the term space.
-        #unmasked_space = self.space.prune(self.term.space)
-        assert self.space == self.space.prune(self.term.space)
+        ## Remove any non-axis filters that are enforced by the term flow.
+        #unmasked_flow = self.flow.prune(self.term.flow)
+        assert self.flow == self.flow.prune(self.term.flow)
 
-        ## When converged with the term space, `space` and `unmasked_space`
+        ## When converged with the term flow, `flow` and `unmasked_flow`
         ## contains the same set of rows, therefore in the context of the
         ## given term, they could be used interchangeably.
-        ## In particular, if `unmasked_space` is already exported, we could
-        ## use the same route for `space`.
-        #if unmasked_space in self.term.routes:
+        ## In particular, if `unmasked_flow` is already exported, we could
+        ## use the same route for `flow`.
+        #if unmasked_flow in self.term.routes:
         #    routes = self.term.routes.copy()
-        #    routes[self.space] = routes[unmasked_space]
-        #    return WrapperTerm(self.state.tag(), self.term, self.term.space,
+        #    routes[self.flow] = routes[unmasked_flow]
+        #    return WrapperTerm(self.state.tag(), self.term, self.term.flow,
         #                       routes)
 
-        # A special case when the given space is an axis prefix of the term
-        # space.  The fact that the space is not exported by the term means
+        # A special case when the given flow is an axis prefix of the term
+        # flow.  The fact that the flow is not exported by the term means
         # that the term tree is optimized by cutting all axes below some
         # baseline.  Now we need to grow these axes back.
-        if self.term.space.concludes(self.space):
-            assert self.term.baseline.base.concludes(self.space)
-            # Here we compile a table term corresponding to the space and
+        if self.term.flow.concludes(self.flow):
+            assert self.term.baseline.base.concludes(self.flow)
+            # Here we compile a table term corresponding to the flow and
             # attach it to the axis directly above it using a serial tie.
 
             # Compile a term corresponding to the axis itself.
             lkid = self.state.compile(self.term.baseline.base,
-                                       baseline=self.space)
+                                       baseline=self.flow)
             ## We expect to get a table or a scalar term here.
-            ## FIXME: No longer valid since the axis could be a quotient space.
+            ## FIXME: No longer valid since the axis could be a quotient flow.
             #assert lkid.is_nullary
 
-            ## Find the axis directly above the space.  Note that here
-            ## `unmasked_space` is the inflation of the given space.
+            ## Find the axis directly above the flow.  Note that here
+            ## `unmasked_flow` is the inflation of the given flow.
             #next_axis = self.term.baseline
-            #while next_axis.base != unmasked_space:
+            #while next_axis.base != unmasked_flow:
             #    next_axis = next_axis.base
 
             ## It is possible that `next_axis` is also not exported by
@@ -734,7 +734,7 @@ class InjectSpace(Inject):
             rkid = self.term
             ## Injecting an axis prefix should never add any axes below
             ## (but will add all the axis prefixes above).
-            #assert unmasked_space not in rkid.routes
+            #assert unmasked_flow not in rkid.routes
 
             # Join the terms using a serial tie.
             joints = tie(self.term.baseline)
@@ -750,56 +750,56 @@ class InjectSpace(Inject):
             # Compile and return a join term.
             return JoinTerm(self.state.tag(), lkid, rkid, joints,
                             is_left, is_right,
-                            rkid.space, lkid.baseline, routes)
+                            rkid.flow, lkid.baseline, routes)
 
         # None of the special cases apply, so we use a general method:
-        # - grow a shoot term for the given space;
+        # - grow a shoot term for the given flow;
         # - attach the shoot to the main term.
 
-        # Compile a shoot term for the space.
-        space_term = self.compile_shoot(self.space, self.term)
+        # Compile a shoot term for the flow.
+        flow_term = self.compile_shoot(self.flow, self.term)
         # The routes to add.
         extra_routes = {}
-        for unit in spread(self.space):
-            extra_routes[unit.clone(space=self.space)] = space_term.routes[unit]
+        for unit in spread(self.flow):
+            extra_routes[unit.clone(flow=self.flow)] = flow_term.routes[unit]
         # Join the shoot to the main term.
-        return self.join_terms(self.term, space_term, extra_routes)
+        return self.join_terms(self.term, flow_term, extra_routes)
 
 
-class CompileRoot(CompileSpace):
+class CompileRoot(CompileFlow):
     """
-    Compiles a term corresponding to a root scalar space.
+    Compiles a term corresponding to a root scalar flow.
     """
 
-    adapts(RootSpace)
+    adapts(RootFlow)
 
     def __call__(self):
         # Generate a `ScalarTerm` instance.
         tag = self.state.tag()
         routes = {}
-        return ScalarTerm(tag, self.space, self.space, routes)
+        return ScalarTerm(tag, self.flow, self.flow, routes)
 
 
-class CompileScalar(CompileSpace):
+class CompileScalar(CompileFlow):
 
-    adapts(ScalarSpace)
+    adapts(ScalarFlow)
 
     def __call__(self):
-        if self.space == self.baseline:
+        if self.flow == self.baseline:
             tag = self.state.tag()
             routes = {}
-            return ScalarTerm(tag, self.space, self.space, routes)
-        term = self.state.compile(self.space.base)
+            return ScalarTerm(tag, self.flow, self.flow, routes)
+        term = self.state.compile(self.flow.base)
         return WrapperTerm(self.state.tag(), term,
-                           self.space, term.baseline, term.routes)
+                           self.flow, term.baseline, term.routes)
 
 
-class CompileTable(CompileSpace):
+class CompileTable(CompileFlow):
     """
-    Compiles a term corresponding to a (direct or fiber) table space.
+    Compiles a term corresponding to a (direct or fiber) table flow.
     """
 
-    adapts(TableSpace)
+    adapts(TableFlow)
 
     def __call__(self):
         # We start with identifying and handling special cases, where
@@ -807,88 +807,88 @@ class CompileTable(CompileSpace):
         # in the regular case.  If none of the special cases are applicable,
         # we use the generic algorithm.
 
-        # The first special case: the given space is the leftmost axis
-        # we must export.  Since `baseline` is always an inflated space,
-        # we need to compare it with the inflation of the given space
-        # rather than with the space itself.
-        if self.space == self.baseline:
+        # The first special case: the given flow is the leftmost axis
+        # we must export.  Since `baseline` is always an inflated flow,
+        # we need to compare it with the inflation of the given flow
+        # rather than with the flow itself.
+        if self.flow == self.baseline:
             # Generate a table term that exports rows from the prominent
             # table.
             tag = self.state.tag()
-            # The routing table must always include the term space, and also,
-            # for any space it includes, the inflation of the space.
-            # In this case, `self.space` is the term space, `self.backbone`
+            # The routing table must always include the term flow, and also,
+            # for any flow it includes, the inflation of the flow.
+            # In this case, `self.flow` is the term flow, `self.backbone`
             # is its inflation.
             routes = {}
-            for unit in spread(self.space):
+            for unit in spread(self.flow):
                 routes[unit] = tag
-            return TableTerm(tag, self.space, self.baseline, routes)
+            return TableTerm(tag, self.flow, self.baseline, routes)
 
-        # Term corresponding to the space base.
-        term = self.state.compile(self.space.base)
+        # Term corresponding to the flow base.
+        term = self.state.compile(self.flow.base)
 
         # The second special case, when the term of the base could also
-        # serve as a term for the space itself.  It is possible if the
+        # serve as a term for the flow itself.  It is possible if the
         # following two conditions are met:
-        # - the term exports the inflation of the given space (`backbone`),
-        # - the given space conforms (has the same cardinality as) its base.
+        # - the term exports the inflation of the given flow (`backbone`),
+        # - the given flow conforms (has the same cardinality as) its base.
         # This case usually corresponds to an HTSQL expression of the form:
         #   (A?f(B)).B,
         # where `B` is a singular, non-nullable link from `A` and `f(B)` is
         # an expression on `B`.
-        if (self.space.conforms(term.space) and
-            all(unit in term.routes for unit in spread(self.space))):
-            # We need to add the given space to the routing table and
-            # replace the term space.
+        if (self.flow.conforms(term.flow) and
+            all(unit in term.routes for unit in spread(self.flow))):
+            # We need to add the given flow to the routing table and
+            # replace the term flow.
             routes = term.routes.copy()
-            for unit in spread(self.space):
-                routes[unit.clone(space=self.space)] = routes[unit]
+            for unit in spread(self.flow):
+                routes[unit.clone(flow=self.flow)] = routes[unit]
             return WrapperTerm(self.state.tag(), term,
-                               self.space, term.baseline, routes)
+                               self.flow, term.baseline, routes)
 
         # Now the general case.  We take two terms:
-        # - the term compiled for the space base
+        # - the term compiled for the flow base
         # - and a table term corresponding to the prominent table,
-        # and join them using the tie between the space and its base.
+        # and join them using the tie between the flow and its base.
 
-        # This is the term for the space base, we already generated it.
+        # This is the term for the flow base, we already generated it.
         lkid = term
         # This is a table term corresponding to the prominent table of
-        # the space.  Instead of generating it directly, we call `compile`
-        # on the same space, but with a different baseline, so that it
+        # the flow.  Instead of generating it directly, we call `compile`
+        # on the same flow, but with a different baseline, so that it
         # will hit the first special case and produce a table term.
         rkid = self.state.compile(self.backbone, baseline=self.backbone)
-        # The connections between the space to its base.
-        joints = tie(self.space)
+        # The connections between the flow to its base.
+        joints = tie(self.flow)
         is_left = False
         is_right = False
         # We use the routing table of the base term with extra routes
-        # corresponding to the given space and its inflation which we
+        # corresponding to the given flow and its inflation which we
         # export from the table term.
         routes = lkid.routes.copy()
         routes = {}
         routes.update(lkid.routes)
         routes.update(rkid.routes)
-        for unit in spread(self.space):
-            routes[unit.clone(space=self.space)] = routes[unit]
+        for unit in spread(self.flow):
+            routes[unit.clone(flow=self.flow)] = routes[unit]
         # Generate a join term node.
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                        is_left, is_right, self.space, lkid.baseline, routes)
+                        is_left, is_right, self.flow, lkid.baseline, routes)
 
 
-class CompileQuotient(CompileSpace):
+class CompileQuotient(CompileFlow):
 
-    adapts(QuotientSpace)
+    adapts(QuotientFlow)
 
     def __call__(self):
-        baseline = self.space.seed_baseline
+        baseline = self.flow.seed_baseline
         while not baseline.is_inflated:
             baseline = baseline.base
-        seed_term = self.state.compile(self.space.seed, baseline=baseline)
-        if self.space.kernel:
-            seed_term = self.state.inject(seed_term, self.space.kernel)
+        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
+        if self.flow.kernel:
+            seed_term = self.state.inject(seed_term, self.flow.kernel)
             filters = []
-            for code in self.space.kernel:
+            for code in self.flow.kernel:
                 filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
                                      code.binding, op=code)
                 filters.append(filter)
@@ -896,31 +896,31 @@ class CompileQuotient(CompileSpace):
                 [filter] = filters
             else:
                 filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                     self.space.binding, ops=filters)
+                                     self.flow.binding, ops=filters)
             seed_term = FilterTerm(self.state.tag(), seed_term, filter,
-                                   seed_term.space, seed_term.baseline,
+                                   seed_term.flow, seed_term.baseline,
                                    seed_term.routes.copy())
-        if (self.space == self.baseline and
-                seed_term.baseline == self.space.seed_baseline):
+        if (self.flow == self.baseline and
+                seed_term.baseline == self.flow.seed_baseline):
             tag = self.state.tag()
             basis = []
             routes = {}
             joints = tie(seed_term.baseline)
             for lunit, runit in joints:
                 basis.append(runit)
-                unit = KernelUnit(runit, self.space, runit.binding)
+                unit = KernelUnit(runit, self.flow, runit.binding)
                 routes[unit] = tag
-            for code in self.space.kernel:
+            for code in self.flow.kernel:
                 basis.append(code)
-                unit = KernelUnit(code, self.space, code.binding)
+                unit = KernelUnit(code, self.flow, code.binding)
                 routes[unit] = tag
             term = ProjectionTerm(tag, seed_term, basis,
-                                  self.space, self.space, routes)
+                                  self.flow, self.flow, routes)
             return term
         baseline = self.baseline
-        if baseline == self.space:
+        if baseline == self.flow:
             baseline = baseline.base
-        lkid = self.state.compile(self.space.base, baseline=baseline)
+        lkid = self.state.compile(self.flow.base, baseline=baseline)
         joints = self.tie_terms(lkid, seed_term)
         lkid = self.inject_ties(lkid, joints)
         tag = self.state.tag()
@@ -933,15 +933,15 @@ class CompileQuotient(CompileSpace):
             rop = KernelUnit(joint.rop, self.backbone, joint.rop.binding)
             routes[rop] = tag
             joints.append(joint.clone(rop=rop))
-        quotient_joints = tie(self.space.seed_baseline)
-        if seed_term.baseline != self.space.seed_baseline:
+        quotient_joints = tie(self.flow.seed_baseline)
+        if seed_term.baseline != self.flow.seed_baseline:
             for joint in quotient_joints:
                 basis.append(joint.rop)
                 unit = KernelUnit(joint.rop, self.backbone, joint.rop.binding)
                 routes[unit] = tag
         else:
             assert quotient_joints == joints_copy
-        for code in self.space.kernel:
+        for code in self.flow.kernel:
             basis.append(code)
             unit = KernelUnit(code, self.backbone, code.binding)
             routes[unit] = tag
@@ -952,25 +952,25 @@ class CompileQuotient(CompileSpace):
         routes = {}
         routes.update(lkid.routes)
         routes.update(rkid.routes)
-        for unit in spread(self.space):
-            routes[unit.clone(space=self.space)] = routes[unit]
+        for unit in spread(self.flow):
+            routes[unit.clone(flow=self.flow)] = routes[unit]
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                        is_left, is_right, self.space, lkid.baseline, routes)
+                        is_left, is_right, self.flow, lkid.baseline, routes)
 
 
-class CompileComplement(CompileSpace):
+class CompileComplement(CompileFlow):
 
-    adapts(ComplementSpace)
+    adapts(ComplementFlow)
 
     def __call__(self):
-        family = self.space.base.family
+        family = self.flow.base.family
         baseline = family.seed_baseline
         while not baseline.is_inflated:
             baseline = baseline.base
         seed_term = self.state.compile(family.seed, baseline=baseline)
         seed_term = self.state.inject(seed_term, family.kernel)
-        if self.space.extra_codes is not None:
-            seed_term = self.state.inject(seed_term, self.space.extra_codes)
+        if self.flow.extra_codes is not None:
+            seed_term = self.state.inject(seed_term, self.flow.extra_codes)
         if family.kernel:
             filters = []
             for code in family.kernel:
@@ -981,35 +981,35 @@ class CompileComplement(CompileSpace):
                 [filter] = filters
             else:
                 filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                     self.space.binding, ops=filters)
+                                     self.flow.binding, ops=filters)
             seed_term = FilterTerm(self.state.tag(), seed_term, filter,
-                                   seed_term.space, seed_term.baseline,
+                                   seed_term.flow, seed_term.baseline,
                                    seed_term.routes.copy())
         seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                seed_term.space, seed_term.baseline,
+                                seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
-        if (self.space == self.baseline and
+        if (self.flow == self.baseline and
                 seed_term.baseline == family.seed_baseline):
             routes = {}
             for unit in seed_term.routes:
-                unit = ComplementUnit(unit, self.space, unit.binding)
+                unit = ComplementUnit(unit, self.flow, unit.binding)
                 routes[unit] = seed_term.tag
             for code in family.kernel:
-                unit = ComplementUnit(code, self.space, unit.binding)
+                unit = ComplementUnit(code, self.flow, unit.binding)
                 routes[unit] = seed_term.tag
-            if self.space.extra_codes is not None:
-                for code in self.space.extra_codes:
-                    unit = ComplementUnit(code, self.space, code.binding)
+            if self.flow.extra_codes is not None:
+                for code in self.flow.extra_codes:
+                    unit = ComplementUnit(code, self.flow, code.binding)
                     routes[unit] = seed_term.tag
             for unit in spread(family.seed):
-                routes[unit.clone(space=self.space)] = seed_term.routes[unit]
+                routes[unit.clone(flow=self.flow)] = seed_term.routes[unit]
             term = WrapperTerm(self.state.tag(), seed_term,
-                               self.space, self.space, routes)
+                               self.flow, self.flow, routes)
             return term
         baseline = self.baseline
-        if baseline == self.space:
+        if baseline == self.flow:
             baseline = baseline.base
-        lkid = self.state.compile(self.space.base, baseline=baseline)
+        lkid = self.state.compile(self.flow.base, baseline=baseline)
         seed_joints = []
         if seed_term.baseline != family.seed_baseline:
             seed_joints = self.tie_terms(lkid, seed_term)
@@ -1021,12 +1021,12 @@ class CompileComplement(CompileSpace):
         for code in family.kernel:
             unit = ComplementUnit(code, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
-        if self.space.extra_codes is not None:
-            for code in self.space.extra_codes:
+        if self.flow.extra_codes is not None:
+            for code in self.flow.extra_codes:
                 unit = ComplementUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
         for unit in spread(family.seed):
-            routes[unit.clone(space=self.backbone)] = seed_term.routes[unit]
+            routes[unit.clone(flow=self.backbone)] = seed_term.routes[unit]
         seed_joints_copy = seed_joints
         seed_joints = []
         for joint in seed_joints:
@@ -1035,147 +1035,147 @@ class CompileComplement(CompileSpace):
             seed_joints.append(joint.clone(rop=rop))
         rkid = WrapperTerm(self.state.tag(), seed_term,
                            self.backbone, self.backbone, routes)
-        joints = seed_joints + tie(self.space)
+        joints = seed_joints + tie(self.flow)
         is_left = False
         is_right = False
         routes = {}
         routes.update(lkid.routes)
         routes.update(rkid.routes)
-        for unit in spread(self.space):
-            routes[unit.clone(space=self.space)] = routes[unit]
+        for unit in spread(self.flow):
+            routes[unit.clone(flow=self.flow)] = routes[unit]
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
-                        is_left, is_right, self.space, lkid.baseline, routes)
+                        is_left, is_right, self.flow, lkid.baseline, routes)
 
 
-class CompileMoniker(CompileSpace):
+class CompileMoniker(CompileFlow):
 
-    adapts(MonikerSpace)
+    adapts(MonikerFlow)
 
     def __call__(self):
-        if (self.space.seed_baseline.base is not None and
-            self.space.base.conforms(self.space.seed_baseline.base) and
-            not self.space.base.spans(self.space.seed_baseline)):
-            baseline = self.space.seed_baseline
+        if (self.flow.seed_baseline.base is not None and
+            self.flow.base.conforms(self.flow.seed_baseline.base) and
+            not self.flow.base.spans(self.flow.seed_baseline)):
+            baseline = self.flow.seed_baseline
             if not (baseline.is_inflated and
-                    self.space == self.state.baseline):
+                    self.flow == self.state.baseline):
                 while not self.state.baseline.concludes(baseline):
                     baseline = baseline.base
-            seed_term = self.state.compile(self.space.seed, baseline=baseline)
-            if self.space.extra_codes is not None:
+            seed_term = self.state.compile(self.flow.seed, baseline=baseline)
+            if self.flow.extra_codes is not None:
                 seed_term = self.state.inject(seed_term,
-                                              self.space.extra_codes)
-            if seed_term.baseline != self.space.seed_baseline:
-                space = self.space.base
-                seed_term = self.state.inject(seed_term, [space])
-                while not seed_term.baseline.concludes(space):
-                    seed_term = self.state.inject(seed_term, [space])
-                    space = space.base
+                                              self.flow.extra_codes)
+            if seed_term.baseline != self.flow.seed_baseline:
+                flow = self.flow.base
+                seed_term = self.state.inject(seed_term, [flow])
+                while not seed_term.baseline.concludes(flow):
+                    seed_term = self.state.inject(seed_term, [flow])
+                    flow = flow.base
             seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                    seed_term.space, seed_term.baseline,
+                                    seed_term.flow, seed_term.baseline,
                                     seed_term.routes.copy())
             baseline = seed_term.baseline
-            if baseline == self.space.seed_baseline:
-                baseline = self.space
+            if baseline == self.flow.seed_baseline:
+                baseline = self.flow
             routes = {}
             for unit in seed_term.routes:
-                if self.space.base.spans(unit.space):
+                if self.flow.base.spans(unit.flow):
                     routes[unit] = seed_term.routes[unit]
-                seed_unit = MonikerUnit(unit, self.space, unit.binding)
+                seed_unit = MonikerUnit(unit, self.flow, unit.binding)
                 routes[seed_unit] = seed_term.tag
                 seed_unit = MonikerUnit(unit, self.backbone, unit.binding)
                 routes[seed_unit] = seed_term.tag
-            if self.space.extra_codes is not None:
-                for code in self.space.extra_codes:
-                    unit = MonikerUnit(code, self.space, code.binding)
+            if self.flow.extra_codes is not None:
+                for code in self.flow.extra_codes:
+                    unit = MonikerUnit(code, self.flow, code.binding)
                     routes[unit] = seed_term.tag
                     unit = MonikerUnit(code, self.backbone, code.binding)
                     routes[unit] = seed_term.tag
-            for unit in spread(self.space.seed):
-                seed_unit = unit.clone(space=self.space)
+            for unit in spread(self.flow.seed):
+                seed_unit = unit.clone(flow=self.flow)
                 routes[seed_unit] = seed_term.routes[unit]
-                seed_unit = unit.clone(space=self.backbone)
+                seed_unit = unit.clone(flow=self.backbone)
                 routes[seed_unit] = seed_term.routes[unit]
             term = WrapperTerm(self.state.tag(), seed_term,
-                               self.space, baseline, routes)
+                               self.flow, baseline, routes)
             return term
         baseline = self.state.baseline
-        if baseline == self.space:
+        if baseline == self.flow:
             baseline = baseline.base
-        trunk_term = self.state.compile(self.space.base, baseline=baseline)
-        seed_term = self.compile_shoot(self.space.seed, trunk_term,
-                                        self.space.extra_codes)
+        trunk_term = self.state.compile(self.flow.base, baseline=baseline)
+        seed_term = self.compile_shoot(self.flow.seed, trunk_term,
+                                        self.flow.extra_codes)
         seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                seed_term.space, seed_term.baseline,
+                                seed_term.flow, seed_term.baseline,
                                 seed_term.routes)
         joints = self.tie_terms(trunk_term, seed_term)
         trunk_term = self.inject_ties(trunk_term, joints)
         routes = trunk_term.routes.copy()
         for unit in seed_term.routes:
-            seed_unit = MonikerUnit(unit, self.space, unit.binding)
+            seed_unit = MonikerUnit(unit, self.flow, unit.binding)
             routes[seed_unit] = seed_term.tag
             seed_unit = MonikerUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
-        if self.space.extra_codes is not None:
-            for code in self.space.extra_codes:
-                unit = MonikerUnit(code, self.space, code.binding)
+        if self.flow.extra_codes is not None:
+            for code in self.flow.extra_codes:
+                unit = MonikerUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
                 unit = MonikerUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
-        for unit in spread(self.space.seed):
-            seed_unit = unit.clone(space=self.space)
+        for unit in spread(self.flow.seed):
+            seed_unit = unit.clone(flow=self.flow)
             routes[seed_unit] = seed_term.routes[unit]
-            seed_unit = unit.clone(space=self.backbone)
+            seed_unit = unit.clone(flow=self.backbone)
             routes[seed_unit] = seed_term.routes[unit]
         return JoinTerm(self.state.tag(), trunk_term, seed_term,
                         joints, False, False,
-                        self.space, trunk_term.baseline, routes)
+                        self.flow, trunk_term.baseline, routes)
 
 
-class CompileForked(CompileSpace):
+class CompileForked(CompileFlow):
 
-    adapts(ForkedSpace)
+    adapts(ForkedFlow)
 
     def __call__(self):
-        seed = self.space.seed
+        seed = self.flow.seed
         baseline = seed
         while not baseline.is_inflated:
             baseline = baseline.base
         seed_term = self.state.compile(seed, baseline=baseline)
-        extra_codes = self.space.kernel[:]
-        if self.space.extra_codes is not None:
-            extra_codes.extend(self.space.extra_codes)
+        extra_codes = self.flow.kernel[:]
+        if self.flow.extra_codes is not None:
+            extra_codes.extend(self.flow.extra_codes)
         seed_term = self.state.inject(seed_term, extra_codes)
         seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                seed_term.space, seed_term.baseline,
+                                seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
-        if (self.state.baseline == self.space and
-                seed_term.baseline == self.space.seed_baseline):
+        if (self.state.baseline == self.flow and
+                seed_term.baseline == self.flow.seed_baseline):
             routes = {}
             for unit in seed_term.routes:
-                seed_unit = ForkedUnit(unit, self.space, unit.binding)
+                seed_unit = ForkedUnit(unit, self.flow, unit.binding)
                 routes[seed_unit] = seed_term.tag
                 seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
                 routes[seed_unit] = seed_term.tag
-            extra_codes = self.space.kernel[:]
-            if self.space.extra_codes is not None:
-                extra_codes.extend(self.space.extra_codes)
+            extra_codes = self.flow.kernel[:]
+            if self.flow.extra_codes is not None:
+                extra_codes.extend(self.flow.extra_codes)
             for code in extra_codes:
-                unit = ForkedUnit(code, self.space, code.binding)
+                unit = ForkedUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
                 unit = ForkedUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
-            for unit in spread(self.space.seed):
-                seed_unit = unit.clone(space=self.space)
+            for unit in spread(self.flow.seed):
+                seed_unit = unit.clone(flow=self.flow)
                 routes[seed_unit] = seed_term.routes[unit]
-                seed_unit = unit.clone(space=self.backbone)
+                seed_unit = unit.clone(flow=self.backbone)
                 routes[seed_unit] = seed_term.routes[unit]
             term = WrapperTerm(self.state.tag(), seed_term,
-                               self.space, self.space, routes)
+                               self.flow, self.flow, routes)
             return term
         baseline = self.state.baseline
-        if baseline == self.space:
+        if baseline == self.flow:
             baseline = baseline.base
-        trunk_term = self.state.compile(self.space.base, baseline=baseline)
+        trunk_term = self.state.compile(self.flow.base, baseline=baseline)
         joints = []
         assert (trunk_term.baseline.concludes(seed_term.baseline) or
                 seed_term.baseline.concludes(trunk_term.baseline))
@@ -1193,52 +1193,52 @@ class CompileForked(CompileSpace):
             for joint in tie(trunk_term.backbone):
                 joint = joint.clone(lop=joint.rop)
                 joints.append(joint)
-        for code in self.space.kernel:
+        for code in self.flow.kernel:
             joint = Joint(code, code)
             joints.append(joint)
         units = [lunit for lunit, runit in joints]
         trunk_term = self.state.inject(trunk_term, units)
         routes = trunk_term.routes.copy()
         for unit in seed_term.routes:
-            seed_unit = ForkedUnit(unit, self.space, unit.binding)
+            seed_unit = ForkedUnit(unit, self.flow, unit.binding)
             routes[seed_unit] = seed_term.tag
             seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
-        extra_codes = self.space.kernel[:]
-        if self.space.extra_codes is not None:
-            extra_codes.extend(self.space.extra_codes)
+        extra_codes = self.flow.kernel[:]
+        if self.flow.extra_codes is not None:
+            extra_codes.extend(self.flow.extra_codes)
         for code in extra_codes:
-            unit = ForkedUnit(code, self.space, code.binding)
+            unit = ForkedUnit(code, self.flow, code.binding)
             routes[unit] = seed_term.tag
             unit = ForkedUnit(code, self.backbone, code.binding)
             routes[unit] = seed_term.tag
-        for unit in spread(self.space.seed):
-            seed_unit = unit.clone(space=self.space)
+        for unit in spread(self.flow.seed):
+            seed_unit = unit.clone(flow=self.flow)
             routes[seed_unit] = seed_term.routes[unit]
-            seed_unit = unit.clone(space=self.backbone)
+            seed_unit = unit.clone(flow=self.backbone)
             routes[seed_unit] = seed_term.routes[unit]
         return JoinTerm(self.state.tag(), trunk_term, seed_term,
                         joints, False, False,
-                        self.space, trunk_term.baseline, routes)
+                        self.flow, trunk_term.baseline, routes)
 
 
-class CompileLinked(CompileSpace):
+class CompileLinked(CompileFlow):
 
-    adapts(LinkedSpace)
+    adapts(LinkedFlow)
 
     def __call__(self):
-        baseline = self.space.seed_baseline
+        baseline = self.flow.seed_baseline
         while not baseline.is_inflated:
             baseline = baseline.base
-        seed_term = self.state.compile(self.space.seed, baseline=baseline)
-        codes = self.space.kernel[:]
-        if self.space.extra_codes is not None:
-            codes += self.space.extra_codes
+        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
+        codes = self.flow.kernel[:]
+        if self.flow.extra_codes is not None:
+            codes += self.flow.extra_codes
         seed_term = self.state.inject(seed_term, codes)
         extra_axes = []
         joints = []
-        if seed_term.baseline != self.space.seed_baseline:
-            backbone = self.space.base.inflate()
+        if seed_term.baseline != self.flow.seed_baseline:
+            backbone = self.flow.base.inflate()
             axis = seed_term.baseline
             while not backbone.concludes(axis):
                 axis = axis.base
@@ -1253,48 +1253,48 @@ class CompileLinked(CompileSpace):
             extra_axes.reverse()
             for axis in extra_axes:
                 for joint in sew(axis):
-                    rop = LinkedUnit(self.space.inflate(), rop, rop.binding)
+                    rop = LinkedUnit(self.flow.inflate(), rop, rop.binding)
                     joint = joint.clone(rop=rop)
                     joints.append(joint)
-        joints.extend(tie(self.space))
+        joints.extend(tie(self.flow))
         trunk_term = None
-        if extra_axes or self.state.baseline != self.space:
+        if extra_axes or self.state.baseline != self.flow:
             baseline = self.state.baseline
-            if baseline == self.space:
+            if baseline == self.flow:
                 baseline = baseline.base
-            trunk_term = self.state.compile(self.space.base, baseline=baseline)
+            trunk_term = self.state.compile(self.flow.base, baseline=baseline)
             trunk_term = self.state.inject(trunk_term,
                                            [joint.lop for joint in joints])
         seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                seed_term.space, seed_term.baseline,
+                                seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
         baseline = seed_term.baseline
-        if baseline == self.space.seed_baseline:
-            baseline = self.space
+        if baseline == self.flow.seed_baseline:
+            baseline = self.flow
         routes = {}
         for unit in seed_term.routes:
-            if self.space.base.spans(unit.space):
+            if self.flow.base.spans(unit.flow):
                 routes[unit] = seed_term.routes[unit]
-            seed_unit = LinkedUnit(unit, self.space, unit.binding)
+            seed_unit = LinkedUnit(unit, self.flow, unit.binding)
             routes[seed_unit] = seed_term.tag
             seed_unit = LinkedUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
         for joint in joints:
             code = joint.rop.code
-            unit = LinkedUnit(code, self.space, code.binding)
+            unit = LinkedUnit(code, self.flow, code.binding)
             routes[unit] = seed_term.tag
             unit = LinkedUnit(code, self.backbone, code.binding)
             routes[unit] = seed_term.tag
-        if self.space.extra_codes is not None:
-            for code in self.space.extra_codes:
-                unit = LinkedUnit(code, self.space, code.binding)
+        if self.flow.extra_codes is not None:
+            for code in self.flow.extra_codes:
+                unit = LinkedUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
                 unit = LinkedUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
-        for unit in spread(self.space.seed):
-            seed_unit = unit.clone(space=self.space)
+        for unit in spread(self.flow.seed):
+            seed_unit = unit.clone(flow=self.flow)
             routes[seed_unit] = seed_term.routes[unit]
-            seed_unit = unit.clone(space=self.backbone)
+            seed_unit = unit.clone(flow=self.backbone)
             routes[seed_unit] = seed_term.routes[unit]
         term = WrapperTerm(self.state.tag(), seed_term,
                            self.backbone, self.backbone, routes)
@@ -1303,108 +1303,108 @@ class CompileLinked(CompileSpace):
             routes.update(term.routes)
             term = JoinTerm(self.state.tag(), trunk_term, term,
                             joints, False, False,
-                            self.space, trunk_term.baseline, routes)
+                            self.flow, trunk_term.baseline, routes)
         return term
 
 
-class CompileFiltered(CompileSpace):
+class CompileFiltered(CompileFlow):
     """
-    Compiles a term corresponding to a filtered space.
+    Compiles a term corresponding to a filtered flow.
     """
 
-    adapts(FilteredSpace)
+    adapts(FilteredFlow)
 
     def __call__(self):
-        # To construct a term for a filtered space, we start with
+        # To construct a term for a filtered flow, we start with
         # a term for its base, ensure that it could generate the given
         # predicate expression and finally wrap it with a filter term
         # node.
 
-        # The term corresponding to the space base.
-        term = self.state.compile(self.space.base)
+        # The term corresponding to the flow base.
+        term = self.state.compile(self.flow.base)
 
         ## Handle the special case when the filter is already enforced
         ## by the mask.  There is no method to directly verify it, so
-        ## we prune the masked operations from the space itself and
+        ## we prune the masked operations from the flow itself and
         ## its base.  When the filter belongs to the mask, the resulting
-        ## spaces will be equal.
-        #if self.space.prune(self.mask) == self.space.base.prune(self.mask):
+        ## flows will be equal.
+        #if self.flow.prune(self.mask) == self.flow.base.prune(self.mask):
         #    # We do not need to apply the filter since it is already
-        #    # enforced by the mask.  We still need to add the space
+        #    # enforced by the mask.  We still need to add the flow
         #    # to the routing table.
         #    routes = term.routes.copy()
-        #    # The space itself and its base share the same inflated space
+        #    # The flow itself and its base share the same inflated flow
         #    # (`backbone`), therefore the backbone must be in the routing
         #    # table.
-        #    routes[self.space] = routes[self.backbone]
-        #    return WrapperTerm(self.state.tag(), term, self.space, routes)
+        #    routes[self.flow] = routes[self.backbone]
+        #    return WrapperTerm(self.state.tag(), term, self.flow, routes)
 
         # Now wrap the base term with a filter term node.
         # Make sure the base term is able to produce the filter expression.
-        kid = self.state.inject(term, [self.space.filter])
+        kid = self.state.inject(term, [self.flow.filter])
         # Inherit the routing table from the base term, add the given
-        # space to the routing table.
+        # flow to the routing table.
         routes = kid.routes.copy()
-        for unit in spread(self.space):
-            routes[unit.clone(space=self.space)] = routes[unit]
+        for unit in spread(self.flow):
+            routes[unit.clone(flow=self.flow)] = routes[unit]
         # Generate a filter term node.
-        return FilterTerm(self.state.tag(), kid, self.space.filter,
-                          self.space, kid.baseline, routes)
+        return FilterTerm(self.state.tag(), kid, self.flow.filter,
+                          self.flow, kid.baseline, routes)
 
 
-class CompileOrdered(CompileSpace):
+class CompileOrdered(CompileFlow):
     """
-    Compiles a term corresponding to an ordered space.
+    Compiles a term corresponding to an ordered flow.
     """
 
-    adapts(OrderedSpace)
+    adapts(OrderedFlow)
 
     def __call__(self):
-        # An ordered space has two functions:
+        # An ordered flow has two functions:
         # - adding explicit row ordering;
         # - extracting a slice from the row set.
         # Note the first function could be ignored since the compiled terms
-        # are not required to respect the ordering of the underlying space.
+        # are not required to respect the ordering of the underlying flow.
 
         # There are two cases when we could reuse the base term without
         # wrapping it with an order term node:
-        # - when the order space does not apply limit/offset to its base;
-        # - when the order space is already enforced by the mask.
-        #if (self.space.is_expanding or
-        #    self.space.prune(self.mask) == self.space.base.prune(self.mask)):
-        if self.space.is_expanding:
-            # Generate a term for the space base.
-            term = self.state.compile(self.space.base)
-            # Update its routing table to include the given space and
+        # - when the order flow does not apply limit/offset to its base;
+        # - when the order flow is already enforced by the mask.
+        #if (self.flow.is_expanding or
+        #    self.flow.prune(self.mask) == self.flow.base.prune(self.mask)):
+        if self.flow.is_expanding:
+            # Generate a term for the flow base.
+            term = self.state.compile(self.flow.base)
+            # Update its routing table to include the given flow and
             # return the node.
             routes = term.routes.copy()
-            for unit in spread(self.space):
-                routes[unit.clone(space=self.space)] = routes[unit]
+            for unit in spread(self.flow):
+                routes[unit.clone(flow=self.flow)] = routes[unit]
             return WrapperTerm(self.state.tag(), term,
-                               self.space, term.baseline, routes)
+                               self.flow, term.baseline, routes)
 
         # Applying limit/offset requires special care.  Since slicing
         # relies on precise row numbering, the base term must produce
         # exactly the rows of the base.  Therefore we cannot apply any
         # optimizations as they change cardinality of the term.
-        # Here we reset the current baseline and mask spaces to the
-        # scalar space, which effectively disables any optimizations.
-        kid = self.state.compile(self.space.base,
+        # Here we reset the current baseline and mask flows to the
+        # scalar flow, which effectively disables any optimizations.
+        kid = self.state.compile(self.flow.base,
                                   baseline=self.state.root,
                                   mask=self.state.root)
-        # Extract the space ordering and make sure the base term is able
+        # Extract the flow ordering and make sure the base term is able
         # to produce the order expressions.
-        order = ordering(self.space)
+        order = ordering(self.flow)
         codes = [code for code, direction in order]
         kid = self.state.inject(kid, codes)
-        # Add the given space to the routing table.
+        # Add the given flow to the routing table.
         routes = kid.routes.copy()
-        for unit in spread(self.space):
-            routes[unit.clone(space=self.space)] = routes[unit]
+        for unit in spread(self.flow):
+            routes[unit.clone(flow=self.flow)] = routes[unit]
         # Generate an order term.
         return OrderTerm(self.state.tag(), kid, order,
-                         self.space.limit, self.space.offset,
-                         self.space, kid.baseline, routes)
+                         self.flow.limit, self.flow.offset,
+                         self.flow, kid.baseline, routes)
 
 
 class InjectCode(Inject):
@@ -1425,7 +1425,7 @@ class InjectUnit(Inject):
 
     Constructor arguments:
 
-    `unit` (:class:`htsql.tr.code.Unit`)
+    `unit` (:class:`htsql.tr.flow.Unit`)
         A unit node to inject.
 
     `term` (:class:`htsql.tr.term.Term`)
@@ -1436,8 +1436,8 @@ class InjectUnit(Inject):
 
     Other attributes:
 
-    `space` (:class:`htsql.tr.code.Space`)
-        An alias to `unit.space`.
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        An alias to `unit.flow`.
     """
 
     adapts(Unit)
@@ -1447,7 +1447,7 @@ class InjectUnit(Inject):
         super(InjectUnit, self).__init__(unit, term, state)
         self.unit = unit
         # Extract the unit attributes.
-        self.space = unit.space
+        self.flow = unit.flow
 
     def __call__(self):
         # Normally, this should never be reachable.  We raise an error here
@@ -1466,20 +1466,20 @@ class InjectColumn(Inject):
 
     def __call__(self):
         # We don't keep column units in the routing table (there are too
-        # many of them).  Instead presence of a space node in the routing
+        # many of them).  Instead presence of a flow node in the routing
         # table indicates that all columns of the prominent table of the
-        # space are exported from the term.
+        # flow are exported from the term.
 
-        # To avoid an extra `inject()` call, check if the unit space
+        # To avoid an extra `inject()` call, check if the unit flow
         # is already exported by the term.
         if self.unit in self.term.routes:
             return self.term
-        # Verify that the unit is singular on the term space.
-        if not self.term.space.spans(self.space):
+        # Verify that the unit is singular on the term flow.
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        # Inject the unit space into the term.
-        return self.state.inject(self.term, [self.unit.space])
+        # Inject the unit flow into the term.
+        return self.state.inject(self.term, [self.unit.flow])
 
 
 class InjectScalar(Inject):
@@ -1491,14 +1491,14 @@ class InjectScalar(Inject):
 
     def __call__(self):
         # Injecting is already implemented for a batch of scalar units
-        # that belong to the same space.  To avoid code duplication,
+        # that belong to the same flow.  To avoid code duplication,
         # we delegate injecting to a batch consisting of just one unit.
 
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
             return self.term
         # Form a batch consisting of a single unit.
-        batch = ScalarBatchExpr(self.unit.space, [self.unit],
+        batch = ScalarBatchExpr(self.unit.flow, [self.unit],
                                 self.unit.binding)
         # Delegate the injecting to the batch.
         return self.state.inject(self.term, [batch])
@@ -1513,7 +1513,7 @@ class InjectAggregate(Inject):
 
     def __call__(self):
         # Injecting is already implemented for a batch of aggregate units
-        # that share the same base and plural spaces.  To avoid code
+        # that share the same base and plural flows.  To avoid code
         # duplication, we delegate injecting to a batch consisting of
         # just one unit.
 
@@ -1521,8 +1521,8 @@ class InjectAggregate(Inject):
         if self.unit in self.term.routes:
             return self.term
         # Form a batch consisting of a single unit.
-        batch = AggregateBatchExpr(self.unit.plural_space,
-                                   self.unit.space, [self.unit],
+        batch = AggregateBatchExpr(self.unit.plural_flow,
+                                   self.unit.flow, [self.unit],
                                    self.unit.binding)
         # Delegate the injecting to the batch.
         return self.state.inject(self.term, [batch])
@@ -1544,37 +1544,37 @@ class InjectCorrelated(Inject):
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
             return self.term
-        # Verify that the unit is singular on the term space.
-        if not self.term.space.spans(self.space):
+        # Verify that the unit is singular on the term flow.
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
 
         # The general chain of operations is as follows:
-        #   - compile a term for the unit space;
+        #   - compile a term for the unit flow;
         #   - inject the unit into the unit term;
         #   - attach the unit term to the main term.
-        # However, when the unit space coincides with the term space,
+        # However, when the unit flow coincides with the term flow,
         # it could be reduced to:
         #   - inject the unit directly into the main term.
         # We say that the unit is *native* to the term if the unit
-        # space coincides with the term space (or dominates over it).
+        # flow coincides with the term flow (or dominates over it).
 
         # Note that currently the latter is always the case because
         # all correlated units are wrapped with a scalar unit sharing
-        # the same unit space.
+        # the same unit flow.
 
         # Check if the unit is native to the term.
-        is_native = self.space.dominates(self.term.space)
+        is_native = self.flow.dominates(self.term.flow)
         if is_native:
             # If so, we are going to inject the unit directly into the term.
             unit_term = self.term
         else:
-            # Otherwise, compile a separate term for the unit space.
+            # Otherwise, compile a separate term for the unit flow.
             # Note: currently, not reachable.
-            unit_term = self.compile_shoot(self.space, self.term)
+            unit_term = self.compile_shoot(self.flow, self.term)
 
         # Compile a term for the correlated subquery.
-        plural_term = self.compile_shoot(self.unit.plural_space,
+        plural_term = self.compile_shoot(self.unit.plural_flow,
                                          unit_term, [self.unit.code])
         # The ties connecting the correlated subquery to the main query.
         joints = self.tie_terms(unit_term, plural_term)
@@ -1582,13 +1582,13 @@ class InjectCorrelated(Inject):
         unit_term = self.inject_ties(unit_term, joints)
         # Connect the plural term to the unit term.
         plural_term = CorrelationTerm(self.state.tag(), plural_term,
-                                      unit_term, joints, plural_term.space,
+                                      unit_term, joints, plural_term.flow,
                                       plural_term.baseline, plural_term.routes)
         # Implant the correlation term into the term tree.
         routes = unit_term.routes.copy()
         routes[self.unit] = plural_term.tag
         unit_term = EmbeddingTerm(self.state.tag(), unit_term, plural_term,
-                                  unit_term.space, unit_term.baseline, routes)
+                                  unit_term.flow, unit_term.baseline, routes)
         # If we attached the unit directly to the main term, we are done.
         if is_native:
             return unit_term
@@ -1604,10 +1604,10 @@ class InjectKernel(Inject):
     def __call__(self):
         if self.unit in self.term.routes:
             return self.term
-        if not self.term.space.spans(self.space):
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        term = self.state.inject(self.term, [self.space])
+        term = self.state.inject(self.term, [self.flow])
         assert self.unit in term.routes
         return term
 
@@ -1619,14 +1619,14 @@ class InjectComplement(Inject):
     def __call__(self):
         if self.unit in self.term.routes:
             return self.term
-        if not self.term.space.spans(self.space):
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        space = self.space.clone(extra_codes=[self.unit.code])
-        baseline = space
+        flow = self.flow.clone(extra_codes=[self.unit.code])
+        baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(space, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline)
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1639,14 +1639,14 @@ class InjectMoniker(Inject):
     def __call__(self):
         if self.unit in self.term.routes:
             return self.term
-        if not self.term.space.spans(self.space):
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        space = self.space.clone(extra_codes=[self.unit.code])
-        baseline = space
+        flow = self.flow.clone(extra_codes=[self.unit.code])
+        baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(space, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline)
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1659,14 +1659,14 @@ class InjectForked(Inject):
     def __call__(self):
         if self.unit in self.term.routes:
             return self.term
-        if not self.term.space.spans(self.space):
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        space = self.space.clone(extra_codes=[self.unit.code])
-        baseline = space
+        flow = self.flow.clone(extra_codes=[self.unit.code])
+        baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(space, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline)
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1679,14 +1679,14 @@ class InjectLinked(Inject):
     def __call__(self):
         if self.unit in self.term.routes:
             return self.term
-        if not self.term.space.spans(self.space):
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        space = self.space.clone(extra_codes=[self.unit.code])
-        baseline = space
+        flow = self.flow.clone(extra_codes=[self.unit.code])
+        baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(space, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline)
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1713,8 +1713,8 @@ class InjectBatch(Inject):
         # Here we group similar scalar and aggregate units into scalar
         # and aggregate batch nodes and then inject the batches.  We do not
         # need to do the same for column units since injecting a column
-        # unit effectively injects the unit space making any column from
-        # the space exportable.
+        # unit effectively injects the unit flow making any column from
+        # the flow exportable.
 
         # We start with the given term, at the end, it will be capable of
         # exporting all expressions from the given collection.
@@ -1723,7 +1723,7 @@ class InjectBatch(Inject):
         # Gather all the units from the given collection of expressions.
         units = []
         for expression in self.collection:
-            # Ignore spaces and other non-code expressions.
+            # Ignore flows and other non-code expressions.
             if isinstance(expression, Code):
                 for unit in expression.units:
                     # We are only interested in units that are not already
@@ -1731,42 +1731,42 @@ class InjectBatch(Inject):
                     if unit not in term.routes:
                         units.append(unit)
 
-        # Find all scalar units and group them by the unit space.  We
-        # maintain a separate list of scalar spaces to ensure we process
+        # Find all scalar units and group them by the unit flow.  We
+        # maintain a separate list of scalar flows to ensure we process
         # the batches in some deterministic order.
-        scalar_spaces = []
-        scalar_space_to_units = {}
+        scalar_flows = []
+        scalar_flow_to_units = {}
         for unit in units:
             if isinstance(unit, ScalarUnit):
-                space = unit.space
-                if space not in scalar_space_to_units:
-                    scalar_spaces.append(space)
-                    scalar_space_to_units[space] = []
-                scalar_space_to_units[space].append(unit)
+                flow = unit.flow
+                if flow not in scalar_flow_to_units:
+                    scalar_flows.append(flow)
+                    scalar_flow_to_units[flow] = []
+                scalar_flow_to_units[flow].append(unit)
         # Form and inject batches of matching scalar units.
-        for space in scalar_spaces:
-            batch_units = scalar_space_to_units[space]
-            batch = ScalarBatchExpr(space, batch_units,
+        for flow in scalar_flows:
+            batch_units = scalar_flow_to_units[flow]
+            batch = ScalarBatchExpr(flow, batch_units,
                                     self.term.binding)
             term = self.state.inject(term, [batch])
 
         # Find all aggregate units and group them by their plural and unit
-        # spaces.  Maintain a list of pairs of spaces to ensure deterministic
+        # flows.  Maintain a list of pairs of flows to ensure deterministic
         # order of processing the batches.
-        aggregate_space_pairs = []
-        aggregate_space_pair_to_units = {}
+        aggregate_flow_pairs = []
+        aggregate_flow_pair_to_units = {}
         for unit in units:
             if isinstance(unit, AggregateUnit):
-                pair = (unit.plural_space, unit.space)
-                if pair not in aggregate_space_pair_to_units:
-                    aggregate_space_pairs.append(pair)
-                    aggregate_space_pair_to_units[pair] = []
-                aggregate_space_pair_to_units[pair].append(unit)
+                pair = (unit.plural_flow, unit.flow)
+                if pair not in aggregate_flow_pair_to_units:
+                    aggregate_flow_pairs.append(pair)
+                    aggregate_flow_pair_to_units[pair] = []
+                aggregate_flow_pair_to_units[pair].append(unit)
         # Form and inject batches of matching aggregate units.
-        for pair in aggregate_space_pairs:
-            plural_space, space = pair
-            group_units = aggregate_space_pair_to_units[pair]
-            group = AggregateBatchExpr(plural_space, space, group_units,
+        for pair in aggregate_flow_pairs:
+            plural_flow, flow = pair
+            group_units = aggregate_flow_pair_to_units[pair]
+            group = AggregateBatchExpr(plural_flow, flow, group_units,
                                        self.term.binding)
             term = self.state.inject(term, [group])
 
@@ -1780,7 +1780,7 @@ class InjectBatch(Inject):
 
 class InjectScalarBatch(Inject):
     """
-    Injects a batch of scalar units sharing the same space.
+    Injects a batch of scalar units sharing the same flow.
     """
 
     adapts(ScalarBatchExpr)
@@ -1788,17 +1788,17 @@ class InjectScalarBatch(Inject):
     def __init__(self, expression, term, state):
         super(InjectScalarBatch, self).__init__(expression, term, state)
         # Extract attributes of the batch.
-        self.space = expression.space
+        self.flow = expression.flow
 
     def __call__(self):
         # To inject a scalar unit into a term, we need to do the following:
-        # - compile a term for the unit space;
+        # - compile a term for the unit flow;
         # - inject the unit into the unit term;
         # - attach the unit term to the main term.
         # If we do this for each unit individually, we may end up with
         # a lot of identical unit terms in our term tree.  To optimize
         # the term tree in this scenario, we collect all scalar units
-        # sharing the same space into a batch expression.  Then, when
+        # sharing the same flow into a batch expression.  Then, when
         # injecting the batch, we use the same unit term for all units
         # in the batch.
 
@@ -1810,17 +1810,17 @@ class InjectScalarBatch(Inject):
             return self.term
         # Verify that the units are singular relative to the term.
         # To report an error, we could point to any unit node.
-        if not self.term.space.spans(self.space):
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                units[0].mark)
         # Extract the unit expressions.
         codes = [unit.code for unit in units]
 
-        # Handle the special case when the unit space is equal to the
-        # term space or dominates it.  In this case, we could inject
+        # Handle the special case when the unit flow is equal to the
+        # term flow or dominates it.  In this case, we could inject
         # the units directly to the main term and avoid creating
         # a separate unit term.
-        if self.space.dominates(self.term.space):
+        if self.flow.dominates(self.term.flow):
             # Make sure the term could export all the units.
             term = self.state.inject(self.term, codes)
             # Add all the units to the routing table.  Note that we point
@@ -1832,16 +1832,16 @@ class InjectScalarBatch(Inject):
             for unit in units:
                 routes[unit] = tag
             # Wrap the term with the updated routing table.
-            return WrapperTerm(tag, term, term.space, term.baseline, routes)
+            return WrapperTerm(tag, term, term.flow, term.baseline, routes)
 
-        # The general case: compile a term for the unit space.
-        unit_term = self.compile_shoot(self.space, self.term, codes)
+        # The general case: compile a term for the unit flow.
+        unit_term = self.compile_shoot(self.flow, self.term, codes)
         # SQL syntax does not permit us evaluating arbitrary
         # expressions in terminal terms, so we wrap such terms with
         # a no-op wrapper.
         if unit_term.is_nullary:
             unit_term = WrapperTerm(self.state.tag(), unit_term,
-                                    unit_term.space, unit_term.baseline,
+                                    unit_term.flow, unit_term.baseline,
                                     unit_term.routes.copy())
         # And join it to the main term.
         extra_routes = dict((unit, unit_term.tag) for unit in units)
@@ -1850,7 +1850,7 @@ class InjectScalarBatch(Inject):
 
 class InjectAggregateBatch(Inject):
     """
-    Injects a batch of aggregate units sharing the same plural and unit spaces.
+    Injects a batch of aggregate units sharing the same plural and unit flows.
     """
 
     adapts(AggregateBatchExpr)
@@ -1858,25 +1858,25 @@ class InjectAggregateBatch(Inject):
     def __init__(self, expression, term, state):
         super(InjectAggregateBatch, self).__init__(expression, term, state)
         # Extract attributes of the batch.
-        self.plural_space = expression.plural_space
-        self.space = expression.space
+        self.plural_flow = expression.plural_flow
+        self.flow = expression.flow
 
     def __call__(self):
         # To inject an aggregate unit into a term, we do the following:
-        # - compile a term for the unit space;
-        # - compile a term for the plural space relative to the unit term;
+        # - compile a term for the unit flow;
+        # - compile a term for the plural flow relative to the unit term;
         # - inject the unit expression into the plural term;
-        # - project plural term into the unit space;
+        # - project plural term into the unit flow;
         # - attach the projected term to the unit term;
         # - attach the unit term to the main term.
-        # When the unit space coincides with the main term space, we could
+        # When the unit flow coincides with the main term flow, we could
         # avoid compiling a separate unit term, and instead attach the
         # projected term directly to the main term.
 
         # In any case, if we perform this procedure for each unit
         # individually, we may end up with a lot of identical unit terms
         # in the final term tree.  So when there are more than one aggregate
-        # unit with the same plural and unit spaces, it make sense to
+        # unit with the same plural and unit flows, it make sense to
         # collect all of them into a batch expression.  Then, when injecting
         # the batch, we could reuse the same unit and plural terms for all
         # aggregates in the batch.
@@ -1889,28 +1889,28 @@ class InjectAggregateBatch(Inject):
             return self.term
         # Verify that the units are singular relative to the term.
         # To report an error, we could point to any unit node available.
-        if not self.term.space.spans(self.space):
+        if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                units[0].mark)
         # Extract the aggregate expressions.
         codes = [unit.code for unit in units]
 
-        # Check if the unit space coincides with or dominates the term
-        # space.  In this case we could avoid compiling a separate unit
+        # Check if the unit flow coincides with or dominates the term
+        # flow.  In this case we could avoid compiling a separate unit
         # term and instead attach the projected term directly to the main
         # term.
-        is_native = self.space.dominates(self.term.space)
+        is_native = self.flow.dominates(self.term.flow)
         if is_native:
             unit_term = self.term
         else:
-            # Compile a separate term for the unit space.
+            # Compile a separate term for the unit flow.
             # Note: currently it is not reachable since we wrap every
-            # aggregate with a scalar unit sharing the same space.
-            unit_term = self.compile_shoot(self.space, self.term)
+            # aggregate with a scalar unit sharing the same flow.
+            unit_term = self.compile_shoot(self.flow, self.term)
 
-        # Compile a term for the plural space against the unit space,
+        # Compile a term for the plural flow against the unit flow,
         # and inject all the aggregate expressions into it.
-        plural_term = self.compile_shoot(self.plural_space,
+        plural_term = self.compile_shoot(self.plural_flow,
                                          unit_term, codes)
         # Generate ties to attach the projected term to the unit term.
         joints = self.tie_terms(unit_term, plural_term)
@@ -1918,25 +1918,25 @@ class InjectAggregateBatch(Inject):
         unit_term = self.inject_ties(unit_term, joints)
 
         # Now we are going to project the plural term onto the unit
-        # space.  As the projection basis, we are using the ties.
+        # flow.  As the projection basis, we are using the ties.
         # There are two kinds of ties we could get from `tie_terms()`:
         # - a list of parallel ties;
         # - or a single serial tie.
         #
         # If we get a list of parallel ties, the projection basis
-        # comprises the primary keys of the tie spaces.  Otherwise,
-        # the basis is the foreign key that joins the tie space to
+        # comprises the primary keys of the tie flows.  Otherwise,
+        # the basis is the foreign key that joins the tie flow to
         # its base.  These are also the columns connecting the
         # projected term to the unit term.
         basis = [runit for lunit, runit in joints]
 
-        # Determine the space of the projected term.
-        projected_space = QuotientSpace(self.space.inflate(),
-                                        self.plural_space, [],
+        # Determine the flow of the projected term.
+        projected_flow = QuotientFlow(self.flow.inflate(),
+                                        self.plural_flow, [],
                                         self.expression.binding)
         # The routing table of the projected term.
         # FIXME: the projected term should be able to export the tie
-        # conditions, so we add the tie spaces to the routing table.
+        # conditions, so we add the tie flows to the routing table.
         # However we should never attempt to export any columns than
         # those that form the tie condition -- it will generate invalid
         # SQL.  It is not clear how to fix this, perhaps the routing
@@ -1946,26 +1946,26 @@ class InjectAggregateBatch(Inject):
         # and export only the aggregate and the kernel units from
         # the projected term.  This seems to be the most correct approach,
         # but then what to do with the requirement that each term exports
-        # its own space and backbone?
+        # its own flow and backbone?
         tag = self.state.tag()
         routes = {}
         joints_copy = joints
         joints = []
         for joint in joints_copy:
-            rop = KernelUnit(joint.rop, projected_space, joint.rop.binding)
+            rop = KernelUnit(joint.rop, projected_flow, joint.rop.binding)
             routes[rop] = tag
             joints.append(joint.clone(rop=rop))
 
-        ## The term space must always be in the routing table.  The actual
+        ## The term flow must always be in the routing table.  The actual
         ## route does not matter since it should never be used.
-        #routes[projected_space] = plural_term.tag
-        # Project the plural term onto the basis of the unit space.
+        #routes[projected_flow] = plural_term.tag
+        # Project the plural term onto the basis of the unit flow.
         projected_term = ProjectionTerm(tag, plural_term, basis,
-                                        projected_space, projected_space,
+                                        projected_flow, projected_flow,
                                         routes)
         # Attach the projected term to the unit term, add extra entries
         # to the routing table for each of the unit in the collection.
-        is_left = (not projected_space.dominates(unit_term.space))
+        is_left = (not projected_flow.dominates(unit_term.flow))
         is_right = False
         # Use the routing table of the trunk term, but also add
         # the given extra routes.
@@ -1975,7 +1975,7 @@ class InjectAggregateBatch(Inject):
         # Generate and return a join term.
         unit_term = JoinTerm(self.state.tag(), unit_term, projected_term,
                              joints, is_left, is_right,
-                             unit_term.space, unit_term.baseline, routes)
+                             unit_term.flow, unit_term.baseline, routes)
         # For native units, we are done since we use the main term as
         # the unit term.  Note: currently this condition always holds.
         if is_native:
@@ -1985,103 +1985,103 @@ class InjectAggregateBatch(Inject):
         return self.join_terms(self.term, unit_term, extra_routes)
 
 
-class OrderSpace(Adapter):
+class OrderFlow(Adapter):
 
-    adapts(Space)
+    adapts(Flow)
 
-    def __init__(self, space, with_strong=True, with_weak=True):
-        assert isinstance(space, Space)
+    def __init__(self, flow, with_strong=True, with_weak=True):
+        assert isinstance(flow, Flow)
         assert isinstance(with_strong, bool)
         assert isinstance(with_weak, bool)
-        self.space = space
+        self.flow = flow
         self.with_strong = with_strong
         self.with_weak = with_weak
 
     def __call__(self):
-        return ordering(self.space.base, self.with_strong, self.with_weak)
+        return ordering(self.flow.base, self.with_strong, self.with_weak)
 
 
-class SpreadSpace(Adapter):
+class SpreadFlow(Adapter):
 
-    adapts(Space)
+    adapts(Flow)
 
-    def __init__(self, space):
-        assert isinstance(space, Space)
-        self.space = space
+    def __init__(self, flow):
+        assert isinstance(flow, Flow)
+        self.flow = flow
 
     def __call__(self):
-        if not self.space.is_axis:
-            return spread(self.space.base)
+        if not self.flow.is_axis:
+            return spread(self.flow.base)
         return []
 
 
-class SewSpace(Adapter):
+class SewFlow(Adapter):
 
-    adapts(Space)
+    adapts(Flow)
 
-    def __init__(self, space):
-        assert isinstance(space, Space)
-        self.space = space
+    def __init__(self, flow):
+        assert isinstance(flow, Flow)
+        self.flow = flow
 
     def __call__(self):
-        if not self.space.is_axis:
-            return sew(self.space.base)
+        if not self.flow.is_axis:
+            return sew(self.flow.base)
         return []
 
 
-class TieSpace(Adapter):
+class TieFlow(Adapter):
 
-    adapts(Space)
+    adapts(Flow)
 
-    def __init__(self, space):
-        assert isinstance(space, Space)
-        self.space = space
+    def __init__(self, flow):
+        assert isinstance(flow, Flow)
+        self.flow = flow
 
     def __call__(self):
-        if not self.space.is_axis:
-            return tie(self.space.base)
+        if not self.flow.is_axis:
+            return tie(self.flow.base)
         return []
 
 
-class OrderRoot(OrderSpace):
+class OrderRoot(OrderFlow):
 
-    adapts(RootSpace)
+    adapts(RootFlow)
 
     def __call__(self):
         return []
 
 
-class OrderScalar(OrderSpace):
+class OrderScalar(OrderFlow):
 
-    adapts(ScalarSpace)
+    adapts(ScalarFlow)
 
     def __call__(self):
-        return ordering(self.space.base, with_strong=self.with_strong,
+        return ordering(self.flow.base, with_strong=self.with_strong,
                                          with_weak=self.with_weak)
 
 
-class OrderTable(OrderSpace):
+class OrderTable(OrderFlow):
 
-    adapts(TableSpace)
+    adapts(TableFlow)
 
     def __call__(self):
-        # A table space complements the weak ordering of its base with
+        # A table flow complements the weak ordering of its base with
         # implicit table ordering.
 
-        for code, direction in ordering(self.space.base,
+        for code, direction in ordering(self.flow.base,
                                         with_strong=self.with_strong,
                                         with_weak=self.with_weak):
             yield (code, direction)
 
         if self.with_weak:
             # Complement the weak ordering with the table ordering (but only
-            # if the cardinality of the space may increase).
-            if not self.space.is_contracting:
+            # if the cardinality of the flow may increase).
+            if not self.flow.is_contracting:
                 # List of columns which provide the default table ordering.
                 columns = []
                 # When possible, we take the columns from the primary key
                 # of the table.
-                table = self.space.family.table
+                table = self.flow.family.table
                 if table.primary_key is not None:
                     column_names = table.primary_key.origin_column_names
                     columns = [table.columns[column_name]
@@ -2102,41 +2102,41 @@ class OrderTable(OrderSpace):
                 # of the table.
                 if not columns:
                     columns = list(table.columns)
-                # We assign the column units to the inflated space: it makes
+                # We assign the column units to the inflated flow: it makes
                 # it easier to find and eliminate duplicates.
-                space = self.space.inflate()
+                flow = self.flow.inflate()
                 # Add weak table ordering.
                 for column in columns:
                     # We need to associate the newly generated column unit
-                    # with some binding node.  We use the binding of the space,
+                    # with some binding node.  We use the binding of the flow,
                     # but in order to produce a better string representation,
                     # we replace the associated syntax node with a new
                     # identifier named after the column.
-                    identifier = IdentifierSyntax(column.name, self.space.mark)
-                    binding = self.space.binding.clone(syntax=identifier)
-                    code = ColumnUnit(column, space, binding)
+                    identifier = IdentifierSyntax(column.name, self.flow.mark)
+                    binding = self.flow.binding.clone(syntax=identifier)
+                    code = ColumnUnit(column, flow, binding)
                     yield (code, +1)
 
 
-class SpreadTable(SpreadSpace):
+class SpreadTable(SpreadFlow):
 
-    adapts(TableSpace)
+    adapts(TableFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        for column in space.family.table.columns:
-            yield ColumnUnit(column, space, self.space.binding)
+        flow = self.flow.inflate()
+        for column in flow.family.table.columns:
+            yield ColumnUnit(column, flow, self.flow.binding)
 
 
-class SewTable(SewSpace):
+class SewTable(SewFlow):
 
-    adapts(TableSpace)
+    adapts(TableFlow)
 
     def __call__(self):
         # Connect a table axis to itself using the primary key of the table.
 
         # The table entity.
-        table = self.space.family.table
+        table = self.flow.family.table
         # The columns that constitute the primary key (if we have one).
         connect_columns = None
         # If the table has a primary key, extract the columns.
@@ -2162,120 +2162,120 @@ class SewTable(SewSpace):
         # No primary key, we don't have other choice but to report an error.
         if connect_columns is None:
             raise CompileError("unable to connect a table"
-                               " lacking a primary key", self.space.mark)
+                               " lacking a primary key", self.flow.mark)
         # Generate joints that represent a connection by the primary key.
-        space = self.space.inflate()
+        flow = self.flow.inflate()
         for column in connect_columns:
-            unit = ColumnUnit(column, space, self.space.binding)
+            unit = ColumnUnit(column, flow, self.flow.binding)
             yield Joint(unit, unit)
 
 
-class TieFiberTable(TieSpace):
+class TieFiberTable(TieFlow):
 
-    adapts(FiberTableSpace)
+    adapts(FiberTableFlow)
 
     def __call__(self):
         # Generate a list of joints corresponding to a connection by
         # a foreign key.  Note that the left unit must belong to the base
         # of the term axis while the right unit belongs to the axis itself.
-        space = self.space.inflate()
-        for lcolumn, rcolumn in zip(space.join.origin_columns,
-                                    space.join.target_columns):
-            lunit = ColumnUnit(lcolumn, space.base, self.space.binding)
-            runit = ColumnUnit(rcolumn, space, self.space.binding)
+        flow = self.flow.inflate()
+        for lcolumn, rcolumn in zip(flow.join.origin_columns,
+                                    flow.join.target_columns):
+            lunit = ColumnUnit(lcolumn, flow.base, self.flow.binding)
+            runit = ColumnUnit(rcolumn, flow, self.flow.binding)
             yield Joint(lunit, runit)
 
 
-class OrderQuotient(OrderSpace):
+class OrderQuotient(OrderFlow):
 
-    adapts(QuotientSpace)
+    adapts(QuotientFlow)
 
     def __call__(self):
-        for code, direction in ordering(self.space.base,
+        for code, direction in ordering(self.flow.base,
                                         with_strong=self.with_strong,
                                         with_weak=self.with_weak):
             yield (code, direction)
         if self.with_weak:
-            space = self.space.inflate()
-            for code in self.space.family.kernel:
-                code = KernelUnit(code, space, code.binding)
+            flow = self.flow.inflate()
+            for code in self.flow.family.kernel:
+                code = KernelUnit(code, flow, code.binding)
                 yield (code, +1)
 
 
-class SpreadQuotient(SpreadSpace):
+class SpreadQuotient(SpreadFlow):
 
-    adapts(QuotientSpace)
-
-    def __call__(self):
-        space = self.space.inflate()
-        for lunit, runit in tie(space.family.seed_baseline):
-            yield KernelUnit(runit, space, runit.binding)
-        for code in self.space.family.kernel:
-            yield KernelUnit(code, space, code.binding)
-
-
-class SewQuotient(SewSpace):
-
-    adapts(QuotientSpace)
+    adapts(QuotientFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        for joint in tie(space.family.seed_baseline):
-            op = KernelUnit(joint.rop, space, joint.rop.binding)
+        flow = self.flow.inflate()
+        for lunit, runit in tie(flow.family.seed_baseline):
+            yield KernelUnit(runit, flow, runit.binding)
+        for code in self.flow.family.kernel:
+            yield KernelUnit(code, flow, code.binding)
+
+
+class SewQuotient(SewFlow):
+
+    adapts(QuotientFlow)
+
+    def __call__(self):
+        flow = self.flow.inflate()
+        for joint in tie(flow.family.seed_baseline):
+            op = KernelUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(lop=op, rop=op)
-        for code in space.family.kernel:
-            unit = KernelUnit(code, space, code.binding)
+        for code in flow.family.kernel:
+            unit = KernelUnit(code, flow, code.binding)
             yield Joint(unit, unit)
 
 
-class TieQuotient(TieSpace):
+class TieQuotient(TieFlow):
 
-    adapts(QuotientSpace)
+    adapts(QuotientFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        for joint in tie(space.family.seed_baseline):
-            rop = KernelUnit(joint.rop, space, joint.rop.binding)
+        flow = self.flow.inflate()
+        for joint in tie(flow.family.seed_baseline):
+            rop = KernelUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 
 
-class OrderComplement(OrderSpace):
+class OrderComplement(OrderFlow):
 
-    adapts(ComplementSpace)
+    adapts(ComplementFlow)
 
     def __call__(self):
-        for code, direction in ordering(self.space.base,
+        for code, direction in ordering(self.flow.base,
                                         with_strong=self.with_strong,
                                         with_weak=self.with_weak):
             yield (code, direction)
         if self.with_weak:
-            space = self.space.inflate()
-            for code, direction in ordering(self.space.base.family.seed):
-                if any(not self.space.base.spans(unit.space)
+            flow = self.flow.inflate()
+            for code, direction in ordering(self.flow.base.family.seed):
+                if any(not self.flow.base.spans(unit.flow)
                        for unit in code.units):
-                    code = ComplementUnit(code, space, code.binding)
+                    code = ComplementUnit(code, flow, code.binding)
                     yield (code, direction)
 
 
-class SpreadComplement(SpreadSpace):
+class SpreadComplement(SpreadFlow):
 
-    adapts(ComplementSpace)
+    adapts(ComplementFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.base.family.seed.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.base.family.seed.inflate()
         for unit in spread(seed):
-            yield unit.clone(space=space)
+            yield unit.clone(flow=flow)
 
 
-class SewComplement(SewSpace):
+class SewComplement(SewFlow):
 
-    adapts(ComplementSpace)
+    adapts(ComplementFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.base.family.seed.inflate()
-        baseline = self.space.base.family.seed_baseline.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.base.family.seed.inflate()
+        baseline = self.flow.base.family.seed_baseline.inflate()
         axes = []
         axis = seed
         while axis is not None and axis.concludes(baseline):
@@ -2285,63 +2285,63 @@ class SewComplement(SewSpace):
         for axis in axes:
             if not axis.is_contracting or axis == baseline:
                 for joint in sew(axis):
-                    op = ComplementUnit(joint.lop, space, joint.lop.binding)
+                    op = ComplementUnit(joint.lop, flow, joint.lop.binding)
                     yield joint.clone(lop=op, rop=op)
 
 
-class TieComplement(TieSpace):
+class TieComplement(TieFlow):
 
-    adapts(ComplementSpace)
+    adapts(ComplementFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        for joint in tie(space.base.family.seed_baseline):
-            lop = KernelUnit(joint.rop, space.base, joint.rop.binding)
-            rop = ComplementUnit(joint.rop, space, joint.rop.binding)
+        flow = self.flow.inflate()
+        for joint in tie(flow.base.family.seed_baseline):
+            lop = KernelUnit(joint.rop, flow.base, joint.rop.binding)
+            rop = ComplementUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(lop=lop, rop=rop)
-        for code in space.base.family.kernel:
-            lop = KernelUnit(code, space.base, code.binding)
-            rop = ComplementUnit(code, space, code.binding)
+        for code in flow.base.family.kernel:
+            lop = KernelUnit(code, flow.base, code.binding)
+            rop = ComplementUnit(code, flow, code.binding)
             yield Joint(lop=lop, rop=rop)
 
 
-class OrderMoniker(OrderSpace):
+class OrderMoniker(OrderFlow):
 
-    adapts(MonikerSpace)
+    adapts(MonikerFlow)
 
     def __call__(self):
-        for code, direction in ordering(self.space.base,
+        for code, direction in ordering(self.flow.base,
                                         with_strong=self.with_strong,
                                         with_weak=self.with_weak):
             yield (code, direction)
         if self.with_weak:
-            space = self.space.inflate()
-            for code, direction in ordering(self.space.seed):
-                if any(not self.space.base.spans(unit.space)
+            flow = self.flow.inflate()
+            for code, direction in ordering(self.flow.seed):
+                if any(not self.flow.base.spans(unit.flow)
                        for unit in code.units):
-                    code = MonikerUnit(code, space, code.binding)
+                    code = MonikerUnit(code, flow, code.binding)
                     yield (code, direction)
 
 
-class SpreadMoniker(SpreadSpace):
+class SpreadMoniker(SpreadFlow):
 
-    adapts(MonikerSpace)
+    adapts(MonikerFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.seed.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.seed.inflate()
         for unit in spread(seed):
-            yield unit.clone(space=space)
+            yield unit.clone(flow=flow)
 
 
-class SewMoniker(SewSpace):
+class SewMoniker(SewFlow):
 
-    adapts(MonikerSpace)
+    adapts(MonikerFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.seed.inflate()
-        baseline = self.space.seed_baseline.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.seed.inflate()
+        baseline = self.flow.seed_baseline.inflate()
         axes = []
         axis = seed
         while axis is not None and axis.concludes(baseline):
@@ -2351,117 +2351,117 @@ class SewMoniker(SewSpace):
         for axis in axes:
             if not axis.is_contracting or axis == baseline:
                 for joint in sew(axis):
-                    op = MonikerUnit(joint.lop, space, joint.lop.binding)
+                    op = MonikerUnit(joint.lop, flow, joint.lop.binding)
                     yield joint.clone(lop=op, rop=op)
 
 
-class TieMoniker(TieSpace):
+class TieMoniker(TieFlow):
 
-    adapts(MonikerSpace)
+    adapts(MonikerFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        for joint in tie(space.seed_baseline):
-            rop = MonikerUnit(joint.rop, space, joint.rop.binding)
+        flow = self.flow.inflate()
+        for joint in tie(flow.seed_baseline):
+            rop = MonikerUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 
 
-class OrderForked(OrderSpace):
+class OrderForked(OrderFlow):
 
-    adapts(ForkedSpace)
+    adapts(ForkedFlow)
 
     def __call__(self):
-        for code, direction in ordering(self.space.base,
+        for code, direction in ordering(self.flow.base,
                                         with_strong=self.with_strong,
                                         with_weak=self.with_weak):
             yield (code, direction)
-        if self.with_weak and not self.space.is_contracting:
-            space = self.space.inflate()
-            for code, direction in ordering(self.space.seed):
-                if all(self.space.seed_baseline.base.spans(unit.space)
+        if self.with_weak and not self.flow.is_contracting:
+            flow = self.flow.inflate()
+            for code, direction in ordering(self.flow.seed):
+                if all(self.flow.seed_baseline.base.spans(unit.flow)
                        for unit in code.units):
                     continue
-                code = ForkedUnit(code, space, code.binding)
+                code = ForkedUnit(code, flow, code.binding)
                 yield (code, direction)
 
 
-class SpreadForked(SpreadSpace):
+class SpreadForked(SpreadFlow):
 
-    adapts(ForkedSpace)
+    adapts(ForkedFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.seed.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.seed.inflate()
         for unit in spread(seed):
-            yield unit.clone(space=space)
+            yield unit.clone(flow=flow)
 
 
-class SewForked(SewSpace):
+class SewForked(SewFlow):
 
-    adapts(ForkedSpace)
+    adapts(ForkedFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.seed.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.seed.inflate()
         for joint in sew(seed):
-            op = ForkedUnit(joint.lop, space, joint.lop.binding)
+            op = ForkedUnit(joint.lop, flow, joint.lop.binding)
             yield joint.clone(lop=op, rop=op)
 
 
-class TieForked(TieSpace):
+class TieForked(TieFlow):
 
-    adapts(ForkedSpace)
+    adapts(ForkedFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.seed.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.seed.inflate()
         for joint in tie(seed):
             lop = joint.rop
-            rop = ForkedUnit(lop, space, lop.binding)
+            rop = ForkedUnit(lop, flow, lop.binding)
             yield joint.clone(lop=lop, rop=rop)
-        for code in self.space.kernel:
+        for code in self.flow.kernel:
             lop = code
-            rop = ForkedUnit(code, space, code.binding)
+            rop = ForkedUnit(code, flow, code.binding)
             yield Joint(lop, rop)
 
 
-class OrderLinked(OrderSpace):
+class OrderLinked(OrderFlow):
 
-    adapts(LinkedSpace)
+    adapts(LinkedFlow)
 
     def __call__(self):
-        for code, direction in ordering(self.space.base,
+        for code, direction in ordering(self.flow.base,
                                         with_strong=self.with_strong,
                                         with_weak=self.with_weak):
             yield (code, direction)
         if self.with_weak:
-            space = self.space.inflate()
-            for code, direction in ordering(self.space.seed):
-                if any(not self.space.base.spans(unit.space)
+            flow = self.flow.inflate()
+            for code, direction in ordering(self.flow.seed):
+                if any(not self.flow.base.spans(unit.flow)
                        for unit in code.units):
-                    code = LinkedUnit(code, space, code.binding)
+                    code = LinkedUnit(code, flow, code.binding)
                     yield (code, direction)
 
 
-class SpreadLinked(SpreadSpace):
+class SpreadLinked(SpreadFlow):
 
-    adapts(LinkedSpace)
+    adapts(LinkedFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.seed.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.seed.inflate()
         for unit in spread(seed):
-            yield unit.clone(space=space)
+            yield unit.clone(flow=flow)
 
 
-class SewLinked(SewSpace):
+class SewLinked(SewFlow):
 
-    adapts(LinkedSpace)
+    adapts(LinkedFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        seed = self.space.seed.inflate()
-        baseline = self.space.seed_baseline.inflate()
+        flow = self.flow.inflate()
+        seed = self.flow.seed.inflate()
+        baseline = self.flow.seed_baseline.inflate()
         axes = []
         axis = seed
         while axis is not None and axis.concludes(baseline):
@@ -2471,55 +2471,55 @@ class SewLinked(SewSpace):
         for axis in axes:
             if not axis.is_contracting or axis == baseline:
                 for joint in sew(axis):
-                    op = LinkedUnit(joint.lop, space, joint.lop.binding)
+                    op = LinkedUnit(joint.lop, flow, joint.lop.binding)
                     yield joint.clone(lop=op, rop=op)
 
 
-class TieLinked(TieSpace):
+class TieLinked(TieFlow):
 
-    adapts(LinkedSpace)
+    adapts(LinkedFlow)
 
     def __call__(self):
-        space = self.space.inflate()
-        for lop, rop in zip(space.counter_kernel, space.kernel):
-            rop = LinkedUnit(rop, space, rop.binding)
+        flow = self.flow.inflate()
+        for lop, rop in zip(flow.counter_kernel, flow.kernel):
+            rop = LinkedUnit(rop, flow, rop.binding)
             yield Joint(lop, rop)
 
 
-class OrderOrdered(OrderSpace):
+class OrderOrdered(OrderFlow):
 
-    adapts(OrderedSpace)
+    adapts(OrderedFlow)
 
     def __call__(self):
         if self.with_strong:
-            for code, direction in ordering(self.space.base,
+            for code, direction in ordering(self.flow.base,
                                             with_strong=True, with_weak=False):
                 yield (code, direction)
-            for code, direction in self.space.order:
+            for code, direction in self.flow.order:
                 yield (code, direction)
         if self.with_weak:
-            for code, direction in ordering(self.space.base,
+            for code, direction in ordering(self.flow.base,
                                             with_strong=False, with_weak=True):
                 yield (code, direction)
 
 
-def ordering(space, with_strong=True, with_weak=True):
-    ordering = OrderSpace(space, with_strong, with_weak)
+def ordering(flow, with_strong=True, with_weak=True):
+    ordering = OrderFlow(flow, with_strong, with_weak)
     return list(ordering())
 
 
-def spread(space):
-    spread = SpreadSpace(space)
+def spread(flow):
+    spread = SpreadFlow(flow)
     return list(spread())
 
 
-def sew(space):
-    sew = SewSpace(space)
+def sew(flow):
+    sew = SewFlow(flow)
     return list(sew())
 
 
-def tie(space):
-    tie = TieSpace(space)
+def tie(flow):
+    tie = TieFlow(flow)
     return list(tie())
 
 
@@ -2529,27 +2529,27 @@ def compile(expression, state=None, baseline=None, mask=None):
 
     Returns a :class:`htsql.tr.term.Term` instance.
 
-    `expression` (:class:`htsql.tr.code.Expression`)
+    `expression` (:class:`htsql.tr.flow.Expression`)
         An expression node.
 
     `state` (:class:`CompilingState` or ``None``)
         The compiling state to use.  If not set, a new compiling state
         is instantiated.
 
-    `baseline` (:class:`htsql.tr.code.Space` or ``None``)
-        The baseline space.  Specifies an axis that the compiled
-        term must export.  If not set, the current baseline space of
+    `baseline` (:class:`htsql.tr.flow.Flow` or ``None``)
+        The baseline flow.  Specifies an axis that the compiled
+        term must export.  If not set, the current baseline flow of
         the state is used.
 
-    `mask` (:class:`htsql.tr.code.Space` or ``None``)
-        The mask space.  Specifies the mask space against which
-        a new term is compiled.  When not set, the current mask space
+    `mask` (:class:`htsql.tr.flow.Flow` or ``None``)
+        The mask flow.  Specifies the mask flow against which
+        a new term is compiled.  When not set, the current mask flow
         of the state is used.
     """
     # Instantiate a new compiling state if not given one.
     if state is None:
         state = CompilingState()
-    # If passed, assign new baseline and mask spaces.
+    # If passed, assign new baseline and mask flows.
     if baseline is not None:
         state.push_baseline(baseline)
     if mask is not None:
@@ -2557,7 +2557,7 @@ def compile(expression, state=None, baseline=None, mask=None):
     # Realize and apply the `Compile` adapter.
     compile = Compile(expression, state)
     term = compile()
-    # Restore old baseline and mask spaces.
+    # Restore old baseline and mask flows.
     if baseline is not None:
         state.pop_baseline()
     if mask is not None:

@@ -14,9 +14,9 @@ This module implements the rewriting process.
 
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain
-from .code import (Expression, QueryExpr, SegmentExpr, Space, RootSpace,
-                   QuotientSpace, MonikerSpace, ForkedSpace, LinkedSpace,
-                   FilteredSpace, OrderedSpace,
+from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
+                   QuotientFlow, MonikerFlow, ForkedFlow, LinkedFlow,
+                   FilteredFlow, OrderedFlow,
                    Code, LiteralCode, CastCode, FormulaCode, Unit, ScalarUnit,
                    AggregateUnitBase, KernelUnit, ComplementUnit,
                    MonikerUnit, ForkedUnit, LinkedUnit)
@@ -30,12 +30,12 @@ class RewritingState(object):
         self.mask = None
         self.mask_stack = []
 
-    def set_root(self, space):
-        assert isinstance(space, RootSpace)
+    def set_root(self, flow):
+        assert isinstance(flow, RootFlow)
         assert self.root is None
         assert self.mask is None
-        self.root = space
-        self.mask = space
+        self.root = flow
+        self.mask = flow
 
     def flush(self):
         assert self.root is not None
@@ -45,7 +45,7 @@ class RewritingState(object):
         self.mask = None
 
     def push_mask(self, mask):
-        assert isinstance(mask, Space)
+        assert isinstance(mask, Flow)
         self.mask_stack.append(self.mask)
         self.mask = mask
 
@@ -87,122 +87,122 @@ class RewriteSegment(Rewrite):
     adapts(SegmentExpr)
 
     def __call__(self):
-        self.state.set_root(self.expression.space.root)
-        elements = [self.state.rewrite(element, mask=self.expression.space)
+        self.state.set_root(self.expression.flow.root)
+        elements = [self.state.rewrite(element, mask=self.expression.flow)
                     for element in self.expression.elements]
-        space = self.state.rewrite(self.expression.space)
+        flow = self.state.rewrite(self.expression.flow)
         self.state.flush()
-        return self.expression.clone(space=space, elements=elements)
+        return self.expression.clone(flow=flow, elements=elements)
 
 
-class RewriteSpace(Rewrite):
+class RewriteFlow(Rewrite):
 
-    adapts(Space)
+    adapts(Flow)
 
-    def __init__(self, space, state):
-        super(RewriteSpace, self).__init__(space, state)
-        self.space = space
-
-    def __call__(self):
-        if self.space.base is None:
-            return self.space
-        base = self.state.rewrite(self.space.base)
-        return self.space.clone(base=base)
-
-
-class RewriteQuotient(RewriteSpace):
-
-    adapts(QuotientSpace)
+    def __init__(self, flow, state):
+        super(RewriteFlow, self).__init__(flow, state)
+        self.flow = flow
 
     def __call__(self):
-        kernel = [self.state.rewrite(code, mask=self.space.family.seed)
-                  for code in self.space.family.kernel]
-        seed = self.state.rewrite(self.space.family.seed, mask=self.space.base)
-        base = self.state.rewrite(self.space.base)
-        return self.space.clone(base=base, seed=seed, kernel=kernel)
+        if self.flow.base is None:
+            return self.flow
+        base = self.state.rewrite(self.flow.base)
+        return self.flow.clone(base=base)
 
 
-class RewriteMoniker(RewriteSpace):
+class RewriteQuotient(RewriteFlow):
 
-    adapts(MonikerSpace)
-
-    def __call__(self):
-        seed = self.state.rewrite(self.space.seed, mask=self.space.base)
-        base = self.state.rewrite(self.space.base)
-        return self.space.clone(base=base, seed=seed)
-
-
-class RewriteForked(RewriteSpace):
-
-    adapts(ForkedSpace)
+    adapts(QuotientFlow)
 
     def __call__(self):
-        seed_mask = self.space.base
+        kernel = [self.state.rewrite(code, mask=self.flow.family.seed)
+                  for code in self.flow.family.kernel]
+        seed = self.state.rewrite(self.flow.family.seed, mask=self.flow.base)
+        base = self.state.rewrite(self.flow.base)
+        return self.flow.clone(base=base, seed=seed, kernel=kernel)
+
+
+class RewriteMoniker(RewriteFlow):
+
+    adapts(MonikerFlow)
+
+    def __call__(self):
+        seed = self.state.rewrite(self.flow.seed, mask=self.flow.base)
+        base = self.state.rewrite(self.flow.base)
+        return self.flow.clone(base=base, seed=seed)
+
+
+class RewriteForked(RewriteFlow):
+
+    adapts(ForkedFlow)
+
+    def __call__(self):
+        seed_mask = self.flow.base
         while not seed_mask.is_axis:
             seed_mask = seed_mask.base
-        seed = self.state.rewrite(self.space.seed, mask=seed_mask)
-        kernel = [self.state.rewrite(code, mask=self.space.base)
-                  for code in self.space.kernel]
-        base = self.state.rewrite(self.space.base)
-        return self.space.clone(base=base, seed=seed, kernel=kernel)
+        seed = self.state.rewrite(self.flow.seed, mask=seed_mask)
+        kernel = [self.state.rewrite(code, mask=self.flow.base)
+                  for code in self.flow.kernel]
+        base = self.state.rewrite(self.flow.base)
+        return self.flow.clone(base=base, seed=seed, kernel=kernel)
 
 
-class RewriteLinked(RewriteSpace):
+class RewriteLinked(RewriteFlow):
 
-    adapts(LinkedSpace)
+    adapts(LinkedFlow)
 
     def __call__(self):
-        base = self.state.rewrite(self.space.base)
-        seed = self.state.rewrite(self.space.seed, mask=self.space.base)
-        kernel = [self.state.rewrite(code, mask=self.space.seed)
-                  for code in self.space.kernel]
-        counter_kernel = [self.state.rewrite(code, mask=self.space.base)
-                          for code in self.space.counter_kernel]
-        return self.space.clone(base=base, seed=seed, kernel=kernel,
+        base = self.state.rewrite(self.flow.base)
+        seed = self.state.rewrite(self.flow.seed, mask=self.flow.base)
+        kernel = [self.state.rewrite(code, mask=self.flow.seed)
+                  for code in self.flow.kernel]
+        counter_kernel = [self.state.rewrite(code, mask=self.flow.base)
+                          for code in self.flow.counter_kernel]
+        return self.flow.clone(base=base, seed=seed, kernel=kernel,
                                 counter_kernel=counter_kernel)
 
 
-class RewriteFiltered(RewriteSpace):
+class RewriteFiltered(RewriteFlow):
 
-    adapts(FilteredSpace)
+    adapts(FilteredFlow)
 
     def __call__(self):
-        if (self.space.prune(self.state.mask)
-                == self.space.base.prune(self.state.mask)):
-            return self.state.rewrite(self.space.base)
-        if self.space.base.dominates(self.state.mask):
-            filter = self.state.rewrite(self.space.filter)
+        if (self.flow.prune(self.state.mask)
+                == self.flow.base.prune(self.state.mask)):
+            return self.state.rewrite(self.flow.base)
+        if self.flow.base.dominates(self.state.mask):
+            filter = self.state.rewrite(self.flow.filter)
         else:
-            filter = self.state.rewrite(self.space.filter,
-                                        mask=self.space.base)
-        base = self.state.rewrite(self.space.base)
+            filter = self.state.rewrite(self.flow.filter,
+                                        mask=self.flow.base)
+        base = self.state.rewrite(self.flow.base)
         if (isinstance(filter, LiteralCode) and
             isinstance(filter.domain, BooleanDomain) and
             filter.value is True):
             return base
-        return self.space.clone(base=base, filter=filter)
+        return self.flow.clone(base=base, filter=filter)
 
 
-class RewriteOrdered(RewriteSpace):
+class RewriteOrdered(RewriteFlow):
 
-    adapts(OrderedSpace)
+    adapts(OrderedFlow)
 
     def __call__(self):
-        if (self.space.prune(self.state.mask)
-                == self.space.base.prune(self.state.mask)):
-            return self.state.rewrite(self.space.base)
-        if self.space.base.dominates(self.state.mask):
+        if (self.flow.prune(self.state.mask)
+                == self.flow.base.prune(self.state.mask)):
+            return self.state.rewrite(self.flow.base)
+        if self.flow.base.dominates(self.state.mask):
             order = [(self.state.rewrite(code), direction)
-                     for code, direction in self.space.order]
+                     for code, direction in self.flow.order]
         else:
-            order = [(self.state.rewrite(code, mask=self.space.base),
+            order = [(self.state.rewrite(code, mask=self.flow.base),
                       direction)
-                     for code, direction in self.space.order]
-        if self.space.is_expanding:
-            base = self.state.rewrite(self.space.base)
+                     for code, direction in self.flow.order]
+        if self.flow.is_expanding:
+            base = self.state.rewrite(self.flow.base)
         else:
-            base = self.state.rewrite(self.space.base, mask=self.space.root)
-        return self.space.clone(base=base, order=order)
+            base = self.state.rewrite(self.flow.base, mask=self.flow.root)
+        return self.flow.clone(base=base, order=order)
 
 
 class RewriteCode(Rewrite):
@@ -268,8 +268,8 @@ class RewriteUnit(RewriteCode):
         self.unit = unit
 
     def __call__(self):
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow)
 
 
 class RewriteScalar(RewriteUnit):
@@ -277,12 +277,12 @@ class RewriteScalar(RewriteUnit):
     adapts(ScalarUnit)
 
     def __call__(self):
-        if self.unit.space.dominates(self.state.mask):
+        if self.unit.flow.dominates(self.state.mask):
             code = self.state.rewrite(self.unit.code)
         else:
-            code = self.state.rewrite(self.unit.code, mask=self.unit.space)
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space, code=code)
+            code = self.state.rewrite(self.unit.code, mask=self.unit.flow)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow, code=code)
 
 
 class RewriteAggregate(RewriteUnit):
@@ -290,14 +290,14 @@ class RewriteAggregate(RewriteUnit):
     adapts(AggregateUnitBase)
 
     def __call__(self):
-        code = self.state.rewrite(self.unit.code, mask=self.unit.plural_space)
-        if self.unit.space.dominates(self.state.mask):
-            plural_space = self.state.rewrite(self.unit.plural_space)
+        code = self.state.rewrite(self.unit.code, mask=self.unit.plural_flow)
+        if self.unit.flow.dominates(self.state.mask):
+            plural_flow = self.state.rewrite(self.unit.plural_flow)
         else:
-            plural_space = self.state.rewrite(self.unit.plural_space,
-                                              mask=self.unit.space)
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space, plural_space=plural_space,
+            plural_flow = self.state.rewrite(self.unit.plural_flow,
+                                              mask=self.unit.flow)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow, plural_flow=plural_flow,
                                code=code)
 
 
@@ -307,9 +307,9 @@ class RewriteKernel(RewriteUnit):
 
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
-                                  mask=self.unit.space.family.seed)
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space, code=code)
+                                  mask=self.unit.flow.family.seed)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow, code=code)
 
 
 class RewriteComplement(RewriteUnit):
@@ -318,9 +318,9 @@ class RewriteComplement(RewriteUnit):
 
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
-                                  mask=self.unit.space.base.family.seed)
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space, code=code)
+                                  mask=self.unit.flow.base.family.seed)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow, code=code)
 
 
 class RewriteMonikerUnit(RewriteUnit):
@@ -329,9 +329,9 @@ class RewriteMonikerUnit(RewriteUnit):
 
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
-                                  mask=self.unit.space.seed)
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space, code=code)
+                                  mask=self.unit.flow.seed)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow, code=code)
 
 
 class RewriteForkedUnit(RewriteUnit):
@@ -340,9 +340,9 @@ class RewriteForkedUnit(RewriteUnit):
 
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
-                                  mask=self.unit.space.base)
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space, code=code)
+                                  mask=self.unit.flow.base)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow, code=code)
 
 
 class RewriteLinkedUnit(RewriteUnit):
@@ -351,9 +351,9 @@ class RewriteLinkedUnit(RewriteUnit):
 
     def __call__(self):
         code = self.state.rewrite(self.unit.code,
-                                  mask=self.unit.space.seed)
-        space = self.state.rewrite(self.unit.space)
-        return self.unit.clone(space=space, code=code)
+                                  mask=self.unit.flow.seed)
+        flow = self.state.rewrite(self.unit.flow)
+        return self.unit.clone(flow=flow, code=code)
 
 
 def rewrite(expression, state=None, mask=None):

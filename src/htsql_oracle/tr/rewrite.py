@@ -6,7 +6,7 @@
 
 from htsql.adapter import adapts
 from htsql.domain import StringDomain
-from htsql.tr.code import LiteralCode
+from htsql.tr.flow import LiteralCode
 from htsql.tr.rewrite import Rewrite
 
 

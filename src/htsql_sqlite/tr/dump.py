@@ -34,7 +34,7 @@ from htsql.tr.error import SerializeError
 class SQLiteDumpTable(DumpTable):
 
     def __call__(self):
-        table = self.frame.space.family.table
+        table = self.frame.flow.family.table
         self.format("{table:name}", table=table.name)
 
 
