@@ -46,10 +46,6 @@ class CompilingState(object):
         When compiling a new term, indicates the leftmost axis that must
         exported by the term.  Note that the baseline flow is always
         inflated.
-
-    `mask` (:class:`htsql.tr.flow.Flow`)
-        When compiling a new term, indicates that the term is going to be
-        attached to a term that represents the `mask` flow.
     """
 
     def __init__(self):
@@ -61,10 +57,7 @@ class CompilingState(object):
         self.baseline_stack = []
         # The current baseline flow.
         self.baseline = None
-        ## The stack of previous mask flows.
-        #self.mask_stack = []
-        ## The current mask flow.
-        #self.mask = None
+        self.injections = []
 
     def tag(self):
         """
@@ -88,10 +81,8 @@ class CompilingState(object):
         # Check that the state flows are not yet initialized.
         assert self.root is None
         assert self.baseline is None
-        #assert self.mask is None
         self.root = flow
         self.baseline = flow
-        #self.mask = flow
 
     def flush(self):
         """
@@ -102,11 +93,9 @@ class CompilingState(object):
         assert self.root is not None
         assert not self.baseline_stack
         assert self.baseline is self.root
-        #assert not self.mask_stack
-        #assert self.mask is self.root
+        assert not self.injections
         self.root = None
         self.baseline = None
-        #self.mask = None
 
     def push_baseline(self, baseline):
         """
@@ -129,27 +118,7 @@ class CompilingState(object):
         """
         self.baseline = self.baseline_stack.pop()
 
-    def push_mask(self, mask):
-        """
-        Sets a new mask flow.
-
-        This function hides the current mask flow.  To restore the
-        previous mask flow, use :meth:`pop_mask`.
-
-        `mask` (:class:`htsql.tr.flow.Flow`)
-            The new mask flow.
-        """
-        #assert isinstance(mask, Flow)
-        #self.mask_stack.append(self.mask)
-        #self.mask = mask
-
-    def pop_mask(self):
-        """
-        Restores the previous mask flow.
-        """
-        #self.mask = self.mask_stack.pop()
-
-    def compile(self, expression, baseline=None, mask=None):
+    def compile(self, expression, baseline=None, mask=None, injections=None):
         """
         Compiles a new term node for the given expression.
 
@@ -165,16 +134,6 @@ class CompilingState(object):
             export the flow itself as well as all inflated prefixes
             up to the `baseline` flow.  It may (but it is not required)
             export other axes as well.
-
-        `mask` (:class:`htsql.tr.flow.Flow` or ``None``)
-            The mask flow.  Specifies the mask flow against which
-            a new term is compiled.  When not set, the current mask flow
-            of the state is used.
-
-            A mask indicates that the new term is going to be attached
-            to a term that represent the mask flow.  Therefore the
-            compiler could ignore any non-axis operations that are
-            already enforced by the mask flow.
         """
         # FIXME: potentially, we could implement a cache of `expression`
         # -> `term` to avoid generating the same term node more than once.
@@ -183,7 +142,19 @@ class CompilingState(object):
         # and mask flows.  Second, each compiled term must have a unique
         # tag, therefore we'd have to replace the tags and route tables
         # of the cached term node.
-        return compile(expression, self, baseline=baseline, mask=mask)
+        current_injections = self.injections
+        self.injections = []
+        if injections:
+            for code in injections:
+                for unit in code.units:
+                    self.injections.append(unit)
+        term = compile(expression, self, baseline=baseline)
+        injections = self.injections
+        self.injections = []
+        if injections:
+            term = self.inject(term, injections)
+        self.injections = current_injections
+        return term
 
     def inject(self, term, expressions):
         """
@@ -292,11 +263,12 @@ class CompileBase(Adapter):
         # Compile the term, use the found baseline and the trunk flow
         # as the mask.
         term = self.state.compile(flow,
-                                  baseline=baseline)
+                                  baseline=baseline,
+                                  injections=codes)
 
-        # If provided, inject the given expressions.
-        if codes is not None:
-            term = self.state.inject(term, codes)
+        ## If provided, inject the given expressions.
+        #if codes is not None:
+        #    term = self.state.inject(term, codes)
 
         # Return the compiled shoot term.
         return term
@@ -558,14 +530,14 @@ class CompileSegment(Compile):
     def __call__(self):
         # Initialize the all state flows with a root scalar flow.
         self.state.set_root(self.expression.flow.root)
-        # Construct a term corresponding to the segment flow.
-        kid = self.state.compile(self.expression.flow)
         # Get the ordering of the segment flow.
         order = ordering(self.expression.flow)
         # List of expressions we need the term to export.
         codes = self.expression.elements + [code for code, direction in order]
-        # Inject the expressions into the term.
-        kid = self.state.inject(kid, codes)
+        # Construct a term corresponding to the segment flow.
+        kid = self.state.compile(self.expression.flow, injections=codes)
+        ## Inject the expressions into the term.
+        #kid = self.state.inject(kid, codes)
         # The compiler does not guarantee that the produced term respects
         # the flow ordering, so it is our responsitibity to wrap the term
         # with an order node.
@@ -967,10 +939,15 @@ class CompileComplement(CompileFlow):
         baseline = family.seed_baseline
         while not baseline.is_inflated:
             baseline = baseline.base
-        seed_term = self.state.compile(family.seed, baseline=baseline)
-        seed_term = self.state.inject(seed_term, family.kernel)
-        if self.flow.extra_codes is not None:
-            seed_term = self.state.inject(seed_term, self.flow.extra_codes)
+        extra_codes = family.kernel + [unit.code
+                                       for unit in self.state.injections
+                                       if isinstance(unit, ComplementUnit)
+                                       and unit.flow == self.flow]
+        seed_term = self.state.compile(family.seed, baseline=baseline,
+                                       injections=extra_codes)
+        #seed_term = self.state.inject(seed_term, family.kernel)
+        #if self.flow.extra_codes is not None:
+        #    seed_term = self.state.inject(seed_term, self.flow.extra_codes)
         if family.kernel:
             filters = []
             for code in family.kernel:
@@ -997,8 +974,8 @@ class CompileComplement(CompileFlow):
             for code in family.kernel:
                 unit = ComplementUnit(code, self.flow, unit.binding)
                 routes[unit] = seed_term.tag
-            if self.flow.extra_codes is not None:
-                for code in self.flow.extra_codes:
+            if extra_codes is not None:
+                for code in extra_codes:
                     unit = ComplementUnit(code, self.flow, code.binding)
                     routes[unit] = seed_term.tag
             for unit in spread(family.seed):
@@ -1021,8 +998,8 @@ class CompileComplement(CompileFlow):
         for code in family.kernel:
             unit = ComplementUnit(code, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
-        if self.flow.extra_codes is not None:
-            for code in self.flow.extra_codes:
+        if extra_codes is not None:
+            for code in extra_codes:
                 unit = ComplementUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
         for unit in spread(family.seed):
@@ -1052,6 +1029,9 @@ class CompileMoniker(CompileFlow):
     adapts(MonikerFlow)
 
     def __call__(self):
+        extra_codes = [unit.code for unit in self.state.injections
+                                 if isinstance(unit, MonikerUnit)
+                                    and unit.flow == self.flow]
         if (self.flow.seed_baseline.base is not None and
             self.flow.base.conforms(self.flow.seed_baseline.base) and
             not self.flow.base.spans(self.flow.seed_baseline)):
@@ -1060,10 +1040,8 @@ class CompileMoniker(CompileFlow):
                     self.flow == self.state.baseline):
                 while not self.state.baseline.concludes(baseline):
                     baseline = baseline.base
-            seed_term = self.state.compile(self.flow.seed, baseline=baseline)
-            if self.flow.extra_codes is not None:
-                seed_term = self.state.inject(seed_term,
-                                              self.flow.extra_codes)
+            seed_term = self.state.compile(self.flow.seed, baseline=baseline,
+                                           injections=extra_codes)
             if seed_term.baseline != self.flow.seed_baseline:
                 flow = self.flow.base
                 seed_term = self.state.inject(seed_term, [flow])
@@ -1084,8 +1062,8 @@ class CompileMoniker(CompileFlow):
                 routes[seed_unit] = seed_term.tag
                 seed_unit = MonikerUnit(unit, self.backbone, unit.binding)
                 routes[seed_unit] = seed_term.tag
-            if self.flow.extra_codes is not None:
-                for code in self.flow.extra_codes:
+            if extra_codes is not None:
+                for code in extra_codes:
                     unit = MonikerUnit(code, self.flow, code.binding)
                     routes[unit] = seed_term.tag
                     unit = MonikerUnit(code, self.backbone, code.binding)
@@ -1103,7 +1081,7 @@ class CompileMoniker(CompileFlow):
             baseline = baseline.base
         trunk_term = self.state.compile(self.flow.base, baseline=baseline)
         seed_term = self.compile_shoot(self.flow.seed, trunk_term,
-                                        self.flow.extra_codes)
+                                       extra_codes)
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes)
@@ -1115,8 +1093,8 @@ class CompileMoniker(CompileFlow):
             routes[seed_unit] = seed_term.tag
             seed_unit = MonikerUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
-        if self.flow.extra_codes is not None:
-            for code in self.flow.extra_codes:
+        if extra_codes is not None:
+            for code in extra_codes:
                 unit = MonikerUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
                 unit = MonikerUnit(code, self.backbone, code.binding)
@@ -1140,11 +1118,12 @@ class CompileForked(CompileFlow):
         baseline = seed
         while not baseline.is_inflated:
             baseline = baseline.base
-        seed_term = self.state.compile(seed, baseline=baseline)
-        extra_codes = self.flow.kernel[:]
-        if self.flow.extra_codes is not None:
-            extra_codes.extend(self.flow.extra_codes)
-        seed_term = self.state.inject(seed_term, extra_codes)
+        extra_codes = self.flow.kernel[:] + [unit.code
+                                             for unit in self.state.injections
+                                             if isinstance(unit, ForkedUnit)
+                                             and unit.flow == self.flow]
+        seed_term = self.state.compile(seed, baseline=baseline,
+                                       injections=extra_codes)
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
@@ -1156,9 +1135,6 @@ class CompileForked(CompileFlow):
                 routes[seed_unit] = seed_term.tag
                 seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
                 routes[seed_unit] = seed_term.tag
-            extra_codes = self.flow.kernel[:]
-            if self.flow.extra_codes is not None:
-                extra_codes.extend(self.flow.extra_codes)
             for code in extra_codes:
                 unit = ForkedUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
@@ -1204,9 +1180,6 @@ class CompileForked(CompileFlow):
             routes[seed_unit] = seed_term.tag
             seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
-        extra_codes = self.flow.kernel[:]
-        if self.flow.extra_codes is not None:
-            extra_codes.extend(self.flow.extra_codes)
         for code in extra_codes:
             unit = ForkedUnit(code, self.flow, code.binding)
             routes[unit] = seed_term.tag
@@ -1230,11 +1203,12 @@ class CompileLinked(CompileFlow):
         baseline = self.flow.seed_baseline
         while not baseline.is_inflated:
             baseline = baseline.base
-        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
-        codes = self.flow.kernel[:]
-        if self.flow.extra_codes is not None:
-            codes += self.flow.extra_codes
-        seed_term = self.state.inject(seed_term, codes)
+        extra_codes = self.flow.kernel[:] + [unit.code
+                                             for unit in self.state.injections
+                                             if isinstance(unit, LinkedUnit)
+                                             and unit.flow == self.flow]
+        seed_term = self.state.compile(self.flow.seed, baseline=baseline,
+                                       injections=extra_codes)
         extra_axes = []
         joints = []
         if seed_term.baseline != self.flow.seed_baseline:
@@ -1285,8 +1259,8 @@ class CompileLinked(CompileFlow):
             routes[unit] = seed_term.tag
             unit = LinkedUnit(code, self.backbone, code.binding)
             routes[unit] = seed_term.tag
-        if self.flow.extra_codes is not None:
-            for code in self.flow.extra_codes:
+        if extra_codes is not None:
+            for code in extra_codes:
                 unit = LinkedUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
                 unit = LinkedUnit(code, self.backbone, code.binding)
@@ -1321,7 +1295,8 @@ class CompileFiltered(CompileFlow):
         # node.
 
         # The term corresponding to the flow base.
-        term = self.state.compile(self.flow.base)
+        kid = self.state.compile(self.flow.base,
+                    injections=self.state.injections+[self.flow.filter])
 
         ## Handle the special case when the filter is already enforced
         ## by the mask.  There is no method to directly verify it, so
@@ -1339,9 +1314,9 @@ class CompileFiltered(CompileFlow):
         #    routes[self.flow] = routes[self.backbone]
         #    return WrapperTerm(self.state.tag(), term, self.flow, routes)
 
-        # Now wrap the base term with a filter term node.
-        # Make sure the base term is able to produce the filter expression.
-        kid = self.state.inject(term, [self.flow.filter])
+        ## Now wrap the base term with a filter term node.
+        ## Make sure the base term is able to produce the filter expression.
+        #kid = self.state.inject(term, [self.flow.filter])
         # Inherit the routing table from the base term, add the given
         # flow to the routing table.
         routes = kid.routes.copy()
@@ -1389,14 +1364,13 @@ class CompileOrdered(CompileFlow):
         # optimizations as they change cardinality of the term.
         # Here we reset the current baseline and mask flows to the
         # scalar flow, which effectively disables any optimizations.
-        kid = self.state.compile(self.flow.base,
-                                  baseline=self.state.root,
-                                  mask=self.state.root)
         # Extract the flow ordering and make sure the base term is able
         # to produce the order expressions.
         order = ordering(self.flow)
         codes = [code for code, direction in order]
-        kid = self.state.inject(kid, codes)
+        kid = self.state.compile(self.flow.base,
+                                  baseline=self.state.root,
+                                  injections=self.state.injections+codes)
         # Add the given flow to the routing table.
         routes = kid.routes.copy()
         for unit in spread(self.flow):
@@ -1622,11 +1596,11 @@ class InjectComplement(Inject):
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        flow = self.flow.clone(extra_codes=[self.unit.code])
         baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline,
+                                       injections=[self.unit])
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1642,11 +1616,11 @@ class InjectMoniker(Inject):
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        flow = self.flow.clone(extra_codes=[self.unit.code])
         baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline,
+                                       injections=[self.unit])
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1662,11 +1636,11 @@ class InjectForked(Inject):
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        flow = self.flow.clone(extra_codes=[self.unit.code])
         baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline,
+                                       injections=[self.unit])
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)
@@ -1682,11 +1656,11 @@ class InjectLinked(Inject):
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        flow = self.flow.clone(extra_codes=[self.unit.code])
         baseline = flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline)
+        unit_term = self.state.compile(flow, baseline=baseline,
+                                       injections=[self.unit])
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)

@@ -19502,20 +19502,16 @@ tests:
                ----
                /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
                SELECT [department].[name],
-                      COALESCE([course_1].[sum], 0),
-                      [course_2].[avg]
+                      COALESCE([course].[sum], 0),
+                      [course].[avg]
                FROM [ad].[department] AS [department]
                     LEFT OUTER JOIN (SELECT SUM([course].[credits]) AS [sum],
+                                            AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
                                             [course].[department_code]
                                      FROM [ad].[course] AS [course]
-                                     GROUP BY [course].[department_code]) AS [course_1]
-                                    ON ([department].[code] = [course_1].[department_code])
-                    LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
-                                            [course].[department_code]
-                                     FROM [ad].[course] AS [course]
-                                     GROUP BY [course].[department_code]) AS [course_2]
-                                    ON ([department].[code] = [course_2].[department_code])
-               WHERE (COALESCE([course_1].[sum], 0) IS NOT NULL)
+                                     GROUP BY [course].[department_code]) AS [course]
+                                    ON ([department].[code] = [course].[department_code])
+               WHERE (COALESCE([course].[sum], 0) IS NOT NULL)
                ORDER BY 2 DESC, [department].[code] ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
@@ -21723,8 +21719,6 @@ tests:
                SELECT [program].[code],
                       COALESCE([student].[count], 0)
                FROM [ad].[program] AS [program]
-                    INNER JOIN [ad].[school] AS [school]
-                               ON ([program].[school_code] = [school].[code])
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
                                             [student].[school_code],
                                             [student].[program_code]
@@ -21732,6 +21726,8 @@ tests:
                                      WHERE ([student].[is_active] <> 0)
                                      GROUP BY [student].[school_code], [student].[program_code]) AS [student]
                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
+                    INNER JOIN [ad].[school] AS [school]
+                               ON ([program].[school_code] = [school].[code])
                WHERE ([school].[code] = 'bus')
                ORDER BY [program].[school_code] ASC, 1 ASC
           - uri: /define(school.program.student:=student?is_active) .count((school?code='bus').program.student)
@@ -23967,8 +23963,15 @@ tests:
                                        [program].[code],
                                        [program].[title],
                                        [program].[degree],
-                                       [program].[part_of]
+                                       [program].[part_of],
+                                       COALESCE([student].[count], 0) AS [count]
                                 FROM [ad].[program] AS [program]
+                                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                             [student].[school_code],
+                                                             [student].[program_code]
+                                                      FROM [ed].[student] AS [student]
+                                                      GROUP BY [student].[school_code], [student].[program_code]) AS [student]
+                                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
                                 WHERE ([program].[degree] IS NOT NULL)) AS [program_2]
                                ON ([program_1].[degree] = [program_2].[degree])
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
@@ -23977,19 +23980,7 @@ tests:
                                      FROM [ed].[student] AS [student]
                                      GROUP BY [student].[school_code], [student].[program_code]) AS [student]
                                     ON (([program_2].[school_code] = [student].[school_code]) AND ([program_2].[code] = [student].[program_code]))
-                    INNER JOIN (SELECT COALESCE([student].[count], 0) AS [count],
-                                       [program].[school_code],
-                                       [program].[code]
-                                FROM [ad].[program] AS [program]
-                                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                                             [student].[school_code],
-                                                             [student].[program_code]
-                                                      FROM [ed].[student] AS [student]
-                                                      GROUP BY [student].[school_code], [student].[program_code]) AS [student]
-                                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                WHERE ([program].[degree] IS NOT NULL)) AS [program_3]
-                               ON (([program_2].[school_code] = [program_3].[school_code]) AND ([program_2].[code] = [program_3].[code]))
-               ORDER BY [program_1].[degree] ASC, [program_3].[count] ASC, 1 ASC, 2 ASC
+               ORDER BY [program_1].[degree] ASC, [program_2].[count] ASC, 1 ASC, 2 ASC
           - uri: /(program^degree){*, exists(^), count(^)}
             status: 200 OK
             headers:

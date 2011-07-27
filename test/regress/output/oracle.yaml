@@ -19733,20 +19733,16 @@ tests:
                ----
                /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
                SELECT "DEPARTMENT"."NAME",
-                      COALESCE("COURSE_1"."sum", 0),
-                      "COURSE_2"."avg"
+                      COALESCE("COURSE"."sum", 0),
+                      "COURSE"."avg"
                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
                     LEFT OUTER JOIN (SELECT SUM("COURSE"."CREDITS") AS "sum",
+                                            AVG("COURSE"."CREDITS") AS "avg",
                                             "COURSE"."DEPARTMENT_CODE"
                                      FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_1"
-                                    ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
-                    LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
-                                            "COURSE"."DEPARTMENT_CODE"
-                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
-                                    ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT_CODE")
-               WHERE (COALESCE("COURSE_1"."sum", 0) IS NOT NULL)
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
+               WHERE (COALESCE("COURSE"."sum", 0) IS NOT NULL)
                ORDER BY 2 DESC, "DEPARTMENT"."CODE" ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
@@ -21976,8 +21972,6 @@ tests:
                SELECT "PROGRAM"."CODE",
                       COALESCE("STUDENT"."count", 0)
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                               ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "STUDENT"."SCHOOL_CODE",
                                             "STUDENT"."PROGRAM_CODE"
@@ -21985,6 +21979,8 @@ tests:
                                      WHERE ("STUDENT"."IS_ACTIVE" <> 0)
                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
+                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                               ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
                WHERE ("SCHOOL"."CODE" = 'bus')
                ORDER BY "PROGRAM"."SCHOOL_CODE" ASC, 1 ASC
           - uri: /define(school.program.student:=student?is_active) .count((school?code='bus').program.student)
@@ -24222,8 +24218,15 @@ tests:
                                        "PROGRAM"."CODE",
                                        "PROGRAM"."TITLE",
                                        "PROGRAM"."DEGREE",
-                                       "PROGRAM"."PART_OF"
+                                       "PROGRAM"."PART_OF",
+                                       COALESCE("STUDENT"."count", 0) AS "count"
                                 FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                             "STUDENT"."SCHOOL_CODE",
+                                                             "STUDENT"."PROGRAM_CODE"
+                                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
+                                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
                                 WHERE ("PROGRAM"."DEGREE" IS NOT NULL)) "PROGRAM_2"
                                ON ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
@@ -24232,19 +24235,7 @@ tests:
                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
                                     ON (("PROGRAM_2"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM_2"."CODE" = "STUDENT"."PROGRAM_CODE"))
-                    INNER JOIN (SELECT COALESCE("STUDENT"."count", 0) AS "count",
-                                       "PROGRAM"."SCHOOL_CODE",
-                                       "PROGRAM"."CODE"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                             "STUDENT"."SCHOOL_CODE",
-                                                             "STUDENT"."PROGRAM_CODE"
-                                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
-                                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
-                                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)) "PROGRAM_3"
-                               ON (("PROGRAM_2"."SCHOOL_CODE" = "PROGRAM_3"."SCHOOL_CODE") AND ("PROGRAM_2"."CODE" = "PROGRAM_3"."CODE"))
-               ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_3"."count" ASC, 1 ASC, 2 ASC
+               ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_2"."count" ASC, 1 ASC, 2 ASC
           - uri: /(program^degree){*, exists(^), count(^)}
             status: 200 OK
             headers:

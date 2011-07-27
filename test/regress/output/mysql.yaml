@@ -19454,20 +19454,16 @@ tests:
                ----
                /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
                SELECT `department`.`name`,
-                      COALESCE(`course_1`.`sum`, 0),
-                      `course_2`.`avg`
+                      COALESCE(`course`.`sum`, 0),
+                      `course`.`avg`
                FROM `htsql_regress`.`department` AS `department`
                     LEFT OUTER JOIN (SELECT CAST(SUM(`course`.`credits`) AS SIGNED INTEGER) AS `sum`,
+                                            AVG(CAST(`course`.`credits` AS DECIMAL(65,30))) AS `avg`,
                                             `course`.`department_code`
                                      FROM `htsql_regress`.`course` AS `course`
-                                     GROUP BY 2) AS `course_1`
-                                    ON (`department`.`code` = `course_1`.`department_code`)
-                    LEFT OUTER JOIN (SELECT AVG(CAST(`course`.`credits` AS DECIMAL(65,30))) AS `avg`,
-                                            `course`.`department_code`
-                                     FROM `htsql_regress`.`course` AS `course`
-                                     GROUP BY 2) AS `course_2`
-                                    ON (`department`.`code` = `course_2`.`department_code`)
-               WHERE (COALESCE(`course_1`.`sum`, 0) IS NOT NULL)
+                                     GROUP BY 3) AS `course`
+                                    ON (`department`.`code` = `course`.`department_code`)
+               WHERE (COALESCE(`course`.`sum`, 0) IS NOT NULL)
                ORDER BY 2 DESC, `department`.`code` ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
@@ -21055,6 +21051,12 @@ tests:
                       `course_1`.`credits`,
                       COALESCE(`class`.`count`, 0)
                FROM `htsql_regress`.`course` AS `course_1`
+                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                            `class`.`department_code`,
+                                            `class`.`course_no`
+                                     FROM `htsql_regress`.`class` AS `class`
+                                     GROUP BY 2, 3) AS `class`
+                                    ON ((`course_1`.`department_code` = `class`.`department_code`) AND (`course_1`.`no` = `class`.`course_no`))
                     LEFT OUTER JOIN (SELECT MAX(`course`.`credits`) AS `max`,
                                             EXISTS(SELECT TRUE
                                                    FROM `htsql_regress`.`class` AS `class`
@@ -21066,12 +21068,6 @@ tests:
                                                FROM `htsql_regress`.`class` AS `class_1`
                                                WHERE (`course_1`.`department_code` = `class_1`.`department_code`)
                                                      AND (`course_1`.`no` = `class_1`.`course_no`)) = `course_2`.`exists`)
-                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                            `class`.`department_code`,
-                                            `class`.`course_no`
-                                     FROM `htsql_regress`.`class` AS `class`
-                                     GROUP BY 2, 3) AS `class`
-                                    ON ((`course_1`.`department_code` = `class`.`department_code`) AND (`course_1`.`no` = `class`.`course_no`))
                     INNER JOIN `htsql_regress`.`department` AS `department`
                                ON (`course_1`.`department_code` = `department`.`code`)
                WHERE (`course_1`.`credits` = `course_2`.`max`)
@@ -21364,41 +21360,43 @@ tests:
 
                ----
                /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student)):where(program:=program.limit(10,15))
-               SELECT `program_1`.`school_code`,
-                      `program_1`.`code`,
-                      COALESCE(`student`.`count`, 0)
-               FROM (SELECT `program`.`school_code`,
-                            `program`.`code`
-                     FROM `htsql_regress`.`program` AS `program`
+               SELECT `program`.`school_code`,
+                      `program`.`code`,
+                      `program`.`count`
+               FROM (SELECT `program_1`.`school_code`,
+                            `program_1`.`code`,
+                            COALESCE(`student`.`count`, 0) AS `count`,
+                            `program_2`.`avg`
+                     FROM `htsql_regress`.`program` AS `program_1`
+                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                                  `student`.`school_code`,
+                                                  `student`.`program_code`
+                                           FROM `htsql_regress`.`student` AS `student`
+                                           GROUP BY 2, 3) AS `student`
+                                          ON ((`program_1`.`school_code` = `student`.`school_code`) AND (`program_1`.`code` = `student`.`program_code`))
+                          LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE(`student`.`count`, 0) AS DECIMAL(65,30))) AS `avg`,
+                                                  `program_1`.`school_code`,
+                                                  `program_1`.`code`
+                                           FROM `htsql_regress`.`program` AS `program_1`
+                                                INNER JOIN (SELECT `program`.`school_code`,
+                                                                   `program`.`code`
+                                                            FROM `htsql_regress`.`program` AS `program`
+                                                            ORDER BY 1 ASC, 2 ASC
+                                                            LIMIT 10
+                                                            OFFSET 15) AS `program_2`
+                                                           ON (`program_1`.`school_code` = `program_2`.`school_code`)
+                                                LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                                                        `student`.`school_code`,
+                                                                        `student`.`program_code`
+                                                                 FROM `htsql_regress`.`student` AS `student`
+                                                                 GROUP BY 2, 3) AS `student`
+                                                                ON ((`program_2`.`school_code` = `student`.`school_code`) AND (`program_2`.`code` = `student`.`program_code`))
+                                           GROUP BY 2, 3) AS `program_2`
+                                          ON ((`program_1`.`school_code` = `program_2`.`school_code`) AND (`program_1`.`code` = `program_2`.`code`))
                      ORDER BY 1 ASC, 2 ASC
                      LIMIT 10
-                     OFFSET 15) AS `program_1`
-                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                            `student`.`school_code`,
-                                            `student`.`program_code`
-                                     FROM `htsql_regress`.`student` AS `student`
-                                     GROUP BY 2, 3) AS `student`
-                                    ON ((`program_1`.`school_code` = `student`.`school_code`) AND (`program_1`.`code` = `student`.`program_code`))
-                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE(`student`.`count`, 0) AS DECIMAL(65,30))) AS `avg`,
-                                            `program_1`.`school_code`,
-                                            `program_1`.`code`
-                                     FROM `htsql_regress`.`program` AS `program_1`
-                                          INNER JOIN (SELECT `program`.`school_code`,
-                                                             `program`.`code`
-                                                      FROM `htsql_regress`.`program` AS `program`
-                                                      ORDER BY 1 ASC, 2 ASC
-                                                      LIMIT 10
-                                                      OFFSET 15) AS `program_2`
-                                                     ON (`program_1`.`school_code` = `program_2`.`school_code`)
-                                          LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                                                  `student`.`school_code`,
-                                                                  `student`.`program_code`
-                                                           FROM `htsql_regress`.`student` AS `student`
-                                                           GROUP BY 2, 3) AS `student`
-                                                          ON ((`program_2`.`school_code` = `student`.`school_code`) AND (`program_2`.`code` = `student`.`program_code`))
-                                     GROUP BY 2, 3) AS `program_2`
-                                    ON ((`program_1`.`school_code` = `program_2`.`school_code`) AND (`program_1`.`code` = `program_2`.`code`))
-               WHERE (CAST(COALESCE(`student`.`count`, 0) AS DECIMAL(65,30)) > `program_2`.`avg`)
+                     OFFSET 15) AS `program`
+               WHERE (CAST(`program`.`count` AS DECIMAL(65,30)) > `program`.`avg`)
                ORDER BY 1 ASC, 2 ASC
           - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
             status: 200 OK
@@ -21719,8 +21717,6 @@ tests:
                SELECT `program`.`code`,
                       COALESCE(`student`.`count`, 0)
                FROM `htsql_regress`.`program` AS `program`
-                    INNER JOIN `htsql_regress`.`school` AS `school`
-                               ON (`program`.`school_code` = `school`.`code`)
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
                                             `student`.`school_code`,
                                             `student`.`program_code`
@@ -21728,6 +21724,8 @@ tests:
                                      WHERE `student`.`is_active`
                                      GROUP BY 2, 3) AS `student`
                                     ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+                    INNER JOIN `htsql_regress`.`school` AS `school`
+                               ON (`program`.`school_code` = `school`.`code`)
                WHERE (`school`.`code` = 'bus')
                ORDER BY `program`.`school_code` ASC, 1 ASC
           - uri: /define(school.program.student:=student?is_active) .count((school?code='bus').program.student)
@@ -23963,8 +23961,15 @@ tests:
                                        `program`.`code`,
                                        `program`.`title`,
                                        `program`.`degree`,
-                                       `program`.`part_of`
+                                       `program`.`part_of`,
+                                       COALESCE(`student`.`count`, 0) AS `count`
                                 FROM `htsql_regress`.`program` AS `program`
+                                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
+                                                             `student`.`school_code`,
+                                                             `student`.`program_code`
+                                                      FROM `htsql_regress`.`student` AS `student`
+                                                      GROUP BY 2, 3) AS `student`
+                                                     ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
                                 WHERE (`program`.`degree` IS NOT NULL)) AS `program_2`
                                ON (`program_1`.`degree` = `program_2`.`degree`)
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
@@ -23973,19 +23978,7 @@ tests:
                                      FROM `htsql_regress`.`student` AS `student`
                                      GROUP BY 2, 3) AS `student`
                                     ON ((`program_2`.`school_code` = `student`.`school_code`) AND (`program_2`.`code` = `student`.`program_code`))
-                    INNER JOIN (SELECT COALESCE(`student`.`count`, 0) AS `count`,
-                                       `program`.`school_code`,
-                                       `program`.`code`
-                                FROM `htsql_regress`.`program` AS `program`
-                                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS `count`,
-                                                             `student`.`school_code`,
-                                                             `student`.`program_code`
-                                                      FROM `htsql_regress`.`student` AS `student`
-                                                      GROUP BY 2, 3) AS `student`
-                                                     ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
-                                WHERE (`program`.`degree` IS NOT NULL)) AS `program_3`
-                               ON ((`program_2`.`school_code` = `program_3`.`school_code`) AND (`program_2`.`code` = `program_3`.`code`))
-               ORDER BY `program_1`.`degree` ASC, `program_3`.`count` ASC, 1 ASC, 2 ASC
+               ORDER BY `program_1`.`degree` ASC, `program_2`.`count` ASC, 1 ASC, 2 ASC
           - uri: /(program^degree){*, exists(^), count(^)}
             status: 200 OK
             headers:

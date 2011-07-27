@@ -874,10 +874,9 @@ class ComplementFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, binding, extra_codes=None):
+    def __init__(self, base, binding):
         assert isinstance(base, Flow)
         assert base.family.is_kernel
-        assert isinstance(extra_codes, maybe(listof(Code)))
         super(ComplementFlow, self).__init__(
                     base=base,
                     family=base.family.seed.family,
@@ -885,14 +884,13 @@ class ComplementFlow(Flow):
                     is_expanding=True,
                     binding=binding,
                     equality_vector=(base,))
-        self.extra_codes = extra_codes
 
 
 class MonikerFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, binding, extra_codes=None):
+    def __init__(self, base, seed, binding):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert seed.spans(base)
@@ -912,14 +910,13 @@ class MonikerFlow(Flow):
                     equality_vector=(base, seed))
         self.seed = seed
         self.seed_baseline = seed_baseline
-        self.extra_codes = extra_codes
 
 
 class ForkedFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, kernel, binding, extra_codes=None):
+    def __init__(self, base, seed, kernel, binding):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert isinstance(kernel, listof(Code))
@@ -928,7 +925,6 @@ class ForkedFlow(Flow):
         #assert base.family == seed.family
         assert all(base.spans(unit.flow) for code in kernel
                                           for unit in code.units)
-        assert isinstance(extra_codes, maybe(listof(Code)))
         seed_baseline = seed
         while not seed_baseline.is_axis:
             seed_baseline = seed_baseline.base
@@ -942,7 +938,6 @@ class ForkedFlow(Flow):
         self.seed = seed
         self.seed_baseline = seed_baseline
         self.kernel = kernel
-        self.extra_codes = extra_codes
 
     def __str__(self):
         return "%s . fork({%s})" \
@@ -953,8 +948,7 @@ class LinkedFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, kernel, counter_kernel,
-                 binding, extra_codes=None):
+    def __init__(self, base, seed, kernel, counter_kernel, binding):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert seed.spans(base)
@@ -982,7 +976,6 @@ class LinkedFlow(Flow):
         self.seed_baseline = seed_baseline
         self.kernel = kernel
         self.counter_kernel = counter_kernel
-        self.extra_codes = extra_codes
 
 
 class FilteredFlow(Flow):
