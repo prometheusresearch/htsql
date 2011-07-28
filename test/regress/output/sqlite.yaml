@@ -19090,17 +19090,10 @@ tests:
                ----
                /department{code,school.code,count(school.program),school.count(program)}
                SELECT "department"."code",
-                      "school_1"."code",
+                      "school_2"."code",
                       COALESCE("program"."count", 0),
-                      "school_2"."count"
+                      "school_1"."count"
                FROM "department" AS "department"
-                    LEFT OUTER JOIN "school" AS "school_1"
-                                    ON ("department"."school_code" = "school_1"."code")
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "program"."school_code"
-                                     FROM "program" AS "program"
-                                     GROUP BY 2) AS "program"
-                                    ON ("school_1"."code" = "program"."school_code")
                     LEFT OUTER JOIN (SELECT COALESCE("program"."count", 0) AS "count",
                                             "school"."code"
                                      FROM "school" AS "school"
@@ -19108,8 +19101,15 @@ tests:
                                                                   "program"."school_code"
                                                            FROM "program" AS "program"
                                                            GROUP BY 2) AS "program"
-                                                          ON ("school"."code" = "program"."school_code")) AS "school_2"
+                                                          ON ("school"."code" = "program"."school_code")) AS "school_1"
+                                    ON ("department"."school_code" = "school_1"."code")
+                    LEFT OUTER JOIN "school" AS "school_2"
                                     ON ("department"."school_code" = "school_2"."code")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."school_code"
+                                     FROM "program" AS "program"
+                                     GROUP BY 2) AS "program"
+                                    ON ("school_2"."code" = "program"."school_code")
                ORDER BY 1 ASC
           - uri: /department{code,school.code, exists(school.program),school.exists(program)}
             status: 200 OK
@@ -19152,19 +19152,19 @@ tests:
                ----
                /department{code,school.code,exists(school.program),school.exists(program)}
                SELECT "department"."code",
-                      "school_1"."code",
+                      "school_2"."code",
                       EXISTS(SELECT 1
                              FROM "program" AS "program"
-                             WHERE ("school_1"."code" = "program"."school_code")),
-                      "school_2"."exists"
+                             WHERE ("school_2"."code" = "program"."school_code")),
+                      "school_1"."exists"
                FROM "department" AS "department"
-                    LEFT OUTER JOIN "school" AS "school_1"
-                                    ON ("department"."school_code" = "school_1"."code")
                     LEFT OUTER JOIN (SELECT EXISTS(SELECT 1
                                                    FROM "program" AS "program"
                                                    WHERE ("school"."code" = "program"."school_code")) AS "exists",
                                             "school"."code"
-                                     FROM "school" AS "school") AS "school_2"
+                                     FROM "school" AS "school") AS "school_1"
+                                    ON ("department"."school_code" = "school_1"."code")
+                    LEFT OUTER JOIN "school" AS "school_2"
                                     ON ("department"."school_code" = "school_2"."code")
                ORDER BY 1 ASC
           - uri: /{count(school)&false(),count(school)|true()}
@@ -21328,10 +21328,10 @@ tests:
                /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student)):where(program:=program.limit(10,15))
                SELECT "program"."school_code",
                       "program"."code",
-                      "program"."count"
+                      COALESCE("program"."count", 0)
                FROM (SELECT "program_1"."school_code",
                             "program_1"."code",
-                            COALESCE("student"."count", 0) AS "count",
+                            "student"."count",
                             "program_2"."avg"
                      FROM "program" AS "program_1"
                           LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
@@ -21362,7 +21362,7 @@ tests:
                      ORDER BY 1 ASC, 2 ASC
                      LIMIT 10
                      OFFSET 15) AS "program"
-               WHERE (CAST("program"."count" AS REAL) > "program"."avg")
+               WHERE (CAST(COALESCE("program"."count", 0) AS REAL) > "program"."avg")
                ORDER BY 1 ASC, 2 ASC
           - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
             status: 200 OK

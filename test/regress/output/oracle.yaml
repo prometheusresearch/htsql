@@ -19400,17 +19400,10 @@ tests:
                ----
                /department{code,school.code,count(school.program),school.count(program)}
                SELECT "DEPARTMENT"."CODE",
-                      "SCHOOL_1"."CODE",
+                      "SCHOOL_2"."CODE",
                       COALESCE("PROGRAM"."count", 0),
-                      "SCHOOL_2"."count"
+                      "SCHOOL_1"."count"
                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "PROGRAM"."SCHOOL_CODE"
-                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                     GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
-                                    ON ("SCHOOL_1"."CODE" = "PROGRAM"."SCHOOL_CODE")
                     LEFT OUTER JOIN (SELECT COALESCE("PROGRAM"."count", 0) AS "count",
                                             "SCHOOL"."CODE"
                                      FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
@@ -19418,8 +19411,15 @@ tests:
                                                                   "PROGRAM"."SCHOOL_CODE"
                                                            FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                                                            GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
-                                                          ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")) "SCHOOL_2"
+                                                          ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")) "SCHOOL_1"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
+                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_2"
                                     ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "PROGRAM"."SCHOOL_CODE"
+                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                     GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
+                                    ON ("SCHOOL_2"."CODE" = "PROGRAM"."SCHOOL_CODE")
                ORDER BY 1 ASC
           - uri: /department{code,school.code, exists(school.program),school.exists(program)}
             status: 200 OK
@@ -19462,21 +19462,21 @@ tests:
                ----
                /department{code,school.code,exists(school.program),school.exists(program)}
                SELECT "DEPARTMENT"."CODE",
-                      "SCHOOL_1"."CODE",
+                      "SCHOOL_2"."CODE",
                       (CASE WHEN EXISTS(SELECT 1
                                         FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                        WHERE ("SCHOOL_1"."CODE" = "PROGRAM"."SCHOOL_CODE")
+                                        WHERE ("SCHOOL_2"."CODE" = "PROGRAM"."SCHOOL_CODE")
                                               AND (1 <> 0)) THEN 1 ELSE 0 END),
-                      "SCHOOL_2"."exists"
+                      "SCHOOL_1"."exists"
                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
-                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
                     LEFT OUTER JOIN (SELECT (CASE WHEN EXISTS(SELECT 1
                                                               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                                                               WHERE ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
                                                                     AND (1 <> 0)) THEN 1 ELSE 0 END) AS "exists",
                                             "SCHOOL"."CODE"
-                                     FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL") "SCHOOL_2"
+                                     FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL") "SCHOOL_1"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
+                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_2"
                                     ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
                ORDER BY 1 ASC
           - uri: /{count(school)&false(),count(school)|true()}

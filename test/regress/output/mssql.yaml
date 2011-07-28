@@ -19169,17 +19169,10 @@ tests:
                ----
                /department{code,school.code,count(school.program),school.count(program)}
                SELECT [department].[code],
-                      [school_1].[code],
+                      [school_2].[code],
                       COALESCE([program].[count], 0),
-                      [school_2].[count]
+                      [school_1].[count]
                FROM [ad].[department] AS [department]
-                    LEFT OUTER JOIN [ad].[school] AS [school_1]
-                                    ON ([department].[school_code] = [school_1].[code])
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[school_code]
-                                     FROM [ad].[program] AS [program]
-                                     GROUP BY [program].[school_code]) AS [program]
-                                    ON ([school_1].[code] = [program].[school_code])
                     LEFT OUTER JOIN (SELECT COALESCE([program].[count], 0) AS [count],
                                             [school].[code]
                                      FROM [ad].[school] AS [school]
@@ -19187,8 +19180,15 @@ tests:
                                                                   [program].[school_code]
                                                            FROM [ad].[program] AS [program]
                                                            GROUP BY [program].[school_code]) AS [program]
-                                                          ON ([school].[code] = [program].[school_code])) AS [school_2]
+                                                          ON ([school].[code] = [program].[school_code])) AS [school_1]
+                                    ON ([department].[school_code] = [school_1].[code])
+                    LEFT OUTER JOIN [ad].[school] AS [school_2]
                                     ON ([department].[school_code] = [school_2].[code])
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[school_code]
+                                     FROM [ad].[program] AS [program]
+                                     GROUP BY [program].[school_code]) AS [program]
+                                    ON ([school_2].[code] = [program].[school_code])
                ORDER BY 1 ASC
           - uri: /department{code,school.code, exists(school.program),school.exists(program)}
             status: 200 OK
@@ -19231,21 +19231,21 @@ tests:
                ----
                /department{code,school.code,exists(school.program),school.exists(program)}
                SELECT [department].[code],
-                      [school_1].[code],
+                      [school_2].[code],
                       (CASE WHEN EXISTS(SELECT 1
                                         FROM [ad].[program] AS [program]
-                                        WHERE ([school_1].[code] = [program].[school_code])
+                                        WHERE ([school_2].[code] = [program].[school_code])
                                               AND (1 <> 0)) THEN 1 ELSE 0 END),
-                      [school_2].[exists]
+                      [school_1].[exists]
                FROM [ad].[department] AS [department]
-                    LEFT OUTER JOIN [ad].[school] AS [school_1]
-                                    ON ([department].[school_code] = [school_1].[code])
                     LEFT OUTER JOIN (SELECT (CASE WHEN EXISTS(SELECT 1
                                                               FROM [ad].[program] AS [program]
                                                               WHERE ([school].[code] = [program].[school_code])
                                                                     AND (1 <> 0)) THEN 1 ELSE 0 END) AS [exists],
                                             [school].[code]
-                                     FROM [ad].[school] AS [school]) AS [school_2]
+                                     FROM [ad].[school] AS [school]) AS [school_1]
+                                    ON ([department].[school_code] = [school_1].[code])
+                    LEFT OUTER JOIN [ad].[school] AS [school_2]
                                     ON ([department].[school_code] = [school_2].[code])
                ORDER BY 1 ASC
           - uri: /{count(school)&false(),count(school)|true()}

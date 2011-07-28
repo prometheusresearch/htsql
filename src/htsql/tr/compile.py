@@ -18,7 +18,8 @@ from ..domain import BooleanDomain
 from .error import CompileError
 from .syntax import IdentifierSyntax
 from .coerce import coerce
-from .signature import IsNullSig, AndSig
+from .signature import IsNullSig, AndSig, OrSig
+from .fn.signature import IfSig
 from .flow import (Expression, Code, Flow, RootFlow, ScalarFlow, TableFlow,
                    DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
@@ -856,9 +857,17 @@ class CompileQuotient(CompileFlow):
         baseline = self.flow.seed_baseline
         while not baseline.is_inflated:
             baseline = baseline.base
-        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
+        aggregates = [unit for unit in self.state.injections
+                           if isinstance(unit, AggregateUnit)
+                           and unit.flow == self.flow
+                           and isinstance(unit.plural_flow, ComplementFlow)
+                           and unit.plural_flow.base == self.flow]
+        seed_term = self.state.compile(self.flow.seed, baseline=baseline,
+                                       injections=self.flow.kernel)
+        if aggregates:
+            pass
         if self.flow.kernel:
-            seed_term = self.state.inject(seed_term, self.flow.kernel)
+            #seed_term = self.state.inject(seed_term, self.flow.kernel)
             filters = []
             for code in self.flow.kernel:
                 filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
@@ -1736,6 +1745,69 @@ class InjectBatch(Inject):
                     aggregate_flow_pairs.append(pair)
                     aggregate_flow_pair_to_units[pair] = []
                 aggregate_flow_pair_to_units[pair].append(unit)
+
+        expanded_flow_pairs = []
+        expanded_flow_pair_to_units = {}
+        for plural_flow, flow in aggregate_flow_pairs:
+            units = aggregate_flow_pair_to_units[plural_flow, flow]
+            expanded_flow = plural_flow
+            if isinstance(plural_flow, FilteredFlow):
+                expanded_flow = plural_flow.base
+            pair = (expanded_flow, flow)
+            if pair not in expanded_flow_pair_to_units:
+                expanded_flow_pairs.append(pair)
+                expanded_flow_pair_to_units[pair] = []
+            expanded_flow_pair_to_units[pair].extend(units)
+        for expanded_flow, flow in expanded_flow_pairs:
+            continue
+            units = expanded_flow_pair_to_units[expanded_flow, flow]
+            if len(units) < 2:
+                continue
+            if all(unit.plural_flow == expanded_flow
+                   for unit in units):
+                continue
+            combined_flow = expanded_flow
+            if not any(unit.plural_flow == expanded_flow
+                       for unit in units):
+                filters = []
+                for unit in units:
+                    assert isinstance(unit.plural_flow, FilteredFlow)
+                    filters.append(unit.plural_flow.filter)
+                if len(filters) > 1:
+                    filter = FormulaCode(OrSig(), coerce(BooleanDomain()),
+                                         combined_flow.binding,
+                                         ops=filters)
+                else:
+                    [filter] = filters
+                combined_flow = FilteredFlow(combined_flow, filter,
+                                             combined_flow.binding)
+            rewritten_units = []
+            unit_to_rewritten_unit = {}
+            for unit in units:
+                rewritten_unit = unit
+                if unit.plural_flow != expanded_flow:
+                    assert isinstance(unit.plural_flow, FilteredFlow)
+                    filter = unit.plural_flow.filter
+                    code = FormulaCode(IfSig(), unit.code.domain,
+                                       unit.code.binding,
+                                       predicates=[filter],
+                                       consequents=[unit.code],
+                                       alternative=None)
+                    rewritten_unit = unit.clone(plural_flow=combined_flow,
+                                                code=code)
+                rewritten_units.append(rewritten_unit)
+                unit_to_rewritten_unit[unit] = rewritten_unit
+            group = AggregateBatchExpr(combined_flow, flow, rewritten_units,
+                                       self.term.binding)
+            term = self.state.inject(term, [group])
+            routes = term.routes.copy()
+            for unit in units:
+                rewritten_unit = unit_to_rewritten_unit[unit]
+                routes[unit] = routes[rewritten_unit]
+                term = WrapperTerm(self.state.tag(), term,
+                                   term.flow, term.baseline,
+                                   routes)
+
         # Form and inject batches of matching aggregate units.
         for pair in aggregate_flow_pairs:
             plural_flow, flow = pair

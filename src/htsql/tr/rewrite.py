@@ -279,6 +279,7 @@ class RewriteScalar(RewriteUnit):
     def __call__(self):
         if self.unit.flow.dominates(self.state.mask):
             code = self.state.rewrite(self.unit.code)
+            return code
         else:
             code = self.state.rewrite(self.unit.code, mask=self.unit.flow)
         flow = self.state.rewrite(self.unit.flow)
