@@ -60,6 +60,8 @@ tests:
                            avg(course.credits)}
     - uri: /{count(school),count(department),count(course)}
     - uri: /{count(department),count(department?exists(course))}
+      ifndef: mssql # MSSQL does not allow an aggregate to contain
+                    # an EXISTS subquery.
     - uri: /department{code,count(course{credits=3})}
     - uri: /department{code,count(course?credits=3)}
     - uri: /school{code,count(department.course{credits=3})}
@@ -112,6 +114,46 @@ tests:
                            ?code~'a'
       skip: true
     - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
+    # Merging frames for scalar and aggregate units
+    # Reduce plural flow to `course?credits={1,2,3}`.
+    - uri: /{count(course?credits=1),
+             count(course?credits=2),
+             count(course?credits=3)}
+    # Reduce plural flow to `course`.
+    - uri: /{count(course),
+             count(course?credits=1),
+             count(course?credits=2),
+             count(course?credits=3)}
+    # Reduce to two batches.
+    - uri: /department{code,
+                       school{count(program?degree='ph'), count(program?degree='bs')},
+                       count(school.program?degree='ph'), count(school.program?degree='bs')}?code='mth'
+    # Reduce to `course?credits=3`.
+    - uri: /define(course_0 := course,
+                   course_1 := course_0?credits=3,
+                   course_2 := course_1?department.code='econ',
+                   course_3 := course_2?count(class)>4)
+           {count(course_1), count(course_3)}
+    # Reduce to `course`.
+    - uri: /define(course_0 := course,
+                   course_1 := course_0?credits=3,
+                   course_2 := course_1?department.code='econ',
+                   course_3 := course_2?count(class)>4)
+           {count(course_0), count(course_1), count(course_2), count(course_3)}
+    # Reduce to `course`.
+    - uri: /define(course_0 := course,
+                   course_1 := course?credits=3,
+                   course_2 := course?department.code='econ',
+                   course_3 := course?count(class)>4)
+           {count(course_0), count(course_1), count(course_2), count(course_3)}
+    # Reduce to `course?credits=3|department.code='econ'|count(class)>4`.
+    - uri: /define(course_1 := course?credits=3,
+                   course_2 := course?department.code='econ',
+                   course_3 := course?count(class)>4)
+           {count(course_1), count(course_2), count(course_3)}
+    # Merge nested aggregates.
+    - uri: /{avg(department{count(course?credits=3)}?code!='econ') :round(2),
+             avg(department{count(course?credits=5)}?code!='mth') :round(2)}
 
   - title: Root, This, Direct and Fiber functions
     tests:

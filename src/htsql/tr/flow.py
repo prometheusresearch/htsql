@@ -1375,13 +1375,27 @@ class ScalarUnit(CompoundUnit):
         The flow on which the unit is defined.
     """
 
-    def __init__(self, code, flow, binding):
+    def __init__(self, code, flow, binding, companions=None):
         super(ScalarUnit, self).__init__(
                     code=code,
                     flow=flow,
                     domain=code.domain,
                     binding=binding,
-                    equality_vector=(code, flow))
+                    equality_vector=(code, flow,
+                                     tuple(companions)
+                                     if companions is not None else None))
+        self.companions = companions
+
+
+class ScalarBatchUnit(ScalarUnit):
+
+    def __init__(self, code, companions, flow, binding):
+        assert isinstance(companions, listof(Code))
+        super(ScalarBatchUnit, self).__init__(
+                    code=code,
+                    flow=flow,
+                    binding=binding,
+                    companions=companions)
 
 
 class AggregateUnitBase(CompoundUnit):
@@ -1413,7 +1427,8 @@ class AggregateUnitBase(CompoundUnit):
         The flow on which the unit is defined.
     """
 
-    def __init__(self, code, plural_flow, flow, binding):
+    def __init__(self, code, plural_flow, flow, binding,
+                 companions=None):
         assert isinstance(code, Code)
         assert isinstance(plural_flow, Flow)
         # FIXME: consider lifting the requirement that the plural
@@ -1425,8 +1440,11 @@ class AggregateUnitBase(CompoundUnit):
                     flow=flow,
                     domain=code.domain,
                     binding=binding,
-                    equality_vector=(code, plural_flow, flow))
+                    equality_vector=(code, plural_flow, flow,
+                                     tuple(companions)
+                                     if companions is not None else None))
         self.plural_flow = plural_flow
+        self.companions = companions
 
 
 class AggregateUnit(AggregateUnitBase):
@@ -1436,6 +1454,18 @@ class AggregateUnit(AggregateUnitBase):
     A regular aggregate unit is expressed in SQL using an aggregate
     expression with ``GROUP BY`` clause.
     """
+
+
+class AggregateBatchUnit(AggregateUnit):
+
+    def __init__(self, code, companions, plural_flow, flow, binding):
+        assert isinstance(companions, listof(Code))
+        super(AggregateBatchUnit, self).__init__(
+                    code=code,
+                    plural_flow=plural_flow,
+                    flow=flow,
+                    binding=binding,
+                    companions=companions)
 
 
 class CorrelatedUnit(AggregateUnitBase):
@@ -1505,78 +1535,5 @@ class LinkedUnit(CompoundUnit):
                 domain=code.domain,
                 binding=binding,
                 equality_vector=(code, flow))
-
-
-class BatchExpr(Expression):
-    """
-    Represents a collection of expression nodes.
-
-    This is an auxiliary expression node used internally by the compiler.
-
-    `collection` (a list of :class:`Expression`)
-        A collection of expression nodes.
-    """
-
-    def __init__(self, collection, binding):
-        assert isinstance(collection, listof(Expression))
-        super(BatchExpr, self).__init__(binding)
-        self.collection = collection
-
-    def __str__(self):
-        # Display the collection:
-        #   (<expression>, <expression>, ...)
-        return "(%s)" % ", ".join(str(expression)
-                                  for expression in self.collection)
-
-
-class ScalarBatchExpr(BatchExpr):
-    """
-    Represents a collection of sclar units sharing the same base flow.
-
-    This is an auxiliary expression node used internally by the compiler.
-
-    `flow` (:class:`Flow`)
-        The base flow of the scalar units.
-
-    `collection` (a list of :class:`ScalarUnit`)
-        A collection of scalar units.  All units must have the same base
-        flow.
-    """
-
-    def __init__(self, flow, collection, binding):
-        assert isinstance(flow, Flow)
-        assert isinstance(collection, listof(ScalarUnit))
-        assert all(flow == unit.flow for unit in collection)
-        super(ScalarBatchExpr, self).__init__(collection, binding)
-        self.flow = flow
-
-
-class AggregateBatchExpr(BatchExpr):
-    """
-    Represents a collection of aggregate units sharing the same base and
-    plural flows.
-
-    This is an auxiliary expression node used internally by the compiler.
-
-    `plural_flow` (:class:`Flow`)
-        The plural flow of the aggregates.
-
-    `flow` (:class:`Flow`)
-        The base flow of the aggregates.
-
-    `collection` (a list of :class:`AggregateUnit`)
-        A collection of aggregate units.  All units must have the same
-        base and plural flows.
-    """
-
-    def __init__(self, plural_flow, flow, collection, binding):
-        assert isinstance(plural_flow, Flow)
-        assert isinstance(flow, Flow)
-        assert isinstance(collection, listof(AggregateUnit))
-        assert all(plural_flow == unit.plural_flow and flow == unit.flow
-                   for unit in collection)
-        super(AggregateBatchExpr, self).__init__(collection, binding)
-        self.plural_flow = plural_flow
-        self.flow = flow
 
 

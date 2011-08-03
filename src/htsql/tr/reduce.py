@@ -1049,6 +1049,37 @@ class ReduceAnd(ReduceBySignature):
                 return self.state.to_predicate(
                         FalsePhrase(self.phrase.expression))
 
+        # Reduce:
+        #   x!=a&x!=b&... => x!={a,b,...}
+        if all((isformula(op, IsEqualSig) or isformula(op, IsInSig))
+               and op.lop == ops[0].lop and op.signature.polarity == -1
+               for op in ops):
+            lop = ops[0].lop
+            rops = []
+            duplicates = set()
+            for op in ops:
+                if isformula(op, IsEqualSig):
+                    if op.rop not in duplicates:
+                        rops.append(op.rop)
+                        duplicates.add(op.rop)
+                elif isformula(op, IsInSig):
+                    for rop in ops.rops:
+                        if rop not in duplicates:
+                            rops.append(op.rop)
+                            duplicates.add(op.rop)
+            if len(rops) > 1:
+                is_nullable = (lop.is_nullable or any(rop.is_nullable
+                                                      for rop in rops))
+                return FormulaPhrase(IsInSig(-1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rops=rops)
+            else:
+                [rop] = rops
+                is_nullable = (lop.is_nullable or rop.is_nullable)
+                return FormulaPhrase(IsEqualSig(-1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rop=rop)
+
         # Return the same operator with reduced operands.  Update
         # the `is_nullable` status since it could change after reducing
         # the arguments.
@@ -1109,7 +1140,37 @@ class ReduceOr(ReduceBySignature):
                 return self.state.to_predicate(
                         TruePhrase(self.phrase.expression))
 
-        return self.phrase.clone(ops=ops)
+        # Reduce:
+        #   x=a|x=b|... => x={a,b,...}
+        if all((isformula(op, IsEqualSig) or isformula(op, IsInSig))
+               and op.lop == ops[0].lop and op.signature.polarity == +1
+               for op in ops):
+            lop = ops[0].lop
+            rops = []
+            duplicates = set()
+            for op in ops:
+                if isformula(op, IsEqualSig):
+                    if op.rop not in duplicates:
+                        rops.append(op.rop)
+                        duplicates.add(op.rop)
+                elif isformula(op, IsInSig):
+                    for rop in ops.rops:
+                        if rop not in duplicates:
+                            rops.append(op.rop)
+                            duplicates.add(op.rop)
+            if len(rops) > 1:
+                is_nullable = (lop.is_nullable or any(rop.is_nullable
+                                                      for rop in rops))
+                return FormulaPhrase(IsInSig(+1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rops=rops)
+            else:
+                [rop] = rops
+                is_nullable = (lop.is_nullable or rop.is_nullable)
+                return FormulaPhrase(IsEqualSig(+1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rop=rop)
+
         # Return the same operator with reduced operands.  Update
         # the `is_nullable` status since it could change after reducing
         # the arguments.

@@ -24,11 +24,11 @@ from .flow import (Expression, Code, Flow, RootFlow, ScalarFlow, TableFlow,
                    DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
                    LinkedFlow, FilteredFlow, OrderedFlow,
-                   Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,
+                   Unit, ScalarUnit, ScalarBatchUnit, ColumnUnit,
+                   AggregateUnit, AggregateBatchUnit, CorrelatedUnit,
                    KernelUnit, ComplementUnit, MonikerUnit, ForkedUnit,
                    LinkedUnit,
-                   QueryExpr, SegmentExpr, BatchExpr, ScalarBatchExpr,
-                   AggregateBatchExpr, FormulaCode)
+                   QueryExpr, SegmentExpr, FormulaCode)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, SegmentTerm, QueryTerm, Joint)
@@ -183,24 +183,10 @@ class CompilingState(object):
         # exportable expressions.
         expressions = [expression for expression in expressions
                                   if expression not in term.routes]
-        # No expressions to inject, return the term unmodified.
-        if not expressions:
-            return term
-        # At this moment, we could just apply the `Inject` adapter
-        # sequentially to each of the expressions.  However, in some
-        # cases, the compiler is able to generate a more optimal
-        # term tree when it processes all units sharing the same
-        # form simultaneously.  To handle this case, we collect
-        # all expressions into an auxiliary expression node
-        # `BatchExpr`.  When injected, the group expression
-        # applies the multi-unit optimizations.
-        if len(expressions) == 1:
-            expression = expressions[0]
-        else:
-            expression = BatchExpr(expressions, term.binding)
-        # Realize and apply the `Inject` adapter.
-        inject = Inject(expression, term, self)
-        return inject()
+        for expression in expressions:
+            inject = Inject(expression, term, self)
+            term = inject()
+        return term
 
 
 class CompileBase(Adapter):
@@ -1481,7 +1467,7 @@ class InjectScalar(Inject):
         if self.unit in self.term.routes:
             return self.term
         # Form a batch consisting of a single unit.
-        batch = ScalarBatchExpr(self.unit.flow, [self.unit],
+        batch = ScalarBatchUnit(self.unit.code, [], self.unit.flow,
                                 self.unit.binding)
         # Delegate the injecting to the batch.
         return self.state.inject(self.term, [batch])
@@ -1504,8 +1490,9 @@ class InjectAggregate(Inject):
         if self.unit in self.term.routes:
             return self.term
         # Form a batch consisting of a single unit.
-        batch = AggregateBatchExpr(self.unit.plural_flow,
-                                   self.unit.flow, [self.unit],
+        batch = AggregateBatchUnit(self.unit.code, [],
+                                   self.unit.plural_flow,
+                                   self.unit.flow,
                                    self.unit.binding)
         # Delegate the injecting to the batch.
         return self.state.inject(self.term, [batch])
@@ -1675,166 +1662,12 @@ class InjectLinked(Inject):
         return self.join_terms(self.term, unit_term, extra_routes)
 
 
-class InjectBatch(Inject):
-    """
-    Injects a batch of expressions into a term.
-    """
-
-    adapts(BatchExpr)
-
-    def __init__(self, expression, term, state):
-        super(InjectBatch, self).__init__(expression, term, state)
-        # Extract attributes of the batch.
-        self.collection = expression.collection
-
-    def __call__(self):
-        # The easiest way to inject a group of expressions is to inject
-        # them into the term one by one.  However, it will not necessarily
-        # generate the most optimal term tree.  We could obtain a better
-        # tree structure if we group all units of the same form and inject
-        # them all together.
-        # Here we group similar scalar and aggregate units into scalar
-        # and aggregate batch nodes and then inject the batches.  We do not
-        # need to do the same for column units since injecting a column
-        # unit effectively injects the unit flow making any column from
-        # the flow exportable.
-
-        # We start with the given term, at the end, it will be capable of
-        # exporting all expressions from the given collection.
-        term = self.term
-
-        # Gather all the units from the given collection of expressions.
-        units = []
-        for expression in self.collection:
-            # Ignore flows and other non-code expressions.
-            if isinstance(expression, Code):
-                for unit in expression.units:
-                    # We are only interested in units that are not already
-                    # exportable by the term.
-                    if unit not in term.routes:
-                        units.append(unit)
-
-        # Find all scalar units and group them by the unit flow.  We
-        # maintain a separate list of scalar flows to ensure we process
-        # the batches in some deterministic order.
-        scalar_flows = []
-        scalar_flow_to_units = {}
-        for unit in units:
-            if isinstance(unit, ScalarUnit):
-                flow = unit.flow
-                if flow not in scalar_flow_to_units:
-                    scalar_flows.append(flow)
-                    scalar_flow_to_units[flow] = []
-                scalar_flow_to_units[flow].append(unit)
-        # Form and inject batches of matching scalar units.
-        for flow in scalar_flows:
-            batch_units = scalar_flow_to_units[flow]
-            batch = ScalarBatchExpr(flow, batch_units,
-                                    self.term.binding)
-            term = self.state.inject(term, [batch])
-
-        # Find all aggregate units and group them by their plural and unit
-        # flows.  Maintain a list of pairs of flows to ensure deterministic
-        # order of processing the batches.
-        aggregate_flow_pairs = []
-        aggregate_flow_pair_to_units = {}
-        for unit in units:
-            if isinstance(unit, AggregateUnit):
-                pair = (unit.plural_flow, unit.flow)
-                if pair not in aggregate_flow_pair_to_units:
-                    aggregate_flow_pairs.append(pair)
-                    aggregate_flow_pair_to_units[pair] = []
-                aggregate_flow_pair_to_units[pair].append(unit)
-
-        expanded_flow_pairs = []
-        expanded_flow_pair_to_units = {}
-        for plural_flow, flow in aggregate_flow_pairs:
-            units = aggregate_flow_pair_to_units[plural_flow, flow]
-            expanded_flow = plural_flow
-            if isinstance(plural_flow, FilteredFlow):
-                expanded_flow = plural_flow.base
-            pair = (expanded_flow, flow)
-            if pair not in expanded_flow_pair_to_units:
-                expanded_flow_pairs.append(pair)
-                expanded_flow_pair_to_units[pair] = []
-            expanded_flow_pair_to_units[pair].extend(units)
-        for expanded_flow, flow in expanded_flow_pairs:
-            continue
-            units = expanded_flow_pair_to_units[expanded_flow, flow]
-            if len(units) < 2:
-                continue
-            if all(unit.plural_flow == expanded_flow
-                   for unit in units):
-                continue
-            combined_flow = expanded_flow
-            if not any(unit.plural_flow == expanded_flow
-                       for unit in units):
-                filters = []
-                for unit in units:
-                    assert isinstance(unit.plural_flow, FilteredFlow)
-                    filters.append(unit.plural_flow.filter)
-                if len(filters) > 1:
-                    filter = FormulaCode(OrSig(), coerce(BooleanDomain()),
-                                         combined_flow.binding,
-                                         ops=filters)
-                else:
-                    [filter] = filters
-                combined_flow = FilteredFlow(combined_flow, filter,
-                                             combined_flow.binding)
-            rewritten_units = []
-            unit_to_rewritten_unit = {}
-            for unit in units:
-                rewritten_unit = unit
-                if unit.plural_flow != expanded_flow:
-                    assert isinstance(unit.plural_flow, FilteredFlow)
-                    filter = unit.plural_flow.filter
-                    code = FormulaCode(IfSig(), unit.code.domain,
-                                       unit.code.binding,
-                                       predicates=[filter],
-                                       consequents=[unit.code],
-                                       alternative=None)
-                    rewritten_unit = unit.clone(plural_flow=combined_flow,
-                                                code=code)
-                rewritten_units.append(rewritten_unit)
-                unit_to_rewritten_unit[unit] = rewritten_unit
-            group = AggregateBatchExpr(combined_flow, flow, rewritten_units,
-                                       self.term.binding)
-            term = self.state.inject(term, [group])
-            routes = term.routes.copy()
-            for unit in units:
-                rewritten_unit = unit_to_rewritten_unit[unit]
-                routes[unit] = routes[rewritten_unit]
-                term = WrapperTerm(self.state.tag(), term,
-                                   term.flow, term.baseline,
-                                   routes)
-
-        # Form and inject batches of matching aggregate units.
-        for pair in aggregate_flow_pairs:
-            plural_flow, flow = pair
-            group_units = aggregate_flow_pair_to_units[pair]
-            group = AggregateBatchExpr(plural_flow, flow, group_units,
-                                       self.term.binding)
-            term = self.state.inject(term, [group])
-
-        # Finally, just take and inject all the given expressions.  We don't
-        # have to bother with filtering out duplicates or expressions that
-        # are already injected.
-        for expression in self.collection:
-            term = self.state.inject(term, [expression])
-        return term
-
-
 class InjectScalarBatch(Inject):
     """
     Injects a batch of scalar units sharing the same flow.
     """
 
-    adapts(ScalarBatchExpr)
-
-    def __init__(self, expression, term, state):
-        super(InjectScalarBatch, self).__init__(expression, term, state)
-        # Extract attributes of the batch.
-        self.flow = expression.flow
+    adapts(ScalarBatchUnit)
 
     def __call__(self):
         # To inject a scalar unit into a term, we need to do the following:
@@ -1848,19 +1681,29 @@ class InjectScalarBatch(Inject):
         # injecting the batch, we use the same unit term for all units
         # in the batch.
 
-        # Get the list of units that are not already exported by the term.
-        units = [unit for unit in self.collection
-                      if unit not in self.term.routes]
-        # If none, there is nothing to be done.
-        if not units:
+        if self.unit in self.term.routes:
             return self.term
+
+        # Get the list of units that are not already exported by the term.
+        proper_unit = ScalarUnit(self.unit.code,
+                                 self.unit.flow,
+                                 self.unit.binding)
+        companion_units = [ScalarUnit(code, self.unit.flow, self.unit.binding)
+                                      for code in self.unit.companions]
+        if proper_unit in self.term.routes:
+            routes = self.term.routes.copy()
+            routes[self.unit] = routes[proper_unit]
+            return self.term.clone(routes=routes)
+        companion_units = [unit for unit in companion_units
+                                if unit not in self.term.routes]
+        units = [self.unit, proper_unit]+companion_units
         # Verify that the units are singular relative to the term.
         # To report an error, we could point to any unit node.
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                units[0].mark)
         # Extract the unit expressions.
-        codes = [unit.code for unit in units]
+        codes = [self.unit.code] + [unit.code for unit in companion_units]
 
         # Handle the special case when the unit flow is equal to the
         # term flow or dominates it.  In this case, we could inject
@@ -1899,7 +1742,7 @@ class InjectAggregateBatch(Inject):
     Injects a batch of aggregate units sharing the same plural and unit flows.
     """
 
-    adapts(AggregateBatchExpr)
+    adapts(AggregateBatchUnit)
 
     def __init__(self, expression, term, state):
         super(InjectAggregateBatch, self).__init__(expression, term, state)
@@ -1919,6 +1762,9 @@ class InjectAggregateBatch(Inject):
         # avoid compiling a separate unit term, and instead attach the
         # projected term directly to the main term.
 
+        if self.unit in self.term.routes:
+            return self.term
+
         # In any case, if we perform this procedure for each unit
         # individually, we may end up with a lot of identical unit terms
         # in the final term tree.  So when there are more than one aggregate
@@ -1928,18 +1774,29 @@ class InjectAggregateBatch(Inject):
         # aggregates in the batch.
 
         # Get the list of units that are not already exported by the term.
-        units = [unit for unit in self.collection
-                      if unit not in self.term.routes]
-        # If none, there is nothing to do.
-        if not units:
-            return self.term
+        proper_unit = AggregateUnit(self.unit.code,
+                                    self.unit.plural_flow,
+                                    self.unit.flow,
+                                    self.unit.binding)
+        companion_units = [AggregateUnit(code,
+                                         self.unit.plural_flow,
+                                         self.unit.flow,
+                                         self.unit.binding)
+                           for code in self.unit.companions]
+        if proper_unit in self.term.routes:
+            routes = self.term.routes.copy()
+            routes[self.unit] = routes[proper_unit]
+            return self.term.clone(routes=routes)
+        companion_units = [unit for unit in companion_units
+                                if unit not in self.term.routes]
+        units = [self.unit, proper_unit]+companion_units
         # Verify that the units are singular relative to the term.
         # To report an error, we could point to any unit node available.
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                units[0].mark)
         # Extract the aggregate expressions.
-        codes = [unit.code for unit in units]
+        codes = [self.unit.code] + [unit.code for unit in companion_units]
 
         # Check if the unit flow coincides with or dominates the term
         # flow.  In this case we could avoid compiling a separate unit
