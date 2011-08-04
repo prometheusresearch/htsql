@@ -16,13 +16,12 @@ from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
-                   QuotientFlow, MonikerFlow, ForkedFlow, LinkedFlow,
-                   FilteredFlow, OrderedFlow,
+                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
+                   LinkedFlow, FilteredFlow, OrderedFlow,
                    Code, LiteralCode, CastCode, FormulaCode, Unit,
                    CompoundUnit, ScalarUnit, ScalarBatchUnit,
                    AggregateUnitBase, AggregateUnit, AggregateBatchUnit,
-                   KernelUnit, ComplementUnit, MonikerUnit, ForkedUnit,
-                   LinkedUnit)
+                   KernelUnit, CoveringUnit)
 from .signature import Signature, OrSig, AndSig
 from .fn.signature import IfSig
 
@@ -957,9 +956,32 @@ class UnmaskKernel(UnmaskUnit):
         return self.unit.clone(flow=flow, code=code)
 
 
-class UnmaskComplement(UnmaskUnit):
+class UnmaskCovering(UnmaskUnit):
 
-    adapts(ComplementUnit)
+    adapts(CoveringUnit)
+
+    def __call__(self):
+        unmask = UnmaskByFlow(self.unit, self.state)
+        return unmask()
+
+
+class UnmaskByFlow(Adapter):
+
+    adapts(Flow)
+
+    @classmethod
+    def dispatch(interface, unit, *args, **kwds):
+        assert isinstance(unit, CoveringUnit)
+        return (type(unit.flow),)
+
+    def __init__(self, unit, state):
+        self.unit = unit
+        self.state = state
+
+
+class UnmaskCoveringComplement(UnmaskByFlow):
+
+    adapts(ComplementFlow)
 
     def __call__(self):
         code = self.state.unmask(self.unit.code,
@@ -968,9 +990,9 @@ class UnmaskComplement(UnmaskUnit):
         return self.unit.clone(flow=flow, code=code)
 
 
-class UnmaskMonikerUnit(UnmaskUnit):
+class UnmaskCoveringMoniker(UnmaskByFlow):
 
-    adapts(MonikerUnit)
+    adapts(MonikerFlow)
 
     def __call__(self):
         code = self.state.unmask(self.unit.code,
@@ -979,9 +1001,9 @@ class UnmaskMonikerUnit(UnmaskUnit):
         return self.unit.clone(flow=flow, code=code)
 
 
-class UnmaskForkedUnit(UnmaskUnit):
+class UnmaskCoveringForked(UnmaskByFlow):
 
-    adapts(ForkedUnit)
+    adapts(ForkedFlow)
 
     def __call__(self):
         code = self.state.unmask(self.unit.code,
@@ -990,9 +1012,9 @@ class UnmaskForkedUnit(UnmaskUnit):
         return self.unit.clone(flow=flow, code=code)
 
 
-class UnmaskLinkedUnit(UnmaskUnit):
+class UnmaskCoveringLinked(UnmaskByFlow):
 
-    adapts(LinkedUnit)
+    adapts(LinkedFlow)
 
     def __call__(self):
         code = self.state.unmask(self.unit.code,

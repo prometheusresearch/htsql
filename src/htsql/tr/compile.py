@@ -26,9 +26,8 @@ from .flow import (Expression, Code, Flow, RootFlow, ScalarFlow, TableFlow,
                    LinkedFlow, FilteredFlow, OrderedFlow,
                    Unit, ScalarUnit, ScalarBatchUnit, ColumnUnit,
                    AggregateUnit, AggregateBatchUnit, CorrelatedUnit,
-                   KernelUnit, ComplementUnit, MonikerUnit, ForkedUnit,
-                   LinkedUnit,
-                   QueryExpr, SegmentExpr, FormulaCode)
+                   KernelUnit, CoveringUnit, QueryExpr, SegmentExpr,
+                   FormulaCode)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
                    WrapperTerm, SegmentTerm, QueryTerm, Joint)
@@ -936,7 +935,7 @@ class CompileComplement(CompileFlow):
             baseline = baseline.base
         extra_codes = family.kernel + [unit.code
                                        for unit in self.state.injections
-                                       if isinstance(unit, ComplementUnit)
+                                       if isinstance(unit, CoveringUnit)
                                        and unit.flow == self.flow]
         seed_term = self.state.compile(family.seed, baseline=baseline,
                                        injections=extra_codes)
@@ -964,14 +963,14 @@ class CompileComplement(CompileFlow):
                 seed_term.baseline == family.seed_baseline):
             routes = {}
             for unit in seed_term.routes:
-                unit = ComplementUnit(unit, self.flow, unit.binding)
+                unit = CoveringUnit(unit, self.flow, unit.binding)
                 routes[unit] = seed_term.tag
             for code in family.kernel:
-                unit = ComplementUnit(code, self.flow, unit.binding)
+                unit = CoveringUnit(code, self.flow, unit.binding)
                 routes[unit] = seed_term.tag
             if extra_codes is not None:
                 for code in extra_codes:
-                    unit = ComplementUnit(code, self.flow, code.binding)
+                    unit = CoveringUnit(code, self.flow, code.binding)
                     routes[unit] = seed_term.tag
             for unit in spread(family.seed):
                 routes[unit.clone(flow=self.flow)] = seed_term.routes[unit]
@@ -988,21 +987,21 @@ class CompileComplement(CompileFlow):
             lkid = self.inject_ties(lkid, seed_joints)
         routes = {}
         for unit in seed_term.routes:
-            unit = ComplementUnit(unit, self.backbone, unit.binding)
+            unit = CoveringUnit(unit, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
         for code in family.kernel:
-            unit = ComplementUnit(code, self.backbone, unit.binding)
+            unit = CoveringUnit(code, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
         if extra_codes is not None:
             for code in extra_codes:
-                unit = ComplementUnit(code, self.backbone, code.binding)
+                unit = CoveringUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
         for unit in spread(family.seed):
             routes[unit.clone(flow=self.backbone)] = seed_term.routes[unit]
         seed_joints_copy = seed_joints
         seed_joints = []
         for joint in seed_joints:
-            rop = ComplementUnit(joint.rop, self.backbone, joint.rop.binding)
+            rop = CoveringUnit(joint.rop, self.backbone, joint.rop.binding)
             routes[rop] = seed_term.tag
             seed_joints.append(joint.clone(rop=rop))
         rkid = WrapperTerm(self.state.tag(), seed_term,
@@ -1025,7 +1024,7 @@ class CompileMoniker(CompileFlow):
 
     def __call__(self):
         extra_codes = [unit.code for unit in self.state.injections
-                                 if isinstance(unit, MonikerUnit)
+                                 if isinstance(unit, CoveringUnit)
                                     and unit.flow == self.flow]
         if (self.flow.seed_baseline.base is not None and
             self.flow.base.conforms(self.flow.seed_baseline.base) and
@@ -1053,15 +1052,15 @@ class CompileMoniker(CompileFlow):
             for unit in seed_term.routes:
                 if self.flow.base.spans(unit.flow):
                     routes[unit] = seed_term.routes[unit]
-                seed_unit = MonikerUnit(unit, self.flow, unit.binding)
+                seed_unit = CoveringUnit(unit, self.flow, unit.binding)
                 routes[seed_unit] = seed_term.tag
-                seed_unit = MonikerUnit(unit, self.backbone, unit.binding)
+                seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
                 routes[seed_unit] = seed_term.tag
             if extra_codes is not None:
                 for code in extra_codes:
-                    unit = MonikerUnit(code, self.flow, code.binding)
+                    unit = CoveringUnit(code, self.flow, code.binding)
                     routes[unit] = seed_term.tag
-                    unit = MonikerUnit(code, self.backbone, code.binding)
+                    unit = CoveringUnit(code, self.backbone, code.binding)
                     routes[unit] = seed_term.tag
             for unit in spread(self.flow.seed):
                 seed_unit = unit.clone(flow=self.flow)
@@ -1084,15 +1083,15 @@ class CompileMoniker(CompileFlow):
         trunk_term = self.inject_ties(trunk_term, joints)
         routes = trunk_term.routes.copy()
         for unit in seed_term.routes:
-            seed_unit = MonikerUnit(unit, self.flow, unit.binding)
+            seed_unit = CoveringUnit(unit, self.flow, unit.binding)
             routes[seed_unit] = seed_term.tag
-            seed_unit = MonikerUnit(unit, self.backbone, unit.binding)
+            seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
         if extra_codes is not None:
             for code in extra_codes:
-                unit = MonikerUnit(code, self.flow, code.binding)
+                unit = CoveringUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
-                unit = MonikerUnit(code, self.backbone, code.binding)
+                unit = CoveringUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
         for unit in spread(self.flow.seed):
             seed_unit = unit.clone(flow=self.flow)
@@ -1115,7 +1114,7 @@ class CompileForked(CompileFlow):
             baseline = baseline.base
         extra_codes = self.flow.kernel[:] + [unit.code
                                              for unit in self.state.injections
-                                             if isinstance(unit, ForkedUnit)
+                                             if isinstance(unit, CoveringUnit)
                                              and unit.flow == self.flow]
         seed_term = self.state.compile(seed, baseline=baseline,
                                        injections=extra_codes)
@@ -1126,14 +1125,14 @@ class CompileForked(CompileFlow):
                 seed_term.baseline == self.flow.seed_baseline):
             routes = {}
             for unit in seed_term.routes:
-                seed_unit = ForkedUnit(unit, self.flow, unit.binding)
+                seed_unit = CoveringUnit(unit, self.flow, unit.binding)
                 routes[seed_unit] = seed_term.tag
-                seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
+                seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
                 routes[seed_unit] = seed_term.tag
             for code in extra_codes:
-                unit = ForkedUnit(code, self.flow, code.binding)
+                unit = CoveringUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
-                unit = ForkedUnit(code, self.backbone, code.binding)
+                unit = CoveringUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
             for unit in spread(self.flow.seed):
                 seed_unit = unit.clone(flow=self.flow)
@@ -1171,14 +1170,14 @@ class CompileForked(CompileFlow):
         trunk_term = self.state.inject(trunk_term, units)
         routes = trunk_term.routes.copy()
         for unit in seed_term.routes:
-            seed_unit = ForkedUnit(unit, self.flow, unit.binding)
+            seed_unit = CoveringUnit(unit, self.flow, unit.binding)
             routes[seed_unit] = seed_term.tag
-            seed_unit = ForkedUnit(unit, self.backbone, unit.binding)
+            seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
         for code in extra_codes:
-            unit = ForkedUnit(code, self.flow, code.binding)
+            unit = CoveringUnit(code, self.flow, code.binding)
             routes[unit] = seed_term.tag
-            unit = ForkedUnit(code, self.backbone, code.binding)
+            unit = CoveringUnit(code, self.backbone, code.binding)
             routes[unit] = seed_term.tag
         for unit in spread(self.flow.seed):
             seed_unit = unit.clone(flow=self.flow)
@@ -1200,7 +1199,7 @@ class CompileLinked(CompileFlow):
             baseline = baseline.base
         extra_codes = self.flow.kernel[:] + [unit.code
                                              for unit in self.state.injections
-                                             if isinstance(unit, LinkedUnit)
+                                             if isinstance(unit, CoveringUnit)
                                              and unit.flow == self.flow]
         seed_term = self.state.compile(self.flow.seed, baseline=baseline,
                                        injections=extra_codes)
@@ -1222,7 +1221,7 @@ class CompileLinked(CompileFlow):
             extra_axes.reverse()
             for axis in extra_axes:
                 for joint in sew(axis):
-                    rop = LinkedUnit(self.flow.inflate(), rop, rop.binding)
+                    rop = CoveringUnit(self.flow.inflate(), rop, rop.binding)
                     joint = joint.clone(rop=rop)
                     joints.append(joint)
         joints.extend(tie(self.flow))
@@ -1244,21 +1243,21 @@ class CompileLinked(CompileFlow):
         for unit in seed_term.routes:
             if self.flow.base.spans(unit.flow):
                 routes[unit] = seed_term.routes[unit]
-            seed_unit = LinkedUnit(unit, self.flow, unit.binding)
+            seed_unit = CoveringUnit(unit, self.flow, unit.binding)
             routes[seed_unit] = seed_term.tag
-            seed_unit = LinkedUnit(unit, self.backbone, unit.binding)
+            seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
             routes[seed_unit] = seed_term.tag
         for joint in joints:
             code = joint.rop.code
-            unit = LinkedUnit(code, self.flow, code.binding)
+            unit = CoveringUnit(code, self.flow, code.binding)
             routes[unit] = seed_term.tag
-            unit = LinkedUnit(code, self.backbone, code.binding)
+            unit = CoveringUnit(code, self.backbone, code.binding)
             routes[unit] = seed_term.tag
         if extra_codes is not None:
             for code in extra_codes:
-                unit = LinkedUnit(code, self.flow, code.binding)
+                unit = CoveringUnit(code, self.flow, code.binding)
                 routes[unit] = seed_term.tag
-                unit = LinkedUnit(code, self.backbone, code.binding)
+                unit = CoveringUnit(code, self.backbone, code.binding)
                 routes[unit] = seed_term.tag
         for unit in spread(self.flow.seed):
             seed_unit = unit.clone(flow=self.flow)
@@ -1582,69 +1581,9 @@ class InjectKernel(Inject):
         return term
 
 
-class InjectComplement(Inject):
+class InjectCovering(Inject):
 
-    adapts(ComplementUnit)
-
-    def __call__(self):
-        if self.unit in self.term.routes:
-            return self.term
-        if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
-                               self.unit.mark)
-        baseline = flow
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline,
-                                       injections=[self.unit])
-        assert self.unit in unit_term.routes
-        extra_routes = { self.unit: unit_term.routes[self.unit] }
-        return self.join_terms(self.term, unit_term, extra_routes)
-
-
-class InjectMoniker(Inject):
-
-    adapts(MonikerUnit)
-
-    def __call__(self):
-        if self.unit in self.term.routes:
-            return self.term
-        if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
-                               self.unit.mark)
-        baseline = flow
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline,
-                                       injections=[self.unit])
-        assert self.unit in unit_term.routes
-        extra_routes = { self.unit: unit_term.routes[self.unit] }
-        return self.join_terms(self.term, unit_term, extra_routes)
-
-
-class InjectForked(Inject):
-
-    adapts(ForkedUnit)
-
-    def __call__(self):
-        if self.unit in self.term.routes:
-            return self.term
-        if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
-                               self.unit.mark)
-        baseline = flow
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline,
-                                       injections=[self.unit])
-        assert self.unit in unit_term.routes
-        extra_routes = { self.unit: unit_term.routes[self.unit] }
-        return self.join_terms(self.term, unit_term, extra_routes)
-
-
-class InjectLinked(Inject):
-
-    adapts(LinkedUnit)
+    adapts(CoveringUnit)
 
     def __call__(self):
         if self.unit in self.term.routes:
@@ -2156,7 +2095,7 @@ class OrderComplement(OrderFlow):
             for code, direction in ordering(self.flow.base.family.seed):
                 if any(not self.flow.base.spans(unit.flow)
                        for unit in code.units):
-                    code = ComplementUnit(code, flow, code.binding)
+                    code = CoveringUnit(code, flow, code.binding)
                     yield (code, direction)
 
 
@@ -2188,7 +2127,7 @@ class SewComplement(SewFlow):
         for axis in axes:
             if not axis.is_contracting or axis == baseline:
                 for joint in sew(axis):
-                    op = ComplementUnit(joint.lop, flow, joint.lop.binding)
+                    op = CoveringUnit(joint.lop, flow, joint.lop.binding)
                     yield joint.clone(lop=op, rop=op)
 
 
@@ -2200,11 +2139,11 @@ class TieComplement(TieFlow):
         flow = self.flow.inflate()
         for joint in tie(flow.base.family.seed_baseline):
             lop = KernelUnit(joint.rop, flow.base, joint.rop.binding)
-            rop = ComplementUnit(joint.rop, flow, joint.rop.binding)
+            rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(lop=lop, rop=rop)
         for code in flow.base.family.kernel:
             lop = KernelUnit(code, flow.base, code.binding)
-            rop = ComplementUnit(code, flow, code.binding)
+            rop = CoveringUnit(code, flow, code.binding)
             yield Joint(lop=lop, rop=rop)
 
 
@@ -2222,7 +2161,7 @@ class OrderMoniker(OrderFlow):
             for code, direction in ordering(self.flow.seed):
                 if any(not self.flow.base.spans(unit.flow)
                        for unit in code.units):
-                    code = MonikerUnit(code, flow, code.binding)
+                    code = CoveringUnit(code, flow, code.binding)
                     yield (code, direction)
 
 
@@ -2254,7 +2193,7 @@ class SewMoniker(SewFlow):
         for axis in axes:
             if not axis.is_contracting or axis == baseline:
                 for joint in sew(axis):
-                    op = MonikerUnit(joint.lop, flow, joint.lop.binding)
+                    op = CoveringUnit(joint.lop, flow, joint.lop.binding)
                     yield joint.clone(lop=op, rop=op)
 
 
@@ -2265,7 +2204,7 @@ class TieMoniker(TieFlow):
     def __call__(self):
         flow = self.flow.inflate()
         for joint in tie(flow.seed_baseline):
-            rop = MonikerUnit(joint.rop, flow, joint.rop.binding)
+            rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 
 
@@ -2284,7 +2223,7 @@ class OrderForked(OrderFlow):
                 if all(self.flow.seed_baseline.base.spans(unit.flow)
                        for unit in code.units):
                     continue
-                code = ForkedUnit(code, flow, code.binding)
+                code = CoveringUnit(code, flow, code.binding)
                 yield (code, direction)
 
 
@@ -2307,7 +2246,7 @@ class SewForked(SewFlow):
         flow = self.flow.inflate()
         seed = self.flow.seed.inflate()
         for joint in sew(seed):
-            op = ForkedUnit(joint.lop, flow, joint.lop.binding)
+            op = CoveringUnit(joint.lop, flow, joint.lop.binding)
             yield joint.clone(lop=op, rop=op)
 
 
@@ -2320,11 +2259,11 @@ class TieForked(TieFlow):
         seed = self.flow.seed.inflate()
         for joint in tie(seed):
             lop = joint.rop
-            rop = ForkedUnit(lop, flow, lop.binding)
+            rop = CoveringUnit(lop, flow, lop.binding)
             yield joint.clone(lop=lop, rop=rop)
         for code in self.flow.kernel:
             lop = code
-            rop = ForkedUnit(code, flow, code.binding)
+            rop = CoveringUnit(code, flow, code.binding)
             yield Joint(lop, rop)
 
 
@@ -2342,7 +2281,7 @@ class OrderLinked(OrderFlow):
             for code, direction in ordering(self.flow.seed):
                 if any(not self.flow.base.spans(unit.flow)
                        for unit in code.units):
-                    code = LinkedUnit(code, flow, code.binding)
+                    code = CoveringUnit(code, flow, code.binding)
                     yield (code, direction)
 
 
@@ -2374,7 +2313,7 @@ class SewLinked(SewFlow):
         for axis in axes:
             if not axis.is_contracting or axis == baseline:
                 for joint in sew(axis):
-                    op = LinkedUnit(joint.lop, flow, joint.lop.binding)
+                    op = CoveringUnit(joint.lop, flow, joint.lop.binding)
                     yield joint.clone(lop=op, rop=op)
 
 
@@ -2385,7 +2324,7 @@ class TieLinked(TieFlow):
     def __call__(self):
         flow = self.flow.inflate()
         for lop, rop in zip(flow.counter_kernel, flow.kernel):
-            rop = LinkedUnit(rop, flow, rop.binding)
+            rop = CoveringUnit(rop, flow, rop.binding)
             yield Joint(lop, rop)
 
 

@@ -1489,51 +1489,18 @@ class KernelUnit(CompoundUnit):
                     equality_vector=(code, flow))
 
 
-class ComplementUnit(CompoundUnit):
+class CoveringUnit(CompoundUnit):
 
     def __init__(self, code, flow, binding):
-        assert isinstance(flow, ComplementFlow)
-        super(ComplementUnit, self).__init__(
+        assert isinstance(flow, (ComplementFlow,
+                                 MonikerFlow,
+                                 ForkedFlow,
+                                 LinkedFlow))
+        super(CoveringUnit, self).__init__(
                     code=code,
                     flow=flow,
                     domain=code.domain,
                     binding=binding,
                     equality_vector=(code, flow))
-
-
-class MonikerUnit(CompoundUnit):
-
-    def __init__(self, code, flow, binding):
-        assert isinstance(flow, MonikerFlow)
-        super(MonikerUnit, self).__init__(
-                code=code,
-                flow=flow,
-                domain=code.domain,
-                binding=binding,
-                equality_vector=(code, flow))
-
-
-class ForkedUnit(CompoundUnit):
-
-    def __init__(self, code, flow, binding):
-        assert isinstance(flow, ForkedFlow)
-        super(ForkedUnit, self).__init__(
-                code=code,
-                flow=flow,
-                domain=code.domain,
-                binding=binding,
-                equality_vector=(code, flow))
-
-
-class LinkedUnit(CompoundUnit):
-
-    def __init__(self, code, flow, binding):
-        assert isinstance(flow, LinkedFlow)
-        super(LinkedUnit, self).__init__(
-                code=code,
-                flow=flow,
-                domain=code.domain,
-                binding=binding,
-                equality_vector=(code, flow))
 
 
