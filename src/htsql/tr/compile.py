@@ -1591,10 +1591,10 @@ class InjectCovering(Inject):
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                self.unit.mark)
-        baseline = flow
+        baseline = self.unit.flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(flow, baseline=baseline,
+        unit_term = self.state.compile(self.unit.flow, baseline=baseline,
                                        injections=[self.unit])
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
