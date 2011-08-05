@@ -19989,6 +19989,87 @@ tests:
                                      GROUP BY "SCHOOL"."CAMPUS") "DEPARTMENT"
                                     ON ("SCHOOL"."CAMPUS" = "DEPARTMENT"."CAMPUS")
                ORDER BY 1 ASC NULLS FIRST
+          - uri: /((school?min(department.course.credits)>1& max(department.course.credits)<8)^campus)
+              {campus, count(school)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school?min(department.course.credits)>1&max(department.course.credits)<8)^campus |
+               +-----------------------------------------------------------------------------------+
+               | campus                               | count(school)                              |
+              -+--------------------------------------+--------------------------------------------+-
+               | old                                  |                                          2 |
+               | south                                |                                          1 |
+                                                                                            (2 rows)
+
+               ----
+               /((school?min(department.course.credits)>1&max(department.course.credits)<8)^campus){campus,count(school)}
+               SELECT "SCHOOL"."CAMPUS",
+                      COUNT(1)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                    LEFT OUTER JOIN (SELECT MIN("COURSE"."CREDITS") AS "min",
+                                            "DEPARTMENT"."SCHOOL_CODE"
+                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                                          INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                     ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "COURSE_1"
+                                    ON ("SCHOOL"."CODE" = "COURSE_1"."SCHOOL_CODE")
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            "DEPARTMENT"."SCHOOL_CODE"
+                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                                          INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                     ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "COURSE_2"
+                                    ON ("SCHOOL"."CODE" = "COURSE_2"."SCHOOL_CODE")
+               WHERE ("SCHOOL"."CAMPUS" IS NOT NULL)
+                     AND ("COURSE_1"."min" > 1)
+                     AND ("COURSE_2"."max" < 8)
+               GROUP BY "SCHOOL"."CAMPUS"
+               ORDER BY 1 ASC NULLS FIRST
+          - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
+              department := department?credit_diff>3) .(department^school_code) {*,
+              avg(department.credit_diff)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department^school_code                    |
+               +-------------------------------------------+
+               | school_code | avg(department.credit_diff) |
+              -+-------------+-----------------------------+-
+               | art         |                           6 |
+               | bus         |                           4 |
+               | eng         |                           5 |
+               | la          |                           4 |
+               | ns          |                           4 |
+                                                    (5 rows)
+
+               ----
+               /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).(department^school_code){*,avg(department.credit_diff)}
+               SELECT "DEPARTMENT"."SCHOOL_CODE",
+                      AVG(("COURSE_3"."max" - "COURSE_3"."min"))
+               FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            "COURSE"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_1"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
+                    LEFT OUTER JOIN (SELECT MIN("COURSE"."CREDITS") AS "min",
+                                            "COURSE"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT_CODE")
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            MIN("COURSE"."CREDITS") AS "min",
+                                            "COURSE"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_3"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_3"."DEPARTMENT_CODE")
+               WHERE ("DEPARTMENT"."SCHOOL_CODE" IS NOT NULL)
+                     AND (("COURSE_1"."max" - "COURSE_2"."min") > 3)
+               GROUP BY "DEPARTMENT"."SCHOOL_CODE"
+               ORDER BY 1 ASC NULLS FIRST
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.({} -> department))}

@@ -36,6 +36,8 @@ class RewritingState(object):
         self.collection_stack = []
         self.replacements = None
         self.replacements_stack = []
+        self.rewrite_cache = None
+        self.unmask_cache = None
 
     def set_root(self, flow):
         assert isinstance(flow, RootFlow)
@@ -43,10 +45,14 @@ class RewritingState(object):
         assert self.mask is None
         assert self.collection is None
         assert self.replacements is None
+        assert self.rewrite_cache is None
+        assert self.unmask_cache is None
         self.root = flow
         self.mask = flow
         self.collection = []
         self.replacements = {}
+        self.rewrite_cache = {}
+        self.unmask_cache = {}
 
     def flush(self):
         assert self.root is not None
@@ -58,6 +64,8 @@ class RewritingState(object):
         self.mask = None
         self.collection = None
         self.replacements = None
+        self.rewrite_cache = None
+        self.unmask_cache = None
 
     def push_mask(self, mask):
         assert isinstance(mask, Flow)
@@ -84,16 +92,27 @@ class RewritingState(object):
         self.replacements[expression] = replacement
 
     def rewrite(self, expression):
+        if self.rewrite_cache is not None:
+            if expression in self.rewrite_cache:
+                return self.rewrite_cache[expression]
+            replacement = rewrite(expression, self)
+            self.rewrite_cache[expression] = replacement
+            return replacement
         return rewrite(expression, self)
 
     def unmask(self, expression, mask=None):
         if mask is not None:
             self.push_mask(mask)
-        unmask = Unmask(expression, self)
-        expression = unmask()
+        key = (self.mask, expression)
+        if key not in self.unmask_cache:
+            unmask = Unmask(expression, self)
+            replacement = unmask()
+            self.unmask_cache[key] = replacement
+        else:
+            replacement = self.unmask_cache[key]
         if mask is not None:
             self.pop_mask()
-        return expression
+        return replacement
 
     def collect(self, expression):
         collect = Collect(expression, self)
@@ -413,21 +432,23 @@ class UnmaskQuotient(UnmaskFlow):
         return self.flow.clone(base=base, seed=seed, kernel=kernel)
 
 
-class ReplaceInQuotient(Collect):
+class ReplaceInQuotient(ReplaceInFlow):
 
     adapts(QuotientFlow)
 
     def __call__(self):
         base = self.state.replace(self.flow.base)
-        self.state.save_collection()
-        self.state.collect(self.flow.seed)
-        for code in self.flow.family.kernel:
-            self.state.collect(code)
-        self.state.recombine()
-        seed = self.state.replace(self.flow.family.seed)
-        kernel = [self.state.replace(code)
-                  for code in self.flow.family.kernel]
-        self.state.restore_collection()
+        seed = self.flow.seed
+        kernel = self.flow.kernel
+        #self.state.save_collection()
+        #self.state.collect(self.flow.seed)
+        #for code in self.flow.kernel:
+        #    self.state.collect(code)
+        #self.state.recombine()
+        #seed = self.state.replace(self.flow.seed)
+        #kernel = [self.state.replace(code)
+        #          for code in self.flow.kernel]
+        #self.state.restore_collection()
         return self.flow.clone(base=base, seed=seed, kernel=kernel)
 
 
@@ -884,10 +905,11 @@ class ReplaceInCompound(ReplaceInUnit):
 
     def __call__(self):
         flow = self.state.replace(self.unit.flow)
-        self.state.save_collection()
-        self.state.collect(self.unit.code)
-        self.state.recombine()
         code = self.state.replace(self.unit.code)
+        self.state.save_collection()
+        self.state.collect(code)
+        self.state.recombine()
+        code = self.state.replace(code)
         self.state.restore_collection()
         return self.unit.clone(flow=flow, code=code)
 
@@ -938,12 +960,14 @@ class ReplaceInAggregate(ReplaceInUnit):
 
     def __call__(self):
         flow = self.state.replace(self.unit.flow)
-        self.state.save_collection()
-        self.state.collect(self.unit.code)
-        self.state.collect(self.unit.plural_flow)
-        self.state.recombine()
         code = self.state.replace(self.unit.code)
         plural_flow = self.state.replace(self.unit.plural_flow)
+        self.state.save_collection()
+        self.state.collect(code)
+        self.state.collect(plural_flow)
+        self.state.recombine()
+        code = self.state.replace(code)
+        plural_flow = self.state.replace(plural_flow)
         self.state.restore_collection()
         return self.unit.clone(code=code, flow=flow, plural_flow=plural_flow)
 

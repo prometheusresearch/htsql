@@ -15304,21 +15304,21 @@ tests:
              /{exists(department{school}),every(department{school}),count(department{school})}
              SELECT EXISTS(SELECT 1
                            FROM "department" AS "department_1"
-                                LEFT OUTER JOIN (SELECT 1 AS "school",
+                                LEFT OUTER JOIN (SELECT 1 AS "exists",
                                                         "school"."code"
                                                  FROM "school" AS "school") AS "school_1"
                                                 ON ("department_1"."school_code" = "school_1"."code")
-                           WHERE ("school_1"."school" IS NOT NULL)),
+                           WHERE ("school_1"."exists" IS NOT NULL)),
                     (NOT EXISTS(SELECT 1
                                 FROM "department" AS "department_1"
-                                     LEFT OUTER JOIN (SELECT 1 AS "school",
+                                     LEFT OUTER JOIN (SELECT 1 AS "exists",
                                                              "school"."code"
                                                       FROM "school" AS "school") AS "school_1"
                                                      ON ("department_1"."school_code" = "school_1"."code")
-                                WHERE ("school_1"."school" IS NULL))),
-                    COUNT(NULLIF(("school"."school" IS NOT NULL), 0))
+                                WHERE ("school_1"."exists" IS NULL))),
+                    COUNT(NULLIF(("school"."exists" IS NOT NULL), 0))
              FROM "department" AS "department"
-                  LEFT OUTER JOIN (SELECT 1 AS "school",
+                  LEFT OUTER JOIN (SELECT 1 AS "exists",
                                           "school"."code"
                                    FROM "school" AS "school") AS "school"
                                   ON ("department"."school_code" = "school"."code")
@@ -19675,6 +19675,87 @@ tests:
                                                      ON ("school"."code" = "department"."school_code")
                                      GROUP BY 2) AS "department"
                                     ON ("school"."campus" = "department"."campus")
+               ORDER BY 1 ASC
+          - uri: /((school?min(department.course.credits)>1& max(department.course.credits)<8)^campus)
+              {campus, count(school)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | (school?min(department.course.credits)>1&max(department.course.credits)<8)^campus |
+               +-----------------------------------------------------------------------------------+
+               | campus                               | count(school)                              |
+              -+--------------------------------------+--------------------------------------------+-
+               | old                                  |                                          2 |
+               | south                                |                                          1 |
+                                                                                            (2 rows)
+
+               ----
+               /((school?min(department.course.credits)>1&max(department.course.credits)<8)^campus){campus,count(school)}
+               SELECT "school"."campus",
+                      COUNT(1)
+               FROM "school" AS "school"
+                    LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min",
+                                            "department"."school_code"
+                                     FROM "department" AS "department"
+                                          INNER JOIN "course" AS "course"
+                                                     ON ("department"."code" = "course"."department_code")
+                                     GROUP BY 2) AS "course_1"
+                                    ON ("school"."code" = "course_1"."school_code")
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                            "department"."school_code"
+                                     FROM "department" AS "department"
+                                          INNER JOIN "course" AS "course"
+                                                     ON ("department"."code" = "course"."department_code")
+                                     GROUP BY 2) AS "course_2"
+                                    ON ("school"."code" = "course_2"."school_code")
+               WHERE ("school"."campus" IS NOT NULL)
+                     AND ("course_1"."min" > 1)
+                     AND ("course_2"."max" < 8)
+               GROUP BY 1
+               ORDER BY 1 ASC
+          - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
+              department := department?credit_diff>3) .(department^school_code) {*,
+              avg(department.credit_diff)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department^school_code                    |
+               +-------------------------------------------+
+               | school_code | avg(department.credit_diff) |
+              -+-------------+-----------------------------+-
+               | art         |                         6.0 |
+               | bus         |                         4.0 |
+               | eng         |                         5.0 |
+               | la          |                         4.0 |
+               | ns          |                         4.0 |
+                                                    (5 rows)
+
+               ----
+               /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).(department^school_code){*,avg(department.credit_diff)}
+               SELECT "department"."school_code",
+                      AVG(CAST(("course_3"."max" - "course_3"."min") AS REAL))
+               FROM "department" AS "department"
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                            "course"."department_code"
+                                     FROM "course" AS "course"
+                                     GROUP BY 2) AS "course_1"
+                                    ON ("department"."code" = "course_1"."department_code")
+                    LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min",
+                                            "course"."department_code"
+                                     FROM "course" AS "course"
+                                     GROUP BY 2) AS "course_2"
+                                    ON ("department"."code" = "course_2"."department_code")
+                    LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                            MIN("course"."credits") AS "min",
+                                            "course"."department_code"
+                                     FROM "course" AS "course"
+                                     GROUP BY 3) AS "course_3"
+                                    ON ("department"."code" = "course_3"."department_code")
+               WHERE ("department"."school_code" IS NOT NULL)
+                     AND (("course_1"."max" - "course_2"."min") > 3)
+               GROUP BY 1
                ORDER BY 1 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
