@@ -962,14 +962,25 @@ class ReplaceInAggregate(ReplaceInUnit):
         flow = self.state.replace(self.unit.flow)
         code = self.state.replace(self.unit.code)
         plural_flow = self.state.replace(self.unit.plural_flow)
+        companions = self.unit.companions
+        if companions is not None:
+            companions = [self.state.replace(companion)
+                          for companion in companions]
         self.state.save_collection()
         self.state.collect(code)
         self.state.collect(plural_flow)
+        if companions is not None:
+            for companion in companions:
+                self.state.collect(companion)
         self.state.recombine()
         code = self.state.replace(code)
         plural_flow = self.state.replace(plural_flow)
+        if companions is not None:
+            companions = [self.state.replace(companion)
+                          for companion in companions]
         self.state.restore_collection()
-        return self.unit.clone(code=code, flow=flow, plural_flow=plural_flow)
+        return self.unit.clone(code=code, flow=flow, plural_flow=plural_flow,
+                               companions=companions)
 
 
 class UnmaskKernel(UnmaskUnit):

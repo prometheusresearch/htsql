@@ -19802,26 +19802,27 @@ tests:
                ORDER BY 1 ASC
           - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
               department := department?credit_diff>3) .(department^school_code) {*,
-              avg(department.credit_diff)}
+              avg(department.credit_diff), sum(department.credit_diff)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | department^school_code                    |
-               +-------------------------------------------+
-               | school_code | avg(department.credit_diff) |
-              -+-------------+-----------------------------+-
-               | art         |                    6.000000 |
-               | bus         |                    4.000000 |
-               | eng         |                    5.000000 |
-               | la          |                    4.000000 |
-               | ns          |                    4.000000 |
-                                                    (5 rows)
+               | department^school_code                                                  |
+               +-------------------------------------------------------------------------+
+               | school_code | avg(department.credit_diff) | sum(department.credit_diff) |
+              -+-------------+-----------------------------+-----------------------------+-
+               | art         |                    6.000000 |                           6 |
+               | bus         |                    4.000000 |                           4 |
+               | eng         |                    5.000000 |                          10 |
+               | la          |                    4.000000 |                           4 |
+               | ns          |                    4.000000 |                           8 |
+                                                                                  (5 rows)
 
                ----
-               /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).(department^school_code){*,avg(department.credit_diff)}
+               /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).(department^school_code){*,avg(department.credit_diff),sum(department.credit_diff)}
                SELECT [department].[school_code],
-                      AVG(CAST(([course_3].[max] - [course_3].[min]) AS DECIMAL(38)))
+                      AVG(CAST(([course_3].[max] - [course_3].[min]) AS DECIMAL(38))),
+                      COALESCE(SUM(([course_3].[max] - [course_3].[min])), 0)
                FROM [ad].[department] AS [department]
                     LEFT OUTER JOIN (SELECT MAX([course].[credits]) AS [max],
                                             [course].[department_code]

@@ -165,14 +165,14 @@ tests:
     - uri: /(school^campus){campus, count(school)}?count(school)>1
     # Two aggregates, one embedded to a quotient frame.
     - uri: /(school^campus){campus, count(school), count(school.department)}
-    # Reducing the seed of a quotient flow.
+    # Reducing the seed of a quotient flow (now working currently).
     - uri: /((school?min(department.course.credits)>1&
                      max(department.course.credits)<8)^campus)
             {campus, count(school)}
     - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
                    department := department?credit_diff>3)
             .(department^school_code)
-            {*, avg(department.credit_diff)}
+            {*, avg(department.credit_diff), sum(department.credit_diff)}
 
   - title: Root, This, Direct and Fiber functions
     tests:
