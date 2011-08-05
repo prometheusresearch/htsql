@@ -154,6 +154,17 @@ tests:
     # Merge nested aggregates.
     - uri: /{avg(department{count(course?credits=3)}?code!='econ') :round(2),
              avg(department{count(course?credits=5)}?code!='mth') :round(2)}
+    # Embed aggregates into a quotient frame.
+    - uri: /(school^campus){campus, count(school), min(school.code), max(school.code)}
+    # Embedding to a quotient frame with reduction of the filter.
+    - uri: /(school^campus){campus, count(school), count(school?count(department)>3)}
+    - uri: /(school^campus){campus,
+                            count(school?count(department)<=3),
+                            count(school?count(department)>3)}
+    # Embedding to a quotient frame with an aggregate in HAVING.
+    - uri: /(school^campus){campus, count(school)}?count(school)>1
+    # Two aggregates, one embedded to a quotient frame.
+    - uri: /(school^campus){campus, count(school), count(school.department)}
 
   - title: Root, This, Direct and Fiber functions
     tests:
@@ -361,6 +372,8 @@ tests:
     - uri: /(program.sort(count(student))^degree).^
                 {*, count(student)}
     - uri: /(program^degree){*, exists(^), count(^)}
+      ifndef: oracle # Oracle cannot handle EXISTS and an aggregate in
+                     # the same SELECT clause.
     - uri: /school{code, count(program), count(distinct(program{degree}))}
     - uri: /school{code, count(program), count(program^degree)}
     - uri: /(program^degree){*, count(^), count(^.student)}

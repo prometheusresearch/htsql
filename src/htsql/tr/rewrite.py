@@ -176,6 +176,8 @@ class RewritingState(object):
                         candidate_flows = candidate_flows[:idx]
                         break
             combined_flow = candidate_flows[-1]
+            if isinstance(plural_flow, ComplementFlow):
+                combined_flow = plural_flow
             codes = []
             filters = []
             for unit in batch_units:
@@ -201,8 +203,9 @@ class RewritingState(object):
                                      alternative=None)
                     code = code.clone(op=op)
                 codes.append(code)
-            if all(unit.plural_flow != combined_flow
-                   for unit in batch_units):
+            if (all(unit.plural_flow != combined_flow
+                    for unit in batch_units) and
+                not isinstance(combined_flow, ComplementFlow)):
                 if len(filters) > 1:
                     filter = FormulaCode(OrSig(), coerce(BooleanDomain()),
                                          combined_flow.binding,

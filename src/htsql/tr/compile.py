@@ -849,8 +849,6 @@ class CompileQuotient(CompileFlow):
                            and unit.plural_flow.base == self.flow]
         seed_term = self.state.compile(self.flow.seed, baseline=baseline,
                                        injections=self.flow.kernel)
-        if aggregates:
-            pass
         if self.flow.kernel:
             #seed_term = self.state.inject(seed_term, self.flow.kernel)
             filters = []
@@ -866,6 +864,41 @@ class CompileQuotient(CompileFlow):
             seed_term = FilterTerm(self.state.tag(), seed_term, filter,
                                    seed_term.flow, seed_term.baseline,
                                    seed_term.routes.copy())
+        aggregate_codes = []
+        complement_flow = ComplementFlow(self.flow, self.flow.binding)
+        if aggregates and seed_term.baseline == self.flow.seed_baseline:
+            routes = {}
+            for unit in seed_term.routes:
+                unit = CoveringUnit(unit, complement_flow, unit.binding)
+                routes[unit] = seed_term.tag
+            for code in self.flow.kernel:
+                unit = CoveringUnit(code, complement_flow, unit.binding)
+                routes[unit] = seed_term.tag
+            for unit in spread(self.flow.seed):
+                routes[unit.clone(flow=complement_flow)] = \
+                        seed_term.routes[unit]
+            complement_term = WrapperTerm(self.state.tag(), seed_term,
+                                          complement_flow,
+                                          complement_flow, routes)
+            for aggregate in aggregates:
+                aggregate_codes.append(aggregate.code)
+                if aggregate.companions is not None:
+                    for companion in aggregate.companions:
+                        aggregate_codes.append(companion)
+            complement_term = self.state.inject(complement_term,
+                                                aggregate_codes)
+            if complement_term.baseline != complement_flow:
+                aggregate_codes = []
+            else:
+                routes = {}
+                for code in aggregate_codes:
+                    for unit in code.units:
+                        routes[unit] = complement_term.routes[unit]
+                routes.update(seed_term.routes)
+                seed_term = WrapperTerm(self.state.tag(),
+                                        complement_term,
+                                        seed_term.flow,
+                                        seed_term.baseline, routes)
         if (self.flow == self.baseline and
                 seed_term.baseline == self.flow.seed_baseline):
             tag = self.state.tag()
@@ -879,6 +912,10 @@ class CompileQuotient(CompileFlow):
             for code in self.flow.kernel:
                 basis.append(code)
                 unit = KernelUnit(code, self.flow, code.binding)
+                routes[unit] = tag
+            for code in aggregate_codes:
+                unit = AggregateUnit(code, complement_flow, self.flow,
+                                     code.binding)
                 routes[unit] = tag
             term = ProjectionTerm(tag, seed_term, basis,
                                   self.flow, self.flow, routes)
@@ -911,6 +948,10 @@ class CompileQuotient(CompileFlow):
             basis.append(code)
             unit = KernelUnit(code, self.backbone, code.binding)
             routes[unit] = tag
+        for code in aggregate_codes:
+            unit = AggregateUnit(code, complement_flow, self.flow,
+                                 code.binding)
+            routes[unit] = tag
         rkid = ProjectionTerm(tag, seed_term, basis,
                               self.backbone, self.backbone, routes)
         is_left = False
@@ -942,20 +983,20 @@ class CompileComplement(CompileFlow):
         #seed_term = self.state.inject(seed_term, family.kernel)
         #if self.flow.extra_codes is not None:
         #    seed_term = self.state.inject(seed_term, self.flow.extra_codes)
-        if family.kernel:
-            filters = []
-            for code in family.kernel:
-                filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
-                                     code.binding, op=code)
-                filters.append(filter)
-            if len(filters) == 1:
-                [filter] = filters
-            else:
-                filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
-                                     self.flow.binding, ops=filters)
-            seed_term = FilterTerm(self.state.tag(), seed_term, filter,
-                                   seed_term.flow, seed_term.baseline,
-                                   seed_term.routes.copy())
+        #if family.kernel:
+        #    filters = []
+        #    for code in family.kernel:
+        #        filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
+        #                             code.binding, op=code)
+        #        filters.append(filter)
+        #    if len(filters) == 1:
+        #        [filter] = filters
+        #    else:
+        #        filter = FormulaCode(AndSig(), coerce(BooleanDomain()),
+        #                             self.flow.binding, ops=filters)
+        #    seed_term = FilterTerm(self.state.tag(), seed_term, filter,
+        #                           seed_term.flow, seed_term.baseline,
+        #                           seed_term.routes.copy())
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
@@ -1774,8 +1815,8 @@ class InjectAggregateBatch(Inject):
 
         # Determine the flow of the projected term.
         projected_flow = QuotientFlow(self.flow.inflate(),
-                                        self.plural_flow, [],
-                                        self.expression.binding)
+                                      self.plural_flow, [],
+                                      self.expression.binding)
         # The routing table of the projected term.
         # FIXME: the projected term should be able to export the tie
         # conditions, so we add the tie flows to the routing table.

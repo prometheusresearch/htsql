@@ -9805,18 +9805,11 @@ tests:
 
              ----
              /(program^degree){degree,count(program)}
-             SELECT [program_1].[degree],
-                    COALESCE([program_2].[count], 0)
-             FROM (SELECT [program].[degree]
-                   FROM [ad].[program] AS [program]
-                   WHERE ([program].[degree] IS NOT NULL)
-                   GROUP BY [program].[degree]) AS [program_1]
-                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                          [program].[degree]
-                                   FROM [ad].[program] AS [program]
-                                   WHERE ([program].[degree] IS NOT NULL)
-                                   GROUP BY [program].[degree]) AS [program_2]
-                                  ON ([program_1].[degree] = [program_2].[degree])
+             SELECT [program].[degree],
+                    COUNT(1)
+             FROM [ad].[program] AS [program]
+             WHERE ([program].[degree] IS NOT NULL)
+             GROUP BY [program].[degree]
              ORDER BY 1 ASC
         - uri: /(program?school_code='eng')^degree
           status: 200 OK
@@ -9855,18 +9848,11 @@ tests:
 
              ----
              /(program^degree)?count(program)>5
-             SELECT [program_1].[degree]
-             FROM (SELECT [program].[degree]
-                   FROM [ad].[program] AS [program]
-                   WHERE ([program].[degree] IS NOT NULL)
-                   GROUP BY [program].[degree]) AS [program_1]
-                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                          [program].[degree]
-                                   FROM [ad].[program] AS [program]
-                                   WHERE ([program].[degree] IS NOT NULL)
-                                   GROUP BY [program].[degree]) AS [program_2]
-                                  ON ([program_1].[degree] = [program_2].[degree])
-             WHERE (COALESCE([program_2].[count], 0) > 5)
+             SELECT [program].[degree]
+             FROM [ad].[program] AS [program]
+             WHERE ([program].[degree] IS NOT NULL)
+             GROUP BY [program].[degree]
+             HAVING (COUNT(1) > 5)
              ORDER BY 1 ASC
         - uri: /(course^{level:=round(no/100),credits}){level-, credits-}
           status: 200 OK
@@ -9941,18 +9927,11 @@ tests:
 
              ----
              /(program^degree){*,count(^)}
-             SELECT [program_1].[degree],
-                    COALESCE([program_2].[count], 0)
-             FROM (SELECT [program].[degree]
-                   FROM [ad].[program] AS [program]
-                   WHERE ([program].[degree] IS NOT NULL)
-                   GROUP BY [program].[degree]) AS [program_1]
-                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                          [program].[degree]
-                                   FROM [ad].[program] AS [program]
-                                   WHERE ([program].[degree] IS NOT NULL)
-                                   GROUP BY [program].[degree]) AS [program_2]
-                                  ON ([program_1].[degree] = [program_2].[degree])
+             SELECT [program].[degree],
+                    COUNT(1)
+             FROM [ad].[program] AS [program]
+             WHERE ([program].[degree] IS NOT NULL)
+             GROUP BY [program].[degree]
              ORDER BY 1 ASC
       - id: logical-expressions
         tests:
@@ -19649,6 +19628,140 @@ tests:
                                      GROUP BY [course].[department_code]) AS [course]
                                     ON ([department].[code] = [course].[department_code])
                WHERE (([department].[code] <> 'econ') OR ([department].[code] <> 'mth'))
+          - uri: /(school^campus){campus, count(school), min(school.code), max(school.code)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school^campus                                                |
+               +--------------------------------------------------------------+
+               | campus | count(school) | min(school.code) | max(school.code) |
+              -+--------+---------------+------------------+------------------+-
+               | north  |             1 | eng              | eng              |
+               | old    |             4 | art              | ns               |
+               | south  |             2 | bus              | mus              |
+                                                                       (3 rows)
+
+               ----
+               /(school^campus){campus,count(school),min(school.code),max(school.code)}
+               SELECT [school].[campus],
+                      COUNT(1),
+                      MIN([school].[code]),
+                      MAX([school].[code])
+               FROM [ad].[school] AS [school]
+               WHERE ([school].[campus] IS NOT NULL)
+               GROUP BY [school].[campus]
+               ORDER BY 1 ASC
+          - uri: /(school^campus){campus, count(school), count(school?count(department)>3)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school^campus                                              |
+               +------------------------------------------------------------+
+               | campus | count(school) | count(school?count(department)>3) |
+              -+--------+---------------+-----------------------------------+-
+               | north  |             1 |                                 1 |
+               | old    |             4 |                                 2 |
+               | south  |             2 |                                 1 |
+                                                                     (3 rows)
+
+               ----
+               /(school^campus){campus,count(school),count(school?count(department)>3)}
+               SELECT [school].[campus],
+                      COUNT(1),
+                      COUNT((CASE WHEN (COALESCE([department].[count], 0) > 3) THEN 1 END))
+               FROM [ad].[school] AS [school]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [department].[school_code]
+                                     FROM [ad].[department] AS [department]
+                                     GROUP BY [department].[school_code]) AS [department]
+                                    ON ([school].[code] = [department].[school_code])
+               WHERE ([school].[campus] IS NOT NULL)
+               GROUP BY [school].[campus]
+               ORDER BY 1 ASC
+          - uri: /(school^campus){campus, count(school?count(department)<=3), count(school?count(department)>3)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school^campus                                                                   |
+               +---------------------------------------------------------------------------------+
+               | campus | count(school?count(department)<=3) | count(school?count(department)>3) |
+              -+--------+------------------------------------+-----------------------------------+-
+               | north  |                                  0 |                                 1 |
+               | old    |                                  2 |                                 2 |
+               | south  |                                  1 |                                 1 |
+                                                                                          (3 rows)
+
+               ----
+               /(school^campus){campus,count(school?count(department)<=3),count(school?count(department)>3)}
+               SELECT [school].[campus],
+                      COUNT((CASE WHEN (COALESCE([department].[count], 0) <= 3) THEN 1 END)),
+                      COUNT((CASE WHEN (COALESCE([department].[count], 0) > 3) THEN 1 END))
+               FROM [ad].[school] AS [school]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [department].[school_code]
+                                     FROM [ad].[department] AS [department]
+                                     GROUP BY [department].[school_code]) AS [department]
+                                    ON ([school].[code] = [department].[school_code])
+               WHERE ([school].[campus] IS NOT NULL)
+               GROUP BY [school].[campus]
+               ORDER BY 1 ASC
+          - uri: /(school^campus){campus, count(school)}?count(school)>1
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school^campus          |
+               +------------------------+
+               | campus | count(school) |
+              -+--------+---------------+-
+               | old    |             4 |
+               | south  |             2 |
+                                 (2 rows)
+
+               ----
+               /(school^campus){campus,count(school)}?count(school)>1
+               SELECT [school].[campus],
+                      COUNT(1)
+               FROM [ad].[school] AS [school]
+               WHERE ([school].[campus] IS NOT NULL)
+               GROUP BY [school].[campus]
+               HAVING (COUNT(1) > 1)
+               ORDER BY 1 ASC
+          - uri: /(school^campus){campus, count(school), count(school.department)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school^campus                                     |
+               +---------------------------------------------------+
+               | campus | count(school) | count(school.department) |
+              -+--------+---------------+--------------------------+-
+               | north  |             1 |                        4 |
+               | old    |             4 |                       13 |
+               | south  |             2 |                        7 |
+                                                            (3 rows)
+
+               ----
+               /(school^campus){campus,count(school),count(school.department)}
+               SELECT [school].[campus],
+                      [school].[count],
+                      COALESCE([department].[count], 0)
+               FROM (SELECT [school].[campus],
+                            COUNT(1) AS [count]
+                     FROM [ad].[school] AS [school]
+                     WHERE ([school].[campus] IS NOT NULL)
+                     GROUP BY [school].[campus]) AS [school]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [school].[campus]
+                                     FROM [ad].[school] AS [school]
+                                          INNER JOIN [ad].[department] AS [department]
+                                                     ON ([school].[code] = [department].[school_code])
+                                     GROUP BY [school].[campus]) AS [department]
+                                    ON ([school].[campus] = [department].[campus])
+               ORDER BY 1 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.({} -> department))}
@@ -21560,7 +21673,6 @@ tests:
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[degree]) AS [student]
                                     ON ([program_1].[degree] = [student].[degree])
                     LEFT OUTER JOIN (SELECT MAX(COALESCE([student].[count], 0)) AS [max]
@@ -21573,7 +21685,6 @@ tests:
                                                            FROM [ad].[program] AS [program]
                                                                 INNER JOIN [ed].[student] AS [student]
                                                                            ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                                           WHERE ([program].[degree] IS NOT NULL)
                                                            GROUP BY [program].[degree]) AS [student]
                                                           ON ([program].[degree] = [student].[degree])) AS [program_2]
                                     ON (1 <> 0)
@@ -22473,18 +22584,11 @@ tests:
 
                ----
                /distinct(program{degree}){*,count(^)}
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0)
-               FROM (SELECT [program].[degree]
-                     FROM [ad].[program] AS [program]
-                     WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
+               SELECT [program].[degree],
+                      COUNT(1)
+               FROM [ad].[program] AS [program]
+               WHERE ([program].[degree] IS NOT NULL)
+               GROUP BY [program].[degree]
                ORDER BY 1 ASC
           - uri: /distinct(program{degree}){degree, count(program)}
             status: 200 OK
@@ -22506,18 +22610,11 @@ tests:
 
                ----
                /distinct(program{degree}){degree,count(program)}
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0)
-               FROM (SELECT [program].[degree]
-                     FROM [ad].[program] AS [program]
-                     WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
+               SELECT [program].[degree],
+                      COUNT(1)
+               FROM [ad].[program] AS [program]
+               WHERE ([program].[degree] IS NOT NULL)
+               GROUP BY [program].[degree]
                ORDER BY 1 ASC
           - uri: /distinct(program{degree}){*, count(^.student)}
             status: 200 OK
@@ -22550,7 +22647,6 @@ tests:
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[degree]) AS [student]
                                     ON ([program].[degree] = [student].[degree])
                ORDER BY 1 ASC
@@ -22585,7 +22681,6 @@ tests:
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[degree]) AS [student]
                                     ON ([program].[degree] = [student].[degree])
                ORDER BY 1 ASC
@@ -22684,25 +22779,14 @@ tests:
 
                ----
                /distinct(student{year(dob),gender}?!is_active){*,count(^)}
-               SELECT [student_1].[year],
-                      [student_1].[gender],
-                      COALESCE([student_2].[count], 0)
-               FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year],
-                            [student].[gender]
-                     FROM [ed].[student] AS [student]
-                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                           AND ([student].[gender] IS NOT NULL)
-                           AND (NOT ([student].[is_active] <> 0))
-                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            DATEPART(YEAR, [student].[dob]) AS [year],
-                                            [student].[gender]
-                                     FROM [ed].[student] AS [student]
-                                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                           AND ([student].[gender] IS NOT NULL)
-                                           AND (NOT ([student].[is_active] <> 0))
-                                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_2]
-                                    ON (([student_1].[year] = [student_2].[year]) AND ([student_1].[gender] = [student_2].[gender]))
+               SELECT DATEPART(YEAR, [student].[dob]),
+                      [student].[gender],
+                      COUNT(1)
+               FROM [ed].[student] AS [student]
+               WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
+                     AND ([student].[gender] IS NOT NULL)
+                     AND (NOT ([student].[is_active] <> 0))
+               GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]
                ORDER BY 1 ASC, 2 ASC
           - uri: /distinct(student{y_dob:=year(dob),gender}?!is_active) {y_dob,gender,count(student)}
             status: 200 OK
@@ -22721,25 +22805,14 @@ tests:
 
                ----
                /distinct(student{y_dob:=year(dob),gender}?!is_active){y_dob,gender,count(student)}
-               SELECT [student_1].[year],
-                      [student_1].[gender],
-                      COALESCE([student_2].[count], 0)
-               FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year],
-                            [student].[gender]
-                     FROM [ed].[student] AS [student]
-                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                           AND ([student].[gender] IS NOT NULL)
-                           AND (NOT ([student].[is_active] <> 0))
-                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            DATEPART(YEAR, [student].[dob]) AS [year],
-                                            [student].[gender]
-                                     FROM [ed].[student] AS [student]
-                                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                           AND ([student].[gender] IS NOT NULL)
-                                           AND (NOT ([student].[is_active] <> 0))
-                                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_2]
-                                    ON (([student_1].[year] = [student_2].[year]) AND ([student_1].[gender] = [student_2].[gender]))
+               SELECT DATEPART(YEAR, [student].[dob]),
+                      [student].[gender],
+                      COUNT(1)
+               FROM [ed].[student] AS [student]
+               WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
+                     AND ([student].[gender] IS NOT NULL)
+                     AND (NOT ([student].[is_active] <> 0))
+               GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]
                ORDER BY 1 ASC, 2 ASC
           - uri: /distinct(distinct(student{year(dob)}?!is_active).^{gender}) {*,
               count(^), count(^.is_active)}
@@ -22756,41 +22829,22 @@ tests:
 
                ----
                /distinct(distinct(student{year(dob)}?!is_active).^{gender}){*,count(^),count(^.is_active)}
-               SELECT [student_1].[gender],
-                      COALESCE([student_2].[count_1], 0),
-                      COALESCE([student_2].[count_2], 0)
-               FROM (SELECT [student_2].[gender]
-                     FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year]
-                           FROM [ed].[student] AS [student]
-                           WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                 AND (NOT ([student].[is_active] <> 0))
-                           GROUP BY DATEPART(YEAR, [student].[dob])) AS [student_1]
-                          INNER JOIN (SELECT [student].[gender],
-                                             DATEPART(YEAR, [student].[dob]) AS [year]
-                                      FROM [ed].[student] AS [student]
-                                      WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                            AND (NOT ([student].[is_active] <> 0))) AS [student_2]
-                                     ON ([student_1].[year] = [student_2].[year])
-                     WHERE ([student_2].[gender] IS NOT NULL)
-                     GROUP BY [student_2].[gender]) AS [student_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
-                                            COUNT(NULLIF([student_2].[is_active], 0)) AS [count_2],
-                                            [student_2].[gender]
-                                     FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year]
-                                           FROM [ed].[student] AS [student]
-                                           WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                 AND (NOT ([student].[is_active] <> 0))
-                                           GROUP BY DATEPART(YEAR, [student].[dob])) AS [student_1]
-                                          INNER JOIN (SELECT [student].[is_active],
-                                                             [student].[gender],
-                                                             DATEPART(YEAR, [student].[dob]) AS [year]
-                                                      FROM [ed].[student] AS [student]
-                                                      WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                            AND (NOT ([student].[is_active] <> 0))) AS [student_2]
-                                                     ON ([student_1].[year] = [student_2].[year])
-                                     WHERE ([student_2].[gender] IS NOT NULL)
-                                     GROUP BY [student_2].[gender]) AS [student_2]
-                                    ON ([student_1].[gender] = [student_2].[gender])
+               SELECT [student_2].[gender],
+                      COUNT(1),
+                      COUNT(NULLIF([student_2].[is_active], 0))
+               FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year]
+                     FROM [ed].[student] AS [student]
+                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
+                           AND (NOT ([student].[is_active] <> 0))
+                     GROUP BY DATEPART(YEAR, [student].[dob])) AS [student_1]
+                    INNER JOIN (SELECT [student].[gender],
+                                       [student].[is_active],
+                                       DATEPART(YEAR, [student].[dob]) AS [year]
+                                FROM [ed].[student] AS [student]
+                                WHERE (NOT ([student].[is_active] <> 0))) AS [student_2]
+                               ON ([student_1].[year] = [student_2].[year])
+               WHERE ([student_2].[gender] IS NOT NULL)
+               GROUP BY [student_2].[gender]
                ORDER BY 1 ASC
           - uri: /distinct(distinct(student{year(dob), gender}?!is_active){*1}) {*,
               count(^), count(^.^), count(^.^.is_active)}
@@ -22811,10 +22865,11 @@ tests:
                ----
                /distinct(distinct(student{year(dob),gender}?!is_active){*1}){*,count(^),count(^.^),count(^.^.is_active)}
                SELECT [student_1].[year],
-                      COALESCE([student_2].[count], 0),
-                      COALESCE([student_3].[count_1], 0),
-                      COALESCE([student_3].[count_2], 0)
-               FROM (SELECT [student].[year]
+                      [student_1].[count],
+                      COALESCE([student_2].[count_1], 0),
+                      COALESCE([student_2].[count_2], 0)
+               FROM (SELECT [student].[year],
+                            COUNT(1) AS [count]
                      FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year]
                            FROM [ed].[student] AS [student]
                            WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
@@ -22823,17 +22878,6 @@ tests:
                            GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student]
                      WHERE ([student].[year] IS NOT NULL)
                      GROUP BY [student].[year]) AS [student_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [student].[year]
-                                     FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year]
-                                           FROM [ed].[student] AS [student]
-                                           WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                 AND ([student].[gender] IS NOT NULL)
-                                                 AND (NOT ([student].[is_active] <> 0))
-                                           GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student]
-                                     WHERE ([student].[year] IS NOT NULL)
-                                     GROUP BY [student].[year]) AS [student_2]
-                                    ON ([student_1].[year] = [student_2].[year])
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
                                             COUNT(NULLIF([student_2].[is_active], 0)) AS [count_2],
                                             [student_1].[year]
@@ -22848,13 +22892,10 @@ tests:
                                                              DATEPART(YEAR, [student].[dob]) AS [year],
                                                              [student].[gender]
                                                       FROM [ed].[student] AS [student]
-                                                      WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                            AND ([student].[gender] IS NOT NULL)
-                                                            AND (NOT ([student].[is_active] <> 0))) AS [student_2]
+                                                      WHERE (NOT ([student].[is_active] <> 0))) AS [student_2]
                                                      ON (([student_1].[year] = [student_2].[year]) AND ([student_1].[gender] = [student_2].[gender]))
-                                     WHERE ([student_1].[year] IS NOT NULL)
-                                     GROUP BY [student_1].[year]) AS [student_3]
-                                    ON ([student_1].[year] = [student_3].[year])
+                                     GROUP BY [student_1].[year]) AS [student_2]
+                                    ON ([student_1].[year] = [student_2].[year])
                ORDER BY 1 ASC
           - uri: /school.distinct(program{degree})
             status: 200 OK
@@ -23152,22 +23193,16 @@ tests:
 
                ----
                /school.distinct(program{degree}){*,count(^)}
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0)
+               SELECT [program].[degree],
+                      [program].[count]
                FROM [ad].[school] AS [school]
                     INNER JOIN (SELECT [program].[degree],
+                                       COUNT(1) AS [count],
                                        [program].[school_code]
                                 FROM [ad].[program] AS [program]
                                 WHERE ([program].[degree] IS NOT NULL)
-                                GROUP BY [program].[school_code], [program].[degree]) AS [program_1]
-                               ON ([school].[code] = [program_1].[school_code])
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[school_code],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[school_code], [program].[degree]) AS [program_2]
-                                    ON (([program_1].[school_code] = [program_2].[school_code]) AND ([program_1].[degree] = [program_2].[degree]))
+                                GROUP BY [program].[school_code], [program].[degree]) AS [program]
+                               ON ([school].[code] = [program].[school_code])
                ORDER BY [school].[code] ASC, 1 ASC
           - uri: /school.distinct(program{degree}){*, count(^.student)}
             status: 200 OK
@@ -23214,7 +23249,6 @@ tests:
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[school_code], [program].[degree]) AS [student]
                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[degree] = [student].[degree]))
                ORDER BY [school].[code] ASC, 1 ASC
@@ -23288,8 +23322,7 @@ tests:
                                        [program].[degree],
                                        [program].[school_code],
                                        [program].[code]
-                                FROM [ad].[program] AS [program]
-                                WHERE ([program].[degree] IS NOT NULL)) AS [program_2]
+                                FROM [ad].[program] AS [program]) AS [program_2]
                                ON (([program_1].[school_code] = [program_2].[school_code]) AND ([program_1].[degree] = [program_2].[degree]))
                WHERE ([school].[code] = 'art')
                ORDER BY 1 ASC, [school].[code] ASC, [program_1].[degree] ASC, [program_2].[school_code] ASC, [program_2].[code] ASC
@@ -23401,33 +23434,23 @@ tests:
 
                ----
                /school.program.distinct(student{year(dob),gender}?!is_active){*,count(^)}
-               SELECT [student_1].[year],
-                      [student_1].[gender],
-                      COALESCE([student_2].[count], 0)
+               SELECT [student].[year],
+                      [student].[gender],
+                      [student].[count]
                FROM [ad].[school] AS [school]
                     INNER JOIN [ad].[program] AS [program]
                                ON ([school].[code] = [program].[school_code])
                     INNER JOIN (SELECT DATEPART(YEAR, [student].[dob]) AS [year],
                                        [student].[gender],
+                                       COUNT(1) AS [count],
                                        [student].[school_code],
                                        [student].[program_code]
                                 FROM [ed].[student] AS [student]
                                 WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
                                       AND ([student].[gender] IS NOT NULL)
                                       AND (NOT ([student].[is_active] <> 0))
-                                GROUP BY [student].[school_code], [student].[program_code], DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_1]
-                               ON (([program].[school_code] = [student_1].[school_code]) AND ([program].[code] = [student_1].[program_code]))
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [student].[school_code],
-                                            [student].[program_code],
-                                            DATEPART(YEAR, [student].[dob]) AS [year],
-                                            [student].[gender]
-                                     FROM [ed].[student] AS [student]
-                                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                           AND ([student].[gender] IS NOT NULL)
-                                           AND (NOT ([student].[is_active] <> 0))
-                                     GROUP BY [student].[school_code], [student].[program_code], DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_2]
-                                    ON (([student_1].[school_code] = [student_2].[school_code]) AND ([student_1].[program_code] = [student_2].[program_code]) AND ([student_1].[year] = [student_2].[year]) AND ([student_1].[gender] = [student_2].[gender]))
+                                GROUP BY [student].[school_code], [student].[program_code], DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student]
+                               ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
                ORDER BY [school].[code] ASC, [program].[school_code] ASC, [program].[code] ASC, 1 ASC, 2 ASC
           - uri: /school.program.distinct(distinct(student{year(dob)}?!is_active).^{gender})
               {*, count(^), count(^.is_active)}
@@ -23446,13 +23469,15 @@ tests:
 
                ----
                /school.program.distinct(distinct(student{year(dob)}?!is_active).^{gender}){*,count(^),count(^.is_active)}
-               SELECT [student_1].[gender],
-                      COALESCE([student_2].[count_1], 0),
-                      COALESCE([student_2].[count_2], 0)
+               SELECT [student].[gender],
+                      [student].[count_1],
+                      [student].[count_2]
                FROM [ad].[school] AS [school]
                     INNER JOIN [ad].[program] AS [program]
                                ON ([school].[code] = [program].[school_code])
                     INNER JOIN (SELECT [student_2].[gender],
+                                       COUNT(1) AS [count_1],
+                                       COUNT(NULLIF([student_2].[is_active], 0)) AS [count_2],
                                        [student_1].[school_code],
                                        [student_1].[program_code]
                                 FROM (SELECT [student].[school_code],
@@ -23463,40 +23488,16 @@ tests:
                                             AND (NOT ([student].[is_active] <> 0))
                                       GROUP BY [student].[school_code], [student].[program_code], DATEPART(YEAR, [student].[dob])) AS [student_1]
                                      INNER JOIN (SELECT [student].[gender],
+                                                        [student].[is_active],
                                                         [student].[school_code],
                                                         [student].[program_code],
                                                         DATEPART(YEAR, [student].[dob]) AS [year]
                                                  FROM [ed].[student] AS [student]
-                                                 WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                       AND (NOT ([student].[is_active] <> 0))) AS [student_2]
+                                                 WHERE (NOT ([student].[is_active] <> 0))) AS [student_2]
                                                 ON (([student_1].[school_code] = [student_2].[school_code]) AND ([student_1].[program_code] = [student_2].[program_code]) AND ([student_1].[year] = [student_2].[year]))
                                 WHERE ([student_2].[gender] IS NOT NULL)
-                                GROUP BY [student_1].[school_code], [student_1].[program_code], [student_2].[gender]) AS [student_1]
-                               ON (([program].[school_code] = [student_1].[school_code]) AND ([program].[code] = [student_1].[program_code]))
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
-                                            COUNT(NULLIF([student_2].[is_active], 0)) AS [count_2],
-                                            [student_1].[school_code],
-                                            [student_1].[program_code],
-                                            [student_2].[gender]
-                                     FROM (SELECT [student].[school_code],
-                                                  [student].[program_code],
-                                                  DATEPART(YEAR, [student].[dob]) AS [year]
-                                           FROM [ed].[student] AS [student]
-                                           WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                 AND (NOT ([student].[is_active] <> 0))
-                                           GROUP BY [student].[school_code], [student].[program_code], DATEPART(YEAR, [student].[dob])) AS [student_1]
-                                          INNER JOIN (SELECT [student].[is_active],
-                                                             [student].[gender],
-                                                             [student].[school_code],
-                                                             [student].[program_code],
-                                                             DATEPART(YEAR, [student].[dob]) AS [year]
-                                                      FROM [ed].[student] AS [student]
-                                                      WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                            AND (NOT ([student].[is_active] <> 0))) AS [student_2]
-                                                     ON (([student_1].[school_code] = [student_2].[school_code]) AND ([student_1].[program_code] = [student_2].[program_code]) AND ([student_1].[year] = [student_2].[year]))
-                                     WHERE ([student_2].[gender] IS NOT NULL)
-                                     GROUP BY [student_1].[school_code], [student_1].[program_code], [student_2].[gender]) AS [student_2]
-                                    ON (([student_1].[school_code] = [student_2].[school_code]) AND ([student_1].[program_code] = [student_2].[program_code]) AND ([student_1].[gender] = [student_2].[gender]))
+                                GROUP BY [student_1].[school_code], [student_1].[program_code], [student_2].[gender]) AS [student]
+                               ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
                ORDER BY [school].[code] ASC, [program].[school_code] ASC, [program].[code] ASC, 1 ASC
           - uri: /school.program.distinct(distinct(student{year(dob), gender}?!is_active){*1})
               {*, count(^), count(^.^), count(^.^.is_active)}
@@ -23524,13 +23525,14 @@ tests:
                ----
                /school.program.distinct(distinct(student{year(dob),gender}?!is_active){*1}){*,count(^),count(^.^),count(^.^.is_active)}
                SELECT [student_1].[year],
-                      COALESCE([student_2].[count], 0),
-                      COALESCE([student_3].[count_1], 0),
-                      COALESCE([student_3].[count_2], 0)
+                      [student_1].[count],
+                      COALESCE([student_2].[count_1], 0),
+                      COALESCE([student_2].[count_2], 0)
                FROM [ad].[school] AS [school]
                     INNER JOIN [ad].[program] AS [program]
                                ON ([school].[code] = [program].[school_code])
                     INNER JOIN (SELECT [student].[year],
+                                       COUNT(1) AS [count],
                                        [student].[school_code],
                                        [student].[program_code]
                                 FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year],
@@ -23544,21 +23546,6 @@ tests:
                                 WHERE ([student].[year] IS NOT NULL)
                                 GROUP BY [student].[school_code], [student].[program_code], [student].[year]) AS [student_1]
                                ON (([program].[school_code] = [student_1].[school_code]) AND ([program].[code] = [student_1].[program_code]))
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [student].[school_code],
-                                            [student].[program_code],
-                                            [student].[year]
-                                     FROM (SELECT [student].[school_code],
-                                                  [student].[program_code],
-                                                  DATEPART(YEAR, [student].[dob]) AS [year]
-                                           FROM [ed].[student] AS [student]
-                                           WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                 AND ([student].[gender] IS NOT NULL)
-                                                 AND (NOT ([student].[is_active] <> 0))
-                                           GROUP BY [student].[school_code], [student].[program_code], DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student]
-                                     WHERE ([student].[year] IS NOT NULL)
-                                     GROUP BY [student].[school_code], [student].[program_code], [student].[year]) AS [student_2]
-                                    ON (([student_1].[school_code] = [student_2].[school_code]) AND ([student_1].[program_code] = [student_2].[program_code]) AND ([student_1].[year] = [student_2].[year]))
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
                                             COUNT(NULLIF([student_2].[is_active], 0)) AS [count_2],
                                             [student_1].[school_code],
@@ -23579,13 +23566,10 @@ tests:
                                                              DATEPART(YEAR, [student].[dob]) AS [year],
                                                              [student].[gender]
                                                       FROM [ed].[student] AS [student]
-                                                      WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                                            AND ([student].[gender] IS NOT NULL)
-                                                            AND (NOT ([student].[is_active] <> 0))) AS [student_2]
+                                                      WHERE (NOT ([student].[is_active] <> 0))) AS [student_2]
                                                      ON (([student_1].[school_code] = [student_2].[school_code]) AND ([student_1].[program_code] = [student_2].[program_code]) AND ([student_1].[year] = [student_2].[year]) AND ([student_1].[gender] = [student_2].[gender]))
-                                     WHERE ([student_1].[year] IS NOT NULL)
-                                     GROUP BY [student_1].[school_code], [student_1].[program_code], [student_1].[year]) AS [student_3]
-                                    ON (([student_1].[school_code] = [student_3].[school_code]) AND ([student_1].[program_code] = [student_3].[program_code]) AND ([student_1].[year] = [student_3].[year]))
+                                     GROUP BY [student_1].[school_code], [student_1].[program_code], [student_1].[year]) AS [student_2]
+                                    ON (([student_1].[school_code] = [student_2].[school_code]) AND ([student_1].[program_code] = [student_2].[program_code]) AND ([student_1].[year] = [student_2].[year]))
                ORDER BY [school].[code] ASC, [program].[school_code] ASC, [program].[code] ASC, 1 ASC
           - uri: /(program^degree){*, count(^)}?count(^)>5
             status: 200 OK
@@ -23603,19 +23587,12 @@ tests:
 
                ----
                /(program^degree){*,count(^)}?count(^)>5
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0)
-               FROM (SELECT [program].[degree]
-                     FROM [ad].[program] AS [program]
-                     WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
-               WHERE (COALESCE([program_2].[count], 0) > 5)
+               SELECT [program].[degree],
+                      COUNT(1)
+               FROM [ad].[program] AS [program]
+               WHERE ([program].[degree] IS NOT NULL)
+               GROUP BY [program].[degree]
+               HAVING (COUNT(1) > 5)
                ORDER BY 1 ASC
           - uri: /(course^credits)?*1>3
             status: 200 OK
@@ -23682,25 +23659,15 @@ tests:
 
                ----
                /(((department?code='stdart').course^credits)?*1>3){*,count(^)}
-               SELECT [course_1].[credits],
-                      COALESCE([course_2].[count], 0)
-               FROM (SELECT [course].[credits]
-                     FROM [ad].[department] AS [department]
-                          INNER JOIN [ad].[course] AS [course]
-                                     ON ([department].[code] = [course].[department_code])
-                     WHERE ([course].[credits] IS NOT NULL)
-                           AND ([department].[code] = 'stdart')
-                     GROUP BY [course].[credits]) AS [course_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [course].[credits]
-                                     FROM [ad].[department] AS [department]
-                                          INNER JOIN [ad].[course] AS [course]
-                                                     ON ([department].[code] = [course].[department_code])
-                                     WHERE ([course].[credits] IS NOT NULL)
-                                           AND ([department].[code] = 'stdart')
-                                     GROUP BY [course].[credits]) AS [course_2]
-                                    ON ([course_1].[credits] = [course_2].[credits])
-               WHERE ([course_1].[credits] > 3)
+               SELECT [course].[credits],
+                      COUNT(1)
+               FROM [ad].[department] AS [department]
+                    INNER JOIN [ad].[course] AS [course]
+                               ON ([department].[code] = [course].[department_code])
+               WHERE ([course].[credits] IS NOT NULL)
+                     AND ([department].[code] = 'stdart')
+               GROUP BY [course].[credits]
+               HAVING ([course].[credits] > 3)
                ORDER BY 1 ASC
           - uri: /(school^count(program)){*, count(^)}
             status: 200 OK
@@ -23722,28 +23689,16 @@ tests:
 
                ----
                /(school^count(program)){*,count(^)}
-               SELECT [school_1].[count],
-                      COALESCE([school_2].[count_1], 0)
-               FROM (SELECT COALESCE([program].[count], 0) AS [count]
-                     FROM [ad].[school] AS [school]
-                          LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                                  [program].[school_code]
-                                           FROM [ad].[program] AS [program]
-                                           GROUP BY [program].[school_code]) AS [program]
-                                          ON ([school].[code] = [program].[school_code])
-                     WHERE (COALESCE([program].[count], 0) IS NOT NULL)
-                     GROUP BY COALESCE([program].[count], 0)) AS [school_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
-                                            COALESCE([program].[count], 0) AS [count_2]
-                                     FROM [ad].[school] AS [school]
-                                          LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                                                  [program].[school_code]
-                                                           FROM [ad].[program] AS [program]
-                                                           GROUP BY [program].[school_code]) AS [program]
-                                                          ON ([school].[code] = [program].[school_code])
-                                     WHERE (COALESCE([program].[count], 0) IS NOT NULL)
-                                     GROUP BY COALESCE([program].[count], 0)) AS [school_2]
-                                    ON ([school_1].[count] = [school_2].[count_2])
+               SELECT COALESCE([program].[count], 0),
+                      COUNT(1)
+               FROM [ad].[school] AS [school]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [program].[school_code]
+                                     FROM [ad].[program] AS [program]
+                                     GROUP BY [program].[school_code]) AS [program]
+                                    ON ([school].[code] = [program].[school_code])
+               WHERE (COALESCE([program].[count], 0) IS NOT NULL)
+               GROUP BY COALESCE([program].[count], 0)
                ORDER BY 1 ASC
           - uri: /school.(program^degree)
             status: 200 OK
@@ -23972,8 +23927,7 @@ tests:
                                        [program].[title],
                                        [program].[degree],
                                        [program].[part_of]
-                                FROM [ad].[program] AS [program]
-                                WHERE ([program].[degree] IS NOT NULL)) AS [program_2]
+                                FROM [ad].[program] AS [program]) AS [program_2]
                                ON ([program_1].[degree] = [program_2].[degree])
                ORDER BY [program_1].[degree] ASC, 1 ASC, 2 ASC
           - uri: /(program.sort(count(student))^degree).^ {*, count(student)}
@@ -24064,8 +24018,7 @@ tests:
                                                              [student].[program_code]
                                                       FROM [ed].[student] AS [student]
                                                       GROUP BY [student].[school_code], [student].[program_code]) AS [student]
-                                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                WHERE ([program].[degree] IS NOT NULL)) AS [program_2]
+                                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))) AS [program_2]
                                ON ([program_1].[degree] = [program_2].[degree])
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
                                             [student].[school_code],
@@ -24094,23 +24047,15 @@ tests:
 
                ----
                /(program^degree){*,exists(^),count(^)}
-               SELECT [program_1].[degree],
+               SELECT [program].[degree],
                       (CASE WHEN EXISTS(SELECT 1
-                                        FROM [ad].[program] AS [program]
-                                        WHERE ([program_1].[degree] = [program].[degree])
-                                              AND (1 <> 0)
-                                              AND ([program].[degree] IS NOT NULL)) THEN 1 ELSE 0 END),
-                      COALESCE([program_2].[count], 0)
-               FROM (SELECT [program].[degree]
-                     FROM [ad].[program] AS [program]
-                     WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
+                                        FROM [ad].[program] AS [program_1]
+                                        WHERE ([program].[degree] = [program_1].[degree])
+                                              AND (1 <> 0)) THEN 1 ELSE 0 END),
+                      COUNT(1)
+               FROM [ad].[program] AS [program]
+               WHERE ([program].[degree] IS NOT NULL)
+               GROUP BY [program].[degree]
                ORDER BY 1 ASC
           - uri: /school{code, count(program), count(distinct(program{degree}))}
             status: 200 OK
@@ -24212,27 +24157,21 @@ tests:
 
                ----
                /(program^degree){*,count(^),count(^.student)}
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0),
+               SELECT [program].[degree],
+                      [program].[count],
                       COALESCE([student].[count], 0)
-               FROM (SELECT [program].[degree]
+               FROM (SELECT [program].[degree],
+                            COUNT(1) AS [count]
                      FROM [ad].[program] AS [program]
                      WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
+                     GROUP BY [program].[degree]) AS [program]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
                                             [program].[degree]
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[degree]) AS [student]
-                                    ON ([program_1].[degree] = [student].[degree])
+                                    ON ([program].[degree] = [student].[degree])
                ORDER BY 1 ASC
           - uri: /(student^{year(dob),gender}?!is_active) {*, count(^), count(^?is_active)}
             status: 200 OK
@@ -24262,25 +24201,14 @@ tests:
 
                ----
                /(student^{year(dob),gender}?!is_active){*,count(^),count(^?is_active)}
-               SELECT [student_1].[year],
-                      [student_1].[gender],
-                      COALESCE([student_2].[count_1], 0),
-                      COALESCE([student_2].[count_2], 0)
-               FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year],
-                            [student].[gender]
-                     FROM [ed].[student] AS [student]
-                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                           AND ([student].[gender] IS NOT NULL)
-                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
-                                            COUNT((CASE WHEN ([student].[is_active] <> 0) THEN 1 END)) AS [count_2],
-                                            DATEPART(YEAR, [student].[dob]) AS [year],
-                                            [student].[gender]
-                                     FROM [ed].[student] AS [student]
-                                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                           AND ([student].[gender] IS NOT NULL)
-                                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_2]
-                                    ON (([student_1].[year] = [student_2].[year]) AND ([student_1].[gender] = [student_2].[gender]))
+               SELECT DATEPART(YEAR, [student].[dob]),
+                      [student].[gender],
+                      COUNT(1),
+                      COUNT((CASE WHEN ([student].[is_active] <> 0) THEN 1 END))
+               FROM [ed].[student] AS [student]
+               WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
+                     AND ([student].[gender] IS NOT NULL)
+               GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]
                ORDER BY 1 ASC, 2 ASC
           - uri: /(student^{y_dob:=year(dob),gender}?!is_active) {*, count(student),
               count(student?is_active)}
@@ -24311,25 +24239,14 @@ tests:
 
                ----
                /(student^{y_dob:=year(dob),gender}?!is_active){*,count(student),count(student?is_active)}
-               SELECT [student_1].[year],
-                      [student_1].[gender],
-                      COALESCE([student_2].[count_1], 0),
-                      COALESCE([student_2].[count_2], 0)
-               FROM (SELECT DATEPART(YEAR, [student].[dob]) AS [year],
-                            [student].[gender]
-                     FROM [ed].[student] AS [student]
-                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                           AND ([student].[gender] IS NOT NULL)
-                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
-                                            COUNT((CASE WHEN ([student].[is_active] <> 0) THEN 1 END)) AS [count_2],
-                                            DATEPART(YEAR, [student].[dob]) AS [year],
-                                            [student].[gender]
-                                     FROM [ed].[student] AS [student]
-                                     WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
-                                           AND ([student].[gender] IS NOT NULL)
-                                     GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]) AS [student_2]
-                                    ON (([student_1].[year] = [student_2].[year]) AND ([student_1].[gender] = [student_2].[gender]))
+               SELECT DATEPART(YEAR, [student].[dob]),
+                      [student].[gender],
+                      COUNT(1),
+                      COUNT((CASE WHEN ([student].[is_active] <> 0) THEN 1 END))
+               FROM [ed].[student] AS [student]
+               WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
+                     AND ([student].[gender] IS NOT NULL)
+               GROUP BY DATEPART(YEAR, [student].[dob]), [student].[gender]
                ORDER BY 1 ASC, 2 ASC
           - uri: /count(program^degree)
             status: 200 OK
@@ -24368,27 +24285,21 @@ tests:
 
                ----
                /distinct(program{degree}){*,count(^),count(^.student)}
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0),
+               SELECT [program].[degree],
+                      [program].[count],
                       COALESCE([student].[count], 0)
-               FROM (SELECT [program].[degree]
+               FROM (SELECT [program].[degree],
+                            COUNT(1) AS [count]
                      FROM [ad].[program] AS [program]
                      WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
+                     GROUP BY [program].[degree]) AS [program]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
                                             [program].[degree]
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[degree]) AS [student]
-                                    ON ([program_1].[degree] = [student].[degree])
+                                    ON ([program].[degree] = [student].[degree])
                ORDER BY 1 ASC
           - uri: /distinct(program{degree}?school.code={'art','la'}) {*, count(^),
               count(^.student)}
@@ -24408,25 +24319,17 @@ tests:
 
                ----
                /distinct(program{degree}?school.code={'art','la'}){*,count(^),count(^.student)}
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0),
+               SELECT [program].[degree],
+                      [program].[count],
                       COALESCE([student].[count], 0)
-               FROM (SELECT [program].[degree]
+               FROM (SELECT [program].[degree],
+                            COUNT(1) AS [count]
                      FROM [ad].[program] AS [program]
                           INNER JOIN [ad].[school] AS [school]
                                      ON ([program].[school_code] = [school].[code])
                      WHERE ([program].[degree] IS NOT NULL)
                            AND ([school].[code] IN ('art', 'la'))
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                          INNER JOIN [ad].[school] AS [school]
-                                                     ON ([program].[school_code] = [school].[code])
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                           AND ([school].[code] IN ('art', 'la'))
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
+                     GROUP BY [program].[degree]) AS [program]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
                                             [program].[degree]
                                      FROM [ad].[program] AS [program]
@@ -24434,10 +24337,9 @@ tests:
                                                      ON ([program].[school_code] = [school].[code])
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                           AND ([school].[code] IN ('art', 'la'))
+                                     WHERE ([school].[code] IN ('art', 'la'))
                                      GROUP BY [program].[degree]) AS [student]
-                                    ON ([program_1].[degree] = [student].[degree])
+                                    ON ([program].[degree] = [student].[degree])
                ORDER BY 1 ASC
           - uri: /distinct(program{degree}) {*, count(^), count(^.student)}?*1
             status: 200 OK
@@ -24459,28 +24361,22 @@ tests:
 
                ----
                /distinct(program{degree}){*,count(^),count(^.student)}?*1
-               SELECT [program_1].[degree],
-                      COALESCE([program_2].[count], 0),
+               SELECT [program].[degree],
+                      [program].[count],
                       COALESCE([student].[count], 0)
-               FROM (SELECT [program].[degree]
+               FROM (SELECT [program].[degree],
+                            COUNT(1) AS [count]
                      FROM [ad].[program] AS [program]
                      WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program_1]
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [program].[degree]
-                                     FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
-                                     GROUP BY [program].[degree]) AS [program_2]
-                                    ON ([program_1].[degree] = [program_2].[degree])
+                     GROUP BY [program].[degree]) AS [program]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
                                             [program].[degree]
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[degree]) AS [student]
-                                    ON ([program_1].[degree] = [student].[degree])
-               WHERE (NULLIF([program_1].[degree], '') IS NOT NULL)
+                                    ON ([program].[degree] = [student].[degree])
+               WHERE (NULLIF([program].[degree], '') IS NOT NULL)
                ORDER BY 1 ASC
           - uri: /(school?code={'art','la'}).distinct(program{degree}) {*, count(^),
               count(^.student)}
@@ -24515,7 +24411,6 @@ tests:
                                             [program].[school_code],
                                             [program].[degree]
                                      FROM [ad].[program] AS [program]
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[school_code], [program].[degree]) AS [program_2]
                                     ON (([program_1].[school_code] = [program_2].[school_code]) AND ([program_1].[degree] = [program_2].[degree]))
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
@@ -24524,7 +24419,6 @@ tests:
                                      FROM [ad].[program] AS [program]
                                           INNER JOIN [ed].[student] AS [student]
                                                      ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                     WHERE ([program].[degree] IS NOT NULL)
                                      GROUP BY [program].[school_code], [program].[degree]) AS [student]
                                     ON (([program_1].[school_code] = [student].[school_code]) AND ([program_1].[degree] = [student].[degree]))
                WHERE ([school].[code] IN ('art', 'la'))
@@ -24578,8 +24472,7 @@ tests:
                                 FROM [ad].[program] AS [program]
                                      INNER JOIN [ad].[school] AS [school]
                                                 ON ([program].[school_code] = [school].[code])
-                                WHERE ([program].[degree] IS NOT NULL)
-                                      AND ([school].[code] IN ('art', 'la'))) AS [program_2]
+                                WHERE ([school].[code] IN ('art', 'la'))) AS [program_2]
                                ON ([program_1].[degree] = [program_2].[degree])
                ORDER BY [program_1].[degree] ASC, 1 ASC, 2 ASC
           - uri: /((program?school_code='art')^degree).limit(1)
