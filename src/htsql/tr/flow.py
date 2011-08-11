@@ -24,46 +24,25 @@ class Expression(Comparable, Clonable, Printable):
     """
     Represents an expression node.
 
-    This is an abstract class; its subclasses are divided into two categories:
-    flow nodes (see :class:`Flow`) and code nodes (see :class:`Code`).
-    There are also several expression node types that do not belong to either
-    of these categories.
+    This is an abstract class; most of its subclasses belong to one of the
+    two categories: *flow* and *code* nodes (see :class:`Flow` and
+    :class:`Code`).
 
-    An expression tree (a DAG) is an intermediate stage of the HTSQL
-    translator.  An expression tree is translated from a binding tree by
-    the *encoding* process.  It is then translated to a frame structure
-    by the *compiling* and *assembling* processes.
+    A flow graph is an intermediate phase of the HTSQL translator.  It is
+    translated from the binding graph by the *encoding* process.  The flow
+    graph is used to *compile* the term tree and then *assemble* the frame
+    structure.
 
-    The following adapters are associated with the encoding process and
-    generate new code and flow nodes::
+    A flow graph reflects the flow structure of the HTSQL query: each
+    expression node represents either a data flow or an expression over
+    a data flow.
 
-        Encode: (Binding, EncodingState) -> Code
-        Relate: (Binding, EncodingState) -> Flow
-
-    See :class:`htsql.tr.encode.Encode` and :class:`htsql.tr.encode.Relate`
-    for more detail.
-
-    The compiling process works as follows.  Flow nodes (and also unit nodes)
-    are translated to frame nodes via several intermediate steps::
-
-        Compile: (Flow, CompilingState) -> Term
-        Assemble: (Term, AssemblingState) -> Frame
-
-    Code nodes are directly translated to phrase nodes::
-
-        Evaluate: (Code, AssemblingState) -> Phrase
-
-    See :class:`htsql.tr.compile.Compile, :class:`htsql.tr.assemble.Assemble`,
-    :class:`htsql.tr.assemble.Evaluate` for more detail.
-
-    Expression nodes support equality by value (as opposed to to equality
-    by identity, which is the default for class instances).  That is, two
-    expression nodes are equal if they are of the same type and all their
-    (essential) attributes are equal.  Some attributes (e.g. `binding) may
-    be considered not essential and do not participate in comparison.  To
-    facilitate expression comparison, :class:`htsql.domain.Domain` objects
-    also support equality by value.  By-value semantics is respected when
-    expression nodes are used as dictionary keys.
+    Expression nodes support equality by value: that is, two expression
+    nodes are equal if they are of the same type and all their (essential)
+    attributes are equal.  Some attributes (e.g. `binding`) are not
+    considered essential and do not participate in comparison.  By-value
+    semantics is respected when expression nodes are used as dictionary
+    keys.
 
     The constructor arguments:
 
@@ -108,7 +87,7 @@ class Expression(Comparable, Clonable, Printable):
 
 class QueryExpr(Expression):
     """
-    Represents a whole HTSQL query.
+    Represents the whole HTSQL query.
 
     `segment` (:class:`SegmentExpr` or ``None``)
         The query segment.
@@ -126,10 +105,10 @@ class SegmentExpr(Expression):
     Represents a segment of an HTSQL query.
 
     `flow` (:class:`Flow`)
-        The flow rendered by the segment.
+        The output flow of the segment.
 
-    `elements` (a list of :class:`Code` objects)
-        The elements rendered by the segment.
+    `elements` (a list of :class:`Code`)
+        The output columns of the segment.
     """
 
     def __init__(self, flow, elements, binding):
@@ -142,18 +121,55 @@ class SegmentExpr(Expression):
 
 
 class Family(object):
+    """
+    Represents the target class of a flow.
+
+    The flow family specifies the type of values produced by
+    a flow.  There are three distinct flow families:
+
+    - *scalar*, which indicates that the flow produces
+      scalar values;
+    - *table*, which indicates that the flow produces
+      records from a database table;
+    - *quotient*, which indicates that the flow produces
+      records from a derived *quotient* class.
+
+    Class attributes:
+
+    `is_scalar` (Boolean)
+        Set for a scalar family.
+
+    `is_table` (Boolean)
+        Set for a table family.
+
+    `is_quotient` (Boolean)
+        Set for a quotient family.
+    """
 
     is_scalar = False
     is_table = False
-    is_kernel = False
+    is_quotient = False
 
 
 class ScalarFamily(Family):
+    """
+    Represents a scalar flow family.
+
+    A scalar flow produces values of a primitive type.
+    """
 
     is_scalar = True
 
 
 class TableFamily(Family):
+    """
+    Represents a table flow family.
+
+    A table flow produces records from a database table.
+
+    `table` (:class:`htsql.entity.TableEntity`)
+        The table.
+    """
 
     is_table = True
 
@@ -162,118 +178,127 @@ class TableFamily(Family):
         self.table = table
 
 
-class KernelFamily(Family):
+class QuotientFamily(Family):
+    """
+    Represents a quotient flow family.
 
-    is_kernel = True
+    A quotient flow produces records from a derived quotient class.
 
-    def __init__(self, seed, seed_baseline, kernel):
+    The quotient class contains records formed from the kernel expressions
+    as they run over the `seed` flow.
+
+    `seed` (:class:`Flow`)
+        The dividend flow.
+
+    `ground` (:class:`Flow`)
+        The ground flow of the dividend.
+
+    `kernels` (list of :class:`Code`)
+        The kernel expressions of the quotient.
+    """
+
+    is_quotient = True
+
+    def __init__(self, seed, ground, kernels):
         assert isinstance(seed, Flow)
-        assert isinstance(seed_baseline, Flow)
-        assert seed_baseline.is_axis and seed.concludes(seed_baseline)
-        assert isinstance(kernel, listof(Code))
+        assert isinstance(ground, Flow)
+        assert ground.is_axis and seed.concludes(ground)
+        assert isinstance(kernels, listof(Code))
         self.seed = seed
-        self.seed_baseline = seed_baseline
-        self.kernel = kernel
+        self.ground = ground
+        self.kernels = kernels
 
 
 class Flow(Expression):
     """
     Represents a flow node.
 
-    A flow is an expression that represents an (ordered multi-) set of rows.
-    Among others, we consider the following kinds of flows:
+    A data flow is a sequence of homogeneous values.  A flow is generated
+    by a series of flow operations applied sequentially to the root flow.
 
-    *The scalar flow* `I`
-        A flow with only one row.
+    Each flow operation takes an input flow as an argument and produces
+    an output flow as a result.  The operation transforms each element
+    from the input row into zero, one, or more elements of the output
+    flow; the generating element is called *the origin* of the generated
+    elements.  Thus, with every element of a flow, we could associate
+    a sequence of origin elements, one per each elementary flow operation
+    that together produce the flow.
 
-    *A table flow* `T`
-        Given a table `T`, the flow consists of all rows of the table.
+    Each instance of :class:`Flow` represents a single flow operation
+    applied to some input flow.  The `base` attribute of the instance
+    represents the input flow while the type of the instance and the
+    other attributes reflect the properies of the operation.  The root
+    flow is denoted by an instance of:class:`RootFlow`, different
+    subclasses of :class:`Flow` correspond to different types of
+    flow operations.
 
-    *A direct table flow* `A * T`
-        Given a table `T` and another flow `A`, the direct table flow
-        consists of pairs `(a, t)` where `a` runs over rows of `A` and
-        `t` runs over rows of `T`.
+    The type of values produced by a flow is indicated by the `family`
+    attribute.  We distinguish three flow families: *scalar*, *table*
+    and *quotient*.  A scalar flow produces values of an elementary data
+    type; a table flow produces records of some table; a quotient flow
+    produces elements of a derived quotient class.
 
-        Note that a table flow is a special case of a direct table flow:
-        `T` is equivalent to `I * T`.
+    Among others, we consider the following flow operations:
 
-        Table `T` in `A * T` is called *the prominent table* of the flow.
+    *The root flow* `I`
+        The initial flow that contains one empty record.
 
-    *A fiber table flow* `A . T` or `A .j T`
-        Given a flow `A` with the prominent table `S`, another table `T`
-        and a join condition `j` between tables `S` and `T`, the fiber
-        table flow consists of pairs `(a, t)` from `A * T` satisfying
-        the join condition `j`.
+    *A direct product* `A * T`
+        Given a scalar flow `A` and a table `T`, the direct product
+        `A * T` generates all records of `T` for each element of `A`.
 
-        Table `T` is called the prominent table of `A . T`.
+    *A fiber product* `A . T`
+        Given an input flow `A` that produces records of some table `S`
+        and a table `T` linked to `S`, for each element of `A`,
+        the fiber product `A . T` generates all associated records
+        from `T`.
 
-    *A filtered flow* `A ? p`
-        Given a flow `A` and a predicate `p` defined on `A`, the
-        filtered flow consists of rows of `A` satisfying condition `p`.
+    *Filtering* `A ? p`
+        Given a flow `A` and a predicate `p` defined on `A`,
+        the filtered flow `A ? p` consists of all elements of `A`
+        satisfying condition `p`.
 
-    *An ordered flow* `A [e,...]`
+    *Ordering* `A [e,...]`
         Given a flow `A` and a list of expressions `e,...`, the
-        ordered flow consists of rows of `A` reordered by the values
-        of expressions.
+        ordered flow `A [e,...]` consists of elements of `A` reordered
+        by the values of `e,...`.
 
-    Note that all these examples (except for the scalar flow) share the same
-    form: they take an existing flow, called *the base flow* and apply some
-    operation to produce a new flow.  Thus *any flow could be expressed
-    as an application of a series of elementary operations to the scalar
-    flow*.
+    *Quotient* `A ^ k`
+        Given a flow `A` and a kernel expression `k` defined on `A`,
+        a quotient `A ^ k` produces all unique values of the kernel
+        as it runs over `A`.
 
-    Each subclass of :class:`Flow` represents an operation that is applied
-    to a base flow.  We could classify the operations (and therefore
-    :class:`Flow` subclasses) into two groups: those which keep the row
-    shape of the base flow and those which expand it.  The latter are
-    called *axis flows*.  We also regard the scalar flow as an axis flow.
-
-    Take an arbitrary flow `A` and consider it as a sequence of
-    operations applied to the scalar flow.  If we then reapply only
-    the axis operations from the sequence, we obtain a new flow `A'`,
-    which we call *the inflation* of `A`.  Note that `A` is a subset
-    of the inflated flow `A'`.
+    Flow operations for which the output flow does not consist of
+    elements of the input flow are called *axial*.  If we take an
+    arbitrary flow `A`, disassemble it into individual operations,
+    and then reapply only axial operations, we get the new flow `A'`,
+    which we call *the inflation* of `A`.  Note that elements of `A`
+    form a subset of elements of `A'`.
 
     Now we can establish how different flows are related to each other.
-    For that we will introduce a notion of *convergency* between two
-    arbitrary flows.  Informally, convergency describes how two flows
-    `A` and `B` can be naturally attached to each other.  When rows
-    in `A` and `B` have the same shape, convergency is reduced to equality,
-    that is, a row from `A` converges to an equal row from `B` if the latter
-    exists.  When rows in `A` and `B` have different shapes, we need
-    to determine their longest common prefix.  Then a row from `A`
-    converges to all rows from `B` that share the same prefix values.
-
     Formally, for each pair of flows `A` and `B`, we define a relation
-    `<->` ("converges to") on rows from `A` and `B`, that is, a subset
-    of the Cartesian product `A x B`, by the following rules:
+    `<->` ("converges to") on elements from `A` and `B`, that is,
+    a subset of the Cartesian product `A x B`, by the following rules:
 
     (1) For any flow `A`, `<->` is the identity relation on `A`,
-        that is, each row converges only to itself.
+        that is, each element converges only to itself.
 
-        For two flows `A` and `B` where `A` is a subset of `B`,
-        each row from `A` converges to an equal row from `B`.  In
-        particular, this defines `<->` on any flow `A` and its inflated
-        flow `A'`, as well as on any non-axis flow `A` and its base
-        flow `B`.
+        For a flow `A` and its inflation `A'`, each element from `A`
+        converges to an equal element from `A'`.
 
-    (2) Suppose `A` and `B` are flows such that `A` is an axis flow
-        and `B` is the base of `A`.  It means that each element of `A`
-        has the form `(b, t)` where `b` is some row from `B`. Then
-        row `a` from `A` converges to row `b` from `B` if `a` has the
-        form `a = (b, t)` for some `t`.
+    (2) Suppose `A` and `B` are flows such that `A` is produced
+        from `B` as a result of some axial flow operation.  Then
+        each element from `A` converges to its origin element
+        from `B`.
 
         By transitivity, we could extend `<->` on `A` and any of its
-        *prefix flows*, that is, the base of `A`, the base of the base
-        of `A` and so on.  For instance, let `B` be the base flow
-        of `A` and let `C` be the base flow of `B`.  Then `a` from `A`
-        converges to `c` from `C` if there exists row `b` from `B`
-        such that `a <-> b` and `b <-> c`.
+        *ancestor flows*, that is, the parent flow of `A`, the
+        parent of the parent of `A` and so on.
 
         In particular, this defines `<->` on an arbitrary flow `A`
-        and the scalar flow `I` since `I` is a prefix for any flow.
-        By the above definition, any row of `A` converges to the (only)
-        row of `I`.
+        and the root flow `I` since `I` is an ancestor of any flow.
+        By the above definition, any element of `A` converges to
+        the (only) record of `I`.
 
     (3) Finally, we are ready to define `<->` on an arbitrary pair
         of flows `A` and `B`.  First, suppose that `A` and `B`
@@ -282,27 +307,27 @@ class Flow(Expression):
         converges to `b` from `B` if there exists `a'` from `A'` such
         that `a <-> a'` and `a' <-> b`.
 
-        In the general case, find the longest prefixes `C` of `A`
+        In the general case, find the closest ancestors `C` of `A`
         and `D` of `B` such that `C` and `D` have the same
         inflated flow: `C' = D'`.  Rules `(1)` and `(2)` establish
         `<->` for the pairs `A` and `C`, `C` and `C' = D'`,
         `C' = D'` and `D`, and `D` and `B`.  We define `<->`
         on `A` and `B` transitively: `a` from `A` converges to
-        `b` from `B` if there exist rows `c` from `C`,
+        `b` from `B` if there exist elements `c` from `C`,
         `c'` from `C' = D'`, `d` from `D` such that
         `a <-> c <-> c' <-> d <-> b`.
 
         Note that it is important that we take among the common inflated
-        prefixes the longest one.  Any two flows have a common inflated
-        prefix: the scalar flow.  If the scalar flow is, indeed, the
-        longest common inflated prefix of `A` and `B`, then each
-        row of `A` converges to every row of `B`.
+        ancestors the closest one.  Any two flows have a common inflated
+        ancestor: the root flow.  If the root flow is, indeed, the closest
+        common inflated ancestor of `A` and `B`, then each element of `A`
+        converges to every element of `B`.
 
-    Now we are ready to introduce several very important relations between
+    Now we are ready to introduce several important relations between
     flows:
 
     `A` *spans* `B`
-        A flow `A` spans a flow `B` if for every row `a` from `A`:
+        A flow `A` spans a flow `B` if for every element `a` from `A`:
 
             `card { b` from `B | a <-> b } <= 1`.
 
@@ -318,7 +343,7 @@ class Flow(Expression):
 
     `A` *dominates* `B`
         A flow `A` dominates a flow `B` if `A` spans `B` and
-        for every row `b` from `B`:
+        for every element `b` from `B`:
 
             `card { a` from `A | a <-> b } >= 1`.
 
@@ -349,45 +374,45 @@ class Flow(Expression):
         produce the same number of rows.
 
         Note that `A` conforming `B` is not the same as `A` being equal
-        to `B`; even if `A` conforms `B`,  rows of `A` and `B` may
-        have different shapes, therefore as sets, they are different.
+        to `B`; even if `A` conforms `B`,  elements of `A` and `B` may
+        be of different types, therefore as sets, they are different.
 
-    Now take an arbitrary flow `A` and its base flow `B`.  We say:
+    Now take an arbitrary flow `A` and its parent flow `B`.  We say:
 
     `A` *contracts* `B`
-        A flow `A` contracts its base `B` if for any row from `B`
-        there is no more than one converging row from `A`.
+        A flow `A` contracts its parent `B` if for any element from `B`
+        there is no more than one converging element from `A`.
 
         Typically, it is non-axis flows that contract their bases,
         although in some cases, an axis flow could do it too.
 
     `A` *expands* `B`
-        A flow `A` expands its base `B` if for any row from `B`
-        there is at least one converging row from `A`.
+        A flow `A` expands its parent `B` if for any element from `B`
+        there is at least one converging element from `A`.
 
         Note that it is possible that a flow `A` both contracts and
         expands its base `B`, and also that `A` neither contracts
         nor expands `B`.  The former means that `A` conforms `B`.
         The latter holds, in particular, for the direct table flow
         `A * T`.  `A * T` violates the contraction condition when
-        `T` contains more than one row and violates the expansion
-        condition when `T` has no rows.
+        `T` contains more than one record and violates the expansion
+        condition when `T` has no records.
 
-    A few words about how rows of a flow are ordered.  The default
+    A few words about how elements of a flow are ordered.  The default
     (also called *weak*) ordering rules are:
 
     - a table flow `T = I * T` is sorted by the lexicographic order
       of the table primary key;
 
-    - a non-axis flow keeps the order of its base;
+    - a non-axial flow keeps the order of its base;
 
-    - an axis flow `A * T` or `A . T` respects the order its base `A`;
-      rows with the same base element are sorted by the table order.
+    - an axial table flow `A * T` or `A . T` respects the order its
+      base `A`; records with the same origin are sorted by the table order.
 
     An alternative sort order could be specified explicitly (also called
     *strong* ordering).  Whenever strong ordering is  specified, it
-    overrides the weak ordering.  Thus, rows of an ordered flow `A [e]`
-    are sorted first by expression `e`, and then rows which are not
+    overrides the weak ordering.  Thus, elements of an ordered flow `A [e]`
+    are sorted first by expression `e`, and then elements which are not
     differentiated by `e` are sorted using the weak ordering of `A`.
     However, if `A` already has a strong ordering, it must be respected.
     Therefore, the general rule for sorting `A [e]` is:
@@ -401,20 +426,19 @@ class Flow(Expression):
     Class attributes:
 
     `is_axis` (Boolean)
-        Indicates whether the flow is an axis flow, that is, the shape
-        of the flow rows differs from the shape of its base.
+        Indicates whether the flow is axial, that is, the elements
+        of the flow do not necessarily coincide with their origins.
 
     `is_root` (Boolean)
-        Indicates if the flow is the root flow.
+        Indicates that the flow is the root flow.
 
     The constructor arguments:
 
     `base` (:class:`Flow` or ``None``)
-        The base flow; ``None`` for the root flow.
+        The parent input flow; ``None`` for the root flow.
 
-    `table` (:class:`htsql.entity.TableEntity` or ``None``)
-        The prominent table of the flow; ``None`` if the flow has no
-        prominent table.
+    `family` (:class:`Family`)
+        Specifies the type of the elements produced by the flow.
 
     `is_contracting` (Boolean)
         Indicates if the flow contracts its base flow.
@@ -425,11 +449,8 @@ class Flow(Expression):
     Other attributes:
 
     `is_inflated` (Boolean)
-        Indicates if the flow is an inflation, that is, the flow itself
-        and all its prefixes are axis flows.
-
-    `root` (:class:`RootFlow`)
-        The root scalar flow.
+        Indicates if the flow is an inflation, that is, this flow
+        operation and all its ancestors are axial.
     """
 
     is_axis = False
@@ -447,26 +468,24 @@ class Flow(Expression):
         self.family = family
         self.is_contracting = is_contracting
         self.is_expanding = is_expanding
-        # Indicates that the flow itself and all its prefixes are axes.
+        # Indicates that the flow itself and all its ancestors are axes.
         self.is_inflated = (self.is_root or
                             (base.is_inflated and self.is_axis))
-        # Extract the root scalar flow from the base.
-        self.root = (base.root if not self.is_root else self)
 
     def unfold(self):
         """
-        Produces a list of prefix flows.
+        Produces a list of ancestor flows.
 
         The method returns a list composed of the flow itself,
         its base, the base of its base and so on.
         """
-        prefixes = []
-        prefix = self
-        while prefix is not None:
-            prefixes.append(prefix)
-            # Note: `prefix.base` is None for the root flow.
-            prefix = prefix.base
-        return prefixes
+        ancestors = []
+        ancestor = self
+        while ancestor is not None:
+            ancestors.append(ancestor)
+            # Note: `ancestor.base` is None for the root flow.
+            ancestor = ancestor.base
+        return ancestors
 
     def resembles(self, other):
         """
@@ -488,7 +507,7 @@ class Flow(Expression):
 
         If we represent a flow as a series of operations sequentially
         applied to the scalar flow, the inflation of the flow is obtained
-        by ignoring any non-axis operations and applying axis operations
+        by ignoring any non-axial operations and applying axial operations
         only.
         """
         # Shortcut: check if the flow is already an inflation.
@@ -496,24 +515,24 @@ class Flow(Expression):
             return self
         # This is going to become a new inflated flow.
         flow = None
-        # Iterate over all prefixes starting from the scalar flow.
-        for prefix in reversed(self.unfold()):
-            # Skip non-axis operations, reapply axis operations to
+        # Iterate over all ancestors starting from the scalar flow.
+        for ancestor in reversed(self.unfold()):
+            # Skip non-axial operations, reapply axial operations to
             # a new base.
-            if prefix.is_axis:
-                flow = prefix.clone(base=flow)
+            if ancestor.is_axis:
+                flow = ancestor.clone(base=flow)
         # This is the inflated flow now.
         return flow
 
     def prune(self, other):
         """
-        Prunes shared non-axis operations.
+        Prunes shared non-axial operations.
 
         Given flows `A` and `B`, this function produces a new flow
         `A'` such that `A` is a subset of `A'` and the convergence
         of `A` and `B` coincides with the convergence of `A'` and `B`.
-        This is done by pruning any non-axis operations of `A` that
-        also occurs in `B`.
+        This is done by pruning any non-axial operations of `A` that
+        also occur in `B`.
         """
         # Sanity check on the argument.
         assert isinstance(other, Flow)
@@ -521,48 +540,49 @@ class Flow(Expression):
         if self.is_inflated:
             return self
         # Unfold the flows into individual operations.
-        my_prefixes = self.unfold()
-        their_prefixes = other.unfold()
+        my_ancestors = self.unfold()
+        their_ancestors = other.unfold()
         # This is going to become the pruned flow.
         flow = None
-        # Iterate until the prefixes are exhausted or diverged.
-        while my_prefixes and their_prefixes:
+        # Iterate until the ancestors are exhausted or diverged.
+        while my_ancestors and their_ancestors:
             # Get the next operation.
-            my_prefix = my_prefixes[-1]
-            their_prefix = their_prefixes[-1]
-            # Compare the prefixes.
-            if my_prefix.resembles(their_prefix):
-                # So both prefixes represent the same operation.
+            my_ancestor = my_ancestors[-1]
+            their_ancestor = their_ancestors[-1]
+            # Compare the ancestors.
+            if my_ancestor.resembles(their_ancestor):
+                # So both ancestors represent the same operation.
                 # If it is an axis operation, apply it; otherwise,
                 # discard it.
                 # FIXME: may break if the flow contains a non-matching
                 # `limit/offset` operation?
-                if my_prefix.is_axis:
-                    flow = my_prefix.clone(base=flow)
-                my_prefixes.pop()
-                their_prefixes.pop()
-            elif not their_prefix.is_axis:
-                # The prefixes represent different operations and `B`'s prefix
-                # is not an axis.  Discard it, we will try the next prefix.
-                # FIXME: we may miss an opportunity to compare `B`'s prefix
-                # with other `A`'s prefixes.  It is not a big deal though,
+                if my_ancestor.is_axis:
+                    flow = my_ancestor.clone(base=flow)
+                my_ancestors.pop()
+                their_ancestors.pop()
+            elif not their_ancestor.is_axis:
+                # The ancestors represent different operations and `B`'s
+                # ancestor is not an axis.  Discard it, we will try the
+                # next ancestor.
+                # FIXME: we may miss an opportunity to compare `B`'s ancestor
+                # with other `A`'s ancestors.  It is not a big deal though,
                 # we do not need to generate an optimal result here.
-                their_prefixes.pop()
-            elif not my_prefix.is_axis:
-                # The prefixes represent different operations, `B`'s prefix
-                # is an axis, and `A`'s prefix is not.  Here we apply the
-                # `A`'s prefix.
-                flow = my_prefix.clone(base=flow)
-                my_prefixes.pop()
+                their_ancestors.pop()
+            elif not my_ancestor.is_axis:
+                # The ancestors represent different operations, `B`'s ancestor
+                # is an axis, and `A`'s ancestor is not.  Here we apply the
+                # `A`'s ancestor.
+                flow = my_ancestor.clone(base=flow)
+                my_ancestors.pop()
             else:
-                # The prefixes are both axes and differ from each other.
-                # At this point, the prefixes diverge and are not
+                # The ancestors are both axial and differ from each other.
+                # At this point, the ancestors diverge and are not
                 # comparable anymore.  Break from the loop.
                 break
-        # Reapply the unprocessed prefixes.
-        while my_prefixes:
-            my_prefix = my_prefixes.pop()
-            flow = my_prefix.clone(base=flow)
+        # Reapply the unprocessed ancestors.
+        while my_ancestors:
+            my_ancestor = my_ancestors.pop()
+            flow = my_ancestor.clone(base=flow)
         # We have a pruned flow here.
         return flow
 
@@ -575,9 +595,11 @@ class Flow(Expression):
         # Shortcut: any flow spans itself.
         if self == other:
             return True
-        # Extract axis prefixes from both flows.
-        my_axes = [prefix for prefix in self.unfold() if prefix.is_axis]
-        their_axes = [prefix for prefix in other.unfold() if prefix.is_axis]
+        # Extract axial ancestors from both flows.
+        my_axes = [ancestor for ancestor in self.unfold()
+                            if ancestor.is_axis]
+        their_axes = [ancestor for ancestor in other.unfold()
+                               if ancestor.is_axis]
         # Iterate until the axes are exhausted or diverged.
         while my_axes and their_axes:
             # Check if the next pair of axes represent the same operation.
@@ -607,40 +629,40 @@ class Flow(Expression):
         if self == other:
             return True
         # Unfold the flows into individual operations.
-        my_prefixes = self.unfold()
-        their_prefixes = other.unfold()
-        # Iterate until the prefixes are exhausted or diverged.
-        while my_prefixes and their_prefixes:
-            # Get the next pair of prefixes.
-            my_prefix = my_prefixes[-1]
-            their_prefix = their_prefixes[-1]
-            # Compare the prefixes.
-            if my_prefix.resembles(their_prefix):
-                # If the prefixes represent the same operation, we could
-                # proceed to the next pair of prefixes.
-                my_prefixes.pop()
-                their_prefixes.pop()
-            elif (my_prefix.is_contracting and
-                  my_prefix.is_expanding and
-                  not my_prefix.is_axis):
-                # Ok, the prefixes represent different operations, but
+        my_ancestors = self.unfold()
+        their_ancestors = other.unfold()
+        # Iterate until the ancestors are exhausted or diverged.
+        while my_ancestors and their_ancestors:
+            # Get the next pair of ancestors.
+            my_ancestor = my_ancestors[-1]
+            their_ancestor = their_ancestors[-1]
+            # Compare the ancestors.
+            if my_ancestor.resembles(their_ancestor):
+                # If the ancestors represent the same operation, we could
+                # proceed to the next pair of ancestors.
+                my_ancestors.pop()
+                their_ancestors.pop()
+            elif (my_ancestor.is_contracting and
+                  my_ancestor.is_expanding and
+                  not my_ancestor.is_axis):
+                # Ok, the ancestors represent different operations, but
                 # one of them is not an axis and does not change the
-                # cardinality of its base.  We could skip this prefix
+                # cardinality of its base.  We could skip this ancestor
                 # and proceed further.
-                my_prefixes.pop()
-            elif (their_prefix.is_contracting and
-                  their_prefix.is_expanding and
-                  not their_prefix.is_axis):
-                # Same with the other prefix.
-                their_prefixes.pop()
+                my_ancestors.pop()
+            elif (their_ancestor.is_contracting and
+                  their_ancestor.is_expanding and
+                  not their_ancestor.is_axis):
+                # Same with the other ancestor.
+                their_ancestors.pop()
             else:
-                # The prefixes start to diverge; break from the loop.
+                # The ancestors start to diverge; break from the loop.
                 break
-        # If all prefixes are processed, the flows conform each other.
+        # If all ancestors are processed, the flows conform each other.
         # Otherwise, they conform each other only if the remaining unprocessed
-        # prefixes do not change the cardinality of their bases.
-        for prefix in my_prefixes + their_prefixes:
-            if not (prefix.is_contracting and prefix.is_expanding):
+        # ancestors do not change the cardinality of their bases.
+        for ancestor in my_ancestors + their_ancestors:
+            if not (ancestor.is_contracting and ancestor.is_expanding):
                 return False
         return True
 
@@ -654,55 +676,55 @@ class Flow(Expression):
         if self == other:
             return True
         # Unfold the flows into individual operations.
-        my_prefixes = self.unfold()
-        their_prefixes = other.unfold()
-        # Iterate until the prefixes are exhausted or diverged.
-        while my_prefixes and their_prefixes:
-            # Get the next pair of prefixes.
-            my_prefix = my_prefixes[-1]
-            their_prefix = their_prefixes[-1]
-            # Compare the prefixes.
-            if my_prefix.resembles(their_prefix):
-                # If the prefixes represent the same operation, we could
-                # proceed to the next pair of prefixes.
-                my_prefixes.pop()
-                their_prefixes.pop()
-            elif their_prefix.is_contracting and not their_prefix.is_axis:
-                # We got prefixes representing different operations; however
-                # the dominated prefix represents a non-axis operation that
+        my_ancestors = self.unfold()
+        their_ancestors = other.unfold()
+        # Iterate until the ancestors are exhausted or diverged.
+        while my_ancestors and their_ancestors:
+            # Get the next pair of ancestors.
+            my_ancestor = my_ancestors[-1]
+            their_ancestor = their_ancestors[-1]
+            # Compare the ancestors.
+            if my_ancestor.resembles(their_ancestor):
+                # If the ancestors represent the same operation, we could
+                # proceed to the next pair of ancestors.
+                my_ancestors.pop()
+                their_ancestors.pop()
+            elif their_ancestor.is_contracting and not their_ancestor.is_axis:
+                # We got ancestors representing different operations; however
+                # the dominated ancestor represents a non-axis operation that
                 # does not increase the cardinality of its base.  Therefore
-                # we could ignore this prefix and proceed further.
-                their_prefixes.pop()
+                # we could ignore this ancestor and proceed further.
+                their_ancestors.pop()
             else:
-                # The prefixes start to diverge; break from the loop.
+                # The ancestors start to diverge; break from the loop.
                 break
-        # If all prefixes are processed, the flow dominates the other.
-        # Otherwise, it is only possible if the remaining prefixes of
+        # If all ancestors are processed, the flow dominates the other.
+        # Otherwise, it is only possible if the remaining ancestors of
         # the flow do not decrease the base cardinality while the
-        # remaining prefixes of the other flow do not increase the
+        # remaining ancestors of the other flow do not increase the
         # base cardinality.
-        for my_prefix in my_prefixes:
-            if not my_prefix.is_expanding:
+        for my_ancestor in my_ancestors:
+            if not my_ancestor.is_expanding:
                 return False
-        for their_prefix in their_prefixes:
-            if not their_prefix.is_contracting:
+        for their_ancestor in their_ancestors:
+            if not their_ancestor.is_contracting:
                 return False
         return True
 
     def concludes(self, other):
         """
-        Verifies if the other flow is a prefix of the flow.
+        Verifies if the other flow is a ancestor of the flow.
         """
         # Sanity check on the argument.
         assert isinstance(other, Flow)
-        # Iterate over all prefixes of the flow comparing them with
+        # Iterate over all ancestors of the flow comparing them with
         # the given other flow.
         flow = self
         while flow is not None:
             if flow == other:
                 return True
             flow = flow.base
-        # None of the prefixes matched, the flows must be unrelated.
+        # None of the ancestors matched, the flows must be unrelated.
         return False
 
 
@@ -710,15 +732,14 @@ class RootFlow(Flow):
     """
     Represents a root scalar flow.
 
-    A scalar flow `I` contains one row ``()``.  Any other flow
-    is generated by applying a sequence of elementary operations
-    to `I`.
+    A root flow `I` contains one record ``()``.  Any other flow is generated
+    by applying a sequence of elementary flow operations to `I`.
 
     `base` (always ``None``)
-        The scalar flow (and only the scalar flow) has no base.
+        The root flow (and only the root flow) has no parent flow.
     """
 
-    # Scalar flow is an axis flow.
+    # Scalar flow is an axial flow.
     is_axis = True
     is_root = True
 
@@ -744,6 +765,12 @@ class RootFlow(Flow):
 
 
 class ScalarFlow(Flow):
+    """
+    Represents a link to the scalar class.
+
+    Traversing a link to the scalar class produces an empty record ``()``
+    for each element of the input flow.
+    """
 
     is_axis = True
 
@@ -757,37 +784,40 @@ class ScalarFlow(Flow):
                     equality_vector=(base,))
 
     def __str__(self):
+        # Display:
+        #   (<base> * I)
         return "(%s * I)" % self.base
 
 
 class TableFlow(Flow):
     """
-    Represents a table flow.
+    Represents a product of an input flow to a table.
 
-    A table flow is a subset of a Cartesian product between the base
-    flow and a table.  This is an abstract class, see concrete subclasses
-    :class:`DirectTableFlow` and :class:`FiberTableFlow`.
+    A product operation generates a subset of a Cartesian product
+    between the base flow and records of a table.  This is an abstract
+    class, see concrete subclasses :class:`DirectTableFlow` and
+    :class:`FiberTableFlow`.
 
     `table` (:class:`htsql.entity.TableEntity`)
-        The prominent table of the product.
+        The table.
     """
 
-    # All subclasses of `TableFlow` are axis flows.
+    # All subclasses of `TableFlow` are axial flows.
     is_axis = True
 
 
 class DirectTableFlow(TableFlow):
     """
-    Represents a direct table flow.
+    Represents a direct product between a scalar flow and a table.
 
-    A direct table flow `A * T` consists of all pairs `(a, t)` where
-    `a` is a row of the base flow `A` and `t` is a row of the table `T`.
+    A direct product `A * T` produces all records of the table `T`
+    for each element of the input flow `A`.
 
     `base` (:class:`Flow`)
         The base flow.
 
     `table` (:class:`htsql.entity.TableEntity`)
-        The prominent table.
+        The table.
     """
 
     def __init__(self, base, table, binding):
@@ -803,20 +833,20 @@ class DirectTableFlow(TableFlow):
 
     def __str__(self):
         # Display:
-        #   (<base> * schema.table)
+        #   (<base> * <schema>.<table>)
         return "(%s * %s)" % (self.base, self.family.table)
 
 
 class FiberTableFlow(TableFlow):
     """
-    Represents a fiber table flow.
+    Represents a fiber product between a table flow and a linked table.
 
-    Let `A` be a flow with the prominent table `S`, `j` be a join
-    condition between tables `S` and `T`.  A fiber table flow `A .j T`
+    Let `A` be a flow producing records of table `S`, `j` be a join
+    condition between tables `S` and `T`.  A fiber product `A .j T`
     (or `A . T` when the join condition is implied) of the flow `A`
-    and the table `T` consists of all pairs `(a, t)`, where `a` is a row
-    from `A` of the form `a = (..., s)` and `t` is a row from `T` such
-    that `s` and `t` satisfy the join condition `j`.
+    and the table `T` is a sequence of records of `T` that for each
+    record of `A` generates all records of `T` satisfying the join
+    condition `j`.
 
     `base` (:class:`Flow`)
         The base flow.
@@ -827,7 +857,7 @@ class FiberTableFlow(TableFlow):
 
     def __init__(self, base, join, binding):
         assert isinstance(join, Join)
-        # Check that the join origin is the prominent table of the base.
+        # Check that the join origin is the table of the base flow.
         assert isinstance(base, Flow) and base.family.is_table
         assert base.family.table is join.origin
         super(FiberTableFlow, self).__init__(
@@ -841,42 +871,100 @@ class FiberTableFlow(TableFlow):
 
     def __str__(self):
         # Display:
-        #   (<base> . schema.table)
+        #   (<base> . <schema>.<table>)
         return "(%s . %s)" % (self.base, self.family.table)
 
 
 class QuotientFlow(Flow):
+    """
+    Represents a quotient operation.
+
+    A quotient operation takes three arguments: an input flow `A`,
+    a seed flow `S`, which should be a descendant of the input flow,
+    and a kernel expression `k` on the seed flow.  For each element
+    of the input flow, the output flow `A . (S ^ k)` generates unique
+    values of `k` as it runs over convergent elements of `S`.
+
+    `base` (:class:`Flow`)
+        The base flow.
+
+    `seed` (:class:`Flow`)
+        The seed flow of the quotient; must be a descendant
+        of the base flow.
+
+    `kernels` (a list of :class:`Code`)
+        Kernel expressions of the quotient.
+
+    Other attributes:
+
+    `ground` (:class:`Flow`)
+        The closest axial ancestor of `seed` that is spanned
+        by the `base` flow.
+    """
 
     is_axis = True
 
-    def __init__(self, base, seed, kernel, binding):
+    def __init__(self, base, seed, kernels, binding):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
+        # Check that `seed` is a plural descendant of `base`.
         assert seed.spans(base)
         assert not base.spans(seed)
-        seed_baseline = seed
-        while not base.spans(seed_baseline.base):
-            seed_baseline = seed_baseline.base
-        assert isinstance(kernel, listof(Code))
+        assert isinstance(kernels, listof(Code))
+        # Find an ancestor of `seed` that is spanned by `base`.
+        ground = seed
+        while not base.spans(ground.base):
+            ground = ground.base
+        # The quotient flow conforms its base flow only when
+        # the kernel expression is constant.
+        is_contracting = (not kernels)
+        is_expanding = (base.is_root and not kernels)
         super(QuotientFlow, self).__init__(
                     base=base,
-                    family=KernelFamily(seed, seed_baseline, kernel),
-                    is_contracting=(not kernel),
-                    is_expanding=(base.is_root and not kernel),
+                    family=QuotientFamily(seed, ground, kernels),
+                    is_contracting=is_contracting,
+                    is_expanding=is_expanding,
                     binding=binding,
-                    equality_vector=(base, seed, tuple(kernel)))
+                    equality_vector=(base, seed, tuple(kernels)))
         self.seed = seed
-        self.seed_baseline = seed_baseline
-        self.kernel = kernel
+        self.ground = ground
+        self.kernels = kernels
+
+    def __str__(self):
+        # Display:
+        #   (<base> . (<seed> ^ {<kernels>}))
+        return "(%s . (%s ^ {%s}))" % (self.base, self.seed,
+                        ", ".join(str(kernel) for kernel in self.kernels))
+
 
 
 class ComplementFlow(Flow):
+    """
+    Represents a complement to a quotient.
+
+    A complement takes a quotient as an input flow and generates
+    elements of the quotient seed.
+
+    `base` (:class:`Flow`)
+        The base flow.
+
+    Other attributes:
+
+    `seed` (:class:`Flow`)
+        The seed flow of the quotient.
+
+    `ground` (:class:`Flow`)
+        The grond flow of the quotient.
+
+    `kernels` (list of :class:`Code`)
+        Kernel expressions of the quotient.
+    """
 
     is_axis = True
 
     def __init__(self, base, binding):
         assert isinstance(base, Flow)
-        assert base.family.is_kernel
+        assert base.family.is_quotient
         super(ComplementFlow, self).__init__(
                     base=base,
                     family=base.family.seed.family,
@@ -884,9 +972,34 @@ class ComplementFlow(Flow):
                     is_expanding=True,
                     binding=binding,
                     equality_vector=(base,))
+        self.seed = base.family.seed
+        self.ground = base.family.ground
+        self.kernels = base.family.kernels
+
+    def __str__(self):
+        # Display:
+        #   (<base> . ^)
+        return "(%s . ^)" % self.base
 
 
 class MonikerFlow(Flow):
+    """
+    Represents an moniker operation.
+
+    A moniker masks an arbitrary sequence of operations
+    as a single axial flow operation.
+
+    `base` (:class:`Flow`)
+        The base flow.
+
+    `seed` (:class:`Flow`)
+        The seed flow.
+
+    Other attributes:
+
+    `ground` (:class:`Flow`)
+        The closest axial ancestor of `seed` spanned by `base`.
+    """
 
     is_axis = True
 
@@ -894,13 +1007,16 @@ class MonikerFlow(Flow):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert seed.spans(base)
+        # We don't need `seed` to be plural or even axial against `base`.
         #assert not base.spans(seed)
-        seed_baseline = seed
-        while not seed_baseline.is_axis:
-            seed_baseline = seed_baseline.base
-        if not base.spans(seed_baseline):
-            while not base.spans(seed_baseline.base):
-                seed_baseline = seed_baseline.base
+        # Determine an axial ancestor of `seed` spanned by `base`
+        # (could be `seed` itself).
+        ground = seed
+        while not ground.is_axis:
+            ground = ground.base
+        if not base.spans(ground):
+            while not base.spans(ground.base):
+                ground = ground.base
         super(MonikerFlow, self).__init__(
                     base=base,
                     family=seed.family,
@@ -909,80 +1025,128 @@ class MonikerFlow(Flow):
                     binding=binding,
                     equality_vector=(base, seed))
         self.seed = seed
-        self.seed_baseline = seed_baseline
+        self.ground = ground
 
 
 class ForkedFlow(Flow):
+    """
+    Represents a fork expression.
+
+    A fork expression associated each element of the input flow
+    with every element of the input flow sharing the same origin
+    and values of the kernel expression.
+
+    `base` (:class:`Flow`)
+        The base flow.
+
+    `seed` (:class:`Flow`)
+        The flow to fork (typically coincides with the base flow).
+
+    `kernels` (list of :class:`Code`)
+        The kernel expressions.
+
+    Other attributes:
+
+    `ground` (:class:`Flow`)
+        The closest axial ancestor of the seed flow.
+    """
 
     is_axis = True
 
-    def __init__(self, base, seed, kernel, binding):
+    def __init__(self, base, seed, kernels, binding):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
-        assert isinstance(kernel, listof(Code))
+        assert isinstance(kernels, listof(Code))
         assert base.spans(seed) and seed.spans(base)
-        # FIXME: this condition could be violated after the rewrite step:
+        # FIXME: this condition could be violated after the rewrite step
+        # (also, equal-by-value is not implemented for `Family`):
         #assert base.family == seed.family
-        assert all(base.spans(unit.flow) for code in kernel
+        assert all(base.spans(unit.flow) for code in kernels
                                           for unit in code.units)
-        seed_baseline = seed
-        while not seed_baseline.is_axis:
-            seed_baseline = seed_baseline.base
+        ground = seed
+        while not ground.is_axis:
+            ground = ground.base
+        is_contracting = ground.is_contracting
+        is_expanding = (not kernels and seed.dominates(base))
         super(ForkedFlow, self).__init__(
                     base=base,
                     family=base.family,
-                    is_contracting=seed_baseline.is_contracting,
-                    is_expanding=seed.dominates(base),
+                    is_contracting=is_contracting,
+                    is_expanding=is_expanding,
                     binding=binding,
-                    equality_vector=(base, seed, tuple(kernel)))
+                    equality_vector=(base, seed, tuple(kernels)))
         self.seed = seed
-        self.seed_baseline = seed_baseline
-        self.kernel = kernel
+        self.ground = ground
+        self.kernels = kernels
 
     def __str__(self):
-        return "%s . fork({%s})" \
-                % (self.base, ", ".join(str(code) for code in self.kernel))
+        # Display:
+        #   (<base> . fork({<kernels>}))
+        return "(%s . fork({%s}))" \
+                % (self.base, ", ".join(str(code) for code in self.kernels))
 
 
 class LinkedFlow(Flow):
+    """
+    Represents a linking operation.
+
+    A linking operation generates, for every element of the input flow,
+    convergent elements from the seed flow with the same image value.
+
+    `base` (:class:`Flow`)
+        The base flow.
+
+    `seed` (:class:`Flow`)
+        The seed flow.
+
+    `images` (list of pairs of :class:`Code`)
+        Pairs of expressions forming a fiber join condition.
+
+    Other attributes:
+
+    `ground` (:class:`Flow`)
+        The closest axial ancestor of `seed` spanned by `base`.
+    """
 
     is_axis = True
 
-    def __init__(self, base, seed, kernel, counter_kernel, binding):
+    def __init__(self, base, seed, images, binding):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert seed.spans(base)
         assert not base.spans(seed)
-        assert isinstance(kernel, listof(Code))
-        assert isinstance(counter_kernel, listof(Code))
-        assert len(kernel) == len(counter_kernel)
-        assert all(seed.spans(unit.flow) for code in kernel
-                                          for unit in code.units)
-        assert all(base.spans(unit.flow) for code in counter_kernel
-                                          for unit in code.units)
-        seed_baseline = seed
-        if not base.spans(seed_baseline):
-            while not base.spans(seed_baseline.base):
-                seed_baseline = seed_baseline.base
+        assert isinstance(images, listof(tupleof(Code, Code)))
+        assert all(base.spans(unit.flow) for lop, rop in images
+                                         for unit in lop.units)
+        assert all(seed.spans(unit.flow) for lop, rop in images
+                                         for unit in rop.units)
+        ground = seed
+        while not base.spans(ground.base):
+            ground = ground.base
         super(LinkedFlow, self).__init__(
                     base=base,
                     family=seed.family,
                     is_contracting=False,
                     is_expanding=False,
                     binding=binding,
-                    equality_vector=(base, seed, tuple(kernel),
-                                     tuple(counter_kernel)))
+                    equality_vector=(base, seed, tuple(images)))
         self.seed = seed
-        self.seed_baseline = seed_baseline
-        self.kernel = kernel
-        self.counter_kernel = counter_kernel
+        self.ground = ground
+        self.images = images
+
+    def __str__(self):
+        # Display:
+        #   (<base> . ({<limages>} -> <seed>{<rimages>}))
+        return "(%s . ({%s} -> %s{%s}))" \
+                % (self.base, ", ".join(str(lop) for lop, rop in self.images),
+                   self.seed, ", ".join(str(rop) for lop, rop in self.images))
 
 
 class FilteredFlow(Flow):
     """
-    Represents a filtered flow.
+    Represents a filtering operation.
 
-    A filtered flow `A ? f`, where `A` is the base flow and `f` is
+    A filtered flow `A ? f`, where `A` is the input flow and `f` is
     a predicate expression on `A`, consists of rows of `A` satisfying
     the condition `f`.
 
@@ -1016,7 +1180,7 @@ class OrderedFlow(Flow):
     Represents an ordered flow.
 
     An ordered flow `A [e,...;p:q]` is a flow with explicitly specified
-    strong ordering.  It also may extract a slice of the base flow.
+    strong ordering.  It also may extract a slice of the input flow.
 
     `base` (:class:`Flow`)
         The base flow.
@@ -1091,11 +1255,11 @@ class Code(Expression):
 
     Among all code expressions, we distinguish *unit expressions*:
     elementary functions on flows.  There are several kinds of units:
-    among them are columns and aggregate functions (see :class:`Unit`
+    among them are table columns and aggregate functions (see :class:`Unit`
     for more detail).  A non-unit code could be expressed as
     a composition of a scalar function and one or several units:
 
-        `f = F(u(a),v(b),...)`,
+        `f = f(a,b,...) = F(u(a),v(b),...)`,
 
     where
 
@@ -1222,10 +1386,9 @@ class Unit(Code):
     the only example of a primitive unit is :class:`ColumnUnit`.
 
     A compound unit requires calculating some non-intrinsic function
-    on the target flow.  There are three types of compound units:
-    :class:`ScalarUnit`, :class:`AggregateUnit` and :class:`CorrelatedUnit`.
-    They correspond respectively to a scalar function and two kinds of
-    an aggregate function.
+    on the target flow.  Among compound units there are :class:`ScalarUnit`
+    and :class:`AggregateUnit`, which correspond respectively to
+    scalar and aggregate functions on a flow.
 
     Note that it is easy to *lift* a unit code from one flow to another.
     Specifically, suppose a unit `u` is defined on a flow `A` and `B`
@@ -1298,7 +1461,7 @@ class CompoundUnit(Unit):
     A compound unit is some non-intrinsic function on a flow.
 
     This is an abstract class; for concrete subclasses, see
-    :class:`ScalarUnit`, :class:`AggregateUnit`, :class:`CorrelatedUnit`.
+    :class:`ScalarUnit`, :class:`AggregateUnit`, etc.
 
     `code` (:class:`Code`)
         The expression to evaluate on the unit flow.
@@ -1327,8 +1490,8 @@ class ColumnUnit(PrimitiveUnit):
         The column produced by the unit.
 
     `flow` (:class:`Flow`)
-        The unit flow.  Note that the prominent table of the flow
-        must coincide with the table of the column.
+        The unit flow.  The flow must be of a table family and the flow
+        table must coincide with the column table.
     """
 
     def __init__(self, column, flow, binding):
@@ -1366,7 +1529,7 @@ class ScalarUnit(CompoundUnit):
 
         `F(u(x),v(x),...)`,
 
-    where `x` is a row of the flow where the scalar unit is defined.
+    where `x` is an element of the flow where the scalar unit is defined.
 
     `code` (:class:`Code`)
         The expression to evaluate.
@@ -1388,6 +1551,9 @@ class ScalarUnit(CompoundUnit):
 
 
 class ScalarBatchUnit(ScalarUnit):
+    """
+    An auxiliary unit type used by the compiler.
+    """
 
     def __init__(self, code, companions, flow, binding):
         assert isinstance(companions, listof(Code))
@@ -1457,6 +1623,9 @@ class AggregateUnit(AggregateUnitBase):
 
 
 class AggregateBatchUnit(AggregateUnit):
+    """
+    An auxiliary unit type used by the compiler.
+    """
 
     def __init__(self, code, companions, plural_flow, flow, binding):
         assert isinstance(companions, listof(Code))
@@ -1478,9 +1647,21 @@ class CorrelatedUnit(AggregateUnitBase):
 
 
 class KernelUnit(CompoundUnit):
+    """
+    Represents a value generated by a quotient flow.
+
+    A value generated by a quotient is either a part of a kernel
+    expression or a unit from a ground flow.
+
+    `code` (:class:`Code`)
+        An expression (calculated against the seed flow of the quotient).
+
+    `flow` (:class:`Flow`)
+        The flow of the quotient family on which the unit is defined.
+    """
 
     def __init__(self, code, flow, binding):
-        assert flow.family.is_kernel
+        assert flow.family.is_quotient
         super(KernelUnit, self).__init__(
                     code=code,
                     flow=flow,
@@ -1490,6 +1671,19 @@ class KernelUnit(CompoundUnit):
 
 
 class CoveringUnit(CompoundUnit):
+    """
+    Represents a value generated by a covering flow.
+
+    A covering flow represents another flow expression as
+    a single axial flow operation.
+
+    `code` (:class:`Code`)
+        An expression (calculated against the seed flow of
+        the covering flow).
+
+    `flow` (:class:`Flow`)
+        The flow on which the unit is defined.
+    """
 
     def __init__(self, code, flow, binding):
         assert isinstance(flow, (ComplementFlow,

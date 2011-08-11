@@ -882,7 +882,7 @@ class DubFrame(Dub):
         # For a frame, a good alias is the name of the table
         # represented by the frame.
         flow = self.clause.flow
-        while flow.family.is_kernel:
+        while flow.family.is_quotient:
             flow = flow.family.seed
         if flow.family.is_table:
             return flow.family.table.name

@@ -27,8 +27,7 @@ from .binding import (Binding, QueryBinding, SegmentBinding, WrappingBinding,
                       SortBinding, CastBinding, RescopingBinding,
                       LiteralBinding, FormulaBinding)
 from .lookup import direct
-from .flow import (RootFlow, ScalarFlow,
-                   DirectTableFlow, FiberTableFlow,
+from .flow import (RootFlow, ScalarFlow, DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
                    LinkedFlow, FilteredFlow, OrderedFlow,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
@@ -117,16 +116,12 @@ class EncodeBase(Adapter):
     """
     Applies an encoding adapter to a binding node.
 
-    This is a base class for three encoding adapters: :class:`Encode`,
-    :class:`Relate`, :class:`Direct`; it encapsulates methods and
-    attributes shared between these adapters.
+    This is a base class for the two encoding adapters: :class:`Encode`
+    and :class:`Relate`; it encapsulates methods and attributes shared
+    between these adapters.
 
-    The encoding process translates binding nodes to flow and code
-    nodes.  Flow nodes represent ordered sets of rows; code nodes
-    represent functions on flows.  See :class:`htsql.tr.binding.Binding`,
-    :class:`htsql.tr.flow.Expression`, :class:`htsql.tr.flow.Flow`,
-    :class:`htsql.tr.flow.Code` for more details on the respective
-    node types.
+    The encoding process translates binding nodes to data flows or
+    expressions over data flows.
 
     `binding` (:class:`htsql.tr.binding.Binding`)
         The binding node to encode.
@@ -152,12 +147,9 @@ class Encode(EncodeBase):
 
     The :class:`Encode` adapter has the following signature::
 
-        Encode: (Binding, EncodingState) -> Code or Expression
+        Encode: (Binding, EncodingState) -> Expression
 
     The adapter is polymorphic on the `Binding` argument.
-
-    See :class:`htsql.tr.binding.Binding`, :class:`htsql.tr.flow.Expression`,
-    :class:`htsql.tr.flow.Code` for detail on the respective nodes.
 
     This adapter provides non-trivial implementation for binding
     nodes representing HTSQL functions and operators.
@@ -172,7 +164,7 @@ class Encode(EncodeBase):
 
 class Relate(EncodeBase):
     """
-    Translates a binding node to a flow expression node.
+    Translates a binding node to a data flow node.
 
     This is an interface adapter; see subclasses for implementations.
 
@@ -182,12 +174,8 @@ class Relate(EncodeBase):
 
     The adapter is polymorphic on the `Binding` argument.
 
-    See :class:`htsql.tr.binding.Binding` and :class:`htsql.tr.flow.Flow`
-    for detail on the respective nodes.
-
-    The adapter provides non-trivial implementations for subclasses
-    of :class:`htsql.tr.binding.ChainBinding`; the `base` attributes
-    are used to restore the structure of the flow.
+    The adapter provides non-trivial implementations for scoping
+    and chaining bindings.
     """
 
     def __call__(self):
@@ -198,11 +186,6 @@ class Relate(EncodeBase):
 
 
 class EncodeQuery(Encode):
-    """
-    Encodes the top-level binding node :class:`htsql.tr.binding.QueryBinding`.
-
-    Produces an instance of :class:`htsql.tr.flow.QueryExpr`.
-    """
 
     adapts(QueryBinding)
 
@@ -216,57 +199,57 @@ class EncodeQuery(Encode):
 
 
 class EncodeSegment(Encode):
-    """
-    Encodes a segment binding node :class:`htsql.tr.binding.SegmentBinding`.
-
-    Produces an instance of :class:`htsql.tr.flow.SegmentExpr`.
-    """
 
     adapts(SegmentBinding)
 
     def __call__(self):
-        # The list of segment elements.
+        # List of output columns.
         elements = []
-        # Encode each of the element bindings.
+        # Encode output columns of the segment.
         for binding in self.binding.elements:
             # Encode the node.
             element = self.state.encode(binding)
             elements.append(element)
+        # Determine the output flow.  If a flow binding is provided,
+        # use it to generate a flow node.
         if self.binding.seed is not None:
             flow = self.state.relate(self.binding.seed)
+        # Otherwise, infer the output flow from output columns.
         else:
+            # List of all unit expressions.
             units = []
             for element in elements:
                 units.extend(element.units)
+            # No units means a root scalar flow.
             if not units:
                 flow = RootFlow(None, self.binding)
+            # Otherwise, find a dominating unit flow.
             else:
+                # List of dominating flows.
                 flows = []
                 for unit in units:
                     if any(flow.dominates(unit.flow) for flow in flows):
                         continue
                     flows = [flow for flow in flows
-                                    if unit.flow.dominates(flow)]
+                                  if unit.flow.dominates(flow)]
                     flows.append(unit.flow)
+                # More than one dominating flow means the output flow
+                # cannot be inferred from the columns unambiguously.
                 if len(flows) > 1:
                     raise EncodeError("invalid segment operand",
                                       self.binding.mark)
+                # Otherwise, `flows` contains a single maximal flow node.
                 else:
-                    flow = flows[0]
+                    [flow] = flows
         return SegmentExpr(flow, elements, self.binding)
 
 
 class RelateRoot(Relate):
-    """
-    Translates the root binding node to a flow node.
-
-    Returns a scalar flow node :class:`htsql.tr.flow.RootFlow`.
-    """
 
     adapts(RootBinding)
 
     def __call__(self):
-        # The root binding always originates the scalar flow `I`.
+        # The root binding gives rise to a root flow.
         return RootFlow(None, self.binding)
 
 
@@ -275,78 +258,60 @@ class RelateHome(Relate):
     adapts(HomeBinding)
 
     def __call__(self):
+        # Generate the parent flow.
         base = self.state.relate(self.binding.base)
+        # A home binding gives rise to a scalar flow.
         return ScalarFlow(base, self.binding)
 
 
 class RelateFreeTable(Relate):
-    """
-    Translates a free table binding to a flow node.
-
-    Returns a direct table node :class:`htsql.tr.flow.DirectTableFlow`.
-    """
 
     adapts(FreeTableBinding)
 
     def __call__(self):
-        # Generate a flow node corresponding to the binding base.
+        # Generate the parent flow.
         base = self.state.relate(self.binding.base)
-        # Produce a direct table flow between the base flow and
-        # the binding table: `base * table`.
+        # Produce a link from a scalar to a table class.
         return DirectTableFlow(base, self.binding.table, self.binding)
 
 
 class RelateAttachedTable(Relate):
-    """
-    Translates an attached table binding to a flow node.
-
-    Returns a fiber table node :class:`htsql.tr.flow.FiberTableFlow`.
-    """
 
     adapts(AttachedTableBinding)
 
     def __call__(self):
-        # Generate a flow node corresponding to the binding base.
-        flow = self.state.relate(self.binding.base)
-        return FiberTableFlow(flow, self.binding.join, self.binding)
+        # Generate the parent flow.
+        base = self.state.relate(self.binding.base)
+        # Produce a link between table classes.
+        return FiberTableFlow(base, self.binding.join, self.binding)
 
 
 class RelateSieve(Relate):
-    """
-    Translates a sieve binding to a flow node.
-
-    Returns a filtered flow node :class:`htsql.tr.flow.FilteredFlow`.
-    """
 
     adapts(SieveBinding)
 
     def __call__(self):
-        # Generate a flow node corresponding to the binding base.
+        # Generate the parent flow.
         flow = self.state.relate(self.binding.base)
         # Encode the predicate expression.
         filter = self.state.encode(self.binding.filter)
-        # Augment the base flow with a filter: `base ? filter`.
+        # Produce a filtering flow operation.
         return FilteredFlow(flow, filter, self.binding)
 
 
 class RelateSort(Relate):
-    """
-    Translates a sort binding to a flow node.
-
-    Returns an ordered flow node :class:`htsql.tr.flow.OrderedFlow`.
-    """
 
     adapts(SortBinding)
 
     def __call__(self):
-        # Generate a flow node corresponding to the binding base.
+        # Generate the parent flow.
         flow = self.state.relate(self.binding.base)
-        # A list of pairs `(code, direction)` containing the expressions
-        # by which the flow is sorted and respective direction indicators.
+        # List of pairs `(code, direction)` containing the expressions
+        # to sort by and respective direction indicators.
         order = []
         # Iterate over ordering binding nodes.
         for binding in self.binding.order:
-            # Encode the binding.
+            # Encode the binding node.
             code = self.state.encode(binding)
             # Extract the direction modifier; assume `+` if none.
             direction = direct(binding)
@@ -356,34 +321,108 @@ class RelateSort(Relate):
         # The slice indicators.
         limit = self.binding.limit
         offset = self.binding.offset
-        # Produce an ordered flow node over the base flow:
-        #   `base [e,...;offset:offset+limit]`.
+        # Produce an ordering flow operation.
         return OrderedFlow(flow, order, limit, offset, self.binding)
 
 
-class EncodeColumn(Encode):
-    """
-    Translates a column binding to a code node.
+class RelateQuotient(Relate):
 
-    Returns a column unit node :class:`htsql.tr.flow.ColumnUnit`.
-    """
+    adapts(QuotientBinding)
+
+    def __call__(self):
+        # Generate the parent flow.
+        base = self.state.relate(self.binding.base)
+        # Generate the seed flow of the quotient.
+        seed = self.state.relate(self.binding.seed)
+        # Verify that the seed is a plural descendant of the parent flow.
+        if base.spans(seed):
+            raise EncodeError("a plural operand is required", seed.mark)
+        if not seed.spans(base):
+            raise EncodeError("invalid plural operand", seed.mark)
+        # Encode the kernel expressions.
+        kernels = [self.state.encode(binding)
+                   for binding in self.binding.kernels]
+        # Produce a quotient flow.
+        return QuotientFlow(base, seed, kernels, self.binding)
+
+
+class RelateComplement(Relate):
+
+    adapts(ComplementBinding)
+
+    def __call__(self):
+        # Generate the parent flow.
+        base = self.state.relate(self.binding.base)
+        # Produce a complement flow.
+        return ComplementFlow(base, self.binding)
+
+
+class RelateMoniker(Relate):
+
+    adapts(CoverBinding)
+
+    def __call__(self):
+        # Generate the parent flow.
+        base = self.state.relate(self.binding.base)
+        # Generate the seed flow.
+        seed = self.state.relate(self.binding.seed)
+        # Produce a masking flow operation.
+        return MonikerFlow(base, seed, self.binding)
+
+
+class RelateFork(Relate):
+
+    adapts(ForkBinding)
+
+    def __call__(self):
+        # Generate the parent flow.
+        base = self.state.relate(self.binding.base)
+        # The seed coincides with the parent flow -- but could be changed
+        # after the rewrite step.
+        seed = base
+        # Generate the fork kernel.
+        kernels = [self.state.encode(binding)
+                   for binding in self.binding.kernels]
+        # Verify that the kernel is singular against the parent flow.
+        for code in kernels:
+            if not all(seed.spans(unit.flow) for unit in code.units):
+                raise EncodeError("a singular operand is required", code.mark)
+        return ForkedFlow(base, seed, kernels, self.binding)
+
+
+class RelateLink(Relate):
+
+    adapts(LinkBinding)
+
+    def __call__(self):
+        # Generate the parent and the seed flows.
+        base = self.state.relate(self.binding.base)
+        seed = self.state.relate(self.binding.seed)
+        # Encode linking expressions.
+        images = [(self.state.encode(lbinding), self.state.encode(rbinding))
+                  for lbinding, rbinding in self.binding.images]
+        # Verify that linking pairs are singular against the parent and
+        # the seed flows.
+        for lcode, rcode in images:
+            if not all(base.spans(unit.flow) for unit in lcode.units):
+                raise EncodeError("a singular operand is required", lcode.mark)
+            if not all(seed.spans(unit.flow) for unit in rcode.units):
+                raise EncodeError("a singular operand is required", rcode.mark)
+        return LinkedFlow(base, seed, images, self.binding)
+
+
+class EncodeColumn(Encode):
 
     adapts(ColumnBinding)
 
     def __call__(self):
-        # The binding base is translated to the flow of the unit node.
+        # Find the flow of the column.
         flow = self.state.relate(self.binding.base)
-        # Generate a column unit node.
+        # Generate a column unit node on the flow.
         return ColumnUnit(self.binding.column, flow, self.binding)
 
 
 class RelateColumn(Relate):
-    """
-    Translates a column binding to a flow node.
-
-    Returns a fiber table node :class:`htsql.tr.flow.FiberTableFlow` or
-    raises an error.
-    """
 
     adapts(ColumnBinding)
 
@@ -396,93 +435,20 @@ class RelateColumn(Relate):
         return super(RelateColumn, self).__call__()
 
 
-class RelateQuotient(Relate):
-
-    adapts(QuotientBinding)
-
-    def __call__(self):
-        flow = self.state.relate(self.binding.base)
-        seed_flow = self.state.relate(self.binding.seed)
-        if flow.spans(seed_flow):
-            raise EncodeError("a plural operand is required",
-                              seed_flow.mark)
-        if not seed_flow.spans(flow):
-            raise EncodeError("invalid plural operand",
-                              seed_flow.mark)
-        kernel = [self.state.encode(binding)
-                  for binding in self.binding.kernels]
-        return QuotientFlow(flow, seed_flow, kernel, self.binding)
-
-
-class RelateComplement(Relate):
-
-    adapts(ComplementBinding)
-
-    def __call__(self):
-        flow = self.state.relate(self.binding.base)
-        return ComplementFlow(flow, self.binding)
-
-
-class RelateMoniker(Relate):
-
-    adapts(CoverBinding)
-
-    def __call__(self):
-        flow = self.state.relate(self.binding.base)
-        seed = self.state.relate(self.binding.seed)
-        return MonikerFlow(flow, seed, self.binding)
-
-
-class RelateFork(Relate):
-
-    adapts(ForkBinding)
-
-    def __call__(self):
-        flow = self.state.relate(self.binding.base)
-        kernel = [self.state.encode(binding)
-                  for binding in self.binding.kernels]
-        for code in kernel:
-            if not all(flow.spans(unit.flow) for unit in code.units):
-                raise EncodeError("a singular operand is required", code.mark)
-        return ForkedFlow(flow, flow, kernel, self.binding)
-
-
-class RelateLink(Relate):
-
-    adapts(LinkBinding)
-
-    def __call__(self):
-        flow = self.state.relate(self.binding.base)
-        seed = self.state.relate(self.binding.seed)
-        kernel = [self.state.encode(rimage)
-                  for limage, rimage in self.binding.images]
-        counter_kernel = [self.state.encode(limage)
-                          for limage, rimage in self.binding.images]
-        for code in kernel:
-            if not all(seed.spans(unit.flow) for unit in code.units):
-                raise EncodeError("a singular operand is required", code.mark)
-        for code in counter_kernel:
-            if not all(flow.spans(unit.flow) for unit in code.units):
-                raise EncodeError("a singular operand is required", code.mark)
-        return LinkedFlow(flow, seed, kernel, counter_kernel, self.binding)
-
-
 class EncodeKernel(Encode):
 
     adapts(KernelBinding)
 
     def __call__(self):
+        # Get the quotient flow of the kernel.
         flow = self.state.relate(self.binding.base)
-        code = flow.family.kernel[self.binding.index]
+        # Extract the respective kernel expression from the flow.
+        code = flow.family.kernels[self.binding.index]
+        # Generate a unit expression.
         return KernelUnit(code, flow, self.binding)
 
 
 class EncodeLiteral(Encode):
-    """
-    Encodes a literal binding.
-
-    Returns a literal code node :class:`htsql.tr.flow.LiteralCode`.
-    """
 
     adapts(LiteralBinding)
 
@@ -493,11 +459,6 @@ class EncodeLiteral(Encode):
 
 
 class EncodeCast(Encode):
-    """
-    Encodes a cast binding.
-
-    The actual encoding is performed by the :class:`Convert` adapter.
-    """
 
     adapts(CastBinding)
 
@@ -573,9 +534,7 @@ class Convert(Adapter):
 
 
 class ConvertUntyped(Convert):
-    """
-    Validates and converts untyped literals.
-    """
+    # Validate and convert untyped literals.
 
     adapts(UntypedDomain, Domain)
 
@@ -600,9 +559,8 @@ class ConvertUntyped(Convert):
 
 
 class ConvertToItself(Convert):
-    """
-    Eliminates redundant conversions.
-    """
+    # Eliminate redundant conversions.
+
     adapts_many((BooleanDomain, BooleanDomain),
                 (IntegerDomain, IntegerDomain),
                 (FloatDomain, FloatDomain),
@@ -614,14 +572,12 @@ class ConvertToItself(Convert):
     # FIXME: do we need `EnumDomain` here?
 
     def __call__(self):
-        # Encode and return the operand of the cast.
+        # Encode and return the operand of the cast; drop the cast node itself.
         return self.state.encode(self.binding.base)
 
 
 class ConvertTupleToBoolean(Convert):
-    """
-    Converts a tuple expression to a conditional expression.
-    """
+    # Converts a tuple expression to a conditional expression.
 
     adapts(TupleDomain, BooleanDomain)
 
@@ -645,9 +601,7 @@ class ConvertTupleToBoolean(Convert):
 
 
 class ConvertStringToBoolean(Convert):
-    """
-    Converts a string expression to a conditional expression.
-    """
+    # Convert a string expression to a conditional expression.
 
     adapts(StringDomain, BooleanDomain)
 
@@ -670,9 +624,7 @@ class ConvertStringToBoolean(Convert):
 
 
 class ConvertToBoolean(Convert):
-    """
-    Converts an expression of any type to a conditional expression.
-    """
+    # Convert an expression of any type to a conditional expression.
 
     adapts_many((NumberDomain, BooleanDomain),
                 (EnumDomain, BooleanDomain),
@@ -694,9 +646,7 @@ class ConvertToBoolean(Convert):
 
 
 class ConvertToString(Convert):
-    """
-    Convert an expression to a string.
-    """
+    # Convert an expression to a string.
 
     adapts_many((BooleanDomain, StringDomain),
                 (NumberDomain, StringDomain),
@@ -716,9 +666,7 @@ class ConvertToString(Convert):
 
 
 class ConvertToInteger(Convert):
-    """
-    Convert an expression to an integer value.
-    """
+    # Convert an expression to an integer value.
 
     adapts_many((DecimalDomain, IntegerDomain),
                 (FloatDomain, IntegerDomain),
@@ -733,9 +681,7 @@ class ConvertToInteger(Convert):
 
 
 class ConvertToDecimal(Convert):
-    """
-    Convert an expression to a decimal value.
-    """
+    # Convert an expression to a decimal value.
 
     adapts_many((IntegerDomain, DecimalDomain),
                 (FloatDomain, DecimalDomain),
@@ -759,9 +705,7 @@ class ConvertToDecimal(Convert):
 
 
 class ConvertToFloat(Convert):
-    """
-    Convert an expression to a float value.
-    """
+    # Convert an expression to a float value.
 
     adapts_many((IntegerDomain, FloatDomain),
                 (DecimalDomain, FloatDomain),
@@ -785,9 +729,7 @@ class ConvertToFloat(Convert):
 
 
 class ConvertToDate(Convert):
-    """
-    Convert an expression to a date value.
-    """
+    # Convert an expression to a date value.
 
     adapts_many((StringDomain, DateDomain),
                 (DateTimeDomain, DateDomain))
@@ -801,38 +743,30 @@ class ConvertToDate(Convert):
 
 
 class ConvertToTime(Convert):
-    """
-    Convert an expression to a time value.
-    """
+    # Convert an expression to a time value.
 
     adapts_many((StringDomain, TimeDomain),
                 (DateTimeDomain, TimeDomain))
 
     def __call__(self):
+        # Leave conversion to the database engine.
         return CastCode(self.state.encode(self.base), self.domain,
                         self.binding)
 
 
 class ConvertToDateTime(Convert):
-    """
-    Convert an expression to a datetime value.
-    """
+    # Convert an expression to a datetime value.
 
     adapts_many((StringDomain, DateTimeDomain),
                 (DateDomain, DateTimeDomain))
 
     def __call__(self):
+        # Leave conversion to the database engine.
         return CastCode(self.state.encode(self.base), self.domain,
                         self.binding)
 
 
 class EncodeFormula(Encode):
-    """
-    Translates a formula binding to a code node.
-
-    The translation is specific to the formula signature and is implemented
-    by the :class:`EncodeBySignature` adapter.
-    """
 
     adapts(FormulaBinding)
 
@@ -843,12 +777,6 @@ class EncodeFormula(Encode):
 
 
 class RelateFormula(Relate):
-    """
-    Translates a formula binding to a flow node.
-
-    The translation is specific to the formula signature and is implemented
-    by the :class:`RelateBySignature` adapter.
-    """
 
     adapts(FormulaBinding)
 
@@ -862,10 +790,9 @@ class EncodeBySignatureBase(Adapter):
     """
     Translates a formula node.
 
-    This is a base class for three encoding adapters:
-    :class:`EncodeBySignature`, :class:`RelateBySignature` and
-    :class:`DirectBySignature`; it encapsulates methods and attributes
-    shared between these adapters.
+    This is a base class for the two encoding adapters:
+    :class:`EncodeBySignature` and :class:`RelateBySignature`;
+    it encapsulates methods and attributes shared between these adapters.
 
     The adapter accepts a binding formula node and is polymorphic
     on the formula signature.
@@ -948,11 +875,9 @@ class RelateBySignature(EncodeBySignatureBase):
                           self.binding.mark)
 
 
-class EncodeWrapper(Encode):
-    """
-    Translates a wrapper binding to a code node.
-    """
+class EncodeWrapping(Encode):
 
+    # FIXME: `RescopingBinding` should generate a `ScalarUnit`?
     adapts_many(WrappingBinding, RescopingBinding)
 
     def __call__(self):
@@ -960,11 +885,12 @@ class EncodeWrapper(Encode):
         return self.state.encode(self.binding.base)
 
 
-class RelateWrapper(Relate):
+class RelateWrapping(Relate):
     """
     Translates a wrapper binding to a flow node.
     """
 
+    # FIXME: `RescopingBinding`?
     adapts_many(WrappingBinding, RescopingBinding)
 
     def __call__(self):
@@ -974,10 +900,10 @@ class RelateWrapper(Relate):
 
 def encode(binding, state=None):
     """
-    Encodes the given binding to a code expression node.
+    Encodes the given binding to an expression node.
 
-    Returns a :class:`htsql.tr.flow.Code` instance (in some cases,
-    a :class:`htsql.tr.flow.Expression` instance).
+    Returns a :class:`htsql.tr.flow.Expression` instance (in most cases,
+    a :class:`htsql.tr.flow.Code` instance).
 
     `binding` (:class:`htsql.tr.binding.Binding`)
         The binding node to encode.
@@ -996,7 +922,7 @@ def encode(binding, state=None):
 
 def relate(binding, state=None):
     """
-    Encodes the given binding to a flow expression node.
+    Encodes the given binding to a data flow node.
 
     Returns a :class:`htsql.tr.flow.Flow` instance.
 

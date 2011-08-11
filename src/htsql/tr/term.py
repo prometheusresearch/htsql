@@ -614,8 +614,11 @@ class SegmentTerm(UnaryTerm):
 
     def __init__(self, tag, kid, elements, flow, routes):
         assert isinstance(elements, listof(Code))
+        root = flow
+        while not root.is_root:
+            root = root.base
         super(SegmentTerm, self).__init__(tag, kid,
-                                          flow, flow.root, routes)
+                                          flow, root, routes)
         self.elements = elements
 
     def __str__(self):

@@ -331,7 +331,10 @@ class RewriteSegment(Rewrite):
     adapts(SegmentExpr)
 
     def __call__(self):
-        self.state.set_root(self.expression.flow.root)
+        root = self.expression.flow
+        while not root.is_root:
+            root = root.base
+        self.state.set_root(root)
         elements = [self.state.rewrite(element)
                     for element in self.expression.elements]
         flow = self.state.rewrite(self.expression.flow)
@@ -415,9 +418,9 @@ class RewriteQuotient(RewriteFlow):
     def __call__(self):
         base = self.state.rewrite(self.flow.base)
         seed = self.state.rewrite(self.flow.family.seed)
-        kernel = [self.state.rewrite(code)
-                  for code in self.flow.family.kernel]
-        return self.flow.clone(base=base, seed=seed, kernel=kernel)
+        kernels = [self.state.rewrite(code)
+                   for code in self.flow.family.kernels]
+        return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
 class UnmaskQuotient(UnmaskFlow):
@@ -425,11 +428,11 @@ class UnmaskQuotient(UnmaskFlow):
     adapts(QuotientFlow)
 
     def __call__(self):
-        kernel = [self.state.unmask(code, mask=self.flow.family.seed)
-                  for code in self.flow.family.kernel]
+        kernels = [self.state.unmask(code, mask=self.flow.family.seed)
+                   for code in self.flow.family.kernels]
         seed = self.state.unmask(self.flow.family.seed, mask=self.flow.base)
         base = self.state.unmask(self.flow.base)
-        return self.flow.clone(base=base, seed=seed, kernel=kernel)
+        return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
 class ReplaceInQuotient(ReplaceInFlow):
@@ -439,7 +442,7 @@ class ReplaceInQuotient(ReplaceInFlow):
     def __call__(self):
         base = self.state.replace(self.flow.base)
         seed = self.flow.seed
-        kernel = self.flow.kernel
+        kernels = self.flow.kernels
         #self.state.save_collection()
         #self.state.collect(self.flow.seed)
         #for code in self.flow.kernel:
@@ -449,7 +452,7 @@ class ReplaceInQuotient(ReplaceInFlow):
         #kernel = [self.state.replace(code)
         #          for code in self.flow.kernel]
         #self.state.restore_collection()
-        return self.flow.clone(base=base, seed=seed, kernel=kernel)
+        return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
 class RewriteMoniker(RewriteFlow):
@@ -493,9 +496,9 @@ class RewriteForked(RewriteFlow):
     def __call__(self):
         base = self.state.rewrite(self.flow.base)
         seed = self.state.rewrite(self.flow.seed)
-        kernel = [self.state.rewrite(code)
-                  for code in self.flow.kernel]
-        return self.flow.clone(base=base, seed=seed, kernel=kernel)
+        kernels = [self.state.rewrite(code)
+                   for code in self.flow.kernels]
+        return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
 class UnmaskForked(UnmaskFlow):
@@ -507,10 +510,10 @@ class UnmaskForked(UnmaskFlow):
         while not seed_mask.is_axis:
             seed_mask = seed_mask.base
         seed = self.state.unmask(self.flow.seed, mask=seed_mask)
-        kernel = [self.state.unmask(code, mask=self.flow.base)
-                  for code in self.flow.kernel]
+        kernels = [self.state.unmask(code, mask=self.flow.base)
+                   for code in self.flow.kernels]
         base = self.state.unmask(self.flow.base)
-        return self.flow.clone(base=base, seed=seed, kernel=kernel)
+        return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
 class CollectInForked(Collect):
@@ -519,7 +522,7 @@ class CollectInForked(Collect):
 
     def __call__(self):
         self.state.collect(self.flow.base)
-        for code in self.flow.kernel:
+        for code in self.flow.kernels:
             self.state.collect(code)
 
 
@@ -529,13 +532,13 @@ class ReplaceInForked(Replace):
 
     def __call__(self):
         base = self.state.replace(self.flow.base)
-        kernel = [self.state.replace(code) for code in self.flow.kernel]
+        kernels = [self.state.replace(code) for code in self.flow.kernels]
         self.state.save_collection()
         self.state.collect(self.flow.seed)
         self.state.recombine()
         seed = self.state.replace(self.flow.seed)
         self.state.restore_collection()
-        return self.flow.clone(base=base, seed=seed, kernel=kernel)
+        return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
 class RewriteLinked(RewriteFlow):
@@ -545,12 +548,9 @@ class RewriteLinked(RewriteFlow):
     def __call__(self):
         base = self.state.rewrite(self.flow.base)
         seed = self.state.rewrite(self.flow.seed)
-        kernel = [self.state.rewrite(code)
-                  for code in self.flow.kernel]
-        counter_kernel = [self.state.rewrite(code)
-                          for code in self.flow.counter_kernel]
-        return self.flow.clone(base=base, seed=seed, kernel=kernel,
-                                counter_kernel=counter_kernel)
+        images = [(self.state.rewrite(lcode), self.state.rewrite(rcode))
+                  for lcode, rcode in self.flow.images]
+        return self.flow.clone(base=base, seed=seed, images=images)
 
 
 class UnmaskLinked(UnmaskFlow):
@@ -560,12 +560,10 @@ class UnmaskLinked(UnmaskFlow):
     def __call__(self):
         base = self.state.unmask(self.flow.base)
         seed = self.state.unmask(self.flow.seed, mask=self.flow.base)
-        kernel = [self.state.unmask(code, mask=self.flow.seed)
-                  for code in self.flow.kernel]
-        counter_kernel = [self.state.unmask(code, mask=self.flow.base)
-                          for code in self.flow.counter_kernel]
-        return self.flow.clone(base=base, seed=seed, kernel=kernel,
-                                counter_kernel=counter_kernel)
+        images = [(self.state.unmask(lcode, mask=self.flow.base),
+                   self.state.unmask(rcode, mask=self.flow.seed))
+                  for lcode, rcode in self.flow.images]
+        return self.flow.clone(base=base, seed=seed, images=images)
 
 
 class CollectInLinked(Collect):
@@ -574,8 +572,8 @@ class CollectInLinked(Collect):
 
     def __call__(self):
         self.state.collect(self.flow.base)
-        for code in self.flow.counter_kernel:
-            self.state.collect(code)
+        for lcode, rcode in self.flow.images:
+            self.state.collect(lcode)
 
 
 class ReplaceInLinked(Replace):
@@ -584,19 +582,18 @@ class ReplaceInLinked(Replace):
 
     def __call__(self):
         base = self.state.replace(self.flow.base)
-        counter_kernel = [self.state.replace(code)
-                          for code in self.flow.counter_kernel]
+        images = [(self.state.replace(lcode), rcode)
+                  for lcode, rcode in self.flow.images]
         self.state.save_collection()
         self.state.collect(self.flow.seed)
-        for code in self.flow.kernel:
-            self.state.collect(code)
+        for lcode, rcode in images:
+            self.state.collect(rcode)
         self.state.recombine()
         seed = self.state.replace(self.flow.seed)
-        kernel = [self.state.replace(code)
-                  for code in self.flow.kernel]
+        images = [(lcode, self.state.replace(rcode))
+                  for lcode, rcode in images]
         self.state.restore_collection()
-        return self.flow.clone(base=base, seed=seed, kernel=kernel,
-                                counter_kernel=counter_kernel)
+        return self.flow.clone(base=base, seed=seed, images=images)
 
 
 class RewriteFiltered(RewriteFlow):
@@ -683,7 +680,7 @@ class UnmaskOrdered(UnmaskFlow):
         if self.flow.is_expanding:
             base = self.state.unmask(self.flow.base)
         else:
-            base = self.state.unmask(self.flow.base, mask=self.flow.root)
+            base = self.state.unmask(self.flow.base, mask=self.state.root)
         return self.flow.clone(base=base, order=order)
 
 

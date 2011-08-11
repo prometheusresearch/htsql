@@ -515,7 +515,7 @@ class CompileSegment(Compile):
 
     def __call__(self):
         # Initialize the all state flows with a root scalar flow.
-        self.state.set_root(self.expression.flow.root)
+        self.state.set_root(RootFlow(None, self.expression.binding))
         # Get the ordering of the segment flow.
         order = ordering(self.expression.flow)
         # List of expressions we need the term to export.
@@ -839,7 +839,7 @@ class CompileQuotient(CompileFlow):
     adapts(QuotientFlow)
 
     def __call__(self):
-        baseline = self.flow.seed_baseline
+        baseline = self.flow.ground
         while not baseline.is_inflated:
             baseline = baseline.base
         aggregates = [unit for unit in self.state.injections
@@ -848,11 +848,11 @@ class CompileQuotient(CompileFlow):
                            and isinstance(unit.plural_flow, ComplementFlow)
                            and unit.plural_flow.base == self.flow]
         seed_term = self.state.compile(self.flow.seed, baseline=baseline,
-                                       injections=self.flow.kernel)
-        if self.flow.kernel:
-            #seed_term = self.state.inject(seed_term, self.flow.kernel)
+                                       injections=self.flow.kernels)
+        if self.flow.kernels:
+            #seed_term = self.state.inject(seed_term, self.flow.kernels)
             filters = []
-            for code in self.flow.kernel:
+            for code in self.flow.kernels:
                 filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
                                      code.binding, op=code)
                 filters.append(filter)
@@ -866,12 +866,12 @@ class CompileQuotient(CompileFlow):
                                    seed_term.routes.copy())
         aggregate_codes = []
         complement_flow = ComplementFlow(self.flow, self.flow.binding)
-        if aggregates and seed_term.baseline == self.flow.seed_baseline:
+        if aggregates and seed_term.baseline == self.flow.ground:
             routes = {}
             for unit in seed_term.routes:
                 unit = CoveringUnit(unit, complement_flow, unit.binding)
                 routes[unit] = seed_term.tag
-            for code in self.flow.kernel:
+            for code in self.flow.kernels:
                 unit = CoveringUnit(code, complement_flow, unit.binding)
                 routes[unit] = seed_term.tag
             for unit in spread(self.flow.seed):
@@ -900,7 +900,7 @@ class CompileQuotient(CompileFlow):
                                         seed_term.flow,
                                         seed_term.baseline, routes)
         if (self.flow == self.baseline and
-                seed_term.baseline == self.flow.seed_baseline):
+                seed_term.baseline == self.flow.ground):
             tag = self.state.tag()
             basis = []
             routes = {}
@@ -909,7 +909,7 @@ class CompileQuotient(CompileFlow):
                 basis.append(runit)
                 unit = KernelUnit(runit, self.flow, runit.binding)
                 routes[unit] = tag
-            for code in self.flow.kernel:
+            for code in self.flow.kernels:
                 basis.append(code)
                 unit = KernelUnit(code, self.flow, code.binding)
                 routes[unit] = tag
@@ -936,15 +936,15 @@ class CompileQuotient(CompileFlow):
             rop = KernelUnit(joint.rop, self.backbone, joint.rop.binding)
             routes[rop] = tag
             joints.append(joint.clone(rop=rop))
-        quotient_joints = tie(self.flow.seed_baseline)
-        if seed_term.baseline != self.flow.seed_baseline:
+        quotient_joints = tie(self.flow.ground)
+        if seed_term.baseline != self.flow.ground:
             for joint in quotient_joints:
                 basis.append(joint.rop)
                 unit = KernelUnit(joint.rop, self.backbone, joint.rop.binding)
                 routes[unit] = tag
         else:
             assert quotient_joints == joints_copy
-        for code in self.flow.kernel:
+        for code in self.flow.kernels:
             basis.append(code)
             unit = KernelUnit(code, self.backbone, code.binding)
             routes[unit] = tag
@@ -971,21 +971,21 @@ class CompileComplement(CompileFlow):
 
     def __call__(self):
         family = self.flow.base.family
-        baseline = family.seed_baseline
+        baseline = family.ground
         while not baseline.is_inflated:
             baseline = baseline.base
-        extra_codes = family.kernel + [unit.code
-                                       for unit in self.state.injections
-                                       if isinstance(unit, CoveringUnit)
-                                       and unit.flow == self.flow]
+        extra_codes = family.kernels + [unit.code
+                                        for unit in self.state.injections
+                                        if isinstance(unit, CoveringUnit)
+                                        and unit.flow == self.flow]
         seed_term = self.state.compile(family.seed, baseline=baseline,
                                        injections=extra_codes)
-        #seed_term = self.state.inject(seed_term, family.kernel)
+        #seed_term = self.state.inject(seed_term, family.kernels)
         #if self.flow.extra_codes is not None:
         #    seed_term = self.state.inject(seed_term, self.flow.extra_codes)
-        #if family.kernel:
+        #if family.kernels:
         #    filters = []
-        #    for code in family.kernel:
+        #    for code in family.kernels:
         #        filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
         #                             code.binding, op=code)
         #        filters.append(filter)
@@ -1001,12 +1001,12 @@ class CompileComplement(CompileFlow):
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
         if (self.flow == self.baseline and
-                seed_term.baseline == family.seed_baseline):
+                seed_term.baseline == family.ground):
             routes = {}
             for unit in seed_term.routes:
                 unit = CoveringUnit(unit, self.flow, unit.binding)
                 routes[unit] = seed_term.tag
-            for code in family.kernel:
+            for code in family.kernels:
                 unit = CoveringUnit(code, self.flow, unit.binding)
                 routes[unit] = seed_term.tag
             if extra_codes is not None:
@@ -1023,14 +1023,14 @@ class CompileComplement(CompileFlow):
             baseline = baseline.base
         lkid = self.state.compile(self.flow.base, baseline=baseline)
         seed_joints = []
-        if seed_term.baseline != family.seed_baseline:
+        if seed_term.baseline != family.ground:
             seed_joints = self.tie_terms(lkid, seed_term)
             lkid = self.inject_ties(lkid, seed_joints)
         routes = {}
         for unit in seed_term.routes:
             unit = CoveringUnit(unit, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
-        for code in family.kernel:
+        for code in family.kernels:
             unit = CoveringUnit(code, self.backbone, unit.binding)
             routes[unit] = seed_term.tag
         if extra_codes is not None:
@@ -1067,17 +1067,17 @@ class CompileMoniker(CompileFlow):
         extra_codes = [unit.code for unit in self.state.injections
                                  if isinstance(unit, CoveringUnit)
                                     and unit.flow == self.flow]
-        if (self.flow.seed_baseline.base is not None and
-            self.flow.base.conforms(self.flow.seed_baseline.base) and
-            not self.flow.base.spans(self.flow.seed_baseline)):
-            baseline = self.flow.seed_baseline
+        if (self.flow.ground.base is not None and
+            self.flow.base.conforms(self.flow.ground.base) and
+            not self.flow.base.spans(self.flow.ground)):
+            baseline = self.flow.ground
             if not (baseline.is_inflated and
                     self.flow == self.state.baseline):
                 while not self.state.baseline.concludes(baseline):
                     baseline = baseline.base
             seed_term = self.state.compile(self.flow.seed, baseline=baseline,
                                            injections=extra_codes)
-            if seed_term.baseline != self.flow.seed_baseline:
+            if seed_term.baseline != self.flow.ground:
                 flow = self.flow.base
                 seed_term = self.state.inject(seed_term, [flow])
                 while not seed_term.baseline.concludes(flow):
@@ -1087,7 +1087,7 @@ class CompileMoniker(CompileFlow):
                                     seed_term.flow, seed_term.baseline,
                                     seed_term.routes.copy())
             baseline = seed_term.baseline
-            if baseline == self.flow.seed_baseline:
+            if baseline == self.flow.ground:
                 baseline = self.flow
             routes = {}
             for unit in seed_term.routes:
@@ -1153,17 +1153,17 @@ class CompileForked(CompileFlow):
         baseline = seed
         while not baseline.is_inflated:
             baseline = baseline.base
-        extra_codes = self.flow.kernel[:] + [unit.code
-                                             for unit in self.state.injections
-                                             if isinstance(unit, CoveringUnit)
-                                             and unit.flow == self.flow]
+        extra_codes = self.flow.kernels[:] + [unit.code
+                                              for unit in self.state.injections
+                                              if isinstance(unit, CoveringUnit)
+                                              and unit.flow == self.flow]
         seed_term = self.state.compile(seed, baseline=baseline,
                                        injections=extra_codes)
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
         if (self.state.baseline == self.flow and
-                seed_term.baseline == self.flow.seed_baseline):
+                seed_term.baseline == self.flow.ground):
             routes = {}
             for unit in seed_term.routes:
                 seed_unit = CoveringUnit(unit, self.flow, unit.binding)
@@ -1204,7 +1204,7 @@ class CompileForked(CompileFlow):
             for joint in tie(trunk_term.backbone):
                 joint = joint.clone(lop=joint.rop)
                 joints.append(joint)
-        for code in self.flow.kernel:
+        for code in self.flow.kernels:
             joint = Joint(code, code)
             joints.append(joint)
         units = [lunit for lunit, runit in joints]
@@ -1235,23 +1235,23 @@ class CompileLinked(CompileFlow):
     adapts(LinkedFlow)
 
     def __call__(self):
-        baseline = self.flow.seed_baseline
+        baseline = self.flow.ground
         while not baseline.is_inflated:
             baseline = baseline.base
-        extra_codes = self.flow.kernel[:] + [unit.code
-                                             for unit in self.state.injections
-                                             if isinstance(unit, CoveringUnit)
-                                             and unit.flow == self.flow]
+        extra_codes = ([rop for lop, rop in self.flow.images] +
+                       [unit.code for unit in self.state.injections
+                                  if isinstance(unit, CoveringUnit)
+                                     and unit.flow == self.flow])
         seed_term = self.state.compile(self.flow.seed, baseline=baseline,
                                        injections=extra_codes)
         extra_axes = []
         joints = []
-        if seed_term.baseline != self.flow.seed_baseline:
+        if seed_term.baseline != self.flow.ground:
             backbone = self.flow.base.inflate()
             axis = seed_term.baseline
             while not backbone.concludes(axis):
                 axis = axis.base
-            seed_term = self.state.inject(seed_term, axis)
+            seed_term = self.state.inject(seed_term, [axis])
             axis = backbone
             while not seed_term.backbone.concludes(axis):
                 axis = axis.base
@@ -1262,7 +1262,7 @@ class CompileLinked(CompileFlow):
             extra_axes.reverse()
             for axis in extra_axes:
                 for joint in sew(axis):
-                    rop = CoveringUnit(self.flow.inflate(), rop, rop.binding)
+                    rop = CoveringUnit(rop, self.flow.inflate(), rop.binding)
                     joint = joint.clone(rop=rop)
                     joints.append(joint)
         joints.extend(tie(self.flow))
@@ -1278,7 +1278,7 @@ class CompileLinked(CompileFlow):
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
         baseline = seed_term.baseline
-        if baseline == self.flow.seed_baseline:
+        if baseline == self.flow.ground:
             baseline = self.flow
         routes = {}
         for unit in seed_term.routes:
@@ -2080,7 +2080,7 @@ class OrderQuotient(OrderFlow):
             yield (code, direction)
         if self.with_weak:
             flow = self.flow.inflate()
-            for code in self.flow.family.kernel:
+            for code in self.flow.family.kernels:
                 code = KernelUnit(code, flow, code.binding)
                 yield (code, +1)
 
@@ -2091,9 +2091,9 @@ class SpreadQuotient(SpreadFlow):
 
     def __call__(self):
         flow = self.flow.inflate()
-        for lunit, runit in tie(flow.family.seed_baseline):
+        for lunit, runit in tie(flow.family.ground):
             yield KernelUnit(runit, flow, runit.binding)
-        for code in self.flow.family.kernel:
+        for code in self.flow.family.kernels:
             yield KernelUnit(code, flow, code.binding)
 
 
@@ -2103,10 +2103,10 @@ class SewQuotient(SewFlow):
 
     def __call__(self):
         flow = self.flow.inflate()
-        for joint in tie(flow.family.seed_baseline):
+        for joint in tie(flow.family.ground):
             op = KernelUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(lop=op, rop=op)
-        for code in flow.family.kernel:
+        for code in flow.family.kernels:
             unit = KernelUnit(code, flow, code.binding)
             yield Joint(unit, unit)
 
@@ -2117,7 +2117,7 @@ class TieQuotient(TieFlow):
 
     def __call__(self):
         flow = self.flow.inflate()
-        for joint in tie(flow.family.seed_baseline):
+        for joint in tie(flow.family.ground):
             rop = KernelUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 
@@ -2158,7 +2158,7 @@ class SewComplement(SewFlow):
     def __call__(self):
         flow = self.flow.inflate()
         seed = self.flow.base.family.seed.inflate()
-        baseline = self.flow.base.family.seed_baseline.inflate()
+        baseline = self.flow.base.family.ground.inflate()
         axes = []
         axis = seed
         while axis is not None and axis.concludes(baseline):
@@ -2178,11 +2178,11 @@ class TieComplement(TieFlow):
 
     def __call__(self):
         flow = self.flow.inflate()
-        for joint in tie(flow.base.family.seed_baseline):
+        for joint in tie(flow.base.family.ground):
             lop = KernelUnit(joint.rop, flow.base, joint.rop.binding)
             rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(lop=lop, rop=rop)
-        for code in flow.base.family.kernel:
+        for code in flow.base.family.kernels:
             lop = KernelUnit(code, flow.base, code.binding)
             rop = CoveringUnit(code, flow, code.binding)
             yield Joint(lop=lop, rop=rop)
@@ -2224,7 +2224,7 @@ class SewMoniker(SewFlow):
     def __call__(self):
         flow = self.flow.inflate()
         seed = self.flow.seed.inflate()
-        baseline = self.flow.seed_baseline.inflate()
+        baseline = self.flow.ground.inflate()
         axes = []
         axis = seed
         while axis is not None and axis.concludes(baseline):
@@ -2244,7 +2244,7 @@ class TieMoniker(TieFlow):
 
     def __call__(self):
         flow = self.flow.inflate()
-        for joint in tie(flow.seed_baseline):
+        for joint in tie(flow.ground):
             rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 
@@ -2261,7 +2261,7 @@ class OrderForked(OrderFlow):
         if self.with_weak and not self.flow.is_contracting:
             flow = self.flow.inflate()
             for code, direction in ordering(self.flow.seed):
-                if all(self.flow.seed_baseline.base.spans(unit.flow)
+                if all(self.flow.ground.base.spans(unit.flow)
                        for unit in code.units):
                     continue
                 code = CoveringUnit(code, flow, code.binding)
@@ -2302,7 +2302,7 @@ class TieForked(TieFlow):
             lop = joint.rop
             rop = CoveringUnit(lop, flow, lop.binding)
             yield joint.clone(lop=lop, rop=rop)
-        for code in self.flow.kernel:
+        for code in self.flow.kernels:
             lop = code
             rop = CoveringUnit(code, flow, code.binding)
             yield Joint(lop, rop)
@@ -2344,7 +2344,7 @@ class SewLinked(SewFlow):
     def __call__(self):
         flow = self.flow.inflate()
         seed = self.flow.seed.inflate()
-        baseline = self.flow.seed_baseline.inflate()
+        baseline = self.flow.ground.inflate()
         axes = []
         axis = seed
         while axis is not None and axis.concludes(baseline):
@@ -2364,7 +2364,7 @@ class TieLinked(TieFlow):
 
     def __call__(self):
         flow = self.flow.inflate()
-        for lop, rop in zip(flow.counter_kernel, flow.kernel):
+        for lop, rop in flow.images:
             rop = CoveringUnit(rop, flow, rop.binding)
             yield Joint(lop, rop)
 
