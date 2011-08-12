@@ -922,7 +922,7 @@ class AppTestCase(SkipTestCase):
         self.state.app = None
         try:
             self.state.app = Application(self.input.db,
-                                         self.input.extensions)
+                                         *self.input.extensions)
         except Exception:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"
