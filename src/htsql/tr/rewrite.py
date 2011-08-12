@@ -17,10 +17,10 @@ from ..domain import BooleanDomain
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, FilteredFlow, OrderedFlow,
+                   LinkedFlow, FilteredFlow, OrderedFlow, BatchFlow,
                    Code, LiteralCode, CastCode, FormulaCode, Unit,
-                   CompoundUnit, ScalarUnit, ScalarBatchUnit,
-                   AggregateUnitBase, AggregateUnit, AggregateBatchUnit,
+                   CompoundUnit, ScalarUnit,
+                   AggregateUnitBase, AggregateUnit,
                    KernelUnit, CoveringUnit)
 from .signature import Signature, OrSig, AndSig
 from .fn.signature import IfSig
@@ -146,8 +146,8 @@ class RewritingState(object):
             for idx, unit in enumerate(batch_units):
                 code = codes[idx]
                 companions = codes[:idx]+codes[idx+1:]
-                batch = ScalarBatchUnit(code, companions, flow,
-                                        unit.binding)
+                base = BatchFlow(unit.flow, companions)
+                batch = unit.clone(flow=base, code=code)
                 self.memorize(unit, batch)
 
         duplicates = set()
@@ -242,8 +242,9 @@ class RewritingState(object):
             for idx, unit in enumerate(batch_units):
                 code = codes[idx]
                 companions = codes[:idx]+codes[idx+1:]
-                batch = AggregateBatchUnit(code, companions, combined_flow,
-                                           flow, unit.binding)
+                base = BatchFlow(unit.flow, companions)
+                batch = unit.clone(flow=base, code=code,
+                                   plural_flow=combined_flow)
                 self.memorize(unit, batch)
 
     def replace(self, expression):
@@ -959,7 +960,9 @@ class ReplaceInAggregate(ReplaceInUnit):
         flow = self.state.replace(self.unit.flow)
         code = self.state.replace(self.unit.code)
         plural_flow = self.state.replace(self.unit.plural_flow)
-        companions = self.unit.companions
+        companions = None
+        if isinstance(self.unit.flow, BatchFlow):
+            companions = self.unit.flow.codes
         if companions is not None:
             companions = [self.state.replace(companion)
                           for companion in companions]
@@ -976,8 +979,9 @@ class ReplaceInAggregate(ReplaceInUnit):
             companions = [self.state.replace(companion)
                           for companion in companions]
         self.state.restore_collection()
-        return self.unit.clone(code=code, flow=flow, plural_flow=plural_flow,
-                               companions=companions)
+        if companions is not None:
+            flow = flow.clone(codes=companions)
+        return self.unit.clone(code=code, flow=flow, plural_flow=plural_flow)
 
 
 class UnmaskKernel(UnmaskUnit):

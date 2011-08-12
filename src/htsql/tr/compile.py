@@ -23,9 +23,9 @@ from .fn.signature import IfSig
 from .flow import (Expression, Code, Flow, RootFlow, ScalarFlow, TableFlow,
                    DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, FilteredFlow, OrderedFlow,
-                   Unit, ScalarUnit, ScalarBatchUnit, ColumnUnit,
-                   AggregateUnit, AggregateBatchUnit, CorrelatedUnit,
+                   LinkedFlow, FilteredFlow, OrderedFlow, BatchFlow,
+                   Unit, ScalarUnit, ColumnUnit,
+                   AggregateUnit, CorrelatedUnit,
                    KernelUnit, CoveringUnit, QueryExpr, SegmentExpr,
                    FormulaCode)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
@@ -844,7 +844,7 @@ class CompileQuotient(CompileFlow):
             baseline = baseline.base
         aggregates = [unit for unit in self.state.injections
                            if isinstance(unit, AggregateUnit)
-                           and unit.flow == self.flow
+                           and unit.flow.conforms(self.flow)
                            and isinstance(unit.plural_flow, ComplementFlow)
                            and unit.plural_flow.base == self.flow]
         seed_term = self.state.compile(self.flow.seed, baseline=baseline,
@@ -882,8 +882,8 @@ class CompileQuotient(CompileFlow):
                                           complement_flow, routes)
             for aggregate in aggregates:
                 aggregate_codes.append(aggregate.code)
-                if aggregate.companions is not None:
-                    for companion in aggregate.companions:
+                if isinstance(aggregate.flow, BatchFlow):
+                    for companion in aggregate.flow.codes:
                         aggregate_codes.append(companion)
             complement_term = self.state.inject(complement_term,
                                                 aggregate_codes)
@@ -1416,6 +1416,15 @@ class CompileOrdered(CompileFlow):
                          self.flow, kid.baseline, routes)
 
 
+class CompileBatch(Compile):
+
+    adapts(BatchFlow)
+
+    def __call__(self):
+        return self.state.compile(self.flow.base,
+                                  injections=self.state.injections)
+
+
 class InjectCode(Inject):
     """
     Augments the term to make it capable of producing the given expression.
@@ -1493,49 +1502,237 @@ class InjectColumn(Inject):
 
 class InjectScalar(Inject):
     """
-    Injects a scalar unit into a term.
+    Injects a scalar unit or a batch of scalar units sharing the same flow.
     """
 
     adapts(ScalarUnit)
 
     def __call__(self):
-        # Injecting is already implemented for a batch of scalar units
-        # that belong to the same flow.  To avoid code duplication,
-        # we delegate injecting to a batch consisting of just one unit.
+        # To inject a scalar unit into a term, we need to do the following:
+        # - compile a term for the unit flow;
+        # - inject the unit into the unit term;
+        # - attach the unit term to the main term.
+        # If we do this for each unit individually, we may end up with
+        # a lot of identical unit terms in our term tree.  To optimize
+        # the term tree in this scenario, we collect all scalar units
+        # sharing the same flow into a batch expression.  Then, when
+        # injecting the batch, we use the same unit term for all units
+        # in the batch.
 
-        # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
             return self.term
-        # Form a batch consisting of a single unit.
-        batch = ScalarBatchUnit(self.unit.code, [], self.unit.flow,
-                                self.unit.binding)
-        # Delegate the injecting to the batch.
-        return self.state.inject(self.term, [batch])
+
+        if isinstance(self.unit.flow, BatchFlow):
+            proper_unit = ScalarUnit(self.unit.code,
+                                     self.unit.flow.base,
+                                     self.unit.binding)
+            companion_units = [ScalarUnit(code, self.unit.flow.base,
+                                          self.unit.binding)
+                               for code in self.unit.flow.codes]
+        else:
+            proper_unit = self.unit
+            companion_units = []
+
+        if proper_unit in self.term.routes:
+            routes = self.term.routes.copy()
+            routes[self.unit] = routes[proper_unit]
+            return self.term.clone(routes=routes)
+        companion_units = [unit for unit in companion_units
+                                if unit not in self.term.routes]
+        units = [self.unit, proper_unit]+companion_units
+        # Verify that the units are singular relative to the term.
+        # To report an error, we could point to any unit node.
+        if not self.term.flow.spans(self.flow):
+            raise CompileError("expected a singular expression",
+                               units[0].mark)
+        # Extract the unit expressions.
+        codes = [self.unit.code] + [unit.code for unit in companion_units]
+
+        # Handle the special case when the unit flow is equal to the
+        # term flow or dominates it.  In this case, we could inject
+        # the units directly to the main term and avoid creating
+        # a separate unit term.
+        if self.flow.dominates(self.term.flow):
+            # Make sure the term could export all the units.
+            term = self.state.inject(self.term, codes)
+            # Add all the units to the routing table.  Note that we point
+            # the units to the wrapper because the given term could be
+            # terminal (i.e., a table) and SQL syntax does not permit
+            # exporting arbitrary expressions from tables.
+            tag = self.state.tag()
+            routes = term.routes.copy()
+            for unit in units:
+                routes[unit] = tag
+            # Wrap the term with the updated routing table.
+            return WrapperTerm(tag, term, term.flow, term.baseline, routes)
+
+        # The general case: compile a term for the unit flow.
+        unit_term = self.compile_shoot(self.flow, self.term, codes)
+        # SQL syntax does not permit us evaluating arbitrary
+        # expressions in terminal terms, so we wrap such terms with
+        # a no-op wrapper.
+        if unit_term.is_nullary:
+            unit_term = WrapperTerm(self.state.tag(), unit_term,
+                                    unit_term.flow, unit_term.baseline,
+                                    unit_term.routes.copy())
+        # And join it to the main term.
+        extra_routes = dict((unit, unit_term.tag) for unit in units)
+        return self.join_terms(self.term, unit_term, extra_routes)
 
 
 class InjectAggregate(Inject):
     """
-    Inject an aggregate unit into a term.
+    Injects a batch of aggregate units sharing the same plural and unit flows.
     """
 
     adapts(AggregateUnit)
 
-    def __call__(self):
-        # Injecting is already implemented for a batch of aggregate units
-        # that share the same base and plural flows.  To avoid code
-        # duplication, we delegate injecting to a batch consisting of
-        # just one unit.
+    def __init__(self, expression, term, state):
+        super(InjectAggregate, self).__init__(expression, term, state)
+        # Extract attributes of the batch.
+        self.plural_flow = expression.plural_flow
+        self.flow = expression.flow
 
-        # Check if the unit is already exported by the term.
+    def __call__(self):
+        # To inject an aggregate unit into a term, we do the following:
+        # - compile a term for the unit flow;
+        # - compile a term for the plural flow relative to the unit term;
+        # - inject the unit expression into the plural term;
+        # - project plural term into the unit flow;
+        # - attach the projected term to the unit term;
+        # - attach the unit term to the main term.
+        # When the unit flow coincides with the main term flow, we could
+        # avoid compiling a separate unit term, and instead attach the
+        # projected term directly to the main term.
+
         if self.unit in self.term.routes:
             return self.term
-        # Form a batch consisting of a single unit.
-        batch = AggregateBatchUnit(self.unit.code, [],
-                                   self.unit.plural_flow,
-                                   self.unit.flow,
-                                   self.unit.binding)
-        # Delegate the injecting to the batch.
-        return self.state.inject(self.term, [batch])
+
+        # In any case, if we perform this procedure for each unit
+        # individually, we may end up with a lot of identical unit terms
+        # in the final term tree.  So when there are more than one aggregate
+        # unit with the same plural and unit flows, it make sense to
+        # collect all of them into a batch expression.  Then, when injecting
+        # the batch, we could reuse the same unit and plural terms for all
+        # aggregates in the batch.
+
+        # Get the list of units that are not already exported by the term.
+        if isinstance(self.unit.flow, BatchFlow):
+            proper_unit = AggregateUnit(self.unit.code,
+                                        self.unit.plural_flow,
+                                        self.unit.flow.base,
+                                        self.unit.binding)
+            companion_units = [AggregateUnit(code,
+                                             self.unit.plural_flow,
+                                             self.unit.flow.base,
+                                             code.binding)
+                               for code in self.unit.flow.codes]
+        else:
+            proper_unit = self.unit
+            companion_units = []
+        if proper_unit in self.term.routes:
+            routes = self.term.routes.copy()
+            routes[self.unit] = routes[proper_unit]
+            return self.term.clone(routes=routes)
+        companion_units = [unit for unit in companion_units
+                                if unit not in self.term.routes]
+        units = [self.unit, proper_unit]+companion_units
+        # Verify that the units are singular relative to the term.
+        # To report an error, we could point to any unit node available.
+        if not self.term.flow.spans(self.flow):
+            raise CompileError("expected a singular expression",
+                               units[0].mark)
+        # Extract the aggregate expressions.
+        codes = [self.unit.code] + [unit.code for unit in companion_units]
+
+        # Check if the unit flow coincides with or dominates the term
+        # flow.  In this case we could avoid compiling a separate unit
+        # term and instead attach the projected term directly to the main
+        # term.
+        is_native = self.flow.dominates(self.term.flow)
+        if is_native:
+            unit_term = self.term
+        else:
+            # Compile a separate term for the unit flow.
+            # Note: currently it is not reachable since we wrap every
+            # aggregate with a scalar unit sharing the same flow.
+            unit_term = self.compile_shoot(self.flow, self.term)
+
+        # Compile a term for the plural flow against the unit flow,
+        # and inject all the aggregate expressions into it.
+        plural_term = self.compile_shoot(self.plural_flow,
+                                         unit_term, codes)
+        # Generate ties to attach the projected term to the unit term.
+        joints = self.tie_terms(unit_term, plural_term)
+        # Make sure the unit term could export the tie conditions.
+        unit_term = self.inject_ties(unit_term, joints)
+
+        # Now we are going to project the plural term onto the unit
+        # flow.  As the projection basis, we are using the ties.
+        # There are two kinds of ties we could get from `tie_terms()`:
+        # - a list of parallel ties;
+        # - or a single serial tie.
+        #
+        # If we get a list of parallel ties, the projection basis
+        # comprises the primary keys of the tie flows.  Otherwise,
+        # the basis is the foreign key that joins the tie flow to
+        # its base.  These are also the columns connecting the
+        # projected term to the unit term.
+        basis = [runit for lunit, runit in joints]
+
+        # Determine the flow of the projected term.
+        projected_flow = QuotientFlow(self.flow.inflate(),
+                                      self.plural_flow, [],
+                                      self.expression.binding)
+        # The routing table of the projected term.
+        # FIXME: the projected term should be able to export the tie
+        # conditions, so we add the tie flows to the routing table.
+        # However we should never attempt to export any columns than
+        # those that form the tie condition -- it will generate invalid
+        # SQL.  It is not clear how to fix this, perhaps the routing
+        # table should contain entries for each of the columns, or
+        # a special entry for just the tie conditions?
+        # FIXME: alternatively, convert the kernel into a scalar unit
+        # and export only the aggregate and the kernel units from
+        # the projected term.  This seems to be the most correct approach,
+        # but then what to do with the requirement that each term exports
+        # its own flow and backbone?
+        tag = self.state.tag()
+        routes = {}
+        joints_copy = joints
+        joints = []
+        for joint in joints_copy:
+            rop = KernelUnit(joint.rop, projected_flow, joint.rop.binding)
+            routes[rop] = tag
+            joints.append(joint.clone(rop=rop))
+
+        ## The term flow must always be in the routing table.  The actual
+        ## route does not matter since it should never be used.
+        #routes[projected_flow] = plural_term.tag
+        # Project the plural term onto the basis of the unit flow.
+        projected_term = ProjectionTerm(tag, plural_term, basis,
+                                        projected_flow, projected_flow,
+                                        routes)
+        # Attach the projected term to the unit term, add extra entries
+        # to the routing table for each of the unit in the collection.
+        is_left = (not projected_flow.dominates(unit_term.flow))
+        is_right = False
+        # Use the routing table of the trunk term, but also add
+        # the given extra routes.
+        routes = unit_term.routes.copy()
+        for unit in units:
+            routes[unit] = projected_term.tag
+        # Generate and return a join term.
+        unit_term = JoinTerm(self.state.tag(), unit_term, projected_term,
+                             joints, is_left, is_right,
+                             unit_term.flow, unit_term.baseline, routes)
+        # For native units, we are done since we use the main term as
+        # the unit term.  Note: currently this condition always holds.
+        if is_native:
+            return unit_term
+        # Otherwise, attach the unit term to the main term.
+        extra_routes = dict((unit, projected_term.tag) for unit in units)
+        return self.join_terms(self.term, unit_term, extra_routes)
 
 
 class InjectCorrelated(Inject):
@@ -1639,232 +1836,6 @@ class InjectCovering(Inject):
                                        injections=[self.unit])
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
-        return self.join_terms(self.term, unit_term, extra_routes)
-
-
-class InjectScalarBatch(Inject):
-    """
-    Injects a batch of scalar units sharing the same flow.
-    """
-
-    adapts(ScalarBatchUnit)
-
-    def __call__(self):
-        # To inject a scalar unit into a term, we need to do the following:
-        # - compile a term for the unit flow;
-        # - inject the unit into the unit term;
-        # - attach the unit term to the main term.
-        # If we do this for each unit individually, we may end up with
-        # a lot of identical unit terms in our term tree.  To optimize
-        # the term tree in this scenario, we collect all scalar units
-        # sharing the same flow into a batch expression.  Then, when
-        # injecting the batch, we use the same unit term for all units
-        # in the batch.
-
-        if self.unit in self.term.routes:
-            return self.term
-
-        # Get the list of units that are not already exported by the term.
-        proper_unit = ScalarUnit(self.unit.code,
-                                 self.unit.flow,
-                                 self.unit.binding)
-        companion_units = [ScalarUnit(code, self.unit.flow, self.unit.binding)
-                                      for code in self.unit.companions]
-        if proper_unit in self.term.routes:
-            routes = self.term.routes.copy()
-            routes[self.unit] = routes[proper_unit]
-            return self.term.clone(routes=routes)
-        companion_units = [unit for unit in companion_units
-                                if unit not in self.term.routes]
-        units = [self.unit, proper_unit]+companion_units
-        # Verify that the units are singular relative to the term.
-        # To report an error, we could point to any unit node.
-        if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
-                               units[0].mark)
-        # Extract the unit expressions.
-        codes = [self.unit.code] + [unit.code for unit in companion_units]
-
-        # Handle the special case when the unit flow is equal to the
-        # term flow or dominates it.  In this case, we could inject
-        # the units directly to the main term and avoid creating
-        # a separate unit term.
-        if self.flow.dominates(self.term.flow):
-            # Make sure the term could export all the units.
-            term = self.state.inject(self.term, codes)
-            # Add all the units to the routing table.  Note that we point
-            # the units to the wrapper because the given term could be
-            # terminal (i.e., a table) and SQL syntax does not permit
-            # exporting arbitrary expressions from tables.
-            tag = self.state.tag()
-            routes = term.routes.copy()
-            for unit in units:
-                routes[unit] = tag
-            # Wrap the term with the updated routing table.
-            return WrapperTerm(tag, term, term.flow, term.baseline, routes)
-
-        # The general case: compile a term for the unit flow.
-        unit_term = self.compile_shoot(self.flow, self.term, codes)
-        # SQL syntax does not permit us evaluating arbitrary
-        # expressions in terminal terms, so we wrap such terms with
-        # a no-op wrapper.
-        if unit_term.is_nullary:
-            unit_term = WrapperTerm(self.state.tag(), unit_term,
-                                    unit_term.flow, unit_term.baseline,
-                                    unit_term.routes.copy())
-        # And join it to the main term.
-        extra_routes = dict((unit, unit_term.tag) for unit in units)
-        return self.join_terms(self.term, unit_term, extra_routes)
-
-
-class InjectAggregateBatch(Inject):
-    """
-    Injects a batch of aggregate units sharing the same plural and unit flows.
-    """
-
-    adapts(AggregateBatchUnit)
-
-    def __init__(self, expression, term, state):
-        super(InjectAggregateBatch, self).__init__(expression, term, state)
-        # Extract attributes of the batch.
-        self.plural_flow = expression.plural_flow
-        self.flow = expression.flow
-
-    def __call__(self):
-        # To inject an aggregate unit into a term, we do the following:
-        # - compile a term for the unit flow;
-        # - compile a term for the plural flow relative to the unit term;
-        # - inject the unit expression into the plural term;
-        # - project plural term into the unit flow;
-        # - attach the projected term to the unit term;
-        # - attach the unit term to the main term.
-        # When the unit flow coincides with the main term flow, we could
-        # avoid compiling a separate unit term, and instead attach the
-        # projected term directly to the main term.
-
-        if self.unit in self.term.routes:
-            return self.term
-
-        # In any case, if we perform this procedure for each unit
-        # individually, we may end up with a lot of identical unit terms
-        # in the final term tree.  So when there are more than one aggregate
-        # unit with the same plural and unit flows, it make sense to
-        # collect all of them into a batch expression.  Then, when injecting
-        # the batch, we could reuse the same unit and plural terms for all
-        # aggregates in the batch.
-
-        # Get the list of units that are not already exported by the term.
-        proper_unit = AggregateUnit(self.unit.code,
-                                    self.unit.plural_flow,
-                                    self.unit.flow,
-                                    self.unit.binding)
-        companion_units = [AggregateUnit(code,
-                                         self.unit.plural_flow,
-                                         self.unit.flow,
-                                         self.unit.binding)
-                           for code in self.unit.companions]
-        if proper_unit in self.term.routes:
-            routes = self.term.routes.copy()
-            routes[self.unit] = routes[proper_unit]
-            return self.term.clone(routes=routes)
-        companion_units = [unit for unit in companion_units
-                                if unit not in self.term.routes]
-        units = [self.unit, proper_unit]+companion_units
-        # Verify that the units are singular relative to the term.
-        # To report an error, we could point to any unit node available.
-        if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
-                               units[0].mark)
-        # Extract the aggregate expressions.
-        codes = [self.unit.code] + [unit.code for unit in companion_units]
-
-        # Check if the unit flow coincides with or dominates the term
-        # flow.  In this case we could avoid compiling a separate unit
-        # term and instead attach the projected term directly to the main
-        # term.
-        is_native = self.flow.dominates(self.term.flow)
-        if is_native:
-            unit_term = self.term
-        else:
-            # Compile a separate term for the unit flow.
-            # Note: currently it is not reachable since we wrap every
-            # aggregate with a scalar unit sharing the same flow.
-            unit_term = self.compile_shoot(self.flow, self.term)
-
-        # Compile a term for the plural flow against the unit flow,
-        # and inject all the aggregate expressions into it.
-        plural_term = self.compile_shoot(self.plural_flow,
-                                         unit_term, codes)
-        # Generate ties to attach the projected term to the unit term.
-        joints = self.tie_terms(unit_term, plural_term)
-        # Make sure the unit term could export the tie conditions.
-        unit_term = self.inject_ties(unit_term, joints)
-
-        # Now we are going to project the plural term onto the unit
-        # flow.  As the projection basis, we are using the ties.
-        # There are two kinds of ties we could get from `tie_terms()`:
-        # - a list of parallel ties;
-        # - or a single serial tie.
-        #
-        # If we get a list of parallel ties, the projection basis
-        # comprises the primary keys of the tie flows.  Otherwise,
-        # the basis is the foreign key that joins the tie flow to
-        # its base.  These are also the columns connecting the
-        # projected term to the unit term.
-        basis = [runit for lunit, runit in joints]
-
-        # Determine the flow of the projected term.
-        projected_flow = QuotientFlow(self.flow.inflate(),
-                                      self.plural_flow, [],
-                                      self.expression.binding)
-        # The routing table of the projected term.
-        # FIXME: the projected term should be able to export the tie
-        # conditions, so we add the tie flows to the routing table.
-        # However we should never attempt to export any columns than
-        # those that form the tie condition -- it will generate invalid
-        # SQL.  It is not clear how to fix this, perhaps the routing
-        # table should contain entries for each of the columns, or
-        # a special entry for just the tie conditions?
-        # FIXME: alternatively, convert the kernel into a scalar unit
-        # and export only the aggregate and the kernel units from
-        # the projected term.  This seems to be the most correct approach,
-        # but then what to do with the requirement that each term exports
-        # its own flow and backbone?
-        tag = self.state.tag()
-        routes = {}
-        joints_copy = joints
-        joints = []
-        for joint in joints_copy:
-            rop = KernelUnit(joint.rop, projected_flow, joint.rop.binding)
-            routes[rop] = tag
-            joints.append(joint.clone(rop=rop))
-
-        ## The term flow must always be in the routing table.  The actual
-        ## route does not matter since it should never be used.
-        #routes[projected_flow] = plural_term.tag
-        # Project the plural term onto the basis of the unit flow.
-        projected_term = ProjectionTerm(tag, plural_term, basis,
-                                        projected_flow, projected_flow,
-                                        routes)
-        # Attach the projected term to the unit term, add extra entries
-        # to the routing table for each of the unit in the collection.
-        is_left = (not projected_flow.dominates(unit_term.flow))
-        is_right = False
-        # Use the routing table of the trunk term, but also add
-        # the given extra routes.
-        routes = unit_term.routes.copy()
-        for unit in units:
-            routes[unit] = projected_term.tag
-        # Generate and return a join term.
-        unit_term = JoinTerm(self.state.tag(), unit_term, projected_term,
-                             joints, is_left, is_right,
-                             unit_term.flow, unit_term.baseline, routes)
-        # For native units, we are done since we use the main term as
-        # the unit term.  Note: currently this condition always holds.
-        if is_native:
-            return unit_term
-        # Otherwise, attach the unit term to the main term.
-        extra_routes = dict((unit, projected_term.tag) for unit in units)
         return self.join_terms(self.term, unit_term, extra_routes)
 
 

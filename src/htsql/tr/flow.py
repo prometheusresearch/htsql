@@ -1243,6 +1243,42 @@ class OrderedFlow(Flow):
         return "%s [%s]" % (self.base, indicators)
 
 
+class BatchFlow(Flow):
+    """
+    Keeps compilation hints.
+
+    This flow node instructs the compiler to produce extra
+    routes when compiling a direct descendant of this flow.
+
+    Currently this node is expected to be a parental flow
+    of a quotient flow and extra codes keeps aggregate units
+    to export from the term of the quotient.
+
+    `base` (:class:`Flow`)
+        The base flow.
+
+    `codes` (list of :class:`Code`)
+        Code nodes for which routes should be generated.
+    """
+
+    def __init__(self, base, codes):
+        assert isinstance(codes, listof(Code))
+        super(BatchFlow, self).__init__(
+                    base=base,
+                    family=base.family,
+                    is_contracting=True,
+                    is_expanding=True,
+                    binding=base.binding,
+                    equality_vector=(base, tuple(codes)))
+        self.codes = codes
+
+    def __str__(self):
+        # Display:
+        #   <base>{<codes>,...}
+        return "%s{%s}" % (self.base, ",".join(str(code)
+                                               for code in self.codes))
+
+
 class Code(Expression):
     """
     Represents a code expression.
@@ -1538,30 +1574,13 @@ class ScalarUnit(CompoundUnit):
         The flow on which the unit is defined.
     """
 
-    def __init__(self, code, flow, binding, companions=None):
+    def __init__(self, code, flow, binding):
         super(ScalarUnit, self).__init__(
                     code=code,
                     flow=flow,
                     domain=code.domain,
                     binding=binding,
-                    equality_vector=(code, flow,
-                                     tuple(companions)
-                                     if companions is not None else None))
-        self.companions = companions
-
-
-class ScalarBatchUnit(ScalarUnit):
-    """
-    An auxiliary unit type used by the compiler.
-    """
-
-    def __init__(self, code, companions, flow, binding):
-        assert isinstance(companions, listof(Code))
-        super(ScalarBatchUnit, self).__init__(
-                    code=code,
-                    flow=flow,
-                    binding=binding,
-                    companions=companions)
+                    equality_vector=(code, flow))
 
 
 class AggregateUnitBase(CompoundUnit):
@@ -1593,8 +1612,7 @@ class AggregateUnitBase(CompoundUnit):
         The flow on which the unit is defined.
     """
 
-    def __init__(self, code, plural_flow, flow, binding,
-                 companions=None):
+    def __init__(self, code, plural_flow, flow, binding):
         assert isinstance(code, Code)
         assert isinstance(plural_flow, Flow)
         # FIXME: consider lifting the requirement that the plural
@@ -1606,11 +1624,8 @@ class AggregateUnitBase(CompoundUnit):
                     flow=flow,
                     domain=code.domain,
                     binding=binding,
-                    equality_vector=(code, plural_flow, flow,
-                                     tuple(companions)
-                                     if companions is not None else None))
+                    equality_vector=(code, plural_flow, flow))
         self.plural_flow = plural_flow
-        self.companions = companions
 
 
 class AggregateUnit(AggregateUnitBase):
@@ -1620,21 +1635,6 @@ class AggregateUnit(AggregateUnitBase):
     A regular aggregate unit is expressed in SQL using an aggregate
     expression with ``GROUP BY`` clause.
     """
-
-
-class AggregateBatchUnit(AggregateUnit):
-    """
-    An auxiliary unit type used by the compiler.
-    """
-
-    def __init__(self, code, companions, plural_flow, flow, binding):
-        assert isinstance(companions, listof(Code))
-        super(AggregateBatchUnit, self).__init__(
-                    code=code,
-                    plural_flow=plural_flow,
-                    flow=flow,
-                    binding=binding,
-                    companions=companions)
 
 
 class CorrelatedUnit(AggregateUnitBase):
