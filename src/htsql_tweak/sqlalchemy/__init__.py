@@ -10,11 +10,19 @@ from htsql.addon import Addon, Parameter
 
 class TweakSQLAlchemyAddon(Addon):
 
-    #prerequisites = []
-    #postrequisites = ['htsql']
+    prerequisites = []
+    postrequisites = ['htsql']
     name = 'tweak.sqlalchemy'
 
     parameters = [
             Parameter('engine', ClassVal(SQLAlchemyEngine))
     ]
+
+    @classmethod
+    def get_extensions(cls, app, attributes):
+        sqlalchemy_engine = attributes['engine']
+        if sqlalchemy_engine:
+            assert isinstance(sqlalchemy_engine, SQLAlchemyEngine)
+            return { 'htsql': { 'db': 'sqlite:///?' }}
+        return {}
 
