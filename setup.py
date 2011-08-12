@@ -79,6 +79,7 @@ ENTRY_POINTS = {
             ' = htsql_tweak.timeout.pgsql:TweakTimeoutPGSQLAddon',
         'tweak.view = htsql_tweak.view:TweakViewAddon',
         'tweak.view.pgsql = htsql_tweak.view.pgsql:TweakViewPGSQLAddon',
+        'tweak.sqlalchemy = htsql_tweak.sqlalchemy:TweakSQLAlchemyAddon',
     ],
 }
 INSTALL_REQUIRES = [
