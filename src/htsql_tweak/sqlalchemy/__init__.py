@@ -5,24 +5,46 @@
 
 from . import connect
 from sqlalchemy.engine.base import Engine as SQLAlchemyEngine
+from sqlalchemy.engine.url import make_url
 from htsql.validator import ClassVal
 from htsql.addon import Addon, Parameter
+from htsql.util import DB
 
 class TweakSQLAlchemyAddon(Addon):
 
     prerequisites = []
     postrequisites = ['htsql']
     name = 'tweak.sqlalchemy'
+    hint = """provides glue to SQLAlchemy engine and model"""
+    help = """
+      This plugin provides SQLAlchemy integration in two ways.
+      First, if the dburi is omitted, it attempts to use the
+      database connection from SQLAlchemy.  Secondly, it uses
+      the SQLAlchemy model instead of introspecting.
+    """
 
     parameters = [
-            Parameter('engine', ClassVal(SQLAlchemyEngine))
+            Parameter('engine', ClassVal(SQLAlchemyEngine),
+              hint='the SQLAlchemy ``engine`` object',
+              value_name='package.module.attribute')
     ]
 
     @classmethod
-    def get_extensions(cls, app, attributes):
+    def get_extension(cls, app, attributes):
+        # This provides the htsql.db plugin parameter (1st argument
+        # of HTSQL) if it is not otherwise provided.  If htsql.db
+        # is provided, than this operation is effectively a noop,
+        # the return result is ignored.
         sqlalchemy_engine = attributes['engine']
         if sqlalchemy_engine:
             assert isinstance(sqlalchemy_engine, SQLAlchemyEngine)
-            return { 'htsql': { 'db': 'sqlite:///?' }}
+            engine = sqlalchemy_engine.dialect.name
+            url = make_url(sqlalchemy_engine.url)
+            return { 'htsql': { 'db': DB(engine=engine, 
+                                         database=url.database,
+                                         username=url.username,
+                                         password=url.password,
+                                         host=url.host, port=url.port) },
+                     'engine.%s' % engine : {}}
         return {}
 
