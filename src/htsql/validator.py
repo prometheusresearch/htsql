@@ -969,6 +969,14 @@ class ClassVal(Validator):
 
     hint = """a class instance (%s)"""
 
+    pattern = r"""
+        ^
+        [a-zA-Z_][0-9a-zA-Z_]*
+        (\. [a-zA-Z_][0-9a-zA-Z_]*)+
+        $
+    """
+    regexp = re.compile(pattern, re.X)
+
     def __init__(self, class_type, is_nullable=False):
         # Sanity check on the arguments.
         assert isinstance(class_type, type)
@@ -989,6 +997,24 @@ class ClassVal(Validator):
                 return None
             else:
                 raise ValueError("the null value is not permitted")
+
+        # If `value` is a string, it must have a form:
+        #   <package>.<module>.<attribute>
+        if isinstance(value, str):
+            if self.regexp.match(value) is None:
+                raise ValueError("a dotted name is expected, got %r"
+                                 % value)
+            module_name, attribute_name = value.rsplit('.', 1)
+            try:
+                module = __import__(module_name, fromlist=[attribute_name])
+            except ImportError, exc:
+                raise ValueError("a module name is expected, got %r"
+                                 % module_name)
+            try:
+                value = getattr(module, attribute_name)
+            except AttributeError, exc:
+                raise ValueError("an attribute of module %r is expected,"
+                                 " got %r" % (module_name, attribute_name))
 
         # Check if the value is an instance of the specified class.
         if not isinstance(value, self.class_type):
