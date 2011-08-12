@@ -3,6 +3,7 @@
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
+from htsql.context import context
 from htsql.connect import Connect
 from htsql.adapter import weigh
 from sqlalchemy.engine.base import Engine as SQLAlchemyEngine
@@ -18,8 +19,8 @@ class SQLAlchemyConnect(Connect):
         if sqlalchemy_engine:
             assert isinstance(sqlalchemy_engine, SQLAlchemyEngine)
             return sqlalchemy_engine.connect() \
-                      .execution_options(autocommit=with_autocommit)
-        else: 
-            return super(SQLAlchemyConnect, self) \
-                      .open_connection(with_autocommit)
+                      .execution_options(autocommit=with_autocommit) \
+                      .connection
+        return super(SQLAlchemyConnect, self) \
+                 .open_connection(with_autocommit)
 

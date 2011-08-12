@@ -10,8 +10,8 @@ from htsql.addon import Addon, Parameter
 
 class TweakSQLAlchemyAddon(Addon):
 
-    prerequisites = []
-    postrequisites = ['htsql']
+    #prerequisites = []
+    #postrequisites = ['htsql']
     name = 'tweak.sqlalchemy'
 
     parameters = [
