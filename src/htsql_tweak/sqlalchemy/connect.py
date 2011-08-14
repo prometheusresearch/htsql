@@ -6,7 +6,6 @@
 from htsql.context import context
 from htsql.connect import Connect
 from htsql.adapter import weigh
-from sqlalchemy.engine.base import Engine as SQLAlchemyEngine
 
 class SQLAlchemyConnect(Connect):
     """ override normal connection with one from SQLAlchemy """
@@ -16,7 +15,6 @@ class SQLAlchemyConnect(Connect):
     def open_connection(self, with_autocommit=False):
         sqlalchemy_engine = context.app.tweak.sqlalchemy.engine
         if sqlalchemy_engine:
-            assert isinstance(sqlalchemy_engine, SQLAlchemyEngine)
             wrapper = sqlalchemy_engine.connect() \
                       .execution_options(autocommit=with_autocommit)
             # wrapper.connection is a proxied DBAPI connection
