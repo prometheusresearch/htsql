@@ -394,7 +394,7 @@ class InstructorGenerator(BaseDataGenerator):
 
     def generate_content(self):
         load_gen = random.Random(RANDOM_SEED)
-        for depcode in sorted(self.dictionary.departments.iterkeys()):
+        for depcode in sorted(self.dictionary.departments):
             load = load_gen.uniform(self.COURSES_PER_INSTRUCTOR[0], self.COURSES_PER_INSTRUCTOR[1])
             total_courses = self.dictionary.departments[depcode]
             count = int(math.ceil(total_courses / load))
@@ -483,9 +483,9 @@ class ClassGenerator(BaseDataGenerator):
         return clazz
 
     def generate_content(self):
-        for depcode in sorted(self.dep_app.iterkeys()):
+        for depcode in sorted(self.dep_app):
             dep_courses = []
-            for course_key in sorted(self.dictionary.courses.iterkeys()):
+            for course_key in sorted(self.dictionary.courses):
                 if course_key[0] == depcode:
                     dep_courses.append(course_key)
             staff = 0
@@ -601,7 +601,7 @@ class EnrollmentGenerator(BaseDataGenerator):
         r = self.dictionary.program_req[(self.student['school_code'], self.student['program_code'])]
         for req in r:
             self.fill_req_map[req] = 0
-        for req in r:
+        for req in sorted(r):
             while self.fill_req_map[req] < r[req]:
                 course_key = self.get_course_by_classification(req)
                 if course_key is None:
@@ -628,7 +628,7 @@ class EnrollmentGenerator(BaseDataGenerator):
                 self.distribution[course_key] = 0
                 for req_course_key in self.dictionary.course_prereq[course_key]:
                     self.correct_req_level(req_course_key, -1)
-        for course_key in sorted(self.distribution.iterkeys()):
+        for course_key in sorted(self.distribution):
             level = self.distribution[course_key] - self.min_level
             if level not in self.courses_by_level:
                 self.courses_by_level[level] = []
@@ -681,7 +681,7 @@ class EnrollmentGenerator(BaseDataGenerator):
                 if cls is not None:
                     self.free_courses.remove(c)
                     return (cls, c)
-            c = self.get_rand_item(self.dictionary.courses.keys(), self.course_gen)
+            c = self.get_rand_item(sorted(self.dictionary.courses), self.course_gen)
             if self.can_take(c):
                 cls = self.get_class_by_course(c, semester, classes_by_semester)
                 if cls is not None:
@@ -782,7 +782,7 @@ class StudentGenerator(BaseDataGenerator):
         self.active_gen = random.Random(RANDOM_SEED)
         self.school_gen = random.Random(RANDOM_SEED)
         self.program_gen = {}
-        for school_code in self.dictionary.school_programs.keys():
+        for school_code in sorted(self.dictionary.school_programs):
             self.program_gen[school_code] = random.Random(RANDOM_SEED)
 
     def generate_student(self, semester):
@@ -791,7 +791,7 @@ class StudentGenerator(BaseDataGenerator):
         dob_end = datetime.date(semester["year"] - self.ADMISSION_AGE[0], 12, 31)
         dob_start = datetime.date(semester["year"] - self.ADMISSION_AGE[1], 1, 1)
         dob = self.generate_date(dob_start, dob_end, self.dob_gen)
-        school = self.get_rand_item(self.dictionary.school_programs.keys(), self.school_gen)
+        school = self.get_rand_item(sorted(self.dictionary.school_programs), self.school_gen)
         program = self.get_rand_item(self.dictionary.school_programs[school], self.program_gen[school])
         self.student_counter += 1
         # what about masters and doctors?

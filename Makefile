@@ -49,7 +49,7 @@ default:
 	@echo "    where <suite> is one of:"
 	@echo "      routine, sqlite, pgsql, mysql, oracle, mssql"
 	@echo "  purge-test: to purge stale test output data"
-	@echo "	 create-<db>: to install the test database for a specific database"
+	@echo "  create-<db>: to install the test database for a specific database"
 	@echo "  drop-<db>: to delete the test database for a specific database"
 	@echo "    where <db> is one of:"
 	@echo "        sqlite, pgsql, mysql, oracle, mssql"

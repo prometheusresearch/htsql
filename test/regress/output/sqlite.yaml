@@ -649,40 +649,34 @@ tests:
              | acc             |       100 | 2008 | spring | 001     | csilva          |      1056 |
              | acc             |       100 | 2009 | spring | 001     | csilva          |      1057 |
              | acc             |       100 | 2010 | spring | 001     | csilva          |      1058 |
+             | acc             |       100 | 2010 | spring | 002     | csilva          |      2621 |
              | acc             |       200 | 2007 | fall   | 001     | vmills          |      1039 |
              | acc             |       200 | 2008 | fall   | 001     | vmills          |      1040 |
              | acc             |       200 | 2009 | fall   | 001     |                 |      1041 |
              | acc             |       200 | 2010 | fall   | 001     | vmills          |      1042 |
-             | acc             |       234 | 2007 | spring | 001     | tshepherd       |      1017 |
+             | acc             |       234 | 2008 | spring | 001     | tshepherd       |      1018 |
              | acc             |       234 | 2009 | spring | 001     | tshepherd       |      1019 |
              | acc             |       234 | 2010 | spring | 001     | tshepherd       |      1020 |
              | acc             |       315 | 2008 | fall   | 001     | tshepherd       |      1026 |
              | acc             |       315 | 2008 | spring | 001     | tshepherd       |      1027 |
-             | acc             |       315 | 2009 | fall   | 001     | tshepherd       |      1028 |
              | acc             |       315 | 2009 | spring | 001     | tshepherd       |      1029 |
              | acc             |       315 | 2010 | spring | 001     | tshepherd       |      1030 |
              | acc             |       322 | 2009 | spring | 001     | nwagner         |      1015 |
              | acc             |       322 | 2010 | spring | 001     | nwagner         |      1016 |
-             | acc             |       420 | 2007 | spring | 001     | vmills          |      1043 |
+             | acc             |       420 | 2008 | spring | 001     | vmills          |      1044 |
              | acc             |       420 | 2009 | spring | 001     | vmills          |      1045 |
              | acc             |       420 | 2010 | spring | 001     | vmills          |      1046 |
-             | acc             |       426 | 2008 | spring | 001     | tshepherd       |      1022 |
              | acc             |       426 | 2009 | spring | 001     | tshepherd       |      1023 |
              | acc             |       426 | 2010 | spring | 001     | tshepherd       |      1024 |
-             | acc             |       431 | 2008 | spring | 001     | csilva          |      1048 |
              | acc             |       431 | 2009 | spring | 001     | csilva          |      1049 |
              | acc             |       431 | 2010 | spring | 001     | csilva          |      1050 |
-             | acc             |       506 | 2007 | spring | 001     | nwagner         |      1009 |
+             | acc             |       506 | 2009 | spring | 001     | nwagner         |      1011 |
              | acc             |       506 | 2010 | spring | 001     | nwagner         |      1012 |
-             | acc             |       511 | 2009 | fall   | 001     | vmills          |      1035 |
-             | acc             |       527 | 2009 | spring | 001     | nwagner         |      1006 |
-             | acc             |       527 | 2010 | fall   | 001     | nwagner         |      1007 |
-             | acc             |       620 | 2010 | fall   | 001     | csilva          |      1054 |
+             | acc             |       527 | 2009 | fall   | 001     | nwagner         |      1005 |
              | arthis          |       102 | 2007 | fall   | 001     | slee            |      1120 |
              | arthis          |       102 | 2008 | fall   | 001     | slee            |      1121 |
-             | arthis          |       102 | 2008 | fall   | 002     | slee            |      2574 |
              | arthis          |       102 | 2010 | fall   | 001     | slee            |      1122 |
-             | arthis          |       102 | 2010 | fall   | 002     | slee            |      2592 |
+             | arthis          |       102 | 2010 | fall   | 002     | slee            |      2579 |
              | arthis          |       209 | 2007 | fall   | 001     | mpowell         |      1101 |
              | arthis          |       209 | 2009 | fall   | 001     | mpowell         |      1102 |
              | arthis          |       209 | 2010 | fall   | 001     | mpowell         |      1103 |
@@ -695,6 +689,12 @@ tests:
              | arthis          |       224 | 2008 | fall   | 001     | ewillis         |      1061 |
              | arthis          |       224 | 2008 | spring | 001     | ewillis         |      1062 |
              | arthis          |       224 | 2009 | fall   | 001     | ewillis         |      1063 |
+             | arthis          |       224 | 2009 | spring | 001     | ewillis         |      1064 |
+             | arthis          |       224 | 2010 | fall   | 001     | ewillis         |      1065 |
+             | arthis          |       224 | 2010 | fall   | 002     | ewillis         |      2618 |
+             | arthis          |       224 | 2010 | spring | 001     | ewillis         |      1066 |
+             | arthis          |       231 | 2007 | spring | 001     | slee            |      1116 |
+             | arthis          |       231 | 2008 | spring | 001     | slee            |      1117 |
                                                                                            (50 rows)
 
              ----
@@ -718,56 +718,56 @@ tests:
              +--------------------------------------------------------------------------------------------------------+
              | id   | name                | gender | dob        | school_code | program_code | start_date | is_active |
             -+------+---------------------+--------+------------+-------------+--------------+------------+-----------+-
-             | 1001 | Linda Wright        | f      | 1988-10-03 | ph          | phd          | 2007-08-15 | true      |
-             | 1002 | Beth Thompson       | f      | 1988-01-24 | ph          | phd          | 2007-08-15 | true      |
-             | 1003 | Sheri Sanchez       | f      | 1985-05-14 | bus         | pbusad       | 2007-08-15 | true      |
-             | 1004 | John Stone          | m      | 1984-01-28 | eng         | ucompsci     | 2007-08-15 | true      |
-             | 1005 | Helen Johnson       | f      | 1986-02-03 | la          | uspan        | 2007-08-15 | true      |
-             | 1006 | Anna Carroll        | f      | 1985-03-29 | bus         | pacc         | 2007-08-15 | true      |
-             | 1007 | Carol Walden        | f      | 1988-04-09 | ph          | phd          | 2007-08-15 | true      |
-             | 1008 | Mark Melton         | m      | 1984-06-05 | bus         | uacct        | 2007-08-15 | true      |
-             | 1009 | Frances Moore       | f      | 1985-10-25 | la          | uhist        | 2007-08-15 | true      |
-             | 1010 | Judy Flynn          | f      | 1986-09-02 | edu         | gedu         | 2007-08-15 | true      |
-             | 1011 | Jacqueline Padilla  | f      | 1989-04-07 | ns          | umth         | 2007-08-15 | true      |
-             | 1012 | Margaret Martin     | f      | 1986-01-15 | la          | psciwri      | 2007-08-15 | true      |
-             | 1013 | Michael Castillo    | m      | 1984-04-04 | eng         | ucompsci     | 2007-08-15 | true      |
-             | 1014 | Kara Ellis          | f      | 1988-01-18 | ph          | phd          | 2007-08-15 | true      |
-             | 1015 | Isabel Anderson     | f      | 1986-12-13 | edu         | gedu         | 2007-08-15 | true      |
-             | 1016 | Charles Luna        | m      | 1984-01-03 | eng         | uelec        | 2007-08-15 | true      |
-             | 1017 | Cassandra Franco    | f      | 1989-04-12 | ns          | gmth         | 2007-08-15 | true      |
-             | 1018 | Nancy Terry         | f      | 1989-11-11 | ns          | uphys        | 2007-08-15 | true      |
-             | 1019 | Deborah Herring     | f      | 1988-06-25 | ph          | phd          | 2007-08-15 | true      |
-             | 1020 | Sheila Randall      | f      | 1989-03-21 | ns          | uchem        | 2007-08-15 | true      |
-             | 1021 | Gordon Allred       | m      | 1984-06-25 | bus         | uecon        | 2007-08-15 | true      |
-             | 1022 | Lori Lim            | f      | 1987-11-03 | ph          | phd          | 2007-08-15 | true      |
-             | 1023 | Virginia Haines     | f      | 1989-03-11 | ns          | pmth         | 2007-08-15 | true      |
-             | 1024 | Susan Harrell       | f      | 1987-06-22 | edu         | psci         | 2007-08-15 | true      |
-             | 1025 | Patti Sutton        | f      | 1985-10-12 | la          | gscitch      | 2007-08-15 | true      |
+             | 1001 | Linda Wright        | f      | 1988-10-03 | ns          | umth         | 2007-08-15 | true      |
+             | 1002 | Beth Thompson       | f      | 1988-01-24 | ns          | gmth         | 2007-08-15 | true      |
+             | 1003 | Sheri Sanchez       | f      | 1985-05-14 | edu         | gedu         | 2007-08-15 | true      |
+             | 1004 | John Stone          | m      | 1984-01-28 | bus         | pbusad       | 2007-08-15 | true      |
+             | 1005 | Helen Johnson       | f      | 1986-02-03 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1006 | Anna Carroll        | f      | 1985-03-29 | edu         | gedu         | 2007-08-15 | true      |
+             | 1007 | Carol Walden        | f      | 1988-04-09 | ns          | uphys        | 2007-08-15 | true      |
+             | 1008 | Mark Melton         | m      | 1984-06-05 | edu         | psci         | 2007-08-15 | true      |
+             | 1009 | Frances Moore       | f      | 1985-10-25 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1010 | Judy Flynn          | f      | 1986-09-02 | la          | uspan        | 2007-08-15 | true      |
+             | 1011 | Jacqueline Padilla  | f      | 1989-04-07 | ph          | phd          | 2007-08-15 | true      |
+             | 1012 | Margaret Martin     | f      | 1986-01-15 | eng         | uelec        | 2007-08-15 | true      |
+             | 1013 | Michael Castillo    | m      | 1984-04-04 | bus         | pacc         | 2007-08-15 | true      |
+             | 1014 | Kara Ellis          | f      | 1988-01-18 | ns          | uchem        | 2007-08-15 | true      |
+             | 1015 | Isabel Anderson     | f      | 1986-12-13 | la          | uhist        | 2007-08-15 | true      |
+             | 1016 | Charles Luna        | m      | 1984-01-03 | bus         | uacct        | 2007-08-15 | true      |
+             | 1017 | Cassandra Franco    | f      | 1989-04-12 | ph          | phd          | 2007-08-15 | true      |
+             | 1018 | Nancy Terry         | f      | 1989-11-11 | ph          | phd          | 2007-08-15 | true      |
+             | 1019 | Deborah Herring     | f      | 1988-06-25 | ns          | pmth         | 2007-08-15 | true      |
+             | 1020 | Sheila Randall      | f      | 1989-03-21 | ph          | phd          | 2007-08-15 | true      |
+             | 1021 | Gordon Allred       | m      | 1984-06-25 | edu         | usci         | 2007-08-15 | true      |
+             | 1022 | Lori Lim            | f      | 1987-11-03 | ns          | uphys        | 2007-08-15 | true      |
+             | 1023 | Virginia Haines     | f      | 1989-03-11 | ph          | phd          | 2007-08-15 | true      |
+             | 1024 | Susan Harrell       | f      | 1987-06-22 | la          | psciwri      | 2007-08-15 | true      |
+             | 1025 | Patti Sutton        | f      | 1985-10-12 | eng         | gbe          | 2007-08-15 | true      |
              | 1026 | Ronald Finch        | m      | 1982-10-23 | art         | ustudio      | 2007-08-15 | true      |
-             | 1027 | Belinda Calhoun     | f      | 1985-06-23 | la          | gengl        | 2007-08-15 | true      |
-             | 1028 | Catherine Kim       | f      | 1986-11-21 | edu         | usci         | 2007-08-15 | true      |
-             | 1029 | Patricia Medina     | f      | 1989-04-21 | ns          | uphys        | 2007-08-15 | true      |
-             | 1030 | Martha Wilkerson    | f      | 1989-09-25 | ns          | gmth         | 2007-08-15 | true      |
-             | 1031 | Patricia Stephens   | f      | 1985-10-26 | la          | psciwri      | 2007-08-15 | true      |
-             | 1032 | Margaret Washington | f      | 1988-12-03 | ns          | uchem        | 2007-08-15 | true      |
-             | 1033 | Isidro Chen         | m      | 1984-02-01 | eng         | gbe          | 2007-08-15 | true      |
-             | 1034 | Darlene Myers       | f      | 1988-06-10 | ph          | phd          | 2007-08-15 | true      |
-             | 1035 | Maria Johnson       | f      | 1986-05-23 | la          | uspan        | 2007-08-15 | true      |
+             | 1027 | Belinda Calhoun     | f      | 1985-06-23 | eng         | umech        | 2007-08-15 | true      |
+             | 1028 | Catherine Kim       | f      | 1986-11-21 | la          | gscitch      | 2007-08-15 | true      |
+             | 1029 | Patricia Medina     | f      | 1989-04-21 | ph          | phd          | 2007-08-15 | true      |
+             | 1030 | Martha Wilkerson    | f      | 1989-09-25 | ph          | phd          | 2007-08-15 | true      |
+             | 1031 | Patricia Stephens   | f      | 1985-10-26 | eng         | uelec        | 2007-08-15 | true      |
+             | 1032 | Margaret Washington | f      | 1988-12-03 | ph          | phd          | 2007-08-15 | true      |
+             | 1033 | Isidro Chen         | m      | 1984-02-01 | bus         | uecon        | 2007-08-15 | true      |
+             | 1034 | Darlene Myers       | f      | 1988-06-10 | ns          | gmth         | 2007-08-15 | true      |
+             | 1035 | Maria Johnson       | f      | 1986-05-23 | eng         | ucompsci     | 2007-08-15 | true      |
              | 1036 | Jonathan Bouchard   | m      | 1982-02-12 | art         | ustudio      | 2007-08-15 | false     |
-             | 1037 | Bessie Hill         | f      | 1987-10-05 | ph          | phd          | 2007-08-15 | true      |
-             | 1038 | Wiley Baker         | m      | 1985-03-11 | bus         | ubusad       | 2007-08-15 | true      |
-             | 1039 | Linda Little        | f      | 1988-08-07 | ph          | phd          | 2007-08-15 | true      |
-             | 1040 | Beverly Brown       | f      | 1987-05-07 | edu         | glited       | 2007-08-15 | true      |
+             | 1037 | Bessie Hill         | f      | 1987-10-05 | ns          | uchem        | 2007-08-15 | true      |
+             | 1038 | Wiley Baker         | m      | 1985-03-11 | edu         | glited       | 2007-08-15 | true      |
+             | 1039 | Linda Little        | f      | 1988-08-07 | ns          | uphys        | 2007-08-15 | true      |
+             | 1040 | Beverly Brown       | f      | 1987-05-07 | la          | gengl        | 2007-08-15 | true      |
              | 1041 | Lowell Cooper       | m      | 1982-01-05 | art         | uhist        | 2007-08-15 | false     |
-             | 1042 | Evelyn Williams     | f      | 1985-12-13 | la          | gscitch      | 2007-08-15 | true      |
-             | 1043 | Patricia Grayson    | f      | 1988-12-10 | ns          | uphys        | 2007-08-15 | true      |
-             | 1044 | Brain Erickson      | m      | 1983-12-15 | eng         | umech        | 2007-08-15 | true      |
-             | 1045 | John Thompson       | m      | 1984-08-08 | bus         | uacct        | 2007-08-15 | true      |
-             | 1046 | Lisa Johnson        | f      | 1988-12-18 | ns          | pmth         | 2007-08-15 | true      |
-             | 1047 | Maurice Wagner      | m      | 1983-07-14 | eng         | uelec        | 2007-08-15 | true      |
-             | 1048 | Patricia Stewart    | f      | 1986-07-17 | la          | gengl        | 2007-08-15 | true      |
-             | 1049 | Andrew Gilbert      | m      | 1983-11-29 | eng         | ucompsci     | 2007-08-15 | true      |
-             | 1050 | Annie Harris        | f      | 1989-09-28 | ns          | umth         | 2007-08-15 | true      |
+             | 1042 | Evelyn Williams     | f      | 1985-12-13 | eng         | gbe          | 2007-08-15 | true      |
+             | 1043 | Patricia Grayson    | f      | 1988-12-10 | ph          | phd          | 2007-08-15 | true      |
+             | 1044 | Brain Erickson      | m      | 1983-12-15 | bus         | ubusad       | 2007-08-15 | true      |
+             | 1045 | John Thompson       | m      | 1984-08-08 | edu         | psci         | 2007-08-15 | true      |
+             | 1046 | Lisa Johnson        | f      | 1988-12-18 | ph          | phd          | 2007-08-15 | true      |
+             | 1047 | Maurice Wagner      | m      | 1983-07-14 | bus         | uacct        | 2007-08-15 | true      |
+             | 1048 | Patricia Stewart    | f      | 1986-07-17 | eng         | uelec        | 2007-08-15 | true      |
+             | 1049 | Andrew Gilbert      | m      | 1983-11-29 | bus         | pacc         | 2007-08-15 | true      |
+             | 1050 | Annie Harris        | f      | 1989-09-28 | ph          | phd          | 2007-08-15 | true      |
                                                                                                               (50 rows)
 
              ----
@@ -792,56 +792,56 @@ tests:
              +-----------------------------------------+
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
-             |       1001 |      1061 | enr    |       |
-             |       1001 |      1068 | enr    |   3.7 |
-             |       1001 |      1119 | ngr    |   4.0 |
-             |       1001 |      1120 | inc    |   2.7 |
-             |       1001 |      1124 | inc    |   3.4 |
-             |       1001 |      1244 | inc    |   2.9 |
-             |       1001 |      1282 | enr    |   2.3 |
-             |       1001 |      1355 | inc    |   2.8 |
-             |       1001 |      1395 | ngr    |   1.9 |
-             |       1001 |      1430 | enr    |   2.6 |
-             |       1001 |      1515 | enr    |   2.4 |
-             |       1001 |      1547 | enr    |       |
-             |       1001 |      1548 | enr    |   1.7 |
-             |       1001 |      1590 | ngr    |   0.2 |
-             |       1001 |      1665 | inc    |   4.0 |
-             |       1001 |      1674 | enr    |   3.2 |
-             |       1001 |      1675 | ngr    |   1.8 |
-             |       1001 |      1681 | enr    |   2.0 |
-             |       1001 |      1692 | ngr    |   4.0 |
-             |       1001 |      1709 | ngr    |       |
-             |       1001 |      1720 | enr    |   1.4 |
-             |       1001 |      1731 | inc    |   0.6 |
-             |       1001 |      1758 | ngr    |   2.3 |
-             |       1001 |      1764 | ngr    |   2.8 |
-             |       1001 |      1793 | ngr    |   0.7 |
-             |       1001 |      1798 | ngr    |   2.6 |
-             |       1001 |      1825 | enr    |   1.7 |
-             |       1001 |      1866 | inc    |   1.5 |
-             |       1001 |      1890 | ngr    |   0.9 |
-             |       1001 |      1899 | enr    |   1.7 |
-             |       1001 |      1937 | enr    |   3.0 |
-             |       1001 |      2008 | enr    |   1.5 |
-             |       1001 |      2107 | enr    |   2.9 |
-             |       1001 |      2173 | ngr    |   3.4 |
-             |       1001 |      2199 | ngr    |   4.0 |
-             |       1001 |      2247 | enr    |   3.5 |
-             |       1001 |      2249 | ngr    |   2.3 |
-             |       1001 |      2269 | inc    |   2.3 |
-             |       1001 |      2274 | ngr    |   3.1 |
-             |       1001 |      2276 | enr    |   0.4 |
-             |       1001 |      2285 | ngr    |   1.2 |
-             |       1001 |      2309 | ngr    |   2.9 |
-             |       1001 |      2394 | enr    |   1.1 |
-             |       1001 |      2457 | inc    |   3.5 |
-             |       1001 |      2461 | ngr    |   0.7 |
-             |       1001 |      2474 | ngr    |   2.9 |
-             |       1001 |      2488 | enr    |   1.9 |
-             |       1001 |      2490 | inc    |   4.0 |
-             |       1001 |      2495 | inc    |   2.0 |
-             |       1001 |      2545 | ngr    |   2.6 |
+             |       1001 |      1070 | ngr    |       |
+             |       1001 |      1088 | enr    |   2.6 |
+             |       1001 |      1096 | inc    |   2.9 |
+             |       1001 |      1098 | ngr    |   2.8 |
+             |       1001 |      1117 | ngr    |   4.0 |
+             |       1001 |      1121 | inc    |   2.3 |
+             |       1001 |      1301 | enr    |   0.4 |
+             |       1001 |      1397 | inc    |   1.5 |
+             |       1001 |      1430 | enr    |   3.5 |
+             |       1001 |      1442 | enr    |   2.3 |
+             |       1001 |      1516 | ngr    |   4.0 |
+             |       1001 |      1551 | ngr    |   0.2 |
+             |       1001 |      1576 | inc    |   4.0 |
+             |       1001 |      1586 | enr    |   1.1 |
+             |       1001 |      1666 | enr    |       |
+             |       1001 |      1672 | enr    |   3.0 |
+             |       1001 |      1679 | inc    |   2.7 |
+             |       1001 |      1687 | ngr    |   1.9 |
+             |       1001 |      1715 | inc    |   2.8 |
+             |       1001 |      1723 | inc    |   4.0 |
+             |       1001 |      1738 | ngr    |   1.2 |
+             |       1001 |      1741 | enr    |   1.9 |
+             |       1001 |      1766 | ngr    |   1.4 |
+             |       1001 |      1770 | inc    |   3.5 |
+             |       1001 |      1785 | ngr    |   0.7 |
+             |       1001 |      1795 | inc    |   3.4 |
+             |       1001 |      1821 | enr    |   2.6 |
+             |       1001 |      1857 | ngr    |   2.9 |
+             |       1001 |      1873 | ngr    |   2.6 |
+             |       1001 |      1881 | enr    |   1.7 |
+             |       1001 |      1911 | inc    |   0.6 |
+             |       1001 |      1928 | ngr    |   1.8 |
+             |       1001 |      2135 | ngr    |   2.3 |
+             |       1001 |      2158 | enr    |   1.4 |
+             |       1001 |      2194 | enr    |   2.4 |
+             |       1001 |      2198 | enr    |   3.2 |
+             |       1001 |      2252 | enr    |   2.9 |
+             |       1001 |      2280 | enr    |   2.0 |
+             |       1001 |      2287 | enr    |       |
+             |       1001 |      2318 | enr    |   1.7 |
+             |       1001 |      2382 | inc    |   3.2 |
+             |       1001 |      2393 | enr    |   1.5 |
+             |       1001 |      2443 | ngr    |   0.9 |
+             |       1001 |      2448 | ngr    |   4.0 |
+             |       1001 |      2457 | enr    |   1.7 |
+             |       1001 |      2462 | ngr    |   3.4 |
+             |       1001 |      2473 | ngr    |   2.6 |
+             |       1001 |      2492 | ngr    |   2.9 |
+             |       1001 |      2502 | ngr    |   2.3 |
+             |       1001 |      2544 | ngr    |   3.1 |
                                                (50 rows)
 
              ----
@@ -1620,15 +1620,19 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | student                                                                                              |
-             +------------------------------------------------------------------------------------------------------+
-             | id   | name              | gender | dob        | school_code | program_code | start_date | is_active |
-            -+------+-------------------+--------+------------+-------------+--------------+------------+-----------+-
-             | 1052 | Kathy Wilkinson   | f      | 1985-08-02 | la          | uengl        | 2007-08-15 | true      |
-             | 1066 | Vickie Gardner    | f      | 1985-07-24 | la          | uengl        | 2007-08-15 | true      |
-             | 1201 | Christina Rodgers | f      | 1986-07-25 | la          | uengl        | 2008-08-15 | true      |
-             | 1329 | Gail House        | f      | 1987-08-13 | la          | uengl        | 2009-08-15 | true      |
-                                                                                                             (4 rows)
+             | student                                                                                           |
+             +---------------------------------------------------------------------------------------------------+
+             | id   | name           | gender | dob        | school_code | program_code | start_date | is_active |
+            -+------+----------------+--------+------------+-------------+--------------+------------+-----------+-
+             | 1069 | Wanda Gordon   | f      | 1986-08-10 | la          | uengl        | 2007-08-15 | true      |
+             | 1092 | Keisha Salinas | f      | 1986-08-22 | la          | uengl        | 2007-08-15 | true      |
+             | 1158 | Violet Wilson  | f      | 1987-10-11 | la          | uengl        | 2008-08-15 | true      |
+             | 1306 | Donna Johnson  | f      | 1989-02-10 | la          | uengl        | 2009-08-15 | true      |
+             | 1424 | Dorthy Neff    | f      | 1990-05-23 | la          | uengl        | 2010-08-15 | true      |
+             | 1428 | Odessa Walter  | f      | 1989-11-23 | la          | uengl        | 2010-08-15 | true      |
+             | 1435 | Barbara West   | f      | 1990-01-16 | la          | uengl        | 2010-08-15 | true      |
+             | 1445 | Linda Woods    | f      | 1990-01-22 | la          | uengl        | 2010-08-15 | true      |
+                                                                                                          (8 rows)
 
              ----
              /(program?school_code='la'&code='uengl').student
@@ -1890,8 +1894,10 @@ tests:
              | astro           |       108 | 2008 | spring | 001     | jfreeman        |      1219 |
              | astro           |       108 | 2009 | spring | 001     | jfreeman        |      1220 |
              | astro           |       108 | 2010 | spring | 001     | jfreeman        |      1221 |
+             | astro           |       345 | 2008 | fall   | 001     | jfreeman        |      1223 |
+             | astro           |       345 | 2009 | fall   | 001     | jfreeman        |      1224 |
              | astro           |       345 | 2010 | fall   | 001     | jfreeman        |      1225 |
-                                                                                            (5 rows)
+                                                                                            (7 rows)
 
              ----
              /(instructor?code='jfreeman').class
@@ -1989,36 +1995,34 @@ tests:
              | department_code | course_no | year | season | section | instructor_code | class_seq |
             -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
              | acc             |       200 | 2010 | fall   | 001     | vmills          |      1042 |
-             | acc             |       527 | 2010 | fall   | 001     | nwagner         |      1007 |
-             | acc             |       620 | 2010 | fall   | 001     | csilva          |      1054 |
              | arthis          |       102 | 2010 | fall   | 001     | slee            |      1122 |
-             | arthis          |       102 | 2010 | fall   | 002     | slee            |      2592 |
+             | arthis          |       102 | 2010 | fall   | 002     | slee            |      2579 |
              | arthis          |       209 | 2010 | fall   | 001     | mpowell         |      1103 |
              | arthis          |       224 | 2010 | fall   | 001     | ewillis         |      1065 |
-             | arthis          |       224 | 2010 | fall   | 002     |                 |      2601 |
+             | arthis          |       224 | 2010 | fall   | 002     | ewillis         |      2618 |
+             | arthis          |       436 | 2010 | fall   | 001     | dbuckley        |      1107 |
              | arthis          |       540 | 2010 | fall   | 001     | mpowell         |      1095 |
              | arthis          |       552 | 2010 | fall   | 001     | ewillis         |      1073 |
-             | arthis          |       552 | 2010 | fall   | 002     | ewillis         |      2609 |
              | arthis          |       623 | 2010 | fall   | 001     | mpowell         |      1100 |
-             | arthis          |       623 | 2010 | fall   | 002     | mpowell         |      2638 |
+             | arthis          |       623 | 2010 | fall   | 002     | mpowell         |      2598 |
              | arthis          |       710 | 2010 | fall   | 001     | cbutler         |      1134 |
-             | arthis          |       710 | 2010 | fall   | 002     | cbutler         |      2622 |
+             | arthis          |       710 | 2010 | fall   | 002     | cbutler         |      2611 |
              | arthis          |       712 | 2010 | fall   | 001     | lkilgore        |      1086 |
+             | arthis          |       712 | 2010 | fall   | 002     | lkilgore        |      2619 |
              | astro           |       106 | 2010 | fall   | 001     | gmckinley       |      1190 |
              | astro           |       122 | 2010 | fall   | 001     | arobinson       |      1201 |
-             | astro           |       122 | 2010 | fall   | 002     | arobinson       |      2636 |
              | astro           |       210 | 2010 | fall   | 001     | jbelanger       |      1157 |
              | astro           |       223 | 2010 | fall   | 001     | mpena           |      1236 |
              | astro           |       230 | 2010 | fall   | 001     | gmckinley       |      1194 |
              | astro           |       315 | 2010 | fall   | 001     | mtriplett       |      1164 |
              | astro           |       340 | 2010 | fall   | 001     | gmckinley       |      1175 |
              | astro           |       345 | 2010 | fall   | 001     | jfreeman        |      1225 |
+             | astro           |       432 | 2010 | fall   | 001     | arobinson       |      1197 |
              | be              |       112 | 2010 | fall   | 001     | dmitchell       |      1243 |
              | be              |       173 | 2010 | fall   | 001     | mgarza          |      1303 |
-             | be              |       173 | 2010 | fall   | 002     | mgarza          |      2577 |
+             | be              |       173 | 2010 | fall   | 002     | mgarza          |      2586 |
              | be              |       415 | 2010 | fall   | 001     | rbeaver         |      1283 |
              | be              |       437 | 2010 | fall   | 001     | hhumphrey       |      1296 |
-             | be              |       437 | 2010 | fall   | 002     | hhumphrey       |      2635 |
              | chem            |       110 | 2010 | fall   | 001     | wmyers          |      1359 |
              | chem            |       200 | 2010 | fall   | 001     | rflores         |      1331 |
              | chem            |       201 | 2010 | fall   | 001     | sfrost          |      1386 |
@@ -2028,16 +2032,18 @@ tests:
              | chem            |       314 | 2010 | fall   | 001     | wmyers          |      1346 |
              | chem            |       320 | 2010 | fall   | 001     | wmyers          |      1363 |
              | comp            |       150 | 2010 | fall   | 001     | sjackson        |      1461 |
-             | comp            |       150 | 2010 | fall   | 002     | sjackson        |      2629 |
+             | comp            |       150 | 2010 | fall   | 002     | sjackson        |      2595 |
              | comp            |       206 | 2010 | fall   | 001     | sjackson        |      1465 |
              | comp            |       215 | 2010 | fall   | 001     | jmcgrath        |      1447 |
              | comp            |       228 | 2010 | fall   | 001     | wbradshaw       |      1453 |
              | comp            |       350 | 2010 | fall   | 001     | wbradshaw       |      1457 |
              | comp            |       437 | 2010 | fall   | 001     | jreeves         |      1477 |
              | comp            |       710 | 2010 | fall   | 001     | rmejia          |      1409 |
-             | comp            |       710 | 2010 | fall   | 002     | rmejia          |      2610 |
+             | comp            |       710 | 2010 | fall   | 002     | rmejia          |      2626 |
              | comp            |       810 | 2010 | fall   | 001     | ethompson       |      1431 |
+             | comp            |       810 | 2010 | fall   | 002     | ethompson       |      2600 |
              | econ            |       205 | 2010 | fall   | 001     | myoung          |      1520 |
+             | econ            |       278 | 2010 | fall   | 001     | myoung          |      1527 |
                                                                                            (50 rows)
 
              ----
@@ -2136,25 +2142,18 @@ tests:
              +-----------------------------------------+
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
-             |       1003 |      1055 | ngr    |   0.5 |
-             |       1010 |      1055 | inc    |   0.0 |
-             |       1012 |      1055 | inc    |   4.0 |
-             |       1026 |      1055 | inc    |   2.9 |
-             |       1028 |      1055 | inc    |   1.4 |
-             |       1032 |      1055 | enr    |   4.0 |
-             |       1042 |      1055 | enr    |   1.9 |
-             |       1044 |      1055 | enr    |   2.6 |
-             |       1045 |      1055 | inc    |   1.4 |
-             |       1046 |      1055 | ngr    |   4.0 |
-             |       1057 |      1055 | inc    |   3.0 |
-             |       1070 |      1055 | enr    |   3.3 |
-             |       1083 |      1055 | inc    |   2.7 |
-             |       1085 |      1055 | ngr    |   2.6 |
-             |       1089 |      1055 | inc    |   4.0 |
-             |       1096 |      1055 | inc    |   2.2 |
-             |       1104 |      1055 | ngr    |   1.8 |
-             |       1114 |      1055 | enr    |   2.8 |
-                                               (18 rows)
+             |       1016 |      1055 | inc    |   1.4 |
+             |       1026 |      1055 | enr    |   0.0 |
+             |       1034 |      1055 | enr    |   3.1 |
+             |       1043 |      1055 | enr    |   3.9 |
+             |       1049 |      1055 | ngr    |   3.6 |
+             |       1060 |      1055 | inc    |   4.0 |
+             |       1066 |      1055 | enr    |   2.2 |
+             |       1068 |      1055 | ngr    |   3.8 |
+             |       1074 |      1055 | enr    |       |
+             |       1082 |      1055 | enr    |   2.0 |
+             |       1088 |      1055 | ngr    |   2.8 |
+                                               (11 rows)
 
              ----
              /(class?class_seq=1055).enrollment
@@ -2172,12 +2171,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                   |
-             +-----------------------------------------------------------+
-             | school_code | code | title             | degree | part_of |
-            -+-------------+------+-------------------+--------+---------+-
-             | edu         | gedu | M.S. in Education | ms     |         |
-                                                                   (1 row)
+             | program                                                              |
+             +----------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of |
+            -+-------------+-------+-----------------------------+--------+---------+-
+             | la          | uspan | Bachelor of Arts in Spanish | ba     |         |
+                                                                              (1 row)
 
              ----
              /(student?id=1010).program
@@ -2200,56 +2199,56 @@ tests:
              +-----------------------------------------+
              | student_id | class_seq | status | grade |
             -+------------+-----------+--------+-------+-
-             |       1010 |      1055 | inc    |   0.0 |
-             |       1010 |      1063 | inc    |   4.0 |
-             |       1010 |      1070 | inc    |   3.8 |
-             |       1010 |      1083 | enr    |   1.5 |
-             |       1010 |      1097 | ngr    |   3.9 |
-             |       1010 |      1109 | enr    |   2.1 |
-             |       1010 |      1132 | ngr    |   2.5 |
-             |       1010 |      1168 | enr    |   2.2 |
-             |       1010 |      1243 | ngr    |   3.3 |
-             |       1010 |      1428 | ngr    |   2.4 |
-             |       1010 |      1459 | ngr    |   3.1 |
-             |       1010 |      1509 | enr    |   1.7 |
-             |       1010 |      1542 | ngr    |   4.0 |
-             |       1010 |      1544 | inc    |   3.1 |
-             |       1010 |      1555 | ngr    |   2.5 |
-             |       1010 |      1565 | ngr    |       |
-             |       1010 |      1571 | ngr    |   0.9 |
-             |       1010 |      1575 | ngr    |   4.0 |
-             |       1010 |      1580 | inc    |   3.7 |
-             |       1010 |      1586 | ngr    |   3.6 |
-             |       1010 |      1588 | ngr    |   4.0 |
-             |       1010 |      1596 | inc    |   1.6 |
-             |       1010 |      1617 | ngr    |   0.5 |
-             |       1010 |      1661 | ngr    |   2.9 |
-             |       1010 |      1664 | enr    |   3.0 |
-             |       1010 |      1672 | enr    |   1.2 |
-             |       1010 |      1677 | inc    |   3.0 |
-             |       1010 |      1687 | inc    |   4.0 |
-             |       1010 |      1693 | ngr    |   3.0 |
-             |       1010 |      1700 | ngr    |   3.7 |
-             |       1010 |      1710 | enr    |   4.0 |
-             |       1010 |      1719 | ngr    |   2.4 |
-             |       1010 |      1731 | inc    |       |
-             |       1010 |      1761 | inc    |   3.3 |
-             |       1010 |      1762 | enr    |   4.0 |
-             |       1010 |      1791 | inc    |   2.2 |
-             |       1010 |      1803 | ngr    |   1.0 |
-             |       1010 |      1826 | enr    |   2.6 |
-             |       1010 |      1839 | enr    |   3.1 |
-             |       1010 |      1859 | inc    |   3.8 |
-             |       1010 |      1882 | enr    |   1.9 |
-             |       1010 |      1910 | enr    |   0.4 |
-             |       1010 |      1929 | enr    |   4.0 |
-             |       1010 |      2005 | ngr    |   4.0 |
-             |       1010 |      2135 | ngr    |   0.4 |
-             |       1010 |      2258 | ngr    |       |
-             |       1010 |      2263 | enr    |   0.2 |
-             |       1010 |      2314 | ngr    |   3.3 |
-             |       1010 |      2315 | enr    |   2.1 |
-             |       1010 |      2384 | ngr    |   3.7 |
+             |       1010 |      1041 | inc    |   4.0 |
+             |       1010 |      1066 | enr    |   2.2 |
+             |       1010 |      1071 | inc    |   3.7 |
+             |       1010 |      1082 | enr    |   0.2 |
+             |       1010 |      1085 | enr    |   3.1 |
+             |       1010 |      1089 | ngr    |       |
+             |       1010 |      1097 | enr    |   4.0 |
+             |       1010 |      1122 | inc    |   3.8 |
+             |       1010 |      1123 | inc    |   0.0 |
+             |       1010 |      1213 | enr    |   2.4 |
+             |       1010 |      1220 | ngr    |   3.0 |
+             |       1010 |      1409 | ngr    |   3.3 |
+             |       1010 |      1429 | enr    |   1.9 |
+             |       1010 |      1509 | inc    |   1.6 |
+             |       1010 |      1514 | enr    |   2.1 |
+             |       1010 |      1544 | ngr    |   0.4 |
+             |       1010 |      1590 | inc    |   2.2 |
+             |       1010 |      1658 | ngr    |   3.7 |
+             |       1010 |      1666 | enr    |   2.6 |
+             |       1010 |      1713 | inc    |   3.3 |
+             |       1010 |      1719 | enr    |   0.4 |
+             |       1010 |      1729 | ngr    |   3.3 |
+             |       1010 |      1742 | ngr    |   2.5 |
+             |       1010 |      1746 | ngr    |   1.0 |
+             |       1010 |      1752 | enr    |   1.2 |
+             |       1010 |      1785 | inc    |   3.1 |
+             |       1010 |      1804 | ngr    |   2.4 |
+             |       1010 |      1812 | ngr    |   3.7 |
+             |       1010 |      1817 | inc    |   4.0 |
+             |       1010 |      1825 | enr    |   3.0 |
+             |       1010 |      1829 | inc    |   2.0 |
+             |       1010 |      1844 | ngr    |   4.0 |
+             |       1010 |      1847 | inc    |   2.7 |
+             |       1010 |      1852 | ngr    |   3.6 |
+             |       1010 |      1854 | inc    |   3.8 |
+             |       1010 |      1895 | ngr    |   4.0 |
+             |       1010 |      1896 | ngr    |   3.9 |
+             |       1010 |      2101 | ngr    |   2.5 |
+             |       1010 |      2105 | ngr    |   3.1 |
+             |       1010 |      2109 | enr    |   4.0 |
+             |       1010 |      2121 | ngr    |       |
+             |       1010 |      2192 | ngr    |   2.9 |
+             |       1010 |      2256 | ngr    |   0.5 |
+             |       1010 |      2272 | enr    |   4.0 |
+             |       1010 |      2276 | enr    |   2.1 |
+             |       1010 |      2311 | enr    |   1.5 |
+             |       1010 |      2315 | ngr    |   2.4 |
+             |       1010 |      2393 | enr    |   4.0 |
+             |       1010 |      2447 | ngr    |   4.0 |
+             |       1010 |      2471 | enr    |   1.7 |
                                                (50 rows)
 
              ----
@@ -2264,7 +2263,7 @@ tests:
              WHERE ("student"."id" = 1010)
              ORDER BY "student"."id" ASC, 1 ASC, 2 ASC
              LIMIT 50
-        - uri: /(enrollment?student_id=1100&class_seq=1100).student
+        - uri: /(enrollment?student_id=1100&class_seq=1110).student
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -2273,11 +2272,11 @@ tests:
              +-------------------------------------------------------------------------------------------------+
              | id   | name         | gender | dob        | school_code | program_code | start_date | is_active |
             -+------+--------------+--------+------------+-------------+--------------+------------+-----------+-
-             | 1100 | Aurelia Carr | f      | 1985-11-22 | la          | uspan        | 2007-08-15 | true      |
+             | 1100 | Aurelia Carr | f      | 1985-11-22 | eng         | ucompsci     | 2007-08-15 | true      |
                                                                                                          (1 row)
 
              ----
-             /(enrollment?student_id=1100&class_seq=1100).student
+             /(enrollment?student_id=1100&class_seq=1110).student
              SELECT "student"."id",
                     "student"."name",
                     "student"."gender",
@@ -2290,9 +2289,9 @@ tests:
                   INNER JOIN "student" AS "student"
                              ON ("enrollment"."student_id" = "student"."id")
              WHERE ("enrollment"."student_id" = 1100)
-                   AND ("enrollment"."class_seq" = 1100)
+                   AND ("enrollment"."class_seq" = 1110)
              ORDER BY "enrollment"."student_id" ASC, "enrollment"."class_seq" ASC
-        - uri: /(enrollment?student_id=1100&class_seq=1100).class
+        - uri: /(enrollment?student_id=1100&class_seq=1110).class
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
@@ -2301,11 +2300,11 @@ tests:
              +-------------------------------------------------------------------------------------+
              | department_code | course_no | year | season | section | instructor_code | class_seq |
             -+-----------------+-----------+------+--------+---------+-----------------+-----------+-
-             | arthis          |       623 | 2010 | fall   | 001     | mpowell         |      1100 |
+             | arthis          |       476 | 2009 | spring | 001     | dbuckley        |      1110 |
                                                                                              (1 row)
 
              ----
-             /(enrollment?student_id=1100&class_seq=1100).class
+             /(enrollment?student_id=1100&class_seq=1110).class
              SELECT "class"."department_code",
                     "class"."course_no",
                     "class"."year",
@@ -2317,7 +2316,7 @@ tests:
                   INNER JOIN "class" AS "class"
                              ON ("enrollment"."class_seq" = "class"."class_seq")
              WHERE ("enrollment"."student_id" = 1100)
-                   AND ("enrollment"."class_seq" = 1100)
+                   AND ("enrollment"."class_seq" = 1110)
              ORDER BY "enrollment"."student_id" ASC, "enrollment"."class_seq" ASC
         - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).department
           status: 400 Bad Request
@@ -19420,7 +19419,7 @@ tests:
             body: |2
                | count(course_1) | count(course_3) |
               -+-----------------+-----------------+-
-               |             220 |               3 |
+               |             220 |               2 |
                                              (1 row)
 
                ----
@@ -19446,7 +19445,7 @@ tests:
             body: |2
                | count(course_0) | count(course_1) | count(course_2) | count(course_3) |
               -+-----------------+-----------------+-----------------+-----------------+-
-               |             358 |             220 |              11 |               3 |
+               |             358 |             220 |              11 |               2 |
                                                                                  (1 row)
 
                ----
@@ -19473,7 +19472,7 @@ tests:
             body: |2
                | count(course_0) | count(course_1) | count(course_2) | count(course_3) |
               -+-----------------+-----------------+-----------------+-----------------+-
-               |             358 |             220 |              15 |              87 |
+               |             358 |             220 |              15 |              80 |
                                                                                  (1 row)
 
                ----
@@ -19500,7 +19499,7 @@ tests:
             body: |2
                | count(course_1) | count(course_2) | count(course_3) |
               -+-----------------+-----------------+-----------------+-
-               |             220 |              15 |              87 |
+               |             220 |              15 |              80 |
                                                                (1 row)
 
                ----
@@ -19857,13 +19856,14 @@ tests:
                | school_code | code     | count(student) |
               -+-------------+----------+----------------+-
                | art         | ustudio  |             26 |
-               | bus         | ubusad   |             15 |
+               | bus         | pbusad   |             13 |
                | edu         | glited   |             15 |
-               | eng         | ucompsci |             11 |
-               | la          | gengl    |             12 |
-               | ns          | pmth     |             15 |
-               | ph          | phd      |             61 |
-                                                  (7 rows)
+               | eng         | ucompsci |             12 |
+               | la          | gengl    |             13 |
+               | ns          | gmth     |             13 |
+               | ns          | umth     |             13 |
+               | ph          | phd      |             72 |
+                                                  (8 rows)
 
                ----
                /school.program{school_code,code,count(student)}?count(student)=max((school_code->program).count(student))
@@ -21011,31 +21011,26 @@ tests:
                +---------------------------------------+
                | code   | no  | credits | count(class) |
               -+--------+-----+---------+--------------+-
-               | acc    | 620 |       6 |            1 |
+               | acc    | 620 |       6 |            0 |
                | arthis | 209 |       6 |            3 |
                | arthis | 540 |       5 |            6 |
-               | astro  | 328 |       4 |            0 |
-               | be     | 241 |       4 |            0 |
                | be     | 415 |       8 |            7 |
                | comp   | 102 |       6 |            5 |
-               | econ   | 101 |       6 |            4 |
+               | econ   | 101 |       6 |            3 |
                | econ   | 102 |       6 |            2 |
-               | econ   | 430 |       4 |            0 |
-               | ee     | 412 |       4 |            0 |
-               | hist   | 220 |       4 |           10 |
+               | eng    | 106 |       5 |            9 |
+               | eng    | 306 |       5 |            9 |
                | lang   | 105 |       6 |            8 |
+               | mm     | 430 |       5 |            1 |
                | phys   | 221 |       6 |            3 |
-               | poli   | 354 |       5 |            9 |
-               | psych  | 304 |       4 |            0 |
-               | psych  | 351 |       4 |            0 |
-               | stdart | 251 |       6 |            3 |
-               | stdart | 352 |       4 |            0 |
-               | stdart | 453 |       6 |            1 |
-               | stdart | 509 |       4 |            0 |
+               | phys   | 288 |       5 |            6 |
+               | psych  | 102 |       5 |            6 |
+               | stdart | 251 |       6 |            4 |
+               | stdart | 453 |       6 |            3 |
                | tched  | 630 |       6 |            4 |
-               | tched  | 635 |       6 |            3 |
+               | tched  | 635 |       6 |            2 |
                | tched  | 640 |       6 |            2 |
-                                               (24 rows)
+                                               (19 rows)
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max((count(class)->course).credits)
@@ -21322,20 +21317,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | course                                |
-               +---------------------------------------+
-               | code   | no  | credits | count(class) |
-              -+--------+-----+---------+--------------+-
-               | astro  | 328 |       4 |            0 |
-               | be     | 241 |       4 |            0 |
-               | be     | 415 |       8 |            7 |
-               | econ   | 430 |       4 |            0 |
-               | ee     | 412 |       4 |            0 |
-               | psych  | 304 |       4 |            0 |
-               | psych  | 351 |       4 |            0 |
-               | stdart | 352 |       4 |            0 |
-               | stdart | 509 |       4 |            0 |
-                                                (9 rows)
+               | course                              |
+               +-------------------------------------+
+               | code | no  | credits | count(class) |
+              -+------+-----+---------+--------------+-
+               | acc  | 620 |       6 |            0 |
+               | be   | 415 |       8 |            7 |
+                                              (2 rows)
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max(fork(exists(class)).credits)
@@ -21374,31 +21362,26 @@ tests:
                +---------------------------------------+
                | code   | no  | credits | count(class) |
               -+--------+-----+---------+--------------+-
-               | acc    | 620 |       6 |            1 |
+               | acc    | 620 |       6 |            0 |
                | arthis | 209 |       6 |            3 |
                | arthis | 540 |       5 |            6 |
-               | astro  | 328 |       4 |            0 |
-               | be     | 241 |       4 |            0 |
                | be     | 415 |       8 |            7 |
                | comp   | 102 |       6 |            5 |
-               | econ   | 101 |       6 |            4 |
+               | econ   | 101 |       6 |            3 |
                | econ   | 102 |       6 |            2 |
-               | econ   | 430 |       4 |            0 |
-               | ee     | 412 |       4 |            0 |
-               | hist   | 220 |       4 |           10 |
+               | eng    | 106 |       5 |            9 |
+               | eng    | 306 |       5 |            9 |
                | lang   | 105 |       6 |            8 |
+               | mm     | 430 |       5 |            1 |
                | phys   | 221 |       6 |            3 |
-               | poli   | 354 |       5 |            9 |
-               | psych  | 304 |       4 |            0 |
-               | psych  | 351 |       4 |            0 |
-               | stdart | 251 |       6 |            3 |
-               | stdart | 352 |       4 |            0 |
-               | stdart | 453 |       6 |            1 |
-               | stdart | 509 |       4 |            0 |
+               | phys   | 288 |       5 |            6 |
+               | psych  | 102 |       5 |            6 |
+               | stdart | 251 |       6 |            4 |
+               | stdart | 453 |       6 |            3 |
                | tched  | 630 |       6 |            4 |
-               | tched  | 635 |       6 |            3 |
+               | tched  | 635 |       6 |            2 |
                | tched  | 640 |       6 |            2 |
-                                               (24 rows)
+                                               (19 rows)
 
                ----
                /course{department.code,no,credits,count(class)}?credits=max(fork(count(class)).credits)
@@ -21433,25 +21416,22 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program                                |
-               +----------------------------------------+
-               | school_code | code    | count(student) |
-              -+-------------+---------+----------------+-
-               | art         | gart    |             16 |
-               | art         | uhist   |             20 |
-               | art         | ustudio |             26 |
-               | bus         | pacc    |             13 |
-               | bus         | pbusad  |             14 |
-               | bus         | ubusad  |             15 |
-               | edu         | glited  |             15 |
-               | edu         | gtch    |             13 |
-               | la          | gengl   |             12 |
-               | ns          | gmth    |             13 |
-               | ns          | pmth    |             15 |
-               | ns          | uchem   |             14 |
-               | ns          | umth    |             14 |
-               | ph          | phd     |             61 |
-                                                (14 rows)
+               | program                                 |
+               +-----------------------------------------+
+               | school_code | code     | count(student) |
+              -+-------------+----------+----------------+-
+               | art         | gart     |             16 |
+               | art         | uhist    |             20 |
+               | art         | ustudio  |             26 |
+               | bus         | pbusad   |             13 |
+               | edu         | glited   |             15 |
+               | edu         | gtch     |             13 |
+               | eng         | ucompsci |             12 |
+               | la          | gengl    |             13 |
+               | ns          | gmth     |             13 |
+               | ns          | umth     |             13 |
+               | ph          | phd      |             72 |
+                                                 (11 rows)
 
                ----
                /program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
@@ -21486,27 +21466,26 @@ tests:
                | school_code | code     | count(student) |
               -+-------------+----------+----------------+-
                | art         | ustudio  |             26 |
-               | bus         | pacc     |             13 |
-               | bus         | pbusad   |             14 |
-               | bus         | ubusad   |             15 |
+               | bus         | pacc     |             11 |
+               | bus         | pbusad   |             13 |
+               | bus         | uecon    |             11 |
+               | edu         | gedlead  |             10 |
                | edu         | gedu     |             11 |
                | edu         | glited   |             15 |
                | edu         | gtch     |             13 |
                | eng         | gbe      |              8 |
                | eng         | gbuseng  |              9 |
-               | eng         | ucompsci |             11 |
+               | eng         | ucompsci |             12 |
                | eng         | uelec    |              9 |
-               | eng         | umech    |              9 |
-               | la          | gengl    |             12 |
-               | la          | glang    |              9 |
-               | la          | gscitch  |             10 |
-               | la          | uhist    |              7 |
+               | eng         | umech    |             11 |
+               | la          | gengl    |             13 |
+               | la          | glang    |             10 |
+               | la          | gscitch  |             11 |
                | la          | uspan    |             10 |
                | ns          | gmth     |             13 |
-               | ns          | pmth     |             15 |
-               | ns          | uchem    |             14 |
-               | ns          | umth     |             14 |
-                                                 (21 rows)
+               | ns          | uchem    |             11 |
+               | ns          | umth     |             13 |
+                                                 (20 rows)
 
                ----
                /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
@@ -21543,27 +21522,26 @@ tests:
                | school_code | code     | count(student) |
               -+-------------+----------+----------------+-
                | art         | ustudio  |             26 |
-               | bus         | pacc     |             13 |
-               | bus         | pbusad   |             14 |
-               | bus         | ubusad   |             15 |
+               | bus         | pacc     |             11 |
+               | bus         | pbusad   |             13 |
+               | bus         | uecon    |             11 |
+               | edu         | gedlead  |             10 |
                | edu         | gedu     |             11 |
                | edu         | glited   |             15 |
                | edu         | gtch     |             13 |
                | eng         | gbe      |              8 |
                | eng         | gbuseng  |              9 |
-               | eng         | ucompsci |             11 |
+               | eng         | ucompsci |             12 |
                | eng         | uelec    |              9 |
-               | eng         | umech    |              9 |
-               | la          | gengl    |             12 |
-               | la          | glang    |              9 |
-               | la          | gscitch  |             10 |
-               | la          | uhist    |              7 |
+               | eng         | umech    |             11 |
+               | la          | gengl    |             13 |
+               | la          | glang    |             10 |
+               | la          | gscitch  |             11 |
                | la          | uspan    |             10 |
                | ns          | gmth     |             13 |
-               | ns          | pmth     |             15 |
-               | ns          | uchem    |             14 |
-               | ns          | umth     |             14 |
-                                                 (21 rows)
+               | ns          | uchem    |             11 |
+               | ns          | umth     |             13 |
+                                                 (20 rows)
 
                ----
                /school.program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
@@ -21604,9 +21582,9 @@ tests:
               -+-------------+----------+----------------+-
                | eng         | gbe      |              8 |
                | eng         | gbuseng  |              9 |
-               | eng         | ucompsci |             11 |
+               | eng         | ucompsci |             12 |
                | eng         | uelec    |              9 |
-               | eng         | umech    |              9 |
+               | eng         | umech    |             11 |
                                                   (5 rows)
 
                ----
@@ -21646,9 +21624,9 @@ tests:
               -+-------------+----------+----------------+-
                | eng         | gbe      |              8 |
                | eng         | gbuseng  |              9 |
-               | eng         | ucompsci |             11 |
+               | eng         | ucompsci |             12 |
                | eng         | uelec    |              9 |
-               | eng         | umech    |              9 |
+               | eng         | umech    |             11 |
                                                   (5 rows)
 
                ----
@@ -21895,7 +21873,7 @@ tests:
                +------------------------------------------------+
                | code | count(program) | count(program.student) |
               -+------+----------------+------------------------+-
-               | eng  |              4 |                     33 |
+               | eng  |              4 |                     37 |
                                                           (1 row)
 
                ----
@@ -21931,7 +21909,7 @@ tests:
                +---------------------------------------------------------------------------------------------------------------------------------------+
                | code | count(program.student) | count((program.define(s:=student)?degree='bs').s) | count((program?degree='bs').define(s:=student).s) |
               -+------+------------------------+---------------------------------------------------+---------------------------------------------------+-
-               | eng  |                     58 |                                                33 |                                                33 |
+               | eng  |                     62 |                                                37 |                                                37 |
                                                                                                                                                  (1 row)
 
                ----
@@ -21996,10 +21974,10 @@ tests:
                | code   | count(student) |
               -+--------+----------------+-
                | gecon  |              5 |
-               | pacc   |             13 |
-               | pbusad |             14 |
-               | uacct  |             11 |
-               | ubusad |             15 |
+               | pacc   |             11 |
+               | pbusad |             13 |
+               | uacct  |              9 |
+               | ubusad |              9 |
                | uecon  |             11 |
                                   (6 rows)
 
@@ -22026,7 +22004,7 @@ tests:
             body: |2
                | count((school?code='bus').program.student) |
               -+--------------------------------------------+-
-               |                                         69 |
+               |                                         58 |
                                                       (1 row)
 
                ----
@@ -22154,13 +22132,13 @@ tests:
                | code | count(student) | count(student?gender='m') | count(student?gender='f') |
               -+------+----------------+---------------------------+---------------------------+-
                | art  |             33 |                        33 |                         0 |
-               | bus  |             69 |                        52 |                        17 |
-               | edu  |             72 |                         0 |                        72 |
-               | eng  |             58 |                        58 |                         0 |
-               | la   |             62 |                         0 |                        62 |
+               | bus  |             58 |                        58 |                         0 |
+               | edu  |             69 |                        52 |                        17 |
+               | eng  |             62 |                         0 |                        62 |
+               | la   |             72 |                         0 |                        72 |
                | mus  |              0 |                         0 |                         0 |
-               | ns   |             72 |                         0 |                        72 |
-               | ph   |             61 |                         0 |                        61 |
+               | ns   |             61 |                         0 |                        61 |
+               | ph   |             72 |                         0 |                        72 |
                | sc   |              0 |                         0 |                         0 |
                                                                                         (9 rows)
 
@@ -22252,12 +22230,12 @@ tests:
               -+------+------------------------------+------------------------------+------------------------------+------------------------------+-
                | art  |                            0 |                            0 |                            0 |                            0 |
                | bus  |                            0 |                            0 |                            0 |                            0 |
-               | edu  |                           10 |                            0 |                            0 |                            0 |
+               | edu  |                            0 |                            0 |                            0 |                            0 |
                | eng  |                            0 |                            0 |                            0 |                            0 |
-               | la   |                            0 |                            0 |                            0 |                            0 |
+               | la   |                           10 |                            0 |                            0 |                            0 |
                | mus  |                            0 |                            0 |                            0 |                            0 |
-               | ns   |                           16 |                           21 |                           11 |                            0 |
-               | ph   |                            7 |                           16 |                            0 |                            0 |
+               | ns   |                            7 |                           16 |                            0 |                            0 |
+               | ph   |                           16 |                           21 |                           11 |                            0 |
                | sc   |                            0 |                            0 |                            0 |                            0 |
                                                                                                                                            (9 rows)
 
@@ -22667,13 +22645,13 @@ tests:
                +---------------------------+
                | degree | count(^.student) |
               -+--------+------------------+-
-               | ba     |               98 |
-               | bs     |              116 |
-               | ct     |               40 |
-               | ma     |               74 |
+               | ba     |              102 |
+               | bs     |              106 |
+               | ct     |               37 |
+               | ma     |               77 |
                | ms     |               36 |
                | pb     |               16 |
-               | ph     |               15 |
+               | ph     |               10 |
                                     (7 rows)
 
                ----
@@ -22701,13 +22679,13 @@ tests:
                +---------------------------------+
                | degree | count(program.student) |
               -+--------+------------------------+-
-               | ba     |                     98 |
-               | bs     |                    116 |
-               | ct     |                     40 |
-               | ma     |                     74 |
+               | ba     |                    102 |
+               | bs     |                    106 |
+               | ct     |                     37 |
+               | ma     |                     77 |
                | ms     |                     36 |
                | pb     |                     16 |
-               | ph     |                     15 |
+               | ph     |                     10 |
                                           (7 rows)
 
                ----
@@ -23258,20 +23236,20 @@ tests:
                | ba     |               46 |
                | pb     |               16 |
                | ba     |               11 |
-               | bs     |               26 |
-               | ct     |               27 |
+               | bs     |               18 |
+               | ct     |               24 |
                | ma     |                5 |
-               | ba     |               14 |
-               | ct     |                9 |
+               | ba     |               12 |
+               | ct     |                8 |
                | ma     |               38 |
                | ms     |               11 |
-               | bs     |               33 |
+               | bs     |               37 |
                | ms     |               25 |
-               | ba     |               27 |
-               | ct     |                4 |
-               | ma     |               31 |
-               | bs     |               57 |
-               | ph     |               15 |
+               | ba     |               33 |
+               | ct     |                5 |
+               | ma     |               34 |
+               | bs     |               51 |
+               | ph     |               10 |
                                    (17 rows)
 
                ----
@@ -23981,48 +23959,48 @@ tests:
                +-----------------------------------------------------------------------------------------------+
                | school_code | code     | title                            | degree | part_of | count(student) |
               -+-------------+----------+----------------------------------+--------+---------+----------------+-
-               | la          | upolisci | Bachelor of Arts in Political    | ba     |         |              1 |
+               | la          | upolisci | Bachelor of Arts in Political    | ba     |         |              3 |
                :             :          : Science                          :        :         :                :
-               | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |              4 |
                | edu         | umath    | Bachelor of Arts in Math         | ba     |         |              5 |
                :             :          : Education                        :        :         :                :
                | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |              5 |
-               | la          | uhist    | Bachelor of Arts in History      | ba     |         |              7 |
-               | edu         | usci     | Bachelor of Arts in Science      | ba     |         |              9 |
+               | edu         | usci     | Bachelor of Arts in Science      | ba     |         |              7 |
                :             :          : Education                        :        :         :                :
+               | la          | uhist    | Bachelor of Arts in History      | ba     |         |              7 |
+               | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |              8 |
                | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |             10 |
                | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |             11 |
                | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |             20 |
                | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |             26 |
-               | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |              4 |
+               | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |              5 |
                | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |              5 |
+               | bus         | uacct    | B.S. in Accounting               | bs     |         |              9 |
+               | bus         | ubusad   | Bachelor of Business             | bs     |         |              9 |
+               :             :          : Administration                   :        :         :                :
                | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |              9 |
-               | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |              9 |
-               | bus         | uacct    | B.S. in Accounting               | bs     |         |             11 |
-               | eng         | ucompsci | B.S. in Computer Science         | bs     |         |             11 |
-               | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |             11 |
+               | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |              9 |
+               | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |             11 |
+               | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |             11 |
+               | eng         | ucompsci | B.S. in Computer Science         | bs     |         |             12 |
                | ns          | gmth     | Masters of Science in            | bs     | pmth    |             13 |
                :             :          : Mathematics                      :        :         :                :
-               | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |             14 |
-               | ns          | umth     | Bachelor of Science in           | bs     | gmth    |             14 |
+               | ns          | umth     | Bachelor of Science in           | bs     | gmth    |             13 |
                :             :          : Mathematics                      :        :         :                :
-               | bus         | ubusad   | Bachelor of Business             | bs     |         |             15 |
-               :             :          : Administration                   :        :         :                :
-               | la          | psciwri  | Science Writing                  | ct     |         |              4 |
-               | edu         | psci     | Certificate in Science Teaching  | ct     |         |              9 |
-               | bus         | pacc     | Graduate Certificate in          | ct     |         |             13 |
+               | la          | psciwri  | Science Writing                  | ct     |         |              5 |
+               | edu         | psci     | Certificate in Science Teaching  | ct     |         |              8 |
+               | bus         | pacc     | Graduate Certificate in          | ct     |         |             11 |
                :             :          : Accounting                       :        :         :                :
-               | bus         | pbusad   | Certificate in Business          | ct     |         |             14 |
+               | bus         | pbusad   | Certificate in Business          | ct     |         |             13 |
                :             :          : Administration                   :        :         :                :
                | bus         | gecon    | Master of Arts in Economics      | ma     |         |              5 |
-               | la          | glang    | Master of Arts in Modern         | ma     |         |              9 |
-               :             :          : Languages                        :        :         :                :
                | edu         | gedlead  | Master of Arts in Education      | ma     |         |             10 |
                :             :          : Leadership                       :        :         :                :
-               | la          | gscitch  | Master of Arts in Science        | ma     |         |             10 |
+               | la          | glang    | Master of Arts in Modern         | ma     |         |             10 |
+               :             :          : Languages                        :        :         :                :
+               | la          | gscitch  | Master of Arts in Science        | ma     |         |             11 |
                :             :          : Teaching                         :        :         :                :
-               | la          | gengl    | Master of Arts in English        | ma     |         |             12 |
                | edu         | gtch     | Master of Arts in Teaching       | ma     |         |             13 |
+               | la          | gengl    | Master of Arts in English        | ma     |         |             13 |
                | edu         | glited   | Master of Arts in Literacy       | ma     |         |             15 |
                :             :          : Education                        :        :         :                :
                | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |              3 |
@@ -24032,7 +24010,7 @@ tests:
                | edu         | gedu     | M.S. in Education                | ms     |         |             11 |
                | art         | gart     | Post Baccalaureate in Art        | pb     |         |             16 |
                :             :          : History                          :        :         :                :
-               | ns          | pmth     | Doctorate of Science in          | ph     |         |             15 |
+               | ns          | pmth     | Doctorate of Science in          | ph     |         |             10 |
                :             :          : Mathematics                      :        :         :                :
                                                                                                        (39 rows)
 
@@ -24187,13 +24165,13 @@ tests:
                +--------------------------------------+
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
-               | ba     |       10 |               98 |
-               | bs     |       11 |              116 |
-               | ct     |        4 |               40 |
-               | ma     |        7 |               74 |
+               | ba     |       10 |              102 |
+               | bs     |       11 |              106 |
+               | ct     |        4 |               37 |
+               | ma     |        7 |               77 |
                | ms     |        5 |               36 |
                | pb     |        1 |               16 |
-               | ph     |        1 |               15 |
+               | ph     |        1 |               10 |
                                                (7 rows)
 
                ----
@@ -24315,13 +24293,13 @@ tests:
                +--------------------------------------+
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
-               | ba     |       10 |               98 |
-               | bs     |       11 |              116 |
-               | ct     |        4 |               40 |
-               | ma     |        7 |               74 |
+               | ba     |       10 |              102 |
+               | bs     |       11 |              106 |
+               | ct     |        4 |               37 |
+               | ma     |        7 |               77 |
                | ms     |        5 |               36 |
                | pb     |        1 |               16 |
-               | ph     |        1 |               15 |
+               | ph     |        1 |               10 |
                                                (7 rows)
 
                ----
@@ -24352,9 +24330,9 @@ tests:
                +----------------------------------------------------+
                | degree      | count(^)      | count(^.student)     |
               -+-------------+---------------+----------------------+-
-               | ba          |             7 |                   73 |
-               | ct          |             1 |                    4 |
-               | ma          |             3 |                   31 |
+               | ba          |             7 |                   79 |
+               | ct          |             1 |                    5 |
+               | ma          |             3 |                   34 |
                | pb          |             1 |                   16 |
                                                              (4 rows)
 
@@ -24391,13 +24369,13 @@ tests:
                +--------------------------------------+
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
-               | ba     |       10 |               98 |
-               | bs     |       11 |              116 |
-               | ct     |        4 |               40 |
-               | ma     |        7 |               74 |
+               | ba     |       10 |              102 |
+               | bs     |       11 |              106 |
+               | ct     |        4 |               37 |
+               | ma     |        7 |               77 |
                | ms     |        5 |               36 |
                | pb     |        1 |               16 |
-               | ph     |        1 |               15 |
+               | ph     |        1 |               10 |
                                                (7 rows)
 
                ----
@@ -24431,9 +24409,9 @@ tests:
               -+--------+----------+------------------+-
                | ba     |        2 |               46 |
                | pb     |        1 |               16 |
-               | ba     |        5 |               27 |
-               | ct     |        1 |                4 |
-               | ma     |        3 |               31 |
+               | ba     |        5 |               33 |
+               | ct     |        1 |                5 |
+               | ma     |        3 |               34 |
                                                (5 rows)
 
                ----

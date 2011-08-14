@@ -117,9 +117,9 @@ tests:
   - uri: /(student?id=1010).enrollment.limit(50)
 
   # Enrollment -> Student (parental)
-  - uri: /(enrollment?student_id=1100&class_seq=1100).student
+  - uri: /(enrollment?student_id=1100&class_seq=1110).student
   # Enrollment -> Class (parental)
-  - uri: /(enrollment?student_id=1100&class_seq=1100).class
+  - uri: /(enrollment?student_id=1100&class_seq=1110).class
 
   # Prerequisite -> Department (ambiguous)
   - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818
