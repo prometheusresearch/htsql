@@ -559,9 +559,11 @@ class EnrollmentGenerator(BaseDataGenerator):
         self.free_courses = []
         self.counter = 0
         self.enrollment_data = []
+        self.semester_classes = {}
         self.grade_gen = random.Random(rand.randint(0, 100000))
         self.course_gen = random.Random(rand.randint(0, 100000))
         self.status_gen = random.Random(rand.randint(0, 100000))
+        self.sorted_courses = sorted(dictionary.courses)
 
     # returns random course by specified classification (or its children if required),
     # None if no suitable courses found
@@ -637,6 +639,18 @@ class EnrollmentGenerator(BaseDataGenerator):
             if course_key not in self.distribution:
                 self.free_courses.append(course_key)
 
+    def get_semester_classes(self):
+        res = {}
+        for record in self.classgen.class_data:
+            dep = record[ClassGenerator.CLASS_COLUMNS.index('department_code')]
+            no = record[ClassGenerator.CLASS_COLUMNS.index('course_no')]
+            year = record[ClassGenerator.CLASS_COLUMNS.index('year')]
+            season = record[ClassGenerator.CLASS_COLUMNS.index('season')]
+            res.setdefault((year, season), {})
+            res[year, season].setdefault((dep, no), [])
+            res[year, season][dep, no].append(record)
+        self.semester_classes = res
+
     def can_take(self, course_key):
         if course_key in self.taken_courses:
             return False
@@ -681,7 +695,7 @@ class EnrollmentGenerator(BaseDataGenerator):
                 if cls is not None:
                     self.free_courses.remove(c)
                     return (cls, c)
-            c = self.get_rand_item(sorted(self.dictionary.courses), self.course_gen)
+            c = self.get_rand_item(self.sorted_courses, self.course_gen)
             if self.can_take(c):
                 cls = self.get_class_by_course(c, semester, classes_by_semester)
                 if cls is not None:
@@ -715,24 +729,10 @@ class EnrollmentGenerator(BaseDataGenerator):
             self.get_random_grade(semester)
         ]
 
-    def get_semester_classes(self, semester):
-        res = {}
-        for record in self.classgen.class_data:
-            dep = record[ClassGenerator.CLASS_COLUMNS.index('department_code')]
-            no = record[ClassGenerator.CLASS_COLUMNS.index('course_no')]
-            year = record[ClassGenerator.CLASS_COLUMNS.index('year')]
-            season = record[ClassGenerator.CLASS_COLUMNS.index('season')]
-            if year == semester["year"] and season == semester["season"]:
-                key = (dep, no)
-                if key in res:
-                    res[key].append(record)
-                else:
-                    res[key] = [record]
-        return res
-
     def generate_content(self):
         self.fill_required_courses()
         self.distribute_courses()
+        self.get_semester_classes()
         level = 0
         credits_gen = random.Random(RANDOM_SEED)
         for semester in self.dictionary.semesters:
@@ -741,7 +741,7 @@ class EnrollmentGenerator(BaseDataGenerator):
                     and semester['season'] != 'summer' \
                     and semester["begin_date"] < CURDATE:
                 credits = credits_gen.uniform(self.CREDITS_PER_SEMESTER[0], self.CREDITS_PER_SEMESTER[1])
-                classes_by_semester = self.get_semester_classes(semester)
+                classes_by_semester = self.semester_classes[semester['year'], semester['season']].copy()
                 credits_taken = 0
                 while credits_taken < credits:
                     (class_seq, course_key) = self.choose_class(level, semester, classes_by_semester)

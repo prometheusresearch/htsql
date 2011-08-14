@@ -84,13 +84,12 @@ with state.app:
 
     for line in content:
         insert_table_data(line, cursor)
-        connection.commit()
 
     generated_content = data_generator.generate(content)
     for line in generated_content:
         insert_table_data(line, cursor)
-        connection.commit()
 
+    connection.commit()
     connection.release()
 
 
