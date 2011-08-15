@@ -116,4 +116,6 @@ htsql = HTSQL(None, {'tweak.sqlalchemy': {'engine': engine,
 with htsql:
    for row in produce("/{'Hello World'}"):
        print row
+   for row in produce("/department{school.campus, name}"):
+       print row
 

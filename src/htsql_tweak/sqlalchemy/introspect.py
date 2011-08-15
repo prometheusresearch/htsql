@@ -110,12 +110,12 @@ class SQLAlchemyIntrospect(Introspect):
         for cons in table.constraints:
             if not isinstance(cons, ForeignKeyConstraint):
                 continue
-            source_columns = [e for e in cons.columns]
-            source_names = [column.name for column in source_columns]
-            for c in source_columns:
-                print type(c)
-            import sys
-            sys.exit(-1)
+            source_names = []
+            for column in cons.columns:
+                if type(column) == str:
+                    source_names.append(column)
+                else:
+                    source_names.append(column.name)
             target_columns = [e.column for e in cons.elements]
             target_table = target_columns[0].table
             target_schema = target_table.schema or '_'
@@ -156,7 +156,7 @@ class SQLAlchemyIntrospect(Introspect):
         buckets = {}
         tables = self.convert_tables(metadata)
         for table in tables:
-            bucket = buckets.set_default(table.schema_name, [])
+            bucket = buckets.setdefault(table.schema_name, [])
             bucket.append(table)
         schemas = []
         for (schema_name, tables) in buckets.items():
