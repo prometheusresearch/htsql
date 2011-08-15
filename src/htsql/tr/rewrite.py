@@ -17,7 +17,7 @@ from ..domain import BooleanDomain
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, FilteredFlow, OrderedFlow, BatchFlow,
+                   LinkedFlow, FilteredFlow, OrderedFlow,
                    Code, LiteralCode, CastCode, FormulaCode, Unit,
                    CompoundUnit, ScalarUnit,
                    AggregateUnitBase, AggregateUnit,
@@ -138,16 +138,18 @@ class RewritingState(object):
                 continue
             codes = [unit.code for unit in batch_units]
             self.save_collection()
+            self.collect(flow)
             for code in codes:
                 self.collect(code)
             self.recombine()
+            flow = self.replace(flow)
             codes = [self.replace(code) for code in codes]
             self.restore_collection()
             for idx, unit in enumerate(batch_units):
                 code = codes[idx]
                 companions = codes[:idx]+codes[idx+1:]
-                base = BatchFlow(unit.flow, companions)
-                batch = unit.clone(flow=base, code=code)
+                batch = unit.clone(code=code, flow=flow,
+                                   companions=companions)
                 self.memorize(unit, batch)
 
         duplicates = set()
@@ -169,9 +171,12 @@ class RewritingState(object):
                 aggregate_flow_pair_to_units[pair].append(unit)
         for pair in aggregate_flow_pairs:
             batch_units = aggregate_flow_pair_to_units[pair]
-            if len(batch_units) <= 1:
-                continue
             plural_flow, flow = pair
+            is_quotient = (isinstance(flow, QuotientFlow) and
+                           isinstance(plural_flow, ComplementFlow) and
+                           plural_flow.base == flow)
+            if len(batch_units) <= 1 and not is_quotient:
+                continue
             candidate_flows = []
             candidate_flow = batch_units[0].plural_flow
             candidate_flows.append(candidate_flow)
@@ -234,18 +239,25 @@ class RewritingState(object):
                 combined_flow = FilteredFlow(combined_flow, filter,
                                              combined_flow.binding)
             self.save_collection()
+            self.collect(flow)
+            self.collect(combined_flow)
             for code in codes:
                 self.collect(code)
             self.recombine()
+            unit_flow = self.replace(flow)
+            combined_flow = self.replace(combined_flow)
             codes = [self.replace(code) for code in codes]
             self.restore_collection()
             for idx, unit in enumerate(batch_units):
                 code = codes[idx]
                 companions = codes[:idx]+codes[idx+1:]
-                base = BatchFlow(unit.flow, companions)
-                batch = unit.clone(flow=base, code=code,
-                                   plural_flow=combined_flow)
+                batch = unit.clone(flow=unit_flow, code=code,
+                                   plural_flow=combined_flow,
+                                   companions=companions)
                 self.memorize(unit, batch)
+            if is_quotient:
+                quotient_flow = unit_flow.clone(companions=codes)
+                self.memorize(flow, quotient_flow)
 
     def replace(self, expression):
         if expression in self.replacements:
@@ -444,15 +456,15 @@ class ReplaceInQuotient(ReplaceInFlow):
         base = self.state.replace(self.flow.base)
         seed = self.flow.seed
         kernels = self.flow.kernels
-        #self.state.save_collection()
-        #self.state.collect(self.flow.seed)
-        #for code in self.flow.kernel:
-        #    self.state.collect(code)
-        #self.state.recombine()
-        #seed = self.state.replace(self.flow.seed)
-        #kernel = [self.state.replace(code)
-        #          for code in self.flow.kernel]
-        #self.state.restore_collection()
+        self.state.save_collection()
+        self.state.collect(self.flow.seed)
+        for code in self.flow.kernels:
+            self.state.collect(code)
+        self.state.recombine()
+        seed = self.state.replace(self.flow.seed)
+        kernels = [self.state.replace(code)
+                   for code in self.flow.kernels]
+        self.state.restore_collection()
         return self.flow.clone(base=base, seed=seed, kernels=kernels)
 
 
@@ -870,7 +882,6 @@ class CollectInUnit(CollectInCode):
         self.unit = unit
 
     def __call__(self):
-        self.state.collect(self.unit.flow)
         self.state.collection.append(self.unit)
 
 
@@ -883,7 +894,11 @@ class ReplaceInUnit(ReplaceInCode):
         self.unit = unit
 
     def __call__(self):
+        self.state.save_collection()
+        self.state.collect(self.unit.flow)
+        self.state.recombine()
         flow = self.state.replace(self.unit.flow)
+        self.state.restore_collection()
         return self.unit.clone(flow=flow)
 
 
@@ -902,12 +917,12 @@ class ReplaceInCompound(ReplaceInUnit):
     adapts(CompoundUnit)
 
     def __call__(self):
+        self.state.save_collection()
+        self.state.collect(self.unit.flow)
+        self.state.collect(self.unit.code)
+        self.state.recombine()
         flow = self.state.replace(self.unit.flow)
         code = self.state.replace(self.unit.code)
-        self.state.save_collection()
-        self.state.collect(code)
-        self.state.recombine()
-        code = self.state.replace(code)
         self.state.restore_collection()
         return self.unit.clone(flow=flow, code=code)
 
@@ -957,30 +972,15 @@ class ReplaceInAggregate(ReplaceInUnit):
     adapts(AggregateUnitBase)
 
     def __call__(self):
-        flow = self.state.replace(self.unit.flow)
-        code = self.state.replace(self.unit.code)
-        plural_flow = self.state.replace(self.unit.plural_flow)
-        companions = None
-        if isinstance(self.unit.flow, BatchFlow):
-            companions = self.unit.flow.codes
-        if companions is not None:
-            companions = [self.state.replace(companion)
-                          for companion in companions]
         self.state.save_collection()
-        self.state.collect(code)
-        self.state.collect(plural_flow)
-        if companions is not None:
-            for companion in companions:
-                self.state.collect(companion)
+        self.state.collect(self.unit.code)
+        self.state.collect(self.unit.flow)
+        self.state.collect(self.unit.plural_flow)
         self.state.recombine()
-        code = self.state.replace(code)
-        plural_flow = self.state.replace(plural_flow)
-        if companions is not None:
-            companions = [self.state.replace(companion)
-                          for companion in companions]
+        code = self.state.replace(self.unit.code)
+        flow = self.state.replace(self.unit.flow)
+        plural_flow = self.state.replace(self.unit.plural_flow)
         self.state.restore_collection()
-        if companions is not None:
-            flow = flow.clone(codes=companions)
         return self.unit.clone(code=code, flow=flow, plural_flow=plural_flow)
 
 

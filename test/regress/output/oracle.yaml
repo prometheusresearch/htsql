@@ -20008,22 +20008,16 @@ tests:
                       COUNT(1)
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     LEFT OUTER JOIN (SELECT MIN("COURSE"."CREDITS") AS "min",
+                                            MAX("COURSE"."CREDITS") AS "max",
                                             "DEPARTMENT"."SCHOOL_CODE"
                                      FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
                                           INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
                                                      ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
-                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "COURSE_1"
-                                    ON ("SCHOOL"."CODE" = "COURSE_1"."SCHOOL_CODE")
-                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
-                                            "DEPARTMENT"."SCHOOL_CODE"
-                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                          INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                     ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
-                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "COURSE_2"
-                                    ON ("SCHOOL"."CODE" = "COURSE_2"."SCHOOL_CODE")
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "COURSE"
+                                    ON ("SCHOOL"."CODE" = "COURSE"."SCHOOL_CODE")
                WHERE ("SCHOOL"."CAMPUS" IS NOT NULL)
-                     AND ("COURSE_1"."min" > 1)
-                     AND ("COURSE_2"."max" < 8)
+                     AND ("COURSE"."min" > 1)
+                     AND ("COURSE"."max" < 8)
                GROUP BY "SCHOOL"."CAMPUS"
                ORDER BY 1 ASC NULLS FIRST
           - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
@@ -20047,27 +20041,23 @@ tests:
                ----
                /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).(department^school_code){*,avg(department.credit_diff),sum(department.credit_diff)}
                SELECT "DEPARTMENT"."SCHOOL_CODE",
-                      AVG(("COURSE_3"."max" - "COURSE_3"."min")),
-                      COALESCE(SUM(("COURSE_3"."max" - "COURSE_3"."min")), 0)
+                      AVG(("COURSE_2"."max" - "COURSE_2"."min")),
+                      COALESCE(SUM(("COURSE_2"."max" - "COURSE_2"."min")), 0)
                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
-                                            "COURSE"."DEPARTMENT_CODE"
-                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_1"
-                                    ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
-                    LEFT OUTER JOIN (SELECT MIN("COURSE"."CREDITS") AS "min",
-                                            "COURSE"."DEPARTMENT_CODE"
-                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
-                                    ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT_CODE")
                     LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
                                             MIN("COURSE"."CREDITS") AS "min",
                                             "COURSE"."DEPARTMENT_CODE"
                                      FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_3"
-                                    ON ("DEPARTMENT"."CODE" = "COURSE_3"."DEPARTMENT_CODE")
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_1"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                            MIN("COURSE"."CREDITS") AS "min",
+                                            "COURSE"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT_CODE")
                WHERE ("DEPARTMENT"."SCHOOL_CODE" IS NOT NULL)
-                     AND (("COURSE_1"."max" - "COURSE_2"."min") > 3)
+                     AND (("COURSE_1"."max" - "COURSE_1"."min") > 3)
                GROUP BY "DEPARTMENT"."SCHOOL_CODE"
                ORDER BY 1 ASC NULLS FIRST
         - id: root,-this,-direct-and-fiber-functions
@@ -21310,11 +21300,11 @@ tests:
                       "COURSE_1"."NO",
                       "COURSE_1"."CREDITS"
                FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
-                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                     LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
                                      FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
                                     ON (1 <> 0)
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
                ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
           - uri: /course{department.code,no,credits,count(class)} ?credits=max((count(class)
@@ -21355,8 +21345,6 @@ tests:
                       "COURSE_1"."CREDITS",
                       COALESCE("CLASS"."count", 0)
                FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
-                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "CLASS"."DEPARTMENT_CODE",
                                             "CLASS"."COURSE_NO"
@@ -21374,6 +21362,8 @@ tests:
                                                           ON (("COURSE"."DEPARTMENT_CODE" = "CLASS"."DEPARTMENT_CODE") AND ("COURSE"."NO" = "CLASS"."COURSE_NO"))
                                      GROUP BY COALESCE("CLASS"."count", 0)) "COURSE_2"
                                     ON (COALESCE("CLASS"."count", 0) = "COURSE_2"."count")
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
                ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
           - uri: /program{school.code, code, degree, num_parts := count({school_code,code}
@@ -21402,8 +21392,6 @@ tests:
                       "PROGRAM_1"."DEGREE",
                       COALESCE("PROGRAM_2"."count", 0)
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
-                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                               ON ("PROGRAM_1"."SCHOOL_CODE" = "SCHOOL"."CODE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "PROGRAM"."SCHOOL_CODE",
                                             "PROGRAM"."PART_OF"
@@ -21419,6 +21407,8 @@ tests:
                                                            GROUP BY "PROGRAM"."SCHOOL_CODE", "PROGRAM"."PART_OF") "PROGRAM_2"
                                                           ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "PROGRAM_2"."PART_OF"))) "PROGRAM_3"
                                     ON (1 <> 0)
+                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                               ON ("PROGRAM_1"."SCHOOL_CODE" = "SCHOOL"."CODE")
                WHERE (COALESCE("PROGRAM_2"."count", 0) = "PROGRAM_3"."max")
                ORDER BY "PROGRAM_1"."SCHOOL_CODE" ASC, 2 ASC
           - uri: /'art'->school{code}
@@ -21463,11 +21453,11 @@ tests:
                       "COURSE_1"."NO",
                       "COURSE_1"."CREDITS"
                FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
-                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                     LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
                                      FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
                                     ON (1 <> 0)
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
                ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
           - uri: /course{department.code,no,credits}?credits=max(fork(department_code).credits)
@@ -21539,13 +21529,13 @@ tests:
                       "COURSE_1"."NO",
                       "COURSE_1"."CREDITS"
                FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
-                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                     LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
                                             "COURSE"."DEPARTMENT_CODE"
                                      FROM "HTSQL_REGRESS"."COURSE" "COURSE"
                                      GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
                                     ON ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE")
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
                ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
           - uri: /department.course{department.code,no,credits}?credits=max(fork().credits)
@@ -21619,13 +21609,13 @@ tests:
                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT_1"
                     INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE_1"
                                ON ("DEPARTMENT_1"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
-                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT_2"
-                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT_2"."CODE")
                     LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
                                             "COURSE"."DEPARTMENT_CODE"
                                      FROM "HTSQL_REGRESS"."COURSE" "COURSE"
                                      GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
                                     ON ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE")
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT_2"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT_2"."CODE")
                WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
                ORDER BY "DEPARTMENT_1"."CODE" ASC, "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
           - uri: /course{department.code,no,credits,count(class)}?credits=max(fork(count(class)).credits)
@@ -21665,8 +21655,6 @@ tests:
                       "COURSE_1"."CREDITS",
                       COALESCE("CLASS"."count", 0)
                FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
-                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "CLASS"."DEPARTMENT_CODE",
                                             "CLASS"."COURSE_NO"
@@ -21684,6 +21672,8 @@ tests:
                                                           ON (("COURSE"."DEPARTMENT_CODE" = "CLASS"."DEPARTMENT_CODE") AND ("COURSE"."NO" = "CLASS"."COURSE_NO"))
                                      GROUP BY COALESCE("CLASS"."count", 0)) "COURSE_2"
                                     ON (COALESCE("CLASS"."count", 0) = "COURSE_2"."count")
+                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
                WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
                ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
           - uri: /program{school_code,code,count(student)}?count(student)>avg(fork().count(student))
@@ -22282,6 +22272,8 @@ tests:
                SELECT "PROGRAM"."CODE",
                       COALESCE("STUDENT"."count", 0)
                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                               ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "STUDENT"."SCHOOL_CODE",
                                             "STUDENT"."PROGRAM_CODE"
@@ -22289,8 +22281,6 @@ tests:
                                      WHERE ("STUDENT"."IS_ACTIVE" <> 0)
                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
-                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                               ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
                WHERE ("SCHOOL"."CODE" = 'bus')
                ORDER BY "PROGRAM"."SCHOOL_CODE" ASC, 1 ASC
           - uri: /define(school.program.student:=student?is_active) .count((school?code='bus').program.student)
@@ -24328,15 +24318,8 @@ tests:
                                        "PROGRAM"."CODE",
                                        "PROGRAM"."TITLE",
                                        "PROGRAM"."DEGREE",
-                                       "PROGRAM"."PART_OF",
-                                       COALESCE("STUDENT"."count", 0) AS "count"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                             "STUDENT"."SCHOOL_CODE",
-                                                             "STUDENT"."PROGRAM_CODE"
-                                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
-                                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))) "PROGRAM_2"
+                                       "PROGRAM"."PART_OF"
+                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
                                ON ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "STUDENT"."SCHOOL_CODE",
@@ -24344,7 +24327,18 @@ tests:
                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
                                     ON (("PROGRAM_2"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM_2"."CODE" = "STUDENT"."PROGRAM_CODE"))
-               ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_2"."count" ASC, 1 ASC, 2 ASC
+                    INNER JOIN (SELECT COALESCE("STUDENT"."count", 0) AS "count",
+                                       "PROGRAM"."SCHOOL_CODE",
+                                       "PROGRAM"."CODE"
+                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                             "STUDENT"."SCHOOL_CODE",
+                                                             "STUDENT"."PROGRAM_CODE"
+                                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
+                                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))) "PROGRAM_3"
+                               ON (("PROGRAM_2"."SCHOOL_CODE" = "PROGRAM_3"."SCHOOL_CODE") AND ("PROGRAM_2"."CODE" = "PROGRAM_3"."CODE"))
+               ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_3"."count" ASC, 1 ASC, 2 ASC
           - uri: /(program^degree){*, exists(^), count(^)}
             status: 200 OK
             headers:

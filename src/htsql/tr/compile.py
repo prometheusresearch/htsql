@@ -23,7 +23,7 @@ from .fn.signature import IfSig
 from .flow import (Expression, Code, Flow, RootFlow, ScalarFlow, TableFlow,
                    DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, FilteredFlow, OrderedFlow, BatchFlow,
+                   LinkedFlow, FilteredFlow, OrderedFlow,
                    Unit, ScalarUnit, ColumnUnit,
                    AggregateUnit, CorrelatedUnit,
                    KernelUnit, CoveringUnit, QueryExpr, SegmentExpr,
@@ -57,7 +57,6 @@ class CompilingState(object):
         self.baseline_stack = []
         # The current baseline flow.
         self.baseline = None
-        self.injections = []
 
     def tag(self):
         """
@@ -93,7 +92,6 @@ class CompilingState(object):
         assert self.root is not None
         assert not self.baseline_stack
         assert self.baseline is self.root
-        assert not self.injections
         self.root = None
         self.baseline = None
 
@@ -118,7 +116,7 @@ class CompilingState(object):
         """
         self.baseline = self.baseline_stack.pop()
 
-    def compile(self, expression, baseline=None, mask=None, injections=None):
+    def compile(self, expression, baseline=None, mask=None):
         """
         Compiles a new term node for the given expression.
 
@@ -142,19 +140,7 @@ class CompilingState(object):
         # and mask flows.  Second, each compiled term must have a unique
         # tag, therefore we'd have to replace the tags and route tables
         # of the cached term node.
-        current_injections = self.injections
-        self.injections = []
-        if injections:
-            for code in injections:
-                for unit in code.units:
-                    self.injections.append(unit)
-        term = compile(expression, self, baseline=baseline)
-        injections = self.injections
-        self.injections = []
-        if injections:
-            term = self.inject(term, injections)
-        self.injections = current_injections
-        return term
+        return compile(expression, self, baseline=baseline)
 
     def inject(self, term, expressions):
         """
@@ -171,7 +157,7 @@ class CompilingState(object):
         `term` (:class:`htsql.tr.term.Term`)
             A term node.
 
-        `expression` (a list of :class:`htsql.tr.flow.Expression`)
+        `expressions` (a list of :class:`htsql.tr.flow.Expression`)
             A list of expressions to inject into the given term.
         """
         assert isinstance(term, Term)
@@ -249,12 +235,11 @@ class CompileBase(Adapter):
         # Compile the term, use the found baseline and the trunk flow
         # as the mask.
         term = self.state.compile(flow,
-                                  baseline=baseline,
-                                  injections=codes)
+                                  baseline=baseline)
 
-        ## If provided, inject the given expressions.
-        #if codes is not None:
-        #    term = self.state.inject(term, codes)
+        # If provided, inject the given expressions.
+        if codes is not None:
+            term = self.state.inject(term, codes)
 
         # Return the compiled shoot term.
         return term
@@ -521,9 +506,9 @@ class CompileSegment(Compile):
         # List of expressions we need the term to export.
         codes = self.expression.elements + [code for code, direction in order]
         # Construct a term corresponding to the segment flow.
-        kid = self.state.compile(self.expression.flow, injections=codes)
-        ## Inject the expressions into the term.
-        #kid = self.state.inject(kid, codes)
+        kid = self.state.compile(self.expression.flow)
+        # Inject the expressions into the term.
+        kid = self.state.inject(kid, codes)
         # The compiler does not guarantee that the produced term respects
         # the flow ordering, so it is our responsitibity to wrap the term
         # with an order node.
@@ -842,15 +827,9 @@ class CompileQuotient(CompileFlow):
         baseline = self.flow.ground
         while not baseline.is_inflated:
             baseline = baseline.base
-        aggregates = [unit for unit in self.state.injections
-                           if isinstance(unit, AggregateUnit)
-                           and unit.flow.conforms(self.flow)
-                           and isinstance(unit.plural_flow, ComplementFlow)
-                           and unit.plural_flow.base == self.flow]
-        seed_term = self.state.compile(self.flow.seed, baseline=baseline,
-                                       injections=self.flow.kernels)
+        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
         if self.flow.kernels:
-            #seed_term = self.state.inject(seed_term, self.flow.kernels)
+            seed_term = self.state.inject(seed_term, self.flow.kernels)
             filters = []
             for code in self.flow.kernels:
                 filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
@@ -866,7 +845,8 @@ class CompileQuotient(CompileFlow):
                                    seed_term.routes.copy())
         aggregate_codes = []
         complement_flow = ComplementFlow(self.flow, self.flow.binding)
-        if aggregates and seed_term.baseline == self.flow.ground:
+        complement_flow = complement_flow.inflate()
+        if self.flow.companions and seed_term.baseline == self.flow.ground:
             routes = {}
             for unit in seed_term.routes:
                 unit = CoveringUnit(unit, complement_flow, unit.binding)
@@ -880,11 +860,7 @@ class CompileQuotient(CompileFlow):
             complement_term = WrapperTerm(self.state.tag(), seed_term,
                                           complement_flow,
                                           complement_flow, routes)
-            for aggregate in aggregates:
-                aggregate_codes.append(aggregate.code)
-                if isinstance(aggregate.flow, BatchFlow):
-                    for companion in aggregate.flow.codes:
-                        aggregate_codes.append(companion)
+            aggregate_codes = self.flow.companions
             complement_term = self.state.inject(complement_term,
                                                 aggregate_codes)
             if complement_term.baseline != complement_flow:
@@ -974,15 +950,9 @@ class CompileComplement(CompileFlow):
         baseline = family.ground
         while not baseline.is_inflated:
             baseline = baseline.base
-        extra_codes = family.kernels + [unit.code
-                                        for unit in self.state.injections
-                                        if isinstance(unit, CoveringUnit)
-                                        and unit.flow == self.flow]
-        seed_term = self.state.compile(family.seed, baseline=baseline,
-                                       injections=extra_codes)
-        #seed_term = self.state.inject(seed_term, family.kernels)
-        #if self.flow.extra_codes is not None:
-        #    seed_term = self.state.inject(seed_term, self.flow.extra_codes)
+        extra_codes = family.kernels + self.flow.companions
+        seed_term = self.state.compile(family.seed, baseline=baseline)
+        seed_term = self.state.inject(seed_term, extra_codes)
         #if family.kernels:
         #    filters = []
         #    for code in family.kernels:
@@ -1064,9 +1034,7 @@ class CompileMoniker(CompileFlow):
     adapts(MonikerFlow)
 
     def __call__(self):
-        extra_codes = [unit.code for unit in self.state.injections
-                                 if isinstance(unit, CoveringUnit)
-                                    and unit.flow == self.flow]
+        extra_codes = self.flow.companions
         if (self.flow.ground.base is not None and
             self.flow.base.conforms(self.flow.ground.base) and
             not self.flow.base.spans(self.flow.ground)):
@@ -1075,8 +1043,8 @@ class CompileMoniker(CompileFlow):
                     self.flow == self.state.baseline):
                 while not self.state.baseline.concludes(baseline):
                     baseline = baseline.base
-            seed_term = self.state.compile(self.flow.seed, baseline=baseline,
-                                           injections=extra_codes)
+            seed_term = self.state.compile(self.flow.seed, baseline=baseline)
+            seed_term = self.state.inject(seed_term, extra_codes)
             if seed_term.baseline != self.flow.ground:
                 flow = self.flow.base
                 seed_term = self.state.inject(seed_term, [flow])
@@ -1153,12 +1121,9 @@ class CompileForked(CompileFlow):
         baseline = seed
         while not baseline.is_inflated:
             baseline = baseline.base
-        extra_codes = self.flow.kernels[:] + [unit.code
-                                              for unit in self.state.injections
-                                              if isinstance(unit, CoveringUnit)
-                                              and unit.flow == self.flow]
-        seed_term = self.state.compile(seed, baseline=baseline,
-                                       injections=extra_codes)
+        extra_codes = self.flow.kernels[:] + self.flow.companions
+        seed_term = self.state.compile(seed, baseline=baseline)
+        seed_term = self.state.inject(seed_term, extra_codes)
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
@@ -1238,12 +1203,10 @@ class CompileLinked(CompileFlow):
         baseline = self.flow.ground
         while not baseline.is_inflated:
             baseline = baseline.base
-        extra_codes = ([rop for lop, rop in self.flow.images] +
-                       [unit.code for unit in self.state.injections
-                                  if isinstance(unit, CoveringUnit)
-                                     and unit.flow == self.flow])
-        seed_term = self.state.compile(self.flow.seed, baseline=baseline,
-                                       injections=extra_codes)
+        extra_codes = ([rop for lop, rop in self.flow.images]
+                       + self.flow.companions)
+        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
+        seed_term = self.state.inject(seed_term, extra_codes)
         extra_axes = []
         joints = []
         if seed_term.baseline != self.flow.ground:
@@ -1330,8 +1293,7 @@ class CompileFiltered(CompileFlow):
         # node.
 
         # The term corresponding to the flow base.
-        kid = self.state.compile(self.flow.base,
-                    injections=self.state.injections+[self.flow.filter])
+        term = self.state.compile(self.flow.base)
 
         ## Handle the special case when the filter is already enforced
         ## by the mask.  There is no method to directly verify it, so
@@ -1349,9 +1311,9 @@ class CompileFiltered(CompileFlow):
         #    routes[self.flow] = routes[self.backbone]
         #    return WrapperTerm(self.state.tag(), term, self.flow, routes)
 
-        ## Now wrap the base term with a filter term node.
-        ## Make sure the base term is able to produce the filter expression.
-        #kid = self.state.inject(term, [self.flow.filter])
+        # Now wrap the base term with a filter term node.
+        # Make sure the base term is able to produce the filter expression.
+        kid = self.state.inject(term, [self.flow.filter])
         # Inherit the routing table from the base term, add the given
         # flow to the routing table.
         routes = kid.routes.copy()
@@ -1404,8 +1366,8 @@ class CompileOrdered(CompileFlow):
         order = ordering(self.flow)
         codes = [code for code, direction in order]
         kid = self.state.compile(self.flow.base,
-                                  baseline=self.state.root,
-                                  injections=self.state.injections+codes)
+                                  baseline=self.state.root)
+        kid = self.state.inject(kid, codes)
         # Add the given flow to the routing table.
         routes = kid.routes.copy()
         for unit in spread(self.flow):
@@ -1414,15 +1376,6 @@ class CompileOrdered(CompileFlow):
         return OrderTerm(self.state.tag(), kid, order,
                          self.flow.limit, self.flow.offset,
                          self.flow, kid.baseline, routes)
-
-
-class CompileBatch(Compile):
-
-    adapts(BatchFlow)
-
-    def __call__(self):
-        return self.state.compile(self.flow.base,
-                                  injections=self.state.injections)
 
 
 class InjectCode(Inject):
@@ -1522,31 +1475,20 @@ class InjectScalar(Inject):
         if self.unit in self.term.routes:
             return self.term
 
-        if isinstance(self.unit.flow, BatchFlow):
-            proper_unit = ScalarUnit(self.unit.code,
-                                     self.unit.flow.base,
-                                     self.unit.binding)
-            companion_units = [ScalarUnit(code, self.unit.flow.base,
-                                          self.unit.binding)
-                               for code in self.unit.flow.codes]
-        else:
-            proper_unit = self.unit
-            companion_units = []
+        units = [self.unit]
+        for code in self.unit.companions:
+            companion_unit = ScalarUnit(code, self.unit.flow,
+                                        code.binding)
+            if companion_unit not in self.term.routes:
+                units.append(companion_unit)
 
-        if proper_unit in self.term.routes:
-            routes = self.term.routes.copy()
-            routes[self.unit] = routes[proper_unit]
-            return self.term.clone(routes=routes)
-        companion_units = [unit for unit in companion_units
-                                if unit not in self.term.routes]
-        units = [self.unit, proper_unit]+companion_units
         # Verify that the units are singular relative to the term.
         # To report an error, we could point to any unit node.
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                units[0].mark)
         # Extract the unit expressions.
-        codes = [self.unit.code] + [unit.code for unit in companion_units]
+        codes = [unit.code for unit in units]
 
         # Handle the special case when the unit flow is equal to the
         # term flow or dominates it.  In this case, we could inject
@@ -1617,33 +1559,21 @@ class InjectAggregate(Inject):
         # aggregates in the batch.
 
         # Get the list of units that are not already exported by the term.
-        if isinstance(self.unit.flow, BatchFlow):
-            proper_unit = AggregateUnit(self.unit.code,
-                                        self.unit.plural_flow,
-                                        self.unit.flow.base,
-                                        self.unit.binding)
-            companion_units = [AggregateUnit(code,
-                                             self.unit.plural_flow,
-                                             self.unit.flow.base,
-                                             code.binding)
-                               for code in self.unit.flow.codes]
-        else:
-            proper_unit = self.unit
-            companion_units = []
-        if proper_unit in self.term.routes:
-            routes = self.term.routes.copy()
-            routes[self.unit] = routes[proper_unit]
-            return self.term.clone(routes=routes)
-        companion_units = [unit for unit in companion_units
-                                if unit not in self.term.routes]
-        units = [self.unit, proper_unit]+companion_units
+        units = [self.unit]
+        for code in self.unit.companions:
+            companion_unit = AggregateUnit(code,
+                                           self.unit.plural_flow,
+                                           self.unit.flow,
+                                           code.binding)
+            if companion_unit not in self.term.routes:
+                units.append(companion_unit)
         # Verify that the units are singular relative to the term.
         # To report an error, we could point to any unit node available.
         if not self.term.flow.spans(self.flow):
             raise CompileError("expected a singular expression",
                                units[0].mark)
         # Extract the aggregate expressions.
-        codes = [self.unit.code] + [unit.code for unit in companion_units]
+        codes = [unit.code for unit in units]
 
         # Check if the unit flow coincides with or dominates the term
         # flow.  In this case we could avoid compiling a separate unit
@@ -1832,8 +1762,8 @@ class InjectCovering(Inject):
         baseline = self.unit.flow
         while not baseline.is_inflated:
             baseline = baseline.base
-        unit_term = self.state.compile(self.unit.flow, baseline=baseline,
-                                       injections=[self.unit])
+        flow = self.unit.flow.clone(companions=[self.unit.code])
+        unit_term = self.state.compile(flow, baseline=baseline)
         assert self.unit in unit_term.routes
         extra_routes = { self.unit: unit_term.routes[self.unit] }
         return self.join_terms(self.term, unit_term, extra_routes)

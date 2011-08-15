@@ -895,6 +895,12 @@ class QuotientFlow(Flow):
     `kernels` (a list of :class:`Code`)
         Kernel expressions of the quotient.
 
+    `companions` (a list of :class:`Code`)
+        An auxiliary hint to the compiler indicating that the term
+        representing the flow needs to export extra aggregate units.
+        The value of this attribute has no effect on the semantics of
+        the flow graph and node comparison.
+
     Other attributes:
 
     `ground` (:class:`Flow`)
@@ -904,13 +910,15 @@ class QuotientFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, kernels, binding):
+    def __init__(self, base, seed, kernels, binding,
+                 companions=[]):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         # Check that `seed` is a plural descendant of `base`.
         assert seed.spans(base)
         assert not base.spans(seed)
         assert isinstance(kernels, listof(Code))
+        assert isinstance(companions, listof(Code))
         # Find an ancestor of `seed` that is spanned by `base`.
         ground = seed
         while not base.spans(ground.base):
@@ -929,13 +937,13 @@ class QuotientFlow(Flow):
         self.seed = seed
         self.ground = ground
         self.kernels = kernels
+        self.companions = companions
 
     def __str__(self):
         # Display:
         #   (<base> . (<seed> ^ {<kernels>}))
         return "(%s . (%s ^ {%s}))" % (self.base, self.seed,
                         ", ".join(str(kernel) for kernel in self.kernels))
-
 
 
 class ComplementFlow(Flow):
@@ -947,6 +955,12 @@ class ComplementFlow(Flow):
 
     `base` (:class:`Flow`)
         The base flow.
+
+    `companions` (list of :class:`Code`)
+        An auxiliary hint to the compiler indicating that the term
+        representing the flow needs to export extra covering units.
+        The value of this attribute has no effect on the semantics of
+        the flow graph and node comparison.
 
     Other attributes:
 
@@ -962,9 +976,10 @@ class ComplementFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, binding):
+    def __init__(self, base, binding, companions=[]):
         assert isinstance(base, Flow)
         assert base.family.is_quotient
+        assert isinstance(companions, listof(Code))
         super(ComplementFlow, self).__init__(
                     base=base,
                     family=base.family.seed.family,
@@ -975,6 +990,7 @@ class ComplementFlow(Flow):
         self.seed = base.family.seed
         self.ground = base.family.ground
         self.kernels = base.family.kernels
+        self.companions = companions
 
     def __str__(self):
         # Display:
@@ -995,6 +1011,12 @@ class MonikerFlow(Flow):
     `seed` (:class:`Flow`)
         The seed flow.
 
+    `companions` (list of :class:`Code`)
+        An auxiliary hint to the compiler indicating that the term
+        representing the flow must export extra covering units.
+        The value of this attribute has no effect on the semantics of
+        the flow graph and node comparison.
+
     Other attributes:
 
     `ground` (:class:`Flow`)
@@ -1003,12 +1025,13 @@ class MonikerFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, binding):
+    def __init__(self, base, seed, binding, companions=[]):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert seed.spans(base)
         # We don't need `seed` to be plural or even axial against `base`.
         #assert not base.spans(seed)
+        assert isinstance(companions, listof(Code))
         # Determine an axial ancestor of `seed` spanned by `base`
         # (could be `seed` itself).
         ground = seed
@@ -1026,6 +1049,12 @@ class MonikerFlow(Flow):
                     equality_vector=(base, seed))
         self.seed = seed
         self.ground = ground
+        self.companions = companions
+
+    def __str__(self):
+        # Display:
+        #   (<base> . (<seed>))
+        return "(%s . (%s))" % (self.base, self.seed)
 
 
 class ForkedFlow(Flow):
@@ -1045,6 +1074,12 @@ class ForkedFlow(Flow):
     `kernels` (list of :class:`Code`)
         The kernel expressions.
 
+    `companions` (list of :class:`Code`)
+        An auxiliary hint to the compiler indicating that the term
+        representing the flow must export extra covering units.
+        The value of this attribute has no effect on the semantics of
+        the flow graph and node comparison.
+
     Other attributes:
 
     `ground` (:class:`Flow`)
@@ -1053,7 +1088,7 @@ class ForkedFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, kernels, binding):
+    def __init__(self, base, seed, kernels, binding, companions=[]):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert isinstance(kernels, listof(Code))
@@ -1063,6 +1098,7 @@ class ForkedFlow(Flow):
         #assert base.family == seed.family
         assert all(base.spans(unit.flow) for code in kernels
                                           for unit in code.units)
+        assert isinstance(companions, listof(Code))
         ground = seed
         while not ground.is_axis:
             ground = ground.base
@@ -1078,6 +1114,7 @@ class ForkedFlow(Flow):
         self.seed = seed
         self.ground = ground
         self.kernels = kernels
+        self.companions = companions
 
     def __str__(self):
         # Display:
@@ -1102,6 +1139,12 @@ class LinkedFlow(Flow):
     `images` (list of pairs of :class:`Code`)
         Pairs of expressions forming a fiber join condition.
 
+    `companions` (list of :class:`Code`)
+        An auxiliary hint to the compiler indicating that the term
+        representing the flow must export extra covering units.
+        The value of this attribute has no effect on the semantics of
+        the flow graph and node comparison.
+
     Other attributes:
 
     `ground` (:class:`Flow`)
@@ -1110,7 +1153,7 @@ class LinkedFlow(Flow):
 
     is_axis = True
 
-    def __init__(self, base, seed, images, binding):
+    def __init__(self, base, seed, images, binding, companions=[]):
         assert isinstance(base, Flow)
         assert isinstance(seed, Flow)
         assert seed.spans(base)
@@ -1120,6 +1163,7 @@ class LinkedFlow(Flow):
                                          for unit in lop.units)
         assert all(seed.spans(unit.flow) for lop, rop in images
                                          for unit in rop.units)
+        assert isinstance(companions, listof(Code))
         ground = seed
         while not base.spans(ground.base):
             ground = ground.base
@@ -1133,6 +1177,7 @@ class LinkedFlow(Flow):
         self.seed = seed
         self.ground = ground
         self.images = images
+        self.companions = companions
 
     def __str__(self):
         # Display:
@@ -1241,42 +1286,6 @@ class OrderedFlow(Flow):
             indicators.append(indicator)
         indicators = ";".join(indicators)
         return "%s [%s]" % (self.base, indicators)
-
-
-class BatchFlow(Flow):
-    """
-    Keeps compilation hints.
-
-    This flow node instructs the compiler to produce extra
-    routes when compiling a direct descendant of this flow.
-
-    Currently this node is expected to be a parental flow
-    of a quotient flow and extra codes keeps aggregate units
-    to export from the term of the quotient.
-
-    `base` (:class:`Flow`)
-        The base flow.
-
-    `codes` (list of :class:`Code`)
-        Code nodes for which routes should be generated.
-    """
-
-    def __init__(self, base, codes):
-        assert isinstance(codes, listof(Code))
-        super(BatchFlow, self).__init__(
-                    base=base,
-                    family=base.family,
-                    is_contracting=True,
-                    is_expanding=True,
-                    binding=base.binding,
-                    equality_vector=(base, tuple(codes)))
-        self.codes = codes
-
-    def __str__(self):
-        # Display:
-        #   <base>{<codes>,...}
-        return "%s{%s}" % (self.base, ",".join(str(code)
-                                               for code in self.codes))
 
 
 class Code(Expression):
@@ -1572,15 +1581,23 @@ class ScalarUnit(CompoundUnit):
 
     `flow` (:class:`Flow`)
         The flow on which the unit is defined.
+
+    `companions` (list of :class:`Code`)
+        An auxiliary hint to the compiler indicating that the term
+        exporting the unit must also export extra scalar units.
+        The value of this attribute has no effect on the semantics of
+        the flow graph and node comparison.
     """
 
-    def __init__(self, code, flow, binding):
+    def __init__(self, code, flow, binding, companions=[]):
+        assert isinstance(companions, listof(Code))
         super(ScalarUnit, self).__init__(
                     code=code,
                     flow=flow,
                     domain=code.domain,
                     binding=binding,
                     equality_vector=(code, flow))
+        self.companions = companions
 
 
 class AggregateUnitBase(CompoundUnit):
@@ -1634,7 +1651,18 @@ class AggregateUnit(AggregateUnitBase):
 
     A regular aggregate unit is expressed in SQL using an aggregate
     expression with ``GROUP BY`` clause.
+
+    `companions` (list of :class:`Code`)
+        An auxiliary hint to the compiler indicating that the term
+        exporting the unit must also export extra aggregate units.
+        The value of this attribute has no effect on the semantics of
+        the flow graph and node comparison.
     """
+
+    def __init__(self, code, plural_flow, flow, binding, companions=[]):
+        assert isinstance(companions, listof(Code))
+        super(AggregateUnit, self).__init__(code, plural_flow, flow, binding)
+        self.companions = companions
 
 
 class CorrelatedUnit(AggregateUnitBase):
