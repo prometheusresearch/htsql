@@ -111,7 +111,7 @@ metadata.bind = engine
 
 from htsql import HTSQL
 from htsql.request import produce
-htsql = HTSQL(None, {'tweak.sqlalchemy': {'engine': engine,
+htsql = HTSQL(None, {'tweak.sqlalchemy': {'engine': engine, 
                                           'metadata': metadata }})
 with htsql:
    for row in produce("/{'Hello World'}"):

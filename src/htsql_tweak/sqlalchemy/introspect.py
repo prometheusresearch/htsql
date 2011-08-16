@@ -35,7 +35,10 @@ class SQLAlchemyIntrospect(Introspect):
         super(SQLAlchemyIntrospect, self).__init__()
  
     def __call__(self):
-        return self.convert_catalog()
+        metadata = context.app.tweak.sqlalchemy.metadata
+        if metadata:
+            return self.convert_catalog(metadata)
+        return super(SQLAlchemyIntrospect, self).__call__()
  
     def permit_schema(self, schema_name):
         return True
@@ -150,9 +153,7 @@ class SQLAlchemyIntrospect(Introspect):
             tables.append(table)
         return tables
 
-    def convert_catalog(self):
-        metadata = context.app.tweak.sqlalchemy.metadata
-        assert metadata, "need SQLAlchemy MetaData"
+    def convert_catalog(self, metadata):
         buckets = {}
         tables = self.convert_tables(metadata)
         for table in tables:
