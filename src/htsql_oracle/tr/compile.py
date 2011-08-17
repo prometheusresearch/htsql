@@ -10,7 +10,8 @@ from htsql.tr.flow import LiteralCode, FormulaCode, ScalarUnit
 from htsql.tr.coerce import coerce
 from htsql.tr.signature import CompareSig
 from .signature import RowNumSig
-from htsql.tr.compile import CompileOrdered, ordering, spread
+from htsql.tr.compile import CompileOrdered
+from htsql.tr.stitch import arrange, spread
 
 
 class OracleCompileOrdered(CompileOrdered):
@@ -30,7 +31,7 @@ class OracleCompileOrdered(CompileOrdered):
         kid = self.state.compile(self.flow.base,
                                   baseline=self.state.root,
                                   mask=self.state.root)
-        order = ordering(self.flow)
+        order = arrange(self.flow)
         codes = [code for code, direction in order]
         kid = self.state.inject(kid, [code for code, direction in order])
         routes = kid.routes.copy()

@@ -38,6 +38,8 @@
    :members:
 .. automodule:: htsql.tr.signature
    :members:
+.. automodule:: htsql.tr.stitch
+   :members:
 .. automodule:: htsql.tr.syntax
    :members:
 .. automodule:: htsql.tr.term

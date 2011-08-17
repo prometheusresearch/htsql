@@ -15,7 +15,7 @@ This module implements the reducing process.
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain, StringDomain
 from .coerce import coerce
-from .compile import ordering
+from .stitch import arrange
 from .term import PermanentTerm
 from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
                     QueryFrame, Phrase, LiteralPhrase, NullPhrase,
@@ -445,7 +445,7 @@ class CollapseBranch(Collapse):
             # can compare the ordering of the underlying flows.
             if not (head.flow.conforms(self.frame.flow) and
                     head.baseline == self.frame.baseline and
-                    ordering(head.flow) == ordering(self.frame.flow)):
+                    arrange(head.flow) == arrange(self.frame.flow)):
                 return self.frame
             # Since the inner and the outer flows conform to each other,
             # the outer frame cannot contain non-trivial `LIMIT` and `OFFSET`

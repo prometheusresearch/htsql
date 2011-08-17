@@ -11,7 +11,8 @@ from htsql.tr.coerce import coerce
 from htsql.tr.signature import CompareSig, AndSig
 from htsql.tr.fn.signature import SortDirectionSig
 from .signature import RowNumberSig
-from htsql.tr.compile import CompileOrdered, ordering, spread
+from htsql.tr.compile import CompileOrdered
+from htsql.tr.stitch import arrange, spread
 
 
 class MSSQLCompileOrdered(CompileOrdered):
@@ -22,7 +23,7 @@ class MSSQLCompileOrdered(CompileOrdered):
         kid = self.state.compile(self.flow.base,
                                   baseline=self.state.root,
                                   mask=self.state.root)
-        order = ordering(self.flow)
+        order = arrange(self.flow)
         codes = [code for code, direction in order]
         kid = self.state.inject(kid, [code for code, direction in order])
         ops = []
