@@ -32,6 +32,8 @@
    :members:
 .. automodule:: htsql.tr.reduce
    :members:
+.. automodule:: htsql.tr.rewrite
+   :members:
 .. automodule:: htsql.tr.scan
    :members:
 .. automodule:: htsql.tr.signature
