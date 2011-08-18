@@ -155,23 +155,24 @@ tests:
     - uri: /{avg(department{count(course?credits=3)}?code!='econ') :round(2),
              avg(department{count(course?credits=5)}?code!='mth') :round(2)}
     # Embed aggregates into a quotient frame.
-    - uri: /(school^campus){campus, count(school), min(school.code), max(school.code)}
+    - uri: /school^campus{campus, count(school), min(school.code), max(school.code)}
     # Embedding to a quotient frame with reduction of the filter.
-    - uri: /(school^campus){campus, count(school), count(school?count(department)>3)}
-    - uri: /(school^campus){campus,
+    - uri: /school^campus{campus, count(school), count(school?count(department)>3)}
+    - uri: /school^campus{campus,
                             count(school?count(department)<=3),
                             count(school?count(department)>3)}
     # Embedding to a quotient frame with an aggregate in HAVING.
-    - uri: /(school^campus){campus, count(school)}?count(school)>1
+    - uri: /school^campus{campus, count(school)}?count(school)>1
     # Two aggregates, one embedded to a quotient frame.
-    - uri: /(school^campus){campus, count(school), count(school.department)}
+    - uri: /school^campus{campus, count(school), count(school.department)}
     # Reducing the seed of a quotient flow (now working currently).
-    - uri: /((school?min(department.course.credits)>1&
-                     max(department.course.credits)<8)^campus)
-            {campus, count(school)}
+    - uri: /school?min(department.course.credits)>1&
+                   max(department.course.credits)<8
+                  ^campus
+                  {campus, count(school)}
     - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
                    department := department?credit_diff>3)
-            .(department^school_code)
+            .department^school_code
             {*, avg(department.credit_diff), sum(department.credit_diff)}
 
   - title: Root, This, Direct and Fiber functions
@@ -256,7 +257,7 @@ tests:
     - uri: /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
             :where program := program.limit(10,15)
     # fork() with projections
-    - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+    - uri: /program^degree?count(^.student)=max(fork().count(^.student))
     # fork() with nullable kernel
     - uri: /program.fork(part_of){root().program{school.code, code, part_of}, school.code, code, part_of}
     # fork().fork() is inefficient
@@ -367,27 +368,31 @@ tests:
     - uri: /school.program.distinct(distinct(student{year(dob), gender}?!is_active){*1})
                 {*, count(^), count(^.^), count(^.^.is_active)}
 
-    - uri: /(program^degree){*, count(^)}?count(^)>5
-    - uri: /(course^credits)?*1>3
-    - uri: /(course^credits){*1-}
-    - uri: /(((department?code='stdart').course^credits)?*1>3)
+    - uri: /program^degree{*, count(^)}?count(^)>5
+    - uri: /course^credits?*1>3
+    - uri: /course^credits{*1-}
+    - uri: /(department?code='stdart').course^credits?*1>3
                 {*, count(^)}
-    - uri: /(school^count(program)){*, count(^)}
+    - uri: /school^count(program){*, count(^)}
     - uri: /school.(program^degree)
     - uri: /department.(school.program^degree)
     - uri: /department.((school?code='art').program^degree)
     - uri: /(program^degree).^
     - uri: /(program.sort(count(student))^degree).^
                 {*, count(student)}
-    - uri: /(program^degree){*, exists(^), count(^)}
+    - uri: /program^degree{*, exists(^), count(^)}
       ifndef: oracle # Oracle cannot handle EXISTS and an aggregate in
                      # the same SELECT clause.
     - uri: /school{code, count(program), count(distinct(program{degree}))}
     - uri: /school{code, count(program), count(program^degree)}
-    - uri: /(program^degree){*, count(^), count(^.student)}
-    - uri: /(student^{year(dob),gender}?!is_active)
+    - uri: /program^degree{*, count(^), count(^.student)}
+    - uri: /student?!is_active^{year(dob),gender}
                 {*, count(^), count(^?is_active)}
-    - uri: /(student^{y_dob:=year(dob),gender}?!is_active)
+    - uri: /student?!is_active^{y_dob:=year(dob),gender}
+                {*, count(student), count(student?is_active)}
+    - uri: /student^({year(dob),gender}?!is_active)
+                {*, count(^), count(^?is_active)}
+    - uri: /student^({y_dob:=year(dob),gender}?!is_active)
                 {*, count(student), count(student?is_active)}
     - uri: /count(program^degree)
 
@@ -403,12 +408,12 @@ tests:
     - uri: /distinct(program{degree}?school.code={'art','la'}).^
 
     # Known regressions.
-    - uri: /(school^{})
+    - uri: /school^{}
       skip: true
-    - uri: /(school^{null()})
+    - uri: /school^{null()}
       skip: true
-    - uri: /(school^{true()})
+    - uri: /school^{true()}
       skip: true
     # A bug `rewrite` is not applied to `base` of an ordered space.
-    - uri: /((program?school_code='art')^degree).limit(1)
+    - uri: /(program?school_code='art'^degree).limit(1)
 

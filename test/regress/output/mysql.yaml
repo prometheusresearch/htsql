@@ -19575,7 +19575,7 @@ tests:
                                      GROUP BY 3) AS `course`
                                     ON (`department`.`code` = `course`.`department_code`)
                WHERE ((`department`.`code` <> 'econ') OR (`department`.`code` <> 'mth'))
-          - uri: /(school^campus){campus, count(school), min(school.code), max(school.code)}
+          - uri: /school^campus{campus, count(school), min(school.code), max(school.code)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -19590,7 +19590,7 @@ tests:
                                                                        (3 rows)
 
                ----
-               /(school^campus){campus,count(school),min(school.code),max(school.code)}
+               /school^campus{campus,count(school),min(school.code),max(school.code)}
                SELECT `school`.`campus`,
                       COUNT(TRUE),
                       MIN(`school`.`code`),
@@ -19599,7 +19599,7 @@ tests:
                WHERE (`school`.`campus` IS NOT NULL)
                GROUP BY 1
                ORDER BY 1 ASC
-          - uri: /(school^campus){campus, count(school), count(school?count(department)>3)}
+          - uri: /school^campus{campus, count(school), count(school?count(department)>3)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -19614,7 +19614,7 @@ tests:
                                                                      (3 rows)
 
                ----
-               /(school^campus){campus,count(school),count(school?count(department)>3)}
+               /school^campus{campus,count(school),count(school?count(department)>3)}
                SELECT `school`.`campus`,
                       COUNT(TRUE),
                       COUNT((CASE WHEN (COALESCE(`department`.`count`, 0) > 3) THEN TRUE END))
@@ -19627,7 +19627,7 @@ tests:
                WHERE (`school`.`campus` IS NOT NULL)
                GROUP BY 1
                ORDER BY 1 ASC
-          - uri: /(school^campus){campus, count(school?count(department)<=3), count(school?count(department)>3)}
+          - uri: /school^campus{campus, count(school?count(department)<=3), count(school?count(department)>3)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -19642,7 +19642,7 @@ tests:
                                                                                           (3 rows)
 
                ----
-               /(school^campus){campus,count(school?count(department)<=3),count(school?count(department)>3)}
+               /school^campus{campus,count(school?count(department)<=3),count(school?count(department)>3)}
                SELECT `school`.`campus`,
                       COUNT((CASE WHEN (COALESCE(`department`.`count`, 0) <= 3) THEN TRUE END)),
                       COUNT((CASE WHEN (COALESCE(`department`.`count`, 0) > 3) THEN TRUE END))
@@ -19655,7 +19655,7 @@ tests:
                WHERE (`school`.`campus` IS NOT NULL)
                GROUP BY 1
                ORDER BY 1 ASC
-          - uri: /(school^campus){campus, count(school)}?count(school)>1
+          - uri: /school^campus{campus, count(school)}?count(school)>1
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -19669,7 +19669,7 @@ tests:
                                  (2 rows)
 
                ----
-               /(school^campus){campus,count(school)}?count(school)>1
+               /school^campus{campus,count(school)}?count(school)>1
                SELECT `school`.`campus`,
                       COUNT(TRUE)
                FROM `htsql_regress`.`school` AS `school`
@@ -19677,7 +19677,7 @@ tests:
                GROUP BY 1
                HAVING (COUNT(TRUE) > 1)
                ORDER BY 1 ASC
-          - uri: /(school^campus){campus, count(school), count(school.department)}
+          - uri: /school^campus{campus, count(school), count(school.department)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -19692,7 +19692,7 @@ tests:
                                                             (3 rows)
 
                ----
-               /(school^campus){campus,count(school),count(school.department)}
+               /school^campus{campus,count(school),count(school.department)}
                SELECT `school`.`campus`,
                       `school`.`count`,
                       COALESCE(`department`.`count`, 0)
@@ -19709,22 +19709,22 @@ tests:
                                      GROUP BY 2) AS `department`
                                     ON (`school`.`campus` = `department`.`campus`)
                ORDER BY 1 ASC
-          - uri: /((school?min(department.course.credits)>1& max(department.course.credits)<8)^campus)
-              {campus, count(school)}
+          - uri: /school?min(department.course.credits)>1& max(department.course.credits)<8
+              ^campus {campus, count(school)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school?min(department.course.credits)>1&max(department.course.credits)<8)^campus |
-               +-----------------------------------------------------------------------------------+
-               | campus                               | count(school)                              |
-              -+--------------------------------------+--------------------------------------------+-
-               | old                                  |                                          2 |
-               | south                                |                                          1 |
-                                                                                            (2 rows)
+               | school?min(department.course.credits)>1&max(department.course.credits)<8^campus |
+               +---------------------------------------------------------------------------------+
+               | campus                              | count(school)                             |
+              -+-------------------------------------+-------------------------------------------+-
+               | old                                 |                                         2 |
+               | south                               |                                         1 |
+                                                                                          (2 rows)
 
                ----
-               /((school?min(department.course.credits)>1&max(department.course.credits)<8)^campus){campus,count(school)}
+               /school?min(department.course.credits)>1&max(department.course.credits)<8^campus{campus,count(school)}
                SELECT `school`.`campus`,
                       COUNT(TRUE)
                FROM `htsql_regress`.`school` AS `school`
@@ -19742,25 +19742,25 @@ tests:
                GROUP BY 1
                ORDER BY 1 ASC
           - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
-              department := department?credit_diff>3) .(department^school_code) {*,
+              department := department?credit_diff>3) .department^school_code {*,
               avg(department.credit_diff), sum(department.credit_diff)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | department^school_code                                                       |
-               +------------------------------------------------------------------------------+
-               | school_code | avg(department.credit_diff)      | sum(department.credit_diff) |
-              -+-------------+----------------------------------+-----------------------------+-
-               | art         | 6.000000000000000000000000000000 |                           6 |
-               | bus         | 4.000000000000000000000000000000 |                           4 |
-               | eng         | 5.000000000000000000000000000000 |                          10 |
-               | la          | 4.000000000000000000000000000000 |                           4 |
-               | ns          | 4.000000000000000000000000000000 |                           8 |
-                                                                                       (5 rows)
+               | define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).department^school_code |
+               +-------------------------------------------------------------------------------------------------------------------------------------+
+               | school_code                    | avg(department.credit_diff)                        | sum(department.credit_diff)                   |
+              -+--------------------------------+----------------------------------------------------+-----------------------------------------------+-
+               | art                            |                   6.000000000000000000000000000000 |                                             6 |
+               | bus                            |                   4.000000000000000000000000000000 |                                             4 |
+               | eng                            |                   5.000000000000000000000000000000 |                                            10 |
+               | la                             |                   4.000000000000000000000000000000 |                                             4 |
+               | ns                             |                   4.000000000000000000000000000000 |                                             8 |
+                                                                                                                                              (5 rows)
 
                ----
-               /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).(department^school_code){*,avg(department.credit_diff),sum(department.credit_diff)}
+               /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).department^school_code{*,avg(department.credit_diff),sum(department.credit_diff)}
                SELECT `department`.`school_code`,
                       AVG(CAST((`course_2`.`max` - `course_2`.`min`) AS DECIMAL(65,30))),
                       COALESCE(CAST(SUM((`course_2`.`max` - `course_2`.`min`)) AS SIGNED INTEGER), 0)
@@ -21691,7 +21691,7 @@ tests:
                                     ON ((`program_1`.`school_code` = `program_2`.`school_code`) AND (`program_1`.`code` = `program_2`.`code`))
                WHERE (CAST(COALESCE(`student`.`count`, 0) AS DECIMAL(65,30)) > `program_2`.`avg`)
                ORDER BY 1 ASC, 2 ASC
-          - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+          - uri: /program^degree?count(^.student)=max(fork().count(^.student))
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -21704,7 +21704,7 @@ tests:
                           (1 row)
 
                ----
-               /(program^degree)?count(^.student)=max(fork().count(^.student))
+               /program^degree?count(^.student)=max(fork().count(^.student))
                SELECT `program_1`.`degree`
                FROM (SELECT `program`.`degree`
                      FROM `htsql_regress`.`program` AS `program`
@@ -23613,7 +23613,7 @@ tests:
                                      GROUP BY 3, 4, 5) AS `student_2`
                                     ON ((`student_1`.`school_code` = `student_2`.`school_code`) AND (`student_1`.`program_code` = `student_2`.`program_code`) AND (`student_1`.`year` = `student_2`.`year`))
                ORDER BY `school`.`code` ASC, `program`.`school_code` ASC, `program`.`code` ASC, 1 ASC
-          - uri: /(program^degree){*, count(^)}?count(^)>5
+          - uri: /program^degree{*, count(^)}?count(^)>5
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -23628,7 +23628,7 @@ tests:
                             (3 rows)
 
                ----
-               /(program^degree){*,count(^)}?count(^)>5
+               /program^degree{*,count(^)}?count(^)>5
                SELECT `program`.`degree`,
                       COUNT(TRUE)
                FROM `htsql_regress`.`program` AS `program`
@@ -23636,7 +23636,7 @@ tests:
                GROUP BY 1
                HAVING (COUNT(TRUE) > 5)
                ORDER BY 1 ASC
-          - uri: /(course^credits)?*1>3
+          - uri: /course^credits?*1>3
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -23652,14 +23652,14 @@ tests:
                          (4 rows)
 
                ----
-               /(course^credits)?*1>3
+               /course^credits?*1>3
                SELECT `course`.`credits`
                FROM `htsql_regress`.`course` AS `course`
                WHERE (`course`.`credits` IS NOT NULL)
                GROUP BY 1
                HAVING (`course`.`credits` > 3)
                ORDER BY 1 ASC
-          - uri: /(course^credits){*1-}
+          - uri: /course^credits{*1-}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -23679,13 +23679,13 @@ tests:
                          (8 rows)
 
                ----
-               /(course^credits){*1-}
+               /course^credits{*1-}
                SELECT `course`.`credits`
                FROM `htsql_regress`.`course` AS `course`
                WHERE (`course`.`credits` IS NOT NULL)
                GROUP BY 1
                ORDER BY 1 DESC
-          - uri: /(((department?code='stdart').course^credits)?*1>3) {*, count(^)}
+          - uri: /(department?code='stdart').course^credits?*1>3 {*, count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -23700,7 +23700,7 @@ tests:
                                                     (3 rows)
 
                ----
-               /(((department?code='stdart').course^credits)?*1>3){*,count(^)}
+               /(department?code='stdart').course^credits?*1>3{*,count(^)}
                SELECT `course`.`credits`,
                       COUNT(TRUE)
                FROM `htsql_regress`.`department` AS `department`
@@ -23711,7 +23711,7 @@ tests:
                GROUP BY 1
                HAVING (`course`.`credits` > 3)
                ORDER BY 1 ASC
-          - uri: /(school^count(program)){*, count(^)}
+          - uri: /school^count(program){*, count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -23730,7 +23730,7 @@ tests:
                                     (7 rows)
 
                ----
-               /(school^count(program)){*,count(^)}
+               /school^count(program){*,count(^)}
                SELECT COALESCE(`program`.`count`, 0),
                       COUNT(TRUE)
                FROM `htsql_regress`.`school` AS `school`
@@ -24073,7 +24073,7 @@ tests:
                                                      ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))) AS `program_3`
                                ON ((`program_2`.`school_code` = `program_3`.`school_code`) AND (`program_2`.`code` = `program_3`.`code`))
                ORDER BY `program_1`.`degree` ASC, `program_3`.`count` ASC, 1 ASC, 2 ASC
-          - uri: /(program^degree){*, exists(^), count(^)}
+          - uri: /program^degree{*, exists(^), count(^)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -24092,7 +24092,7 @@ tests:
                                         (7 rows)
 
                ----
-               /(program^degree){*,exists(^),count(^)}
+               /program^degree{*,exists(^),count(^)}
                SELECT `program`.`degree`,
                       EXISTS(SELECT TRUE
                              FROM `htsql_regress`.`program` AS `program_1`
@@ -24182,7 +24182,7 @@ tests:
                                      GROUP BY 2) AS `program_2`
                                     ON (`school`.`code` = `program_2`.`school_code`)
                ORDER BY 1 ASC
-          - uri: /(program^degree){*, count(^), count(^.student)}
+          - uri: /program^degree{*, count(^), count(^.student)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -24201,7 +24201,7 @@ tests:
                                                (7 rows)
 
                ----
-               /(program^degree){*,count(^),count(^.student)}
+               /program^degree{*,count(^),count(^.student)}
                SELECT `program`.`degree`,
                       `program`.`count`,
                       COALESCE(`student`.`count`, 0)
@@ -24218,12 +24218,67 @@ tests:
                                      GROUP BY 2) AS `student`
                                     ON (`program`.`degree` = `student`.`degree`)
                ORDER BY 1 ASC
-          - uri: /(student^{year(dob),gender}?!is_active) {*, count(^), count(^?is_active)}
+          - uri: /student?!is_active^{year(dob),gender} {*, count(^), count(^?is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | student^{year(dob),gender}?!is_active              |
+               | student?!is_active^{year(dob),gender}              |
+               +----------------------------------------------------+
+               | year(dob) | gender | count(^) | count(^?is_active) |
+              -+-----------+--------+----------+--------------------+-
+               |      1982 | m      |        4 |                  0 |
+               |      1983 | m      |        9 |                  0 |
+               |      1984 | m      |        8 |                  0 |
+               |      1985 | m      |        8 |                  0 |
+                                                             (4 rows)
+
+               ----
+               /student?!is_active^{year(dob),gender}{*,count(^),count(^?is_active)}
+               SELECT EXTRACT(YEAR FROM `student`.`dob`),
+                      `student`.`gender`,
+                      COUNT(TRUE),
+                      COUNT((CASE WHEN `student`.`is_active` THEN TRUE END))
+               FROM `htsql_regress`.`student` AS `student`
+               WHERE (EXTRACT(YEAR FROM `student`.`dob`) IS NOT NULL)
+                     AND (`student`.`gender` IS NOT NULL)
+                     AND (NOT `student`.`is_active`)
+               GROUP BY 1, 2
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /student?!is_active^{y_dob:=year(dob),gender} {*, count(student),
+              count(student?is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | student?!is_active^{y_dob:=year(dob),gender}               |
+               +------------------------------------------------------------+
+               | y_dob | gender | count(student) | count(student?is_active) |
+              -+-------+--------+----------------+--------------------------+-
+               |  1982 | m      |              4 |                        0 |
+               |  1983 | m      |              9 |                        0 |
+               |  1984 | m      |              8 |                        0 |
+               |  1985 | m      |              8 |                        0 |
+                                                                     (4 rows)
+
+               ----
+               /student?!is_active^{y_dob:=year(dob),gender}{*,count(student),count(student?is_active)}
+               SELECT EXTRACT(YEAR FROM `student`.`dob`),
+                      `student`.`gender`,
+                      COUNT(TRUE),
+                      COUNT((CASE WHEN `student`.`is_active` THEN TRUE END))
+               FROM `htsql_regress`.`student` AS `student`
+               WHERE (EXTRACT(YEAR FROM `student`.`dob`) IS NOT NULL)
+                     AND (`student`.`gender` IS NOT NULL)
+                     AND (NOT `student`.`is_active`)
+               GROUP BY 1, 2
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /student^({year(dob),gender}?!is_active) {*, count(^), count(^?is_active)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | student^({year(dob),gender}?!is_active)            |
                +----------------------------------------------------+
                | year(dob) | gender | count(^) | count(^?is_active) |
               -+-----------+--------+----------+--------------------+-
@@ -24245,7 +24300,7 @@ tests:
                                                             (15 rows)
 
                ----
-               /(student^{year(dob),gender}?!is_active){*,count(^),count(^?is_active)}
+               /student^({year(dob),gender}?!is_active){*,count(^),count(^?is_active)}
                SELECT EXTRACT(YEAR FROM `student`.`dob`),
                       `student`.`gender`,
                       COUNT(TRUE),
@@ -24255,13 +24310,13 @@ tests:
                      AND (`student`.`gender` IS NOT NULL)
                GROUP BY 1, 2
                ORDER BY 1 ASC, 2 ASC
-          - uri: /(student^{y_dob:=year(dob),gender}?!is_active) {*, count(student),
+          - uri: /student^({y_dob:=year(dob),gender}?!is_active) {*, count(student),
               count(student?is_active)}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | student^{y_dob:=year(dob),gender}?!is_active               |
+               | student^({y_dob:=year(dob),gender}?!is_active)             |
                +------------------------------------------------------------+
                | y_dob | gender | count(student) | count(student?is_active) |
               -+-------+--------+----------------+--------------------------+-
@@ -24283,7 +24338,7 @@ tests:
                                                                     (15 rows)
 
                ----
-               /(student^{y_dob:=year(dob),gender}?!is_active){*,count(student),count(student?is_active)}
+               /student^({y_dob:=year(dob),gender}?!is_active){*,count(student),count(student?is_active)}
                SELECT EXTRACT(YEAR FROM `student`.`dob`),
                       `student`.`gender`,
                       COUNT(TRUE),
@@ -24520,20 +24575,20 @@ tests:
                                 WHERE (`school`.`code` IN ('art', 'la'))) AS `program_2`
                                ON (`program_1`.`degree` = `program_2`.`degree`)
                ORDER BY `program_1`.`degree` ASC, 1 ASC, 2 ASC
-          - uri: /((program?school_code='art')^degree).limit(1)
+          - uri: /(program?school_code='art'^degree).limit(1)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (program?school_code='art')^degree |
-               +------------------------------------+
-               | degree                             |
-              -+------------------------------------+-
-               | ba                                 |
-                                              (1 row)
+               | program?school_code='art'^degree |
+               +----------------------------------+
+               | degree                           |
+              -+----------------------------------+-
+               | ba                               |
+                                            (1 row)
 
                ----
-               /((program?school_code='art')^degree).limit(1)
+               /(program?school_code='art'^degree).limit(1)
                SELECT `program`.`degree`
                FROM `htsql_regress`.`program` AS `program`
                WHERE (`program`.`degree` IS NOT NULL)
