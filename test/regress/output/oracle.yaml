@@ -24776,30 +24776,187 @@ tests:
                                 WHERE ("SCHOOL"."CODE" IN ('art', 'la'))) "PROGRAM_2"
                                ON ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE")
                ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, 1 ASC, 2 ASC
-          - uri: /(program?school_code='art'^degree).limit(1)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | program?school_code='art'^degree |
-               +----------------------------------+
-               | degree                           |
-              -+----------------------------------+-
-               | ba                               |
-                                            (1 row)
+      - id: known-issues
+        tests:
+        - uri: /{}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: empty selector:
+                /{}
+                 ^^
+        - uri: /school{}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: empty selector:
+                /school{}
+                 ^^^^^^^^
+        - uri: /school.true()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | true() |
+            -+--------+-
+             | true   |
+                (1 row)
 
-               ----
-               /(program?school_code='art'^degree).limit(1)
-               SELECT "PROGRAM"."DEGREE"
-               FROM (SELECT "PROGRAM"."DEGREE"
-                     FROM (SELECT "PROGRAM"."DEGREE"
-                           FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                           WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-                                 AND ("PROGRAM"."SCHOOL_CODE" = 'art')
-                           GROUP BY "PROGRAM"."DEGREE"
-                           ORDER BY 1 ASC NULLS FIRST) "PROGRAM"
-                     WHERE (ROWNUM < 2)) "PROGRAM"
-               ORDER BY 1 ASC NULLS FIRST
+             ----
+             /school.true()
+             SELECT 1
+             FROM DUAL "!"
+        - uri: /school.campus
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | campus |
+            -+--------+-
+             | old    |
+             | south  |
+             | old    |
+             | north  |
+             | old    |
+             | south  |
+             | old    |
+             |        |
+             |        |
+               (9 rows)
+
+             ----
+             /school.campus
+             SELECT "SCHOOL"."CAMPUS"
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+             ORDER BY "SCHOOL"."CODE" ASC
+        - uri: /school^{}{true()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{} |
+             +-----------+
+             | true()    |
+            -+-----------+-
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+                  (9 rows)
+
+             ----
+             /school^{}{true()}
+             SELECT 1
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+        - uri: /school^{true()}{true()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{true()} |
+             +-----------------+
+             | true()          |
+            -+-----------------+-
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+                        (9 rows)
+
+             ----
+             /school^{true()}{true()}
+             SELECT 1
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+             WHERE (1 <> 0)
+        - uri: /school^{}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{}     |
+             +---------------+
+             | count(school) |
+            -+---------------+-
+             |             9 |
+                       (1 row)
+
+             ----
+             /school^{}{*,count(school)}
+             SELECT COUNT(1)
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+        - uri: /school^{true()}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{true()}        |
+             +------------------------+
+             | true() | count(school) |
+            -+--------+---------------+-
+             | true   |             9 |
+                                (1 row)
+
+             ----
+             /school^{true()}{*,count(school)}
+             SELECT 1,
+                    COUNT(1)
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+             WHERE (1 <> 0)
+        - uri: /school^{null()}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{null()}        |
+             +------------------------+
+             | null() | count(school) |
+            -+--------+---------------+-
+             |        |             0 |
+                                (1 row)
+
+             ----
+             /school^{null()}{*,count(school)}
+             SELECT NULL,
+                    COUNT(1)
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+             WHERE (0 <> 0)
+        - uri: /department^school_code{school_code.name, name}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown attribute 'name':
+                /department^school_code{school_code.name, name}
+                                                    ^^^^
+        - uri: /program.part_of.*
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unable to resolve a wildcard:
+                /program.part_of.*
+                                 ^
+        - uri: /{count(school), exists(school)}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing 'SELECT COUNT(1),\n       (CASE WHEN EXISTS(SELECT 1\n                         FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"\n                         WHERE (1 <> 0)) THEN 1 ELSE 0 END)\nFROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"\n': ORA-00937: not a single-group group function
+            :
+                /{count(school), exists(school)}
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   - include: test/regress/input/format.yaml
     output:
       id: format

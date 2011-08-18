@@ -24503,27 +24503,175 @@ tests:
                                 WHERE ("school"."code" IN ('art', 'la'))) AS "program_2"
                                ON ("program_1"."degree" = "program_2"."degree")
                ORDER BY "program_1"."degree" ASC, 1 ASC, 2 ASC
-          - uri: /(program?school_code='art'^degree).limit(1)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | program?school_code='art'^degree |
-               +----------------------------------+
-               | degree                           |
-              -+----------------------------------+-
-               | ba                               |
-                                            (1 row)
+      - id: known-issues
+        tests:
+        - uri: /{}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: empty selector:
+                /{}
+                 ^^
+        - uri: /school{}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: empty selector:
+                /school{}
+                 ^^^^^^^^
+        - uri: /school.true()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | true() |
+            -+--------+-
+             | true   |
+                (1 row)
 
-               ----
-               /(program?school_code='art'^degree).limit(1)
-               SELECT "program"."degree"
-               FROM "program" AS "program"
-               WHERE ("program"."degree" IS NOT NULL)
-                     AND ("program"."school_code" = 'art')
-               GROUP BY 1
-               ORDER BY 1 ASC
-               LIMIT 1
+             ----
+             /school.true()
+             SELECT 1
+        - uri: /school.campus
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | campus |
+            -+--------+-
+             | old    |
+             | south  |
+             | old    |
+             | north  |
+             | old    |
+             | south  |
+             | old    |
+             |        |
+             |        |
+               (9 rows)
+
+             ----
+             /school.campus
+             SELECT "school"."campus"
+             FROM "school" AS "school"
+             ORDER BY "school"."code" ASC
+        - uri: /school^{}{true()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{} |
+             +-----------+
+             | true()    |
+            -+-----------+-
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+                  (9 rows)
+
+             ----
+             /school^{}{true()}
+             SELECT 1
+             FROM "school" AS "school"
+        - uri: /school^{true()}{true()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{true()} |
+             +-----------------+
+             | true()          |
+            -+-----------------+-
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+                        (9 rows)
+
+             ----
+             /school^{true()}{true()}
+             SELECT 1
+             FROM "school" AS "school"
+        - uri: /school^{}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{}     |
+             +---------------+
+             | count(school) |
+            -+---------------+-
+             |             9 |
+                       (1 row)
+
+             ----
+             /school^{}{*,count(school)}
+             SELECT COUNT(1)
+             FROM "school" AS "school"
+        - uri: /school^{true()}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{true()}        |
+             +------------------------+
+             | true() | count(school) |
+            -+--------+---------------+-
+             | true   |             9 |
+                                (1 row)
+
+             ----
+             /school^{true()}{*,count(school)}
+             SELECT 1,
+                    COUNT(1)
+             FROM "school" AS "school"
+        - uri: /school^{null()}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{null()}        |
+             +------------------------+
+             | null() | count(school) |
+            -+--------+---------------+-
+             |        |             0 |
+                                (1 row)
+
+             ----
+             /school^{null()}{*,count(school)}
+             SELECT NULL,
+                    COUNT(1)
+             FROM "school" AS "school"
+             WHERE 0
+        - uri: /department^school_code{school_code.name, name}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown attribute 'name':
+                /department^school_code{school_code.name, name}
+                                                    ^^^^
+        - uri: /program.part_of.*
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unable to resolve a wildcard:
+                /program.part_of.*
+                                 ^
   - include: test/regress/input/format.yaml
     output:
       id: format

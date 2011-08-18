@@ -24555,27 +24555,193 @@ tests:
                                 WHERE ([school].[code] IN ('art', 'la'))) AS [program_2]
                                ON ([program_1].[degree] = [program_2].[degree])
                ORDER BY [program_1].[degree] ASC, 1 ASC, 2 ASC
-          - uri: /(program?school_code='art'^degree).limit(1)
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | program?school_code='art'^degree |
-               +----------------------------------+
-               | degree                           |
-              -+----------------------------------+-
-               | ba                               |
-                                            (1 row)
+      - id: known-issues
+        tests:
+        - uri: /{}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: empty selector:
+                /{}
+                 ^^
+        - uri: /school{}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: empty selector:
+                /school{}
+                 ^^^^^^^^
+        - uri: /school.true()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | true() |
+            -+--------+-
+             | true   |
+                (1 row)
 
-               ----
-               /(program?school_code='art'^degree).limit(1)
-               SELECT TOP 1
-                      [program].[degree]
-               FROM [ad].[program] AS [program]
-               WHERE ([program].[degree] IS NOT NULL)
-                     AND ([program].[school_code] = 'art')
-               GROUP BY [program].[degree]
-               ORDER BY 1 ASC
+             ----
+             /school.true()
+             SELECT 1
+        - uri: /school.campus
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | campus |
+            -+--------+-
+             | old    |
+             | south  |
+             | old    |
+             | north  |
+             | old    |
+             | south  |
+             | old    |
+             |        |
+             |        |
+               (9 rows)
+
+             ----
+             /school.campus
+             SELECT [school].[campus]
+             FROM [ad].[school] AS [school]
+             ORDER BY [school].[code] ASC
+        - uri: /school^{}{true()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{} |
+             +-----------+
+             | true()    |
+            -+-----------+-
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+             | true      |
+                  (9 rows)
+
+             ----
+             /school^{}{true()}
+             SELECT 1
+             FROM [ad].[school] AS [school]
+        - uri: /school^{true()}{true()}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{true()} |
+             +-----------------+
+             | true()          |
+            -+-----------------+-
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+             | true            |
+                        (9 rows)
+
+             ----
+             /school^{true()}{true()}
+             SELECT 1
+             FROM [ad].[school] AS [school]
+             WHERE (1 <> 0)
+        - uri: /school^{}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{}     |
+             +---------------+
+             | count(school) |
+            -+---------------+-
+             |             9 |
+                       (1 row)
+
+             ----
+             /school^{}{*,count(school)}
+             SELECT COUNT(1)
+             FROM [ad].[school] AS [school]
+        - uri: /school^{true()}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{true()}        |
+             +------------------------+
+             | true() | count(school) |
+            -+--------+---------------+-
+             | true   |             9 |
+                                (1 row)
+
+             ----
+             /school^{true()}{*,count(school)}
+             SELECT 1,
+                    COUNT(1)
+             FROM [ad].[school] AS [school]
+             WHERE (1 <> 0)
+        - uri: /school^{null()}{*, count(school)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school^{null()}        |
+             +------------------------+
+             | null() | count(school) |
+            -+--------+---------------+-
+             |        |             0 |
+                                (1 row)
+
+             ----
+             /school^{null()}{*,count(school)}
+             SELECT NULL,
+                    COUNT(1)
+             FROM [ad].[school] AS [school]
+             WHERE (0 <> 0)
+        - uri: /department^school_code{school_code.name, name}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown attribute 'name':
+                /department^school_code{school_code.name, name}
+                                                    ^^^^
+        - uri: /program.part_of.*
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unable to resolve a wildcard:
+                /program.part_of.*
+                                 ^
+        - uri: /count(school.exists(department))
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            engine failure: error while executing 'SELECT COUNT(NULLIF((CASE WHEN EXISTS(SELECT 1\n                                      FROM [ad].[department] AS [department]\n                                      WHERE ([school].[code] = [department].[school_code])\n                                            AND (1 <> 0)) THEN 1 ELSE 0 END), 0))\nFROM [ad].[school] AS [school]\n': SQL Server message 130, severity 15, state 1, line 1:
+            Cannot perform an aggregate function on an expression containing an aggregate or a subquery.
+            DB-Lib error message 130, severity 15:
+            General SQL Server error: Check messages from the SQL Server
+            SQL Server message 130, severity 15, state 1, line 1:
+            Cannot perform an aggregate function on an expression containing an aggregate or a subquery.
+            DB-Lib error message 130, severity 15:
+            General SQL Server error: Check messages from the SQL Server
+            :
+                /count(school.exists(department))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   - include: test/regress/input/format.yaml
     output:
       id: format

@@ -393,13 +393,53 @@ tests:
                 {*, count(^), count(^.student)}
     - uri: /distinct(program{degree}?school.code={'art','la'}).^
 
-    # Known regressions.
-    - uri: /school^{}
-      skip: true
-    - uri: /school^{null()}
-      skip: true
-    - uri: /school^{true()}
-      skip: true
-    # A bug `rewrite` is not applied to `base` of an ordered space.
-    - uri: /(program?school_code='art'^degree).limit(1)
+- title: Known issues
+  tests:
+  # Queries with no output columns should be permitted
+  # (and report the number of rows).
+  - uri: /{}
+    expect: 400
+  - uri: /school{}
+    expect: 400
+
+  # Should produce a row for each record of `school`.
+  - uri: /school.true()
+  # If `school.campus` is treated as a link to a scalar class,
+  # `NULL` values should be filtered out.
+  - uri: /school.campus
+
+  # An empty kernel or a kernel composed of literals breaks a quotient
+  # when the selector contains no aggregates.
+  - uri: /school^{}{true()}
+  - uri: /school^{true()}{true()}
+  # But,
+  - uri: /school^{}{*, count(school)}
+  - uri: /school^{true()}{*, count(school)}
+  # This should filter out `NULL` from the kernel and produce no rows.
+  - uri: /school^{null()}{*, count(school)}
+  # Links in the quotient kernel should remain functional.
+  - uri: /department^school_code{school_code.name, name}
+    expect: 400
+
+  # Introspector is unable to assign a name to some links
+  # (see `schema.yaml` for other examples).
+  - uri: /program.part_of.*
+    expect: 400
+
+  # In PostgreSQL, SUM(int) => bigint, SUM(bigint) => decimal,
+  # but HTSQL expects an integer.
+  - uri: /sum(department.sum(course.credits))
+    ifdef: pgsql
+    skip: true # can't verify an exception
+  # Oracle does not permit correlated subqueries in the same frame
+  # with aggregates.
+  - uri: /{count(school), exists(school)}
+    ifdef: oracle
+    expect: 409
+  # MS SQL Server does not permit the argument of an aggregate to
+  # contain a subquery.
+  - uri: /count(school.exists(department))
+    ifdef: mssql
+    expect: 409
+
 
