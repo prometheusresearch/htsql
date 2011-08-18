@@ -617,6 +617,7 @@ class InjectFlow(Inject):
         assert term.flow.spans(flow)
         super(InjectFlow, self).__init__(flow, term, state)
         self.flow = flow
+        self.backbone = flow.inflate()
         self.term = term
         self.state = state
 
@@ -627,8 +628,7 @@ class InjectFlow(Inject):
         # and attach it to the main term.
 
         # Check if the flow is already exported.
-        if all(unit.clone(flow=self.flow) in self.term.routes
-               for unit in spread(self.flow)):
+        if all(unit in self.term.routes for unit in spread(self.flow)):
             return self.term
 
         ## Remove any non-axis filters that are enforced by the term flow.
@@ -706,7 +706,7 @@ class InjectFlow(Inject):
         # The routes to add.
         extra_routes = {}
         for unit in spread(self.flow):
-            extra_routes[unit.clone(flow=self.flow)] = flow_term.routes[unit]
+            extra_routes[unit] = flow_term.routes[unit]
         # Join the shoot to the main term.
         return self.join_terms(self.term, flow_term, extra_routes)
 
@@ -782,12 +782,12 @@ class CompileTable(CompileFlow):
         # where `B` is a singular, non-nullable link from `A` and `f(B)` is
         # an expression on `B`.
         if (self.flow.conforms(term.flow) and
-            all(unit in term.routes for unit in spread(self.flow))):
+            all(unit in term.routes for unit in spread(self.backbone))):
             # We need to add the given flow to the routing table and
             # replace the term flow.
             routes = term.routes.copy()
             for unit in spread(self.flow):
-                routes[unit.clone(flow=self.flow)] = routes[unit]
+                routes[unit] = routes[unit.clone(flow=self.backbone)]
             return WrapperTerm(self.state.tag(), term,
                                self.flow, term.baseline, routes)
 
@@ -815,7 +815,7 @@ class CompileTable(CompileFlow):
         routes.update(lkid.routes)
         routes.update(rkid.routes)
         for unit in spread(self.flow):
-            routes[unit.clone(flow=self.flow)] = routes[unit]
+            routes[unit] = routes[unit.clone(flow=self.backbone)]
         # Generate a join term node.
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
                         is_left, is_right, self.flow, lkid.baseline, routes)
@@ -938,7 +938,7 @@ class CompileQuotient(CompileFlow):
         routes.update(lkid.routes)
         routes.update(rkid.routes)
         for unit in spread(self.flow):
-            routes[unit.clone(flow=self.flow)] = routes[unit]
+            routes[unit] = routes[unit.clone(flow=self.backbone)]
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
                         is_left, is_right, self.flow, lkid.baseline, routes)
 
@@ -1026,7 +1026,7 @@ class CompileComplement(CompileFlow):
         routes.update(lkid.routes)
         routes.update(rkid.routes)
         for unit in spread(self.flow):
-            routes[unit.clone(flow=self.flow)] = routes[unit]
+            routes[unit] = routes[unit.clone(flow=self.backbone)]
         return JoinTerm(self.state.tag(), lkid, rkid, joints,
                         is_left, is_right, self.flow, lkid.baseline, routes)
 
@@ -1320,7 +1320,7 @@ class CompileFiltered(CompileFlow):
         # flow to the routing table.
         routes = kid.routes.copy()
         for unit in spread(self.flow):
-            routes[unit.clone(flow=self.flow)] = routes[unit]
+            routes[unit] = routes[unit.clone(flow=self.backbone)]
         # Generate a filter term node.
         return FilterTerm(self.state.tag(), kid, self.flow.filter,
                           self.flow, kid.baseline, routes)
@@ -1353,7 +1353,7 @@ class CompileOrdered(CompileFlow):
             # return the node.
             routes = term.routes.copy()
             for unit in spread(self.flow):
-                routes[unit.clone(flow=self.flow)] = routes[unit]
+                routes[unit] = routes[unit.clone(flow=self.backbone)]
             return WrapperTerm(self.state.tag(), term,
                                self.flow, term.baseline, routes)
 
@@ -1373,7 +1373,7 @@ class CompileOrdered(CompileFlow):
         # Add the given flow to the routing table.
         routes = kid.routes.copy()
         for unit in spread(self.flow):
-            routes[unit.clone(flow=self.flow)] = routes[unit]
+            routes[unit] = routes[unit.clone(flow=self.backbone)]
         # Generate an order term.
         return OrderTerm(self.state.tag(), kid, order,
                          self.flow.limit, self.flow.offset,

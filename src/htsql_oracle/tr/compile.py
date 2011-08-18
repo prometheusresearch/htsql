@@ -36,7 +36,7 @@ class OracleCompileOrdered(CompileOrdered):
         kid = self.state.inject(kid, [code for code, direction in order])
         routes = kid.routes.copy()
         for unit in spread(self.flow):
-            routes[unit.clone(flow=self.flow)] = routes[unit]
+            routes[unit] = routes[unit.clone(flow=self.backbone)]
         kid = OrderTerm(self.state.tag(), kid, order, None, None,
                         self.flow, kid.baseline, routes)
         kid = PermanentTerm(self.state.tag(), kid,

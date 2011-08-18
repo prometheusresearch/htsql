@@ -436,10 +436,12 @@ tests:
   - uri: /{count(school), exists(school)}
     ifdef: oracle
     expect: 409
+    ignore: true
   # MS SQL Server does not permit the argument of an aggregate to
   # contain a subquery.
   - uri: /count(school.exists(department))
     ifdef: mssql
     expect: 409
+    ignore: true
 
 

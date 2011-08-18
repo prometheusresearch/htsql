@@ -66,7 +66,7 @@ class MSSQLCompileOrdered(CompileOrdered):
                                  ops=[left_filter, right_filter])
         routes = kid.routes.copy()
         for unit in spread(self.flow):
-            routes[unit.clone(flow=self.flow)] = routes[unit]
+            routes[unit] = routes[unit.clone(flow=self.backbone)]
         return FilterTerm(self.state.tag(), kid, filter,
                           self.flow, kid.baseline, routes)
 

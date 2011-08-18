@@ -13,7 +13,7 @@ This module implements stitching utilities over flow nodes.
 
 
 from ..util import maybe, listof
-from ..adapter import Adapter, adapts
+from ..adapter import Adapter, adapts, adapts_many
 from .error import CompileError
 from .syntax import IdentifierSyntax
 from .flow import (Flow, RootFlow, ScalarFlow, TableFlow,
@@ -25,6 +25,28 @@ from .term import Joint
 
 
 class Arrange(Adapter):
+    """
+    Produces the ordering of the given flow.
+
+    Returns a list of pairs `(code, direction)`, where `code` is an instance
+    of :class:`htsql.tr.flow.Code` and `direction` is ``+1`` or ``-1``.
+    This list uniquely identifies sorting order of the flow elements.
+
+    This is an interface adapter with a signature::
+
+        Arrange: (Flow, bool, bool) -> [(Code, int), ...]
+
+    The adapter is polymorphic on the first argument.
+
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        The flow to order.
+
+    `with_strong` (Boolean)
+        If set, include explicit flow ordering.
+
+    `with_weak` (Boolean)
+        If set, include implicit flow ordering.
+    """
 
     adapts(Flow)
 
@@ -37,24 +59,29 @@ class Arrange(Adapter):
         self.with_weak = with_weak
 
     def __call__(self):
-        return arrange(self.flow.base, self.with_strong, self.with_weak)
-
-
-class Spread(Adapter):
-
-    adapts(Flow)
-
-    def __init__(self, flow):
-        assert isinstance(flow, Flow)
-        self.flow = flow
-
-    def __call__(self):
-        if not self.flow.is_axis:
-            return spread(self.flow.base)
+        # The default implementation works for the root flow and non-axial
+        # flows.
+        if self.flow.base is not None:
+            return arrange(self.flow.base, self.with_strong, self.with_weak)
         return []
 
 
-class Sew(Adapter):
+class Spread(Adapter):
+    """
+    Produces native units of the given flow.
+
+    This is an interface adapter with a singlature::
+
+        Spread: Flow -> (Unit, ...)
+
+    Native units of the flow are units which are exported by any term
+    representing the flow.  Note that together with native units generated
+    by this adapter, a flow term should also export same units reparented
+    against an inflated flow.
+
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        The flow node to spread.
+    """
 
     adapts(Flow)
 
@@ -63,12 +90,64 @@ class Sew(Adapter):
         self.flow = flow
 
     def __call__(self):
+        # If the flow is not axial, use the native units of the parental flow,
+        # but reparent them to the given flow.
+        if not self.flow.is_axis:
+            for unit in spread(self.flow.base):
+                yield unit.clone(flow=self.flow)
+        # Otherwise, do not produce any units; must be overriden for axial
+        # flows with native units.
+
+
+class Sew(Adapter):
+    """
+    Generates joints connecting two parallel flows.
+
+    This is an interface adapter with a singlature::
+
+        Sew: Flow -> (Joint, ...)
+
+    The joints produced by the :class:`Sew` adapter could be used to
+    attach together two term nodes represending the same flow node.
+
+    Units in the joints always belong to an inflated flow.
+
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        The flow node to sew.
+    """
+
+    adapts(Flow)
+
+    def __init__(self, flow):
+        assert isinstance(flow, Flow)
+        self.flow = flow
+
+    def __call__(self):
+        # Non-axial flows should use the joints of the closest axis.
         if not self.flow.is_axis:
             return sew(self.flow.base)
+        # The default implementation is suitable for scalar flows;
+        # must be overriden for other axial flows.
         return []
 
 
 class Tie(Adapter):
+    """
+    Generates joints connecting the given flow to its parent.
+
+    This is an interface adapter with a singlature::
+
+        Tie: Flow -> (Joint, ...)
+
+    The joints produced by the :class:`Tie` adapter are used to attach
+    a term node representing the flow to a term node representing the
+    origin flow.
+
+    Units in the joints always belong to an inflated flow.
+
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        The flow node to sew.
+    """
 
     adapts(Flow)
 
@@ -77,16 +156,11 @@ class Tie(Adapter):
         self.flow = flow
 
     def __call__(self):
+        # Non-axial flows should use the joints of the closest axis.
         if not self.flow.is_axis:
             return tie(self.flow.base)
-        return []
-
-
-class ArrangeRoot(Arrange):
-
-    adapts(RootFlow)
-
-    def __call__(self):
+        # The default implementation is suitable for scalar flows;
+        # must be overriden for other axial flows.
         return []
 
 
@@ -95,6 +169,7 @@ class ArrangeScalar(Arrange):
     adapts(ScalarFlow)
 
     def __call__(self):
+        # A scalar flow inherits its ordering from the parent flow.
         return arrange(self.flow.base, with_strong=self.with_strong,
                                        with_weak=self.with_weak)
 
@@ -104,7 +179,7 @@ class ArrangeTable(Arrange):
     adapts(TableFlow)
 
     def __call__(self):
-        # A table flow complements the weak ordering of its base with
+        # A table flow complements the ordering of its parent with
         # implicit table ordering.
 
         for code, direction in arrange(self.flow.base,
@@ -113,8 +188,8 @@ class ArrangeTable(Arrange):
             yield (code, direction)
 
         if self.with_weak:
-            # Complement the weak ordering with the table ordering (but only
-            # if the cardinality of the flow may increase).
+            # Augment the parent ordering with ordering by the primary key
+            # of the table (but only if the cardinality of the flow grows).
             if not self.flow.is_contracting:
                 # List of columns which provide the default table ordering.
                 columns = []
@@ -162,9 +237,9 @@ class SpreadTable(Spread):
     adapts(TableFlow)
 
     def __call__(self):
-        flow = self.flow.inflate()
-        for column in flow.family.table.columns:
-            yield ColumnUnit(column, flow, self.flow.binding)
+        # A term representing a table flow exports all columns of the table.
+        for column in self.flow.family.table.columns:
+            yield ColumnUnit(column, self.flow, self.flow.binding)
 
 
 class SewTable(Sew):
@@ -230,11 +305,16 @@ class ArrangeQuotient(Arrange):
     adapts(QuotientFlow)
 
     def __call__(self):
+        # Start with the parent ordering.
         for code, direction in arrange(self.flow.base,
                                        with_strong=self.with_strong,
                                        with_weak=self.with_weak):
             yield (code, direction)
+
+        # Augment the parent ordering with implicit ordering by
+        # the kernel expressions.
         if self.with_weak:
+            # We use inflated flows for ordering units.
             flow = self.flow.inflate()
             for code in self.flow.family.kernels:
                 code = KernelUnit(code, flow, code.binding)
@@ -246,11 +326,15 @@ class SpreadQuotient(Spread):
     adapts(QuotientFlow)
 
     def __call__(self):
-        flow = self.flow.inflate()
-        for lunit, runit in tie(flow.family.ground):
-            yield KernelUnit(runit, flow, runit.binding)
+        # Expressions attaching the quotient to the parent flow.
+        # We take a tie between the seed ground and its parent;
+        # the left side of the tie belongs to the seed ground
+        # and must be exported by any term representing the quotient.
+        for lunit, runit in tie(self.flow.family.ground):
+            yield KernelUnit(runit, self.flow, runit.binding)
+        # The kernel expressions of the quotient.
         for code in self.flow.family.kernels:
-            yield KernelUnit(code, flow, code.binding)
+            yield KernelUnit(code, self.flow, code.binding)
 
 
 class SewQuotient(Sew):
@@ -258,10 +342,15 @@ class SewQuotient(Sew):
     adapts(QuotientFlow)
 
     def __call__(self):
+        # Use an inflated flow for joints.
         flow = self.flow.inflate()
+        # The ground base units attaching the quotient to
+        # the parent flow.  FIXME: not needed when the parent
+        # flow is also sewn.
         for joint in tie(flow.family.ground):
             op = KernelUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(lop=op, rop=op)
+        # The kernel expressions.
         for code in flow.family.kernels:
             unit = KernelUnit(code, flow, code.binding)
             yield Joint(unit, unit)
@@ -272,57 +361,92 @@ class TieQuotient(Tie):
     adapts(QuotientFlow)
 
     def __call__(self):
+        # Use an inflated flow for joints.
         flow = self.flow.inflate()
+        # Use the joints attaching the seed ground to its parent,
+        # but wrap the ground units so they belong to the quotient flow.
         for joint in tie(flow.family.ground):
             rop = KernelUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 
 
-class ArrangeComplement(Arrange):
+class ArrangeCovering(Arrange):
 
-    adapts(ComplementFlow)
+    # The implementation is shared by all covering flows.
+    adapts_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
 
     def __call__(self):
+        # Start with the parent ordering.
         for code, direction in arrange(self.flow.base,
                                        with_strong=self.with_strong,
                                        with_weak=self.with_weak):
             yield (code, direction)
+
+        # Add ordering of the seed flow.
         if self.with_weak:
+            # We use inflated flows for ordering.
             flow = self.flow.inflate()
-            for code, direction in arrange(self.flow.base.family.seed):
-                if any(not self.flow.base.spans(unit.flow)
-                       for unit in code.units):
+            # We use this flow to filter out expressions singular against
+            # the parent flow; could be `None` (only for `ForkedFlow`
+            # and `MonikerFlow`).  Note that we could have used
+            # `self.flow.base` for all but `ForkedFlow`.
+            base = self.flow.ground.base
+            # Emit ordering of the seed, but ignore expressions
+            # that are singular against the parent flow --
+            # they cannot affect the ordering.
+            # Note that both weak and strong ordering of the seed
+            # become weak ordering of the covering flow.
+            for code, direction in arrange(self.flow.seed):
+                if base is None or any(not base.spans(unit.flow)
+                                       for unit in code.units):
                     code = CoveringUnit(code, flow, code.binding)
                     yield (code, direction)
 
 
-class SpreadComplement(Spread):
+class SpreadCovering(Spread):
 
-    adapts(ComplementFlow)
+    # The implementation is shared by all covering flows.
+    adapts_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
 
     def __call__(self):
-        flow = self.flow.inflate()
-        seed = self.flow.base.family.seed.inflate()
+        # Native units of the complement are inherited from the seed flow.
+
+        # Use an inflated seed to reduce the number of variations.
+        seed = self.flow.seed.inflate()
         for unit in spread(seed):
-            yield unit.clone(flow=flow)
+            yield unit.clone(flow=self.flow)
 
 
-class SewComplement(Sew):
+class SewCovering(Sew):
 
-    adapts(ComplementFlow)
+    # The implementation is shared by all covering flows.
+    adapts_many(ComplementFlow, MonikerFlow, LinkedFlow, ForkedFlow)
 
     def __call__(self):
+        # To sew two terms representing a covering flow, we sew all axial flows
+        # from the seed to the ground.
+
+        # Use an inflated flow for joints.
         flow = self.flow.inflate()
-        seed = self.flow.base.family.seed.inflate()
-        baseline = self.flow.base.family.ground.inflate()
+
+        # The top axis.
+        seed = self.flow.seed.inflate()
+        # The last axis to use (for `ForkedFlow`, same as `seed`).
+        baseline = self.flow.ground.inflate()
+        # Gather all axes from the seed to the baseline.
         axes = []
         axis = seed
         while axis is not None and axis.concludes(baseline):
             axes.append(axis)
             axis = axis.base
+        # Start from the shortest axis.
         axes.reverse()
+        # Combine joints from all the axes.
         for axis in axes:
+            # We can skip non-expanding axes, but must always
+            # include the baseline.
             if not axis.is_contracting or axis == baseline:
+                # Wrap and emit the axis joints.
                 for joint in sew(axis):
                     op = CoveringUnit(joint.lop, flow, joint.lop.binding)
                     yield joint.clone(lop=op, rop=op)
@@ -333,65 +457,24 @@ class TieComplement(Tie):
     adapts(ComplementFlow)
 
     def __call__(self):
+        # Use an inflated flow for joints.
         flow = self.flow.inflate()
-        for joint in tie(flow.base.family.ground):
-            lop = KernelUnit(joint.rop, flow.base, joint.rop.binding)
-            rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
+        # Units attaching the seed ground to its parent.
+        for joint in tie(flow.ground):
+            # The ground base expression.
+            op = joint.rop
+            # The expression embedded in the quotient.
+            lop = KernelUnit(op, flow.base, op.binding)
+            # The expression embedded in the complement.
+            rop = CoveringUnit(op, flow, op.binding)
             yield joint.clone(lop=lop, rop=rop)
-        for code in flow.base.family.kernels:
+        # The kernel expressions.
+        for code in flow.kernels:
+            # The quotient kernel.
             lop = KernelUnit(code, flow.base, code.binding)
+            # The same kernel embedded in the complement space.
             rop = CoveringUnit(code, flow, code.binding)
             yield Joint(lop=lop, rop=rop)
-
-
-class ArrangeMoniker(Arrange):
-
-    adapts(MonikerFlow)
-
-    def __call__(self):
-        for code, direction in arrange(self.flow.base,
-                                       with_strong=self.with_strong,
-                                       with_weak=self.with_weak):
-            yield (code, direction)
-        if self.with_weak:
-            flow = self.flow.inflate()
-            for code, direction in arrange(self.flow.seed):
-                if any(not self.flow.base.spans(unit.flow)
-                       for unit in code.units):
-                    code = CoveringUnit(code, flow, code.binding)
-                    yield (code, direction)
-
-
-class SpreadMoniker(Spread):
-
-    adapts(MonikerFlow)
-
-    def __call__(self):
-        flow = self.flow.inflate()
-        seed = self.flow.seed.inflate()
-        for unit in spread(seed):
-            yield unit.clone(flow=flow)
-
-
-class SewMoniker(Sew):
-
-    adapts(MonikerFlow)
-
-    def __call__(self):
-        flow = self.flow.inflate()
-        seed = self.flow.seed.inflate()
-        baseline = self.flow.ground.inflate()
-        axes = []
-        axis = seed
-        while axis is not None and axis.concludes(baseline):
-            axes.append(axis)
-            axis = axis.base
-        axes.reverse()
-        for axis in axes:
-            if not axis.is_contracting or axis == baseline:
-                for joint in sew(axis):
-                    op = CoveringUnit(joint.lop, flow, joint.lop.binding)
-                    yield joint.clone(lop=op, rop=op)
 
 
 class TieMoniker(Tie):
@@ -399,52 +482,12 @@ class TieMoniker(Tie):
     adapts(MonikerFlow)
 
     def __call__(self):
+        # Use an inflated flow for joints.
         flow = self.flow.inflate()
+        # Use the joints attaching the seed ground to its parent.
         for joint in tie(flow.ground):
             rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
-
-
-class ArrangeForked(Arrange):
-
-    adapts(ForkedFlow)
-
-    def __call__(self):
-        for code, direction in arrange(self.flow.base,
-                                       with_strong=self.with_strong,
-                                       with_weak=self.with_weak):
-            yield (code, direction)
-        if self.with_weak and not self.flow.is_contracting:
-            flow = self.flow.inflate()
-            for code, direction in arrange(self.flow.seed):
-                if all(self.flow.ground.base.spans(unit.flow)
-                       for unit in code.units):
-                    continue
-                code = CoveringUnit(code, flow, code.binding)
-                yield (code, direction)
-
-
-class SpreadForked(Spread):
-
-    adapts(ForkedFlow)
-
-    def __call__(self):
-        flow = self.flow.inflate()
-        seed = self.flow.seed.inflate()
-        for unit in spread(seed):
-            yield unit.clone(flow=flow)
-
-
-class SewForked(Sew):
-
-    adapts(ForkedFlow)
-
-    def __call__(self):
-        flow = self.flow.inflate()
-        seed = self.flow.seed.inflate()
-        for joint in sew(seed):
-            op = CoveringUnit(joint.lop, flow, joint.lop.binding)
-            yield joint.clone(lop=op, rop=op)
 
 
 class TieForked(Tie):
@@ -452,66 +495,18 @@ class TieForked(Tie):
     adapts(ForkedFlow)
 
     def __call__(self):
+        # Use an inflated flow for joints.
         flow = self.flow.inflate()
-        seed = self.flow.seed.inflate()
-        for joint in tie(seed):
+        # Attach the seed ground to its parent.
+        for joint in tie(flow.seed):
             lop = joint.rop
             rop = CoveringUnit(lop, flow, lop.binding)
             yield joint.clone(lop=lop, rop=rop)
+        # Attach the seed to itself by the kernel expressions.
         for code in self.flow.kernels:
             lop = code
             rop = CoveringUnit(code, flow, code.binding)
             yield Joint(lop, rop)
-
-
-class ArrangeLinked(Arrange):
-
-    adapts(LinkedFlow)
-
-    def __call__(self):
-        for code, direction in arrange(self.flow.base,
-                                       with_strong=self.with_strong,
-                                       with_weak=self.with_weak):
-            yield (code, direction)
-        if self.with_weak:
-            flow = self.flow.inflate()
-            for code, direction in arrange(self.flow.seed):
-                if any(not self.flow.base.spans(unit.flow)
-                       for unit in code.units):
-                    code = CoveringUnit(code, flow, code.binding)
-                    yield (code, direction)
-
-
-class SpreadLinked(Spread):
-
-    adapts(LinkedFlow)
-
-    def __call__(self):
-        flow = self.flow.inflate()
-        seed = self.flow.seed.inflate()
-        for unit in spread(seed):
-            yield unit.clone(flow=flow)
-
-
-class SewLinked(Sew):
-
-    adapts(LinkedFlow)
-
-    def __call__(self):
-        flow = self.flow.inflate()
-        seed = self.flow.seed.inflate()
-        baseline = self.flow.ground.inflate()
-        axes = []
-        axis = seed
-        while axis is not None and axis.concludes(baseline):
-            axes.append(axis)
-            axis = axis.base
-        axes.reverse()
-        for axis in axes:
-            if not axis.is_contracting or axis == baseline:
-                for joint in sew(axis):
-                    op = CoveringUnit(joint.lop, flow, joint.lop.binding)
-                    yield joint.clone(lop=op, rop=op)
 
 
 class TieLinked(Tie):
@@ -519,7 +514,9 @@ class TieLinked(Tie):
     adapts(LinkedFlow)
 
     def __call__(self):
+        # Use an inflated flow for joints.
         flow = self.flow.inflate()
+        # Attach the seed to the base flow using the fiber conditions.
         for lop, rop in flow.images:
             rop = CoveringUnit(rop, flow, rop.binding)
             yield Joint(lop, rop)
@@ -530,12 +527,15 @@ class ArrangeOrdered(Arrange):
     adapts(OrderedFlow)
 
     def __call__(self):
+        # Start with strong ordering of the parent flow.
         if self.with_strong:
             for code, direction in arrange(self.flow.base,
                                            with_strong=True, with_weak=False):
                 yield (code, direction)
+            # Emit the ordering specified by the node itself.
             for code, direction in self.flow.order:
                 yield (code, direction)
+        # Conclude with weak ordering of the parent flow.
         if self.with_weak:
             for code, direction in arrange(self.flow.base,
                                            with_strong=False, with_weak=True):
@@ -543,22 +543,47 @@ class ArrangeOrdered(Arrange):
 
 
 def arrange(flow, with_strong=True, with_weak=True):
+    """
+    Returns the ordering of the given flow.
+
+    `flow` (:class:`htsql.tr.flow.Flow`)
+        The flow to order.
+
+    `with_strong` (Boolean)
+        If set, include explicit flow ordering.
+
+    `with_weak` (Boolean)
+        If set, include implicit flow ordering.
+    """
+    # Realize an `Arrange` adapter.
     arrange = Arrange(flow, with_strong, with_weak)
+    # Invoke the adapter and convert the generated iterator to a list.
     return list(arrange())
 
 
 def spread(flow):
+    """
+    Returns native units of the given flow.
+
+    Na
+    """
+    # Realize a `Spread` adapter.
     spread = Spread(flow)
+    # Invoke the adapter and convert the generated iterator to a list.
     return list(spread())
 
 
 def sew(flow):
+    # Realize a `Sew` adapter.
     sew = Sew(flow)
+    # Invoke the adapter and convert the generated iterator to a list.
     return list(sew())
 
 
 def tie(flow):
+    # Realize a `Tie` adapter.
     tie = Tie(flow)
+    # Invoke the adapter and convert the generated iterator to a list.
     return list(tie())
 
 

@@ -19,6 +19,15 @@ from .flow import Expression, Flow, Code, Unit, QueryExpr
 
 
 class Joint(Comparable, Clonable, Printable):
+    """
+    Represents a join condition.
+
+    `lop` (:class:`htsql.tr.flow.Code`)
+        The left operand of join expression.
+
+    `rop` (:class:`htsql.tr.flow.Code`)
+        The right operand of join expression.
+    """
 
     def __init__(self, lop, rop):
         assert isinstance(lop, Code)
@@ -28,6 +37,9 @@ class Joint(Comparable, Clonable, Printable):
         self.rop = rop
 
     def __iter__(self):
+        """
+        Returns the pair of expressions that form the joint.
+        """
         return iter([self.lop, self.rop])
 
 
