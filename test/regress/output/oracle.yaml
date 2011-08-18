@@ -19208,6 +19208,39 @@ tests:
                                      GROUP BY "PROGRAM"."SCHOOL_CODE") "PROGRAM"
                                     ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
                ORDER BY 1 ASC
+          - uri: /school{code,exists(department),exists(program)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                      |
+               +---------------------------------------------+
+               | code | exists(department) | exists(program) |
+              -+------+--------------------+-----------------+-
+               | art  | true               | true            |
+               | bus  | true               | true            |
+               | edu  | true               | true            |
+               | eng  | true               | true            |
+               | la   | true               | true            |
+               | mus  | true               | false           |
+               | ns   | true               | true            |
+               | ph   | false              | true            |
+               | sc   | false              | false           |
+                                                      (9 rows)
+
+               ----
+               /school{code,exists(department),exists(program)}
+               SELECT "SCHOOL"."CODE",
+                      (CASE WHEN EXISTS(SELECT 1
+                                        FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                                        WHERE ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
+                                              AND (1 <> 0)) THEN 1 ELSE 0 END),
+                      (CASE WHEN EXISTS(SELECT 1
+                                        FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                        WHERE ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
+                                              AND (1 <> 0)) THEN 1 ELSE 0 END)
+               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+               ORDER BY 1 ASC
           - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
             status: 200 OK
             headers:
@@ -19497,99 +19530,6 @@ tests:
                                     ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
                WHERE (COALESCE("PROGRAM"."count", 0) > 3)
                ORDER BY 1 ASC
-          - uri: /school.program{school, code, degree, count(root(){(school?code='art').program.student})}
-              ?school~'a'
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | (school.program?school~'a')                                                     |
-              -+---------------------------------------------------------------------------------+-
-               | school | code     | degree | count(root(){(school?code='art').program.student}) |
-              -+--------+----------+--------+----------------------------------------------------+-
-               | art    | gart     | pb     |                                                  5 |
-               | art    | uhist    | ba     |                                                  1 |
-               | art    | ustudio  | ba     |                                                  0 |
-               | la     | gengl    | ma     |                                                  0 |
-               | la     | glang    | ma     |                                                  0 |
-               | la     | gscitch  | ma     |                                                  0 |
-               | la     | psciwri  | ct     |                                                  0 |
-               | la     | uengl    | ba     |                                                  0 |
-               | la     | uhist    | ba     |                                                  0 |
-               | la     | upolisci | ba     |                                                  0 |
-               | la     | upsych   | ba     |                                                  0 |
-               | la     | uspan    | ba     |                                                  0 |
-                                                                                         (12 rows)
-
-               ----
-               /school.program{school,code,degree,count(root(){(school?code='art').program.student})}?school~'a'
-               SELECT "PROGRAM"."SCHOOL",
-                      "PROGRAM"."CODE",
-                      "PROGRAM"."DEGREE",
-                      COALESCE("STUDENT"."count", 0)
-               FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "SCHOOL"."CODE" AS "CODE_1",
-                                            "PROGRAM"."SCHOOL",
-                                            "PROGRAM"."CODE" AS "CODE_2"
-                                     FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                                          INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                                     ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL")
-                                          INNER JOIN "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                                     ON (("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM"))
-                                     WHERE ("SCHOOL"."CODE" = 'art')
-                                     GROUP BY "SCHOOL"."CODE", "PROGRAM"."SCHOOL", "PROGRAM"."CODE") "STUDENT"
-                                    ON (("SCHOOL"."CODE" = "STUDENT"."CODE_1") AND ("PROGRAM"."SCHOOL" = "STUDENT"."SCHOOL") AND ("PROGRAM"."CODE" = "STUDENT"."CODE_2"))
-               WHERE ("PROGRAM"."SCHOOL" LIKE '%a%' ESCAPE '\')
-               ORDER BY "SCHOOL"."CODE" ASC, 1 ASC, 2 ASC
-          - uri: /program.school{code, root().program{code, degree}, count(root(){(program?degree='ba').school.department})}
-              ?code~'a'
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | (program.school?code~'a')                                                                                     |
-              -+---------------------------------------------------------------------------------------------------------------+-
-               | code | root().program{code} | root().program{degree} | count(root(){(program?degree='ba').school.department}) |
-              -+------+----------------------+------------------------+--------------------------------------------------------+-
-               | art  | gart                 | pb                     |                                                      0 |
-               | art  | uhist                | ba                     |                                                      2 |
-               | art  | ustudio              | ba                     |                                                      2 |
-               | la   | gengl                | ma                     |                                                      0 |
-               | la   | glang                | ma                     |                                                      0 |
-               | la   | gscitch              | ma                     |                                                      0 |
-               | la   | psciwri              | ct                     |                                                      0 |
-               | la   | uengl                | ba                     |                                                      5 |
-               | la   | uhist                | ba                     |                                                      5 |
-               | la   | upolisci             | ba                     |                                                      5 |
-               | la   | upsych               | ba                     |                                                      5 |
-               | la   | uspan                | ba                     |                                                      5 |
-                                                                                                                       (12 rows)
-
-               ----
-               /program.school{code,root().program{code,degree},count(root(){(program?degree='ba').school.department})}?code~'a'
-               SELECT "SCHOOL"."CODE",
-                      "PROGRAM"."CODE",
-                      "PROGRAM"."DEGREE",
-                      COALESCE("DEPARTMENT"."count", 0)
-               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                               ON ("PROGRAM"."SCHOOL" = "SCHOOL"."CODE")
-                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "PROGRAM"."SCHOOL",
-                                            "PROGRAM"."CODE"
-                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                          INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                                                     ON ("PROGRAM"."SCHOOL" = "SCHOOL"."CODE")
-                                          INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                                     ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL")
-                                     WHERE ("PROGRAM"."DEGREE" = 'ba')
-                                     GROUP BY "PROGRAM"."SCHOOL", "PROGRAM"."CODE") "DEPARTMENT"
-                                    ON (("PROGRAM"."SCHOOL" = "DEPARTMENT"."SCHOOL") AND ("PROGRAM"."CODE" = "DEPARTMENT"."CODE"))
-               WHERE ("SCHOOL"."CODE" LIKE '%a%' ESCAPE '\')
-               ORDER BY "PROGRAM"."SCHOOL" ASC, 2 ASC
           - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
             status: 200 OK
             headers:
@@ -20195,20 +20135,18 @@ tests:
                                     ON ("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE")
                WHERE (COALESCE("STUDENT"."count", 0) = "PROGRAM_2"."max")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC, 2 ASC
-          - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
+          - uri: /{count(school),{count(school)}?true(),{count(school)}?false()}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |                                                                              |
-              -+------------------------------------------------------------------------------+-
-               | count(school) | this(){count(school)}?true() | this(){count(school)}?false() |
-              -+---------------+------------------------------+-------------------------------+-
-               |             9 |                            9 |                               |
-                                                                                        (1 row)
+               | count(school) | count(school) | count(school) |
+              -+---------------+---------------+---------------+-
+               |             9 |             9 |               |
+                                                         (1 row)
 
                ----
-               /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
+               /{count(school),{count(school)}?true(),{count(school)}?false()}
                SELECT "SCHOOL"."count",
                       "SCHOOL"."count",
                       "!"."count"
@@ -20219,28 +20157,28 @@ tests:
                                            FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL") "SCHOOL"
                                      WHERE (0 <> 0)) "!"
                                     ON (1 <> 0)
-          - uri: /school{code,name,this(){code}?name!~'art', root().school{code}?name!~'art'}
+          - uri: /school{code,name,{code}?name!~'art', root().school{code}?name!~'art'}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                            |
-              -+---------------------------------------------------------------------------------------------------+-
-               | code | name                          | this(){code}?name!~'art' | root().school{code}?name!~'art' |
-              -+------+-------------------------------+--------------------------+---------------------------------+-
-               | art  | School of Art and Design      |                          |                                 |
-               | bus  | School of Business            | bus                      | bus                             |
-               | edu  | College of Education          | edu                      | edu                             |
-               | eng  | School of Engineering         | eng                      | eng                             |
-               | la   | School of Arts and Humanities |                          |                                 |
-               | mus  | School of Music & Dance       | mus                      | mus                             |
-               | ns   | School of Natural Sciences    | ns                       | ns                              |
-               | ph   | Public Honorariums            | ph                       | ph                              |
-               | sc   | School of Continuing Studies  | sc                       | sc                              |
-                                                                                                            (9 rows)
+               | school                                             |
+               +----------------------------------------------------+
+               | code | name                          | code | code |
+              -+------+-------------------------------+------+------+-
+               | art  | School of Art and Design      |      |      |
+               | bus  | School of Business            | bus  | bus  |
+               | edu  | College of Education          | edu  | edu  |
+               | eng  | School of Engineering         | eng  | eng  |
+               | la   | School of Arts and Humanities |      |      |
+               | mus  | School of Music & Dance       | mus  | mus  |
+               | ns   | School of Natural Sciences    | ns   | ns   |
+               | ph   | Public Honorariums            | ph   | ph   |
+               | sc   | School of Continuing Studies  | sc   | sc   |
+                                                             (9 rows)
 
                ----
-               /school{code,name,this(){code}?name!~'art',root().school{code}?name!~'art'}
+               /school{code,name,{code}?name!~'art',root().school{code}?name!~'art'}
                SELECT "SCHOOL_1"."CODE",
                       "SCHOOL_1"."NAME",
                       "SCHOOL_2"."CODE",
@@ -20251,86 +20189,122 @@ tests:
                                      WHERE ("SCHOOL"."NAME" NOT LIKE '%art%' ESCAPE '\')) "SCHOOL_2"
                                     ON ("SCHOOL_1"."CODE" = "SCHOOL_2"."CODE")
                ORDER BY 1 ASC
-          - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
+          - uri: /school{name,count(department),{count(department)}?name!~'art'}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                    |
-              -+-------------------------------------------------------------------------------------------+-
-               | name                          | count(department) | this(){count(department)}?name!~'art' |
-              -+-------------------------------+-------------------+---------------------------------------+-
-               | School of Art and Design      |                 2 |                                       |
-               | School of Business            |                 3 |                                     3 |
-               | College of Education          |                 2 |                                     2 |
-               | School of Engineering         |                 4 |                                     4 |
-               | School of Arts and Humanities |                 5 |                                       |
-               | School of Music & Dance       |                 4 |                                     4 |
-               | School of Natural Sciences    |                 4 |                                     4 |
-               | Public Honorariums            |                 0 |                                     0 |
-               | School of Continuing Studies  |                 0 |                                     0 |
-                                                                                                    (9 rows)
+               | school                                                                |
+               +-----------------------------------------------------------------------+
+               | name                          | count(department) | count(department) |
+              -+-------------------------------+-------------------+-------------------+-
+               | School of Art and Design      |                 2 |                   |
+               | School of Business            |                 3 |                 3 |
+               | College of Education          |                 2 |                 2 |
+               | School of Engineering         |                 4 |                 4 |
+               | School of Arts and Humanities |                 5 |                   |
+               | School of Music & Dance       |                 4 |                 4 |
+               | School of Natural Sciences    |                 4 |                 4 |
+               | Public Honorariums            |                 0 |                 0 |
+               | School of Continuing Studies  |                 0 |                 0 |
+                                                                                (9 rows)
 
                ----
-               /school{name,count(department),this(){count(department)}?name!~'art'}
+               /school{name,count(department),{count(department)}?name!~'art'}
                SELECT "SCHOOL_1"."NAME",
                       COALESCE("DEPARTMENT"."count", 0),
                       "SCHOOL_2"."count"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "DEPARTMENT"."SCHOOL"
+                                            "DEPARTMENT"."SCHOOL_CODE"
                                      FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                     GROUP BY "DEPARTMENT"."SCHOOL") "DEPARTMENT"
-                                    ON ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL")
+                                     GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
+                                    ON ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                     LEFT OUTER JOIN (SELECT COALESCE("DEPARTMENT"."count", 0) AS "count",
                                             "SCHOOL"."CODE"
                                      FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                                           LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                                  "DEPARTMENT"."SCHOOL"
+                                                                  "DEPARTMENT"."SCHOOL_CODE"
                                                            FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                                           GROUP BY "DEPARTMENT"."SCHOOL") "DEPARTMENT"
-                                                          ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL")
+                                                           GROUP BY "DEPARTMENT"."SCHOOL_CODE") "DEPARTMENT"
+                                                          ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                                      WHERE ("SCHOOL"."NAME" NOT LIKE '%art%' ESCAPE '\')) "SCHOOL_2"
                                     ON ("SCHOOL_1"."CODE" = "SCHOOL_2"."CODE")
                ORDER BY "SCHOOL_1"."CODE" ASC
-          - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
+          - uri: /school{name,exists(department),{exists(department)}?name!~'art'}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                      |
-              -+---------------------------------------------------------------------------------------------+-
-               | name                          | exists(department) | this(){exists(department)}?name!~'art' |
-              -+-------------------------------+--------------------+----------------------------------------+-
-               | School of Art and Design      | true               |                                        |
-               | School of Business            | true               | true                                   |
-               | College of Education          | true               | true                                   |
-               | School of Engineering         | true               | true                                   |
-               | School of Arts and Humanities | true               |                                        |
-               | School of Music & Dance       | true               | true                                   |
-               | School of Natural Sciences    | true               | true                                   |
-               | Public Honorariums            | false              | false                                  |
-               | School of Continuing Studies  | false              | false                                  |
-                                                                                                      (9 rows)
+               | school                                                                  |
+               +-------------------------------------------------------------------------+
+               | name                          | exists(department) | exists(department) |
+              -+-------------------------------+--------------------+--------------------+-
+               | School of Art and Design      | true               |                    |
+               | School of Business            | true               | true               |
+               | College of Education          | true               | true               |
+               | School of Engineering         | true               | true               |
+               | School of Arts and Humanities | true               |                    |
+               | School of Music & Dance       | true               | true               |
+               | School of Natural Sciences    | true               | true               |
+               | Public Honorariums            | false              | false              |
+               | School of Continuing Studies  | false              | false              |
+                                                                                  (9 rows)
 
                ----
-               /school{name,exists(department),this(){exists(department)}?name!~'art'}
+               /school{name,exists(department),{exists(department)}?name!~'art'}
                SELECT "SCHOOL_1"."NAME",
                       (CASE WHEN EXISTS(SELECT 1
                                         FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                        WHERE ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL")
+                                        WHERE ("SCHOOL_1"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                                               AND (1 <> 0)) THEN 1 ELSE 0 END),
                       "SCHOOL_2"."exists"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
                     LEFT OUTER JOIN (SELECT (CASE WHEN EXISTS(SELECT 1
                                                               FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                                              WHERE ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL")
+                                                              WHERE ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                                                                     AND (1 <> 0)) THEN 1 ELSE 0 END) AS "exists",
                                             "SCHOOL"."CODE"
                                      FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                                      WHERE ("SCHOOL"."NAME" NOT LIKE '%art%' ESCAPE '\')) "SCHOOL_2"
                                     ON ("SCHOOL_1"."CODE" = "SCHOOL_2"."CODE")
                ORDER BY "SCHOOL_1"."CODE" ASC
+          - uri: /department{code, school{code}, school{code}?name!~'art'}?code~'a'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department           |
+               +----------------------+
+               |        | school      |
+               |        +-------------+
+               | code   | code | code |
+              -+--------+------+------+-
+               | acc    | bus  | bus  |
+               | arthis | art  |      |
+               | astro  | ns   | ns   |
+               | bursar |      |      |
+               | career |      |      |
+               | lang   | la   |      |
+               | parent |      |      |
+               | pia    | mus  | mus  |
+               | stdart | art  |      |
+                               (9 rows)
+
+               ----
+               /department{code,school{code},school{code}?name!~'art'}?code~'a'
+               SELECT "DEPARTMENT"."CODE",
+                      "SCHOOL_1"."CODE",
+                      "SCHOOL_2"."CODE"
+               FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
+                    LEFT OUTER JOIN (SELECT "SCHOOL"."CODE"
+                                     FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                                     WHERE ("SCHOOL"."NAME" NOT LIKE '%art%' ESCAPE '\')) "SCHOOL_2"
+                                    ON ("DEPARTMENT"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
+               WHERE ("DEPARTMENT"."CODE" LIKE '%a%' ESCAPE '\')
+               ORDER BY 1 ASC
           - uri: /home()
             status: 400 Bad Request
             headers:
@@ -24519,34 +24493,29 @@ tests:
                +----------------------------------------------------+
                | year(dob) | gender | count(^) | count(^?is_active) |
               -+-----------+--------+----------+--------------------+-
-               |      1982 | m      |       11 |                  7 |
-               |      1983 | m      |       26 |                 17 |
-               |      1984 | m      |       39 |                 31 |
-               |      1985 | f      |       12 |                 12 |
-               |      1985 | m      |       50 |                 42 |
-               |      1986 | f      |       38 |                 38 |
-               |      1986 | m      |       30 |                 30 |
-               |      1987 | f      |       36 |                 36 |
-               |      1987 | m      |       13 |                 13 |
-               |      1988 | f      |       56 |                 56 |
-               |      1988 | m      |        3 |                  3 |
-               |      1989 | f      |       61 |                 61 |
-               |      1990 | f      |       33 |                 33 |
-               |      1991 | f      |       37 |                 37 |
-               |      1992 | f      |       11 |                 11 |
-                                                            (15 rows)
+               |      1982 | m      |        4 |                  0 |
+               |      1983 | m      |        9 |                  0 |
+               |      1984 | m      |        8 |                  0 |
+               |      1985 | m      |        8 |                  0 |
+                                                             (4 rows)
 
                ----
                /student^({year(dob),gender}?!is_active){*,count(^),count(^?is_active)}
-               SELECT EXTRACT(YEAR FROM "STUDENT"."DOB"),
-                      "STUDENT"."GENDER",
+               SELECT "STUDENT_2"."year",
+                      "STUDENT_2"."GENDER",
                       COUNT(1),
-                      COUNT((CASE WHEN ("STUDENT"."IS_ACTIVE" <> 0) THEN 1 END))
-               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-               WHERE (EXTRACT(YEAR FROM "STUDENT"."DOB") IS NOT NULL)
-                     AND ("STUDENT"."GENDER" IS NOT NULL)
-               GROUP BY EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER"
-               ORDER BY 1 ASC, 2 ASC
+                      COUNT((CASE WHEN ("STUDENT_1"."IS_ACTIVE" <> 0) THEN 1 END))
+               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT_1"
+                    LEFT OUTER JOIN (SELECT EXTRACT(YEAR FROM "STUDENT"."DOB") AS "year",
+                                            "STUDENT"."GENDER",
+                                            "STUDENT"."ID"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     WHERE (NOT ("STUDENT"."IS_ACTIVE" <> 0))) "STUDENT_2"
+                                    ON ("STUDENT_1"."ID" = "STUDENT_2"."ID")
+               WHERE ("STUDENT_2"."year" IS NOT NULL)
+                     AND ("STUDENT_2"."GENDER" IS NOT NULL)
+               GROUP BY "STUDENT_2"."year", "STUDENT_2"."GENDER"
+               ORDER BY 1 ASC NULLS FIRST, 2 ASC NULLS FIRST
           - uri: /student^({y_dob:=year(dob),gender}?!is_active) {*, count(student),
               count(student?is_active)}
             status: 200 OK
@@ -24557,34 +24526,29 @@ tests:
                +------------------------------------------------------------+
                | y_dob | gender | count(student) | count(student?is_active) |
               -+-------+--------+----------------+--------------------------+-
-               |  1982 | m      |             11 |                        7 |
-               |  1983 | m      |             26 |                       17 |
-               |  1984 | m      |             39 |                       31 |
-               |  1985 | f      |             12 |                       12 |
-               |  1985 | m      |             50 |                       42 |
-               |  1986 | f      |             38 |                       38 |
-               |  1986 | m      |             30 |                       30 |
-               |  1987 | f      |             36 |                       36 |
-               |  1987 | m      |             13 |                       13 |
-               |  1988 | f      |             56 |                       56 |
-               |  1988 | m      |              3 |                        3 |
-               |  1989 | f      |             61 |                       61 |
-               |  1990 | f      |             33 |                       33 |
-               |  1991 | f      |             37 |                       37 |
-               |  1992 | f      |             11 |                       11 |
-                                                                    (15 rows)
+               |  1982 | m      |              4 |                        0 |
+               |  1983 | m      |              9 |                        0 |
+               |  1984 | m      |              8 |                        0 |
+               |  1985 | m      |              8 |                        0 |
+                                                                     (4 rows)
 
                ----
                /student^({y_dob:=year(dob),gender}?!is_active){*,count(student),count(student?is_active)}
-               SELECT EXTRACT(YEAR FROM "STUDENT"."DOB"),
-                      "STUDENT"."GENDER",
+               SELECT "STUDENT_2"."year",
+                      "STUDENT_2"."GENDER",
                       COUNT(1),
-                      COUNT((CASE WHEN ("STUDENT"."IS_ACTIVE" <> 0) THEN 1 END))
-               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-               WHERE (EXTRACT(YEAR FROM "STUDENT"."DOB") IS NOT NULL)
-                     AND ("STUDENT"."GENDER" IS NOT NULL)
-               GROUP BY EXTRACT(YEAR FROM "STUDENT"."DOB"), "STUDENT"."GENDER"
-               ORDER BY 1 ASC, 2 ASC
+                      COUNT((CASE WHEN ("STUDENT_1"."IS_ACTIVE" <> 0) THEN 1 END))
+               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT_1"
+                    LEFT OUTER JOIN (SELECT EXTRACT(YEAR FROM "STUDENT"."DOB") AS "year",
+                                            "STUDENT"."GENDER",
+                                            "STUDENT"."ID"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     WHERE (NOT ("STUDENT"."IS_ACTIVE" <> 0))) "STUDENT_2"
+                                    ON ("STUDENT_1"."ID" = "STUDENT_2"."ID")
+               WHERE ("STUDENT_2"."year" IS NOT NULL)
+                     AND ("STUDENT_2"."GENDER" IS NOT NULL)
+               GROUP BY "STUDENT_2"."year", "STUDENT_2"."GENDER"
+               ORDER BY 1 ASC NULLS FIRST, 2 ASC NULLS FIRST
           - uri: /count(program^degree)
             status: 200 OK
             headers:

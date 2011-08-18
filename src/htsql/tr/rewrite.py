@@ -1321,6 +1321,12 @@ class UnmaskScalar(UnmaskUnit):
         if self.unit.flow.dominates(self.state.mask):
             code = self.state.unmask(self.unit.code)
             return code
+        # It is also redundant if the operand is a unit under the same
+        # or a dominated flow.
+        if (isinstance(self.unit.code, Unit) and
+                self.unit.flow.dominates(self.unit.code.flow)):
+            code = self.state.unmask(self.unit.code)
+            return code
         # Unmask the unit expression against the unit flow.
         code = self.state.unmask(self.unit.code, mask=self.unit.flow)
         # Unmask the unit flow against the current mask.

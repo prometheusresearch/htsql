@@ -18963,6 +18963,37 @@ tests:
                                      GROUP BY 2) AS "program"
                                     ON ("school"."code" = "program"."school_code")
                ORDER BY 1 ASC
+          - uri: /school{code,exists(department),exists(program)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                      |
+               +---------------------------------------------+
+               | code | exists(department) | exists(program) |
+              -+------+--------------------+-----------------+-
+               | art  | true               | true            |
+               | bus  | true               | true            |
+               | edu  | true               | true            |
+               | eng  | true               | true            |
+               | la   | true               | true            |
+               | mus  | true               | false           |
+               | ns   | true               | true            |
+               | ph   | false              | true            |
+               | sc   | false              | false           |
+                                                      (9 rows)
+
+               ----
+               /school{code,exists(department),exists(program)}
+               SELECT "school"."code",
+                      EXISTS(SELECT TRUE
+                             FROM "ad"."department" AS "department"
+                             WHERE ("school"."code" = "department"."school_code")),
+                      EXISTS(SELECT TRUE
+                             FROM "ad"."program" AS "program"
+                             WHERE ("school"."code" = "program"."school_code"))
+               FROM "ad"."school" AS "school"
+               ORDER BY 1 ASC
           - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
             status: 200 OK
             headers:
@@ -19248,99 +19279,6 @@ tests:
                                     ON ("school"."code" = "program"."school_code")
                WHERE (COALESCE("program"."count", 0) > 3)
                ORDER BY 1 ASC
-          - uri: /school.program{school, code, degree, count(root(){(school?code='art').program.student})}
-              ?school~'a'
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | (school.program?school~'a')                                                     |
-              -+---------------------------------------------------------------------------------+-
-               | school | code     | degree | count(root(){(school?code='art').program.student}) |
-              -+--------+----------+--------+----------------------------------------------------+-
-               | art    | gart     | pb     |                                                  5 |
-               | art    | uhist    | ba     |                                                  1 |
-               | art    | ustudio  | ba     |                                                  0 |
-               | la     | gengl    | ma     |                                                  0 |
-               | la     | glang    | ma     |                                                  0 |
-               | la     | gscitch  | ma     |                                                  0 |
-               | la     | psciwri  | ct     |                                                  0 |
-               | la     | uengl    | ba     |                                                  0 |
-               | la     | uhist    | ba     |                                                  0 |
-               | la     | upolisci | ba     |                                                  0 |
-               | la     | upsych   | ba     |                                                  0 |
-               | la     | uspan    | ba     |                                                  0 |
-                                                                                         (12 rows)
-
-               ----
-               /school.program{school,code,degree,count(root(){(school?code='art').program.student})}?school~'a'
-               SELECT "program"."school",
-                      "program"."code",
-                      "program"."degree",
-                      COALESCE("student"."count", 0)
-               FROM "ad"."school" AS "school"
-                    INNER JOIN "ad"."program" AS "program"
-                               ON ("school"."code" = "program"."school")
-                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
-                                            "school"."code" AS "code_1",
-                                            "program"."school",
-                                            "program"."code" AS "code_2"
-                                     FROM "ad"."school" AS "school"
-                                          INNER JOIN "ad"."program" AS "program"
-                                                     ON ("school"."code" = "program"."school")
-                                          INNER JOIN "ed"."student" AS "student"
-                                                     ON (("program"."school" = "student"."school") AND ("program"."code" = "student"."program"))
-                                     WHERE ("school"."code" = 'art')
-                                     GROUP BY 2, 3, 4) AS "student"
-                                    ON (("school"."code" = "student"."code_1") AND ("program"."school" = "student"."school") AND ("program"."code" = "student"."code_2"))
-               WHERE ("program"."school" ILIKE '%a%')
-               ORDER BY "school"."code" ASC, 1 ASC, 2 ASC
-          - uri: /program.school{code, root().program{code, degree}, count(root(){(program?degree='ba').school.department})}
-              ?code~'a'
-            status: 200 OK
-            headers:
-            - [Content-Type, text/plain; charset=UTF-8]
-            body: |2
-               | (program.school?code~'a')                                                                                     |
-              -+---------------------------------------------------------------------------------------------------------------+-
-               | code | root().program{code} | root().program{degree} | count(root(){(program?degree='ba').school.department}) |
-              -+------+----------------------+------------------------+--------------------------------------------------------+-
-               | art  | gart                 | pb                     |                                                      0 |
-               | art  | uhist                | ba                     |                                                      2 |
-               | art  | ustudio              | ba                     |                                                      2 |
-               | la   | gengl                | ma                     |                                                      0 |
-               | la   | glang                | ma                     |                                                      0 |
-               | la   | gscitch              | ma                     |                                                      0 |
-               | la   | psciwri              | ct                     |                                                      0 |
-               | la   | uengl                | ba                     |                                                      5 |
-               | la   | uhist                | ba                     |                                                      5 |
-               | la   | upolisci             | ba                     |                                                      5 |
-               | la   | upsych               | ba                     |                                                      5 |
-               | la   | uspan                | ba                     |                                                      5 |
-                                                                                                                       (12 rows)
-
-               ----
-               /program.school{code,root().program{code,degree},count(root(){(program?degree='ba').school.department})}?code~'a'
-               SELECT "school"."code",
-                      "program"."code",
-                      "program"."degree",
-                      COALESCE("department"."count", 0)
-               FROM "ad"."program" AS "program"
-                    INNER JOIN "ad"."school" AS "school"
-                               ON ("program"."school" = "school"."code")
-                    LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
-                                            "program"."school",
-                                            "program"."code"
-                                     FROM "ad"."program" AS "program"
-                                          INNER JOIN "ad"."school" AS "school"
-                                                     ON ("program"."school" = "school"."code")
-                                          INNER JOIN "ad"."department" AS "department"
-                                                     ON ("school"."code" = "department"."school")
-                                     WHERE ("program"."degree" = 'ba')
-                                     GROUP BY 2, 3) AS "department"
-                                    ON (("program"."school" = "department"."school") AND ("program"."code" = "department"."code"))
-               WHERE ("school"."code" ILIKE '%a%')
-               ORDER BY "program"."school" ASC, 2 ASC
           - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
             status: 200 OK
             headers:
@@ -19946,20 +19884,18 @@ tests:
                                     ON ("program_1"."school_code" = "program_2"."school_code")
                WHERE (COALESCE("student"."count", 0) = "program_2"."max")
                ORDER BY "school"."code" ASC, 1 ASC, 2 ASC
-          - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
+          - uri: /{count(school),{count(school)}?true(),{count(school)}?false()}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               |                                                                              |
-              -+------------------------------------------------------------------------------+-
-               | count(school) | this(){count(school)}?true() | this(){count(school)}?false() |
-              -+---------------+------------------------------+-------------------------------+-
-               |             9 |                            9 |                               |
-                                                                                        (1 row)
+               | count(school) | count(school) | count(school) |
+              -+---------------+---------------+---------------+-
+               |             9 |             9 |               |
+                                                         (1 row)
 
                ----
-               /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
+               /{count(school),{count(school)}?true(),{count(school)}?false()}
                SELECT "school"."count",
                       "school"."count",
                       "!"."count"
@@ -19970,28 +19906,28 @@ tests:
                                            FROM "ad"."school" AS "school") AS "school"
                                      WHERE FALSE) AS "!"
                                     ON TRUE
-          - uri: /school{code,name,this(){code}?name!~'art', root().school{code}?name!~'art'}
+          - uri: /school{code,name,{code}?name!~'art', root().school{code}?name!~'art'}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                            |
-              -+---------------------------------------------------------------------------------------------------+-
-               | code | name                          | this(){code}?name!~'art' | root().school{code}?name!~'art' |
-              -+------+-------------------------------+--------------------------+---------------------------------+-
-               | art  | School of Art and Design      |                          |                                 |
-               | bus  | School of Business            | bus                      | bus                             |
-               | edu  | College of Education          | edu                      | edu                             |
-               | eng  | School of Engineering         | eng                      | eng                             |
-               | la   | School of Arts and Humanities |                          |                                 |
-               | mus  | School of Music & Dance       | mus                      | mus                             |
-               | ns   | School of Natural Sciences    | ns                       | ns                              |
-               | ph   | Public Honorariums            | ph                       | ph                              |
-               | sc   | School of Continuing Studies  | sc                       | sc                              |
-                                                                                                            (9 rows)
+               | school                                             |
+               +----------------------------------------------------+
+               | code | name                          | code | code |
+              -+------+-------------------------------+------+------+-
+               | art  | School of Art and Design      |      |      |
+               | bus  | School of Business            | bus  | bus  |
+               | edu  | College of Education          | edu  | edu  |
+               | eng  | School of Engineering         | eng  | eng  |
+               | la   | School of Arts and Humanities |      |      |
+               | mus  | School of Music & Dance       | mus  | mus  |
+               | ns   | School of Natural Sciences    | ns   | ns   |
+               | ph   | Public Honorariums            | ph   | ph   |
+               | sc   | School of Continuing Studies  | sc   | sc   |
+                                                             (9 rows)
 
                ----
-               /school{code,name,this(){code}?name!~'art',root().school{code}?name!~'art'}
+               /school{code,name,{code}?name!~'art',root().school{code}?name!~'art'}
                SELECT "school_1"."code",
                       "school_1"."name",
                       "school_2"."code",
@@ -20002,84 +19938,120 @@ tests:
                                      WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
                                     ON ("school_1"."code" = "school_2"."code")
                ORDER BY 1 ASC
-          - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
+          - uri: /school{name,count(department),{count(department)}?name!~'art'}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                    |
-              -+-------------------------------------------------------------------------------------------+-
-               | name                          | count(department) | this(){count(department)}?name!~'art' |
-              -+-------------------------------+-------------------+---------------------------------------+-
-               | School of Art and Design      |                 2 |                                       |
-               | School of Business            |                 3 |                                     3 |
-               | College of Education          |                 2 |                                     2 |
-               | School of Engineering         |                 4 |                                     4 |
-               | School of Arts and Humanities |                 5 |                                       |
-               | School of Music & Dance       |                 4 |                                     4 |
-               | School of Natural Sciences    |                 4 |                                     4 |
-               | Public Honorariums            |                 0 |                                     0 |
-               | School of Continuing Studies  |                 0 |                                     0 |
-                                                                                                    (9 rows)
+               | school                                                                |
+               +-----------------------------------------------------------------------+
+               | name                          | count(department) | count(department) |
+              -+-------------------------------+-------------------+-------------------+-
+               | School of Art and Design      |                 2 |                   |
+               | School of Business            |                 3 |                 3 |
+               | College of Education          |                 2 |                 2 |
+               | School of Engineering         |                 4 |                 4 |
+               | School of Arts and Humanities |                 5 |                   |
+               | School of Music & Dance       |                 4 |                 4 |
+               | School of Natural Sciences    |                 4 |                 4 |
+               | Public Honorariums            |                 0 |                 0 |
+               | School of Continuing Studies  |                 0 |                 0 |
+                                                                                (9 rows)
 
                ----
-               /school{name,count(department),this(){count(department)}?name!~'art'}
+               /school{name,count(department),{count(department)}?name!~'art'}
                SELECT "school_1"."name",
                       COALESCE("department"."count", 0),
                       "school_2"."count"
                FROM "ad"."school" AS "school_1"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
-                                            "department"."school"
+                                            "department"."school_code"
                                      FROM "ad"."department" AS "department"
                                      GROUP BY 2) AS "department"
-                                    ON ("school_1"."code" = "department"."school")
+                                    ON ("school_1"."code" = "department"."school_code")
                     LEFT OUTER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
                                             "school"."code"
                                      FROM "ad"."school" AS "school"
                                           LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
-                                                                  "department"."school"
+                                                                  "department"."school_code"
                                                            FROM "ad"."department" AS "department"
                                                            GROUP BY 2) AS "department"
-                                                          ON ("school"."code" = "department"."school")
+                                                          ON ("school"."code" = "department"."school_code")
                                      WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
                                     ON ("school_1"."code" = "school_2"."code")
                ORDER BY "school_1"."code" ASC
-          - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
+          - uri: /school{name,exists(department),{exists(department)}?name!~'art'}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                                                                      |
-              -+---------------------------------------------------------------------------------------------+-
-               | name                          | exists(department) | this(){exists(department)}?name!~'art' |
-              -+-------------------------------+--------------------+----------------------------------------+-
-               | School of Art and Design      | true               |                                        |
-               | School of Business            | true               | true                                   |
-               | College of Education          | true               | true                                   |
-               | School of Engineering         | true               | true                                   |
-               | School of Arts and Humanities | true               |                                        |
-               | School of Music & Dance       | true               | true                                   |
-               | School of Natural Sciences    | true               | true                                   |
-               | Public Honorariums            | false              | false                                  |
-               | School of Continuing Studies  | false              | false                                  |
-                                                                                                      (9 rows)
+               | school                                                                  |
+               +-------------------------------------------------------------------------+
+               | name                          | exists(department) | exists(department) |
+              -+-------------------------------+--------------------+--------------------+-
+               | School of Art and Design      | true               |                    |
+               | School of Business            | true               | true               |
+               | College of Education          | true               | true               |
+               | School of Engineering         | true               | true               |
+               | School of Arts and Humanities | true               |                    |
+               | School of Music & Dance       | true               | true               |
+               | School of Natural Sciences    | true               | true               |
+               | Public Honorariums            | false              | false              |
+               | School of Continuing Studies  | false              | false              |
+                                                                                  (9 rows)
 
                ----
-               /school{name,exists(department),this(){exists(department)}?name!~'art'}
+               /school{name,exists(department),{exists(department)}?name!~'art'}
                SELECT "school_1"."name",
                       EXISTS(SELECT TRUE
                              FROM "ad"."department" AS "department"
-                             WHERE ("school_1"."code" = "department"."school")),
+                             WHERE ("school_1"."code" = "department"."school_code")),
                       "school_2"."exists"
                FROM "ad"."school" AS "school_1"
                     LEFT OUTER JOIN (SELECT EXISTS(SELECT TRUE
                                                    FROM "ad"."department" AS "department"
-                                                   WHERE ("school"."code" = "department"."school")) AS "exists",
+                                                   WHERE ("school"."code" = "department"."school_code")) AS "exists",
                                             "school"."code"
                                      FROM "ad"."school" AS "school"
                                      WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
                                     ON ("school_1"."code" = "school_2"."code")
                ORDER BY "school_1"."code" ASC
+          - uri: /department{code, school{code}, school{code}?name!~'art'}?code~'a'
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department           |
+               +----------------------+
+               |        | school      |
+               |        +-------------+
+               | code   | code | code |
+              -+--------+------+------+-
+               | acc    | bus  | bus  |
+               | arthis | art  |      |
+               | astro  | ns   | ns   |
+               | bursar |      |      |
+               | career |      |      |
+               | lang   | la   |      |
+               | parent |      |      |
+               | pia    | mus  | mus  |
+               | stdart | art  |      |
+                               (9 rows)
+
+               ----
+               /department{code,school{code},school{code}?name!~'art'}?code~'a'
+               SELECT "department"."code",
+                      "school_1"."code",
+                      "school_2"."code"
+               FROM "ad"."department" AS "department"
+                    LEFT OUTER JOIN "ad"."school" AS "school_1"
+                                    ON ("department"."school_code" = "school_1"."code")
+                    LEFT OUTER JOIN (SELECT "school"."code"
+                                     FROM "ad"."school" AS "school"
+                                     WHERE ("school"."name" NOT ILIKE '%art%')) AS "school_2"
+                                    ON ("department"."school_code" = "school_2"."code")
+               WHERE ("department"."code" ILIKE '%a%')
+               ORDER BY 1 ASC
           - uri: /home()
             status: 400 Bad Request
             headers:
@@ -24312,34 +24284,29 @@ tests:
                +----------------------------------------------------+
                | year(dob) | gender | count(^) | count(^?is_active) |
               -+-----------+--------+----------+--------------------+-
-               |      1982 | m      |       11 |                  7 |
-               |      1983 | m      |       26 |                 17 |
-               |      1984 | m      |       39 |                 31 |
-               |      1985 | f      |       12 |                 12 |
-               |      1985 | m      |       50 |                 42 |
-               |      1986 | f      |       38 |                 38 |
-               |      1986 | m      |       30 |                 30 |
-               |      1987 | f      |       36 |                 36 |
-               |      1987 | m      |       13 |                 13 |
-               |      1988 | f      |       56 |                 56 |
-               |      1988 | m      |        3 |                  3 |
-               |      1989 | f      |       61 |                 61 |
-               |      1990 | f      |       33 |                 33 |
-               |      1991 | f      |       37 |                 37 |
-               |      1992 | f      |       11 |                 11 |
-                                                            (15 rows)
+               |      1982 | m      |        4 |                  0 |
+               |      1983 | m      |        9 |                  0 |
+               |      1984 | m      |        8 |                  0 |
+               |      1985 | m      |        8 |                  0 |
+                                                             (4 rows)
 
                ----
                /student^({year(dob),gender}?!is_active){*,count(^),count(^?is_active)}
-               SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER),
-                      "student"."gender",
+               SELECT "student_2"."year",
+                      "student_2"."gender",
                       COUNT(TRUE),
-                      COUNT((CASE WHEN "student"."is_active" THEN TRUE END))
-               FROM "ed"."student" AS "student"
-               WHERE (CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) IS NOT NULL)
-                     AND ("student"."gender" IS NOT NULL)
+                      COUNT((CASE WHEN "student_1"."is_active" THEN TRUE END))
+               FROM "ed"."student" AS "student_1"
+                    LEFT OUTER JOIN (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                            "student"."gender",
+                                            "student"."id"
+                                     FROM "ed"."student" AS "student"
+                                     WHERE (NOT "student"."is_active")) AS "student_2"
+                                    ON ("student_1"."id" = "student_2"."id")
+               WHERE ("student_2"."year" IS NOT NULL)
+                     AND ("student_2"."gender" IS NOT NULL)
                GROUP BY 1, 2
-               ORDER BY 1 ASC, 2 ASC
+               ORDER BY 1 ASC NULLS FIRST, 2 ASC NULLS FIRST
           - uri: /student^({y_dob:=year(dob),gender}?!is_active) {*, count(student),
               count(student?is_active)}
             status: 200 OK
@@ -24350,34 +24317,29 @@ tests:
                +------------------------------------------------------------+
                | y_dob | gender | count(student) | count(student?is_active) |
               -+-------+--------+----------------+--------------------------+-
-               |  1982 | m      |             11 |                        7 |
-               |  1983 | m      |             26 |                       17 |
-               |  1984 | m      |             39 |                       31 |
-               |  1985 | f      |             12 |                       12 |
-               |  1985 | m      |             50 |                       42 |
-               |  1986 | f      |             38 |                       38 |
-               |  1986 | m      |             30 |                       30 |
-               |  1987 | f      |             36 |                       36 |
-               |  1987 | m      |             13 |                       13 |
-               |  1988 | f      |             56 |                       56 |
-               |  1988 | m      |              3 |                        3 |
-               |  1989 | f      |             61 |                       61 |
-               |  1990 | f      |             33 |                       33 |
-               |  1991 | f      |             37 |                       37 |
-               |  1992 | f      |             11 |                       11 |
-                                                                    (15 rows)
+               |  1982 | m      |              4 |                        0 |
+               |  1983 | m      |              9 |                        0 |
+               |  1984 | m      |              8 |                        0 |
+               |  1985 | m      |              8 |                        0 |
+                                                                     (4 rows)
 
                ----
                /student^({y_dob:=year(dob),gender}?!is_active){*,count(student),count(student?is_active)}
-               SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER),
-                      "student"."gender",
+               SELECT "student_2"."year",
+                      "student_2"."gender",
                       COUNT(TRUE),
-                      COUNT((CASE WHEN "student"."is_active" THEN TRUE END))
-               FROM "ed"."student" AS "student"
-               WHERE (CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) IS NOT NULL)
-                     AND ("student"."gender" IS NOT NULL)
+                      COUNT((CASE WHEN "student_1"."is_active" THEN TRUE END))
+               FROM "ed"."student" AS "student_1"
+                    LEFT OUTER JOIN (SELECT CAST(EXTRACT(YEAR FROM "student"."dob") AS INTEGER) AS "year",
+                                            "student"."gender",
+                                            "student"."id"
+                                     FROM "ed"."student" AS "student"
+                                     WHERE (NOT "student"."is_active")) AS "student_2"
+                                    ON ("student_1"."id" = "student_2"."id")
+               WHERE ("student_2"."year" IS NOT NULL)
+                     AND ("student_2"."gender" IS NOT NULL)
                GROUP BY 1, 2
-               ORDER BY 1 ASC, 2 ASC
+               ORDER BY 1 ASC NULLS FIRST, 2 ASC NULLS FIRST
           - uri: /count(program^degree)
             status: 200 OK
             headers:

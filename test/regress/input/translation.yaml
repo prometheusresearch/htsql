@@ -82,7 +82,6 @@ tests:
       ifndef: mssql
     - uri: /school{code,count(department),count(program)}
     - uri: /school{code,exists(department),exists(program)}
-      skip: true # broken until `reduce` is implemented
     # Aggregates sharing the same spaces.
     - uri: /department{sum(course.credits),count(course.credits),
                        avg(course.credits)}?exists(course)
@@ -104,15 +103,6 @@ tests:
     # Unmasking and bundling aggregate units
     - uri: /school{code,count(program)}?count(program)>3
     # Merging terms with parallel ties
-    # (broken due to changed selector semantics)
-    - uri: /school.program{school, code, degree,
-                           count(root(){(school?code='art').program.student})}
-                           ?school~'a'
-      skip: true
-    - uri: /program.school{code, root().program{code, degree},
-                           count(root(){(program?degree='ba').school.department})}
-                           ?code~'a'
-      skip: true
     - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
     # Merging frames for scalar and aggregate units
     # Reduce plural flow to `course?credits={1,2,3}`.
@@ -188,16 +178,12 @@ tests:
     - uri: /school.program{school_code,code,count(student)}
                     ?count(student)=max((school_code -> program).count(student))
     # Lifting a unit to a dominating space
-    # (broken due to changed selector semantics)
-    - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
-      skip: true
-    - uri: /school{code,name,this(){code}?name!~'art',
+    - uri: /{count(school),{count(school)}?true(),{count(school)}?false()}
+    - uri: /school{code,name,{code}?name!~'art',
                    root().school{code}?name!~'art'}
-      skip: true
-    - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
-      skip: true
-    - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
-      skip: true
+    - uri: /school{name,count(department),{count(department)}?name!~'art'}
+    - uri: /school{name,exists(department),{exists(department)}?name!~'art'}
+    - uri: /department{code, school{code}, school{code}?name!~'art'}?code~'a'
     # The `home()` function.
     # Empty selector
     - uri: /home()

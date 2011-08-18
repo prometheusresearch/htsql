@@ -542,11 +542,20 @@ class ConvertUntyped(Convert):
         # The base binding is of untyped domain, however it does not have
         # to be an instance of `LiteralBinding` since the actual literal node
         # could be wrapped by decorators.  However after we encode the node,
-        # the decorators are gone and the result must be a `LiteralCode`.
+        # the decorators are gone and the result must be a `LiteralCode`
         # The domain should remain the same too.
+        # FIXME: the literal could possibly be wrapped into `ScalarUnit`
+        # if the literal binding was rescoped.
         base = self.state.encode(self.base)
-        assert isinstance(base, LiteralCode)
+        assert isinstance(base, (LiteralCode, ScalarUnit))
         assert isinstance(base.domain, UntypedDomain)
+        # Unwrap scalar units from the literal code.
+        wrappers = []
+        while isinstance(base, ScalarUnit):
+            wrappers.append(base)
+            base = base.code
+        assert isinstance(base, LiteralCode)
+        # If the operand is a scalar unit,
         # Convert the serialized literal value to a Python object; raises
         # a `ValueError` if the literal is not in a valid format.
         try:
@@ -555,7 +564,12 @@ class ConvertUntyped(Convert):
             raise EncodeError(str(exc), self.binding.mark)
         # Generate a new literal node with the converted value and
         # the target domain.
-        return LiteralCode(value, self.domain, self.binding)
+        code = LiteralCode(value, self.domain, self.binding)
+        # If necessary, wrap the literal back into scalar units.
+        while wrappers:
+            wrapper = wrappers.pop()
+            code = wrapper.clone(code=code)
+        return code
 
 
 class ConvertToItself(Convert):
@@ -766,6 +780,17 @@ class ConvertToDateTime(Convert):
                         self.binding)
 
 
+class EncodeRescoping(Encode):
+
+    adapts(RescopingBinding)
+
+    def __call__(self):
+        # Wrap the base expression into a scalar unit.
+        code = self.state.encode(self.binding.base)
+        flow = self.state.relate(self.binding.scope)
+        return ScalarUnit(code, flow, self.binding)
+
+
 class EncodeFormula(Encode):
 
     adapts(FormulaBinding)
@@ -877,8 +902,7 @@ class RelateBySignature(EncodeBySignatureBase):
 
 class EncodeWrapping(Encode):
 
-    # FIXME: `RescopingBinding` should generate a `ScalarUnit`?
-    adapts_many(WrappingBinding, RescopingBinding)
+    adapts_many(WrappingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -890,8 +914,7 @@ class RelateWrapping(Relate):
     Translates a wrapper binding to a flow node.
     """
 
-    # FIXME: `RescopingBinding`?
-    adapts_many(WrappingBinding, RescopingBinding)
+    adapts_many(WrappingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
