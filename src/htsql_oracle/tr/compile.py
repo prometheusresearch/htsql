@@ -29,8 +29,7 @@ class OracleCompileOrdered(CompileOrdered):
             else:
                 right_limit = self.flow.limit+1
         kid = self.state.compile(self.flow.base,
-                                  baseline=self.state.root,
-                                  mask=self.state.root)
+                                 baseline=self.state.root)
         order = arrange(self.flow)
         codes = [code for code, direction in order]
         kid = self.state.inject(kid, [code for code, direction in order])

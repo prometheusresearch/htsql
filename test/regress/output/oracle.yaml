@@ -23111,22 +23111,14 @@ tests:
 
                ----
                /distinct(distinct(student{year(dob)}?!is_active).^{gender}){*,count(^),count(^.is_active)}
-               SELECT "STUDENT_2"."GENDER",
+               SELECT "STUDENT"."GENDER",
                       COUNT(1),
-                      COUNT(NULLIF("STUDENT_2"."IS_ACTIVE", 0))
-               FROM (SELECT EXTRACT(YEAR FROM "STUDENT"."DOB") AS "year"
-                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                     WHERE (EXTRACT(YEAR FROM "STUDENT"."DOB") IS NOT NULL)
-                           AND (NOT ("STUDENT"."IS_ACTIVE" <> 0))
-                     GROUP BY EXTRACT(YEAR FROM "STUDENT"."DOB")) "STUDENT_1"
-                    INNER JOIN (SELECT "STUDENT"."GENDER",
-                                       "STUDENT"."IS_ACTIVE",
-                                       EXTRACT(YEAR FROM "STUDENT"."DOB") AS "year"
-                                FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                WHERE (NOT ("STUDENT"."IS_ACTIVE" <> 0))) "STUDENT_2"
-                               ON ("STUDENT_1"."year" = "STUDENT_2"."year")
-               WHERE ("STUDENT_2"."GENDER" IS NOT NULL)
-               GROUP BY "STUDENT_2"."GENDER"
+                      COUNT(NULLIF("STUDENT"."IS_ACTIVE", 0))
+               FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+               WHERE ("STUDENT"."GENDER" IS NOT NULL)
+                     AND (EXTRACT(YEAR FROM "STUDENT"."DOB") IS NOT NULL)
+                     AND (NOT ("STUDENT"."IS_ACTIVE" <> 0))
+               GROUP BY "STUDENT"."GENDER"
                ORDER BY 1 ASC
           - uri: /distinct(distinct(student{year(dob), gender}?!is_active){*1}) {*,
               count(^), count(^.^), count(^.^.is_active)}
@@ -23591,23 +23583,18 @@ tests:
 
                ----
                /(school?code='art').(program^degree).^{title+,degree}
-               SELECT "PROGRAM_2"."TITLE",
-                      "PROGRAM_2"."DEGREE"
+               SELECT "PROGRAM"."TITLE",
+                      "PROGRAM"."DEGREE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN (SELECT "PROGRAM"."DEGREE",
-                                       "PROGRAM"."SCHOOL_CODE"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-                                GROUP BY "PROGRAM"."SCHOOL_CODE", "PROGRAM"."DEGREE") "PROGRAM_1"
-                               ON ("SCHOOL"."CODE" = "PROGRAM_1"."SCHOOL_CODE")
                     INNER JOIN (SELECT "PROGRAM"."TITLE",
                                        "PROGRAM"."DEGREE",
                                        "PROGRAM"."SCHOOL_CODE",
                                        "PROGRAM"."CODE"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
-                               ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE"))
+                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                                WHERE ("PROGRAM"."DEGREE" IS NOT NULL)) "PROGRAM"
+                               ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
                WHERE ("SCHOOL"."CODE" = 'art')
-               ORDER BY 1 ASC, "SCHOOL"."CODE" ASC, "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_2"."SCHOOL_CODE" ASC, "PROGRAM_2"."CODE" ASC
+               ORDER BY 1 ASC, "SCHOOL"."CODE" ASC, 2 ASC NULLS FIRST, "PROGRAM"."SCHOOL_CODE" ASC, "PROGRAM"."CODE" ASC
           - uri: /school.program.distinct(student{year(dob),gender}?!is_active)
             status: 200 OK
             headers:
@@ -23757,28 +23744,16 @@ tests:
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
                     INNER JOIN "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                                ON ("SCHOOL"."CODE" = "PROGRAM"."SCHOOL_CODE")
-                    INNER JOIN (SELECT "STUDENT_2"."GENDER",
+                    INNER JOIN (SELECT "STUDENT"."GENDER",
                                        COUNT(1) AS "count_1",
-                                       COUNT(NULLIF("STUDENT_2"."IS_ACTIVE", 0)) AS "count_2",
-                                       "STUDENT_1"."SCHOOL_CODE",
-                                       "STUDENT_1"."PROGRAM_CODE"
-                                FROM (SELECT "STUDENT"."SCHOOL_CODE",
-                                             "STUDENT"."PROGRAM_CODE",
-                                             EXTRACT(YEAR FROM "STUDENT"."DOB") AS "year"
-                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                      WHERE (EXTRACT(YEAR FROM "STUDENT"."DOB") IS NOT NULL)
-                                            AND (NOT ("STUDENT"."IS_ACTIVE" <> 0))
-                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE", EXTRACT(YEAR FROM "STUDENT"."DOB")) "STUDENT_1"
-                                     INNER JOIN (SELECT "STUDENT"."GENDER",
-                                                        "STUDENT"."IS_ACTIVE",
-                                                        "STUDENT"."SCHOOL_CODE",
-                                                        "STUDENT"."PROGRAM_CODE",
-                                                        EXTRACT(YEAR FROM "STUDENT"."DOB") AS "year"
-                                                 FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                                 WHERE (NOT ("STUDENT"."IS_ACTIVE" <> 0))) "STUDENT_2"
-                                                ON (("STUDENT_1"."SCHOOL_CODE" = "STUDENT_2"."SCHOOL_CODE") AND ("STUDENT_1"."PROGRAM_CODE" = "STUDENT_2"."PROGRAM_CODE") AND ("STUDENT_1"."year" = "STUDENT_2"."year"))
-                                WHERE ("STUDENT_2"."GENDER" IS NOT NULL)
-                                GROUP BY "STUDENT_1"."SCHOOL_CODE", "STUDENT_1"."PROGRAM_CODE", "STUDENT_2"."GENDER") "STUDENT"
+                                       COUNT(NULLIF("STUDENT"."IS_ACTIVE", 0)) AS "count_2",
+                                       "STUDENT"."SCHOOL_CODE",
+                                       "STUDENT"."PROGRAM_CODE"
+                                FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                WHERE ("STUDENT"."GENDER" IS NOT NULL)
+                                      AND (EXTRACT(YEAR FROM "STUDENT"."DOB") IS NOT NULL)
+                                      AND (NOT ("STUDENT"."IS_ACTIVE" <> 0))
+                                GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE", "STUDENT"."GENDER") "STUDENT"
                                ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
                ORDER BY "SCHOOL"."CODE" ASC, "PROGRAM"."SCHOOL_CODE" ASC, "PROGRAM"."CODE" ASC, 1 ASC
           - uri: /school.program.distinct(distinct(student{year(dob), gender}?!is_active){*1})
@@ -24195,23 +24170,14 @@ tests:
 
                ----
                /(program^degree).^
-               SELECT "PROGRAM_2"."SCHOOL_CODE",
-                      "PROGRAM_2"."CODE",
-                      "PROGRAM_2"."TITLE",
-                      "PROGRAM_2"."DEGREE",
-                      "PROGRAM_2"."PART_OF"
-               FROM (SELECT "PROGRAM"."DEGREE"
-                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                     WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-                     GROUP BY "PROGRAM"."DEGREE") "PROGRAM_1"
-                    INNER JOIN (SELECT "PROGRAM"."SCHOOL_CODE",
-                                       "PROGRAM"."CODE",
-                                       "PROGRAM"."TITLE",
-                                       "PROGRAM"."DEGREE",
-                                       "PROGRAM"."PART_OF"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
-                               ON ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE")
-               ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, 1 ASC, 2 ASC
+               SELECT "PROGRAM"."SCHOOL_CODE",
+                      "PROGRAM"."CODE",
+                      "PROGRAM"."TITLE",
+                      "PROGRAM"."DEGREE",
+                      "PROGRAM"."PART_OF"
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+               WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
+               ORDER BY 4 ASC NULLS FIRST, 1 ASC, 2 ASC
           - uri: /(program.sort(count(student))^degree).^ {*, count(student)}
             status: 200 OK
             headers:
@@ -24278,29 +24244,19 @@ tests:
 
                ----
                /(program.sort(count(student))^degree).^{*,count(student)}
-               SELECT "PROGRAM_2"."SCHOOL_CODE",
-                      "PROGRAM_2"."CODE",
-                      "PROGRAM_2"."TITLE",
-                      "PROGRAM_2"."DEGREE",
-                      "PROGRAM_2"."PART_OF",
+               SELECT "PROGRAM_1"."SCHOOL_CODE",
+                      "PROGRAM_1"."CODE",
+                      "PROGRAM_1"."TITLE",
+                      "PROGRAM_1"."DEGREE",
+                      "PROGRAM_1"."PART_OF",
                       COALESCE("STUDENT"."count", 0)
-               FROM (SELECT "PROGRAM"."DEGREE"
-                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                     WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-                     GROUP BY "PROGRAM"."DEGREE") "PROGRAM_1"
-                    INNER JOIN (SELECT "PROGRAM"."SCHOOL_CODE",
-                                       "PROGRAM"."CODE",
-                                       "PROGRAM"."TITLE",
-                                       "PROGRAM"."DEGREE",
-                                       "PROGRAM"."PART_OF"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
-                               ON ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE")
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "STUDENT"."SCHOOL_CODE",
                                             "STUDENT"."PROGRAM_CODE"
                                      FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
                                      GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
-                                    ON (("PROGRAM_2"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM_2"."CODE" = "STUDENT"."PROGRAM_CODE"))
+                                    ON (("PROGRAM_1"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM_CODE"))
                     INNER JOIN (SELECT COALESCE("STUDENT"."count", 0) AS "count",
                                        "PROGRAM"."SCHOOL_CODE",
                                        "PROGRAM"."CODE"
@@ -24310,9 +24266,10 @@ tests:
                                                              "STUDENT"."PROGRAM_CODE"
                                                       FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
                                                       GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
-                                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))) "PROGRAM_3"
-                               ON (("PROGRAM_2"."SCHOOL_CODE" = "PROGRAM_3"."SCHOOL_CODE") AND ("PROGRAM_2"."CODE" = "PROGRAM_3"."CODE"))
-               ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, "PROGRAM_3"."count" ASC, 1 ASC, 2 ASC
+                                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))) "PROGRAM_2"
+                               ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "PROGRAM_2"."CODE"))
+               WHERE ("PROGRAM_1"."DEGREE" IS NOT NULL)
+               ORDER BY 4 ASC NULLS FIRST, "PROGRAM_2"."count" ASC, 1 ASC, 2 ASC
           - uri: /school{code, count(program), count(distinct(program{degree}))}
             status: 200 OK
             headers:
@@ -24753,29 +24710,17 @@ tests:
 
                ----
                /distinct(program{degree}?school.code={'art','la'}).^
-               SELECT "PROGRAM_2"."SCHOOL_CODE",
-                      "PROGRAM_2"."CODE",
-                      "PROGRAM_2"."TITLE",
-                      "PROGRAM_2"."DEGREE",
-                      "PROGRAM_2"."PART_OF"
-               FROM (SELECT "PROGRAM"."DEGREE"
-                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                          INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                                     ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
-                     WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
-                           AND ("SCHOOL"."CODE" IN ('art', 'la'))
-                     GROUP BY "PROGRAM"."DEGREE") "PROGRAM_1"
-                    INNER JOIN (SELECT "PROGRAM"."SCHOOL_CODE",
-                                       "PROGRAM"."CODE",
-                                       "PROGRAM"."TITLE",
-                                       "PROGRAM"."DEGREE",
-                                       "PROGRAM"."PART_OF"
-                                FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                     INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                                                ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
-                                WHERE ("SCHOOL"."CODE" IN ('art', 'la'))) "PROGRAM_2"
-                               ON ("PROGRAM_1"."DEGREE" = "PROGRAM_2"."DEGREE")
-               ORDER BY "PROGRAM_1"."DEGREE" ASC NULLS FIRST, 1 ASC, 2 ASC
+               SELECT "PROGRAM"."SCHOOL_CODE",
+                      "PROGRAM"."CODE",
+                      "PROGRAM"."TITLE",
+                      "PROGRAM"."DEGREE",
+                      "PROGRAM"."PART_OF"
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
+                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+                               ON ("PROGRAM"."SCHOOL_CODE" = "SCHOOL"."CODE")
+               WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
+                     AND ("SCHOOL"."CODE" IN ('art', 'la'))
+               ORDER BY 4 ASC NULLS FIRST, 1 ASC, 2 ASC
       - id: known-issues
         tests:
         - uri: /{}

@@ -22809,21 +22809,13 @@ tests:
 
                ----
                /distinct(distinct(student{year(dob)}?!is_active).^{gender}){*,count(^),count(^.is_active)}
-               SELECT "student_2"."gender",
+               SELECT "student"."gender",
                       COUNT(1),
-                      COUNT(NULLIF("student_2"."is_active", 0))
-               FROM (SELECT CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year"
-                     FROM "student" AS "student"
-                     WHERE (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
-                           AND (NOT "student"."is_active")
-                     GROUP BY 1) AS "student_1"
-                    INNER JOIN (SELECT "student"."gender",
-                                       "student"."is_active",
-                                       CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year"
-                                FROM "student" AS "student"
-                                WHERE (NOT "student"."is_active")) AS "student_2"
-                               ON ("student_1"."year" = "student_2"."year")
-               WHERE ("student_2"."gender" IS NOT NULL)
+                      COUNT(NULLIF("student"."is_active", 0))
+               FROM "student" AS "student"
+               WHERE ("student"."gender" IS NOT NULL)
+                     AND (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                     AND (NOT "student"."is_active")
                GROUP BY 1
                ORDER BY 1 ASC
           - uri: /distinct(distinct(student{year(dob), gender}?!is_active){*1}) {*,
@@ -23289,23 +23281,18 @@ tests:
 
                ----
                /(school?code='art').(program^degree).^{title+,degree}
-               SELECT "program_2"."title",
-                      "program_2"."degree"
+               SELECT "program"."title",
+                      "program"."degree"
                FROM "school" AS "school"
-                    INNER JOIN (SELECT "program"."degree",
-                                       "program"."school_code"
-                                FROM "program" AS "program"
-                                WHERE ("program"."degree" IS NOT NULL)
-                                GROUP BY 2, 1) AS "program_1"
-                               ON ("school"."code" = "program_1"."school_code")
                     INNER JOIN (SELECT "program"."title",
                                        "program"."degree",
                                        "program"."school_code",
                                        "program"."code"
-                                FROM "program" AS "program") AS "program_2"
-                               ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."degree" = "program_2"."degree"))
+                                FROM "program" AS "program"
+                                WHERE ("program"."degree" IS NOT NULL)) AS "program"
+                               ON ("school"."code" = "program"."school_code")
                WHERE ("school"."code" = 'art')
-               ORDER BY 1 ASC, "school"."code" ASC, "program_1"."degree" ASC, "program_2"."school_code" ASC, "program_2"."code" ASC
+               ORDER BY 1 ASC, "school"."code" ASC, 2 ASC, "program"."school_code" ASC, "program"."code" ASC
           - uri: /school.program.distinct(student{year(dob),gender}?!is_active)
             status: 200 OK
             headers:
@@ -23455,27 +23442,15 @@ tests:
                FROM "school" AS "school"
                     INNER JOIN "program" AS "program"
                                ON ("school"."code" = "program"."school_code")
-                    INNER JOIN (SELECT "student_2"."gender",
+                    INNER JOIN (SELECT "student"."gender",
                                        COUNT(1) AS "count_1",
-                                       COUNT(NULLIF("student_2"."is_active", 0)) AS "count_2",
-                                       "student_1"."school_code",
-                                       "student_1"."program_code"
-                                FROM (SELECT "student"."school_code",
-                                             "student"."program_code",
-                                             CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year"
-                                      FROM "student" AS "student"
-                                      WHERE (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
-                                            AND (NOT "student"."is_active")
-                                      GROUP BY 1, 2, 3) AS "student_1"
-                                     INNER JOIN (SELECT "student"."gender",
-                                                        "student"."is_active",
-                                                        "student"."school_code",
-                                                        "student"."program_code",
-                                                        CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) AS "year"
-                                                 FROM "student" AS "student"
-                                                 WHERE (NOT "student"."is_active")) AS "student_2"
-                                                ON (("student_1"."school_code" = "student_2"."school_code") AND ("student_1"."program_code" = "student_2"."program_code") AND ("student_1"."year" = "student_2"."year"))
-                                WHERE ("student_2"."gender" IS NOT NULL)
+                                       COUNT(NULLIF("student"."is_active", 0)) AS "count_2",
+                                       "student"."school_code",
+                                       "student"."program_code"
+                                FROM "student" AS "student"
+                                WHERE ("student"."gender" IS NOT NULL)
+                                      AND (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                                      AND (NOT "student"."is_active")
                                 GROUP BY 4, 5, 1) AS "student"
                                ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
                ORDER BY "school"."code" ASC, "program"."school_code" ASC, "program"."code" ASC, 1 ASC
@@ -23893,23 +23868,14 @@ tests:
 
                ----
                /(program^degree).^
-               SELECT "program_2"."school_code",
-                      "program_2"."code",
-                      "program_2"."title",
-                      "program_2"."degree",
-                      "program_2"."part_of"
-               FROM (SELECT "program"."degree"
-                     FROM "program" AS "program"
-                     WHERE ("program"."degree" IS NOT NULL)
-                     GROUP BY 1) AS "program_1"
-                    INNER JOIN (SELECT "program"."school_code",
-                                       "program"."code",
-                                       "program"."title",
-                                       "program"."degree",
-                                       "program"."part_of"
-                                FROM "program" AS "program") AS "program_2"
-                               ON ("program_1"."degree" = "program_2"."degree")
-               ORDER BY "program_1"."degree" ASC, 1 ASC, 2 ASC
+               SELECT "program"."school_code",
+                      "program"."code",
+                      "program"."title",
+                      "program"."degree",
+                      "program"."part_of"
+               FROM "program" AS "program"
+               WHERE ("program"."degree" IS NOT NULL)
+               ORDER BY 4 ASC, 1 ASC, 2 ASC
           - uri: /(program.sort(count(student))^degree).^ {*, count(student)}
             status: 200 OK
             headers:
@@ -23976,29 +23942,19 @@ tests:
 
                ----
                /(program.sort(count(student))^degree).^{*,count(student)}
-               SELECT "program_2"."school_code",
-                      "program_2"."code",
-                      "program_2"."title",
-                      "program_2"."degree",
-                      "program_2"."part_of",
+               SELECT "program_1"."school_code",
+                      "program_1"."code",
+                      "program_1"."title",
+                      "program_1"."degree",
+                      "program_1"."part_of",
                       COALESCE("student"."count", 0)
-               FROM (SELECT "program"."degree"
-                     FROM "program" AS "program"
-                     WHERE ("program"."degree" IS NOT NULL)
-                     GROUP BY 1) AS "program_1"
-                    INNER JOIN (SELECT "program"."school_code",
-                                       "program"."code",
-                                       "program"."title",
-                                       "program"."degree",
-                                       "program"."part_of"
-                                FROM "program" AS "program") AS "program_2"
-                               ON ("program_1"."degree" = "program_2"."degree")
+               FROM "program" AS "program_1"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
                                             "student"."school_code",
                                             "student"."program_code"
                                      FROM "student" AS "student"
                                      GROUP BY 2, 3) AS "student"
-                                    ON (("program_2"."school_code" = "student"."school_code") AND ("program_2"."code" = "student"."program_code"))
+                                    ON (("program_1"."school_code" = "student"."school_code") AND ("program_1"."code" = "student"."program_code"))
                     INNER JOIN (SELECT COALESCE("student"."count", 0) AS "count",
                                        "program"."school_code",
                                        "program"."code"
@@ -24008,9 +23964,10 @@ tests:
                                                              "student"."program_code"
                                                       FROM "student" AS "student"
                                                       GROUP BY 2, 3) AS "student"
-                                                     ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))) AS "program_3"
-                               ON (("program_2"."school_code" = "program_3"."school_code") AND ("program_2"."code" = "program_3"."code"))
-               ORDER BY "program_1"."degree" ASC, "program_3"."count" ASC, 1 ASC, 2 ASC
+                                                     ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))) AS "program_2"
+                               ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."code"))
+               WHERE ("program_1"."degree" IS NOT NULL)
+               ORDER BY 4 ASC, "program_2"."count" ASC, 1 ASC, 2 ASC
           - uri: /program^degree{*, exists(^), count(^)}
             status: 200 OK
             headers:
@@ -24480,29 +24437,17 @@ tests:
 
                ----
                /distinct(program{degree}?school.code={'art','la'}).^
-               SELECT "program_2"."school_code",
-                      "program_2"."code",
-                      "program_2"."title",
-                      "program_2"."degree",
-                      "program_2"."part_of"
-               FROM (SELECT "program"."degree"
-                     FROM "program" AS "program"
-                          INNER JOIN "school" AS "school"
-                                     ON ("program"."school_code" = "school"."code")
-                     WHERE ("program"."degree" IS NOT NULL)
-                           AND ("school"."code" IN ('art', 'la'))
-                     GROUP BY 1) AS "program_1"
-                    INNER JOIN (SELECT "program"."school_code",
-                                       "program"."code",
-                                       "program"."title",
-                                       "program"."degree",
-                                       "program"."part_of"
-                                FROM "program" AS "program"
-                                     INNER JOIN "school" AS "school"
-                                                ON ("program"."school_code" = "school"."code")
-                                WHERE ("school"."code" IN ('art', 'la'))) AS "program_2"
-                               ON ("program_1"."degree" = "program_2"."degree")
-               ORDER BY "program_1"."degree" ASC, 1 ASC, 2 ASC
+               SELECT "program"."school_code",
+                      "program"."code",
+                      "program"."title",
+                      "program"."degree",
+                      "program"."part_of"
+               FROM "program" AS "program"
+                    INNER JOIN "school" AS "school"
+                               ON ("program"."school_code" = "school"."code")
+               WHERE ("program"."degree" IS NOT NULL)
+                     AND ("school"."code" IN ('art', 'la'))
+               ORDER BY 4 ASC, 1 ASC, 2 ASC
       - id: known-issues
         tests:
         - uri: /{}

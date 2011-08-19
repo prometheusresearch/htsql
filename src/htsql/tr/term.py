@@ -493,27 +493,27 @@ class ProjectionTerm(UnaryTerm):
 
     A projection term generates the following SQL clause::
 
-        (SELECT ... FROM <kid> GROUP BY <kernel>)
+        (SELECT ... FROM <kid> GROUP BY <kernels>)
 
     `kid` (:class:`Term`)
         The operand of the projection.
 
-    `kernel` (a list of :class:`htsql.tr.code.Code`)
-        The equivalence kernel.
+    `kernels` (a list of :class:`htsql.tr.code.Code`)
+        The kernel expressions.
     """
 
-    def __init__(self, tag, kid, kernel, flow, baseline, routes):
-        assert isinstance(kernel, listof(Code))
+    def __init__(self, tag, kid, kernels, flow, baseline, routes):
+        assert isinstance(kernels, listof(Code))
         super(ProjectionTerm, self).__init__(tag, kid, flow, baseline, routes)
-        self.kernel = kernel
+        self.kernels = kernels
 
     def __str__(self):
         # Display:
         #   (<kid> ^ <code>, <code>, ...)
-        if not self.kernel:
+        if not self.kernels:
             return "(%s ^)" % self.kid
         return "(%s ^ %s)" % (self.kid,
-                              ", ".join(str(code) for code in self.kernel))
+                              ", ".join(str(code) for code in self.kernels))
 
 
 class OrderTerm(UnaryTerm):

@@ -845,7 +845,7 @@ class AssembleProjection(Assemble):
         # Call the super `delegate()` to review and forward claims.
         super(AssembleProjection, self).delegate()
         # Appoint and assign claims for the projection kernel.
-        for code in self.term.kernel:
+        for code in self.term.kernels:
             self.state.schedule(code)
         # Restore the original dispatching context.
         self.state.pop_gate()
@@ -865,7 +865,7 @@ class AssembleProjection(Assemble):
         # The list of phrases included to the clause.
         group = []
         # Evaluate all the code expressions in the kernel.
-        for code in self.term.kernel:
+        for code in self.term.kernels:
             # If a code does not have units, it must be a scalar function
             # or a literal, and therefore it cannot affect the projection.
             # We can safely weed it out.
