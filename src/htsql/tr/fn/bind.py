@@ -637,7 +637,6 @@ class BindDefine(BindMacro):
             if is_reference:
                 body = self.state.bind(assignment.body, scope=binding)
                 recipe = BindingRecipe(body)
-                recipe = ClosedRecipe(recipe)
             else:
                 if (len(assignment.terms) == 1 and
                         assignment.parameters is not None):
@@ -645,7 +644,7 @@ class BindDefine(BindMacro):
                 recipe = SubstitutionRecipe(binding, assignment.terms[1:],
                                             assignment.parameters,
                                             assignment.body)
-                recipe = ClosedRecipe(recipe)
+            recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, is_reference, arity,
                                         recipe, self.syntax)
         return binding
@@ -667,7 +666,6 @@ class BindWhere(BindMacro):
             if is_reference:
                 body = self.state.bind(assignment.body, scope=binding)
                 recipe = BindingRecipe(body)
-                recipe = ClosedRecipe(recipe)
             else:
                 if (len(assignment.terms) == 1 and
                         assignment.parameters is not None):
@@ -675,7 +673,7 @@ class BindWhere(BindMacro):
                 recipe = SubstitutionRecipe(binding, assignment.terms[1:],
                                             assignment.parameters,
                                             assignment.body)
-                recipe = ClosedRecipe(recipe)
+            recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, is_reference, arity,
                                         recipe, self.syntax)
         return self.state.bind(lop, scope=binding)

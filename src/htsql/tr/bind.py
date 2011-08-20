@@ -491,52 +491,52 @@ class BindAssignment(Bind):
         #   identifier := ...
         #   identifier(parameter,...) := ...
         #   parent. ... .identifier(parameter,...) := ...
+        #   parent. ... .$identifier(parameter,...) := ...
 
         # The dot-separated names and reference indicators.
         terms = []
         parameters = None
         syntax = self.syntax.lbranch
         # Is it a reference?
-        if isinstance(syntax, ReferenceSyntax):
-            terms.append((syntax.identifier.value, True))
-        # Otherwise, it is a dot-separated list of identifiers followed
-        # by an optional function call.
+        # Expect a dot-separated list of identifiers followed
+        # by an optional function call or a reference.
+        # Dot-separated identifiers.
+        head = None
+        # An identifier, a reference, or a function call.
+        tail = syntax
+        if isinstance(syntax, SpecifierSyntax):
+            head = syntax.lbranch
+            tail = syntax.rbranch
+        # Parse and validate the qualifier.
+        if head is not None:
+            while isinstance(head, SpecifierSyntax):
+                syntax = head.rbranch
+                if not isinstance(syntax, IdentifierSyntax):
+                    raise BindError("an identifier is expected",
+                                    syntax.mark)
+                terms.insert(0, (syntax.value, False))
+                head = head.lbranch
+            if not isinstance(head, IdentifierSyntax):
+                raise BindError("an identifier is expected", head.mark)
+            terms.insert(0, (head.value, False))
+        # Parse and validate the target identifier, reference or function call.
+        if isinstance(tail, IdentifierSyntax):
+            terms.append((tail.value, False))
+        elif isinstance(tail, ReferenceSyntax):
+            terms.append((tail.identifier.value, True))
+        elif isinstance(tail, FunctionSyntax):
+            terms.append((tail.name, False))
+            parameters = []
+            for argument in tail.arguments:
+                if isinstance(argument, IdentifierSyntax):
+                    parameters.append((argument.value, False))
+                elif isinstance(argument, ReferenceSyntax):
+                    parameters.append((argument.identifier.value, True))
+                else:
+                    raise BindError("an identifier is expected",
+                                    argument.mark)
         else:
-            # Dot-separated identifiers.
-            head = None
-            # An identifier or a function call.
-            tail = syntax
-            if isinstance(syntax, SpecifierSyntax):
-                head = syntax.lbranch
-                tail = syntax.rbranch
-            # Parse and validate the qualifier.
-            if head is not None:
-                while isinstance(head, SpecifierSyntax):
-                    syntax = head.rbranch
-                    if not isinstance(syntax, IdentifierSyntax):
-                        raise BindError("an identifier is expected",
-                                        syntax.mark)
-                    terms.insert(0, (syntax.value, False))
-                    head = head.lbranch
-                if not isinstance(head, IdentifierSyntax):
-                    raise BindError("an identifier is expected", head.mark)
-                terms.insert(0, (head.value, False))
-            # Parse and validate the target identifier or function call.
-            if isinstance(tail, IdentifierSyntax):
-                terms.append((tail.value, False))
-            elif isinstance(tail, FunctionSyntax):
-                terms.append((tail.name, False))
-                parameters = []
-                for argument in tail.arguments:
-                    if isinstance(argument, IdentifierSyntax):
-                        parameters.append((argument.value, False))
-                    elif isinstance(argument, ReferenceSyntax):
-                        parameters.append((argument.identifier.value, True))
-                    else:
-                        raise BindError("an identifier is expected",
-                                        argument.mark)
-            else:
-                raise BindError("an identifier is expected", tail.mark)
+            raise BindError("an identifier is expected", tail.mark)
         # The right side of the assignment expression.
         body = self.syntax.rbranch
         # Generate an assignment node.
@@ -928,10 +928,18 @@ class BindBySubstitution(BindByRecipe):
                 raise BindError("unknown attribute %r" % self.syntax,
                                 self.syntax.mark)
             binding = self.state.use(recipe, self.syntax)
+            # Check if the term is a reference.
+            if is_reference:
+                # Must the the last term in the assignment.
+                assert len(self.recipe.terms) == 1
+                # Bind the reference against the scope where it is defined.
+                body = self.state.bind(self.recipe.body, scope=binding)
+                recipe = BindingRecipe(body)
             # Augment the scope with the tail of the recipe.
-            recipe = SubstitutionRecipe(binding, self.recipe.terms[1:],
-                                        self.recipe.parameters,
-                                        self.recipe.body)
+            else:
+                recipe = SubstitutionRecipe(binding, self.recipe.terms[1:],
+                                            self.recipe.parameters,
+                                            self.recipe.body)
             recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, is_reference, arity,
                                         recipe, self.syntax)

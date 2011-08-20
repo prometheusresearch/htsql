@@ -191,8 +191,8 @@ tests:
     - uri: /course?credits=$max_credits
             :where $max_credits := max(course.credits)
     - uri: /course?credits=max(fork().credits)
-    - uri: /department.define($max_credits := max(course.credits))
-            {code, count(course?credits=$max_credits)}.limit(10)
+    - uri: /department{code, count(course?credits=$max_credits)}.limit(10)
+            :where department.$max_credits := max(course.credits)
     - uri: /department{code, count(course?credits=max(fork().credits))}.limit(10)
 
   - title: Root, This, Direct and Fiber functions

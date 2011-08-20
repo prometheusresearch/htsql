@@ -19979,7 +19979,8 @@ tests:
                                     ON TRUE
                WHERE (`course_1`.`credits` = `course_2`.`max`)
                ORDER BY 1 ASC, 2 ASC
-          - uri: /department.define($max_credits := max(course.credits)) {code, count(course?credits=$max_credits)}.limit(10)
+          - uri: /department{code, count(course?credits=$max_credits)}.limit(10) :where
+              department.$max_credits := max(course.credits)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -20001,7 +20002,7 @@ tests:
                                                      (10 rows)
 
                ----
-               /department.define($max_credits:=max(course.credits)){code,count(course?credits=$max_credits)}.limit(10)
+               /department{code,count(course?credits=$max_credits)}.limit(10):where(department.$max_credits:=max(course.credits))
                SELECT `department`.`code`,
                       COALESCE(`course`.`count`, 0)
                FROM `htsql_regress`.`department` AS `department`
