@@ -830,6 +830,12 @@ class CompileQuotient(CompileFlow):
         # by pretending that the seed term actually represents
         # the complement flow and injecting the expressions into it.
 
+        # Currently we can't generate a proper SQL frame for quotients
+        # with an empty kernel, so force an error in this case.
+        if all(not code.units for code in self.flow.kernels):
+            raise CompileError("scalar kernel is not supported",
+                               self.flow.mark)
+
         # Start with generating a term for the seed flow.
 
         # The ground flow is expected to be the baseline of the seed term.

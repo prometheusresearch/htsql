@@ -25201,104 +25201,64 @@ tests:
              FROM "ad"."school" AS "school"
              ORDER BY "school"."code" ASC
         - uri: /school^{}{true()}
-          status: 200 OK
+          status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | school^{} |
-             +-----------+
-             | true()    |
-            -+-----------+-
-             | true      |
-             | true      |
-             | true      |
-             | true      |
-             | true      |
-             | true      |
-             | true      |
-             | true      |
-             | true      |
-                  (9 rows)
-
-             ----
-             /school^{}{true()}
-             SELECT TRUE
-             FROM "ad"."school" AS "school"
+          body: |
+            compile error: scalar kernel is not supported:
+                /school^{}{true()}
+                 ^^^^^^^^^
         - uri: /school^{true()}{true()}
-          status: 200 OK
+          status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | school^{true()} |
-             +-----------------+
-             | true()          |
-            -+-----------------+-
-             | true            |
-             | true            |
-             | true            |
-             | true            |
-             | true            |
-             | true            |
-             | true            |
-             | true            |
-             | true            |
-                        (9 rows)
-
-             ----
-             /school^{true()}{true()}
-             SELECT TRUE
-             FROM "ad"."school" AS "school"
+          body: |
+            compile error: scalar kernel is not supported:
+                /school^{true()}{true()}
+                 ^^^^^^^^^^^^^^^
         - uri: /school^{}{*, count(school)}
-          status: 200 OK
+          status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | school^{}     |
-             +---------------+
-             | count(school) |
-            -+---------------+-
-             |             9 |
-                       (1 row)
-
-             ----
-             /school^{}{*,count(school)}
-             SELECT COUNT(TRUE)
-             FROM "ad"."school" AS "school"
+          body: |
+            compile error: scalar kernel is not supported:
+                /school^{}{*, count(school)}
+                 ^^^^^^^^^
         - uri: /school^{true()}{*, count(school)}
-          status: 200 OK
+          status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | school^{true()}        |
-             +------------------------+
-             | true() | count(school) |
-            -+--------+---------------+-
-             | true   |             9 |
-                                (1 row)
-
-             ----
-             /school^{true()}{*,count(school)}
-             SELECT TRUE,
-                    COUNT(TRUE)
-             FROM "ad"."school" AS "school"
+          body: |
+            compile error: scalar kernel is not supported:
+                /school^{true()}{*, count(school)}
+                 ^^^^^^^^^^^^^^^
         - uri: /school^{null()}{*, count(school)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            compile error: scalar kernel is not supported:
+                /school^{null()}{*, count(school)}
+                 ^^^^^^^^^^^^^^^
+        - uri: /(school^null()).^
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school^{null()}        |
-             +------------------------+
-             | null() | count(school) |
-            -+--------+---------------+-
-             |        |             0 |
-                                (1 row)
+             | ^                    |
+             +----------------------+
+             | code | name | campus |
+            -+------+------+--------+-
+                            (no rows)
 
              ----
-             /school^{null()}{*,count(school)}
-             SELECT NULL,
-                    COUNT(TRUE)
+             /(school^null()).^
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
              FROM "ad"."school" AS "school"
              WHERE FALSE
+             ORDER BY 1 ASC
         - uri: /department^school_code{school_code.name, name}
           status: 400 Bad Request
           headers:

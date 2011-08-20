@@ -453,12 +453,19 @@ tests:
   # An empty kernel or a kernel composed of literals breaks a quotient
   # when the selector contains no aggregates.
   - uri: /school^{}{true()}
+    expect: 400
   - uri: /school^{true()}{true()}
-  # But,
+    expect: 400
+  # These cases accidentaly produce a correct result.
   - uri: /school^{}{*, count(school)}
+    expect: 400
   - uri: /school^{true()}{*, count(school)}
+    expect: 400
   # This should filter out `NULL` from the kernel and produce no rows.
   - uri: /school^{null()}{*, count(school)}
+    expect: 400
+  # This works because we avoid compiling the quotient term.
+  - uri: /(school^null()).^
   # Links in the quotient kernel should remain functional.
   - uri: /department^school_code{school_code.name, name}
     expect: 400
