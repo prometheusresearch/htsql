@@ -13,7 +13,7 @@ This module implements the compiling process.
 
 
 from ..util import maybe, listof
-from ..adapter import Adapter, adapts
+from ..adapter import Adapter, adapts, adapts_many
 from ..domain import BooleanDomain
 from .error import CompileError
 from .coerce import coerce
@@ -1114,254 +1114,152 @@ class CompileComplement(CompileFlow):
                         is_left, is_right, self.flow, lkid.baseline, routes)
 
 
-class CompileMoniker(CompileFlow):
+class CompileCovering(CompileFlow):
 
-    adapts(MonikerFlow)
-
-    def __call__(self):
-        extra_codes = self.flow.companions
-        if (self.flow.ground.base is not None and
-            self.flow.base.conforms(self.flow.ground.base) and
-            not self.flow.base.spans(self.flow.ground)):
-            baseline = self.flow.ground
-            if not (baseline.is_inflated and
-                    self.flow == self.state.baseline):
-                while not self.state.baseline.concludes(baseline):
-                    baseline = baseline.base
-            seed_term = self.state.compile(self.flow.seed, baseline=baseline)
-            seed_term = self.state.inject(seed_term, extra_codes)
-            if seed_term.baseline != self.flow.ground:
-                flow = self.flow.base
-                seed_term = self.state.inject(seed_term, [flow])
-                while not seed_term.baseline.concludes(flow):
-                    seed_term = self.state.inject(seed_term, [flow])
-                    flow = flow.base
-            seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                    seed_term.flow, seed_term.baseline,
-                                    seed_term.routes.copy())
-            baseline = seed_term.baseline
-            if baseline == self.flow.ground:
-                baseline = self.flow
-            routes = {}
-            for unit in seed_term.routes:
-                if self.flow.base.spans(unit.flow):
-                    routes[unit] = seed_term.routes[unit]
-                seed_unit = CoveringUnit(unit, self.flow, unit.binding)
-                routes[seed_unit] = seed_term.tag
-                seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
-                routes[seed_unit] = seed_term.tag
-            if extra_codes is not None:
-                for code in extra_codes:
-                    unit = CoveringUnit(code, self.flow, code.binding)
-                    routes[unit] = seed_term.tag
-                    unit = CoveringUnit(code, self.backbone, code.binding)
-                    routes[unit] = seed_term.tag
-            for unit in spread(self.flow.seed):
-                seed_unit = unit.clone(flow=self.flow)
-                routes[seed_unit] = seed_term.routes[unit]
-                seed_unit = unit.clone(flow=self.backbone)
-                routes[seed_unit] = seed_term.routes[unit]
-            term = WrapperTerm(self.state.tag(), seed_term,
-                               self.flow, baseline, routes)
-            return term
-        baseline = self.state.baseline
-        if baseline == self.flow:
-            baseline = baseline.base
-        trunk_term = self.state.compile(self.flow.base, baseline=baseline)
-        seed_term = self.compile_shoot(self.flow.seed, trunk_term,
-                                       extra_codes)
-        seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                seed_term.flow, seed_term.baseline,
-                                seed_term.routes)
-        joints = self.glue_terms(trunk_term, seed_term)
-        trunk_term = self.inject_joints(trunk_term, joints)
-        routes = trunk_term.routes.copy()
-        for unit in seed_term.routes:
-            seed_unit = CoveringUnit(unit, self.flow, unit.binding)
-            routes[seed_unit] = seed_term.tag
-            seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
-            routes[seed_unit] = seed_term.tag
-        if extra_codes is not None:
-            for code in extra_codes:
-                unit = CoveringUnit(code, self.flow, code.binding)
-                routes[unit] = seed_term.tag
-                unit = CoveringUnit(code, self.backbone, code.binding)
-                routes[unit] = seed_term.tag
-        for unit in spread(self.flow.seed):
-            seed_unit = unit.clone(flow=self.flow)
-            routes[seed_unit] = seed_term.routes[unit]
-            seed_unit = unit.clone(flow=self.backbone)
-            routes[seed_unit] = seed_term.routes[unit]
-        return JoinTerm(self.state.tag(), trunk_term, seed_term,
-                        joints, False, False,
-                        self.flow, trunk_term.baseline, routes)
-
-
-class CompileForked(CompileFlow):
-
-    adapts(ForkedFlow)
+    # The implementation is shared by these three covering flows.
+    adapts_many(MonikerFlow, ForkedFlow, LinkedFlow)
 
     def __call__(self):
-        seed = self.flow.seed
-        baseline = seed
+        # Moniker, forked and linked flows are represented as a seed term
+        # with the baseline at the seed ground.  The compilation processes
+        # for these types of flows are almost identical.
+
+        # If the seed term has an irregular shape, we must generate a term
+        # for the parent flow and add custom joints between the seed
+        # and the parent terms.  If the seed term is regular and the
+        # baseline is at the current flow, we avoid generating a parent term.
+
+        # The flow node may contain extra code objects -- `companions`,
+        # which indicate that the generated term should export covering
+        # units wrapping the companions.
+
+        # Generate the seed term.
+
+        # The baseline of the seed term is expected to be the seed ground flow.
+        baseline = self.flow.ground
+        # However it may be not inflated, in which case we find the closest
+        # inflated axis.
         while not baseline.is_inflated:
             baseline = baseline.base
-        extra_codes = self.flow.kernels[:] + self.flow.companions
-        seed_term = self.state.compile(seed, baseline=baseline)
-        seed_term = self.state.inject(seed_term, extra_codes)
+        # Create the seed term.
+        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
+        # The seed term may need to export some extra expressions.
+        codes = []
+        # For the forked flow, it must export the kernel expressions.
+        if isinstance(self.flow, ForkedFlow):
+            codes += self.flow.kernels
+        # For the linked flow, it must export the linking expressions.
+        if isinstance(self.flow, LinkedFlow):
+            codes += [rop for lop, rop in self.flow.images]
+        # Any companion expressions must also be included.
+        codes += self.flow.companions
+        seed_term = self.state.inject(seed_term, codes)
+
+        # Indicates whether the seed term has a regular shape.
+        is_regular = (seed_term.baseline == self.flow.ground)
+
+        # Wrap the term to have a target for covering units.
         seed_term = WrapperTerm(self.state.tag(), seed_term,
                                 seed_term.flow, seed_term.baseline,
                                 seed_term.routes.copy())
-        if (self.state.baseline == self.flow and
-                seed_term.baseline == self.flow.ground):
-            routes = {}
-            for unit in seed_term.routes:
-                seed_unit = CoveringUnit(unit, self.flow, unit.binding)
-                routes[seed_unit] = seed_term.tag
-                seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
-                routes[seed_unit] = seed_term.tag
-            for code in extra_codes:
-                unit = CoveringUnit(code, self.flow, code.binding)
-                routes[unit] = seed_term.tag
-                unit = CoveringUnit(code, self.backbone, code.binding)
-                routes[unit] = seed_term.tag
-            for unit in spread(self.flow.seed):
-                seed_unit = unit.clone(flow=self.flow)
-                routes[seed_unit] = seed_term.routes[unit]
-                seed_unit = unit.clone(flow=self.backbone)
-                routes[seed_unit] = seed_term.routes[unit]
-            term = WrapperTerm(self.state.tag(), seed_term,
-                               self.flow, self.flow, routes)
-            return term
-        baseline = self.state.baseline
-        if baseline == self.flow:
-            baseline = baseline.base
-        trunk_term = self.state.compile(self.flow.base, baseline=baseline)
-        joints = []
-        assert (trunk_term.baseline.concludes(seed_term.baseline) or
-                seed_term.baseline.concludes(trunk_term.baseline))
-        axes = []
-        axis = trunk_term.backbone
-        while axis != seed_term.baseline:
-            axis = axis.base
-            if not axis.is_contracting or axis == seed_term.baseline:
-                axes.append(axis)
-        axes.reverse()
-        if axes:
-            for axis in axes:
-                joints.extend(sew(axis))
-        else:
-            for joint in tie(trunk_term.backbone):
-                joint = joint.clone(lop=joint.rop)
-                joints.append(joint)
-        for code in self.flow.kernels:
-            joint = Joint(code, code)
-            joints.append(joint)
-        units = [lunit for lunit, runit in joints]
-        trunk_term = self.state.inject(trunk_term, units)
-        routes = trunk_term.routes.copy()
-        for unit in seed_term.routes:
-            seed_unit = CoveringUnit(unit, self.flow, unit.binding)
-            routes[seed_unit] = seed_term.tag
-            seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
-            routes[seed_unit] = seed_term.tag
-        for code in extra_codes:
-            unit = CoveringUnit(code, self.flow, code.binding)
-            routes[unit] = seed_term.tag
-            unit = CoveringUnit(code, self.backbone, code.binding)
-            routes[unit] = seed_term.tag
-        for unit in spread(self.flow.seed):
-            seed_unit = unit.clone(flow=self.flow)
-            routes[seed_unit] = seed_term.routes[unit]
-            seed_unit = unit.clone(flow=self.backbone)
-            routes[seed_unit] = seed_term.routes[unit]
-        return JoinTerm(self.state.tag(), trunk_term, seed_term,
-                        joints, False, False,
-                        self.flow, trunk_term.baseline, routes)
 
+        # Generate the trunk term and join conditions (if needed).
 
-class CompileLinked(CompileFlow):
-
-    adapts(LinkedFlow)
-
-    def __call__(self):
-        baseline = self.flow.ground
-        while not baseline.is_inflated:
-            baseline = baseline.base
-        extra_codes = ([rop for lop, rop in self.flow.images]
-                       + self.flow.companions)
-        seed_term = self.state.compile(self.flow.seed, baseline=baseline)
-        seed_term = self.state.inject(seed_term, extra_codes)
-        extra_axes = []
-        joints = []
-        if seed_term.baseline != self.flow.ground:
-            backbone = self.flow.base.inflate()
-            axis = seed_term.baseline
-            while not backbone.concludes(axis):
-                axis = axis.base
-            seed_term = self.state.inject(seed_term, [axis])
-            axis = backbone
-            while not seed_term.backbone.concludes(axis):
-                axis = axis.base
-            while axis != seed_term.baseline.base:
-                if not axis.is_contracting or axis == seed_term.baseline:
-                    extra_axes.append(axis)
-                axis = axis.base
-            extra_axes.reverse()
-            for axis in extra_axes:
-                for joint in sew(axis):
-                    rop = CoveringUnit(rop, self.flow.inflate(), rop.binding)
-                    joint = joint.clone(rop=rop)
-                    joints.append(joint)
-        joints.extend(tie(self.flow))
+        # The term for the parent flow.  May remain `None` if we already
+        # reached the baseline.
         trunk_term = None
-        if extra_axes or self.state.baseline != self.flow:
-            baseline = self.state.baseline
+        # Join conditions attaching the term to the trunk.
+        joints = []
+
+        # The regular case: make the parent term only if the
+        # baseline is below the given flow.
+        if is_regular:
+            if self.baseline != self.flow:
+                trunk_term = self.state.compile(self.flow.base)
+            # We need the joints to produce covering units, so generate
+            # them even when we do not use them for joining.
+            joints = tie(self.flow)
+
+        # The irregular case: we must create the parent term
+        # even if the baseline is above the parent flow.
+        else:
+            # Lower the baseline if needed.
+            baseline = self.baseline
             if baseline == self.flow:
                 baseline = baseline.base
+            # Compile a term for the parent flow.
             trunk_term = self.state.compile(self.flow.base, baseline=baseline)
-            trunk_term = self.state.inject(trunk_term,
-                                           [joint.lop for joint in joints])
-        seed_term = WrapperTerm(self.state.tag(), seed_term,
-                                seed_term.flow, seed_term.baseline,
-                                seed_term.routes.copy())
-        baseline = seed_term.baseline
-        if baseline == self.flow.ground:
-            baseline = self.flow
-        routes = {}
-        for unit in seed_term.routes:
-            if self.flow.base.spans(unit.flow):
-                routes[unit] = seed_term.routes[unit]
-            seed_unit = CoveringUnit(unit, self.flow, unit.binding)
-            routes[seed_unit] = seed_term.tag
-            seed_unit = CoveringUnit(unit, self.backbone, unit.binding)
-            routes[seed_unit] = seed_term.tag
-        for joint in joints:
-            code = joint.rop.code
-            unit = CoveringUnit(code, self.flow, code.binding)
-            routes[unit] = seed_term.tag
+            # Generate custom joints.
+            shoot_term = seed_term
+            # For the forked flow, this is tricky as we can't join the trunk
+            # to the seed term as usual -- we must leave the seed axis
+            # free of joints.  To avoid recoding the joining method here,
+            # we disguise the seed term as if it does not contain the seed
+            # axis, then we could use `glue_terms` as usual.  Note that
+            # the baseline lies below `ground.base` since the seed term
+            # is irregular.  The `shoot_term` is a throwaway node, it
+            # is only used to call `glue_terms` here.
+            if isinstance(self.flow, ForkedFlow):
+                shoot_term = WrapperTerm(seed_term.tag, seed_term,
+                                         self.flow.ground.base,
+                                         seed_term.baseline,
+                                         seed_term.routes)
+            seed_joints = self.glue_terms(trunk_term, shoot_term)
+            for joint in seed_joints:
+                unit = CoveringUnit(joint.rop, self.backbone,
+                                    joint.rop.binding)
+                joints.append(joint.clone(rop=unit))
+            # Append regular joints.
+            joints += tie(self.flow)
+
+        # Populate units exported by the covering term.
+        units = []
+
+        # Wrap everything produced by the seed term.
+        for code in seed_term.routes:
             unit = CoveringUnit(code, self.backbone, code.binding)
+            units.append(unit)
+        # Ensure we can satisfy the joints.
+        for joint in joints:
+            units.append(joint.rop)
+        # Export any requested companion units.
+        for code in self.flow.companions:
+            unit = CoveringUnit(code, self.backbone, code.binding)
+            units.append(unit)
+
+        # Generate the routing table and the covering term.
+        routes = {}
+        # Export covering units.
+        for unit in units:
             routes[unit] = seed_term.tag
-        if extra_codes is not None:
-            for code in extra_codes:
-                unit = CoveringUnit(code, self.flow, code.binding)
-                routes[unit] = seed_term.tag
-                unit = CoveringUnit(code, self.backbone, code.binding)
-                routes[unit] = seed_term.tag
+        # Export native units.
         for unit in spread(self.flow.seed):
-            seed_unit = unit.clone(flow=self.flow)
-            routes[seed_unit] = seed_term.routes[unit]
-            seed_unit = unit.clone(flow=self.backbone)
-            routes[seed_unit] = seed_term.routes[unit]
+            routes[unit.clone(flow=self.backbone)] = seed_term.routes[unit]
+        # The covering term.
         term = WrapperTerm(self.state.tag(), seed_term,
                            self.backbone, self.backbone, routes)
-        if trunk_term is not None:
-            routes = trunk_term.routes.copy()
-            routes.update(term.routes)
-            term = JoinTerm(self.state.tag(), trunk_term, term,
-                            joints, False, False,
-                            self.flow, trunk_term.baseline, routes)
-        return term
+
+        # If there is no parental term, we are done.
+        if trunk_term is None:
+            return term
+
+        # Attach the covering term to the trunk.
+        lkid = self.inject_joints(trunk_term, joints)
+        rkid = term
+        # Merge the routing table.
+        routes = {}
+        routes.update(lkid.routes)
+        routes.update(rkid.routes)
+        # Reparent the exported units from the flow backbone to the flow itself.
+        for unit in units:
+            routes[unit.clone(flow=self.flow)] = seed_term.tag
+        for unit in spread(self.flow.seed):
+            routes[unit.clone(flow=self.flow)] = seed_term.routes[unit]
+        is_left = False
+        is_right = False
+        # Join the terms.
+        return JoinTerm(self.state.tag(), lkid, rkid, joints,
+                        is_left, is_right, self.flow, lkid.baseline, routes)
 
 
 class CompileFiltered(CompileFlow):

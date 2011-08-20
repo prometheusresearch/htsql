@@ -484,8 +484,15 @@ class TieMoniker(Tie):
     def __call__(self):
         # Use an inflated flow for joints.
         flow = self.flow.inflate()
-        # Use the joints attaching the seed ground to its parent.
-        for joint in tie(flow.ground):
+        # Normally, use the serial joints of the seed ground, but if
+        # the ground (as well as the flow itself) is singular against
+        # the parent flow, use parallel joints.
+        if flow.is_contracting:
+            joints = sew(flow.ground)
+        else:
+            joints = tie(flow.ground)
+        # Wrap the ground joints.
+        for joint in joints:
             rop = CoveringUnit(joint.rop, flow, joint.rop.binding)
             yield joint.clone(rop=rop)
 

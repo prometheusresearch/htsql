@@ -446,7 +446,17 @@ class CollapseBranch(Collapse):
             if not (head.flow.conforms(self.frame.flow) and
                     head.baseline == self.frame.baseline and
                     arrange(head.flow) == arrange(self.frame.flow)):
-                return self.frame
+                # Another safe case is when the outer frame contains
+                # no clauses that may change the cardinality of the inner
+                # frame, including no other `FROM` subframes.
+                if not (self.frame.where is None and
+                        not self.frame.group and
+                        self.frame.having is None and
+                        not self.frame.order and
+                        self.frame.limit is None and
+                        self.frame.offset is None and
+                        not tail):
+                    return self.frame
             # Since the inner and the outer flows conform to each other,
             # the outer frame cannot contain non-trivial `LIMIT` and `OFFSET`
             # clauses.

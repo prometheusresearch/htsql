@@ -20292,7 +20292,10 @@ tests:
                       "department"."name",
                       "department"."school_code"
                FROM "school" AS "school"
-                    INNER JOIN "department" AS "department"
+                    INNER JOIN (SELECT "department"."code",
+                                       "department"."name",
+                                       "department"."school_code"
+                                FROM "department" AS "department") AS "department"
                                ON ("school"."code" = "department"."school_code")
                ORDER BY "school"."code" ASC, 1 ASC
           - uri: /school{code, count(moniker(department))}
@@ -20586,7 +20589,10 @@ tests:
                       "department"."name",
                       "department"."school_code"
                FROM "school" AS "school"
-                    CROSS JOIN "department" AS "department"
+                    CROSS JOIN (SELECT "department"."code",
+                                       "department"."name",
+                                       "department"."school_code"
+                                FROM "department" AS "department") AS "department"
                ORDER BY "school"."code" ASC, 1 ASC
           - uri: /school{code, count(moniker(home().department))}
             status: 200 OK

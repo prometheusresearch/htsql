@@ -20610,7 +20610,10 @@ tests:
                       "DEPARTMENT"."NAME",
                       "DEPARTMENT"."SCHOOL_CODE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    INNER JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    INNER JOIN (SELECT "DEPARTMENT"."CODE",
+                                       "DEPARTMENT"."NAME",
+                                       "DEPARTMENT"."SCHOOL_CODE"
+                                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT") "DEPARTMENT"
                                ON ("SCHOOL"."CODE" = "DEPARTMENT"."SCHOOL_CODE")
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC
           - uri: /school{code, count(moniker(department))}
@@ -20904,7 +20907,10 @@ tests:
                       "DEPARTMENT"."NAME",
                       "DEPARTMENT"."SCHOOL_CODE"
                FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-                    CROSS JOIN "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                    CROSS JOIN (SELECT "DEPARTMENT"."CODE",
+                                       "DEPARTMENT"."NAME",
+                                       "DEPARTMENT"."SCHOOL_CODE"
+                                FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT") "DEPARTMENT"
                ORDER BY "SCHOOL"."CODE" ASC, 1 ASC
           - uri: /school{code, count(moniker(home().department))}
             status: 200 OK
