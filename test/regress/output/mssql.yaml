@@ -8573,16 +8573,16 @@ tests:
 
              ----
              /define($avg_credits:=avg(course.credits)).course?credits>$avg_credits
-             SELECT [course].[department_code],
-                    [course].[no],
-                    [course].[title],
-                    [course].[credits],
-                    [course].[description]
-             FROM [ad].[course] AS [course]
+             SELECT [course_1].[department_code],
+                    [course_1].[no],
+                    [course_1].[title],
+                    [course_1].[credits],
+                    [course_1].[description]
+             FROM [ad].[course] AS [course_1]
                   LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg]
-                                   FROM [ad].[course] AS [course]) AS [!]
+                                   FROM [ad].[course] AS [course]) AS [course_2]
                                   ON (1 <> 0)
-             WHERE (CAST([course].[credits] AS DECIMAL(38)) > [!].[avg])
+             WHERE (CAST([course_1].[credits] AS DECIMAL(38)) > [course_2].[avg])
              ORDER BY 1 ASC, 2 ASC
         - uri: /course?credits>$avg_credits :where $avg_credits := avg(course.credits)
           status: 200 OK
@@ -9041,16 +9041,16 @@ tests:
 
              ----
              /course?credits>$avg_credits:where($avg_credits:=avg(course.credits))
-             SELECT [course].[department_code],
-                    [course].[no],
-                    [course].[title],
-                    [course].[credits],
-                    [course].[description]
-             FROM [ad].[course] AS [course]
+             SELECT [course_1].[department_code],
+                    [course_1].[no],
+                    [course_1].[title],
+                    [course_1].[credits],
+                    [course_1].[description]
+             FROM [ad].[course] AS [course_1]
                   LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg]
-                                   FROM [ad].[course] AS [course]) AS [!]
+                                   FROM [ad].[course] AS [course]) AS [course_2]
                                   ON (1 <> 0)
-             WHERE (CAST([course].[credits] AS DECIMAL(38)) > [!].[avg])
+             WHERE (CAST([course_1].[credits] AS DECIMAL(38)) > [course_2].[avg])
              ORDER BY 1 ASC, 2 ASC
         - uri: /department.define($avg_credits:=avg(course.credits)) .course?credits>$avg_credits
           status: 200 OK
@@ -9527,25 +9527,21 @@ tests:
 
              ----
              /department.define($avg_credits:=avg(course.credits)).course?credits>$avg_credits
-             SELECT [course].[department_code],
-                    [course].[no],
-                    [course].[title],
-                    [course].[credits],
-                    [course].[description]
-             FROM [ad].[department] AS [department_1]
-                  INNER JOIN [ad].[course] AS [course]
-                             ON ([department_1].[code] = [course].[department_code])
-                  LEFT OUTER JOIN (SELECT [course].[avg],
-                                          [department].[code]
-                                   FROM [ad].[department] AS [department]
-                                        LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
-                                                                [course].[department_code]
-                                                         FROM [ad].[course] AS [course]
-                                                         GROUP BY [course].[department_code]) AS [course]
-                                                        ON ([department].[code] = [course].[department_code])) AS [department_2]
-                                  ON ([department_1].[code] = [department_2].[code])
-             WHERE (CAST([course].[credits] AS DECIMAL(38)) > [department_2].[avg])
-             ORDER BY [department_1].[code] ASC, 1 ASC, 2 ASC
+             SELECT [course_1].[department_code],
+                    [course_1].[no],
+                    [course_1].[title],
+                    [course_1].[credits],
+                    [course_1].[description]
+             FROM [ad].[department] AS [department]
+                  INNER JOIN [ad].[course] AS [course_1]
+                             ON ([department].[code] = [course_1].[department_code])
+                  LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
+                                          [course].[department_code]
+                                   FROM [ad].[course] AS [course]
+                                   GROUP BY [course].[department_code]) AS [course_2]
+                                  ON ([department].[code] = [course_2].[department_code])
+             WHERE (CAST([course_1].[credits] AS DECIMAL(38)) > [course_2].[avg])
+             ORDER BY [department].[code] ASC, 1 ASC, 2 ASC
       - id: projections
         tests:
         - uri: /program{degree}
@@ -19746,33 +19742,26 @@ tests:
                                 GROUP BY [course].[department_code], CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT)) AS [course_1]
                                ON ([department].[code] = [course_1].[department_code])
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count_1],
-                                            COUNT((CASE WHEN ([course_2].[credits] = [department_2].[max]) THEN 1 END)) AS [count_2],
-                                            [department_1].[code],
+                                            COUNT((CASE WHEN ([course_2].[credits] = [course_3].[max]) THEN 1 END)) AS [count_2],
                                             [course_1].[department_code],
                                             [course_1].[integer]
-                                     FROM [ad].[department] AS [department_1]
-                                          INNER JOIN (SELECT [course].[department_code],
-                                                             CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT) AS [integer]
-                                                      FROM [ad].[course] AS [course]
-                                                      WHERE (CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT) IS NOT NULL)
-                                                      GROUP BY [course].[department_code], CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT)) AS [course_1]
-                                                     ON ([department_1].[code] = [course_1].[department_code])
+                                     FROM (SELECT [course].[department_code],
+                                                  CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT) AS [integer]
+                                           FROM [ad].[course] AS [course]
+                                           WHERE (CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT) IS NOT NULL)
+                                           GROUP BY [course].[department_code], CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT)) AS [course_1]
                                           INNER JOIN (SELECT [course].[credits],
                                                              [course].[department_code],
                                                              CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT) AS [integer]
                                                       FROM [ad].[course] AS [course]) AS [course_2]
                                                      ON (([course_1].[department_code] = [course_2].[department_code]) AND ([course_1].[integer] = [course_2].[integer]))
-                                          LEFT OUTER JOIN (SELECT [course].[max],
-                                                                  [department].[code]
-                                                           FROM [ad].[department] AS [department]
-                                                                LEFT OUTER JOIN (SELECT MAX([course].[credits]) AS [max],
-                                                                                        [course].[department_code]
-                                                                                 FROM [ad].[course] AS [course]
-                                                                                 GROUP BY [course].[department_code]) AS [course]
-                                                                                ON ([department].[code] = [course].[department_code])) AS [department_2]
-                                                          ON ([department_1].[code] = [department_2].[code])
-                                     GROUP BY [department_1].[code], [course_1].[department_code], [course_1].[integer]) AS [course_2]
-                                    ON (([department].[code] = [course_2].[code]) AND ([course_1].[department_code] = [course_2].[department_code]) AND ([course_1].[integer] = [course_2].[integer]))
+                                          LEFT OUTER JOIN (SELECT MAX([course].[credits]) AS [max],
+                                                                  [course].[department_code]
+                                                           FROM [ad].[course] AS [course]
+                                                           GROUP BY [course].[department_code]) AS [course_3]
+                                                          ON ([course_1].[department_code] = [course_3].[department_code])
+                                     GROUP BY [course_1].[department_code], [course_1].[integer]) AS [course_2]
+                                    ON (([course_1].[department_code] = [course_2].[department_code]) AND ([course_1].[integer] = [course_2].[integer]))
                ORDER BY [department].[code] ASC, 1 ASC
           - uri: /school?min(department.course.credits)>1& max(department.course.credits)<8
               ^campus {campus, count(school)}
@@ -19958,49 +19947,169 @@ tests:
                       COALESCE([course_2].[count], 0)
                FROM [ad].[department] AS [department]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [department].[code]
-                                     FROM [ad].[department] AS [department]
-                                          INNER JOIN (SELECT [department_1].[code]
-                                                      FROM [ad].[department] AS [department_1]
-                                                           INNER JOIN [ad].[course] AS [course]
-                                                                      ON ([department_1].[code] = [course].[department_code])
-                                                           LEFT OUTER JOIN (SELECT [course].[avg],
-                                                                                   [department].[code]
-                                                                            FROM [ad].[department] AS [department]
-                                                                                 LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
-                                                                                                         [course].[department_code]
-                                                                                                  FROM [ad].[course] AS [course]
-                                                                                                  GROUP BY [course].[department_code]) AS [course]
-                                                                                                 ON ([department].[code] = [course].[department_code])) AS [department_2]
-                                                                           ON ([department_1].[code] = [department_2].[code])
-                                                      WHERE (CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT) IS NOT NULL)
-                                                            AND (CAST([course].[credits] AS DECIMAL(38)) > [department_2].[avg])
-                                                      GROUP BY [department_1].[code], [course].[department_code], CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT)) AS [course]
-                                                     ON ([department].[code] = [course].[code])
-                                     GROUP BY [department].[code]) AS [course_1]
-                                    ON ([department].[code] = [course_1].[code])
+                                            [course].[department_code]
+                                     FROM (SELECT [course_1].[department_code]
+                                           FROM [ad].[course] AS [course_1]
+                                                LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
+                                                                        [course].[department_code]
+                                                                 FROM [ad].[course] AS [course]
+                                                                 GROUP BY [course].[department_code]) AS [course_2]
+                                                                ON ([course_1].[department_code] = [course_2].[department_code])
+                                           WHERE (CAST((CAST([course_1].[no] AS DECIMAL(38)) / 100.) AS INT) IS NOT NULL)
+                                                 AND (CAST([course_1].[credits] AS DECIMAL(38)) > [course_2].[avg])
+                                           GROUP BY [course_1].[department_code], CAST((CAST([course_1].[no] AS DECIMAL(38)) / 100.) AS INT)) AS [course]
+                                     GROUP BY [course].[department_code]) AS [course_1]
+                                    ON ([department].[code] = [course_1].[department_code])
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                            [department].[code]
-                                     FROM [ad].[department] AS [department]
-                                          INNER JOIN (SELECT [department_1].[code],
-                                                             [course].[department_code]
-                                                      FROM [ad].[department] AS [department_1]
-                                                           INNER JOIN [ad].[course] AS [course]
-                                                                      ON ([department_1].[code] = [course].[department_code])
-                                                           LEFT OUTER JOIN (SELECT [course].[avg],
-                                                                                   [department].[code]
-                                                                            FROM [ad].[department] AS [department]
-                                                                                 LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
-                                                                                                         [course].[department_code]
-                                                                                                  FROM [ad].[course] AS [course]
-                                                                                                  GROUP BY [course].[department_code]) AS [course]
-                                                                                                 ON ([department].[code] = [course].[department_code])) AS [department_2]
-                                                                           ON ([department_1].[code] = [department_2].[code])
-                                                      WHERE (CAST((CAST([course].[no] AS DECIMAL(38)) / 100.) AS INT) IS NOT NULL)
-                                                            AND (CAST([course].[credits] AS DECIMAL(38)) > [department_2].[avg])) AS [course]
-                                                     ON (([department].[code] = [course].[code]) AND ([department].[code] = [course].[department_code]))
-                                     GROUP BY [department].[code]) AS [course_2]
-                                    ON ([department].[code] = [course_2].[code])
+                                            [course_1].[department_code]
+                                     FROM [ad].[course] AS [course_1]
+                                          LEFT OUTER JOIN (SELECT AVG(CAST([course].[credits] AS DECIMAL(38))) AS [avg],
+                                                                  [course].[department_code]
+                                                           FROM [ad].[course] AS [course]
+                                                           GROUP BY [course].[department_code]) AS [course_2]
+                                                          ON ([course_1].[department_code] = [course_2].[department_code])
+                                     WHERE (CAST((CAST([course_1].[no] AS DECIMAL(38)) / 100.) AS INT) IS NOT NULL)
+                                           AND (CAST([course_1].[credits] AS DECIMAL(38)) > [course_2].[avg])
+                                     GROUP BY [course_1].[department_code]) AS [course_2]
+                                    ON ([department].[code] = [course_2].[department_code])
+               ORDER BY 1 ASC
+          - uri: /course?credits=$max_credits :where $max_credits := max(course.credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                                                                                          |
+               +-------------------------------------------------------------------------------------------------+
+               | department_code | no  | title                      | credits | description                      |
+              -+-----------------+-----+----------------------------+---------+----------------------------------+-
+               | be              | 415 | Internship in Biomedical   |       8 | The student will work twenty     |
+               :                 :     : Engineering                :         : hours per week in an area firm   :
+               :                 :     :                            :         : to gain experience in the        :
+               :                 :     :                            :         : application of biomedical        :
+               :                 :     :                            :         : engineering principles in an     :
+               :                 :     :                            :         : industrial setting.              :
+                                                                                                           (1 row)
+
+               ----
+               /course?credits=$max_credits:where($max_credits:=max(course.credits))
+               SELECT [course_1].[department_code],
+                      [course_1].[no],
+                      [course_1].[title],
+                      [course_1].[credits],
+                      [course_1].[description]
+               FROM [ad].[course] AS [course_1]
+                    LEFT OUTER JOIN (SELECT MAX([course].[credits]) AS [max]
+                                     FROM [ad].[course] AS [course]) AS [course_2]
+                                    ON (1 <> 0)
+               WHERE ([course_1].[credits] = [course_2].[max])
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /course?credits=max(fork().credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                                                                                          |
+               +-------------------------------------------------------------------------------------------------+
+               | department_code | no  | title                      | credits | description                      |
+              -+-----------------+-----+----------------------------+---------+----------------------------------+-
+               | be              | 415 | Internship in Biomedical   |       8 | The student will work twenty     |
+               :                 :     : Engineering                :         : hours per week in an area firm   :
+               :                 :     :                            :         : to gain experience in the        :
+               :                 :     :                            :         : application of biomedical        :
+               :                 :     :                            :         : engineering principles in an     :
+               :                 :     :                            :         : industrial setting.              :
+                                                                                                           (1 row)
+
+               ----
+               /course?credits=max(fork().credits)
+               SELECT [course_1].[department_code],
+                      [course_1].[no],
+                      [course_1].[title],
+                      [course_1].[credits],
+                      [course_1].[description]
+               FROM [ad].[course] AS [course_1]
+                    LEFT OUTER JOIN (SELECT MAX([course].[credits]) AS [max]
+                                     FROM [ad].[course] AS [course]) AS [course_2]
+                                    ON (1 <> 0)
+               WHERE ([course_1].[credits] = [course_2].[max])
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /department.define($max_credits := max(course.credits)) {code, count(course?credits=$max_credits)}.limit(10)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                  |
+               +---------------------------------------------+
+               | code   | count(course?credits=$max_credits) |
+              -+--------+------------------------------------+-
+               | acc    |                                  1 |
+               | arthis |                                  1 |
+               | astro  |                                  2 |
+               | be     |                                  1 |
+               | bursar |                                  0 |
+               | career |                                  0 |
+               | chem   |                                  2 |
+               | comp   |                                  1 |
+               | econ   |                                  2 |
+               | edpol  |                                 15 |
+                                                     (10 rows)
+
+               ----
+               /department.define($max_credits:=max(course.credits)){code,count(course?credits=$max_credits)}.limit(10)
+               SELECT TOP 10
+                      [department].[code],
+                      COALESCE([course].[count], 0)
+               FROM [ad].[department] AS [department]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [course_1].[department_code]
+                                     FROM [ad].[course] AS [course_1]
+                                          LEFT OUTER JOIN (SELECT MAX([course].[credits]) AS [max],
+                                                                  [course].[department_code]
+                                                           FROM [ad].[course] AS [course]
+                                                           GROUP BY [course].[department_code]) AS [course_2]
+                                                          ON ([course_1].[department_code] = [course_2].[department_code])
+                                     WHERE ([course_1].[credits] = [course_2].[max])
+                                     GROUP BY [course_1].[department_code]) AS [course]
+                                    ON ([department].[code] = [course].[department_code])
+               ORDER BY 1 ASC
+          - uri: /department{code, count(course?credits=max(fork().credits))}.limit(10)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                         |
+               +----------------------------------------------------+
+               | code   | count(course?credits=max(fork().credits)) |
+              -+--------+-------------------------------------------+-
+               | acc    |                                         1 |
+               | arthis |                                         1 |
+               | astro  |                                         2 |
+               | be     |                                         1 |
+               | bursar |                                         0 |
+               | career |                                         0 |
+               | chem   |                                         2 |
+               | comp   |                                         1 |
+               | econ   |                                         2 |
+               | edpol  |                                        15 |
+                                                            (10 rows)
+
+               ----
+               /department{code,count(course?credits=max(fork().credits))}.limit(10)
+               SELECT TOP 10
+                      [department].[code],
+                      COALESCE([course].[count], 0)
+               FROM [ad].[department] AS [department]
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [course_1].[department_code]
+                                     FROM [ad].[course] AS [course_1]
+                                          LEFT OUTER JOIN (SELECT MAX([course].[credits]) AS [max],
+                                                                  [course].[department_code]
+                                                           FROM [ad].[course] AS [course]
+                                                           GROUP BY [course].[department_code]) AS [course_2]
+                                                          ON ([course_1].[department_code] = [course_2].[department_code])
+                                     WHERE ([course_1].[credits] = [course_2].[max])
+                                     GROUP BY [course_1].[department_code]) AS [course]
+                                    ON ([department].[code] = [course].[department_code])
                ORDER BY 1 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
@@ -21146,15 +21255,15 @@ tests:
 
                ----
                /program.sort(count(student)).moniker((this()?false()).student)
-               SELECT [student].[id],
-                      [student].[name],
-                      [student].[gender],
-                      [student].[dob],
-                      [student].[school_code_1],
-                      [student].[program_code],
-                      [student].[start_date],
-                      [student].[is_active]
-               FROM [ad].[program] AS [program_1]
+               SELECT [student_1].[id],
+                      [student_1].[name],
+                      [student_1].[gender],
+                      [student_1].[dob],
+                      [student_1].[school_code_1],
+                      [student_1].[program_code],
+                      [student_1].[start_date],
+                      [student_1].[is_active]
+               FROM [ad].[program] AS [program]
                     INNER JOIN (SELECT [student].[id],
                                        [student].[name],
                                        [student].[gender],
@@ -21168,20 +21277,15 @@ tests:
                                 FROM [ad].[program] AS [program]
                                      INNER JOIN [ed].[student] AS [student]
                                                 ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-                                WHERE (0 <> 0)) AS [student]
-                               ON (([program_1].[school_code] = [student].[school_code_2]) AND ([program_1].[code] = [student].[code]) AND ([program_1].[school_code] = [student].[school_code_1]) AND ([program_1].[code] = [student].[program_code]))
-                    LEFT OUTER JOIN (SELECT [student].[count],
-                                            [program].[school_code],
-                                            [program].[code]
-                                     FROM [ad].[program] AS [program]
-                                          LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                                                  [student].[school_code],
-                                                                  [student].[program_code]
-                                                           FROM [ed].[student] AS [student]
-                                                           GROUP BY [student].[school_code], [student].[program_code]) AS [student]
-                                                          ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))) AS [program_2]
-                                    ON (([program_1].[school_code] = [program_2].[school_code]) AND ([program_1].[code] = [program_2].[code]))
-               ORDER BY COALESCE([program_2].[count], 0) ASC, [program_1].[school_code] ASC, [program_1].[code] ASC, 1 ASC
+                                WHERE (0 <> 0)) AS [student_1]
+                               ON (([program].[school_code] = [student_1].[school_code_2]) AND ([program].[code] = [student_1].[code]) AND ([program].[school_code] = [student_1].[school_code_1]) AND ([program].[code] = [student_1].[program_code]))
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                            [student].[school_code],
+                                            [student].[program_code]
+                                     FROM [ed].[student] AS [student]
+                                     GROUP BY [student].[school_code], [student].[program_code]) AS [student_2]
+                                    ON (([program].[school_code] = [student_2].[school_code]) AND ([program].[code] = [student_2].[program_code]))
+               ORDER BY COALESCE([student_2].[count], 0) ASC, [program].[school_code] ASC, [program].[code] ASC, 1 ASC
           - uri: /moniker(school.sort(count(department)))
             status: 200 OK
             headers:

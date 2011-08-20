@@ -187,6 +187,13 @@ tests:
                               course := course?credits>$avg_credits,
                               course_level := course^integer(no/100)).limit(3)
             {code, count(course_level), count(course_level.course)}
+    # Optimized gluing.
+    - uri: /course?credits=$max_credits
+            :where $max_credits := max(course.credits)
+    - uri: /course?credits=max(fork().credits)
+    - uri: /department.define($max_credits := max(course.credits))
+            {code, count(course?credits=$max_credits)}.limit(10)
+    - uri: /department{code, count(course?credits=max(fork().credits))}.limit(10)
 
   - title: Root, This, Direct and Fiber functions
     tests:

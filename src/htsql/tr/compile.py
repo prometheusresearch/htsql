@@ -179,7 +179,7 @@ class CompileBase(Adapter):
 
     # Utility functions used by implementations.
 
-    def compile_shoot(self, flow, trunk_term, codes=None):
+    def compile_shoot(self, flow, trunk, codes=None):
         """
         Compiles a term corresponding to the given flow.
 
@@ -189,9 +189,11 @@ class CompileBase(Adapter):
         `flow` (:class:`htsql.tr.flow.Flow`)
             A flow node, for which the we compile a term.
 
-        `trunk_term` (:class:`htsql.tr.term.Term`)
+        `trunk` (:class:`htsql.tr.flow.Flow` or :class:`htsql.tr.term.Term`)
            Expresses a promise that the compiled term will be
-           (eventually) joined to `trunk_term` (see :meth:`join_terms`).
+           (eventually) joined to a term corresponding to the
+           `trunk` flow.  If `trunk` is a :class:`htsql.tr.term.Term`
+           instance, use the term flow.
 
         `codes` (a list of :class:`htsql.tr.flow.Expression` or ``None``)
            If provided, a list of expressions to be injected
@@ -200,13 +202,18 @@ class CompileBase(Adapter):
 
         # Sanity check on the arguments.
         assert isinstance(flow, Flow)
-        assert isinstance(trunk_term, Term)
+        assert isinstance(trunk, (Flow, Term))
         assert isinstance(codes, maybe(listof(Expression)))
+
+        # If a term node is passed in place of a trunk flow, use
+        # the flow of the term.
+        if isinstance(trunk, Term):
+            trunk = trunk.flow
 
         # This condition is enforced by unmasking process -- all
         # non-axial operations in the trunk flow are pruned from
         # the given flow.
-        assert flow == flow.prune(trunk_term.flow)
+        assert flow == flow.prune(trunk)
 
         # Determine the longest ancestor of the flow that contains
         # no non-axial operations.
@@ -222,8 +229,8 @@ class CompileBase(Adapter):
         # at least the base of the shoot baseline must be spanned by
         # the trunk flow (then, we can project on the columns of
         # a foreign key that attaches the baseline to its base).
-        if not trunk_term.flow.spans(baseline):
-            while not trunk_term.flow.spans(baseline.base):
+        if not trunk.spans(baseline):
+            while not trunk.spans(baseline.base):
                 baseline = baseline.base
 
         # Compile the term for the given flow up to the baseline.
@@ -235,6 +242,126 @@ class CompileBase(Adapter):
 
         # Return the compiled shoot term.
         return term
+
+    def glue_flows(self, flow, baseline, shoot, shoot_baseline):
+        """
+        Returns joints attaching the shoot flow to the trunk flow.
+
+        The given flow nodes specify the shape of two term nodes:
+        the trunk term and the shoot term.  The function returns
+        a list of :class:`htsql.tr.term.Joint` objects that could
+        be used to attach the shoot term to the trunk term without
+        changing the cardinality of the latter.
+
+        `flow` (:class:`htsql.tr.flow.Flow`)
+            The flow of the trunk term.
+
+        `baseline` (:class:`htsql.tr.flow.Flow`)
+            The baseline of the trunk term.
+
+        `shoot` (:class:`htsql.tr.flow.Flow`)
+            The flow of the shoot term.
+
+        `shoot_baseline` (:class:`htsql.tr.flow.Flow`)
+            The baseline of the shoot term.
+        """
+        # Sanity check on the arguments.
+        assert isinstance(flow, Flow)
+        assert isinstance(baseline, Flow)
+        assert baseline.is_inflated
+        # The `flow` may represent not the trunk flow itself,
+        # but one of its ancestors which may lie below `baseline`.
+        #assert flow.concludes(baseline)
+        assert isinstance(shoot, Flow)
+        assert isinstance(shoot_baseline, Flow)
+        assert shoot_baseline.is_inflated
+        assert shoot.concludes(shoot_baseline)
+
+        # Verify that it is possible to join the terms without
+        # changing the cardinality of the trunk.
+        assert (shoot_baseline.is_root or flow.spans(shoot_baseline.base))
+
+        # There are two ways the joints are generated:
+        #
+        # - when the shoot baseline is an axis of the trunk flow,
+        #   in this case we join the terms using parallel joints on
+        #   the common axes;
+        # - otherwise, join the terms using a serial joint between
+        #   the shoot baseline and its base.
+
+        # Joints to attach the shoot to the trunk.
+        joints = []
+        # The backbone of the trunk term.
+        backbone = flow.inflate()
+        # The backbone of the shoot term.
+        shoot_backbone = shoot.inflate()
+        # Check if the shoot baseline is an axis of the trunk flow.
+        if backbone.concludes(shoot_baseline):
+            # In this case, we join the terms by all axes of the trunk
+            # flow that are exported by the shoot term.
+            # Find the first inflated axis of the trunk exported
+            # by the shoot.
+            axis = backbone
+            while not shoot_backbone.concludes(axis):
+                axis = axis.base
+            # Now the axes between `axis` and `shoot_baseline` are common
+            # axes of the trunk flow and the shoot term.  For each of them,
+            # generate a parallel joint.  Note that we do not verify
+            # (and, in general, it is not required) that these axes
+            # are exported by the trunk term.  Apply `inject_joints()` on
+            # the trunk term before using the joints to join the terms.
+            axes = []
+            while axis != shoot_baseline.base:
+                # Skip non-expanding axes (but always include the baseline).
+                if not axis.is_contracting or axis == shoot_baseline:
+                    axes.append(axis)
+                axis = axis.base
+            # We prefer (for no particular reason) the joints to go
+            # from shortest to longest axes.
+            axes.reverse()
+            for axis in axes:
+                joints.extend(sew(axis))
+        else:
+            # When the shoot does not touch the trunk flow, we attach it
+            # using a serial joint between the shoot baseline and its base.
+            # Note that we do not verify (and it is not required) that
+            # the trunk term exports the base flow.  Apply `inject_joints()`
+            # on the trunk term to inject any necessary flows before
+            # joining the terms using the joints.
+            joints = tie(shoot_baseline)
+
+            # We can try to optimize the joints when the base of the
+            # shoot baseline is an ancestor of the trunk flow, but not
+            # exported by the trunk term.  It this case, we prefer to
+            # avoid adding an extra axis to the trunk term from below.
+
+            # The axis that joins the shoot term to the trunk.
+            origin = shoot_baseline.base
+            # Check if the axis is a part of the trunk backbone, but
+            # lies below the the trunk baseline.
+            if (baseline.concludes(origin) and baseline != origin):
+                # Find the direct descendant of `origin` along the trunk.
+                axis = baseline
+                while axis.base != origin:
+                    axis = axis.base
+                # Ties from the shoot term to the origin flow.
+                shoot_joints = joints
+                # Ties from the trunk term to the origin flow.
+                trunk_joints = tie(axis)
+                # Check if both set of ties share the same origin
+                # expressions.
+                if (len(trunk_joints) == len(shoot_joints) and
+                        all(trunk_joint.lop == shoot_joint.lop
+                            for trunk_joint, shoot_joint
+                            in zip(trunk_joints, shoot_joints))):
+                    # Generate a new set of ties by merging the shoot
+                    # and trunk joints.
+                    joints = [Joint(trunk_joint.rop, shoot_joint.rop)
+                              for trunk_joint, shoot_joint
+                              in zip(trunk_joints, shoot_joints)]
+
+        # Return the generated joints.
+        return joints
 
     def glue_terms(self, trunk_term, shoot_term):
         """
@@ -253,58 +380,9 @@ class CompileBase(Adapter):
         # Sanity check on the arguments.
         assert isinstance(trunk_term, Term)
         assert isinstance(shoot_term, Term)
-        # Verify that it is possible to join the terms without
-        # changing the cardinality of the trunk.
-        assert (shoot_term.baseline.is_root or
-                trunk_term.flow.spans(shoot_term.baseline.base))
-
-        # There are two ways the joints are generated:
-        #
-        # - when the shoot baseline is an axis of the trunk flow,
-        #   in this case we join the terms using parallel joints on
-        #   the common axes;
-        # - otherwise, join the terms using a serial joint between
-        #   the shoot baseline and its base.
-
-        # Joints to attach the shoot to the trunk.
-        joints = []
-        # Check if the shoot baseline is an axis of the trunk flow.
-        if trunk_term.backbone.concludes(shoot_term.baseline):
-            # In this case, we join the terms by all axes of the trunk
-            # flow that are exported by the shoot term.
-            # Find the first inflated axis of the trunk exported
-            # by the shoot.
-            axis = trunk_term.backbone
-            while not shoot_term.backbone.concludes(axis):
-                axis = axis.base
-            # Now the axes between `axis` and `baseline` are common axes
-            # of the trunk flow and the shoot term.  For each of them,
-            # generate a parallel joint.  Note that we do not verify
-            # (and, in general, it is not required) that these axes
-            # are exported by the trunk term.  Apply `inject_joints()` on
-            # the trunk term before using the joints to join the terms.
-            axes = []
-            while axis != shoot_term.baseline.base:
-                # Skip non-expanding axes (but always include the baseline).
-                if not axis.is_contracting or axis == shoot_term.baseline:
-                    axes.append(axis)
-                axis = axis.base
-            # We prefer (for no particular reason) the joints to go
-            # from shortest to longest axes.
-            axes.reverse()
-            for axis in axes:
-                joints.extend(sew(axis))
-        else:
-            # When the shoot does not touch the trunk flow, we attach it
-            # using a serial joint between the shoot baseline and its base.
-            # Note that we do not verify (and it is not required) that
-            # the trunk term exports the base flow.  Apply `inject_joints()`
-            # on the trunk term to inject any necessary flows before
-            # joining the terms using the joints.
-            joints = tie(shoot_term.baseline)
-
-        # Return the generated joints.
-        return joints
+        # Delegate to an auxiliary method.
+        return self.glue_flows(trunk_term.flow, trunk_term.baseline,
+                               shoot_term.flow, shoot_term.baseline)
 
     def inject_joints(self, term, joints):
         """
@@ -1191,18 +1269,16 @@ class CompileCovering(CompileFlow):
             shoot_term = seed_term
             # For the forked flow, this is tricky as we can't join the trunk
             # to the seed term as usual -- we must leave the seed axis
-            # free of joints.  To avoid recoding the joining method here,
-            # we disguise the seed term as if it does not contain the seed
-            # axis, then we could use `glue_terms` as usual.  Note that
-            # the baseline lies below `ground.base` since the seed term
-            # is irregular.  The `shoot_term` is a throwaway node, it
-            # is only used to call `glue_terms` here.
+            # free of joints.  Note that the seed baseline lies below
+            # `ground.base` since the seed term is irregular.
             if isinstance(self.flow, ForkedFlow):
-                shoot_term = WrapperTerm(seed_term.tag, seed_term,
-                                         self.flow.ground.base,
-                                         seed_term.baseline,
-                                         seed_term.routes)
-            seed_joints = self.glue_terms(trunk_term, shoot_term)
+                seed_joints = self.glue_flows(trunk_term.flow,
+                                              trunk_term.baseline,
+                                              self.flow.ground.base,
+                                              seed_term.baseline)
+            # Otherwise, just attach the shoot term to the trunk term.
+            else:
+                seed_joints = self.glue_terms(trunk_term, shoot_term)
             for joint in seed_joints:
                 unit = CoveringUnit(joint.rop, self.backbone,
                                     joint.rop.binding)
@@ -1500,26 +1576,43 @@ class InjectAggregate(Inject):
         # Extract the aggregate expressions.
         codes = [unit.code for unit in units]
 
-        # Check if the unit flow coincides with or dominates the term
-        # flow.  In this case we could avoid compiling a separate unit
-        # term and instead attach the projected term directly to the main
-        # term.
-        is_native = self.flow.dominates(self.term.flow)
+        # Check if the unit can be attached directly to the trunk term.
+        # It is possible only if the unit flow coincides with or dominates
+        # the trunk flow or one of its ancestors.  In this case, we could
+        # avoid compiling a separate unit term and instead attach the
+        # projected term directly to the main term.
+        is_native = False
+
+        # The attachment point.
+        unit_flow = self.term.flow
+        # Iterate over all ancestors of the term flow till (if) we find
+        # the attachment point.
+        while  unit_flow is not None:
+            if self.flow.dominates(unit_flow):
+                is_native = True
+                break
+            unit_flow = unit_flow.base
+        # The trunk term can serve as the unit term.
         if is_native:
             unit_term = self.term
+            # Note that the attachment point may be below the term flow.
+            unit_baseline = unit_term.baseline
         else:
             # Compile a separate term for the unit flow.
-            # Note: currently it is not reachable since we wrap every
-            # aggregate with a scalar unit sharing the same flow.
-            # FIXME: is it really so?
             unit_term = self.compile_shoot(self.flow, self.term)
+            unit_flow = unit_term.flow
+            unit_baseline = unit_term.baseline
 
         # Compile a term for the plural flow against the unit flow,
         # and inject all the aggregate expressions into it.
         plural_term = self.compile_shoot(self.plural_flow,
-                                         unit_term, codes)
+                                         unit_flow, codes)
         # Generate joints to attach the projected term to the unit term.
-        unit_joints = self.glue_terms(unit_term, plural_term)
+        # Note that we attaching not to the term itself, but to
+        # the attaching point we determined before.  The attachment
+        # point may lie below the term flow.
+        unit_joints = self.glue_flows(unit_flow, unit_baseline,
+                                      plural_term.flow, plural_term.baseline)
         # Make sure the unit term could export the join conditions.
         unit_term = self.inject_joints(unit_term, unit_joints)
 
@@ -1614,8 +1707,8 @@ class InjectCorrelated(Inject):
             unit_term = self.term
         else:
             # Otherwise, compile a separate term for the unit flow.
-            # Note: currently, not reachable as currently correlated units
-            # are always wrapped by a scalar unit with the same base flow.
+            # Note: not reachable as currently correlated units are always
+            # wrapped by a scalar unit with the same base flow.
             unit_term = self.compile_shoot(self.flow, self.term)
 
         # Compile a term for the correlated subquery.

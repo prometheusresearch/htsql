@@ -8755,16 +8755,16 @@ tests:
 
              ----
              /define($avg_credits:=avg(course.credits)).course?credits>$avg_credits
-             SELECT "COURSE"."DEPARTMENT_CODE",
-                    "COURSE"."NO",
-                    "COURSE"."TITLE",
-                    "COURSE"."CREDITS",
-                    "COURSE"."DESCRIPTION"
-             FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+             SELECT "COURSE_1"."DEPARTMENT_CODE",
+                    "COURSE_1"."NO",
+                    "COURSE_1"."TITLE",
+                    "COURSE_1"."CREDITS",
+                    "COURSE_1"."DESCRIPTION"
+             FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
                   LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg"
-                                   FROM "HTSQL_REGRESS"."COURSE" "COURSE") "!"
+                                   FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
                                   ON (1 <> 0)
-             WHERE ("COURSE"."CREDITS" > "!"."avg")
+             WHERE ("COURSE_1"."CREDITS" > "COURSE_2"."avg")
              ORDER BY 1 ASC, 2 ASC
         - uri: /course?credits>$avg_credits :where $avg_credits := avg(course.credits)
           status: 200 OK
@@ -9223,16 +9223,16 @@ tests:
 
              ----
              /course?credits>$avg_credits:where($avg_credits:=avg(course.credits))
-             SELECT "COURSE"."DEPARTMENT_CODE",
-                    "COURSE"."NO",
-                    "COURSE"."TITLE",
-                    "COURSE"."CREDITS",
-                    "COURSE"."DESCRIPTION"
-             FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+             SELECT "COURSE_1"."DEPARTMENT_CODE",
+                    "COURSE_1"."NO",
+                    "COURSE_1"."TITLE",
+                    "COURSE_1"."CREDITS",
+                    "COURSE_1"."DESCRIPTION"
+             FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
                   LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg"
-                                   FROM "HTSQL_REGRESS"."COURSE" "COURSE") "!"
+                                   FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
                                   ON (1 <> 0)
-             WHERE ("COURSE"."CREDITS" > "!"."avg")
+             WHERE ("COURSE_1"."CREDITS" > "COURSE_2"."avg")
              ORDER BY 1 ASC, 2 ASC
         - uri: /department.define($avg_credits:=avg(course.credits)) .course?credits>$avg_credits
           status: 200 OK
@@ -9709,25 +9709,21 @@ tests:
 
              ----
              /department.define($avg_credits:=avg(course.credits)).course?credits>$avg_credits
-             SELECT "COURSE"."DEPARTMENT_CODE",
-                    "COURSE"."NO",
-                    "COURSE"."TITLE",
-                    "COURSE"."CREDITS",
-                    "COURSE"."DESCRIPTION"
-             FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT_1"
-                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                             ON ("DEPARTMENT_1"."CODE" = "COURSE"."DEPARTMENT_CODE")
-                  LEFT OUTER JOIN (SELECT "COURSE"."avg",
-                                          "DEPARTMENT"."CODE"
-                                   FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                        LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
-                                                                "COURSE"."DEPARTMENT_CODE"
-                                                         FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                         GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
-                                                        ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")) "DEPARTMENT_2"
-                                  ON ("DEPARTMENT_1"."CODE" = "DEPARTMENT_2"."CODE")
-             WHERE ("COURSE"."CREDITS" > "DEPARTMENT_2"."avg")
-             ORDER BY "DEPARTMENT_1"."CODE" ASC, 1 ASC, 2 ASC
+             SELECT "COURSE_1"."DEPARTMENT_CODE",
+                    "COURSE_1"."NO",
+                    "COURSE_1"."TITLE",
+                    "COURSE_1"."CREDITS",
+                    "COURSE_1"."DESCRIPTION"
+             FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                  INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                             ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
+                  LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
+                                          "COURSE"."DEPARTMENT_CODE"
+                                   FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                   GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
+                                  ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT_CODE")
+             WHERE ("COURSE_1"."CREDITS" > "COURSE_2"."avg")
+             ORDER BY "DEPARTMENT"."CODE" ASC, 1 ASC, 2 ASC
       - id: projections
         tests:
         - uri: /program{degree}
@@ -19980,33 +19976,26 @@ tests:
                            ORDER BY 2 ASC, 1 ASC) "COURSE"
                      WHERE (ROWNUM < 4)) "COURSE_1"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count_1",
-                                            COUNT((CASE WHEN ("COURSE_2"."CREDITS" = "DEPARTMENT_2"."max") THEN 1 END)) AS "count_2",
-                                            "DEPARTMENT_1"."CODE",
+                                            COUNT((CASE WHEN ("COURSE_2"."CREDITS" = "COURSE_3"."max") THEN 1 END)) AS "count_2",
                                             "COURSE_1"."DEPARTMENT_CODE",
                                             "COURSE_1"."integer"
-                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT_1"
-                                          INNER JOIN (SELECT "COURSE"."DEPARTMENT_CODE",
-                                                             CAST(("COURSE"."NO" / 100) AS INTEGER) AS "integer"
-                                                      FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                      WHERE (CAST(("COURSE"."NO" / 100) AS INTEGER) IS NOT NULL)
-                                                      GROUP BY "COURSE"."DEPARTMENT_CODE", CAST(("COURSE"."NO" / 100) AS INTEGER)) "COURSE_1"
-                                                     ON ("DEPARTMENT_1"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
+                                     FROM (SELECT "COURSE"."DEPARTMENT_CODE",
+                                                  CAST(("COURSE"."NO" / 100) AS INTEGER) AS "integer"
+                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                           WHERE (CAST(("COURSE"."NO" / 100) AS INTEGER) IS NOT NULL)
+                                           GROUP BY "COURSE"."DEPARTMENT_CODE", CAST(("COURSE"."NO" / 100) AS INTEGER)) "COURSE_1"
                                           INNER JOIN (SELECT "COURSE"."CREDITS",
                                                              "COURSE"."DEPARTMENT_CODE",
                                                              CAST(("COURSE"."NO" / 100) AS INTEGER) AS "integer"
                                                       FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
                                                      ON (("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE") AND ("COURSE_1"."integer" = "COURSE_2"."integer"))
-                                          LEFT OUTER JOIN (SELECT "COURSE"."max",
-                                                                  "DEPARTMENT"."CODE"
-                                                           FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                                                LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
-                                                                                        "COURSE"."DEPARTMENT_CODE"
-                                                                                 FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                                                 GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
-                                                                                ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")) "DEPARTMENT_2"
-                                                          ON ("DEPARTMENT_1"."CODE" = "DEPARTMENT_2"."CODE")
-                                     GROUP BY "DEPARTMENT_1"."CODE", "COURSE_1"."DEPARTMENT_CODE", "COURSE_1"."integer") "COURSE_2"
-                                    ON (("COURSE_1"."CODE" = "COURSE_2"."CODE") AND ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE") AND ("COURSE_1"."integer" = "COURSE_2"."integer"))
+                                          LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                                                  "COURSE"."DEPARTMENT_CODE"
+                                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                           GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_3"
+                                                          ON ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_3"."DEPARTMENT_CODE")
+                                     GROUP BY "COURSE_1"."DEPARTMENT_CODE", "COURSE_1"."integer") "COURSE_2"
+                                    ON (("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE") AND ("COURSE_1"."integer" = "COURSE_2"."integer"))
                ORDER BY "COURSE_1"."CODE" ASC, 1 ASC
           - uri: /school?min(department.course.credits)>1& max(department.course.credits)<8
               ^campus {campus, count(school)}
@@ -20218,49 +20207,175 @@ tests:
                            ORDER BY 1 ASC) "DEPARTMENT"
                      WHERE (ROWNUM < 4)) "DEPARTMENT"
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "DEPARTMENT"."CODE"
-                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                          INNER JOIN (SELECT "DEPARTMENT_1"."CODE"
-                                                      FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT_1"
-                                                           INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                                      ON ("DEPARTMENT_1"."CODE" = "COURSE"."DEPARTMENT_CODE")
-                                                           LEFT OUTER JOIN (SELECT "COURSE"."avg",
-                                                                                   "DEPARTMENT"."CODE"
-                                                                            FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                                                                 LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
-                                                                                                         "COURSE"."DEPARTMENT_CODE"
-                                                                                                  FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                                                                  GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
-                                                                                                 ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")) "DEPARTMENT_2"
-                                                                           ON ("DEPARTMENT_1"."CODE" = "DEPARTMENT_2"."CODE")
-                                                      WHERE (CAST(("COURSE"."NO" / 100) AS INTEGER) IS NOT NULL)
-                                                            AND ("COURSE"."CREDITS" > "DEPARTMENT_2"."avg")
-                                                      GROUP BY "DEPARTMENT_1"."CODE", "COURSE"."DEPARTMENT_CODE", CAST(("COURSE"."NO" / 100) AS INTEGER)) "COURSE"
-                                                     ON ("DEPARTMENT"."CODE" = "COURSE"."CODE")
-                                     GROUP BY "DEPARTMENT"."CODE") "COURSE_1"
-                                    ON ("DEPARTMENT"."CODE" = "COURSE_1"."CODE")
+                                            "COURSE"."DEPARTMENT_CODE"
+                                     FROM (SELECT "COURSE_1"."DEPARTMENT_CODE"
+                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                                                LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
+                                                                        "COURSE"."DEPARTMENT_CODE"
+                                                                 FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                                 GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
+                                                                ON ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE")
+                                           WHERE (CAST(("COURSE_1"."NO" / 100) AS INTEGER) IS NOT NULL)
+                                                 AND ("COURSE_1"."CREDITS" > "COURSE_2"."avg")
+                                           GROUP BY "COURSE_1"."DEPARTMENT_CODE", CAST(("COURSE_1"."NO" / 100) AS INTEGER)) "COURSE"
+                                     GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_1"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_1"."DEPARTMENT_CODE")
                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                            "DEPARTMENT"."CODE"
-                                     FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                          INNER JOIN (SELECT "DEPARTMENT_1"."CODE",
-                                                             "COURSE"."DEPARTMENT_CODE"
-                                                      FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT_1"
-                                                           INNER JOIN "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                                      ON ("DEPARTMENT_1"."CODE" = "COURSE"."DEPARTMENT_CODE")
-                                                           LEFT OUTER JOIN (SELECT "COURSE"."avg",
-                                                                                   "DEPARTMENT"."CODE"
-                                                                            FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
-                                                                                 LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
-                                                                                                         "COURSE"."DEPARTMENT_CODE"
-                                                                                                  FROM "HTSQL_REGRESS"."COURSE" "COURSE"
-                                                                                                  GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE"
-                                                                                                 ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")) "DEPARTMENT_2"
-                                                                           ON ("DEPARTMENT_1"."CODE" = "DEPARTMENT_2"."CODE")
-                                                      WHERE (CAST(("COURSE"."NO" / 100) AS INTEGER) IS NOT NULL)
-                                                            AND ("COURSE"."CREDITS" > "DEPARTMENT_2"."avg")) "COURSE"
-                                                     ON (("DEPARTMENT"."CODE" = "COURSE"."CODE") AND ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE"))
-                                     GROUP BY "DEPARTMENT"."CODE") "COURSE_2"
-                                    ON ("DEPARTMENT"."CODE" = "COURSE_2"."CODE")
+                                            "COURSE_1"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                                          LEFT OUTER JOIN (SELECT AVG("COURSE"."CREDITS") AS "avg",
+                                                                  "COURSE"."DEPARTMENT_CODE"
+                                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                           GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
+                                                          ON ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE")
+                                     WHERE (CAST(("COURSE_1"."NO" / 100) AS INTEGER) IS NOT NULL)
+                                           AND ("COURSE_1"."CREDITS" > "COURSE_2"."avg")
+                                     GROUP BY "COURSE_1"."DEPARTMENT_CODE") "COURSE_2"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE_2"."DEPARTMENT_CODE")
+               ORDER BY 1 ASC
+          - uri: /course?credits=$max_credits :where $max_credits := max(course.credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                                                                                          |
+               +-------------------------------------------------------------------------------------------------+
+               | department_code | no  | title                      | credits | description                      |
+              -+-----------------+-----+----------------------------+---------+----------------------------------+-
+               | be              | 415 | Internship in Biomedical   |       8 | The student will work twenty     |
+               :                 :     : Engineering                :         : hours per week in an area firm   :
+               :                 :     :                            :         : to gain experience in the        :
+               :                 :     :                            :         : application of biomedical        :
+               :                 :     :                            :         : engineering principles in an     :
+               :                 :     :                            :         : industrial setting.              :
+                                                                                                           (1 row)
+
+               ----
+               /course?credits=$max_credits:where($max_credits:=max(course.credits))
+               SELECT "COURSE_1"."DEPARTMENT_CODE",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."TITLE",
+                      "COURSE_1"."CREDITS",
+                      "COURSE_1"."DESCRIPTION"
+               FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
+                                    ON (1 <> 0)
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /course?credits=max(fork().credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course                                                                                          |
+               +-------------------------------------------------------------------------------------------------+
+               | department_code | no  | title                      | credits | description                      |
+              -+-----------------+-----+----------------------------+---------+----------------------------------+-
+               | be              | 415 | Internship in Biomedical   |       8 | The student will work twenty     |
+               :                 :     : Engineering                :         : hours per week in an area firm   :
+               :                 :     :                            :         : to gain experience in the        :
+               :                 :     :                            :         : application of biomedical        :
+               :                 :     :                            :         : engineering principles in an     :
+               :                 :     :                            :         : industrial setting.              :
+                                                                                                           (1 row)
+
+               ----
+               /course?credits=max(fork().credits)
+               SELECT "COURSE_1"."DEPARTMENT_CODE",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."TITLE",
+                      "COURSE_1"."CREDITS",
+                      "COURSE_1"."DESCRIPTION"
+               FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE") "COURSE_2"
+                                    ON (1 <> 0)
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /department.define($max_credits := max(course.credits)) {code, count(course?credits=$max_credits)}.limit(10)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                  |
+               +---------------------------------------------+
+               | code   | count(course?credits=$max_credits) |
+              -+--------+------------------------------------+-
+               | acc    |                                  1 |
+               | arthis |                                  1 |
+               | astro  |                                  2 |
+               | be     |                                  1 |
+               | bursar |                                  0 |
+               | career |                                  0 |
+               | chem   |                                  2 |
+               | comp   |                                  1 |
+               | econ   |                                  2 |
+               | edpol  |                                 15 |
+                                                     (10 rows)
+
+               ----
+               /department.define($max_credits:=max(course.credits)){code,count(course?credits=$max_credits)}.limit(10)
+               SELECT "DEPARTMENT"."CODE",
+                      COALESCE("COURSE"."count", 0)
+               FROM (SELECT "DEPARTMENT"."CODE"
+                     FROM (SELECT "DEPARTMENT"."CODE"
+                           FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                           ORDER BY 1 ASC) "DEPARTMENT"
+                     WHERE (ROWNUM < 11)) "DEPARTMENT"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "COURSE_1"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                                          LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                                                  "COURSE"."DEPARTMENT_CODE"
+                                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                           GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
+                                                          ON ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE")
+                                     WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+                                     GROUP BY "COURSE_1"."DEPARTMENT_CODE") "COURSE"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
+               ORDER BY 1 ASC
+          - uri: /department{code, count(course?credits=max(fork().credits))}.limit(10)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                         |
+               +----------------------------------------------------+
+               | code   | count(course?credits=max(fork().credits)) |
+              -+--------+-------------------------------------------+-
+               | acc    |                                         1 |
+               | arthis |                                         1 |
+               | astro  |                                         2 |
+               | be     |                                         1 |
+               | bursar |                                         0 |
+               | career |                                         0 |
+               | chem   |                                         2 |
+               | comp   |                                         1 |
+               | econ   |                                         2 |
+               | edpol  |                                        15 |
+                                                            (10 rows)
+
+               ----
+               /department{code,count(course?credits=max(fork().credits))}.limit(10)
+               SELECT "DEPARTMENT"."CODE",
+                      COALESCE("COURSE"."count", 0)
+               FROM (SELECT "DEPARTMENT"."CODE"
+                     FROM (SELECT "DEPARTMENT"."CODE"
+                           FROM "HTSQL_REGRESS"."DEPARTMENT" "DEPARTMENT"
+                           ORDER BY 1 ASC) "DEPARTMENT"
+                     WHERE (ROWNUM < 11)) "DEPARTMENT"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "COURSE_1"."DEPARTMENT_CODE"
+                                     FROM "HTSQL_REGRESS"."COURSE" "COURSE_1"
+                                          LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max",
+                                                                  "COURSE"."DEPARTMENT_CODE"
+                                                           FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                                                           GROUP BY "COURSE"."DEPARTMENT_CODE") "COURSE_2"
+                                                          ON ("COURSE_1"."DEPARTMENT_CODE" = "COURSE_2"."DEPARTMENT_CODE")
+                                     WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+                                     GROUP BY "COURSE_1"."DEPARTMENT_CODE") "COURSE"
+                                    ON ("DEPARTMENT"."CODE" = "COURSE"."DEPARTMENT_CODE")
                ORDER BY 1 ASC
         - id: root,-this,-direct-and-fiber-functions
           tests:
@@ -21407,15 +21522,15 @@ tests:
 
                ----
                /program.sort(count(student)).moniker((this()?false()).student)
-               SELECT "STUDENT"."ID",
-                      "STUDENT"."NAME",
-                      "STUDENT"."GENDER",
-                      "STUDENT"."DOB",
-                      "STUDENT"."SCHOOL_CODE_1",
-                      "STUDENT"."PROGRAM_CODE",
-                      "STUDENT"."START_DATE",
-                      "STUDENT"."IS_ACTIVE"
-               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM_1"
+               SELECT "STUDENT_1"."ID",
+                      "STUDENT_1"."NAME",
+                      "STUDENT_1"."GENDER",
+                      "STUDENT_1"."DOB",
+                      "STUDENT_1"."SCHOOL_CODE_1",
+                      "STUDENT_1"."PROGRAM_CODE",
+                      "STUDENT_1"."START_DATE",
+                      "STUDENT_1"."IS_ACTIVE"
+               FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                     INNER JOIN (SELECT "STUDENT"."ID",
                                        "STUDENT"."NAME",
                                        "STUDENT"."GENDER",
@@ -21429,20 +21544,15 @@ tests:
                                 FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
                                      INNER JOIN "HTSQL_REGRESS"."STUDENT" "STUDENT"
                                                 ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
-                                WHERE (0 <> 0)) "STUDENT"
-                               ON (("PROGRAM_1"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE_2") AND ("PROGRAM_1"."CODE" = "STUDENT"."CODE") AND ("PROGRAM_1"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE_1") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM_CODE"))
-                    LEFT OUTER JOIN (SELECT "STUDENT"."count",
-                                            "PROGRAM"."SCHOOL_CODE",
-                                            "PROGRAM"."CODE"
-                                     FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM"
-                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                                                  "STUDENT"."SCHOOL_CODE",
-                                                                  "STUDENT"."PROGRAM_CODE"
-                                                           FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
-                                                           GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
-                                                          ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))) "PROGRAM_2"
-                                    ON (("PROGRAM_1"."SCHOOL_CODE" = "PROGRAM_2"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "PROGRAM_2"."CODE"))
-               ORDER BY COALESCE("PROGRAM_2"."count", 0) ASC, "PROGRAM_1"."SCHOOL_CODE" ASC, "PROGRAM_1"."CODE" ASC, 1 ASC
+                                WHERE (0 <> 0)) "STUDENT_1"
+                               ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT_1"."SCHOOL_CODE_2") AND ("PROGRAM"."CODE" = "STUDENT_1"."CODE") AND ("PROGRAM"."SCHOOL_CODE" = "STUDENT_1"."SCHOOL_CODE_1") AND ("PROGRAM"."CODE" = "STUDENT_1"."PROGRAM_CODE"))
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL_CODE",
+                                            "STUDENT"."PROGRAM_CODE"
+                                     FROM "HTSQL_REGRESS"."STUDENT" "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT_2"
+                                    ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT_2"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT_2"."PROGRAM_CODE"))
+               ORDER BY COALESCE("STUDENT_2"."count", 0) ASC, "PROGRAM"."SCHOOL_CODE" ASC, "PROGRAM"."CODE" ASC, 1 ASC
           - uri: /moniker(school.sort(count(department)))
             status: 200 OK
             headers:
