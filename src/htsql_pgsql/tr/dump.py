@@ -12,6 +12,7 @@ This module adapts the SQL serializer for PostgreSQL.
 """
 
 
+from htsql.domain import IntegerDomain
 from htsql.tr.dump import (FormatLiteral, DumpBranch, DumpFloat,
                            DumpDecimal, DumpDate, DumpTime, DumpDateTime,
                            DumpToDecimal, DumpToFloat, DumpToString)
@@ -19,7 +20,7 @@ from htsql.tr.fn.dump import (DumpLike, DumpDateIncrement,
                               DumpDateDecrement, DumpDateDifference,
                               DumpMakeDate, DumpExtractYear, DumpExtractMonth,
                               DumpExtractDay, DumpExtractHour,
-                              DumpExtractMinute)
+                              DumpExtractMinute, DumpSum)
 
 
 class PGSQLFormatLiteral(FormatLiteral):
@@ -159,5 +160,14 @@ class PGSQLDumpLike(DumpLike):
     def __call__(self):
         self.format("({lop} {polarity:not}ILIKE {rop})",
                     self.phrase, self.signature)
+
+
+class PGSQLDumpSum(DumpSum):
+
+    def __call__(self):
+        if isinstance(self.phrase.domain, IntegerDomain):
+            self.format("CAST(SUM({op}) AS BIGINT)", self.phrase)
+        else:
+            return super(PGSQLDumpSum, self).__call__()
 
 

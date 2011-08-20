@@ -7239,7 +7239,7 @@ tests:
                     COALESCE("course"."sum", 0),
                     "course"."avg"
              FROM "ad"."department" AS "department"
-                  LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum",
+                  LEFT OUTER JOIN (SELECT CAST(SUM("course"."credits") AS BIGINT) AS "sum",
                                           AVG(CAST("course"."credits" AS NUMERIC)) AS "avg",
                                           "course"."department_code"
                                    FROM "ad"."course" AS "course"
@@ -15544,7 +15544,7 @@ tests:
 
              ----
              /{sum(course{credits}?department_code='be'),count(course{credits}?department_code='be'),avg(course{credits}?department_code='be')}
-             SELECT COALESCE(SUM("course"."credits"), 0),
+             SELECT COALESCE(CAST(SUM("course"."credits") AS BIGINT), 0),
                     COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)),
                     AVG(CAST("course"."credits" AS NUMERIC))
              FROM "ad"."course" AS "course"
@@ -15562,7 +15562,7 @@ tests:
 
              ----
              /{sum(course{credits}?department_code='str'),count(course{credits}?department_code='str'),avg(course{credits}?department_code='str')}
-             SELECT COALESCE(SUM("course"."credits"), 0),
+             SELECT COALESCE(CAST(SUM("course"."credits") AS BIGINT), 0),
                     COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)),
                     AVG(CAST("course"."credits" AS NUMERIC))
              FROM "ad"."course" AS "course"
@@ -19043,7 +19043,7 @@ tests:
                       COALESCE("course"."count", 0),
                       "course"."avg"
                FROM "ad"."department" AS "department"
-                    LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum",
+                    LEFT OUTER JOIN (SELECT CAST(SUM("course"."credits") AS BIGINT) AS "sum",
                                             COUNT(NULLIF(("course"."credits" IS NOT NULL), FALSE)) AS "count",
                                             AVG(CAST("course"."credits" AS NUMERIC)) AS "avg",
                                             "course"."department_code"
@@ -19335,7 +19335,7 @@ tests:
                       COALESCE("course"."sum", 0),
                       "course"."avg"
                FROM "ad"."department" AS "department"
-                    LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum",
+                    LEFT OUTER JOIN (SELECT CAST(SUM("course"."credits") AS BIGINT) AS "sum",
                                             AVG(CAST("course"."credits" AS NUMERIC)) AS "avg",
                                             "course"."department_code"
                                      FROM "ad"."course" AS "course"
@@ -19793,7 +19793,7 @@ tests:
                /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).department^school_code{*,avg(department.credit_diff),sum(department.credit_diff)}
                SELECT "department"."school_code",
                       AVG(CAST(("course_2"."max" - "course_2"."min") AS NUMERIC)),
-                      COALESCE(SUM(("course_2"."max" - "course_2"."min")), 0)
+                      COALESCE(CAST(SUM(("course_2"."max" - "course_2"."min")) AS BIGINT), 0)
                FROM "ad"."department" AS "department"
                     LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
                                             MIN("course"."credits") AS "min",
@@ -21404,7 +21404,7 @@ tests:
                                             AVG(CAST(COALESCE("course"."sum", 0) AS NUMERIC)) AS "avg",
                                             "department"."school_code"
                                      FROM "ad"."department" AS "department"
-                                          LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum",
+                                          LEFT OUTER JOIN (SELECT CAST(SUM("course"."credits") AS BIGINT) AS "sum",
                                                                   "course"."department_code"
                                                            FROM "ad"."course" AS "course"
                                                            GROUP BY 2) AS "course"
@@ -21435,7 +21435,7 @@ tests:
                                             AVG(CAST(COALESCE("course"."sum", 0) AS NUMERIC)) AS "avg",
                                             "department"."school_code"
                                      FROM "ad"."department" AS "department"
-                                          LEFT OUTER JOIN (SELECT SUM("course"."credits") AS "sum",
+                                          LEFT OUTER JOIN (SELECT CAST(SUM("course"."credits") AS BIGINT) AS "sum",
                                                                   "course"."department_code"
                                                            FROM "ad"."course" AS "course"
                                                            GROUP BY 2) AS "course"
@@ -22359,7 +22359,7 @@ tests:
                FROM "ad"."school" AS "school"
                     LEFT OUTER JOIN (SELECT MIN("course"."credits") AS "min",
                                             MAX("course"."credits") AS "max",
-                                            SUM("course"."credits") AS "sum",
+                                            CAST(SUM("course"."credits") AS BIGINT) AS "sum",
                                             AVG(CAST("course"."credits" AS NUMERIC)) AS "avg",
                                             "department"."school_code"
                                      FROM "ad"."department" AS "department"
@@ -25275,6 +25275,25 @@ tests:
             bind error: unable to resolve a wildcard:
                 /program.part_of.*
                                  ^
+        - uri: /sum(department.sum(course.credits))
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | sum(department.sum(course.credits)) |
+            -+-------------------------------------+-
+             |                                1195 |
+                                             (1 row)
+
+             ----
+             /sum(department.sum(course.credits))
+             SELECT CAST(SUM(COALESCE("course"."sum", 0)) AS BIGINT)
+             FROM "ad"."department" AS "department"
+                  LEFT OUTER JOIN (SELECT CAST(SUM("course"."credits") AS BIGINT) AS "sum",
+                                          "course"."department_code"
+                                   FROM "ad"."course" AS "course"
+                                   GROUP BY 2) AS "course"
+                                  ON ("department"."code" = "course"."department_code")
   - include: test/regress/input/format.yaml
     output:
       id: format

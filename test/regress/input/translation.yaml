@@ -476,10 +476,9 @@ tests:
     expect: 400
 
   # In PostgreSQL, SUM(int) => bigint, SUM(bigint) => decimal,
-  # but HTSQL expects an integer.
+  # but HTSQL expects an integer (FIXED?)
   - uri: /sum(department.sum(course.credits))
     ifdef: pgsql
-    skip: true # can't verify an exception
   # Oracle does not permit correlated subqueries in the same frame
   # with aggregates.
   - uri: /{count(school), exists(school)}
