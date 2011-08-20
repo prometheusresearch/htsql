@@ -18930,6 +18930,22 @@ tests:
                              WHERE ("school"."code" = "program"."school_code"))
                FROM "school" AS "school"
                ORDER BY 1 ASC
+          - uri: /school{code,department.exists(course)}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              compile error: expected a singular expression:
+                  /school{code,department.exists(course)}
+                                          ^^^^^^^^^^^^^^
+          - uri: /school{code,department.avg(course.credits)}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              compile error: expected a singular expression:
+                  /school{code,department.avg(course.credits)}
+                                          ^^^^^^^^^^^^^^^^^^^
           - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
             status: 200 OK
             headers:
@@ -19613,6 +19629,63 @@ tests:
                                      GROUP BY 2) AS "department"
                                     ON ("school"."campus" = "department"."campus")
                ORDER BY 1 ASC
+          - uri: /department.define($max_credits:=max(course.credits)) .(course^{level:=integer(no/100)}).limit(3)
+              {*, count(course), count(course?credits=$max_credits)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course^{level:=integer(no/100)}                            |
+               +------------------------------------------------------------+
+               | level | count(course) | count(course?credits=$max_credits) |
+              -+-------+---------------+------------------------------------+-
+               |     1 |             1 |                                  0 |
+               |     2 |             2 |                                  0 |
+               |     3 |             2 |                                  0 |
+                                                                     (3 rows)
+
+               ----
+               /department.define($max_credits:=max(course.credits)).(course^{level:=integer(no/100)}).limit(3){*,count(course),count(course?credits=$max_credits)}
+               SELECT "course_1"."integer",
+                      COALESCE("course_2"."count_1", 0),
+                      COALESCE("course_2"."count_2", 0)
+               FROM "department" AS "department"
+                    INNER JOIN (SELECT CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER) AS "integer",
+                                       "course"."department_code"
+                                FROM "course" AS "course"
+                                WHERE (CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER) IS NOT NULL)
+                                GROUP BY 2, 1) AS "course_1"
+                               ON ("department"."code" = "course_1"."department_code")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count_1",
+                                            COUNT((CASE WHEN ("course_2"."credits" = "department_2"."max") THEN 1 END)) AS "count_2",
+                                            "department_1"."code",
+                                            "course_1"."department_code",
+                                            "course_1"."integer"
+                                     FROM "department" AS "department_1"
+                                          INNER JOIN (SELECT "course"."department_code",
+                                                             CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER) AS "integer"
+                                                      FROM "course" AS "course"
+                                                      WHERE (CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER) IS NOT NULL)
+                                                      GROUP BY 1, 2) AS "course_1"
+                                                     ON ("department_1"."code" = "course_1"."department_code")
+                                          INNER JOIN (SELECT "course"."credits",
+                                                             "course"."department_code",
+                                                             CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER) AS "integer"
+                                                      FROM "course" AS "course") AS "course_2"
+                                                     ON (("course_1"."department_code" = "course_2"."department_code") AND ("course_1"."integer" = "course_2"."integer"))
+                                          LEFT OUTER JOIN (SELECT "course"."max",
+                                                                  "department"."code"
+                                                           FROM "department" AS "department"
+                                                                LEFT OUTER JOIN (SELECT MAX("course"."credits") AS "max",
+                                                                                        "course"."department_code"
+                                                                                 FROM "course" AS "course"
+                                                                                 GROUP BY 2) AS "course"
+                                                                                ON ("department"."code" = "course"."department_code")) AS "department_2"
+                                                          ON ("department_1"."code" = "department_2"."code")
+                                     GROUP BY 3, 4, 5) AS "course_2"
+                                    ON (("department"."code" = "course_2"."code") AND ("course_1"."department_code" = "course_2"."department_code") AND ("course_1"."integer" = "course_2"."integer"))
+               ORDER BY "department"."code" ASC, 1 ASC
+               LIMIT 3
           - uri: /school?min(department.course.credits)>1& max(department.course.credits)<8
               ^campus {campus, count(school)}
             status: 200 OK
@@ -19685,6 +19758,162 @@ tests:
                      AND (("course_1"."max" - "course_1"."min") > 3)
                GROUP BY 1
                ORDER BY 1 ASC
+          - uri: /program.define($degree:=degree).school.department.limit(1) {count(course.title~$degree)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                  |
+               +-----------------------------+
+               | count(course.title~$degree) |
+              -+-----------------------------+-
+               |                           0 |
+                                       (1 row)
+
+               ----
+               /program.define($degree:=degree).school.department.limit(1){count(course.title~$degree)}
+               SELECT COALESCE("course"."count", 0)
+               FROM "program" AS "program"
+                    INNER JOIN "school" AS "school"
+                               ON ("program"."school_code" = "school"."code")
+                    INNER JOIN "department" AS "department"
+                               ON ("school"."code" = "department"."school_code")
+                    LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."title" LIKE (('%' || COALESCE(REPLACE(REPLACE(REPLACE("program"."degree", '\', '\\'), '%', '\%'), '_', '\_'), '')) || '%') ESCAPE '\'), 0)) AS "count",
+                                            "program"."school_code",
+                                            "program"."code" AS "code_1",
+                                            "department"."code" AS "code_2"
+                                     FROM "program" AS "program"
+                                          INNER JOIN "school" AS "school"
+                                                     ON ("program"."school_code" = "school"."code")
+                                          INNER JOIN "department" AS "department"
+                                                     ON ("school"."code" = "department"."school_code")
+                                          INNER JOIN "course" AS "course"
+                                                     ON ("department"."code" = "course"."department_code")
+                                     GROUP BY 2, 3, 4) AS "course"
+                                    ON (("program"."school_code" = "course"."school_code") AND ("program"."code" = "course"."code_1") AND ("department"."code" = "course"."code_2"))
+               ORDER BY "program"."school_code" ASC, "program"."code" ASC, "department"."code" ASC
+               LIMIT 1
+          - uri: /school.define($code:=code).department.limit(1) {count(course.title~$code)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                |
+               +---------------------------+
+               | count(course.title~$code) |
+              -+---------------------------+-
+               |                        13 |
+                                     (1 row)
+
+               ----
+               /school.define($code:=code).department.limit(1){count(course.title~$code)}
+               SELECT COALESCE("course"."count", 0)
+               FROM "school" AS "school"
+                    INNER JOIN "department" AS "department"
+                               ON ("school"."code" = "department"."school_code")
+                    LEFT OUTER JOIN (SELECT COUNT(NULLIF(("course"."title" LIKE (('%' || REPLACE(REPLACE(REPLACE("school"."code", '\', '\\'), '%', '\%'), '_', '\_')) || '%') ESCAPE '\'), 0)) AS "count",
+                                            "school"."code" AS "code_1",
+                                            "department"."code" AS "code_2"
+                                     FROM "school" AS "school"
+                                          INNER JOIN "department" AS "department"
+                                                     ON ("school"."code" = "department"."school_code")
+                                          INNER JOIN "course" AS "course"
+                                                     ON ("department"."code" = "course"."department_code")
+                                     GROUP BY 2, 3) AS "course"
+                                    ON (("school"."code" = "course"."code_1") AND ("department"."code" = "course"."code_2"))
+               ORDER BY "school"."code" ASC, "department"."code" ASC
+               LIMIT 1
+          - uri: /(program?school.code='art').school.limit(1)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                   |
+               +------------------------------------------+
+               | code | name                     | campus |
+              -+------+--------------------------+--------+-
+               | art  | School of Art and Design | old    |
+                                                    (1 row)
+
+               ----
+               /(program?school.code='art').school.limit(1)
+               SELECT "school"."code",
+                      "school"."name",
+                      "school"."campus"
+               FROM "program" AS "program"
+                    INNER JOIN "school" AS "school"
+                               ON ("program"."school_code" = "school"."code")
+               WHERE ("school"."code" = 'art')
+               ORDER BY "program"."school_code" ASC, "program"."code" ASC
+               LIMIT 1
+          - uri: /department.define($avg_credits := avg(course.credits), course :=
+              course?credits>$avg_credits, course_level := course^integer(no/100)).limit(3)
+              {code, count(course_level), count(course_level.course)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | department                                                |
+               +-----------------------------------------------------------+
+               | code   | count(course_level) | count(course_level.course) |
+              -+--------+---------------------+----------------------------+-
+               | acc    |                   3 |                          3 |
+               | arthis |                   5 |                          6 |
+               | astro  |                   4 |                          5 |
+                                                                    (3 rows)
+
+               ----
+               /department.define($avg_credits:=avg(course.credits),course:=course?credits>$avg_credits,course_level:=course^integer(no/100)).limit(3){code,count(course_level),count(course_level.course)}
+               SELECT "department"."code",
+                      COALESCE("course_1"."count", 0),
+                      COALESCE("course_2"."count", 0)
+               FROM "department" AS "department"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "department"."code"
+                                     FROM "department" AS "department"
+                                          INNER JOIN (SELECT "department_1"."code"
+                                                      FROM "department" AS "department_1"
+                                                           INNER JOIN "course" AS "course"
+                                                                      ON ("department_1"."code" = "course"."department_code")
+                                                           LEFT OUTER JOIN (SELECT "course"."avg",
+                                                                                   "department"."code"
+                                                                            FROM "department" AS "department"
+                                                                                 LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS REAL)) AS "avg",
+                                                                                                         "course"."department_code"
+                                                                                                  FROM "course" AS "course"
+                                                                                                  GROUP BY 2) AS "course"
+                                                                                                 ON ("department"."code" = "course"."department_code")) AS "department_2"
+                                                                           ON ("department_1"."code" = "department_2"."code")
+                                                      WHERE (CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER) IS NOT NULL)
+                                                            AND (CAST("course"."credits" AS REAL) > "department_2"."avg")
+                                                      GROUP BY 1, "course"."department_code", CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER)) AS "course"
+                                                     ON ("department"."code" = "course"."code")
+                                     GROUP BY 2) AS "course_1"
+                                    ON ("department"."code" = "course_1"."code")
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "department"."code"
+                                     FROM "department" AS "department"
+                                          INNER JOIN (SELECT "department_1"."code",
+                                                             "course"."department_code"
+                                                      FROM "department" AS "department_1"
+                                                           INNER JOIN "course" AS "course"
+                                                                      ON ("department_1"."code" = "course"."department_code")
+                                                           LEFT OUTER JOIN (SELECT "course"."avg",
+                                                                                   "department"."code"
+                                                                            FROM "department" AS "department"
+                                                                                 LEFT OUTER JOIN (SELECT AVG(CAST("course"."credits" AS REAL)) AS "avg",
+                                                                                                         "course"."department_code"
+                                                                                                  FROM "course" AS "course"
+                                                                                                  GROUP BY 2) AS "course"
+                                                                                                 ON ("department"."code" = "course"."department_code")) AS "department_2"
+                                                                           ON ("department_1"."code" = "department_2"."code")
+                                                      WHERE (CAST((CAST("course"."no" AS REAL) / 100.0) AS INTEGER) IS NOT NULL)
+                                                            AND (CAST("course"."credits" AS REAL) > "department_2"."avg")) AS "course"
+                                                     ON (("department"."code" = "course"."code") AND ("department"."code" = "course"."department_code"))
+                                     GROUP BY 2) AS "course_2"
+                                    ON ("department"."code" = "course_2"."code")
+               ORDER BY 1 ASC
+               LIMIT 3
         - id: root,-this,-direct-and-fiber-functions
           tests:
           - uri: /{count(school)*count(department),count(school.({} -> department))}
@@ -20752,6 +20981,153 @@ tests:
                                                           ON 1
                                      WHERE 0) AS "!_2"
                                     ON 1
+          - uri: /moniker((this()?false()).student)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | moniker((this()?false()).student)                                              |
+               +--------------------------------------------------------------------------------+
+               | id | name | gender | dob | school_code | program_code | start_date | is_active |
+              -+----+------+--------+-----+-------------+--------------+------------+-----------+-
+                                                                                        (no rows)
+
+               ----
+               /moniker((this()?false()).student)
+               SELECT "student"."id",
+                      "student"."name",
+                      "student"."gender",
+                      "student"."dob",
+                      "student"."school_code",
+                      "student"."program_code",
+                      "student"."start_date",
+                      "student"."is_active"
+               FROM "student" AS "student"
+               WHERE 0
+               ORDER BY 1 ASC
+          - uri: /program.moniker((this()?false()).student)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | moniker((this()?false()).student)                                              |
+               +--------------------------------------------------------------------------------+
+               | id | name | gender | dob | school_code | program_code | start_date | is_active |
+              -+----+------+--------+-----+-------------+--------------+------------+-----------+-
+                                                                                        (no rows)
+
+               ----
+               /program.moniker((this()?false()).student)
+               SELECT "student"."id",
+                      "student"."name",
+                      "student"."gender",
+                      "student"."dob",
+                      "student"."school_code_1",
+                      "student"."program_code",
+                      "student"."start_date",
+                      "student"."is_active"
+               FROM "program" AS "program"
+                    INNER JOIN (SELECT "student"."id",
+                                       "student"."name",
+                                       "student"."gender",
+                                       "student"."dob",
+                                       "student"."school_code" AS "school_code_1",
+                                       "student"."program_code",
+                                       "student"."start_date",
+                                       "student"."is_active",
+                                       "program"."school_code" AS "school_code_2",
+                                       "program"."code"
+                                FROM "program" AS "program"
+                                     INNER JOIN "student" AS "student"
+                                                ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+                                WHERE 0) AS "student"
+                               ON (("program"."school_code" = "student"."school_code_2") AND ("program"."code" = "student"."code") AND ("program"."school_code" = "student"."school_code_1") AND ("program"."code" = "student"."program_code"))
+               ORDER BY "program"."school_code" ASC, "program"."code" ASC, 1 ASC
+          - uri: /program.sort(count(student)).moniker((this()?false()).student)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | moniker((this()?false()).student)                                              |
+               +--------------------------------------------------------------------------------+
+               | id | name | gender | dob | school_code | program_code | start_date | is_active |
+              -+----+------+--------+-----+-------------+--------------+------------+-----------+-
+                                                                                        (no rows)
+
+               ----
+               /program.sort(count(student)).moniker((this()?false()).student)
+               SELECT "student"."id",
+                      "student"."name",
+                      "student"."gender",
+                      "student"."dob",
+                      "student"."school_code_1",
+                      "student"."program_code",
+                      "student"."start_date",
+                      "student"."is_active"
+               FROM "program" AS "program_1"
+                    INNER JOIN (SELECT "student"."id",
+                                       "student"."name",
+                                       "student"."gender",
+                                       "student"."dob",
+                                       "student"."school_code" AS "school_code_1",
+                                       "student"."program_code",
+                                       "student"."start_date",
+                                       "student"."is_active",
+                                       "program"."school_code" AS "school_code_2",
+                                       "program"."code"
+                                FROM "program" AS "program"
+                                     INNER JOIN "student" AS "student"
+                                                ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+                                WHERE 0) AS "student"
+                               ON (("program_1"."school_code" = "student"."school_code_2") AND ("program_1"."code" = "student"."code") AND ("program_1"."school_code" = "student"."school_code_1") AND ("program_1"."code" = "student"."program_code"))
+                    LEFT OUTER JOIN (SELECT "student"."count",
+                                            "program"."school_code",
+                                            "program"."code"
+                                     FROM "program" AS "program"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "student"."school_code",
+                                                                  "student"."program_code"
+                                                           FROM "student" AS "student"
+                                                           GROUP BY 2, 3) AS "student"
+                                                          ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))) AS "program_2"
+                                    ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."code"))
+               ORDER BY COALESCE("program_2"."count", 0) ASC, "program_1"."school_code" ASC, "program_1"."code" ASC, 1 ASC
+          - uri: /moniker(school.sort(count(department)))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | moniker(school.sort(count(department)))       |
+               +-----------------------------------------------+
+               | code | name                          | campus |
+              -+------+-------------------------------+--------+-
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | edu  | College of Education          | old    |
+               | bus  | School of Business            | south  |
+               | eng  | School of Engineering         | north  |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | la   | School of Arts and Humanities | old    |
+                                                        (9 rows)
+
+               ----
+               /moniker(school.sort(count(department)))
+               SELECT "school_1"."code",
+                      "school_1"."name",
+                      "school_1"."campus"
+               FROM "school" AS "school_1"
+                    INNER JOIN (SELECT COALESCE("department"."count", 0) AS "count",
+                                       "school"."code"
+                                FROM "school" AS "school"
+                                     LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                             "department"."school_code"
+                                                      FROM "department" AS "department"
+                                                      GROUP BY 2) AS "department"
+                                                     ON ("school"."code" = "department"."school_code")) AS "school_2"
+                               ON ("school_1"."code" = "school_2"."code")
+               ORDER BY "school_2"."count" ASC, 1 ASC
           - uri: /school.(code -> department{school_code})
             status: 200 OK
             headers:
@@ -23808,6 +24184,48 @@ tests:
                                 GROUP BY 2, "program"."school_code", 1) AS "program"
                                ON ("department"."school_code" = "program"."code")
                ORDER BY "department"."code" ASC, 1 ASC
+          - uri: /department.((school?code='art').program^degree).^
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | ^                                                                          |
+               +----------------------------------------------------------------------------+
+               | school_code | code    | title                           | degree | part_of |
+              -+-------------+---------+---------------------------------+--------+---------+-
+               | art         | uhist   | Bachelor of Arts in Art History | ba     |         |
+               | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |         |
+               | art         | gart    | Post Baccalaureate in Art       | pb     |         |
+               :             :         : History                         :        :         :
+               | art         | uhist   | Bachelor of Arts in Art History | ba     |         |
+               | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |         |
+               | art         | gart    | Post Baccalaureate in Art       | pb     |         |
+               :             :         : History                         :        :         :
+                                                                                     (6 rows)
+
+               ----
+               /department.((school?code='art').program^degree).^
+               SELECT "program"."school_code",
+                      "program"."code_1",
+                      "program"."title",
+                      "program"."degree",
+                      "program"."part_of"
+               FROM "department" AS "department"
+                    LEFT OUTER JOIN "school" AS "school"
+                                    ON ("department"."school_code" = "school"."code")
+                    INNER JOIN (SELECT "program"."school_code",
+                                       "program"."code" AS "code_1",
+                                       "program"."title",
+                                       "program"."degree",
+                                       "program"."part_of",
+                                       "school"."code" AS "code_2"
+                                FROM "school" AS "school"
+                                     INNER JOIN "program" AS "program"
+                                                ON ("school"."code" = "program"."school_code")
+                                WHERE ("program"."degree" IS NOT NULL)
+                                      AND ("school"."code" = 'art')) AS "program"
+                               ON (("department"."school_code" = "program"."code_2") AND ("school"."code" = "program"."school_code"))
+               ORDER BY "department"."code" ASC, 4 ASC, 1 ASC, 2 ASC
           - uri: /(program^degree).^
             status: 200 OK
             headers:
@@ -24174,6 +24592,61 @@ tests:
                      AND (NOT "student"."is_active")
                GROUP BY 1, 2
                ORDER BY 1 ASC, 2 ASC
+          - uri: /(student?!is_active^{year(dob),gender}).student
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | student                                                                                              |
+               +------------------------------------------------------------------------------------------------------+
+               | id   | name              | gender | dob        | school_code | program_code | start_date | is_active |
+              -+------+-------------------+--------+------------+-------------+--------------+------------+-----------+-
+               | 1036 | Jonathan Bouchard | m      | 1982-02-12 | art         | ustudio      | 2007-08-15 | false     |
+               | 1041 | Lowell Cooper     | m      | 1982-01-05 | art         | uhist        | 2007-08-15 | false     |
+               | 1113 | John Miller       | m      | 1982-05-14 | art         | uhist        | 2007-08-15 | false     |
+               | 1118 | John Johnson      | m      | 1982-03-20 | art         | ustudio      | 2007-08-15 | false     |
+               | 1125 | Charles Olson     | m      | 1983-04-18 | art         | uhist        | 2008-08-15 | false     |
+               | 1126 | Albert Miller     | m      | 1983-03-06 | art         | gart         | 2008-08-15 | false     |
+               | 1133 | Richard Nguyen    | m      | 1983-03-09 | art         | uhist        | 2008-08-15 | false     |
+               | 1142 | Prince Gray       | m      | 1983-04-27 | art         | ustudio      | 2008-08-15 | false     |
+               | 1170 | Paul Bell         | m      | 1983-02-07 | art         | ustudio      | 2008-08-15 | false     |
+               | 1173 | David Martinez    | m      | 1983-05-15 | art         | gart         | 2008-08-15 | false     |
+               | 1187 | Dwayne Davis      | m      | 1983-01-06 | art         | ustudio      | 2008-08-15 | false     |
+               | 1200 | Tony Proctor      | m      | 1983-05-18 | art         | ustudio      | 2008-08-15 | false     |
+               | 1226 | Mark Owen         | m      | 1983-01-08 | art         | uhist        | 2008-08-15 | false     |
+               | 1249 | Robert Lynch      | m      | 1984-02-25 | art         | uhist        | 2009-08-15 | false     |
+               | 1250 | Marcus Sweeney    | m      | 1984-04-29 | art         | ustudio      | 2009-08-15 | false     |
+               | 1256 | Brian Hooper      | m      | 1984-05-03 | art         | gart         | 2009-08-15 | false     |
+               | 1267 | Christopher Avila | m      | 1984-01-27 | art         | ustudio      | 2009-08-15 | false     |
+               | 1274 | Robert Brown      | m      | 1984-05-01 | art         | uhist        | 2009-08-15 | false     |
+               | 1283 | Bill Tate         | m      | 1984-05-21 | art         | gart         | 2009-08-15 | false     |
+               | 1311 | Robert Grove      | m      | 1984-01-24 | art         | uhist        | 2009-08-15 | false     |
+               | 1334 | Arthur Bennett    | m      | 1984-05-03 | art         | gart         | 2009-08-15 | false     |
+               | 1361 | Samuel Johnson    | m      | 1985-04-15 | art         | ustudio      | 2010-08-15 | false     |
+               | 1372 | William Bell      | m      | 1985-04-27 | art         | gart         | 2010-08-15 | false     |
+               | 1374 | Warren Bond       | m      | 1985-04-30 | art         | ustudio      | 2010-08-15 | false     |
+               | 1375 | Roland Valencia   | m      | 1985-02-15 | art         | ustudio      | 2010-08-15 | false     |
+               | 1403 | Leonel Garcia     | m      | 1985-01-02 | art         | uhist        | 2010-08-15 | false     |
+               | 1419 | Micheal Joyner    | m      | 1985-04-16 | art         | gart         | 2010-08-15 | false     |
+               | 1430 | Lawrence Ross     | m      | 1985-05-19 | art         | uhist        | 2010-08-15 | false     |
+               | 1433 | Carl Bailey       | m      | 1985-04-06 | art         | ustudio      | 2010-08-15 | false     |
+                                                                                                              (29 rows)
+
+               ----
+               /(student?!is_active^{year(dob),gender}).student
+               SELECT "student"."id",
+                      "student"."name",
+                      "student"."gender",
+                      "student"."dob",
+                      "student"."school_code",
+                      "student"."program_code",
+                      "student"."start_date",
+                      "student"."is_active"
+               FROM "student" AS "student"
+               WHERE (CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) IS NOT NULL)
+                     AND ("student"."gender" IS NOT NULL)
+                     AND (NOT "student"."is_active")
+               ORDER BY CAST(STRFTIME('%Y', "student"."dob") AS INTEGER) ASC, 3 ASC, 1 ASC
           - uri: /student^({year(dob),gender}?!is_active) {*, count(^), count(^?is_active)}
             status: 200 OK
             headers:
@@ -24256,6 +24729,48 @@ tests:
                      FROM "program" AS "program"
                      WHERE ("program"."degree" IS NOT NULL)
                      GROUP BY "program"."degree") AS "program"
+          - uri: /(program^degree).define($degree:=degree) {*, count(^.student?name~$degree)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program^degree                         |
+               +----------------------------------------+
+               | degree | count(^.student?name~$degree) |
+              -+--------+-------------------------------+-
+               | ba     |                             3 |
+               | bs     |                             1 |
+               | ct     |                             0 |
+               | ma     |                            11 |
+               | ms     |                             2 |
+               | pb     |                             0 |
+               | ph     |                             0 |
+                                                 (7 rows)
+
+               ----
+               /(program^degree).define($degree:=degree){*,count(^.student?name~$degree)}
+               SELECT "program"."degree",
+                      COALESCE("student"."count", 0)
+               FROM (SELECT "program"."degree"
+                     FROM "program" AS "program"
+                     WHERE ("program"."degree" IS NOT NULL)
+                     GROUP BY 1) AS "program"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "program"."degree"
+                                     FROM (SELECT "program"."degree"
+                                           FROM "program" AS "program"
+                                           WHERE ("program"."degree" IS NOT NULL)
+                                           GROUP BY 1) AS "program"
+                                          INNER JOIN (SELECT "student"."name",
+                                                             "program"."degree"
+                                                      FROM "program" AS "program"
+                                                           INNER JOIN "student" AS "student"
+                                                                      ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))) AS "student"
+                                                     ON ("program"."degree" = "student"."degree")
+                                     WHERE ("student"."name" LIKE (('%' || COALESCE(REPLACE(REPLACE(REPLACE("program"."degree", '\', '\\'), '%', '\%'), '_', '\_'), '')) || '%') ESCAPE '\')
+                                     GROUP BY 2) AS "student"
+                                    ON ("program"."degree" = "student"."degree")
+               ORDER BY 1 ASC
           - uri: /distinct(program{degree}) {*, count(^), count(^.student)}
             status: 200 OK
             headers:
@@ -24454,6 +24969,14 @@ tests:
                WHERE ("program"."degree" IS NOT NULL)
                      AND ("school"."code" IN ('art', 'la'))
                ORDER BY 4 ASC, 1 ASC, 2 ASC
+          - uri: /{(school^campus).campus}
+            status: 400 Bad Request
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |
+              compile error: expected a singular expression:
+                  /{(school^campus).campus}
+                                    ^^^^^^
       - id: known-issues
         tests:
         - uri: /{}

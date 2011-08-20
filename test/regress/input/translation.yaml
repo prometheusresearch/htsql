@@ -82,6 +82,12 @@ tests:
       ifndef: mssql
     - uri: /school{code,count(department),count(program)}
     - uri: /school{code,exists(department),exists(program)}
+    # Signular unit with a plural base flow.
+    - uri: /school{code,department.exists(course)}
+      expect: 400
+    # Aggregate unit with a plural base flow.
+    - uri: /school{code,department.avg(course.credits)}
+      expect: 400
     # Aggregates sharing the same spaces.
     - uri: /department{sum(course.credits),count(course.credits),
                        avg(course.credits)}?exists(course)
@@ -155,7 +161,11 @@ tests:
     - uri: /school^campus{campus, count(school)}?count(school)>1
     # Two aggregates, one embedded to a quotient frame.
     - uri: /school^campus{campus, count(school), count(school.department)}
-    # Reducing the seed of a quotient flow (now working currently).
+    # Failing to embed aggregates into a quotient frame.
+    - uri: /department.define($max_credits:=max(course.credits))
+            .(course^{level:=integer(no/100)}).limit(3)
+            {*, count(course), count(course?credits=$max_credits)}
+    # Reducing the seed of a quotient flow.
     - uri: /school?min(department.course.credits)>1&
                    max(department.course.credits)<8
                   ^campus
@@ -164,6 +174,19 @@ tests:
                    department := department?credit_diff>3)
             .department^school_code
             {*, avg(department.credit_diff), sum(department.credit_diff)}
+    # Omitting non-expanding joints when merging term nodes.
+    - uri: /program.define($degree:=degree).school.department.limit(1)
+            {count(course.title~$degree)}
+    # But not in this case.
+    - uri: /school.define($code:=code).department.limit(1)
+            {count(course.title~$code)}
+    # Reusing the parent term as the flow term.
+    - uri: /(program?school.code='art').school.limit(1)
+    # Lowering the baseline flow when compiling a quotient.
+    - uri: /department.define($avg_credits := avg(course.credits),
+                              course := course?credits>$avg_credits,
+                              course_level := course^integer(no/100)).limit(3)
+            {code, count(course_level), count(course_level.course)}
 
   - title: Root, This, Direct and Fiber functions
     tests:
@@ -211,6 +234,10 @@ tests:
     - uri: /{moniker(this()){count(school)},
              moniker(this()?true()){count(school)},
              moniker(this()?false()){count(school)}}
+    - uri: /moniker((this()?false()).student)
+    - uri: /program.moniker((this()?false()).student)
+    - uri: /program.sort(count(student)).moniker((this()?false()).student)
+    - uri: /moniker(school.sort(count(department)))
     # linking operator
     - uri: /school.(code -> department{school_code})
     - uri: /(school?code='art').(code -> department{school_code}){code, count(course)}
@@ -363,6 +390,7 @@ tests:
     - uri: /school.(program^degree)
     - uri: /department.(school.program^degree)
     - uri: /department.((school?code='art').program^degree)
+    - uri: /department.((school?code='art').program^degree).^
     - uri: /(program^degree).^
     - uri: /(program.sort(count(student))^degree).^
                 {*, count(student)}
@@ -376,11 +404,14 @@ tests:
                 {*, count(^), count(^?is_active)}
     - uri: /student?!is_active^{y_dob:=year(dob),gender}
                 {*, count(student), count(student?is_active)}
+    - uri: /(student?!is_active^{year(dob),gender}).student
     - uri: /student^({year(dob),gender}?!is_active)
                 {*, count(^), count(^?is_active)}
     - uri: /student^({y_dob:=year(dob),gender}?!is_active)
                 {*, count(student), count(student?is_active)}
     - uri: /count(program^degree)
+    - uri: /(program^degree).define($degree:=degree)
+            {*, count(^.student?name~$degree)}
 
     # The `distinct()` function.
     - uri: /distinct(program{degree})
@@ -392,6 +423,10 @@ tests:
     - uri: /(school?code={'art','la'}).distinct(program{degree})
                 {*, count(^), count(^.student)}
     - uri: /distinct(program{degree}?school.code={'art','la'}).^
+
+    # Errors.
+    - uri: /{(school^campus).campus}
+      expect: 400
 
 - title: Known issues
   tests:

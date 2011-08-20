@@ -584,6 +584,9 @@ class InjectFlow(Inject):
 
         # Check if the flow is already exported.
         if all(unit in self.term.routes for unit in spread(self.flow)):
+            # Not reachable since we only call `InjectFlow` from
+            # `InjectColumn` and `InjectKernel`, and those already
+            # verified that the flow is not exported.
             return self.term
 
         # Check that the flow does not contain any non-axial operations
@@ -636,21 +639,14 @@ class InjectFlow(Inject):
         return self.join_terms(self.term, flow_term, extra_routes)
 
 
-class CompileRoot(CompileFlow):
-
-    adapts(RootFlow)
-
-    def __call__(self):
-        # Generate a scalar term (the baseline must coincide with the flow).
-        return ScalarTerm(self.state.tag(), self.flow, self.flow, {})
-
-
 class CompileScalar(CompileFlow):
 
-    adapts(ScalarFlow)
+    # The root flow is a special case of the scalar flow.
+    adapts_many(ScalarFlow, RootFlow)
 
     def __call__(self):
-        # If we are at the baseline, generate a scalar term.
+        # If we are at the baseline (always the case for the root flow),
+        # generate a scalar term.
         if self.flow == self.baseline:
             return ScalarTerm(self.state.tag(), self.flow, self.flow, {})
         # Otherwise, compile a term for the parent flow and reuse
@@ -794,8 +790,10 @@ class CompileQuotient(CompileFlow):
 
         # List of injected aggregate expressions.
         aggregates = []
+        # Clear out companions to avoid infinite recursion.
+        quotient = self.backbone.clone(companions=[])
         # The plural space for the aggregates.
-        complement = ComplementFlow(self.backbone, self.flow.binding)
+        complement = ComplementFlow(quotient, self.flow.binding)
         # We can only inject aggregates if the seed term has the regular shape.
         if self.flow.companions and is_regular:
             # We are going to disguise the seed term as a complement.
@@ -1363,6 +1361,7 @@ class InjectColumn(Inject):
         # To avoid an extra `inject()` call, check if the unit flow
         # is already exported by the term.
         if self.unit in self.term.routes:
+            # Not reachable since already checked in `state.inject()`.
             return self.term
         # Verify that the unit is singular on the term flow.
         if not self.term.flow.spans(self.flow):
@@ -1393,6 +1392,7 @@ class InjectScalar(Inject):
 
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
+            # Not reachable since already checked in `state.inject()`.
             return self.term
 
         # List of units to inject.  This includes the given unit itself
@@ -1400,6 +1400,8 @@ class InjectScalar(Inject):
         units = [self.unit]
         for code in self.unit.companions:
             companion_unit = ScalarUnit(code, self.flow, code.binding)
+            # This test rarely fails since injecting any of the companions
+            # injects the whole group.
             if companion_unit not in self.term.routes:
                 units.append(companion_unit)
 
@@ -1415,6 +1417,8 @@ class InjectScalar(Inject):
         # the units directly to the main term and avoid creating
         # a separate unit term.
         if self.flow.dominates(self.term.flow):
+            # This is no longer reachable since unmasking removes
+            # scalar units that dominate their mask flow.
             # Make sure the term could export all the units.
             term = self.state.inject(self.term, codes)
             # Add all the units to the routing table.  Note that we point
@@ -1469,6 +1473,7 @@ class InjectAggregate(Inject):
 
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
+            # Not reachable since already checked in `state.inject()`.
             return self.term
 
         # When we inject many aggregates to the main term individually,
@@ -1483,6 +1488,8 @@ class InjectAggregate(Inject):
         for code in self.unit.companions:
             companion_unit = AggregateUnit(code, self.plural_flow,
                                            self.flow, code.binding)
+            # This test rarely fails since injecting any of the companions
+            # injects the whole group.
             if companion_unit not in self.term.routes:
                 units.append(companion_unit)
 
@@ -1577,9 +1584,12 @@ class InjectCorrelated(Inject):
 
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
+            # Not reachable since already checked in `state.inject()`.
             return self.term
         # Verify that the unit is singular on the term flow.
         if not self.term.flow.spans(self.flow):
+            # This is not reachable: the error is already reported by
+            # the wrapping scalar unit.
             raise CompileError("expected a singular expression",
                                self.unit.mark)
 
@@ -1604,7 +1614,8 @@ class InjectCorrelated(Inject):
             unit_term = self.term
         else:
             # Otherwise, compile a separate term for the unit flow.
-            # Note: currently, not reachable.
+            # Note: currently, not reachable as currently correlated units
+            # are always wrapped by a scalar unit with the same base flow.
             unit_term = self.compile_shoot(self.flow, self.term)
 
         # Compile a term for the correlated subquery.
@@ -1627,6 +1638,7 @@ class InjectCorrelated(Inject):
         if is_native:
             return unit_term
         # Otherwise, we need to attach the unit term to the main term.
+        # Not reachable.
         extra_routes = { self.unit: plural_term.tag }
         return self.join_terms(self.term, unit_term, extra_routes)
 
@@ -1638,6 +1650,7 @@ class InjectKernel(Inject):
     def __call__(self):
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
+            # Not reachable since already checked in `state.inject()`.
             return self.term
         # Check if the unit is singular against the term flow.
         if not self.term.flow.spans(self.flow):
@@ -1645,7 +1658,6 @@ class InjectKernel(Inject):
                                self.unit.mark)
         # Inject the quotient space -- this should automatically
         # provide the unit.
-        # FIXME: is it reachable?
         term = self.state.inject(self.term, [self.flow])
         # Verify that the unit is injected.
         assert self.unit in term.routes
@@ -1660,9 +1672,12 @@ class InjectCovering(Inject):
     def __call__(self):
         # Check if the unit is already exported by the term.
         if self.unit in self.term.routes:
+            # Not reachable since already checked in `state.inject()`.
             return self.term
         # Ensure that the unit is singular against the term flow.
         if not self.term.flow.spans(self.flow):
+            # Not reachable since covering units are never generated
+            # by the user directly, only by the compiler.
             raise CompileError("expected a singular expression",
                                self.unit.mark)
         # FIXME: the rewritter should optimize the flow graph
@@ -1679,15 +1694,8 @@ class InjectCovering(Inject):
 
         # Compile a shoot term for the flow.
         flow_term = self.compile_shoot(flow, self.term)
-        # The routes to add.
-        extra_routes = {}
-        # Add native units of the injected flow in case someone
-        # may need them later (but only do it if the trunk term
-        # does not export them already).
-        for unit in spread(flow):
-            if unit not in self.term.routes:
-                extra_routes[unit] = flow_term.routes[unit]
         # Add the route to the new unit.
+        extra_routes = {}
         extra_routes[self.unit] = flow_term.routes[self.unit]
         # Join the shoot to the main term.
         term = self.join_terms(self.term, flow_term, extra_routes)
@@ -1697,7 +1705,7 @@ class InjectCovering(Inject):
         return term
 
 
-def compile(expression, state=None, baseline=None, mask=None):
+def compile(expression, state=None, baseline=None):
     """
     Compiles a new term node for the given expression.
 
@@ -1714,11 +1722,6 @@ def compile(expression, state=None, baseline=None, mask=None):
         The baseline flow.  Specifies an axis that the compiled
         term must export.  If not set, the current baseline flow of
         the state is used.
-
-    `mask` (:class:`htsql.tr.flow.Flow` or ``None``)
-        The mask flow.  Specifies the mask flow against which
-        a new term is compiled.  When not set, the current mask flow
-        of the state is used.
     """
     # Instantiate a new compiling state if not given one.
     if state is None:
@@ -1726,16 +1729,12 @@ def compile(expression, state=None, baseline=None, mask=None):
     # If passed, assign new baseline and mask flows.
     if baseline is not None:
         state.push_baseline(baseline)
-    if mask is not None:
-        state.push_mask(mask)
     # Realize and apply the `Compile` adapter.
     compile = Compile(expression, state)
     term = compile()
     # Restore old baseline and mask flows.
     if baseline is not None:
         state.pop_baseline()
-    if mask is not None:
-        state.pop_mask()
     # Return the compiled term.
     return term
 
