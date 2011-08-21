@@ -18,7 +18,7 @@ from ..domain import BooleanDomain
 from .error import CompileError
 from .coerce import coerce
 from .signature import IsNullSig, AndSig
-from .flow import (Expression, QueryExpr, SegmentExpr, Code,
+from .flow import (Expression, QueryExpr, SegmentExpr, Code, LiteralCode,
                    FormulaCode, Flow, RootFlow, ScalarFlow,
                    TableFlow, DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow,
@@ -27,7 +27,7 @@ from .flow import (Expression, QueryExpr, SegmentExpr, Code,
                    KernelUnit, CoveringUnit)
 from .term import (Term, ScalarTerm, TableTerm, FilterTerm, JoinTerm,
                    EmbeddingTerm, CorrelationTerm, ProjectionTerm, OrderTerm,
-                   WrapperTerm, SegmentTerm, QueryTerm, Joint)
+                   WrapperTerm, PermanentTerm, SegmentTerm, QueryTerm, Joint)
 from .stitch import arrange, spread, sew, tie
 
 
@@ -830,12 +830,6 @@ class CompileQuotient(CompileFlow):
         # by pretending that the seed term actually represents
         # the complement flow and injecting the expressions into it.
 
-        # Currently we can't generate a proper SQL frame for quotients
-        # with an empty kernel, so force an error in this case.
-        if all(not code.units for code in self.flow.kernels):
-            raise CompileError("scalar kernel is not supported",
-                               self.flow.mark)
-
         # Start with generating a term for the seed flow.
 
         # The ground flow is expected to be the baseline of the seed term.
@@ -866,6 +860,11 @@ class CompileQuotient(CompileFlow):
             seed_term = FilterTerm(self.state.tag(), seed_term, filter,
                                    seed_term.flow, seed_term.baseline,
                                    seed_term.routes.copy())
+
+        # Wrap the term to have a target for composite units.
+        seed_term = WrapperTerm(self.state.tag(), seed_term,
+                                seed_term.flow, seed_term.baseline,
+                                seed_term.routes.copy())
 
         # Indicates that the seed term has the regular shape.
         is_regular = (seed_term.baseline == self.flow.ground)
@@ -974,6 +973,26 @@ class CompileQuotient(CompileFlow):
             unit = AggregateUnit(code, complement, self.backbone,
                                  code.binding)
             units.append(unit)
+
+        # FIXME: incomplete; not reachable because we raise an error
+        # on a scalar kernel.
+
+        # When the kernel is scalar, to ensure proper conversion to SQL,
+        # force `GROUP BY` to contain a reference from a subframe.  For
+        # that, we create a permanent wrapper around the seed flow and
+        # create a scalar unit pointing to that wrapper.  The unit
+        # is added to the projection basis.
+        if all(not code.units for code in self.flow.kernels):
+            basis_code = LiteralCode(True, coerce(BooleanDomain()),
+                                     self.flow.binding)
+            basis_unit = ScalarUnit(basis_code, self.flow.seed,
+                                    basis_code.binding)
+            basis.append(basis_unit)
+            routes = seed_term.routes.copy()
+            routes[basis_unit] = seed_term.tag
+            seed_term = PermanentTerm(self.state.tag(), seed_term,
+                                      seed_term.flow, seed_term.baseline,
+                                      routes)
 
         # Generate the projection term.
         tag = self.state.tag()

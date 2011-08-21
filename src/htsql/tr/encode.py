@@ -342,6 +342,9 @@ class RelateQuotient(Relate):
         # Encode the kernel expressions.
         kernels = [self.state.encode(binding)
                    for binding in self.binding.kernels]
+        # Note: we need to check that the kernel is not scalar, but we can't
+        # do it here because some units may be removed by the unmasking
+        # process; so the check is delegated to unmasking.
         # Produce a quotient flow.
         return QuotientFlow(base, seed, kernels, self.binding)
 

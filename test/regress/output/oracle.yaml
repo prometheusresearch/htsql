@@ -25454,7 +25454,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: scalar kernel is not supported:
+            encode error: an empty or scalar kernel is not allowed:
                 /school^{}{true()}
                  ^^^^^^^^^
         - uri: /school^{true()}{true()}
@@ -25462,15 +25462,23 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: scalar kernel is not supported:
+            encode error: an empty or scalar kernel is not allowed:
                 /school^{true()}{true()}
                  ^^^^^^^^^^^^^^^
+        - uri: /school?false()^{true()}{true()}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: an empty or scalar kernel is not allowed:
+                /school?false()^{true()}{true()}
+                 ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: scalar kernel is not supported:
+            encode error: an empty or scalar kernel is not allowed:
                 /school^{}{*, count(school)}
                  ^^^^^^^^^
         - uri: /school^{true()}{*, count(school)}
@@ -25478,36 +25486,57 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: scalar kernel is not supported:
+            encode error: an empty or scalar kernel is not allowed:
                 /school^{true()}{*, count(school)}
                  ^^^^^^^^^^^^^^^
+        - uri: /school?false()^{true()}{*, count(school)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: an empty or scalar kernel is not allowed:
+                /school?false()^{true()}{*, count(school)}
+                 ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{null()}{*, count(school)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: scalar kernel is not supported:
+            encode error: an empty or scalar kernel is not allowed:
                 /school^{null()}{*, count(school)}
                  ^^^^^^^^^^^^^^^
-        - uri: /(school^null()).^
-          status: 200 OK
+        - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
+          status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | ^                    |
-             +----------------------+
-             | code | name | campus |
-            -+------+------+--------+-
-                            (no rows)
-
-             ----
-             /(school^null()).^
-             SELECT "SCHOOL"."CODE",
-                    "SCHOOL"."NAME",
-                    "SCHOOL"."CAMPUS"
-             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
-             WHERE (0 <> 0)
-             ORDER BY 1 ASC
+          body: |
+            encode error: an empty or scalar kernel is not allowed:
+                /{school^{}{count(school)}, school?false()^{}{count(school)}}
+                  ^^^^^^^^^
+        - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: an empty or scalar kernel is not allowed:
+                /school{program^{}{count(program)}, program?false()^{}{count(program)}}
+                        ^^^^^^^^^^
+        - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: an empty or scalar kernel is not allowed:
+                /{count(school^true()), count(school?false()^true()), count(school^null())}
+                        ^^^^^^^^^^^^^
+        - uri: /(school^null()).^
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: an empty or scalar kernel is not allowed:
+                /(school^null()).^
+                  ^^^^^^^^^^^^^
         - uri: /department^school_code{school_code.name, name}
           status: 400 Bad Request
           headers:
@@ -25524,6 +25553,26 @@ tests:
             bind error: unable to resolve a wildcard:
                 /program.part_of.*
                                  ^
+        - uri: /{sum(course{credits}?false()), sum(confidential{pay_grade}?false())}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | sum(course{credits}?false()) | sum(confidential{pay_grade}?false()) |
+            -+------------------------------+--------------------------------------+-
+             |                            0 |                                      |
+                                                                             (1 row)
+
+             ----
+             /{sum(course{credits}?false()),sum(confidential{pay_grade}?false())}
+             SELECT COALESCE("COURSE"."sum", 0),
+                    "CONFIDENTIAL"."sum"
+             FROM (SELECT SUM("COURSE"."CREDITS") AS "sum"
+                   FROM "HTSQL_REGRESS"."COURSE" "COURSE"
+                   WHERE (0 <> 0)) "COURSE"
+                  CROSS JOIN (SELECT SUM("CONFIDENTIAL"."PAY_GRADE") AS "sum"
+                              FROM "HTSQL_REGRESS"."CONFIDENTIAL" "CONFIDENTIAL"
+                              WHERE (0 <> 0)) "CONFIDENTIAL"
         - uri: /{count(school), exists(school)}
           status: 409 Conflict
           headers:

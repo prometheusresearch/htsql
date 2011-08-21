@@ -926,6 +926,8 @@ class QuotientFlow(Flow):
         # The quotient flow conforms its base flow only when
         # the kernel expression is constant.
         is_contracting = (not kernels)
+        # FIXME: this is wrong, but the assembler relies on it
+        # to collapse `GROUP BY` to the segment frame.
         is_expanding = (base.is_root and not kernels)
         super(QuotientFlow, self).__init__(
                     base=base,

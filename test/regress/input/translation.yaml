@@ -456,16 +456,29 @@ tests:
     expect: 400
   - uri: /school^{true()}{true()}
     expect: 400
+  - uri: /school?false()^{true()}{true()}
+    expect: 400
   # These cases accidentaly produce a correct result.
   - uri: /school^{}{*, count(school)}
     expect: 400
   - uri: /school^{true()}{*, count(school)}
     expect: 400
+  - uri: /school?false()^{true()}{*, count(school)}
+    expect: 400
   # This should filter out `NULL` from the kernel and produce no rows.
   - uri: /school^{null()}{*, count(school)}
     expect: 400
-  # This works because we avoid compiling the quotient term.
+  # Using singular scalar quotients in the selector.
+  - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
+    expect: 400
+  - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
+    expect: 400
+  # Using plural scalar quotients in an aggregate
+  - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
+    expect: 400
+  # This actually works because we avoid compiling the quotient term.
   - uri: /(school^null()).^
+    expect: 400
   # Links in the quotient kernel should remain functional.
   - uri: /department^school_code{school_code.name, name}
     expect: 400
@@ -474,6 +487,10 @@ tests:
   # (see `schema.yaml` for other examples).
   - uri: /program.part_of.*
     expect: 400
+
+  # `sum()` should never produce `NULL`.
+  - uri: /{sum(course{credits}?false()),
+           sum(confidential{pay_grade}?false())}
 
   # In PostgreSQL, SUM(int) => bigint, SUM(bigint) => decimal,
   # but HTSQL expects an integer (FIXED?)

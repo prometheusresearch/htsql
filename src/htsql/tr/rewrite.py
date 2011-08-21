@@ -14,6 +14,7 @@ This module implements the rewriting process.
 
 from ..adapter import Utility, Adapter, adapts
 from ..domain import BooleanDomain
+from .error import EncodeError
 from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
@@ -744,6 +745,11 @@ class UnmaskQuotient(UnmaskFlow):
         # Unmask the kernel against the seed flow.
         kernels = [self.state.unmask(code, mask=self.flow.family.seed)
                    for code in self.flow.family.kernels]
+        # Verify that the kernel is not scalar.  We can't do it earlier
+        # because since unmasking may remove fantom units.
+        if all(not code.units for code in kernels):
+            raise EncodeError("an empty or scalar kernel is not allowed",
+                              self.flow.mark)
         # Unmask the seed against the quotient parent flow.
         seed = self.state.unmask(self.flow.family.seed, mask=self.flow.base)
         # Unmask the parent flow against the current mask.
