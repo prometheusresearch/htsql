@@ -8,10 +8,9 @@
 
    introduction
    tutorial
+   specification
    reference
    install
-   roadmap
-   design
    api
 
 Indices and tables
