@@ -6,6 +6,7 @@ from sphinx.util.osutil import copyfile
 from pygments.lexer import RegexLexer
 from pygments.token import Punctuation, Text, Operator, Name, String, Number
 
+import re
 import os, os.path
 from urllib2 import quote, urlopen, Request, HTTPError, URLError
 from cgi import escape
@@ -18,6 +19,8 @@ class HtsqlLexer(RegexLexer):
     aliases = ['htsql']
     filenames = ['*.htsql']
     mimetypes = ['text/x-htsql', 'application/x-htsql']
+
+    escape_regexp = re.compile(r'%(?P<code>[0-9A-Fa-f]{2})')
 
     tokens = {
         'root': [
@@ -34,6 +37,29 @@ class HtsqlLexer(RegexLexer):
             (r'\.|,|\(|\)|\{|\}|\[|\]|:|\$', Punctuation),
         ]
     }
+
+    def get_tokens_unprocessed(self, text):
+        octets = text.encode('utf-8')
+        quotes = []
+        for match in self.escape_regexp.finditer(octets):
+            quotes.append(match.start())
+        octets = self.escape_regexp.sub(lambda m: chr(int(m.group('code'), 16)),
+                                        octets)
+        try:
+            text = octets.decode('utf-8')
+        except UnicodeDecodeError:
+            quotes = []
+        token_stream = super(HtsqlLexer, self).get_tokens_unprocessed(text)
+        pos_inc = 0
+        for pos, token, value in token_stream:
+            pos += pos_inc
+            while quotes and pos <= quotes[0] < pos+len(value):
+                idx = quotes.pop(0)-pos
+                octets = value[idx].encode('utf-8')
+                repl = u''.join(u'%%%02X' % ord(octet) for octet in octets)
+                value = value[:idx]+repl+value[idx+1:]
+                pos_inc += len(repl)-1
+            yield (pos, token, value)
 
 
 class HTSQLServerDirective(Directive):
