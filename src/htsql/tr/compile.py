@@ -439,13 +439,14 @@ class CompileBase(Adapter):
         trunk_term = self.inject_joints(trunk_term, joints)
         # Determine if we could use an inner join to attach the shoot
         # to the trunk.  We could do it if the inner join does not
-        # decrease cardinality of the trunk.
-        # FIXME: The condition that the shoot flow dominates the
-        # trunk flow is sufficient, but not really necessary.
-        # In general, we can use the inner join if the shoot flow
-        # dominates the ancestor of the trunk flow cut at the longest
-        # common axis of trunk and the shoot flows.
-        is_left = (not shoot_term.flow.dominates(trunk_term.flow))
+        # decrease cardinality of the trunk.  It is so if the shoot flow
+        # dominates a closest ancestor of the trunk flow that is spanned
+        # by the shoot flow.
+        is_left = True
+        flow = trunk_term.flow
+        while not shoot_term.flow.spans(flow):
+            flow = flow.base
+        is_left = (not shoot_term.flow.dominates(flow))
         is_right = False
         # Use the routing table of the trunk term, but also add
         # the given extra routes.

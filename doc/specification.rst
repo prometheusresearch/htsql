@@ -248,7 +248,7 @@ Complement
 ~~~~~~~~~~
 
 A projection complement (``^``) represents a complement link from a
-projection to the projected table.
+projection to the projected flow.
 
 Do not confuse a projection complement with a binary projection
 operator, which is also represented with the ``^`` character.

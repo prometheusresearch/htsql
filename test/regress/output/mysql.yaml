@@ -22226,8 +22226,8 @@ tests:
                                        `program`.`school_code`
                                 FROM `htsql_regress`.`program` AS `program`) AS `program_2`
                                ON (`program_1`.`part_of` = `program_2`.`part_of`)
-                    LEFT OUTER JOIN `htsql_regress`.`school` AS `school_1`
-                                    ON (`program_1`.`school_code` = `school_1`.`code`)
+                    INNER JOIN `htsql_regress`.`school` AS `school_1`
+                               ON (`program_1`.`school_code` = `school_1`.`code`)
                     INNER JOIN `htsql_regress`.`school` AS `school_2`
                                ON (`program_2`.`school_code` = `school_2`.`code`)
                ORDER BY `program_1`.`school_code` ASC, 2 ASC, `program_2`.`school_code` ASC, 5 ASC

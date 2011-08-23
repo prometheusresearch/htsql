@@ -22516,8 +22516,8 @@ tests:
                                        "PROGRAM"."SCHOOL_CODE"
                                 FROM "HTSQL_REGRESS"."PROGRAM" "PROGRAM") "PROGRAM_2"
                                ON ("PROGRAM_1"."PART_OF" = "PROGRAM_2"."PART_OF")
-                    LEFT OUTER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
-                                    ON ("PROGRAM_1"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
+                    INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_1"
+                               ON ("PROGRAM_1"."SCHOOL_CODE" = "SCHOOL_1"."CODE")
                     INNER JOIN "HTSQL_REGRESS"."SCHOOL" "SCHOOL_2"
                                ON ("PROGRAM_2"."SCHOOL_CODE" = "SCHOOL_2"."CODE")
                ORDER BY "PROGRAM_1"."SCHOOL_CODE" ASC, 2 ASC, "PROGRAM_2"."SCHOOL_CODE" ASC, 5 ASC
