@@ -288,7 +288,7 @@ following two forms:
 .. htsql:: /course{department_code, no, title}?credits<3
    :cut: 3 
 
-.. htsql:: /(course?credits<3){department_code, no, title}
+.. htsql:: /course?credits<3 {department_code, no, title}
    :cut: 3 
 
 Note that the order in which selection and filter operators are applied

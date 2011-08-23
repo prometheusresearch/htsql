@@ -295,7 +295,7 @@ correct, but aren't.
    :cut: 4
    :hide:
 
-     /(school?exists(program))
+     /school?exists(program)
        {name, avg(department.count(course?credits>3))}
 
 Each syntactic component of the HTSQL query is self-contained; when
