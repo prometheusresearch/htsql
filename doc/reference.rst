@@ -243,9 +243,9 @@ Logical Functions and Operators
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `boolean(x)`         | cast *x* to Boolean       | ``boolean(true())``       | ``true``             |
+| `boolean(x)`         | cast *x* to Boolean       | ``boolean('true')``       | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``boolean(false())``      | ``false``            |
+|                      |                           | ``boolean('false')``      | ``false``            |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``boolean(1)``            | ``true``             |
 |                      |                           +---------------------------+----------------------+
@@ -254,10 +254,6 @@ Logical Functions and Operators
 |                      |                           | ``boolean(string(''))``   | ``false``            |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | |boolean-from-date-in|    | ``true``             |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``boolean(null())``       | ``null``             |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |boolean-from-null-s-in|  | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `true()`             | logical *TRUE* value      | ``true()``                |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -279,7 +275,17 @@ Logical Functions and Operators
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``!false()``              | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
+| `null(x)`            | *NULL* value              | ``null()``                |                      |
++----------------------+---------------------------+---------------------------+----------------------+
 | `is_null(x)`         | *x* is null               | ``is_null(null())``       | ``true``             |
++----------------------+---------------------------+---------------------------+----------------------+
+| `if_null(x,y)`       | *x* if *x* is not null;   | ``if_null(1,0)``          | ``1``                |
+|                      | *y* otherwise             +---------------------------+----------------------+
+|                      |                           | ``if_null(null(),0)``     | ``0``                |
++----------------------+---------------------------+---------------------------+----------------------+
+| `null_if(x,y)`       | *x* if *x* is not equal   | ``null_if(1,0)``          | ``1``                |
+|                      | to *y*; null otherwise    +---------------------------+----------------------+
+|                      |                           | ``null_if(0,0)``          | ``null``             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `x = y`              | *x* is equal to *y*       | ``'HTSQL'='QUEL'``        | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -315,14 +321,6 @@ Logical Functions and Operators
 |                      | equal to *y*              +---------------------------+----------------------+
 |                      |                           | ``'omega'>='alpha'``      | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `if_null(x,y)`       | *x* if *x* is not null;   | ``if_null(1,0)``          | ``1``                |
-|                      | *y* otherwise             +---------------------------+----------------------+
-|                      |                           | ``if_null(null(),0)``     | ``0``                |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `null_if(x,y)`       | *x* if *x* is not equal   | ``null_if(1,0)``          | ``1``                |
-|                      | to *y*; null otherwise    +---------------------------+----------------------+
-|                      |                           | ``null_if(0,0)``          | ``null``             |
-+----------------------+---------------------------+---------------------------+----------------------+
 | |if-fn|              | first *ck* such that *pk* | |if-true-in|              | ``'up'``             |
 +----------------------+ is *TRUE*; *o* or null    +---------------------------+----------------------+
 | |if-else-fn|         | otherwise                 | |if-false-in|             | ``'down'``           |
@@ -334,7 +332,6 @@ Logical Functions and Operators
 
 .. |boolean-from-string-in| replace:: ``boolean(string('HTSQL'))``
 .. |boolean-from-date-in| replace:: ``boolean(date('2010-04-15'))``
-.. |boolean-from-null-s-in| replace:: ``boolean(string(null()))``
 .. |if-fn| replace:: `if(p1,c1,...,pn,cn)`
 .. |if-else-fn| replace:: `if(p1,c1,...,pn,cn,o)`
 .. |if-true-in| replace:: ``if(true(),'up','down')``
@@ -344,6 +341,218 @@ Logical Functions and Operators
 .. |switch-1-in| replace:: ``switch(1,1,'up',0,'down')``
 .. |switch-0-in| replace:: ``switch(0,1,'up',0,'down')``
 
+Boolean Cast
+~~~~~~~~~~~~
+
+`boolean(x)`
+    Convert `x` to Boolean.
+
+The result of the conversion depends on the type of the argument:
+
+`untyped`
+    The literal ``'false'`` is converted to *FALSE*, the literal
+    ``'true'`` is converted to *TRUE*, any other literals generate an
+    error.
+`boolean`
+    The value is unchanged.
+`string`
+    *NULL* and an empty string are converted to *FALSE*, other values
+    are converted to *TRUE*.
+other data types
+    `null` values are converted to *FALSE*, other values are converted
+    to *TRUE*.
+
+.. htsql:: /{boolean('false'), boolean('true')}
+
+.. htsql:: /{boolean(null()), boolean(false()), boolean(true())}
+
+.. htsql:: /{boolean(string(null())), boolean(string('')),
+             boolean(string('HTSQL'))}
+
+.. htsql:: /{boolean(integer(null())), boolean(0.0),
+             boolean(date('2010-04-15'))}
+
+Logical Values
+--------------
+
+`true()`
+    Logical *TRUE* value.
+
+`false()`
+    Logical *FALSE* value.
+
+.. htsql:: /{true(), false()}
+
+Logical Operators
+~~~~~~~~~~~~~~~~~
+
+`p | q`
+    Logical *OR* operator.
+
+`p & q`
+    Logical *AND* operator.
+
+`\! p`
+    Logical *NOT* operator.
+
+Arguments of a logical operators that are not of a Boolean type
+automatically converted to Boolean (see `boolean()` function).
+
+.. htsql:: /{true()|true(), true()|false(),
+             false()|true(), false()|false()}
+
+.. htsql:: /{true()&true(), true()&false(),
+             false()&true(), false()&false()}
+
+.. htsql:: /{!true(), !false()}
+
+.. htsql::
+
+   /{true()&null(), false()&null(), null()&null(),
+     true()|null(), false()|null(), null()|null(),
+     !null()}
+
+.. htsql:: /school?exists(program)&exists(department)|!campus
+   :cut: 3
+
+NULL Checking
+~~~~~~~~~~~~~
+
+`null()`
+    Untyped *NULL* value.
+`is_null(x)`
+    *TRUE* if `x` is *NULL*, *FALSE* otherwise.
+`if_null(x,y)`
+    `x` if `x` is not *NULL*, `y` otherwise.
+`null_if(x,y)`
+    `x` if `x` is not equal to `y`, *NULL* otherwise.
+
+The arguments of `if_null()` and `null_if()` should be of the same type;
+if not, the arguments are coerced to the most general type.
+
+.. htsql:: /{null()}
+
+.. htsql:: /{is_null(null()), is_null(0)}
+
+.. htsql:: /{if_null('SQL','HTSQL'), if_null(null(),'HTSQL')}
+
+.. htsql:: /{null_if('HTSQL','SQL'), null_if('SQL','SQL')}
+
+.. htsql:: /course{title, credits}?is_null(credits)
+
+.. htsql:: /course{title, credits}?(credits :if_null 0)=0
+
+.. htsql:: /course{title, credits}?!(credits :null_if 0)
+
+Equality Operators
+~~~~~~~~~~~~~~~~~~
+
+`x = y`
+    *TRUE* if `x` is equal to `y`, *FALSE* otherwise.  Returns *NULL* if
+    any of the operands is *NULL*.
+`x != y`
+    *TRUE* if `x` is not equal to `y`, *FALSE* otherwise.  Returns
+    *NULL* if any of the operands is *NULL*.
+`x == y`
+    *TRUE* if `x` is equal to `y`, *FALSE* otherwise.  Treats *NULL* as
+    a regular value.
+`x !== y`
+    *TRUE* if `x` is not equal to `y`, *FALSE* otherwise.  Treats *NULL*
+    as a regular value.
+`x = {a,b,c,...}`
+    *TRUE* if `x` is equal to *some* value among `a,b,c,...`, *FALSE*
+    otherwise.
+`x != {a,b,c,...}`
+    *TRUE* if `x` is not equal to *all* values among `a,b,c,...`,
+    *FALSE* otherwise.
+
+The form `x = {a,b,c,...}` is a short-cut syntax for `x=a|x=b|x=c|...`.
+Similarly, the form `x != {a,b,c,...}` is a short-cut syntax for
+`x!=a|x!=b|x!=c|...`.
+
+The operands of equality operators are expected to be of the same time.
+If the types of the operands are different, the operands are coerced to
+the most general type; it is an error if the operand types are not
+compatible to each other.
+
+.. htsql:: /{1=1.0, 'HTSQL'!='SQUARE'}
+
+.. htsql:: /{0!=null(), null()=null(), 0!==null(), null()==null()}
+
+.. htsql:: /'HTSQL'!={'ISBL','SQUARE','QUEL'}
+
+.. htsql:: /school?campus='old'
+   :cut: 3
+
+.. htsql:: /school?campus!={'north','south'}
+   :cut: 3
+
+.. htsql:: /school{code, campus=='old', campus=='north', campus=='south'}
+   :cut: 3
+
+Comparison Operators
+~~~~~~~~~~~~~~~~~~~~
+
+`x < y`
+    *TRUE* if `x` is less than `y`, *FALSE* otherwise.
+`x <= y`
+    *TRUE* if `x` is less than or equal to `y`, *FALSE* otherwise.
+`x > y`
+    *TRUE* if `x` is greater than `y`, *FALSE* otherwise.
+`x >= y`
+    *TRUE* if `x` is greater than or equal to `y`, *FALSE* otherwise.
+
+The result is *NULL* if any of the operands is *NULL*.
+
+An operand of a comparison operator must be of a string, numeric,
+enumeration, or date/time type.  Both operands are expected to be of
+the same type; if not, the operands are coerced to the most general
+type.
+
+.. htsql:: /{23<=17.5, 'HTSQL'<'SQUARE',
+             date('2010-04-15')>=date('1991-08-20')}
+
+.. htsql:: /school?count(department)>=4
+   :cut: 3
+
+Branching Functions
+~~~~~~~~~~~~~~~~~~~
+
+`if(p1,c1,p2,c2,...,pn,cn[,o])`
+    This function takes *N* logical expressions `p1,p2,...,pN`
+    interleaved with *N* values `c1,c2,...,cN`, followed by an optional
+    value `o`.  The function returns the value `ck` corresponding to the
+    first predicate `pk` evaluated to *TRUE*.  If none of the predicates
+    are evaluated to *TRUE*, the value of `o` is returned, or *NULL* if
+    `o` is not specified.
+`switch(x,y1,c1,y2,c2,...,yn,cn[,o])`
+    This function takes a control expression `x` followed by *N* variant
+    values `y1,y2,...,yN` interleaved with *N* resulting values
+    `c1,c2,...,cN`, and concluded with an optional default value `o`.
+    The function returns the value `ck` corresponding to the first
+    variant `yk` equal to `x`.  If none of the variants are equal to the
+    control value, `o` is returned, or *NULL* if `o` is not specified.
+
+These functions expect all the resulting values `c1,c2,...,cN` as well
+as the default value `o` to be of the same type.  If the value types
+are different, all values are coerced to the most general type.  Same
+is true for the control expression `x` and variant values `y1,y2,...,yN`
+of the function `switch()`.
+
+.. htsql::
+   :cut: 3
+
+   /course{title, if(credits>=5, 'hard',
+                     credits>=3, 'medium',
+                                 'easy') :as level}
+          ?department.code='astro'
+
+.. htsql::
+   :cut: 3
+
+   /student{name, switch(gender, 'm', 1,
+                                 'f', -1) :as sex_code}
+           ?program.code='gedu'
 
 Numeric Functions
 -----------------
@@ -577,29 +786,29 @@ Date/Time Functions
 Aggregate Functions
 -------------------
 
-+----------------------+---------------------------+---------------------------+----------------------+
-| Function             | Description               | Example Input             | Output               |
-+======================+===========================+===========================+======================+
-| `exists(ps)`         | *TRUE* if *ps* contains   | |exists-in|               |                      |
-|                      | at least one *TRUE*       |                           |                      |
-|                      | value; *FALSE* otherwise  |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `every(ps)`          | *TRUE* if *ps* contains   | |every-in|                |                      |
-|                      | only *TRUE* values;       |                           |                      |
-|                      | *FALSE* otherwise         |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `count(ps)`          | number of *TRUE* values   | |count-in|                |                      |
-|                      | in *ps*                   |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `min(xs)`            | smallest element in *xs*  | ``min(course.credits)``   |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `max(xs)`            | largest element in *xs*   | ``max(course.credits)``   |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `sum(xs)`            | sum of elements in *xs*   | ``sum(course.credits)``   |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `avg(xs)`            | average value of elements | ``avg(course.credits)``   |                      |
-|                      | in *xs*                   |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
++----------------------+---------------------------+---------------------------+
+| Function             | Description               | Example Input             |
++======================+===========================+===========================+
+| `exists(ps)`         | *TRUE* if *ps* contains   | |exists-in|               |
+|                      | at least one *TRUE*       |                           |
+|                      | value; *FALSE* otherwise  |                           |
++----------------------+---------------------------+---------------------------+
+| `every(ps)`          | *TRUE* if *ps* contains   | |every-in|                |
+|                      | only *TRUE* values;       |                           |
+|                      | *FALSE* otherwise         |                           |
++----------------------+---------------------------+---------------------------+
+| `count(ps)`          | number of *TRUE* values   | |count-in|                |
+|                      | in *ps*                   |                           |
++----------------------+---------------------------+---------------------------+
+| `min(xs)`            | smallest element in *xs*  | ``min(course.credits)``   |
++----------------------+---------------------------+---------------------------+
+| `max(xs)`            | largest element in *xs*   | ``max(course.credits)``   |
++----------------------+---------------------------+---------------------------+
+| `sum(xs)`            | sum of elements in *xs*   | ``sum(course.credits)``   |
++----------------------+---------------------------+---------------------------+
+| `avg(xs)`            | average value of elements | ``avg(course.credits)``   |
+|                      | in *xs*                   |                           |
++----------------------+---------------------------+---------------------------+
 
 .. |exists-in| replace:: ``exists(course.credits>5)``
 .. |every-in| replace:: ``every(course.credits>5)``
@@ -609,32 +818,32 @@ Aggregate Functions
 Flow Operations
 ---------------
 
-+----------------------+---------------------------+---------------------------+----------------------+
-| Function             | Description               | Example Input             | Output               |
-+======================+===========================+===========================+======================+
-| `flow ? p`           | records from *flow*       | ``school?code='edu'``     |                      |
-|                      | satisfying condition *p*  |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `flow ^ x`           | unique values of *x* as   | ``school^campus``         |                      |
-|                      | it runs over *flow*       |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `flow {x,...}`       | select output columns     | ``school{code,name}``     |                      |
-|                      | *x*, ... for *flow*       |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `sort(x,...)`        | reorder records in *flow* | ``course.sort(credits-)`` |                      |
-|                      | by *x*, ...               |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `limit(n)`           | first *n* records from    | ``course.limit(10)``      |                      |
-|                      | *flow*                    |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `limit(n,k)`         | *n* records from *flow*   | ``course.limit(10,20)``   |                      |
-|                      | starting from *k*-th      |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `x -> xs`            | traverse an ad-hoc link   | |link-in|                 |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `fork([x])`          | traverse a                | ``course.fork(credits)``  |                      |
-|                      | self-referential link     |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
++----------------------+---------------------------+---------------------------+
+| Function             | Description               | Example Input             |
++======================+===========================+===========================+
+| `flow ? p`           | records from *flow*       | ``school?code='edu'``     |
+|                      | satisfying condition *p*  |                           |
++----------------------+---------------------------+---------------------------+
+| `flow ^ x`           | unique values of *x* as   | ``school^campus``         |
+|                      | it runs over *flow*       |                           |
++----------------------+---------------------------+---------------------------+
+| `flow {x,...}`       | select output columns     | ``school{code,name}``     |
+|                      | *x*, ... for *flow*       |                           |
++----------------------+---------------------------+---------------------------+
+| `sort(x,...)`        | reorder records in *flow* | ``course.sort(credits-)`` |
+|                      | by *x*, ...               |                           |
++----------------------+---------------------------+---------------------------+
+| `limit(n)`           | first *n* records from    | ``course.limit(10)``      |
+|                      | *flow*                    |                           |
++----------------------+---------------------------+---------------------------+
+| `limit(n,k)`         | *n* records from *flow*   | ``course.limit(10,20)``   |
+|                      | starting from *k*-th      |                           |
++----------------------+---------------------------+---------------------------+
+| `x -> xs`            | traverse an ad-hoc link   | |link-in|                 |
++----------------------+---------------------------+---------------------------+
+| `fork([x])`          | traverse a                | ``course.fork(credits)``  |
+|                      | self-referential link     |                           |
++----------------------+---------------------------+---------------------------+
 
 .. |link-in| replace:: ``school.(campus -> school)``
 
@@ -642,20 +851,20 @@ Flow Operations
 Scope Operations
 ----------------
 
-+----------------------+---------------------------+---------------------------+----------------------+
-| Function             | Description               | Example Input             | Output               |
-+======================+===========================+===========================+======================+
-| `define(x:=...)`     | add names to the current  | |define-in|               |                      |
-|                      | scope                     |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `where(expr,x:=...)` | evaluate an expression    | |where-in|                |                      |
-|                      | with extra names in the   |                           |                      |
-|                      | current scope             |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `root()`             | root scope                |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `this()`             | current scope             |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
++----------------------+---------------------------+---------------------------+
+| Function             | Description               | Example Input             |
++======================+===========================+===========================+
+| `define(x:=...)`     | add names to the current  | |define-in|               |
+|                      | scope                     |                           |
++----------------------+---------------------------+---------------------------+
+| `where(expr,x:=...)` | evaluate an expression    | |where-in|                |
+|                      | with extra names in the   |                           |
+|                      | current scope             |                           |
++----------------------+---------------------------+---------------------------+
+| `root()`             | root scope                |                           |
++----------------------+---------------------------+---------------------------+
+| `this()`             | current scope             |                           |
++----------------------+---------------------------+---------------------------+
 
 .. |define-in| replace:: ``define(num_prog:=count(program))``
 .. |where-in| replace:: ``count(course?credits>$c) :where $c:=avg(course.credits)``
@@ -664,15 +873,15 @@ Scope Operations
 Decorators
 ----------
 
-+----------------------+---------------------------+---------------------------+----------------------+
-| Function             | Description               | Example Input             | Output               |
-+======================+===========================+===========================+======================+
-| `as(x,title)`        | set the column title      | |as-in|                   |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `x +`                | indicate ascending order  | ``credits+``              |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `x -`                | indicate descending order | ``credits-``              |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
++----------------------+---------------------------+---------------------------+
+| Function             | Description               | Example Input             |
++======================+===========================+===========================+
+| `as(x,title)`        | set the column title      | |as-in|                   |
++----------------------+---------------------------+---------------------------+
+| `x +`                | indicate ascending order  | ``credits+``              |
++----------------------+---------------------------+---------------------------+
+| `x -`                | indicate descending order | ``credits-``              |
++----------------------+---------------------------+---------------------------+
 
 .. |as-in| replace:: ``count(program) :as '# of programs'``
 
@@ -680,21 +889,21 @@ Decorators
 Formatters
 ----------
 
-+----------------------+---------------------------+---------------------------+----------------------+
-| Function             | Description               | Example Input             | Output               |
-+======================+===========================+===========================+======================+
-| `/:html`             | HTML tabular output       |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `/:txt`              | plain text tabular output |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `/:csv`              | CSV (comma-separated      |                           |                      |
-|                      | values) output            |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `/:tsv`              | TSV (tab-separated        |                           |                      |
-|                      | values) output            |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `/:json`             | JSON-serialized output    |                           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
++----------------------+---------------------------+
+| Function             | Description               |
++======================+===========================+
+| `/:html`             | HTML tabular output       |
++----------------------+---------------------------+
+| `/:txt`              | plain text tabular output |
++----------------------+---------------------------+
+| `/:csv`              | CSV (comma-separated      |
+|                      | values) output            |
++----------------------+---------------------------+
+| `/:tsv`              | TSV (tab-separated        |
+|                      | values) output            |
++----------------------+---------------------------+
+| `/:json`             | JSON-serialized output    |
++----------------------+---------------------------+
 
 
 .. vim: set spell spelllang=en textwidth=72:
