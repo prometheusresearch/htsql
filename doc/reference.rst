@@ -247,13 +247,9 @@ Logical Functions and Operators
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``boolean('false')``      | ``false``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``boolean(1)``            | ``true``             |
-|                      |                           +---------------------------+----------------------+
 |                      |                           | |boolean-from-string-in|  | ``true``             |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``boolean(string(''))``   | ``false``            |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |boolean-from-date-in|    | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `true()`             | logical *TRUE* value      | ``true()``                |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -331,7 +327,6 @@ Logical Functions and Operators
 +----------------------+---------------------------+---------------------------+----------------------+
 
 .. |boolean-from-string-in| replace:: ``boolean(string('HTSQL'))``
-.. |boolean-from-date-in| replace:: ``boolean(date('2010-04-15'))``
 .. |if-fn| replace:: `if(p1,c1,...,pn,cn)`
 .. |if-else-fn| replace:: `if(p1,c1,...,pn,cn,o)`
 .. |if-true-in| replace:: ``if(true(),'up','down')``
@@ -560,27 +555,21 @@ Numeric Functions
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `integer(x)`         | cast *x* to integer       | ``integer(60)``           | ``60``               |
+| `integer(x)`         | cast *x* to integer       | ``integer('60')``         | ``60``               |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``integer(17.25)``        | ``17``               |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``integer(223607e-5)``    | ``2``                |
-|                      |                           +---------------------------+----------------------+
 |                      |                           | ``integer(string('60'))`` | ``60``               |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `decimal(x)`         | cast *x* to decimal       | ``decimal(60)``           | ``60.0``             |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``decimal(17.25)``        | ``17.25``            |
+| `decimal(x)`         | cast *x* to decimal       | ``decimal('17.25')``      | ``17.25``            |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``decimal(223607e-5)``    | ``2.23607``          |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | |decimal-from-string-in|  | ``17.25``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `float(x)`           | cast *x* to float         | ``float(60)``             | ``6e1``              |
+| `float(x)`           | cast *x* to float         | ``float('223607e-5')``    | ``223607e-5``        |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``float(17.25)``          | ``1725e-2``          |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``float(223607e-5)``      | ``223607e-5``        |
+|                      |                           | ``float(60)``             | ``6e1``              |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | |float-from-string-in|    | ``223607e-5``        |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -706,24 +695,12 @@ string typed values using single quotes in the output column.
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``string(1.0)``           | ``'1.0'``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``string(null())``        | ``null``             |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``string(true())``        | ``'true'``           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``string(false())``       | ``'false'``          |
-|                      |                           +---------------------------+----------------------+
 |                      |                           | |string-from-date-in|     | ``'2010-04-15'``     |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``string(time('20:13'))`` | ``'20:13'``          |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |string-from-dt-in|       | |string-from-dt-out| |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `length(s)`          | number of characters      | ``length('HTSQL')``       | ``5``                |
 |                      | in *s*                    |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `s + t`              | concatenate *s* and *t*;  | ``'Hello' + ' World'``    | ``'Hello World'``    |
-|                      | treats nulls as empty     +---------------------------+----------------------+
-|                      | strings                   | ``'Hello' + null()``      | ``'Hello'``          |
+| `s + t`              | concatenate *s* and *t*   | ``'HT' + 'SQL'``          | ``'HTSQL'``          |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `s ~ t`              | *s* contains *t*;         | ``'HTSQL' ~ 'sql'``       | ``true``             |
 |                      | case-insensitive          |                           |                      |
@@ -931,25 +908,13 @@ Date/Time Functions
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `date(x)`            | cast *x* to date          | ``date('2010-04-15')``    | |date-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |date-from-string-in|     | |date-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |date-from-dt-in|         | |date-out|           |
+| `date(x)`            | cast *x* to date          | ``date('2010-04-15')``    |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `time(x)`            | cast *x* to time          | ``time('20:13')``         | |time-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |date-from-string-in|     | |time-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |date-from-dt-in|         | |time-out|           |
+| `time(x)`            | cast *x* to time          | ``time('20:13')``         |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `datetime(x)`        | cast *x* to datetime      | |dt-from-untyped-in|      | |dt-out|             |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |dt-from-string-in|       | |dt-out|             |
+| `datetime(x)`        | cast *x* to datetime      | |dt-from-untyped-in|      |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `date(yyyy,mm,dd)`   | date *yyyy-mm-dd*         | ``date(2010,4,15)``       | |date-out|           |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `time(HH,MM[,SS])`   | time *HH:MM:SS*           | ``time(20,13)``           | |time-out|           |
 +----------------------+---------------------------+---------------------------+----------------------+
 | |dt-cr-fn|           | datetime *yyyy-mm-dd*     | |dt-cr-in|                | |dt-out|             |
 |                      | *HH:MM:SS*                |                           |                      |
@@ -960,6 +925,10 @@ Date/Time Functions
 | `today()`            | current date              | ``today()``               |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `now()`              | current date and time     | ``now()``                 |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `date(dt)`           | date of *dt*              | |date-from-dt-in|         | |date-out|           |
++----------------------+---------------------------+---------------------------+----------------------+
+| `time(dt)`           | time of *dt*              | |time-from-dt-in|         | |time-out|           |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `year(d)`            | year of *d*               | |year-in|                 | ``2010``             |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -974,38 +943,120 @@ Date/Time Functions
 | `second(t)`          | seconds of *t*            | ``second(time('20:13'))`` | ``0.0``              |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `d + n`              | increment *d* by *n* days | |date-inc-in|             | |date-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |dt-inc-in|               | |dt-out|             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `d - n`              | decrement *d* by *n* days | |date-dec-in|             | |date-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | |dt-dec-in|               | |dt-out|             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `d1 - d2`            | number of days between    | |date-diff-in|            | ``13626``            |
 |                      | *d1* and *d2*             |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 
 .. |date-out| replace:: ``date('2010-04-15')``
-.. |date-from-string-in| replace:: ``date(string('2010-04-15'))``
-.. |date-from-dt-in| replace:: ``date(datetime('2010-04-15 20:13'))``
 .. |time-out| replace:: ``time('20:13')``
-.. |time-from-string-in| replace:: ``time(string('20:13'))``
-.. |time-from-dt-in| replace:: ``time(datetime('2010-04-15 20:13'))``
-.. |dt-from-untyped-in| replace:: ``datetime('2010-04-15 20:13'))``
-.. |dt-out| replace:: ``datetime('2010-04-15 20:13')``
-.. |dt-from-string-in| replace:: ``datetime(string('2010-04-15 20:13'))``
-.. |dt-cr-fn| replace:: `datetime(yyyy,mm,dd,HH,MM[,SS])`
+.. |dt-from-untyped-in| replace:: ``datetime('2010-04-15T20:13')``
+.. |dt-out| replace:: ``datetime('2010-04-15T20:13')``
+.. |dt-from-string-in| replace:: ``datetime( string('2010-04-15T20:13') )``
+.. |dt-cr-fn| replace:: `datetime(yyyy,mm,dd [,HH,MM,SS])`
 .. |dt-cr-in| replace:: ``datetime(2010,4,15,20,13)``
-.. |dt-dt-in| replace:: ``datetime(date('2010-04-15'),time('20:13'))``
+.. |dt-dt-in| replace:: ``datetime( date('2010-04-15'), time('20:13') )``
+.. |date-from-dt-in| replace:: ``date( datetime('2010-04-15T20:13') )``
+.. |time-from-dt-in| replace:: ``time( datetime('2010-04-15T20:13') )``
 .. |year-in| replace:: ``year(date('2010-04-15'))``
 .. |month-in| replace:: ``month(date('2010-04-15'))``
 .. |day-in| replace:: ``day(date('2010-04-15'))``
 .. |date-inc-in| replace:: ``date('1991-08-20')+6813``
 .. |date-dec-in| replace:: ``date('2028-12-09')-6813``
-.. |dt-inc-in| replace:: ``datetime('1991-08-20 02:01')+6813.75833333333``
-.. |dt-dec-in| replace:: ``datetime('2028-12-10 14:25')-6813.75833333333``
-.. |date-diff-in| replace:: ``date('2028-12-09')-date('1991-08-20')``
+.. |date-diff-in| replace:: ``date('2028-12-09') - date('1991-08-20')``
 
+Date/Time Cast
+~~~~~~~~~~~~~~
+
+`date(x)`
+    Convert `x` to a *date* value.
+`time(x)`
+    Convert `x` to a *time* value.
+`datetime(x)`
+    Convert `x` to a *datetime* value.
+
+Conversion functions accept untyped literals and string expressions.
+An untyped literal must obey the literal format of the respective target
+type.  Conversion from a string value is backend-specific.
+
+.. htsql:: /{date('2010-04-15'), time('20:13'),
+             datetime('2010-04-15 20:13')}
+
+.. htsql:: /student?dob<date('1982-06-01')
+   :cut: 3
+
+Date/Time Construction
+~~~~~~~~~~~~~~~~~~~~~~
+
+`date(yyyy,mm,dd)`
+    Construct a date from the given year, month and day values.
+`datetime(yyyy,mm,dd[,HH,MM,SS])`
+    Construct a datetime from the given year, month, day, hour, minute
+    and second values.
+`datetime(d,t)`
+    Construct a datetime from the given date and time.
+
+Construction functions accept and normalize component values outside the
+regular range.
+
+.. htsql:: /{date(2010,4,15), datetime(2010,4,15,20,13),
+             datetime(date('2010-04-15'),time('20:13'))}
+
+.. htsql:: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
+
+Component Extraction
+~~~~~~~~~~~~~~~~~~~~
+
+`date(dt)`
+    Date of a *datetime* value.
+`time(dt)`
+    Time of a *datetime* value.
+`year(d)`
+    Year of a *date* or a *datetime* value.
+`month(d)`
+    Month of a *date* or a *datetime* value.
+`day(d)`
+    Day of a *date* or a *datetime* value.
+`hour(t)`
+    Hours of a *time* or a *datetime* value.
+`minute(t)`
+    Minutes of a *time* or a *datetime* value.
+`second(t)`
+    Seconds of a *time* or a *datetime* value.
+
+The extracted values are integers except for `second()`, where the
+extracted value is a float number.
+
+.. htsql::
+
+   /{date($dt), time($dt),
+     year($d), month($d), day($d),
+     hour($t), minute($t), second($t)}
+    :where ($d := date('2010-04-15'), $t := time('20:13'),
+            $dt := datetime($d,$t))
+
+Date/Time Arithmetics
+~~~~~~~~~~~~~~~~~~~~~
+
+`d + n`
+    Increment a *date* or a *datetime* value by `n` days.
+`d - n`
+    Decrement a *date* or a *datetime* value by `n` days.
+`d1 - d2`
+    Number of days between two *date* values.
+
+.. htsql:: /{date('1991-08-20')+6813,
+             datetime('1991-08-20 02:01')+6813.75833333333}
+
+.. htsql:: /{date('2028-12-09')-6813,
+             datetime('2028-12-10 14:25')-6813.75833333333}
+
+.. htsql:: /date('2028-12-09')-date('1991-08-20')
+
+.. htsql:: /student{name, (start_date-dob)/365 :round(1) :as age}
+   :cut: 3
 
 Aggregate Functions
 -------------------
