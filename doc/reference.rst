@@ -606,6 +606,90 @@ Numeric Functions
 .. |decimal-from-string-in| replace:: ``decimal(string('17.25'))``
 .. |float-from-string-in| replace:: ``float(string('223607e-5'))``
 
+Numeric Cast
+~~~~~~~~~~~~
+
+`integer(x)`
+    Convert `x` to integer.
+`decimal(x)`
+    Convert `x` to decimal.
+`float(x)`
+    Convert `x` to float.
+
+The argument of a conversion function can be of one of the following
+types:
+
+*untyped*
+    An untyped literal must be a valid number.  The `integer()` function
+    accepts only integer literals, `decimal()` and `float()` accepts
+    untyped literals written in integer, decimal or scientific notation.
+*numeric*
+    Numeric cast functions convert numbers between different storage
+    forms.  Behavior on range overflow and rounding rules are
+    backend-dependent.
+*string*
+    A string value must contain a valid number.  The set of allowed
+    input values depends on the backend.
+
+.. htsql:: /{integer(2.125), decimal('271828e-5'), float(string(60))}
+
+Arithmetic Expressions
+~~~~~~~~~~~~~~~~~~~~~~
+
+`+ x`
+    Return `x`.
+`- x`
+    Negate `x`.
+`x + y`
+    Add `x` to `y`.
+`x - y`
+    Subtract `y` from `x`.
+`x * y`
+    Multiply `x` by `y`.
+`x / y`
+    Divide `x` by `y`.
+
+Arithmetic operators expect operands of a numeric type.  If the operands
+are of different types, they are coerced to the most general type, in
+the order: *integer*, *decimal*, *float*.  For instance, adding an
+integer value to a decimal value converts the integer operand to
+decimal; multiplying a decimal value to a float value converts the
+decimal operand to float.
+
+In general, the type of the result coincides with the type of the
+operands.  The only exception is the division operator: when applied to
+integer operands, division produces a decimal value.
+
+The behavior of arithmetic expressions on range overflow or division by
+zero is backend-dependent: different backends may raise an error, return
+a *NULL* value or generate an incorrect result.
+
+Note that some arithmetic operators are also defined for *string*
+and *date* values; they are described in respective sections.
+
+.. htsql:: /{(2+4)*7, -(98-140), 21/5}
+
+Rounding Functions
+~~~~~~~~~~~~~~~~~~
+
+`round(x)`
+    Round `x` to the nearest integer value.
+`round(x,n)`
+    Round `x` to `n` decimal places.
+
+If called with one argument, `round()` accepts values of *decimal* or
+*float* types and returns a value of the same type.
+
+When called with two arguments, `round()` expects a *decimal* argument
+and produces a *decimal* value.  The second argument should be an integer;
+some backends permit negative values.
+
+.. htsql:: /{round(3272.78125),
+             round(3272.78125,2),
+             round(3272.78125,-2)}
+
+.. htsql:: /school{code, avg(department.count(course)) :round 2}
+   :cut: 3
 
 String Functions
 ----------------
