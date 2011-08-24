@@ -15,7 +15,7 @@ the expression.  The type also indicates how returned values are
 formatted in the output.
 
 Since HTSQL wraps an SQL database, HTSQL data types are related to SQL
-data type.  Although HTSQL does not expose SQL data types directly to
+data types.  Although HTSQL does not expose SQL data types directly to
 the user, each SQL data type corresponds to some HTSQL data type and
 vice versa.
 
@@ -145,7 +145,7 @@ There is no generic rule how to determine the type of a quoted literal;
 every operator and function have different rules how to treat untyped
 values.  However the content of the literal is never examined when
 determining its data type.  It is possible to explicitly specify the
-type of an unquoted literal by applying a *cast* operator.
+type of an unquoted literal by applying a *cast* function.
 
 .. htsql:: /{string('2010-04-15'), date('2010-04-15')}
 
@@ -188,8 +188,8 @@ follows:
 
 
 
-Boolean
--------
+Boolean Type
+------------
 
 Type `boolean` is a logical data type with two values: *TRUE*
 and *FALSE*.
@@ -218,127 +218,102 @@ native data types.
 | *mssql*              | ``BIT``                   |
 +----------------------+---------------------------+
 
-.. |oracle-native| replace:: ``NUMBER(1) CHECK (X IN (0, 1))``
+.. |oracle-native| replace:: ``NUMBER(1) CHECK (_ IN (0, 1))``
+
+Numeric Types
+-------------
+
+String Type
+-----------
+
+Enum Type
+---------
+
+Date/Time Types
+---------------
 
 
+Functions and Operators
+=======================
 
 
-
-
-Special Data Types
-==================
-
-
-Function Syntax
-===============
-
-A few observations about HTSQL's function and operator usage:
-
-* For any function, "``f(x,y)``" can be written "``x :f(y)``" and
-  depending upon grammatical context, abbreviated to "``x :f y``". 
-
-* Unless annotated, functions are null-regular, that is, if any of 
-  their arguments is ``null()`` then the result is ``null()``.
-
-* HTSQL uses zero-based indexes, e.g. the 1st item in a collection is 
-  indexed by ``0``, the 2nd character indexed by ``1``, and so on. 
-
-* A single quoted string in an HTSQL request is an *untyped* literal,
-  and is automatically cast depending upon the context -- it is not
-  necessarily a string value.
-
-
-Logical Operators
-=================
+Logical Functions and Operators
+-------------------------------
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `boolean(x)`         | cast *x* to Boolean       | ``boolean(true())``       | ``true()``           |
+| `boolean(x)`         | cast *x* to Boolean       | ``boolean(true())``       | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``boolean(false())``      | ``false()``          |
+|                      |                           | ``boolean(false())``      | ``false``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``boolean(1)``            | ``true()``           |
+|                      |                           | ``boolean(1)``            | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | |boolean-from-string-in|  | ``true()``           |
+|                      |                           | |boolean-from-string-in|  | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``boolean(string(''))``   | ``false()``          |
+|                      |                           | ``boolean(string(''))``   | ``false``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | |boolean-from-date-in|    | ``true()``           |
+|                      |                           | |boolean-from-date-in|    | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``boolean(null())``       | ``null()``           |
+|                      |                           | ``boolean(null())``       | ``null``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | |boolean-from-null-s-in|  | ``false()``          |
+|                      |                           | |boolean-from-null-s-in|  | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `true()`             | logical *TRUE* value      | ``true()``                |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `false()`            | logical *FALSE* value     | ``false()``               |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `p & q`              | logical *AND* operator;   | ``true()&true()``         | ``true()``           |
-|                      | treats nulls as *UNKNOWN* +---------------------------+----------------------+
-|                      |                           | ``true()&false()``        | ``false()``          |
+| `p & q`              | logical *AND* operator    | ``true()&true()``         | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``false()&false()``       | ``false()``          |
+|                      |                           | ``true()&false()``        | ``false``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``true()&null()``         | ``null()``           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``false()&null()``        | ``false()``          |
+|                      |                           | ``false()&false()``       | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `p | q`              | logical *OR* operator;    | ``true()|true()``         | ``true()``           |
-|                      | treats nulls as *UNKNOWN* +---------------------------+----------------------+
-|                      |                           | ``true()|false()``        | ``true()``           |
+| `p | q`              | logical *OR* operator     | ``true()|true()``         | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``false()|false()``       | ``false()``          |
+|                      |                           | ``true()|false()``        | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``true()|null()``         | ``true()``           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``false()|null()``        | ``null()``           |
+|                      |                           | ``false()|false()``       | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `\!p`                | logical *NOT* operator;   | ``!true()``               | ``false()``          |
-|                      | treats nulls as *UNKNOWN* +---------------------------+----------------------+
-|                      |                           | ``!false()``              | ``true()``           |
+| `\!p`                | logical *NOT* operator    | ``!true()``               | ``false``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``!null()``               | ``null()``           |
+|                      |                           | ``!false()``              | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `is_null(x)`         | *x* is null               | ``is_null(null())``       | ``true()``           |
+| `is_null(x)`         | *x* is null               | ``is_null(null())``       | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x = y`              | *x* is equal to *y*       | ``'HTSQL'='QUEL'``        | ``false()``          |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``2=null()``              | ``null()``           |
+| `x = y`              | *x* is equal to *y*       | ``'HTSQL'='QUEL'``        | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x != y`             | *x* is not equal to *y*   | ``'HTSQL'!='QUEL'``       | ``true()``           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``2!=null()``             | ``null()``           |
+| `x != y`             | *x* is not equal to *y*   | ``'HTSQL'!='QUEL'``       | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x == y`             | *x* is equal to *y*;      | ``'HTSQL'=='QUEL'``       | ``false()``          |
+| `x == y`             | *x* is equal to *y*;      | ``'HTSQL'=='QUEL'``       | ``false``            |
 |                      | treats nulls as regular   +---------------------------+----------------------+
-|                      | values                    | ``2==null()``             | ``false()``          |
+|                      | values                    | ``2==null()``             | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x !== y`            | *x* is not equal to *y*;  | ``'HTSQL'!=='QUEL'``      | ``true()``           |
+| `x !== y`            | *x* is not equal to *y*;  | ``'HTSQL'!=='QUEL'``      | ``true``             |
 |                      | treats nulls as regular   +---------------------------+----------------------+
-|                      | values                    | ``2!==null()``            | ``true()``           |
+|                      | values                    | ``2!==null()``            | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x = {a,b,c,...}`    | *x* is among *a*, *b*,    | ``5={2,3,5,7}'``          | ``true()``           |
+| `x = {a,b,c,...}`    | *x* is among *a*, *b*,    | ``5={2,3,5,7}'``          | ``true``             |
 |                      | *c*, ...                  |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x != {a,b,c,...}`   | *x* is not among *a*,     | ``5!={2,3,5,7}'``         | ``false()``          |
+| `x != {a,b,c,...}`   | *x* is not among *a*,     | ``5!={2,3,5,7}'``         | ``false``            |
 |                      | *b*, *c*, ...             |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x < y`              | *x* is less than *y*      | ``1<10``                  | ``true()``           |
+| `x < y`              | *x* is less than *y*      | ``1<10``                  | ``true``             |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``'omega'<'alpha'``       | ``false()``          |
+|                      |                           | ``'omega'<'alpha'``       | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x <= y`             | *x* is less than or equal | ``1<=10``                 | ``true()``           |
+| `x <= y`             | *x* is less than or equal | ``1<=10``                 | ``true``             |
 |                      | to *y*                    +---------------------------+----------------------+
-|                      |                           | ``'omega'<='alpha'``      | ``false()``          |
+|                      |                           | ``'omega'<='alpha'``      | ``false``            |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x > y`              | *x* is greater than *y*   | ``1>10``                  | ``false()``          |
+| `x > y`              | *x* is greater than *y*   | ``1>10``                  | ``false``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``'omega'>'alpha'``       | ``true()``           |
+|                      |                           | ``'omega'>'alpha'``       | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x >= y`             | *x* is greater than or    | ``1>=10``                 | ``false()``          |
+| `x >= y`             | *x* is greater than or    | ``1>=10``                 | ``false``            |
 |                      | equal to *y*              +---------------------------+----------------------+
-|                      |                           | ``'omega'>='alpha'``      | ``true()``           |
+|                      |                           | ``'omega'>='alpha'``      | ``true``             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `if_null(x,y)`       | *x* if *x* is not null;   | ``if_null(1,0)``          | ``1``                |
 |                      | *y* otherwise             +---------------------------+----------------------+
@@ -346,7 +321,7 @@ Logical Operators
 +----------------------+---------------------------+---------------------------+----------------------+
 | `null_if(x,y)`       | *x* if *x* is not equal   | ``null_if(1,0)``          | ``1``                |
 |                      | to *y*; null otherwise    +---------------------------+----------------------+
-|                      |                           | ``null_if(0,0)``          | ``null()``           |
+|                      |                           | ``null_if(0,0)``          | ``null``             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | |if-fn|              | first *ck* such that *pk* | |if-true-in|              | ``'up'``             |
 +----------------------+ is *TRUE*; *o* or null    +---------------------------+----------------------+
@@ -371,7 +346,7 @@ Logical Operators
 
 
 Numeric Functions
-=================
+-----------------
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -400,7 +375,9 @@ Numeric Functions
 |                      |                           +---------------------------+----------------------+
 |                      |                           | |float-from-string-in|    | ``223607e-5``        |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `-x`                 | negate *x*                | ``-7``                    |                      |
+| `+ x`                | *x*                       | ``+60``                   |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `- x`                | negate *x*                | ``-7``                    |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `x + y`              | add *x* to *y*            | ``13+7``                  | ``20``               |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -422,7 +399,7 @@ Numeric Functions
 
 
 String Functions
-================
+----------------
 
 By convention, string functions take a string as its first parameter.
 When an untyped literal, such as ``'value'`` is used and a string is
@@ -436,27 +413,31 @@ string typed values using single quotes in the output column.
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``string(1.0)``           | ``'1.0'``            |
 |                      |                           +---------------------------+----------------------+
-|                      |                           | ``string(null())``        | ``null()``           |
+|                      |                           | ``string(null())``        | ``null``             |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``string(true())``        | ``'true'``           |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | ``string(false())``       | ``'false'``          |
 |                      |                           +---------------------------+----------------------+
 |                      |                           | |string-from-date-in|     | ``'2010-04-15'``     |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | ``string(time('20:13'))`` | ``'20:13'``          |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |string-from-dt-in|       | |string-from-dt-out| |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `length(s)`          | number of characters      | ``length('HTSQL')``       | ``5``                |
 |                      | in *s*                    |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x + y`              | concatenate *x* and *y*;  | ``'Hello' + ' World'``    | ``'Hello World'``    |
+| `s + t`              | concatenate *s* and *t*;  | ``'Hello' + ' World'``    | ``'Hello World'``    |
 |                      | treats nulls as empty     +---------------------------+----------------------+
 |                      | strings                   | ``'Hello' + null()``      | ``'Hello'``          |
 |                      |                           |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x ~ y`              | *x* contains *y*;         | ``'HTSQL' ~ 'sql'``       | ``true()``           |
+| `s ~ t`              | *s* contains *t*;         | ``'HTSQL' ~ 'sql'``       | ``true``             |
 |                      | case-insensitive          |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x !~ y`             | *x* does not contain      | ``'HTSQL' !~ 'sql'``      | ``false()``          |
-|                      | *y*; case-insensitive     |                           |                      |
+| `s !~ t`             | *s* does not contain      | ``'HTSQL' !~ 'sql'``      | ``false``            |
+|                      | *t*; case-insensitive     |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `head(s)`            | first character of *s*    | ``head('HTSQL')``         | ``'H'``              |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -499,35 +480,53 @@ string typed values using single quotes in the output column.
 | `rtrim(s)`           | strips trailing spaces    | ``rtrim('  HTSQL  ')``    | ``'  HTSQL'``        |
 |                      | from *s*                  |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `replace(s,x,y)`     | replace all occurences    | |replace-in|              | ``'HTRAF'``          |
-|                      | of *x* in *s* with *y*;   +---------------------------+----------------------+
-|                      | in *s* with *y*; null *x* | |replace-null-in|         | ``'HTSQL'``          |
-|                      | is treated as an empty    |                           |                      |
-|                      | string                    |                           |                      |
+| `replace(s,t,r)`     | replace all occurences    | |replace-in|              | ``'HTRAF'``          |
+|                      | of *t* in *s* with *r*    |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 
 .. |string-from-date-in| replace:: ``string(date('2010-04-15'))``
+.. |string-from-dt-in| replace:: ``string(datetime('2010-04-15 20:13'))``
+.. |string-from-dt-out| replace:: ``'2010-04-15 20:13'``
 .. |slice-start-in| replace:: ``slice('HTSQL',null(),2)``
 .. |slice-end-in| replace:: ``slice('HTSQL',2,null())``
 .. |replace-in| replace:: ``replace('HTSQL','SQL','RAF')``
-.. |replace-null-in| replace:: ``replace('HTSQL',null(),'RAF')``
 
 
-Date Functions
-==============
+Date/Time Functions
+-------------------
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `date(x)`            | cast *x* to date          | ``date('2010-04-15')``    |                      |
+| `date(x)`            | cast *x* to date          | ``date('2010-04-15')``    | |date-out|           |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |date-from-string-in|     | |date-out|           |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |date-from-dt-in|         | |date-out|           |
++----------------------+---------------------------+---------------------------+----------------------+
+| `time(x)`            | cast *x* to time          | ``time('20:13')``         | |time-out|           |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |date-from-string-in|     | |time-out|           |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |date-from-dt-in|         | |time-out|           |
++----------------------+---------------------------+---------------------------+----------------------+
+| `datetime(x)`        | cast *x* to datetime      | |dt-from-untyped-in|      | |dt-out|             |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |dt-from-string-in|       | |dt-out|             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `date(yyyy,mm,dd)`   | date *yyyy-mm-dd*         | ``date(2010,4,15)``       | |date-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``date(2010,3,46)``       | |date-out|           |
-|                      |                           +---------------------------+----------------------+
-|                      |                           | ``date(2011,-8,15)``      | |date-out|           |
++----------------------+---------------------------+---------------------------+----------------------+
+| `time(HH,MM[,SS])`   | time *HH:MM:SS*           | ``time(20,13)``           | |time-out|           |
++----------------------+---------------------------+---------------------------+----------------------+
+| |dt-cr-fn|           | datetime *yyyy-mm-dd*     | |dt-cr-in|                | |dt-out|             |
+|                      | *HH:MM:SS*                |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `datetime(d,t)`      | datetime from date and    | |dt-dt-in|                | |dt-out|             |
+|                      | time                      |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `today()`            | current date              | ``today()``               |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `now()`              | current date and time     | ``now()``                 |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `year(d)`            | year of *d*               | |year-in|                 | ``2010``             |
 +----------------------+---------------------------+---------------------------+----------------------+
@@ -535,25 +534,48 @@ Date Functions
 +----------------------+---------------------------+---------------------------+----------------------+
 | `day(d)`             | day of *d*                | |day-in|                  | ``15``               |
 +----------------------+---------------------------+---------------------------+----------------------+
+| `hour(t)`            | hours of *t*              | ``hour(time('20:13'))``   | ``20``               |
++----------------------+---------------------------+---------------------------+----------------------+
+| `minute(t)`          | minutes of *t*            | ``minute(time('20:13'))`` | ``13``               |
++----------------------+---------------------------+---------------------------+----------------------+
+| `second(t)`          | seconds of *t*            | ``second(time('20:13'))`` | ``0.0``              |
++----------------------+---------------------------+---------------------------+----------------------+
 | `d + n`              | increment *d* by *n* days | |date-inc-in|             | |date-out|           |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |dt-inc-in|               | |dt-out|             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `d - n`              | decrement *d* by *n* days | |date-dec-in|             | |date-out|           |
+|                      |                           +---------------------------+----------------------+
+|                      |                           | |dt-dec-in|               | |dt-out|             |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `d1 - d2`            | number of days between    | |date-diff-in|            | ``13626``            |
 |                      | *d1* and *d2*             |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 
 .. |date-out| replace:: ``date('2010-04-15')``
+.. |date-from-string-in| replace:: ``date(string('2010-04-15'))``
+.. |date-from-dt-in| replace:: ``date(datetime('2010-04-15 20:13'))``
+.. |time-out| replace:: ``time('20:13')``
+.. |time-from-string-in| replace:: ``time(string('20:13'))``
+.. |time-from-dt-in| replace:: ``time(datetime('2010-04-15 20:13'))``
+.. |dt-from-untyped-in| replace:: ``datetime('2010-04-15 20:13'))``
+.. |dt-out| replace:: ``datetime('2010-04-15 20:13')``
+.. |dt-from-string-in| replace:: ``datetime(string('2010-04-15 20:13'))``
+.. |dt-cr-fn| replace:: `datetime(yyyy,mm,dd,HH,MM[,SS])`
+.. |dt-cr-in| replace:: ``datetime(2010,4,15,20,13)``
+.. |dt-dt-in| replace:: ``datetime(date('2010-04-15'),time('20:13'))``
 .. |year-in| replace:: ``year(date('2010-04-15'))``
 .. |month-in| replace:: ``month(date('2010-04-15'))``
 .. |day-in| replace:: ``day(date('2010-04-15'))``
 .. |date-inc-in| replace:: ``date('1991-08-20')+6813``
 .. |date-dec-in| replace:: ``date('2028-12-09')-6813``
+.. |dt-inc-in| replace:: ``datetime('1991-08-20 02:01')+6813.75833333333``
+.. |dt-dec-in| replace:: ``datetime('2028-12-10 14:25')-6813.75833333333``
 .. |date-diff-in| replace:: ``date('2028-12-09')-date('1991-08-20')``
 
 
 Aggregate Functions
-===================
+-------------------
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -569,13 +591,13 @@ Aggregate Functions
 | `count(ps)`          | number of *TRUE* values   | |count-in|                |                      |
 |                      | in *ps*                   |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `min(xs)`            | smallest *x* in *sx*      | ``min(course.credits)``   |                      |
+| `min(xs)`            | smallest element in *xs*  | ``min(course.credits)``   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `max(xs)`            | largest *x* in *sx*       | ``max(course.credits)``   |                      |
+| `max(xs)`            | largest element in *xs*   | ``max(course.credits)``   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `sum(xs)`            | sum of *x* in *xs*        | ``sum(course.credits)``   |                      |
+| `sum(xs)`            | sum of elements in *xs*   | ``sum(course.credits)``   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `avg(xs)`            | average value of *x*      | ``avg(course.credits)``   |                      |
+| `avg(xs)`            | average value of elements | ``avg(course.credits)``   |                      |
 |                      | in *xs*                   |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 
@@ -584,57 +606,79 @@ Aggregate Functions
 .. |count-in| replace:: ``count(course.credits>5)``
 
 
-Navigation Operations
-=====================
+Flow Operations
+---------------
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `chain . link`       | traverse a link           | ``school.program``        |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `chain . attr`       | extract attribute value   | ``school.name``           |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `chain . \*`         | extract all attributes    | ``school.*``              |                      |
-+----------------------+---------------------------+---------------------------+----------------------+
-| `chain ? p`          | records from *chain*      | ``school?code='edu'``     |                      |
+| `flow ? p`           | records from *flow*       | ``school?code='edu'``     |                      |
 |                      | satisfying condition *p*  |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain.sort(x,...)`  | records from *chain*      | ``course.sort(credits-)`` |                      |
-|                      | sorted by *x*, ...        |                           |                      |
+| `flow ^ x`           | unique values of *x* as   | ``school^campus``         |                      |
+|                      | it runs over *flow*       |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain.limit(n)`     | first *n* records from    | ``course.limit(10)``      |                      |
-|                      | *chain*                   |                           |                      |
+| `flow {x,...}`       | select output columns     | ``school{code,name}``     |                      |
+|                      | *x*, ... for *flow*       |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain.limit(n,k)`   | *n* records from *chain*  | ``course.limit(10,20)``   |                      |
+| `sort(x,...)`        | reorder records in *flow* | ``course.sort(credits-)`` |                      |
+|                      | by *x*, ...               |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `limit(n)`           | first *n* records from    | ``course.limit(10)``      |                      |
+|                      | *flow*                    |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `limit(n,k)`         | *n* records from *flow*   | ``course.limit(10,20)``   |                      |
 |                      | starting from *k*-th      |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `chain {x,...}`      | select *x*, ... from      | ``school{code,name}``     |                      |
-|                      | *chain*                   |                           |                      |
+| `x -> xs`            | traverse an ad-hoc link   | |link-in|                 |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `root()`             | scalar class              |                           |                      |
+| `fork([x])`          | traverse a                | ``course.fork(credits)``  |                      |
+|                      | self-referential link     |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `this()`             | current chain             |                           |                      |
+
+.. |link-in| replace:: ``school.(campus -> school)``
+
+
+Scope Operations
+----------------
+
 +----------------------+---------------------------+---------------------------+----------------------+
+| Function             | Description               | Example Input             | Output               |
++======================+===========================+===========================+======================+
+| `define(x:=...)`     | add names to the current  | |define-in|               |                      |
+|                      | scope                     |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `where(expr,x:=...)` | evaluate an expression    | |where-in|                |                      |
+|                      | with extra names in the   |                           |                      |
+|                      | current scope             |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `root()`             | root scope                |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `this()`             | current scope             |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+
+.. |define-in| replace:: ``define(num_prog:=count(program))``
+.. |where-in| replace:: ``count(course?credits>$c) :where $c:=avg(course.credits)``
 
 
 Decorators
-==========
+----------
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
 +======================+===========================+===========================+======================+
-| `as(x,title)`        | set the column title      | ``number :as 'No.'``      |                      |
+| `as(x,title)`        | set the column title      | |as-in|                   |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x+`                 | sort by *x* in            | ``credits+``              |                      |
-|                      | ascending order           |                           |                      |
+| `x +`                | indicate ascending order  | ``credits+``              |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
-| `x-`                 | sort by *x* in            | ``credits-``              |                      |
-|                      | descending order          |                           |                      |
+| `x -`                | indicate descending order | ``credits-``              |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
+
+.. |as-in| replace:: ``count(program) :as '# of programs'``
 
 
 Formatters
-==========
+----------
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -644,6 +688,9 @@ Formatters
 | `/:txt`              | plain text tabular output |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `/:csv`              | CSV (comma-separated      |                           |                      |
+|                      | values) output            |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `/:tsv`              | TSV (tab-separated        |                           |                      |
 |                      | values) output            |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `/:json`             | JSON-serialized output    |                           |                      |
