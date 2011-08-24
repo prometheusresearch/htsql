@@ -898,9 +898,11 @@ Search and Replace
 Case-sensitivity of the search depends on the backend; *NULL* values for
 `t` and `r` are interpreted as an empty string.
 
-.. htsql:: /{'HTTP' :replace('TP','SQL'),
-             'HTTP' :replace(null(), 'SQL'),
-             'HTTP' :replace('TP', null())}
+.. htsql::
+
+   /{'HTTP' :replace('TP','SQL'),
+     'HTTP' :replace(null(), 'SQL'),
+     'HTTP' :replace('TP', null())}
 
 Date/Time Functions
 -------------------
@@ -1001,8 +1003,10 @@ Date/Time Construction
 Construction functions accept and normalize component values outside the
 regular range.
 
-.. htsql:: /{date(2010,4,15), datetime(2010,4,15,20,13),
-             datetime(date('2010-04-15'),time('20:13'))}
+.. htsql::
+
+   /{date(2010,4,15), datetime(2010,4,15,20,13),
+     datetime(date('2010-04-15'),time('20:13'))}
 
 .. htsql:: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
 
@@ -1034,7 +1038,8 @@ extracted value is a float number.
    /{date($dt), time($dt),
      year($d), month($d), day($d),
      hour($t), minute($t), second($t)}
-    :where ($d := date('2010-04-15'), $t := time('20:13'),
+    :where ($d := date('2010-04-15'),
+            $t := time('20:13'),
             $dt := datetime($d,$t))
 
 Date/Time Arithmetics
@@ -1089,6 +1094,88 @@ Aggregate Functions
 .. |every-in| replace:: ``every(course.credits>5)``
 .. |count-in| replace:: ``count(course.credits>5)``
 
+Aggregate functions accept a plural argument, which, when evaluated,
+produces a flow of values, and generates a single *aggregating* value
+from it.
+
+Boolean Aggregates
+~~~~~~~~~~~~~~~~~~
+
+`exists(xs)`
+    Produce *TRUE* if `xs` contains at least one *TRUE* value, *FALSE*
+    otherwise.  The aggregate returns *FALSE* on an empty flow.
+`every(xs)`
+    Produce *FALSE* if `xs` contains only *TRUE* values, *FALSE*
+    otherwise.  The aggregate returns *TRUE* on an empty flow.
+`count(xs)`
+    The number of *TRUE* values in `xs`; ``0`` if `xs` is empty.
+
+Boolean aggregates expect a Boolean argument; a non-Boolean argument
+is converted to Boolean first (see function `boolean()`).
+
+.. htsql:: /course?department.code='astro'
+   :cut: 3
+
+.. htsql::
+
+   /{exists(astro_course.credits>=5),
+     every(astro_course.credits>=5),
+     count(astro_course.credits>=5)}
+    :where astro_course := course?department.code='astro'
+
+.. htsql:: /course?department.code='pia'
+
+.. htsql::
+
+   /{exists(pia_course.credits>=5),
+     every(pia_course.credits>=5),
+     count(pia_course.credits>=5)}
+    :where pia_course := course?department.code='pia'
+
+Extrema
+~~~~~~~
+
+`min(xs)`
+    The smallest value in `xs`.
+`max(xs)`
+    The largest value in `xs`.
+
+The functions accept numeric, string, enumeration and date/time
+arguments.  *NULL* values in the flow are ignored; if the flow is
+empty,  *NULL* is returned.
+
+.. htsql::
+
+   /{min(astro_course.credits), max(astro_course.credits)}
+    :where astro_course := course?department.code='astro'
+
+.. htsql::
+
+   /{min(pia_course.credits), max(pia_course.credits)}
+    :where pia_course := course?department.code='pia'
+
+Sum and Average
+~~~~~~~~~~~~~~~
+
+`sum(xs)`
+    The sum of values in `xs`; returns ``0`` if `xs` is empty.
+`avg(xs)`
+    The average of values in `xs`.
+
+The functions accept a numeric argument.  `sum()` returns a
+result of the same type as the argument, `avg()` returns
+a *decimal* result for an *integer* or a *decimal* argument,
+and *float* result for a *float* argument.
+
+.. htsql::
+
+   /{sum(astro_course.credits), avg(astro_course.credits)}
+    :where astro_course := course?department.code='astro'
+
+.. htsql::
+
+   /{sum(pia_course.credits), avg(pia_course.credits)}
+    :where pia_course := course?department.code='pia'
 
 Flow Operations
 ---------------
