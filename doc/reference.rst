@@ -724,7 +724,6 @@ string typed values using single quotes in the output column.
 | `s + t`              | concatenate *s* and *t*;  | ``'Hello' + ' World'``    | ``'Hello World'``    |
 |                      | treats nulls as empty     +---------------------------+----------------------+
 |                      | strings                   | ``'Hello' + null()``      | ``'Hello'``          |
-|                      |                           |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `s ~ t`              | *s* contains *t*;         | ``'HTSQL' ~ 'sql'``       | ``true``             |
 |                      | case-insensitive          |                           |                      |
@@ -784,6 +783,147 @@ string typed values using single quotes in the output column.
 .. |slice-end-in| replace:: ``slice('HTSQL',2,null())``
 .. |replace-in| replace:: ``replace('HTSQL','SQL','RAF')``
 
+String Cast
+~~~~~~~~~~~
+
+`string(x)`
+    Convert `x` to a string.
+
+HTSQL permits any value to be converted to a string; the conversion
+respects the format for literals of the original type.
+
+.. htsql:: /{string('HTSQL'), string(true()), string(2.125),
+             string(datetime('2010-04-15 20:13'))}
+
+.. htsql::
+   :cut: 3
+
+   /department{'Department of '+name+' offers '
+               +string(count(course))+' courses' :as text}
+              ?exists(course)
+
+String Length
+~~~~~~~~~~~~~
+
+`length(s)`
+    Number of characters in `s`.
+
+The exact meaning of a string length depends on the backend and the
+underlying SQL type.  The function returns ``0`` if the argument is
+*NULL*.
+
+.. htsql:: /{length('HTSQL'), length(''), length(null())}
+
+
+String Concatenation
+~~~~~~~~~~~~~~~~~~~~
+
+`s + t`
+    Concatenate `s` and `t`.
+
+The concatenation operator treats a *NULL* operand as an empty string.
+
+.. htsql:: /{'HT'+'SQL', null()+'SQL'}
+
+.. htsql:: /course{department_code+'.'+string(no) :as code, title}
+   :cut: 3
+
+Substring Search
+~~~~~~~~~~~~~~~~
+
+`s ~ t`
+    *TRUE* if `t` is a substring of `s`, *FALSE* otherwise.
+`s !~ t`
+    *TRUE* if `t` is a substring of `s`, *FALSE* otherwise.
+
+The search functions are case-insensitive; exact rules for
+case-insensitivity depend on the backend.
+
+.. htsql:: /{'HTSQL'~'sql', 'sql'!~'HTSQL'}
+
+.. htsql:: /school?code~'art'
+
+Substring Extraction
+~~~~~~~~~~~~~~~~~~~~
+
+`head(s)`
+    The first character of `s`.
+`head(s,n)`
+    The first `n` characters of `s`.
+`tail(s)`
+    The last character of `s`.
+`tail(s,n)`
+    The last `n` characters of `s`.
+`slice(s,i,j)`
+    The `i`-th to `j`-th (exclusive) characters of `s`.
+`at(s,k)`
+    The `k`-th character of `s`.
+`at(s,k,n)`
+    `n` characters of `s` starting from the `k`-th.
+
+In HTSQL, characters of a string are indexed from `0`.
+
+Extraction functions permit negative or *NULL* indexes.  `head()`
+(`tail()`), when given a negative `n`, produces all but the last (first)
+`-n` characters of `s`; if `n` is *NULL*, it is assumed to be ``1``.
+
+For `slice()`, a negative index `i` or `j` indicates to count
+`(-i-1)`-th (`(-j-1)`-th) character from the end of `s`.  *NULL* value
+for `i` or `j` indicates the beginning (the end) of the string.
+
+For `at()`, a negative `n` produces `-n` characters of `s`
+ending at the `k`-th character; if `n` is *NULL*, it is assumed to
+be ``1``.
+
+.. htsql:: /{'HTSQL' :head, 'HTSQL' :head(2), 'HTSQL' :head(-3)}
+
+.. htsql:: /{'HTSQL' :tail, 'HTSQL': tail(3), 'HTSQL': tail(-2)}
+
+.. htsql:: /{'HTSQL' :slice(1,-1), 'HTSQL' :slice(1,null()),
+             'HTSQL' :slice(null(),-1)}
+
+.. htsql:: /{'HTSQL' :at(2), 'HTSQL' :at(1,3), 'HTSQL': at(-1,-3)}
+
+Case Conversion
+~~~~~~~~~~~~~~~
+
+`upper(s)`
+    Convert `s` to upper case.
+`lower(s)`
+    Convert `s` to lower case.
+
+The conversion semantics is backend-dependent.
+
+.. htsql:: /{'htsql' :upper, 'HTSQL' :lower}
+
+String Trimming
+~~~~~~~~~~~~~~~
+
+`trim(s)`
+    Strip leading and trailing spaces from `s`.
+`ltrim(s)`
+    Strip leading spaces from `s`.
+`rtrim(s)`
+    Strip trailing spaces from `s`.
+
+.. htsql::
+
+   /{'  HTSQL  ' :trim :replace(' ','!'),
+     '  HTSQL  ' :ltrim :replace(' ','!'),
+     '  HTSQL  ' :rtrim :replace(' ','!')}
+
+Search and Replace
+~~~~~~~~~~~~~~~~~~
+
+`replace(s,t,r)`
+    Replace all occurences of substring `t` in `s` with `r`.
+
+Case-sensitivity of the search depends on the backend; *NULL* values for
+`t` and `r` are interpreted as an empty string.
+
+.. htsql:: /{'HTTP' :replace('TP','SQL'),
+             'HTTP' :replace(null(), 'SQL'),
+             'HTTP' :replace('TP', null())}
 
 Date/Time Functions
 -------------------
