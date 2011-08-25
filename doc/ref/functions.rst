@@ -1,244 +1,12 @@
-***************************************
-  Data Types, Functions and Operators
-***************************************
+***************************
+  Functions and Operators
+***************************
 
-This document describe built-in HTSQL data types, functions and
-operators.
-
-
-Data Types
-==========
-
-Every HTSQL expression has an associated type.  The type defines the set
-of valid values produced by the expression and permitted operations over
-the expression.  The type also indicates how returned values are
-formatted in the output.
-
-Since HTSQL wraps an SQL database, HTSQL data types are related to SQL
-data types.  Although HTSQL does not expose SQL data types directly to
-the user, each SQL data type corresponds to some HTSQL data type and
-vice versa.
-
-In this section we describe what data types HTSQL supports, how HTSQL
-types are mapped to SQL types, the format of input literals for each
-data type, etc.
-
-Regular and Special Types
--------------------------
-
-HTSQL demands that every expression has an associated type.  For
-example, in the query:
-
-.. htsql:: /{2+2=4, count(school), date('2010-04-15')-6813}
-
-the expressions ``2+2=4``, ``count(school)``,
-``date('2010-04-15')-6813`` have the types `boolean`, `integer` and
-`date` respectively.  These are *regular* types.
-
-The following table lists the default set of supported regular data
-types in HTSQL; more data types could be added by *HTSQL extensions*.
-
-+----------------------+---------------------------+---------------------------+
-| Type                 | Description               | Example Input             |
-+======================+===========================+===========================+
-| `boolean`            | logical data type, with   | ``true()``                |
-|                      | two values: *TRUE* and    +---------------------------+
-|                      | *FALSE*                   | ``false()``               |
-+----------------------+---------------------------+---------------------------+
-| `integer`            | binary integer type       | ``4096``                  |
-+----------------------+---------------------------+---------------------------+
-| `decimal`            | arbitrary-precision       | ``124.49``                |
-|                      | exact numeric type        |                           |
-+----------------------+---------------------------+---------------------------+
-| `float`              | IEEE 754 floating-point   | ``271828e-5``             |
-|                      | inexact numeric type      |                           |
-+----------------------+---------------------------+---------------------------+
-| `string`             | text data type            | ``string('HTSQL')``       |
-+----------------------+---------------------------+---------------------------+
-| `enum`               | enumeration data type,    |                           |
-|                      | with predefined set of    |                           |
-|                      | valid string values       |                           |
-+----------------------+---------------------------+---------------------------+
-| `date`               | calendar date             | ``date('2010-04-15')``    |
-+----------------------+---------------------------+---------------------------+
-| `time`               | time of day               | ``time('20:13:04.5')``    |
-+----------------------+---------------------------+---------------------------+
-| `datetime`           | date and time combined    | |datetime-in|             |
-+----------------------+---------------------------+---------------------------+
-| `opaque`             | unrecognized data type    |                           |
-+----------------------+---------------------------+---------------------------+
-
-.. |datetime-in| replace:: ``datetime('2010-04-15 20:13:04.5')``
-
-Some HTSQL expressions do not produce a proper value and therefore
-cannot be assigned a regular data type.  In this case, the expression is
-assigned one of the *special* data types: `record`, `untyped` or `void`.
-
-Record entities are assigned the `record` type.  This type is special
-since values of this type are never displayed directly and it has no
-corresponding SQL data type.
-
-Quoted HTSQL literals have no intrinsic data type; their actual type is
-determined from the context.  Until it is determined, HTSQL translator
-assign them a temporary `untyped` type.
-
-Some expressions, such as assignments, produce no values and therefore
-have no meaningful data type.   In this case, the assigned type is
-`void`.
-
-The following table lists supported special data types.
-
-+----------------------+---------------------------+---------------------------+
-| Type                 | Description               | Example Input             |
-+======================+===========================+===========================+
-| `record`             | type of record entities   | ``school``                |
-+----------------------+---------------------------+---------------------------+
-| `untyped`            | initial type of quoted    | ``'HTSQL'``               |
-|                      | literals                  |                           |
-+----------------------+---------------------------+---------------------------+
-| `void`               | type without any valid    |                           |
-|                      | values                    |                           |
-+----------------------+---------------------------+---------------------------+
-
-Literal Expressions
--------------------
-
-A literal expression is an atomic expression that represents a fixed
-value.  HTSQL supports two types of literals: *numeric* (or unquoted) and
-*quoted*.
-
-An unquoted literal is a number written in one of the following forms:
-
-* an integer number
-* a number with a decimal point
-* a number in exponential notation
-
-.. htsql:: /{60, 2.125, 271828e-5}
-
-Literals in these forms are assigned `integer`, `decimal` and `float`
-types respectively.
-
-A quoted literal is an arbitrary string value enclosed in single quotes.
-
-.. htsql:: /{'', 'HTSQL', 'O''Reilly'}
-
-In this example, three literal expressions represent an empty string,
-*HTSQL* and *O'Reilly* respectively.  Note that to represent a single
-quote in the value, we must duplicate it.
-
-As opposed to numeric literals, quoted literals have no intrinsic type,
-their type is determined from the context.  Specifically, the type of
-a quoted literal is inferred from the innermost expression that contains
-the literal.  Until the actual data type of a quoted literal is
-determined, the literal is assigned an `untyped` type.
-
-Consider a query:
-
-.. htsql:: /2+2='4'
-
-Here, a quoted literal ``'4'`` is a right operand of an equality
-expression, and its left counterpart ``2+2`` has the type `integer`.
-Therefore, HTSQL processor is able to infer `integer` for the literal
-``'4'``.
-
-There is no generic rule how to determine the type of a quoted literal;
-every operator and function have different rules how to treat untyped
-values.  However the content of the literal is never examined when
-determining its data type.  It is possible to explicitly specify the
-type of an unquoted literal by applying a *cast* function.
-
-.. htsql:: /{string('2010-04-15'), date('2010-04-15')}
-
-Here, the same quoted literal is converted to `string` and `date` data
-types respectively.  Each data type has a set of quoted literals it
-accepts; it is an error when the quoted literal does not obey the format
-expected by a particular type.
-
-.. htsql:: /{integer('HTSQL')}
-   :error:
-
-Note the error generated because ``'HTSQL'`` is not a valid format for
-an integer literal.
-
-Type Conversion
----------------
-
-Expressions of one type could be explicitly converted to another type
-using a *cast* function.  A cast function is a regular function with one
-argument; the name of the function coincides with the name of the target
-type.
-
-Not every conversion is permitted; for instance, an integer value could
-be converted to a string, but not to a date:
-
-.. htsql:: /string(60)
-
-.. htsql:: /date(60)
-   :error:
-
-Implicit type conversion is called *coercion*.  In an arithmetic
-formulas and other expressions that require homogeneous arguments, when
-the operands are of different types, values of less generic types are
-converted to the most generic type.  The order of conversion is as
-follows:
-
-* `integer`
-* `decimal`
-* `float`
-
-
-
-Boolean Type
-------------
-
-Type `boolean` is a logical data type with two values: *TRUE*
-and *FALSE*.
-
-.. htsql:: /{boolean('true'), boolean('false')}
-
-.. htsql:: /{true(), false()}
-
-The following table maps the `boolean` type to respective
-native data types.
-
-+----------------------+---------------------------+
-| Backend              | Native types              |
-+======================+===========================+
-| *sqlite*             | ``BOOL``, ``BOOLEAN`` or  |
-|                      | any type containing       |
-|                      | ``BOOL`` in its name      |
-+----------------------+---------------------------+
-| *pgsql*              | ``BOOLEAN``               |
-+----------------------+---------------------------+
-| *mysql*              | ``BOOL`` aka ``BOOLEAN``  |
-|                      | aka ``TINYINT(1)``        |
-+----------------------+---------------------------+
-| *oracle*             | |oracle-native|           |
-+----------------------+---------------------------+
-| *mssql*              | ``BIT``                   |
-+----------------------+---------------------------+
-
-.. |oracle-native| replace:: ``NUMBER(1) CHECK (_ IN (0, 1))``
-
-Numeric Types
--------------
-
-String Type
------------
-
-Enum Type
----------
-
-Date/Time Types
----------------
-
-
-Functions and Operators
-=======================
+This document describes built-in functions and operators.
 
 
 Logical Functions and Operators
--------------------------------
+===============================
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -337,7 +105,7 @@ Logical Functions and Operators
 .. |switch-0-in| replace:: ``switch(0,1,'up',0,'down')``
 
 Boolean Cast
-~~~~~~~~~~~~
+------------
 
 `boolean(x)`
     Convert `x` to Boolean.
@@ -379,7 +147,7 @@ Logical Values
 .. htsql:: /{true(), false()}
 
 Logical Operators
-~~~~~~~~~~~~~~~~~
+-----------------
 
 `p | q`
     Logical *OR* operator.
@@ -411,7 +179,7 @@ automatically converted to Boolean (see `boolean()` function).
    :cut: 3
 
 NULL Checking
-~~~~~~~~~~~~~
+-------------
 
 `null()`
     Untyped *NULL* value.
@@ -440,7 +208,7 @@ if not, the arguments are coerced to the most general type.
 .. htsql:: /course{title, credits}?!(credits :null_if 0)
 
 Equality Operators
-~~~~~~~~~~~~~~~~~~
+------------------
 
 `x = y`
     *TRUE* if `x` is equal to `y`, *FALSE* otherwise.  Returns *NULL* if
@@ -486,7 +254,7 @@ compatible to each other.
    :cut: 3
 
 Comparison Operators
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 `x < y`
     *TRUE* if `x` is less than `y`, *FALSE* otherwise.
@@ -511,7 +279,7 @@ type.
    :cut: 3
 
 Branching Functions
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 `if(p1,c1,p2,c2,...,pn,cn[,o])`
     This function takes *N* logical expressions `p1,p2,...,pN`
@@ -549,8 +317,9 @@ of the function `switch()`.
                                  'f', -1) :as sex_code}
            ?program.code='gedu'
 
+
 Numeric Functions
------------------
+=================
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -596,7 +365,7 @@ Numeric Functions
 .. |float-from-string-in| replace:: ``float(string('223607e-5'))``
 
 Numeric Cast
-~~~~~~~~~~~~
+------------
 
 `integer(x)`
     Convert `x` to integer.
@@ -623,7 +392,7 @@ types:
 .. htsql:: /{integer(2.125), decimal('271828e-5'), float(string(60))}
 
 Arithmetic Expressions
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 `+ x`
     Return `x`.
@@ -659,7 +428,7 @@ and *date* values; they are described in respective sections.
 .. htsql:: /{(2+4)*7, -(98-140), 21/5}
 
 Rounding Functions
-~~~~~~~~~~~~~~~~~~
+------------------
 
 `round(x)`
     Round `x` to the nearest integer value.
@@ -680,8 +449,9 @@ some backends permit negative values.
 .. htsql:: /school{code, avg(department.count(course)) :round 2}
    :cut: 3
 
+
 String Functions
-----------------
+================
 
 By convention, string functions take a string as its first parameter.
 When an untyped literal, such as ``'value'`` is used and a string is
@@ -761,7 +531,7 @@ string typed values using single quotes in the output column.
 .. |replace-in| replace:: ``replace('HTSQL','SQL','RAF')``
 
 String Cast
-~~~~~~~~~~~
+-----------
 
 `string(x)`
     Convert `x` to a string.
@@ -780,7 +550,7 @@ respects the format for literals of the original type.
               ?exists(course)
 
 String Length
-~~~~~~~~~~~~~
+-------------
 
 `length(s)`
     Number of characters in `s`.
@@ -791,9 +561,8 @@ underlying SQL type.  The function returns ``0`` if the argument is
 
 .. htsql:: /{length('HTSQL'), length(''), length(null())}
 
-
-String Concatenation
-~~~~~~~~~~~~~~~~~~~~
+Concatenation
+-------------
 
 `s + t`
     Concatenate `s` and `t`.
@@ -806,7 +575,7 @@ The concatenation operator treats a *NULL* operand as an empty string.
    :cut: 3
 
 Substring Search
-~~~~~~~~~~~~~~~~
+----------------
 
 `s ~ t`
     *TRUE* if `t` is a substring of `s`, *FALSE* otherwise.
@@ -821,7 +590,7 @@ case-insensitivity depend on the backend.
 .. htsql:: /school?code~'art'
 
 Substring Extraction
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 `head(s)`
     The first character of `s`.
@@ -862,7 +631,7 @@ be ``1``.
 .. htsql:: /{'HTSQL' :at(2), 'HTSQL' :at(1,3), 'HTSQL': at(-1,-3)}
 
 Case Conversion
-~~~~~~~~~~~~~~~
+---------------
 
 `upper(s)`
     Convert `s` to upper case.
@@ -874,7 +643,7 @@ The conversion semantics is backend-dependent.
 .. htsql:: /{'htsql' :upper, 'HTSQL' :lower}
 
 String Trimming
-~~~~~~~~~~~~~~~
+---------------
 
 `trim(s)`
     Strip leading and trailing spaces from `s`.
@@ -890,7 +659,7 @@ String Trimming
      '  HTSQL  ' :rtrim :replace(' ','!')}
 
 Search and Replace
-~~~~~~~~~~~~~~~~~~
+------------------
 
 `replace(s,t,r)`
     Replace all occurences of substring `t` in `s` with `r`.
@@ -904,8 +673,9 @@ Case-sensitivity of the search depends on the backend; *NULL* values for
      'HTTP' :replace(null(), 'SQL'),
      'HTTP' :replace('TP', null())}
 
+
 Date/Time Functions
--------------------
+===================
 
 +----------------------+---------------------------+---------------------------+----------------------+
 | Function             | Description               | Example Input             | Output               |
@@ -970,7 +740,7 @@ Date/Time Functions
 .. |date-diff-in| replace:: ``date('2028-12-09') - date('1991-08-20')``
 
 Date/Time Cast
-~~~~~~~~~~~~~~
+--------------
 
 `date(x)`
     Convert `x` to a *date* value.
@@ -990,7 +760,7 @@ type.  Conversion from a string value is backend-specific.
    :cut: 3
 
 Date/Time Construction
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 `date(yyyy,mm,dd)`
     Construct a date from the given year, month and day values.
@@ -1011,7 +781,7 @@ regular range.
 .. htsql:: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
 
 Component Extraction
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 `date(dt)`
     Date of a *datetime* value.
@@ -1043,7 +813,7 @@ extracted value is a float number.
             $dt := datetime($d,$t))
 
 Date/Time Arithmetics
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 `d + n`
     Increment a *date* or a *datetime* value by `n` days.
@@ -1063,8 +833,9 @@ Date/Time Arithmetics
 .. htsql:: /student{name, (start_date-dob)/365 :round(1) :as age}
    :cut: 3
 
+
 Aggregate Functions
--------------------
+===================
 
 +----------------------+---------------------------+---------------------------+
 | Function             | Description               | Example Input             |
@@ -1099,7 +870,7 @@ produces a flow of values, and generates a single *aggregating* value
 from it.
 
 Boolean Aggregates
-~~~~~~~~~~~~~~~~~~
+------------------
 
 `exists(xs)`
     Produce *TRUE* if `xs` contains at least one *TRUE* value, *FALSE*
@@ -1133,7 +904,7 @@ is converted to Boolean first (see function `boolean()`).
     :where pia_course := course?department.code='pia'
 
 Extrema
-~~~~~~~
+-------
 
 `min(xs)`
     The smallest value in `xs`.
@@ -1155,7 +926,7 @@ empty,  *NULL* is returned.
     :where pia_course := course?department.code='pia'
 
 Sum and Average
-~~~~~~~~~~~~~~~
+---------------
 
 `sum(xs)`
     The sum of values in `xs`; returns ``0`` if `xs` is empty.
@@ -1177,8 +948,9 @@ and *float* result for a *float* argument.
    /{sum(pia_course.credits), avg(pia_course.credits)}
     :where pia_course := course?department.code='pia'
 
+
 Flow Operations
----------------
+===============
 
 +----------------------+---------------------------+---------------------------+
 | Function             | Description               | Example Input             |
@@ -1216,7 +988,7 @@ Flow Operations
 .. |link-in| replace:: ``school.(campus -> school)``
 
 Sieving
-~~~~~~~
+-------
 
 `flow ^ p`
     Emit records from `flow` that satisfy condition `p`.
@@ -1231,7 +1003,7 @@ is not Boolean, it is implicitly converted to Boolean (see `boolean()`).
 .. htsql:: /school.filter(campus='south')
 
 Projection
-~~~~~~~~~~
+----------
 
 `flow ^ x`
     Emit all unique values of `x` as it ranges over `flow`.  *NULL*
@@ -1284,7 +1056,7 @@ may contain the following names:
 .. **
 
 Selection
-~~~~~~~~~
+---------
 
 `{x,...}`
     Define output columns in the input flow.
@@ -1326,8 +1098,9 @@ The selector expression admits two forms of short-cut syntax:
    /department{code, $avg_credits := avg(course.credits),
                count(course?credits>$avg_credits)}
 
+
 Scope Operations
-----------------
+================
 
 +----------------------+---------------------------+---------------------------+
 | Function             | Description               | Example Input             |
@@ -1348,7 +1121,7 @@ Scope Operations
 .. |where-in| replace:: ``count(course?credits>$c) :where $c:=avg(course.credits)``
 
 Calculated Attributes
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 `define(x:=...)`
     Add a calculated attribute to the current scope.
@@ -1360,15 +1133,16 @@ These functions add calculated attributes and references to the current
 scope.
 
 Scopes
-~~~~~~
+------
 
 `root()`
     The root scope.
 `this()`
     The current scope.
 
+
 Decorators
-----------
+==========
 
 +----------------------+---------------------------+---------------------------+
 | Function             | Description               | Example Input             |
@@ -1383,7 +1157,7 @@ Decorators
 .. |as-in| replace:: ``count(program) :as '# of programs'``
 
 Title
-~~~~~
+-----
 
 `as(x,title)`
     Specifies the title of the output column.
@@ -1396,7 +1170,7 @@ selection operator.
    :cut: 3
 
 Direction Decorators
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 `x +`
     Specifies ascending direction, *NULL* first.
@@ -1409,8 +1183,9 @@ selection operator.
 .. htsql:: /school.sort(campus+)
    :cut: 3
 
+
 Formatters
-----------
+==========
 
 +----------------------+---------------------------+
 | Function             | Description               |
