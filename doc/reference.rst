@@ -1184,13 +1184,16 @@ Flow Operations
 | Function             | Description               | Example Input             |
 +======================+===========================+===========================+
 | `flow ? p`           | records from *flow*       | ``school?code='edu'``     |
-|                      | satisfying condition *p*  |                           |
++----------------------+ satisfying condition *p*  +---------------------------+
+| `filter(p)`          |                           | |filter-out|              |  
 +----------------------+---------------------------+---------------------------+
 | `flow ^ x`           | unique values of *x* as   | ``school^campus``         |
-|                      | it runs over *flow*       |                           |
++----------------------+ it runs over *flow*       +---------------------------+
+| `distinct(flow{x})`  |                           | |distinct-out|            |
 +----------------------+---------------------------+---------------------------+
 | `flow {x,...}`       | select output columns     | ``school{code,name}``     |
-|                      | *x*, ... for *flow*       |                           |
++----------------------+ *x*, ... for *flow*       +---------------------------+
+| `select(x,...)`      |                           | |select-out|              |
 +----------------------+---------------------------+---------------------------+
 | `sort(x,...)`        | reorder records in *flow* | ``course.sort(credits-)`` |
 |                      | by *x*, ...               |                           |
@@ -1207,8 +1210,121 @@ Flow Operations
 |                      | self-referential link     |                           |
 +----------------------+---------------------------+---------------------------+
 
+.. |filter-out| replace:: ``school.filter(code='edu')``
+.. |distinct-out| replace:: ``distinct(school{campus})``
+.. |select-out| replace:: ``school.select(code,name)``
 .. |link-in| replace:: ``school.(campus -> school)``
 
+Sieving
+~~~~~~~
+
+`flow ^ p`
+    Emit records from `flow` that satisfy condition `p`.
+`filter(p)`
+    Emit records from the input flow that satisfy condition `p`.
+
+The condition is expected to be of Boolean type.  If the argument `p`
+is not Boolean, it is implicitly converted to Boolean (see `boolean()`).
+
+.. htsql:: /school?campus='south'
+
+.. htsql:: /school.filter(campus='south')
+
+Projection
+~~~~~~~~~~
+
+`flow ^ x`
+    Emit all unique values of `x` as it ranges over `flow`.  *NULL*
+    values are ignored.
+`flow ^ {x,...}`
+    Emit all unique values of the expressions `x,...`.  *NULL* values
+    are ignored.
+`distinct(flow{x,...})`
+    Emit all unique values of the output columns of `flow{x,...}`.
+    *NULL* values are ignored.
+
+The projection operation `flow ^ x` creates a new naming scope, which
+may contain the following names:
+
+`flow`
+    If `flow` is an identifier, then it is used to denote the plural
+    link associating each value of `x` with respective records from the
+    original flow.  It is called the complement link of the projection.
+    The symbol `^` is an alias for a complement link and could be used
+    when `flow` is not an identifier and so cannot be used as a name.
+`x`
+    If `x` is an identifier, then it refers to the value of `x`.
+    It is called the kernel of the projection.  When `x` is not an
+    identifier, but an arbitrary expression, one may assign it a name
+    using in-place selector assignment syntax.
+
+.. htsql:: /school{code, name, campus, count(department)}
+   :cut: 3
+
+.. htsql:: /school^campus {campus, count(school)}
+
+.. htsql:: /school^campus {*, count(^)}
+
+.. **
+
+.. htsql:: /distinct(school{campus}) {campus, count(school)}
+
+.. htsql::
+   :cut: 3
+
+   /school^{num_dept := count(department)}
+    {num_dept, count(school)}
+
+.. htsql::
+   :cut: 3
+
+   /school^{campus :if_null '', count(department)}
+    {*, count(school)}
+
+.. **
+
+Selection
+~~~~~~~~~
+
+`{x,...}`
+    Define output columns in the input flow.
+`flow{x,...}`
+    Define output columns in the given flow.
+`select(x,...)`
+    Define output columns in the input flow.
+
+The selector expression admits two forms of short-cut syntax:
+
+*in-place assignment*
+    If an element of a selector is an assignment expression,
+    the name defined by the assignment is added to the current scope.
+    Only unqualified attribute and reference assignments are allowed.
+*sorting decorators*
+    If an element of a selector contains a sort order indicators,
+    the expression is used to reorder elements in the input flow.
+
+.. htsql:: /{count(school), count(program), count(department)}
+
+.. htsql:: /select(count(school), count(program),
+                   count(department))
+
+.. htsql:: /school{code, count(program)}
+   :cut: 3
+
+.. htsql:: /school.select(code, count(program))
+   :cut: 3
+
+.. htsql:: /school{code, count(program)-}
+   :cut: 3
+
+.. htsql:: /school{code, num_prog := count(program)}?num_prog<4
+   :cut: 3
+
+.. htsql::
+   :cut: 3
+
+   /department{code, $avg_credits := avg(course.credits),
+               count(course?credits>$avg_credits)}
 
 Scope Operations
 ----------------
@@ -1231,6 +1347,25 @@ Scope Operations
 .. |define-in| replace:: ``define(num_prog:=count(program))``
 .. |where-in| replace:: ``count(course?credits>$c) :where $c:=avg(course.credits)``
 
+Calculated Attributes
+~~~~~~~~~~~~~~~~~~~~~
+
+`define(x:=...)`
+    Add a calculated attribute to the current scope.
+`where(expr,x:=...)`
+    Evaluate an expression in a current scope with a calculated
+    attribute.
+
+These functions add calculated attributes and references to the current
+scope.
+
+Scopes
+~~~~~~
+
+`root()`
+    The root scope.
+`this()`
+    The current scope.
 
 Decorators
 ----------
@@ -1247,6 +1382,32 @@ Decorators
 
 .. |as-in| replace:: ``count(program) :as '# of programs'``
 
+Title
+~~~~~
+
+`as(x,title)`
+    Specifies the title of the output column.
+
+The title could be either an identifier or a quoted literal.  This
+function should be used only when specifying output columns using a
+selection operator.
+
+.. htsql:: /school{code :as ID, count(program) :as '# of Programs'}
+   :cut: 3
+
+Direction Decorators
+~~~~~~~~~~~~~~~~~~~~
+
+`x +`
+    Specifies ascending direction, *NULL* first.
+`x -`
+    Specifies descending direction, *NULL* last.
+
+This decorators should be used only on arguments of `sort()` or in a
+selection operator.
+
+.. htsql:: /school.sort(campus+)
+   :cut: 3
 
 Formatters
 ----------
@@ -1266,6 +1427,11 @@ Formatters
 +----------------------+---------------------------+
 | `/:json`             | JSON-serialized output    |
 +----------------------+---------------------------+
+
+These functions specify the format of the output data.
+
+.. htsql:: /school/:csv
+   :cut: 3
 
 
 .. vim: set spell spelllang=en textwidth=72:
