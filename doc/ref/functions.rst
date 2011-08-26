@@ -360,6 +360,12 @@ Numeric Functions
 | `round(x,n)`         | round *x* to *n* decimal  | ``round(17.25,1)``        | ``17.3``             |
 |                      | places                    |                           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
+| `trunc(x)`           | round *x* to an integer,  | ``trunc(17.25)``          | ``17``               |
+|                      | towards zero              |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
+| `trunc(x,n)`         | round *x* to *n* decimal  | ``trunc(17.25,1)``        | ``17.2``             |
+|                      | places, towards zero      |                           |                      |
++----------------------+---------------------------+---------------------------+----------------------+
 
 .. |decimal-from-string-in| replace:: ``decimal(string('17.25'))``
 .. |float-from-string-in| replace:: ``float(string('223607e-5'))``
@@ -434,20 +440,33 @@ Rounding Functions
     Round `x` to the nearest integer value.
 `round(x,n)`
     Round `x` to `n` decimal places.
+`trunc(x)`
+    Round `x` to an integer, towards zero.
+`trunc(x,n)`
+    Round `x` to `n` decimal places, towards zero.
 
-If called with one argument, `round()` accepts values of *decimal* or
-*float* types and returns a value of the same type.
+If called with one argument, the functions accept values of *decimal* or
+*float* types and return a value of the same type.
 
-When called with two arguments, `round()` expects a *decimal* argument
+When called with two arguments, the functions expects a *decimal* argument
 and produces a *decimal* value.  The second argument should be an integer;
-some backends permit negative values.
+negative values are permitted.
 
 .. htsql:: /{round(3272.78125),
              round(3272.78125,2),
              round(3272.78125,-2)}
 
+.. htsql:: /{trunc(3272.78125),
+             trunc(3272.78125,2),
+             trunc(3272.78125,-2)}
+
 .. htsql:: /school{code, avg(department.count(course)) :round 2}
    :cut: 3
+
+.. htsql::
+
+   /department^avg_credits {avg_credits, count(department)}
+    :where department.avg_credits := avg(course.credits) :trunc(1)
 
 
 String Functions
@@ -990,7 +1009,7 @@ Flow Operations
 Sieving
 -------
 
-`flow ^ p`
+`flow ? p`
     Emit records from `flow` that satisfy condition `p`.
 `filter(p)`
     Emit records from the input flow that satisfy condition `p`.
