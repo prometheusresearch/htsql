@@ -140,7 +140,7 @@ To title an output column, use the ``:as`` decorator:
 
 .. htsql:: /school{name, count(department) :as '%23 of Dept.'}
    :query: /school{name,count(department):as%20'%23%20of%20Dept.'}
-   :cut: 4
+   :cut: 3
 
 Since HTSQL is a web query language, there are two characters that have
 special meaning: ``%`` is used to encode reserved and unprintable
@@ -159,7 +159,7 @@ Since the HTSQL processor knows about this relationship, it is possible
 to link data accordingly:
 
 .. htsql:: /program{school.name, title}
-   :cut: 4
+   :cut: 3
 
 It is possible to link data through several relationships.  Since ``course``
 is offered by a ``department`` which belongs to a ``school``, we can write:
@@ -245,13 +245,13 @@ following example sorts courses in ascending order by department and
 then in descending order by number of credits:
 
 .. htsql:: /course.sort(department_code+, credits-)
-   :cut: 3
+   :cut: 2
 
 When sorting by a selected output column, you could use a shortcut
 syntax which combines column selection and sorting:
 
 .. htsql:: /course{department_code+, no, credits-, title}
-   :cut: 5
+   :cut: 4
 
 To list a range of rows, the ``limit()`` function takes one or two
 arguments.  The first argument is the number of rows to return, the
@@ -414,13 +414,13 @@ It's possible to nest aggregate expressions.  This request returns the
 average number of courses each department offers:
 
 .. htsql:: /school{name, avg(department.count(course))}
-   :cut: 4
+   :cut: 3
 
 Filters and nested aggregates can be combined.  Here we count, for each
 school, departments offering 4 or more credits:
 
 .. htsql:: /school{name, count(department?exists(course?credits>3))}
-   :cut: 4
+   :cut: 3
 
 Filtering can be done on one column, with aggregation on another.  This
 example shows average credits from only high-level courses:
@@ -444,7 +444,7 @@ either lack correlated ``course`` records or where every one of those
 
 .. htsql:: /department{name, avg(course.credits)}
             ?every(course.credits=3)
-   :cut: 4
+   :cut: 3
 
 
 Compositional Navigation
@@ -481,10 +481,10 @@ Drill-down navigation trims unrelated rows and preserves the order of
 prior links. Consider the following two queries.
 
 .. htsql:: /department
-   :cut: 5
+   :cut: 4
 
 .. htsql:: /school.department
-   :cut: 5
+   :cut: 4
 
 Although the latter query also returns records from the department
 table, it differs from the former in two ways.  First, it skips
@@ -786,7 +786,7 @@ If you wish to project by more than one expression, use a selector
 combinations of course level and credits.
 
 .. htsql:: /course^{round(no/100), credits}
-   :cut: 5
+   :cut: 4
 
 Just as tables are sorted by default using the table's primary key,
 projected expressions are also sorted using the distinct columns.
@@ -805,7 +805,7 @@ program table having that degree.  In the query below, we return
 distinct degrees with the number of corresponding programs.
 
 .. htsql:: /program^degree {degree, count(program)}
-   :cut: 5
+   :cut: 4
 
 We may want to filter the base table before projecting.  For example,
 listing only distinct degrees in the School of Engineering.
@@ -832,7 +832,7 @@ following example, we return distinct course level and credits
 combinations sorted in descending order by level and credits.
 
 .. htsql:: /course^{level:=round(no/100),credits}{level-, credits-}
-   :cut: 5
+   :cut: 4
 
 Sometimes HTSQL cannot assign a name linking to the base of the
 projection.  In these cases, you may use ``^`` to refer to it.
@@ -840,7 +840,7 @@ Additionally ``*`` can be used to return all columns of the projection.
 Thus, the first example of this section could be written:
 
 .. htsql:: /program^degree{*, count(^)}
-   :cut: 5
+   :cut: 4
 
 .. **
 
