@@ -960,7 +960,7 @@ that have more than three credits:
 .. htsql:: /course?(department_code='arthis'|department_code='stdart')&credits>3
    :cut: 4
 
-.. ||
+.. ** || 
 
 Without the parenthesis, the expression above would show all courses
 from ``'arthis'`` regardless of credits:
@@ -968,7 +968,7 @@ from ``'arthis'`` regardless of credits:
 .. htsql:: /course?department_code='arthis'|department_code='stdart'&credits>3
    :cut: 3
 
-.. ||
+.. ** ||
 
 When a non-boolean is used in a logical expression, it is implicitly
 cast as a *boolean*.  As part of this cast, tri-value logic is
