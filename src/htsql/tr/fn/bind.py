@@ -48,7 +48,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         DateDifferenceSig, TodaySig, NowSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
                         KeepPolaritySig, ReversePolaritySig,
-                        RoundSig, RoundToSig, LengthSig,
+                        RoundSig, RoundToSig, TruncSig, TruncToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         QuotientSig, AssignmentSig, DefineSig,
@@ -1244,6 +1244,44 @@ class CorrelateDecimalRoundTo(CorrelateFunction):
     correlates(RoundToSig, (IntegerDomain, IntegerDomain),
                            (DecimalDomain, IntegerDomain))
     signature = RoundToSig
+    domains = [DecimalDomain(), IntegerDomain()]
+    codomain = DecimalDomain()
+
+
+class BindTrunc(BindPolyFunction):
+
+    named('trunc')
+    signature = TruncSig
+
+
+class CorrelateDecimalTrunc(CorrelateFunction):
+
+    correlates(TruncSig, IntegerDomain,
+                         DecimalDomain)
+    signature = TruncSig
+    domains = [DecimalDomain()]
+    codomain = DecimalDomain()
+
+
+class CorrelateFloatTrunc(CorrelateFunction):
+
+    correlates(TruncSig, FloatDomain)
+    signature = TruncSig
+    domains = [FloatDomain()]
+    codomain = FloatDomain()
+
+
+class BindTruncTo(BindPolyFunction):
+
+    named(('trunc', 2))
+    signature = TruncToSig
+
+
+class CorrelateDecimalTruncTo(CorrelateFunction):
+
+    correlates(TruncToSig, (IntegerDomain, IntegerDomain),
+                           (DecimalDomain, IntegerDomain))
+    signature = TruncToSig
     domains = [DecimalDomain(), IntegerDomain()]
     codomain = DecimalDomain()
 

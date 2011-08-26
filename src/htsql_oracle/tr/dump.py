@@ -144,14 +144,20 @@ class OracleDumpBoolean(DumpBoolean):
 class OracleDumpInteger(DumpInteger):
 
     def __call__(self):
-        self.write(str(self.value))
+        if self.value >= 0:
+            self.write(str(self.value))
+        else:
+            self.write("(%s)" % self.value)
 
 
 class OracleDumpFloat(DumpFloat):
 
     def __call__(self):
         assert str(self.value) not in ['inf', '-inf', 'nan']
-        self.write(repr(self.value)+'D')
+        if self.value >= 0.0:
+            self.write("%rD" % self.value)
+        else:
+            self.write("(%rD)" % self.value)
 
 
 class OracleDumpTime(DumpTime):

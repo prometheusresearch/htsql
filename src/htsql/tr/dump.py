@@ -1454,8 +1454,11 @@ class DumpInteger(DumpByDomain):
         if not (-2**63 <= self.value < 2**63):
             raise SerializeError("invalid integer value",
                                  self.phrase.mark)
-        # Write the number.
-        self.write(str(self.value))
+        # Write the number; use `(...)` around a negative number.
+        if self.value >= 0:
+            self.write(str(self.value))
+        else:
+            self.write("(%s)" % self.value)
 
 
 class DumpFloat(DumpByDomain):
@@ -1474,8 +1477,12 @@ class DumpFloat(DumpByDomain):
         # FIXME: Python 2.5/win32?
         assert str(self.value) not in ['inf', '-inf', 'nan']
         # Write the standard representation of the number assuming that
-        # the database could figure out its type from the context.
-        self.write(repr(self.value))
+        # the database could figure out its type from the context; use `(...)`
+        # around a negative number.
+        if self.value >= 0.0:
+            self.write(repr(self.value))
+        else:
+            self.write("(%r)" % self.value)
 
 
 class DumpDecimal(DumpByDomain):
@@ -1493,8 +1500,12 @@ class DumpDecimal(DumpByDomain):
         # Last check that we didn't get a non-number.
         assert self.value.is_finite()
         # Write the standard representation of the number assuming that
-        # the database could figure out its type from the context.
-        self.write(str(self.value))
+        # the database could figure out its type from the context; use `(...)`
+        # around a negative number.
+        if not self.value.is_signed():
+            self.write(str(self.value))
+        else:
+            self.write("(%s)" % self.value)
 
 
 class DumpString(DumpByDomain):

@@ -14,15 +14,28 @@ from ...adapter import adapts
 from ..reduce import ReduceBySignature
 from ..frame import LiteralPhrase, FormulaPhrase
 from ..signature import IfNullSig
-from .signature import KeepPolaritySig, ConcatenateSig
+from .signature import KeepPolaritySig, ReversePolaritySig, ConcatenateSig
 
 
-class ReduceKeepPolaritySig(ReduceBySignature):
+class ReduceKeepPolarity(ReduceBySignature):
 
     adapts(KeepPolaritySig)
 
     def __call__(self):
         return self.state.reduce(self.phrase.op)
+
+
+class ReduceReversePolarity(ReduceBySignature):
+
+    adapts(ReversePolaritySig)
+
+    def __call__(self):
+        op = self.state.reduce(self.phrase.op)
+        if isinstance(op, LiteralPhrase):
+            if op.value is None:
+                return op
+            return op.clone(value=-op.value, expression=self.phrase.expression)
+        return self.phrase.clone(op=op)
 
 
 class ReduceConcatenate(ReduceBySignature):

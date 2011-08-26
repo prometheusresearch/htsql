@@ -58,13 +58,19 @@ class PGSQLDumpBranch(DumpBranch):
 class PGSQLDumpFloat(DumpFloat):
 
     def __call__(self):
-        self.write("%s::FLOAT8" % repr(self.value))
+        if self.value >= 0.0:
+            self.write("%s::FLOAT8" % repr(self.value))
+        else:
+            self.write("'%s'::FLOAT8" % repr(self.value))
 
 
 class PGSQLDumpDecimal(DumpDecimal):
 
     def __call__(self):
-        self.write("%s::NUMERIC" % self.value)
+        if not self.value.is_signed():
+            self.write("%s::NUMERIC" % self.value)
+        else:
+            self.write("'%s'::NUMERIC" % self.value)
 
 
 class PGSQLDumpDate(DumpDate):

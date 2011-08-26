@@ -12766,7 +12766,7 @@ tests:
              /{0,7,-97,3571}
              SELECT 0,
                     7,
-                    (- 97),
+                    (-97),
                     3571
              FROM DUAL "!"
         - uri: /{integer('4862'), integer('-9694845')}
@@ -12782,7 +12782,7 @@ tests:
              ----
              /{integer('4862'),integer('-9694845')}
              SELECT 4862,
-                    -9694845
+                    (-9694845)
              FROM DUAL "!"
         - uri: /{integer('-9223372036854775808'), integer('9223372036854775807')}
           status: 200 OK
@@ -12796,7 +12796,7 @@ tests:
 
              ----
              /{integer('-9223372036854775808'),integer('9223372036854775807')}
-             SELECT -9223372036854775808,
+             SELECT (-9223372036854775808),
                     9223372036854775807
              FROM DUAL "!"
         - uri: /{integer('2.5e1')}
@@ -12835,7 +12835,7 @@ tests:
              ----
              /{1.0,-2.5,0.875}
              SELECT 1.0,
-                    (- 2.5),
+                    (-2.5),
                     0.875
              FROM DUAL "!"
         - uri: /{decimal('1E-10')}
@@ -12887,7 +12887,7 @@ tests:
              ----
              /{0e0,-57721e-5,36288e2}
              SELECT 0.0D,
-                    (- 0.57721D),
+                    (-0.57721D),
                     3628800.0D
              FROM DUAL "!"
         - uri: /{float('2147483647')}
@@ -14029,11 +14029,11 @@ tests:
              ----
              /{+7,-7,+2.125,-2.125,+271828e-5,-271828e-5}
              SELECT 7,
-                    (- 7),
+                    (-7),
                     2.125,
-                    (- 2.125),
+                    (-2.125),
                     2.71828D,
-                    (- 2.71828D)
+                    (-2.71828D)
              FROM DUAL "!"
         - uri: /{7920+9504, 7.25+0.875, 120207e-5+57721e-5}
           status: 200 OK
@@ -14235,62 +14235,146 @@ tests:
              SELECT (0.0D / 0.0D),
                     (7.0D / 0.0D)
              FROM DUAL "!"
-        - uri: /{round(3272.78125,2)}
+        - uri: /{round(3272.78125), round(3272.78125,2), round(3272.78125,-2)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | round(3272.78125,2) |
-            -+---------------------+-
-             |             3272.78 |
-                             (1 row)
+             | round(3272.78125) | round(3272.78125,2) | round(3272.78125,-2) |
+            -+-------------------+---------------------+----------------------+-
+             |              3273 |             3272.78 |                 3300 |
+                                                                        (1 row)
 
              ----
-             /{round(3272.78125,2)}
-             SELECT ROUND(3272.78125, 2)
+             /{round(3272.78125),round(3272.78125,2),round(3272.78125,-2)}
+             SELECT ROUND(3272.78125),
+                    ROUND(3272.78125, 2),
+                    ROUND(3272.78125, (-2))
              FROM DUAL "!"
-        - uri: /{round(3272.78125,-2)}
+        - uri: /{trunc(3272.78125), trunc(3272.78125,2), trunc(3272.78125,-2)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | round(3272.78125,-2) |
-            -+----------------------+-
-             |                 3300 |
-                              (1 row)
+             | trunc(3272.78125) | trunc(3272.78125,2) | trunc(3272.78125,-2) |
+            -+-------------------+---------------------+----------------------+-
+             |              3272 |             3272.78 |                 3200 |
+                                                                        (1 row)
 
              ----
-             /{round(3272.78125,-2)}
-             SELECT ROUND(3272.78125, (- 2))
+             /{trunc(3272.78125),trunc(3272.78125,2),trunc(3272.78125,-2)}
+             SELECT TRUNC(3272.78125),
+                    TRUNC(3272.78125, 2),
+                    TRUNC(3272.78125, (-2))
              FROM DUAL "!"
-        - uri: /{round(3272.78125), round(271828e-5)}
+        - uri: /{round(3272.78125,1+1), round(3272.78125,1-1), round(3272.78125,-1-1)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | round(3272.78125) | round(271828e-5) |
-            -+-------------------+------------------+-
-             |              3273 |              3.0 |
+             | round(3272.78125,1+1) | round(3272.78125,1-1) | round(3272.78125,-1-1) |
+            -+-----------------------+-----------------------+------------------------+-
+             |               3272.78 |                  3273 |                   3300 |
+                                                                                (1 row)
+
+             ----
+             /{round(3272.78125,1+1),round(3272.78125,1-1),round(3272.78125,-1-1)}
+             SELECT ROUND(3272.78125, (1 + 1)),
+                    ROUND(3272.78125, (1 - 1)),
+                    ROUND(3272.78125, ((-1) - 1))
+             FROM DUAL "!"
+        - uri: /{trunc(3272.78125,1+1), trunc(3272.78125,1-1), trunc(3272.78125,-1-1)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | trunc(3272.78125,1+1) | trunc(3272.78125,1-1) | trunc(3272.78125,-1-1) |
+            -+-----------------------+-----------------------+------------------------+-
+             |               3272.78 |                  3272 |                   3200 |
+                                                                                (1 row)
+
+             ----
+             /{trunc(3272.78125,1+1),trunc(3272.78125,1-1),trunc(3272.78125,-1-1)}
+             SELECT TRUNC(3272.78125, (1 + 1)),
+                    TRUNC(3272.78125, (1 - 1)),
+                    TRUNC(3272.78125, ((-1) - 1))
+             FROM DUAL "!"
+        - uri: /{round(-3272.78125), round(-3272.78125,2), round(-3272.78125,-2)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | round(-3272.78125) | round(-3272.78125,2) | round(-3272.78125,-2) |
+            -+--------------------+----------------------+-----------------------+-
+             |              -3273 |             -3272.78 |                 -3300 |
+                                                                           (1 row)
+
+             ----
+             /{round(-3272.78125),round(-3272.78125,2),round(-3272.78125,-2)}
+             SELECT ROUND((-3272.78125)),
+                    ROUND((-3272.78125), 2),
+                    ROUND((-3272.78125), (-2))
+             FROM DUAL "!"
+        - uri: /{trunc(-3272.78125), trunc(-3272.78125,2), trunc(-3272.78125,-2)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | trunc(-3272.78125) | trunc(-3272.78125,2) | trunc(-3272.78125,-2) |
+            -+--------------------+----------------------+-----------------------+-
+             |              -3272 |             -3272.78 |                 -3200 |
+                                                                           (1 row)
+
+             ----
+             /{trunc(-3272.78125),trunc(-3272.78125,2),trunc(-3272.78125,-2)}
+             SELECT TRUNC((-3272.78125)),
+                    TRUNC((-3272.78125), 2),
+                    TRUNC((-3272.78125), (-2))
+             FROM DUAL "!"
+        - uri: /{round(271828e-5), round(-271828e-5)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | round(271828e-5) | round(-271828e-5) |
+            -+------------------+-------------------+-
+             |              3.0 |              -3.0 |
                                               (1 row)
 
              ----
-             /{round(3272.78125),round(271828e-5)}
-             SELECT ROUND(3272.78125),
-                    ROUND(2.71828D)
+             /{round(271828e-5),round(-271828e-5)}
+             SELECT ROUND(2.71828D),
+                    ROUND((-2.71828D))
              FROM DUAL "!"
-        - uri: /{round(9973)}
+        - uri: /{trunc(271828e-5), trunc(-271828e-5)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | round(9973) |
-            -+-------------+-
-             |        9973 |
-                     (1 row)
+             | trunc(271828e-5) | trunc(-271828e-5) |
+            -+------------------+-------------------+-
+             |              2.0 |              -2.0 |
+                                              (1 row)
 
              ----
-             /{round(9973)}
-             SELECT ROUND(9973)
+             /{trunc(271828e-5),trunc(-271828e-5)}
+             SELECT TRUNC(2.71828D),
+                    TRUNC((-2.71828D))
+             FROM DUAL "!"
+        - uri: /{round(9973), trunc(9973)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | round(9973) | trunc(9973) |
+            -+-------------+-------------+-
+             |        9973 |        9973 |
+                                   (1 row)
+
+             ----
+             /{round(9973),trunc(9973)}
+             SELECT ROUND(9973),
+                    TRUNC(9973)
              FROM DUAL "!"
         - uri: /{round(9973,-2)}
           status: 200 OK
@@ -14304,7 +14388,7 @@ tests:
 
              ----
              /{round(9973,-2)}
-             SELECT ROUND(9973, (- 2))
+             SELECT ROUND(9973, (-2))
              FROM DUAL "!"
         - uri: /{round(271828e-5,2)}
           status: 400 Bad Request
@@ -14313,6 +14397,14 @@ tests:
           body: |
             bind error: incompatible arguments:
                 /{round(271828e-5,2)}
+                  ^^^^^^^^^^^^^^^^^^
+        - uri: /{trunc(271828e-5,2)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: incompatible arguments:
+                /{trunc(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
       - id: string-functions-and-operators
         tests:
@@ -14360,7 +14452,7 @@ tests:
              /{string(60),string(2.125),string(-57721e-5)}
              SELECT TO_CHAR(60),
                     TO_CHAR(2.125),
-                    TO_CHAR((- 0.57721D))
+                    TO_CHAR((-0.57721D))
              FROM DUAL "!"
         - uri: /{string(date('2010-04-15'))}
           status: 200 OK
@@ -14539,7 +14631,7 @@ tests:
              /{head('OMGWTFBBQ'),head('OMGWTFBBQ',3),head('OMGWTFBBQ',-3)}
              SELECT SUBSTR('OMGWTFBBQ', 1, 1),
                     SUBSTR('OMGWTFBBQ', 1, 3),
-                    SUBSTR('OMGWTFBBQ', 1, (CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN ((LENGTH('OMGWTFBBQ') + (- 3)) >= 0) THEN (LENGTH('OMGWTFBBQ') + (- 3)) ELSE 0 END))
+                    SUBSTR('OMGWTFBBQ', 1, (CASE WHEN ((-3) >= 0) THEN (-3) WHEN ((LENGTH('OMGWTFBBQ') + (-3)) >= 0) THEN (LENGTH('OMGWTFBBQ') + (-3)) ELSE 0 END))
              FROM DUAL "!"
         - uri: /{tail('OMGWTFBBQ'), tail('OMGWTFBBQ',3), tail('OMGWTFBBQ',-3)}
           status: 200 OK
@@ -14555,7 +14647,7 @@ tests:
              /{tail('OMGWTFBBQ'),tail('OMGWTFBBQ',3),tail('OMGWTFBBQ',-3)}
              SELECT SUBSTR('OMGWTFBBQ', (CASE WHEN (1 < 0) THEN (1 - 1) WHEN (1 <= LENGTH('OMGWTFBBQ')) THEN (LENGTH('OMGWTFBBQ') + (1 - 1)) ELSE 1 END)),
                     SUBSTR('OMGWTFBBQ', (CASE WHEN (3 < 0) THEN (1 - 3) WHEN (3 <= LENGTH('OMGWTFBBQ')) THEN (LENGTH('OMGWTFBBQ') + (1 - 3)) ELSE 1 END)),
-                    SUBSTR('OMGWTFBBQ', (CASE WHEN ((- 3) < 0) THEN (1 - (- 3)) WHEN ((- 3) <= LENGTH('OMGWTFBBQ')) THEN (LENGTH('OMGWTFBBQ') + (1 - (- 3))) ELSE 1 END))
+                    SUBSTR('OMGWTFBBQ', (CASE WHEN ((-3) < 0) THEN (1 - (-3)) WHEN ((-3) <= LENGTH('OMGWTFBBQ')) THEN (LENGTH('OMGWTFBBQ') + (1 - (-3))) ELSE 1 END))
              FROM DUAL "!"
         - uri: /{head('OMGWTFBBQ',0), tail('OMGWTFBBQ',0)}
           status: 200 OK
@@ -14603,9 +14695,9 @@ tests:
              ----
              /{slice('OMGWTFBBQ',3,6),slice('OMGWTFBBQ',3,-3),slice('OMGWTFBBQ',-6,6),slice('OMGWTFBBQ',-6,-3)}
              SELECT SUBSTR('OMGWTFBBQ', 4, 3),
-                    SUBSTR('OMGWTFBBQ', 4, (CASE WHEN (4 < ((CASE WHEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - 4) ELSE 0 END)),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1), (CASE WHEN (((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < 7) THEN (7 - ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END)),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1), (CASE WHEN (((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < ((CASE WHEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - ((CASE WHEN ((- 6) >= 0) THEN (- 6) WHEN (((- 6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END))
+                    SUBSTR('OMGWTFBBQ', 4, (CASE WHEN (4 < ((CASE WHEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((-3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((-3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - 4) ELSE 0 END)),
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((-6) >= 0) THEN (-6) WHEN (((-6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1), (CASE WHEN (((CASE WHEN ((-6) >= 0) THEN (-6) WHEN (((-6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < 7) THEN (7 - ((CASE WHEN ((-6) >= 0) THEN (-6) WHEN (((-6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END)),
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((-6) >= 0) THEN (-6) WHEN (((-6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1), (CASE WHEN (((CASE WHEN ((-6) >= 0) THEN (-6) WHEN (((-6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < ((CASE WHEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((-3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((-3), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((-3), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - ((CASE WHEN ((-6) >= 0) THEN (-6) WHEN (((-6) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-6) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END))
              FROM DUAL "!"
         - uri: /{slice('OMGWTFBBQ',0,0), slice('OMGWTFBBQ',6,3), slice('OMGWTFBBQ',10,13),
             slice('OMGWTFBBQ',-3,-6)}
@@ -14623,7 +14715,7 @@ tests:
              SELECT SUBSTR('OMGWTFBBQ', 1, 0),
                     SUBSTR('OMGWTFBBQ', 7, 0),
                     SUBSTR('OMGWTFBBQ', 11, 3),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1), (CASE WHEN (((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < ((CASE WHEN (COALESCE((- 6), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 6), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((- 6), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((- 6), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((- 6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((- 6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - ((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END))
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((-3) >= 0) THEN (-3) WHEN (((-3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1), (CASE WHEN (((CASE WHEN ((-3) >= 0) THEN (-3) WHEN (((-3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) < ((CASE WHEN (COALESCE((-6), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((-6), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((-6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((-6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) THEN (((CASE WHEN (COALESCE((-6), LENGTH('OMGWTFBBQ')) >= 0) THEN COALESCE((-6), LENGTH('OMGWTFBBQ')) WHEN ((COALESCE((-6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) >= 0) THEN (COALESCE((-6), LENGTH('OMGWTFBBQ')) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1) - ((CASE WHEN ((-3) >= 0) THEN (-3) WHEN (((-3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)) ELSE 0 END))
              FROM DUAL "!"
         - uri: /{slice(null(),3,-3), slice('OMGWTGBBQ',null(),null()), slice('OMGWTFBBQ',-3,null()),
             slice('OMGWTFBBQ',null(),3)}
@@ -14640,7 +14732,7 @@ tests:
              /{slice(null(),3,-3),slice('OMGWTGBBQ',null(),null()),slice('OMGWTFBBQ',-3,null()),slice('OMGWTFBBQ',null(),3)}
              SELECT NULL,
                     SUBSTR('OMGWTGBBQ', 1),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((- 3) >= 0) THEN (- 3) WHEN (((- 3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((- 3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)),
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((-3) >= 0) THEN (-3) WHEN (((-3) + LENGTH('OMGWTFBBQ')) >= 0) THEN ((-3) + LENGTH('OMGWTFBBQ')) ELSE 0 END) + 1)),
                     SUBSTR('OMGWTFBBQ', 1, 3)
              FROM DUAL "!"
         - uri: /{at('OMGWTFBBQ',0), at('OMGWTFBBQ',3), at('OMGWTFBBQ',-3)}
@@ -14657,7 +14749,7 @@ tests:
              /{at('OMGWTFBBQ',0),at('OMGWTFBBQ',3),at('OMGWTFBBQ',-3)}
              SELECT SUBSTR('OMGWTFBBQ', 1, 1),
                     SUBSTR('OMGWTFBBQ', 4, 1),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 1) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) ELSE ((CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) + (CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 1) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) ELSE ((CASE WHEN (1 >= 0) THEN 1 ELSE (- 1) END) + (CASE WHEN (1 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 1) END)) END) ELSE 0 END))
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 1) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN 1 ELSE (-1) END) ELSE ((CASE WHEN (1 >= 0) THEN 1 ELSE (-1) END) + (CASE WHEN (1 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 1) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (1 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 1) END) >= 0) THEN (CASE WHEN (1 >= 0) THEN 1 ELSE (-1) END) ELSE ((CASE WHEN (1 >= 0) THEN 1 ELSE (-1) END) + (CASE WHEN (1 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 1) END)) END) ELSE 0 END))
              FROM DUAL "!"
         - uri: /{at('OMGWTFBBQ',3,3), at('OMGWTFBBQ',6,-3), at('OMGWTFBBQ',-3,3),
             at('OMGWTFBBQ',-12,6)}
@@ -14673,9 +14765,9 @@ tests:
              ----
              /{at('OMGWTFBBQ',3,3),at('OMGWTFBBQ',6,-3),at('OMGWTFBBQ',-3,3),at('OMGWTFBBQ',-12,6)}
              SELECT SUBSTR('OMGWTFBBQ', 4, 3),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) ELSE 0 END)),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 3) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) ELSE ((CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) + (CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 3) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) ELSE ((CASE WHEN (3 >= 0) THEN 3 ELSE (- 3) END) + (CASE WHEN (3 >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE ((- 3) + LENGTH('OMGWTFBBQ')) END) + 3) END)) END) ELSE 0 END)),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) + 6) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) + (CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) + 6) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (- 6) END) + (CASE WHEN (6 >= 0) THEN (CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((- 12) >= 0) THEN (- 12) ELSE ((- 12) + LENGTH('OMGWTFBBQ')) END) + 6) END)) END) ELSE 0 END))
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN ((-3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN ((-3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) + (CASE WHEN ((-3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (-3)) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN ((-3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) + (CASE WHEN ((-3) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (6 + LENGTH('OMGWTFBBQ')) END) + (-3)) END)) END) ELSE 0 END)),
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 3) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN 3 ELSE (-3) END) ELSE ((CASE WHEN (3 >= 0) THEN 3 ELSE (-3) END) + (CASE WHEN (3 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 3) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (3 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 3) END) >= 0) THEN (CASE WHEN (3 >= 0) THEN 3 ELSE (-3) END) ELSE ((CASE WHEN (3 >= 0) THEN 3 ELSE (-3) END) + (CASE WHEN (3 >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE ((-3) + LENGTH('OMGWTFBBQ')) END) + 3) END)) END) ELSE 0 END)),
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN (CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) + 6) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (-6) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (-6) END) + (CASE WHEN (6 >= 0) THEN (CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) + 6) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN (6 >= 0) THEN (CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) + 6) END) >= 0) THEN (CASE WHEN (6 >= 0) THEN 6 ELSE (-6) END) ELSE ((CASE WHEN (6 >= 0) THEN 6 ELSE (-6) END) + (CASE WHEN (6 >= 0) THEN (CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN ((-12) >= 0) THEN (-12) ELSE ((-12) + LENGTH('OMGWTFBBQ')) END) + 6) END)) END) ELSE 0 END))
              FROM DUAL "!"
         - uri: /{at('OMGWTFBBQ',10), at('OMGWTFBBQ',0,-3)}
           status: 200 OK
@@ -14690,7 +14782,7 @@ tests:
              ----
              /{at('OMGWTFBBQ',10),at('OMGWTFBBQ',0,-3)}
              SELECT SUBSTR('OMGWTFBBQ', 11, 1),
-                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END) >= 0) THEN (CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) ELSE ((CASE WHEN ((- 3) >= 0) THEN (- 3) ELSE (- (- 3)) END) + (CASE WHEN ((- 3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (- 3)) END)) END) ELSE 0 END))
+                    SUBSTR('OMGWTFBBQ', ((CASE WHEN ((CASE WHEN ((-3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) ELSE 0 END) + 1), (CASE WHEN ((CASE WHEN ((CASE WHEN ((-3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) + (CASE WHEN ((-3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (-3)) END)) END) >= 0) THEN (CASE WHEN ((CASE WHEN ((-3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (-3)) END) >= 0) THEN (CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) ELSE ((CASE WHEN ((-3) >= 0) THEN (-3) ELSE 3 END) + (CASE WHEN ((-3) >= 0) THEN (CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) ELSE ((CASE WHEN (0 >= 0) THEN 0 ELSE (0 + LENGTH('OMGWTFBBQ')) END) + (-3)) END)) END) ELSE 0 END))
              FROM DUAL "!"
         - uri: /{at(null(),3), at('OMGWTFBBQ',null(),3), at('OMGWTFBBQ',3,null())}
           status: 200 OK
@@ -14950,7 +15042,7 @@ tests:
              /{date(2010,4,15),date(2010,3,46),date(2011,-8,15)}
              SELECT (DATE '2001-01-01' + (2010 - 2001) * INTERVAL '1' YEAR + (4 - 1) * INTERVAL '1' MONTH + (15 - 1) * INTERVAL '1' DAY),
                     (DATE '2001-01-01' + (2010 - 2001) * INTERVAL '1' YEAR + (3 - 1) * INTERVAL '1' MONTH + (46 - 1) * INTERVAL '1' DAY),
-                    (DATE '2001-01-01' + (2011 - 2001) * INTERVAL '1' YEAR + ((- 8) - 1) * INTERVAL '1' MONTH + (15 - 1) * INTERVAL '1' DAY)
+                    (DATE '2001-01-01' + (2011 - 2001) * INTERVAL '1' YEAR + ((-8) - 1) * INTERVAL '1' MONTH + (15 - 1) * INTERVAL '1' DAY)
              FROM DUAL "!"
         - uri: /{year(date('2010-04-15')), month(date('2010-04-15')), day(date('2010-04-15'))}
           status: 200 OK
@@ -15234,7 +15326,7 @@ tests:
 
              ----
              /{datetime(2010,3,46,25,-289,124.5)}
-             SELECT (TIMESTAMP '2001-01-01 00:00:00' + (2010 - 2001) * INTERVAL '1' YEAR + (3 - 1) * INTERVAL '1' MONTH + (46 - 1) * INTERVAL '1' DAY + 25 * INTERVAL '1' HOUR + (- 289) * INTERVAL '1' MINUTE + 124.5D * INTERVAL '1' SECOND)
+             SELECT (TIMESTAMP '2001-01-01 00:00:00' + (2010 - 2001) * INTERVAL '1' YEAR + (3 - 1) * INTERVAL '1' MONTH + (46 - 1) * INTERVAL '1' DAY + 25 * INTERVAL '1' HOUR + (-289) * INTERVAL '1' MINUTE + 124.5D * INTERVAL '1' SECOND)
              FROM DUAL "!"
         - uri: /{datetime(date('2010-04-15'),time('20:03'))}
           status: 200 OK

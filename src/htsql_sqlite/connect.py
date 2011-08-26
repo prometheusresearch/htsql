@@ -27,6 +27,13 @@ class SQLiteError(DBError):
     """
 
 
+def sqlite3_power(x, y):
+    try:
+        return float(x) ** float(y)
+    except:
+        return None
+
+
 class ConnectSQLite(Connect):
     """
     Implementation of the connection adapter for SQLite.
@@ -42,7 +49,11 @@ class ConnectSQLite(Connect):
             connection = sqlite3.connect(db.database, isolation_level=None)
         else:
             connection = sqlite3.connect(db.database)
+        self.create_functions(connection)
         return connection
+
+    def create_functions(self, connection):
+        connection.create_function('POWER', 2, sqlite3_power)
 
     def normalize_error(self, exception):
         # If we got a DBAPI exception, generate our error out of it.
