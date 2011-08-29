@@ -2,6 +2,8 @@
   Installation and Administration Guide
 *****************************************
 
+.. contents::  Table of Contents
+
 .. highlight:: console
 
 The following instructions assume a recent Debian_ or `Debian-derived`_
@@ -15,7 +17,7 @@ package managers.
 Quick Start
 ===========
 
-1. Install Python_, pip_ package manager and required Python modules
+1. Install Python_, the pip_ package manager and required Python modules
    (setuptools_ and pyyaml_)::
 
         # apt-get install python python-pip
@@ -23,8 +25,7 @@ Quick Start
 
 2. Install database adapters.
 
-   * For SQLite, Python comes with a builtin sqlite3_ module, so there is
-     nothing to install.
+   * SQLite requires no additional drivers.
 
    * For PostgreSQL, install psycopg2_::
 
@@ -40,27 +41,27 @@ Quick Start
 
    * For Oracle, download and install `Oracle Instant Client`_ from
      http://oracle.com/, then download, build and install cx_Oracle_.
-     The latter could be done with pip_ package manager::
+     The latter could be done with the pip_ package manager::
 
         # pip install cx-oracle
 
 3. Download, build and install HTSQL, either from a package or from
    `HTSQL source`_ repository.
 
-   * Use pip_ to install the latest released version of HTSQL::
+   * To install the latest released version of HTSQL, use pip_::
 
-        $ pip install HTSQL
+        # pip install HTSQL
 
-   * Install Mercurial_, download `HTSQL source`_, build and install
-     HTSQL::
+   * To use the latest development version of HTSQL, install Mercurial_,
+     download `HTSQL source`_, then build and install HTSQL::
 
         # apt-get install mercurial
         $ hg clone http://bitbucket.org/prometheus/htsql
         $ cd htsql
-        $ python setup.py build
-        # python setup.py install
+        $ make build
+        # make install
 
-4. The last step creates an ``htsql-ctl`` executable.  For general
+4. The last step creates an executable ``htsql-ctl``.  For general
    help and a list of commands, run::
 
         $ htsql-ctl help
@@ -120,12 +121,17 @@ is already installed; if not, install it by running::
 
     # apt-get install python
 
+Installation of Python modules that have no system packages requires
+the pip_ package manager::
+
+    # apt-get install python-pip
+
 HTSQL depends on the following Python libraries:
 
 * setuptools_ (``0.6c9`` or newer);
 * pyyaml_ (``3.07`` or newer);
 
-HTSQL requires additional database drivers:
+In addition, HTSQL requires database drivers:
 
 * SQLite is supported out of the box;
 * psycopg2_ (``2.0.10`` or newer), for PostgreSQL;
@@ -138,10 +144,11 @@ To install the dependencies, run::
     # apt-get install python-setuptools python-yaml
 
 You can install database drivers using system packages (when possible)
-or from source, using pip_ package manager.  Installing drivers from
-source requires Python header files, which can be installed with::
+or from source, using the pip_ package manager.  Installing drivers from
+source requires a C compiler and Python header files, which can be
+installed with::
 
-    # apt-get install python-dev
+    # apt-get install build-essential python-dev
 
 To install the PostgreSQL driver from the system repository, run::
 
@@ -213,18 +220,22 @@ To install HTSQL in a development mode, run::
 When HTSQL is installed in the development mode, any changes in the
 source files are reflected immediately without need to reinstall.
 
-HTSQL comes with a comprehensive suite of regression tests.  By default,
-the suite assumes that a PostgreSQL instance is running on the same machine
-and the current user has administrative permissions.  To run the tests::
+HTSQL comes with a comprehensive suite of regression tests.  Running the
+tests requires a working database server for each of the supported database
+backends.  To specify connection parameters to the test servers, copy
+the file ``Makefile.env.sample`` to ``Makefile.env`` and edit the latter.
+For example, to to set the credentials of an administrative user for
+a PostgreSQL database, edit parameters ``PGSQL_ADMIN_USERNAME`` and
+``PGSQL_ADMIN_PASSWORD``; to set the address of the database server,
+edit parameters ``PGSQL_HOST`` and ``PGSQL_PORT``.
+
+To run the tests::
 
     $ make test
 
-Connection parameters to the test server could be specified explicitly.  Copy
-the file ``Makefile.env.sample`` to ``Makefile.env`` and edit the latter.  For
-example, to to set the credentials of an administrative user for a PostgreSQL
-database , update parameters ``PGSQL_ADMIN_USERNAME`` and
-``PGSQL_ADMIN_PASSWORD``.  To set the address of the database server, update
-parameters ``PGSQL_HOST`` and ``PGSQL_PORT``.
+To run the tests against a specific database backend (e.g. SQLite), run::
+
+    # make test-sqlite
 
 Running regression tests creates a database ``htsql_regress`` and a
 database user with the same name.
@@ -240,7 +251,7 @@ Usage
 The ``htsql-ctl`` Executable
 ----------------------------
 
-Installing HTSQL creates an ``htsql-ctl`` command-line application::
+Installing HTSQL creates a command-line application ``htsql-ctl``::
 
     $ htsql-ctl
 
@@ -301,6 +312,9 @@ the form:
 
 Other database servers use similar conventions.
 
+You can use option ``-p`` to prompt for a password if you do not want
+to specify the database password in a command line.
+
 Command-line Shell
 ------------------
 
@@ -328,5 +342,75 @@ and ``PORT`` are omitted, the server is started on ``*:8080``.
 For more details on the ``server`` routine, run::
 
     $ htsql-ctl help server
+
+
+Deployment
+==========
+
+The built-in HTSQL web server was designed for personal and testing use
+and may appear inadequate for production deployment.  In particular,
+it does not not provide any means for authentication and lacks SSL support.
+
+Integration with Apache
+-----------------------
+
+It is possible to integrate HTSQL with `Apache HTTP Server`_ using
+mod_wsgi_.  Here we assume that both Apache and mod_wsgi are already
+installed.
+
+First, create a WSGI script file:
+
+.. sourcecode:: python
+
+   from htsql import HTSQL
+
+   # The address of the database in the form:
+   #   engine://user:pass@host:port/database
+   DB = '...'
+
+   application = HTSQL(DB)
+
+Save this file as ``htsql.wsgi`` and place it to a directory
+accessible by Apache (but do not put it below the root of the web
+site so that it cannot be downloaded).
+
+Next, add the following line to the Apache configuration file:
+
+.. sourcecode:: apache
+
+   WSGIScriptAlias /htsql /path/to/htsql.wsgi
+
+This line should be added to the ``VirtualHost`` section of the respective
+web site.  It associates any URL starting with ``/htsql`` with the HTSQL
+server.
+
+For more information of installing and configuring Apache and mod_wsgi,
+see documentation for the respective projects, in particular,
+`Quick Configuration Guide for mod_wsgi`_.
+
+.. _Apache HTTP Server: http://httpd.apache.org/
+.. _mod_wsgi: http://code.google.com/p/modwsgi/
+.. _Quick Configuration Guide for mod_wsgi:
+    http://code.google.com/p/modwsgi/wiki/QuickConfigurationGuide
+
+
+Security
+========
+
+Giving HTSQL access is practically equivalent to giving an access to
+a read-only SQL console and should be planned accordingly.
+
+HTSQL, as a gateway between HTTP server and a database server, does
+not provide any security mechanisms.  Any protection should be set
+up on either the HTTP or the database layers.  On the HTTP layer,
+you may put the HTSQL server behind an HTTP server or a proxy
+to provide SSL, authentication and caching.  On the database layer,
+you may restrict access to selected database entities using roles and
+permissions.
+
+With a proper setup, data leaks should be impossible.  Another
+potential vector of attack is overloading the database server,
+against which we recommend setting up an HTTP caching layer and
+restricting resource usage for the HTSQL database user.
 
 
