@@ -19,8 +19,8 @@ This package implements the HTSQL-to-SQL translator.
 """
 
 
-from . import (assemble, binding, bind, code, coerce, compile, dump, encode,
-               error, fn, frame, lookup, parse, plan, reduce, rewrite, scan,
-               signature, syntax, term, token)
+from . import (assemble, binding, bind, coerce, compile, dump, encode, error,
+               flow, fn, frame, lookup, parse, plan, reduce, rewrite, scan,
+               signature, stitch, syntax, term, token)
 
 
