@@ -106,7 +106,7 @@ def extract(engine, metadata=None):
             
 engine = create_engine("sqlite:///:memory:")
 metadata = Base.metadata
-assert (9, 39, 27, 100) == populate(engine)
+populate(engine)
 metadata.bind = engine
 
 from htsql import HTSQL
