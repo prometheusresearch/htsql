@@ -48,7 +48,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         DateDifferenceSig, TodaySig, NowSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
                         KeepPolaritySig, ReversePolaritySig,
-                        RoundSig, RoundToSig, LengthSig,
+                        RoundSig, RoundToSig, TruncSig, TruncToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         QuotientSig, AssignmentSig, DefineSig,
@@ -637,7 +637,6 @@ class BindDefine(BindMacro):
             if is_reference:
                 body = self.state.bind(assignment.body, scope=binding)
                 recipe = BindingRecipe(body)
-                recipe = ClosedRecipe(recipe)
             else:
                 if (len(assignment.terms) == 1 and
                         assignment.parameters is not None):
@@ -645,7 +644,7 @@ class BindDefine(BindMacro):
                 recipe = SubstitutionRecipe(binding, assignment.terms[1:],
                                             assignment.parameters,
                                             assignment.body)
-                recipe = ClosedRecipe(recipe)
+            recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, is_reference, arity,
                                         recipe, self.syntax)
         return binding
@@ -667,7 +666,6 @@ class BindWhere(BindMacro):
             if is_reference:
                 body = self.state.bind(assignment.body, scope=binding)
                 recipe = BindingRecipe(body)
-                recipe = ClosedRecipe(recipe)
             else:
                 if (len(assignment.terms) == 1 and
                         assignment.parameters is not None):
@@ -675,7 +673,7 @@ class BindWhere(BindMacro):
                 recipe = SubstitutionRecipe(binding, assignment.terms[1:],
                                             assignment.parameters,
                                             assignment.body)
-                recipe = ClosedRecipe(recipe)
+            recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, is_reference, arity,
                                         recipe, self.syntax)
         return self.state.bind(lop, scope=binding)
@@ -1246,6 +1244,44 @@ class CorrelateDecimalRoundTo(CorrelateFunction):
     correlates(RoundToSig, (IntegerDomain, IntegerDomain),
                            (DecimalDomain, IntegerDomain))
     signature = RoundToSig
+    domains = [DecimalDomain(), IntegerDomain()]
+    codomain = DecimalDomain()
+
+
+class BindTrunc(BindPolyFunction):
+
+    named('trunc')
+    signature = TruncSig
+
+
+class CorrelateDecimalTrunc(CorrelateFunction):
+
+    correlates(TruncSig, IntegerDomain,
+                         DecimalDomain)
+    signature = TruncSig
+    domains = [DecimalDomain()]
+    codomain = DecimalDomain()
+
+
+class CorrelateFloatTrunc(CorrelateFunction):
+
+    correlates(TruncSig, FloatDomain)
+    signature = TruncSig
+    domains = [FloatDomain()]
+    codomain = FloatDomain()
+
+
+class BindTruncTo(BindPolyFunction):
+
+    named(('trunc', 2))
+    signature = TruncToSig
+
+
+class CorrelateDecimalTruncTo(CorrelateFunction):
+
+    correlates(TruncToSig, (IntegerDomain, IntegerDomain),
+                           (DecimalDomain, IntegerDomain))
+    signature = TruncToSig
     domains = [DecimalDomain(), IntegerDomain()]
     codomain = DecimalDomain()
 

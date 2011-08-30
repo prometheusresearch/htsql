@@ -24,9 +24,9 @@ from htsql.tr.dump import (FormatName, DumpBranch, DumpBySignature,
                            DumpDateTime, DumpToInteger,
                            DumpToFloat, DumpToDecimal, DumpToString,
                            DumpToDate, DumpToTime, DumpToDateTime)
-from htsql.tr.fn.dump import (DumpRound, DumpRoundTo, DumpLength,
-                              DumpConcatenate, DumpSubstring, DumpTrim,
-                              DumpToday, DumpNow, DumpExtractYear,
+from htsql.tr.fn.dump import (DumpRound, DumpRoundTo, DumpTrunc, DumpTruncTo,
+                              DumpLength, DumpConcatenate, DumpSubstring,
+                              DumpTrim, DumpToday, DumpNow, DumpExtractYear,
                               DumpExtractMonth, DumpExtractDay,
                               DumpExtractHour, DumpExtractMinute,
                               DumpExtractSecond, DumpMakeDate, DumpMakeDateTime,
@@ -141,7 +141,10 @@ class MSSQLDumpInteger(DumpInteger):
             raise SerializeError("invalid integer value",
                                  self.phrase.mark)
         if abs(self.value) < 2**31:
-            self.write(str(self.value))
+            if self.value >= 0:
+                self.write(str(self.value))
+            else:
+                self.write("(%s)" % self.value)
         else:
             self.write("CAST(%s AS BIGINT)" % self.value)
 
@@ -153,6 +156,8 @@ class MSSQLDumpFloat(DumpFloat):
         value = repr(self.value)
         if 'e' not in value and 'E' not in value:
             value = value+'e0'
+        if value[0] == '-':
+            value = "(%s)" % value
         self.write(value)
 
 
@@ -165,6 +170,8 @@ class MSSQLDumpDecimal(DumpDecimal):
             value = "CAST(%s AS DECIMAL(38,19))" % value
         elif '.' not in value:
             value = "%s." % value
+        if value[0] == '-':
+            value = "(%s)" % value
         self.write(value)
 
 
@@ -351,9 +358,46 @@ class MSSQLDumpRoundTo(DumpRoundTo):
         if scale is not None:
             self.format("CAST(ROUND({op}, {precision})"
                         " AS DECIMAL(38,{scale:pass}))",
-                        self.arguments, scale=str(scale))
+                        self.arguments, self.signature, scale=str(scale))
         else:
-            self.format("ROUND({op}, {precision})", self.arguments)
+            self.format("ROUND({op}, {precision})",
+                        self.arguments, self.signature)
+
+
+class MSSQLDumpTrunc(DumpTrunc):
+
+    def __call__(self):
+        if isinstance(self.phrase.domain, DecimalDomain):
+            self.format("CAST(ROUND({op} -"
+                        " (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END), 0)"
+                        " AS DECIMAL(38))", self.arguments)
+        else:
+            self.format("ROUND({op} -"
+                        " (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END), 0)",
+                        self.arguments)
+
+
+class MSSQLDumpTruncTo(DumpTruncTo):
+
+    def __call__(self):
+        scale = None
+        if (isinstance(self.phrase.precision, LiteralPhrase) and
+            self.phrase.precision.value is not None):
+            scale = self.phrase.precision.value
+            if scale < 0:
+                scale = 0
+        if scale is not None:
+            self.format("CAST(ROUND({op} -"
+                        " (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END) /"
+                        " CAST(POWER(10e0, {precision}) AS DECIMAL(38,19)),"
+                        " {precision})"
+                        " AS DECIMAL(38,{scale:pass}))",
+                        self.arguments, self.signature, scale=str(scale))
+        else:
+            self.format("ROUND({op} -"
+                        " (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END) /"
+                        " CAST(POWER(10e0, {precision}) AS DECIMAL(38,19)),"
+                        " {precision})", self.arguments, self.signature)
 
 
 class MSSQLDumpLength(DumpLength):

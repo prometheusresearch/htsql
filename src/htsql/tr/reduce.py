@@ -15,7 +15,7 @@ This module implements the reducing process.
 from ..adapter import Adapter, adapts
 from ..domain import BooleanDomain, StringDomain
 from .coerce import coerce
-from .compile import ordering
+from .stitch import arrange
 from .term import PermanentTerm
 from .frame import (Clause, Frame, ScalarFrame, BranchFrame, NestedFrame,
                     QueryFrame, Phrase, LiteralPhrase, NullPhrase,
@@ -317,7 +317,7 @@ class CollapseBranch(Collapse):
         # subframe but the first one.  It may be even trickier because
         # we need to carry over the `JOIN` condition.  There are some
         # cases when we may want to absorb the second subframe
-        # (see a special case in `InjectSpace` when we grow a missing
+        # (see a special case in `InjectFlow` when we grow a missing
         # axis).
 
         # No subframes in the `FROM` clause -- nothing to do.
@@ -429,25 +429,35 @@ class CollapseBranch(Collapse):
             # the head frame to the outer frame.  It is only safe when
             # both the outer and the inner frames produce the same
             # number of rows.  However we cannot deduce that from the
-            # frame structure only, so we analyze the spaces from which
+            # frame structure only, so we analyze the flows from which
             # the frames were compiled.
             # The inner and the outer frames would produce the same number
-            # of rows if they are compiled from the same space, or, at
-            # least, the spaces they are compiled from conform to each
-            # other.  We also verify that their baseline spaces are equal,
+            # of rows if they are compiled from the same flow, or, at
+            # least, the flows they are compiled from conform to each
+            # other.  We also verify that their baseline flows are equal,
             # but this is a redundant check -- precense of a non-trivial
             # `LIMIT` or `OFFSET` implies that the baseline is the scalar
-            # space (see `CompileOrdered` in `htsql.tr.compile`).
+            # flow (see `CompileOrdered` in `htsql.tr.compile`).
             # Other than that, we also need to check that the `ORDER BY`
             # clauses of the inner and outer frames coincide (if they
             # both are non-empty).  We cannot compare the clauses directly
             # since they contain different export references, but we
-            # can compare the ordering of the underlying spaces.
-            if not (head.space.conforms(self.frame.space) and
+            # can compare the ordering of the underlying flows.
+            if not (head.flow.conforms(self.frame.flow) and
                     head.baseline == self.frame.baseline and
-                    ordering(head.space) == ordering(self.frame.space)):
-                return self.frame
-            # Since the inner and the outer spaces conform to each other,
+                    arrange(head.flow) == arrange(self.frame.flow)):
+                # Another safe case is when the outer frame contains
+                # no clauses that may change the cardinality of the inner
+                # frame, including no other `FROM` subframes.
+                if not (self.frame.where is None and
+                        not self.frame.group and
+                        self.frame.having is None and
+                        not self.frame.order and
+                        self.frame.limit is None and
+                        self.frame.offset is None and
+                        not tail):
+                    return self.frame
+            # Since the inner and the outer flows conform to each other,
             # the outer frame cannot contain non-trivial `LIMIT` and `OFFSET`
             # clauses.
             assert self.frame.limit is None and self.frame.offset is None
@@ -1049,6 +1059,37 @@ class ReduceAnd(ReduceBySignature):
                 return self.state.to_predicate(
                         FalsePhrase(self.phrase.expression))
 
+        # Reduce:
+        #   x!=a&x!=b&... => x!={a,b,...}
+        if all((isformula(op, IsEqualSig) or isformula(op, IsInSig))
+               and op.lop == ops[0].lop and op.signature.polarity == -1
+               for op in ops):
+            lop = ops[0].lop
+            rops = []
+            duplicates = set()
+            for op in ops:
+                if isformula(op, IsEqualSig):
+                    if op.rop not in duplicates:
+                        rops.append(op.rop)
+                        duplicates.add(op.rop)
+                elif isformula(op, IsInSig):
+                    for rop in ops.rops:
+                        if rop not in duplicates:
+                            rops.append(op.rop)
+                            duplicates.add(op.rop)
+            if len(rops) > 1:
+                is_nullable = (lop.is_nullable or any(rop.is_nullable
+                                                      for rop in rops))
+                return FormulaPhrase(IsInSig(-1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rops=rops)
+            else:
+                [rop] = rops
+                is_nullable = (lop.is_nullable or rop.is_nullable)
+                return FormulaPhrase(IsEqualSig(-1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rop=rop)
+
         # Return the same operator with reduced operands.  Update
         # the `is_nullable` status since it could change after reducing
         # the arguments.
@@ -1109,7 +1150,37 @@ class ReduceOr(ReduceBySignature):
                 return self.state.to_predicate(
                         TruePhrase(self.phrase.expression))
 
-        return self.phrase.clone(ops=ops)
+        # Reduce:
+        #   x=a|x=b|... => x={a,b,...}
+        if all((isformula(op, IsEqualSig) or isformula(op, IsInSig))
+               and op.lop == ops[0].lop and op.signature.polarity == +1
+               for op in ops):
+            lop = ops[0].lop
+            rops = []
+            duplicates = set()
+            for op in ops:
+                if isformula(op, IsEqualSig):
+                    if op.rop not in duplicates:
+                        rops.append(op.rop)
+                        duplicates.add(op.rop)
+                elif isformula(op, IsInSig):
+                    for rop in ops.rops:
+                        if rop not in duplicates:
+                            rops.append(op.rop)
+                            duplicates.add(op.rop)
+            if len(rops) > 1:
+                is_nullable = (lop.is_nullable or any(rop.is_nullable
+                                                      for rop in rops))
+                return FormulaPhrase(IsInSig(+1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rops=rops)
+            else:
+                [rop] = rops
+                is_nullable = (lop.is_nullable or rop.is_nullable)
+                return FormulaPhrase(IsEqualSig(+1), self.domain, is_nullable,
+                                     self.phrase.expression,
+                                     lop=lop, rop=rop)
+
         # Return the same operator with reduced operands.  Update
         # the `is_nullable` status since it could change after reducing
         # the arguments.

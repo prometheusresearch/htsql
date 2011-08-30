@@ -15,6 +15,7 @@ This module provides a mechanism for pluggable extensions.
 from .util import listof, aresubclasses, toposort
 from .context import context
 import sys
+import types
 
 
 class Component(object):
@@ -34,6 +35,34 @@ class Component(object):
     *protocols*; see :class:`Utility`, :class:`Adapter`, :class:`Protocol`
     respectively.
     """
+
+    # Augment method names with prefix `<name>.` to make the adapter
+    # name visible in tracebacks.
+    class __metaclass__(type):
+
+        def __new__(mcls, name, bases, content):
+            # Iterate over all values in the class namespace.
+            for value in content.values():
+                # Ignore non-function attributes.
+                if not isinstance(value, types.FunctionType):
+                    continue
+                # Update the code name and regenerate the code object.
+                code = value.func_code
+                code_name = code.co_name
+                if '.' in code_name:
+                    continue
+                code_name = '%s.%s' % (name, code_name)
+                code = types.CodeType(code.co_argcount, code.co_nlocals,
+                                      code.co_stacksize, code.co_flags,
+                                      code.co_code, code.co_consts,
+                                      code.co_names, code.co_varnames,
+                                      code.co_filename, code_name,
+                                      code.co_firstlineno, code.co_lnotab,
+                                      code.co_freevars, code.co_cellvars)
+                # Patch the function object.
+                value.func_code = code
+            # Create the class.
+            return type.__new__(mcls, name, bases, content)
 
     @staticmethod
     def components():

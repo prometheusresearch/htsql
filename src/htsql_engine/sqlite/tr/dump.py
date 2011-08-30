@@ -14,12 +14,14 @@ This module adapts the SQL serializer for SQLite.
 
 from htsql.adapter import adapts
 from htsql.domain import BooleanDomain, StringDomain
+from htsql.tr.frame import LiteralPhrase
 from htsql.tr.dump import (DumpTable, DumpBoolean, DumpDecimal, DumpDate,
                            DumpTime, DumpDateTime,
                            DumpToFloat, DumpToDecimal, DumpToString,
                            DumpToDate, DumpToTime, DumpToDateTime,
                            DumpIsTotallyEqual)
-from htsql.tr.fn.dump import (DumpLength, DumpSubstring, DumpTrim,
+from htsql.tr.fn.dump import (DumpRoundTo, DumpTrunc, DumpTruncTo,
+                              DumpLength, DumpSubstring, DumpTrim,
                               DumpDateIncrement, DumpDateTimeIncrement,
                               DumpDateDecrement, DumpDateTimeDecrement,
                               DumpDateDifference, DumpMakeDate,
@@ -34,7 +36,7 @@ from htsql.tr.error import SerializeError
 class SQLiteDumpTable(DumpTable):
 
     def __call__(self):
-        table = self.frame.space.family.table
+        table = self.frame.flow.family.table
         self.format("{table:name}", table=table.name)
 
 
@@ -129,6 +131,37 @@ class SQLiteDumpIsTotallyEqual(DumpIsTotallyEqual):
                     " ({lop} IS NULL AND {rop} IS NULL)"
                     " THEN 1 ELSE 0 END)",
                     self.arguments, self.signature)
+
+
+class SQLiteDumpRoundTo(DumpRoundTo):
+
+    def __call__(self):
+        if (isinstance(self.phrase.precision, LiteralPhrase)
+                and self.phrase.precision.value is not None):
+            scale = self.phrase.precision.value
+            if scale >= 0:
+                self.format("ROUND({op}, {scale:pass})",
+                            self.arguments, scale=str(scale))
+            else:
+                power = 10**(-scale)
+                self.format("(ROUND({op} / {power:pass}.0) * {power:pass}.0)",
+                            self.arguments, power=str(power))
+        else:
+            self.format("(ROUND({op} * POWER(10, {precision}))"
+                        " / POWER(10, {precision}))",
+                        self.arguments, self.signature)
+
+
+class SQLiteDumpTrunc(DumpTrunc):
+
+    template = "ROUND({op} - (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END))"
+
+
+class SQLiteDumpTruncTo(DumpTruncTo):
+
+    template = ("(ROUND({op} * POWER(10, {precision})"
+                " - (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END))"
+                " / POWER(10, {precision}))")
 
 
 class SQLiteDumpLength(DumpLength):

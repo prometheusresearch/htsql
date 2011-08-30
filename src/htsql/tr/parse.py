@@ -94,16 +94,21 @@ class QueryParser(Parser):
         input           ::= query END
 
         query           ::= '/' ( segment ( '/' format )? )?
-        segment         ::= test
+        segment         ::= top
         format          ::= ':' identifier
 
-        test            ::= or_test ( direction | mapping )*
+        top             ::= flow ( direction | mapping )*
         direction       ::= '+' | '-'
-        mapping         ::= ':' identifier ( or_test | call )?
+        mapping         ::= ':' identifier ( flow | call )?
 
-        or_test         ::= and_test ( '|' and_test )*
-        and_test        ::= not_test ( '&' not_test )*
-        not_test        ::= '!' not_test | comparison
+        flow            ::= disjunction ( sieve | quotient | selection )*
+        sieve           ::= '?' disjunction
+        quotient        ::= '^' disjunction
+        selection       ::= selector ( '.' atom )*
+
+        disjunction     ::= conjunction ( '|' conjunction )*
+        conjunction     ::= negation ( '&' negation )*
+        negation        ::= '!' negation | comparison
 
         comparison      ::= expression ( ( '~' | '!~' |
                                            '<=' | '<' | '>=' |  '>' |
@@ -112,22 +117,21 @@ class QueryParser(Parser):
 
         expression      ::= term ( ( '+' | '-' ) term )*
         term            ::= factor ( ( '*' | '/' ) factor )*
-        factor          ::= ( '+' | '-' ) factor | quotient   
-        quotient        ::= sieve ( '^' sieve )?
+        factor          ::= ( '+' | '-' ) factor | pointer
 
-        sieve           ::= link ( '?' or_test )?
-        link            ::= assignment ( '->' assignment )
-        assignment      ::= specifier ( ':=' test )?
-        specifier       ::= selection ( '.' selection )*
-        selection       ::= atom selector?
+        pointer         ::= specifier ( link | assignment )?
+        link            ::= '->' flow
+        assignment      ::= ':=' top
+
+        specifier       ::= atom ( '.' atom )*
         atom            ::= '*' index? | '^' | selector | group |
                             identifier call? | reference | literal
         index           ::= NUMBER | '(' NUMBER ')'
 
-        group           ::= '(' test ')'
-        call            ::= '(' tests? ')'
-        selector        ::= '{' tests? '}'
-        tests           ::= test ( ',' test )* ','?
+        group           ::= '(' top ')'
+        call            ::= '(' tops? ')'
+        selector        ::= '{' tops? '}'
+        tops            ::= top ( ',' top )* ','?
         reference       ::= '$' identifier
 
         identifier      ::= NAME
@@ -166,8 +170,8 @@ class SegmentParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   segment     ::= test
-        branch = TestParser << tokens
+        #   segment     ::= top
+        branch = TopParser << tokens
         mark = branch.mark
         segment = SegmentSyntax(branch, mark)
         return segment
@@ -189,42 +193,42 @@ class FormatParser(Parser):
         return format
 
 
-class TestParser(Parser):
+class TopParser(Parser):
     """
-    Parses a `test` production.
+    Parses a `top` production.
     """
 
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   test        ::= or_test ( direction | mapping )*
+        #   top         ::= flow ( direction | mapping )*
         #   direction   ::= '+' | '-'
-        #   mapping     ::= ':' identifier ( or_test | call )?
+        #   mapping     ::= ':' identifier ( flow | call )?
         #   FOLLOW(mapping) = ['+','-',':',',',')','}']
-        test = OrTestParser << tokens
+        top = FlowParser << tokens
         while tokens.peek(SymbolToken, ['+', '-', ':']):
             # Parse `direction` decorator.
             if tokens.peek(SymbolToken, ['+', '-']):
                 symbol_token = tokens.pop(SymbolToken, ['+', '-'])
                 symbol = symbol_token.value
-                mark = Mark.union(test, symbol_token)
-                test = OperatorSyntax(symbol, test, None, mark)
+                mark = Mark.union(top, symbol_token)
+                top = OperatorSyntax(symbol, top, None, mark)
             # Parse `mapping` application.
             else:
                 symbol_token = tokens.pop(SymbolToken, [':'])
                 identifier = IdentifierParser << tokens
-                lbranch = test
+                lbranch = top
                 rbranches = []
                 # Mapping parameters in parentheses.
                 if tokens.peek(SymbolToken, ['(']):
                     tokens.pop(SymbolToken, ['('])
                     while not tokens.peek(SymbolToken, [')']):
-                        rbranch = TestParser << tokens
+                        rbranch = TopParser << tokens
                         rbranches.append(rbranch)
                         if not tokens.peek(SymbolToken, [')']):
                             tokens.pop(SymbolToken, [',', ')'])
                     tail_token = tokens.pop(SymbolToken, [')'])
-                    mark = Mark.union(test, tail_token)
+                    mark = Mark.union(top, tail_token)
                 # No parenthesis: either no parameters or a single parameter.
                 else:
                     # Determine whether the mapping has a parameter or not.
@@ -238,62 +242,111 @@ class TestParser(Parser):
                     if not (tokens.peek(SymbolToken,
                                         [':', ',', ')', '}'], ahead=ahead) or
                             tokens.peek(EndToken, ahead=ahead)):
-                        rbranch = OrTestParser << tokens
+                        rbranch = FlowParser << tokens
                         rbranches.append(rbranch)
-                    mark = Mark.union(test, identifier, *rbranches)
-                test = MappingSyntax(identifier, lbranch, rbranches, mark)
-        return test
+                    mark = Mark.union(top, identifier, *rbranches)
+                top = MappingSyntax(identifier, lbranch, rbranches, mark)
+        return top
 
 
-class OrTestParser(Parser):
+class FlowParser(Parser):
     """
-    Parses an `or_test` production.
+    Parses a `flow` production.
+    """
+
+    @classmethod
+    def process(cls, tokens):
+        # Expect:
+        #   flow        ::= disjunction ( sieve | quotient | selection )*
+        #   sieve       ::= '?' disjunction
+        #   quotient    ::= '^' disjunction
+        #   selection   ::= selector ( '.' atom )*
+        flow = DisjunctionParser << tokens
+        while tokens.peek(SymbolToken, ['?', '^', '{']):
+            if tokens.peek(SymbolToken, ['?'], do_pop=True):
+                lbranch = flow
+                rbranch = DisjunctionParser << tokens
+                mark = Mark.union(lbranch, rbranch)
+                flow = SieveSyntax(lbranch, rbranch, mark)
+            elif tokens.peek(SymbolToken, ['^'], do_pop=True):
+                lbranch = flow
+                rbranch = DisjunctionParser << tokens
+                mark = Mark.union(lbranch, rbranch)
+                flow = QuotientSyntax(lbranch, rbranch, mark)
+            elif tokens.peek(SymbolToken, ['{'], do_pop=True):
+                lbranch = flow
+                rbranches = []
+                while not tokens.peek(SymbolToken, ['}']):
+                    rbranch = TopParser << tokens
+                    rbranches.append(rbranch)
+                    if not tokens.peek(SymbolToken, ['}']):
+                        # We know it's not going to be '}', but we put it into
+                        # the list of accepted values to generate a better
+                        # error message.
+                        tokens.pop(SymbolToken, [',', '}'])
+                tail_token = tokens.pop(SymbolToken, ['}'])
+                mark = Mark.union(flow, tail_token)
+                flow = SelectorSyntax(lbranch, rbranches, mark)
+                while tokens.peek(SymbolToken, ['.'], do_pop=True):
+                    lbranch = flow
+                    rbranch = AtomParser << tokens
+                    mark = Mark.union(flow, rbranch)
+                    flow = SpecifierSyntax(lbranch, rbranch, mark)
+            else:
+                # Not reachable.
+                assert False
+        return flow
+
+
+class DisjunctionParser(Parser):
+    """
+    Parses a `disjunction` production.
     """
 
     @classmethod
     def process(cls, tokens):
         # Parses the production:
-        #   or_test     ::= and_test ( '|' and_test )*
-        test = AndTestParser << tokens
+        #   disjunction ::= conjunction ( '|' conjunction )*
+        test = ConjunctionParser << tokens
         while tokens.peek(SymbolToken, ['|']):
             symbol_token = tokens.pop(SymbolToken, ['|'])
             symbol = symbol_token.value
             lbranch = test
-            rbranch = AndTestParser << tokens
+            rbranch = ConjunctionParser << tokens
             mark = Mark.union(lbranch, rbranch)
             test = OperatorSyntax(symbol, lbranch, rbranch, mark)
         return test
 
 
-class AndTestParser(Parser):
+class ConjunctionParser(Parser):
     """
-    Parses an `and_test` production.
+    Parses a `conjunction` production.
     """
 
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   and_test    ::= not_test ( '&' not_test )*
-        test = NotTestParser << tokens
+        #   conjunction ::= negation ( '&' negation )*
+        test = NegationParser << tokens
         while tokens.peek(SymbolToken, ['&']):
             symbol_token = tokens.pop(SymbolToken, ['&'])
             symbol = symbol_token.value
             lbranch = test
-            rbranch = NotTestParser << tokens
+            rbranch = NegationParser << tokens
             mark = Mark.union(lbranch, rbranch)
             test = OperatorSyntax(symbol, lbranch, rbranch, mark)
         return test
 
 
-class NotTestParser(Parser):
+class NegationParser(Parser):
     """
-    Parses a `not_test` production.
+    Parses a `negation` production.
     """
 
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   not_test    ::= '!' not_test | comparison
+        #   negation    ::= '!' negation | comparison
         symbol_tokens = []
         while tokens.peek(SymbolToken, ['!']):
             symbol_token = tokens.pop(SymbolToken, ['!'])
@@ -383,7 +436,7 @@ class TermParser(Parser):
 
 class FactorParser(Parser):
     """
-    Parses a `factor` production.
+    Parses a `pointer` production.
     """
 
     @classmethod
@@ -394,7 +447,7 @@ class FactorParser(Parser):
         while tokens.peek(SymbolToken, ['+', '-']):
             symbol_token = tokens.pop(SymbolToken, ['+', '-'])
             symbol_tokens.append(symbol_token)
-        factor = QuotientParser << tokens
+        factor = PointerParser << tokens
         while symbol_tokens:
             symbol_token = symbol_tokens.pop()
             symbol = symbol_token.value
@@ -403,83 +456,29 @@ class FactorParser(Parser):
         return factor
 
 
-class QuotientParser(Parser):
+class PointerParser(Parser):
     """
-    Parses a `quotient` production.
-    """
-
-    @classmethod
-    def process(cls, tokens):
-        # Expect:
-        #   quotient    ::= sieve ( '^' sieve )?
-        quotient = SieveParser << tokens
-        # The grammar is ambiguous here: if the sieve contains a filter,
-        # the sieve parser will greedily consume any `^` expression.
-        if not tokens.peek(SymbolToken, ['^']):
-            return quotient
-        tokens.pop(SymbolToken, ['^'])
-        lbranch = quotient
-        rbranch = SieveParser << tokens
-        mark = Mark.union(lbranch, rbranch)
-        quotient = QuotientSyntax(lbranch, rbranch, mark)
-        return quotient
-
-
-class SieveParser(Parser):
-    """
-    Parses a `sieve` production.
+    Parses a `pointer` production.
     """
 
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   sieve       ::= link ( '?' or_test )?
-        sieve = LinkParser << tokens
-        if tokens.peek(SymbolToken, ['?']):
-            tokens.pop(SymbolToken, ['?'])
-            lbranch = sieve
-            rbranch = OrTestParser << tokens
+        #   pointer     ::= specifier ( link | assignment )?
+        #   link        ::= '->' flow
+        #   assignment  ::= ':=' top
+        pointer = SpecifierParser << tokens
+        if tokens.peek(SymbolToken, ['->'], do_pop=True):
+            lbranch = pointer
+            rbranch = FlowParser << tokens
             mark = Mark.union(lbranch, rbranch)
-            sieve = SieveSyntax(lbranch, rbranch, mark)
-        return sieve
-
-
-class LinkParser(Parser):
-    """
-    Parses a `link` production.
-    """
-
-    @classmethod
-    def process(cls, tokens):
-        # Expect:
-        #   link        ::= assignment ( '->' assignment )
-        link = AssignmentParser << tokens
-        if tokens.peek(SymbolToken, ['->']):
-            tokens.pop(SymbolToken, ['->'])
-            lbranch = link
-            rbranch = AssignmentParser << tokens
+            pointer = LinkSyntax(lbranch, rbranch, mark)
+        elif tokens.peek(SymbolToken, [':='], do_pop=True):
+            lbranch = pointer
+            rbranch = TopParser << tokens
             mark = Mark.union(lbranch, rbranch)
-            link = LinkSyntax(lbranch, rbranch, mark)
-        return link
-
-
-class AssignmentParser(Parser):
-    """
-    Parses an `assignment` production.
-    """
-
-    @classmethod
-    def process(cls, tokens):
-        # Expect:
-        #   assignment  ::= specifier ( ':=' test )?
-        assignment = SpecifierParser << tokens
-        if tokens.peek(SymbolToken, [':=']):
-            tokens.pop(SymbolToken, [':='])
-            lbranch = assignment
-            rbranch = TestParser << tokens
-            mark = Mark.union(lbranch, rbranch)
-            assignment = AssignmentSyntax(lbranch, rbranch, mark)
-        return assignment
+            pointer = AssignmentSyntax(lbranch, rbranch, mark)
+        return pointer
 
 
 class SpecifierParser(Parser):
@@ -490,42 +489,15 @@ class SpecifierParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   specifier   ::= selection ( '.' selection )*
-        specifier = SelectionParser << tokens
+        #   specifier   ::= atom ( '.' atom )*
+        specifier = AtomParser << tokens
         while tokens.peek(SymbolToken, ['.']):
             tokens.pop(SymbolToken, ['.'])
             lbranch = specifier
-            rbranch = SelectionParser << tokens
+            rbranch = AtomParser << tokens
             mark = Mark.union(lbranch, rbranch)
             specifier = SpecifierSyntax(lbranch, rbranch, mark)
         return specifier
-
-
-class SelectionParser(Parser):
-    """
-    Parses a `selection` production.
-    """
-
-    @classmethod
-    def process(cls, tokens):
-        # Expect:
-        #   selection   ::= atom selector?
-        selection = AtomParser << tokens
-        if tokens.peek(SymbolToken, ['{']):
-            tokens.pop(SymbolToken, ['{'])
-            lbranch = selection
-            rbranches = []
-            while not tokens.peek(SymbolToken, ['}']):
-                rbranch = TestParser << tokens
-                rbranches.append(rbranch)
-                if not tokens.peek(SymbolToken, ['}']):
-                    # We know it's not going to be '}', but we put it into the list
-                    # of accepted values to generate a better error message.
-                    tokens.pop(SymbolToken, [',', '}'])
-            tail_token = tokens.pop(SymbolToken, ['}'])
-            mark = Mark.union(selection, tail_token)
-            selection = SelectorSyntax(lbranch, rbranches, mark)
-        return selection
 
 
 class AtomParser(Parser):
@@ -539,8 +511,8 @@ class AtomParser(Parser):
         #   atom        ::= '*' index? | '^' | selector | group |
         #                   identifier call? | reference | literal
         #   index       ::= NUMBER | '(' NUMBER ')'
-        #   call        ::= '(' tests? ')'
-        #   tests       ::= test ( ',' test )* ','?
+        #   call        ::= '(' tops? ')'
+        #   tops        ::= top ( ',' top )* ','?
         #   reference   ::= '$' identifier
         #   literal     ::= STRING | NUMBER
 
@@ -574,7 +546,7 @@ class AtomParser(Parser):
                 tokens.pop(SymbolToken, ['('])
                 branches = []
                 while not tokens.peek(SymbolToken, [')']):
-                    branch = TestParser << tokens
+                    branch = TopParser << tokens
                     branches.append(branch)
                     if not tokens.peek(SymbolToken, [')']):
                         tokens.pop(SymbolToken, [',', ')'])
@@ -613,9 +585,9 @@ class GroupParser(Parser):
     @classmethod
     def process(self, tokens):
         # Expect:
-        #   group       ::= '(' test ')'
+        #   group       ::= '(' top ')'
         head_token = tokens.pop(SymbolToken, ['('])
-        branch = TestParser << tokens
+        branch = TopParser << tokens
         tail_token = tokens.pop(SymbolToken, [')'])
         mark = Mark.union(head_token, tail_token)
         group = GroupSyntax(branch, mark)
@@ -630,12 +602,12 @@ class SelectorParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   selector    ::= '{' tests? '}'
-        #   tests       ::= test ( ',' test )* ','?
+        #   selector    ::= '{' tops? '}'
+        #   tests       ::= top ( ',' top )* ','?
         head_token = tokens.pop(SymbolToken, ['{'])
         branches = []
         while not tokens.peek(SymbolToken, ['}']):
-            branch = TestParser << tokens
+            branch = TopParser << tokens
             branches.append(branch)
             if not tokens.peek(SymbolToken, ['}']):
                 # We know it's not going to be '}', but we put it into the list

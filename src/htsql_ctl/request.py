@@ -424,7 +424,7 @@ class GetRoutine(GetPostBaseRoutine):
     Here,
     
       - ENGINE is the type of the database server; supported values are
-        `pgsql` and `sqlite`.
+        `sqlite`, `pgsql`, `mysql`, `mssql` and `oracle`.
       - The parameters USERNAME:PASSWORD are used for authentication.
       - The parameters HOST:PORT indicate the address of the database
         server.
@@ -474,7 +474,7 @@ class PostRoutine(GetPostBaseRoutine):
     Here,
     
       - ENGINE is the type of the database server; supported values are
-        `pgsql` and `sqlite`.
+        `sqlite`, `pgsql`, `mysql`, `mssql` and `oracle`.
       - The parameters USERNAME:PASSWORD are used for authentication.
       - The parameters HOST:PORT indicate the address of the database
         server.

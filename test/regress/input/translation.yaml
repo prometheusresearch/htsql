@@ -60,12 +60,14 @@ tests:
                            avg(course.credits)}
     - uri: /{count(school),count(department),count(course)}
     - uri: /{count(department),count(department?exists(course))}
+      ifndef: mssql # MSSQL does not allow an aggregate to contain
+                    # an EXISTS subquery.
     - uri: /department{code,count(course{credits=3})}
     - uri: /department{code,count(course?credits=3)}
     - uri: /school{code,count(department.course{credits=3})}
-    - uri: /school{code}?count(department.course{credits=3})=20
-    - uri: /department?exists(course.credits=5)
-    - uri: /department?every(course.credits=5)
+    - uri: /school{code}?count(department.course{credits=3})=61
+    - uri: /department?exists(course.credits=6)
+    - uri: /department?every(course.credits=6)
     - uri: /department{code,min(course.credits),max(course.credits)}
     - uri: /department{code,avg(course.credits),
                             sum(course.credits)/count(course.credits)}
@@ -80,7 +82,12 @@ tests:
       ifndef: mssql
     - uri: /school{code,count(department),count(program)}
     - uri: /school{code,exists(department),exists(program)}
-      skip: true # broken until `reduce` is implemented
+    # Signular unit with a plural base flow.
+    - uri: /school{code,department.exists(course)}
+      expect: 400
+    # Aggregate unit with a plural base flow.
+    - uri: /school{code,department.avg(course.credits)}
+      expect: 400
     # Aggregates sharing the same spaces.
     - uri: /department{sum(course.credits),count(course.credits),
                        avg(course.credits)}?exists(course)
@@ -102,16 +109,91 @@ tests:
     # Unmasking and bundling aggregate units
     - uri: /school{code,count(program)}?count(program)>3
     # Merging terms with parallel ties
-    # (broken due to changed selector semantics)
-    - uri: /school.program{school, code, degree,
-                           count(root(){(school?code='art').program.student})}
-                           ?school~'a'
-      skip: true
-    - uri: /program.school{code, root().program{code, degree},
-                           count(root(){(program?degree='ba').school.department})}
-                           ?code~'a'
-      skip: true
     - uri: /department{name,sum(course.credits)-,avg(course.credits)}?sum(course.credits)
+    # Merging frames for scalar and aggregate units
+    # Reduce plural flow to `course?credits={1,2,3}`.
+    - uri: /{count(course?credits=1),
+             count(course?credits=2),
+             count(course?credits=3)}
+    # Reduce plural flow to `course`.
+    - uri: /{count(course),
+             count(course?credits=1),
+             count(course?credits=2),
+             count(course?credits=3)}
+    # Reduce to two batches.
+    - uri: /department{code,
+                       school{count(program?degree='ph'), count(program?degree='bs')},
+                       count(school.program?degree='ph'), count(school.program?degree='bs')}?code='mth'
+    # Reduce to `course?credits=3`.
+    - uri: /define(course_0 := course,
+                   course_1 := course_0?credits=3,
+                   course_2 := course_1?department.code='econ',
+                   course_3 := course_2?count(class)>4)
+           {count(course_1), count(course_3)}
+    # Reduce to `course`.
+    - uri: /define(course_0 := course,
+                   course_1 := course_0?credits=3,
+                   course_2 := course_1?department.code='econ',
+                   course_3 := course_2?count(class)>4)
+           {count(course_0), count(course_1), count(course_2), count(course_3)}
+    # Reduce to `course`.
+    - uri: /define(course_0 := course,
+                   course_1 := course?credits=3,
+                   course_2 := course?department.code='econ',
+                   course_3 := course?count(class)>4)
+           {count(course_0), count(course_1), count(course_2), count(course_3)}
+    # Reduce to `course?credits=3|department.code='econ'|count(class)>4`.
+    - uri: /define(course_1 := course?credits=3,
+                   course_2 := course?department.code='econ',
+                   course_3 := course?count(class)>4)
+           {count(course_1), count(course_2), count(course_3)}
+    # Merge nested aggregates.
+    - uri: /{avg(department{count(course?credits=3)}?code!='econ') :round(2),
+             avg(department{count(course?credits=5)}?code!='mth') :round(2)}
+    # Embed aggregates into a quotient frame.
+    - uri: /school^campus{campus, count(school), min(school.code), max(school.code)}
+    # Embedding to a quotient frame with reduction of the filter.
+    - uri: /school^campus{campus, count(school), count(school?count(department)>3)}
+    - uri: /school^campus{campus,
+                            count(school?count(department)<=3),
+                            count(school?count(department)>3)}
+    # Embedding to a quotient frame with an aggregate in HAVING.
+    - uri: /school^campus{campus, count(school)}?count(school)>1
+    # Two aggregates, one embedded to a quotient frame.
+    - uri: /school^campus{campus, count(school), count(school.department)}
+    # Failing to embed aggregates into a quotient frame.
+    - uri: /department.define($max_credits:=max(course.credits))
+            .(course^{level:=integer(no/100)}).limit(3)
+            {*, count(course), count(course?credits=$max_credits)}
+    # Reducing the seed of a quotient flow.
+    - uri: /school?min(department.course.credits)>1&
+                   max(department.course.credits)<8
+                  ^campus
+                  {campus, count(school)}
+    - uri: /define(department.credit_diff := max(course.credits)-min(course.credits),
+                   department := department?credit_diff>3)
+            .department^school_code
+            {*, avg(department.credit_diff), sum(department.credit_diff)}
+    # Omitting non-expanding joints when merging term nodes.
+    - uri: /program.define($degree:=degree).school.department.limit(1)
+            {count(course.title~$degree)}
+    # But not in this case.
+    - uri: /school.define($code:=code).department.limit(1)
+            {count(course.title~$code)}
+    # Reusing the parent term as the flow term.
+    - uri: /(program?school.code='art').school.limit(1)
+    # Lowering the baseline flow when compiling a quotient.
+    - uri: /department.define($avg_credits := avg(course.credits),
+                              course := course?credits>$avg_credits,
+                              course_level := course^integer(no/100)).limit(3)
+            {code, count(course_level), count(course_level.course)}
+    # Optimized gluing.
+    - uri: /course?credits=$max_credits
+            :where $max_credits := max(course.credits)
+    - uri: /course?credits=max(fork().credits)
+    - uri: /department{code, count(course?credits=$max_credits)}.limit(10)
+            :where department.$max_credits := max(course.credits)
+    - uri: /department{code, count(course?credits=max(fork().credits))}.limit(10)
 
   - title: Root, This, Direct and Fiber functions
     tests:
@@ -126,16 +208,12 @@ tests:
     - uri: /school.program{school_code,code,count(student)}
                     ?count(student)=max((school_code -> program).count(student))
     # Lifting a unit to a dominating space
-    # (broken due to changed selector semantics)
-    - uri: /{count(school),this(){count(school)}?true(),this(){count(school)}?false()}
-      skip: true
-    - uri: /school{code,name,this(){code}?name!~'art',
+    - uri: /{count(school),{count(school)}?true(),{count(school)}?false()}
+    - uri: /school{code,name,{code}?name!~'art',
                    root().school{code}?name!~'art'}
-      skip: true
-    - uri: /school{name,count(department),this(){count(department)}?name!~'art'}
-      skip: true
-    - uri: /school{name,exists(department),this(){exists(department)}?name!~'art'}
-      skip: true
+    - uri: /school{name,count(department),{count(department)}?name!~'art'}
+    - uri: /school{name,exists(department),{exists(department)}?name!~'art'}
+    - uri: /department{code, school{code}, school{code}?name!~'art'}?code~'a'
     # The `home()` function.
     # Empty selector
     - uri: /home()
@@ -163,6 +241,10 @@ tests:
     - uri: /{moniker(this()){count(school)},
              moniker(this()?true()){count(school)},
              moniker(this()?false()){count(school)}}
+    - uri: /moniker((this()?false()).student)
+    - uri: /program.moniker((this()?false()).student)
+    - uri: /program.sort(count(student)).moniker((this()?false()).student)
+    - uri: /moniker(school.sort(count(department)))
     # linking operator
     - uri: /school.(code -> department{school_code})
     - uri: /(school?code='art').(code -> department{school_code}){code, count(course)}
@@ -195,12 +277,11 @@ tests:
     - uri: /program{school_code,code,count(student)}?count(student)>avg(fork(school_code).count(student))
             :where program := program.limit(10,15)
     # fork() with projections
-    - uri: /(program^degree)?count(^.student)=max(fork().count(^.student))
+    - uri: /program^degree?count(^.student)=max(fork().count(^.student))
     # fork() with nullable kernel
     - uri: /program.fork(part_of){root().program{school.code, code, part_of}, school.code, code, part_of}
     # fork().fork() is inefficient
-    - uri: /school.fork().fork().fork()
-      skip: true
+    - uri: /school.fork().fork().fork().limit(1)
 
   - title: Table Expressions
     tests:
@@ -274,14 +355,14 @@ tests:
     - uri: /distinct(program{degree}){*, count(^.student)}
     - uri: /distinct(program{degree}){degree, count(program.student)}
     - uri: /distinct(program{degree :if_null '--'})
-    - uri: /distinct(student{year(dob),gender})
-    - uri: /distinct(student{year(dob),gender}){*, *1, *2}
-    - uri: /distinct(student{year(dob),gender}){*,count(^)}
-    - uri: /distinct(student{y_dob:=year(dob),gender})
+    - uri: /distinct(student{year(dob),gender}?!is_active)
+    - uri: /distinct(student{year(dob),gender}?!is_active){*, *1, *2}
+    - uri: /distinct(student{year(dob),gender}?!is_active){*,count(^)}
+    - uri: /distinct(student{y_dob:=year(dob),gender}?!is_active)
                 {y_dob,gender,count(student)}
-    - uri: /distinct(distinct(student{year(dob)}).^{gender})
+    - uri: /distinct(distinct(student{year(dob)}?!is_active).^{gender})
                 {*, count(^), count(^.is_active)}
-    - uri: /distinct(distinct(student{year(dob), gender}){*1})
+    - uri: /distinct(distinct(student{year(dob), gender}?!is_active){*1})
                 {*, count(^), count(^.^), count(^.^.is_active)}
 
     - uri: /school.distinct(program{degree})
@@ -299,34 +380,45 @@ tests:
 
     - uri: /(school?code='art').(program^degree).^{title+, degree}
 
-    - uri: /school.program.distinct(student{year(dob),gender})
-    - uri: /school.program.distinct(student{year(dob),gender}){*, *1, *2}
-    - uri: /school.program.distinct(student{year(dob),gender}){*, count(^)}
-    - uri: /school.program.distinct(distinct(student{year(dob)}).^{gender})
+    - uri: /school.program.distinct(student{year(dob),gender}?!is_active)
+    - uri: /school.program.distinct(student{year(dob),gender}?!is_active){*, *1, *2}
+    - uri: /school.program.distinct(student{year(dob),gender}?!is_active){*, count(^)}
+    - uri: /school.program.distinct(distinct(student{year(dob)}?!is_active).^{gender})
                 {*, count(^), count(^.is_active)}
-    - uri: /school.program.distinct(distinct(student{year(dob), gender}){*1})
+    - uri: /school.program.distinct(distinct(student{year(dob), gender}?!is_active){*1})
                 {*, count(^), count(^.^), count(^.^.is_active)}
 
-    - uri: /(program^degree){*, count(^)}?count(^)>5
-    - uri: /(course^credits)?*1>3
-    - uri: /(course^credits){*1-}
-    - uri: /(((department?code='stdart').course^credits)?*1>3)
+    - uri: /program^degree{*, count(^)}?count(^)>5
+    - uri: /course^credits?*1>3
+    - uri: /course^credits{*1-}
+    - uri: /(department?code='stdart').course^credits?*1>3
                 {*, count(^)}
-    - uri: /(school^count(program)){*, count(^)}
+    - uri: /school^count(program){*, count(^)}
     - uri: /school.(program^degree)
     - uri: /department.(school.program^degree)
     - uri: /department.((school?code='art').program^degree)
+    - uri: /department.((school?code='art').program^degree).^
     - uri: /(program^degree).^
     - uri: /(program.sort(count(student))^degree).^
                 {*, count(student)}
-    - uri: /(program^degree){*, exists(^), count(^)}
+    - uri: /program^degree{*, exists(^), count(^)}
+      ifndef: oracle # Oracle cannot handle EXISTS and an aggregate in
+                     # the same SELECT clause.
     - uri: /school{code, count(program), count(distinct(program{degree}))}
     - uri: /school{code, count(program), count(program^degree)}
-    - uri: /(program^degree){*, count(^), count(^.student)}
-    - uri: /(student^{year(dob),gender}){*, count(^), count(^?is_active)}
-    - uri: /(student^{y_dob:=year(dob),gender})
+    - uri: /program^degree{*, count(^), count(^.student)}
+    - uri: /student?!is_active^{year(dob),gender}
+                {*, count(^), count(^?is_active)}
+    - uri: /student?!is_active^{y_dob:=year(dob),gender}
+                {*, count(student), count(student?is_active)}
+    - uri: /(student?!is_active^{year(dob),gender}).student
+    - uri: /student^({year(dob),gender}?!is_active)
+                {*, count(^), count(^?is_active)}
+    - uri: /student^({y_dob:=year(dob),gender}?!is_active)
                 {*, count(student), count(student?is_active)}
     - uri: /count(program^degree)
+    - uri: /(program^degree).define($degree:=degree)
+            {*, count(^.student?name~$degree)}
 
     # The `distinct()` function.
     - uri: /distinct(program{degree})
@@ -339,13 +431,82 @@ tests:
                 {*, count(^), count(^.student)}
     - uri: /distinct(program{degree}?school.code={'art','la'}).^
 
-    # Known regressions.
-    - uri: /(school^{})
-      skip: true
-    - uri: /(school^{null()})
-      skip: true
-    - uri: /(school^{true()})
-      skip: true
-    # A bug `rewrite` is not applied to `base` of an ordered space.
-    - uri: /((program?school_code='art')^degree).limit(1)
+    # Errors.
+    - uri: /{(school^campus).campus}
+      expect: 400
+
+- title: Known issues
+  tests:
+  # Queries with no output columns should be permitted
+  # (and report the number of rows).
+  - uri: /{}
+    expect: 400
+  - uri: /school{}
+    expect: 400
+
+  # Should produce a row for each record of `school`.
+  - uri: /school.true()
+  # If `school.campus` is treated as a link to a scalar class,
+  # `NULL` values should be filtered out.
+  - uri: /school.campus
+
+  # An empty kernel or a kernel composed of literals breaks a quotient
+  # when the selector contains no aggregates.
+  - uri: /school^{}{true()}
+    expect: 400
+  - uri: /school^{true()}{true()}
+    expect: 400
+  - uri: /school?false()^{true()}{true()}
+    expect: 400
+  # These cases accidentaly produce a correct result.
+  - uri: /school^{}{*, count(school)}
+    expect: 400
+  - uri: /school^{true()}{*, count(school)}
+    expect: 400
+  - uri: /school?false()^{true()}{*, count(school)}
+    expect: 400
+  # This should filter out `NULL` from the kernel and produce no rows.
+  - uri: /school^{null()}{*, count(school)}
+    expect: 400
+  # Using singular scalar quotients in the selector.
+  - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
+    expect: 400
+  - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
+    expect: 400
+  # Using plural scalar quotients in an aggregate
+  - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
+    expect: 400
+  # This actually works because we avoid compiling the quotient term.
+  - uri: /(school^null()).^
+    expect: 400
+  # Links in the quotient kernel should remain functional.
+  - uri: /department^school_code{school_code.name, name}
+    expect: 400
+
+  # Introspector is unable to assign a name to some links
+  # (see `schema.yaml` for other examples).
+  - uri: /program.part_of.*
+    expect: 400
+
+  # `sum()` should never produce `NULL`.
+  - uri: /{sum(course{credits}?false()),
+           sum(confidential{pay_grade}?false())}
+
+  # In PostgreSQL, SUM(int) => bigint, SUM(bigint) => decimal,
+  # but HTSQL expects an integer (FIXED?)
+  - uri: /sum(department.sum(course.credits))
+    ifdef: pgsql
+  # Oracle does not permit correlated subqueries in the same frame
+  # with aggregates.
+  - uri: /{count(school), exists(school)}
+    ifdef: oracle
+    expect: 409
+    ignore: true
+  # MS SQL Server does not permit the argument of an aggregate to
+  # contain a subquery.
+  - uri: /count(school.exists(department))
+    ifdef: mssql
+    expect: 409
+    ignore: true
+
 

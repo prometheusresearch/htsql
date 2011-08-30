@@ -1,17 +1,14 @@
-
-========================
+************************
   HTSQL Documentation
-========================
+************************
 
 .. toctree::
    :maxdepth: 2
 
    introduction
    tutorial
-   reference
+   ref/index
    install
-   roadmap
-   design
    api
 
 Indices and tables

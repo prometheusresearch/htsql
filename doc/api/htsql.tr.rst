@@ -10,8 +10,6 @@
    :members:
 .. automodule:: htsql.tr.binding
    :members:
-.. automodule:: htsql.tr.code
-   :members:
 .. automodule:: htsql.tr.coerce
    :members:
 .. automodule:: htsql.tr.compile
@@ -21,6 +19,8 @@
 .. automodule:: htsql.tr.encode
    :members:
 .. automodule:: htsql.tr.error
+   :members:
+.. automodule:: htsql.tr.flow
    :members:
 .. automodule:: htsql.tr.frame
    :members:
@@ -32,9 +32,13 @@
    :members:
 .. automodule:: htsql.tr.reduce
    :members:
+.. automodule:: htsql.tr.rewrite
+   :members:
 .. automodule:: htsql.tr.scan
    :members:
 .. automodule:: htsql.tr.signature
+   :members:
+.. automodule:: htsql.tr.stitch
    :members:
 .. automodule:: htsql.tr.syntax
    :members:

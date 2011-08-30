@@ -16,13 +16,14 @@ from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
                         DateTimeIncrementSig, SubtractSig, DateDecrementSig,
                         DateTimeDecrementSig, DateDifferenceSig,
                         MultiplySig, DivideSig, IfSig, SwitchSig,
-                        ReversePolaritySig, RoundSig, RoundToSig,
-                        LengthSig, LikeSig, ReplaceSig, SubstringSig,
-                        UpperSig, LowerSig, TrimSig, TodaySig, NowSig,
-                        MakeDateSig, MakeDateTimeSig, CombineDateTimeSig,
-                        ExtractYearSig, ExtractMonthSig, ExtractDaySig,
-                        ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,
-                        ExistsSig, CountSig, MinMaxSig, SumSig, AvgSig)
+                        ReversePolaritySig, RoundSig, RoundToSig, TruncSig,
+                        TruncToSig, LengthSig, LikeSig, ReplaceSig,
+                        SubstringSig, UpperSig, LowerSig, TrimSig, TodaySig,
+                        NowSig, MakeDateSig, MakeDateTimeSig,
+                        CombineDateTimeSig, ExtractYearSig, ExtractMonthSig,
+                        ExtractDaySig, ExtractHourSig, ExtractMinuteSig,
+                        ExtractSecondSig, ExistsSig, CountSig, MinMaxSig,
+                        SumSig, AvgSig)
 
 
 class DumpFunction(DumpBySignature):
@@ -146,6 +147,18 @@ class DumpRoundTo(DumpFunction):
 
     adapts(RoundToSig)
     template = "ROUND({op}, {precision})"
+
+
+class DumpTrunc(DumpFunction):
+
+    adapts(TruncSig)
+    template = "TRUNC({op})"
+
+
+class DumpTruncTo(DumpFunction):
+
+    adapts(TruncToSig)
+    template = "TRUNC({op}, {precision})"
 
 
 class DumpLength(DumpFunction):

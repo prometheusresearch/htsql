@@ -5,7 +5,7 @@
 
 
 from ...adapter import adapts, adapts_none
-from ..code import LiteralCode, FormulaCode
+from ..flow import LiteralCode, FormulaCode
 from ..rewrite import RewriteBySignature
 from .signature import SubstringSig
 

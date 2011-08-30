@@ -6,7 +6,7 @@
 
 from htsql.context import context
 from htsql.tr.encode import EncodeSegment
-from htsql.tr.code import OrderedSpace
+from htsql.tr.flow import OrderedFlow
 
 
 class AutolimitEncodeSegment(EncodeSegment):
@@ -16,12 +16,12 @@ class AutolimitEncodeSegment(EncodeSegment):
         limit = context.app.tweak.autolimit.limit
         if limit is None:
             return code
-        space = code.space
-        while isinstance(space, OrderedSpace):
-            if space.limit is not None and space.limit < limit:
+        flow = code.flow
+        while isinstance(flow, OrderedFlow):
+            if flow.limit is not None and flow.limit < limit:
                 return code
-            space = space.base
-        space = OrderedSpace(code.space, [], limit, None, code.binding)
-        return code.clone(space=space)
+            flow = flow.base
+        flow = OrderedFlow(code.flow, [], limit, None, code.binding)
+        return code.clone(flow=flow)
 
 

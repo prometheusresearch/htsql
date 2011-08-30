@@ -288,6 +288,7 @@ class IntrospectMSSQL(Introspect):
         elif name == ('sys', 'bit'):
             return MSSQLBooleanDomain(schema_name, type_name)
         elif name in [('sys', 'smallint'), ('sys', 'int'), ('sys', 'bigint')]:
+            # FIXME: tinyint?
             return MSSQLIntegerDomain(schema_name, type_name,
                                       size=max_length*8)
         elif name in [('sys', 'decimal'), ('sys', 'numeric')]:

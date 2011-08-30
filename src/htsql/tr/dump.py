@@ -881,11 +881,11 @@ class DubFrame(Dub):
     def __call__(self):
         # For a frame, a good alias is the name of the table
         # represented by the frame.
-        space = self.clause.space
-        while space.family.is_kernel:
-            space = space.family.seed
-        if space.family.is_table:
-            return space.family.table.name
+        flow = self.clause.flow
+        while flow.family.is_quotient:
+            flow = flow.family.seed
+        if flow.family.is_table:
+            return flow.family.table.name
         # Use the default alias when the frame does not represent
         # any table.
         return super(DubFrame, self).__call__()
@@ -956,7 +956,7 @@ class DumpTable(Dump):
         # Serialize a table reference in a `FROM` clause.  Dump:
         #   <schema>.<table>
         # Must be overridden for backends which lack schemas.
-        table = self.frame.space.family.table
+        table = self.frame.flow.family.table
         self.format("{schema:name}.{table:name}",
                     schema=table.schema_name,
                     table=table.name)
@@ -1454,8 +1454,11 @@ class DumpInteger(DumpByDomain):
         if not (-2**63 <= self.value < 2**63):
             raise SerializeError("invalid integer value",
                                  self.phrase.mark)
-        # Write the number.
-        self.write(str(self.value))
+        # Write the number; use `(...)` around a negative number.
+        if self.value >= 0:
+            self.write(str(self.value))
+        else:
+            self.write("(%s)" % self.value)
 
 
 class DumpFloat(DumpByDomain):
@@ -1474,8 +1477,12 @@ class DumpFloat(DumpByDomain):
         # FIXME: Python 2.5/win32?
         assert str(self.value) not in ['inf', '-inf', 'nan']
         # Write the standard representation of the number assuming that
-        # the database could figure out its type from the context.
-        self.write(repr(self.value))
+        # the database could figure out its type from the context; use `(...)`
+        # around a negative number.
+        if self.value >= 0.0:
+            self.write(repr(self.value))
+        else:
+            self.write("(%r)" % self.value)
 
 
 class DumpDecimal(DumpByDomain):
@@ -1493,8 +1500,12 @@ class DumpDecimal(DumpByDomain):
         # Last check that we didn't get a non-number.
         assert self.value.is_finite()
         # Write the standard representation of the number assuming that
-        # the database could figure out its type from the context.
-        self.write(str(self.value))
+        # the database could figure out its type from the context; use `(...)`
+        # around a negative number.
+        if not self.value.is_signed():
+            self.write(str(self.value))
+        else:
+            self.write("(%s)" % self.value)
 
 
 class DumpString(DumpByDomain):

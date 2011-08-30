@@ -7,7 +7,7 @@
 from htsql.adapter import adapts
 from htsql.domain import IntegerDomain
 from htsql.tr.encode import Convert
-from htsql.tr.code import CastCode
+from htsql.tr.flow import CastCode
 from .domain import INetDomain
 
 

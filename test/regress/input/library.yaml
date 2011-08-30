@@ -325,19 +325,29 @@ tests:
   - uri: /{0e0/0e0, 7/0e0}
     ifdef: [oracle]
 
-  # Rounding
-  - uri: /{round(3272.78125,2)}
-  - uri: /{round(3272.78125,-2)}
-    ifndef: sqlite
-  - uri: /{round(3272.78125), round(271828e-5)}
+  # Rounding and Truncating
+  - uri: /{round(3272.78125), round(3272.78125,2), round(3272.78125,-2)}
+  - uri: /{trunc(3272.78125), trunc(3272.78125,2), trunc(3272.78125,-2)}
+  # Calculated precision.
+  - uri: /{round(3272.78125,1+1), round(3272.78125,1-1), round(3272.78125,-1-1)}
+  - uri: /{trunc(3272.78125,1+1), trunc(3272.78125,1-1), trunc(3272.78125,-1-1)}
+  # Negative values.
+  - uri: /{round(-3272.78125), round(-3272.78125,2), round(-3272.78125,-2)}
+  - uri: /{trunc(-3272.78125), trunc(-3272.78125,2), trunc(-3272.78125,-2)}
+  # Float arguments.
+  - uri: /{round(271828e-5), round(-271828e-5)}
+  - uri: /{trunc(271828e-5), trunc(-271828e-5)}
   # Coercion
-  - uri: /{round(9973)}
+  - uri: /{round(9973), trunc(9973)}
   # Bug in MSSQL 2008R2, see
   # https://connect.microsoft.com/SQLServer/feedback/details/646516/bad-example-for-round
   - uri: /{round(9973,-2)}
-    ifndef: [sqlite, mssql]
+    ifndef: [mssql]
   # Inadmissible operand
   - uri: /{round(271828e-5,2)}
+    expect: 400
+    ifndef: sqlite
+  - uri: /{trunc(271828e-5,2)}
     expect: 400
     ifndef: sqlite
 
@@ -651,7 +661,7 @@ tests:
   - uri: /school.department
   # N - 1
   - uri: /program.school
-  - uri: /department.school
+  - uri: /department
   # 1 - 1
   - uri: /instructor.confidential
   - uri: /confidential.instructor

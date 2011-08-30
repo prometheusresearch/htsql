@@ -499,7 +499,7 @@ class DateDomain(Domain):
         try:
             value = datetime.date(year, month, day)
         except ValueError, exc:
-            raise ValueError("invalid date literal: %s" % exc)
+            raise ValueError("invalid date literal: %s" % exc.args[0])
         return value
 
     def dump(self, value):
@@ -562,7 +562,7 @@ class TimeDomain(Domain):
         try:
             value = datetime.time(hour, minute, second, microsecond)
         except ValueError, exc:
-            raise ValueError("invalid time literal: %s" % exc)
+            raise ValueError("invalid time literal: %s" % exc.args[0])
         return value
 
     def dump(self, value):
@@ -661,7 +661,7 @@ class DateTimeDomain(Domain):
             value = datetime.datetime(year, month, day, hour, minute, second,
                                       microsecond, tz)
         except ValueError, exc:
-            raise ValueError("invalid datetime literal: %s" % exc)
+            raise ValueError("invalid datetime literal: %s" % exc.args[0])
         return value
 
     def dump(self, value):

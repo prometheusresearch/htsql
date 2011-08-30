@@ -16,7 +16,7 @@ from ..util import Printable, Comparable
 from ..adapter import Adapter, adapts, adapts_many
 from ..domain import BooleanDomain
 from .coerce import coerce
-from .code import (Code, LiteralCode, FormulaCode, CastCode, Unit, ColumnUnit)
+from .flow import (Code, LiteralCode, FormulaCode, CastCode, Unit, ColumnUnit)
 from .term import (PreTerm, Term, UnaryTerm, BinaryTerm, TableTerm,
                    ScalarTerm, FilterTerm, JoinTerm, CorrelationTerm,
                    EmbeddingTerm, ProjectionTerm, OrderTerm, SegmentTerm,
@@ -52,7 +52,7 @@ class Claim(Comparable, Printable):
     are equal if their units, brokers, and targets are equal to each
     other.
 
-    `unit` (:class:`htsql.tr.code.Unit`)
+    `unit` (:class:`htsql.tr.flow.Unit`)
         The exported unit.
 
     `broker` (an integer)
@@ -104,16 +104,16 @@ class Gate(object):
 
         See also the `offsprings` attribute of :class:`htsql.tr.term.Term`.
 
-    `routes` (a dictionary `Unit | Space -> tag`)
+    `routes` (a dictionary `Unit | Flow -> tag`)
         Maps a unit to a term capable of evaluating the unit.
 
         The `routes` table is used when generating unit claims
         to determine the target term by the unit.
 
-        A key of the `routes` table is either a :class:`htsql.tr.code.Unit`
-        node or a :class:`htsql.tr.code.Space` node.  The latter indicates
+        A key of the `routes` table is either a :class:`htsql.tr.flow.Unit`
+        node or a :class:`htsql.tr.flow.Flow` node.  The latter indicates
         that the corresponding term is capable of exporting any primitive
-        unit from the given space.
+        unit from the given flow.
 
         See also the `routes` attribute of :class:`htsql.tr.term.Term`.
 
@@ -301,7 +301,7 @@ class AssemblingState(object):
         capable of evaluating the unit and returns the corresponding
         :class:`Claim` object.
 
-        `unit` (:class:`htsql.tr.code.Unit`)
+        `unit` (:class:`htsql.tr.flow.Unit`)
             The unit to make a claim for.
         """
         # To make a claim, we need to find two terms:
@@ -315,11 +315,11 @@ class AssemblingState(object):
 
         ## Extract the (tag of the) target term from the current routing
         ## table.  Recall that `routes` does not keep primitive units directly,
-        ## instead a space node represents all primitive units that belong
-        ## to that space.
+        ## instead a flow node represents all primitive units that belong
+        ## to that flow.
         #if unit.is_primitive:
-        #    assert unit.space in self.gate.routes
-        #    target = self.gate.routes[unit.space]
+        #    assert unit.flow in self.gate.routes
+        #    target = self.gate.routes[unit.flow]
         #if unit.is_compound:
         #    assert unit in self.gate.routes
         #    target = self.gate.routes[unit]
@@ -362,7 +362,7 @@ class AssemblingState(object):
         """
         Appoints and assigns claims for all units of the given code.
 
-        `code` (:class:`htsql.tr.code.Code`)
+        `code` (:class:`htsql.tr.flow.Code`)
             A code object to schedule.
 
         `dispatcher` (:class:`htsql.tr.term.Term` or ``None``)
@@ -396,7 +396,7 @@ class AssemblingState(object):
         It is assumed that the code node was previously scheduled
         with :meth:`schedule` and all the claims were satisfied.
 
-        `code` (:class:`htsql.tr.code.Code`)
+        `code` (:class:`htsql.tr.flow.Code`)
             The code node to evaluate.
 
         `dispatcher` (:class:`htsql.tr.term.Term` or ``None``)
@@ -845,7 +845,7 @@ class AssembleProjection(Assemble):
         # Call the super `delegate()` to review and forward claims.
         super(AssembleProjection, self).delegate()
         # Appoint and assign claims for the projection kernel.
-        for code in self.term.kernel:
+        for code in self.term.kernels:
             self.state.schedule(code)
         # Restore the original dispatching context.
         self.state.pop_gate()
@@ -865,7 +865,7 @@ class AssembleProjection(Assemble):
         # The list of phrases included to the clause.
         group = []
         # Evaluate all the code expressions in the kernel.
-        for code in self.term.kernel:
+        for code in self.term.kernels:
             # If a code does not have units, it must be a scalar function
             # or a literal, and therefore it cannot affect the projection.
             # We can safely weed it out.
@@ -874,7 +874,7 @@ class AssembleProjection(Assemble):
             phrase = self.state.evaluate(code, router=self.term.kid)
             group.append(phrase)
         # It may happen that the kernel of the projection is empty, which
-        # means the range of the projection is the scalar space.  SQL
+        # means the range of the projection is the scalar flow.  SQL
         # recognizes scalar projections by detecting an aggregate in
         # the `SELECT` list, so, technically, we could keep the `GROUP BY`
         # list empty.  However, when collapsing frames, we must be able
@@ -1171,7 +1171,7 @@ class Evaluate(Adapter):
 
     The adapter is polymorphic on the `Code` argument.
 
-    `code` (:class:`htsql.tr.code.Code`)
+    `code` (:class:`htsql.tr.flow.Code`)
         The code node to translate.
 
     `state` (:class:`AssemblingState`)
@@ -1240,13 +1240,13 @@ class EvaluateBySignature(Adapter):
     Evaluates a formula node.
 
     This is an auxiliary adapter used to evaluate
-    :class:`htsql.tr.code.FormulaCode` nodes.  The adapter is polymorphic
+    :class:`htsql.tr.flow.FormulaCode` nodes.  The adapter is polymorphic
     on the formula signature.
 
     Unless overridden, the adapter evaluates the arguments of the formula
     and generates a new formula phrase with the same signature.
 
-    `code` (:class:`htsql.tr.code.FormulaCode`)
+    `code` (:class:`htsql.tr.flow.FormulaCode`)
         The formula node to evaluate.
 
     `state` (:class:`AssemblingState`)

@@ -72,8 +72,8 @@ for data analysts and web developers.
 Why not SQL?
 ============
 
-Relational algebra has proven to be inadequate for encoding business
-inquiries --- elementary set operations simply do not correspond to
+Relational algebra is frequently inadequate for encoding business 
+inquiries --- elementary set operations do not correspond to 
 meaningful data transformations.  The SQL language itself is tedious,
 verbose, and provides poor means of abstraction.  Yet, the relational
 database is an excellent tool for data modeling, storage and retrieval.
@@ -200,7 +200,7 @@ are returned and how the aggregate is related to those rows.
    :cut: 4
    :hide:
 
-    /(school^campus) {campus, count(school.department)}
+    /school^campus {campus, count(school.department)}
 
 In the HTSQL query, we start with an explicit projection (the ``^``
 operator), then we select correlated columns.  This way, the aggregation
@@ -295,7 +295,7 @@ correct, but aren't.
    :cut: 4
    :hide:
 
-     /(school?exists(program))
+     /school?exists(program)
        {name, avg(department.count(course?credits>3))}
 
 Each syntactic component of the HTSQL query is self-contained; when
@@ -433,7 +433,7 @@ distinct ``campus`` values from the ``school`` table:
 In the scope of the projection, ``school`` refers to all records from
 ``school`` table having the same value of ``campus`` attribute:
 
-.. htsql:: /(school^campus){campus, count(school)}
+.. htsql:: /school^campus {campus, count(school)}
 
 
 Linking

@@ -289,6 +289,9 @@ class BaseDataGenerator(object):
     def generate_content(self):
         pass
 
+    def get_content(self):
+        pass
+
 
 class InstructorGenerator(BaseDataGenerator):
 
@@ -309,6 +312,9 @@ class InstructorGenerator(BaseDataGenerator):
         self.dictionary = dictionary
         self.instructors = set()
         self.dep_app = {}
+        self.instructor_data = []
+        self.confidential_data = []
+        self.appointment_data = []
         self.gender_gen = random.Random(RANDOM_SEED)
         self.title_gen = random.Random(RANDOM_SEED)
         self.phone_gen = random.Random(RANDOM_SEED)
@@ -387,11 +393,8 @@ class InstructorGenerator(BaseDataGenerator):
         ]
 
     def generate_content(self):
-        instructor_data = []
-        confidential_data = []
-        appointment_data = []
         load_gen = random.Random(RANDOM_SEED)
-        for depcode in sorted(self.dictionary.departments.iterkeys()):
+        for depcode in sorted(self.dictionary.departments):
             load = load_gen.uniform(self.COURSES_PER_INSTRUCTOR[0], self.COURSES_PER_INSTRUCTOR[1])
             total_courses = self.dictionary.departments[depcode]
             count = int(math.ceil(total_courses / load))
@@ -399,24 +402,26 @@ class InstructorGenerator(BaseDataGenerator):
                 self.dep_app[depcode] = []
             for i in range(0, count):
                 (instructor_code, record) = self.generate_instructor()
-                instructor_data.append(record)
+                self.instructor_data.append(record)
                 self.instructors.add(instructor_code)
                 confidential = self.generate_confidential(instructor_code)
-                confidential_data.append(confidential)
+                self.confidential_data.append(confidential)
                 appointment = self.generate_appointment(instructor_code, depcode)
-                appointment_data.append(appointment)
+                self.appointment_data.append(appointment)
                 self.dep_app[depcode].append(appointment)
+
+    def get_content(self):
         return [
-            self.make_insert_map(self.INSTRUCTOR_TABLE, self.INSTRUCTOR_COLUMNS, instructor_data),
-            self.make_insert_map(self.CONFIDENTIAL_TABLE, self.CONFIDENTIAL_COLUMNS, confidential_data),
-            self.make_insert_map(self.APPOINTMENT_TABLE, self.APPOINTMENT_COLUMNS, appointment_data),
+            self.make_insert_map(self.INSTRUCTOR_TABLE, self.INSTRUCTOR_COLUMNS, self.instructor_data),
+            self.make_insert_map(self.CONFIDENTIAL_TABLE, self.CONFIDENTIAL_COLUMNS, self.confidential_data),
+            self.make_insert_map(self.APPOINTMENT_TABLE, self.APPOINTMENT_COLUMNS, self.appointment_data),
         ]
 
 
 class ClassGenerator(BaseDataGenerator):
 
     CLASS_FILL_LIMIT = 40
-    YEARLY_CLASS_PERCENT = 20
+    YEARLY_CLASS_PERCENT = 80
     MISSING_CLASS_PERCENT = 5
     NULL_INSTRUCTOR_PERCENT = 2
 
@@ -451,6 +456,13 @@ class ClassGenerator(BaseDataGenerator):
         val = int(section)
         return '%03d' % (val + 1)
 
+    def _is_empty_class(self, class_record):
+        class_seq = self.get(self.CLASS_COLUMNS, class_record, 'class_seq')
+        return class_seq not in self.class_fill_map
+
+    def drop_empty_classes(self):
+        self.class_data = [c for c in self.class_data if not self._is_empty_class(c)]
+
     def generate_class(self, inst_code, course_key, semester, section):
         # instructor is nullable ?!
         if self.instructor_gen.randint(1,100) <= self.NULL_INSTRUCTOR_PERCENT:
@@ -471,9 +483,9 @@ class ClassGenerator(BaseDataGenerator):
         return clazz
 
     def generate_content(self):
-        for depcode in sorted(self.dep_app.iterkeys()):
+        for depcode in sorted(self.dep_app):
             dep_courses = []
-            for course_key in sorted(self.dictionary.courses.iterkeys()):
+            for course_key in sorted(self.dictionary.courses):
                 if course_key[0] == depcode:
                     dep_courses.append(course_key)
             staff = 0
@@ -508,6 +520,8 @@ class ClassGenerator(BaseDataGenerator):
                             if self.class_gen.randint(0, 100) < self.MISSING_CLASS_PERCENT:
                                 continue
                             self.generate_class(inst_code, course, semester, '001')
+
+    def get_content(self):
         return [
             self.make_insert_map(self.CLASS_TABLE, self.CLASS_COLUMNS, self.class_data)
         ]
@@ -544,9 +558,12 @@ class EnrollmentGenerator(BaseDataGenerator):
         self.courses_by_level = {}
         self.free_courses = []
         self.counter = 0
+        self.enrollment_data = []
+        self.semester_classes = {}
         self.grade_gen = random.Random(rand.randint(0, 100000))
         self.course_gen = random.Random(rand.randint(0, 100000))
         self.status_gen = random.Random(rand.randint(0, 100000))
+        self.sorted_courses = sorted(dictionary.courses)
 
     # returns random course by specified classification (or its children if required),
     # None if no suitable courses found
@@ -586,7 +603,7 @@ class EnrollmentGenerator(BaseDataGenerator):
         r = self.dictionary.program_req[(self.student['school_code'], self.student['program_code'])]
         for req in r:
             self.fill_req_map[req] = 0
-        for req in r:
+        for req in sorted(r):
             while self.fill_req_map[req] < r[req]:
                 course_key = self.get_course_by_classification(req)
                 if course_key is None:
@@ -613,7 +630,7 @@ class EnrollmentGenerator(BaseDataGenerator):
                 self.distribution[course_key] = 0
                 for req_course_key in self.dictionary.course_prereq[course_key]:
                     self.correct_req_level(req_course_key, -1)
-        for course_key in sorted(self.distribution.iterkeys()):
+        for course_key in sorted(self.distribution):
             level = self.distribution[course_key] - self.min_level
             if level not in self.courses_by_level:
                 self.courses_by_level[level] = []
@@ -621,6 +638,18 @@ class EnrollmentGenerator(BaseDataGenerator):
         for course_key in self.taken_courses:
             if course_key not in self.distribution:
                 self.free_courses.append(course_key)
+
+    def get_semester_classes(self):
+        res = {}
+        for record in self.classgen.class_data:
+            dep = record[ClassGenerator.CLASS_COLUMNS.index('department_code')]
+            no = record[ClassGenerator.CLASS_COLUMNS.index('course_no')]
+            year = record[ClassGenerator.CLASS_COLUMNS.index('year')]
+            season = record[ClassGenerator.CLASS_COLUMNS.index('season')]
+            res.setdefault((year, season), {})
+            res[year, season].setdefault((dep, no), [])
+            res[year, season][dep, no].append(record)
+        self.semester_classes = res
 
     def can_take(self, course_key):
         if course_key in self.taken_courses:
@@ -666,7 +695,7 @@ class EnrollmentGenerator(BaseDataGenerator):
                 if cls is not None:
                     self.free_courses.remove(c)
                     return (cls, c)
-            c = self.get_rand_item(self.dictionary.courses.keys(), self.course_gen)
+            c = self.get_rand_item(self.sorted_courses, self.course_gen)
             if self.can_take(c):
                 cls = self.get_class_by_course(c, semester, classes_by_semester)
                 if cls is not None:
@@ -700,25 +729,10 @@ class EnrollmentGenerator(BaseDataGenerator):
             self.get_random_grade(semester)
         ]
 
-    def get_semester_classes(self, semester):
-        res = {}
-        for record in self.classgen.class_data:
-            dep = record[ClassGenerator.CLASS_COLUMNS.index('department_code')]
-            no = record[ClassGenerator.CLASS_COLUMNS.index('course_no')]
-            year = record[ClassGenerator.CLASS_COLUMNS.index('year')]
-            season = record[ClassGenerator.CLASS_COLUMNS.index('season')]
-            if year == semester["year"] and season == semester["season"]:
-                key = (dep, no)
-                if key in res:
-                    res[key].append(record)
-                else:
-                    res[key] = [record]
-        return res
-
     def generate_content(self):
-        enrollment_data = []
         self.fill_required_courses()
         self.distribute_courses()
+        self.get_semester_classes()
         level = 0
         credits_gen = random.Random(RANDOM_SEED)
         for semester in self.dictionary.semesters:
@@ -727,26 +741,29 @@ class EnrollmentGenerator(BaseDataGenerator):
                     and semester['season'] != 'summer' \
                     and semester["begin_date"] < CURDATE:
                 credits = credits_gen.uniform(self.CREDITS_PER_SEMESTER[0], self.CREDITS_PER_SEMESTER[1])
-                classes_by_semester = self.get_semester_classes(semester)
+                classes_by_semester = self.semester_classes[semester['year'], semester['season']].copy()
                 credits_taken = 0
                 while credits_taken < credits:
                     (class_seq, course_key) = self.choose_class(level, semester, classes_by_semester)
                     credits_taken = credits_taken + self.dictionary.courses[course_key]
                     # make enrollment
                     enr = self.generate_enrollment(class_seq, semester)
-                    enrollment_data.append(enr)
+                    self.enrollment_data.append(enr)
 
                 # if all courses of the current lavel are off, move to the next
                 if level in self.courses_by_level and len(self.courses_by_level[level]) == 0:
                     level = level + 1
+
+    def get_content(self):
         return [
-            self.make_insert_map(self.ENROLLMENT_TABLE, self.ENROLLMENT_COLUMNS, enrollment_data)
+            self.make_insert_map(self.ENROLLMENT_TABLE, self.ENROLLMENT_COLUMNS, self.enrollment_data)
         ]
+
 
 class StudentGenerator(BaseDataGenerator):
 
     """ Generate students """
-    ADMISSION_SIZE = (30, 50)
+    ADMISSION_SIZE = (100, 125)
     ADMISSION_AGE = (18, 25)
     STUDENT_ID_OFFSET = 1000
     INACTIVE_PERCENT = 5
@@ -764,7 +781,9 @@ class StudentGenerator(BaseDataGenerator):
         self.dob_gen = random.Random(RANDOM_SEED)
         self.active_gen = random.Random(RANDOM_SEED)
         self.school_gen = random.Random(RANDOM_SEED)
-        self.program_gen = random.Random(RANDOM_SEED)
+        self.program_gen = {}
+        for school_code in sorted(self.dictionary.school_programs):
+            self.program_gen[school_code] = random.Random(RANDOM_SEED)
 
     def generate_student(self, semester):
         gender = self.generate_gender(self.gender_gen)
@@ -772,8 +791,8 @@ class StudentGenerator(BaseDataGenerator):
         dob_end = datetime.date(semester["year"] - self.ADMISSION_AGE[0], 12, 31)
         dob_start = datetime.date(semester["year"] - self.ADMISSION_AGE[1], 1, 1)
         dob = self.generate_date(dob_start, dob_end, self.dob_gen)
-        school = self.get_rand_item(self.dictionary.school_programs.keys(), self.school_gen)
-        program = self.get_rand_item(self.dictionary.school_programs[school], self.program_gen)
+        school = self.get_rand_item(sorted(self.dictionary.school_programs), self.school_gen)
+        program = self.get_rand_item(self.dictionary.school_programs[school], self.program_gen[school])
         self.student_counter += 1
         # what about masters and doctors?
         active = (CURDATE - semester["begin_date"]).days < 4 * 365
@@ -799,6 +818,8 @@ class StudentGenerator(BaseDataGenerator):
                 for i in range (0, student_count):
                     student = self.generate_student(semester)
                     self.student_data.append(student)
+
+    def get_content(self):
         return [
             self.make_insert_map(self.STUDENT_TABLE, self.STUDENT_COLUMNS, self.student_data)
         ]
@@ -809,15 +830,27 @@ def generate(content):
     random.seed(RANDOM_SEED)
     name_data = StatNameData()
     inst_namegen = StatNameGenerator(name_data, INSTRUCTOR_NAME_SEED)
+
     instgen = InstructorGenerator(inst_namegen, dictionary)
-    result = instgen.generate_content()
+    instgen.generate_content()
+    result = instgen.get_content()
+
     classgen = ClassGenerator(dictionary, instgen.dep_app)
-    result.extend(classgen.generate_content())
+    classgen.generate_content()
+
     stud_namegen = StatNameGenerator(name_data, STUDENT_NAME_SEED)
     studgen = StudentGenerator(stud_namegen, dictionary)
-    result.extend(studgen.generate_content())
+    studgen.generate_content()
+    result.extend(studgen.get_content())
+
     r = random.Random(RANDOM_SEED)
+    enr_result = []
     for student in studgen.student_data:
         enrgen = EnrollmentGenerator(dictionary, student, classgen, r)
-        result.extend(enrgen.generate_content())
+        enrgen.generate_content()
+        enr_result.extend(enrgen.get_content())
+
+    classgen.drop_empty_classes()
+    result.extend(classgen.get_content())
+    result.extend(enr_result)
     return result

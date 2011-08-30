@@ -21,7 +21,7 @@ from htsql.tr.dump import (FormatName, FormatLiteral,
                            DumpToDomain, DumpToInteger, DumpToFloat,
                            DumpToDecimal, DumpToString, DumpToDateTime,
                            DumpIsTotallyEqual)
-from htsql.tr.fn.dump import (DumpLength, DumpSubstring, DumpTrim,
+from htsql.tr.fn.dump import (DumpTrunc, DumpTruncTo,
                               DumpDateIncrement, DumpDateTimeIncrement,
                               DumpDateDecrement, DumpDateTimeDecrement,
                               DumpDateDifference, DumpExtractSecond,
@@ -52,6 +52,8 @@ class MySQLDumpFloat(DumpFloat):
         value = repr(self.value)
         if 'e' not in value and 'E' not in value:
             value = value+'e0'
+        if value[0] == "-":
+            value = "(%s)" % value
         self.write(value)
 
 
@@ -64,6 +66,8 @@ class MySQLDumpDecimal(DumpDecimal):
             value = "CAST(%s AS DECIMAL(65,30))" % value
         elif '.' not in value:
             value = "%s." % value
+        if value[0] == "-":
+            value = "(%s)" % value
         self.write(value)
 
 
@@ -142,6 +146,16 @@ class MySQLDumpIsTotallyEqual(DumpIsTotallyEqual):
             self.format("({lop} <=> {rop})", self.arguments)
         if self.signature.polarity == -1:
             self.format("(NOT ({lop} <=> {rop}))", self.arguments)
+
+
+class MySQLDumpTrunc(DumpTrunc):
+
+    template = "TRUNCATE({op}, 0)"
+
+
+class MySQLDumpTruncTo(DumpTruncTo):
+
+    template = "TRUNCATE({op}, {precision})"
 
 
 class MySQLDumpDateIncrement(DumpDateIncrement):

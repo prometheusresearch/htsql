@@ -83,7 +83,7 @@ rows from a table, simply write the table name:
 
    /school
 
-`The result set`__ is a list of schools in the university, including all
+`The query result`__ is a list of schools in the university, including all
 columns, sorted by the primary key for the table:
 
 __ http://demo.htsql.org/school
@@ -119,7 +119,8 @@ table selection to complex calculation.
 Choosing Columns
 ----------------
 
-Use a *selector* to specify more than one output column:
+Use a *selector*, marked with ``{`` curley braces ``}``, to specify 
+more than one output column:
 
 .. htsql:: /{count(school), count(program), count(department)}
 
@@ -130,8 +131,8 @@ display:
    :cut: 4
 
 In addition to table attributes, you could select arbitrary expressions.
-The following example displays, for each of the school records, the
-school's name and the number of associated departments:
+The following example displays, for each school record, the school's 
+name and the number of associated departments:
 
 .. htsql:: /school{name, count(department)}
    :cut: 4
@@ -139,8 +140,8 @@ school's name and the number of associated departments:
 To title an output column, use the ``:as`` decorator:
 
 .. htsql:: /school{name, count(department) :as '%23 of Dept.'}
-   :query: /school{name,count(department):as%20'%23%20of%20Dept.'}
-   :cut: 4
+   :query: /school{name,%20count(department)%20:as%20'%23%20of%20Dept.'}
+   :cut: 3
 
 Since HTSQL is a web query language, there are two characters that have
 special meaning: ``%`` is used to encode reserved and unprintable
@@ -159,11 +160,10 @@ Since the HTSQL processor knows about this relationship, it is possible
 to link data accordingly:
 
 .. htsql:: /program{school.name, title}
-   :cut: 4
+   :cut: 3
 
-It is possible to link data through several relationships.  Since
-``course`` is offered by a ``department`` which belongs to a ``school``,
-we can write:
+It is possible to link data through several relationships.  Since ``course``
+is offered by a ``department`` which belongs to a ``school``, we can write:
 
 .. htsql:: /course{department.school.name, department.name, title}
    :cut: 4
@@ -218,7 +218,7 @@ conjunction (``&``), alternation (``|``), and negation (``!``)
 operators.  The following request returns programs in the "School of
 Business" that do not grant a "Bachelor of Science" degree:
 
-.. htsql:: /program?school_code='bus'&degree!='bs'
+.. htsql:: /program?school.code='bus'&degree!='bs'
    :cut: 3
 
 Filters can be combined with selectors and links.  The following request
@@ -246,13 +246,13 @@ following example sorts courses in ascending order by department and
 then in descending order by number of credits:
 
 .. htsql:: /course.sort(department_code+, credits-)
-   :cut: 3
+   :cut: 2
 
 When sorting by a selected output column, you could use a shortcut
 syntax which combines column selection and sorting:
 
 .. htsql:: /course{department_code+, no, credits-, title}
-   :cut: 5
+   :cut: 4
 
 To list a range of rows, the ``limit()`` function takes one or two
 arguments.  The first argument is the number of rows to return, the
@@ -289,7 +289,7 @@ following two forms:
 .. htsql:: /course{department_code, no, title}?credits<3
    :cut: 3 
 
-.. htsql:: /(course?credits<3){department_code, no, title}
+.. htsql:: /course?credits<3 {department_code, no, title}
    :cut: 3 
 
 Note that the order in which selection and filter operators are applied
@@ -415,13 +415,13 @@ It's possible to nest aggregate expressions.  This request returns the
 average number of courses each department offers:
 
 .. htsql:: /school{name, avg(department.count(course))}
-   :cut: 4
+   :cut: 3
 
 Filters and nested aggregates can be combined.  Here we count, for each
 school, departments offering 4 or more credits:
 
 .. htsql:: /school{name, count(department?exists(course?credits>3))}
-   :cut: 4
+   :cut: 3
 
 Filtering can be done on one column, with aggregation on another.  This
 example shows average credits from only high-level courses:
@@ -445,7 +445,7 @@ either lack correlated ``course`` records or where every one of those
 
 .. htsql:: /department{name, avg(course.credits)}
             ?every(course.credits=3)
-   :cut: 4
+   :cut: 3
 
 
 Compositional Navigation
@@ -482,10 +482,10 @@ Drill-down navigation trims unrelated rows and preserves the order of
 prior links. Consider the following two queries.
 
 .. htsql:: /department
-   :cut: 5
+   :cut: 4
 
 .. htsql:: /school.department
-   :cut: 5
+   :cut: 4
 
 Although the latter query also returns records from the department
 table, it differs from the former in two ways.  First, it skips
@@ -779,21 +779,18 @@ Projections aren't limited to table attributes.  Let's assume course
 level as the first digit of the course number.  Then, hence following
 expression returns distinct course levels:
 
-.. htsql:: /course^round(no/100)
+.. htsql:: /course^trunc(no/100)
    :cut: 3
 
 If you wish to project by more than one expression, use a selector
 ``{}`` to group the expressions.  In this example we return distinct
 combinations of course level and credits.
 
-.. htsql:: /course^{round(no/100), credits}
-   :cut: 5
+.. htsql:: /course^{trunc(no/100), credits}
+   :cut: 4
 
 Just as tables are sorted by default using the table's primary key,
 projected expressions are also sorted using the distinct columns.
-
-Note: HTSQL currently lacks ``trunc()`` function, which should be used
-above instead of ``round()`` to get the correct course level.
 
 
 Working with Projections
@@ -805,37 +802,43 @@ column ``degree`` and a plural link ``program`` to records of the
 program table having that degree.  In the query below, we return
 distinct degrees with the number of corresponding programs.
 
-.. htsql:: /(program^degree){degree, count(program)}
-   :cut: 5
+.. htsql:: /program^degree {degree, count(program)}
+   :cut: 4
 
 We may want to filter the base table before projecting.  For example,
 listing only distinct degrees in the School of Engineering.
 
-.. htsql:: /(program?school_code='eng')^degree
+.. htsql:: 
    :cut: 5
+
+   /program?school_code='eng' 
+           ^degree
 
 Or, we could filter the expression after the projection has happened.
 In the next query we return only degrees having more than 5
 corresponding programs.
 
-.. htsql:: /(program^degree)?count(program)>5
+.. htsql::
    :cut: 5
+
+   /program^degree
+           ?count(program)>5
 
 Usually HTSQL automatically assigns names to projected columns, however,
 in cases where you have an expression, you have to name them.  In the
 following example, we return distinct course level and credits
 combinations sorted in descending order by level and credits.
 
-.. htsql:: /(course^{level:=round(no/100),credits}){level-, credits-}
-   :cut: 5
+.. htsql:: /course^{level:=round(no/100),credits}{level-, credits-}
+   :cut: 4
 
 Sometimes HTSQL cannot assign a name linking to the base of the
 projection.  In these cases, you may use ``^`` to refer to it.
 Additionally ``*`` can be used to return all columns of the projection.
 Thus, the first example of this section could be written:
 
-.. htsql:: /(program^degree){*, count(^)}
-   :cut: 5
+.. htsql:: /program^degree{*, count(^)}
+   :cut: 4
 
 .. **
 
@@ -850,57 +853,57 @@ expressions, and ``NULL`` handling.
 Comparison Operators
 --------------------
 
-The quality operator (``=``) is overloaded to support various types.
+The equality operator (``=``) is overloaded to support various types.
 For character strings, this depends upon the underlying database's
 collation rules but typically is case-sensitive.  For example, to return
-a ``course`` by ``title``:
+a ``department`` by ``name``:
 
-.. htsql:: /course?title='Drawing'
+.. htsql:: /department?name='Economics'
 
-If you're not sure of the exact course title, use the case-insensitive
-*contains* operator (``~``).  The example below returns all ``course``
-records that contain the substring ``'lab'``:
+If you're not sure of the exact department name, use the case-insensitive
+*contains* operator (``~``).  The example below returns all ``department``
+records that contain the substring ``'engineering'``:
 
-.. htsql:: /course?title~'lab'
+.. htsql:: /department?name~'engineering'
    :cut: 4
 
 Use the *not-contains* operator (``!~``) to exclude all courses with
-physics in the title:
+*science* in the name:
 
-.. htsql:: /course?title!~'lab'
+.. htsql:: /department?name!~'science'
    :cut: 4
    :hide:
 
-To exclude a specific class, use the *not-equals* operator:
+To exclude a specific department, use the *not-equals* operator:
 
-.. htsql:: /course?title!='Organic Chemistry Laboratory I'
+.. htsql:: /department?name!='Management & Marketing'
    :cut: 4
    :hide:
 
 The *equality* (``=``) and *inequality* (``!=``) operators are
 straightforward when used with numbers:
 
-.. htsql:: /course{department_code, no, title}?no=101
+.. htsql:: /department?count(course)!=0
    :cut: 2
 
 The *in* operator (``={}``) can be thought of as equality over a set.
-This example, we return courses that are in neither the "Art History"
-nor the "Studio Art" department:
+This example, we return departments that don't belong to either the
+School of Engineering or the School of Natural Sciences:
 
-.. htsql:: /course?department_code!={'arthis','stdart'}
+.. htsql:: /department?school_code!={'eng','ns'}
    :cut: 4
    :hide:
 
-Use the *greater-than* (``>``) operator to request courses with more
-than 3 credits:
+Use the *greater-than* (``>``) operator to request departments with
+more than 20 offered courses:
 
-.. htsql:: /course?credits>3
-   :cut: 2
+.. htsql:: /department?count(course)>20
+   :cut: 4
 
-Use the *greater-than-or-equal-to* (``>=``) operator request courses
-that have three credits or more:
+Use the *greater-than-or-equal-to* (``>=``) operator to request
+departments with 20 courses or more:
 
-.. htsql:: /course?credits>=3
+.. htsql:: /department?count(course)>=20
    :cut: 4
    :hide:
 
@@ -944,7 +947,7 @@ The *alternation* (``|``) operator is ``true()`` if either of its
 operands is ``true()``.  For example, we could list courses having
 anomalous number of credits:
 
-.. htsql:: /course?credits>4|credits<3
+.. htsql:: /course?credits>5|credits<3
    :cut: 4
 
 The precedence rules for boolean operators follow typical programming
@@ -957,11 +960,15 @@ that have more than three credits:
 .. htsql:: /course?(department_code='arthis'|department_code='stdart')&credits>3
    :cut: 4
 
+.. ** || 
+
 Without the parenthesis, the expression above would show all courses
 from ``'arthis'`` regardless of credits:
 
 .. htsql:: /course?department_code='arthis'|department_code='stdart'&credits>3
    :cut: 3
+
+.. ** ||
 
 When a non-boolean is used in a logical expression, it is implicitly
 cast as a *boolean*.  As part of this cast, tri-value logic is

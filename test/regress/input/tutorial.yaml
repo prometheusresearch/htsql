@@ -9,31 +9,43 @@ tests:
 
 - title: Getting Started
   tests:
-  # Selecting Data
+  # Basic Expressions
   - uri: /school
+  - uri: /(3+4)*6
+  - uri: /count(school)
+  # Choosing Columns
+  - uri: /{count(school), count(program), count(department)}
   - uri: /program{school_code, code, title}
-  - uri: /department{name-, school_code}
-  - uri: /course{department_code+, no, credits-, title}
-  - uri: /course{department_code+ :as 'Dept Code', no :as 'No.',
-                 credits-, title}
+  - uri: /school{name, count(department)}
+  - uri: /school{name, count(department) :as '%23 of Dept.'}
   # Linking Data
   - uri: /program{school.name, title}
   - uri: /course{department.school.name, department.name, title}
   - uri: /course{department{school.name, name}, title}
-  - uri: /department{*,school.*}
+  - uri: /department{*, school.*}
   # Filtering Data
   - uri: /department?school_code='eng'
+  - uri: /program?title~'lit'
   - uri: /program?degree={'ba','bs'}
   - uri: /program?school.code='bus'&degree!='bs'
   - uri: /course{department_code, no, title}
                 ?credits<3&department.school.code='ns'
-  - uri: /(course?credits<3&department.school.code='ns')
-                {department_code, no, title}
-  # Formatters
+  # Sorting & Truncating
+  - uri: /school.sort(name)
+  - uri: /course.sort(department_code+, credits-)
+  - uri: /course{department_code+, no, credits-, title}
+  - uri: /program.limit(5,10)
+  # Formatting Output
   - uri: /school/:json
   # Putting it All Together
-  - uri: /course{department{code, name},no,title+}
-                ?department.school.code='bus'/:csv
+  - uri: /course{department_code, no, title}?credits<3
+  - uri: /(course?credits<3){department_code, no, title}
+  - uri: /course.filter(credits<3).select(department_code, no, title)
+  - uri: /course.sort(credits-).limit(10){department_code, no, credits}
+  - uri: /course{department_code, no, credits-}.limit(10)
+  - uri: /course.limit(10).sort(credits-){department_code, no, credits}
+  - uri: /department{school.name, name, count(course)-}
+                .filter(school.name~'art').limit(5)/:csv
 
 - title: Relating and Aggregating Data
   tests:
@@ -51,29 +63,144 @@ tests:
   - uri: /school{name, avg(department.count(course))}
   - uri: /school{name, count(department?exists(course?credits>3))}
   - uri: /department{name, avg((course?no>400).credits)}
-  - uri: /department{code, min(course.credits), max(course.credits),
-                           avg(course.credits)}
-  - uri: /department{name, avg(course.credits), count(course)}
+  - uri: /department{code, min(course.credits), max(course.credits)}
+  - uri: /department{code, sum(course.credits), avg(course.credits)}
+  - uri: /department{name, avg(course.credits)}
                 ?every(course.credits=3)
+  # Compositional Navigation
+  - uri: /school.filter(code='eng')
+  - uri: /department?school.code='eng'
+  - uri: /school.filter(code='eng').department
+  - uri: /school.filter(code='eng').department.filter(code='ee').course
+  - uri: /department
+  - uri: /school.department
+
+- title: Calculations & References
+  tests:
+  # Calculated Attributes
+  - uri: /school{name, count(department)}? count(department)>3
+  - uri: /school.define(num_dept:=count(department))
+                {name, num_dept}?num_dept>3
+  - uri: /school{name, num_dept:=count(department)}? num_dept>3
+  # Calculated Links
+  - uri: /department
+                {name, count(course?no>=200&no<300),
+                 max((course?no>=200&no<300).credits),
+                 min((course?no>=200&no<300).credits),
+                 avg((course?no>=200&no<300).credits)}
+  - uri: /department.define(sophomore := course?no>=200&no<300)
+                {name, count(sophomore),
+                 max(sophomore.credits),
+                 min(sophomore.credits),
+                 avg(sophomore.credits)}
+  - uri: /department{name,
+                {count(sophomore),
+                 max(sophomore.credits),
+                 min(sophomore.credits),
+                 avg(sophomore.credits)
+                } :where(sophomore := course?no>=200&no<300)}
+  - uri: /department.define(freshman := course?no>=100&no<200,
+                            sophomore := course?no>=200&no<300,
+                            junior := course?no>=300&no<400,
+                            senior := course?no>=400&no<500)
+                {name,
+                 count(freshman),
+                 max(freshman.credits),
+                 min(freshman.credits),
+                 avg(freshman.credits),
+                 count(sophomore), 
+                 max(sophomore.credits),
+                 min(sophomore.credits),
+                 avg(sophomore.credits),
+                 count(junior), 
+                 max(junior.credits),
+                 min(junior.credits), 
+                 avg(junior.credits),
+                 count(senior), 
+                 max(senior.credits),
+                 min(senior.credits),
+                 avg(senior.credits)}
+  - uri: /department.define(freshman := course?no>=100&no<200,
+                            sophomore := course?no>=200&no<300,
+                            junior := course?no>=300&no<400,
+                            senior := course?no>=400&no<500,
+                            stats(set) := {count(set),
+                                           max(set.credits),
+                                           min(set.credits),
+                                           avg(set.credits)})
+                {name,
+                 stats(freshman),
+                 stats(sophomore), 
+                 stats(junior),
+                 stats(senior)}
+  # Argument References
+  - uri: /department.define(course(level) := course?no>=level*100
+                                                   &no<(level+1)*100)
+                {name,
+                 count(course(1)),
+                 count(course(2)),
+                 count(course(3)),
+                 count(course(4))}
+    expect: 400
+  - uri: /department.define(course($level) := course?no>=$level*100
+                                                    &no<($level+1)*100)
+                {name,
+                 count(course(1)),
+                 count(course(2)),
+                 count(course(3)),
+                 count(course(4))}
+  - uri: /department.define(
+                stats($level) := {count(set),
+                                  max(set.credits),
+                                  min(set.credits),
+                                  avg(set.credits)
+                                 } :where set :=
+                                        course?no>=$level*100
+                                              &no<($level+1)*100)
+                {name, stats(1), stats(2), stats(3), stats(4)}
+  # Defined References
+  - uri: /define($avg_credits := avg(course.credits))
+                .course?credits>$avg_credits
+  - uri: /course?credits>$avg_credits
+                :where $avg_credits := avg(course.credits)
+  - uri: /department.define($avg_credits:=avg(course.credits))
+                .course?credits>$avg_credits
+
+- title: Projections
+  tests:
+  # Distinct Expressions
+  - uri: /program{degree}
+  - uri: /distinct(program{degree})
+  - uri: /program^degree
+  - uri: /count(program^degree)
+  - uri: /school{name, count(program^degree)}
+  - uri: /course^round(no/100)
+  - uri: /course^{round(no/100), credits}
+  # Working with Projections
+  - uri: /(program^degree){degree, count(program)}
+  - uri: /(program?school_code='eng')^degree
+  - uri: /(program^degree)?count(program)>5
+  - uri: /(course^{level:=round(no/100),credits}){level-, credits-}
+  - uri: /(program^degree){*, count(^)}
 
 - title: Logical Expressions
   tests:
   # Comparison Operators
-  - uri: /course?title='Drawing'
-  - uri: /course?title~'lab'
-  - uri: /course?title!~'lab'
-  - uri: /course?title!='Organic Chemistry Laboratory I'
-  - uri: /course{department_code,no,title}?no=101
-  - uri: /course?department_code!={'arthis','stdart'}
-  - uri: /course?credits>3
-  - uri: /course?credits>=3
+  - uri: /department?name='Economics'
+  - uri: /department?name~'engineering'
+  - uri: /department?name!~'science'
+  - uri: /department?name!='Management & Marketing'
+  - uri: /department?count(course)!=0
+  - uri: /department?school_code!={'eng','ns'}
+  - uri: /department?count(course)>20
+  - uri: /department?count(course)>=20
   - uri: /department?code>'me'
   # Boolean Expressions
   - uri: /{true(), false(), null(), ''}
   - uri: /department{code, name}?is_null(school_code)
   - uri: /department{code, name}?!is_null(school_code)
   - uri: /course?department_code='acc'&credits<3
-  - uri: /course?credits>4|credits<3
+  - uri: /course?credits>5|credits<3
   - uri: /course?(department_code='arthis'|department_code='stdart')&credits>3
   - uri: /course?department_code='arthis'|department_code='stdart'&credits>3
   - uri: /course?description
@@ -85,12 +212,4 @@ tests:
   - uri: /department?school_code=null()
   - uri: /department?school_code==null()
   - uri: /department?school_code!=='art'
-
-- title: Odds & Ends
-  tests:
-  - uri: /{1='1'}               # untyped literals
-  - uri: /{'Bursar''s Office'}  # single-quote escaping
-  - uri: /{'%25'}               # percent-encoding
-  - uri: /course.sort(credits)  # sort expression
-  - uri: /course.limit(5,20)    # limit/offset
 

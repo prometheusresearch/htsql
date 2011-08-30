@@ -196,6 +196,18 @@ class RoundToSig(Signature):
     ]
 
 
+class TruncSig(UnarySig):
+    pass
+
+
+class TruncToSig(Signature):
+
+    slots = [
+            Slot('op'),
+            Slot('precision'),
+    ]
+
+
 class IfSig(Signature):
 
     slots = [

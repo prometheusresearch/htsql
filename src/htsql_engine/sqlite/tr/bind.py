@@ -13,8 +13,9 @@ This module adapts HTSQL binder for SQLite.
 
 from htsql.domain import IntegerDomain, FloatDomain
 from htsql.tr.fn.bind import (correlates, CorrelateDecimalRoundTo,
+                              CorrelateDecimalTruncTo,
                               CorrelateDecimalAvg)
-from htsql.tr.fn.signature import RoundToSig
+from htsql.tr.fn.signature import RoundToSig, TruncToSig
 
 
 class SQLiteCorrelateDecimalAvg(CorrelateDecimalAvg):
@@ -26,5 +27,10 @@ class SQLiteCorrelateDecimalAvg(CorrelateDecimalAvg):
 class SQLiteCorrelateFloatRoundTo(CorrelateDecimalRoundTo):
 
     correlates(RoundToSig, (FloatDomain, IntegerDomain))
+
+
+class SQLiteCorrelateFloatTruncTo(CorrelateDecimalTruncTo):
+
+    correlates(TruncToSig, (FloatDomain, IntegerDomain))
 
 

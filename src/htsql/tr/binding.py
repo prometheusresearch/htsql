@@ -26,7 +26,7 @@ class Binding(Clonable, Printable):
     This is an abstract class; see subclasses for concrete binding nodes.
 
     A binding graph is an intermediate phase of the HTSQL translator between
-    the syntax tree and the flow graph.  It is  converted from the syntax tree
+    the syntax tree and the flow graph.  It is converted from the syntax tree
     by the *binding* process and further translated to the flow graph by the
     *encoding* process.
 

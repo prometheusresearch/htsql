@@ -3,7 +3,7 @@
 .PHONY: default build install deps develop doc dist windist pypi clean \
 	test train test-routine train-routine test-sqlite train-sqlite \
 	test-pgsql train-pgsql test-mysql train-mysql test-oracle train-oracle \
-	test-mssql train-mssql purge-test lint \
+	test-mssql train-mssql purge-test lint coverage \
 	create-sqlite create-pgsql create-mysql create-oracle create-mssql \
 	drop-sqlite drop-pgsql drop-mysql drop-oracle drop-mssql \
 	build-all check-all start-pgsql84 start-pgsql90 start-mysql51 \
@@ -49,11 +49,12 @@ default:
 	@echo "    where <suite> is one of:"
 	@echo "      routine, sqlite, pgsql, mysql, oracle, mssql"
 	@echo "  purge-test: to purge stale test output data"
-	@echo "	 create-<db>: to install the test database for a specific database"
+	@echo "  create-<db>: to install the test database for a specific database"
 	@echo "  drop-<db>: to delete the test database for a specific database"
 	@echo "    where <db> is one of:"
 	@echo "        sqlite, pgsql, mysql, oracle, mssql"
 	@echo "  lint: detect errors in the source code"
+	@echo "  coverage: measure code coverage of regression tests"
 	@echo
 	@echo "  *** Integration Testing ***"
 	@echo "  build-all: to build all test benches"
@@ -203,6 +204,16 @@ purge-test:
 # Detect errors in the source code (requires PyFlakes)
 lint:
 	${PYFLAKES} src/htsql src/htsql_pgsql src/htsql_sqlite
+
+# Measure code coverage of regression tests (requires coverage)
+coverage:
+	rm -rf build/coverage
+	mkdir -p build/coverage
+	COVERAGE_FILE=build/coverage/coverage.dat \
+	${COVERAGE} run --branch --source=htsql,htsql_sqlite,htsql_pgsql,htsql_mysql,htsql_oracle,htsql_mssql,htsql_tweak \
+	`which ${HTSQL_CTL}` regress -i test/regress.yaml -q
+	COVERAGE_FILE=build/coverage/coverage.dat \
+	${COVERAGE} html --directory=build/coverage
 
 # Install the regression database for SQLite.
 create-sqlite:
