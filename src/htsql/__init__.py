@@ -44,7 +44,7 @@ To execute a WSGI request, run
 """
 
 
-__version__ = '2.1.0rc1'
+__version__ = '2.1.1'
 
 
 from .application import Application as HTSQL

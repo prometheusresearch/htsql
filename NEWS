@@ -2,6 +2,20 @@ List of Changes
 ===============
 
 
+2.1.1 final (2011-08-30)
+------------------------
+
+* General code cleanup and refactoring.
+* Improved emitted SQL for projections and aggregates.
+* Changed operator precedence to avoid parentheses around
+  filtering and projection operators.
+* Added a test data generator for HTSQL regression tests
+  (thank to Yuri Yerokhin).
+* Added support for hierarchical headers for `/:txt` and `/:html`
+  formatters.
+* Updated documentation.
+
+
 2.1.0 rc 1 (2011-06-21)
 -----------------------
 
