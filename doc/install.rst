@@ -2,8 +2,6 @@
   Installation and Administration Guide
 *****************************************
 
-.. contents::  Table of Contents
-
 .. highlight:: console
 
 The following instructions assume a recent Debian_ or `Debian-derived`_
