@@ -180,6 +180,9 @@ follows:
 * `decimal`
 * `float`
 
+For instance, if an arithmetic operation has an integer and a decimal
+operands, the integer operand is converted to decimal.
+
 
 Boolean Type
 ============
@@ -206,28 +209,256 @@ native data types.
 | *mysql*              | ``BOOL`` aka ``BOOLEAN``  |
 |                      | aka ``TINYINT(1)``        |
 +----------------------+---------------------------+
-| *oracle*             | |oracle-native|           |
+| *oracle*             | |oracle-native-bool|      |
 +----------------------+---------------------------+
 | *mssql*              | ``BIT``                   |
 +----------------------+---------------------------+
 
-.. |oracle-native| replace:: ``NUMBER(1) CHECK (_ IN (0, 1))``
+.. |oracle-native-bool| replace:: ``NUMBER(1) CHECK (_ IN (0, 1))``
 
 
 Numeric Types
 =============
 
+HTSQL supports three numeric types: `integer`, `decimal`
+and `float`.
+
+The `integer` type is a type of binary integer values
+of a finite range.  Typically, a value of an integer
+type takes 16, 32 or 64 bits.
+
+The `decimal` type is an arbitrary precision exact numeric
+type.  A value of a decimal type is represented as a sequence
+of decimal digits.
+
+The `float` type is an IEEE 754 floating-point inexact
+numeric type.
+
+Numeric literals are assigned to one of these types, depending
+on the literal notation:
+
+* numbers written as decimal integers are assigned to `integer` type;
+* numbers with a decimal point are assigned to `decimal` type;
+* numbers in exponential notation are assigned to `float` type.
+
+.. htsql:: /{60, 2.125, 271828e-5}
+
+The following table maps `integer` to respective native data types:
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | ``INT``, ``INTEGER`` or   |
+|                      | any type containing       |
+|                      | ``INT`` in its name       |
++----------------------+---------------------------+
+| *pgsql*              | ``SMALLINT``,             |
+|                      | ``INTEGER``, ``BIGINT``   |
++----------------------+---------------------------+
+| *mysql*              | ``TINYINT`` except        |
+|                      | ``TINYINT(1)``,           |
+|                      | ``SMALLINT``, and others  |
++----------------------+---------------------------+
+| *oracle*             | ``INTEGER`` aka           |
+|                      | ``NUMBER(38)``            |
++----------------------+---------------------------+
+| *mssql*              | ``SMALLINT``, ``INT``     |
+|                      | ``BIGINT``                |
++----------------------+---------------------------+
+
+Note: Oracle does not have a native binary integer type, so
+it is emulated as a decimal type ``NUMBER(38)``.
+
+The following table maps `decimal` to native data types:
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | None                      |
++----------------------+---------------------------+
+| *pgsql*              | ``NUMERIC``               |
++----------------------+---------------------------+
+| *mysql*              | ``DECIMAL``               |
++----------------------+---------------------------+
+| *oracle*             | ``NUMBER`` except for     |
+|                      | ``NUMBER(38)``            |
++----------------------+---------------------------+
+| *mssql*              | ``DECIMAL``, ``NUMERIC``  |
++----------------------+---------------------------+
+
+Note: SQLite does not support arbitrary-precision exact numbers,
+any values of `decimal` types are cast to `float`.
+
+The following table maps `float` to native data types:
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | ``REAL``, ``FLOAT``,      |
+|                      | ``DOUBLE`` or any type    |
+|                      | containing ``REAL``,      |
+|                      | ``FLOA``, ``DOUB`` in its |
+|                      | name                      |
++----------------------+---------------------------+
+| *pgsql*              | ``REAL``,                 |
+|                      | ``DOUBLE PRECISION``      |
++----------------------+---------------------------+
+| *mysql*              | ``FLOAT``, ``DOUBLE``     |
++----------------------+---------------------------+
+| *oracle*             | ``BINARY_FLOAT``,         |
+|                      | ``BINARY_DOUBLE``         |
++----------------------+---------------------------+
+| *mssql*              | ``FLOAT``, ``REAL``       |
++----------------------+---------------------------+
+
 
 String Type
 ===========
+
+The `string` data type represents all varieties of SQL character
+types.  A value of a string type is a finite sequence of
+characters.
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | name contains ``CHAR``,   |
+|                      | ``CLOB`` or ``TEXT``      |
++----------------------+---------------------------+
+| *pgsql*              | ``CHAR``, ``VARCHAR``,    |
+|                      | ``TEXT``                  |
++----------------------+---------------------------+
+| *mysql*              | ``CHAR``, ``VARCHAR``     |
+|                      | ``TINYTEXT``, ``TEXT``,   |
+|                      | etc                       |
++----------------------+---------------------------+
+| *oracle*             | ``CHAR``, ``NCHAR``,      |
+|                      | ``VARCHAR2``,             |
+|                      | ``NVARCHAR2``,            |
+|                      | ``CLOB``, ``NCLOB``       |
++----------------------+---------------------------+
+| *mssql*              | ``CHAR``, ``NCHAR``       |
+|                      | ``VARCHAR``, ``NVARCHAR`` |
++----------------------+---------------------------+
 
 
 Enum Type
 =========
 
+The `enum` type represents a finite, ordered set of fixed values.
+`enum` is a family of types, each element of the family is associated
+with the respective set of values.
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | None                      |
++----------------------+---------------------------+
+| *pgsql*              | ``ENUM``                  |
++----------------------+---------------------------+
+| *mysql*              | ``ENUM``                  |
++----------------------+---------------------------+
+| *oracle*             | None                      |
++----------------------+---------------------------+
+| *mssql*              | None                      |
++----------------------+---------------------------+
+
+Note: only PostgreSQL and MySQL support `enum` data type.
+
 
 Date/Time Types
 ===============
+
+HTSQL presents three data type to express date and time values:
+`date`, `time` and `datetime`.  The values of `date` type are
+dates, the values of `time` type represent time of a day,
+`datetime` is a combination of date and time.
+
+Literal values of `date` type must have the form ``YYYY-MM-DD``.
+Literal values of `time` type should have the form: ``hh:mm:ss.sss``.
+Here, the seconds component is optional and could be omitted.
+Finally, a literal value of `datetime` type is a combination of
+date and time separated by a whitespace or character ``T``.
+
+.. htsql:: /{date('2010-04-15'), time('20:13:04.5'),
+             datetime('2010-04-15 20:13:04.5')}
+
+The following table maps `date` to native data types:
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | ``DATE``                  |
++----------------------+---------------------------+
+| *pgsql*              | ``DATE``                  |
++----------------------+---------------------------+
+| *mysql*              | ``DATE``                  |
++----------------------+---------------------------+
+| *oracle*             | None                      |
++----------------------+---------------------------+
+| *mssql*              | None                      |
++----------------------+---------------------------+
+
+Notes:
+
+1. SQLite does not have a native `date` type; a date value
+   is represented as a string ``'YYYY-MM-DD'``.
+2. Oracle does not have a native `date` type (even though
+   it has a type called ``DATE``); date values are
+   represented as values of type ``DATE`` with zero
+   time part.
+3. MS SQL Server 2005 does not have a native `date` type;
+   date values are represented as values of type ``DATETIME``
+   with zero time part.
+
+The following table maps `time` to native date types:
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | None                      |
++----------------------+---------------------------+
+| *pgsql*              | ``TIME``                  |
++----------------------+---------------------------+
+| *mysql*              | ``TIME``                  |
++----------------------+---------------------------+
+| *oracle*             | None                      |
++----------------------+---------------------------+
+| *mssql*              | None                      |
++----------------------+---------------------------+
+
+Notes:
+
+1. SQLite does not have a native `time` type; a time value
+   is represented as a string ``'hh:mm:ss'``.
+2. Oracle does not have a native `time` type; time values
+   are represented using type ``INTERVAL HOUR TO SECOND``.
+3. MS SQL Server 2005 does not have a native `time` type;
+   time values are represented as float numbers in the range
+   from 0.0 to 1.0.
+
+The following table maps `datetime` to native types:
+
++----------------------+---------------------------+
+| Backend              | Native types              |
++======================+===========================+
+| *sqlite*             | ``DATETIME``,             |
+|                      | ``TIMESTAMP``             |
++----------------------+---------------------------+
+| *pgsql*              | ``TIMESTAMP``             |
++----------------------+---------------------------+
+| *mysql*              | ``DATETIME``,             |
+|                      | ``TIMESTAMP``             |
++----------------------+---------------------------+
+| *oracle*             | ``DATE``, ``TIMESTAMP``   |
++----------------------+---------------------------+
+| *mssql*              | ``DATETIME``,             |
+|                      | ``SMALLDATETIME``         |
++----------------------+---------------------------+
+
+Note: SQLite does not have a native datetime type;
+a datetime value is represented as a string of the form
+``'YYYY-MM-DD hh:mm:ss'``.
 
 
 .. vim: set spell spelllang=en textwidth=72:
