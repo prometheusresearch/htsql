@@ -1,0 +1,76 @@
+<html>
+<body>
+<script src="jquery.min.js"></script>
+<script src="springy.js"></script>
+<script src="springyui.js"></script>
+<script>
+
+var graph = new Graph();
+
+var t_school = graph.newNode({label: 'school'});
+var t_course_classification = graph.newNode({label: 'course_classification'});
+var t_appointment = graph.newNode({label: 'appointment'});
+var t_classification = graph.newNode({label: 'classification'});
+var t_confidential = graph.newNode({label: 'confidential'});
+var t_program_requirement = graph.newNode({label: 'program_requirement'});
+var t_enrollment = graph.newNode({label: 'enrollment'});
+var t_course = graph.newNode({label: 'course'});
+var t_semester = graph.newNode({label: 'semester'});
+var t_program = graph.newNode({label: 'program'});
+var t_student = graph.newNode({label: 'student'});
+var t_department = graph.newNode({label: 'department'});
+var t_instructor = graph.newNode({label: 'instructor'});
+var t_class = graph.newNode({label: 'class'});
+var t_prerequisite = graph.newNode({label: 'prerequisite'});
+
+graph.newEdge(t_school, t_department, {});
+graph.newEdge(t_school, t_program, {});
+graph.newEdge(t_course_classification, t_course, {});
+graph.newEdge(t_course_classification, t_classification, {});
+graph.newEdge(t_appointment, t_department, {});
+graph.newEdge(t_appointment, t_instructor, {});
+graph.newEdge(t_classification, t_classification, {});
+graph.newEdge(t_classification, t_classification, {});
+graph.newEdge(t_classification, t_program_requirement, {});
+graph.newEdge(t_classification, t_course_classification, {});
+graph.newEdge(t_confidential, t_instructor, {});
+graph.newEdge(t_program_requirement, t_classification, {});
+graph.newEdge(t_program_requirement, t_program, {});
+graph.newEdge(t_enrollment, t_class, {});
+graph.newEdge(t_enrollment, t_student, {});
+graph.newEdge(t_course, t_department, {});
+graph.newEdge(t_course, t_prerequisite, {});
+graph.newEdge(t_course, t_course_classification, {});
+graph.newEdge(t_course, t_class, {});
+graph.newEdge(t_semester, t_class, {});
+graph.newEdge(t_program, t_school, {});
+graph.newEdge(t_program, t_program, {});
+graph.newEdge(t_program, t_student, {});
+graph.newEdge(t_program, t_program_requirement, {});
+graph.newEdge(t_program, t_program, {});
+graph.newEdge(t_student, t_program, {});
+graph.newEdge(t_student, t_enrollment, {});
+graph.newEdge(t_department, t_school, {});
+graph.newEdge(t_department, t_appointment, {});
+graph.newEdge(t_department, t_course, {});
+graph.newEdge(t_instructor, t_confidential, {});
+graph.newEdge(t_instructor, t_appointment, {});
+graph.newEdge(t_instructor, t_class, {});
+graph.newEdge(t_class, t_course, {});
+graph.newEdge(t_class, t_semester, {});
+graph.newEdge(t_class, t_instructor, {});
+graph.newEdge(t_class, t_enrollment, {});
+graph.newEdge(t_prerequisite, t_course, {});
+
+
+//graph.newEdge(dennis, michael, {color: '#00A0B0'});
+
+jQuery(document).ready(function(){
+	jQuery('#springydemo').springy({ 'graph': graph });
+});
+
+</script>
+
+<canvas id="springydemo" width="640" height="480" />
+</body>
+</html>
