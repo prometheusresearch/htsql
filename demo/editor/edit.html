@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>HTSQL Editor</title>
+    <script src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+    <script src="build/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="build/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="build/codemirror/theme/default.css">
+    <script type="text/javascript" src="htsql-mode.js"></script>
+    <link rel="stylesheet" href="htsql-mode.css">
+    <style type="text/css">
+      .CodeMirror {
+        border: 1px solid black;
+      }
+      .CodeMirror-scroll {
+        height: 100px;
+      }
+      #output {
+        width: 100%;
+        height: 500px;
+        border: 1px solid black;
+      }
+    </style>
+    <script type="text/javascript">
+        var base = "http://demo.htsql.org";
+        $(document).ready(function() {
+            function run(query) {
+                query = query.replace(/^\s+|\s+$/, "");
+                if (!/^\//.test(query)) {
+                    return;
+                }
+                query = escape(query);
+                $('#output').attr('src', base+query);
+                window.location.hash = '#'+query;
+            }
+            var code = $('#code');
+            if (code.val() == "") {
+                code.val('/');
+                var hash = window.location.hash;
+                if (/^#\/.+/.test(hash)) {
+                    code.val(unescape(hash.substr(1)));
+                }
+            }
+            run(code.val());
+            var cm = CodeMirror.fromTextArea(code[0], {
+                mode: 'htsql',
+                onKeyEvent: function(i, e) {
+                    if (e.ctrlKey && e.keyCode == 13) {
+                        $('#run').click();
+                        return true;
+                    }
+                }
+            });
+            $('#run').click(function() {
+                run(cm.getValue());
+            });
+        });
+    </script>
+  </head>
+  <body>
+    <textarea id="code"></textarea>
+    <br>
+    <button id="run">Run</button> (or press <em>Ctrl-Enter</em>)
+    <br>
+    <strong>Output:</strong>
+    <br>
+    <iframe id="output" width="640" height="480"></iframe>
+  </body>
+</html>
+

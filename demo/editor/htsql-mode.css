@@ -1,0 +1,18 @@
+.cm-s-default span.cm-htsql-function {
+  color: #06287E;
+}
+.cm-s-default span.cm-htsql-attribute {
+  color: #007020;
+}
+.cm-s-default span.cm-htsql-number {
+  color: #208050;
+}
+.cm-s-default span.cm-htsql-string {
+  color: #4070A0;
+}
+.cm-s-default span.cm-htsql-operator {
+  color: #666666;
+}
+.cm-s-default span.cm-htsql-punctuation {
+  color: #525252;
+}
