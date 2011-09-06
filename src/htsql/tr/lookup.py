@@ -32,6 +32,19 @@ import re
 import unicodedata
 
 
+def get_catalog():
+    "returns the catalog object; generate if necessary"
+    # Get the database metadata.  Check if it was loaded before;
+    # if not, load it from the database and cache it as an application
+    # attribute.
+    app = context.app
+    if app.htsql.cached_catalog is None:
+        introspect = Introspect()
+        catalog = introspect()
+        app.htsql.cached_catalog = catalog
+    return app.htsql.cached_catalog
+
+
 def normalize(name):
     """
     Normalizes a name to provide a valid HTSQL identifier.
@@ -207,7 +220,6 @@ class DirectionProbe(Probe):
     def __str__(self):
         return "?<+|->"
 
-
 class Lookup(Adapter):
     """
     Extracts information from a binding node.
@@ -241,16 +253,7 @@ class Lookup(Adapter):
         assert isinstance(probe, Probe)
         self.binding = binding
         self.probe = probe
-        # Get the database metadata.  Check if it was loaded before;
-        # if not, load it from the database and cache it as an application
-        # attribute.
-        # FIXME: move it to a more appropriate place.
-        app = context.app
-        if app.htsql.cached_catalog is None:
-            introspect = Introspect()
-            catalog = introspect()
-            app.htsql.cached_catalog = catalog
-        self.catalog = app.htsql.cached_catalog
+        self.catalog = get_catalog()
 
     def __call__(self):
         # `None` means the lookup request failed.

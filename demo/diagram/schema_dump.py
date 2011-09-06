@@ -1,10 +1,10 @@
 import sys
 from htsql import HTSQL
 from htsql.request import produce
-from htsql.tr.lookup import normalize, lookup, AttributeProbe
+from htsql.tr.lookup import normalize, lookup_attribute, get_catalog
 from htsql.tr.parse import parse
 from htsql.tr.bind import bind
-conn = HTSQL("pgsql:htsql_regress")
+app = HTSQL("pgsql:htsql_regress")
 
 #----------------
 # build the graph
@@ -12,11 +12,9 @@ conn = HTSQL("pgsql:htsql_regress")
 
 graph = {}
 
-with conn:
+with app:
     # force introspection 
-    for row in produce("/'Hello World'"):
-        pass
-    catalog = conn.htsql.cached_catalog
+    catalog = get_catalog()
     reverse = {}
 
     # record all potential reverse links
@@ -52,21 +50,18 @@ with conn:
                  
                 # probe the binding for the link name
                 fk_name = normalize(fk.target_name)
-                probe = AttributeProbe(fk_name, None)
-                if lookup(btable, probe):
+                if lookup_attribute(btable, fk_name):
                     forward_links.append((fk_name, is_parental, fk_name))
                 else:
                     if 1 == len(fk.origin_column_names):
                         oc_name = normalize(fk.origin_column_names[0])
-                        probe = AttributeProbe(oc_name, None)
-                        if lookup(btable, probe):
+                        if lookup_attribute(btable, oc_name):
                             forward_links.append((oc_name, is_parental, 
                                                   fk_name))
 
             # add reverse links that lookup
             for fk_name in reverse.get(tname,[]):
-                probe = AttributeProbe(fk_name, None)
-                if lookup(btable, probe):
+                if lookup_attribute(btable, fk_name):
                     reverse_links.append((fk_name, False, fk_name))
 
             graph[tname] = (set(forward_links), set(reverse_links))
