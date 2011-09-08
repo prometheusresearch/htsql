@@ -13,7 +13,7 @@ This module implements the request utility.
 
 
 from .adapter import Utility, Realization
-from .cmd.act import produce, render as render_cmd
+from .cmd.act import produce as produce_cmd, render as render_cmd
 from .cmd.command import UniversalCmd
 import urllib
 
@@ -38,7 +38,7 @@ class Request(Utility):
 
     def produce(self):
         command = UniversalCmd(self.uri)
-        return produce(command)
+        return produce_cmd(command)
 
     def render(self, environ):
         command = UniversalCmd(self.uri)
