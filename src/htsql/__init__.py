@@ -47,8 +47,8 @@ To execute a WSGI request, run
 __version__ = '2.1.1'
 
 
-from . import (adapter, addon, application, connect, context, domain, entity,
-               error, introspect, mark, request, split_sql, tr, util,
+from . import (adapter, addon, application, cmd, connect, context, domain,
+               entity, error, introspect, mark, request, split_sql, tr, util,
                validator, wsgi)
 from .validator import DBVal
 from .addon import Addon, Parameter
@@ -90,7 +90,7 @@ class HTSQLAddon(Addon):
                       hint="""the connection URI"""),
     ]
 
-    packages = ['.', '.fmt', '.tr', '.tr.fn']
+    packages = ['.', '.cmd', '.fmt', '.tr', '.tr.fn']
     prerequisites = []
     postrequisites = ['engine']
 

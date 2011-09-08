@@ -12,9 +12,6 @@ This module implements generic HTSQL exceptions.
 """
 
 
-from .mark import Mark
-
-
 class HTTPError(Exception):
     """
     An error associated with an HTSQL query.
@@ -42,20 +39,14 @@ class HTTPError(Exception):
 
     `detail` (a string)
         The description of the error.
-
-    `mark` (class:`htsql.mark.Mark`)
-        The slice of an HTSQL query that caused the error.
     """
 
     code = None
     kind = None
 
-    def __init__(self, detail, mark):
+    def __init__(self, detail):
         assert isinstance(detail, str)
-        assert isinstance(mark, Mark)
-
         self.detail = detail
-        self.mark = mark
 
     def __call__(self, environ, start_response):
         """
@@ -66,9 +57,7 @@ class HTTPError(Exception):
         return [str(self), "\n"]
 
     def __str__(self):
-        lines = self.mark.excerpt()
-        mark_detail = "\n".join("    "+line for line in lines)
-        return "%s: %s:\n%s" % (self.kind, self.detail, mark_detail)
+        return "%s: %s" % (self.kind, self.detail)
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.detail)

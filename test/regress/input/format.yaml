@@ -97,3 +97,18 @@ tests:
            '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
            '%CE%BE', '\/%25''"&<>#', ''}/:html
 
+- title: Commands
+  tests:
+  - uri: /school/:retrieve
+  - uri: /retrieve(/school)
+  - uri: /school/:retrieve/:json
+  # Errors
+  - uri: /retrieve()
+    expect: 400
+  - uri: /retrieve(school)
+    expect: 400
+  - uri: /school/:html/:retrieve
+    expect: 400
+  - uri: /school/:html/:json
+    expect: 400
+

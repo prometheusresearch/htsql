@@ -25,6 +25,7 @@ tests:
     Available routines:
       help (h, ?)              : describe the usage of the application and its routines
       version                  : display the version of the application
+      extension (ext)          : list and describe HTSQL extensions
       server (serve, s)        : start an HTTP server handling HTSQL requests
       shell (sh)               : start an HTSQL shell
       get                      : execute and render an HTSQL query

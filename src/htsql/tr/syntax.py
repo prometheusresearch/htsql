@@ -50,73 +50,45 @@ class QuerySyntax(Syntax):
     """
     Represents an HTSQL query.
 
-    An HTSQL query is composed of a segment expression and an optional format
-    decorator::
-
-        /<segment>/:<format>
-
-    `segment` (:class:`SegmentSyntax` or ``None``)
-        The segment expression.
-
-    `format` (:class:`FormatSyntax` or ``None``)
-        The format decorator.
+    `segment` (:class:`SegmentSyntax`)
+        The top-level segment.
     """
 
-    def __init__(self, segment, format, mark):
-        assert isinstance(segment, maybe(SegmentSyntax))
-        assert isinstance(format, maybe(FormatSyntax))
+    def __init__(self, segment, mark):
+        assert isinstance(segment, SegmentSyntax)
 
         super(QuerySyntax, self).__init__(mark)
         self.segment = segment
-        self.format = format
 
     def __str__(self):
         # Generate an HTSQL query:
-        #   /<segment>/:<format>
-        chunks = []
-        if self.segment is not None:
-            chunks.append(str(self.segment))
-        if self.format is not None:
-            chunks.append(str(self.format))
-        if not chunks:
-            chunks.append('/')
-        return ''.join(chunks)
+        #   /<segment>
+        return str(self.segment)
 
 
 class SegmentSyntax(Syntax):
     """
     Represents a segment expression.
 
-    `branch` (:class:`Syntax`)
+    `branch` (:class:`Syntax` or ``None``)
         An expression.
     """
 
     def __init__(self, branch, mark):
-        assert isinstance(branch, Syntax)
+        assert isinstance(branch, maybe(Syntax))
 
         super(SegmentSyntax, self).__init__(mark)
         self.branch = branch
 
     def __str__(self):
-        return '/%s' % self.branch
-
-
-class FormatSyntax(Syntax):
-    """
-    Represents a format decorator.
-
-    `identifier` (:class:`IdentifierSyntax`)
-        The decorator identifier.
-    """
-
-    def __init__(self, identifier, mark):
-        assert isinstance(identifier, IdentifierSyntax)
-
-        super(FormatSyntax, self).__init__(mark)
-        self.identifier = identifier
-
-    def __str__(self):
-        return '/:%s' % self.identifier
+        # Display:
+        #   /<branch>
+        if self.branch is None:
+            return '/'
+        elif isinstance(self.branch, CommandSyntax):
+            return str(self.branch)
+        else:
+            return '/%s' % self.branch
 
 
 class SelectorSyntax(Syntax):
@@ -259,6 +231,23 @@ class MappingSyntax(ApplicationSyntax):
         chunks = []
         chunks.append(str(self.lbranch))
         chunks.append(':%s' % self.identifier)
+        if self.rbranches:
+            chunks.append('(%s)' % ','.join(str(rbranch)
+                                            for rbranch in self.rbranches))
+        return ''.join(chunks)
+
+
+class CommandSyntax(MappingSyntax):
+
+    def __init__(self, identifier, lbranch, rbranches, mark):
+        assert isinstance(lbranch, SegmentSyntax)
+        super(CommandSyntax, self).__init__(identifier, lbranch, rbranches,
+                                            mark)
+
+    def __str__(self):
+        chunks = []
+        chunks.append(str(self.lbranch))
+        chunks.append('/:%s' % self.identifier)
         if self.rbranches:
             chunks.append('(%s)' % ','.join(str(rbranch)
                                             for rbranch in self.rbranches))

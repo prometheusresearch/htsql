@@ -15,7 +15,7 @@ This module implements the HTSQL parser.
 from ..mark import Mark
 from .scan import scan
 from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
-from .syntax import (QuerySyntax, SegmentSyntax, FormatSyntax, SelectorSyntax,
+from .syntax import (QuerySyntax, SegmentSyntax, CommandSyntax, SelectorSyntax,
                      FunctionSyntax, MappingSyntax, OperatorSyntax,
                      QuotientSyntax, SieveSyntax, LinkSyntax, AssignmentSyntax,
                      SpecifierSyntax, GroupSyntax, IdentifierSyntax,
@@ -91,11 +91,10 @@ class QueryParser(Parser):
 
     Here is the grammar of HTSQL::
 
-        input           ::= query END
+        input           ::= segment END
 
-        query           ::= '/' ( segment ( '/' format )? )?
-        segment         ::= top
-        format          ::= ':' identifier
+        segment         ::= '/' ( top command* )?
+        command         ::= '/' ':' identifier ( '/' top? | call | flow )?
 
         top             ::= flow ( direction | mapping )*
         direction       ::= '+' | '-'
@@ -129,9 +128,10 @@ class QueryParser(Parser):
         index           ::= NUMBER | '(' NUMBER ')'
 
         group           ::= '(' top ')'
-        call            ::= '(' tops? ')'
-        selector        ::= '{' tops? '}'
-        tops            ::= top ( ',' top )* ','?
+        call            ::= '(' arguments? ')'
+        selector        ::= '{' arguments? '}'
+        arguments       ::= argument ( ',' argument )* ','?
+        argument        ::= segment | top
         reference       ::= '$' identifier
 
         identifier      ::= NAME
@@ -144,22 +144,9 @@ class QueryParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   query       ::= '/' ( segment ( '/' format )? )?
-        #   FIRST(format)   = [':']
-        head_token = tokens.pop(SymbolToken, ['/'])
-        segment = None
-        format = None
-        if not tokens.peek(EndToken):
-            if tokens.peek(SymbolToken, [':']):
-                format = FormatParser << tokens
-            else:
-                segment = SegmentParser << tokens
-                if tokens.peek(SymbolToken, ['/']):
-                    tokens.pop(SymbolToken, ['/'])
-                    format = FormatParser << tokens
-        mark = Mark.union(head_token, segment, format)
-        query = QuerySyntax(segment, format, mark)
-        return query
+        #   input       ::= segment END
+        segment = SegmentParser << tokens
+        return QuerySyntax(segment, segment.mark)
 
 
 class SegmentParser(Parser):
@@ -170,27 +157,54 @@ class SegmentParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   segment     ::= top
-        branch = TopParser << tokens
-        mark = branch.mark
+        #   segment     ::= '/' ( top command* )?
+        #   command     ::= '/' ':' identifier ( '/' top? | call | flow )?
+        head_token = tokens.pop(SymbolToken, ['/'])
+        branch = None
+        if not (tokens.peek(EndToken) or
+                tokens.peek(SymbolToken, [',', ')', '}'])):
+            branch = TopParser << tokens
+            while tokens.peek(SymbolToken, ['/']):
+                tail_token = tokens.pop(SymbolToken, ['/'])
+                if not (tokens.peek(EndToken) or
+                        tokens.peek(SymbolToken, [',', ')', '}'])):
+                    tokens.pop(SymbolToken, [':'])
+                    mark = Mark.union(head_token, branch)
+                    lbranch = SegmentSyntax(branch, mark)
+                    identifier = IdentifierParser << tokens
+                    rbranches = []
+                    if not (tokens.peek(EndToken) or
+                            tokens.peek(SymbolToken, [',', ')', '}'])):
+                        if tokens.peek(SymbolToken, ['/']):
+                            if not tokens.peek(SymbolToken, [':'], ahead=1):
+                                rbranch_token = tokens.pop(SymbolToken, ['/'])
+                                rbranch = None
+                                if not (tokens.peek(EndToken) or
+                                        tokens.peek(SymbolToken,
+                                                    [',', ')', '}'])):
+                                    rbranch = TopParser << tokens
+                                mark = Mark.union(rbranch_token, rbranch)
+                                rbranch = SegmentSyntax(rbranch, mark)
+                                rbranches.append(rbranch)
+                        elif tokens.peek(SymbolToken, ['(']):
+                            tokens.pop(SymbolToken, ['('])
+                            while not tokens.peek(SymbolToken, [')']):
+                                if tokens.peek(SymbolToken, ['/']):
+                                    rbranch = SegmentParser << tokens
+                                else:
+                                    rbranch = TopParser << tokens
+                                rbranches.append(rbranch)
+                                if not tokens.peek(SymbolToken, [')']):
+                                    tokens.pop(SymbolToken, [',', ')'])
+                            tail_token = tokens.pop(SymbolToken, [')'])
+                        else:
+                            rbranch = FlowParser << tokens
+                            rbranches.append(rbranch)
+                mark = Mark.union(lbranch, identifier, tail_token, *rbranches)
+                branch = CommandSyntax(identifier, lbranch, rbranches, mark)
+        mark = Mark.union(head_token, branch)
         segment = SegmentSyntax(branch, mark)
         return segment
-
-
-class FormatParser(Parser):
-    """
-    Parses a `format` production.
-    """
-
-    @classmethod
-    def process(cls, tokens):
-        # Expect:
-        #   format      ::= ':' identifier
-        head_token = tokens.pop(SymbolToken, [':'])
-        identifier = IdentifierParser << tokens
-        mark = Mark.union(head_token, identifier)
-        format = FormatSyntax(identifier, mark)
-        return format
 
 
 class TopParser(Parser):
@@ -223,7 +237,10 @@ class TopParser(Parser):
                 if tokens.peek(SymbolToken, ['(']):
                     tokens.pop(SymbolToken, ['('])
                     while not tokens.peek(SymbolToken, [')']):
-                        rbranch = TopParser << tokens
+                        if tokens.peek(SymbolToken, ['/']):
+                            rbranch = SegmentParser << tokens
+                        else:
+                            rbranch = TopParser << tokens
                         rbranches.append(rbranch)
                         if not tokens.peek(SymbolToken, [')']):
                             tokens.pop(SymbolToken, [',', ')'])
@@ -277,7 +294,10 @@ class FlowParser(Parser):
                 lbranch = flow
                 rbranches = []
                 while not tokens.peek(SymbolToken, ['}']):
-                    rbranch = TopParser << tokens
+                    if tokens.peek(SymbolToken, ['/']):
+                        rbranch = SegmentParser << tokens
+                    else:
+                        rbranch = TopParser << tokens
                     rbranches.append(rbranch)
                     if not tokens.peek(SymbolToken, ['}']):
                         # We know it's not going to be '}', but we put it into
@@ -442,7 +462,7 @@ class FactorParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   factor      ::= ( '+' | '-' ) factor | quotient
+        #   factor      ::= ( '+' | '-' ) factor | pointer
         symbol_tokens = []
         while tokens.peek(SymbolToken, ['+', '-']):
             symbol_token = tokens.pop(SymbolToken, ['+', '-'])
@@ -511,8 +531,9 @@ class AtomParser(Parser):
         #   atom        ::= '*' index? | '^' | selector | group |
         #                   identifier call? | reference | literal
         #   index       ::= NUMBER | '(' NUMBER ')'
-        #   call        ::= '(' tops? ')'
-        #   tops        ::= top ( ',' top )* ','?
+        #   call        ::= '(' arguments? ')'
+        #   arguments   ::= argument ( ',' argument )* ','?
+        #   argument    ::= segment | top
         #   reference   ::= '$' identifier
         #   literal     ::= STRING | NUMBER
 
@@ -546,8 +567,11 @@ class AtomParser(Parser):
                 tokens.pop(SymbolToken, ['('])
                 branches = []
                 while not tokens.peek(SymbolToken, [')']):
-                    branch = TopParser << tokens
-                    branches.append(branch)
+                    if tokens.peek(SymbolToken, ['/']):
+                        rbranch = SegmentParser << tokens
+                    else:
+                        rbranch = TopParser << tokens
+                    branches.append(rbranch)
                     if not tokens.peek(SymbolToken, [')']):
                         tokens.pop(SymbolToken, [',', ')'])
                 tail_token = tokens.pop(SymbolToken, [')'])
@@ -602,13 +626,17 @@ class SelectorParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   selector    ::= '{' tops? '}'
-        #   tests       ::= top ( ',' top )* ','?
+        #   selector    ::= '{' arguments? '}'
+        #   arguments   ::= argument ( ',' argument )* ','?
+        #   argument    ::= segment | top
         head_token = tokens.pop(SymbolToken, ['{'])
         branches = []
         while not tokens.peek(SymbolToken, ['}']):
-            branch = TopParser << tokens
-            branches.append(branch)
+            if tokens.peek(SymbolToken, ['/']):
+                rbranch = SegmentParser << tokens
+            else:
+                rbranch = TopParser << tokens
+            branches.append(rbranch)
             if not tokens.peek(SymbolToken, ['}']):
                 # We know it's not going to be '}', but we put it into the list
                 # of accepted values to generate a better error message.

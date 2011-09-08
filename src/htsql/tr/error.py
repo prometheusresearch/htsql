@@ -14,12 +14,23 @@ translator.
 
 
 from ..error import BadRequestError
+from ..mark import Mark
 
 
 class TranslateError(BadRequestError):
     """
     Represents a translation error.
     """
+
+    def __init__(self, detail, mark):
+        assert isinstance(mark, Mark)
+        super(TranslateError, self).__init__(detail)
+        self.mark = mark
+
+    def __str__(self):
+        lines = self.mark.excerpt()
+        mark_detail = "\n".join("    "+line for line in lines)
+        return "%s: %s:\n%s" % (self.kind, self.detail, mark_detail)
 
 
 class ScanError(TranslateError):

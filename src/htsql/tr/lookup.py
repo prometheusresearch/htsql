@@ -24,7 +24,7 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       CoverBinding, ForkBinding, LinkBinding, RescopingBinding,
                       DefinitionBinding, SelectionBinding, DirectionBinding,
                       RerouteBinding, ReferenceRerouteBinding,
-                      TitleBinding, AliasBinding,
+                      TitleBinding, AliasBinding, CommandBinding,
                       FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                       ComplementRecipe, KernelRecipe, SubstitutionRecipe,
                       BindingRecipe, PinnedRecipe, AmbiguousRecipe)
@@ -33,7 +33,10 @@ import unicodedata
 
 
 def get_catalog():
-    "returns the catalog object; generate if necessary"
+    """
+    Returns the catalog object; generates it if necessary.
+    """
+    # FIXME: use locking; move to a more appropriate place.
     # Get the database metadata.  Check if it was loaded before;
     # if not, load it from the database and cache it as an application
     # attribute.
@@ -220,6 +223,11 @@ class DirectionProbe(Probe):
     def __str__(self):
         return "?<+|->"
 
+
+class CommandProbe(Probe):
+    pass
+
+
 class Lookup(Adapter):
     """
     Extracts information from a binding node.
@@ -329,6 +337,14 @@ class GuessNameFromChaining(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
+class LookupCommandInWrapping(Lookup):
+
+    adapts(WrappingBinding, CommandProbe)
+
+    def __call__(self):
+        return lookup(self.binding.base, self.probe)
+
+
 class GuessTitleFromSegment(Lookup):
     # Generate a heading from a segment binding.
 
@@ -340,6 +356,14 @@ class GuessTitleFromSegment(Lookup):
             return lookup(self.binding.seed, self.probe)
         # Otherwise, produce an empty heading.
         return []
+
+
+class LookupCommandInCommand(Lookup):
+
+    adapts(CommandBinding, CommandProbe)
+
+    def __call__(self):
+        return self.binding.command
 
 
 class LookupAttributeInHome(Lookup):
@@ -1035,6 +1059,11 @@ def direct(binding):
     indicator.
     """
     probe = DirectionProbe()
+    return lookup(binding, probe)
+
+
+def lookup_command(binding):
+    probe = CommandProbe()
     return lookup(binding, probe)
 
 

@@ -23,14 +23,15 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
                        AssignmentBinding, DefinitionBinding, AliasBinding,
                        SelectionBinding, HomeBinding, RescopingBinding,
-                       CoverBinding, ForkBinding, LinkBinding, Binding,
+                       CoverBinding, ForkBinding, LinkBinding,
+                       CommandBinding, SegmentBinding, QueryBinding, Binding,
                        BindingRecipe, ComplementRecipe, KernelRecipe,
                        SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..lookup import (lookup_attribute, lookup_complement, direct, expand,
-                      guess_name)
+                      guess_name, lookup_command)
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -53,6 +54,8 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         QuotientSig, AssignmentSig, DefineSig,
                         WhereSig, SelectSig, LinkSig)
+from ...cmd.command import (DefaultCmd, RetrieveCmd, TextCmd, HTMLCmd, JSONCmd,
+                            CSVCmd, TSVCmd)
 import sys
 
 
@@ -335,6 +338,70 @@ class BindPolyFunction(BindFunction):
                                  **arguments)
         correlate = Correlate(binding, self.state)
         return correlate()
+
+
+class BindCommand(BindMacro):
+
+    signature = UnarySig
+
+
+class BindRetrieve(BindCommand):
+
+    named('retrieve')
+
+    def expand(self, op):
+        op = self.state.bind(op)
+        if not isinstance(op, SegmentBinding):
+            raise BindError("a segment is required", op.mark)
+        binding = QueryBinding(self.state.root, op, op.syntax)
+        command = RetrieveCmd(binding)
+        return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class BindFormat(BindCommand):
+
+    command = None
+
+    def expand(self, op):
+        op = self.state.bind(op)
+        producer = lookup_command(op)
+        if producer is None:
+            if not isinstance(op, SegmentBinding):
+                raise BindError("a segment is required", op.mark)
+            binding = QueryBinding(self.state.root, op, op.syntax)
+            producer = DefaultCmd(binding)
+        command = self.command(producer)
+        return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class BindText(BindFormat):
+
+    named('txt')
+    command = TextCmd
+
+
+class BindHTML(BindFormat):
+
+    named('html')
+    command = HTMLCmd
+
+
+class BindJSON(BindFormat):
+
+    named('json')
+    command = JSONCmd
+
+
+class BindCSV(BindFormat):
+
+    named('csv')
+    command = CSVCmd
+
+
+class BindTSV(BindFormat):
+
+    named('tsv')
+    command = TSVCmd
 
 
 class BindNull(BindMacro):

@@ -12,14 +12,16 @@ This module implements the entitle adapter.
 """
 
 
-from ..tr.lookup import guess_title
-
-
 def entitle(binding, with_strong=True, with_weak=True):
     headers = guess_title(binding)
     if headers:
         return headers[-1]
     else:
         return ""
+
+
+def guess_title(binding):
+    from ..tr.lookup import guess_title
+    return guess_title(binding)
 
 

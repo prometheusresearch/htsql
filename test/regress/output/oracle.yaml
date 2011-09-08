@@ -20782,7 +20782,7 @@ tests:
             body: |
               bind error: empty selector:
                   /home()
-                   ^^^^^^
+                  ^^^^^^^
           - uri: /home(){2+2}
             status: 200 OK
             headers:
@@ -22686,7 +22686,7 @@ tests:
             body: |
               bind error: empty selector:
                   /{}
-                   ^^
+                  ^^^
           - uri: /school{}
             status: 400 Bad Request
             headers:
@@ -22694,7 +22694,7 @@ tests:
             body: |
               bind error: empty selector:
                   /school{}
-                   ^^^^^^^^
+                  ^^^^^^^^^
         - id: assignments
           tests:
           - uri: /school.define(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
@@ -25495,7 +25495,7 @@ tests:
           body: |
             bind error: empty selector:
                 /{}
-                 ^^
+                ^^^
         - uri: /school{}
           status: 400 Bad Request
           headers:
@@ -25503,7 +25503,7 @@ tests:
           body: |
             bind error: empty selector:
                 /school{}
-                 ^^^^^^^^
+                ^^^^^^^^^
         - uri: /school.true()
           status: 200 OK
           headers:
@@ -25745,7 +25745,7 @@ tests:
                                                       (9 rows)
 
              ----
-             /school/:txt
+             /school
              SELECT "SCHOOL"."CODE",
                     "SCHOOL"."NAME",
                     "SCHOOL"."CAMPUS"
@@ -25760,7 +25760,7 @@ tests:
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-            <title>/school/:html</title>
+            <title>/school</title>
             <style type="text/css">
             body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
             a:link, a:visited { color: #1f4884; text-decoration: none }
@@ -25786,7 +25786,7 @@ tests:
             </style>
             </head>
             <body>
-            <table class="page" summary="/school/:html">
+            <table class="page" summary="/school">
             <tr>
             <td class="content">
             <table class="list" summary="school">
@@ -25803,7 +25803,7 @@ tests:
             <tr class="odd"><td>sc</td><td>School of Continuing Studies</td><td><em>&mdash;</em></td></tr>
             <tr class="total"><td colspan="3">(9 rows)</td></tr></table></td>
             </tr>
-            <tr><td class="footer">/school/:html</td></tr>
+            <tr><td class="footer">/school</td></tr>
             </table>
             </body>
             </html>
@@ -25812,9 +25812,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid argument: unknown format:
+            bind error: unknown function 'unknown':
                 /school/:unknown
-                        ^^^^^^^^
+                ^^^^^^^^^^^^^^^^
       - id: format-selection-by-`accept`
         tests:
         - uri: /school
@@ -26012,7 +26012,7 @@ tests:
                                                          (9 rows)
 
              ----
-             /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}/:txt
+             /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}
              SELECT "SCHOOL"."NAME",
                     COALESCE("DEPARTMENT"."count", 0)
              FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
@@ -26032,7 +26032,7 @@ tests:
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-            <title>/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}/:html</title>
+            <title>/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}</title>
             <style type="text/css">
             body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
             a:link, a:visited { color: #1f4884; text-decoration: none }
@@ -26058,7 +26058,7 @@ tests:
             </style>
             </head>
             <body>
-            <table class="page" summary="/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}/:html">
+            <table class="page" summary="/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}">
             <tr>
             <td class="content">
             <table class="list" summary="List of Schools">
@@ -26075,7 +26075,7 @@ tests:
             <tr class="odd"><td>School of Continuing Studies</td><td class="number">0</td></tr>
             <tr class="total"><td colspan="2">(9 rows)</td></tr></table></td>
             </tr>
-            <tr><td class="footer">/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}/:html</td></tr>
+            <tr><td class="footer">/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}</td></tr>
             </table>
             </body>
             </html>
@@ -26135,7 +26135,7 @@ tests:
                                                                                                                              (1 row)
 
              ----
-             /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}/:txt
+             /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
              SELECT NULL,
                     1,
                     0,
@@ -26157,7 +26157,7 @@ tests:
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-            <title>/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}/:html</title>
+            <title>/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}</title>
             <style type="text/css">
             body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
             a:link, a:visited { color: #1f4884; text-decoration: none }
@@ -26183,7 +26183,7 @@ tests:
             </style>
             </head>
             <body>
-            <table class="page" summary="/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}/:html">
+            <table class="page" summary="/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}">
             <tr>
             <td class="content">
             <table class="list" summary="">
@@ -26191,7 +26191,7 @@ tests:
             <tr class="odd"><td><em>&mdash;</em></td><td><em>true</em></td><td><em>false</em></td><td class="number">60</td><td class="number">2.125</td><td class="number">2.71828</td><td>HTSQL</td><td>2010-04-15</td><td>20:13:04.500000</td><td>2010-04-15 20:13:00</td></tr>
             <tr class="total"><td colspan="10">(1 row)</td></tr></table></td>
             </tr>
-            <tr><td class="footer">/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}/:html</td></tr>
+            <tr><td class="footer">/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}</td></tr>
             </table>
             </body>
             </html>
@@ -26236,7 +26236,7 @@ tests:
                             (no rows)
 
              ----
-             /school?false()/:txt
+             /school?false()
              SELECT "SCHOOL"."CODE",
                     "SCHOOL"."NAME",
                     "SCHOOL"."CAMPUS"
@@ -26252,7 +26252,7 @@ tests:
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-            <title>/school?false()/:html</title>
+            <title>/school?false()</title>
             <style type="text/css">
             body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
             a:link, a:visited { color: #1f4884; text-decoration: none }
@@ -26278,7 +26278,7 @@ tests:
             </style>
             </head>
             <body>
-            <table class="page" summary="/school?false()/:html">
+            <table class="page" summary="/school?false()">
             <tr>
             <td class="content">
             <table class="list" summary="school">
@@ -26286,7 +26286,7 @@ tests:
             <tr class="header"><th>code</th><th>name</th><th>campus</th></tr>
             <tr class="total"><td colspan="3">(no rows)</td></tr></table></td>
             </tr>
-            <tr><td class="footer">/school?false()/:html</td></tr>
+            <tr><td class="footer">/school?false()</td></tr>
             </table>
             </body>
             </html>
@@ -26331,7 +26331,7 @@ tests:
             | \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\\u0010\"
             | \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\x7F\"
             | \u03BE   | \\/%'\"&<>#      |    |\n                                                                                                                                                                                                        (1
-            row)\n\n ----\n /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&<>#',''}/:txt\n
+            row)\n\n ----\n /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&<>#',''}\n
             SELECT '\x01\x02\x03\x04\x05\x06\a\b\t\n \v\f\n \x0E\x0F\x10',\n        '\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F',\n
             \       '\u03BE',\n        '\\/%''\"&<>#',\n        NULL\n FROM DUAL \"!\"\n"
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
@@ -26341,7 +26341,7 @@ tests:
           - [Content-Type, text/html; charset=UTF-8]
           body: "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"
             \"http://www.w3.org/TR/html4/loose.dtd\">\n<html>\n<head>\n<meta http-equiv=\"Content-Type\"
-            content=\"text/html; charset=UTF-8\">\n<title>/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&amp;&lt;&gt;#',''}/:html</title>\n<style
+            content=\"text/html; charset=UTF-8\">\n<title>/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&amp;&lt;&gt;#',''}</title>\n<style
             type=\"text/css\">\nbody { font-family: sans-serif; font-size: 90%; color:
             #515151; background: #ffffff }\na:link, a:visited { color: #1f4884; text-decoration:
             none }\na:hover { text-decoration: underline }\ntable { border-collapse:
@@ -26361,8 +26361,118 @@ tests:
             }\ntr.total td { text-align: right; font-size: 75%; font-style: italic;
             padding: 0.3em 0.5em 0; border-width: 0 }\ntable.void { text-align: center;
             border-color: #c3c3c3; border-width: 1px 0 }\n</style>\n</head>\n<body>\n<table
-            class=\"page\" summary=\"/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''&quot;&amp;&lt;&gt;#',''}/:html\">\n<tr>\n<td
+            class=\"page\" summary=\"/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''&quot;&amp;&lt;&gt;#',''}\">\n<tr>\n<td
             class=\"content\">\n<table class=\"list\" summary=\"\">\n<tr class=\"header\"><th>'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'</th><th>'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'</th><th>'\u03BE'</th><th>'\\/%25''\"&amp;&lt;&gt;#'</th><th>''</th></tr>\n<tr
             class=\"odd\"><td>\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10</td><td>\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F</td><td>\u03BE</td><td>\\/%'\"&amp;&lt;&gt;#</td><td><em>&mdash;</em></td></tr>\n<tr
             class=\"total\"><td colspan=\"5\">(1 row)</td></tr></table></td>\n</tr>\n<tr><td
-            class=\"footer\">/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&amp;&lt;&gt;#',''}/:html</td></tr>\n</table>\n</body>\n</html>\n"
+            class=\"footer\">/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&amp;&lt;&gt;#',''}</td></tr>\n</table>\n</body>\n</html>\n"
+      - id: commands
+        tests:
+        - uri: /school/:retrieve
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school
+             SELECT "SCHOOL"."CODE",
+                    "SCHOOL"."NAME",
+                    "SCHOOL"."CAMPUS"
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+             ORDER BY 1 ASC
+        - uri: /retrieve(/school)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school
+             SELECT "SCHOOL"."CODE",
+                    "SCHOOL"."NAME",
+                    "SCHOOL"."CAMPUS"
+             FROM "HTSQL_REGRESS"."SCHOOL" "SCHOOL"
+             ORDER BY 1 ASC
+        - uri: /school/:retrieve/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "meta": [
+                {"title": "code", "domain": "string"},
+                {"title": "name", "domain": "string"},
+                {"title": "campus", "domain": "string"}
+              ],
+              "data": [
+                ["art", "School of Art and Design", "old"],
+                ["bus", "School of Business", "south"],
+                ["edu", "College of Education", "old"],
+                ["eng", "School of Engineering", "north"],
+                ["la", "School of Arts and Humanities", "old"],
+                ["mus", "School of Music & Dance", "south"],
+                ["ns", "School of Natural Sciences", "old"],
+                ["ph", "Public Honorariums", null],
+                ["sc", "School of Continuing Studies", null]
+              ]
+            }
+        - uri: /retrieve()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: missing argument op:
+                /retrieve()
+                 ^^^^^^^^^^
+        - uri: /retrieve(school)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: a segment is required:
+                /retrieve(school)
+                          ^^^^^^
+        - uri: /school/:html/:retrieve
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: a segment is required:
+                /school/:html/:retrieve
+                ^^^^^^^^^^^^^
+        - uri: /school/:html/:json
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid request: invalid command

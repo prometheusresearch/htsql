@@ -17,6 +17,7 @@ from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax, IdentifierSyntax, ReferenceSyntax
 from .signature import Signature, Bag, Formula
+from ..cmd.command import Command
 
 
 class Binding(Clonable, Printable):
@@ -112,12 +113,20 @@ class SegmentBinding(Binding):
     """
 
     def __init__(self, base, seed, elements, syntax):
-        assert isinstance(base, RootBinding)
+        assert isinstance(base, Binding)
         assert isinstance(seed, maybe(Binding))
         assert isinstance(elements, listof(Binding))
         super(SegmentBinding, self).__init__(base, VoidDomain(), syntax)
         self.seed = seed
         self.elements = elements
+
+
+class CommandBinding(Binding):
+
+    def __init__(self, base, command, syntax):
+        assert isinstance(command, Command)
+        super(CommandBinding, self).__init__(base, VoidDomain(), syntax)
+        self.command = command
 
 
 class ScopingBinding(Binding):

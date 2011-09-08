@@ -17,7 +17,7 @@ from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
 from .error import BindError
-from .syntax import (Syntax, QuerySyntax, SegmentSyntax, FormatSyntax,
+from .syntax import (Syntax, QuerySyntax, SegmentSyntax, CommandSyntax,
                      SelectorSyntax, ApplicationSyntax, OperatorSyntax,
                      QuotientSyntax, SieveSyntax, LinkSyntax, AssignmentSyntax,
                      SpecifierSyntax, MappingSyntax, FunctionSyntax,
@@ -37,7 +37,7 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       SubstitutionRecipe, BindingRecipe, ClosedRecipe,
                       PinnedRecipe, InvalidRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
-                     expand, direct, guess_name)
+                     expand, direct, guess_name, lookup_command)
 from .coerce import coerce
 
 
@@ -244,6 +244,8 @@ class BindQuery(Bind):
             segment = self.state.bind(self.syntax.segment)
         # Shut down the lookup scope stack.
         self.state.flush()
+        if lookup_command(segment) is not None:
+            return segment
         # Construct and return the top-level binding node.
         return QueryBinding(root, segment, self.syntax)
 
@@ -255,6 +257,8 @@ class BindSegment(Bind):
     def __call__(self):
         # Bind the segment expression.
         seed = self.state.bind(self.syntax.branch)
+        if lookup_command(seed) is not None:
+            return seed
         # Extract output flow and columns.
         bindings = []
         recipes = expand(seed)
