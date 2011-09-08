@@ -71,6 +71,7 @@ ENTRY_POINTS = {
         'tweak.cors = htsql_tweak.cors:TweakCORSAddon',
         'tweak.inet = htsql_tweak.inet:TweakINetAddon',
         'tweak.inet.pgsql = htsql_tweak.inet.pgsql:TweakINetPGSQLAddon',
+        'tweak.hello = htsql_tweak.hello:TweakHelloAddon',
         'tweak.schema = htsql_tweak.schema:TweakSchemaAddon',
         'tweak.system = htsql_tweak.system:TweakSystemAddon',
         'tweak.system.pgsql = htsql_tweak.system.pgsql:TweakSystemPGSQLAddon',
