@@ -244,6 +244,10 @@ class ItemizeTable(Utility):
 class ItemizeHome(Utility):
     """ 
     Returns top-level tables in the root context.
+
+    The intent of this enumeration is to provide a single list
+    of non-redundant tables by canonical name.  We don't expect
+    the lookup list returned to contain the same table twice.
     """
     # TODO: This requires pathalogical test schemas
     #       in order to test for full coverage.
@@ -254,21 +258,39 @@ class ItemizeHome(Utility):
         buckets = {}
         for schema in self.catalog.schemas:
             for table in schema.tables:
-                buckets.setdefault(normalize(table.name), [])\
-                       .append((table, schema.priority))
-
-        lookup_table = {}
+                buckets.setdefault(normalize(table.name), []).append(table)
+       
+        lookup_table = {} 
+        collisions = []
         for (name, candidates) in buckets.items():
             if len(candidates) > 1:
-                max_rank = max(rank for (table, rank) in candidates)
-                candidates = [(table, None) 
-                              for (table, rank) in candidates
-                              if rank == max_rank]
+                rankings = [self.catalog.schemas[table.schema_name].priority
+                            for table in candidates]
+                max_rank = max(rankings)
+                if rankings.count(max_rank) == 1:
+                    chosen = candidates[rankings.index(max_rank)]
+                    collisions.extend(table for table in candidates
+                                      if table != chosen)
+                    candidates = [chosen]
+                else:
+                    # schema ranking did not resolve ambiguity 
+                    pass
             if len(candidates) > 1:
+                collisions.extend(candidates)
                 lookup_table[name] = AmbiguousRecipe()
             else:
-                table = candidates[0][0]
+                table = candidates[0]
                 lookup_table[name] = FreeTableRecipe(table)
+
+        for table in collisions:
+            fq_name = "%s_%s" % (normalize(table.schema_name),
+                                 normalize(table.name))
+            if fq_name in lookup_table:
+                # TODO: find some way to report when this
+                # secondary naming scheme creates collisions
+                continue
+            lookup_table[fq_name] = FreeTableRecipe(table)
+
         return lookup_table
 
 
