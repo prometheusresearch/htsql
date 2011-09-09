@@ -13,10 +13,10 @@ This module implements name resolution adapters.
 
 
 from ..util import Clonable, Printable, maybe
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapts, adapts_many, Utility
 from ..context import context
 from ..introspect import Introspect
-from ..entity import DirectJoin, ReverseJoin
+from ..entity import DirectJoin, ReverseJoin, TableEntity
 from .syntax import Syntax, IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       SegmentBinding, HomeBinding, RootBinding, TableBinding,
@@ -228,6 +228,50 @@ class CommandProbe(Probe):
     pass
 
 
+class ItemizeTable(Utility):
+    """ 
+    Returns columns and links for a given table.
+    """
+
+    def __init__(self, table):
+        assert isinstance(table, TableEntity)
+        self.table = table
+        self.catalog = get_catalog()
+
+    def __call__(self):
+        return {} 
+
+class ItemizeHome(Utility):
+    """ 
+    Returns top-level tables in the root context.
+    """
+    # TODO: This requires pathalogical test schemas
+    #       in order to test for full coverage.
+    def __init__(self):
+        self.catalog = get_catalog()
+
+    def __call__(self):
+        buckets = {}
+        for schema in self.catalog.schemas:
+            for table in schema.tables:
+                buckets.setdefault(normalize(table.name), [])\
+                       .append((table, schema.priority))
+
+        lookup_table = {}
+        for (name, candidates) in buckets.items():
+            if len(candidates) > 1:
+                max_rank = max(rank for (table, rank) in candidates)
+                candidates = [(table, None) 
+                              for (table, rank) in candidates
+                              if rank == max_rank]
+            if len(candidates) > 1:
+                lookup_table[name] = AmbiguousRecipe()
+            else:
+                table = candidates[0][0]
+                lookup_table[name] = FreeTableRecipe(table)
+        return lookup_table
+
+
 class Lookup(Adapter):
     """
     Extracts information from a binding node.
@@ -375,41 +419,8 @@ class LookupAttributeInHome(Lookup):
         # Ignore probes for parameterized attributes.
         if self.probe.arity is not None:
             return None
-        # Check if we could find a table with the given name.
-        recipe = self.lookup_table()
-        if recipe is not None:
-            return recipe
-        # No luck, report that we cannot find a member with the given name.
-        return None
-
-    def lookup_table(self):
-        # Find all tables which normalized name coincides with the normalized
-        # identifier.
-        candidates = []
-        # FIXME: very inefficient.  We could either build and cache
-        # a mapping: normalized name -> list of matching tables, or cache
-        # the result of the lookup operation (the parameters of the binding
-        # constructor).
-        for schema in self.catalog.schemas:
-            for table in schema.tables:
-                if normalize(table.name) == self.probe.key:
-                    candidates.append(table)
-        # Keep only the schemas with the highest priority.
-        if candidates:
-            priority = max(self.catalog.schemas[table.schema_name].priority
-                           for table in candidates)
-            candidates = [table
-                          for table in candidates
-                          if self.catalog.schemas[table.schema_name].priority
-                                                                == priority]
-        # If we find one and only one matching table, generate a binding
-        # node for it.
-        if len(candidates) == 1:
-            table = candidates[0]
-            return FreeTableRecipe(table)
-        if len(candidates) > 1:
-            return AmbiguousRecipe()
-
+        names = itemize()
+        return names.get(self.probe.key)
 
 class ExpandHome(Lookup):
     # The home class contains no public attributes.
@@ -934,6 +945,21 @@ class GuessTitleFromAlias(Lookup):
     def __call__(self):
         return [str(self.binding.syntax)]
 
+def itemize(table=None):
+    """
+    Returns a dictionary of names in the given context.
+    If table is provided, columns and links are returned;
+    otherwise this returns tables accessable from the root.
+    """
+    # FIXME: This needs to be cached such that an
+    #        update of the catalog will cause the
+    #        lookup table to be re-generated.
+    if table:
+	itemize = ItemizeTable(table)
+    else:
+        itemize = ItemizeHome()
+    return itemize()
+    
 
 def lookup(binding, probe):
     """
