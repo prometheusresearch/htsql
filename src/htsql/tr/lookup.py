@@ -390,7 +390,9 @@ class ItemizeTable(Utility):
 
 class EnumerateTable(Utility):
     """ 
-    Returns a list of public identifiers for a table.
+    Returns a list of public identifiers for a table.  If there
+    are two columns that have same normalized name, then both
+    columns are omitted from the enumeration.
     """
 
     def __init__(self, table):
@@ -405,10 +407,10 @@ class EnumerateTable(Utility):
             if name in names:
                 if name not in collisions:
                     collisions.append(name)
-                    continue
-            names.append(name)
+            else:
+                names.append(name)
         for name in collisions:
-            del names[name]
+            names.remove(name)
         return names 
 
 
