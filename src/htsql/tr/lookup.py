@@ -228,19 +228,6 @@ class CommandProbe(Probe):
     pass
 
 
-class ItemizeTable(Utility):
-    """ 
-    Returns columns and links for a given table.
-    """
-
-    def __init__(self, table):
-        assert isinstance(table, TableEntity)
-        self.table = table
-        self.catalog = get_catalog()
-
-    def __call__(self):
-        return {} 
-
 class ItemizeHome(Utility):
     """ 
     Returns top-level tables in the root context.
@@ -260,7 +247,7 @@ class ItemizeHome(Utility):
             for table in schema.tables:
                 buckets.setdefault(normalize(table.name), []).append(table)
        
-        lookup_table = {} 
+        itemization = {} 
         collisions = []
         for (name, candidates) in buckets.items():
             if len(candidates) > 1:
@@ -277,21 +264,152 @@ class ItemizeHome(Utility):
                     pass
             if len(candidates) > 1:
                 collisions.extend(candidates)
-                lookup_table[name] = AmbiguousRecipe()
+                itemization[name] = AmbiguousRecipe()
             else:
                 table = candidates[0]
-                lookup_table[name] = FreeTableRecipe(table)
+                itemization[name] = FreeTableRecipe(table)
 
         for table in collisions:
             fq_name = "%s_%s" % (normalize(table.schema_name),
                                  normalize(table.name))
-            if fq_name in lookup_table:
+            if fq_name in itemization:
                 # TODO: find some way to report when this
                 # secondary naming scheme creates collisions
                 continue
-            lookup_table[fq_name] = FreeTableRecipe(table)
+            itemization[fq_name] = FreeTableRecipe(table)
 
-        return lookup_table
+        return itemization
+
+
+class ItemizeTable(Utility):
+    """ 
+    Returns columns and links recipies for a given table.
+
+    Column attributes trump direct links which trump reverse links.  
+    However, if two objects of the same name exist, then the 
+    associated value is an ``AmbiguousRecipe``.  This could happen
+    if two columns happen to have the same normalized name, or when
+    there are two foreign keys to the same table.
+    """
+
+    def __init__(self, table):
+        assert isinstance(table, TableEntity)
+        self.table = table
+        self.catalog = get_catalog()
+
+    def __call__(self):
+        # Builds enumeration such that columns override 
+        # direct joins, which override reverse joins.
+
+        itemization = self.itemize_reverse_joins()
+        itemization.update(self.itemize_direct_joins())
+        itemization.update(self.itemize_columns())
+        return itemization
+
+    def find_link(self, column):
+        # Determines if the column may represents a link to another table.
+        # This is the case when the column is associated with a foreign key.
+
+        # Get a list of foreign keys associated with the given column.
+        candidates = []
+        for fk in self.table.foreign_keys:
+            if fk.origin_column_names != [column.name]:
+                continue
+            candidates.append(fk)
+
+        # Return immediately if there are no candidate keys.
+        if not candidates:
+            return None
+
+        # We got an unambiguous link if there's only one foreign key
+        # associated with the column,
+        if len(candidates) == 1:
+            # Generate the link join.
+            fk = candidates[0]
+            origin_schema = self.catalog.schemas[fk.origin_schema_name]
+            origin = origin_schema.tables[fk.origin_name]
+            target_schema = self.catalog.schemas[fk.target_schema_name]
+            target = target_schema.tables[fk.target_name]
+            join = DirectJoin(origin, target, fk)
+            # Build and return the link binding.
+            return AttachedTableRecipe([join])
+
+        if len(candidates) > 1:
+            return AmbiguousRecipe()
+
+    def itemize_columns(self):
+        # Builds mapping of column names into column recipes.
+        # If two columns have the same normalized name, then 
+        # the result is ambiguous.
+
+        itemization = {}
+        for column in self.table.columns:
+            name = normalize(column.name)
+            if name in itemization:
+                itemization[name] = AmbiguousRecipe()
+                continue
+            link = self.find_link(column)
+            itemization[name] = ColumnRecipe(column, link)
+        return itemization
+
+    def itemize_direct_joins(self):
+        # Builds mapping of table names into link recipies using
+        # foreign keys originating from the current table.
+
+        itemization = {}
+        for foreign_key in self.table.foreign_keys:
+            name = normalize(foreign_key.target_name)
+            if name in itemization:
+                itemization[name] = AmbiguousRecipe()
+                continue
+            target_schema = self.catalog.schemas[foreign_key.target_schema_name]
+            target = target_schema.tables[foreign_key.target_name]
+            join = DirectJoin(self.table, target, foreign_key)
+            itemization[name] = AttachedTableRecipe([join])
+        return itemization
+
+    def itemize_reverse_joins(self):
+        # Builds mapping of referencing tables that possess a foreign 
+        # key to current context table.
+
+        target_pair = (self.table.schema_name, self.table.name)
+        target_schema = self.catalog.schemas[self.table.schema_name]
+        itemization = {}
+        for schema in self.catalog.schemas:
+            for table in schema.tables:
+                for foreign_key in table.foreign_keys:
+                    if target_pair == (foreign_key.target_schema_name,
+                                       foreign_key.target_name):
+                        name = normalize(foreign_key.origin_name)
+                        if name in itemization:
+                            itemization[name] = AmbiguousRecipe()
+                            continue
+                        join = ReverseJoin(self.table, table, foreign_key)
+                        itemization[name] = AttachedTableRecipe([join])
+        return itemization
+
+class EnumerateTable(Utility):
+    """ 
+    Returns a list of public identifiers for a table.
+    """
+
+    def __init__(self, table):
+        assert isinstance(table, TableEntity)
+        self.table = table
+
+    def __call__(self):
+        names = []
+        collisions = []
+        for column in self.table.columns:
+            name = normalize(column.name)
+            if name in names:
+                if name not in collisions:
+                    collisions.append(name)
+                    continue
+            names.append(name)
+        for name in collisions:
+            del names[name]
+        return names 
 
 
 class Lookup(Adapter):
@@ -441,8 +559,8 @@ class LookupAttributeInHome(Lookup):
         # Ignore probes for parameterized attributes.
         if self.probe.arity is not None:
             return None
-        names = itemize()
-        return names.get(self.probe.key)
+        recipe_by_name = itemize()
+        return recipe_by_name.get(self.probe.key)
 
 class ExpandHome(Lookup):
     # The home class contains no public attributes.
@@ -467,47 +585,7 @@ class GuessTitleFromHome(Lookup):
         return []
 
 
-class LookupInTable(Lookup):
-    # Helpers for lookup in table nodes.
-
-    adapts_many((TableBinding, AttributeProbe),
-                (TableBinding, ExpansionProbe))
-
-    def find_link(self, column):
-        # Determines if the column may represents a link to another table.
-        # This is the case when the column is associated with a foreign key.
-
-        # Get a list of foreign keys associated with the given column.
-        candidates = []
-        schema = self.catalog.schemas[column.schema_name]
-        table = schema.tables[column.table_name]
-        for fk in table.foreign_keys:
-            if fk.origin_column_names != [column.name]:
-                continue
-            candidates.append(fk)
-
-        # Return immediately if there are no candidate keys.
-        if not candidates:
-            return None
-
-        # We got an unambiguous link if there's only one foreign key
-        # associated with the column,
-        if len(candidates) == 1:
-            # Generate the link join.
-            fk = candidates[0]
-            origin_schema = self.catalog.schemas[fk.origin_schema_name]
-            origin = origin_schema.tables[fk.origin_name]
-            target_schema = self.catalog.schemas[fk.target_schema_name]
-            target = target_schema.tables[fk.target_name]
-            join = DirectJoin(origin, target, fk)
-            # Build and return the link binding.
-            return AttachedTableRecipe([join])
-
-        if len(candidates) > 1:
-            return AmbiguousRecipe()
-
-
-class LookupAttributeInTable(LookupInTable):
+class LookupAttributeInTable(Lookup):
     # A table context contains three types of members:
     # - table columns;
     # - referenced tables, i.e., tables for which there exists a foreign
@@ -521,100 +599,11 @@ class LookupAttributeInTable(LookupInTable):
         # Ignore probes for parameterized attributes.
         if self.probe.arity is not None:
             return None
-        # Check if we could find a column with the given name.
-        recipe = self.lookup_column()
-        if recipe is not None:
-            return recipe
-        # If not, check for a referenced table with the given name.
-        recipe = self.lookup_direct_join()
-        if recipe is not None:
-            return recipe
-        # Finally, check for a referencing table with the given name.
-        recipe = self.lookup_reverse_join()
-        if recipe is not None:
-            return recipe
-        # We are out of luck.
-        return None
-
-    def lookup_column(self):
-        # Finds a column with given name in the context table.
-
-        table = self.binding.table
-        # Columns matching the given identifier.  Since we are comparing
-        # normalized names, there is a (very small) possibility there are
-        # more than one column matching the same name.
-        candidates = []
-        # FIXME: not very efficient.
-        for column in table.columns:
-            if normalize(column.name) == self.probe.key:
-                candidates.append(column)
-        # We found a single matching column, generate the corresponding recipe.
-        if len(candidates) == 1:
-            column = candidates[0]
-            link = self.find_link(column)
-            return ColumnRecipe(column, link)
-        # It is an error if there are more than one matching columns.
-        if len(candidates) > 1:
-            return AmbiguousRecipe()
-
-    def lookup_direct_join(self):
-        # Finds a table referenced from the context table that matches
-        # the given identifier.
-
-        origin = self.binding.table
-        # Candidates are foreign keys with the context table as the origin
-        # and a table matching the given name as the target.
-        candidates = []
-        for foreign_key in origin.foreign_keys:
-            if normalize(foreign_key.target_name) == self.probe.key:
-                candidates.append(foreign_key)
-        # We found exactly one matching foreign key, generate the
-        # corresponding recipe.
-        if len(candidates) == 1:
-            foreign_key = candidates[0]
-            target_schema = self.catalog.schemas[foreign_key.target_schema_name]
-            target = target_schema.tables[foreign_key.target_name]
-            join = DirectJoin(origin, target, foreign_key)
-            return AttachedTableRecipe([join])
-        # More than one matching key, generate an error recipe.
-        if len(candidates) > 1:
-            return AmbiguousRecipe()
-
-    def lookup_reverse_join(self):
-        # Finds a table with the given name that possesses a foreign key
-        # referencing the context table.
-
-        # The origin of the reverse join (but the target of the foreign key).
-        origin = self.binding.table
-        # List of foreign keys targeting the context table which referencing
-        # table matches the given identifier.
-        candidates = []
-        # Go through all tables matching the identifier.
-        # FIXME: very inefficient.
-        for target_schema in self.catalog.schemas:
-            for target in target_schema.tables:
-                if normalize(target.name) != self.probe.key:
-                    continue
-                # Add all foreign keys referencing the context table to the
-                # list of candidates.
-                for foreign_key in target.foreign_keys:
-                    if (foreign_key.target_schema_name == origin.schema_name
-                            and foreign_key.target_name == origin.name):
-                        candidates.append(foreign_key)
-        # We found exactly one matching foreign key, generate the
-        # corresponding recipe.
-        if len(candidates) == 1:
-            foreign_key = candidates[0]
-            target_schema = self.catalog.schemas[foreign_key.origin_schema_name]
-            target = target_schema.tables[foreign_key.origin_name]
-            join = ReverseJoin(origin, target, foreign_key)
-            return AttachedTableRecipe([join])
-        # More than one matching key, generate an error recipe.
-        if len(candidates) > 1:
-            return AmbiguousRecipe()
+        recipe_by_name = itemize(self.binding.table)
+        return recipe_by_name.get(self.probe.key)
 
 
-class ExpandTable(LookupInTable):
+class ExpandTable(Lookup):
     # Extract all the columns of the table.
 
     adapts(TableBinding, ExpansionProbe)
@@ -623,16 +612,14 @@ class ExpandTable(LookupInTable):
         # Only expand on a class probe.
         if not self.probe.is_hard:
             return super(ExpandTable, self).__call__()
-        # Produce a list of column recipes.
         return self.itemize_columns()
 
     def itemize_columns(self):
-        # Produce a recipe for each column of the table.
-        for column in self.binding.table.columns:
-            # Create a "virtual" syntax node for each column,
-            identifier = IdentifierSyntax(column.name, self.binding.mark)
-            link = self.find_link(column)
-            recipe = ColumnRecipe(column, link)
+        recipe_by_name = itemize(self.binding.table)
+        for name in enumerate_table(self.binding.table):
+            # Create a "virtual" syntax node for each column
+            identifier = IdentifierSyntax(name, self.binding.mark)
+            recipe = recipe_by_name[name]
             yield (identifier, recipe)
 
 
@@ -982,6 +969,12 @@ def itemize(table=None):
         itemize = ItemizeHome()
     return itemize()
     
+def enumerate_table(table):
+    """
+    Returns a list of public names for a table.
+    """
+    enumerate_table = EnumerateTable(table)
+    return enumerate_table()
 
 def lookup(binding, probe):
     """
