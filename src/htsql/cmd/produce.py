@@ -89,7 +89,7 @@ class ProduceDefault(Act):
         return act(command, self.action)
 
 
-class ProduceSelect(Act):
+class ProduceRetrieve(Act):
 
     adapts(RetrieveCmd, ProduceAction)
 

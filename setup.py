@@ -81,6 +81,8 @@ ENTRY_POINTS = {
         'tweak.view = htsql_tweak.view:TweakViewAddon',
         'tweak.view.pgsql = htsql_tweak.view.pgsql:TweakViewPGSQLAddon',
         'tweak.sqlalchemy = htsql_tweak.sqlalchemy:TweakSQLAlchemyAddon',
+        'tweak.meta = htsql_tweak.meta:TweakMetaAddon',
+        'tweak.meta.slave = htsql_tweak.meta.slave:TweakMetaSlaveAddon',
     ],
 }
 INSTALL_REQUIRES = [
