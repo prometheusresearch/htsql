@@ -36,6 +36,8 @@ class Domain(object):
     to the other.
     """
 
+    family = 'unknown'
+
     def parse(self, data):
         """
         Converts an HTSQL literal to a native Python object.
@@ -107,6 +109,7 @@ class VoidDomain(Domain):
     This domain is assigned to objects when the domain is structurally
     required, but does not have any semantics.
     """
+    family = 'void'
 
 
 class UntypedDomain(Domain):
@@ -116,6 +119,7 @@ class UntypedDomain(Domain):
     This domain is assigned to HTSQL literals temporarily until the actual
     domain could be derived from the context.
     """
+    family = 'untyped'
 
 
 class TupleDomain(Domain):
@@ -124,6 +128,8 @@ class TupleDomain(Domain):
 
     This domain is assigned to table expressions.
     """
+    family = 'tuple'
+
     # FIXME: add a reference to the underlying `TableEntity`.  This may
     # require importing `TableEntity` from `htsql.entity`, which creates
     # a circular module dependency.  To break it, we will have to split
@@ -142,6 +148,7 @@ class BooleanDomain(Domain):
 
     Valid native values: `bool` objects.
     """
+    family = 'boolean'
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -186,6 +193,7 @@ class NumberDomain(Domain):
         Indicates whether the values are stored in binary or decimal form.
     """
 
+    family = 'number'
     is_exact = None
     radix = None
 
@@ -202,6 +210,7 @@ class IntegerDomain(NumberDomain):
         Number of bits used to store a value; ``None`` if not known.
     """
 
+    family = 'integer'
     is_exact = True
     radix = 2
 
@@ -252,6 +261,7 @@ class FloatDomain(NumberDomain):
         Number of bits used to store a value; ``None`` if not known.
     """
 
+    family = 'float'
     is_exact = False
     radix = 2
 
@@ -310,6 +320,7 @@ class DecimalDomain(NumberDomain):
         integers, ``None`` if infinite or not known.
     """
 
+    family = 'decimal'
     is_exact = True
     radix = 10
 
@@ -375,7 +386,7 @@ class StringDomain(Domain):
     `is_varying` (Boolean)
         Indicates whether values are fixed-length or variable-length.
     """
-
+    family = 'string'
 
     def __init__(self, length=None, is_varying=True):
         # Sanity check on the arguments.
@@ -422,6 +433,7 @@ class EnumDomain(Domain):
     `labels` (a list of strings)
         List of valid values.
     """
+    family = 'enum'
 
     def __init__(self, labels):
         assert isinstance(labels, listof(str))
@@ -470,6 +482,7 @@ class DateDomain(Domain):
 
     Valid native values: `datetime.date` objects.
     """
+    family = 'date'
 
     # Regular expression to match YYYY-MM-DD.
     pattern = r'''(?x)
@@ -520,6 +533,7 @@ class TimeDomain(Domain):
 
     Valid native values: `datetime.time` objects.
     """
+    family = 'time'
 
     # Regular expression to match HH:MM:SS.SSSSSS.
     pattern = r'''(?x)
@@ -584,6 +598,7 @@ class DateTimeDomain(Domain):
 
     Valid native values: `datetime.datetime` objects.
     """
+    family = 'datetime'
 
     # Regular expression to match YYYY-MM-DD HH:MM:SS.SSSSSS.
     pattern = r'''(?x)
@@ -681,5 +696,6 @@ class OpaqueDomain(Domain):
     Note: this is the only SQL domain with values that cannot be serialized
     using :meth:`dump`.
     """
+    family = 'opaque'
 
 
