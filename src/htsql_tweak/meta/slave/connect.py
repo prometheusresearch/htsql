@@ -3,7 +3,6 @@
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
-
 from htsql.context import context
 from htsql.connect import Connect
 from htsql.adapter import weigh
@@ -43,23 +42,23 @@ def create_meta_schema(connection):
                REFERENCES "table"(name)
         );
         CREATE TABLE "link" (
-            origin_table TEXT NOT NULL,
+            table_name TEXT NOT NULL,
             field_name TEXT NOT NULL,
             is_singular BOOLEAN NOT NULL,
-            target_table TEXT NOT NULL,
-            reverse_of TEXT,
-            replica_of TEXT,
-            PRIMARY KEY (origin_table, field_name),
-            FOREIGN KEY (origin_table, field_name)
+            target_table_name TEXT NOT NULL,
+            reverse_name TEXT,
+            replica_name TEXT,
+            PRIMARY KEY (table_name, field_name),
+            FOREIGN KEY (table_name, field_name)
                REFERENCES "field"(table_name, name),
-            FOREIGN KEY (origin_table)
+            FOREIGN KEY (table_name)
                REFERENCES "table"(name),
-            FOREIGN KEY (target_table)
+            FOREIGN KEY (target_table_name)
                REFERENCES "table"(name),
-            FOREIGN KEY (target_table, reverse_of)
-               REFERENCES "link"(origin_table, field_name),
-            FOREIGN KEY (origin_table, replica_of)
-               REFERENCES "link"(origin_table, field_name)
+            FOREIGN KEY (target_table_name, reverse_name)
+               REFERENCES "link"(table_name, field_name),
+            FOREIGN KEY (table_name, replica_name)
+               REFERENCES "link"(table_name, field_name)
         );
     """)
 
@@ -102,12 +101,12 @@ def populate_meta_schema(connection):
 
         def make_link(field_name, link):
             is_singular = all(join.is_contracting for join in link.joins)
-            target_table = table_handles[link.joins[-1].target]
+            target_table_name = table_handles[link.joins[-1].target]
             cursor.execute("""
-              INSERT INTO "link" (origin_table, field_name,
-                                  is_singular, target_table)
+              INSERT INTO "link" (table_name, field_name,
+                                  is_singular, target_table_name)
               VALUES (?,?,?,?)
-            """, [table_name, field_name, is_singular, target_table])
+            """, [table_name, field_name, is_singular, target_table_name])
 
         for (field_name, recipe) in fields.items():
             if isinstance(recipe, ColumnRecipe):
@@ -140,19 +139,19 @@ def populate_meta_schema(connection):
 
     for (table_name, field_name, foreign_key) in reverse_links:
         if foreign_key in link_by_fk:
-            (target_table, reverse_of) = link_by_fk[foreign_key]
+            (target_table_name, reverse_name) = link_by_fk[foreign_key]
             cursor.execute("""
-              UPDATE "link" SET reverse_of = ?
-               WHERE origin_table = ? AND field_name = ?
-            """, [reverse_of, table_name, field_name])
+              UPDATE "link" SET reverse_name = ?
+               WHERE table_name = ? AND field_name = ?
+            """, [reverse_name, table_name, field_name])
 
     for (table_name, field_name, foreign_key) in column_links:
         if foreign_key in link_by_fk:
-            (target_table, replica_of) = link_by_fk[foreign_key]
+            (target_table_name, replica_name) = link_by_fk[foreign_key]
             cursor.execute("""
-              UPDATE "link" SET replica_of = ?
-               WHERE origin_table = ? AND field_name = ?
-            """, [replica_of, table_name, field_name])
+              UPDATE "link" SET replica_name = ?
+               WHERE table_name = ? AND field_name = ?
+            """, [replica_name, table_name, field_name])
 
 
 class MetaSlaveConnect(Connect):
