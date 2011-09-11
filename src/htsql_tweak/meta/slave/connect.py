@@ -32,33 +32,33 @@ def create_meta_schema(connection):
         );
         CREATE TABLE "column" (
             table_name TEXT NOT NULL,
-            field_name TEXT NOT NULL,
+            name       TEXT NOT NULL,
             domain_type TEXT NOT NULL,
             is_mandatory BOOLEAN NOT NULL,
-            PRIMARY KEY (table_name, field_name),
-            FOREIGN KEY (table_name, field_name)
+            PRIMARY KEY (table_name, name),
+            FOREIGN KEY (table_name, name)
                REFERENCES "field"(table_name, name),
             FOREIGN KEY (table_name)
                REFERENCES "table"(name)
         );
         CREATE TABLE "link" (
             table_name TEXT NOT NULL,
-            field_name TEXT NOT NULL,
+            name TEXT NOT NULL,
             is_singular BOOLEAN NOT NULL,
             target_table_name TEXT NOT NULL,
             reverse_name TEXT,
             replica_name TEXT,
-            PRIMARY KEY (table_name, field_name),
-            FOREIGN KEY (table_name, field_name)
+            PRIMARY KEY (table_name, name),
+            FOREIGN KEY (table_name, name)
                REFERENCES "field"(table_name, name),
             FOREIGN KEY (table_name)
                REFERENCES "table"(name),
             FOREIGN KEY (target_table_name)
                REFERENCES "table"(name),
             FOREIGN KEY (target_table_name, reverse_name)
-               REFERENCES "link"(table_name, field_name),
+               REFERENCES "link"(table_name, name),
             FOREIGN KEY (table_name, replica_name)
-               REFERENCES "link"(table_name, field_name)
+               REFERENCES "link"(table_name, name)
         );
     """)
 
@@ -83,75 +83,75 @@ def populate_meta_schema(connection):
         fields = itemize(recipe.table)
         public = enumerate_table(recipe.table)
 
-        def make_field(field_name, kind):
+        def make_field(name, kind):
             sort = None
-            if field_name in public:
-                sort = public.index(field_name)
+            if name in public:
+                sort = public.index(name)
             cursor.execute("""
               INSERT INTO field (table_name, name, kind, sort)
               VALUES (?,?,?,?)
-            """, [table_name, field_name, kind, sort])
+            """, [table_name, name, kind, sort])
 
-        def make_column(field_name, domain_type, is_mandatory):
+        def make_column(name, domain_type, is_mandatory):
             cursor.execute("""
-              INSERT INTO "column" (table_name, field_name,
+              INSERT INTO "column" (table_name, name,
                                     domain_type, is_mandatory)
               VALUES (?,?,?,?)
-            """, [table_name, field_name, domain_type, is_mandatory])
+            """, [table_name, name, domain_type, is_mandatory])
 
-        def make_link(field_name, link):
+        def make_link(name, link):
             is_singular = all(join.is_contracting for join in link.joins)
             target_table_name = table_handles[link.joins[-1].target]
             cursor.execute("""
-              INSERT INTO "link" (table_name, field_name,
+              INSERT INTO "link" (table_name, name,
                                   is_singular, target_table_name)
               VALUES (?,?,?,?)
-            """, [table_name, field_name, is_singular, target_table_name])
+            """, [table_name, name, is_singular, target_table_name])
 
-        for (field_name, recipe) in fields.items():
+        for (name, recipe) in fields.items():
             if isinstance(recipe, ColumnRecipe):
-                make_field(field_name, 'column')
-                make_column(field_name, recipe.column.domain.family,
+                make_field(name, 'column')
+                make_column(name, recipe.column.domain.family,
                             not recipe.column.is_nullable)
                 if isinstance(recipe.link, AttachedTableRecipe):
                     assert len(recipe.link.joins) == 1
                     join = recipe.link.joins[0]
                     if table_handles.get(join.target):
-                        make_link(field_name, recipe.link)
-                        column_links.append((table_name, field_name,
+                        make_link(name, recipe.link)
+                        column_links.append((table_name, name,
                                              join.foreign_key))
             elif isinstance(recipe, AttachedTableRecipe):
                 if table_handles.get(recipe.joins[-1].target):
-                    make_field(field_name, 'link')
-                    make_link(field_name, recipe)
+                    make_field(name, 'link')
+                    make_link(name, recipe)
                     if len(recipe.joins) == 1:
                         join = recipe.joins[0]
                         if isinstance(join, ReverseJoin):
-                            reverse_links.append((table_name, field_name,
+                            reverse_links.append((table_name, name,
                                                   join.foreign_key))
                         elif isinstance(join, DirectJoin):
                             link_by_fk[join.foreign_key] = \
-                                (table_name, field_name)
+                                (table_name, name)
             elif isinstance(recipe, AmbiguousRecipe):
                 pass
             else:
                 assert False, "Unexpected Recipe Type"
 
-    for (table_name, field_name, foreign_key) in reverse_links:
+    for (table_name, name, foreign_key) in reverse_links:
         if foreign_key in link_by_fk:
             (target_table_name, reverse_name) = link_by_fk[foreign_key]
             cursor.execute("""
               UPDATE "link" SET reverse_name = ?
-               WHERE table_name = ? AND field_name = ?
-            """, [reverse_name, table_name, field_name])
+               WHERE table_name = ? AND name = ?
+            """, [reverse_name, table_name, name])
 
-    for (table_name, field_name, foreign_key) in column_links:
+    for (table_name, name, foreign_key) in column_links:
         if foreign_key in link_by_fk:
             (target_table_name, replica_name) = link_by_fk[foreign_key]
             cursor.execute("""
               UPDATE "link" SET replica_name = ?
-               WHERE table_name = ? AND field_name = ?
-            """, [replica_name, table_name, field_name])
+               WHERE table_name = ? AND name = ?
+            """, [replica_name, table_name, name])
 
 
 class MetaSlaveConnect(Connect):
