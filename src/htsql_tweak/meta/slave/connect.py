@@ -112,22 +112,16 @@ def populate_meta_schema(connection):
                 make_column(name, recipe.column.domain.family,
                             not recipe.column.is_nullable)
             elif isinstance(recipe, AttachedTableRecipe):
-                target_table_name = table_handles.get(recipe.joins[-1].target)
+                target_table_name = table_handles.get(recipe.target_table)
                 if target_table_name:
-                    is_singular = all(join.is_contracting 
-                                      for join in recipe.joins)
                     make_field(name, 'link')
-                    make_link(name, is_singular, target_table_name)
-
-                    # record reverse links to update it later
-                    if len(recipe.joins) == 1:
-                        join = recipe.joins[0]
-                        if isinstance(join, ReverseJoin):
-                            reverse_links.append((table_name, name,
-                                                  join.foreign_key))
-                        elif isinstance(join, DirectJoin):
-                            link_by_fk[join.foreign_key] = \
-                                (table_name, name)
+                    make_link(name, recipe.is_singular, target_table_name)
+                    if recipe.is_direct:
+                        link_by_fk[recipe.joins[0].foreign_key] = \
+                            (table_name, name)
+                    elif recipe.is_reverse:
+                        reverse_links.append((table_name, name,
+                                              recipe.joins[0].foreign_key))
             else:
                 pass
 

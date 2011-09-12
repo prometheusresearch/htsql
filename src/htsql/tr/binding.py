@@ -12,7 +12,8 @@ This module declares binding nodes and recipe objects.
 """
 
 
-from ..util import maybe, listof, oneof, tupleof, Clonable, Printable
+from ..util import (maybe, listof, oneof, tupleof, 
+                    Clonable, Printable, Comparable)
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
 from .syntax import Syntax, IdentifierSyntax, ReferenceSyntax
@@ -76,7 +77,7 @@ class Binding(Clonable, Printable):
         return str(self.syntax)
 
 
-class Recipe(Printable):
+class Recipe(Comparable, Printable):
     """
     Represents a recipe object.
 
@@ -654,6 +655,7 @@ class FreeTableRecipe(Recipe):
     def __init__(self, table):
         assert isinstance(table, TableEntity)
         self.table = table
+        super(FreeTableRecipe, self).__init__(equality_vector=(table,))
 
     def __str__(self):
         return str(self.table)
@@ -665,11 +667,33 @@ class AttachedTableRecipe(Recipe):
 
     `joins` (a list of :class:`htsql.entity.Join`)
         The joins to attach the nodes.
+
+    `origin_table`
+        table entity at the head of this link
+
+    `target_table`
+        table entity at the tail of this link
+
+    `is_singular` 
+        boolean value if this link is singular
+
+    `is_direct``
+        this is single join direct link created by a foreign key
+ 
+    `is_reverse`
+        this is a single join created by reversal of a foreign key 
     """
 
     def __init__(self, joins):
         assert isinstance(joins, listof(Join)) and len(joins) > 0
         self.joins = joins
+        self.origin_table = joins[0].target
+        self.target_table = joins[-1].target
+        self.is_singular = all(join.is_contracting for join in joins)
+        self.is_direct  = len(joins) == 1 and joins[0].is_direct
+        self.is_reverse = len(joins) == 1 and joins[0].is_reverse
+        super(AttachedTableRecipe, self).__init__(
+            equality_vector=(tuple(joins),))
 
     def __str__(self):
         return " => ".join(str(join) for join in self.joins)
@@ -692,6 +716,7 @@ class ColumnRecipe(Recipe):
         assert isinstance(link, maybe(Recipe))
         self.column = column
         self.link = link
+        super(ColumnRecipe, self).__init__(equality_vector=(column,))
 
     def __str__(self):
         return str(self.column)
@@ -714,6 +739,7 @@ class KernelRecipe(Recipe):
         assert 0 <= index < len(quotient.kernels)
         self.quotient = quotient
         self.index = index
+        super(KernelRecipe, self).__init__(equality_vector=(quotient, index))
 
     def __str__(self):
         return "%s.*%s" % (self.quotient, self.index+1)
@@ -730,6 +756,7 @@ class ComplementRecipe(Recipe):
     def __init__(self, quotient):
         assert isinstance(quotient, QuotientBinding)
         self.quotient = quotient
+        super(ComplementRecipe, self).__init__(equality_vector=(quotient,))
 
     def __str__(self):
         return "%s.^" % self.quotient
@@ -765,6 +792,9 @@ class SubstitutionRecipe(Recipe):
         self.terms = terms
         self.parameters = parameters
         self.body = body
+        super(SubstitutionRecipe, self).__init__(
+            equality_vector=(base, tuple(terms), body,  
+                None if parameters is None else tuple(parameters)))
 
     def __str__(self):
         # Display:
@@ -802,6 +832,7 @@ class BindingRecipe(Recipe):
     def __init__(self, binding):
         assert isinstance(binding, Binding)
         self.binding = binding
+        super(BindingRecipe, self).__init__(equality_vector=(binding,))
 
     def __str__(self):
         return str(self.binding)
@@ -815,6 +846,7 @@ class ClosedRecipe(Recipe):
     def __init__(self, recipe):
         assert isinstance(recipe, Recipe)
         self.recipe = recipe
+        super(ClosedRecipe, self).__init__(equality_vector=(recipe,))
 
     def __str__(self):
         return "(%s)" % self.recipe
@@ -836,6 +868,7 @@ class PinnedRecipe(Recipe):
         assert isinstance(recipe, Recipe)
         self.scope = scope
         self.recipe = recipe
+        super(PinnedRecipe, self).__init__(equality_vector=(scope,recipe,))
 
     def __str__(self):
         return "%s -> %s" % (self.scope, self.recipe)
