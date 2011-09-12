@@ -69,6 +69,8 @@ def populate_meta_schema(connection):
     table_handles = {}
 
     for (table_name, recipe) in tables.items():
+        if isinstance(recipe, AmbiguousRecipe):
+            continue
         cursor.execute("""
           INSERT INTO "table" (name)
           VALUES (?)
@@ -80,6 +82,8 @@ def populate_meta_schema(connection):
     column_links = []
 
     for (table_name, recipe) in tables.items():
+        if isinstance(recipe, AmbiguousRecipe):
+            continue
         fields = itemize(recipe.table)
         public = enumerate_table(recipe.table)
 
