@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>pgsql:///htsql_regress</title>
+    <script src="external/jquery/jquery-1.6.2.min.js"></script>
+    <script src="external/codemirror/lib/codemirror.js"></script>
+    <script src="htsql-mode.js"></script>
+    <script src="shell2.js"></script>
+    <link rel="stylesheet" href="external/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="external/codemirror/theme/default.css">
+    <link rel="stylesheet" href="htsql-mode.css">
+    <link rel="stylesheet" href="shell2.css">
+  </head>
+
+  <body>
+
+    <div class="heading-area">
+      <span class="database">pgsql:htsql_regress</span>
+      <ul class="menu">
+        <li><a id="schema">Schema</a></li>
+        <li><a id="help">Help</a></li>
+      </ul>
+    </div>
+
+    <div class="input-area">
+      <div class="editor-container">
+        <textarea id="editor">/department{school{code, name},
+            code, name, count(course)}
+           ?exists(course)</textarea>
+      </div>
+      <div class="button-container">
+        <a id="run">Run</a>
+      </div>
+      <a id="shortcuts">Keyboard Shortcuts</a>
+    </div>
+
+    <div class="output-area">
+
+      <div class="grid-wrapper">
+
+        <table id="grid">
+
+          <tr id="grid-head">
+            <td></td>
+            <td id="titles"><div class="scroll"></div></td>
+          </tr>
+
+          <tr id="grid-body">
+
+            <td id="indices"><div class="scroll"></div></td>
+
+            <td id="values">
+              <div class="scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th class="dummy" rowspan="3">&nbsp;</th>
+                      <th colspan="5">department</th>
+                      <th class="dummy" rowspan="3">&nbsp;</th>
+                    </tr>
+                    <tr>
+                      <th colspan="2">school</th>
+                      <th rowspan="2">code</th>
+                      <th rowspan="2">name</th>
+                      <th rowspan="2">count(course)</th>
+                    </tr>
+                    <tr>
+                      <th>code</th>
+                      <th>name</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><th>1</th><td>bus</td><td>School of Business</td><td>acc</td><td>Accounting</td><td class="number">12</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>2</th><td>art</td><td>School of Art and Design</td><td>arthis</td><td>Art History</td><td class="number">20</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>3</th><td>ns</td><td>School of Natural Sciences</td><td>astro</td><td>Astronomy</td><td class="number">22</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>4</th><td>eng</td><td>School of Engineering</td><td>be</td><td>Bioengineering</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>5</th><td>ns</td><td>School of Natural Sciences</td><td>chem</td><td>Chemistry</td><td class="number">18</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>6</th><td>eng</td><td>School of Engineering</td><td>comp</td><td>Computer Science</td><td class="number">21</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>7</th><td>bus</td><td>School of Business</td><td>econ</td><td>Economics</td><td class="number">15</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>8</th><td>edu</td><td>College of Education</td><td>edpol</td><td>Educational Policy</td><td class="number">16</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>9</th><td>eng</td><td>School of Engineering</td><td>ee</td><td>Electrical Engineering</td><td class="number">14</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>10</th><td>la</td><td>School of Arts and Humanities</td><td>eng</td><td>English</td><td class="number">21</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>11</th><td>la</td><td>School of Arts and Humanities</td><td>hist</td><td>History</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>12</th><td>la</td><td>School of Arts and Humanities</td><td>lang</td><td>Foreign Languages</td><td class="number">21</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>13</th><td>eng</td><td>School of Engineering</td><td>me</td><td>Mechanical Engineering</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>14</th><td>bus</td><td>School of Business</td><td>mm</td><td>Management &amp; Marketing</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>15</th><td>ns</td><td>School of Natural Sciences</td><td>mth</td><td>Mathematics</td><td class="number">11</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>16</th><td>ns</td><td>School of Natural Sciences</td><td>phys</td><td>Physics</td><td class="number">23</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>17</th><td>la</td><td>School of Arts and Humanities</td><td>poli</td><td>Political Science</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>18</th><td>la</td><td>School of Arts and Humanities</td><td>psych</td><td>Psychology</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
+                    <tr><th>19</th><td>art</td><td>School of Art and Design</td><td>stdart</td><td>Studio Art</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="alt"><th>20</th><td>edu</td><td>College of Education</td><td>tched</td><td>Teacher Education</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
+                    <tr class="dummy"><th class="dummy">&nbsp;</th><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </td>
+
+          </tr>
+
+        </table>
+
+      </div>
+
+      <div class="export-buttons">
+        <a id="export-html">HTML</a>
+        <a id="export-json">JSON</a>
+        <a id="export-csv">CSV</a>
+      </div>
+
+    </div>
+
+    <div class="footer-area">
+    </div>
+
+  </body>
+
+</html>

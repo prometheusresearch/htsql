@@ -1,0 +1,321 @@
+
+* {
+  font-family: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  font-size: 100%;
+  text-decoration: none;
+  vertical-align: baseline;
+  border-size: 0;
+  border-style: none;
+  outline: 0;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  list-style-type: none;
+}
+
+body {
+  font-family: "Arial", sans-serif;
+  font-size: 80%;
+  line-height: 1.4;
+  color: #000;
+  background: #fff;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+pre, tt, code, kbd, samp {
+  font-family: "DejaVu Sans Mono", "Menlo", "Lucida Console", monospace;
+}
+
+.clearfix:after {
+  visibility: hidden;
+  display: block;
+  font-size: 0;
+  content: " ";
+  clear: both;
+  height: 0;
+}
+
+.heading-area {
+  float: left;
+  clear: left;
+  width: 100%;
+  padding: 5px 0;
+  color: #e6e6e6;
+  background: #176573;
+  background-image: -moz-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1));
+  background-image: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1));
+  background-image: linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1));
+}
+
+.heading-area .database {
+  float: left;
+  padding: 0 1em;
+}
+
+.heading-area ul.menu {
+  float: right;
+  width: 12em;
+}
+
+.heading-area ul.menu li {
+  float: left;
+  width: 6em;
+}
+
+.heading-area ul.menu li a {
+  cursor: pointer;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.heading-area ul.menu li a:hover {
+  color: #fff;
+}
+
+.input-area {
+  position: relative;
+  float: left;
+  clear: left;
+  width: 100%;
+  color: #1a1a1a;
+  background: #f5eed7;
+  border: solid #e6dbb0;
+  border-width: 0 0 1px;
+}
+
+.input-area .editor-container {
+  height: 6em;
+  margin-right: 15em;
+  padding: 0.2em 1em;
+}
+
+.input-area .editor-container #editor {
+  font-family: "DejaVu Sans Mono", "Menlo", "Lucida Console", monospace;
+  font-size: 105%;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  padding: 0.1em;
+  border: 1px solid #e6dbb0;
+}
+
+.input-area .editor-container .CodeMirror {
+  font-family: "DejaVu Sans Mono", "Menlo", "Lucida Console", monospace;
+  font-size: 105%;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  padding: 0.1em;
+  border: 1px solid #e6dbb0;
+}
+
+.input-area .editor-container .CodeMirror-scroll {
+  width: 100%;
+  height: 100%;
+}
+
+.input-area .button-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 15em;
+  height: 6em;
+  padding: 0.2em 0;
+}
+
+.input-area .button-container #run {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 0.5em 3em;
+  font-weight: bold;
+  color: #e6e6e6;
+  background: #8e9e63;
+  border: 1px solid #e6dbb0;
+  background-image: -moz-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0));
+  background-image: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0));
+  background-image: linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0));
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+  cursor: pointer;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.input-area .button-container #run:hover {
+  color: #fff;
+}
+
+.input-area .button-container #run:active {
+  background-image: -moz-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
+  background-image: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
+  background-image: linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
+}
+
+.input-area #shortcuts {
+  font-size: 90%;
+  font-style: italic;
+  margin: 0.1em 1em;
+  color: #808080;
+  cursor: pointer;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.input-area #shortcuts:hover {
+  text-decoration: underline;
+}
+
+.output-area {
+  float: left;
+  clear: left;
+  width: 100%;
+  height: 100%;
+  color: #1a1a1a;
+  overflow: hidden;
+}
+
+.output-area .grid-wrapper {
+  padding: 0 0 0 1em;
+  overflow: hidden;
+}
+
+#grid {
+  margin: 1em 0 0;
+  width: 100%;
+}
+
+#grid #indices {
+  width: 0;
+}
+
+.scroll {
+  overflow: hidden;
+}
+
+#values .scroll {
+  overflow: auto;
+}
+
+#titles {
+  border: solid #1a1a1a;
+  border-width: 0 0 1px 1px;
+}
+
+#indices {
+  border: solid #1a1a1a;
+  border-width: 1px 1px 0 0;
+}
+
+#titles table, #values thead {
+  background: #f2f2f2;
+  border: hidden;
+}
+
+#titles tr, #values thead tr {
+  border: solid #999999;
+  border-width: 1px 0 0;
+}
+
+#titles th, #values thead th {
+  border: solid #999999;
+  border-width: 0 0 0 1px;
+}
+
+#indices table {
+  width: 100%;
+  border: hidden;
+}
+
+#values table {
+  border: hidden;
+}
+
+#values td {
+  border: solid #999999;
+  border-width: 0 0 0 1px;
+}
+
+#titles th,
+#indices th,
+#values th {
+  font-weight: bold;
+}
+
+#titles tr.alt,
+#indices tr.alt,
+#values tr.alt {
+  background: #f2f2f2;
+}
+
+#titles td, #titles th,
+#indices td, #indices th,
+#values td, #values th {
+  padding: 3px 10px;
+  vertical-align: bottom;
+}
+
+#titles th, #values thead th {
+  text-align: center;
+}
+
+#indices th, #values tbody th {
+  font-size: 90%;
+  text-align: right;
+}
+
+#values tbody td {
+  font-size: 105%;
+}
+
+#values .number {
+  text-align: right;
+}
+
+.output-area .export-buttons {
+  float: left;
+  width: 100%;
+  padding: 0.5em 0;
+}
+
+.output-area .export-buttons a {
+  float: left;
+  padding: 0.5em 2em;
+  margin: 0 0 0 1em;
+  color: #e6e6e6;
+  background: #8e9e63;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.output-area .export-buttons a:hover {
+  color: #fff;
+}
+
+.footer-area {
+  float: left;
+  clear: left;
+  width: 100%;
+  height: 0.3em;
+  background: #e6dbb0;
+  background-image: -moz-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+  background-image: -webkit-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+  background-image: linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+}
+

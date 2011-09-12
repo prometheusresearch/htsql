@@ -1,12 +1,16 @@
 .PHONY: clean
 
-build:
-	mkdir build
-	wget -q -P build http://codemirror.net/codemirror.zip
-	unzip -q build/codemirror.zip -d build
-	rm build/codemirror.zip
-	mv build/CodeMirror-* build/codemirror
+external:
+	mkdir external
+	mkdir external/reset
+	wget -q -P external/reset http://meyerweb.com/eric/tools/css/reset/reset.css
+	mkdir external/jquery
+	wget -q -P external/jquery http://code.jquery.com/jquery-1.6.2.min.js
+	wget -q -P external http://codemirror.net/codemirror.zip
+	unzip -q external/codemirror.zip -d external
+	rm external/codemirror.zip
+	mv external/CodeMirror-* external/codemirror
 
 clean:
-	rm -rf build
+	rm -rf external
 
