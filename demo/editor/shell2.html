@@ -15,104 +15,95 @@
 
   <body>
 
-    <div class="heading-area">
-      <span class="database">pgsql:htsql_regress</span>
-      <ul class="menu">
-        <li><a id="schema">Schema</a></li>
-        <li><a id="help">Help</a></li>
-      </ul>
-    </div>
+    <div class="viewport">
 
-    <div class="input-area">
-      <div class="editor-container">
-        <textarea id="editor">/department{school{code, name},
-            code, name, count(course)}
-           ?exists(course)</textarea>
-      </div>
-      <div class="button-container">
-        <a id="run">Run</a>
-      </div>
-      <a id="shortcuts">Keyboard Shortcuts</a>
-    </div>
-
-    <div class="output-area">
-
-      <div class="grid-wrapper">
-
-        <table id="grid">
-
-          <tr id="grid-head">
-            <td></td>
-            <td id="titles"><div class="scroll"></div></td>
-          </tr>
-
-          <tr id="grid-body">
-
-            <td id="indices"><div class="scroll"></div></td>
-
-            <td id="values">
-              <div class="scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th class="dummy" rowspan="3">&nbsp;</th>
-                      <th colspan="5">department</th>
-                      <th class="dummy" rowspan="3">&nbsp;</th>
-                    </tr>
-                    <tr>
-                      <th colspan="2">school</th>
-                      <th rowspan="2">code</th>
-                      <th rowspan="2">name</th>
-                      <th rowspan="2">count(course)</th>
-                    </tr>
-                    <tr>
-                      <th>code</th>
-                      <th>name</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><th>1</th><td>bus</td><td>School of Business</td><td>acc</td><td>Accounting</td><td class="number">12</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>2</th><td>art</td><td>School of Art and Design</td><td>arthis</td><td>Art History</td><td class="number">20</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>3</th><td>ns</td><td>School of Natural Sciences</td><td>astro</td><td>Astronomy</td><td class="number">22</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>4</th><td>eng</td><td>School of Engineering</td><td>be</td><td>Bioengineering</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>5</th><td>ns</td><td>School of Natural Sciences</td><td>chem</td><td>Chemistry</td><td class="number">18</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>6</th><td>eng</td><td>School of Engineering</td><td>comp</td><td>Computer Science</td><td class="number">21</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>7</th><td>bus</td><td>School of Business</td><td>econ</td><td>Economics</td><td class="number">15</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>8</th><td>edu</td><td>College of Education</td><td>edpol</td><td>Educational Policy</td><td class="number">16</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>9</th><td>eng</td><td>School of Engineering</td><td>ee</td><td>Electrical Engineering</td><td class="number">14</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>10</th><td>la</td><td>School of Arts and Humanities</td><td>eng</td><td>English</td><td class="number">21</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>11</th><td>la</td><td>School of Arts and Humanities</td><td>hist</td><td>History</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>12</th><td>la</td><td>School of Arts and Humanities</td><td>lang</td><td>Foreign Languages</td><td class="number">21</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>13</th><td>eng</td><td>School of Engineering</td><td>me</td><td>Mechanical Engineering</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>14</th><td>bus</td><td>School of Business</td><td>mm</td><td>Management &amp; Marketing</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>15</th><td>ns</td><td>School of Natural Sciences</td><td>mth</td><td>Mathematics</td><td class="number">11</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>16</th><td>ns</td><td>School of Natural Sciences</td><td>phys</td><td>Physics</td><td class="number">23</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>17</th><td>la</td><td>School of Arts and Humanities</td><td>poli</td><td>Political Science</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>18</th><td>la</td><td>School of Arts and Humanities</td><td>psych</td><td>Psychology</td><td class="number">17</td><td class="dummy">&nbsp;</td></tr>
-                    <tr><th>19</th><td>art</td><td>School of Art and Design</td><td>stdart</td><td>Studio Art</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="alt"><th>20</th><td>edu</td><td>College of Education</td><td>tched</td><td>Teacher Education</td><td class="number">19</td><td class="dummy">&nbsp;</td></tr>
-                    <tr class="dummy"><th class="dummy">&nbsp;</th><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </td>
-
-          </tr>
-
-        </table>
-
+      <div class="heading-area">
+        <span class="database">pgsql:htsql_regress</span>
+        <ul class="menu">
+          <li><a id="schema">Schema</a></li>
+          <li><a id="help">Help</a></li>
+        </ul>
       </div>
 
-      <div class="export-buttons">
-        <a id="export-html">HTML</a>
-        <a id="export-json">JSON</a>
-        <a id="export-csv">CSV</a>
+      <div class="input-area">
+        <div class="editor-container">
+          <textarea id="editor">/department{school{code, name},
+              code, name, count(course)}
+             ?exists(course)</textarea>
+        </div>
+        <div class="button-container">
+          <a id="run">Run</a>
+        </div>
+        <a id="shortcuts">Keyboard Shortcuts</a>
       </div>
 
-    </div>
+      <div class="output-area">
 
-    <div class="footer-area">
-    </div>
+        <div class="grid">
+
+          <div class="grid-head">
+            <div class="expander"></div>
+          </div>
+
+          <div class="grid-body">
+            <table>
+              <thead>
+                <tr>
+                  <th class="dummy" rowspan="3">&nbsp;</th>
+                  <th colspan="5">department</span></th>
+                  <th class="dummy" rowspan="3">&nbsp;</th>
+                </tr>
+                <tr>
+                  <th colspan="2"><span>school</span></th>
+                  <th rowspan="2"><span>code</span></th>
+                  <th rowspan="2"><span>name</span></th>
+                  <th rowspan="2"><span>count(course)</span></th>
+                </tr>
+                <tr>
+                  <th><span>code</span></th>
+                  <th><span>name</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th><span>1</span></th><td><span>bus</span></td><td><span>School of Business</span></td><td><span>acc</span></td><td><span>Accounting</span></td><td class="number"><span>12</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>2</span></th><td><span>art</span></td><td><span>School of Art and Design</span></td><td><span>arthis</span></td><td><span>Art History</span></td><td class="number"><span>20</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>3</span></th><td><span>ns</span></td><td><span>School of Natural Sciences</span></td><td><span>astro</span></td><td><span>Astronomy</span></td><td class="number"><span>22</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>4</span></th><td><span>eng</span></td><td><span>School of Engineering</span></td><td><span>be</span></td><td><span>Bioengineering</span></td><td class="number"><span>17</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>5</span></th><td><span>ns</span></td><td><span>School of Natural Sciences</span></td><td><span>chem</span></td><td><span>Chemistry</span></td><td class="number"><span>18</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>6</span></th><td><span>eng</span></td><td><span>School of Engineering</span></td><td><span>comp</span></td><td><span>Computer Science</span></td><td class="number"><span>21</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>7</span></th><td><span>bus</span></td><td><span>School of Business</span></td><td><span>econ</span></td><td><span>Economics</span></td><td class="number"><span>15</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>8</span></th><td><span>edu</span></td><td><span>College of Education</span></td><td><span>edpol</span></td><td><span>Educational Policy</span></td><td class="number"><span>16</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>9</span></th><td><span>eng</span></td><td><span>School of Engineering</span></td><td><span>ee</span></td><td><span>Electrical Engineering</span></td><td class="number"><span>14</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>10</span></th><td><span>la</span></td><td><span>School of Arts and Humanities</span></td><td><span>eng</span></td><td><span>English</span></td><td class="number"><span>21</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>11</span></th><td><span>la</span></td><td><span>School of Arts and Humanities</span></td><td><span>hist</span></td><td><span>History</span></td><td class="number"><span>17</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>12</span></th><td><span>la</span></td><td><span>School of Arts and Humanities</span></td><td><span>lang</span></td><td><span>Foreign Languages</span></td><td class="number"><span>21</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>13</span></th><td><span>eng</span></td><td><span>School of Engineering</span></td><td><span>me</span></td><td><span>Mechanical Engineering</span></td><td class="number"><span>19</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>14</span></th><td><span>bus</span></td><td><span>School of Business</span></td><td><span>mm</span></td><td><span>Management &amp; Marketing</span></td><td class="number"><span>17</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>15</span></th><td><span>ns</span></td><td><span>School of Natural Sciences</span></td><td><span>mth</span></td><td><span>Mathematics</span></td><td class="number"><span>11</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>16</span></th><td><span>ns</span></td><td><span>School of Natural Sciences</span></td><td><span>phys</span></td><td><span>Physics</span></td><td class="number"><span>23</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>17</span></th><td><span>la</span></td><td><span>School of Arts and Humanities</span></td><td><span>poli</span></td><td><span>Political Science</span></td><td class="number"><span>19</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>18</span></th><td><span>la</span></td><td><span>School of Arts and Humanities</span></td><td><span>psych</span></td><td><span>Psychology</span></td><td class="number"><span>17</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr><th><span>19</span></th><td><span>art</span></td><td><span>School of Art and Design</span></td><td><span>stdart</span></td><td><span>Studio Art</span></td><td class="number"><span>19</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="alt"><th><span>20</span></th><td><span>edu</span></td><td><span>College of Education</span></td><td><span>tched</span></td><td><span>Teacher Education</span></td><td class="number"><span>19</span></td><td class="dummy">&nbsp;</td></tr>
+                <tr class="dummy"><th class="dummy">&nbsp;</th><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td><td class="dummy">&nbsp;</td></tr>
+              </tbody>
+            </table>
+          </div> <!-- grid-body -->
+
+        </div> <!-- grid -->
+
+        <div class="export-buttons">
+          <a id="export-html">HTML</a>
+          <a id="export-json">JSON</a>
+          <a id="export-csv">CSV</a>
+        </div>
+
+      </div> <!-- output-area -->
+
+      <div class="footer-area">
+      </div>
+
+    </div> <!-- viewport -->
 
   </body>
 

@@ -2,73 +2,50 @@
 $(document).ready(function() {
 
     function handle_resize() {
-        var output_height = $(window).height()
-                            -$('.heading-area').outerHeight()
-                            -$('.input-area').outerHeight()
-                            -$('.footer-area').outerHeight();
-        if (output_height < 240) {
-            output_height = 240;
-        }
-        $('.output-area').height(output_height);
-        var wrapper_height = output_height - $('.export-buttons').outerHeight();
-        $('.grid-wrapper').height(wrapper_height);
-        if ($('#grid').css('visibility') == 'hidden') {
-            setTimeout(split_table, 0);
-        }
-    }
-
-    function split_table() {
-        /*
-        $('#values td, #values th').each(function() {
-            $(this).width($(this).width());
-            $(this).height($(this).height());
-        });
-        */
-        $('#values thead th').each(function() {
-            $(this).width($(this).width());
-        });
-        $('#values tbody tr:first-child td').each(function() {
-            $(this).width($(this).width());
-        });
-        $('#values tbody tr').each(function() {
-            $(this).height($(this).height());
-        });
-        $('#values table').clone().appendTo('#titles .scroll');
-        $('#values table').clone().appendTo('#indices .scroll');
-        $('#titles tbody').remove();
-        $('#titles tr:first-child th:first-child').remove();
-        $('#indices thead').remove();
-        $('#indices td').remove();
-        $('#values thead').remove();
-        $('#values th').remove();
         setTimeout(resize_grid, 0);
     }
 
+    function handle_scroll() {
+        $('.grid-head').scrollLeft($('.grid-body').scrollLeft());
+    }
+
     function resize_grid() {
-        var height = $('.export-buttons').offset().top - $('#values .scroll').offset().top;
-        if (height < $('#values .scroll').height()) {
-            height = Math.floor(height);
-            $('#values .scroll').height(height);
-            $('#indices .scroll').height(height);
-            $('#values .scroll').scroll(handle_vertical_scroll);
+        var height = $('.export-buttons').offset().top - $('.grid-body').offset().top;
+        height = Math.floor(height);
+        height = height > 0 ? height : 0;
+        $('.grid-body').height(height);
+        $('.grid').css('visibility', 'visible');
+    }
+
+    function split_table() {
+        var col_widths = [];
+        $('.grid tbody tr:first-child').children().each(function(idx) {
+            col_widths[idx] = $(this).width()+2;
+        });
+        $('.grid-head').append("<table></table>");
+        $('.grid-head table').append($('.grid-body thead'));
+        var total_width = 0;
+        for (var idx = col_widths.length-1; idx >= 0; idx --) {
+            var width = col_widths[idx];
+            total_width += width;
+            $('.grid-head table').prepend("<col style=\"width: "+width+"px\">");
+            $('.grid-body table').prepend("<col style=\"width: "+width+"px\">");
         }
-        setTimeout(show_grid, 0);
-    }
-
-    function show_grid() {
-        $('#grid').css('visibility', 'visible');
-    }
-
-    function handle_vertical_scroll() {
-        $('#indices .scroll').scrollTop($('#values .scroll').scrollTop());
+        $('.grid-head .expander').css("left", ""+total_width+100+"px");
+        $('.grid-head table').width(total_width);
+        $('.grid-body table').width(total_width);
+        $('.grid-head table').css('table-layout', 'fixed');
+        $('.grid-body table').css('table-layout', 'fixed');
+        $('.grid-body').scroll(handle_scroll);
+        setTimeout(resize_grid, 0);
     }
 
     var editor = $('#editor');
     var cm = CodeMirror.fromTextArea(editor[0], {
         mode: 'htsql'
     });
-    $('#grid').css('visibility', 'hidden');
-    setTimeout(handle_resize, 0);
+    $('.grid').css('visibility', 'hidden');
+    setTimeout(split_table, 0);
     $(window).resize(handle_resize);
 });
 
