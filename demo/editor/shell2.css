@@ -54,7 +54,7 @@ pre, tt, code, kbd, samp {
   width: 100%;
   padding: 5px 0;
   color: #e6e6e6;
-  background: #176573;
+  background: #4d4d4d;
   background-image: -moz-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1));
   background-image: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1));
   background-image: linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1));
@@ -66,9 +66,11 @@ pre, tt, code, kbd, samp {
   position: relative;
   width: 100%;
   color: #1a1a1a;
-  background: #f5eed7;
-  border: solid #e6dbb0;
-  border-width: 0 0 1px;
+  border: solid #999999;
+  border-width: 1px 0;
+  -moz-box-shadow: inset 0 2px 2px rgba(0,0,0,0.1), inset 0 -2px 2px rgba(0,0,0,0.1);
+  -webkit-box-shadow: inset 0 2px 2px rgba(0,0,0,0.1), inset 0 -2px 2px rgba(0,0,0,0.1);
+  box-shadow: inset 0 2px 2px rgba(0,0,0,0.1), inset 0 -2px 2px rgba(0,0,0,0.1);
 }
 
 .output-area {
@@ -86,10 +88,10 @@ pre, tt, code, kbd, samp {
   bottom: 0;
   width: 100%;
   height: 0.3em;
-  background: #e6dbb0;
-  background-image: -moz-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
-  background-image: -webkit-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
-  background-image: linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+  z-index: -1;
+  -moz-box-shadow: inset 0 -2px 2px rgba(0,0,0,0.1);
+  -webkit-box-shadow: inset 0 -2px 2px rgba(0,0,0,0.1);
+  box-shadow: inset 0 -2px 2px rgba(0,0,0,0.1);
 }
 
 /* Heading area */
@@ -124,18 +126,13 @@ pre, tt, code, kbd, samp {
 
 .input-area .editor-container {
   height: 6em;
-  margin-right: 15em;
-  padding: 0.2em 1em;
-}
-
-.input-area .editor-container #editor {
-  font-family: "DejaVu Sans Mono", "Menlo", "Lucida Console", monospace;
-  font-size: 105%;
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  padding: 0.1em;
-  border: 1px solid #e6dbb0;
+  margin-right: 20em;
+  padding: 0.5em 1em;
+  border: solid #999999;
+  border-width: 0 1px 0 0;
+  -moz-box-shadow: inset -1px 0 1px rgba(0,0,0,0.1);
+  -webkit-box-shadow: inset -1px 0 1px rgba(0,0,0,0.1);
+  box-shadow: inset -1px 0 1px rgba(0,0,0,0.1);
 }
 
 .input-area .editor-container .CodeMirror {
@@ -143,9 +140,6 @@ pre, tt, code, kbd, samp {
   font-size: 105%;
   width: 100%;
   height: 100%;
-  background: #fff;
-  padding: 0.1em;
-  border: 1px solid #e6dbb0;
 }
 
 .input-area .editor-container .CodeMirror-scroll {
@@ -157,96 +151,66 @@ pre, tt, code, kbd, samp {
   position: absolute;
   top: 0;
   right: 0;
-  width: 15em;
+  width: 18em;
   height: 6em;
-  padding: 0.2em 0;
+  padding: 0.5em 1em;
 }
 
-.input-area .button-container #run {
+.input-area .button-container ul {
   position: absolute;
-  bottom: 0;
   left: 0;
-  padding: 0.5em 3em;
-  font-weight: bold;
-  color: #e6e6e6;
-  background: #8e9e63;
-  border: 1px solid #e6dbb0;
-  background-image: -moz-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0));
-  background-image: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0));
-  background-image: linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0));
+  bottom: 0;
+}
+
+.input-area .button-container li {
+  float: left;
+  margin: 0 0 0.5em 1em;
+}
+
+.input-area .button-container a {
+  float: left;
+  text-align: center;
+  padding: 0.2em 1.2em;
+  color: #1a1a1a;
+  background: #abbbbe;
+  border: 1px solid #999999;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
   border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 1px 2px rgba(0,0,0,0.05);
+  text-shadow: 0 1px 1px rgba(255,255,255,0.75);
   cursor: pointer;
   -moz-user-select: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
-.input-area .button-container #run:hover {
+.input-area .button-container a:hover {
   color: #fff;
 }
 
-.input-area .button-container #run:active {
+.input-area .button-container a:active {
   background-image: -moz-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
   background-image: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
   background-image: linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
 }
 
-.input-area #shortcuts {
-  font-size: 90%;
-  font-style: italic;
-  margin: 0.1em 1em;
-  color: #808080;
-  cursor: pointer;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.input-area #shortcuts:hover {
-  text-decoration: underline;
-}
-
 /* Output area */
 
 .output-area .grid {
-  padding: 1em 0 0 1em;
   overflow: hidden;
-}
-
-.output-area .export-buttons {
-  float: left;
-  position: absolute;
-  left: 0;
-  bottom: 0.3em;
-  padding: 0.5em 0;
-}
-
-.output-area .export-buttons a {
-  float: left;
-  padding: 0.5em 2em;
-  margin: 0 0 0 1em;
-  color: #e6e6e6;
-  background: #8e9e63;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.output-area .export-buttons a:hover {
-  color: #fff;
 }
 
 /* Grid */
 
 /* Grid borders */
 
+.grid table {
+  border-style: hidden none none none;
+}
+
 .grid thead {
+  background: #eef5dd;
   background: #f2f2f2;
   border: solid #1a1a1a;
   border-width: 0 0 1px 0;
@@ -258,7 +222,8 @@ pre, tt, code, kbd, samp {
 }
 
 .grid thead tr:first-child {
-  border: 0;
+  border: solid #f2f2f2;
+  border-width: 1px 0 0 0;
 }
 
 .grid thead th {
@@ -268,7 +233,7 @@ pre, tt, code, kbd, samp {
 
 .grid thead tr:first-child th:first-child {
   border: 1px solid;
-  border-color: #f2f2f2 #1a1a1a #1a1a1a #f2f2f2;
+  border-color: #fff #1a1a1a #1a1a1a #fff;
 }
 
 .grid tbody th {
@@ -287,7 +252,16 @@ pre, tt, code, kbd, samp {
 }
 
 .grid tr.alt {
+  background: #eef5dd;
   background: #f2f2f2;
+}
+
+.grid tbody tr:hover {
+  background: #176371;
+  background: #1a1a1a;
+  background: #333333;
+  color: #e6e6e6;
+  color: #fff;
 }
 
 /* Grid styling */
@@ -334,13 +308,8 @@ pre, tt, code, kbd, samp {
   overflow: hidden;
 }
 
-.grid .grid-head .expander {
-  position: relative;
-  width: 1px;
-  height: 1px;
-}
-
 .grid .grid-body {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
