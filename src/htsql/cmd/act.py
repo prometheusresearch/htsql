@@ -9,6 +9,10 @@ from ..error import BadRequestError
 from .command import Command
 
 
+class UnsupportedActionError(BadRequestError):
+    pass
+
+
 class Action(object):
     pass
 
@@ -34,7 +38,7 @@ class Act(Adapter):
         self.action = action
 
     def __call__(self):
-        raise BadRequestError("invalid command")
+        raise UnsupportedActionError("unsupported action")
 
 
 def act(command, action):

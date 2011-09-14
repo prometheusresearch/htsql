@@ -236,12 +236,14 @@ class ItemizeHome(Utility):
     of non-redundant tables by canonical name.  We don't expect
     the lookup list returned to contain the same table twice.
     """
+
     # TODO: This requires pathalogical test schemas
     #       in order to test for full coverage.
     def __init__(self):
         self.catalog = get_catalog()
 
     def __call__(self):
+        # FIXME: keep the original case of the tables.
         buckets = {}
         for schema in self.catalog.schemas:
             for table in schema.tables:
@@ -298,6 +300,7 @@ class ItemizeTable(Utility):
         self.catalog = get_catalog()
 
     def __call__(self):
+        # FIXME: keep the original case of the object names.
         # Builds enumeration such that columns override 
         # direct joins, which override reverse joins.
 
@@ -387,6 +390,7 @@ class ItemizeTable(Utility):
                         join = ReverseJoin(self.table, table, foreign_key)
                         itemization[name] = AttachedTableRecipe([join])
         return itemization
+
 
 class EnumerateTable(Utility):
     """ 
