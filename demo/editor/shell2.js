@@ -35,15 +35,10 @@ $(document).ready(function() {
         if (!/^\//.test(query)) {
             return;
         }
-        query += "/:json";
-        query = escape(query);
-        var uri = base_uri+query;
+        query = "/evaluate('"+escape(query.replace(/'/g, "''"))+"')";
+        var uri = base_uri+escape(query);
         $.getJSON(uri, handle_result);
         global_start = Date.now();
-    }
-
-    function encode(s) {
-        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
     var handle_result_start = 0;
@@ -51,47 +46,45 @@ $(document).ready(function() {
 
     function handle_result(output) {
         handle_result_start = Date.now();
-        var meta = output.meta;
-        var data = output.data;
-        size = meta.length;
+        var style = output.style;
+        var head = output.head;
+        var body = output.body;
+        var size = style.length;
         table_data = '';
         table_data += '<table>';
         table_data += '<thead>';
-        table_data += '<tr>';
-        table_data += '<th class="dummy">&nbsp;</th>';
-        for (var i = 0; i < size; i ++) {
-            table_data += '<th><span>'+encode(meta[i].title)+'</span></th>';
-        }
-        var classes = [];
-        for (var i = 0; i < size; i ++) {
-            if (meta[i].domain == 'number') {
-                classes[i] = 'number';
+        for (var k = 0; k < head.length; k ++) {
+            var row = head[k];
+            table_data += '<tr>';
+            table_data += '<th class="dummy">&nbsp;</th>';
+            for (var i = 0; i < head[k].length; i ++) {
+                var cell = row[i];
+                var title = cell[0];
+                var colspan = cell[1];
+                var rowspan = cell[2];
+                table_data += '<th' + (colspan>1 ? ' colspan="'+colspan+'"' : '')
+                                    + (rowspan>1 ? ' rowspan="'+rowspan+'"' : '') + '>'
+                              + '<span>' + title + '</span></th>';
             }
+            if (k == 0) {
+                table_data += '<th' + (head.length > 1 ? ' rowspan="'+head.length+'"' : '')
+                              + ' class="dummy">&nbsp;</th>';
+            }
+            table_data += '</tr>';
         }
-        table_data += '<th class="dummy">&nbsp;</th>';
-        table_data += '</tr>';
         table_data += '</thead>';
         table_data += '<tbody>';
-        for (var k = 0; k < data.length; k ++) {
-            var row = data[k];
+        for (var k = 0; k < body.length; k ++) {
+            var row = body[k];
             table_data += '<tr' + (k % 2 == 1 ? ' class="alt">' : '>');
             table_data += '<th><span>'+(k+1)+'</span></th>';
             for (var i = 0; i < size; i ++) {
                 var value = row[i];
                 if (value == null) {
-                    value = '<em>&mdash;</em>';
+                    value = '&nbsp;'
                 }
-                else if (value == true) {
-                    value = '<em>true</em>';
-                }
-                else if (value == false) {
-                    value = '<em>false</em>';
-                }
-                else {
-                    value = encode(value+'');
-                }
-                table_data += '<td' + (classes[i] ? ' class="'+classes[i]+'">' : '>')
-                    + '<span>' + value + '</span></td>';
+                table_data += '<td><span' + (style[i] ? ' class="'+style[i]+'">' : '>')
+                              + value + '</span></td>';
             }
             table_data += '<td class="dummy">&nbsp;</td>';
             table_data += '</tr>';
@@ -189,7 +182,8 @@ $(document).ready(function() {
         console.log("total: "+(global_end-global_start)/1000);
     }
 
-    var base_uri = "http://demo.htsql.org";
+    /*var base_uri = "http://demo.htsql.org";*/
+    var base_uri = "http://localhost:8080";
     var table_data = null;
     var viewport = $('.viewport');
     var grid = $('.grid');

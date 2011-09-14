@@ -296,10 +296,6 @@ em {
   font-size: 105%;
 }
 
-.grid td.number {
-  text-align: right;
-}
-
 .grid span {
   display: block;
   padding: 3px 10px;
@@ -309,6 +305,14 @@ em {
 /*.grid td span {
   overflow: auto;
 }*/
+
+.grid span.number {
+  text-align: right;
+}
+
+.grid span.boolean {
+  font-style: italic;
+}
 
 /* Grid scrolling */
 
