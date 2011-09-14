@@ -83,6 +83,7 @@ ENTRY_POINTS = {
         'tweak.sqlalchemy = htsql_tweak.sqlalchemy:TweakSQLAlchemyAddon',
         'tweak.meta = htsql_tweak.meta:TweakMetaAddon',
         'tweak.meta.slave = htsql_tweak.meta.slave:TweakMetaSlaveAddon',
+        'tweak.shell = htsql_tweak.shell:TweakShellAddon',
     ],
 }
 INSTALL_REQUIRES = [
