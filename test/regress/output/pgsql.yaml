@@ -26230,4 +26230,4 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid request: invalid command
+            invalid request: unsupported action

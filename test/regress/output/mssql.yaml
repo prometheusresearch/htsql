@@ -467,7 +467,7 @@ tests:
           body: |2
              | confidential                                             |
              +----------------------------------------------------------+
-             | instructor_code | SSN         | pay_grade | home_phone   |
+             | instructor_code | ssn         | pay_grade | home_phone   |
             -+-----------------+-------------+-----------+--------------+-
              | alott           | 781-84-3529 |         7 | 702-409-2864 |
              | amarcum         | 452-08-8468 |         5 | 702-537-5485 |
@@ -1843,7 +1843,7 @@ tests:
           body: |2
              | confidential                                             |
              +----------------------------------------------------------+
-             | instructor_code | SSN         | pay_grade | home_phone   |
+             | instructor_code | ssn         | pay_grade | home_phone   |
             -+-----------------+-------------+-----------+--------------+-
              | jfreeman        | 325-45-5707 |         5 | 702-967-4546 |
                                                                   (1 row)
@@ -15936,7 +15936,7 @@ tests:
           body: |2
              | confidential                                             |
              +----------------------------------------------------------+
-             | instructor_code | SSN         | pay_grade | home_phone   |
+             | instructor_code | ssn         | pay_grade | home_phone   |
             -+-----------------+-------------+-----------+--------------+-
              | alott           | 781-84-3529 |         7 | 702-409-2864 |
              | amarcum         | 452-08-8468 |         5 | 702-537-5485 |
@@ -26215,4 +26215,4 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            invalid request: invalid command
+            invalid request: unsupported action
