@@ -241,11 +241,14 @@ class BindQuery(Bind):
         # Bind the segment node if it is available.
         segment = None
         if self.syntax.segment is not None:
-            segment = self.state.bind(self.syntax.segment)
+            # FIXME: refactor the top-level syntax nodes.
+            if self.syntax.segment.branch is not None:
+                segment = self.state.bind(self.syntax.segment)
         # Shut down the lookup scope stack.
         self.state.flush()
-        if lookup_command(segment) is not None:
-            return segment
+        if segment is not None:
+            if lookup_command(segment) is not None:
+                return segment
         # Construct and return the top-level binding node.
         return QueryBinding(root, segment, self.syntax)
 
@@ -255,6 +258,9 @@ class BindSegment(Bind):
     adapts(SegmentSyntax)
 
     def __call__(self):
+        # FIXME: an empty segment syntax should not be generated.
+        if self.syntax.branch is None:
+            raise BindError("empty segment", self.syntax.mark)
         # Bind the segment expression.
         seed = self.state.bind(self.syntax.branch)
         if lookup_command(seed) is not None:
