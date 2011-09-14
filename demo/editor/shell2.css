@@ -41,6 +41,14 @@ pre, tt, code, kbd, samp {
   font-family: "DejaVu Sans Mono", "Menlo", "Lucida Console", monospace;
 }
 
+strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
+
 /* Page structure */
 
 .viewport {
@@ -298,9 +306,9 @@ pre, tt, code, kbd, samp {
   overflow: hidden;
 }
 
-.grid td span {
+/*.grid td span {
   overflow: auto;
-}
+}*/
 
 /* Grid scrolling */
 

@@ -15,32 +15,134 @@ $(document).ready(function() {
     function make_editor() {
         var editor = $('#editor');
         var cm = CodeMirror.fromTextArea(editor[0], {
-            mode: 'htsql'
+            mode: 'htsql',
+            onKeyEvent: function(i, e) {
+                if (e.ctrlKey && e.keyCode == 13) {
+                    if (e.type == 'keyup') {
+                        $('#run').click();
+                    }
+                    return true;
+                }
+            }
         });
         return cm;
     }
 
+    var global_start = 0;
+    function handle_run() {
+        var query = editor.getValue();
+        query = query.replace(/^\s+|\s+$/, "");
+        if (!/^\//.test(query)) {
+            return;
+        }
+        query += "/:json";
+        query = escape(query);
+        var uri = base_uri+query;
+        $.getJSON(uri, handle_result);
+        global_start = Date.now();
+    }
+
+    function encode(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    var handle_result_start = 0;
+    var handle_result_end = 0;
+
+    function handle_result(output) {
+        handle_result_start = Date.now();
+        var meta = output.meta;
+        var data = output.data;
+        size = meta.length;
+        table_data = '';
+        table_data += '<table>';
+        table_data += '<thead>';
+        table_data += '<tr>';
+        table_data += '<th class="dummy">&nbsp;</th>';
+        for (var i = 0; i < size; i ++) {
+            table_data += '<th><span>'+encode(meta[i].title)+'</span></th>';
+        }
+        var classes = [];
+        for (var i = 0; i < size; i ++) {
+            if (meta[i].domain == 'number') {
+                classes[i] = 'number';
+            }
+        }
+        table_data += '<th class="dummy">&nbsp;</th>';
+        table_data += '</tr>';
+        table_data += '</thead>';
+        table_data += '<tbody>';
+        for (var k = 0; k < data.length; k ++) {
+            var row = data[k];
+            table_data += '<tr' + (k % 2 == 1 ? ' class="alt">' : '>');
+            table_data += '<th><span>'+(k+1)+'</span></th>';
+            for (var i = 0; i < size; i ++) {
+                var value = row[i];
+                if (value == null) {
+                    value = '<em>&mdash;</em>';
+                }
+                else if (value == true) {
+                    value = '<em>true</em>';
+                }
+                else if (value == false) {
+                    value = '<em>false</em>';
+                }
+                else {
+                    value = encode(value+'');
+                }
+                table_data += '<td' + (classes[i] ? ' class="'+classes[i]+'">' : '>')
+                    + '<span>' + value + '</span></td>';
+            }
+            table_data += '<td class="dummy">&nbsp;</td>';
+            table_data += '</tr>';
+        }
+        table_data += '<tr>';
+        table_data += '<th class="dummy">&nbsp;</th>';
+        for (var i = 0; i < size; i ++) {
+            table_data += '<td class="dummy">&nbsp;</td>';
+        }
+        table_data += '<td class="dummy">&nbsp;</td>';
+        table_data += '</tbody>';
+        table_data += '</table>';
+        setTimeout(reset_grid, 0);
+        handle_result_end = Date.now();
+    }
+
     function handle_resize() {
-        setTimeout(resize_grid, 0);
+        setTimeout(reset_grid, 0);
     }
 
     function handle_scroll() {
         grid_head.scrollLeft(grid_body.scrollLeft());
     }
 
-    function resize_grid() {
-        var height = viewport.height() - grid_body.offset().top;
-        height = Math.floor(height);
-        height = height > 0 ? height : 0;
-        grid_body.height(height);
-        grid.css('visibility', 'visible');
+    var reset_grid_start = 0;
+    var reset_grid_end = 0;
+    function reset_grid() {
+        reset_grid_start = Date.now();
+        grid.removeAttr('style');
+        grid_head.removeAttr('style').empty();
+        grid_body.removeAttr('style').empty();
+        if (table_data) {
+            var height = viewport.height() - grid.offset().top;
+            height = Math.floor(height);
+            height = height > 0 ? height : 0;
+            grid_body.height(height);
+            grid_body.html(table_data);
+            setTimeout(split_table, 0);
+        }
+        reset_grid_end = Date.now();
     }
 
+    var split_table_start = 0;
+    var split_table_end = 0;
     function split_table() {
+        split_table_start = Date.now();
         var col_widths = [];
-        grid_body.find('tbody tr:first-child').children().each(function(idx) {
+        grid_body.find('tbody').find('tr:first-child').children().each(function(idx) {
             col_widths[idx] = $(this).width()+2;
         });
+        grid_body.height(grid_body.height()-grid_body.find('thead').height());
         $("<table></table>").appendTo(grid_head).append(grid_body.find('thead'));
         var total_width = 0;
         for (var idx = col_widths.length-1; idx >= 0; idx --) {
@@ -65,21 +167,41 @@ $(document).ready(function() {
             }
             head_table.prepend("<col style=\"width: "+width+"px\">");
         }
-        body_table.width(total_width).css('table-layout', 'fixed').scroll(handle_scroll);
-        head_table.width(total_width+100).css('table-layout', 'fixed');
-        grid_body.scroll(handle_scroll);
-        setTimeout(resize_grid, 0);
+        body_table.width(total_width)
+            .css('table-layout', 'fixed').scroll(handle_scroll);
+        head_table.width(total_width+100)
+            .css('table-layout', 'fixed');
+        setTimeout(report, 0);
+        split_table_end = Date.now()
     }
 
+    var global_end = 0;
+    function report() {
+        global_end = Date.now();
+        console.log("---");
+        console.log("delay: "+(handle_result_start-global_start)/1000);
+        console.log("handle_result: "+(handle_result_end-handle_result_start)/1000);
+        console.log("delay: "+(reset_grid_start-handle_result_end)/1000);
+        console.log("reset_grid: "+(reset_grid_end-reset_grid_start)/1000);
+        console.log("delay: "+(split_table_start-reset_grid_end)/1000);
+        console.log("split_table: "+(split_table_end-split_table_start)/1000);
+        console.log("delay: "+(global_end-split_table_end)/1000);
+        console.log("total: "+(global_end-global_start)/1000);
+    }
+
+    var base_uri = "http://demo.htsql.org";
+    var table_data = null;
     var viewport = $('.viewport');
     var grid = $('.grid');
     var grid_head = $('.grid-head');
     var grid_body = $('.grid-body');
     var editor = make_editor();
+    editor.setCursor(0, 1);
+    editor.focus();
     var scrollbar_size = get_scrollbar_size();
 
-    $('.grid').css('visibility', 'hidden');
-    setTimeout(split_table, 0);
+    $('#run').click(handle_run);
+    grid_body.scroll(handle_scroll);
     $(window).resize(handle_resize);
 });
 
