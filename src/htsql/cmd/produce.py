@@ -116,7 +116,7 @@ class ProduceRetrieve(Act):
                 cursor = connection.cursor()
                 cursor.execute(plan.sql)
                 records = []
-                for row in cursor:
+                for row in cursor.fetchall():
                     values = []
                     for item, normalize in zip(row, normalizers):
                         value = normalize(item)

@@ -238,6 +238,7 @@ class CursorProxy(object):
         """
         Iterates over the rows of the result.
         """
+        # FIXME: guarding doesn't seem to work well with generators.
         with self.guard:
             for row in self.cursor:
                 yield row
