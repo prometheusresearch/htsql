@@ -4,12 +4,18 @@
 #
 
 
-from . import command
-from htsql.addon import Addon
+from . import command, locate
+from htsql.addon import Addon, Parameter
+from htsql.validator import StrVal
 
 
 class TweakShellAddon(Addon):
 
     name = 'tweak.shell'
+    prerequisites = ['tweak.resource']
+
+    parameters = [
+            Parameter('server_root', StrVal(r'^https?://.+$')),
+    ]
 
 
