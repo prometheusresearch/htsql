@@ -26,7 +26,7 @@ from htsql.tr.dump import (SerializeSegment, Dump, DumpBranch, DumpAnchor,
 from htsql.tr.fn.dump import (DumpLength, DumpSubstring, DumpDateIncrement,
                               DumpDateDecrement, DumpDateDifference,
                               DumpMakeDate, DumpCombineDateTime,
-                              DumpExtractSecond)
+                              DumpExtractSecond, DumpToday)
 from .signature import RowNumSig
 
 
@@ -315,6 +315,11 @@ class OracleDumpDateDecrement(DumpDateDecrement):
 class OracleDumpDateDifference(DumpDateDifference):
 
     template = "({lop} - {rop})"
+
+
+class OracleDumpToday(DumpToday):
+
+    template = "TRUNC(CURRENT_DATE, 'DD')"
 
 
 class OracleDumpMakeDate(DumpMakeDate):
