@@ -126,7 +126,7 @@ $(document).ready(function() {
         if (state.waiting)
             return;
         state.lastQuery = query;
-        query = "/evaluate('"+escape(query.replace(/'/g, "''"))+"')";
+        query = "/evaluate('"+query.replace(/'/g, "''")+"')";
         var url = config.serverUri+escape(query);
         $.ajax({
             url: url,
