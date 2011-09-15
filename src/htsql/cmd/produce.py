@@ -130,6 +130,7 @@ class ProduceRetrieve(Act):
             except:
                 if connection is not None:
                     connection.invalidate()
+                raise
         return Product(profile, records)
 
 
