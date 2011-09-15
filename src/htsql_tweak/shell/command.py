@@ -68,7 +68,10 @@ class RenderEvaluate(Act):
         except HTTPError, exc:
             body = self.render_error(exc)
         else:
-            body = self.render_product(product)
+            if product:
+                body = self.render_product(product)
+            else:
+                body = self.render_empty()
         return (status, headers, body)
 
     def evaluate(self):
@@ -95,6 +98,11 @@ class RenderEvaluate(Act):
         yield "  \"style\": %s,\n" % style
         yield "  \"head\": %s,\n" % head
         yield "  \"body\": %s\n" % body
+        yield "}\n"
+
+    def render_empty(self):
+        yield "{\n"
+        yield "  \"type\": \"empty\"\n"
         yield "}\n"
 
     def make_style(self, product):

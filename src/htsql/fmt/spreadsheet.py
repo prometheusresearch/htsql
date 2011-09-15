@@ -40,7 +40,9 @@ class CSVRenderer(Renderer):
         return "200 OK"
 
     def generate_headers(self, product):
-        filename = entitle(product.profile.binding.segment)
+        filename = None
+        if product:
+            filename = entitle(product.profile.binding.segment)
         if not filename:
             filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')

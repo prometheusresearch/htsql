@@ -151,13 +151,15 @@ $(document).ready(function() {
             case "product":
                 handleProduct(output);
                 break;
+            case "empty":
+                handleEmpty(output);
+                break;
             case "error":
                 handleError(output);
                 break;
             case "unsupported":
                 handleUnsupported(output);
         }
-        log(output.type);
     }
 
     function handleError(output) {
@@ -173,6 +175,12 @@ $(document).ready(function() {
         state.$panel = null;
         var url = config.serverUri+escape(state.lastQuery);
         window.open(url, "_blank");
+    }
+
+    function handleEmpty(output) {
+        if (state.$panel)
+            state.$panel.hide();
+        state.$panel = null;
     }
 
     function handleProduct(output) {

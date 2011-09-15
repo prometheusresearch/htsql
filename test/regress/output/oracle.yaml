@@ -25944,6 +25944,75 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {}
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.csv"]
+          body: ''
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            (no data)
+
+             ----
+             /
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>/</title>
+            <style type="text/css">
+            body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
+            a:link, a:visited { color: #1f4884; text-decoration: none }
+            a:hover { text-decoration: underline }
+            table { border-collapse: collapse; margin: 0.5em auto; width: 100% }
+            table, tr { border-style: solid; border-width: 0 }
+            td, th { padding: 0.2em 0.5em; text-align: left }
+            td { vertical-align: top }
+            th { vertical-align: bottom }
+            table.page { border: 0; padding: 1em; width: auto }
+            tr.content { padding: 1em 1em 0.5em }
+            tr.footer { padding: 0 1em 1em; text-align: left; font-style: italic }
+            table.list .number { text-align: right }
+            table.list td, table.list th { border-color: #c3c3c3; border-width: 0 1px; border-style: solid }
+            tr.header { background: #dae3ea; border-color: #c3c3c3; border-width: 1px 1px 0 }
+            tr.header th.spanning { text-align: center; font-size: 105%; background: transparent }
+            tr.odd { background: #ffffff; border-color: #c3c3c3; border-width: 0 1px }
+            tr.even { background: #f2f2f2; border-color: #c3c3c3; border-width: 0 1px }
+            tr.odd:hover, tr.even:hover { background: #ffe3bd }
+            tr.total { background: transparent;border-color: #c3c3c3; border-width: 1px 0 0 }
+            tr.total td { text-align: right; font-size: 75%; font-style: italic; padding: 0.3em 0.5em 0; border-width: 0 }
+            table.void { text-align: center; border-color: #c3c3c3; border-width: 1px 0 }
+            </style>
+            </head>
+            <body>
+            <table class="page" summary="/">
+            <tr>
+            <td class="content">
+            <table class="void">
+            <tr><td>no data</td></tr>
+            </table>
+            </td>
+            </tr>
+            <tr><td class="footer">/</td></tr>
+            </table>
+            </body>
+            </html>
       - id: the-`as`-decorator
         tests:
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as

@@ -34,6 +34,19 @@ tests:
   - uri: /school
     headers:
       Accept: text/html
+  # Empty segment
+  - uri: /
+    headers:
+      Accept: application/json
+  - uri: /
+    headers:
+      Accept: text/csv
+  - uri: /
+    headers:
+      Accept: text/plain
+  - uri: /
+    headers:
+      Accept: text/html
 
 - title: The `AS` Decorator
   tests:
