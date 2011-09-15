@@ -84,6 +84,7 @@ ENTRY_POINTS = {
         'tweak.meta = htsql_tweak.meta:TweakMetaAddon',
         'tweak.meta.slave = htsql_tweak.meta.slave:TweakMetaSlaveAddon',
         'tweak.shell = htsql_tweak.shell:TweakShellAddon',
+        'tweak.resource = htsql_tweak.resource:TweakResourceAddon',
     ],
 }
 INSTALL_REQUIRES = [
