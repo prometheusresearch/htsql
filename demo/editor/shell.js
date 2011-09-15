@@ -164,7 +164,7 @@ $(document).ready(function() {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = $errorPanel.show();
-        $error.text(output.message);
+        $error.html(output.message);
     }
 
     function handleUnsupported(output) {

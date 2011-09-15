@@ -204,6 +204,10 @@ button {
 
 /* Output area */
 
+.output-area {
+  color: #1a1a1a;
+}
+
 .output-area .panel {
   display: none;
   position: absolute;
