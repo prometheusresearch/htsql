@@ -6,10 +6,23 @@ $(document).ready(function() {
             console.log(data);
     }
 
+    function timing(point) {
+        if (!Date.now)
+            return;
+        var timestamp = Date.now();
+        if (state.lastTimestamp) {
+            var delta = (timestamp-state.lastTimestamp)/1000;
+            log("("+state.lastPoint+") -> ("+point+"): "+delta);
+        }
+        state.lastPoint = point;
+        state.lastTimestamp = timestamp;
+    }
+
     function makeConfig() {
         var $body = $('body');
         return {
             databaseName: $body.attr('data-database-name') || "",
+            serverName: $body.attr('data-server-name') || "",
             serverRoot: $body.attr('data-server-root') || "",
             queryOnStart: $body.attr('data-query-on-start') || "/",
             evaluateOnStart: ($body.attr('data-evaluate-on-start') == 'true'),
@@ -39,9 +52,10 @@ $(document).ready(function() {
             waiting: false,
             lastQuery: null,
             lastAction: null,
-            table: null,
             marker: null,
-            expansion: 0
+            expansion: 0,
+            lastPoint: null,
+            lastTimestamp: null
         }
     }
 
@@ -323,6 +337,7 @@ $(document).ready(function() {
     }
 
     function handleProduct(output) {
+//      timing("rendering table");
         var style = output.style;
         var head = output.head;
         var body = output.body;
@@ -384,14 +399,16 @@ $(document).ready(function() {
         table += '<td class="dummy">&nbsp;</td>';
         table += '</tbody>';
         table += '</table>';
-        state.table = table;
-        $grid.removeAttr('style');
-        $gridHead.removeAttr('style').empty();
-        $gridBody.removeAttr('style').empty();
+        $gridHead.empty();
+        $gridBody.empty()
+            .css({ top: 0,
+                   width: ($viewport.width()+environ.screenWidth-1)+"px",
+                   right: "auto",
+                   "overflow-y": "hidden",
+                   "overflow-x": "hidden" });
         if (state.$panel)
             state.$panel.hide();
         state.$panel = $productPanel.show();
-        setTimeout(addTable, 0);
         var title = '';
         if (head.length > 0) {
             for (var i = 0; i < head[0].length; i ++) {
@@ -403,6 +420,63 @@ $(document).ready(function() {
             }
         }
         updateTitle(title);
+        $gridBody.html(table);
+        $gridHead.scrollLeft(0);
+        $gridBody.scrollLeft(0).scrollTop(0);
+        setTimeout(configureGrid, 0);
+    }
+
+    function configureGrid() {
+        var $bodyTable = $gridBody.children('table');
+        var gridWidth = $grid.width();
+        var colWidths = [];
+        $bodyTable.find('tbody tr:first-child').children().each(function(idx) {
+            colWidths[idx] = $(this).width();
+        });
+        colWidths[colWidths.length-1] = 1;
+        var tableWidth = 0;
+        for (var i = 0; i < colWidths.length-1; i ++) {
+            tableWidth += colWidths[i];
+        }
+        if (tableWidth < gridWidth) {
+            var diff = gridWidth-tableWidth-1;
+            colWidths[colWidths.length-1] += diff;
+            tableWidth += diff;
+        }
+        var $bodyGroup = $("<colgroup></colgroup>");
+        var $headGroup = $("<colgroup></colgroup>");
+        for (var i = 0; i < colWidths.length; i ++) {
+            var width = colWidths[i];
+            $bodyGroup.append("<col style=\"width: "+width+"px\">");
+            if (i == colWidths.length-1) {
+                width += environ.screenWidth;
+            }
+            $headGroup.append("<col style=\"width: "+width+"px\">");
+        }
+        var $headTable = $("<table></table>")
+                .appendTo($gridHead)
+                .css('table-layout', 'fixed')
+                .width(tableWidth)
+                .append($headGroup)
+                .append($bodyTable.children('thead').clone());
+        var headHeight = $headTable.height();
+        $bodyTable.children('colgroup').remove();
+        $bodyTable.children('thead').remove();
+        $bodyTable.css('table-layout', 'fixed')
+                .width(tableWidth)
+                .prepend($bodyGroup);
+        $gridBody.css({ right: 0,
+                        top: headHeight,
+                        width: 'auto',
+                        'overflow-y': 'auto',
+                        'overflow-x': (tableWidth-environ.screenWidth
+                                        < gridWidth-environ.scrollbarWidth) ?
+                                        'hidden' : 'auto' });
+        setTimeout(reportTime, 0);
+    }
+
+    function reportTime() {
+//        timing("!rendering table");
     }
 
     function showWaiting() {
@@ -411,67 +485,6 @@ $(document).ready(function() {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = $requestPanel.show();
-    }
-
-    function addTable() {
-        $gridBody.css({ width: ($grid.width()+environ.screenWidth-1)+"px",
-                        right: "auto" });
-        $gridBody.html(state.table);
-        setTimeout(splitTable, 0);
-    }
-
-    function splitTable() {
-        var colWidths = [];
-        var headHeight = $gridBody.find('thead').height();
-        $gridBody.find('tbody').find('tr:first-child').children().each(function(idx) {
-            colWidths[idx] = $(this).width();
-        });
-        colWidths[colWidths.length-1] = 1;
-        $gridBody.find('colgroup').remove()
-        $("<table></table>").appendTo($gridHead).append($gridBody.find('thead'));
-        var tableWidth = 0;
-        for (var i = 0; i < colWidths.length-1; i ++) {
-            tableWidth += colWidths[i];
-        }
-        var panelWidth = $productPanel.width();
-        if (tableWidth < panelWidth) {
-            var diff = panelWidth-tableWidth-1;
-            colWidths[colWidths.length-1] += diff;
-            tableWidth += diff;
-        }
-        var $bodyTable = $gridBody.children('table');
-        var $headTable = $gridHead.children('table');
-        var $bodyGroup = $("<colgroup></colgroup>");
-        var $headGroup = $("<colgroup></colgroup>");
-        for (var i = 0; i < colWidths.length; i ++) {
-            var width = colWidths[i];
-            $bodyGroup.append("<col style=\"width: "+width+"px\">");
-            if (i == colWidths.length-1)
-                width += environ.screenWidth;
-            $headGroup.append("<col style=\"width: "+width+"px\">");
-        }
-        $bodyTable.prepend($($bodyGroup))
-            .width(tableWidth)
-            .css('table-layout', 'fixed');
-        $headTable.prepend($($headGroup))
-            .width(tableWidth+environ.screenWidth)
-            .css('table-layout', 'fixed');
-        $gridBody.css({ right: 0, top: headHeight, width: 'auto' });
-        setTimeout(adjustGrid);
-    }
-
-    function adjustGrid() {
-        var $table = $gridBody.children('table');
-        var $cell = $table.children('tbody')
-                        .children('tr:first-child')
-                        .children('td:last-child');
-        var tableWidth = $table.width()-$cell.width();
-        $gridBody.css({
-            top: $gridHead.height(),
-            'overflow-y': 'auto',
-            'overflow-x': (tableWidth < $gridBody.width()-environ.scrollbarWidth) ?
-                            'hidden' : 'auto'
-        });
     }
 
     var config = makeConfig();
