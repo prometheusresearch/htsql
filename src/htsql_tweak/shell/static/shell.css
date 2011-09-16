@@ -150,6 +150,7 @@ button {
 .input-area .editor-box .CodeMirror {
   width: 100%;
   height: 100%;
+  line-height: 1.4;
 }
 
 .input-area .editor-box .CodeMirror-scroll {
@@ -160,6 +161,19 @@ button {
 .input-area .editor-box .CodeMirror .marker {
   border: dotted #f00;
   border-width: 0 0 1px 0;
+}
+
+.input-area .editor-box .expansion-control {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  font-size: 70%;
+  line-height: 1;
+  color: #999999;
+}
+
+.input-area .editor-box .expansion-control button:hover {
+  color: #1a1a1a;
 }
 
 .input-area .button-box {
@@ -245,6 +259,7 @@ button {
   top: 0;
   font-size: 110%;
   font-weight: bold;
+  color: #999999;
 }
 
 .output-area .notification {

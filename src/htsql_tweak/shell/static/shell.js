@@ -39,7 +39,8 @@ $(document).ready(function() {
             lastQuery: null,
             lastAction: null,
             table: null,
-            marker: null
+            marker: null,
+            expansion: 0
         }
     }
 
@@ -48,9 +49,24 @@ $(document).ready(function() {
         var editor = CodeMirror.fromTextArea($editor[0], {
             mode: 'htsql',
             onKeyEvent: function(i, e) {
+                // Ctrl-Enter
                 if (e.ctrlKey && e.keyCode == 13) {
                     if (e.type == 'keyup') {
                         $('#run').click();
+                    }
+                    return true;
+                }
+                // Ctrl-Up
+                if (e.ctrlKey && e.keyCode == 38) {
+                    if (e.type == 'keyup') {
+                        $('#shrink').click();
+                    }
+                    return true;
+                }
+                // Ctrl-Down
+                if (e.ctrlKey && e.keyCode == 40) {
+                    if (e.type == 'keyup') {
+                        $('#expand').click();
                     }
                     return true;
                 }
@@ -82,6 +98,28 @@ $(document).ready(function() {
     function clickRun() {
         var query = getQuery();
         run(query);
+    }
+
+    function clickExpand(dir) {
+        var expansion = state.expansion+dir;
+        if (expansion < -1 || expansion > 3)
+            return;
+        if (state.expansion == -1)
+            $shrink.css({ visibility: 'visible' });
+        if (expansion == -1)
+            $shrink.css({ visibility: 'hidden' });
+        if (state.expansion == 3)
+            $expand.css({ visibility: 'visible' });
+        if (expansion == 3)
+            $expand.css({ visibility: 'hidden' });
+        var height = null;
+        if (expansion < 0)
+            height = 4;
+        else
+            height = 8*(expansion+1);
+        $('.input-area').css({ height: height+'em' });
+        $('.output-area').css({ top: (height+2)+'em' });
+        state.expansion += dir;
     }
 
     function clickPopups() {
@@ -384,6 +422,8 @@ $(document).ready(function() {
     var $sql = $('#sql');
     var $popups = $('#popups');
     var $morePopup = $('#more-popup');
+    var $shrink = $('#shrink');
+    var $expand = $('#expand');
 
     var editor = makeEditor();
     setQuery(config.queryOnStart);
@@ -402,6 +442,8 @@ $(document).ready(function() {
     $('#close-sql').click(clickClose);
     $('#grid-body').scroll(scrollGrid);
     $('#popups').click(clickPopups);
+    $('#shrink').click(function() { return clickExpand(-1); });
+    $('#expand').click(function() { return clickExpand(+1); });
 
     $('#schema').hide();
     $('#help').hide();
