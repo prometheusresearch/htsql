@@ -115,6 +115,8 @@ tests:
   - uri: /school/:retrieve
   - uri: /retrieve(/school)
   - uri: /school/:retrieve/:json
+  - uri: /school/:sql
+  - uri: /school/:retrieve/:sql
   # Errors
   - uri: /retrieve()
     expect: 400
@@ -123,5 +125,7 @@ tests:
   - uri: /school/:html/:retrieve
     expect: 400
   - uri: /school/:html/:json
+    expect: 400
+  - uri: /school/:html/:sql
     expect: 400
 

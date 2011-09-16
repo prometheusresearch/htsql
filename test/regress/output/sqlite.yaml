@@ -26205,6 +26205,26 @@ tests:
                 ["sc", "School of Continuing Studies", null]
               ]
             }
+        - uri: /school/:sql
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            SELECT "school"."code",
+                   "school"."name",
+                   "school"."campus"
+            FROM "school" AS "school"
+            ORDER BY 1 ASC
+        - uri: /school/:retrieve/:sql
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            SELECT "school"."code",
+                   "school"."name",
+                   "school"."campus"
+            FROM "school" AS "school"
+            ORDER BY 1 ASC
         - uri: /retrieve()
           status: 400 Bad Request
           headers:
@@ -26230,6 +26250,12 @@ tests:
                 /school/:html/:retrieve
                 ^^^^^^^^^^^^^
         - uri: /school/:html/:json
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            invalid request: unsupported action
+        - uri: /school/:html/:sql
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]

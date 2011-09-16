@@ -238,10 +238,13 @@ class CursorProxy(object):
         """
         Iterates over the rows of the result.
         """
-        # FIXME: guarding doesn't seem to work well with generators.
-        with self.guard:
-            for row in self.cursor:
-                yield row
+        iterator = iter(self.cursor)
+        while True:
+            with self.guard:
+                row = next(iterator, None)
+            if row is None:
+                break
+            yield row
 
     def close(self):
         """

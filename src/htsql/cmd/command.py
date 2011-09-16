@@ -79,3 +79,10 @@ class TSVCmd(RendererCmd):
     format = TSVRenderer
 
 
+class SQLCmd(Command):
+
+    def __init__(self, producer):
+        assert isinstance(producer, Command)
+        self.producer = producer
+
+

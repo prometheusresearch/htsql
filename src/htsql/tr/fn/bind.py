@@ -55,7 +55,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         QuotientSig, AssignmentSig, DefineSig,
                         WhereSig, SelectSig, LinkSig)
 from ...cmd.command import (DefaultCmd, RetrieveCmd, TextCmd, HTMLCmd, JSONCmd,
-                            CSVCmd, TSVCmd)
+                            CSVCmd, TSVCmd, SQLCmd)
 import sys
 
 
@@ -402,6 +402,12 @@ class BindTSV(BindFormat):
 
     named('tsv')
     command = TSVCmd
+
+
+class BindSQL(BindFormat):
+
+    named('sql')
+    command = SQLCmd
 
 
 class BindNull(BindMacro):

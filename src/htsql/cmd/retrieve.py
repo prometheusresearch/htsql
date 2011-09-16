@@ -5,8 +5,8 @@
 
 
 from ..adapter import adapts, Utility
-from .command import RetrieveCmd
-from .act import act, Act, ProduceAction, AnalyzeAction
+from .command import RetrieveCmd, SQLCmd
+from .act import act, analyze, Act, ProduceAction, AnalyzeAction, RenderAction
 from ..tr.encode import encode
 from ..tr.rewrite import rewrite
 from ..tr.compile import compile
@@ -91,7 +91,7 @@ class ProduceRetrieve(Act):
                 cursor = connection.cursor()
                 cursor.execute(plan.sql)
                 records = []
-                for row in cursor.fetchall():
+                for row in cursor:
                     values = []
                     for item, normalize in zip(row, normalizers):
                         value = normalize(item)
@@ -100,8 +100,8 @@ class ProduceRetrieve(Act):
                 connection.commit()
                 connection.release()
             except DBError, exc:
-                raise EngineError("error while executing %r: %s"
-                                  % (plan.sql, exc))
+                raise EngineError("failed to execute a database query: %s"
+                                  % exc)
             except:
                 if connection is not None:
                     connection.invalidate()
@@ -122,5 +122,18 @@ class AnalyzeRetrieve(Act):
         frame = reduce(frame)
         plan = serialize(frame)
         return plan
+
+
+class RenderSQL(Act):
+
+    adapts(SQLCmd, RenderAction)
+    def __call__(self):
+        plan = analyze(self.command.producer)
+        status = '200 OK'
+        headers = [('Content-Type', 'text/plain; charset=UTF-8')]
+        body = []
+        if plan.sql:
+            body = [plan.sql]
+        return (status, headers, body)
 
 
