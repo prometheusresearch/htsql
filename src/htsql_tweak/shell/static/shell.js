@@ -75,6 +75,16 @@ $(document).ready(function() {
         return editor;
     }
 
+    function updateTitle(message) {
+        if (!message) {
+            message = '['+config.databaseName+']';
+        }
+        else {
+            message = message+' ['+config.databaseName+']';
+        }
+        $('title').text(message);
+    }
+
     function setQuery(query) {
         editor.setValue(query);
         editor.setCursor(editor.lineCount(), 0);
@@ -197,6 +207,7 @@ $(document).ready(function() {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = $failurePanel.show();
+        updateTitle();
     }
 
     function handleSuccess(output) {
@@ -238,6 +249,7 @@ $(document).ready(function() {
                                              ch: output.last_column },
                                            'marker');
         }
+        updateTitle($error.text());
     }
 
     function handleUnsupported(output) {
@@ -248,12 +260,14 @@ $(document).ready(function() {
             var url = config.serverRoot+escape(state.lastQuery);
             window.open(url, "_blank");
         }
+        updateTitle();
     }
 
     function handleEmpty(output) {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = null;
+        updateTitle();
     }
 
     function handleSql(output) {
@@ -261,6 +275,7 @@ $(document).ready(function() {
             state.$panel.hide();
         state.$panel = $sqlPanel.show();
         $sql.html(output.sql);
+        updateTitle();
     }
 
     function handleProduct(output) {
@@ -333,6 +348,17 @@ $(document).ready(function() {
             state.$panel.hide();
         state.$panel = $productPanel.show();
         setTimeout(addTable, 0);
+        var title = '';
+        if (head.length > 0) {
+            for (var i = 0; i < head[0].length; i ++) {
+                if (title)
+                    title += ', ';
+                title += head[0][i][0].replace(/&lt;/g, '<')
+                                      .replace(/&gt;/g, '>')
+                                      .replace(/&amp;/g, '&');
+            }
+        }
+        updateTitle(title);
     }
 
     function showWaiting() {
@@ -449,8 +475,8 @@ $(document).ready(function() {
     $('#help').hide();
     $('#close-sql').hide();
 
-    $('title').text(config.databaseName);
     $($database).text(config.databaseName);
+    updateTitle();
 
     if (config.evaluateOnStart) {
         $('#run').click();
