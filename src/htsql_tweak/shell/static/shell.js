@@ -37,6 +37,7 @@ $(document).ready(function() {
             $panel: null,
             waiting: false,
             lastQuery: null,
+            lastAction: null,
             table: null,
         }
     }
@@ -106,6 +107,15 @@ $(document).ready(function() {
         }
     }
 
+    function clickShowSql() {
+        $popups.hide();
+        $popups.children('.popup').hide();
+        var query = getQuery();
+        if (query && query != '/') {
+            run(query, 'analyze');
+        }
+    }
+
     function clickClose() {
         if (state.$panel) {
             state.$panel.hide();
@@ -117,7 +127,7 @@ $(document).ready(function() {
         $gridHead.scrollLeft($gridBody.scrollLeft());
     }
 
-    function run(query) {
+    function run(query, action) {
         if (!query)
             return;
         if (!config.serverRoot)
@@ -125,7 +135,9 @@ $(document).ready(function() {
         if (state.waiting)
             return;
         state.lastQuery = query;
-        query = "/evaluate('"+query.replace(/'/g, "''")+"')";
+        state.lastAction = action;
+        query = "/evaluate('" + query.replace(/'/g,"''") + "'"
+                + (action ? ",'" + action + "'" : "") + ")";
         var url = config.serverRoot+escape(query);
         $.ajax({
             url: url,
@@ -153,6 +165,9 @@ $(document).ready(function() {
             case "empty":
                 handleEmpty(output);
                 break;
+            case "sql":
+                handleSql(output);
+                break;
             case "error":
                 handleError(output);
                 break;
@@ -172,14 +187,23 @@ $(document).ready(function() {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = null;
-        var url = config.serverRoot+escape(state.lastQuery);
-        window.open(url, "_blank");
+        if (!state.lastAction) {
+            var url = config.serverRoot+escape(state.lastQuery);
+            window.open(url, "_blank");
+        }
     }
 
     function handleEmpty(output) {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = null;
+    }
+
+    function handleSql(output) {
+        if (state.$panel)
+            state.$panel.hide();
+        state.$panel = $sqlPanel.show();
+        $sql.html(output.sql);
     }
 
     function handleProduct(output) {
@@ -337,6 +361,8 @@ $(document).ready(function() {
     var $errorPanel = $('#error-panel');
     var $error = $('#error');
     var $failurePanel = $('#failure-panel');
+    var $sqlPanel = $('#sql-panel');
+    var $sql = $('#sql');
     var $popups = $('#popups');
     var $morePopup = $('#more-popup');
 
@@ -351,13 +377,16 @@ $(document).ready(function() {
     $('#export-html').click(function() { return clickExport('html'); });
     $('#export-json').click(function() { return clickExport('json'); });
     $('#export-csv').click(function() { return clickExport('csv'); });
+    $('#show-sql').click(clickShowSql);
     $('#close-error').click(clickClose);
     $('#close-failure').click(clickClose);
+    $('#close-sql').click(clickClose);
     $('#grid-body').scroll(scrollGrid);
     $('#popups').click(clickPopups);
 
     $('#schema').hide();
     $('#help').hide();
+    $('#close-sql').hide();
 
     $('title').text(config.databaseName);
     $('database').text(config.databaseName);

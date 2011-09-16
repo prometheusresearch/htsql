@@ -50,6 +50,12 @@
             <strong>Executing a database request.  Please wait&hellip;</strong>
           </div>
         </div>
+        <div id="sql-panel" class="panel">
+          <div class="notification">
+            <pre id="sql"></pre>
+            <button id="close-sql" class="close">&times;</button>
+          </div>
+        </div>
         <div id="error-panel" class="panel">
           <div class="alert">
             <strong>The server produced an error:</strong>
@@ -71,6 +77,7 @@
             <li><button id="export-html">Export to HTML</button></li>
             <li><button id="export-json">Export to JSON</button></li>
             <li><button id="export-csv">Export to CSV</button></li>
+            <li><button id="show-sql">Show SQL</button></li>
           </ul>
         </div>
       </div>

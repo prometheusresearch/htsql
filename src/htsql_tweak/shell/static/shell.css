@@ -217,7 +217,7 @@ button {
   bottom: 0;
 }
 
-/* Error panels */
+/* Status panels */
 
 .output-area .notification,
 .output-area .alert {
@@ -225,8 +225,9 @@ button {
   left: 1em;
   right: 17em;
   top: 1em;
-  overflow: auto;
   padding: 1em;
+  max-height: 75%;
+  overflow: auto;
   -moz-border-radius: 4px;
   -webkit-border-radius: 4px;
   border-radius: 4px;
@@ -393,7 +394,7 @@ button {
   right: 0;
   bottom: 0;
   display: none;
-  z-index: 1;
+  z-index: 10;
 }
 
 .popup-area .popup {

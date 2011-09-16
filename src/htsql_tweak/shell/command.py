@@ -10,7 +10,8 @@ from htsql.adapter import Adapter, adapts, named
 from htsql.error import HTTPError
 from htsql.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain)
 from htsql.cmd.command import UniversalCmd, Command
-from htsql.cmd.act import Act, RenderAction, UnsupportedActionError, produce
+from htsql.cmd.act import (Act, RenderAction, UnsupportedActionError,
+                           produce, analyze)
 from htsql.tr.syntax import StringSyntax, NumberSyntax, SegmentSyntax
 from htsql.tr.binding import CommandBinding
 from htsql.tr.signature import Signature, Slot
@@ -33,10 +34,12 @@ class ShellCmd(Command):
 
 class EvaluateCmd(Command):
 
-    def __init__(self, query, limit=None):
+    def __init__(self, query, action=None, limit=None):
         assert isinstance(query, str)
+        assert isinstance(action, maybe(str))
         assert isinstance(limit, maybe(int))
         self.query = query
+        self.action = action
         self.limit = limit
 
 
@@ -51,6 +54,7 @@ class EvaluateSig(Signature):
 
     slots = [
             Slot('query'),
+            Slot('action', is_mandatory=False),
             Slot('limit', is_mandatory=False),
     ]
 
@@ -77,15 +81,22 @@ class BindEvaluate(BindCommand):
     named('evaluate')
     signature = EvaluateSig
 
-    def expand(self, query, limit):
+    def expand(self, query, action, limit):
         if not isinstance(query, StringSyntax):
             raise BindError("a string literal is required", query.mark)
         query = query.value
+        if action is not None:
+            if not isinstance(action, StringSyntax):
+                raise BindError("a string literal is required", action.mark)
+            if action.value not in ['produce', 'analyze']:
+                raise BindError("'produce' or 'analyze' is expected",
+                                action.mark)
+            action = action.value
         if limit is not None:
             if not isinstance(limit, NumberSyntax) and limit.is_integer:
                 raise BindError("an integer literal is required", limit.mark)
             limit = int(limit.value)
-        command = EvaluateCmd(query, limit)
+        command = EvaluateCmd(query, action, limit)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 
@@ -137,22 +148,25 @@ class RenderEvaluate(Act):
     def __call__(self):
         status = "200 OK"
         headers = [('Content-Type', 'application/javascript')]
+        command = UniversalCmd(self.command.query)
         try:
-            product = self.evaluate()
+            if self.command.action == 'analyze':
+                plan = analyze(command)
+            else:
+                product = produce(command)
         except UnsupportedActionError, exc:
             body = self.render_unsupported(exc)
         except HTTPError, exc:
             body = self.render_error(exc)
         else:
-            if product:
-                body = self.render_product(product)
+            if self.command.action == 'analyze':
+                body = self.render_sql(plan)
             else:
-                body = self.render_empty()
+                if product:
+                    body = self.render_product(product)
+                else:
+                    body = self.render_empty()
         return (status, headers, body)
-
-    def evaluate(self):
-        command = UniversalCmd(self.command.query)
-        return produce(command)
 
     def render_unsupported(self, exc):
         yield "{\n"
@@ -179,6 +193,15 @@ class RenderEvaluate(Act):
     def render_empty(self):
         yield "{\n"
         yield "  \"type\": \"empty\"\n"
+        yield "}\n"
+
+    def render_sql(self, plan):
+        sql = plan.sql
+        if not sql:
+            sql = ''
+        yield "{\n"
+        yield "  \"type\": \"sql\",\n"
+        yield "  \"sql\": %s\n" % escape(cgi.escape(sql))
         yield "}\n"
 
     def make_style(self, product):
