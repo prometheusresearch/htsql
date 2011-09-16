@@ -5,19 +5,30 @@
 
 
 from htsql.util import maybe
+from htsql.context import context
 from htsql.adapter import Adapter, adapts, named
 from htsql.error import HTTPError
 from htsql.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain)
 from htsql.cmd.command import UniversalCmd, Command
 from htsql.cmd.act import Act, RenderAction, UnsupportedActionError, produce
-from htsql.tr.syntax import StringSyntax, NumberSyntax
+from htsql.tr.syntax import StringSyntax, NumberSyntax, SegmentSyntax
 from htsql.tr.binding import CommandBinding
 from htsql.tr.signature import Signature, Slot
 from htsql.tr.error import BindError
 from htsql.tr.fn.bind import BindCommand
 from htsql.fmt.entitle import guess_title
 from htsql.fmt.json import escape
+from ..resource.locate import locate
+import re
 import cgi
+import wsgiref.util
+
+
+class ShellCmd(Command):
+
+    def __init__(self, query=None):
+        assert isinstance(query, maybe(str))
+        self.query = query
 
 
 class EvaluateCmd(Command):
@@ -29,12 +40,36 @@ class EvaluateCmd(Command):
         self.limit = limit
 
 
+class ShellSig(Signature):
+
+    slots = [
+            Slot('query', is_mandatory=False),
+    ]
+
+
 class EvaluateSig(Signature):
 
     slots = [
             Slot('query'),
             Slot('limit', is_mandatory=False),
     ]
+
+
+class BindShell(BindCommand):
+
+    named('shell')
+    signature = ShellSig
+
+    def expand(self, query):
+        if query is not None:
+            if isinstance(query, StringSyntax):
+                query = query.value
+            elif isinstance(query, SegmentSyntax):
+                query = str(query)
+            else:
+                raise BindError("a query is required", query.mark)
+        command = ShellCmd(query)
+        return CommandBinding(self.state.scope, command, self.syntax)
 
 
 class BindEvaluate(BindCommand):
@@ -52,6 +87,47 @@ class BindEvaluate(BindCommand):
             limit = int(limit.value)
         command = EvaluateCmd(query, limit)
         return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class RenderShell(Act):
+
+    adapts(ShellCmd, RenderAction)
+
+    def __call__(self):
+        query = self.command.query
+        resource = locate('/shell/index.html')
+        assert resource is not None
+        database_name = context.app.htsql.db.database
+        server_root = context.app.tweak.shell.server_root
+        if server_root is None:
+            server_root = wsgiref.util.application_uri(self.action.environ)
+        if server_root.endswith('/'):
+            server_root = server_root[:-1]
+        resource_root = (server_root + '/%s/shell/'
+                         % context.app.tweak.resource.indicator)
+        if query is not None and query not in ['', '/']:
+            query_on_start = query
+            evaluate_on_start = 'true'
+        else:
+            query_on_start = '/'
+            evaluate_on_start = 'false'
+        data = resource.data
+        data = self.patch(data, 'base href', resource_root)
+        data = self.patch(data, 'data-database-name', database_name)
+        data = self.patch(data, 'data-server-root', server_root)
+        data = self.patch(data, 'data-query-on-start', query_on_start)
+        data = self.patch(data, 'data-evaluate-on-start', evaluate_on_start)
+        status = '200 OK'
+        headers = [('Content-Type', 'text/html; charset=UTF-8')]
+        body = [data]
+        return (status, headers, body)
+
+    def patch(self, data, prefix, value):
+        pattern = prefix + r'="[^"]*"'
+        replacement = prefix + '="%s"' % cgi.escape(value, True)
+        data, count = re.subn(pattern, replacement, data, 1)
+        assert count == 1
+        return data
 
 
 class RenderEvaluate(Act):

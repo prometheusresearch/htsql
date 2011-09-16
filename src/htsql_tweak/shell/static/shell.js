@@ -12,7 +12,7 @@ $(document).ready(function() {
             databaseName: $body.attr('data-database-name') || "",
             serverRoot: $body.attr('data-server-root') || "",
             queryOnStart: $body.attr('data-query-on-start') || "/",
-            evaluateOnStart: ($body.attr('evaluate-on-start') == 'true')
+            evaluateOnStart: ($body.attr('data-evaluate-on-start') == 'true')
         };
     }
 
