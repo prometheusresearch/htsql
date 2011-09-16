@@ -5,11 +5,8 @@
 
 
 from ..adapter import adapts, Utility
-from .command import UniversalCmd, DefaultCmd, RetrieveCmd
-from .act import act, Act, ProduceAction
-from ..tr.lookup import lookup_command
-from ..tr.parse import parse
-from ..tr.bind import bind
+from .command import RetrieveCmd
+from .act import act, Act, ProduceAction, AnalyzeAction
 from ..tr.encode import encode
 from ..tr.rewrite import rewrite
 from ..tr.compile import compile
@@ -67,28 +64,6 @@ class Product(Utility):
         return (self.records is not None)
 
 
-class ProduceUniversal(Act):
-
-    adapts(UniversalCmd, ProduceAction)
-
-    def __call__(self):
-        syntax = parse(self.command.query)
-        binding = bind(syntax)
-        command = lookup_command(binding)
-        if command is None:
-            command = DefaultCmd(binding)
-        return act(command, self.action)
-
-
-class ProduceDefault(Act):
-
-    adapts(DefaultCmd, ProduceAction)
-
-    def __call__(self):
-        command = RetrieveCmd(self.command.binding)
-        return act(command, self.action)
-
-
 class ProduceRetrieve(Act):
 
     adapts(RetrieveCmd, ProduceAction)
@@ -132,5 +107,20 @@ class ProduceRetrieve(Act):
                     connection.invalidate()
                 raise
         return Product(profile, records)
+
+
+class AnalyzeRetrieve(Act):
+
+    adapts(RetrieveCmd, AnalyzeAction)
+
+    def __call__(self):
+        binding = self.command.binding
+        expression = encode(binding)
+        expression = rewrite(expression)
+        term = compile(expression)
+        frame = assemble(term)
+        frame = reduce(frame)
+        plan = serialize(frame)
+        return plan
 
 

@@ -6,7 +6,12 @@
 
 from ..adapter import Adapter, adapts
 from ..error import BadRequestError
-from .command import Command
+from .command import (Command, UniversalCmd, DefaultCmd, RetrieveCmd,
+                      ProducerCmd, RendererCmd)
+from ..tr.lookup import lookup_command
+from ..tr.parse import parse
+from ..tr.bind import bind
+from ..fmt.format import FindRenderer
 
 
 class UnsupportedActionError(BadRequestError):
@@ -18,6 +23,10 @@ class Action(object):
 
 
 class ProduceAction(Action):
+    pass
+
+
+class AnalyzeAction(Action):
     pass
 
 
@@ -41,6 +50,60 @@ class Act(Adapter):
         raise UnsupportedActionError("unsupported action")
 
 
+class ActUniversal(Act):
+
+    adapts(UniversalCmd, Action)
+
+    def __call__(self):
+        syntax = parse(self.command.query)
+        binding = bind(syntax)
+        command = lookup_command(binding)
+        if command is None:
+            command = DefaultCmd(binding)
+        return act(command, self.action)
+
+
+class ActDefault(Act):
+
+    adapts(DefaultCmd, Action)
+
+    def __call__(self):
+        command = RetrieveCmd(self.command.binding)
+        return act(command, self.action)
+
+
+class RenderProducer(Act):
+
+    adapts(ProducerCmd, RenderAction)
+
+    def __call__(self):
+        product = produce(self.command)
+        environ = self.action.environ
+        find_renderer = FindRenderer()
+        accept = set([''])
+        if 'HTTP_ACCEPT' in environ:
+            for name in environ['HTTP_ACCEPT'].split(','):
+                if ';' in name:
+                    name = name.split(';', 1)[0]
+                name = name.strip()
+                accept.add(name)
+        renderer_class = find_renderer(accept)
+        assert renderer_class is not None
+        renderer = renderer_class()
+        return renderer.render(product)
+
+
+class RenderRenderer(Act):
+
+    adapts(RendererCmd, RenderAction)
+
+    def __call__(self):
+        product = produce(self.command.producer)
+        renderer_class = self.command.format
+        renderer = renderer_class()
+        return renderer.render(product)
+
+
 def act(command, action):
     act = Act(command, action)
     return act()
@@ -48,6 +111,11 @@ def act(command, action):
 
 def produce(command):
     action = ProduceAction()
+    return act(command, action)
+
+
+def analyze(command):
+    action = AnalyzeAction()
     return act(command, action)
 
 
