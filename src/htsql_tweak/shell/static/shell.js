@@ -12,7 +12,8 @@ $(document).ready(function() {
             databaseName: $body.attr('data-database-name') || "",
             serverRoot: $body.attr('data-server-root') || "",
             queryOnStart: $body.attr('data-query-on-start') || "/",
-            evaluateOnStart: ($body.attr('data-evaluate-on-start') == 'true')
+            evaluateOnStart: ($body.attr('data-evaluate-on-start') == 'true'),
+            implicitShell: ($body.attr('data-implicit-shell') == 'true')
         };
     }
 
@@ -91,8 +92,11 @@ $(document).ready(function() {
     }
 
     function getQuery() {
-        var query = editor.getValue();
-        query = query.replace(/^\s+|\s+$/g, "");
+        var orig_query = editor.getValue();
+        var query = orig_query.replace(/^\s+|\s+$/g, "");
+        if (query != orig_query) {
+            editor.setValue(query);
+        }
         if (!/^\//.test(query)) {
             return;
         }
@@ -107,7 +111,8 @@ $(document).ready(function() {
 
     function clickRun() {
         var query = getQuery();
-        run(query);
+        pushHistory(query)
+        run(query, null);
     }
 
     function clickExpand(dir) {
@@ -174,6 +179,45 @@ $(document).ready(function() {
 
     function scrollGrid() {
         $gridHead.scrollLeft($gridBody.scrollLeft());
+    }
+
+    function popstateWindow(event) {
+        var data = event.originalEvent.state;
+        if (!data) {
+            return;
+        }
+        var query = data.query;
+        if (query == getQuery()) {
+            return;
+        }
+        if (state.waiting) {
+            return
+        }
+        setQuery(query);
+        if (state.$panel)
+            state.$panel.hide();
+        state.$panel = null;
+        updateTitle();
+    }
+
+    function pushHistory(query, replace) {
+        if (!history.pushState || !history.replaceState)
+            return;
+        if (!query || !config.serverRoot || state.waiting)
+            return;
+        var data = { query: query };
+        var title = 'HTSQL';
+        if (!config.implicitShell) {
+            if (query == '/')
+                query = "/shell()";
+            else
+                query = "/shell('" + query.replace(/'/g,"''") + "')";
+        }
+        var url = config.serverRoot+escape(query);
+        if (replace)
+            history.replaceState(data, title, url);
+        else
+            history.pushState(data, title, url);
     }
 
     function run(query, action) {
@@ -470,16 +514,18 @@ $(document).ready(function() {
     $('#popups').click(clickPopups);
     $('#shrink').click(function() { return clickExpand(-1); });
     $('#expand').click(function() { return clickExpand(+1); });
+    $(window).bind('popstate', popstateWindow);
 
     $('#schema').hide();
     $('#help').hide();
     $('#close-sql').hide();
 
-    $($database).text(config.databaseName);
+    $database.text(config.databaseName);
     updateTitle();
 
+    pushHistory(config.queryOnStart, true);
     if (config.evaluateOnStart) {
-        $('#run').click();
+        run(config.queryOnStart);
     }
 
 });

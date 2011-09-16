@@ -50,7 +50,7 @@ class ShellRenderUniversal(Act):
         try:
             syntax = parse(self.command.query)
             if addon.on_root and syntax.segment.branch is None:
-                command = ShellCmd()
+                command = ShellCmd(is_implicit=True)
             else:
                 binding = bind(syntax)
                 command = lookup_command(binding)
@@ -58,7 +58,7 @@ class ShellRenderUniversal(Act):
                     if (addon.on_default and
                             syntax.segment.branch is not None):
                         query = unquote(self.command.query)
-                        command = ShellCmd(query)
+                        command = ShellCmd(query, is_implicit=True)
                     else:
                         command = DefaultCmd(binding)
             return act(command, self.action)
@@ -66,7 +66,7 @@ class ShellRenderUniversal(Act):
             if not addon.on_error:
                 raise
             query = unquote(self.command.query)
-            command = ShellCmd(query)
+            command = ShellCmd(query, is_implicit=True)
             return act(command, self.action)
 
 

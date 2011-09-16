@@ -28,9 +28,11 @@ import wsgiref.util
 
 class ShellCmd(Command):
 
-    def __init__(self, query=None):
+    def __init__(self, query=None, is_implicit=False):
         assert isinstance(query, maybe(str))
+        assert isinstance(is_implicit, bool)
         self.query = query
+        self.is_implicit = is_implicit
 
 
 class EvaluateCmd(Command):
@@ -123,12 +125,14 @@ class RenderShell(Act):
         else:
             query_on_start = '/'
             evaluate_on_start = 'false'
+        implicit = str(self.command.is_implicit).lower()
         data = resource.data
         data = self.patch(data, 'base href', resource_root)
         data = self.patch(data, 'data-database-name', database_name)
         data = self.patch(data, 'data-server-root', server_root)
         data = self.patch(data, 'data-query-on-start', query_on_start)
         data = self.patch(data, 'data-evaluate-on-start', evaluate_on_start)
+        data = self.patch(data, 'data-implicit-shell', implicit)
         status = '200 OK'
         headers = [('Content-Type', 'text/html; charset=UTF-8')]
         body = [data]
