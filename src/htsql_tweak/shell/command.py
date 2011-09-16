@@ -12,6 +12,7 @@ from htsql.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain)
 from htsql.cmd.command import UniversalCmd, Command
 from htsql.cmd.act import (Act, RenderAction, UnsupportedActionError,
                            produce, analyze)
+from htsql.tr.error import TranslateError
 from htsql.tr.syntax import StringSyntax, NumberSyntax, SegmentSyntax
 from htsql.tr.binding import CommandBinding
 from htsql.tr.signature import Signature, Slot
@@ -174,9 +175,26 @@ class RenderEvaluate(Act):
         yield "}\n"
 
     def render_error(self, exc):
+        detail = exc.detail
+        first_line = 'null'
+        first_column = 'null'
+        last_line = 'null'
+        last_column = 'null'
+        if isinstance(exc, TranslateError) and exc.mark.input:
+            mark = exc.mark
+            first_break = mark.input.rfind('\n', 0, mark.start)+1
+            last_break = mark.input.rfind('\n', 0, mark.end)+1
+            first_line = mark.input.count('\n', 0, first_break)
+            last_line = mark.input.count('\n', 0, last_break)
+            first_column = mark.start-first_break
+            last_column = mark.end-last_break
         yield "{\n"
         yield "  \"type\": \"error\",\n"
-        yield "  \"message\": %s\n" % escape(cgi.escape(str(exc)))
+        yield "  \"detail\": %s,\n" % escape(cgi.escape(detail))
+        yield "  \"first_line\": %s,\n" % first_line
+        yield "  \"first_column\": %s,\n" % first_column
+        yield "  \"last_line\": %s,\n" % last_line
+        yield "  \"last_column\": %s\n" % last_column
         yield "}\n"
 
     def render_product(self, product):

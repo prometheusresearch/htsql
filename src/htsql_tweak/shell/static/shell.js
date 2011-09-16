@@ -39,6 +39,7 @@ $(document).ready(function() {
             lastQuery: null,
             lastAction: null,
             table: null,
+            marker: null
         }
     }
 
@@ -134,6 +135,10 @@ $(document).ready(function() {
             return;
         if (state.waiting)
             return;
+        if (state.marker) {
+            state.marker();
+            state.marker = null;
+        }
         state.lastQuery = query;
         state.lastAction = action;
         query = "/evaluate('" + query.replace(/'/g,"''") + "'"
@@ -180,7 +185,21 @@ $(document).ready(function() {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = $errorPanel.show();
-        $error.html(output.message);
+        $error.html(output.detail);
+        if (state.marker) {
+            state.marker();
+            state.marker = null;
+        }
+        if (output.first_line !== null && output.first_column !== null &&
+                output.last_line !== null && output.last_column !== null) {
+            editor.setCursor({ line: output.first_line,
+                               ch: output.first_column });
+            state.marker = editor.markText({ line: output.first_line,
+                                             ch: output.first_column },
+                                           { line: output.last_line,
+                                             ch: output.last_column },
+                                           'marker');
+        }
     }
 
     function handleUnsupported(output) {
@@ -389,7 +408,7 @@ $(document).ready(function() {
     $('#close-sql').hide();
 
     $('title').text(config.databaseName);
-    $('database').text(config.databaseName);
+    $($database).text(config.databaseName);
 
     if (config.evaluateOnStart) {
         $('#run').click();
