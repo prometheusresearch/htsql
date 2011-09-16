@@ -438,10 +438,13 @@ $(document).ready(function() {
         for (var i = 0; i < colWidths.length-1; i ++) {
             tableWidth += colWidths[i];
         }
+        var overflow = 'auto';
         if (tableWidth < gridWidth) {
             var diff = gridWidth-tableWidth-1;
             colWidths[colWidths.length-1] += diff;
             tableWidth += diff;
+            if (diff+5 >= environ.scrollbarWidth)
+                overflow = 'hidden';
         }
         var $bodyGroup = $("<colgroup></colgroup>");
         var $headGroup = $("<colgroup></colgroup>");
@@ -469,9 +472,7 @@ $(document).ready(function() {
                         top: headHeight,
                         width: 'auto',
                         'overflow-y': 'auto',
-                        'overflow-x': (tableWidth-environ.screenWidth
-                                        < gridWidth-environ.scrollbarWidth) ?
-                                        'hidden' : 'auto' });
+                        'overflow-x': overflow });
         setTimeout(reportTime, 0);
     }
 
