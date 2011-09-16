@@ -25,7 +25,7 @@ def unquote(query):
         if not code:
             return match.group()
         code = int(code, 16)
-        if code < 0x20 or code == 0x25 or code == 0x7F:
+        if code == 0x00:
             return match.group()
         return chr(code)
     return escape_regexp.sub(replace, query)
