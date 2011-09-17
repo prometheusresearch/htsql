@@ -417,10 +417,11 @@ $(document).ready(function() {
             table += '<td class="dummy">&nbsp;</td>';
             table += '</tr>';
         }
+        var ch = output.more ? "&#x22EE;" : "&nbsp;"
         table += '<tr>';
-        table += '<th class="dummy">&nbsp;</th>';
+        table += '<th class="dummy">'+ch+'</th>';
         for (var i = 0; i < size; i ++) {
-            table += '<td class="dummy">&nbsp;</td>';
+            table += '<td class="dummy">'+ch+'</td>';
         }
         table += '<td class="dummy">&nbsp;</td>';
         table += '</tbody>';

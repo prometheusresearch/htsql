@@ -376,6 +376,7 @@ button {
 
 #grid .dummy {
   padding: 0;
+  text-align: center;
 }
 
 #grid .w640 td {
@@ -421,7 +422,7 @@ button {
 #grid button {
   text-align: center;
   padding: 0.2em 1.2em;
-  margin: 1em 2em 3em;
+  margin: 2em 2em 3em;
   color: #1a1a1a;
   background: #abbbbe;
   border: 1px solid #999999;
