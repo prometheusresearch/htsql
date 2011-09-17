@@ -418,6 +418,30 @@ button {
   max-width: 400px;
 }
 
+#grid button {
+  text-align: center;
+  padding: 0.2em 1.2em;
+  margin: 1em 2em 3em;
+  color: #1a1a1a;
+  background: #abbbbe;
+  border: 1px solid #999999;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 1px 2px rgba(0,0,0,0.05);
+  text-shadow: 0 1px 1px rgba(255,255,255,0.75);
+}
+
+#grid button:hover {
+  color: #fff;
+}
+
+#grid li button:active {
+  background-image: -moz-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
+  background-image: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
+  background-image: linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.05), rgba(0,0,0,0));
+}
+
 /* Grid scrolling */
 
 #grid {

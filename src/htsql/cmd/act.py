@@ -26,6 +26,13 @@ class ProduceAction(Action):
     pass
 
 
+class SafeProduceAction(ProduceAction):
+
+    def __init__(self, limit):
+        assert isinstance(limit, int) and limit > 0
+        self.limit = limit
+
+
 class AnalyzeAction(Action):
     pass
 
@@ -111,6 +118,11 @@ def act(command, action):
 
 def produce(command):
     action = ProduceAction()
+    return act(command, action)
+
+
+def safe_produce(command, limit):
+    action = SafeProduceAction(limit)
     return act(command, action)
 
 

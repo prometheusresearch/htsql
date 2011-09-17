@@ -52,6 +52,8 @@ $(document).ready(function() {
             waiting: false,
             lastQuery: null,
             lastAction: null,
+            lastPage: null,
+            lastOffset: null,
             marker: null,
             expansion: 0,
             lastPoint: null,
@@ -126,7 +128,7 @@ $(document).ready(function() {
     function clickRun() {
         var query = getQuery();
         pushHistory(query)
-        run(query, null);
+        run(query);
     }
 
     function clickExpand(dir) {
@@ -184,6 +186,13 @@ $(document).ready(function() {
         }
     }
 
+    function clickLoad() {
+        var query = state.lastQuery
+        var page = state.lastPage || 1;
+        state.lastOffset = $gridBody.scrollTop();
+        run(query, 'produce', page+1);
+    }
+
     function clickClose() {
         if (state.$panel) {
             state.$panel.hide();
@@ -234,7 +243,7 @@ $(document).ready(function() {
             history.pushState(data, title, url);
     }
 
-    function run(query, action) {
+    function run(query, action, page) {
         if (!query)
             return;
         if (!config.serverRoot)
@@ -247,8 +256,13 @@ $(document).ready(function() {
         }
         state.lastQuery = query;
         state.lastAction = action;
+        state.lastPage = page;
+        if (!action)
+            action = 'produce';
+        if (!page)
+            page = 1;
         query = "/evaluate('" + query.replace(/'/g,"''") + "'"
-                + (action ? ",'" + action + "'" : "") + ")";
+                + ",'" + action + "'" + "," + page + ")";
         var url = config.serverRoot+escape(query);
         $.ajax({
             url: url,
@@ -411,6 +425,9 @@ $(document).ready(function() {
         table += '<td class="dummy">&nbsp;</td>';
         table += '</tbody>';
         table += '</table>';
+        if (output.more) {
+            table += '<button id="load">Load More Data</button>';
+        }
         $gridHead.empty();
         $gridBody.empty()
             .css({ top: 0,
@@ -434,6 +451,11 @@ $(document).ready(function() {
         updateTitle(title);
         $gridBody.html(table);
         $gridBody.scrollLeft(0).scrollTop(0);
+        if (state.lastPage && state.lastOffset) {
+            $gridBody.scrollTop(state.lastOffset);
+            state.lastOffset = 0;
+        }
+        $('#load').click(clickLoad);
         setTimeout(configureGrid, 0);
     }
 

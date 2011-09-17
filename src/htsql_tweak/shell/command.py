@@ -12,7 +12,7 @@ from htsql.error import HTTPError
 from htsql.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain)
 from htsql.cmd.command import UniversalCmd, Command
 from htsql.cmd.act import (Act, RenderAction, UnsupportedActionError,
-                           produce, analyze)
+                           produce, safe_produce, analyze)
 from htsql.tr.error import TranslateError
 from htsql.tr.syntax import StringSyntax, NumberSyntax, SegmentSyntax
 from htsql.tr.binding import CommandBinding
@@ -38,13 +38,13 @@ class ShellCmd(Command):
 
 class EvaluateCmd(Command):
 
-    def __init__(self, query, action=None, limit=None):
+    def __init__(self, query, action=None, page=None):
         assert isinstance(query, str)
         assert isinstance(action, maybe(str))
-        assert isinstance(limit, maybe(int))
+        assert isinstance(page, maybe(int))
         self.query = query
         self.action = action
-        self.limit = limit
+        self.page = page
 
 
 class ShellSig(Signature):
@@ -59,7 +59,7 @@ class EvaluateSig(Signature):
     slots = [
             Slot('query'),
             Slot('action', is_mandatory=False),
-            Slot('limit', is_mandatory=False),
+            Slot('page', is_mandatory=False),
     ]
 
 
@@ -85,7 +85,7 @@ class BindEvaluate(BindCommand):
     named('evaluate')
     signature = EvaluateSig
 
-    def expand(self, query, action, limit):
+    def expand(self, query, action, page):
         if not isinstance(query, StringSyntax):
             raise BindError("a string literal is required", query.mark)
         query = query.value
@@ -96,11 +96,11 @@ class BindEvaluate(BindCommand):
                 raise BindError("'produce' or 'analyze' is expected",
                                 action.mark)
             action = action.value
-        if limit is not None:
-            if not isinstance(limit, NumberSyntax) and limit.is_integer:
-                raise BindError("an integer literal is required", limit.mark)
-            limit = int(limit.value)
-        command = EvaluateCmd(query, action, limit)
+        if page is not None:
+            if not isinstance(page, NumberSyntax) and page.is_integer:
+                raise BindError("an integer literal is required", page.mark)
+            page = int(page.value)
+        command = EvaluateCmd(query, action, page)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 
@@ -154,14 +154,22 @@ class RenderEvaluate(Act):
     adapts(EvaluateCmd, RenderAction)
 
     def __call__(self):
+        addon = context.app.tweak.shell
         status = "200 OK"
         headers = [('Content-Type', 'application/javascript')]
         command = UniversalCmd(self.command.query)
+        limit = None
         try:
             if self.command.action == 'analyze':
                 plan = analyze(command)
             else:
-                product = produce(command)
+                page = self.command.page
+                if page is not None and page > 0 and addon.limit is not None:
+                    limit = page*addon.limit
+                if limit is not None:
+                    product = safe_produce(command, limit+1)
+                else:
+                    product = produce(command)
         except UnsupportedActionError, exc:
             body = self.render_unsupported(exc)
         except HTTPError, exc:
@@ -171,7 +179,7 @@ class RenderEvaluate(Act):
                 body = self.render_sql(plan)
             else:
                 if product:
-                    body = self.render_product(product)
+                    body = self.render_product(product, limit)
                 else:
                     body = self.render_empty()
         return (status, headers, body)
@@ -204,15 +212,17 @@ class RenderEvaluate(Act):
         yield "  \"last_column\": %s\n" % last_column
         yield "}\n"
 
-    def render_product(self, product):
+    def render_product(self, product, limit):
         style = self.make_style(product)
         head = self.make_head(product)
-        body = self.make_body(product)
+        body = self.make_body(product, limit)
+        more = self.make_more(product, limit)
         yield "{\n"
         yield "  \"type\": \"product\",\n"
         yield "  \"style\": %s,\n" % style
         yield "  \"head\": %s,\n" % head
-        yield "  \"body\": %s\n" % body
+        yield "  \"body\": %s,\n" % body
+        yield "  \"more\": %s\n" % more
         yield "}\n"
 
     def render_empty(self):
@@ -269,7 +279,7 @@ class RenderEvaluate(Act):
             rows.append("[%s]" % ", ".join(cells))
         return "[%s]" % ", ".join(rows)
 
-    def make_body(self, product):
+    def make_body(self, product, limit):
         rows = []
         domains = [element.domain
                    for element in product.profile.segment.elements]
@@ -283,7 +293,14 @@ class RenderEvaluate(Act):
                     cell = escape(cgi.escape(format(value)))
                 cells.append(cell)
             rows.append("[%s]" % ", ".join(cells))
+        if limit is not None:
+            rows = rows[:limit]
         return "[%s]" % ", ".join(rows)
+
+    def make_more(self, product, limit):
+        if limit is not None and len(product.records) >= limit:
+            return "true"
+        return "false"
 
 
 class GetStyle(Adapter):

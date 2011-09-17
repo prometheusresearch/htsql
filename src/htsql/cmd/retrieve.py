@@ -6,8 +6,10 @@
 
 from ..adapter import adapts, Utility
 from .command import RetrieveCmd, SQLCmd
-from .act import act, analyze, Act, ProduceAction, AnalyzeAction, RenderAction
+from .act import (act, analyze, Act, ProduceAction, SafeProduceAction,
+                  AnalyzeAction, RenderAction)
 from ..tr.encode import encode
+from ..tr.flow import OrderedFlow
 from ..tr.rewrite import rewrite
 from ..tr.compile import compile
 from ..tr.assemble import assemble
@@ -71,6 +73,10 @@ class ProduceRetrieve(Act):
     def __call__(self):
         binding = self.command.binding
         expression = encode(binding)
+        # FIXME: abstract it out.
+        if isinstance(self.action, SafeProduceAction):
+            limit = self.action.limit
+            expression = self.safe_patch(expression, limit)
         expression = rewrite(expression)
         term = compile(expression)
         frame = assemble(term)
@@ -107,6 +113,26 @@ class ProduceRetrieve(Act):
                     connection.invalidate()
                 raise
         return Product(profile, records)
+
+    def safe_patch(self, expression, limit):
+        segment = expression.segment
+        if segment is None:
+            return expression
+        flow = segment.flow
+        while not flow.is_axis:
+            if (isinstance(flow, OrderedFlow) and flow.limit is not None
+                                              and flow.limit <= limit):
+                return expression
+            flow = flow.base
+        if flow.is_root:
+            return expression
+        if isinstance(segment.flow, OrderedFlow):
+            flow = segment.flow.clone(limit=limit)
+        else:
+            flow = OrderedFlow(segment.flow, [], limit, None, segment.binding)
+        segment = segment.clone(flow=flow)
+        expression = expression.clone(segment=segment)
+        return expression
 
 
 class AnalyzeRetrieve(Act):
