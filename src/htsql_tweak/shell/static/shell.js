@@ -41,8 +41,8 @@ $(document).ready(function() {
         var scrollbarWidth = 100-$inner.width();
         $outer.remove();
         return {
-            scrollbarWidth: scrollbarWidth,
-            screenWidth: 2000,
+            scrollbarWidth: scrollbarWidth || 20,
+            screenWidth: window.screen.width || 2000,
         }
     }
 
@@ -337,19 +337,31 @@ $(document).ready(function() {
     }
 
     function handleProduct(output) {
-//      timing("rendering table");
+//        timing("rendering table");
         var style = output.style;
         var head = output.head;
         var body = output.body;
         var size = style.length;
+        var width = $viewport.width();
+        var constraint = null;
+        if (width < 640)
+            constraint = 'w640';
+        else if (width < 800)
+            constraint = 'w800';
+        else if (width < 1024)
+            constraint = 'w1024';
+        else if (width < 1280)
+            constraint = 'w1280';
+        else if (width < 1600)
+            constraint = 'w1600';
         var table = '';
-        table += '<table>';
+        table += '<table'+(constraint ? ' class="'+constraint+'"' : '')+'>';
         table += '<colgroup>';
         table += '<col>';
         for (var i = 0; i < size; i ++) {
             table += '<col>';
         }
-        table += '<col style="width: '+environ.screenWidth+'px">';
+        table += '<col style="width: '+width+'px">';
         table += '</colgroup>';
         table += '<thead>';
         for (var k = 0; k < head.length; k ++) {
@@ -366,7 +378,7 @@ $(document).ready(function() {
                 var rowspan = cell[2];
                 table += '<th' + (colspan>1 ? ' colspan="'+colspan+'"' : '')
                                     + (rowspan>1 ? ' rowspan="'+rowspan+'"' : '') + '>'
-                              + '<span>' + title + '</span></th>';
+                              + title + '</th>';
             }
             if (k == 0) {
                 table += '<th' + (head.length > 1 ? ' rowspan="'+head.length+'"' : '')
@@ -379,14 +391,14 @@ $(document).ready(function() {
         for (var k = 0; k < body.length; k ++) {
             var row = body[k];
             table += '<tr' + (k % 2 == 1 ? ' class="alt">' : '>');
-            table += '<th><span>'+(k+1)+'</span></th>';
+            table += '<th>'+(k+1)+'</th>';
             for (var i = 0; i < size; i ++) {
                 var value = row[i];
                 if (value == null) {
                     value = '&nbsp;'
                 }
-                table += '<td><span' + (style[i] ? ' class="'+style[i]+'">' : '>')
-                              + value + '</span></td>';
+                table += '<td' + (style[i] ? ' class="'+style[i]+'">' : '>')
+                              + value + '</td>';
             }
             table += '<td class="dummy">&nbsp;</td>';
             table += '</tr>';
@@ -402,7 +414,7 @@ $(document).ready(function() {
         $gridHead.empty();
         $gridBody.empty()
             .css({ top: 0,
-                   width: ($viewport.width()+environ.screenWidth-1)+"px",
+                   width: size*width+"px",
                    right: "auto",
                    "overflow-y": "hidden",
                    "overflow-x": "hidden" });
@@ -421,7 +433,6 @@ $(document).ready(function() {
         }
         updateTitle(title);
         $gridBody.html(table);
-        $gridHead.scrollLeft(0);
         $gridBody.scrollLeft(0).scrollTop(0);
         setTimeout(configureGrid, 0);
     }
@@ -431,11 +442,11 @@ $(document).ready(function() {
         var gridWidth = $grid.width();
         var colWidths = [];
         $bodyTable.find('tbody tr:first-child').children().each(function(idx) {
-            colWidths[idx] = $(this).width();
+            colWidths[idx] = $(this).outerWidth();
         });
         colWidths[colWidths.length-1] = 1;
         var tableWidth = 0;
-        for (var i = 0; i < colWidths.length-1; i ++) {
+        for (var i = 0; i < colWidths.length; i ++) {
             tableWidth += colWidths[i];
         }
         var overflow = 'auto';
@@ -443,7 +454,7 @@ $(document).ready(function() {
             var diff = gridWidth-tableWidth-1;
             colWidths[colWidths.length-1] += diff;
             tableWidth += diff;
-            if (diff+5 >= environ.scrollbarWidth)
+            if (diff >= 2*environ.scrollbarWidth)
                 overflow = 'hidden';
         }
         var $bodyGroup = $("<colgroup></colgroup>");
@@ -451,9 +462,6 @@ $(document).ready(function() {
         for (var i = 0; i < colWidths.length; i ++) {
             var width = colWidths[i];
             $bodyGroup.append("<col style=\"width: "+width+"px\">");
-            if (i == colWidths.length-1) {
-                width += environ.screenWidth;
-            }
             $headGroup.append("<col style=\"width: "+width+"px\">");
         }
         var $headTable = $("<table></table>")
@@ -462,9 +470,14 @@ $(document).ready(function() {
                 .width(tableWidth)
                 .append($headGroup)
                 .append($bodyTable.children('thead').clone());
-        var headHeight = $headTable.height();
+        $gridHead.scrollLeft(0);
+        var headHeight = $gridHead.height();
+        $("<div></div>").appendTo($gridHead)
+            .width(tableWidth+environ.screenWidth)
+            .height(1);
         $bodyTable.children('colgroup').remove();
         $bodyTable.children('thead').remove();
+        $bodyTable.removeClass();
         $bodyTable.css('table-layout', 'fixed')
                 .width(tableWidth)
                 .prepend($bodyGroup);

@@ -276,12 +276,15 @@ button {
 
 /* Grid borders */
 
+#grid-head {
+  background: #f2f2f2;
+}
+
 #grid table {
   border-style: hidden none none none;
 }
 
 #grid thead {
-  background: #eef5dd;
   background: #f2f2f2;
   border: solid #1a1a1a;
   border-width: 0 0 1px 0;
@@ -339,7 +342,10 @@ button {
 
 #grid td,
 #grid th {
+  padding: 3px 10px;
+  overflow: hidden;
   vertical-align: bottom;
+  word-wrap: break-word;
 }
 
 #grid th {
@@ -359,22 +365,57 @@ button {
   font-size: 105%;
 }
 
-#grid span {
-  display: block;
-  padding: 3px 10px;
-  overflow: hidden;
-}
-
-/*#grid td span {
-  overflow: auto;
-}*/
-
-#grid span.number {
+#grid .number {
   text-align: right;
 }
 
-#grid span.boolean {
+#grid .boolean {
+  text-align: right;
   font-style: italic;
+}
+
+#grid .dummy {
+  padding: 0;
+}
+
+#grid .w640 td {
+  max-width: 480px;
+}
+
+#grid .w640 th {
+  max-width: 160px;
+}
+
+#grid .w800 td {
+  max-width: 600px;
+}
+
+#grid .w800 th {
+  max-width: 200px;
+}
+
+#grid .w1024 td {
+  max-width: 768px;
+}
+
+#grid .w1024 th {
+  max-width: 256px;
+}
+
+#grid .w1280 td {
+  max-width: 960px;
+}
+
+#grid .w1280 th {
+  max-width: 320px;
+}
+
+#grid .w1600 td {
+  max-width: 1200px;
+}
+
+#grid .w1600 th {
+  max-width: 400px;
 }
 
 /* Grid scrolling */
