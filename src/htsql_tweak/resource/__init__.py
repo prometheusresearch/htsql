@@ -7,6 +7,7 @@
 from . import wsgi, locate
 from htsql.addon import Addon, Parameter
 from htsql.validator import StrVal
+import threading
 
 
 class TweakResourceAddon(Addon):
@@ -16,5 +17,9 @@ class TweakResourceAddon(Addon):
     parameters = [
             Parameter('indicator', StrVal(r'^[/]+$'), default='-'),
     ]
+
+    def __init__(self, app, attributes):
+        super(TweakResourceAddon, self).__init__(app, attributes)
+        self.lock = threading.Lock()
 
 

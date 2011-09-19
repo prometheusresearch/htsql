@@ -4,6 +4,8 @@
 #
 
 
+from __future__ import with_statement
+from htsql.context import context
 from htsql.util import maybe
 from htsql.adapter import Protocol, named
 import mimetypes
@@ -11,7 +13,6 @@ import hashlib
 import os, os.path
 import cStringIO
 import zipfile
-import tempfile
 import urllib2
 import pkg_resources
 
@@ -99,16 +100,19 @@ class LocateRemote(Locate):
         self.init_repository()
 
     def init_repository(self):
-        tempdir = tempfile.gettempdir()
-        staticdir = os.path.join(tempdir, '.htsql.%s' % os.getuid())
-        if not os.path.exists(staticdir):
-            os.mkdir(staticdir, 0700)
+        userdir = os.path.expanduser('~')
+        staticdir = os.path.join(userdir, '.htsql.shared')
         resourcedir = os.path.join(staticdir, 'resource')
-        if not os.path.exists(resourcedir):
-            os.mkdir(resourcedir)
         cachedir = os.path.join(resourcedir, '%s.%s' % (self.cache, self.md5))
         if not os.path.exists(cachedir):
-            self.init_cache(cachedir)
+            addon = context.app.tweak.resource
+            with addon.lock:
+                if not os.path.exists(staticdir):
+                    os.mkdir(staticdir, 0700)
+                if not os.path.exists(resourcedir):
+                    os.mkdir(resourcedir)
+                if not os.path.exists(cachedir):
+                    self.init_cache(cachedir)
         self.repository = cachedir
 
     def init_cache(self, cachedir):
