@@ -2,6 +2,20 @@ List of Changes
 ===============
 
 
+2.2.0 beta 1 (2011-09-20)
+-------------------------
+
+* fixed silent data truncation bug on invalid values.
+* added support for loading application configuration from a file;
+  option `-C FILE`.
+* refactored plugin architecture; added support for plugin parameters.
+* added SQLAlchemy adapter.
+* added support for statement-like functions; converted formatters
+  to statements.
+* added plugin `tweak.meta`: database metadata exposed as a database.
+* added plugin `tweak.shell`: a simple web-based HTSQL editor.
+
+
 2.1.1 final (2011-08-30)
 ------------------------
 
