@@ -124,6 +124,10 @@ So, to enumerate links for a table, say ``course`` you could type:
 
 .. htsql:: /meta(/link?table_name='course')
 
+You could also run ``/meta()`` on the meta-data schema, for example:
+
+.. htsql:: /meta(/meta(/table))
+
 
 ``tweak.shell``
 ---------------
