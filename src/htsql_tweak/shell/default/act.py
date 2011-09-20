@@ -45,7 +45,8 @@ class ShellRenderUniversal(Act):
                     name = name.split(';', 1)[0]
                 name = name.strip()
                 accept.add(name)
-        if 'text/html' not in accept:
+        if not (('text/html' in accept or 'text/*' in accept
+                 or '*/*' in accept) and 'application/json' not in accept):
             return super(ShellRenderUniversal, self).__call__()
         try:
             syntax = parse(self.command.query)

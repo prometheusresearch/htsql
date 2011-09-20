@@ -418,7 +418,7 @@ $(document).ready(function() {
             table += '</tr>';
         }
         var ch = output.more ? "&#x22EE;" : "&nbsp;"
-        table += '<tr>';
+        table += '<tr class="dummy">';
         table += '<th class="dummy">'+ch+'</th>';
         for (var i = 0; i < size; i ++) {
             table += '<td class="dummy">'+ch+'</td>';
