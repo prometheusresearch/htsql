@@ -13,6 +13,12 @@ import threading
 class TweakResourceAddon(Addon):
 
     name = 'tweak.resource'
+    hint = """static resource support"""
+    help = """
+      This plugin creates a mechanism for other plugins, such as
+      the ``tweak.shell`` to provide access to static resources
+      such as Javascript and CSS files. 
+    """
 
     parameters = [
             Parameter('indicator', StrVal(r'^[/]+$'), default='-'),

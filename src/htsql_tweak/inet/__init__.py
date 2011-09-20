@@ -10,6 +10,11 @@ from htsql.addon import Addon
 class TweakINetAddon(Addon):
 
     name = 'tweak.inet'
+    hint = """adds support for inet data types"""
+    help = """
+      This plugin adds support for various internet data
+      types for PostgreSQL.
+    """
 
     @classmethod
     def get_extension(cls, app, attributes):
