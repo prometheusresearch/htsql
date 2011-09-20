@@ -20,11 +20,11 @@
    :members:
 .. automodule:: htsql.error
    :members:
-.. automodule:: htsql.export
-   :members:
 .. automodule:: htsql.introspect
    :members:
 .. automodule:: htsql.mark
+   :members:
+.. automodule:: htsql.request
    :members:
 .. automodule:: htsql.split_sql
    :members:
