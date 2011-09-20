@@ -5,17 +5,17 @@ List of Changes
 2.2.0 beta 1 (2011-09-20)
 -------------------------
 
-* fixed silent data truncation bug on invalid values; users of SQLite
+* Fixed silent data truncation bug on invalid values; users of SQLite
   are adviced to upgrade.
-* added support for loading application configuration from a file;
+* Added support for loading application configuration from a file;
   option `-C FILE`.
-* refactored plugin architecture; added support for plugin parameters.
-* added SQLAlchemy adapter.
-* added support for statement-like functions; converted formatters
+* Refactored plugin architecture; added support for plugin parameters.
+* Added SQLAlchemy adapter.
+* Added support for statement-like functions; converted formatters
   to statements.
-* added plugin `tweak.meta`: database metadata exposed as a database.
-* added plugin `tweak.shell`: a simple web-based HTSQL editor.
-* removed plugin `tweak.schema`: functionality is implemented in
+* Added plugin `tweak.meta`: database metadata exposed as a database.
+* Added plugin `tweak.shell`: a simple web-based HTSQL editor.
+* Removed plugin `tweak.schema`: functionality is implemented in
   the core.
 
 

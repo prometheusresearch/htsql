@@ -76,31 +76,16 @@ other tables such as student, instructor and enrollment.
 Basic Expressions
 -----------------
 
-Every HTSQL request starts with a forward-slash ``/``.  To return all
-rows from a table, simply write the table name:
+HTSQL requests start with a forward-slash ``/``.  To return all rows and
+columns from the school table, sorted by primary key, write:
 
-.. sourcecode:: htsql
+.. htsql:: /school
+   :cut: 3
 
-   /school
-
-`The query result`__ is a list of schools in the university, including all
-columns, sorted by the primary key for the table:
-
-__ http://demo.htsql.org/school
-
- ====  ============================= ======
- code  name                          campus
- ====  ============================= ======
- art   School of Art and Design      old
- bus   School of Business            south
- edu   College of Education          old
- egn   School of Engineering         north
- la    School of Arts and Humanities old
- mus   School of Music & Dance       south
- ns    School of Natural Sciences    old
- ph    Public Honorariums
- sc    School of Continuing Studies
- ====  ============================= ======
+.. hint::
+   In this tutorial query results are shown truncated.  Click 
+   on any example request to open it at demo.htsql.org and see 
+   the complete output.
 
 Scalar expressions, including arithmetic and boolean operations, can be
 written directly:
