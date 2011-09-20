@@ -13,7 +13,7 @@ class Department(models.Model):
     code = models.CharField(max_length=16, primary_key=True,
                             db_column='code')
     name = models.CharField(max_length=64, unique=True)
-    school = models.ForeignKey(School, db_column='school', 
+    school = models.ForeignKey(School, db_column='school_code', 
                                blank=True, null=True)
 
 class Program(models.Model):
@@ -25,7 +25,7 @@ class Program(models.Model):
         (u'ma', u"Master's of Arts"),
         (u'ms', u"Master's of Science"),
         (u'ph', u"Doctor of Philosophy"))
-    school = models.ForeignKey(School, db_column='school')
+    school = models.ForeignKey(School, db_column='school_code')
     code = models.CharField(max_length=16)
     title = models.CharField(max_length=64, unique=True)
     degree = models.CharField(max_length=2, 

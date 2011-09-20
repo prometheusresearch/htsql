@@ -12,6 +12,14 @@ from htsql.validator import PIntVal
 class TweakAutolimitAddon(Addon):
 
     name = 'tweak.autolimit'
+    hint = """truncates all results to a given number of rows"""
+    help = """
+      To help deployments ensure against accidental denial of
+      service, this plugin automatically truncates output from
+      a query to a given number of rows (10k default).  The 
+      ``limit`` parameter can be customized to change the 
+      truncation limit.
+    """
 
     parameters = [
             Parameter('limit', PIntVal(is_nullable=True),
