@@ -10,6 +10,12 @@ from htsql.addon import Addon
 class TweakSystemAddon(Addon):
 
     name = 'tweak.system'
+    hint = """direct access to system catalog"""
+    help = """
+      This plugin adds the system catalog tables and links 
+      for the database's native system catalog.  This is 
+      supported only for PostgreSQL.
+    """
 
     @classmethod
     def get_extension(cls, app, attributes):

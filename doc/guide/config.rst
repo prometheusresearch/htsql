@@ -124,6 +124,23 @@ So, to enumerate links for a table, say ``course`` you could type:
 
 .. htsql:: /meta(/link?table_name='course')
 
+You could also run ``/meta()`` on the meta-data schema, for example:
+
+.. htsql:: /meta(/meta(/table))
+
+
+``tweak.shell``
+---------------
+
+This extension module adds a command ``/shell()`` which takes any query
+and populates visual editor with syntax highlighting (using the
+excellent CodeMirror_ library).  As you modify the query, the URL
+changes so it can be bookmarked.
+
+The ``tweak.shell.default`` plugin will make ``/shell()`` the 
+default command, replacing the regular HTML output.
+
+.. _CodeMirror: http://codemirror.net/
 
 ``tweak.autolimit``
 -------------------
@@ -142,18 +159,34 @@ service, this plugin automatically limits all queries to
 a given number of ``timeout`` seconds (the default is 60s).  
 This plugin is currently only supported by PostgreSQL.
 
+``tweak.cors``
+--------------
 
-``tweak.shell``
----------------
+This plugin adds CORS headers in order to enable cross
+site scripting for public data servers.  This permits
+modern browsers to bypass JSONP and other hacks used
+to work around XSS protection.
 
-This extension module adds a command ``/shell()`` which takes any query
-and populates visual editor with syntax highlighting (using the
-excellent CodeMirror_ library).  As you modify the query, the URL
-changes so it can be bookmarked.
+``tweak.sqlalchemy``
+--------------------
 
-The ``tweak.shell.default`` plugin will make ``/shell()`` the 
-default command, replacing the regular HTML output.
+This plugin provides SQLAlchemy integration in two ways.
+First, if the dburi is omitted, it attempts to use the
+database connection from SQLAlchemy.  Secondly, it uses
+the SQLAlchemy model instead of introspecting.
 
-.. _CodeMirror: http://codemirror.net/
+``tweak.view``
+--------------
+
+This plugin attempts to guess at various links 
+between views and tables (where foreign keys are
+not defined).  This is only supported in PostgreSQL.
+
+``tweak.system``
+----------------
+
+This plugin adds the system catalog tables and links for the
+database's native system catalog.  This is supported only for
+PostgreSQL.
 
 .. vim: set spell spelllang=en textwidth=72:
