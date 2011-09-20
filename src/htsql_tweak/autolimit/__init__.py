@@ -12,7 +12,7 @@ from htsql.validator import PIntVal
 class TweakAutolimitAddon(Addon):
 
     name = 'tweak.autolimit'
-    hint = """truncates all results to a given number of rows"""
+    hint = """limit # of rows returned by queries"""
     help = """
       To help deployments ensure against accidental denial of
       service, this plugin automatically truncates output from

@@ -11,6 +11,14 @@ from htsql.addon import Addon
 class TweakMetaAddon(Addon):
 
     name = 'tweak.meta'
+    hint = """meta-data introspection database"""
+    help = """
+      This plugin provides a command ``/meta()`` that is an
+      in-memory database providing introspection ability.
+      The introspection permits listing of tables, columns,
+      and links.  For example, ``/meta(/table)`` lists all
+      of the tables in the current database.
+    """
 
     prerequisites = []
 

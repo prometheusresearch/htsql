@@ -46,7 +46,7 @@ class RenderHello(Act):
 class TweakHelloAddon(Addon):
     
     name = 'tweak.hello'
-    hint = """example plugin and example /hello() world command"""
+    hint = """example plugin and command"""
     help = """
       This is an example plugin and command.  It has two parameters
       ``address`` which defaults to 'world' and ``repeat`` which

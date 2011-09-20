@@ -12,6 +12,12 @@ from htsql.validator import BoolVal
 class TweakShellDefaultAddon(Addon):
 
     name = 'tweak.shell.default'
+    hint = """makes /shell() be default command"""
+    help = """
+      This plugin makes the default formatter be the command shell,
+      rather than plain HTML.  Of course ``/:html`` format is still
+      available, but must be provided explicitly.
+    """
 
     parameters = [
             Parameter('on_root', BoolVal(), default=True),
