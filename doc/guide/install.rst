@@ -1,6 +1,6 @@
-*****************************************
-  Installation and Administration Guide
-*****************************************
+******************************
+  HTSQL Installation & Usage
+******************************
 
 .. highlight:: console
 
@@ -74,7 +74,7 @@ Quick Start
         $ htsql-ctl server DBURI [HOST [PORT]]
 
    The parameter ``DBURI`` specifies how to connect to a database.  For
-   a SQLite database, ``DBURI`` has the form:
+   a SQLite database, dburi_ has the form:
 
    .. sourcecode:: text
 
@@ -86,12 +86,14 @@ Quick Start
 
         engine://user:pass@host:port/database
 
-   Here, ``engine`` specifies the type of the database server, and must be one
-   of: ``sqlite``, ``pgsql``, ``mysql``, ``mssql``, ``oracle``.  ``database``
-   is the name of the database to connect to.  The components ``host:port``
-   indicate the address of the database server, ``user:pass`` are
-   authentication parameters.  Both ``user:pass`` and ``host:port`` components
-   are optional and could be omitted.
+   The engine (one of ``sqlite``, ``pgsql``, ``mysql``, ``mssql`` 
+   or ``oracle``) and the database name are mandatory.  The other
+   components can be omitted if the default connection parameters
+   work or environment variables are setup properly.  For example, 
+   to connect to a local PostgreSQL database ``htsql_regress`` 
+   installed by the regression test suite, you could write::
+
+        $ htsql-ctl shell pgsql:htsql_regress
 
 .. _Python: http://python.org/
 .. _pip: http://pypi.python.org/pypi/pip
@@ -107,8 +109,8 @@ Quick Start
 .. _HTSQL source: http://bitbucket.org/prometheus/htsql
 
 
-Installation
-============
+Detailed Installation
+=====================
 
 Installing Prerequisites
 ------------------------
@@ -185,62 +187,18 @@ build and install the Python driver::
 
     # pip install cx-oracle
 
+
 Installing HTSQL
 ----------------
 
-To install the latest released version of HTSQL, run::
+Then, to install the latest released version of HTSQL, run::
 
     # pip install HTSQL
 
-If you want to closely follow development of HTSQL, we recommend
-installing HTSQL directly from the `HTSQL source`_ repository.  You need
-a Mercurial client::
+You could then test that you installation worked by connecting
+to an existing database and running a basic query::
 
-    # apt-get install mercurial
-
-To download `HTSQL source`_::
-
-    $ hg clone http://bitbucket.org/prometheus/htsql
-
-To build and install HTSQL, run::
-
-    $ cd htsql
-    $ make build
-    # make install
-
-That installs the HTSQL executable ``htsql-ctl`` to ``/usr/local/bin``
-and HTSQL library files to ``/usr/local/lib``.
-
-To install HTSQL in a development mode, run::
-
-    # make develop
-
-When HTSQL is installed in the development mode, any changes in the
-source files are reflected immediately without need to reinstall.
-
-HTSQL comes with a comprehensive suite of regression tests.  Running the
-tests requires a working database server for each of the supported database
-backends.  To specify connection parameters to the test servers, copy
-the file ``Makefile.env.sample`` to ``Makefile.env`` and edit the latter.
-For example, to to set the credentials of an administrative user for
-a PostgreSQL database, edit parameters ``PGSQL_ADMIN_USERNAME`` and
-``PGSQL_ADMIN_PASSWORD``; to set the address of the database server,
-edit parameters ``PGSQL_HOST`` and ``PGSQL_PORT``.
-
-To run the tests::
-
-    $ make test
-
-To run the tests against a specific database backend (e.g. SQLite), run::
-
-    # make test-sqlite
-
-Running regression tests creates a database ``htsql_regress`` and a
-database user with the same name.
-
-To learn other ``make`` targets, run::
-
-    $ make
+    $ htsql-ctl shell DBURI
 
 
 Usage
@@ -272,6 +230,8 @@ To get a list of routines, run::
 To describe a specific routine, run::
 
     $ htsql-ctl help <routine>
+
+.. _dburi:
 
 Database Connection
 -------------------
@@ -342,73 +302,71 @@ For more details on the ``server`` routine, run::
     $ htsql-ctl help server
 
 
-Deployment
-==========
+Developer's Corner
+==================
 
-The built-in HTSQL web server was designed for personal and testing use
-and may appear inadequate for production deployment.  In particular,
-it does not not provide any means for authentication and lacks SSL support.
+Following are instructions for those who wish to follow the 
+development version of HTSQL.
 
-Integration with Apache
------------------------
+Install From Source
+-------------------
 
-It is possible to integrate HTSQL with `Apache HTTP Server`_ using
-mod_wsgi_.  Here we assume that both Apache and mod_wsgi are already
-installed.
+To track HTSQL's progress, you'll want to install directly from the
+`HTSQL source`_ repository.  First, you'll need a Mercurial client::
 
-First, create a WSGI script file:
+    # apt-get install mercurial
 
-.. sourcecode:: python
+To download `HTSQL source`_::
 
-   from htsql import HTSQL
+    $ hg clone http://bitbucket.org/prometheus/htsql
 
-   # The address of the database in the form:
-   #   engine://user:pass@host:port/database
-   DB = '...'
+To build and install HTSQL, run::
 
-   application = HTSQL(DB)
+    $ cd htsql
+    $ make build
+    # make install
 
-Save this file as ``htsql.wsgi`` and place it to a directory
-accessible by Apache (but do not put it below the root of the web
-site so that it cannot be downloaded).
+That installs the HTSQL executable ``htsql-ctl`` to ``/usr/local/bin``
+and HTSQL library files to ``/usr/local/lib``.
 
-Next, add the following line to the Apache configuration file:
+Alternatively, if you intend to update your distribution often to 
+follow daily commits, follow the above instructions, but instead 
+of ``make install`` instead run::
 
-.. sourcecode:: apache
+    # make develop
 
-   WSGIScriptAlias /htsql /path/to/htsql.wsgi
+When HTSQL is installed in the development mode, any changes in the
+source files are reflected immediately without need to reinstall.
+Hence, you can update your HTSQL by using mercurial and restarting::
 
-This line should be added to the ``VirtualHost`` section of the respective
-web site.  It associates any URL starting with ``/htsql`` with the HTSQL
-server.
+    $ cd htsql && hg pull -u
 
-For more information of installing and configuring Apache and mod_wsgi,
-see documentation for the respective projects, in particular,
-`Quick Configuration Guide for mod_wsgi`_.
+Regression Tests
+----------------
 
-.. _Apache HTTP Server: http://httpd.apache.org/
-.. _mod_wsgi: http://code.google.com/p/modwsgi/
-.. _Quick Configuration Guide for mod_wsgi:
-    http://code.google.com/p/modwsgi/wiki/QuickConfigurationGuide
+HTSQL comes with a comprehensive suite of regression tests.  Running the
+tests requires a working database server for each of the supported database
+backends.  To specify connection parameters to the test servers, copy
+the file ``Makefile.env.sample`` to ``Makefile.env`` and edit the latter.
+For example, to to set the credentials of an administrative user for
+a PostgreSQL database, edit parameters ``PGSQL_ADMIN_USERNAME`` and
+``PGSQL_ADMIN_PASSWORD``; to set the address of the database server,
+edit parameters ``PGSQL_HOST`` and ``PGSQL_PORT``.
 
+To run the tests::
 
-Security
-========
+    $ make test
 
-Giving HTSQL access is practically equivalent to giving an access to
-a read-only SQL console and should be planned accordingly.
+To run the tests against a specific database backend (e.g. SQLite), run::
 
-HTSQL, as a gateway between HTTP server and a database server, does
-not provide any security mechanisms.  Any protection should be set
-up on either the HTTP or the database layers.  On the HTTP layer,
-you may put the HTSQL server behind an HTTP server or a proxy
-to provide SSL, authentication and caching.  On the database layer,
-you may restrict access to selected database entities using roles and
-permissions.
+    # make test-sqlite
 
-With a proper setup, data leaks should be impossible.  Another
-potential vector of attack is overloading the database server,
-against which we recommend setting up an HTTP caching layer and
-restricting resource usage for the HTSQL database user.
+Running regression tests creates a database ``htsql_regress`` and a
+database user with the same name.
+
+To learn other ``make`` targets, run::
+
+    $ make
 
 
+.. vim: set spell spelllang=en textwidth=72:

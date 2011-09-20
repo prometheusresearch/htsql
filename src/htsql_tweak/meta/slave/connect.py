@@ -67,6 +67,7 @@ def populate_meta_schema(connection):
 
     for (table_name, recipe) in tables.items():
         if not isinstance(recipe, FreeTableRecipe):
+            # only handle unambiguous top-level table links
             continue
         cursor.execute("""
           INSERT INTO "table" (name)
@@ -79,6 +80,7 @@ def populate_meta_schema(connection):
 
     for (table_name, recipe) in tables.items():
         if not isinstance(recipe, FreeTableRecipe):
+            # only handle unambiguous top-level table links
             continue
         fields = itemize(recipe.table)
         public = enumerate_table(recipe.table)
@@ -122,7 +124,13 @@ def populate_meta_schema(connection):
                     elif recipe.is_reverse:
                         reverse_links.append((table_name, name,
                                               recipe.joins[0].foreign_key))
+                    else:
+                        # this is a complex link, and we don't bother
+                        # tracking reverse links for them
+                        pass
             else:
+                # at this point, we don't handle anything other
+                # than Columns or Links (attached tables)
                 pass
 
     for (table_name, name, foreign_key) in reverse_links:

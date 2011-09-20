@@ -8,7 +8,7 @@
    introduction
    tutorial
    ref/index
-   install
+   guide/index
    api
 
 Indices and tables
