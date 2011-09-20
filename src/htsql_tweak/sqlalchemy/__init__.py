@@ -16,7 +16,7 @@ class TweakSQLAlchemyAddon(Addon):
     prerequisites = []
     postrequisites = ['htsql']
     name = 'tweak.sqlalchemy'
-    hint = """provides glue to SQLAlchemy engine and model"""
+    hint = """adapts to SQLAlchemy engine and model"""
     help = """
       This plugin provides SQLAlchemy integration in two ways.
       First, if the dburi is omitted, it attempts to use the

@@ -54,10 +54,11 @@ Some plugins have parameters which can be added to the command line.
 For example, the ``autolimit`` extension truncates at ``limit`` number
 of rows.  The default is 10k, but this ``limit`` can be set::
 
-  $ htsql-ctl shell -E tweak.autolimit;limit=10 pgsql:htsql_regress
+  $ htsql-ctl shell -E tweak.autolimit:limit=10 pgsql:htsql_regress
 
-  ^ this is wrong; how do you set parameters again?
+If more than one parameter is possible, use "," to seperate them::
 
+  $ htsql-ctl shell -E tweak.hello:repeat=3,address=home pgsql:htsql_regress 
 
 Config Files
 ------------

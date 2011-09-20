@@ -13,6 +13,11 @@ class TweakShellAddon(Addon):
 
     name = 'tweak.shell'
     prerequisites = ['tweak.resource']
+    hint = """registers visual /shell() command"""
+    help = """
+      This command creates a command line editor in Javascript
+      that can let users edit multi-line queries using a web-browser.
+    """
 
     parameters = [
             Parameter('server_root', StrVal(r'^https?://.+$')),

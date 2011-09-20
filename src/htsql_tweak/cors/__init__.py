@@ -11,5 +11,12 @@ from htsql.addon import Addon
 class TweakCORSAddon(Addon):
 
     name = 'tweak.cors'
+    hint = """permit cross site scripting"""
+    help = """
+      This plugin adds CORS headers in order to enable cross
+      site scripting for public data servers.  This permits
+      modern browsers to bypass JSONP and other hacks used
+      to work around XSS protection.
+    """
 
 
