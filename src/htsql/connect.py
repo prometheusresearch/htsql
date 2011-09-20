@@ -241,7 +241,10 @@ class CursorProxy(object):
         iterator = iter(self.cursor)
         while True:
             with self.guard:
-                row = next(iterator, None)
+                try:
+                    row = iterator.next()
+                except StopIteration:
+                    row = None
             if row is None:
                 break
             yield row
