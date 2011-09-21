@@ -8,7 +8,7 @@
    introduction
    tutorial
    ref/index
-   guide/index
+   admin/index
    api
 
 Indices and tables
