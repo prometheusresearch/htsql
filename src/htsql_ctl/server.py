@@ -12,12 +12,16 @@ This module implements the `server` routine.
 """
 
 
+from __future__ import with_statement
 from .error import ScriptError
 from .routine import Argument, Routine
 from .option import QuietOption, PasswordOption, ExtensionsOption, ConfigOption
 from .request import ConfigYAMLLoader
 from htsql.util import DB
 from htsql.validator import StrVal, IntVal, DBVal
+from htsql.request import produce
+from htsql.error import HTTPError
+from htsql.connect import DBError
 import socket
 import SocketServer
 import wsgiref.simple_server
@@ -163,12 +167,24 @@ class ServerRoutine(Routine):
                                   " %s" % exc)
             extensions = extensions + [config_extension]
 
-        # Create the HTSQL application and the HTTP server.
+        # Create the HTSQL application.
         from htsql import HTSQL
         try:
             app = HTSQL(db, *extensions)
         except ImportError, exc:
             raise ScriptError("failed to construct application: %s" % exc)
+
+        # Verify that the application can connect to the database and
+        # execute queries.
+        try:
+            with app:
+                produce('/true()')
+        except DBError, exc:
+            raise ScriptError("failed to connect to the database: %s" % exc)
+        except HTTPError, exc:
+            raise ScriptError("unable to perform a database query: %s" % exc)
+
+        # Create the HTTP server.
         httpd = HTSQLServer(self)
         httpd.set_app(app)
 

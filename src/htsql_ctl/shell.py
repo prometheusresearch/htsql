@@ -12,12 +12,16 @@ This module implements the `shell` routine.
 """
 
 
+from __future__ import with_statement
 from .error import ScriptError
 from .routine import Argument, Routine
 from .option import PasswordOption, ExtensionsOption, ConfigOption
 from .request import Request, ConfigYAMLLoader
 from htsql.validator import DBVal
 from htsql.util import DB, listof, trim_doc
+from htsql.request import produce
+from htsql.error import HTTPError
+from htsql.connect import DBError
 import traceback
 import StringIO
 import mimetypes
@@ -818,6 +822,16 @@ class ShellRoutine(Routine):
             self.state.app = HTSQL(db, *extensions)
         except ImportError, exc:
             raise ScriptError("failed to construct application: %s" % exc)
+
+        # Verify that the application can connect to the database and
+        # execute queries.
+        try:
+            with self.state.app:
+                produce('/true()')
+        except DBError, exc:
+            raise ScriptError("failed to connect to the database: %s" % exc)
+        except HTTPError, exc:
+            raise ScriptError("unable to perform a database query: %s" % exc)
 
         # Display the welcome notice; load the history.
         self.setup()
