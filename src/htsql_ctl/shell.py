@@ -105,6 +105,10 @@ class Cmd(object):
         """
         return trim_doc(cls.help)
 
+    @classmethod
+    def complete(cls, routine, argument):
+        return None
+
     def __init__(self, routine, argument):
         assert isinstance(routine, ShellRoutine)
         assert isinstance(argument, str)
@@ -113,12 +117,9 @@ class Cmd(object):
         self.state = routine.state
         self.argument = argument
 
-    def execute(self, app):
+    def execute(self):
         """
         Executes the command.
-
-        `app`
-            A WSGI application.
 
         The normal return value is ``None``; any other value causes
         the shell to exit.
@@ -143,7 +144,13 @@ class HelpCmd(Cmd):
     Type `help <command>` to learn how to use the specified command.
     """
 
-    def execute(self, app):
+    @classmethod
+    def complete(cls, routine, argument):
+        if argument:
+            return None
+        return sorted(routine.command_by_name)
+
+    def execute(self):
         # If called without arguments, describe the shell.
         # If called with an argument, assume it is the name of the command
         # to describe.
@@ -215,7 +222,7 @@ class ExitCmd(Cmd):
     Type `exit` or Ctrl-D to quit the shell.
     """
 
-    def execute(self, app):
+    def execute(self):
         # Returning any non-`None` value exits the shell.
         return True
 
@@ -234,7 +241,7 @@ class UserCmd(Cmd):
     To unset the remote user for HTTP requests, type `user`.
     """
 
-    def execute(self, app):
+    def execute(self):
         # If set, `state.remote_user` is passed to the WSGI application
         # as `environ['REMOTE_USER']`.
         if self.argument:
@@ -261,7 +268,13 @@ class HeadersCmd(Cmd):
     Only HTTP response body will be displayed.
     """
 
-    def execute(self, app):
+    @classmethod
+    def complete(cls, routine, argument):
+        if argument:
+            return None
+        return ['on', 'off']
+
+    def execute(self):
         # `state.with_headers` indicates whether or not to display
         # the status line and headers of the WSGI response.
         if not self.argument:
@@ -301,7 +314,13 @@ class PagerCmd(Cmd):
     when the shell is running in a terminal.
     """
 
-    def execute(self, app):
+    @classmethod
+    def complete(cls, routine, argument):
+        if argument:
+            return None
+        return ['on', 'off']
+
+    def execute(self):
         if not self.argument:
             self.ctl.out("** expected 'on' or 'off'")
             return
@@ -333,7 +352,11 @@ class GetPostBaseCmd(Cmd):
     # The HTTP method implemented by the command.
     method = None
 
-    def execute(self, app):
+    @classmethod
+    def complete(cls, routine, argument):
+        return []
+
+    def execute(self):
         # Check if the argument of the command looks like an HTSQL query.
         if not self.argument:
             self.ctl.out("** a query is expected")
@@ -378,7 +401,7 @@ class GetPostBaseCmd(Cmd):
                                       content_body=content_body)
 
         # Execute the WSGI request.
-        response = request.execute(app)
+        response = request.execute(self.state.app)
 
         # Check for exceptions and incomplete responses.
         if response.exc_info is not None:
@@ -484,7 +507,7 @@ class RunCmd(Cmd):
     """
 
     # FIXME: duplicates `GetPostBaseCmd.execute()`.
-    def execute(self, app):
+    def execute(self):
         # Check if the argument is suppied and is a valid filename.
         if not self.argument:
             self.ctl.out("** a file name is expected")
@@ -504,7 +527,7 @@ class RunCmd(Cmd):
         # Prepare and execute a WSGI request.
         request = Request.prepare('GET', query=query,
                                   remote_user=self.state.remote_user)
-        response = request.execute(app)
+        response = request.execute(self.state.app)
 
         # Check for exceptions and incomplete responses.
         if response.exc_info is not None:
@@ -539,6 +562,9 @@ class ShellState(object):
     """
     Holds mutable shell parameters.
 
+    `app`
+        The current HTSQL application.
+
     `with_headers` (Boolean)
         Indicates whether to display the status line and the headers of
         an HTTP response.
@@ -550,11 +576,17 @@ class ShellState(object):
         Indicates whether the pager is enabled.
     """
 
-    def __init__(self, with_headers=False,
-                 remote_user=None, with_pager=True):
+    def __init__(self, app=None, with_headers=False,
+                 remote_user=None, with_pager=True,
+                 completer=None, completer_delims=None,
+                 completions=()):
+        self.app = app
         self.with_headers = with_headers
         self.remote_user = remote_user
         self.with_pager = with_pager
+        self.completer = completer
+        self.completer_delims = completer_delims
+        self.completions = completions
 
 
 class ShellRoutine(Routine):
@@ -783,26 +815,32 @@ class ShellRoutine(Routine):
         # Create the HTSQL application.
         from htsql import HTSQL
         try:
-            app = HTSQL(db, *extensions)
+            self.state.app = HTSQL(db, *extensions)
         except ImportError, exc:
             raise ScriptError("failed to construct application: %s" % exc)
 
         # Display the welcome notice; load the history.
-        self.setup(app)
+        self.setup()
         try:
             # Read and execute commands until instructed to exit.
-            while self.loop(app) is None:
+            while self.loop() is None:
                 pass
         finally:
             # Save the history.
-            self.shutdown(app)
+            self.shutdown()
 
-    def setup(self, app):
-        # Load the `readline` history.
+    def setup(self):
+        # Load the `readline` history; initialize completion.
         if self.is_interactive and readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             if os.path.exists(path):
                 readline.read_history_file(path)
+            self.state.completer = readline.get_completer()
+            self.state.completer_delims = readline.get_completer_delims()
+            readline.set_completer(self.completer)
+            readline.set_completer_delims(
+                    " \t\n`~!@#$%^&*()-=+[{]}\\|;:\'\",<.>/?")
+            readline.parse_and_bind("tab: complete")
 
         # Display the welcome notice.
         if self.is_interactive:
@@ -810,17 +848,22 @@ class ShellRoutine(Routine):
             if intro:
                 self.ctl.out(intro)
 
-    def shutdown(self, app):
-        # Save the `readline` history.
+    def shutdown(self):
+        # Save the `readline` history; restore the original state of completion.
         if self.is_interactive and readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             readline.write_history_file(path)
+            readline.set_completer(self.state.completer)
+            readline.set_completer_delims(self.state.completer_delims)
 
-    def loop(self, app):
+    def loop(self):
         # Display the prompt and read the command from the console.
         # On EOF, exit the loop.
         if self.is_interactive:
-            prompt = "%s$ " % app.htsql.db.database
+            prompt = "$ "
+            app = self.state.app
+            if app is not None and app.htsql.db is not None:
+                prompt = "%s$ " % app.htsql.db.database
             try:
                 line = raw_input(prompt)
             except EOFError:
@@ -852,6 +895,43 @@ class ShellRoutine(Routine):
         # Instantiate and execute the command.
         command_class = self.command_by_name[name]
         command = command_class(self, argument)
-        return command.execute(app)
+        return command.execute()
+
+    def completer(self, text, index):
+        try:
+            if index == 0:
+                line = readline.get_line_buffer()
+                begidx = readline.get_begidx()
+                endidx = readline.get_endidx()
+                delta = len(line)
+                line = line.lstrip()
+                delta -= len(line)
+                begidx -= delta
+                endidx -= delta
+                prefix = line[:begidx]
+                if not prefix:
+                    completions = sorted(self.command_by_name)
+                else:
+                    name = prefix.split()[0]
+                    if self.command_name_pattern.match(name):
+                        prefix = prefix[len(name):].strip()
+                    else:
+                        name = ''
+                    if name in self.command_by_name:
+                        command_class = self.command_by_name[name]
+                        completions = command_class.complete(self, prefix)
+                        if completions is None:
+                            completions = []
+                    else:
+                        completions = []
+                completions = [word for word in completions
+                                    if word and word.startswith(text)]
+                self.state.completions = tuple(completions)
+            if index < len(self.state.completions):
+                return self.state.completions[index]
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(exc_type, exc_value, exc_traceback,
+                                      file=self.ctl.stderr)
 
 
