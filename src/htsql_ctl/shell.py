@@ -22,6 +22,8 @@ from htsql.util import DB, listof, trim_doc
 from htsql.request import produce
 from htsql.error import HTTPError
 from htsql.connect import DBError
+from htsql.model import HomeNode
+from htsql.classify import classify, normalize
 import traceback
 import StringIO
 import mimetypes
@@ -348,6 +350,81 @@ class PagerCmd(Cmd):
             self.ctl.out("** pager is disabled")
 
 
+class ScanState(object):
+
+    def __init__(self):
+        self.indicator = '/'
+        self.identifiers = []
+        self.stack = []
+
+    def push(self, indicator, identifiers=None):
+        self.stack.append((self.indicator, self.identifiers))
+        self.indicator = indicator
+        if identifiers is not None:
+            self.identifiers = identifiers
+
+    def drop(self, indicators):
+        if self.indicator in indicators:
+            self.indicator, self.identifiers = self.stack.pop()
+            return True
+        return False
+
+    def drop_all(self, indicators=None):
+        if self.indicator in indicators:
+            while self.indicator in indicators:
+                self.indicator, self.identifiers = self.stack.pop()
+            return True
+        return False
+
+    def clone(self):
+        copy = ScanState()
+        copy.indicator = self.indicator
+        copy.identifiers = self.identifiers
+        copy.stack = self.stack[:]
+        return copy
+
+
+class NodeChain(object):
+
+    def __init__(self, app):
+        self.app = app
+        self.nodes = []
+        self.labels_by_node = {}
+        self.names_by_node = {}
+
+    def push(self, node):
+        self.nodes.append(node)
+        if node not in self.labels_by_node:
+            with self.app:
+                labels = classify(node)
+            names = dict((label.name, label) for label in labels)
+            self.labels_by_node[node] = labels
+            self.names_by_node[node] = names
+
+    def drop(self):
+        self.nodes.pop()
+
+    def labels(self):
+        if not self.nodes:
+            return []
+        return self.labels_by_node[self.nodes[-1]]
+
+    def label(self, name):
+        if not self.nodes:
+            return None
+        return self.names_by_node[self.nodes[-1]].get(name)
+
+    def __nonzero__(self):
+        return bool(self.nodes)
+
+    def clone(self):
+        copy = NodeChain(self.app)
+        copy.nodes = self.nodes[:]
+        copy.labels_by_node = self.labels_by_node
+        copy.names_by_node = self.names_by_node
+        return copy
+
+
 class GetPostBaseCmd(Cmd):
     """
     Implements the common methods of `get` and `post` commands.
@@ -356,9 +433,85 @@ class GetPostBaseCmd(Cmd):
     # The HTTP method implemented by the command.
     method = None
 
+    pattern = r"""
+    ~ | < | > | = | ! | & | \| | -> | \. | , | \? | \^ |
+    / | \* | \+ | - | \( | \) | \{ | \} | := | : | \$ |
+    ' (?: [^'] | '')* ' | \d+ [.eE]? |
+    (?! \d) \w+
+    """
+    letter_pattern = r"""(?! \d) \w"""
+    regexp = re.compile(pattern, re.X|re.U)
+    letter_regexp = re.compile(letter_pattern, re.X|re.U)
+
     @classmethod
     def complete(cls, routine, argument):
-        return []
+        if routine.state.app is None:
+            return
+        argument = argument.decode('utf-8', 'replace')
+        tokens = cls.regexp.findall(argument)
+        tokens = [''] + [token.encode('utf-8') for token in tokens] + ['']
+        state = ScanState()
+        for idx in range(1, len(tokens)-1):
+            token = tokens[idx]
+            prev_token = tokens[idx-1]
+            next_token = tokens[idx+1]
+            if cls.letter_regexp.match(token) is not None:
+                if not (prev_token == ':' or prev_token == '$'
+                        or next_token == '('):
+                    state.push('_', state.identifiers+[token])
+            elif token == '.':
+                pass
+            elif token == '->':
+                state.push('_', [])
+            elif token == '?' or token == '^':
+                state_copy = state.clone()
+                state.drop_all('_')
+                if not state.drop('?^'):
+                    state = state_copy
+                state.push(token)
+            elif token == '(':
+                state.push(token)
+            elif token == ')':
+                state_copy = state.clone()
+                state.drop_all('_?^')
+                if not state.drop('('):
+                    state = state_copy
+            elif token == '{':
+                state_copy = state.clone()
+                state.drop_all('_')
+                if not state.drop('?^'):
+                    state = state_copy
+                state.push(token)
+            elif token == '}':
+                state_copy = state.clone()
+                state.drop_all('_?^')
+                if not state.drop('{'):
+                    state = state_copy
+            elif token == ':=':
+                state.drop('_')
+            elif token == ':':
+                state.drop_all('_?^')
+            elif token == '$':
+                state.push('_', [])
+            else:
+                state.drop_all('_')
+        identifiers = state.identifiers
+        chain = NodeChain(routine.state.app)
+        chain.push(HomeNode())
+        for identifier in identifiers:
+            identifier = normalize(identifier)
+            chain_copy = chain.clone()
+            while chain:
+                label = chain.label(identifier)
+                if label is not None:
+                    chain.push(label.target)
+                    break
+                chain.drop()
+            if not chain:
+                chain = chain_copy
+        labels = chain.labels()
+        names = [label.name for label in labels]
+        return names
 
     def execute(self):
         # Check if the argument of the command looks like an HTSQL query.
