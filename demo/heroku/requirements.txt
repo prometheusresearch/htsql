@@ -1,0 +1,4 @@
+HTSQL
+PyYAML
+psycopg2
+CherryPy

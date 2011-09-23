@@ -1,6 +1,6 @@
-*******************************
-  HTSQL Administrator's Guide
-*******************************
+************************
+  HTSQL Administration
+************************
 
 This document describes administration of an HTSQL server.  We start
 with discussing installation and configuration.  This guide also
@@ -13,5 +13,6 @@ server behavior.
    install
    config
    deploy
+   cloud 
 
 .. vim: set spell spelllang=en textwidth=72:

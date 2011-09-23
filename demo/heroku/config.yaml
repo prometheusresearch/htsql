@@ -1,0 +1,3 @@
+tweak.shell:
+#  server-root: http://htsql.herokuapp.com/
+tweak.shell.default:
