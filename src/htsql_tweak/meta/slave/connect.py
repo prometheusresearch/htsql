@@ -6,10 +6,8 @@
 from htsql.context import context
 from htsql.connect import Connect
 from htsql.adapter import weigh
-from htsql.tr.lookup import itemize, enumerate_table
-from htsql.tr.binding import (AttachedTableRecipe, ColumnRecipe,
-                              FreeTableRecipe)
-from htsql.entity import DirectJoin, ReverseJoin
+from htsql.classify import classify, relabel
+from htsql.model import HomeNode, TableNode, TableArc, ColumnArc, ChainArc
 import sqlite3
 
 
@@ -62,28 +60,27 @@ def create_meta_schema(connection):
 
 def populate_meta_schema(connection):
     cursor = connection.cursor()
-    tables = itemize()
+    tables = classify(HomeNode())
     table_handles = {}
 
-    for (table_name, recipe) in tables.items():
-        if not isinstance(recipe, FreeTableRecipe):
+    for label in tables:
+        if not isinstance(label.arc, TableArc):
             # only handle unambiguous top-level table links
             continue
         cursor.execute("""
           INSERT INTO "table" (name)
           VALUES (?)
-        """, [table_name])
-        table_handles[recipe.table] = table_name
+        """, [label.name])
+        table_handles[label.arc.table] = label.name
 
-    link_by_fk = {}
-    reverse_links = []
+    name_by_chain = {}
 
-    for (table_name, recipe) in tables.items():
-        if not isinstance(recipe, FreeTableRecipe):
+    for label in tables:
+        if not isinstance(label.arc, TableArc):
             # only handle unambiguous top-level table links
             continue
-        fields = itemize(recipe.table)
-        public = enumerate_table(recipe.table)
+        fields = classify(TableNode(label.arc.table))
+        public = [field.name for field in fields if field.is_public]
 
         def make_field(name, kind):
             sort = None
@@ -92,54 +89,54 @@ def populate_meta_schema(connection):
             cursor.execute("""
               INSERT INTO field (table_name, name, kind, sort)
               VALUES (?,?,?,?)
-            """, [table_name, name, kind, sort])
+            """, [label.name, name, kind, sort])
 
         def make_column(name, domain_type, is_mandatory):
             cursor.execute("""
               INSERT INTO "column" (table_name, name,
                                     domain_type, is_mandatory)
               VALUES (?,?,?,?)
-            """, [table_name, name, domain_type, is_mandatory])
+            """, [label.name, name, domain_type, is_mandatory])
 
         def make_link(name, is_singular, target_table_name):
             cursor.execute("""
               INSERT INTO "link" (table_name, name,
                                   is_singular, target_table_name)
               VALUES (?,?,?,?)
-            """, [table_name, name, is_singular, target_table_name])
+            """, [label.name, name, is_singular, target_table_name])
 
-        for (name, recipe) in fields.items():
-            if isinstance(recipe, ColumnRecipe):
+        for field in fields:
+            name = field.name
+            arc = field.arc
+            all_labels = relabel(arc)
+
+            if isinstance(arc, ColumnArc):
                 make_field(name, 'column')
-                make_column(name, recipe.column.domain.family,
-                            not recipe.column.is_nullable)
-            elif isinstance(recipe, AttachedTableRecipe):
-                target_table_name = table_handles.get(recipe.target_table)
+                make_column(name, arc.column.domain.family,
+                            not arc.column.is_nullable)
+            elif isinstance(arc, ChainArc):
+                if arc in name_by_chain:
+                    continue
+                target_table_name = table_handles.get(arc.target.table)
                 if target_table_name:
                     make_field(name, 'link')
-                    make_link(name, recipe.is_singular, target_table_name)
-                    if recipe.is_direct:
-                        link_by_fk[recipe.joins[0].foreign_key] = \
-                            (table_name, name)
-                    elif recipe.is_reverse:
-                        reverse_links.append((table_name, name,
-                                              recipe.joins[0].foreign_key))
-                    else:
-                        # this is a complex link, and we don't bother
-                        # tracking reverse links for them
-                        pass
+                    make_link(name, arc.is_contracting, target_table_name)
+                name_by_chain[arc] = (label.name, name)
             else:
                 # at this point, we don't handle anything other
                 # than Columns or Links (attached tables)
                 pass
 
-    for (table_name, name, foreign_key) in reverse_links:
-        if foreign_key in link_by_fk:
-            (target_table_name, reverse_link_name) = link_by_fk[foreign_key]
+    for arc in name_by_chain:
+        table_name, name = name_by_chain[arc]
+        reverse = arc.reverse()
+        if reverse in name_by_chain:
+            target_table_name, reverse_link_name = name_by_chain[reverse]
             cursor.execute("""
               UPDATE "link" SET reverse_link_name = ?
                WHERE table_name = ? AND name = ?
             """, [reverse_link_name, table_name, name])
+
 
 class MetaSlaveConnect(Connect):
 

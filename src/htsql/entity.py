@@ -424,6 +424,9 @@ class Join(object):
         self.is_expanding = is_expanding
         self.is_contracting = is_contracting
 
+    def reverse(self):
+        raise NotImplementedError()
+
     def __str__(self):
         # Generate a string of the form:
         #   schema.table -> schema.table
@@ -495,6 +498,9 @@ class DirectJoin(Join):
                                          is_expanding, is_contracting)
         self.foreign_key = foreign_key
 
+    def reverse(self):
+        return ReverseJoin(self.target, self.origin, self.foreign_key)
+
     def __hash__(self):
         # Provide comparison by value.
         return hash(self.foreign_key)
@@ -555,6 +561,9 @@ class ReverseJoin(Join):
         super(ReverseJoin, self).__init__(origin, target,
                                           is_expanding, is_contracting)
         self.foreign_key = foreign_key
+
+    def reverse(self):
+        return DirectJoin(self.target, self.origin, self.foreign_key)
 
     def __hash__(self):
         # Provide comparison by value.

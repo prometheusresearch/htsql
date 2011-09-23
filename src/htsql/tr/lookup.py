@@ -13,10 +13,11 @@ This module implements name resolution adapters.
 
 
 from ..util import Clonable, Printable, maybe
-from ..adapter import Adapter, adapts, adapts_many, Utility
-from ..context import context
+from ..adapter import Adapter, adapts, adapts_many
 from ..introspect import introspect
-from ..entity import DirectJoin, ReverseJoin, TableEntity
+from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
+                     InvalidArc, AmbiguousArc)
+from ..classify import classify, normalize
 from .syntax import Syntax, IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       SegmentBinding, HomeBinding, RootBinding, TableBinding,
@@ -30,34 +31,6 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       BindingRecipe, PinnedRecipe, AmbiguousRecipe)
 import re
 import unicodedata
-
-
-def get_catalog():
-    """
-    Returns the catalog object; generates it if necessary.
-    """
-    return introspect()
-
-
-def normalize(name):
-    """
-    Normalizes a name to provide a valid HTSQL identifier.
-
-    We assume `name` is a valid UTF-8 string.  Then it is:
-
-    - translated to Unicode normal form C;
-    - converted to lowercase;
-    - has non-alphanumeric characters replaced with underscores;
-    - preceded with an underscore if it starts with a digit.
-
-    The result is a valid HTSQL identifier.
-    """
-    assert isinstance(name, str) and len(name) > 0
-    name = name.decode('utf-8')
-    name = unicodedata.normalize('NFC', name).lower()
-    name = re.sub(ur"(?u)^(?=\d)|\W", u"_", name)
-    name = name.encode('utf-8')
-    return name
 
 
 class Probe(Clonable, Printable):
@@ -219,194 +192,49 @@ class CommandProbe(Probe):
     pass
 
 
-class ItemizeHome(Utility):
-    """ 
-    Returns top-level tables in the root context.
+class Prescribe(Adapter):
 
-    The intent of this enumeration is to provide a single list
-    of non-redundant tables by canonical name.  We don't expect
-    the lookup list returned to contain the same table twice.
-    """
+    adapts(Arc)
 
-    # TODO: This requires pathalogical test schemas
-    #       in order to test for full coverage.
-    def __init__(self):
-        self.catalog = get_catalog()
+    def __init__(self, arc):
+        assert isinstance(arc, Arc)
+        self.arc = arc
 
     def __call__(self):
-        # FIXME: keep the original case of the tables.
-        buckets = {}
-        for schema in self.catalog.schemas:
-            for table in schema.tables:
-                buckets.setdefault(normalize(table.name), []).append(table)
-       
-        itemization = {} 
-        collisions = []
-        for (name, candidates) in buckets.items():
-            if len(candidates) > 1:
-                rankings = [self.catalog.schemas[table.schema_name].priority
-                            for table in candidates]
-                max_rank = max(rankings)
-                if rankings.count(max_rank) == 1:
-                    chosen = candidates[rankings.index(max_rank)]
-                    collisions.extend(table for table in candidates
-                                      if table != chosen)
-                    candidates = [chosen]
-                else:
-                    # schema ranking did not resolve ambiguity 
-                    pass
-            if len(candidates) > 1:
-                collisions.extend(candidates)
-                itemization[name] = AmbiguousRecipe()
-            else:
-                table = candidates[0]
-                itemization[name] = FreeTableRecipe(table)
-
-        for table in collisions:
-            fq_name = "%s_%s" % (normalize(table.schema_name),
-                                 normalize(table.name))
-            if fq_name in itemization:
-                # TODO: find some way to report when this
-                # secondary naming scheme creates collisions
-                continue
-            itemization[fq_name] = FreeTableRecipe(table)
-
-        return itemization
+        return InvalidRecipe()
 
 
-class ItemizeTable(Utility):
-    """ 
-    Returns columns and links recipies for a given table.
+class PrescribeTable(Prescribe):
 
-    Column attributes trump direct links which trump reverse links.  
-    However, if two objects of the same name exist, then the 
-    associated value is an ``AmbiguousRecipe``.  This could happen
-    if two columns happen to have the same normalized name, or when
-    there are two foreign keys to the same table.
-    """
-
-    def __init__(self, table):
-        assert isinstance(table, TableEntity)
-        self.table = table
-        self.catalog = get_catalog()
+    adapts(TableArc)
 
     def __call__(self):
-        # FIXME: keep the original case of the object names.
-        # Builds enumeration such that columns override 
-        # direct joins, which override reverse joins.
-
-        itemization = self.itemize_reverse_joins()
-        itemization.update(self.itemize_direct_joins())
-        itemization.update(self.itemize_columns())
-        return itemization
-
-    def find_link(self, column):
-        # Determines if the column may represents a link to another table.
-        # This is the case when the column is associated with a foreign key.
-
-        # Get a list of foreign keys associated with the given column.
-        candidates = []
-        for fk in self.table.foreign_keys:
-            if fk.origin_column_names != [column.name]:
-                continue
-            candidates.append(fk)
-
-        # Return immediately if there are no candidate keys.
-        if not candidates:
-            return None
-
-        # We got an unambiguous link if there's only one foreign key
-        # associated with the column,
-        if len(candidates) == 1:
-            # Generate the link join.
-            fk = candidates[0]
-            origin_schema = self.catalog.schemas[fk.origin_schema_name]
-            origin = origin_schema.tables[fk.origin_name]
-            target_schema = self.catalog.schemas[fk.target_schema_name]
-            target = target_schema.tables[fk.target_name]
-            join = DirectJoin(origin, target, fk)
-            # Build and return the link binding.
-            return AttachedTableRecipe([join])
-
-        if len(candidates) > 1:
-            return AmbiguousRecipe()
-
-    def itemize_columns(self):
-        # Builds mapping of column names into column recipes.
-        # If two columns have the same normalized name, then 
-        # the result is ambiguous.
-
-        itemization = {}
-        for column in self.table.columns:
-            name = normalize(column.name)
-            if name in itemization:
-                itemization[name] = AmbiguousRecipe()
-                continue
-            link = self.find_link(column)
-            itemization[name] = ColumnRecipe(column, link)
-        return itemization
-
-    def itemize_direct_joins(self):
-        # Builds mapping of table names into link recipies using
-        # foreign keys originating from the current table.
-
-        itemization = {}
-        for foreign_key in self.table.foreign_keys:
-            name = normalize(foreign_key.target_name)
-            if name in itemization:
-                itemization[name] = AmbiguousRecipe()
-                continue
-            target_schema = self.catalog.schemas[foreign_key.target_schema_name]
-            target = target_schema.tables[foreign_key.target_name]
-            join = DirectJoin(self.table, target, foreign_key)
-            itemization[name] = AttachedTableRecipe([join])
-        return itemization
-
-    def itemize_reverse_joins(self):
-        # Builds mapping of referencing tables that possess a foreign 
-        # key to current context table.
-
-        target_pair = (self.table.schema_name, self.table.name)
-        target_schema = self.catalog.schemas[self.table.schema_name]
-        itemization = {}
-        for schema in self.catalog.schemas:
-            for table in schema.tables:
-                for foreign_key in table.foreign_keys:
-                    if target_pair == (foreign_key.target_schema_name,
-                                       foreign_key.target_name):
-                        name = normalize(foreign_key.origin_name)
-                        if name in itemization:
-                            itemization[name] = AmbiguousRecipe()
-                            continue
-                        join = ReverseJoin(self.table, table, foreign_key)
-                        itemization[name] = AttachedTableRecipe([join])
-        return itemization
+        return FreeTableRecipe(self.arc.table)
 
 
-class EnumerateTable(Utility):
-    """ 
-    Returns a list of public identifiers for a table.  If there
-    are two columns that have same normalized name, then both
-    columns are omitted from the enumeration.
-    """
+class PrescribeColumn(Prescribe):
 
-    def __init__(self, table):
-        assert isinstance(table, TableEntity)
-        self.table = table
+    adapts(ColumnArc)
 
     def __call__(self):
-        names = []
-        collisions = []
-        for column in self.table.columns:
-            name = normalize(column.name)
-            if name in names:
-                if name not in collisions:
-                    collisions.append(name)
-            else:
-                names.append(name)
-        for name in collisions:
-            names.remove(name)
-        return names 
+        link = (prescribe(self.arc.link) if self.arc.link is not None else None)
+        return ColumnRecipe(self.arc.column, link)
+
+
+class PrescribeChain(Prescribe):
+
+    adapts(ChainArc)
+
+    def __call__(self):
+        return AttachedTableRecipe(self.arc.joins)
+
+
+class PrescribeAmbiguous(Prescribe):
+
+    adapts(AmbiguousArc)
+
+    def __call__(self):
+        return AmbiguousRecipe()
 
 
 class Lookup(Adapter):
@@ -428,11 +256,6 @@ class Lookup(Adapter):
 
     `probe` (:class:`Probe`)
         The lookup request.
-
-    Other attributes:
-
-    `catalog` (:class:`htsql.entity.Catalog`)
-        The database metadata.
     """
 
     adapts(Binding, Probe)
@@ -442,7 +265,6 @@ class Lookup(Adapter):
         assert isinstance(probe, Probe)
         self.binding = binding
         self.probe = probe
-        self.catalog = get_catalog()
 
     def __call__(self):
         # `None` means the lookup request failed.
@@ -556,8 +378,14 @@ class LookupAttributeInHome(Lookup):
         # Ignore probes for parameterized attributes.
         if self.probe.arity is not None:
             return None
-        recipe_by_name = itemize()
-        return recipe_by_name.get(self.probe.key)
+        labels = classify(HomeNode())
+        label_by_name = dict((label.name, label) for label in labels)
+        if self.probe.key not in label_by_name:
+            return None
+        label = label_by_name[self.probe.key]
+        recipe = prescribe(label.arc)
+        return recipe
+
 
 class ExpandHome(Lookup):
     # The home class contains no public attributes.
@@ -565,9 +393,18 @@ class ExpandHome(Lookup):
     adapts(HomeBinding, ExpansionProbe)
 
     def __call__(self):
-        # Expand the home class: there are no public attributes.
+        # Expand the home class: there should be no public attributes, but try
+        # it anyway.
         if self.probe.is_hard:
-            return []
+            labels = classify(HomeNode())
+            recipes = []
+            for label in labels:
+                if not label.is_public:
+                    continue
+                identifier = IdentifierSyntax(label.name, self.binding.mark)
+                recipe = prescribe(label.arc)
+                recipes.append((identifier, recipe))
+            return recipes
         # Otherwise, fail to expand.
         return None
 
@@ -596,8 +433,13 @@ class LookupAttributeInTable(Lookup):
         # Ignore probes for parameterized attributes.
         if self.probe.arity is not None:
             return None
-        recipe_by_name = itemize(self.binding.table)
-        return recipe_by_name.get(self.probe.key)
+        labels = classify(TableNode(self.binding.table))
+        label_by_name = dict((label.name, label) for label in labels)
+        if self.probe.key not in label_by_name:
+            return None
+        label = label_by_name[self.probe.key]
+        recipe = prescribe(label.arc)
+        return recipe
 
 
 class ExpandTable(Lookup):
@@ -612,11 +454,13 @@ class ExpandTable(Lookup):
         return self.itemize_columns()
 
     def itemize_columns(self):
-        recipe_by_name = itemize(self.binding.table)
-        for name in enumerate_table(self.binding.table):
+        labels = classify(TableNode(self.binding.table))
+        for label in labels:
+            if not label.is_public:
+                continue
             # Create a "virtual" syntax node for each column
-            identifier = IdentifierSyntax(name, self.binding.mark)
-            recipe = recipe_by_name[name]
+            identifier = IdentifierSyntax(label.name, self.binding.mark)
+            recipe = prescribe(label.arc)
             yield (identifier, recipe)
 
 
@@ -951,27 +795,11 @@ class GuessTitleFromAlias(Lookup):
     def __call__(self):
         return [str(self.binding.syntax)]
 
-def itemize(table=None):
-    """
-    Returns a dictionary of names in the given context.
-    If table is provided, columns and links are returned;
-    otherwise this returns tables accessable from the root.
-    """
-    # FIXME: This needs to be cached such that an
-    #        update of the catalog will cause the
-    #        lookup table to be re-generated.
-    if table:
-	itemize = ItemizeTable(table)
-    else:
-        itemize = ItemizeHome()
-    return itemize()
-    
-def enumerate_table(table):
-    """
-    Returns a list of public names for a table.
-    """
-    enumerate_table = EnumerateTable(table)
-    return enumerate_table()
+
+def prescribe(arc):
+    prescribe = Prescribe(arc)
+    return prescribe()
+
 
 def lookup(binding, probe):
     """

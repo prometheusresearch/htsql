@@ -879,6 +879,9 @@ class InvalidRecipe(Recipe):
     Generates an error when applied.
     """
 
+    def __init__(self):
+        super(InvalidRecipe, self).__init__(equality_vector=())
+
     def __str__(self):
         return "!"
 

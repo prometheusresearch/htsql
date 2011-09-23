@@ -54,6 +54,7 @@ from .validator import DBVal
 from .addon import Addon, Parameter
 from .connect import ConnectionPool
 from .introspect import CatalogCache
+from .classify import LabelCache
 
 from .application import Application as HTSQL
 
@@ -99,5 +100,6 @@ class HTSQLAddon(Addon):
         super(HTSQLAddon, self).__init__(app, attributes)
         self.catalog_cache = CatalogCache()
         self.connection_pool = ConnectionPool()
+        self.label_cache = LabelCache()
 
 

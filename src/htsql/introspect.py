@@ -14,13 +14,13 @@ This module declares the database introspector adapter.
 
 from .context import context
 from .adapter import Utility
-from threading import Lock
+import threading
 
 
 class CatalogCache(object):
 
     def __init__(self):
-        self.lock = Lock()
+        self.lock = threading.Lock()
         self.catalog = None
 
     def update(self, catalog):
