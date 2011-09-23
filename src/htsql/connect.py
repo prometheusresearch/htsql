@@ -322,7 +322,7 @@ class Connect(Utility):
         return None
 
 
-class Pool(object):
+class ConnectionPool(object):
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -336,10 +336,7 @@ class PoolConnect(Connect):
     def __call__(self, with_autocommit=False):
         if with_autocommit:
             return super(PoolConnect, self).__call__(with_autocommit)
-        app = context.app
-        if app.htsql.cached_pool is None:
-            app.htsql.cached_pool = Pool()
-        pool = app.htsql.cached_pool
+        pool = context.app.htsql.connection_pool
         with pool.lock:
             for connection in pool.items[:]:
                 if not connection.is_valid:

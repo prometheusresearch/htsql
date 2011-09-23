@@ -52,7 +52,8 @@ from . import (adapter, addon, application, cmd, connect, context, domain,
                validator, wsgi)
 from .validator import DBVal
 from .addon import Addon, Parameter
-from .adapter import ComponentRegistry
+from .connect import ConnectionPool
+from .introspect import CatalogCache
 
 from .application import Application as HTSQL
 
@@ -95,9 +96,8 @@ class HTSQLAddon(Addon):
     postrequisites = ['engine']
 
     def __init__(self, app, attributes):
-        self.component_registry = ComponentRegistry()
-        self.cached_catalog = None
-        self.cached_pool = None
         super(HTSQLAddon, self).__init__(app, attributes)
+        self.catalog_cache = CatalogCache()
+        self.connection_pool = ConnectionPool()
 
 

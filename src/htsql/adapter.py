@@ -70,7 +70,7 @@ class Component(object):
         Produce a list of all components of the active application.
         """
         # Get the component registry of the active application.
-        registry = context.app.htsql.component_registry
+        registry = context.app.component_registry
         # A shortcut: return cached components.
         if registry.components is not None:
             return registry.components
@@ -121,7 +121,7 @@ class Component(object):
         Produces a list of all components implementing the interface.
         """
         # Get the component registry of the active application.
-        registry = context.app.htsql.component_registry
+        registry = context.app.component_registry
         # A shortcut: return cached implementations.
         try:
             return registry.implementations[interface]
@@ -143,7 +143,7 @@ class Component(object):
         Produces a realization of the interface for the given dispatch key.
         """
         # Get the component registry of the active application.
-        registry = context.app.htsql.component_registry
+        registry = context.app.component_registry
 
         # A shortcut: if the realization for the given interface and the
         # dispatch key is already built, return it.

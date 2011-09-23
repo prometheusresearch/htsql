@@ -15,7 +15,7 @@ This module implements name resolution adapters.
 from ..util import Clonable, Printable, maybe
 from ..adapter import Adapter, adapts, adapts_many, Utility
 from ..context import context
-from ..introspect import Introspect
+from ..introspect import introspect
 from ..entity import DirectJoin, ReverseJoin, TableEntity
 from .syntax import Syntax, IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
@@ -36,16 +36,7 @@ def get_catalog():
     """
     Returns the catalog object; generates it if necessary.
     """
-    # FIXME: use locking; move to a more appropriate place.
-    # Get the database metadata.  Check if it was loaded before;
-    # if not, load it from the database and cache it as an application
-    # attribute.
-    app = context.app
-    if app.htsql.cached_catalog is None:
-        introspect = Introspect()
-        catalog = introspect()
-        app.htsql.cached_catalog = catalog
-    return app.htsql.cached_catalog
+    return introspect()
 
 
 def normalize(name):
