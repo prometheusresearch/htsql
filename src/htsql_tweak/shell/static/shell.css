@@ -37,7 +37,7 @@ table {
   border-spacing: 0;
 }
 
-pre, tt, code, kbd, samp, .CodeMirror {
+pre, tt, code, kbd, samp, .CodeMirror, .code {
   font-family: "DejaVu Sans Mono", "Liberation Mono", "Menlo", "Lucida Console", monospace;
   font-size: 105%;
 }
@@ -514,5 +514,11 @@ button {
 
 #more-popup button:hover {
   color: #fff;
+}
+
+#complete-popup {
+  color: #1a1a1a;
+  background: #fff;
+  border: 1px solid #999999;
 }
 

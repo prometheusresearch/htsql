@@ -5,7 +5,7 @@
 
 
 from htsql import __version__
-from htsql.util import maybe
+from htsql.util import maybe, listof
 from htsql.context import context
 from htsql.adapter import Adapter, adapts, named
 from htsql.error import HTTPError
@@ -13,8 +13,11 @@ from htsql.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain)
 from htsql.cmd.command import UniversalCmd, Command
 from htsql.cmd.act import (Act, RenderAction, UnsupportedActionError,
                            produce, safe_produce, analyze)
+from htsql.model import HomeNode, InvalidArc
+from htsql.classify import classify, normalize
 from htsql.tr.error import TranslateError
-from htsql.tr.syntax import StringSyntax, NumberSyntax, SegmentSyntax
+from htsql.tr.syntax import (StringSyntax, NumberSyntax, SegmentSyntax,
+                             IdentifierSyntax)
 from htsql.tr.binding import CommandBinding
 from htsql.tr.signature import Signature, Slot
 from htsql.tr.error import BindError
@@ -36,6 +39,13 @@ class ShellCmd(Command):
         self.is_implicit = is_implicit
 
 
+class CompleteCmd(Command):
+
+    def __init__(self, names):
+        assert isinstance(names, listof(str))
+        self.names = names
+
+
 class EvaluateCmd(Command):
 
     def __init__(self, query, action=None, page=None):
@@ -51,6 +61,13 @@ class ShellSig(Signature):
 
     slots = [
             Slot('query', is_mandatory=False),
+    ]
+
+
+class CompleteSig(Signature):
+
+    slots = [
+            Slot('names', is_mandatory=False, is_singular=False),
     ]
 
 
@@ -77,6 +94,22 @@ class BindShell(BindCommand):
             else:
                 raise BindError("a query is required", query.mark)
         command = ShellCmd(query)
+        return CommandBinding(self.state.scope, command, self.syntax)
+
+
+class BindComplete(BindCommand):
+
+    named('complete')
+    signature = CompleteSig
+
+    def expand(self, names):
+        identifiers = names
+        names = []
+        for identifier in identifiers:
+            if not isinstance(identifier, (IdentifierSyntax, StringSyntax)):
+                raise BindError("an identifier is required", identifier.mark)
+            names.append(identifier.value)
+        command = CompleteCmd(names)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 
@@ -147,6 +180,58 @@ class RenderShell(Act):
         data, count = re.subn(pattern, replacement, data, 1)
         assert count == 1
         return data
+
+
+class RenderComplete(Act):
+
+    adapts(CompleteCmd, RenderAction)
+
+    def __call__(self):
+        identifiers = self.command.names
+        nodes = []
+        labels_by_node = {}
+        names_by_node = {}
+        node = HomeNode()
+        labels = classify(node)
+        labels = [label for label in labels
+                        if not isinstance(label.arc, InvalidArc)]
+        nodes.append(node)
+        labels_by_node[node] = labels
+        names_by_node[node] = dict((label.name, label) for label in labels)
+        for identifier in identifiers:
+            identifier = normalize(identifier)
+            nodes_copy = nodes[:]
+            while nodes:
+                node = nodes[-1]
+                label = names_by_node[node].get(identifier)
+                if label is not None:
+                    node = label.target
+                    nodes.append(node)
+                    if node not in labels_by_node:
+                        labels = classify(node)
+                        labels = [label
+                                  for label in labels
+                                  if not isinstance(label.arc, InvalidArc)]
+                        labels_by_node[node] = labels
+                        names_by_node[node] = dict((label.name, label)
+                                                   for label in labels)
+                    break
+                nodes.pop()
+            if not nodes:
+                nodes = nodes_copy
+        node = nodes[-1]
+        labels = labels_by_node[node]
+        names = [label.name for label in labels]
+        status = '200 OK'
+        headers = [('Content-Type', 'application/javascript')]
+        body = self.render_names(names)
+        return (status, headers, body)
+
+    def render_names(self, names):
+        yield "{\n"
+        yield "  \"type\": \"complete\",\n"
+        yield "  \"names\": [%s]\n" % ", ".join(escape(name) for name in names)
+        yield "}\n"
 
 
 class RenderEvaluate(Act):

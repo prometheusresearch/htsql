@@ -22,7 +22,7 @@ from htsql.util import DB, listof, trim_doc
 from htsql.request import produce
 from htsql.error import HTTPError
 from htsql.connect import DBError
-from htsql.model import HomeNode
+from htsql.model import HomeNode, InvalidArc
 from htsql.classify import classify, normalize
 import traceback
 import StringIO
@@ -397,6 +397,8 @@ class NodeChain(object):
         if node not in self.labels_by_node:
             with self.app:
                 labels = classify(node)
+            labels = [label for label in labels
+                            if not isinstance(label.arc, InvalidArc)]
             names = dict((label.name, label) for label in labels)
             self.labels_by_node[node] = labels
             self.names_by_node[node] = names

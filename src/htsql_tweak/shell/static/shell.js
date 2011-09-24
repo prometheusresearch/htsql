@@ -57,7 +57,8 @@ $(document).ready(function() {
             marker: null,
             expansion: 0,
             lastPoint: null,
-            lastTimestamp: null
+            lastTimestamp: null,
+            completions: {}
         }
     }
 
@@ -67,23 +68,30 @@ $(document).ready(function() {
             mode: 'htsql',
             onKeyEvent: function(i, e) {
                 // Ctrl-Enter
-                if (e.ctrlKey && e.keyCode == 13) {
-                    if (e.type == 'keyup') {
+                if ((e.ctrlKey || e.metaKey) && !e.altKey && e.keyCode == 13) {
+                    if (e.type == 'keydown') {
                         $('#run').click();
                     }
                     return true;
                 }
                 // Ctrl-Up
-                if (e.ctrlKey && e.keyCode == 38) {
-                    if (e.type == 'keyup') {
+                if ((e.ctrlKey || e.metaKey) && !e.altKey && e.keyCode == 38) {
+                    if (e.type == 'keydown') {
                         $('#shrink').click();
                     }
                     return true;
                 }
                 // Ctrl-Down
-                if (e.ctrlKey && e.keyCode == 40) {
-                    if (e.type == 'keyup') {
+                if ((e.ctrlKey || e.metaKey) && !e.altKey && e.keyCode == 40) {
+                    if (e.type == 'keydown') {
                         $('#expand').click();
+                    }
+                    return true;
+                }
+                // Ctrl-Space
+                if ((e.ctrlKey || e.metaKey) && !e.altKey && e.keyCode == 32) {
+                    if (e.type == 'keydown') {
+                        startComplete();
                     }
                     return true;
                 }
@@ -524,6 +532,259 @@ $(document).ready(function() {
         state.$panel = $requestPanel.show();
     }
 
+    function startComplete() {
+        if (editor.somethingSelected()) {
+            return;
+        }
+        var cursor = editor.getCursor();
+        var token = editor.getTokenAt(cursor);
+        var line = cursor.line;
+        var start = token.start;
+        var end = token.end;
+        var prefix = token.string;
+        if (!/^(?![0-9])[_0-9a-zA-Z\u0080-\uFFFF]+$/.test(token.string)) {
+            start = cursor.ch;
+            end = cursor.ch;
+            prefix = '';
+        }
+        var query = editor.getRange({line: 0, ch: 0}, {line: line, ch: start});
+        var names = scanQuery(query);
+        var completions = state.completions;
+        for (var k = 0; k < names.length; k ++) {
+            if (completions && completions.hasOwnProperty(names[k]))
+                completions = completions[names[k]];
+            else
+                completions = null;
+        }
+        if (completions && completions.hasOwnProperty(''))
+            completions = completions[''];
+        else
+            completions = null;
+        if (!completions) {
+            requestCompletions(names);
+            return;
+        }
+        var matches = [];
+        for (var k = 0; k < completions.length; k ++) {
+            var name = completions[k];
+            if (name.substr(0, prefix.length) == prefix) {
+                matches.push(name);
+            }
+        }
+        //log(matches);
+        if (matches.length == 0)
+            return;
+        if (matches.length == 1) {
+            var match = matches[0];
+            editor.replaceRange(match, {line: line, ch: start}, {line: line, ch: end});
+            return;
+        };
+        var common = matches[0];
+        for (var k = 0; k < matches.length; k ++) {
+            var match = matches[k];
+            var l = common.length < match.length ? common.length : match.length;
+            while (common.substr(0, l) != match.substr(0, l))
+                l --;
+            common = common.substr(0, l);
+            if (common == prefix)
+                break;
+        }
+        if (common != prefix) {
+            editor.replaceRange(common, {line: line, ch: start}, {line: line, ch: end});
+            setTimeout(startComplete);
+            return;
+        }
+        $complete.empty();
+        for (var k = 0; k < matches.length; k ++)
+            $complete.append($('<option></option>').text(matches[k]));
+        var coords = editor.charCoords({line: line, ch: start});
+        $completePopup.css({ top: coords.yBot+"px", left: coords.x+"px" });
+        $complete.attr('size', matches.length < 10 ? matches.length : 10);
+        $complete.val(matches[0]);
+        $complete.blur(function () {
+            clickPopups();
+            $complete.unbind();
+            $completePopup.unbind().clearAttr('style');
+        });
+        $complete.keydown(function (e) {
+            /* Esc */
+            if (e.keyCode == 27) {
+                setTimeout(function() { editor.focus(); });
+                return false;
+            }
+            /* Enter, Space */
+            else if (e.keyCode == 13 || e.keyCode == 32) {
+                var choice = $complete.val();
+                editor.replaceRange(choice, {line: line, ch: start}, {line: line, ch: end});
+                setTimeout(function() { editor.focus(); });
+                return false;
+            }
+            /* Up, Down */
+            else if (e.keyCode == 38 || e.keyCode == 40) {
+                return;
+            }
+            else {
+                editor.focus();
+                var ch = String.fromCharCode(e.keyCode);
+                if (/^[_0-9a-zA-Z\u0080-\uFFFF]+$/.test(ch))
+                    setTimeout(startComplete, 100);
+                return;
+            }
+        });
+        $completePopup.click(function() {
+            var choice = $complete.val();
+            editor.replaceRange(choice, {line: line, ch: start}, {line: line, ch: end});
+            setTimeout(function() { editor.focus(); });
+            return false;
+        });
+        $completePopup.show();
+        $popups.show();
+        if (matches.length <= 10) {
+            $completePopup.css({width: ($complete[0].clientWidth-1)+"px", overflow: 'hidden'});
+        }
+        $complete.focus();
+    }
+
+    function requestCompletions(names) {
+        var query = "";
+        for (var k = 0; k < names.length; k ++) {
+            var name = names[k];
+            if (k > 0)
+                query += ",";
+            query += "'"+name.replace(/'/g, "''")+"'";
+        }
+        query = "/complete(" + query + ")";
+        var url = config.serverRoot+escape(query);
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            success: function (output) {
+                if (output.type != 'complete')
+                    return;
+                var completions = state.completions;
+                for (var k = 0; k < names.length; k ++) {
+                    var name = names[k];
+                    if (!completions.hasOwnProperty(name))
+                        completions[name] = {}
+                    completions = completions[name];
+                }
+                completions[''] = output.names;
+                setTimeout(startComplete);
+            }
+        });
+    }
+
+    function ScanState() {
+        this.indicator = '/';
+        this.identifiers = [];
+        this.stack = [];
+    }
+
+    ScanState.prototype.push = function (indicator, identifiers) {
+        this.stack.push({indicator: this.indicator, identifiers: this.identifiers});
+        this.indicator = indicator;
+        if (identifiers) {
+            this.identifiers = identifiers;
+        }
+    }
+
+    ScanState.prototype.drop = function (indicators) {
+        if (indicators.test(this.indicator)) {
+            var item = this.stack.pop();
+            this.indicator = item.indicator;
+            this.identifiers = item.identifiers;
+            return true;
+        }
+        return false;
+    }
+
+    ScanState.prototype.drop_all = function (indicators) {
+        if (indicators.test(this.indicator)) {
+            while (indicators.test(this.indicator)) {
+                var item = this.stack.pop();
+                this.indicator = item.indicator;
+                this.identifiers = item.identifiers;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    ScanState.prototype.clone = function () {
+        var copy = new ScanState();
+        copy.indicator = this.indicator;
+        copy.identifiers = this.identifiers;
+        copy.stack = this.stack.concat();
+        return copy;
+    }
+
+    function scanQuery(query) {
+        var regexp = /->|:=|[~<>=!&|.,?(){}:$^/*+-]|'(?:[^']|'')*'|\d+[.eE]?|(?!\d)[_0-9a-zA-Z\u0080-\uFFFF]+/g;
+        var tokens = [];
+        var match;
+        while ((match = regexp.exec(query))) {
+            tokens.push(match[0]);
+        }
+        var state = new ScanState();
+        for (var i = 0; i < tokens.length; i ++) {
+            var token = tokens[i];
+            var prev_token = (i > 0) ? tokens[i-1] : '';
+            var next_token = (i < tokens.length-1) ? tokens[i+1] : '';
+            if (/^(?![0-9])[_0-9a-zA-Z\u0080-\uFFFF]+$/.test(token)) {
+                if (!/[:$]/.test(prev_token) && !/[(]/.test(next_token)) {
+                    state.push('_', state.identifiers.concat([token]));
+                }
+            }
+            else if (token == '.') {
+            }
+            else if (token == '->') {
+                state.push('_', []);
+            }
+            else if (token == '?' || token == '^') {
+                var copy = state.clone();
+                state.drop_all(/[_]/);
+                if (!state.drop(/[?^]/))
+                    state = copy;
+                state.push(token);
+            }
+            else if (token == '(') {
+                state.push(token);
+            }
+            else if (token == ')') {
+                var copy = state.clone();
+                state.drop_all(/[_?^]/);
+                if (!state.drop(/[(]/))
+                    state = copy;
+            }
+            else if (token == '{') {
+                var copy = state.clone();
+                state.drop_all(/[_]/);
+                if (!state.drop(/[?^]/))
+                    state = copy;
+                state.push(token);
+            }
+            else if (token == '}') {
+                var copy = state.clone();
+                state.drop_all(/[_?^]/);
+                if (!state.drop(/[{]/))
+                    state = copy;
+            }
+            else if (token == ':=') {
+                state.drop(/[_]/);
+            }
+            else if (token == ':') {
+                state.drop_all(/[_?^]/);
+            }
+            else if (token == '$') {
+                state.push('_', []);
+            }
+            else {
+                state.drop_all(/[_]/);
+            }
+        }
+        return state.identifiers;
+    }
+
     var config = makeConfig();
     var environ = makeEnviron();
     var state = makeState();
@@ -542,6 +803,8 @@ $(document).ready(function() {
     var $sql = $('#sql');
     var $popups = $('#popups');
     var $morePopup = $('#more-popup');
+    var $completePopup = $('#complete-popup');
+    var $complete = $('#complete');
     var $shrink = $('#shrink');
     var $expand = $('#expand');
 
