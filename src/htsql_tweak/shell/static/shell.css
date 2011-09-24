@@ -138,7 +138,7 @@ button {
 .input-area .editor-box {
   position: absolute;
   left: 0;
-  right: 16em;
+  right: 5.5em;
   top: 0;
   bottom: 0;
   padding: 0.5em 0 0.5em 1em;
@@ -180,24 +180,16 @@ button {
 }
 
 .input-area .button-box {
+  padding: 0.5em 0 0.5em 1em;
   position: absolute;
   right: 0;
   top: 0;
-  bottom: 0;
-  width: 16em;
+  width: 5em;
 }
 
-.input-area .button-box ul {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 0.5em 0;
-}
-
-.input-area .button-box li {
-  float: left;
-  margin: 0 0 0 1em;
+.input-area .button-box a {
+  color: #1a1a1a;
+  text-decoration: underline;
 }
 
 .input-area .button-box button {
