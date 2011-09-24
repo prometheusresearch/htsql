@@ -131,6 +131,12 @@ $(document).ready(function() {
     }
 
     function clickHelp() {
+        $popups.hide();
+        $popups.children('.popup').hide();
+        if (state.$panel)
+            state.$panel.hide();
+        state.$panel = $helpPanel.show();
+        updateTitle();
     }
 
     function clickRun() {
@@ -800,6 +806,7 @@ $(document).ready(function() {
     var $error = $('#error');
     var $failurePanel = $('#failure-panel');
     var $sqlPanel = $('#sql-panel');
+    var $helpPanel = $('#help-panel');
     var $sql = $('#sql');
     var $popups = $('#popups');
     var $morePopup = $('#more-popup');
@@ -830,7 +837,6 @@ $(document).ready(function() {
     $(window).bind('popstate', popstateWindow);
 
     $('#schema').hide();
-    $('#help').hide();
     $('#close-sql').hide();
 
     $database.text(config.databaseName);

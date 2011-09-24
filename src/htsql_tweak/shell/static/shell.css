@@ -1,4 +1,3 @@
-
 /* Clear and baseline */
 
 * {
@@ -116,13 +115,12 @@ button {
 
 .heading-area ul.menu {
   float: right;
-  padding: 0.3em 0;
-  width: 12em;
+  padding: 0.3em 0.3em;
 }
 
 .heading-area ul.menu li {
   float: left;
-  width: 6em;
+  padding: 0 0.3em;
 }
 
 .heading-area ul.menu li button:hover {
