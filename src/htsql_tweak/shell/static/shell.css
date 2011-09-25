@@ -136,7 +136,7 @@ button {
 .input-area .editor-box {
   position: absolute;
   left: 0;
-  right: 5.5em;
+  right: 6em;
   top: 0;
   bottom: 0;
   padding: 0.5em 0 0.5em 1em;
@@ -183,20 +183,25 @@ button {
   right: 0;
   bottom: 0;
   height: 3.5em;
-  width: 5em;
+  width: 5.5em;
 }
 
-.input-area .button-box a {
-  color: #000000;
-  text-decoration: underline;
+.input-area .button-box ul {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.5em 0;
 }
 
-.input-area .button-box a:hover {
-  color: #999999;
+.input-area .button-box li {
+    float: left;
+    margin: 0 0 0 1em;
 }
 
 .input-area .button-box button {
   float: left;
+  width: 5em;
   text-align: center;
   padding: 0.2em 1.2em;
   color: #1a1a1a;
@@ -210,6 +215,9 @@ button {
   box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 1px 2px rgba(0,0,0,0.05);
   text-shadow: 0 1px 1px rgba(255,255,255,0.75);
 }
+
+#run { width: 4.9em; height: 3em; margin: 0 0 .2em 0 }
+#more { width: 4.9em; height: 1.8em }
 
 .input-area .button-box li button:hover {
   color: #fff;
