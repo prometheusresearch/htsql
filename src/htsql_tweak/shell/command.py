@@ -382,7 +382,7 @@ class RenderEvaluate(Act):
         return "[%s]" % ", ".join(rows)
 
     def make_more(self, product, limit):
-        if limit is not None and len(product.records) >= limit:
+        if limit is not None and len(product.records) > limit:
             return "true"
         return "false"
 
