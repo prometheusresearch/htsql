@@ -13,7 +13,7 @@ from htsql.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain)
 from htsql.cmd.command import UniversalCmd, Command
 from htsql.cmd.act import (Act, RenderAction, UnsupportedActionError,
                            produce, safe_produce, analyze)
-from htsql.model import HomeNode, InvalidArc
+from htsql.model import HomeNode, InvalidNode, InvalidArc
 from htsql.classify import classify, normalize
 from htsql.tr.error import TranslateError
 from htsql.tr.syntax import (StringSyntax, NumberSyntax, SegmentSyntax,
@@ -205,20 +205,19 @@ class RenderComplete(Act):
                 node = nodes[-1]
                 label = names_by_node[node].get(identifier)
                 if label is not None:
-                    node = label.target
-                    nodes.append(node)
-                    if node not in labels_by_node:
-                        labels = classify(node)
-                        labels = [label
-                                  for label in labels
-                                  if not isinstance(label.arc, InvalidArc)]
-                        labels_by_node[node] = labels
-                        names_by_node[node] = dict((label.name, label)
-                                                   for label in labels)
                     break
                 nodes.pop()
-            if not nodes:
-                nodes = nodes_copy
+            node = label.target if label is not None else InvalidNode()
+            nodes = nodes_copy
+            nodes.append(node)
+            if node not in labels_by_node:
+                labels = classify(node)
+                labels = [label
+                          for label in labels
+                          if not isinstance(label.arc, InvalidArc)]
+                labels_by_node[node] = labels
+                names_by_node[node] = dict((label.name, label)
+                                           for label in labels)
         node = nodes[-1]
         labels = labels_by_node[node]
         names = [label.name for label in labels]

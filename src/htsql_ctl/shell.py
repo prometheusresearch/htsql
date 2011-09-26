@@ -22,7 +22,7 @@ from htsql.util import DB, listof, trim_doc
 from htsql.request import produce
 from htsql.error import HTTPError
 from htsql.connect import DBError
-from htsql.model import HomeNode, InvalidArc
+from htsql.model import HomeNode, InvalidNode, InvalidArc
 from htsql.classify import classify, normalize
 import traceback
 import StringIO
@@ -506,11 +506,11 @@ class GetPostBaseCmd(Cmd):
             while chain:
                 label = chain.label(identifier)
                 if label is not None:
-                    chain.push(label.target)
                     break
                 chain.drop()
-            if not chain:
-                chain = chain_copy
+            node = label.target if label is not None else InvalidNode()
+            chain = chain_copy
+            chain.push(node)
         labels = chain.labels()
         names = [label.name for label in labels]
         return names
