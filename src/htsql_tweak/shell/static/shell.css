@@ -521,3 +521,59 @@ button:active {
   box-shadow: 1px 1px 1px rgba(0,0,0,0.1);
 }
 
+#help-popup {
+  position: static;
+  margin: 5em auto;
+  max-width: 50em;
+  color: #1a1a1a;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  -moz-box-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+  box-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+#help-popup h1,
+#help-popup h2 {
+  background: #f2f2f2;
+  text-align: center;
+  font-weight: bold;
+}
+
+#help-popup h1 {
+  font-size: 500%;
+}
+
+#help-popup h2 {
+  font-size: 150%;
+  border: solid #d9d9d9;
+  border-width: 0 0 1px;
+}
+
+#help-popup p,
+#help-popup dl {
+  margin: 1em;
+}
+
+#help-popup dt {
+  font-weight: bold;
+  float: left;
+  clear: left;
+  margin: 0 1em;
+  min-width: 10em;
+}
+
+#help-popup dd {
+  margin: 0 1em;
+}
+
+#help-popup a {
+  color: #4d4d4d;
+  text-decoration: underline;
+}
+
+#help-popup a:hover {
+  color: #1a1a1a;
+}
+

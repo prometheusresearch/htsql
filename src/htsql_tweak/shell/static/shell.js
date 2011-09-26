@@ -22,7 +22,7 @@ $(document).ready(function() {
         var $body = $('body');
         return {
             databaseName: $body.attr('data-database-name') || "",
-            serverName: $body.attr('data-server-name') || "",
+            htsqlVersion: $body.attr('data-htsql-version') || "",
             serverRoot: $body.attr('data-server-root') || "",
             queryOnStart: $body.attr('data-query-on-start') || "/",
             evaluateOnStart: ($body.attr('data-evaluate-on-start') == 'true'),
@@ -131,12 +131,9 @@ $(document).ready(function() {
     }
 
     function clickHelp() {
-        $popups.hide();
-        $popups.children('.popup').hide();
-        if (state.$panel)
-            state.$panel.hide();
-        state.$panel = $helpPanel.show();
-        updateTitle();
+        $('#version').text(config.htsqlVersion);
+        $popups.show();
+        $helpPopup.show();
     }
 
     function clickRun() {
@@ -817,12 +814,12 @@ $(document).ready(function() {
     var $error = $('#error');
     var $failurePanel = $('#failure-panel');
     var $sqlPanel = $('#sql-panel');
-    var $helpPanel = $('#help-panel');
     var $sql = $('#sql');
     var $popups = $('#popups');
     var $morePopup = $('#more-popup');
     var $completePopup = $('#complete-popup');
     var $complete = $('#complete');
+    var $helpPopup = $('#help-popup');
     var $shrink = $('#shrink');
     var $expand = $('#expand');
 
@@ -846,6 +843,7 @@ $(document).ready(function() {
     $('#shrink').click(function() { return clickExpand(-1); });
     $('#expand').click(function() { return clickExpand(+1); });
     $(window).bind('popstate', popstateWindow);
+    $('#help-popup').click(function (e) { e.stopPropagation(); });
 
     $('#schema').hide();
     $('#close-sql').hide();
