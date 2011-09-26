@@ -164,6 +164,15 @@ $(document).ready(function() {
             height = 8*(expansion+1);
         $('.input-area').css({ height: height+'em' });
         $('.output-area').css({ top: (height+2)+'em' });
+        if (expansion == -1) {
+            $('#run').css({ height: '2em',
+                            'margin-bottom': '1px'});
+            $('#more').css({ 'margin-bottom': '1px'});
+        }
+        else {
+            $('#run').removeAttr('style');
+            $('#more').removeAttr('style');
+        }
         state.expansion += dir;
     }
 
@@ -610,7 +619,7 @@ $(document).ready(function() {
         $complete.blur(function () {
             clickPopups();
             $complete.unbind();
-            $completePopup.unbind().clearAttr('style');
+            $completePopup.unbind().removeAttr('style');
         });
         $complete.keydown(function (e) {
             /* Esc */
@@ -625,8 +634,10 @@ $(document).ready(function() {
                 setTimeout(function() { editor.focus(); });
                 return false;
             }
-            /* Up, Down */
-            else if (e.keyCode == 38 || e.keyCode == 40) {
+            /* Up, Down, PageUp, PageDown, Home, End */
+            else if (e.keyCode == 38 || e.keyCode == 40 ||
+                     e.keyCode == 33 || e.keyCode == 34 ||
+                     e.keyCode == 35 || e.keyCode == 36) {
                 return;
             }
             else {
