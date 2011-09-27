@@ -485,7 +485,7 @@ $(document).ready(function() {
         var gridWidth = $grid.width();
         var colWidths = [];
         $bodyTable.find('tbody tr:first-child').children().each(function(idx) {
-            colWidths[idx] = $(this).outerWidth();
+            colWidths[idx] = $(this).outerWidth()+1;
         });
         colWidths[colWidths.length-1] = 1;
         var tableWidth = 0;
