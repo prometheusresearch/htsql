@@ -21,7 +21,7 @@ class TweakResourceAddon(Addon):
     """
 
     parameters = [
-            Parameter('indicator', StrVal(r'^[/]+$'), default='-'),
+            Parameter('indicator', StrVal(r'^[^/]+$'), default='-'),
     ]
 
     def __init__(self, app, attributes):
