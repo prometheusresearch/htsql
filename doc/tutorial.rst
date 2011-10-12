@@ -628,7 +628,6 @@ a parameterized calculation which takes a the course level and produces
 courses of this level.  Naively, we could write:
 
 .. htsql::
-   :hide:
    :error:
 
    /department.define(course(level) := course?no>=level*100
