@@ -16,13 +16,8 @@ from htsql.connect import Connect, Normalize, DBError
 from htsql.adapter import adapts
 from htsql.context import context
 from htsql.domain import BooleanDomain, StringDomain, EnumDomain, TimeDomain
-import MySQLdb, MySQLdb.connections
+import pymysql, pymysql.err
 import datetime
-
-
-class Cursor(MySQLdb.connections.Connection.default_cursor):
-
-    _defer_warnings = True
 
 
 class MySQLError(DBError):
@@ -46,17 +41,16 @@ class ConnectMySQL(Connect):
         if db.port is not None:
             parameters['port'] = db.port
         if db.username is not None:
-            parameters['user'] = db.username
+            parameters['user'] = db.username 
         if db.password is not None:
             parameters['passwd'] = db.password
         parameters['charset'] = 'utf8'
-        parameters['cursorclass'] = Cursor
-        connection = MySQLdb.connect(**parameters)
+        connection = pymysql.connect(**parameters)
         return connection
 
     def normalize_error(self, exception):
         # If we got a DBAPI exception, generate our error out of it.
-        if isinstance(exception, MySQLdb.Error):
+        if isinstance(exception, pymysql.err.MySQLError):
             message = str(exception)
             error = MySQLError(message, exception)
             return error
