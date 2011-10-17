@@ -1,0 +1,3 @@
+version=3
+opts=uversionmangle=s/(beta|rc|a|b|c)/~$1/ \
+http://pypi.python.org/packages/source/H/HTSQL/HTSQL-(.*)\.tar\.gz debian uupdate
