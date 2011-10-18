@@ -1,16 +1,17 @@
-Source: htsql
+Source: python-htsql
 Section: non-free/python
 Priority: optional
 Maintainer: Clark C. Evans <cce@clarkevans.com>
 Build-Depends: debhelper (>= 7.4.3), python-setuptools (>= 0.6b3), 
- python-all (>= 2.6.6-3~)
-Standards-Version: 3.9.1
+ python-all (>= 2.6.6-3)
+Standards-Version: 3.9.2
 Homepage: http://yaml.org
-XS-Python-Version: >=2.5
+
 Package: python-htsql
 Architecture: all
-Depends: python-yaml, ${misc:Depends}, ${python:Depends}
+Depends: python-yaml, python (>= 2.5), ${misc:Depends}, ${python:Depends}
 Suggests: python-psycopg2, python-mysqldb
+Provides: ${python:Provides}
 Description: a navigational query language for relational databases
  ***********************************************************
    HTSQL -- A Query Language for the Accidental Programmer

@@ -1,5 +1,5 @@
-htsql (2.2.0b2-1) unstable; urgency=low
+python-htsql (2.2.0b2-1) unstable; urgency=low
 
   * initial .deb distribution based on 9/22 release
 
- -- Clark C. Evans <cce@clarkevans.com> Mon, 17 Oct 2011, 19:20:00 +0500
+ -- Clark C. Evans <cce@clarkevans.com>  Mon, 17 Oct 2011 19:20:00 +0500
