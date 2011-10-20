@@ -17,6 +17,8 @@ import sys
 import urllib
 import pkgutil
 import datetime, time
+import keyword
+import operator
 
 
 #
@@ -631,27 +633,70 @@ def toposort(elements, order, is_total=False):
 #
 
 
-class Record(object):
-    """
-    Implements a simple record type.
+class Record(tuple):
 
-    The constructor of :class:`Record` expects keyword arguments,
-    which becomes the attributes of the instance.
+    __slots__ = ()
+    __fields__ = ()
 
-    `attributes`
-        Attributes of the record.
-    """
+    @classmethod
+    def make(cls, fields):
+        assert isinstance(fields, listof(maybe(str)))
+        duplicates = set()
+        for idx, field in enumerate(fields):
+            if field is None:
+                continue
+            if not re.match(r'^(?!\d)\w+$', field):
+                field = None
+            elif field.startswith('__'):
+                field = None
+            else:
+                if keyword.iskeyword(field):
+                    field = field+'_'
+                if field in duplicates:
+                    field = None
+                fields[idx] = field
+                duplicates.add(field)
+        bases = (cls,)
+        attributes = {}
+        attributes['__slots__'] = ()
+        attributes['__fields__'] = tuple(fields)
+        for idx, field in enumerate(fields):
+            if field is None:
+                continue
+            attributes[field] = property(operator.itemgetter(idx))
+        return type(cls.__name__, bases, attributes)
 
-    def __init__(self, **attributes):
-        for name in attributes:
-            setattr(self, name, attributes[name])
+    def __new__(cls, *args, **kwds):
+        if kwds:
+            args_tail = []
+            for field in cls.__fields__[len(args):]:
+                if field not in kwds:
+                    if field is not None:
+                        raise TypeError("Missing argument %r" % field)
+                    else:
+                        raise TypeError("Missing argument #%d"
+                                        % (len(args)+len(args_tail)+1))
+                args_tail.append(kwds.pop(field))
+            if kwds:
+                field = sorted(kwds)[0]
+                if field in cls.__fields__:
+                    raise TypeError("Duplicate argument %r" % field)
+                else:
+                    raise TypeError("Unknown argument %r" % field)
+            args = args+tuple(args_tail)
+        if len(args) != len(cls.__fields__):
+            raise TypeError("Expected %d arguments, got %d"
+                            % (len(cls.__fields__), len(args)))
+        return tuple.__new__(cls, args)
+
+    def __getnewargs__(self):
+        return tuple(self)
 
     def __repr__(self):
-        # Display:
-        #   Record(name=value, ...)
-        return "%s(%s)" % (self.__class__.__name__,
-                           ", ".join("%s=%r" % (name, getattr(self, name))
-                                     for name in sorted(vars(self))))
+        return ("%s(%s)"
+                % (self.__class__.__name__,
+                   ", ".join("%s=%r" % (name or '?', value)
+                             for name, value in zip(self.__fields__, self))))
 
 
 class Printable(object):

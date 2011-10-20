@@ -89,7 +89,7 @@ class ProduceRetrieve(Act):
             normalizers = []
             for phrase in select:
                 normalize = Normalize(phrase.domain)
-                normalizers.append(normalize)
+                normalizers.append(normalize())
             connection = None
             try:
                 connect = Connect()

@@ -12,276 +12,249 @@ This module implements the introspection adapter for MySQL.
 """
 
 
+from htsql.adapter import Protocol, named
 from htsql.introspect import Introspect
-from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
-                          ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
-                          ForeignKeyEntity)
+from htsql.entity import make_catalog
 from .domain import (MySQLBooleanDomain, MySQLIntegerDomain,
                      MySQLDecimalDomain, MySQLFloatDomain, MySQLStringDomain,
                      MySQLEnumDomain, MySQLDateDomain, MySQLTimeDomain,
                      MySQLDateTimeDomain, MySQLOpaqueDomain)
-from htsql.connect import Connect
-from htsql.util import Record
-
-
-class Meta(object):
-    """
-    Loads raw meta-data from `information_schema`.
-    """
-
-    def __init__(self):
-        connect = Connect()
-        connection = connect()
-        cursor = connection.cursor()
-        self.schemata = self.fetch(cursor,
-                'information_schema.schemata',
-                ['schema_name'])
-        self.tables = self.fetch(cursor,
-                'information_schema.tables',
-                ['table_schema', 'table_name'])
-        self.columns = self.fetch(cursor,
-                'information_schema.columns',
-                ['table_schema', 'table_name', 'ordinal_position'])
-        self.constraints = self.fetch(cursor,
-                'information_schema.table_constraints',
-                ['table_schema', 'table_name',
-                 'constraint_schema', 'constraint_name'])
-        self.key_columns = self.fetch(cursor,
-                'information_schema.key_column_usage',
-                ['table_schema', 'table_name',
-                 'constraint_schema', 'constraint_name',
-                 'ordinal_position'])
-        cursor.execute("SELECT DATABASE()")
-        self.current_database = cursor.fetchone()[0]
-        self.tables_by_schema = self.group(self.tables, self.schemata)
-        self.columns_by_table = self.group(self.columns, self.tables)
-        self.constraints_by_table = self.group(self.constraints, self.tables)
-        self.key_columns_by_constraint = self.group(self.key_columns,
-                                                    self.constraints)
-        connection.commit()
-        connection.release()
-
-    def fetch(self, cursor, table_name, id_names):
-        rows = {}
-        cursor.execute("SELECT * FROM %s" % table_name)
-        for items in cursor.fetchall():
-            attributes = {}
-            for kind, item in zip(cursor.description, items):
-                name = kind[0].lower()
-                if isinstance(item, unicode):
-                    item = item.encode('utf-8')
-                attributes[name] = item
-            key = tuple(attributes[name] for name in id_names)
-            record = Record(**attributes)
-            rows[key] = record
-        return rows
-
-    def group(self, targets, bases):
-        groups = {}
-        if not targets or not bases:
-            return groups
-        target_length = max(len(key) for key in targets)
-        assert all(target_length == len(key) for key in targets)
-        base_length = max(len(key) for key in bases)
-        assert all(base_length == len(key) for key in bases)
-        assert base_length < target_length
-        for key in bases:
-            groups[key] = []
-        for key in sorted(targets):
-            base_key = key[:base_length]
-            assert base_key in groups
-            groups[base_key].append(key)
-        return groups
+from htsql.connect import connect
+import itertools
 
 
 class IntrospectMySQL(Introspect):
-    """
-    Implements the introspection adapter for MySQL.
-    """
 
-    def __init__(self):
-        super(IntrospectMySQL, self).__init__()
-        self.meta = Meta()
+    system_schema_names = ['mysql', 'information_schema']
 
     def __call__(self):
-        return self.introspect_catalog()
+        connection = connect()
+        cursor = connection.cursor()
 
-    def introspect_catalog(self):
-        schemas = self.introspect_schemas()
-        return CatalogEntity(schemas)
+        catalog = make_catalog()
 
-    def permit_schema(self, schema_name):
-        if schema_name in ['mysql', 'information_schema']:
-            return False
-        return True
+        cursor.execute("""
+            SELECT s.schema_name
+            FROM information_schema.schemata s
+            ORDER BY 1
+        """)
+        for row in cursor.fetchnamed():
+            catalog.add_schema(row.schema_name)
+        cursor.execute("""
+            SELECT DATABASE()
+        """)
+        database_name = cursor.fetchone()[0]
+        if database_name in catalog.schemas:
+            catalog.schemas[database_name].set_priority(1)
 
-    def permit_table(self, schema_name, table_name):
-        return True
+        cursor.execute("""
+            SELECT t.table_schema, t.table_name
+            FROM information_schema.tables t
+            WHERE t.table_type IN ('BASE TABLE', 'VIEW')
+            ORDER BY 1, 2
+        """)
+        for row in cursor.fetchnamed():
+            if row.table_schema not in catalog.schemas:
+                continue
+            schema = catalog.schemas[row.table_schema]
+            schema.add_table(row.table_name)
 
-    def permit_column(self, schema_name, table_name, column_name):
-        return True
+        cursor.execute("""
+            SELECT c.table_schema, c.table_name, c.ordinal_position,
+                   c.column_name, c.is_nullable, c.column_default,
+                   c.data_type, c.column_type, c.character_maximum_length,
+                   c.numeric_precision, c.numeric_scale
+            FROM information_schema.columns c
+            ORDER BY 1, 2, 3
+        """)
+        for row in cursor.fetchnamed():
+            if row.table_schema not in catalog.schemas:
+                continue
+            schema = catalog.schemas[row.table_schema]
+            if row.table_name not in schema.tables:
+                continue
+            table = schema.tables[row.table_name]
+            name = row.column_name
+            is_nullable = (row.is_nullable == 'YES')
+            has_default = (row.column_default is not None)
+            data_type = row.data_type
+            column_type = row.column_type
+            length = row.character_maximum_length
+            if isinstance(length, long):
+                length = int(length)
+                if isinstance(length, long): # LONGTEXT
+                    length = None
+            precision = row.numeric_precision
+            if isinstance(precision, long):
+                precision = int(precision)
+            scale = row.numeric_scale
+            if isinstance(scale, long):
+                scale = int(scale)
+            introspect_domain = IntrospectMySQLDomain(data_type, column_type,
+                                                      length, precision, scale)
+            domain = introspect_domain()
+            table.add_column(name, domain, is_nullable, has_default)
 
-    def introspect_schemas(self):
-        schemas = []
-        for key in sorted(self.meta.schemata):
-            record = self.meta.schemata[key]
-            name = record.schema_name
-            if not self.permit_schema(name):
+        cursor.execute("""
+            SELECT c.table_schema, c.table_name,
+                   c.constraint_schema, c.constraint_name,
+                   c.constraint_type
+            FROM information_schema.table_constraints c
+            WHERE c.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'FOREIGN KEY')
+            ORDER BY 1, 2, 3, 4
+        """)
+        constraint_rows = cursor.fetchnamed()
+        cursor.execute("""
+            SELECT u.table_schema, u.table_name,
+                   u.constraint_schema, u.constraint_name,
+                   u.ordinal_position,
+                   u.column_name,
+                   u.referenced_table_schema,
+                   u.referenced_table_name,
+                   u.referenced_column_name
+            FROM information_schema.key_column_usage u
+            ORDER BY 1, 2, 3, 4, 5
+        """)
+        usage_rows_by_constraint_key = \
+                dict((key, list(group))
+                     for key, group in itertools.groupby(cursor.fetchnamed(),
+                         lambda r: (r.table_schema, r.table_name,
+                                    r.constraint_schema, r.constraint_name)))
+        for constraint_row in constraint_rows:
+            key = (constraint_row.table_schema,
+                   constraint_row.table_name,
+                   constraint_row.constraint_schema,
+                   constraint_row.constraint_name)
+            if key not in usage_rows_by_constraint_key:
                 continue
-            tables = self.introspect_tables(key)
-            priority = 0
-            if name == self.meta.current_database:
-                priority = 1
-            schema = SchemaEntity(name, tables, priority)
-            schemas.append(schema)
-        schemas.sort(key=(lambda s: s.name))
-        return schemas
+            usage_rows = usage_rows_by_constraint_key[key]
+            if constraint_row.table_schema not in catalog.schemas:
+                continue
+            schema = catalog.schemas[constraint_row.table_schema]
+            if constraint_row.table_name not in schema.tables:
+                continue
+            table = schema.tables[constraint_row.table_name]
+            if not all(row.column_name in table.columns
+                       for row in usage_rows):
+                continue
+            columns = [table.columns[row.column_name] for row in usage_rows]
+            if constraint_row.constraint_type in ('PRIMARY KEY', 'UNIQUE'):
+                is_primary = (constraint_row.constraint_type == 'PRIMARY KEY')
+                table.add_unique_key(columns, is_primary)
+            elif constraint_row.constraint_type == 'FOREIGN KEY':
+                row = usage_rows[0]
+                if row.referenced_table_schema not in catalog.schemas:
+                    continue
+                target_schema = catalog.schemas[row.referenced_table_schema]
+                if row.referenced_table_name not in target_schema.tables:
+                    continue
+                target_table = target_schema.tables[row.referenced_table_name]
+                if not all(row.referenced_column_name in target_table.columns
+                           for row in usage_rows):
+                    continue
+                target_columns = \
+                        [target_table.columns[row.referenced_column_name]
+                         for row in usage_rows]
+                table.add_foreign_key(columns, target_table, target_columns)
 
-    def introspect_tables(self, schema_key):
-        tables = []
-        for key in self.meta.tables_by_schema[schema_key]:
-            record = self.meta.tables[key]
-            if record.table_type not in ['BASE TABLE', 'VIEW']:
-                continue
-            schema_name = record.table_schema
-            name = record.table_name
-            if not self.permit_table(schema_name, name):
-                continue
-            columns = self.introspect_columns(key)
-            unique_keys = self.introspect_unique_keys(key)
-            foreign_keys = self.introspect_foreign_keys(key)
-            table = TableEntity(schema_name, name,
-                                columns, unique_keys, foreign_keys)
-            tables.append(table)
-        tables.sort(key=(lambda t: t.name))
-        return tables
+        connection.release()
+        return catalog
 
-    def introspect_columns(self, table_key):
-        columns = []
-        for key in self.meta.columns_by_table[table_key]:
-            record = self.meta.columns[key]
-            schema_name = record.table_schema
-            table_name = record.table_name
-            name = record.column_name
-            if not self.permit_column(schema_name, table_name, name):
-                continue
-            domain = self.introspect_domain(key)
-            is_nullable = (record.is_nullable == 'YES')
-            has_default = (record.column_default is not None)
-            column = ColumnEntity(schema_name, table_name, name, domain,
-                                  is_nullable, has_default)
-            columns.append(column)
-        return columns
 
-    def introspect_unique_keys(self, table_key):
-        unique_keys = []
-        for key in self.meta.constraints_by_table[table_key]:
-            record = self.meta.constraints[key]
-            if record.constraint_type not in ['PRIMARY KEY', 'UNIQUE']:
-                continue
-            schema_name = record.table_schema
-            table_name = record.table_name
-            column_names = []
-            for column_key in self.meta.key_columns_by_constraint[key]:
-                column_record = self.meta.key_columns[column_key]
-                column_names.append(column_record.column_name)
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
-                continue
-            if record.constraint_type == 'PRIMARY KEY':
-                unique_key = PrimaryKeyEntity(schema_name, table_name,
-                                              column_names)
-            else:
-                unique_key = UniqueKeyEntity(schema_name, table_name,
-                                             column_names)
-            unique_keys.append(unique_key)
-        return unique_keys
+class IntrospectMySQLDomain(Protocol):
 
-    def introspect_foreign_keys(self, table_key):
-        foreign_keys = []
-        for key in self.meta.constraints_by_table[table_key]:
-            record = self.meta.constraints[key]
-            if record.constraint_type != 'FOREIGN KEY':
-                continue
-            schema_name = record.table_schema
-            target_schema_name = None
-            table_name = record.table_name
-            target_table_name = None
-            column_names = []
-            target_column_names = []
-            for column_key in self.meta.key_columns_by_constraint[key]:
-                column_record = self.meta.key_columns[column_key]
-                if target_schema_name is None:
-                    target_schema_name = column_record.referenced_table_schema
-                if target_table_name is None:
-                    target_table_name = column_record.referenced_table_name
-                column_names.append(column_record.column_name)
-                target_column_names.append(column_record.referenced_column_name)
-            if not self.permit_schema(target_schema_name):
-                continue
-            if not self.permit_table(target_schema_name, target_table_name):
-                continue
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
-                continue
-            if not all(self.permit_column(target_schema_name,
-                                          target_table_name,
-                                          target_column_name)
-                       for target_column_name in target_column_names):
-                continue
-            foreign_key = ForeignKeyEntity(schema_name, table_name,
-                                           column_names,
-                                           target_schema_name,
-                                           target_table_name,
-                                           target_column_names)
-            foreign_keys.append(foreign_key)
-        return foreign_keys
+    def __init__(self, data_type, column_type, length, precision, scale):
+        self.data_type = data_type
+        self.column_type = column_type
+        self.length = length
+        self.precision = precision
+        self.scale = scale
 
-    def introspect_domain(self, key):
-        record = self.meta.columns[key]
-        data_type = record.data_type
-        character_maximum_length = record.character_maximum_length
-        if isinstance(character_maximum_length, long):
-            character_maximum_length = int(character_maximum_length)
-            if isinstance(character_maximum_length, long): # LONGTEXT
-                character_maximum_length = None
-        numeric_precision = record.numeric_precision
-        if isinstance(numeric_precision, long):
-            numeric_precision = int(numeric_precision)
-        numeric_scale = record.numeric_scale
-        if isinstance(numeric_scale, long):
-            numeric_scale = int(numeric_scale)
-        column_type = record.column_type
-        if data_type == 'char':
-            return MySQLStringDomain(data_type,
-                                     length=character_maximum_length,
-                                     is_varying=False)
-        elif data_type in ['varchar', 'tinytext',
-                           'text', 'mediumtext', 'longtext']:
-            return MySQLStringDomain(data_type,
-                                     length=character_maximum_length,
-                                     is_varying=True)
-        elif (data_type == 'enum' and column_type.startswith('enum(') and
-                                      column_type.endswith(')')):
+    def __call__(self):
+        return MySQLOpaqueDomain(self.data_type)
+
+
+class IntrospectMySQLCharDomain(IntrospectMySQLDomain):
+
+    named('char')
+
+    def __call__(self):
+        return MySQLStringDomain(self.data_type,
+                                 length=self.length,
+                                 is_varying=False)
+
+
+class IntrospectMySQLVarCharDomain(IntrospectMySQLDomain):
+
+    named('varchar', 'tinytext', 'text', 'mediumtext', 'longtext')
+
+    def __call__(self):
+        return MySQLStringDomain(self.data_type,
+                                 length=self.length,
+                                 is_varying=True)
+
+
+class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):
+
+    named('enum')
+
+    def __call__(self):
+        column_type = self.column_type
+        if column_type.startswith('enum(') and column_type.endswith(')'):
             labels = [item[1:-1] for item in column_type[5:-1].split(',')]
-            return MySQLEnumDomain(data_type, labels=labels)
-        elif data_type == 'tinyint' and column_type == 'tinyint(1)':
-            return MySQLBooleanDomain(data_type)
-        elif data_type in ['tinyint', 'smallint', 'mediumint',
-                           'int', 'bigint']:
-            return MySQLIntegerDomain(data_type)
-        elif data_type == 'decimal':
-            return MySQLDecimalDomain(data_type,
-                                      precision=numeric_precision,
-                                      scale=numeric_scale)
-        elif data_type in ['float', 'double']:
-            return MySQLFloatDomain(data_type)
-        elif data_type == 'date':
-            return MySQLDateDomain(data_type)
-        elif data_type == 'time':
-            return MySQLTimeDomain(data_type)
-        elif data_type in ['datetime', 'timestamp']:
-            return MySQLDateTimeDomain(data_type)
-        return MySQLOpaqueDomain(data_type)
+            return MySQLEnumDomain(self.data_type, labels=labels)
+        return super(IntrospectMySQLEnumDomain, self).__call__()
+
+
+class IntrospectMySQLIntegerDomain(IntrospectMySQLDomain):
+
+    named('tinyint', 'smallint', 'mediumint', 'int', 'bigint')
+
+    def __call__(self):
+        if self.data_type == 'tinyint' and self.column_type == 'tinyint(1)':
+            return MySQLBooleanDomain(self.data_type)
+        return MySQLIntegerDomain(self.data_type)
+
+
+class IntrospectMySQLDecimalDomain(IntrospectMySQLDomain):
+
+    named('decimal')
+
+    def __call__(self):
+        return MySQLDecimalDomain(self.data_type,
+                                  precision=self.precision,
+                                  scale=self.scale)
+
+
+class IntrospectMySQLFloatDomain(IntrospectMySQLDomain):
+
+    named('float', 'double')
+
+    def __call__(self):
+        return MySQLFloatDomain(self.data_type)
+
+
+class IntrospectMySQLDateDomain(IntrospectMySQLDomain):
+
+    named('date')
+
+    def __call__(self):
+        return MySQLDateDomain(self.data_type)
+
+
+class IntrospectMySQLTimeDomain(IntrospectMySQLDomain):
+
+    named('time')
+
+    def __call__(self):
+        return MySQLTimeDomain(self.data_type)
+
+
+class IntrospectMySQLDateTimeDomain(IntrospectMySQLDomain):
+
+    named('datetime', 'timestamp')
+
+    def __call__(self):
+        return MySQLDateTimeDomain(self.data_type)
 
 

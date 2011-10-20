@@ -86,8 +86,7 @@ class ClassifyHome(Classify):
         for name in sorted(buckets):
             candidates = buckets[name]
             if len(candidates) > 1:
-                rankings = [self.catalog.schemas[table.schema_name].priority
-                            for table in candidates]
+                rankings = [table.schema.priority for table in candidates]
                 max_rank = max(rankings)
                 if rankings.count(max_rank) == 1:
                     chosen = candidates[rankings.index(max_rank)]
@@ -108,7 +107,7 @@ class ClassifyHome(Classify):
 
         duplicates = set(buckets)
         for table in collisions:
-            fq_name = "%s_%s" % (normalize(table.schema_name),
+            fq_name = "%s_%s" % (normalize(table.schema.name),
                                  normalize(table.name))
             if fq_name in duplicates:
                 # TODO: find some way to report when this
@@ -151,7 +150,7 @@ class ClassifyTable(Classify):
         # Get a list of foreign keys associated with the given column.
         candidates = []
         for fk in self.table.foreign_keys:
-            if fk.origin_column_names != [column.name]:
+            if fk.origin_columns != [column]:
                 continue
             candidates.append(fk)
 
@@ -162,11 +161,7 @@ class ClassifyTable(Classify):
         # Generate the joins corresponding to each alternative.
         alternatives = []
         for fk in candidates:
-            origin_schema = self.catalog.schemas[fk.origin_schema_name]
-            origin = origin_schema.tables[fk.origin_name]
-            target_schema = self.catalog.schemas[fk.target_schema_name]
-            target = target_schema.tables[fk.target_name]
-            join = DirectJoin(origin, target, fk)
+            join = DirectJoin(fk)
             arc = ChainArc(self.table, [join])
             alternatives.append(arc)
         # We got an unambiguous link if there's only one foreign key
@@ -215,20 +210,18 @@ class ClassifyTable(Classify):
         for key in self.table.foreign_keys:
             weight = 0
             for uk in self.table.unique_keys:
-                if all(column_name in uk.origin_column_names
-                       for column_name in key.origin_column_names):
+                if all(column in uk.origin_columns
+                       for column in key.origin_columns):
                     weight = 1
                     break
-            target_schema = self.catalog.schemas[key.target_schema_name]
-            target = target_schema.tables[key.target_name]
-            join = DirectJoin(self.table, target, key)
+            join = DirectJoin(key)
             arc = ChainArc(self.table, [join])
             arc_by_key[key] = arc
             names = []
-            name = normalize(key.target_name)
+            name = normalize(key.target.name)
             names.append((name, weight))
-            origin_name = normalize(key.origin_column_names[-1])
-            target_name = normalize(key.target_column_names[-1])
+            origin_name = normalize(key.origin_columns[-1].name)
+            target_name = normalize(key.target_columns[-1].name)
             if origin_name.endswith(target_name):
                 name = origin_name[:-len(target_name)].rstrip('_')
                 if name:
@@ -261,39 +254,29 @@ class ClassifyTable(Classify):
         # Builds mapping of referencing tables that possess a foreign
         # key to current context table.
 
-        target_pair = (self.table.schema_name, self.table.name)
-        foreign_keys = []
-        for schema in self.catalog.schemas:
-            for table in schema.tables:
-                for key in table.foreign_keys:
-                    if target_pair == (key.target_schema_name, key.target_name):
-                        foreign_keys.append(key)
-
         arc_by_key = {}
         names_by_key = {}
         keys_by_name = {}
         weight_by_name = {}
-        for key in foreign_keys:
-            origin_schema = self.catalog.schemas[key.origin_schema_name]
-            origin = origin_schema.tables[key.origin_name]
+        for key in self.table.referring_foreign_keys:
             weight = 0
-            for uk in origin.unique_keys:
-                if all(column_name in uk.origin_column_names
-                       for column_name in key.origin_column_names):
+            for uk in key.origin.unique_keys:
+                if all(column in uk.origin_columns
+                       for column in key.origin_columns):
                     weight = 1
                     break
-            join = ReverseJoin(self.table, origin, key)
+            join = ReverseJoin(key)
             arc = ChainArc(self.table, [join])
             arc_by_key[key] = arc
             names = []
-            name = normalize(key.origin_name)
+            name = normalize(key.origin.name)
             names.append((name, weight))
-            origin_name = normalize(key.origin_column_names[-1])
-            target_name = normalize(key.target_column_names[-1])
+            origin_name = normalize(key.origin_columns[-1].name)
+            target_name = normalize(key.target_columns[-1].name)
             if origin_name.endswith(target_name):
                 name = origin_name[:-len(target_name)].rstrip('_')
                 if name:
-                    name += '_'+normalize(key.origin_name)
+                    name += '_'+normalize(key.origin.name)
                     names.append((name, weight+2))
             names_by_key[key] = names
             for name, weight in names:
@@ -304,7 +287,7 @@ class ClassifyTable(Classify):
                 if weight_by_name[name] == weight:
                     keys_by_name[name].append(key)
         labels = []
-        for key in foreign_keys:
+        for key in self.table.referring_foreign_keys:
             for name, weight in names_by_key[key]:
                 if keys_by_name[name][0] == key:
                     if len(keys_by_name[name]) == 1:

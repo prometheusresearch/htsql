@@ -1544,8 +1544,7 @@ class ColumnUnit(PrimitiveUnit):
     def __init__(self, column, flow, binding):
         assert isinstance(column, ColumnEntity)
         assert (flow.family.is_table and
-                (flow.family.table.schema_name, flow.family.table.name)
-                    == (column.schema_name, column.table_name))
+                flow.family.table == column.table)
         super(ColumnUnit, self).__init__(
                     flow=flow,
                     domain=column.domain,

@@ -139,9 +139,7 @@ class ColumnArc(Arc):
 
     def __init__(self, table, column, link=None):
         assert isinstance(table, TableEntity)
-        assert isinstance(column, ColumnEntity)
-        assert ((column.schema_name, column.table_name)
-                == (table.schema_name, table.name))
+        assert isinstance(column, ColumnEntity) and column.table is table
         assert isinstance(link, maybe(Arc))
         if link is not None:
             assert link.origin == TableNode(table)

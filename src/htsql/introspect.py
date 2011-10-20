@@ -33,17 +33,6 @@ class Introspect(Utility):
 
     An introspector analyzes the database meta-data and generates
     an HTSQL catalog.
-
-    Usage::
-
-        introspect = Introspect()
-        catalog = introspect()
-
-    Note that most implementations loads the meta-data information
-    when the adapter is constructed so subsequent calls of
-    :meth:`__call__` will always produce essentially the same catalog.
-    To re-load the meta-data from the database, create a new instance
-    of the :class:`Introspect` adapter.
     """
 
     def __call__(self):
@@ -61,6 +50,7 @@ def introspect():
             if catalog_cache.catalog is None:
                 introspect = Introspect()
                 catalog = introspect()
+                catalog.freeze()
                 catalog_cache.update(catalog)
     return catalog_cache.catalog
 

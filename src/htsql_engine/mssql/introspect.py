@@ -12,293 +12,257 @@ This module implements the introspection adapter for MS SQL Server.
 """
 
 
+from htsql.adapter import Protocol, named
 from htsql.introspect import Introspect
-from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
-                          ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
-                          ForeignKeyEntity)
+from htsql.entity import make_catalog
 from .domain import (MSSQLBooleanDomain, MSSQLIntegerDomain,
                      MSSQLDecimalDomain, MSSQLFloatDomain, MSSQLStringDomain,
                      MSSQLDateTimeDomain, MSSQLOpaqueDomain)
-from htsql.connect import Connect
-from htsql.util import Record
-
-
-class Meta(object):
-    """
-    Loads raw meta-data from the `sys` schema.
-    """
-
-    def __init__(self):
-        connect = Connect()
-        connection = connect()
-        cursor = connection.cursor()
-        self.schemas = self.fetch(cursor, 'sys.schemas', ['schema_id'])
-        self.objects = self.fetch(cursor, 'sys.objects', ['object_id'])
-        self.columns = self.fetch(cursor, 'sys.columns',
-                                  ['object_id', 'column_id'])
-        self.types = self.fetch(cursor, 'sys.types', ['user_type_id'])
-        self.key_constraints = self.fetch(cursor, 'sys.key_constraints',
-                                          ['object_id'])
-        self.indexes = self.fetch(cursor, 'sys.indexes',
-                                  ['object_id', 'index_id'])
-        self.index_columns = self.fetch(cursor, 'sys.index_columns',
-                                        ['object_id', 'index_id',
-                                         'index_column_id'])
-        self.foreign_keys = self.fetch(cursor, 'sys.foreign_keys',
-                                      ['object_id'])
-        self.foreign_key_columns = self.fetch(cursor, 'sys.foreign_key_columns',
-                                              ['constraint_object_id',
-                                               'constraint_column_id'])
-        cursor.execute("SELECT DEFAULT_SCHEMA_NAME"
-                       " FROM SYS.DATABASE_PRINCIPALS"
-                       " WHERE PRINCIPAL_ID = USER_ID()")
-        self.default_schema = cursor.fetchone()[0]
-        self.objects_by_schema = self.group(self.objects, self.schemas,
-                                            ['schema_id'])
-        self.columns_by_object = self.group(self.columns, self.objects,
-                                            ['object_id'])
-        self.key_constraints_by_parent = self.group(self.key_constraints,
-                                                    self.objects,
-                                                    ['parent_object_id'])
-        self.foreign_keys_by_parent = self.group(self.foreign_keys,
-                                                 self.objects,
-                                                 ['parent_object_id'])
-        self.columns_by_index = self.group(self.index_columns, self.indexes,
-                                           ['object_id', 'index_id'])
-        self.columns_by_foreign_key = self.group(self.foreign_key_columns,
-                                                 self.foreign_keys,
-                                                 ['constraint_object_id'])
-        connection.commit()
-        connection.release()
-
-    def fetch(self, cursor, table_name, id_names):
-        rows = {}
-        cursor.execute("SELECT * FROM %s" % table_name)
-        for items in cursor.fetchall():
-            attributes = {}
-            for kind, item in zip(cursor.description, items):
-                name = kind[0].lower()
-                if isinstance(item, unicode):
-                    item = item.encode('utf-8')
-                attributes[name] = item
-            key = tuple(attributes[name] for name in id_names)
-            record = Record(**attributes)
-            rows[key] = record
-        return rows
-
-    def group(self, targets, bases, id_names):
-        groups = {}
-        if not targets or not bases:
-            return groups
-        for key in bases:
-            groups[key] = []
-        for key in sorted(targets):
-            record = targets[key]
-            base_key = tuple(getattr(record, name) for name in id_names)
-            assert base_key in groups
-            groups[base_key].append(key)
-        return groups
+from htsql.connect import connect
+import itertools
+import fnmatch
 
 
 class IntrospectMSSQL(Introspect):
-    """
-    Implements the introspection adapter for MSSQL.
-    """
 
-    def __init__(self):
-        super(IntrospectMSSQL, self).__init__()
-        self.meta = Meta()
+    system_schema_names = ['guest', 'INFORMATION_SCHEMA', 'sys', 'db_*']
 
     def __call__(self):
-        return self.introspect_catalog()
+        connection = connect()
+        cursor = connection.cursor()
 
-    def introspect_catalog(self):
-        schemas = self.introspect_schemas()
-        return CatalogEntity(schemas)
+        catalog = make_catalog()
 
-    def permit_schema(self, schema_name):
-        if schema_name in ['guest', 'INFORMATION_SCHEMA', 'sys']:
-            return False
-        if schema_name.startswith('db_'):
-            return False
-        return True
+        schema_by_id = {}
+        cursor.execute("""
+            SELECT schema_id, name
+            FROM sys.schemas
+            ORDER BY name
+        """)
+        for row in cursor.fetchnamed():
+            if any(fnmatch.fnmatchcase(row.name, pattern)
+                   for pattern in self.system_schema_names):
+                continue
+            schema = catalog.add_schema(row.name.encode('utf-8'))
+            schema_by_id[row.schema_id] = schema
 
-    def permit_table(self, schema_name, table_name):
-        return True
+        cursor.execute("""
+            SELECT default_schema_name
+            FROM sys.database_principals
+            WHERE principal_id = USER_ID()
+        """)
+        default_schema_name = cursor.fetchone()[0].encode('utf-8')
+        if default_schema_name in catalog.schemas:
+            catalog.schemas[default_schema_name].set_priority(1)
 
-    def permit_column(self, schema_name, table_name, column_name):
-        return True
+        table_by_id = {}
+        cursor.execute("""
+            SELECT object_id, schema_id, name
+            FROM sys.objects
+            WHERE type in ('U', 'V')
+            ORDER BY schema_id, name
+        """)
+        for row in cursor.fetchnamed():
+            if row.schema_id not in schema_by_id:
+                continue
+            schema = schema_by_id[row.schema_id]
+            table = schema.add_table(row.name.encode('utf-8'))
+            table_by_id[row.object_id] = table
 
-    def introspect_schemas(self):
-        schemas = []
-        for key in sorted(self.meta.schemas):
-            record = self.meta.schemas[key]
-            name = record.name
-            if not self.permit_schema(name):
+        column_by_id = {}
+        cursor.execute("""
+            SELECT c.object_id, c.column_id, c.name, c.max_length,
+                   c.precision, c.scale, c.is_nullable, c.default_object_id,
+                   t.name AS type_name, s.name AS type_schema_name
+            FROM sys.columns c
+            JOIN sys.types t ON (c.system_type_id = t.system_type_id)
+            JOIN sys.schemas s ON (t.schema_id = s.schema_id)
+            ORDER BY c.object_id, c.column_id
+        """)
+        for row in cursor.fetchnamed():
+            if row.object_id not in table_by_id:
                 continue
-            tables = self.introspect_tables(key)
-            priority = 0
-            if name == self.meta.default_schema:
-                priority = 1
-            schema = SchemaEntity(name, tables, priority)
-            schemas.append(schema)
-        schemas.sort(key=(lambda s: s.name))
-        return schemas
+            table = table_by_id[row.object_id]
+            name = row.name.encode('utf-8')
+            type_schema_name = row.type_schema_name.encode('utf-8')
+            type_name = row.type_name.encode('utf-8')
+            length = row.max_length if row.max_length != -1 else None
+            precision = row.precision
+            scale = row.scale
+            introspect_domain = IntrospectMSSQLDomain(type_schema_name,
+                                                      type_name,
+                                                      length, precision, scale)
+            domain = introspect_domain()
+            is_nullable = bool(row.is_nullable)
+            has_default = bool(row.default_object_id)
+            column = table.add_column(name, domain, is_nullable, has_default)
+            column_by_id[row.object_id, row.column_id] = column
 
-    def introspect_tables(self, schema_key):
-        schema_record = self.meta.schemas[schema_key]
-        schema_name = schema_record.name
-        tables = []
-        for key in self.meta.objects_by_schema[schema_key]:
-            record = self.meta.objects[key]
-            if record.type not in ['U ', 'V ']:
+        cursor.execute("""
+            SELECT object_id, index_id, is_primary_key, is_unique_constraint
+            FROM sys.indexes
+            WHERE (is_primary_key = 1 OR is_unique_constraint = 1) AND
+                  is_disabled = 0
+            ORDER BY object_id, index_id
+        """)
+        index_rows = cursor.fetchnamed()
+        cursor.execute("""
+            SELECT object_id, index_id, index_column_id, column_id
+            FROM sys.index_columns
+            ORDER BY object_id, index_id, index_column_id
+        """)
+        column_rows_by_id = \
+                dict((key, list(group))
+                     for key, group in itertools.groupby(cursor.fetchnamed(),
+                                         lambda r: (r.object_id, r.index_id)))
+        for row in index_rows:
+            if row.object_id not in table_by_id:
                 continue
-            name = record.name
-            if not self.permit_table(schema_name, name):
+            table = table_by_id[row.object_id]
+            key = (row.object_id, row.index_id)
+            if key not in column_rows_by_id:
                 continue
-            columns = self.introspect_columns(key)
-            unique_keys = self.introspect_unique_keys(key)
-            foreign_keys = self.introspect_foreign_keys(key)
-            table = TableEntity(schema_name, name,
-                                columns, unique_keys, foreign_keys)
-            tables.append(table)
-        tables.sort(key=(lambda t: t.name))
-        return tables
+            column_rows = column_rows_by_id[key]
+            if not all((column_row.object_id, column_row.column_id)
+                            in column_by_id
+                       for column_row in column_rows):
+                continue
+            columns = [column_by_id[column_row.object_id, column_row.column_id]
+                       for column_row in column_rows]
+            is_primary = bool(row.is_primary_key)
+            table.add_unique_key(columns, is_primary)
 
-    def introspect_columns(self, table_key):
-        table_record = self.meta.objects[table_key]
-        schema_record = self.meta.schemas[table_record.schema_id,]
-        schema_name = schema_record.name
-        table_name = table_record.name
-        columns = []
-        for key in self.meta.columns_by_object[table_key]:
-            record = self.meta.columns[key]
-            name = record.name
-            if not self.permit_column(schema_name, table_name, name):
+        cursor.execute("""
+            SELECT object_id, parent_object_id, referenced_object_id
+            FROM sys.foreign_keys
+            WHERE is_disabled = 0
+            ORDER BY object_id
+        """)
+        key_rows = cursor.fetchnamed()
+        cursor.execute("""
+            SELECT constraint_object_id, constraint_column_id,
+                   parent_object_id, parent_column_id,
+                   referenced_object_id, referenced_column_id
+            FROM sys.foreign_key_columns
+            ORDER BY constraint_object_id, constraint_column_id
+        """)
+        key_column_rows_by_id = \
+                dict((key, list(group))
+                     for key, group in itertools.groupby(cursor.fetchnamed(),
+                                            lambda r: r.constraint_object_id))
+        for row in key_rows:
+            if row.parent_object_id not in table_by_id:
                 continue
-            domain = self.introspect_domain(key)
-            is_nullable = bool(record.is_nullable)
-            has_default = bool(record.default_object_id)
-            column = ColumnEntity(schema_name, table_name, name, domain,
-                                  is_nullable, has_default)
-            columns.append(column)
-        return columns
+            table = table_by_id[row.parent_object_id]
+            if row.referenced_object_id not in table_by_id:
+                continue
+            target_table = table_by_id[row.referenced_object_id]
+            if row.object_id not in key_column_rows_by_id:
+                continue
+            column_rows = key_column_rows_by_id[row.object_id]
+            column_ids = [(column_row.parent_object_id,
+                           column_row.parent_column_id)
+                          for column_row in column_rows]
+            target_column_ids = [(column_row.referenced_object_id,
+                                  column_row.referenced_column_id)
+                                 for column_row in column_rows]
+            if not all(column_id in column_by_id
+                       for column_id in column_ids):
+                continue
+            columns = [column_by_id[column_id]
+                       for column_id in column_ids]
+            if not all(column_id in column_by_id
+                       for column_id in target_column_ids):
+                continue
+            target_columns = [column_by_id[column_id]
+                              for column_id in target_column_ids]
+            table.add_foreign_key(columns, target_table, target_columns)
 
-    def introspect_unique_keys(self, table_key):
-        table_record = self.meta.objects[table_key]
-        schema_record = self.meta.schemas[table_record.schema_id,]
-        schema_name = schema_record.name
-        table_name = table_record.name
-        unique_keys = []
-        for key in self.meta.key_constraints_by_parent[table_key]:
-            record = self.meta.key_constraints[key]
-            index_key = (record.parent_object_id, record.unique_index_id)
-            index_record = self.meta.indexes[index_key]
-            if index_record.is_disabled:
-                continue
-            assert (index_record.is_primary_key or
-                    index_record.is_unique_constraint)
-            column_names = []
-            for index_column_key in self.meta.columns_by_index[index_key]:
-                index_column_record = self.meta.index_columns[index_column_key]
-                column_key = (index_column_record.object_id,
-                              index_column_record.column_id)
-                column_record = self.meta.columns[column_key]
-                column_names.append(column_record.name)
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
-                continue
-            if index_record.is_primary_key:
-                unique_key = PrimaryKeyEntity(schema_name, table_name,
-                                              column_names)
-            else:
-                unique_key = UniqueKeyEntity(schema_name, table_name,
-                                             column_names)
-            unique_keys.append(unique_key)
-        return unique_keys
+        connection.release()
+        return catalog
 
-    def introspect_foreign_keys(self, table_key):
-        table_record = self.meta.objects[table_key]
-        schema_record = self.meta.schemas[table_record.schema_id,]
-        schema_name = schema_record.name
-        table_name = table_record.name
-        foreign_keys = []
-        for key in self.meta.foreign_keys_by_parent[table_key]:
-            record = self.meta.foreign_keys[key]
-            if record.is_disabled:
-                continue
-            target_table_key = (record.referenced_object_id,)
-            target_table_record = self.meta.objects[target_table_key]
-            target_schema_key = (target_table_record.schema_id,)
-            target_schema_record = self.meta.schemas[target_schema_key]
-            target_schema_name = target_schema_record.name
-            target_table_name = target_table_record.name
-            column_names = []
-            target_column_names = []
-            for column_key in self.meta.columns_by_foreign_key[key]:
-                fk_column_record = self.meta.foreign_key_columns[column_key]
-                column_record = self.meta.columns[
-                                        fk_column_record.parent_object_id,
-                                        fk_column_record.parent_column_id]
-                target_column_record = self.meta.columns[
-                                        fk_column_record.referenced_object_id,
-                                        fk_column_record.referenced_column_id]
-                column_names.append(column_record.name)
-                target_column_names.append(target_column_record.name)
-            if not self.permit_schema(target_schema_name):
-                continue
-            if not self.permit_table(target_schema_name, target_table_name):
-                continue
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
-                continue
-            if not all(self.permit_column(target_schema_name,
-                                          target_table_name,
-                                          target_column_name)
-                       for target_column_name in target_column_names):
-                continue
-            foreign_key = ForeignKeyEntity(schema_name, table_name,
-                                           column_names,
-                                           target_schema_name,
-                                           target_table_name,
-                                           target_column_names)
-            foreign_keys.append(foreign_key)
-        return foreign_keys
 
-    def introspect_domain(self, key):
-        column_record = self.meta.columns[key]
-        type_record = self.meta.types[column_record.system_type_id,]
-        schema_record = self.meta.schemas[type_record.schema_id,]
-        schema_name = schema_record.name
-        type_name = type_record.name
-        name = (schema_name, type_name)
-        max_length = column_record.max_length
-        if max_length == -1:
-            max_length = None
-        precision = column_record.precision
-        scale = column_record.scale
-        if name in [('sys', 'char'), ('sys', 'nchar')]:
-            return MSSQLStringDomain(schema_name, type_name,
-                                     length=max_length,
-                                     is_varying=False)
-        if name in [('sys', 'varchar'), ('sys', 'nvarchar')]:
-            return MSSQLStringDomain(schema_name, type_name,
-                                     length=max_length,
-                                     is_varying=False)
-        elif name == ('sys', 'bit'):
-            return MSSQLBooleanDomain(schema_name, type_name)
-        elif name in [('sys', 'smallint'), ('sys', 'int'), ('sys', 'bigint')]:
-            # FIXME: tinyint?
-            return MSSQLIntegerDomain(schema_name, type_name,
-                                      size=max_length*8)
-        elif name in [('sys', 'decimal'), ('sys', 'numeric')]:
-            return MSSQLDecimalDomain(schema_name, type_name,
-                                      precision=precision, scale=scale)
-        elif name in [('sys', 'real'), ('sys', 'float')]:
-            return MSSQLFloatDomain(schema_name, type_name,
-                                    size=max_length*8)
-        elif name in [('sys', 'datetime'), ('sys', 'smalldatetime')]:
-            return MSSQLDateTimeDomain(schema_name, type_name)
-        return MSSQLOpaqueDomain(schema_name, type_name)
+class IntrospectMSSQLDomain(Protocol):
+
+    @classmethod
+    def dispatch(component, schema_name, type_name, *args, **kwds):
+        return (schema_name, type_name)
+
+    @classmethod
+    def matches(component, dispatch_key):
+        return (dispatch_key in component.names)
+
+    def __init__(self, schema_name, type_name,
+                 length, precision, scale):
+        self.schema_name = schema_name
+        self.type_name = type_name
+        self.length = length
+        self.precision = precision
+        self.scale = scale
+
+    def __call__(self):
+        return MSSQLOpaqueDomain(self.schema_name, self.type_name)
+
+
+class IntrospectMSSQLCharDomain(IntrospectMSSQLDomain):
+
+    named(('sys', 'char'), ('sys', 'nchar'))
+
+    def __call__(self):
+        return MSSQLStringDomain(self.schema_name, self.type_name,
+                                 length=self.length, is_varying=False)
+
+
+class IntrospectMSSQLVarCharDomain(IntrospectMSSQLDomain):
+
+    named(('sys', 'varchar'), ('sys', 'nvarchar'))
+
+    def __call__(self):
+        return MSSQLStringDomain(self.schema_name, self.type_name,
+                                 length=self.length, is_varying=False)
+
+
+class IntrospectMSSQLBitDomain(IntrospectMSSQLDomain):
+
+    named(('sys', 'bit'))
+
+    def __call__(self):
+        return MSSQLBooleanDomain(self.schema_name, self.type_name)
+
+
+class IntrospectMSSQLIntegerDomain(IntrospectMSSQLDomain):
+
+    named(('sys', 'tinyint'), ('sys', 'smallint'),
+          ('sys', 'int'), ('sys', 'bigint'))
+
+    def __call__(self):
+        return MSSQLIntegerDomain(self.schema_name, self.type_name,
+                                  size=self.length*8)
+
+
+class IntrospectMSSQLDecimalDomain(IntrospectMSSQLDomain):
+
+    named(('sys', 'decimal'), ('sys', 'numeric'))
+
+    def __call__(self):
+        return MSSQLDecimalDomain(self.schema_name, self.type_name,
+                                  precision=self.precision, scale=self.scale)
+
+
+class IntrospectMSSQLFloatDomain(IntrospectMSSQLDomain):
+
+    named(('sys', 'real'), ('sys', 'float'))
+
+    def __call__(self):
+        return MSSQLFloatDomain(self.schema_name, self.type_name,
+                                size=self.length*8)
+
+
+class IntrospectMSSQLDateTimeDomain(IntrospectMSSQLDomain):
+
+    named(('sys', 'datetime'), ('sys', 'smalldatetime'))
+
+    def __call__(self):
+        return MSSQLDateTimeDomain(self.schema_name, self.type_name)
 
 
