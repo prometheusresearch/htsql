@@ -178,7 +178,7 @@ class MutableSchemaEntity(SchemaEntity, MutableEntity):
         self.__class__ = SchemaEntity
 
     def remove(self):
-        for table in reversed(self.tables):
+        for table in reversed(list(self.tables)):
             table.remove()
         self.catalog.schemas.remove(self)
         self.__dict__.clear()
@@ -232,14 +232,15 @@ class MutableTableEntity(TableEntity, MutableEntity):
         self.__class__ = TableEntity
 
     def remove(self):
-        for unique_key in self.unique_keys:
+        for unique_key in list(self.unique_keys):
             unique_key.remove()
-        for foreign_key in self.foreign_keys:
+        for foreign_key in list(self.foreign_keys):
             foreign_key.remove()
-        for foreign_key in self.referring_foreign_keys:
+        for foreign_key in list(self.referring_foreign_keys):
             foreign_key.remove()
-        for column in reverse(self.columns):
+        for column in reversed(list(self.columns)):
             column.remove()
+        self.schema.tables.remove(self)
         self.__dict__.clear()
         self.__class__ = RemovedEntity
 
@@ -311,6 +312,7 @@ class MutableColumnEntity(ColumnEntity, MutableEntity):
             foreign_key.remove()
         for foreign_key in self.referring_foreign_keys:
             foreign_key.remove()
+        self.table.columns.remove(self)
         self.__dict__.clear()
         self.__class__ = RemovedEntity
 

@@ -85,6 +85,7 @@ ENTRY_POINTS = {
         'tweak.resource = htsql_tweak.resource:TweakResourceAddon',
         'tweak.shell = htsql_tweak.shell:TweakShellAddon',
         'tweak.shell.default = htsql_tweak.shell.default:TweakShellDefaultAddon',
+        'tweak.override = htsql_tweak.override:TweakOverrideAddon',
     ],
 }
 INSTALL_REQUIRES = [
