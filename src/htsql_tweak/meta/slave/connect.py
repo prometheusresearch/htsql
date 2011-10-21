@@ -3,6 +3,7 @@
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
+from __future__ import with_statement
 from htsql.context import context
 from htsql.connect import Connect
 from htsql.adapter import weigh
@@ -142,19 +143,15 @@ class MetaSlaveConnect(Connect):
 
     weigh(2.0) # ensure connections here are not pooled
 
-    def open_connection(self, with_autocommit=False):
+    def open(self):
         app = context.app
         connection = app.tweak.meta.slave.cached_connection
         if connection is None:
             connection = sqlite3.connect(':memory:', check_same_thread=False)
-            slave_app = app
             master_app = app.tweak.meta.slave.master()
-            context.switch(slave_app, master_app)
-            try:
+            with master_app:
                 create_meta_schema(connection)
                 populate_meta_schema(connection)
-            finally:
-                context.switch(master_app, slave_app)
             connection.commit()
             app.tweak.meta.slave.cached_connection = connection
         return connection

@@ -174,16 +174,6 @@ class ServerRoutine(Routine):
         except ImportError, exc:
             raise ScriptError("failed to construct application: %s" % exc)
 
-        # Verify that the application can connect to the database and
-        # execute queries.
-        try:
-            with app:
-                produce('/true()')
-        except DBError, exc:
-            raise ScriptError("failed to connect to the database: %s" % exc)
-        except HTTPError, exc:
-            raise ScriptError("unable to perform a database query: %s" % exc)
-
         # Create the HTTP server.
         httpd = HTSQLServer(self)
         httpd.set_app(app)

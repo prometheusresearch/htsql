@@ -7,6 +7,19 @@
 from htsql.context import context
 from htsql.adapter import weigh
 from htsql.introspect import Introspect
+import threading
+
+
+class UnusedPatternCache(object):
+
+    def __init__(self):
+        self.patterns = None
+        self.lock = threading.Lock()
+
+    def update(self, patterns):
+        with self.lock:
+            if self.patterns is None:
+                self.patterns = patterns
 
 
 class OverrideIntrospect(Introspect):
@@ -165,8 +178,15 @@ class OverrideIntrospect(Introspect):
                                               pattern.is_partial)
                         unused.discard(pattern)
 
-        #if unused:
-        #    print unused
+        unused_patterns = []
+        for pattern in (addon.include_schemas + addon.exclude_schemas +
+                        addon.include_tables + addon.exclude_tables +
+                        addon.include_columns + addon.exclude_columns +
+                        addon.not_nulls + addon.unique_keys +
+                        addon.foreign_keys):
+            if pattern in unused:
+                unused_patterns.append(pattern)
+        addon.unused_pattern_cache.update(unused_patterns)
 
         return catalog
 

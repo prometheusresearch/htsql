@@ -978,16 +978,6 @@ class ShellRoutine(Routine):
         except ImportError, exc:
             raise ScriptError("failed to construct application: %s" % exc)
 
-        # Verify that the application can connect to the database and
-        # execute queries.
-        try:
-            with self.state.app:
-                produce('/true()')
-        except DBError, exc:
-            raise ScriptError("failed to connect to the database: %s" % exc)
-        except HTTPError, exc:
-            raise ScriptError("unable to perform a database query: %s" % exc)
-
         # Display the welcome notice; load the history.
         self.setup()
         try:

@@ -7,8 +7,10 @@
 from . import introspect, pattern
 from htsql.addon import Addon, Parameter
 from htsql.validator import SeqVal
+from htsql.introspect import introspect
 from .pattern import (SchemaPatternVal, TablePatternVal, ColumnPatternVal,
                       UniqueKeyPatternVal, ForeignKeyPatternVal)
+from .introspect import UnusedPatternCache
 
 
 class TweakOverrideAddon(Addon):
@@ -35,5 +37,17 @@ class TweakOverrideAddon(Addon):
             Parameter('foreign_keys', SeqVal(ForeignKeyPatternVal()),
                       default=[]),
     ]
+
+    def __init__(self, app, attributes):
+        super(TweakOverrideAddon, self).__init__(app, attributes)
+        self.unused_pattern_cache = UnusedPatternCache()
+
+    def validate(self):
+        catalog = introspect()
+        unused_patterns = self.unused_pattern_cache.patterns
+        if unused_patterns:
+            raise ValueError("unused override patterns: %s"
+                             % ", ".join(str(pattern)
+                                         for pattern in unused_patterns))
 
 
