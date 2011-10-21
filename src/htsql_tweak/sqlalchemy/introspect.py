@@ -9,22 +9,18 @@
 This module implements the introspection adapter for SQLAlchemy MetaData.
 """
 
+from htsql.context import context
+from htsql.adapter import Adapter, weigh, adapts, adapts_many
 from htsql.introspect import Introspect
-from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
-                          ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
-                          ForeignKeyEntity)
+from htsql.entity import make_catalog
 from htsql.domain import (BooleanDomain, IntegerDomain, TimeDomain,
                           FloatDomain, StringDomain, DateDomain,
                           DateTimeDomain, OpaqueDomain)
 from htsql.connect import Connect
-from htsql.util import Record
-
-from htsql.context import context
-from htsql.adapter import weigh
-
 from sqlalchemy import types
 from sqlalchemy.schema import (PrimaryKeyConstraint, ForeignKeyConstraint,
-                               CheckConstraint, UniqueConstraint) 
+                               CheckConstraint, UniqueConstraint)
+
 
 class SQLAlchemyIntrospect(Introspect):
     """ override normal introspection with SQLAlchemy's MetaData """
@@ -33,134 +29,157 @@ class SQLAlchemyIntrospect(Introspect):
 
     def __init__(self):
         super(SQLAlchemyIntrospect, self).__init__()
- 
+
     def __call__(self):
         metadata = context.app.tweak.sqlalchemy.metadata
-        if metadata:
-            return self.convert_catalog(metadata)
-        return super(SQLAlchemyIntrospect, self).__call__()
- 
-    def permit_schema(self, schema_name):
-        return True
+        if not metadata:
+            return super(SQLAlchemyIntrospect, self).__call__()
 
-    def permit_table(self, schema_name, table_name):
-        return True
+        catalog = make_catalog()
 
-    def permit_column(self, schema_name, table_name, column_name):
-        return True
-    
-    def permit_columns(self, schema_name, table_name, column_names):
-        return all(self.permit_column(schema_name, table_name, column_name)
-                           for column_name in column_names)
+        for table_record in metadata.sorted_tables:
+            schema_name = table_record.schema or '_'
+            if schema_name not in catalog.schemas:
+                catalog.add_schema(schema_name)
+            schema = catalog.schemas[schema_name]
+            table = schema.add_table(table_record.name)
 
-    def convert_domain(self, sqa_type):
-        for (test, ifso) in ((types.Boolean, BooleanDomain),
-                             (types.Integer, IntegerDomain),
-                             (types.DateTime, DateTimeDomain),
-                             (types.Date, DateDomain),
-                             (types.Time, TimeDomain)):
-            if isinstance(sqa_type, test):
-                return ifso()
-        if isinstance(sqa_type, types.String):
-           is_varying = True
-           if isinstance(sqa_type, (types.CHAR, types.NCHAR)):
-               is_varying = False
-           if isinstance(sqa_type, types.TEXT):
-               assert sqa_type.length is None
-           return StringDomain(sqa_type.length, is_varying)
-        if isinstance(sqa_type, types.Float):
-           return FloatDomain(sqa_type.precision)
-        if isinstance(sqa_type, types.Numeric):
-           return DecimalDomain(sqa_type.precision, sqa_type.scale)
+            for column_record in table_record.columns:
+                introspect_domain = IntrospectSADomain(column_record.type)
+                domain = introspect_domain()
+                is_nullable = column_record.nullable
+                has_default = (column_record.server_default is not None)
+                table.add_column(column_record.name, domain,
+                                 is_nullable, has_default)
+
+        for table_record in metadata.sorted_tables:
+            schema_name = table_record.schema or '_'
+            schema = catalog.schemas[schema_name]
+            table = schema.tables[table_record.name]
+
+            for key_record in table_record.constraints:
+                if isinstance(key_record, (PrimaryKeyConstraint,
+                                           UniqueConstraint)):
+                    names = [column_record.name
+                             if not isinstance(column_record, str)
+                             else column_record
+                             for column_record in key_record.columns]
+                    if not all(name in table.columns for name in names):
+                        continue
+                    columns = [table.columns[name] for name in names]
+                    is_primary = isinstance(key_record, PrimaryKeyConstraint)
+                    table.add_unique_key(columns, is_primary)
+                elif isinstance(key_record, ForeignKeyConstraint):
+                    names = [column_record.name
+                             if not isinstance(column_record, str)
+                             else column_record
+                             for column_record in key_record.columns]
+                    if not all(name in table.columns for name in names):
+                        continue
+                    columns = [table.columns[name] for name in names]
+                    target_records = [element.column
+                                      for element in key_record.elements]
+                    target_table_record = target_records[0].table
+                    target_schema_name = target_table_record.schema or '_'
+                    if target_schema_name not in catalog.schemas:
+                        continue
+                    target_schema = catalog.schemas[target_schema_name]
+                    if target_table_record.name not in target_schema.tables:
+                        continue
+                    target_table = \
+                            target_schema.tables[target_table_record.name]
+                    target_names = [target_record.name
+                                    for target_record in target_records]
+                    if not all(name in target_table.columns
+                               for name in target_names):
+                        continue
+                    target_columns = [target_table.columns[name]
+                                      for name in target_names]
+                    table.add_foreign_key(columns, target_table, target_columns)
+
+        return catalog
+
+
+class IntrospectSADomain(Adapter):
+
+    adapts(types.TypeEngine)
+
+    def __init__(self, type):
+        self.type = type
+
+    def __call__(self):
         return OpaqueDomain()
 
-    def convert_columns(self, schema, table):
-        columns = []
-        for column in table.columns:
-            if not self.permit_column(schema, table.name, column.name) and \
-               not column.primary_key:
-                continue
-            domain = self.convert_domain(column.type)
-            has_default = column.server_default is not None
-            columns.append(ColumnEntity(schema, table.name, 
-                                        column.name, domain,
-                                        column.nullable, has_default))
-        return columns
 
-    def convert_unique_keys(self, schema, table):
-        unique_keys = []
-        for cons in table.constraints:
-            if isinstance(cons, PrimaryKeyConstraint):
-                column_names = []
-                for column in cons.columns:
-                    column_names.append(column.name)
-                unique_keys.append(PrimaryKeyEntity(schema, table.name, 
-                                                    column_names))
-                continue
-            if isinstance(cons, UniqueConstraint):
-                column_names = []
-                for column in cons.columns:
-                    column_names.append(column.name)
-                if not self.permit_columns(schema, table.name, column_names):
-                    continue
-                unique_keys.append(UniqueKeyEntity(schema, table.name, 
-                                                   column_names))
-                continue
-        return unique_keys
-            
-    def convert_foreign_keys(self, schema, table):
-        foreign_keys = []
-        for cons in table.constraints:
-            if not isinstance(cons, ForeignKeyConstraint):
-                continue
-            source_names = []
-            for column in cons.columns:
-                if type(column) == str:
-                    source_names.append(column)
-                else:
-                    source_names.append(column.name)
-            target_columns = [e.column for e in cons.elements]
-            target_table = target_columns[0].table
-            target_schema = target_table.schema or '_'
-            target_names = [column.name for column in target_columns]
-            if not self.permit_schema(target_schema):
-                continue
-            if not self.permit_table(target_schema, target_table.name):
-                continue
-            if not self.permit_columns(schema, table.name, source_names):
-                continue
-            if not self.permit_columns(target_schema, target_table.name, 
-                                       target_names):
-                continue
-            foreign_key = ForeignKeyEntity(schema, table.name, source_names,
-                             target_schema, target_table.name, target_names)
-            foreign_keys.append(foreign_key)
-        return foreign_keys
+class IntrospectSABooleanDomain(IntrospectSADomain):
 
-    def convert_tables(self, metadata):
-        tables = []
-        for table in metadata.sorted_tables:
-            schema_name = table.schema or '_'
-            if not self.permit_schema(schema_name):
-                continue
-            if not self.permit_table(schema_name, table.name):
-                continue
-            columns = self.convert_columns(schema_name, table)
-            unique_keys = self.convert_unique_keys(schema_name, table)
-            foreign_keys = self.convert_foreign_keys(schema_name, table)
-            table = TableEntity(schema_name, table.name, columns, 
-                                unique_keys, foreign_keys)
-            tables.append(table)
-        return tables
+    adapts(types.Boolean)
 
-    def convert_catalog(self, metadata):
-        buckets = {}
-        tables = self.convert_tables(metadata)
-        for table in tables:
-            bucket = buckets.setdefault(table.schema_name, [])
-            bucket.append(table)
-        schemas = []
-        for (schema_name, tables) in buckets.items():
-             schemas.append(SchemaEntity(schema_name, tables))
-        return CatalogEntity(schemas)
-            
+    def __call__(self):
+        return BooleanDomain()
+
+
+class IntrospectSAIntegerDomain(IntrospectSADomain):
+
+    adapts(types.Integer)
+
+    def __call__(self):
+        return IntegerDomain()
+
+
+class IntrospectSAStringDomain(IntrospectSADomain):
+
+    adapts(types.String)
+
+    def __call__(self):
+        return StringDomain(self.type.length, True)
+
+
+class IntrospectSACharDomain(IntrospectSADomain):
+
+    adapts_many(types.CHAR, types.NCHAR)
+
+    def __call__(self):
+        return StringDomain(self.type.length, False)
+
+
+class IntrospectSAFloatDomain(IntrospectSADomain):
+
+    adapts(types.Float)
+
+    def __call__(self):
+        return FloatDomain()
+
+
+class IntrospectSADecimalDomain(IntrospectSADomain):
+
+    adapts(types.Numeric)
+
+    def __call__(self):
+        return DecimalDomain(self.type.precision, self.type.scale)
+
+
+class IntrospectSADateDomain(IntrospectSADomain):
+
+    adapts(types.Date)
+
+    def __call__(self):
+        return DateDomain()
+
+
+class IntrospectSATimeDomain(IntrospectSADomain):
+
+    adapts(types.Time)
+
+    def __call__(self):
+        return TimeDomain()
+
+
+class IntrospectSADateTimeDomain(IntrospectSADomain):
+
+    adapts(types.DateTime)
+
+    def __call__(self):
+        return DateTimeDomain()
+
+
