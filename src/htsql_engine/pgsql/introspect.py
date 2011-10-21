@@ -21,11 +21,13 @@ from .domain import (PGBooleanDomain, PGIntegerDomain, PGFloatDomain,
                      PGTimeDomain, PGDateTimeDomain, PGOpaqueDomain)
 from htsql.connect import connect
 import itertools
+import fnmatch
 
 
 class IntrospectPGSQL(Introspect):
 
-    system_schema_names = ['pg_catalog', 'information_schema']
+    system_schema_names = ['pg_*', 'information_schema']
+    system_table_names = []
     system_column_names = ['tableoid', 'cmax', 'xmax', 'cmin', 'xmin', 'ctid']
 
     def __call__(self):
@@ -42,7 +44,8 @@ class IntrospectPGSQL(Introspect):
         schema_by_oid = {}
         for row in cursor.fetchnamed():
             name = row.nspname
-            if name in self.system_schema_names:
+            if any(fnmatch.fnmatchcase(name, pattern)
+                   for pattern in self.system_schema_names):
                 continue
             schema = catalog.add_schema(name)
             schema_by_oid[row.oid] = schema
@@ -58,15 +61,18 @@ class IntrospectPGSQL(Introspect):
 
         table_by_oid = {}
         cursor.execute("""
-            SELECT c.oid, c.relkind, c.relnamespace, c.relname
+            SELECT c.oid, c.relnamespace, c.relname
             FROM pg_catalog.pg_class c
-            WHERE HAS_TABLE_PRIVILEGE(c.oid, 'SELECT')
+            WHERE c.relkind IN ('r', 'v') AND
+                  HAS_TABLE_PRIVILEGE(c.oid, 'SELECT')
             ORDER BY c.relnamespace, c.relname
         """)
         for row in cursor.fetchnamed():
-            if row.relkind not in ('r', 'v'):
-                continue
             if row.relnamespace not in schema_by_oid:
+                continue
+            name = row.relname
+            if any(fnmatch.fnmatchcase(name, pattern)
+                   for pattern in self.system_table_names):
                 continue
             schema = schema_by_oid[row.relnamespace]
             table = schema.add_table(row.relname)
@@ -102,7 +108,8 @@ class IntrospectPGSQL(Introspect):
         for row in cursor.fetchnamed():
             if row.attisdropped:
                 continue
-            if row.attname in self.system_column_names:
+            if any(fnmatch.fnmatchcase(row.attname, pattern)
+                   for pattern in self.system_column_names):
                 continue
             if row.attrelid not in table_by_oid:
                 continue
