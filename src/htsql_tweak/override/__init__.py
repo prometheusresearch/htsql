@@ -7,7 +7,8 @@
 from . import introspect, pattern
 from htsql.addon import Addon, Parameter
 from htsql.validator import SeqVal
-from .pattern import SchemaPatternVal, TablePatternVal, ColumnPatternVal
+from .pattern import (SchemaPatternVal, TablePatternVal, ColumnPatternVal,
+                      UniqueKeyPatternVal, ForeignKeyPatternVal)
 
 
 class TweakOverrideAddon(Addon):
@@ -15,15 +16,24 @@ class TweakOverrideAddon(Addon):
     name = 'tweak.override'
 
     parameters = [
-            Parameter('include_schema', SeqVal(SchemaPatternVal())),
-            Parameter('exclude_schema', SeqVal(SchemaPatternVal())),
-            Parameter('include_table', SeqVal(TablePatternVal())),
-            Parameter('exclude_table', SeqVal(TablePatternVal())),
-            Parameter('include_column', SeqVal(ColumnPatternVal())),
-            Parameter('exclude_column', SeqVal(ColumnPatternVal())),
-#            Parameter('not-null', SeqVal(NotNullConstraintVal())),
-#            Parameter('unique-key', SeqVal(UniqueKeyConstraintVal())),
-#            Parameter('foreign-key', SeqVal(ForeignKeyConstraintVal())),
+            Parameter('include_schemas', SeqVal(SchemaPatternVal()),
+                      default=[]),
+            Parameter('exclude_schemas', SeqVal(SchemaPatternVal()),
+                      default=[]),
+            Parameter('include_tables', SeqVal(TablePatternVal()),
+                      default=[]),
+            Parameter('exclude_tables', SeqVal(TablePatternVal()),
+                      default=[]),
+            Parameter('include_columns', SeqVal(ColumnPatternVal()),
+                      default=[]),
+            Parameter('exclude_columns', SeqVal(ColumnPatternVal()),
+                      default=[]),
+            Parameter('not_nulls', SeqVal(ColumnPatternVal()),
+                      default=[]),
+            Parameter('unique_keys', SeqVal(UniqueKeyPatternVal()),
+                      default=[]),
+            Parameter('foreign_keys', SeqVal(ForeignKeyPatternVal()),
+                      default=[]),
     ]
 
 

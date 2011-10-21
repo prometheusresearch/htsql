@@ -294,6 +294,8 @@ class MutableColumnEntity(ColumnEntity, MutableEntity):
 
     def set_is_nullable(self, is_nullable):
         assert isinstance(is_nullable, bool)
+        if is_nullable and self.table.primary_key is not None:
+            assert self not in self.table.primary_key.origin_columns
         self.is_nullable = is_nullable
         return self
 
