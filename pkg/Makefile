@@ -1,13 +1,22 @@
-VERSION = '2.2.0b2'
+VERSION = 2.2.0b2
+ARCHIVE = HTSQL-$(VERSION).tar.gz
 
-clean:
-	rm -rf python-htsql* HTSQL-*
+$(ARCHIVE):
+	wget http://pypi.python.org/packages/source/H/HTSQL/$(ARCHIVE)
 
-deb:
-	wget http://pypi.python.org/packages/source/H/HTSQL/HTSQL-$(VERSION).tar.gz
-	mv HTSQL-$(VERSION).tar.gz python-htsql_2.2.0b2.orig.tar.gz
-	tar xvfz python-htsql_$(VERSION).orig.tar.gz
+debian/htsql.1:
+	help2man --help-option=help --version-string=$(VERSION) \
+		--no-info htsql-ctl > debian/htsql.1
+
+deb: $(ARCHIVE) clean 
+	if test -r ~/.pydistutils.cfg; then exit 1; fi
+	cp -f $(ARCHIVE) htsql_$(VERSION).orig.tar.gz
+	tar xvfz htsql_$(VERSION).orig.tar.gz
 	cp -a debian HTSQL-$(VERSION)
 	cd HTSQL-$(VERSION) && dpkg-buildpackage -rfakeroot
-	lintian python-htsql_$(VERSION)-1.dsc
+	lintian htsql_$(VERSION)-1.dsc
 
+clean:
+	rm -rf htsql* HTSQL-$(VERSION) python-htsql*
+
+.PHONY: clean
