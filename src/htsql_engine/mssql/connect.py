@@ -12,7 +12,7 @@ This module implements the connection adapter for MS SQL Server.
 """
 
 
-from htsql.connect import Connect, Normalize, DBError
+from htsql.connect import Connect, Normalize, NormalizeError, DBError
 from htsql.adapter import adapts
 from htsql.context import context
 from htsql.domain import BooleanDomain, StringDomain, DateDomain, TimeDomain
@@ -27,11 +27,8 @@ class MSSQLError(DBError):
 
 
 class ConnectMSSQL(Connect):
-    """
-    Implementation of the connection adapter for MS SQL Server.
-    """
 
-    def open_connection(self, with_autocommit=False):
+    def open(self):
         db = context.app.htsql.db
         parameters = {}
         parameters['database'] = db.database
@@ -46,26 +43,30 @@ class ConnectMSSQL(Connect):
             parameters['password'] = db.password
         parameters['charset'] = 'utf8'
         connection = pymssql.connect(**parameters)
-        if with_autocommit:
+        if self.with_autocommit:
             connection.autocommit(True)
         return connection
 
-    def normalize_error(self, exception):
+
+class NormalizeMSSQLError(NormalizeError):
+
+    def __call__(self):
         # If we got a DBAPI exception, generate our error out of it.
-        if isinstance(exception, pymssql.Error):
-            message = str(exception)
-            error = MSSQLError(message, exception)
+        if isinstance(self.error, pymssql.Error):
+            message = str(self.error)
+            error = MSSQLError(message)
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(ConnectMSSQL, self).normalize_error(exception)
+        return super(NormalizeMSSQLError, self).__call__()
 
 
 class NormalizeMSSQLBoolean(Normalize):
 
     adapts(BooleanDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if value is None:
             return None
         return (value != 0)
@@ -75,7 +76,8 @@ class NormalizeMSSQLString(Normalize):
 
     adapts(StringDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
         return value
@@ -85,7 +87,8 @@ class NormalizeMSSQLDate(Normalize):
 
     adapts(DateDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, datetime.datetime):
             assert not value.time()
             value = value.date()
@@ -96,7 +99,8 @@ class NormalizeMSSQLTime(Normalize):
 
     adapts(TimeDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, float):
             assert 0.0 <= value < 1.0
             value = int(86400000000*value) * datetime.timedelta(0,0,1)

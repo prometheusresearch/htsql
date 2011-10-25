@@ -116,4 +116,7 @@ class Addon(object):
         for name in attributes:
             setattr(self, name, attributes[name])
 
+    def validate(self):
+        pass
+
 

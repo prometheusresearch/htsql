@@ -555,8 +555,7 @@ class AssembleTable(Assemble):
             # The requested column entity.
             column = claim.unit.column
             # More sanity checks.
-            assert (column.schema_name == table.schema_name and
-                    column.table_name == table.name)
+            assert column.table == table
             # The exported phrase is nullable if the column itself is nullable,
             # but also if the frame is attached to its parent using an
             # `OUTER JOIN`.

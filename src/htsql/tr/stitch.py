@@ -197,19 +197,17 @@ class ArrangeTable(Arrange):
                 # of the table.
                 table = self.flow.family.table
                 if table.primary_key is not None:
-                    column_names = table.primary_key.origin_column_names
-                    columns = [table.columns[column_name]
-                               for column_name in column_names]
+                    columns = table.primary_key.origin_columns
                 # However when the primary key does not exist, we use columns
                 # of the first unique key comprised of non-nullable columns.
                 else:
                     for key in table.unique_keys:
-                        column_names = key.origin_column_names
-                        key_columns = [table.columns[column_name]
-                                       for column_name in column_names]
+                        # Ignore partial keys.
+                        if key.is_partial:
+                            continue
                         if all(not column.is_nullable
-                               for column in key_columns):
-                            columns = key_columns
+                               for column in key.origin_columns):
+                            columns = key.origin_columns
                             break
                 # If neither the primary key nor unique keys with non-nullable
                 # columns exist, we have one option left: sort by all columns
@@ -255,23 +253,21 @@ class SewTable(Sew):
         connect_columns = None
         # If the table has a primary key, extract the columns.
         if table.primary_key is not None:
-            column_names = table.primary_key.origin_column_names
-            connect_columns = [table.columns[column_name]
-                               for column_name in column_names]
+            connect_columns = table.primary_key.origin_columns
         # The table lacks a primary key, in this case, search for a unique
         # key which could replace it.
         if connect_columns is None:
             # Iterate over all unique keys of the table.
             for key in table.unique_keys:
-                # Extract the columns of the key.
-                column_names = key.origin_column_names
-                key_columns = [table.columns[column_name]
-                               for column_name in column_names]
+                # Ignore partial keys.
+                if key.is_partial:
+                    continue
                 # Check that no columns of the key are nullable,
                 # in this case, they uniquely identify a row of the table,
                 # and thus, could serve as the primary key.
-                if all(not column.is_nullable for column in key_columns):
-                    connect_columns = key_columns
+                if all(not column.is_nullable
+                       for column in key.origin_columns):
+                    connect_columns = key.origin_columns
                     break
         # No primary key, we don't have other choice but to report an error.
         if connect_columns is None:

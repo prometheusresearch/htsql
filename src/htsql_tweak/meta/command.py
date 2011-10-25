@@ -4,6 +4,7 @@
 #
 
 
+from __future__ import with_statement
 from htsql import HTSQL
 from htsql.context import context
 from htsql.adapter import adapts, named
@@ -52,17 +53,13 @@ class ProduceMeta(Act):
     adapts(MetaCmd, ProduceAction)
 
     def __call__(self):
-        master_app = context.app
         slave_app = get_slave_app()
-        context.switch(master_app, slave_app)
-        try:
+        with slave_app:
             binding = bind(self.command.syntax)
             command = lookup_command(binding)
             if command is None:
                 command = DefaultCmd(binding)
             product = act(command, self.action)
-        finally:
-            context.switch(slave_app, master_app)
         return product
 
 

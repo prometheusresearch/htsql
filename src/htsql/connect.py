@@ -13,6 +13,7 @@ This module declares the database connection adapter.
 
 
 from __future__ import with_statement
+from .util import Record
 from .adapter import Adapter, Utility, adapts, weigh
 from .domain import Domain
 from .context import context
@@ -25,17 +26,11 @@ class DBError(Exception):
 
     `message` (a string)
         The error message.
-
-    `dbapi_error` (an exception)
-        The original DBAPI exception.
     """
 
-    def __init__(self, message, dbapi_error):
+    def __init__(self, message):
         assert isinstance(message, str)
-        assert isinstance(dbapi_error, Exception)
-
         self.message = message
-        self.dbapi_error = dbapi_error
 
     def __str__(self):
         return self.message
@@ -55,19 +50,13 @@ class ErrorGuard(object):
 
         connect = Connect()
         try:
-            with ErrorGuard(connect):
+            with ErrorGuard():
                 connection = connect.open_connection()
                 cursor = connection.cursor()
                 ...
         except DBError:
             ...
-
-    `connect` (:class:`Connect`)
-        An instance of the connection utility.
     """
-
-    def __init__(self, connect):
-        self.connect = connect
 
     def __enter__(self):
         # Enters the `with` clause.
@@ -93,8 +82,8 @@ class ErrorGuard(object):
         else:
             exception = exc_type(exc_value)
 
-        # Ask the connection adapter to convert the exception.
-        error = self.connect.normalize_error(exception)
+        # Convert the exception.
+        error = normalize_error(exception)
 
         # If we got a new exception, raise it.
         if error is not None:
@@ -234,6 +223,15 @@ class CursorProxy(object):
         with self.guard:
             return self.cursor.fetchall()
 
+    def fetchnamed(self):
+        with self.guard:
+            rows = self.fetchall()
+            if not rows:
+                return rows
+            fields = [kind[0].lower() for kind in self.description]
+        Row = Record.make(fields)
+        return [Row(*row) for row in rows]
+
     def __iter__(self):
         """
         Iterates over the rows of the result.
@@ -276,7 +274,11 @@ class Connect(Utility):
             ...
     """
 
-    def __call__(self, with_autocommit=False):
+    def __init__(self, with_autocommit=False):
+        assert isinstance(with_autocommit, bool)
+        self.with_autocommit = with_autocommit
+
+    def __call__(self):
         """
         Returns a connection object.
 
@@ -285,20 +287,17 @@ class Connect(Utility):
 
         If the database parameters for the application are invalid,
         the method may raise :exc:`DBError`.
-
-        `with_autocommit` (Boolean)
-            If set, the connection is opened in the autocommit mode.
         """
         # Create a guard for DBAPI exceptions.
-        guard = ErrorGuard(self)
+        guard = ErrorGuard()
         # Open a raw connection while intercepting DBAPI exceptions.
         with guard:
-            connection = self.open_connection(with_autocommit)
+            connection = self.open()
         # Return a proxy object.
         proxy = ConnectionProxy(connection, guard)
         return proxy
 
-    def open_connection(self, with_autocommit=False):
+    def open(self):
         """
         Returns a raw DBAPI connection object.
 
@@ -307,19 +306,6 @@ class Connect(Utility):
         """
         # Override when subclassing.
         raise NotImplementedError()
-
-    def normalize_error(self, exception):
-        """
-        Normalizes a DBAPI exception.
-
-        When `exception` is a DBAPI exception, returns an instance of
-        :exc:`DBError`; otherwise, returns ``None``.
-
-        `exception`
-            An exception object.
-        """
-        # The default implementation.
-        return None
 
 
 class ConnectionPool(object):
@@ -333,9 +319,9 @@ class PoolConnect(Connect):
 
     weigh(1.0)
 
-    def __call__(self, with_autocommit=False):
-        if with_autocommit:
-            return super(PoolConnect, self).__call__(with_autocommit)
+    def __call__(self):
+        if self.with_autocommit:
+            return super(PoolConnect, self).__call__()
         pool = context.app.htsql.connection_pool
         with pool.lock:
             for connection in pool.items[:]:
@@ -345,7 +331,7 @@ class PoolConnect(Connect):
                 if not connection.is_busy:
                     connection.acquire()
                     return connection
-            connection = super(PoolConnect, self).__call__(with_autocommit)
+            connection = super(PoolConnect, self).__call__()
             pool.items.append(connection)
             return connection
 
@@ -354,10 +340,39 @@ class Normalize(Adapter):
 
     adapts(Domain)
 
+    @staticmethod
+    def convert(value):
+        return value
+
     def __init__(self, domain):
         self.domain = domain
 
-    def __call__(self, value):
-        return value
+    def __call__(self):
+        return self.convert
+
+
+class NormalizeError(Utility):
+
+    def __init__(self, error):
+        assert isinstance(error, Exception)
+        self.error = error
+
+    def __call__(self):
+        return None
+
+
+def connect(with_autocommit=False):
+    connect = Connect(with_autocommit=with_autocommit)
+    return connect()
+
+
+def normalize(domain):
+    normalize = Normalize(domain)
+    return normalize()
+
+
+def normalize_error(error):
+    normalize = NormalizeError(error)
+    return normalize()
 
 

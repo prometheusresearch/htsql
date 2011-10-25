@@ -12,306 +12,252 @@ This module implements the introspection adapter for Oracle.
 """
 
 
+from htsql.adapter import Protocol, named
 from htsql.introspect import Introspect
-from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
-                          ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
-                          ForeignKeyEntity)
+from htsql.entity import make_catalog
 from .domain import (OracleBooleanDomain, OracleIntegerDomain,
                      OracleDecimalDomain, OracleFloatDomain,
                      OracleStringDomain, OracleDateTimeDomain,
                      OracleOpaqueDomain)
-from htsql.connect import Connect
-from htsql.util import Record
-import sys, re
-
-if sys.version_info >= (2, 6):
-    from collections import namedtuple
-
-
-class Meta(object):
-    """
-    Loads raw meta-data from `information_schema`.
-    """
-
-    ignored_owners = ['SYS', 'SYSTEM', 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP',
-                      'CTXSYS', 'XDB', 'ANONYMOUS', 'MDSYS', 'HR',
-                      'FLOWS_FILES', 'FLOWS_020100']
-
-    def __init__(self):
-        connect = Connect()
-        connection = connect()
-        cursor = connection.cursor()
-        # not very elegant to address actual cursor through proxy
-        cursor.cursor.arraysize = 1000
-        self.users = self.fetch(cursor, 'all_users', ['username'])
-        self.tables = self.fetch(cursor, 'all_catalog',
-                                 ['owner', 'table_name'])
-        self.columns = self.fetch(cursor, 'all_tab_columns',
-                                  ['owner', 'table_name', 'column_id'],
-                                  ['owner', 'table_name', 'column_id', 'column_name', 'nullable', 'data_default',
-                                   'data_type', 'data_length', 'data_precision', 'data_scale'])
-        self.constraints = self.fetch(cursor, 'all_constraints',
-                                      ['owner', 'constraint_name'])
-        self.key_columns = self.fetch(cursor, 'all_cons_columns',
-                                      ['owner', 'constraint_name',
-                                       'position'])
-        cursor.execute("SELECT USER FROM DUAL")
-        self.current_user = cursor.fetchone()[0]
-        self.tables_by_user = self.group(self.tables, self.users,
-                                         ['owner'])
-        self.columns_by_table = self.group(self.columns, self.tables,
-                                           ['owner', 'table_name'])
-        self.constraints_by_table = self.group(self.constraints, self.tables,
-                                               ['owner', 'table_name'])
-        self.key_columns_by_constraint = self.group(self.key_columns,
-                        self.constraints, ['owner', 'constraint_name'])
-        connection.commit()
-        connection.release()
-
-    def encode(self, item):
-        if isinstance(item, unicode):
-            return item.encode('utf-8')
-        else:
-            return item
-
-    def fetch(self, cursor, table_name, id_names, cnames=None):
-        rows = {}
-        if cnames is not None:
-            sql = "SELECT " + ",".join(cnames) + " FROM %s"
-        else:
-            sql = "SELECT * FROM %s "
-        if 'owner' in id_names:
-            sql += " WHERE owner NOT IN ('%s')" % "','".join(self.ignored_owners)
-        cursor.execute(sql % table_name)
-        column_names = tuple(kind[0].lower() for kind in cursor.description)
-
-        if sys.version_info < (2, 6):
-            for items in cursor.fetchall():
-                attributes = {}
-                for name, item in zip(column_names, items):
-                    if isinstance(item, unicode):
-                        item = item.encode('utf-8')
-                    attributes[name] = item
-                key = tuple(attributes[name] for name in id_names)
-                record = Record(**attributes)
-                rows[key] = record
-        else:
-            Row = namedtuple('Row', column_names)
-            for items in cursor.fetchall():
-                record = Row._make(self.encode(item) for item in items)
-                key = tuple(getattr(record, name) for name in id_names)
-                rows[key] = record
-
-        return rows
-
-    def group(self, targets, bases, id_names):
-        groups = {}
-        if not targets or not bases:
-            return groups
-        for key in bases:
-            groups[key] = []
-        for key in sorted(targets):
-            record = targets[key]
-            base_key = tuple(getattr(record, name) for name in id_names)
-            if base_key not in groups:
-                continue
-            groups[base_key].append(key)
-        return groups
+from htsql.connect import connect
+import re
+import itertools
 
 
 class IntrospectOracle(Introspect):
-    """
-    Implements the introspection adapter for Oracle.
-    """
 
-    def __init__(self):
-        super(IntrospectOracle, self).__init__()
-        self.meta = Meta()
+    system_owner_names = ['SYS', 'SYSTEM', 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP',
+                          'CTXSYS', 'XDB', 'ANONYMOUS', 'MDSYS', 'HR',
+                          'FLOWS_FILES', 'FLOWS_020100']
 
     def __call__(self):
-        return self.introspect_catalog()
+        connection = connect()
+        cursor = connection.cursor()
 
-    def introspect_catalog(self):
-        schemas = self.introspect_schemas()
-        return CatalogEntity(schemas)
+        catalog = make_catalog()
 
-    def permit_schema(self, schema_name):
-#        if schema_name in ['SYS', 'SYSTEM', 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP',
-#                           'CTXSYS', 'XDB', 'ANONYMOUS', 'MDSYS', 'HR',
-#                           'FLOWS_FILES', 'FLOWS_020100']:
-#            return False
-        if '$' in schema_name:
-            return False
-        return True
+        if self.system_owner_names:
+            ignored_owners = ("(%s)"
+                              % ", ".join("'%s'" % name
+                                          for name in self.system_owner_names))
+        else:
+            ignored_owners = "('$')"
 
-    def permit_table(self, schema_name, table_name):
-        if '$' in schema_name or '$' in table_name:
-            return False
-        return True
+        cursor.execute("""
+            SELECT username
+            FROM all_users
+            WHERE username NOT IN %(ignored_owners)s
+            ORDER BY 1
+        """ % vars())
+        for row in cursor.fetchnamed():
+            if '$' in row.username:
+                continue
+            catalog.add_schema(row.username)
 
-    def permit_column(self, schema_name, table_name, column_name):
-        if '$' in schema_name or '$' in table_name or '$' in column_name:
-            return False
-        return True
+        cursor.execute("""
+            SELECT USER FROM DUAL
+        """)
+        current_user = cursor.fetchone()[0]
+        if current_user in catalog.schemas:
+            catalog.schemas[current_user].set_priority(1)
 
-    def introspect_schemas(self):
-        schemas = []
-        for key in sorted(self.meta.users):
-            record = self.meta.users[key]
-            name = record.username
-            if not self.permit_schema(name):
+        cursor.execute("""
+            SELECT owner, table_name
+            FROM all_catalog
+            WHERE owner NOT IN %(ignored_owners)s AND
+                  table_type IN ('TABLE', 'VIEW')
+            ORDER BY 1, 2
+        """ % vars())
+        for row in cursor.fetchnamed():
+            if '$' in row.table_name:
                 continue
-            tables = self.introspect_tables(key)
-            priority = 0
-            if name == self.meta.current_user:
-                priority = 1
-            schema = SchemaEntity(name, tables, priority)
-            schemas.append(schema)
-        schemas.sort(key=(lambda s: s.name))
-        return schemas
+            if row.owner not in catalog.schemas:
+                continue
+            schema = catalog.schemas[row.owner]
+            schema.add_table(row.table_name)
 
-    def introspect_tables(self, schema_key):
-        tables = []
-        for key in self.meta.tables_by_user[schema_key]:
-            record = self.meta.tables[key]
-            if record.table_type not in ['TABLE', 'VIEW']:
-                continue
-            schema_name = record.owner
-            name = record.table_name
-            if not self.permit_table(schema_name, name):
-                continue
-            columns = self.introspect_columns(key)
-            unique_keys = self.introspect_unique_keys(key)
-            foreign_keys = self.introspect_foreign_keys(key)
-            table = TableEntity(schema_name, name,
-                                columns, unique_keys, foreign_keys)
-            tables.append(table)
-        tables.sort(key=(lambda t: t.name))
-        return tables
+        cursor.execute("""
+            SELECT owner, constraint_name, table_name, search_condition
+            FROM all_constraints
+            WHERE owner NOT IN %(ignored_owners)s AND
+                  constraint_type = 'C'
+            ORDER BY 1, 3, 2
+        """ % vars())
+        checkrows_by_table = \
+                dict((key, list(group))
+                     for key, group in itertools.groupby(cursor.fetchnamed(),
+                                            lambda r: (r.owner, r.table_name)))
 
-    def introspect_columns(self, table_key):
-        columns = []
-        for key in self.meta.columns_by_table[table_key]:
-            record = self.meta.columns[key]
-            schema_name = record.owner
-            table_name = record.table_name
-            name = record.column_name
-            if not self.permit_column(schema_name, table_name, name):
+        cursor.execute("""
+            SELECT owner, table_name, column_id, column_name,
+                   data_type, data_length, data_precision, data_scale,
+                   nullable, data_default
+            FROM all_tab_columns
+            WHERE owner NOT IN %(ignored_owners)s
+            ORDER BY 1, 2, 3
+        """ % vars())
+        for row in cursor.fetchnamed():
+            if '$' in row.column_name:
                 continue
-            domain = self.introspect_domain(key)
-            is_nullable = (record.nullable == 'Y')
-            has_default = (record.data_default is not None)
-            column = ColumnEntity(schema_name, table_name, name, domain,
-                                  is_nullable, has_default)
-            columns.append(column)
-        return columns
+            if row.owner not in catalog.schemas:
+                continue
+            schema = catalog.schemas[row.owner]
+            if row.table_name not in schema.tables:
+                continue
+            table = schema.tables[row.table_name]
+            name = row.column_name
+            check = None
+            check_key = (row.owner, row.table_name)
+            if check_key in checkrows_by_table:
+                for checkrow in checkrows_by_table[check_key]:
+                    condition = checkrow.search_condition
+                    if condition.lower().startswith(name.lower()+' '):
+                        check = condition
+                        break
+            introspect_domain = IntrospectOracleDomain(row.data_type,
+                                                       row.data_length,
+                                                       row.data_precision,
+                                                       row.data_scale,
+                                                       check)
+            domain = introspect_domain()
+            is_nullable = (row.nullable == 'Y')
+            has_default = (row.data_default is not None)
+            table.add_column(name, domain, is_nullable, has_default)
 
-    def introspect_unique_keys(self, table_key):
-        unique_keys = []
-        for key in self.meta.constraints_by_table[table_key]:
-            record = self.meta.constraints[key]
-            if record.constraint_type not in ['P', 'U']:
+        cursor.execute("""
+            SELECT owner, constraint_name, constraint_type,
+                   table_name, r_owner, r_constraint_name
+            FROM all_constraints
+            WHERE owner NOT IN %(ignored_owners)s AND
+                  constraint_type IN ('P', 'U', 'R') AND
+                  status = 'ENABLED' AND validated = 'VALIDATED'
+            ORDER BY 1, 2
+        """ % vars())
+        constraint_rows = cursor.fetchnamed()
+        constraint_row_by_constraint = \
+                dict(((row.owner, row.constraint_name), row)
+                     for row in constraint_rows)
+        cursor.execute("""
+            SELECT owner, constraint_name, position, column_name
+            FROM all_cons_columns
+            WHERE owner NOT IN %(ignored_owners)s
+            ORDER BY 1, 2, 3
+        """ % vars())
+        column_rows_by_constraint = \
+                dict((key, list(group))
+                     for key, group in itertools.groupby(cursor.fetchnamed(),
+                         lambda r: (r.owner, r.constraint_name)))
+        for row in constraint_rows:
+            key = (row.owner, row.constraint_name)
+            if key not in column_rows_by_constraint:
                 continue
-            if record.status != 'ENABLED' or record.validated != 'VALIDATED':
+            column_rows = column_rows_by_constraint[key]
+            if row.owner not in catalog.schemas:
                 continue
-            schema_name = record.owner
-            table_name = record.table_name
-            column_names = []
-            for column_key in self.meta.key_columns_by_constraint[key]:
-                column_record = self.meta.key_columns[column_key]
-                column_names.append(column_record.column_name)
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
+            schema = catalog.schemas[row.owner]
+            if row.table_name not in schema.tables:
                 continue
-            if record.constraint_type == 'P':
-                unique_key = PrimaryKeyEntity(schema_name, table_name,
-                                              column_names)
-            else:
-                unique_key = UniqueKeyEntity(schema_name, table_name,
-                                             column_names)
-            unique_keys.append(unique_key)
-        return unique_keys
+            table = schema.tables[row.table_name]
+            if not all(column_row.column_name in table.columns
+                       for column_row in column_rows):
+                continue
+            columns = [table.columns[column_row.column_name]
+                       for column_row in column_rows]
+            if row.constraint_type in ('P', 'U'):
+                is_primary = (row.constraint_type == 'P')
+                table.add_unique_key(columns, is_primary)
+            elif row.constraint_type == 'R':
+                target_key = (row.r_owner, row.r_constraint_name)
+                if target_key not in constraint_row_by_constraint:
+                    continue
+                if target_key not in column_rows_by_constraint:
+                    continue
+                target_row = constraint_row_by_constraint[target_key]
+                target_column_rows = column_rows_by_constraint[target_key]
+                if target_row.owner not in catalog.schemas:
+                    continue
+                target_schema = catalog.schemas[target_row.owner]
+                if target_row.table_name not in target_schema.tables:
+                    continue
+                target_table = target_schema.tables[target_row.table_name]
+                if not all(column_row.column_name in target_table.columns
+                           for column_row in target_column_rows):
+                    continue
+                target_columns = [target_table.columns[column_row.column_name]
+                                  for column_row in target_column_rows]
+                table.add_foreign_key(columns, target_table, target_columns)
 
-    def introspect_foreign_keys(self, table_key):
-        foreign_keys = []
-        for key in self.meta.constraints_by_table[table_key]:
-            record = self.meta.constraints[key]
-            if record.constraint_type != 'R':
-                continue
-            if record.status != 'ENABLED' or record.validated != 'VALIDATED':
-                continue
-            target_key = (record.r_owner, record.r_constraint_name)
-            target_record = self.meta.constraints[target_key]
-            schema_name = record.owner
-            target_schema_name = target_record.owner
-            table_name = record.table_name
-            target_table_name = target_record.table_name
-            column_names = []
-            target_column_names = []
-            for column_key in self.meta.key_columns_by_constraint[key]:
-                column_record = self.meta.key_columns[column_key]
-                column_names.append(column_record.column_name)
-            for column_key in self.meta.key_columns_by_constraint[target_key]:
-                column_record = self.meta.key_columns[column_key]
-                target_column_names.append(column_record.column_name)
-            if not self.permit_schema(target_schema_name):
-                continue
-            if not self.permit_table(target_schema_name, target_table_name):
-                continue
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
-                continue
-            if not all(self.permit_column(target_schema_name,
-                                          target_table_name,
-                                          target_column_name)
-                       for target_column_name in target_column_names):
-                continue
-            foreign_key = ForeignKeyEntity(schema_name, table_name,
-                                           column_names,
-                                           target_schema_name,
-                                           target_table_name,
-                                           target_column_names)
-            foreign_keys.append(foreign_key)
-        return foreign_keys
+        connection.release()
+        return catalog
+
+
+class IntrospectOracleDomain(Protocol):
+
+    def __init__(self, data_type, length, precision, scale, check):
+        self.data_type = data_type
+        self.length = length
+        self.precision = precision
+        self.scale = scale
+        self.check = check
+
+    def __call__(self):
+        return OracleOpaqueDomain(self.data_type)
+
+
+class IntrospectOracleCharDomain(IntrospectOracleDomain):
+
+    named('CHAR', 'NCHAR')
+
+    def __call__(self):
+        return OracleStringDomain(self.data_type,
+                                  length=self.length,
+                                  is_varying=False)
+
+
+class IntrospectOracleVarCharDomain(IntrospectOracleDomain):
+
+    named('VARCHAR2', 'NVARCHAR2', 'CLOB', 'NCLOB', 'LONG')
+
+    def __call__(self):
+        return OracleStringDomain(self.data_type,
+                                  length=self.length,
+                                  is_varying=True)
+
+
+class IntrospectOracleNumberDomain(IntrospectOracleDomain):
+
+    named('NUMBER')
 
     boolean_pattern = r"""
-        ^ %s \s+ IN \s+ \( (?: 0 \s* , \s* 1 | 1 \s* , \s* 0 ) \) $
+        ^ \w+ \s+ IN \s+ \( (?: 0 \s* , \s* 1 | 1 \s* , \s* 0 ) \) $
     """
+    boolean_regexp = re.compile(boolean_pattern, re.X|re.I)
 
-    def introspect_domain(self, key):
-        record = self.meta.columns[key]
-        table_key = (record.owner, record.table_name)
-        data_type = record.data_type
-        data_length = record.data_length
-        data_precision = record.data_precision
-        data_scale = record.data_scale
-        if data_type in ['CHAR', 'NCHAR']:
-            return OracleStringDomain(data_type,
-                                      length=data_length,
-                                      is_varying=False)
-        elif data_type in ['VARCHAR2', 'NVARCHAR2', 'CLOB', 'NCLOB', 'LONG']:
-            return OracleStringDomain(data_type,
-                                      length=data_length,
-                                      is_varying=True)
-        elif data_type == 'NUMBER':
-            if (data_precision, data_scale) == (1, 0):
-                for constraint_key in self.meta.constraints_by_table[table_key]:
-                    constraint_record = self.meta.constraints[constraint_key]
-                    if (constraint_record.constraint_type == 'C' and
-                        re.match(self.boolean_pattern
-                                 % re.escape(record.column_name),
-                                 constraint_record.search_condition,
-                                 re.X|re.I)):
-                        return OracleBooleanDomain(data_type)
-            if (data_precision, data_scale) == (38, 0):
-                return OracleIntegerDomain(data_type)
-            return OracleDecimalDomain(data_type,
-                                       precision=data_precision,
-                                       scale=data_scale)
-        elif data_type in ['BINARY_FLOAT', 'BINARY_DOUBLE']:
-            return OracleFloatDomain(data_type)
-        elif data_type == 'DATE' or data_type.startswith('TIMESTAMP'):
-            return OracleDateTimeDomain(data_type)
-        return OracleOpaqueDomain(data_type)
+    def __call__(self):
+        if (self.precision, self.scale) == (1, 0):
+            if (self.check is not None and
+                    self.boolean_regexp.match(self.check)):
+                return OracleBooleanDomain(self.data_type)
+        if (self.precision, self.scale) == (38, 0):
+            return OracleIntegerDomain(self.data_type)
+        return OracleDecimalDomain(self.data_type,
+                                   precision=self.precision,
+                                   scale=self.scale)
+
+
+class IntrospectOracleFloatDomain(IntrospectOracleDomain):
+
+    named('BINARY_FLOAT', 'BINARY_DOUBLE')
+
+    def __call__(self):
+        return OracleFloatDomain(self.data_type)
+
+
+class IntrospectOracleDateTimeDomain(IntrospectOracleDomain):
+
+    named('DATE', 'TIMESTAMP')
+
+    def __call__(self):
+        return OracleDateTimeDomain(self.data_type)
 
 

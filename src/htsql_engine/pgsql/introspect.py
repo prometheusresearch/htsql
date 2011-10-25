@@ -12,294 +12,285 @@ This module implements the introspection adapter for PostgreSQL.
 """
 
 
+from htsql.adapter import Protocol, named
 from htsql.introspect import Introspect
-from htsql.entity import (CatalogEntity, SchemaEntity, TableEntity,
-                          ColumnEntity, UniqueKeyEntity, PrimaryKeyEntity,
-                          ForeignKeyEntity)
+from htsql.entity import make_catalog
 from .domain import (PGBooleanDomain, PGIntegerDomain, PGFloatDomain,
                      PGDecimalDomain, PGCharDomain, PGVarCharDomain,
                      PGTextDomain, PGEnumDomain, PGDateDomain,
                      PGTimeDomain, PGDateTimeDomain, PGOpaqueDomain)
-from htsql.connect import Connect
-from htsql.util import Record
-
-
-class Meta(object):
-    """
-    Loads raw meta-data from the `pg_catalog` schema.
-    """
-
-    def __init__(self):
-        connect = Connect()
-        connection = connect()
-        cursor = connection.cursor()
-        self.pg_namespace = self.fetch(cursor, 'pg_catalog.pg_namespace')
-        self.pg_class = self.fetch(cursor, 'pg_catalog.pg_class',
-                    extra="HAS_TABLE_PRIVILEGE(oid, 'SELECT') AS has_access")
-        self.pg_class_by_namespace = self.group(self.pg_class,
-                                                self.pg_namespace,
-                                                'relnamespace')
-        self.pg_type = self.fetch(cursor, 'pg_catalog.pg_type')
-        self.pg_attribute = self.fetch(cursor, 'pg_catalog.pg_attribute',
-                                       ('attrelid', 'attnum'))
-        self.pg_attribute_by_class = self.group(self.pg_attribute,
-                                                self.pg_class,
-                                                'attrelid')
-        self.pg_enum = self.fetch(cursor, 'pg_catalog.pg_enum')
-        self.pg_enum_by_type = self.group(self.pg_enum, self.pg_type,
-                                          'enumtypid')
-        self.pg_constraint = self.fetch(cursor, 'pg_catalog.pg_constraint')
-        self.pg_constraint_by_class = self.group(self.pg_constraint,
-                                                 self.pg_class, 'conrelid')
-        self.pg_rewrite = self.fetch(cursor, 'pg_rewrite')
-        cursor.execute("SELECT CURRENT_SCHEMAS(TRUE)")
-        self.search_path = cursor.fetchone()[0]
-        self.skip_list = []
-        for oid in sorted(self.pg_class):
-            rel = self.pg_class[oid]
-            if not rel.has_access:
-                schema_name = self.pg_namespace[rel.relnamespace].nspname
-                table_name = rel.relname
-                self.skip_list.append((schema_name, table_name))
-        connection.commit()
-        connection.release()
-
-    def fetch(self, cursor, table_name, key_names=('oid',), extra=None):
-        rows = {}
-        select = "%s, *" % ", ".join(key_names)
-        if extra is not None:
-            select += ", %s" % extra
-        sql ="SELECT %s FROM %s" % (select, table_name)
-        cursor.execute(sql)
-        for items in cursor.fetchall():
-            key = tuple(items[idx] for idx in range(len(key_names)))
-            if len(key) == 1:
-                key = key[0]
-            attributes = {}
-            for kind, item in zip(cursor.description, items)[len(key_names):]:
-                name = kind[0]
-                attributes[name] = item
-            record = Record(**attributes)
-            rows[key] = record
-        return rows
-
-    def group(self, targets, bases, attribute):
-        groups = {}
-        for base_key in bases:
-            groups[base_key] = {}
-        for target_key in targets:
-            target = targets[target_key]
-            group_key = getattr(target, attribute)
-            if group_key not in groups:
-                continue
-            groups[group_key][target_key] = target
-        return groups
+from htsql.connect import connect
+import itertools
+import fnmatch
 
 
 class IntrospectPGSQL(Introspect):
-    """
-    Implements the introspection adapter for PostgreSQL.
-    """
 
-    def __init__(self):
-        super(IntrospectPGSQL, self).__init__()
-        self.meta = Meta()
-        # maps for fast access
-        self.table_by_oid = {}
+    system_schema_names = ['pg_*', 'information_schema']
+    system_table_names = []
+    system_column_names = ['tableoid', 'cmax', 'xmax', 'cmin', 'xmin', 'ctid']
 
     def __call__(self):
-        return self.introspect_catalog()
+        connection = connect()
+        cursor = connection.cursor()
 
-    def introspect_catalog(self):
-        schemas = self.introspect_schemas()
-        return CatalogEntity(schemas)
+        catalog = make_catalog()
 
-    def permit_schema(self, schema_name):
-        if schema_name in ['pg_catalog', 'information_schema']:
-            return False
-        return True
+        cursor.execute("""
+            SELECT n.oid, n.nspname
+            FROM pg_catalog.pg_namespace n
+            ORDER BY n.nspname
+        """)
+        schema_by_oid = {}
+        for row in cursor.fetchnamed():
+            name = row.nspname
+            if any(fnmatch.fnmatchcase(name, pattern)
+                   for pattern in self.system_schema_names):
+                continue
+            schema = catalog.add_schema(name)
+            schema_by_oid[row.oid] = schema
 
-    def permit_table(self, schema_name, table_name):
-        if (schema_name, table_name) in self.meta.skip_list:
-            return False
-        return True
+        cursor.execute("""
+            SELECT CURRENT_SCHEMAS(TRUE)
+        """)
+        search_path = cursor.fetchone()[0]
+        for idx, name in enumerate(search_path):
+            priority = len(search_path)-idx
+            if name in catalog.schemas:
+                catalog.schemas[name].set_priority(priority)
 
-    def permit_column(self, schema_name, table_name, column_name):
-        if column_name in ['tableoid', 'cmax', 'xmax', 'cmin', 'xmin', 'ctid']:
-            return False
-        return True
+        table_by_oid = {}
+        cursor.execute("""
+            SELECT c.oid, c.relnamespace, c.relname
+            FROM pg_catalog.pg_class c
+            WHERE c.relkind IN ('r', 'v') AND
+                  HAS_TABLE_PRIVILEGE(c.oid, 'SELECT')
+            ORDER BY c.relnamespace, c.relname
+        """)
+        for row in cursor.fetchnamed():
+            if row.relnamespace not in schema_by_oid:
+                continue
+            name = row.relname
+            if any(fnmatch.fnmatchcase(name, pattern)
+                   for pattern in self.system_table_names):
+                continue
+            schema = schema_by_oid[row.relnamespace]
+            table = schema.add_table(row.relname)
+            table_by_oid[row.oid] = table
 
-    def introspect_schemas(self):
-        schemas = []
-        for oid in sorted(self.meta.pg_namespace):
-            nsp = self.meta.pg_namespace[oid]
-            name = nsp.nspname
-            if not self.permit_schema(name):
-                continue
-            tables = self.introspect_tables(oid)
-            priority = 0
-            if name in self.meta.search_path:
-                priority = (len(self.meta.search_path)
-                            - self.meta.search_path.index(name))
-            schema = SchemaEntity(name, tables, priority)
-            schemas.append(schema)
-        schemas.sort(key=(lambda s: s.name))
-        return schemas
+        cursor.execute("""
+            SELECT t.oid, n.nspname, t.typname, t.typtype,
+                   t.typbasetype, t.typlen, t.typtypmod, t.typdefault
+            FROM pg_catalog.pg_type t
+            JOIN pg_catalog.pg_namespace n ON (t.typnamespace = n.oid)
+            ORDER BY n.oid, t.typname
+        """)
+        typrows_by_oid = dict((row.oid, row) for row in cursor.fetchnamed())
 
-    def introspect_tables(self, schema_oid):
-        schema_name = self.meta.pg_namespace[schema_oid].nspname
-        tables = []
-        for oid in sorted(self.meta.pg_class_by_namespace[schema_oid]):
-            rel = self.meta.pg_class[oid]
-            if rel.relkind not in ('r', 'v'):
-                continue
-            name = rel.relname
-            if not self.permit_table(schema_name, name):
-                continue
-            columns = self.introspect_columns(oid)
-            unique_keys = self.introspect_unique_keys(oid)
-            foreign_keys = self.introspect_foreign_keys(oid)
-            table = TableEntity(schema_name, name,
-                                columns, unique_keys, foreign_keys)
-            tables.append(table)
-            self.table_by_oid[oid] = table
-        tables.sort(key=(lambda t: t.name))
-        return tables
+        # FIXME: respect `enumsortorder` if available
+        cursor.execute("""
+            SELECT e.enumtypid, e.enumlabel
+            FROM pg_catalog.pg_enum e
+            ORDER BY e.enumtypid, e.oid
+        """)
+        enumrows_by_typid = dict((key, list(group))
+                                 for key, group
+                                 in itertools.groupby(cursor.fetchnamed(),
+                                                      lambda r: r.enumtypid))
 
-    def introspect_columns(self, table_oid):
-        rel = self.meta.pg_class[table_oid]
-        schema_name = self.meta.pg_namespace[rel.relnamespace].nspname
-        table_name = rel.relname
-        columns = []
-        for relid, num in sorted(self.meta.pg_attribute_by_class[table_oid]):
-            att = self.meta.pg_attribute[relid, num]
-            name = att.attname
-            if att.attisdropped:
+        column_by_num = {}
+        cursor.execute("""
+            SELECT a.attrelid, a.attnum, a.attname, a.atttypid, a.atttypmod,
+                   a.attnotnull, a.atthasdef, a.attisdropped
+            FROM pg_catalog.pg_attribute a
+            ORDER BY a.attrelid, a.attnum
+        """)
+        for row in cursor.fetchnamed():
+            if row.attisdropped:
                 continue
-            if not self.permit_column(schema_name, table_name, name):
+            if any(fnmatch.fnmatchcase(row.attname, pattern)
+                   for pattern in self.system_column_names):
                 continue
-            domain = self.introspect_domain(relid, num)
-            typ = self.meta.pg_type[att.atttypid]
-            is_nullable = (not att.attnotnull)
-            has_default = (att.atthasdef or typ.typdefault is not None)
-            column = ColumnEntity(schema_name, table_name, name, domain,
-                                  is_nullable, has_default)
-            columns.append(column)
-        return columns
+            if row.attrelid not in table_by_oid:
+                continue
+            table = table_by_oid[row.attrelid]
+            name = row.attname
+            modifier = row.atttypmod
+            typrow = typrows_by_oid[row.atttypid]
+            length = typrow.typlen
+            if modifier == -1:
+                modifier = typrow.typtypmod
+            is_nullable = (not row.attnotnull)
+            has_default = (row.atthasdef or typrow.typdefault is not None)
+            introspect_domain = IntrospectPGSQLDomain(typrow.nspname,
+                                                      typrow.typname,
+                                                      length, modifier)
+            domain = introspect_domain()
+            while isinstance(domain, PGOpaqueDomain) and typrow.typtype == 'd':
+                typrow = typrows_by_oid[typrow.typbasetype]
+                if modifier == -1:
+                    modifier = typrow.typtypmod
+                introspect_domain = IntrospectPGSQLDomain(typrow.nspname,
+                                                          typrow.typname,
+                                                          length, modifier)
+                domain = introspect_domain()
+            if (isinstance(domain, PGOpaqueDomain) and typrow.typtype == 'e'
+                                        and typrow.oid in enumrows_by_typid):
+                enumrows = enumrows_by_typid[typrow.oid]
+                labels = [enumrow.enumlabel for enumrow in enumrows]
+                domain = PGEnumDomain(typrow.nspname, typrow.typname,
+                                      labels=labels)
+            column = table.add_column(name, domain, is_nullable, has_default)
+            column_by_num[row.attrelid, row.attnum] = column
 
-    def introspect_unique_keys(self, table_oid):
-        rel = self.meta.pg_class[table_oid]
-        schema_name = self.meta.pg_namespace[rel.relnamespace].nspname
-        table_name = rel.relname
-        unique_keys = []
-        for oid in sorted(self.meta.pg_constraint_by_class[table_oid]):
-            con = self.meta.pg_constraint[oid]
-            if con.contype not in ('p', 'u'):
+        cursor.execute("""
+            SELECT c.contype, c.confmatchtype,
+                   c.conrelid, c.conkey, c.confrelid, c.confkey
+            FROM pg_catalog.pg_constraint c
+            WHERE c.contype IN ('p', 'u', 'f')
+            ORDER BY c.oid
+        """)
+        for row in cursor.fetchnamed():
+            if row.conrelid not in table_by_oid:
                 continue
-            column_names = []
-            for key in con.conkey:
-                att = self.meta.pg_attribute[table_oid, key]
-                column_names.append(att.attname)
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
+            table = table_by_oid[row.conrelid]
+            if not all((row.conrelid, num) in column_by_num
+                       for num in row.conkey):
                 continue
-            if con.contype == 'p':
-                unique_key = PrimaryKeyEntity(schema_name, table_name,
-                                              column_names)
-            else:
-                unique_key = UniqueKeyEntity(schema_name, table_name,
-                                             column_names)
-            unique_keys.append(unique_key)
-        return unique_keys
+            columns = [column_by_num[row.conrelid, num]
+                       for num in row.conkey]
+            if row.contype in ('p', 'u'):
+                is_primary = (row.contype == 'p')
+                table.add_unique_key(columns, is_primary)
+            elif row.contype == 'f':
+                if row.confrelid not in table_by_oid:
+                    continue
+                target_table = table_by_oid[row.confrelid]
+                if not all((row.confrelid, num) in column_by_num
+                           for num in row.confkey):
+                    continue
+                target_columns = [column_by_num[row.confrelid, num]
+                                  for num in row.confkey]
+                is_partial = (len(target_columns) > 1 and
+                              any(column.is_nullable
+                                  for column in target_columns) and
+                              row.confmatchtype == 'u')
+                table.add_foreign_key(columns, target_table, target_columns,
+                                      is_partial)
 
-    def introspect_foreign_keys(self, table_oid):
-        rel = self.meta.pg_class[table_oid]
-        schema_name = self.meta.pg_namespace[rel.relnamespace].nspname
-        table_name = rel.relname
-        foreign_keys = []
-        for oid in sorted(self.meta.pg_constraint_by_class[table_oid]):
-            con = self.meta.pg_constraint[oid]
-            if con.contype != 'f':
-                continue
-            column_names = []
-            for key in con.conkey:
-                att = self.meta.pg_attribute[table_oid, key]
-                column_names.append(att.attname)
-            rel = self.meta.pg_class[con.confrelid]
-            nsp = self.meta.pg_namespace[rel.relnamespace]
-            target_schema_name = nsp.nspname
-            target_table_name = rel.relname
-            target_column_names = []
-            for key in con.confkey:
-                att = self.meta.pg_attribute[con.confrelid, key]
-                target_column_names.append(att.attname)
-            if not all(self.permit_column(schema_name, table_name, column_name)
-                       for column_name in column_names):
-                continue
-            if not self.permit_schema(target_schema_name):
-                continue
-            if not self.permit_table(target_schema_name, target_table_name):
-                continue
-            if not all(self.permit_column(target_schema_name,
-                                          target_table_name,
-                                          target_column_name)
-                       for target_column_name in target_column_names):
-                continue
-            foreign_key = ForeignKeyEntity(schema_name, table_name,
-                                           column_names,
-                                           target_schema_name,
-                                           target_table_name,
-                                           target_column_names)
-            foreign_keys.append(foreign_key)
-        return foreign_keys
+        connection.release()
+        return catalog
 
-    def introspect_domain(self, relid, num):
-        att = self.meta.pg_attribute[relid, num]
-        typ = self.meta.pg_type[att.atttypid]
-        schema_name = self.meta.pg_namespace[typ.typnamespace].nspname
-        name = typ.typname
-        base = typ
-        while base.typtype == 'd':
-            if att.atttypmod == -1:
-                att.atttypmod = base.typtypmod
-            base = self.meta.pg_type[base.typbasetype]
-        base_schema_name = self.meta.pg_namespace[base.typnamespace].nspname
-        base_name = base.typname
-        if base.typtype == 'e':
-            labels = []
-            for oid in sorted(self.meta.pg_enum_by_type[att.atttypid]):
-                enum = self.meta.pg_enum[oid]
-                labels.append(enum.enumlabel)
-            return PGEnumDomain(schema_name, name, labels=labels)
-        if base_schema_name == 'pg_catalog':
-            if base_name == 'bool':
-                return PGBooleanDomain(schema_name, name)
-            if base_name in ['int2', 'int4', 'int8']:
-                return PGIntegerDomain(schema_name, name, size=8*base.typlen)
-            if base_name in ['float4', 'float8']:
-                return PGFloatDomain(schema_name, name, size=8*base.typlen)
-            if base_name == 'numeric':
-                precision = None
-                scale = None
-                if att.atttypmod != -1:
-                    precision = ((att.atttypmod-4) >> 0x10) & 0xFFFF
-                    scale = (att.atttypmod-4) & 0xFFFF
-                return PGDecimalDomain(schema_name, name,
-                                       precision=precision, scale=scale)
-            if base_name == 'bpchar':
-                length = att.atttypmod-4 if att.atttypmod != -1 else None
-                return PGCharDomain(schema_name, name, length=length)
-            if base_name == 'varchar':
-                length = att.atttypmod-4 if att.atttypmod != -1 else None
-                return PGVarCharDomain(schema_name, name, length=length)
-            if base_name == 'text':
-                return PGTextDomain(schema_name, name)
-            if base_name == 'date':
-                return PGDateDomain(schema_name, name)
-            if base_name in ['time', 'timetz']:
-                return PGTimeDomain(schema_name, name)
-            if base_name in ['timestamp', 'timestamptz']:
-                return PGDateTimeDomain(schema_name, name)
-        return PGOpaqueDomain(schema_name, name)
+
+class IntrospectPGSQLDomain(Protocol):
+
+    @classmethod
+    def dispatch(component, schema_name, name, *args, **kwds):
+        return (schema_name, name)
+
+    @classmethod
+    def matches(component, dispatch_key):
+        return (dispatch_key in component.names)
+
+    def __init__(self, schema_name, name, length, modifier):
+        self.schema_name = schema_name
+        self.name = name
+        self.length = length
+        self.modifier = modifier
+
+    def __call__(self):
+        return PGOpaqueDomain(self.schema_name, self.name)
+
+
+class IntrospectPGSQLBooleanDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'bool'))
+
+    def __call__(self):
+        return PGBooleanDomain(self.schema_name, self.name)
+
+
+class IntrospectPGSQLIntegerDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'int2'),
+          ('pg_catalog', 'int4'),
+          ('pg_catalog', 'int8'))
+
+    def __call__(self):
+        return PGIntegerDomain(self.schema_name, self.name,
+                               size=8*self.length)
+
+
+class IntrospectPGSQLFloatDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'float4'), ('pg_catalog', 'float8'))
+
+    def __call__(self):
+        return PGFloatDomain(self.schema_name, self.name,
+                              size=8*self.length)
+
+
+class IntrospectPGSQLDecimalDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'numeric'))
+
+    def __call__(self):
+        precision = None
+        scale = None
+        if self.modifier != -1:
+            precision = ((self.modifier-4) >> 0x10) & 0xFFFF
+            scale = (self.modifier-4) & 0xFFFF
+        return PGDecimalDomain(self.schema_name, self.name,
+                               precision=precision, scale=scale)
+
+
+class IntrospectPGSQLCharDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'bpchar'))
+
+    def __call__(self):
+        length = self.modifier-4 if self.modifier != -1 else None
+        return PGCharDomain(self.schema_name, self.name, length=length)
+
+
+class IntrospectPGSQLVarCharDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'varchar'))
+
+    def __call__(self):
+        length = self.modifier-4 if self.modifier != -1 else None
+        return PGVarCharDomain(self.schema_name, self.name, length=length)
+
+
+class IntrospectPGSQLTextDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'text'))
+
+    def __call__(self):
+        return PGTextDomain(self.schema_name, self.name)
+
+
+class IntrospectPGSQLDateDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'date'))
+
+    def __call__(self):
+        return PGDateDomain(self.schema_name, self.name)
+
+
+class IntrospectPGSQLTimeDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'time'), ('pg_catalog', 'timetz'))
+
+    def __call__(self):
+        return PGTimeDomain(self.schema_name, self.name)
+
+
+class IntrospectPGSQLDateTimeDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'timestamp'), ('pg_catalog', 'timestamptz'))
+
+    def __call__(self):
+        return PGDateTimeDomain(self.schema_name, self.name)
 
 

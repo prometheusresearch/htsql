@@ -13,7 +13,7 @@ This module declares the database introspector adapter.
 
 
 from .context import context
-from .adapter import Utility
+from .adapter import Utility, weigh
 import threading
 
 
@@ -33,17 +33,6 @@ class Introspect(Utility):
 
     An introspector analyzes the database meta-data and generates
     an HTSQL catalog.
-
-    Usage::
-
-        introspect = Introspect()
-        catalog = introspect()
-
-    Note that most implementations loads the meta-data information
-    when the adapter is constructed so subsequent calls of
-    :meth:`__call__` will always produce essentially the same catalog.
-    To re-load the meta-data from the database, create a new instance
-    of the :class:`Introspect` adapter.
     """
 
     def __call__(self):
@@ -54,6 +43,55 @@ class Introspect(Utility):
         raise NotImplementedError()
 
 
+class IntrospectCleanup(Introspect):
+
+    weigh(10.0)
+
+    def __call__(self):
+        catalog = super(IntrospectCleanup, self).__call__()
+
+        for schema in reversed(list(catalog.schemas)):
+            for table in reversed(list(schema.tables)):
+                if not table.columns:
+                    table.remove()
+            if not schema.tables:
+                schema.remove()
+
+        for schema in catalog.schemas:
+            for table in schema.tables:
+                duplicates = {}
+                for unique_key in list(table.unique_keys):
+                    key = tuple(unique_key.origin_columns)
+                    if key in duplicates:
+                        other_key = duplicates[key]
+                        if (unique_key.is_primary or
+                            (not unique_key.is_partial and
+                                other_key.is_partial)):
+                            other_key.remove()
+                            duplicates[key] = unique_key
+                        else:
+                            unique_key.remove()
+                    else:
+                        duplicates[key] = unique_key
+                duplicates = {}
+                for foreign_key in list(table.foreign_keys):
+                    key = (tuple(foreign_key.origin_columns),
+                           foreign_key.target,
+                           tuple(foreign_key.target_columns))
+                    if key in duplicates:
+                        other_key = duplicates[key]
+                        if (not foreign_key.is_partial and
+                                other_key.is_partial):
+                            other_key.remove()
+                            duplicates[key] = foreign_key
+                        else:
+                            foreign_key.remove()
+                    else:
+                        duplicates[key] = foreign_key
+
+        return catalog
+
+
 def introspect():
     catalog_cache = context.app.htsql.catalog_cache
     if catalog_cache.catalog is None:
@@ -61,6 +99,7 @@ def introspect():
             if catalog_cache.catalog is None:
                 introspect = Introspect()
                 catalog = introspect()
+                catalog.freeze()
                 catalog_cache.update(catalog)
     return catalog_cache.catalog
 

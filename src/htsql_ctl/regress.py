@@ -1953,7 +1953,7 @@ class SQLTestCase(SkipTestCase):
         # to split the SQL data and to connect to the database, but we
         # never use it for executing HTSQL queries.
         from htsql.application import Application
-        from htsql.connect import Connect, DBError
+        from htsql.connect import connect, DBError
         from htsql.split_sql import SplitSQL
         try:
             app = Application(self.input.connect)
@@ -1974,7 +1974,6 @@ class SQLTestCase(SkipTestCase):
                 return self.failed("*** invalid SQL: %s" % exc)
 
             # Realize the connector and connect to the database.
-            connect = Connect()
             try:
                 connection = connect(with_autocommit=self.input.autocommit)
                 cursor = connection.cursor()

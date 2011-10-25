@@ -958,7 +958,7 @@ class DumpTable(Dump):
         # Must be overridden for backends which lack schemas.
         table = self.frame.flow.family.table
         self.format("{schema:name}.{table:name}",
-                    schema=table.schema_name,
+                    schema=table.schema.name,
                     table=table.name)
 
 

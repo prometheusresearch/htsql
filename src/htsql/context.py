@@ -27,20 +27,16 @@ class ThreadContext(threading.local):
 
     def __init__(self):
         self.active_app = None
+        self.app_stack = []
 
-    def switch(self, old_app, app):
-        """
-        Activate/inactivate an HTSQL application.
-
-        `old_app` (:class:`htsql.application.Application` or ``None``)
-            The current active application or ``None`` if there is no one.
-
-        `app` (:class:`htsql.application.Application` or ``None``)
-            The new active application or ``None`` to just inactivate
-            the current active application.
-        """
-        assert self.active_app is old_app
+    def push(self, app):
+        self.app_stack.append(self.active_app)
         self.active_app = app
+
+    def pop(self, app):
+        assert app is self.active_app
+        assert self.app_stack
+        self.active_app = self.app_stack.pop()
 
     @property
     def app(self):

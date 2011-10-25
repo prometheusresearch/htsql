@@ -26,5 +26,7 @@ class EngineAddon(Addon):
 
     @classmethod
     def get_extension(cls, app, attributes):
-        return 'engine.%s' % app.htsql.db.engine
+        if app.htsql.db is not None:
+            return 'engine.%s' % app.htsql.db.engine
+
 

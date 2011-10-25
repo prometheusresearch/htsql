@@ -12,12 +12,17 @@ This module implements the connection adapter for MySQL.
 """
 
 
-from htsql.connect import Connect, Normalize, DBError
+from htsql.connect import Connect, Normalize, NormalizeError, DBError
 from htsql.adapter import adapts
 from htsql.context import context
 from htsql.domain import BooleanDomain, StringDomain, EnumDomain, TimeDomain
-import pymysql, pymysql.err
+import MySQLdb, MySQLdb.connections
 import datetime
+
+
+class Cursor(MySQLdb.connections.Connection.default_cursor):
+
+    _defer_warnings = True
 
 
 class MySQLError(DBError):
@@ -27,11 +32,8 @@ class MySQLError(DBError):
 
 
 class ConnectMySQL(Connect):
-    """
-    Implementation of the connection adapter for SQLite.
-    """
 
-    def open_connection(self, with_autocommit=False):
+    def open(self):
         # Note: `with_autocommit` is ignored.
         db = context.app.htsql.db
         parameters = {}
@@ -41,29 +43,35 @@ class ConnectMySQL(Connect):
         if db.port is not None:
             parameters['port'] = db.port
         if db.username is not None:
-            parameters['user'] = db.username 
+            parameters['user'] = db.username
         if db.password is not None:
             parameters['passwd'] = db.password
+        parameters['use_unicode'] = False
         parameters['charset'] = 'utf8'
-        connection = pymysql.connect(**parameters)
+        parameters['cursorclass'] = Cursor
+        connection = MySQLdb.connect(**parameters)
         return connection
 
-    def normalize_error(self, exception):
+
+class NormalizeMySQLError(NormalizeError):
+
+    def __call__(self):
         # If we got a DBAPI exception, generate our error out of it.
-        if isinstance(exception, pymysql.err.MySQLError):
-            message = str(exception)
-            error = MySQLError(message, exception)
+        if isinstance(self.error, MySQLdb.Error):
+            message = str(self.error)
+            error = MySQLError(message)
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(ConnectMySQL, self).normalize_error(exception)
+        return super(NormalizeMySQLError, self).__call__()
 
 
 class NormalizeMySQLBoolean(Normalize):
 
     adapts(BooleanDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if value is None:
             return None
         return (value != 0)
@@ -73,7 +81,8 @@ class NormalizeMySQLString(Normalize):
 
     adapts(StringDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
         return value
@@ -83,7 +92,7 @@ class NormalizeMySQLEnum(Normalize):
 
     adapts(EnumDomain)
 
-    def __call__(self, value):
+    def convert(self, value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
         if value not in self.domain.labels:
@@ -95,7 +104,8 @@ class NormalizeMySQLTime(Normalize):
 
     adapts(TimeDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, datetime.timedelta):
             if value.days != 0:
                 value = None

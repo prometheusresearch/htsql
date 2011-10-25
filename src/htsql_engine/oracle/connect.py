@@ -12,7 +12,7 @@ This module implements the connection adapter for Oracle.
 """
 
 
-from htsql.connect import Connect, Normalize, DBError
+from htsql.connect import Connect, Normalize, NormalizeError, DBError
 from htsql.adapter import adapts
 from htsql.context import context
 from htsql.domain import (BooleanDomain, DecimalDomain, StringDomain,
@@ -47,7 +47,7 @@ class ConnectOracle(Connect):
             return cursor.var(str, 100, cursor.arraysize,
                               outconverter=cls.outconverter)
 
-    def open_connection(self, with_autocommit=False):
+    def open(self):
         db = context.app.htsql.db
         parameters = {}
         parameters['user'] = db.username or ''
@@ -61,7 +61,7 @@ class ConnectOracle(Connect):
             dsn = db.database
         parameters['dsn'] = dsn
         connection = cx_Oracle.connect(**parameters)
-        if with_autocommit:
+        if self.with_autocommit:
             connection.autocommit = True
         connection.outputtypehandler = self.outputtypehandler
         cursor = connection.cursor()
@@ -69,22 +69,26 @@ class ConnectOracle(Connect):
         cursor.execute("ALTER SESSION SET NLS_COMP = LINGUISTIC");
         return connection
 
-    def normalize_error(self, exception):
+
+class NormalizeOracleError(NormalizeError):
+
+    def __call__(self):
         # If we got a DBAPI exception, generate our error out of it.
-        if isinstance(exception, cx_Oracle.Error):
-            message = str(exception)
-            error = OracleError(message, exception)
+        if isinstance(self.error, cx_Oracle.Error):
+            message = str(self.error)
+            error = OracleError(message)
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(ConnectOracle, self).normalize_error(exception)
+        return super(NormalizeOracleError, self).__call__()
 
 
 class NormalizeOracleBoolean(Normalize):
 
     adapts(BooleanDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if value is None:
             return None
         return (value != 0)
@@ -94,7 +98,8 @@ class NormalizeOracleDecimal(Normalize):
 
     adapts(DecimalDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if value is None:
             return None
         return decimal.Decimal(value)
@@ -104,7 +109,8 @@ class NormalizeOracleString(Normalize):
 
     adapts(StringDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, cx_Oracle.LOB):
             try:
                 value = value.read()
@@ -120,7 +126,8 @@ class NormalizeOracleDate(Normalize):
 
     adapts(DateDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, datetime.datetime):
             assert not value.time()
             value = value.date()
@@ -131,7 +138,8 @@ class NormalizeOracleTime(Normalize):
 
     adapts(TimeDomain)
 
-    def __call__(self, value):
+    @staticmethod
+    def convert(value):
         if isinstance(value, datetime.timedelta):
             assert not value.days
             value = (datetime.datetime(2001,1,1) + value).time()

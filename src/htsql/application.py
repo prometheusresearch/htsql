@@ -145,18 +145,25 @@ class Application(object):
                 addon_instance_by_name[addon_name] = addon_instance
         for addon_name in sorted(addon_instance_by_name):
             self.addons.append(addon_instance_by_name[addon_name])
+        with self:
+            for addon in self.addons:
+                try:
+                    addon.validate()
+                except ValueError, exc:
+                    raise ImportError("failed to initialize %r: %s"
+                                      % (addon.name, exc))
 
     def __enter__(self):
         """
         Activates the application in the current thread.
         """
-        context.switch(None, self)
+        context.push(self)
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """
         Inactivates the application in the current thread.
         """
-        context.switch(self, None)
+        context.pop(self)
 
     def __call__(self, environ, start_response):
         """

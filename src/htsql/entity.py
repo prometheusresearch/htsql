@@ -12,367 +12,436 @@ This module implements the HTSQL catalog and catalog entities.
 """
 
 
-from .util import listof
+from .util import listof, Printable, Comparable
 from .domain import Domain
+import weakref
 
 
-class Entity(object):
-    """
-    Represents a database metadata object.
-    """
+class Entity(Printable):
 
-    def __str__(self):
-        return self.__class__.__name__.lower()
+    is_frozen = True
 
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
+    def __init__(self, owner):
+        assert not self.is_frozen
+        assert isinstance(owner, weakref.ref) and isinstance(owner(), Entity)
+        self.owner = owner
+
+    def freeze(self):
+        pass
+
+
+class MutableEntity(Entity):
+
+    is_frozen = False
+
+    def remove(self):
+        self.__dict__.clear()
+        self.__class__ = RemovedEntity
 
 
 class NamedEntity(Entity):
-    """
-    Represents a database object with a name.
 
-    `name` (a string)
-        The object name
-    """
-
-    def __init__(self, name):
-        # Sanity check on the argument.
+    def __init__(self, owner, name):
         assert isinstance(name, str) and len(name) > 0
+        super(NamedEntity, self).__init__(owner)
         self.name = name
 
     def __str__(self):
         return self.name
 
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
+
+class RemovedEntity(Printable):
+
+    def __str__(self):
+        return "<removed>"
 
 
-class EntitySet(object):
-    """
-    Implements an ordered collection of named entities.
+class EntitySet(Printable):
 
-    :class:`EntitySet` provides a read-only mapping interface to a collection
-    of named entities.  The only deviation from the mapping interface is that
-    iteration generates entities in the original order (instead of entity
-    names in an arbitrary order).
+    is_frozen = True
 
-    `entities`
-        A list of named entities.  Entity names must be unique.
-    """
-
-    def __init__(self, entities):
-        # Sanity check on the argument.
-        assert isinstance(entities, listof(NamedEntity))
-
-        # An ordered list of entities.
-        self.entities = entities
-        # A mapping: name -> entity.
-        self.entity_by_name = dict((entity.name, entity)
-                                   for entity in entities)
-
-        # Verify that the names are unique.
-        assert len(self.entity_by_name) == len(self.entities)
+    def __init__(self):
+        assert not self.is_frozen
+        self.entities = []
+        self.index_by_name = {}
 
     def __contains__(self, name):
-        """
-        Checks if the collection contains an entity with the given name.
-        """
-        return (name in self.entity_by_name)
+        return (name in self.index_by_name)
 
     def __getitem__(self, name):
-        """
-        Returns an entity with the given name.
-
-        Raises :exc:`KeyError` if there is no entity with the given name
-        in the collection.
-        """
-        return self.entity_by_name[name]
+        return self.entities[self.index_by_name[name]]
 
     def __iter__(self):
-        """
-        Generates entities in the original order.
-        """
         return iter(self.entities)
 
     def __len__(self):
-        """
-        Returns the number of entities in the collection.
-        """
         return len(self.entities)
 
     def get(self, name, default=None):
-        """
-        Returns an entity with the given name.
-
-        If the collection does not contain an entity with the given name,
-        returns the `default` value.
-        """
-        return self.entity_by_name.get(name, default)
+        index = self.index_by_name
+        if index is not None:
+            return self.entities[index]
+        return default
 
     def keys(self):
-        """
-        Returns a list of entity names in the original order.
-        """
         return [entity.name for entity in self.entities]
 
     def values(self):
-        """
-        Returns a list of entities in the original order.
-        """
         return self.entities[:]
 
     def items(self):
-        """
-        Returns a list of pairs ``(name, entity)`` in the original order.
-        """
         return [(entity.name, entity) for entity in self.entities]
+
+    def __str__(self):
+        return "[%s]" % ", ".join(entity.name for entity in self.entities)
+
+
+class MutableEntitySet(EntitySet):
+
+    is_frozen = False
+
+    def add(self, entity):
+        assert isinstance(entity, NamedEntity)
+        if entity.name in self.index_by_name:
+            raise KeyError(entity.name)
+        self.index_by_name[entity.name] = len(self.entities)
+        self.entities.append(entity)
+
+    def remove(self, entity):
+        assert isinstance(entity, NamedEntity)
+        assert entity.name in self.index_by_name
+        idx = self.index_by_name[entity.name]
+        assert self.entities[idx] is entity
+        del self.entities[idx]
+        del self.index_by_name[entity.name]
+        for entity in self.entities[idx:]:
+            self.index_by_name[entity.name] -= 1
+
+    def freeze(self):
+        for entity in self.entities:
+            entity.freeze()
+        self.__class__ = EntitySet
 
 
 class CatalogEntity(Entity):
-    """
-    Encapsulates database metadata.
+    pass
 
-    `schemas` (a list of :class:`SchemaEntity`)
-        A list of schemas.
-    """
 
-    def __init__(self, schemas):
-        # Sanity check on the argument.
-        assert isinstance(schemas, listof(SchemaEntity))
-        name_to_schema = dict((schema.name, schema) for schema in schemas)
-        for origin_schema in schemas:
-            for origin_table in origin_schema.tables:
-                for fk in origin_table.foreign_keys:
-                    assert fk.target_schema_name in name_to_schema, fk
-                    schema = name_to_schema[fk.target_schema_name]
-                    assert fk.target_name in schema.tables, fk
-                    table = schema.tables[fk.target_name]
-                    assert (set(column.name for column in table.columns)
-                                .issuperset(set(fk.target_column_names))), fk
+class MutableCatalogEntity(CatalogEntity, MutableEntity):
 
-        # An ordered mapping: name -> schema.
-        self.schemas = EntitySet(schemas)
+    def __init__(self):
+        super(MutableCatalogEntity, self).__init__(weakref.ref(self))
+        self.schemas = MutableEntitySet()
+
+    def add_schema(self, name, priority=0):
+        return MutableSchemaEntity(self, name, priority)
+
+    def freeze(self):
+        self.schemas.freeze()
+        self.__class__ = CatalogEntity
+
+    def remove(self):
+        for schema in reverse(self.schemas):
+            schema.remove()
+        self.__dict__.clear()
+        self.__class__ = RemovedEntity
 
 
 class SchemaEntity(NamedEntity):
-    """
-    Represents a database schema.
 
-    `name` (a string)
-        The schema name.
+    @property
+    def catalog(self):
+        return self.owner()
 
-    `tables` (a list of :class:`TableEntity`)
-        A list of tables in the schema.
-    """
 
-    def __init__(self, name, tables, priority=0):
-        # Sanity check on the arguments.
-        assert isinstance(tables, listof(TableEntity))
-        assert all(table.schema_name == name for table in tables)
+class MutableSchemaEntity(SchemaEntity, MutableEntity):
+
+    def __init__(self, catalog, name, priority):
+        assert isinstance(catalog, MutableCatalogEntity)
+        assert name not in catalog.schemas
         assert isinstance(priority, int)
-
-        super(SchemaEntity, self).__init__(name)
-        # An ordered mapping: name -> table.
-        self.tables = EntitySet(tables)
+        super(MutableSchemaEntity, self).__init__(weakref.ref(catalog), name)
+        self.tables = MutableEntitySet()
         self.priority = priority
+        catalog.schemas.add(self)
+
+    def set_priority(self, priority):
+        assert isinstance(priority, int)
+        self.priority = priority
+        return self
+
+    def add_table(self, name):
+        return MutableTableEntity(self, name)
+
+    def freeze(self):
+        self.tables.freeze()
+        self.__class__ = SchemaEntity
+
+    def remove(self):
+        for table in reversed(list(self.tables)):
+            table.remove()
+        self.catalog.schemas.remove(self)
+        self.__dict__.clear()
+        self.__class__ = RemovedEntity
 
 
 class TableEntity(NamedEntity):
-    """
-    Represents a database table or a view.
 
-    `schema_name` (a string)
-        The name of the schema to which the table belongs.
-
-    `name` (a string)
-        The table name.
-
-    `columns` (a list of :class:`ColumnEntity`)
-        A list of columns of the table.
-
-    `unique_keys` (a list of :class:`UniqueKeyEntity`)
-        A list of unique key constraints applied to the table.
-
-    `foreign_keys` (a list of :class:`ForeignKeyEntity`)
-        A list of foreign key constraints applied to the table.
-    """
-
-    def __init__(self, schema_name, name, columns, unique_keys, foreign_keys):
-        # Sanity check on the arguments.
-        assert isinstance(schema_name, str)
-        assert isinstance(columns, listof(ColumnEntity))
-        assert all((column.schema_name, column.table_name)
-                        == (schema_name, name) for column in columns), \
-               (schema_name, name, columns)
-        assert isinstance(unique_keys, listof(UniqueKeyEntity))
-        assert all((uk.origin_schema_name, uk.origin_name)
-                        == (schema_name, name) for uk in unique_keys), \
-               (schema_name, name, unique_keys)
-        assert set(column.name for column in columns).issuperset(
-                set(column_name for uk in unique_keys
-                                for column_name in uk.origin_column_names)), \
-               (schema_name, name, unique_keys)
-        assert isinstance(foreign_keys, listof(ForeignKeyEntity))
-        assert all((fk.origin_schema_name, fk.origin_name)
-                        == (schema_name, name) for fk in foreign_keys), \
-               (schema_name, name, foreign_keys)
-        assert set(column.name for column in columns).issuperset(
-                set(column_name for fk in foreign_keys
-                                for column_name in fk.origin_column_names)), \
-               (schema_name, name, foreign_keys)
-
-        super(TableEntity, self).__init__(name)
-        self.schema_name = schema_name
-        # An ordered mapping: name -> column.
-        self.columns = EntitySet(columns)
-        self.unique_keys = unique_keys
-        # Find the primary key if it exists.
-        self.primary_key = None
-        primary_keys = [uk for uk in unique_keys if uk.is_primary]
-        assert len(primary_keys) <= 1
-        if primary_keys:
-            self.primary_key = primary_keys[0]
-        self.foreign_keys = foreign_keys
+    @property
+    def schema(self):
+        return self.owner()
 
     def __str__(self):
-        return "%s.%s" % (self.schema_name, self.name)
+        return "%s.%s" % (self.schema, self.name)
 
 
-class ColumnEntity(NamedEntity):
-    """
-    Represents a column of a table.
+class MutableTableEntity(TableEntity, MutableEntity):
 
-    `schema_name`, `table_name` (strings)
-        The schema name and the name of the table to which the column belongs.
+    def __init__(self, schema, name):
+        assert isinstance(schema, MutableSchemaEntity)
+        assert name not in schema.tables
+        super(MutableTableEntity, self).__init__(weakref.ref(schema), name)
+        self.columns = MutableEntitySet()
+        self.primary_key = None
+        self.unique_keys = []
+        self.foreign_keys = []
+        self.referring_foreign_keys = []
+        schema.tables.add(self)
 
-    `name` (a string)
-        The name of the column.
+    def add_column(self, name, domain, is_nullable=True, has_default=False):
+        return MutableColumnEntity(self, name, domain,
+                                   is_nullable, has_default)
 
-    `domain` (:class:`htsql.domain.Domain`)
-        The column type.
+    def add_unique_key(self, columns, is_primary=False, is_partial=False):
+        return MutableUniqueKeyEntity(self, columns, is_primary, is_partial)
 
-    `is_nullable` (Boolean)
-        Indicates if the column admits ``NULL`` values.
+    def add_primary_key(self, columns):
+        return MutableUniqueKeyEntity(self, columns, True, False)
 
-    `has_default` (Boolean)
-        Indicates if the column has some (explicitly set) default value.
-    """
+    def add_foreign_key(self, columns, target, target_columns,
+                        is_partial=False):
+        return MutableForeignKeyEntity(self, columns, target, target_columns,
+                                       is_partial)
 
-    def __init__(self, schema_name, table_name, name,
-                 domain, is_nullable=False, has_default=False):
-        # Sanity check on the arguments.
-        assert isinstance(schema_name, str)
-        assert isinstance(table_name, str)
+    def freeze(self):
+        self.columns.freeze()
+        for unique_key in self.unique_keys:
+            unique_key.freeze()
+        for foreign_key in self.foreign_keys:
+            foreign_key.freeze()
+        self.__class__ = TableEntity
+
+    def remove(self):
+        for unique_key in list(self.unique_keys):
+            unique_key.remove()
+        for foreign_key in list(self.foreign_keys):
+            foreign_key.remove()
+        for foreign_key in list(self.referring_foreign_keys):
+            foreign_key.remove()
+        for column in reversed(list(self.columns)):
+            column.remove()
+        self.schema.tables.remove(self)
+        self.__dict__.clear()
+        self.__class__ = RemovedEntity
+
+
+class ColumnEntity(NamedEntity, MutableEntity):
+
+    @property
+    def table(self):
+        return self.owner()
+
+    @property
+    def unique_keys(self):
+        return [unique_key
+                for unique_key in self.table.unique_keys
+                if self in unique_key.origin_columns]
+
+    @property
+    def foreign_keys(self):
+        return [foreign_key
+                for foreign_key in self.table.foreign_keys
+                if self in foreign_key.origin_columns]
+
+    @property
+    def referring_foreign_keys(self):
+        return [foreign_key
+                for foreign_key in self.table.referring_foreign_keys
+                if self in foreign_key.target_columns]
+
+    def __str__(self):
+        return "%s.%s" % (self.table, self.name)
+
+
+class MutableColumnEntity(ColumnEntity, MutableEntity):
+
+    def __init__(self, table, name, domain, is_nullable, has_default):
+        assert isinstance(table, MutableTableEntity)
+        assert name not in table.columns
         assert isinstance(domain, Domain)
         assert isinstance(is_nullable, bool)
         assert isinstance(has_default, bool)
-
-        super(ColumnEntity, self).__init__(name)
-        self.schema_name = schema_name
-        self.table_name = table_name
+        super(MutableColumnEntity, self).__init__(weakref.ref(table), name)
         self.domain = domain
         self.is_nullable = is_nullable
         self.has_default = has_default
+        table.columns.add(self)
 
-    def __str__(self):
-        return "%s.%s.%s" % (self.schema_name, self.table_name, self.name)
+    def set_domain(self, domain):
+        assert isinstance(domain, Domain)
+        self.domain = domain
+        return self
+
+    def set_is_nullable(self, is_nullable):
+        assert isinstance(is_nullable, bool)
+        if is_nullable and self.table.primary_key is not None:
+            assert self not in self.table.primary_key.origin_columns
+        self.is_nullable = is_nullable
+        return self
+
+    def set_has_default(self, has_default):
+        assert isinstance(has_default, bool)
+        self.has_default = has_default
+        return self
+
+    def freeze(self):
+        self.__class__ = ColumnEntity
+
+    def remove(self):
+        for unique_key in self.unique_keys:
+            unique_key.remove()
+        for foreign_key in self.foreign_keys:
+            foreign_key.remove()
+        for foreign_key in self.referring_foreign_keys:
+            foreign_key.remove()
+        self.table.columns.remove(self)
+        self.__dict__.clear()
+        self.__class__ = RemovedEntity
 
 
 class UniqueKeyEntity(Entity):
-    """
-    Represents a unique key constraint.
 
-    Class attributes:
-
-    `is_primary` (Boolean)
-        Indicates if the constraint represents a primary key.
-
-    The constructor accepts the following parameters:
-
-    `origin_schema_name`, `origin_name` (strings)
-        The schema name and the name of the table to which the constraint
-        is applied.
-
-    `origin_column_names` (a list of strings)
-        The names of the columns which the constraint comprises.
-    """
-
-    is_primary = False
-
-    def __init__(self, origin_schema_name, origin_name, origin_column_names):
-        # Sanity check on the arguments.
-        assert isinstance(origin_schema_name, str)
-        assert isinstance(origin_name, str)
-        assert isinstance(origin_column_names, listof(str))
-        assert len(origin_column_names) > 0
-
-        self.origin_schema_name = origin_schema_name
-        self.origin_name = origin_name
-        self.origin_column_names = origin_column_names
+    @property
+    def origin(self):
+        return self.owner()
 
     def __str__(self):
-        # Generate a string of the form:
-        #   schema.table(column,...)
-        return "%s.%s(%s)" % (self.origin_schema_name, self.origin_name,
-                              ",".join(self.origin_column_names))
+        return "%s(%s)" % (self.origin,
+                           ",".join(column.name
+                                    for column in self.origin_columns))
 
 
-class PrimaryKeyEntity(UniqueKeyEntity):
-    """
-    Represents a primary key constraint.
-    """
+class MutableUniqueKeyEntity(UniqueKeyEntity, MutableEntity):
 
-    is_primary = True
+    def __init__(self, origin, origin_columns, is_primary, is_partial):
+        assert isinstance(origin, MutableTableEntity)
+        assert isinstance(origin_columns, listof(MutableColumnEntity))
+        assert len(origin_columns) > 0
+        assert all(column.table is origin for column in origin_columns)
+        assert isinstance(is_primary, bool)
+        assert isinstance(is_partial, bool)
+        if is_primary:
+            assert not is_partial
+            assert origin.primary_key is None
+            assert [not column.is_nullable for column in origin_columns]
+        super(MutableUniqueKeyEntity, self).__init__(weakref.ref(origin))
+        self.origin_columns = origin_columns
+        self.is_primary = is_primary
+        self.is_partial = is_partial
+        origin.unique_keys.append(self)
+        if is_primary:
+            origin.primary_key = self
+
+    def set_is_primary(self, is_primary):
+        assert isinstance(is_primary, bool)
+        if is_primary == self.is_primary:
+            return self
+        if is_primary:
+            assert not self.is_partial
+            assert [not column.is_nullable for column in self.origin_columns]
+            assert self.origin.primary_key is None
+            self.origin.primary_key = self
+        else:
+            self.origin.primary_key = None
+        self.is_primary = is_primary
+        return self
+
+    def set_is_partial(self, is_partial):
+        assert isinstance(is_partial, bool)
+        if is_partial == self.is_partial:
+            return self
+        if is_partial:
+            assert not self.is_primary
+        self.is_partial = is_partial
+        return self
+
+    def freeze(self):
+        self.__class__ = UniqueKeyEntity
+
+    def remove(self):
+        self.origin.unique_keys.remove(self)
+        if self.is_primary:
+            self.origin.primary_key = None
+        self.__dict__.clear()
+        self.__class__ = RemovedEntity
 
 
 class ForeignKeyEntity(Entity):
-    """
-    Represents a foreign key constraint.
 
-    `origin_schema_name`, `origin_name` (strings)
-        The schema name and the name of the table to which the constraint
-        is applied.
+    @property
+    def origin(self):
+        return self.owner()
 
-    `origin_column_names` (a list of strings)
-        The names of the columns which the constraint comprises.
-
-    `target_schema_name`, `target_name` (strings)
-        The schema name and the name of the referenced table.
-
-    `target_column_names` (a list of strings)
-        The names of the columns which the constraint refers to.
-    """
-
-    def __init__(self, origin_schema_name, origin_name, origin_column_names,
-                 target_schema_name, target_name, target_column_names):
-        # Sanity check on the arguments.
-        assert isinstance(origin_schema_name, str)
-        assert isinstance(origin_name, str)
-        assert isinstance(origin_column_names, listof(str))
-        assert isinstance(target_schema_name, str)
-        assert isinstance(target_name, str)
-        assert isinstance(target_column_names, listof(str))
-        assert len(origin_column_names) == len(target_column_names) > 0
-
-        self.origin_schema_name = origin_schema_name
-        self.origin_name = origin_name
-        self.origin_column_names = origin_column_names
-        self.target_schema_name = target_schema_name
-        self.target_name = target_name
-        self.target_column_names = target_column_names
+    @property
+    def target(self):
+        return self.coowner()
 
     def __str__(self):
-        # Generate a string of the form:
-        #   schema.table(column,...) -> schema.table(column,...)
-        return "%s.%s(%s) -> %s.%s(%s)" \
-                % (self.origin_schema_name, self.origin_name,
-                   ",".join(self.origin_column_names),
-                   self.target_schema_name, self.target_name,
-                   ",".join(self.target_column_names))
+        return ("%s(%s) -> %s(%s)"
+                % (self.origin,
+                   ",".join(column.name for column in self.origin_columns),
+                   self.target,
+                   ",".join(column.name for column in self.target_columns)))
 
 
-class Join(object):
+class MutableForeignKeyEntity(ForeignKeyEntity, MutableEntity):
+
+    def __init__(self, origin, origin_columns, target, target_columns,
+                 is_partial):
+        assert isinstance(origin, MutableTableEntity)
+        assert isinstance(origin_columns, listof(MutableColumnEntity))
+        assert len(origin_columns) > 0
+        assert all(column.table is origin for column in origin_columns)
+        assert isinstance(target, MutableTableEntity)
+        assert origin.schema.catalog is target.schema.catalog
+        assert isinstance(target_columns, listof(MutableColumnEntity))
+        assert len(target_columns) == len(origin_columns)
+        assert all(column.table is target for column in target_columns)
+        assert isinstance(is_partial, bool)
+        super(MutableForeignKeyEntity, self).__init__(weakref.ref(origin))
+        self.origin_columns = origin_columns
+        self.coowner = weakref.ref(target)
+        self.target_columns = target_columns
+        self.is_partial = is_partial
+        origin.foreign_keys.append(self)
+        target.referring_foreign_keys.append(self)
+
+    def set_is_partial(self, is_partial):
+        assert isinstance(is_partial, bool)
+        self.is_partial = is_partial
+        return self
+
+    def freeze(self):
+        self.__class__ = ForeignKeyEntity
+
+    def remove(self):
+        self.origin.foreign_keys.remove(self)
+        self.target.referring_foreign_keys.remove(self)
+        self.__dict__.clear()
+        self.__class__ = RemovedEntity
+
+
+class Join(Printable, Comparable):
     """
     Represents a join condition between two tables.
 
@@ -412,15 +481,21 @@ class Join(object):
     is_direct = False
     is_reverse = False
 
-    def __init__(self, origin, target, is_expanding, is_contracting):
+    def __init__(self, origin, target, origin_columns, target_columns,
+                 is_expanding, is_contracting, equality_vector):
         # Sanity check on the arguments.
         assert isinstance(origin, TableEntity)
         assert isinstance(target, TableEntity)
+        assert isinstance(origin_columns, listof(ColumnEntity))
+        assert isinstance(target_columns, listof(ColumnEntity))
         assert isinstance(is_expanding, bool)
         assert isinstance(is_contracting, bool)
 
+        super(Join, self).__init__(equality_vector=equality_vector)
         self.origin = origin
         self.target = target
+        self.origin_columns = origin_columns
+        self.target_columns = target_columns
         self.is_expanding = is_expanding
         self.is_contracting = is_contracting
 
@@ -432,83 +507,48 @@ class Join(object):
         #   schema.table -> schema.table
         return "%s -> %s" % (self.origin, self.target)
 
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
-
-    def __hash__(self):
-        # Since joins are used in comparison operations of code and space
-        # objects, we need to override hash and equality operators to
-        # provide comparison by value.  Override in subclasses.
-        raise NotImplementedError()
-
-    def __eq__(self, other):
-        # Since joins are used in comparison operations of code and space
-        # objects, we need to override hash and equality operators to
-        # provide comparison by value.  Override in subclasses.
-        raise NotImplementedError()
-
-    def __ne__(self, other):
-        # Since we override `==`, we also need to override `!=`.
-        return not (self == other)
-
 
 class DirectJoin(Join):
     """
     Represents a join condition corresponding to a foreign key.
 
-    `origin` (:class:`TableEntity`)
-        The origin table of the join.
-
-    `target` (:class:`TableEntity`)
-        The target table of the join.
-
     `foreign_key` (:class:`ForeignKeyEntity`)
-        The foreign key that generates the join condition.  Note
-        that the origin and the target of the key must coincide with
-        the `origin` and `target` parameters.
+        The foreign key that generates the join condition.
     """
 
     is_direct = True
 
-    def __init__(self, origin, target, foreign_key):
+    def __init__(self, foreign_key):
         # Sanity check on the arguments.
-        assert isinstance(origin, TableEntity)
-        assert isinstance(target, TableEntity)
         assert isinstance(foreign_key, ForeignKeyEntity)
-        assert ((origin.schema_name, origin.name) ==
-                (foreign_key.origin_schema_name, foreign_key.origin_name))
-        assert ((target.schema_name, target.name) ==
-                (foreign_key.target_schema_name, foreign_key.target_name))
+
+        # The origin and target tables.
+        origin = foreign_key.origin
+        target = foreign_key.target
 
         # The columns that form the join condition.
-        self.origin_columns = [origin.columns[name]
-                               for name in foreign_key.origin_column_names]
-        self.target_columns = [target.columns[name]
-                               for name in foreign_key.target_column_names]
+        origin_columns = foreign_key.origin_columns
+        target_columns = foreign_key.target_columns
 
-        # If all referencing columns are `NOT NULL`, the target row
-        # always exists.
-        is_expanding = all(not column.is_nullable
-                           for column in self.origin_columns)
-        # For a join condition corresponding to a foreign key, there is always
-        # no more than one row in the target table.
-        is_contracting = True
+        # If all referencing columns are `NOT NULL` and the key is total,
+        # the target row always exists.
+        is_expanding = not (foreign_key.is_partial or
+                            any(column.is_nullable
+                                for column in foreign_key.origin_columns))
+        # Normally, the foreign key always refers to a unique key of
+        # the target table; so the join should always be contracting.
+        is_contracting = any(all(column in foreign_key.target_columns
+                                 for column in unique_key.origin_columns)
+                             for unique_key in foreign_key.target.unique_keys)
 
         super(DirectJoin, self).__init__(origin, target,
-                                         is_expanding, is_contracting)
+                                         origin_columns, target_columns,
+                                         is_expanding, is_contracting,
+                                         equality_vector=(foreign_key,))
         self.foreign_key = foreign_key
 
     def reverse(self):
-        return ReverseJoin(self.target, self.origin, self.foreign_key)
-
-    def __hash__(self):
-        # Provide comparison by value.
-        return hash(self.foreign_key)
-
-    def __eq__(self, other):
-        # Provide comparison by value.
-        return (isinstance(other, DirectJoin) and
-                self.foreign_key == other.foreign_key)
+        return ReverseJoin(self.foreign_key)
 
 
 class ReverseJoin(Join):
@@ -516,62 +556,44 @@ class ReverseJoin(Join):
     Represents a join condition that joins tables in the opposite direction
     to some foreign key.
 
-    `origin` (:class:`TableEntity`)
-        The origin table of the join.
-
-    `target` (:class:`TableEntity`)
-        The target table of the join.
-
     `foreign_key` (:class:`ForeignKeyEntity`)
-        The foreign key that generates the join condition.  Note
-        that the origin and the target of the key must coincide with
-        the `target` and `origin` parameters respectively.
+        The foreign key that generates the join condition.
     """
 
     is_reverse = True
 
-    def __init__(self, origin, target, foreign_key):
+    def __init__(self, foreign_key):
         # Sanity check on the arguments.
-        assert isinstance(origin, TableEntity)
-        assert isinstance(target, TableEntity)
-        assert isinstance(foreign_key, ForeignKeyEntity)
-        assert ((origin.schema_name, origin.name) ==
-                (foreign_key.target_schema_name, foreign_key.target_name))
-        assert ((target.schema_name, target.name) ==
-                (foreign_key.origin_schema_name, foreign_key.origin_name))
         assert isinstance(foreign_key, ForeignKeyEntity)
 
+        # The origin and target tables.
+        origin = foreign_key.target
+        target = foreign_key.origin
+
         # The columns that form the join condition.
-        self.origin_columns = [origin.columns[name]
-                               for name in foreign_key.target_column_names]
-        self.target_columns = [target.columns[name]
-                               for name in foreign_key.origin_column_names]
+        origin_columns = foreign_key.target_columns
+        target_columns = foreign_key.origin_columns
 
         # Unset since we do not know if all rows in the target table
         # of a foreign key are referenced.
         is_expanding = False
         # Set if the foreign key is one-to-one.  It is so if and only if
         # the referencing columns form a unique key.
-        is_contracting = False
-        for uk in target.unique_keys:
-            if all(column_name in foreign_key.origin_column_names
-                   for column_name in uk.origin_column_names):
-                is_contracting = True
+        is_contracting = any(all(column in foreign_key.origin_columns
+                                 for column in unique_key.origin_columns)
+                             for unique_key in foreign_key.origin.unique_keys)
 
         super(ReverseJoin, self).__init__(origin, target,
-                                          is_expanding, is_contracting)
+                                          origin_columns, target_columns,
+                                          is_expanding, is_contracting,
+                                          equality_vector=(foreign_key,))
         self.foreign_key = foreign_key
 
     def reverse(self):
-        return DirectJoin(self.target, self.origin, self.foreign_key)
+        return DirectJoin(self.foreign_key)
 
-    def __hash__(self):
-        # Provide comparison by value.
-        return hash(self.foreign_key)
 
-    def __eq__(self, other):
-        # Provide comparison by value.
-        return (isinstance(other, ReverseJoin) and
-                self.foreign_key == other.foreign_key)
+def make_catalog():
+    return MutableCatalogEntity()
 
 

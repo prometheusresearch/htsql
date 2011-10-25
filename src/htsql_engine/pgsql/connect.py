@@ -12,7 +12,7 @@ This module implements the connection adapter for PostgreSQL.
 """
 
 
-from htsql.connect import Connect, DBError
+from htsql.connect import Connect, DBError, NormalizeError
 from htsql.context import context
 import psycopg2, psycopg2.extensions
 
@@ -28,7 +28,7 @@ class ConnectPGSQL(Connect):
     Implementation of the connection adapter for PostgreSQL.
     """
 
-    def open_connection(self, with_autocommit=False):
+    def open(self):
         # Prepare and execute the `psycopg2.connect()` call.
         db = context.app.htsql.db
         parameters = {}
@@ -44,20 +44,23 @@ class ConnectPGSQL(Connect):
         connection = psycopg2.connect(**parameters)
 
         # Enable autocommit.
-        if with_autocommit:
+        if self.with_autocommit:
             connection.set_isolation_level(
                     psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         return connection
 
-    def normalize_error(self, exception):
+
+class NormalizePGSQLError(NormalizeError):
+
+    def __call__(self):
         # If we got a DBAPI exception, generate our own error.
-        if isinstance(exception, psycopg2.Error):
-            message = str(exception)
-            error = PGSQLError(message, exception)
+        if isinstance(self.error, psycopg2.Error):
+            message = str(self.error)
+            error = PGSQLError(message)
             return error
 
         # Otherwise, let the superclass return `None`.
-        return super(ConnectPGSQL, self).normalize_error(exception)
+        return super(NormalizePGSQLError, self).__call__()
 
 

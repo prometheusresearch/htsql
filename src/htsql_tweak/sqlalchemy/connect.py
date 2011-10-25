@@ -12,13 +12,12 @@ class SQLAlchemyConnect(Connect):
 
     weigh(2.0) # ensure connections here are not pooled
 
-    def open_connection(self, with_autocommit=False):
+    def open(self):
         sqlalchemy_engine = context.app.tweak.sqlalchemy.engine
         if sqlalchemy_engine:
             wrapper = sqlalchemy_engine.connect() \
-                      .execution_options(autocommit=with_autocommit)
+                      .execution_options(autocommit=self.with_autocommit)
             # wrapper.connection is a proxied DBAPI connection
             # that is in the SQLAlchemy connection pool.
             return wrapper.connection
-        return super(SQLAlchemyConnect, self) \
-                 .open_connection(with_autocommit)
+        return super(SQLAlchemyConnect, self).open()

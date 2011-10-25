@@ -52,8 +52,8 @@ from . import (adapter, addon, application, cmd, connect, context, domain,
                validator, wsgi)
 from .validator import DBVal
 from .addon import Addon, Parameter
-from .connect import ConnectionPool
-from .introspect import CatalogCache
+from .connect import ConnectionPool, connect, DBError
+from .introspect import CatalogCache, introspect
 from .classify import LabelCache
 
 from .application import Application as HTSQL
@@ -101,5 +101,19 @@ class HTSQLAddon(Addon):
         self.catalog_cache = CatalogCache()
         self.connection_pool = ConnectionPool()
         self.label_cache = LabelCache()
+
+    def validate(self):
+        if self.db is None:
+            raise ValueError("database address is not specified")
+        try:
+            connection = connect()
+            connection.release()
+        except DBError, exc:
+            raise ValueError("failed to establish database connection: %s"
+                             % exc)
+        try:
+            catalog = introspect()
+        except DBError, exc:
+            raise ValueError("failed to introspect the database: %s" % exc)
 
 
