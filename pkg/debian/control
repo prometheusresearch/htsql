@@ -2,8 +2,7 @@ Source: htsql
 Section: non-free/python
 Priority: optional
 Maintainer: Clark C. Evans <cce@clarkevans.com>
-Build-Depends: debhelper (>= 7.4.3), python-setuptools (>= 0.6b3), 
- python (>= 2.5-2~)
+Build-Depends: python-all, debhelper (>= 7.4.3), python-setuptools (>= 0.6b3)
 Homepage: http://htsql.org
 Vcs-Browser: https://bitbucket.org/prometheus/htsql
 Standards-Version: 3.9.2
@@ -11,8 +10,7 @@ X-Python-Version: >= 2.5
 
 Package: htsql
 Architecture: all
-Depends: python (>= 2.5), python-yaml, python-pkg-resources, 
- ${misc:Depends}, ${python:Depends}
+Depends: python (>=2.5), python-yaml, python-pkg-resources, ${misc:Depends}
 Suggests: python-psycopg2, python-mysqldb
 Description: a navigational query language for relational databases
  ***********************************************************
