@@ -13,7 +13,7 @@ deb: $(ARCHIVE) clean
 	cp -f $(ARCHIVE) htsql_$(VERSION).orig.tar.gz
 	tar xvfz htsql_$(VERSION).orig.tar.gz
 	cp -a debian HTSQL-$(VERSION)
-	cd HTSQL-$(VERSION) && dpkg-buildpackage -rfakeroot
+	cd HTSQL-$(VERSION) && dpkg-buildpackage -k8E70D862
 	lintian htsql_$(VERSION)-1.dsc
 
 clean:
