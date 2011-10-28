@@ -19,10 +19,10 @@
 title: HTSQL regression tests
 id: all
 tests:
-- include: test/regress/input/routine.yaml
-- include: test/regress/input/sqlite.yaml
-- include: test/regress/input/pgsql.yaml
-- include: test/regress/input/mysql.yaml
-- include: test/regress/input/oracle.yaml
-- include: test/regress/input/mssql.yaml
+- include: test/input/routine.yaml
+- include: test/input/sqlite.yaml
+- include: test/input/pgsql.yaml
+- include: test/input/mysql.yaml
+- include: test/input/oracle.yaml
+- include: test/input/mssql.yaml
 

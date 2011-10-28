@@ -1,0 +1,64 @@
+#
+# Copyright (c) 2006-2011, Prometheus Research, LLC
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+#
+
+title: Oracle regression tests
+id: oracle
+output: test/output/oracle.yaml
+tests:
+
+- title: Remove any existing regression database
+  id: drop-oracle
+  tests:
+  - connect: &admin-connect
+      engine: oracle
+      database: ${ORACLE_SID:XE}
+      username: ${ORACLE_USERNAME}
+      password: ${ORACLE_PASSWORD}
+      host: ${ORACLE_HOST}
+      port: ${ORACLE_PORT}
+    sql: |
+        DROP USER htsql_demo CASCADE;
+    autocommit: true
+    ignore: true
+
+- title: Deploy the regression database
+  id: create-oracle
+  tests:
+  - connect: *admin-connect
+    sql: |
+        CREATE USER htsql_demo IDENTIFIED BY secret;
+        GRANT CREATE SESSION TO htsql_demo;
+        GRANT CREATE TABLE TO htsql_demo;
+        GRANT CREATE SEQUENCE TO htsql_demo;
+        GRANT CREATE TRIGGER TO htsql_demo;
+        GRANT UNLIMITED TABLESPACE TO htsql_demo;
+    autocommit: true
+  - connect: &connect
+      engine: oracle
+      database: ${ORACLE_SID:XE}
+      username: htsql_demo
+      password: secret
+      host: ${ORACLE_HOST}
+      port: ${ORACLE_PORT}
+    sql-include: test/sql/demo-oracle.sql
+  - db: *connect
+  - py-include: test/sql/demo-load.py
+
+- title: Run the test collection
+  id: test-oracle
+  tests:
+  - define: oracle
+  - db: *connect
+  # The Regression Schema
+  - include: test/input/schema.yaml
+  # Examples from the Tutorial
+  - include: test/input/tutorial.yaml
+  # Standard Data Types, Functions, and Operations
+  - include: test/input/library.yaml
+  # Edge Cases of HTSQL-to-SQL Translation
+  - include: test/input/translation.yaml
+  # Formatting Output Data
+  - include: test/input/format.yaml
+

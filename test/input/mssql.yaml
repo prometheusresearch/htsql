@@ -1,0 +1,66 @@
+#
+# Copyright (c) 2006-2011, Prometheus Research, LLC
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+#
+
+title: MS SQL Server regression tests
+id: mssql
+output: test/output/mssql.yaml
+tests:
+
+- title: Remove any existing regression database
+  id: drop-mssql
+  tests:
+  - connect: &admin-connect
+      engine: mssql
+      database: master
+      username: ${MSSQL_USERNAME}
+      password: ${MSSQL_PASSWORD}
+      host: ${MSSQL_HOST}
+      port: ${MSSQL_PORT}
+    sql: |
+        IF DB_ID('htsql_demo') IS NOT NULL
+            DROP DATABASE [htsql_demo];
+        IF SUSER_ID('htsql_demo') IS NOT NULL
+            DROP LOGIN [htsql_demo];
+    autocommit: true
+    ignore: true
+
+- title: Deploy the regression database
+  id: create-mssql
+  tests:
+  - connect: *admin-connect
+    sql: |
+        CREATE DATABASE [htsql_demo] COLLATE Latin1_General_CI_AI;
+        CREATE LOGIN [htsql_demo] WITH PASSWORD = 'secret', CHECK_POLICY = OFF;
+        USE [htsql_demo];
+        CREATE USER [htsql_demo] FOR LOGIN [htsql_demo];
+        GRANT CONTROL TO [htsql_demo] WITH GRANT OPTION;
+    autocommit: true
+  - connect: &connect
+      engine: mssql
+      database: htsql_demo
+      username: htsql_demo
+      password: secret
+      host: ${MSSQL_HOST}
+      port: ${MSSQL_PORT}
+    sql-include: test/sql/demo-mssql.sql
+  - db: *connect
+  - py-include: test/sql/demo-load.py
+
+- title: Run the test collection
+  id: test-mssql
+  tests:
+  - define: mssql
+  - db: *connect
+  # The Regression Schema
+  - include: test/input/schema.yaml
+  # Examples from the Tutorial
+  - include: test/input/tutorial.yaml
+  # Standard Data Types, Functions, and Operations
+  - include: test/input/library.yaml
+  # Edge Cases of HTSQL-to-SQL Translation
+  - include: test/input/translation.yaml
+  # Formatting Output Data
+  - include: test/input/format.yaml
+

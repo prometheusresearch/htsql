@@ -5,24 +5,24 @@
 
 title: SQLite regression tests
 id: sqlite
-output: test/regress/output/sqlite.yaml
+output: test/output/sqlite.yaml
 tests:
 
 - title: Remove any existing regression database
   id: drop-sqlite
   tests:
-  - rmdir: ${SQLITE_DIRECTORY}
+  - rmdir: build/regress/sqlite
 
 - title: Deploy the regression database
   id: create-sqlite
   tests:
-  - mkdir: ${SQLITE_DIRECTORY}
+  - mkdir: build/regress/sqlite
   - connect: &connect
       engine: sqlite
-      database: ${SQLITE_DIRECTORY}/${SQLITE_DATABASE}
-    sql-include: test/regress/sql/regress-sqlite.sql
+      database: build/regress/sqlite/htsql_demo.sqlite
+    sql-include: test/sql/demo-sqlite.sql
   - db: *connect
-  - py-include: test/regress/sql/regress-load.py
+  - py-include: test/sql/demo-load.py
 
 - title: Run the test collection
   id: test-sqlite
@@ -30,13 +30,13 @@ tests:
   - define: sqlite
   - db: *connect
   # The Regression Schema
-  - include: test/regress/input/schema.yaml
+  - include: test/input/schema.yaml
   # Examples from the Tutorial
-  - include: test/regress/input/tutorial.yaml
+  - include: test/input/tutorial.yaml
   # Standard Data Types, Functions, and Operations
-  - include: test/regress/input/library.yaml
+  - include: test/input/library.yaml
   # Edge Cases of HTSQL-to-SQL Translation
-  - include: test/regress/input/translation.yaml
+  - include: test/input/translation.yaml
   # Formatting Output Data
-  - include: test/regress/input/format.yaml
+  - include: test/input/format.yaml
 

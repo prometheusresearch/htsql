@@ -11,10 +11,10 @@ from htsql.util import listof
 from htsql.connect import Connect
 import yaml, sys
 
-sys.path.append('test/regress/sql/datagen')
+sys.path.append('test/sql/datagen')
 import data_generator
 
-REGRESS_DATA = 'test/regress/sql/regress-data.yaml'
+REGRESS_DATA = 'test/sql/demo-data.yaml'
 
 assert state.app is not None
 

@@ -1,0 +1,61 @@
+#
+# Copyright (c) 2006-2011, Prometheus Research, LLC
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+#
+
+title: PostgreSQL regression tests
+id: pgsql
+output: test/output/pgsql.yaml
+tests:
+
+- title: Remove any existing regression database
+  id: drop-pgsql
+  tests:
+  - connect: &admin-connect
+      engine: pgsql
+      database: postgres
+      username: ${PGSQL_USERNAME}
+      password: ${PGSQL_PASSWORD}
+      host: ${PGSQL_HOST}
+      port: ${PGSQL_PORT}
+    sql: |
+        DROP DATABASE IF EXISTS "htsql_demo";
+        DROP ROLE IF EXISTS "htsql_demo";
+    autocommit: true
+
+- title: Deploy the regression database
+  id: create-pgsql
+  tests:
+  - connect: *admin-connect
+    sql: |
+        CREATE DATABASE "htsql_demo" WITH ENCODING = 'UTF-8';
+        CREATE ROLE "htsql_demo" WITH LOGIN PASSWORD 'secret';
+        ALTER DATABASE "htsql_demo" OWNER TO "htsql_demo";
+    autocommit: true
+  - connect: &connect
+      engine: pgsql
+      database: htsql_demo
+      username: htsql_demo
+      password: secret
+      host: ${PGSQL_HOST}
+      port: ${PGSQL_PORT}
+    sql-include: test/sql/demo-pgsql.sql
+  - db: *connect
+  - py-include: test/sql/demo-load.py
+
+- title: Run the test collection
+  id: test-pgsql
+  tests:
+  - define: pgsql
+  - db: *connect
+  # The Regression Schema
+  - include: test/input/schema.yaml
+  # Examples from the Tutorial
+  - include: test/input/tutorial.yaml
+  # Standard Data Types, Functions, and Operations
+  - include: test/input/library.yaml
+  # Edge Cases of HTSQL-to-SQL Translation
+  - include: test/input/translation.yaml
+  # Formatting Output Data
+  - include: test/input/format.yaml
+

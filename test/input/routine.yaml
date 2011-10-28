@@ -5,7 +5,7 @@
 
 title: HTSQL-CTL Command-Line Tool
 id: routine
-output: test/regress/output/routine.yaml
+output: test/output/routine.yaml
 tests:
 - ctl: []
 - ctl: [help]

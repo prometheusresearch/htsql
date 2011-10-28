@@ -5,7 +5,7 @@
 
 title: MySQL regression tests
 id: mysql
-output: test/regress/output/mysql.yaml
+output: test/output/mysql.yaml
 tests:
 
 - title: Remove any existing regression database
@@ -14,17 +14,17 @@ tests:
   - connect: &admin-connect
       engine: mysql
       database: mysql
-      username: ${MYSQL_ADMIN_USERNAME}
-      password: ${MYSQL_ADMIN_PASSWORD}
+      username: ${MYSQL_USERNAME}
+      password: ${MYSQL_PASSWORD}
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
-    sql: !environ |
-        DROP DATABASE `${MYSQL_DATABASE}`;
+    sql: |
+        DROP DATABASE `htsql_demo`;
     #autocommit: true
     ignore: true
   - connect: *admin-connect
-    sql: !environ |
-        DROP USER `${MYSQL_USERNAME}`;
+    sql: |
+        DROP USER `htsql_demo`;
     #autocommit: true
     ignore: true
 
@@ -33,23 +33,23 @@ tests:
   tests:
   - connect: *admin-connect
     sql: !environ |
-        CREATE DATABASE `${MYSQL_DATABASE}`
+        CREATE DATABASE `htsql_demo`
             CHARACTER SET utf8 COLLATE utf8_general_ci;
-        CREATE USER `${MYSQL_USERNAME}`
-            IDENTIFIED BY '${MYSQL_PASSWORD}';
+        CREATE USER `htsql_demo`
+            IDENTIFIED BY 'secret';
         GRANT ALL PRIVILEGES
-            ON `${MYSQL_DATABASE}`.* TO `${MYSQL_USERNAME}`;
+            ON `htsql_demo`.* TO `htsql_demo`;
     #autocommit: true
   - connect: &connect
       engine: mysql
-      database: ${MYSQL_DATABASE}
-      username: ${MYSQL_USERNAME}
-      password: ${MYSQL_PASSWORD}
+      database: htsql_demo
+      username: htsql_demo
+      password: secret
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
-    sql-include: test/regress/sql/regress-mysql.sql
+    sql-include: test/sql/demo-mysql.sql
   - db: *connect
-  - py-include: test/regress/sql/regress-load.py
+  - py-include: test/sql/demo-load.py
 
 - title: Run the test collection
   id: test-mysql
@@ -57,13 +57,13 @@ tests:
   - define: mysql
   - db: *connect
   # The Regression Schema
-  - include: test/regress/input/schema.yaml
+  - include: test/input/schema.yaml
   # Examples from the Tutorial
-  - include: test/regress/input/tutorial.yaml
+  - include: test/input/tutorial.yaml
   # Standard Data Types, Functions, and Operations
-  - include: test/regress/input/library.yaml
+  - include: test/input/library.yaml
   # Edge Cases of HTSQL-to-SQL Translation
-  - include: test/regress/input/translation.yaml
+  - include: test/input/translation.yaml
   # Formatting Output Data
-  - include: test/regress/input/format.yaml
+  - include: test/input/format.yaml
 
