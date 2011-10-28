@@ -9,7 +9,8 @@
 # for the list of prerequisites and detailed installation instructions.
 
 from setuptools import setup, find_packages
-import os.path
+from setuptools.command.sdist import sdist as _sdist, log
+import sys, os, os.path
 
 # We use the merged content of `README`, `INSTALL`, and `NEWS` as the
 # long description of the package.
@@ -97,6 +98,37 @@ INSTALL_REQUIRES = [
 #    'pymssql>=1.0.2',
 ]
 
+# Override the default sdist command to include compiled documentation.
+class sdist(_sdist):
+
+    def make_release_tree(self, base_dir, files):
+        _sdist.make_release_tree(self, base_dir, files)
+        if not os.path.isfile('doc/conf.py'):
+            return
+        try:
+            from sphinx.application import Sphinx
+        except ImportError:
+            log.warn("Sphinx is not installed"
+                      " -- unable to compile documentation")
+        log.info("compiling documentation")
+        srcdir = os.path.abspath('doc')
+        confdir = srcdir
+        outdir = os.path.abspath(os.path.join(base_dir, 'doc'))
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+        doctreedir = os.path.join(self.dist_dir, '.doctrees')
+        buildername = 'html'
+        sphinx = Sphinx(srcdir, confdir, outdir, doctreedir, buildername,
+                        status=None, warningiserror=True, freshenv=True)
+        sphinx.build()
+        if sphinx.statuscode:
+            log.error("failed to compile documentation!")
+
+CMDCLASS = {
+    'sdist': sdist,
+}
+
+
 setup(name=NAME,
       version=VERSION,
       description=DESCRIPTION,
@@ -114,6 +146,7 @@ setup(name=NAME,
       zip_safe=ZIP_SAFE,
       entry_points=ENTRY_POINTS,
       install_requires=INSTALL_REQUIRES,
+      cmdclass=CMDCLASS,
 )
 
 
