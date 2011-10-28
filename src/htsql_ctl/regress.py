@@ -2344,7 +2344,12 @@ class RegressYAMLLoader(BaseYAMLLoader):
     """
 
     # A pattern to match substitution variables in `!environ` nodes.
-    environ_pattern = r"""\$ \{ (?P<name> [a-zA-Z_][0-9a-zA-Z_.-]*) \}"""
+    environ_pattern = r"""
+        \$ \{
+            (?P<name> [a-zA-Z_][0-9a-zA-Z_.-]*)
+            (?: : (?P<default> [0-9A-Za-z~@#^&*_;:,./?=+-]*) )?
+        \}
+    """
     environ_regexp = re.compile(environ_pattern, re.X)
     # A pattern for valid values of substitution variables.
     environ_value_pattern = r"""^ [0-9A-Za-z~@#^&*_;:,./?=+-]* $"""
@@ -2535,7 +2540,8 @@ class RegressYAMLLoader(BaseYAMLLoader):
         def replace(match):
             # Substitute environment variables with values.
             name = match.group('name')
-            value = os.environ.get(name, '')
+            default = match.group('default') or ''
+            value = os.environ.get(name, default)
             if not self.environ_value_regexp.match(value):
                 raise yaml.constructor.ConstructorError(None, None,
                         "invalid value of environment variable %s: %r"
