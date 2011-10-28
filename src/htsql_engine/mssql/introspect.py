@@ -75,7 +75,7 @@ class IntrospectMSSQL(Introspect):
                    c.precision, c.scale, c.is_nullable, c.default_object_id,
                    t.name AS type_name, s.name AS type_schema_name
             FROM sys.columns c
-            JOIN sys.types t ON (c.system_type_id = t.system_type_id)
+            JOIN sys.types t ON (c.user_type_id = t.user_type_id)
             JOIN sys.schemas s ON (t.schema_id = s.schema_id)
             ORDER BY c.object_id, c.column_id
         """)
