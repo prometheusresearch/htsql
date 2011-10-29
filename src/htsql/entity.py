@@ -141,7 +141,7 @@ class MutableCatalogEntity(CatalogEntity, MutableEntity):
         self.__class__ = CatalogEntity
 
     def remove(self):
-        for schema in reverse(self.schemas):
+        for schema in reversed(self.schemas):
             schema.remove()
         self.__dict__.clear()
         self.__class__ = RemovedEntity

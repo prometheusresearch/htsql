@@ -3,8 +3,8 @@ syntax: glob
 *.pyo
 .*.sw?
 *.egg-info
+*.env
 build
 external
 sandbox
 static/htraf
-Makefile.env
