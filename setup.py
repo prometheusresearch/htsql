@@ -10,7 +10,7 @@
 
 from setuptools import setup, find_packages
 from setuptools.command.sdist import sdist as _sdist, log
-import sys, os, os.path
+import sys, os, os.path, re
 
 # We use the merged content of `README`, `INSTALL`, and `NEWS` as the
 # long description of the package.
@@ -20,13 +20,19 @@ README = open(os.path.join(root, 'README')).read()
 INSTALL = open(os.path.join(root, 'INSTALL')).read()
 NEWS = open(os.path.join(root, 'NEWS')).read()
 
+# Extract the package version from `src/htsql/__init__.py`.
+
+INIT_PY = open(os.path.join(root, 'src/htsql/__init__.py')).read()
+INIT_PY_VERSION = re.search(r"__version__ = '(?P<version>[^']+)'",
+                            INIT_PY).group('version')
+
 # The distutils parameters are defined here.  Do not forget to update
 # the `__version__` attribute in `src/htsql/__init__.py` and `version`
 # and `release` attributes in `doc/conf.py` any time the `VERSION`
 # parameter is updated here.
 
 NAME = "HTSQL"
-VERSION = "2.2.0b2"
+VERSION = INIT_PY_VERSION
 DESCRIPTION = "Query language for the accidental programmer"
 LONG_DESCRIPTION = "\n".join([README, INSTALL, NEWS])
 AUTHOR = "Clark C. Evans and Kirill Simonov; Prometheus Research, LLC"
@@ -102,14 +108,22 @@ INSTALL_REQUIRES = [
 class sdist(_sdist):
 
     def make_release_tree(self, base_dir, files):
+        # Populate the release tree.
         _sdist.make_release_tree(self, base_dir, files)
+        # `setup.cfg` is overriden by setuptools, so copy it back.
+        release_setup_cfg = os.path.join(base_dir, 'setup.cfg')
+        os.unlink(release_setup_cfg)
+        self.copy_file('setup.cfg', release_setup_cfg)
+        # Check if we have source documentation.
         if not os.path.isfile('doc/conf.py'):
             return
+        # Check if we have Sphinx installed.
         try:
             from sphinx.application import Sphinx
         except ImportError:
             log.warn("Sphinx is not installed"
                       " -- unable to compile documentation")
+        # Instantiate and run Sphinx builder.
         log.info("compiling documentation")
         srcdir = os.path.abspath('doc')
         confdir = srcdir
@@ -119,7 +133,7 @@ class sdist(_sdist):
         doctreedir = os.path.join(self.dist_dir, '.doctrees')
         buildername = 'html'
         sphinx = Sphinx(srcdir, confdir, outdir, doctreedir, buildername,
-                        status=None, warningiserror=True, freshenv=True)
+                        warningiserror=True, freshenv=True)
         sphinx.build()
         if sphinx.statuscode:
             log.error("failed to compile documentation!")
