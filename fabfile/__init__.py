@@ -7,6 +7,7 @@
 
 from .dist import *
 from .test import *
+from .buildbot import *
 import types
 
 

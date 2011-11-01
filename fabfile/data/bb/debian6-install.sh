@@ -1,6 +1,6 @@
 #/bin/sh
 
-# Post-installation script for the Lunux VM.
+# Post-installation script for Debian6 VM.
 
 # Add the public key to /root/.ssh/authorized_keys.
 mkdir /root/.ssh

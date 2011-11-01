@@ -20,14 +20,17 @@ valid_engines = ['sqlite', 'pgsql', 'mysql', 'oracle', 'mssql']
 def validate_engine(engine):
     # Complain if the engine is not from the above list.
     if engine not in valid_engines:
-        abort("unknown engine %r; must be one of %s"
-              % (engine, ", ".join(repr(valid_engine)
-                                   for valid_engine in valid_engines)))
+        abort(("unknown engine %r;" % engine
+               if engine is not None
+               else "engine is not specified;") +
+              " must be one of %s"
+              % ", ".join(repr(valid_engine)
+                          for valid_engine in valid_engines))
 
 
 def make_demo_db(engine):
     # Generate the DB URI for the demo database.
-    load_fabfile.env()
+    load_fabfile_env()
     if engine == 'sqlite':
         return "sqlite:build/regress/sqlite/htsql_demo.sqlite"
     elif engine in ['pgsql', 'mysql', 'mssql']:
@@ -138,7 +141,7 @@ def lint():
 
 def coverage():
     """measure code coverage by regression tests (requires coverage.py)"""
-    load_fabfile.env()
+    load_fabfile_env()
     shutil.rmtree("build/coverage", True)
     os.makedirs("build/coverage")
     HTSQL_CTL = os.environ.get("HTSQL_CTL", "htsql-ctl")
@@ -154,7 +157,7 @@ def coverage():
     print "    %s" % filecolor("./build/coverage/index.html")
 
 
-def createdb(engine):
+def createdb(engine=None):
     """deploy the demo database"""
     validate_engine(engine)
     regress("-q drop-%s create-%s" % (engine, engine))
@@ -164,7 +167,7 @@ def createdb(engine):
     print "    %s" % filecolor(db)
 
 
-def dropdb(engine):
+def dropdb(engine=None):
     """delete the demo database"""
     validate_engine(engine)
     regress("-q drop-%s" % engine)
@@ -172,14 +175,14 @@ def dropdb(engine):
     print "The demo database has been deleted."
 
 
-def shell(engine):
+def shell(engine=None):
     """start an HTSQL shell on the demo database"""
     validate_engine(engine)
     db = make_demo_db(engine)
     exec_htsql_ctl("shell %s" % db)
 
 
-def serve(engine):
+def serve(engine=None):
     """start an HTSQL server on the demo database"""
     validate_engine(engine)
     db = make_demo_db(engine)
@@ -188,7 +191,7 @@ def serve(engine):
     exec_htsql_ctl("serve %s %s %s" % (db, host, port))
 
 
-def client_demo(engine):
+def client_demo(engine=None):
     """run a native database client against the demo database"""
     load_fabfile_env()
     validate_engine(engine)
@@ -203,7 +206,7 @@ def client_demo(engine):
     execute(command)
 
 
-def client_admin(engine):
+def client_admin(engine=None):
     """run a native database client with administrator rights"""
     load_fabfile_env()
     validate_engine(engine)

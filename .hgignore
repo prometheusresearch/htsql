@@ -5,6 +5,7 @@ syntax: glob
 *.egg-info
 *.env
 build
+vm
 external
 sandbox
 static/htraf
