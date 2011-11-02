@@ -114,12 +114,32 @@ class VM(object):
         sock.close()
 
     def forward(self, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect(('127.0.0.1', port+10000))
+            sock.close()
+            is_taken = True
+        except socket.error:
+            is_taken = False
+        port_path = os.path.join(CTL_DIR, "tcp.%s" % port)
+        if is_taken:
+            if os.path.exists(port_path):
+                name = open(port_path).read().strip()
+                if name != self.name:
+                    abort("port %s is already taken by VM %r"
+                          % (port, name))
+            else:
+                abort("port %s is already taken" % port)
         self.ctl("hostfwd_add tcp:127.0.0.1:%s-:%s"
                  % (port+10000, port))
+        open(port_path, 'w').write("%s\n" % self.name)
 
     def unforward(self, port):
         self.ctl("hostfwd_remove tcp::%s-:%s"
                  % (port+10000, port))
+        port_path = os.path.join(CTL_DIR, "tcp.%s" % port)
+        if os.path.exists(port_path):
+            os.unlink(port_path)
 
     def build(self):
         assert False

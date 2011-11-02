@@ -9,6 +9,9 @@ echo pgsql90-vm >/etc/hostname
 # Install the PostgreSQL 9.0 server from backports.
 apt-get -qy -t squeeze-backports install postgresql-9.0
 
+# Clean APT cache.
+apt-get clean
+
 # Set the password of the user postgres to 'admin'.
 su -c "psql -c \"ALTER ROLE postgres WITH PASSWORD 'admin'\"" postgres
 

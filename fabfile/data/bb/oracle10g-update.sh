@@ -14,6 +14,9 @@ apt-get -q update
 # Install the Oracle 10g Express Edition.
 apt-get -qy install oracle-xe-universal
 
+# Clean APT cache.
+apt-get clean
+
 # Fix the problem when the configuration script eats the last
 # character of the password if it is 'n': replace IFS="\n" with IFS=$'\n'.
 sed -i -e s/IFS=\"\\\\n\"/IFS=\$\'\\\\n\'/ /etc/init.d/oracle-xe

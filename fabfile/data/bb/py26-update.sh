@@ -28,6 +28,9 @@ apt-get -qy install libmysqlclient-dev
 apt-get -qy install freetds-dev
 apt-get -qy install oracle-xe-client
 
+# Clean APT cache.
+apt-get clean
+
 # Initialize Python virtual enviroment in `/root`.
 virtualenv -p python2.6 .
 

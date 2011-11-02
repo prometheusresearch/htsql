@@ -23,7 +23,7 @@ def install():
     setup_py("build --build-base=build/lib install")
     print
     print "HTSQL is installed.  For information on usage, run"
-    print "    %s" % white("htsql-ctl help", bold=True)
+    print "    %s" % filecolor("htsql-ctl help")
 
 
 def develop():
@@ -61,13 +61,18 @@ def pypi():
 
 def clean():
     """delete generated files"""
-    shutil.rmtree("build", True)
+    if os.path.exists("build"):
+        print "removing ./build"
+        shutil.rmtree("build")
     for dirpath, dirnames, filenames in os.walk("."):
         for filename in filenames:
             if filename.endswith(".pyc") or filename.endswith(".pyo"):
-                os.unlink(os.path.join(dirpath, filename))
+                filename = os.path.join(dirpath, filename)
+                print "removing %s" % filename
+                os.unlink(filename)
     for filename in glob.glob("HTSQL-*"):
         if os.path.isdir(filename):
+            print "removing ./%s" % filename
             shutil.rmtree(filename)
 
 

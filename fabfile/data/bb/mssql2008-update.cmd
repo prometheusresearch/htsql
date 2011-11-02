@@ -33,6 +33,12 @@ SQLEXPR32_x86_ENU.exe /Q /IACCEPTSQLSERVERLICENSETERMS /ACTION=install /FEATURES
 set path=%path%;"%programfiles%\Microsoft SQL Server\100\Tools\binn"
 sqlcmd -Q "ALTER LOGIN sa WITH PASSWORD='admin', CHECK_POLICY=OFF"
 
+rem Cleanup.
+del /q NetFx20SP2_x86.exe
+rmdir /q /s NetFx20SP2_x86
+del /q WindowsServer2003-KB942288-v4-x86.exe
+del /q SQLEXPR32_x86_ENU.exe
+
 rem Shut down.
 shutdown /s /t 0 /f
 

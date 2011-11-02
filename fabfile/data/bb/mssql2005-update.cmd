@@ -44,6 +44,12 @@ reg add "HKLM\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL.1\MSSQLServer\SuperS
 reg add "HKLM\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL.1\MSSQLServer\SuperSocketNetLib\Tcp\IP2" /v TcpPort /t REG_SZ /d 1433 /f
 reg add "HKLM\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL.1\MSSQLServer\SuperSocketNetLib\Tcp\IPAll" /v TcpPort /t REG_SZ /d 1433 /f
 
+rem Cleanup.
+del /q dotnetfx.exe
+rmdir /q /s dotnetfx
+del /q SQLEXPR.EXE
+rmdir /q /s SQLEXPR
+
 rem Shut down.
 shutdown /s /t 0 /f
 

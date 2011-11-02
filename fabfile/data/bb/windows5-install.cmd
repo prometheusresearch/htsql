@@ -26,6 +26,13 @@ copy identity.pub "%programfiles%\ICW\home\Administrator\.ssh\authorized_keys"
 rem Supress the prompt for CD2.
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\R2Setup" /v cd2chain /t REG_DWORD /d 0 /f
 
+rem Cleanup.
+del /q wget-1.11.4-1-setup.exe
+del /q 7z465.exe
+del /q Copssh_4.0.4_Installer.zip
+del /q Copssh_4.0.4_Installer.exe
+del /q identity.pub
+
 rem Shut down.
 shutdown /s /t 0 /f
 

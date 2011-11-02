@@ -9,6 +9,9 @@ echo pgsql84-vm >/etc/hostname
 # Install the PostgreSQL 8.4 server.
 apt-get -qy install postgresql-8.4
 
+# Clean APT cache.
+apt-get clean
+
 # Set the password of the user postgres to 'admin'.
 su -c "psql -c \"ALTER ROLE postgres WITH PASSWORD 'admin'\"" postgres
 

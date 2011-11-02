@@ -13,6 +13,9 @@ echo "mysql-server-5.1 mysql-server/root_password_again password admin" | debcon
 # Install MySQL 5.1.
 apt-get -qy install mysql-server-5.1
 
+# Clean APT cache.
+apt-get clean
+
 # Configure MySQL to listen on all interfaces.
 cat <<END >/etc/mysql/conf.d/bind_address.cnf
 [mysqld]
