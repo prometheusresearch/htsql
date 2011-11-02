@@ -1,0 +1,53 @@
+#
+# Copyright (c) 2006-2011, Prometheus Research, LLC
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+#
+
+title: HTSQL Extensions
+id: addon
+tests:
+
+- title: tweak
+  tests:
+  # Addon description
+  - ctl: [ext, tweak]
+
+- title: tweak.autolimit
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.autolimit]
+
+  # Set limit=10000 (default)
+  - load: demo
+    extensions:
+      tweak.autolimit: {}
+
+  - uri: /{2+2}
+  - uri: /school
+
+  # Merging consecutive limits.
+  - uri: /school.limit(10001)
+  - uri: /school.limit(10000)
+  - uri: /school.limit(9999)
+  - uri: /program.limit(2,3)
+  - uri: /program.limit(2,3).sort(title)
+  - uri: /program.limit(2,3).school
+  - uri: /program.limit(2,3).student
+
+  # Set limit=5
+  - load: demo
+    extensions:
+      tweak.autolimit: { limit: 5 }
+
+  - uri: /{2+2}
+  - uri: /school
+
+  # Merging consecutive limits.
+  - uri: /school.limit(6)
+  - uri: /school.limit(5)
+  - uri: /school.limit(4)
+  - uri: /program.limit(2,3)
+  - uri: /program.limit(2,3).sort(title)
+  - uri: /program.limit(2,3).school
+  - uri: /program.limit(2,3).student
+

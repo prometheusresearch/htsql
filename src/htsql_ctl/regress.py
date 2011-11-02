@@ -669,7 +669,7 @@ class DefineTestCase(SkipTestCase):
     """
 
     name = "define"
-    hint = """activates a toggle"""
+    hint = """activate a toggle"""
     help = """
     This test case activates a toggle variable.  A toggle allows one
     to conditionally enable or disable some test cases using `ifdef`

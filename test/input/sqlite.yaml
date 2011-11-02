@@ -29,6 +29,7 @@ tests:
   tests:
   - define: sqlite
   - db: *connect
+    save: demo
   # The Regression Schema
   - include: test/input/schema.yaml
   # Examples from the Tutorial
@@ -39,4 +40,6 @@ tests:
   - include: test/input/translation.yaml
   # Formatting Output Data
   - include: test/input/format.yaml
+  # Extensions
+  - include: test/input/addon.yaml
 

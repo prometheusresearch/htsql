@@ -26261,3 +26261,518 @@ tests:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             invalid request: unsupported action
+  - include: test/input/addon.yaml
+    output:
+      id: addon
+      tests:
+      - id: tweak
+        tests:
+        - ctl: [ext, tweak]
+          stdout: |+
+            TWEAK - contain various tweaks for HTSQL
+
+          exit: 0
+      - id: tweak.autolimit
+        tests:
+        - ctl: [ext, tweak.autolimit]
+          stdout: |+
+            TWEAK.AUTOLIMIT - limit number of rows returned by queries
+
+            This addon automatically truncates output from a query to
+            a given number of rows (10,000, by default).
+
+            Use this addon to prevent accidental denial of service
+            caused by large query output.
+
+            The `limit` parameter sets the truncation threshold.
+
+            Parameters:
+              limit=LIMIT              : max. number of rows (default: 10000)
+
+          exit: 0
+        - uri: /{2+2}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | 2+2 |
+            -+-----+-
+             |   4 |
+             (1 row)
+
+             ----
+             /{2+2}
+             SELECT (2 + 2)
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school" AS "school"
+             ORDER BY 1 ASC
+             LIMIT 10000
+        - uri: /school.limit(10001)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school.limit(10001)
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM (SELECT "school"."code",
+                          "school"."name",
+                          "school"."campus"
+                   FROM "school" AS "school"
+                   ORDER BY 1 ASC
+                   LIMIT 10001) AS "school"
+             ORDER BY 1 ASC
+             LIMIT 10000
+        - uri: /school.limit(10000)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school.limit(10000)
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school" AS "school"
+             ORDER BY 1 ASC
+             LIMIT 10000
+        - uri: /school.limit(9999)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school.limit(9999)
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school" AS "school"
+             ORDER BY 1 ASC
+             LIMIT 9999
+        - uri: /program.limit(2,3)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | program                                                              |
+             +----------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of |
+            -+-------------+-------+-----------------------------+--------+---------+-
+             | bus         | gecon | Master of Arts in Economics | ma     |         |
+             | bus         | pacc  | Graduate Certificate in     | ct     |         |
+             :             :       : Accounting                  :        :         :
+                                                                             (2 rows)
+
+             ----
+             /program.limit(2,3)
+             SELECT "program"."school_code",
+                    "program"."code",
+                    "program"."title",
+                    "program"."degree",
+                    "program"."part_of"
+             FROM "program" AS "program"
+             ORDER BY 1 ASC, 2 ASC
+             LIMIT 2
+             OFFSET 3
+        - uri: /program.limit(2,3).sort(title)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | program                                                              |
+             +----------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of |
+            -+-------------+-------+-----------------------------+--------+---------+-
+             | bus         | pacc  | Graduate Certificate in     | ct     |         |
+             :             :       : Accounting                  :        :         :
+             | bus         | gecon | Master of Arts in Economics | ma     |         |
+                                                                             (2 rows)
+
+             ----
+             /program.limit(2,3).sort(title)
+             SELECT "program"."school_code",
+                    "program"."code",
+                    "program"."title",
+                    "program"."degree",
+                    "program"."part_of"
+             FROM (SELECT "program"."school_code",
+                          "program"."code",
+                          "program"."title",
+                          "program"."degree",
+                          "program"."part_of"
+                   FROM "program" AS "program"
+                   ORDER BY 1 ASC, 2 ASC
+                   LIMIT 2
+                   OFFSET 3) AS "program"
+             ORDER BY 3 ASC, 1 ASC, 2 ASC
+        - uri: /program.limit(2,3).school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                             |
+             +------------------------------------+
+             | code | name               | campus |
+            -+------+--------------------+--------+-
+             | bus  | School of Business | south  |
+             | bus  | School of Business | south  |
+                                           (2 rows)
+
+             ----
+             /program.limit(2,3).school
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "program" AS "program"
+                  INNER JOIN "school" AS "school"
+                             ON ("program"."school_code" = "school"."code")
+             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+             LIMIT 2
+             OFFSET 3
+        - uri: /program.limit(2,3).student
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | student                                                                                             |
+             +-----------------------------------------------------------------------------------------------------+
+             | id   | name             | gender | dob        | school_code | program_code | start_date | is_active |
+            -+------+------------------+--------+------------+-------------+--------------+------------+-----------+-
+             | 1188 | Richard Flores   | m      | 1984-07-16 | bus         | gecon        | 2008-08-15 | true      |
+             | 1268 | Ronald Brown     | m      | 1985-03-18 | bus         | gecon        | 2009-08-15 | true      |
+             | 1333 | Frank Brooks     | m      | 1985-08-29 | bus         | gecon        | 2009-08-15 | true      |
+             | 1379 | Thomas Hartman   | m      | 1986-03-12 | bus         | gecon        | 2010-08-15 | true      |
+             | 1425 | Marvin Hall      | m      | 1986-03-20 | bus         | gecon        | 2010-08-15 | true      |
+             | 1013 | Michael Castillo | m      | 1984-04-04 | bus         | pacc         | 2007-08-15 | true      |
+             | 1049 | Andrew Gilbert   | m      | 1983-11-29 | bus         | pacc         | 2007-08-15 | true      |
+             | 1128 | David Watkins    | m      | 1984-06-25 | bus         | pacc         | 2008-08-15 | true      |
+             | 1145 | Joe Tucker       | m      | 1984-08-06 | bus         | pacc         | 2008-08-15 | true      |
+             | 1160 | Duane Cantrell   | m      | 1984-05-26 | bus         | pacc         | 2008-08-15 | true      |
+             | 1174 | Edward Lake      | m      | 1985-04-01 | bus         | pacc         | 2008-08-15 | true      |
+             | 1248 | Dennis Hendrix   | m      | 1986-03-25 | bus         | pacc         | 2009-08-15 | true      |
+             | 1275 | Billy Goins      | m      | 1985-04-24 | bus         | pacc         | 2009-08-15 | true      |
+             | 1284 | Charles Farrell  | m      | 1985-06-09 | bus         | pacc         | 2009-08-15 | true      |
+             | 1321 | Charles Poole    | m      | 1986-02-02 | bus         | pacc         | 2009-08-15 | true      |
+             | 1373 | Joseph Clark     | m      | 1986-10-21 | bus         | pacc         | 2010-08-15 | true      |
+                                                                                                           (16 rows)
+
+             ----
+             /program.limit(2,3).student
+             SELECT "student"."id",
+                    "student"."name",
+                    "student"."gender",
+                    "student"."dob",
+                    "student"."school_code",
+                    "student"."program_code",
+                    "student"."start_date",
+                    "student"."is_active"
+             FROM (SELECT "program"."school_code",
+                          "program"."code"
+                   FROM "program" AS "program"
+                   ORDER BY 1 ASC, 2 ASC
+                   LIMIT 2
+                   OFFSET 3) AS "program"
+                  INNER JOIN "student" AS "student"
+                             ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+             ORDER BY "program"."school_code" ASC, "program"."code" ASC, 1 ASC
+             LIMIT 10000
+        - uri: /{2+2}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | 2+2 |
+            -+-----+-
+             |   4 |
+             (1 row)
+
+             ----
+             /{2+2}
+             SELECT (2 + 2)
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+                                                      (5 rows)
+
+             ----
+             /school
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school" AS "school"
+             ORDER BY 1 ASC
+             LIMIT 5
+        - uri: /school.limit(6)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+                                                      (5 rows)
+
+             ----
+             /school.limit(6)
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM (SELECT "school"."code",
+                          "school"."name",
+                          "school"."campus"
+                   FROM "school" AS "school"
+                   ORDER BY 1 ASC
+                   LIMIT 6) AS "school"
+             ORDER BY 1 ASC
+             LIMIT 5
+        - uri: /school.limit(5)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+                                                      (5 rows)
+
+             ----
+             /school.limit(5)
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school" AS "school"
+             ORDER BY 1 ASC
+             LIMIT 5
+        - uri: /school.limit(4)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                   |
+             +------------------------------------------+
+             | code | name                     | campus |
+            -+------+--------------------------+--------+-
+             | art  | School of Art and Design | old    |
+             | bus  | School of Business       | south  |
+             | edu  | College of Education     | old    |
+             | eng  | School of Engineering    | north  |
+                                                 (4 rows)
+
+             ----
+             /school.limit(4)
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "school" AS "school"
+             ORDER BY 1 ASC
+             LIMIT 4
+        - uri: /program.limit(2,3)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | program                                                              |
+             +----------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of |
+            -+-------------+-------+-----------------------------+--------+---------+-
+             | bus         | gecon | Master of Arts in Economics | ma     |         |
+             | bus         | pacc  | Graduate Certificate in     | ct     |         |
+             :             :       : Accounting                  :        :         :
+                                                                             (2 rows)
+
+             ----
+             /program.limit(2,3)
+             SELECT "program"."school_code",
+                    "program"."code",
+                    "program"."title",
+                    "program"."degree",
+                    "program"."part_of"
+             FROM "program" AS "program"
+             ORDER BY 1 ASC, 2 ASC
+             LIMIT 2
+             OFFSET 3
+        - uri: /program.limit(2,3).sort(title)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | program                                                              |
+             +----------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of |
+            -+-------------+-------+-----------------------------+--------+---------+-
+             | bus         | pacc  | Graduate Certificate in     | ct     |         |
+             :             :       : Accounting                  :        :         :
+             | bus         | gecon | Master of Arts in Economics | ma     |         |
+                                                                             (2 rows)
+
+             ----
+             /program.limit(2,3).sort(title)
+             SELECT "program"."school_code",
+                    "program"."code",
+                    "program"."title",
+                    "program"."degree",
+                    "program"."part_of"
+             FROM (SELECT "program"."school_code",
+                          "program"."code",
+                          "program"."title",
+                          "program"."degree",
+                          "program"."part_of"
+                   FROM "program" AS "program"
+                   ORDER BY 1 ASC, 2 ASC
+                   LIMIT 2
+                   OFFSET 3) AS "program"
+             ORDER BY 3 ASC, 1 ASC, 2 ASC
+        - uri: /program.limit(2,3).school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                             |
+             +------------------------------------+
+             | code | name               | campus |
+            -+------+--------------------+--------+-
+             | bus  | School of Business | south  |
+             | bus  | School of Business | south  |
+                                           (2 rows)
+
+             ----
+             /program.limit(2,3).school
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "program" AS "program"
+                  INNER JOIN "school" AS "school"
+                             ON ("program"."school_code" = "school"."code")
+             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+             LIMIT 2
+             OFFSET 3
+        - uri: /program.limit(2,3).student
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | student                                                                                           |
+             +---------------------------------------------------------------------------------------------------+
+             | id   | name           | gender | dob        | school_code | program_code | start_date | is_active |
+            -+------+----------------+--------+------------+-------------+--------------+------------+-----------+-
+             | 1188 | Richard Flores | m      | 1984-07-16 | bus         | gecon        | 2008-08-15 | true      |
+             | 1268 | Ronald Brown   | m      | 1985-03-18 | bus         | gecon        | 2009-08-15 | true      |
+             | 1333 | Frank Brooks   | m      | 1985-08-29 | bus         | gecon        | 2009-08-15 | true      |
+             | 1379 | Thomas Hartman | m      | 1986-03-12 | bus         | gecon        | 2010-08-15 | true      |
+             | 1425 | Marvin Hall    | m      | 1986-03-20 | bus         | gecon        | 2010-08-15 | true      |
+                                                                                                          (5 rows)
+
+             ----
+             /program.limit(2,3).student
+             SELECT "student"."id",
+                    "student"."name",
+                    "student"."gender",
+                    "student"."dob",
+                    "student"."school_code",
+                    "student"."program_code",
+                    "student"."start_date",
+                    "student"."is_active"
+             FROM (SELECT "program"."school_code",
+                          "program"."code"
+                   FROM "program" AS "program"
+                   ORDER BY 1 ASC, 2 ASC
+                   LIMIT 2
+                   OFFSET 3) AS "program"
+                  INNER JOIN "student" AS "student"
+                             ON (("program"."school_code" = "student"."school_code") AND ("program"."code" = "student"."program_code"))
+             ORDER BY "program"."school_code" ASC, "program"."code" ASC, 1 ASC
+             LIMIT 5

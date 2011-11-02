@@ -10,4 +10,6 @@ class TweakAddon(Addon):
 
     name = 'tweak'
     prerequisites = []
+    hint = """contain various tweaks for HTSQL"""
+
 

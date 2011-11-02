@@ -17,7 +17,7 @@ class AutolimitEncodeSegment(EncodeSegment):
         if limit is None or limit <= 0:
             return code
         flow = code.flow
-        while not flow.is_axis:
+        while flow.is_contracting:
             if (isinstance(flow, OrderedFlow) and flow.limit is not None
                                               and flow.limit <= limit):
                 return code
