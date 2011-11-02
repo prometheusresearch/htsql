@@ -80,7 +80,7 @@ class ExtensionRoutine(Routine):
             addon_class = entry_point.load()
         except Exception, exc:
             raise ScriptError("failed to load extension %s: %s"
-                              % self.addon, exc)
+                              % (self.addon, exc))
         if not (isinstance(addon_class, type) and
                 issubclass(addon_class, Addon) and
                 addon_class.name == entry_point.name):

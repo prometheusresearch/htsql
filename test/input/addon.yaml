@@ -51,3 +51,34 @@ tests:
   - uri: /program.limit(2,3).school
   - uri: /program.limit(2,3).student
 
+  # Set limit=null
+  - load: demo
+    extensions:
+      tweak.autolimit: { limit: null }
+
+  - uri: /{2+2}
+  - uri: /school
+
+- title: tweak.cors
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.cors]
+
+  # Set origin=* (default)
+  - load: demo
+    extensions:
+      tweak.cors: {}
+  - uri: /school
+
+  # Set origin=http://demo.htsql.org
+  - load: demo
+    extensions:
+      tweak.cors: { origin: 'http://demo.htsql.org' }
+  - uri: /school
+
+  # Set origin=null
+  - load: demo
+    extensions:
+      tweak.cors: { origin: null }
+  - uri: /school
+

@@ -26844,3 +26844,154 @@ tests:
              WHERE ([program].[limit] >= 4)
                    AND ([program].[limit] < 6)
              ORDER BY [program].[school_code] ASC, [program].[code] ASC, 1 ASC
+        - uri: /{2+2}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | 2+2 |
+            -+-----+-
+             |   4 |
+             (1 row)
+
+             ----
+             /{2+2}
+             SELECT (2 + 2)
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school] AS [school]
+             ORDER BY 1 ASC
+      - id: tweak.cors
+        tests:
+        - ctl: [ext, tweak.cors]
+          stdout: |+
+            TWEAK.CORS - enable cross-origin resource sharing
+
+            This addon adds CORS headers to HTTP output to allow HTSQL queries
+            by a web page from a different domain.
+
+            For security reasons, browsers do not allow AJAX requests to cross
+            the domain boundaries.  The CORS (Cross-Origin Resource Sharing)
+            specification defines a way for a server to provide a list of
+            domains which are permitted to make AJAX requests. For more details
+            on CORS, see `http://www.w3.org/TR/cors/`.
+
+            The `origin` parameter lists domains which are allowed to access
+            the server.  The value of `origin` must be either `*` (default) or
+            a space-separated list of host names of the form:
+
+                http[s]://domain[:port]
+
+            The default value of `origin` permits HTSQL queries from any
+            domain.  Do not use the default settings with non-public data.
+
+            Parameters:
+              origin=ORIGIN            : URI that may access the server (default: *)
+
+          exit: 0
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Access-Control-Allow-Origin, '*']
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school] AS [school]
+             ORDER BY 1 ASC
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          - [Access-Control-Allow-Origin, 'http://demo.htsql.org']
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school] AS [school]
+             ORDER BY 1 ASC
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +-----------------------------------------------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+                                                      (9 rows)
+
+             ----
+             /school
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school] AS [school]
+             ORDER BY 1 ASC
