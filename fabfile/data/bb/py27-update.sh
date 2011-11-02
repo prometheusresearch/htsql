@@ -1,6 +1,7 @@
 #/bin/sh
 
 # Post-installation script for the py27 VM.
+set -ex
 
 # Update the hostname.
 echo py27-vm >/etc/hostname
@@ -12,36 +13,37 @@ Package: *
 Pin: release n=wheezy
 Pin-Priority: 90
 END
-apt-get update
+apt-get -q update
 
 # Register the Oracle repository.
 echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
 wget -q http://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
-apt-get update
+apt-get -q update
 
 # Install Mercurial.
-apt-get -y install mercurial
+apt-get -qy install mercurial
+
+# Install Python dependencies from testing.
+APT_LISTCHANGES_FRONTEND=none \
+DEBIAN_FRONTEND=noninteractive \
+apt-get -qy install -t wheezy gcc-4.4
 
 # Install Python 2.7 and required Python packages.
-apt-get -y install -t wheezy python2.7
-apt-get -y install -t wheezy python-setuptools
-apt-get -y install -t wheezy python-yaml
-apt-get -y install -t wheezy python-pip
-apt-get -y install -t wheezy python-virtualenv
+apt-get -qy install -t wheezy python2.7
+apt-get -qy install -t wheezy python-setuptools
+apt-get -qy install -t wheezy python-yaml
+apt-get -qy install -t wheezy python-pip
+apt-get -qy install -t wheezy python-virtualenv
 
 # Install development files for Python and database drivers.
-apt-get -y install -t wheezy python2.7-dev
-apt-get -y install libpq-dev
-apt-get -y install libmysqlclient-dev
-apt-get -y install freetds-dev
-apt-get -y install oracle-xe-client
+apt-get -qy install -t wheezy python2.7-dev
+apt-get -qy install libpq-dev
+apt-get -qy install libmysqlclient-dev
+apt-get -qy install freetds-dev
+apt-get -qy install oracle-xe-client
 
 # Initialize Python virtual enviroment in `/root`.
 virtualenv -p python2.7 .
-
-# Download the source code of HTSQL.
-mkdir src
-hg -q clone https://bitbucket.org/prometheus/htsql src/htsql
 
 # Set the Oracle, FreeTDS and `virtualenv` environment variables on login.
 cat <<END >>/root/.bashrc

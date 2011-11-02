@@ -1,6 +1,7 @@
 #/bin/sh
 
 # Post-installation script for the oracle10g VM.
+set -ex
 
 ## Update the hostname.
 #echo oracle10g-vm >/etc/hostname
@@ -8,10 +9,10 @@
 # Register the Oracle repository.
 echo "deb http://oss.oracle.com/debian/ unstable main non-free" >/etc/apt/sources.list.d/oracle.list
 wget -q http://oss.oracle.com/el4/RPM-GPG-KEY-oracle -O- | apt-key add -
-apt-get update
+apt-get -q update
 
 # Install the Oracle 10g Express Edition.
-apt-get -y install oracle-xe-universal
+apt-get -qy install oracle-xe-universal
 
 # Fix the problem when the configuration script eats the last
 # character of the password if it is 'n': replace IFS="\n" with IFS=$'\n'.

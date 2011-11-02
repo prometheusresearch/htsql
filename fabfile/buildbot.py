@@ -4,7 +4,7 @@
 #
 
 
-from .util import load_fabfile_env
+from .util import load_fabfile_env, execute
 from fabric.api import abort, local, run, put, output, settings, prompt
 from fabric.network import disconnect_all
 import os, os.path, urllib2, shutil, socket, time
@@ -23,7 +23,10 @@ DATA_ROOT = "./fabfile/data/bb"
 VM_DISK = "8G"
 VM_MEM = "512"
 
-DEBIAN6_ISO_URL = "http://cdimage.debian.org/cdimage/archive/6.0.2.1/i386/iso-cd/debian-6.0.2.1-i386-netinst.iso"
+DEBIAN6_ISO_URLS = [
+    "http://cdimage.debian.org/cdimage/archive/6.0.3/i386/iso-cd/debian-6.0.3-i386-netinst.iso",
+    "http://cdimage.debian.org/cdimage/release/6.0.3/i386/iso-cd/debian-6.0.3-i386-netinst.iso",
+]
 WGET_INSTALL_URL = "http://downloads.sourceforge.net/gnuwin32/wget-1.11.4-1-setup.exe"
 WINDOWS5_ISO_FILES = [
         "en_win_srv_2003_r2_standard_with_sp2_cd1_x13-04790.iso",
@@ -151,11 +154,21 @@ class Debian6VM(VM):
 
         print "Building VM %r:" % self.name
 
-        debian6_path = os.path.join(TMP_DIR, os.path.basename(DEBIAN6_ISO_URL))
+        debian6_path = os.path.join(TMP_DIR,
+                                    os.path.basename(DEBIAN6_ISO_URLS[0]))
         if not os.path.exists(debian6_path):
             print "- downloading Debian ISO image"
-            print "=> %s" % debian_path
-            data = urllib2.urlopen(DEBIAN6_ISO_URL).read()
+            print "=> %s" % debian6_path
+            data = None
+            for url in DEBIAN6_ISO_URLS:
+                try:
+                    data = urllib2.urlopen(url).read()
+                except urllib2.HTTPError:
+                    pass
+                else:
+                    break
+            if data is None:
+                abort("cannot download Debian ISO image")
             stream = open(debian6_path, 'w')
             stream.write(data)
             stream.close()
@@ -249,7 +262,6 @@ class LinuxBenchVM(Debian6VM):
                 run("rm /root/update.sh")
                 run("poweroff")
                 disconnect_all()
-                #run("nohup reboot >/dev/null")
             self.wait()
 
             self.kvm("-daemonize")
@@ -499,6 +511,7 @@ def vm_build(*names):
             continue
         vm.build()
 
+
 def vm_delete(*names):
     """delete a virtual machine"""
     load_fabfile_env()
@@ -545,6 +558,18 @@ def vm_stop(*names):
 def vm_shell(name):
     """open a shell to a virtual machine"""
     load_fabfile_env()
+    vm = VM.make(name)
+    if vm is None:
+        abort("unknown VM %r" % name)
+    if not vm.running():
+        print "VM %r is not running" % vm.name
+        return
+    vm.forward(22)
+    host = "linux-vm"
+    if 'win' in name or 'ms' in name:
+        host = "windows-vm"
+    execute("ssh -F %s %s"
+            % (os.path.join(CTL_DIR, "ssh_config"), host))
 
 
 def vm_vnc(name):

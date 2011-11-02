@@ -1,6 +1,7 @@
 #/bin/sh
 
 # Post-installation script for the mysql51 VM.
+set -ex
 
 # Update the hostname.
 echo mysql51-vm >/etc/hostname
@@ -10,7 +11,7 @@ echo "mysql-server-5.1 mysql-server/root_password password admin" | debconf-set-
 echo "mysql-server-5.1 mysql-server/root_password_again password admin" | debconf-set-selections
 
 # Install MySQL 5.1.
-apt-get -y install mysql-server-5.1
+apt-get -qy install mysql-server-5.1
 
 # Configure MySQL to listen on all interfaces.
 cat <<END >/etc/mysql/conf.d/bind_address.cnf
