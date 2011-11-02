@@ -85,7 +85,6 @@ class TermStringIO(StringIO.StringIO):
         return data
 
 
-
 class Field(object):
     """
     Describes a parameter of test data.
@@ -881,8 +880,10 @@ class AppTestCase(SkipTestCase):
                       hint="""the connection URI"""),
                 Field('extensions', MapVal(StrVal(),
                                            MapVal(StrVal(), AnyVal())),
-                      default=[],
+                      default={},
                       hint="""include extra extensions"""),
+                Field('save', StrVal(), default=None,
+                      hint="""name of the configuration""")
         ] + SkipTestCase.Input.fields
 
     def out_header(self):
@@ -922,11 +923,73 @@ class AppTestCase(SkipTestCase):
         self.state.app = None
         try:
             self.state.app = Application(self.input.db,
-                                         *self.input.extensions)
+                                         self.input.extensions)
         except Exception:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"
                                " initializing an HTSQL application")
+
+        # Record the configuration.
+        if self.input.save is not None:
+            self.state.saves[self.input.save] = (self.input.db,
+                                                 self.input.extensions)
+
+        return self.passed()
+
+
+class LoadAppTestCase(SkipTestCase):
+    """
+    Loads an existing configuration of an HTSQL application.
+    """
+
+    name = "load-app"
+    hint = """activate an existing HTSQL application"""
+    help = """
+    This test case loads a previously saved application configuration.
+    """
+
+    class Input(TestData):
+        fields = [
+                Field('load', StrVal(),
+                      hint="""name of the configuration"""),
+                Field('extensions', MapVal(StrVal(),
+                                           MapVal(StrVal(), AnyVal())),
+                      default={},
+                      hint="""include extra extensions"""),
+                Field('save', StrVal(), default=None,
+                      hint="""name of the new configuration""")
+        ] + SkipTestCase.Input.fields
+
+    def verify(self):
+        # Check if the test is skipped.
+        if self.skipped():
+            return
+
+        # Display the header.
+        self.out_header()
+
+        # Find the configuration data; complain if not found.
+        if self.input.load not in self.state.saves:
+            return self.failed("*** unknown configuration name %s"
+                               % self.input.load)
+        configuration = self.state.saves[self.input.load]
+
+        # Add new extensions.
+        configuration = configuration+(self.input.extensions,)
+
+        # Create an application and update the testing state.
+        from htsql.application import Application
+        self.state.app = None
+        try:
+            self.state.app = Application(*configuration)
+        except Exception:
+            self.out_exception(sys.exc_info())
+            return self.failed("*** an exception occured while"
+                               " initializing an HTSQL application")
+
+        # Record the new configuration.
+        if self.input.save is not None:
+            self.state.saves[self.input.save] = configuration
 
         return self.passed()
 
@@ -2252,6 +2315,9 @@ class TestState(object):
     `toggles`
         A set of active named toggles.
 
+    `saves`
+        A mapping of named application configurations.
+
     `with_all_suites`
         Indicates that the current suite or one of its ancestors
         was explicitly selected by the user.
@@ -2269,12 +2335,13 @@ class TestState(object):
         Indicates whether the user asked to halt the testing.
     """
 
-    def __init__(self, app=None, forks=None, toggles=None,
+    def __init__(self, app=None, forks=None, toggles=None, saves=None,
                  with_all_suites=False, passed=0, failed=0, updated=0,
                  is_exiting=False):
         self.app = app
         self.forks = forks or {}
         self.toggles = toggles or set()
+        self.saves = saves or {}
         self.with_all_suites = with_all_suites
         self.passed = passed
         self.failed = failed
@@ -2292,6 +2359,7 @@ class TestState(object):
         other.app = self.app
         other.forks = self.forks.copy()
         other.toggles = self.toggles.copy()
+        other.saves = self.saves.copy()
         other.with_all_suites = self.with_all_suites
         other.passed = self.passed
         other.failed = self.failed
@@ -2753,6 +2821,7 @@ class RegressRoutine(Routine):
     # List of supported types of test cases.
     cases = [
             AppTestCase,
+            LoadAppTestCase,
             DefineTestCase,
             IncludeTestCase,
             SuiteTestCase,
