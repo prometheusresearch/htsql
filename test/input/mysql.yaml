@@ -11,7 +11,7 @@ tests:
 - title: Remove any existing regression database
   id: drop-mysql
   tests:
-  - connect: &admin-connect
+  - connect: &connect-admin
       engine: mysql
       database: mysql
       username: ${MYSQL_USERNAME}
@@ -20,27 +20,41 @@ tests:
       port: ${MYSQL_PORT}
     sql: |
         DROP DATABASE `htsql_demo`;
-    #autocommit: true
     ignore: true
-  - connect: *admin-connect
+  - connect: *connect-admin
     sql: |
         DROP USER `htsql_demo`;
-    #autocommit: true
+    ignore: true
+  - connect: *connect-admin
+    sql: |
+        DROP DATABASE `htsql_type`;
+    ignore: true
+  - connect: *connect-admin
+    sql: |
+        DROP USER `htsql_type`;
+    ignore: true
+  - connect: *connect-admin
+    sql: |
+        DROP DATABASE `htsql_sandbox`;
+    ignore: true
+  - connect: *connect-admin
+    sql: |
+        DROP USER `htsql_sandbox`;
     ignore: true
 
 - title: Deploy the regression database
   id: create-mysql
   tests:
-  - connect: *admin-connect
-    sql: !environ |
+  # Create the `demo` database
+  - connect: *connect-admin
+    sql: |
         CREATE DATABASE `htsql_demo`
             CHARACTER SET utf8 COLLATE utf8_general_ci;
         CREATE USER `htsql_demo`
             IDENTIFIED BY 'secret';
         GRANT ALL PRIVILEGES
             ON `htsql_demo`.* TO `htsql_demo`;
-    #autocommit: true
-  - connect: &connect
+  - connect: &connect-demo
       engine: mysql
       database: htsql_demo
       username: htsql_demo
@@ -48,14 +62,53 @@ tests:
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
     sql-include: test/sql/demo-mysql.sql
-  - db: *connect
+  - db: *connect-demo
   - py-include: test/sql/demo-load.py
+  # Create the `type` database
+  - connect: *connect-admin
+    sql: |
+        CREATE DATABASE `htsql_type`
+            CHARACTER SET utf8 COLLATE utf8_general_ci;
+        CREATE USER `htsql_type`
+            IDENTIFIED BY 'secret';
+        GRANT ALL PRIVILEGES
+            ON `htsql_type`.* TO `htsql_type`;
+  - connect: &connect-type
+      engine: mysql
+      database: htsql_type
+      username: htsql_type
+      password: secret
+      host: ${MYSQL_HOST}
+      port: ${MYSQL_PORT}
+    sql-include: test/sql/type-mysql.sql
+  # Create the `sandbox` database
+  - connect: *connect-admin
+    sql: |
+        CREATE DATABASE `htsql_sandbox`
+            CHARACTER SET utf8 COLLATE utf8_general_ci;
+        CREATE USER `htsql_sandbox`
+            IDENTIFIED BY 'secret';
+        GRANT ALL PRIVILEGES
+            ON `htsql_sandbox`.* TO `htsql_sandbox`;
+  - connect: &connect-sandbox
+      engine: mysql
+      database: htsql_sandbox
+      username: htsql_sandbox
+      password: secret
+      host: ${MYSQL_HOST}
+      port: ${MYSQL_PORT}
+    sql: |
+        -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
   id: test-mysql
   tests:
   - define: mysql
-  - db: *connect
+  - db: *connect-sandbox
+    save: sandbox
+  - db: *connect-type
+    save: type
+  - db: *connect-demo
     save: demo
   # The Regression Schema
   - include: test/input/schema.yaml

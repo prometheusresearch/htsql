@@ -11,7 +11,7 @@ tests:
 - title: Remove any existing regression database
   id: drop-oracle
   tests:
-  - connect: &admin-connect
+  - connect: &connect-admin
       engine: oracle
       database: ${ORACLE_SID:XE}
       username: ${ORACLE_USERNAME}
@@ -22,11 +22,22 @@ tests:
         DROP USER htsql_demo CASCADE;
     autocommit: true
     ignore: true
+  - connect: *connect-admin
+    sql: |
+        DROP USER htsql_type CASCADE;
+    autocommit: true
+    ignore: true
+  - connect: *connect-admin
+    sql: |
+        DROP USER htsql_sandbox CASCADE;
+    autocommit: true
+    ignore: true
 
 - title: Deploy the regression database
   id: create-oracle
   tests:
-  - connect: *admin-connect
+  # Create the `demo` database
+  - connect: *connect-admin
     sql: |
         CREATE USER htsql_demo IDENTIFIED BY secret;
         GRANT CREATE SESSION TO htsql_demo;
@@ -35,7 +46,7 @@ tests:
         GRANT CREATE TRIGGER TO htsql_demo;
         GRANT UNLIMITED TABLESPACE TO htsql_demo;
     autocommit: true
-  - connect: &connect
+  - connect: &connect-demo
       engine: oracle
       database: ${ORACLE_SID:XE}
       username: htsql_demo
@@ -43,14 +54,55 @@ tests:
       host: ${ORACLE_HOST}
       port: ${ORACLE_PORT}
     sql-include: test/sql/demo-oracle.sql
-  - db: *connect
+  - db: *connect-demo
   - py-include: test/sql/demo-load.py
+  # Create the `type` database
+  - connect: *connect-admin
+    sql: |
+        CREATE USER htsql_type IDENTIFIED BY secret;
+        GRANT CREATE SESSION TO htsql_type;
+        GRANT CREATE TABLE TO htsql_type;
+        GRANT CREATE SEQUENCE TO htsql_type;
+        GRANT CREATE TRIGGER TO htsql_type;
+        GRANT UNLIMITED TABLESPACE TO htsql_type;
+    autocommit: true
+  - connect: &connect-type
+      engine: oracle
+      database: ${ORACLE_SID:XE}
+      username: htsql_type
+      password: secret
+      host: ${ORACLE_HOST}
+      port: ${ORACLE_PORT}
+    sql-include: test/sql/type-oracle.sql
+  # Create the `sandbox` database
+  - connect: *connect-admin
+    sql: |
+        CREATE USER htsql_sandbox IDENTIFIED BY secret;
+        GRANT CREATE SESSION TO htsql_sandbox;
+        GRANT CREATE TABLE TO htsql_sandbox;
+        GRANT CREATE SEQUENCE TO htsql_sandbox;
+        GRANT CREATE TRIGGER TO htsql_sandbox;
+        GRANT UNLIMITED TABLESPACE TO htsql_sandbox;
+    autocommit: true
+  - connect: &connect-sandbox
+      engine: oracle
+      database: ${ORACLE_SID:XE}
+      username: htsql_sandbox
+      password: secret
+      host: ${ORACLE_HOST}
+      port: ${ORACLE_PORT}
+    sql: |
+        -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
   id: test-oracle
   tests:
   - define: oracle
-  - db: *connect
+  - db: *connect-sandbox
+    save: sandbox
+  - db: *connect-type
+    save: type
+  - db: *connect-demo
     save: demo
   # The Regression Schema
   - include: test/input/schema.yaml

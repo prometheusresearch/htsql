@@ -8,10 +8,10 @@ id: mssql
 output: test/output/mssql.yaml
 tests:
 
-- title: Remove any existing regression database
+- title: Remove any existing regression databases
   id: drop-mssql
   tests:
-  - connect: &admin-connect
+  - connect: &connect-admin
       engine: mssql
       database: master
       username: ${MSSQL_USERNAME}
@@ -23,13 +23,22 @@ tests:
             DROP DATABASE [htsql_demo];
         IF SUSER_ID('htsql_demo') IS NOT NULL
             DROP LOGIN [htsql_demo];
+        IF DB_ID('htsql_type') IS NOT NULL
+            DROP DATABASE [htsql_type];
+        IF SUSER_ID('htsql_type') IS NOT NULL
+            DROP LOGIN [htsql_type];
+        IF DB_ID('htsql_sandbox') IS NOT NULL
+            DROP DATABASE [htsql_sandbox];
+        IF SUSER_ID('htsql_sandbox') IS NOT NULL
+            DROP LOGIN [htsql_sandbox];
     autocommit: true
     ignore: true
 
-- title: Deploy the regression database
+- title: Deploy the regression databases
   id: create-mssql
   tests:
-  - connect: *admin-connect
+  # Create the `demo` database
+  - connect: *connect-admin
     sql: |
         CREATE DATABASE [htsql_demo] COLLATE Latin1_General_CI_AI;
         CREATE LOGIN [htsql_demo] WITH PASSWORD = 'secret', CHECK_POLICY = OFF;
@@ -37,7 +46,7 @@ tests:
         CREATE USER [htsql_demo] FOR LOGIN [htsql_demo];
         GRANT CONTROL TO [htsql_demo] WITH GRANT OPTION;
     autocommit: true
-  - connect: &connect
+  - connect: &connect-demo
       engine: mssql
       database: htsql_demo
       username: htsql_demo
@@ -45,14 +54,53 @@ tests:
       host: ${MSSQL_HOST}
       port: ${MSSQL_PORT}
     sql-include: test/sql/demo-mssql.sql
-  - db: *connect
+  - db: *connect-demo
   - py-include: test/sql/demo-load.py
+  # Create the `type` database
+  - connect: *connect-admin
+    sql: |
+        CREATE DATABASE [htsql_type] COLLATE Latin1_General_CI_AI;
+        CREATE LOGIN [htsql_type] WITH PASSWORD = 'secret', CHECK_POLICY = OFF;
+        USE [htsql_type];
+        CREATE USER [htsql_type] FOR LOGIN [htsql_type];
+        GRANT CONTROL TO [htsql_type] WITH GRANT OPTION;
+    autocommit: true
+  - connect: &connect-type
+      engine: mssql
+      database: htsql_type
+      username: htsql_type
+      password: secret
+      host: ${MSSQL_HOST}
+      port: ${MSSQL_PORT}
+    sql-include: test/sql/type-mssql.sql
+  # Create the `sandbox` database
+  - connect: *connect-admin
+    sql: |
+        CREATE DATABASE [htsql_sandbox] COLLATE Latin1_General_CI_AI;
+        CREATE LOGIN [htsql_sandbox] WITH PASSWORD = 'secret', CHECK_POLICY = OFF;
+        USE [htsql_sandbox];
+        CREATE USER [htsql_sandbox] FOR LOGIN [htsql_sandbox];
+        GRANT CONTROL TO [htsql_sandbox] WITH GRANT OPTION;
+    autocommit: true
+  - connect: &connect-sandbox
+      engine: mssql
+      database: htsql_sandbox
+      username: htsql_sandbox
+      password: secret
+      host: ${MSSQL_HOST}
+      port: ${MSSQL_PORT}
+    sql: |
+        -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
   id: test-mssql
   tests:
   - define: mssql
-  - db: *connect
+  - db: *connect-sandbox
+    save: sandbox
+  - db: *connect-type
+    save: data
+  - db: *connect-demo
     save: demo
   # The Regression Schema
   - include: test/input/schema.yaml

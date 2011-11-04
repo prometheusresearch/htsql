@@ -17,7 +17,7 @@ from htsql.introspect import Introspect
 from htsql.entity import make_catalog
 from .domain import (SQLiteBooleanDomain, SQLiteIntegerDomain,
                      SQLiteFloatDomain, SQLiteTextDomain, SQLiteDateDomain,
-                     SQLiteDateTimeDomain, SQLiteOpaqueDomain)
+                     SQLiteTimeDomain, SQLiteDateTimeDomain, SQLiteOpaqueDomain)
 from htsql.connect import connect
 
 

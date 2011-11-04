@@ -21,18 +21,23 @@ tests:
     sql: |
         DROP DATABASE IF EXISTS "htsql_demo";
         DROP ROLE IF EXISTS "htsql_demo";
+        DROP DATABASE IF EXISTS "htsql_type";
+        DROP ROLE IF EXISTS "htsql_type";
+        DROP DATABASE IF EXISTS "htsql_sandbox";
+        DROP ROLE IF EXISTS "htsql_sandbox";
     autocommit: true
 
 - title: Deploy the regression database
   id: create-pgsql
   tests:
+  # Create the `demo` database
   - connect: *admin-connect
     sql: |
         CREATE DATABASE "htsql_demo" WITH ENCODING = 'UTF-8';
         CREATE ROLE "htsql_demo" WITH LOGIN PASSWORD 'secret';
         ALTER DATABASE "htsql_demo" OWNER TO "htsql_demo";
     autocommit: true
-  - connect: &connect
+  - connect: &connect-demo
       engine: pgsql
       database: htsql_demo
       username: htsql_demo
@@ -40,14 +45,49 @@ tests:
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
     sql-include: test/sql/demo-pgsql.sql
-  - db: *connect
+  - db: *connect-demo
   - py-include: test/sql/demo-load.py
+  # Create the `type` database
+  - connect: *admin-connect
+    sql: |
+        CREATE DATABASE "htsql_type" WITH ENCODING = 'UTF-8';
+        CREATE ROLE "htsql_type" WITH LOGIN PASSWORD 'secret';
+        ALTER DATABASE "htsql_type" OWNER TO "htsql_type";
+    autocommit: true
+  - connect: &connect-type
+      engine: pgsql
+      database: htsql_type
+      username: htsql_type
+      password: secret
+      host: ${PGSQL_HOST}
+      port: ${PGSQL_PORT}
+    sql-include: test/sql/type-pgsql.sql
+  # Create the `sandbox` database
+  - connect: *admin-connect
+    sql: |
+        CREATE DATABASE "htsql_sandbox" WITH ENCODING = 'UTF-8';
+        CREATE ROLE "htsql_sandbox" WITH LOGIN PASSWORD 'secret';
+        ALTER DATABASE "htsql_sandbox" OWNER TO "htsql_sandbox";
+    autocommit: true
+  - connect: &connect-sandbox
+      engine: pgsql
+      database: htsql_sandbox
+      username: htsql_sandbox
+      password: secret
+      host: ${PGSQL_HOST}
+      port: ${PGSQL_PORT}
+    sql: |
+        -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
   id: test-pgsql
   tests:
   - define: pgsql
-  - db: *connect
+  - db: *connect-sandbox
+    save: sandbox
+  - db: *connect-type
+    save: type
+  - db: *connect-demo
     save: demo
   # The Regression Schema
   - include: test/input/schema.yaml

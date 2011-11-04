@@ -111,7 +111,8 @@ class IntrospectOracle(Introspect):
             if check_key in checkrows_by_table:
                 for checkrow in checkrows_by_table[check_key]:
                     condition = checkrow.search_condition
-                    if condition.lower().startswith(name.lower()+' '):
+                    if (condition.lower().startswith(name.lower()+' ') or
+                        condition.lower().startswith('"'+name.lower()+'" ')):
                         check = condition
                         break
             introspect_domain = IntrospectOracleDomain(row.data_type,
@@ -229,7 +230,7 @@ class IntrospectOracleNumberDomain(IntrospectOracleDomain):
     named('NUMBER')
 
     boolean_pattern = r"""
-        ^ \w+ \s+ IN \s+ \( (?: 0 \s* , \s* 1 | 1 \s* , \s* 0 ) \) $
+        ^ [\w"]+ \s+ IN \s+ \( (?: 0 \s* , \s* 1 | 1 \s* , \s* 0 ) \) $
     """
     boolean_regexp = re.compile(boolean_pattern, re.X|re.I)
 

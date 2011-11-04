@@ -17,18 +17,31 @@ tests:
   id: create-sqlite
   tests:
   - mkdir: build/regress/sqlite
-  - connect: &connect
+  - connect: &connect-demo
       engine: sqlite
       database: build/regress/sqlite/htsql_demo.sqlite
     sql-include: test/sql/demo-sqlite.sql
-  - db: *connect
+  - db: *connect-demo
   - py-include: test/sql/demo-load.py
+  - connect: &connect-type
+      engine: sqlite
+      database: build/regress/sqlite/htsql_type.sqlite
+    sql-include: test/sql/type-sqlite.sql
+  - connect: &connect-sandbox
+      engine: sqlite
+      database: build/regress/sqlite/htsql_sandbox.sqlite
+    sql: |
+        -- The `sandbox` database is populated by the tests.
 
 - title: Run the test collection
   id: test-sqlite
   tests:
   - define: sqlite
-  - db: *connect
+  - db: *connect-sandbox
+    save: sandbox
+  - db: *connect-type
+    save: type
+  - db: *connect-demo
     save: demo
   # The Regression Schema
   - include: test/input/schema.yaml
