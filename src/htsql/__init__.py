@@ -47,14 +47,14 @@ To execute a WSGI request, run
 __version__ = '2.2.0b2'
 
 
-from . import (adapter, addon, application, cmd, connect, context, domain,
-               entity, error, introspect, mark, request, split_sql, tr, util,
-               validator, wsgi)
+from . import (adapter, addon, application, cache, cmd, connect, context,
+               domain, entity, error, introspect, mark, request, split_sql,
+               tr, util, validator, wsgi)
 from .validator import DBVal
 from .addon import Addon, Parameter
 from .connect import ConnectionPool, connect, DBError
-from .introspect import CatalogCache, introspect
-from .classify import LabelCache
+from .introspect import introspect
+from .cache import GeneralCache
 
 from .application import Application as HTSQL
 
@@ -98,9 +98,8 @@ class HTSQLAddon(Addon):
 
     def __init__(self, app, attributes):
         super(HTSQLAddon, self).__init__(app, attributes)
-        self.catalog_cache = CatalogCache()
-        self.connection_pool = ConnectionPool()
-        self.label_cache = LabelCache()
+        self.cache = GeneralCache()
+        self.pool = ConnectionPool()
 
     def validate(self):
         if self.db is None:

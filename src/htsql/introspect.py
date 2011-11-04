@@ -14,17 +14,8 @@ This module declares the database introspector adapter.
 
 from .context import context
 from .adapter import Utility, weigh
+from .cache import once
 import threading
-
-
-class CatalogCache(object):
-
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.catalog = None
-
-    def update(self, catalog):
-        self.catalog = catalog
 
 
 class Introspect(Utility):
@@ -92,15 +83,11 @@ class IntrospectCleanup(Introspect):
         return catalog
 
 
+@once
 def introspect():
-    catalog_cache = context.app.htsql.catalog_cache
-    if catalog_cache.catalog is None:
-        with catalog_cache.lock:
-            if catalog_cache.catalog is None:
-                introspect = Introspect()
-                catalog = introspect()
-                catalog.freeze()
-                catalog_cache.update(catalog)
-    return catalog_cache.catalog
+    introspect = Introspect()
+    catalog = introspect()
+    catalog.freeze()
+    return catalog
 
 

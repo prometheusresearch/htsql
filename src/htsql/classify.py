@@ -6,12 +6,12 @@
 
 from .util import listof
 from .context import context
+from .cache import once
 from .adapter import Adapter, adapts
 from .model import (Node, Arc, Label, HomeNode, TableNode, TableArc, ChainArc,
                     ColumnArc, AmbiguousArc)
 from .entity import DirectJoin, ReverseJoin
 from .introspect import introspect
-import threading
 import re
 import unicodedata
 
@@ -303,21 +303,33 @@ class ClassifyTable(Classify):
         return labels
 
 
+@once
 def classify(node):
-    cache = context.app.htsql.label_cache
-    if node not in cache.labels_by_node:
-        with cache.lock:
-            if node not in cache.labels_by_node:
-                classify = Classify(node)
-                labels = classify()
-                cache.update(node, labels)
-    return cache.labels_by_node[node]
+    classify = Classify(node)
+    labels = classify()
+    return labels
 
 
+@once
 def relabel(arc):
-    cache = context.app.htsql.label_cache
-    if arc not in cache.labels_by_arc:
-        classify(arc.origin)
-    return cache.labels_by_arc.get(arc, [])
+    cache = context.app.htsql.cache
+    labels = classify(arc.origin)
+    duplicates = set()
+    labels_by_arc = {}
+    labels_by_arc[arc] = []
+    arcs = [arc]
+    for label in labels:
+        assert label.name not in duplicates, label
+        duplicates.add(label.name)
+        arc = label.arc
+        if arc not in labels_by_arc:
+            labels_by_arc[arc] = []
+            arcs.append(arc)
+        labels_by_arc[arc].append(label)
+    for arc in arcs:
+        key = (relabel, arc)
+        value = labels_by_arc[arc]
+        cache.set(key, value)
+    return labels_by_arc[arc[0]]
 
 

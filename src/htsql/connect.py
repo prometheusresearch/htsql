@@ -322,7 +322,7 @@ class PoolConnect(Connect):
     def __call__(self):
         if self.with_autocommit:
             return super(PoolConnect, self).__call__()
-        pool = context.app.htsql.connection_pool
+        pool = context.app.htsql.pool
         with pool.lock:
             for connection in pool.items[:]:
                 if not connection.is_valid:
