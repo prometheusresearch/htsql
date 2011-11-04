@@ -6,7 +6,6 @@
 
 from htsql.util import maybe
 from htsql.domain import Domain
-from htsql_engine.pgsql.domain import PGDomain
 import socket
 
 
@@ -19,15 +18,11 @@ class INetDomain(Domain):
         try:
             data = socket.inet_ntoa(socket.inet_aton(data))
         except socket.error, exc:
-            raise ValueError("invalid inet value")
+            raise ValueError("invalid IPv4 address")
         return data
 
     def dump(self, value):
         assert isinstance(data, maybe(str))
         return value
-
-
-class PGINetDomain(PGDomain, INetDomain):
-    pass
 
 

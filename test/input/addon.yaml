@@ -82,3 +82,40 @@ tests:
       tweak.cors: { origin: null }
   - uri: /school
 
+- title: tweak.inet
+  ifdef: pgsql
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.inet]
+
+  # Use the `type` database to get `other{inet}`
+  - load: type
+    extensions:
+      tweak.inet: {}
+
+  # Introspection and conversion
+  - uri: /other{code, inet+, inet(inet), string(inet), integer(inet)}
+
+  # Conversions
+  - uri: /{inet('127.0.0.1')}
+  - uri: /{inet(string('127.0.0.1')), inet(2130706433)}
+  - uri: /{string(inet('127.0.0.1')), integer(inet('127.0.0.1'))}
+
+  # Invalid literals and conversions
+  - uri: /{inet('HTSQL')}
+    expect: 400
+  - uri: /{inet(string('HTSQL'))}
+    expect: 409
+  - uri: /{inet(-1)}
+    expect: 409
+
+  # Comparison
+  - uri: /{inet('192.168.24.1')=inet('192.168.24.1'),
+           inet('192.168.24.1')!=inet('192.168.12.10'),
+           inet('192.168.24.1')>inet('192.168.12.10')}
+
+  # Arithmetics
+  - uri: /{inet('192.168.12.10')+3063,
+           inet('192.168.24.1')-3063,
+           inet('192.168.24.1')-inet('192.168.12.10')}
+

@@ -4,7 +4,7 @@
 #
 
 
-from . import bind, coerce, domain, dump, encode
+from . import introspect, dump
 from htsql.addon import Addon
 
 
@@ -12,5 +12,6 @@ class TweakINetPGSQLAddon(Addon):
 
     name = 'tweak.inet.pgsql'
     prerequisites = ['engine.pgsql']
+    hint = """implement `tweak.inet` for PostgreSQL"""
 
 

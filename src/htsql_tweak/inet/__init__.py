@@ -4,16 +4,25 @@
 #
 
 
+from . import bind, coerce, encode, domain, signature
 from htsql.addon import Addon
 
 
 class TweakINetAddon(Addon):
 
     name = 'tweak.inet'
-    hint = """adds support for inet data types"""
+    hint = """add support for IPv4 data type"""
     help = """
-      This plugin adds support for various internet data
-      types for PostgreSQL.
+    This addon adds support for IPv4 data type.  The addon implements:
+
+    - `inet()` constructor which accepts literals in standard IPv4
+      dotted notation;
+    - standard comparison operators for `inet` values;
+    - conversion of `inet` values from/to `string` and `integer` values;
+    - arithmetic operations: `inet-integer`, `inet+integer`,
+      `inet-inet`.
+
+    Currently, only PostgreSQL backend is supported.
     """
 
     @classmethod

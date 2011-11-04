@@ -26992,3 +26992,161 @@ tests:
                     "school"."campus"
              FROM "ad"."school" AS "school"
              ORDER BY 1 ASC
+      - id: tweak.inet
+        tests:
+        - ctl: [ext, tweak.inet]
+          stdout: |+
+            TWEAK.INET - add support for IPv4 data type
+
+            This addon adds support for IPv4 data type.  The addon implements:
+
+            - `inet()` constructor which accepts literals in standard IPv4
+              dotted notation;
+            - standard comparison operators for `inet` values;
+            - conversion of `inet` values from/to `string` and `integer` values;
+            - arithmetic operations: `inet-integer`, `inet+integer`,
+              `inet-inet`.
+
+            Currently, only PostgreSQL backend is supported.
+
+          exit: 0
+        - uri: /other{code, inet+, inet(inet), string(inet), integer(inet)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | other                                                      |
+             +------------------------------------------------------------+
+             | code      | inet      | inet      | inet      | inet       |
+            -+-----------+-----------+-----------+-----------+------------+-
+             | 2-null    |           |           |           |            |
+             | 1-regular | 127.0.0.1 | 127.0.0.1 | 127.0.0.1 | 2130706433 |
+                                                                   (2 rows)
+
+             ----
+             /other{code,inet+,inet(inet),string(inet),integer(inet)}
+             SELECT "other"."code",
+                    "other"."inet",
+                    "other"."inet",
+                    HOST("other"."inet"),
+                    ("other"."inet" - '0.0.0.0'::INET)
+             FROM "public"."other" AS "other"
+             ORDER BY 2 ASC NULLS FIRST, 1 ASC
+        - uri: /other{code, inet, inet(inet), string(inet), integer(inet)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | other                                                         |
+             +---------------------------------------------------------------+
+             | code      | inet      | inet      | inet         | inet       |
+            -+-----------+-----------+-----------+--------------+------------+-
+             | 1-regular | 127.0.0.1 | 127.0.0.1 | 127.0.0.1/32 | 2130706433 |
+             | 2-null    |           |           |              |            |
+                                                                      (2 rows)
+
+             ----
+             /other{code,inet,inet(inet),string(inet),integer(inet)}
+             SELECT "other"."code",
+                    "other"."inet",
+                    "other"."inet",
+                    CAST("other"."inet" AS TEXT),
+                    ("other"."inet" - '0.0.0.0'::INET)
+             FROM "public"."other" AS "other"
+             ORDER BY 1 ASC
+        - uri: /{inet('127.0.0.1')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | '127.0.0.1' |
+            -+-------------+-
+             | 127.0.0.1   |
+                     (1 row)
+
+             ----
+             /{inet('127.0.0.1')}
+             SELECT '127.0.0.1'::INET
+        - uri: /{inet(string('127.0.0.1')), inet(2130706433)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | '127.0.0.1' | 2130706433 |
+            -+-------------+------------+-
+             | 127.0.0.1   | 127.0.0.1  |
+                                  (1 row)
+
+             ----
+             /{inet(string('127.0.0.1')),inet(2130706433)}
+             SELECT CAST('127.0.0.1' AS INET),
+                    ('0.0.0.0'::INET + 2130706433)
+        - uri: /{string(inet('127.0.0.1')), integer(inet('127.0.0.1'))}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | '127.0.0.1' | '127.0.0.1' |
+            -+-------------+-------------+-
+             | 127.0.0.1   |  2130706433 |
+                                   (1 row)
+
+             ----
+             /{string(inet('127.0.0.1')),integer(inet('127.0.0.1'))}
+             SELECT HOST('127.0.0.1'::INET),
+                    ('127.0.0.1'::INET - '0.0.0.0'::INET)
+        - uri: /{inet('HTSQL')}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid IPv4 address:
+                /{inet('HTSQL')}
+                  ^^^^^^^^^^^^^
+        - uri: /{inet(string('HTSQL'))}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |+
+            engine failure: failed to execute a database query: invalid input syntax for type inet: "HTSQL"
+            LINE 1: SELECT CAST('HTSQL' AS INET)
+                                ^
+
+        - uri: /{inet(-1)}
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |+
+            engine failure: failed to execute a database query: result is out of range
+
+        - uri: /{inet('192.168.24.1')=inet('192.168.24.1'), inet('192.168.24.1')!=inet('192.168.12.10'),
+            inet('192.168.24.1')>inet('192.168.12.10')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | inet('192.168.24.1')=inet('192.168.24.1') | inet('192.168.24.1')!=inet('192.168.12.10') | inet('192.168.24.1')>inet('192.168.12.10') |
+            -+-------------------------------------------+---------------------------------------------+--------------------------------------------+-
+             | true                                      | true                                        | true                                       |
+                                                                                                                                              (1 row)
+
+             ----
+             /{inet('192.168.24.1')=inet('192.168.24.1'),inet('192.168.24.1')!=inet('192.168.12.10'),inet('192.168.24.1')>inet('192.168.12.10')}
+             SELECT ('192.168.24.1'::INET = '192.168.24.1'::INET),
+                    ('192.168.24.1'::INET <> '192.168.12.10'::INET),
+                    ('192.168.24.1'::INET > '192.168.12.10'::INET)
+        - uri: /{inet('192.168.12.10')+3063, inet('192.168.24.1')-3063, inet('192.168.24.1')-inet('192.168.12.10')}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | inet('192.168.12.10')+3063 | inet('192.168.24.1')-3063 | inet('192.168.24.1')-inet('192.168.12.10') |
+            -+----------------------------+---------------------------+--------------------------------------------+-
+             | 192.168.24.1               | 192.168.12.10             |                                       3063 |
+                                                                                                             (1 row)
+
+             ----
+             /{inet('192.168.12.10')+3063,inet('192.168.24.1')-3063,inet('192.168.24.1')-inet('192.168.12.10')}
+             SELECT ('192.168.12.10'::INET + 3063),
+                    ('192.168.24.1'::INET - 3063),
+                    ('192.168.24.1'::INET - '192.168.12.10'::INET)
