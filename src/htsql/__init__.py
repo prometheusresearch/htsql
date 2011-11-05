@@ -105,13 +105,12 @@ class HTSQLAddon(Addon):
         if self.db is None:
             raise ValueError("database address is not specified")
         try:
-            connection = connect()
-            connection.release()
+            connect().release()
         except DBError, exc:
             raise ValueError("failed to establish database connection: %s"
                              % exc)
         try:
-            catalog = introspect()
+            introspect()
         except DBError, exc:
             raise ValueError("failed to introspect the database: %s" % exc)
 

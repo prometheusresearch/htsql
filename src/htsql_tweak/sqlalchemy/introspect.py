@@ -13,13 +13,12 @@ from htsql.context import context
 from htsql.adapter import Adapter, weigh, adapts, adapts_many
 from htsql.introspect import Introspect
 from htsql.entity import make_catalog
-from htsql.domain import (BooleanDomain, IntegerDomain, TimeDomain,
-                          FloatDomain, StringDomain, DateDomain,
+from htsql.domain import (BooleanDomain, IntegerDomain, FloatDomain,
+                          DecimalDomain, StringDomain, DateDomain, TimeDomain,
                           DateTimeDomain, OpaqueDomain)
-from htsql.connect import Connect
 from sqlalchemy import types
 from sqlalchemy.schema import (PrimaryKeyConstraint, ForeignKeyConstraint,
-                               CheckConstraint, UniqueConstraint)
+                               UniqueConstraint)
 
 
 class SQLAlchemyIntrospect(Introspect):

@@ -16,27 +16,6 @@ import re
 import unicodedata
 
 
-class LabelCache(object):
-
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.labels_by_node = {}
-        self.labels_by_arc = {}
-
-    def update(self, node, labels):
-        assert isinstance(node, Node)
-        assert isinstance(labels, listof(Label))
-        assert all(label.origin == node for label in labels)
-        duplicates = set()
-        for label in labels:
-            assert label.name not in duplicates, label
-            duplicates.add(label.name)
-        self.labels_by_node.setdefault(node, [])
-        for label in labels:
-            self.labels_by_node.setdefault(label.origin, []).append(label)
-            self.labels_by_arc.setdefault(label.arc, []).append(label)
-
-
 def normalize(name):
     """
     Normalizes a name to provide a valid HTSQL identifier.
@@ -63,7 +42,6 @@ class Classify(Adapter):
     adapts(Node)
 
     def __init__(self, node):
-        assert isinstance(node, Node)
         self.node = node
         self.catalog = introspect()
 
@@ -305,6 +283,7 @@ class ClassifyTable(Classify):
 
 @once
 def classify(node):
+    assert isinstance(node, Node)
     classify = Classify(node)
     labels = classify()
     return labels
@@ -312,6 +291,7 @@ def classify(node):
 
 @once
 def relabel(arc):
+    assert isinstance(arc, Arc)
     cache = context.app.htsql.cache
     labels = classify(arc.origin)
     duplicates = set()

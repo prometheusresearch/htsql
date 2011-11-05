@@ -12,11 +12,10 @@ This module declares binding nodes and recipe objects.
 """
 
 
-from ..util import (maybe, listof, oneof, tupleof, 
-                    Clonable, Printable, Comparable)
+from ..util import maybe, listof, tupleof, Clonable, Printable, Comparable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
-from .syntax import Syntax, IdentifierSyntax, ReferenceSyntax
+from .syntax import Syntax
 from .signature import Signature, Bag, Formula
 from ..cmd.command import Command
 

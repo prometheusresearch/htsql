@@ -17,12 +17,12 @@ class INetDomain(Domain):
             return None
         try:
             data = socket.inet_ntoa(socket.inet_aton(data))
-        except socket.error, exc:
+        except socket.error:
             raise ValueError("invalid IPv4 address")
         return data
 
     def dump(self, value):
-        assert isinstance(data, maybe(str))
+        assert isinstance(value, maybe(str))
         return value
 
 

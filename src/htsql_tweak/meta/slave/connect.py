@@ -9,7 +9,7 @@ from htsql.cache import once
 from htsql.connect import Connect
 from htsql.adapter import weigh, Utility
 from htsql.classify import classify, relabel
-from htsql.model import HomeNode, TableNode, TableArc, ColumnArc, ChainArc
+from htsql.model import HomeNode, TableArc, ColumnArc, ChainArc
 import sqlite3
 
 

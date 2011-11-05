@@ -1007,12 +1007,12 @@ class ClassVal(Validator):
             module_name, attribute_name = value.rsplit('.', 1)
             try:
                 module = __import__(module_name, fromlist=[attribute_name])
-            except ImportError, exc:
+            except ImportError:
                 raise ValueError("a module name is expected, got %r"
                                  % module_name)
             try:
                 value = getattr(module, attribute_name)
-            except AttributeError, exc:
+            except AttributeError:
                 raise ValueError("an attribute of module %r is expected,"
                                  " got %r" % (module_name, attribute_name))
 

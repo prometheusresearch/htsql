@@ -16,34 +16,29 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-                      ReferenceSyntax, SpecifierSyntax, ApplicationSyntax,
-                      FunctionSyntax, GroupSyntax)
+                      SpecifierSyntax, ApplicationSyntax, GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrappingBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
-                       AssignmentBinding, DefinitionBinding, AliasBinding,
-                       SelectionBinding, HomeBinding, RescopingBinding,
-                       CoverBinding, ForkBinding, LinkBinding,
+                       AssignmentBinding, DefinitionBinding, SelectionBinding,
+                       HomeBinding, RescopingBinding, CoverBinding, ForkBinding,
                        CommandBinding, SegmentBinding, QueryBinding, Binding,
                        BindingRecipe, ComplementRecipe, KernelRecipe,
                        SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindByRecipe, BindingState
 from ..error import BindError
 from ..coerce import coerce
-from ..lookup import (lookup_attribute, lookup_complement, direct, expand,
-                      guess_name, lookup_command)
+from ..lookup import direct, expand, guess_name, lookup_command
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
                          NotSig)
-from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
-                        SortSig, CastSig, MakeDateSig, MakeDateTimeSig,
-                        CombineDateTimeSig,
+from .signature import (AsSig, SortDirectionSig, LimitSig, SortSig, CastSig,
+                        MakeDateSig, MakeDateTimeSig, CombineDateTimeSig,
                         ExtractYearSig, ExtractMonthSig, ExtractDaySig,
                         ExtractHourSig, ExtractMinuteSig, ExtractSecondSig,
-                        AddSig, ConcatenateSig,
-                        HeadSig, TailSig, SliceSig, AtSig, ReplaceSig,
-                        UpperSig, LowerSig, TrimSig,
+                        AddSig, ConcatenateSig, HeadSig, TailSig, SliceSig,
+                        AtSig, ReplaceSig, UpperSig, LowerSig, TrimSig,
                         DateIncrementSig, DateTimeIncrementSig,
                         SubtractSig, DateDecrementSig, DateTimeDecrementSig,
                         DateDifferenceSig, TodaySig, NowSig,
@@ -52,8 +47,7 @@ from .signature import (FiberSig, AsSig, SortDirectionSig, LimitSig,
                         RoundSig, RoundToSig, TruncSig, TruncToSig, LengthSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
-                        QuotientSig, AssignmentSig, DefineSig,
-                        WhereSig, SelectSig, LinkSig)
+                        DefineSig, WhereSig, SelectSig, LinkSig)
 from ...cmd.command import (DefaultCmd, RetrieveCmd, TextCmd, HTMLCmd, JSONCmd,
                             CSVCmd, TSVCmd, SQLCmd)
 import sys

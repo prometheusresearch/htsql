@@ -12,15 +12,12 @@ This module implements stitching utilities over flow nodes.
 """
 
 
-from ..util import maybe, listof
 from ..adapter import Adapter, adapts, adapts_many
 from .error import CompileError
 from .syntax import IdentifierSyntax
-from .flow import (Flow, RootFlow, ScalarFlow, TableFlow,
-                   DirectTableFlow, FiberTableFlow,
-                   QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
-                   LinkedFlow, FilteredFlow, OrderedFlow,
-                   ColumnUnit, KernelUnit, CoveringUnit)
+from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
+                   ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow,
+                   OrderedFlow, ColumnUnit, KernelUnit, CoveringUnit)
 from .term import Joint
 
 

@@ -13,7 +13,7 @@ This module defines script options.
 
 
 from htsql.util import maybe
-from htsql.validator import Validator, StrVal, SeqVal, ExtensionVal
+from htsql.validator import Validator, StrVal, ExtensionVal
 import re
 
 

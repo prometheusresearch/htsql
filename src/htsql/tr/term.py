@@ -12,7 +12,7 @@ This module declares term nodes.
 """
 
 
-from ..util import (listof, dictof, oneof, tupleof, maybe,
+from ..util import (listof, dictof, tupleof, maybe,
                     Clonable, Printable, Comparable)
 from ..domain import BooleanDomain
 from .flow import Expression, Flow, Code, Unit, QueryExpr

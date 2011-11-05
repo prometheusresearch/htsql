@@ -16,7 +16,7 @@ from htsql.adapter import adapts
 from htsql.domain import (BooleanDomain, NumberDomain, IntegerDomain,
                           StringDomain)
 from htsql.tr.dump import (FormatName, FormatLiteral,
-                           DumpBoolean, DumpDecimal, DumpFloat, DumpDate,
+                           DumpDecimal, DumpFloat, DumpDate,
                            DumpTime, DumpDateTime,
                            DumpToDomain, DumpToInteger, DumpToFloat,
                            DumpToDecimal, DumpToString, DumpToDateTime,

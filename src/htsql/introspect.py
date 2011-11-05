@@ -12,10 +12,8 @@ This module declares the database introspector adapter.
 """
 
 
-from .context import context
 from .adapter import Utility, weigh
 from .cache import once
-import threading
 
 
 class Introspect(Utility):

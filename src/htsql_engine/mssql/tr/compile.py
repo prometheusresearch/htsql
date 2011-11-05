@@ -5,7 +5,7 @@
 
 
 from htsql.domain import BooleanDomain, IntegerDomain
-from htsql.tr.term import PermanentTerm, FilterTerm, OrderTerm
+from htsql.tr.term import PermanentTerm, FilterTerm
 from htsql.tr.flow import LiteralCode, FormulaCode, ScalarUnit
 from htsql.tr.coerce import coerce
 from htsql.tr.signature import CompareSig, AndSig
@@ -23,7 +23,6 @@ class MSSQLCompileOrdered(CompileOrdered):
         kid = self.state.compile(self.flow.base,
                                  baseline=self.state.root)
         order = arrange(self.flow)
-        codes = [code for code, direction in order]
         kid = self.state.inject(kid, [code for code, direction in order])
         ops = []
         for code, direction in order:

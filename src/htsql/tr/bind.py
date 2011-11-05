@@ -17,13 +17,12 @@ from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
 from .error import BindError
-from .syntax import (Syntax, QuerySyntax, SegmentSyntax, CommandSyntax,
-                     SelectorSyntax, ApplicationSyntax, OperatorSyntax,
-                     QuotientSyntax, SieveSyntax, LinkSyntax, AssignmentSyntax,
-                     SpecifierSyntax, MappingSyntax, FunctionSyntax,
-                     GroupSyntax, IdentifierSyntax, WildcardSyntax,
-                     ReferenceSyntax, ComplementSyntax, StringSyntax,
-                     NumberSyntax)
+from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
+                     ApplicationSyntax, OperatorSyntax, QuotientSyntax,
+                     SieveSyntax, LinkSyntax, AssignmentSyntax,
+                     SpecifierSyntax, FunctionSyntax, GroupSyntax,
+                     IdentifierSyntax, WildcardSyntax, ReferenceSyntax,
+                     ComplementSyntax, StringSyntax, NumberSyntax)
 from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       RootBinding, HomeBinding, FreeTableBinding,
                       AttachedTableBinding, ColumnBinding, QuotientBinding,
@@ -35,7 +34,7 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       Recipe, FreeTableRecipe, AttachedTableRecipe,
                       ColumnRecipe, KernelRecipe, ComplementRecipe,
                       SubstitutionRecipe, BindingRecipe, ClosedRecipe,
-                      PinnedRecipe, InvalidRecipe, AmbiguousRecipe)
+                      PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
                      expand, direct, guess_name, lookup_command)
 from .coerce import coerce

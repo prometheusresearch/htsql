@@ -19,9 +19,6 @@ from .option import PasswordOption, ExtensionsOption, ConfigOption
 from .request import Request, ConfigYAMLLoader
 from htsql.validator import DBVal
 from htsql.util import DB, listof, trim_doc
-from htsql.request import produce
-from htsql.error import HTTPError
-from htsql.connect import DBError
 from htsql.model import HomeNode, InvalidNode, InvalidArc
 from htsql.classify import classify, normalize
 import traceback

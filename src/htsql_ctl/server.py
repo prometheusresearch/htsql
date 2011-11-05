@@ -19,9 +19,6 @@ from .option import QuietOption, PasswordOption, ExtensionsOption, ConfigOption
 from .request import ConfigYAMLLoader
 from htsql.util import DB
 from htsql.validator import StrVal, IntVal, DBVal
-from htsql.request import produce
-from htsql.error import HTTPError
-from htsql.connect import DBError
 import socket
 import SocketServer
 import wsgiref.simple_server

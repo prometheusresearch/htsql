@@ -14,11 +14,10 @@ This module implements name resolution adapters.
 
 from ..util import Clonable, Printable, maybe
 from ..adapter import Adapter, adapts, adapts_many
-from ..introspect import introspect
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
-                     InvalidArc, AmbiguousArc)
+                     AmbiguousArc)
 from ..classify import classify, normalize
-from .syntax import Syntax, IdentifierSyntax
+from .syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       SegmentBinding, HomeBinding, RootBinding, TableBinding,
                       ColumnBinding, QuotientBinding, ComplementBinding,
@@ -27,10 +26,8 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       RerouteBinding, ReferenceRerouteBinding,
                       TitleBinding, AliasBinding, CommandBinding,
                       FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
-                      ComplementRecipe, KernelRecipe, SubstitutionRecipe,
-                      BindingRecipe, PinnedRecipe, AmbiguousRecipe)
-import re
-import unicodedata
+                      ComplementRecipe, KernelRecipe, BindingRecipe,
+                      InvalidRecipe, AmbiguousRecipe)
 
 
 class Probe(Clonable, Printable):

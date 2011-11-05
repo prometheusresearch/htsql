@@ -7,7 +7,7 @@
 from __future__ import with_statement
 from htsql.context import context
 from htsql.util import maybe
-from htsql.adapter import Protocol, named
+from htsql.adapter import Protocol
 import mimetypes
 import hashlib
 import os, os.path

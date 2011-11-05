@@ -33,7 +33,6 @@ from htsql.tr.fn.dump import (DumpRound, DumpRoundTo, DumpTrunc, DumpTruncTo,
                               DumpDateIncrement, DumpDateDecrement,
                               DumpDateTimeIncrement, DumpDateTimeDecrement,
                               DumpDateDifference)
-from htsql.tr.signature import FromPredicateSig, ToPredicateSig
 from htsql.tr.fn.signature import SortDirectionSig
 from .signature import RowNumberSig
 

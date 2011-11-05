@@ -19,8 +19,7 @@ from .error import CompileError
 from .coerce import coerce
 from .signature import IsNullSig, AndSig
 from .flow import (Expression, QueryExpr, SegmentExpr, Code, LiteralCode,
-                   FormulaCode, Flow, RootFlow, ScalarFlow,
-                   TableFlow, DirectTableFlow, FiberTableFlow,
+                   FormulaCode, Flow, RootFlow, ScalarFlow, TableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow,
                    ForkedFlow, LinkedFlow, FilteredFlow, OrderedFlow,
                    Unit, ScalarUnit, ColumnUnit, AggregateUnit, CorrelatedUnit,

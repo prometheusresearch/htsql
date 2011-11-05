@@ -6,7 +6,7 @@
 
 from ..adapter import adapts, Utility
 from .command import RetrieveCmd, SQLCmd
-from .act import (act, analyze, Act, ProduceAction, SafeProduceAction,
+from .act import (analyze, Act, ProduceAction, SafeProduceAction,
                   AnalyzeAction, RenderAction)
 from ..tr.encode import encode
 from ..tr.flow import OrderedFlow
