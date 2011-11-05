@@ -59,7 +59,11 @@ class IntrospectSQLite(Introspect):
                 if row.pk:
                     primary_key_columns.append(column)
             if primary_key_columns:
-                table.add_primary_key(primary_key_columns)
+                # SQLite does not enforce NOT NULL on PRIMARY KEY columns.
+                if any(column.is_nullable for column in primary_key_columns):
+                    table.add_unique_key(primary_key_columns)
+                else:
+                    table.add_primary_key(primary_key_columns)
 
         for table in schema.tables:
             cursor.execute("""PRAGMA index_list(%s)"""

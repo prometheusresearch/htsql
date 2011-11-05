@@ -7,11 +7,13 @@ title: HTSQL Extensions
 id: addon
 tests:
 
+# TWEAK - tweaks for HTSQL
 - title: tweak
   tests:
   # Addon description
   - ctl: [ext, tweak]
 
+# TWEAK.AUTOLIMIT - limit number of rows
 - title: tweak.autolimit
   tests:
   # Addon description
@@ -59,6 +61,7 @@ tests:
   - uri: /{2+2}
   - uri: /school
 
+# TWEAK.CORS - cross-origin resource sharing
 - title: tweak.cors
   tests:
   # Addon description
@@ -82,6 +85,7 @@ tests:
       tweak.cors: { origin: null }
   - uri: /school
 
+# TWEAK.INET - IPv4 data type
 - title: tweak.inet
   ifdef: pgsql
   tests:
@@ -118,4 +122,81 @@ tests:
   - uri: /{inet('192.168.12.10')+3063,
            inet('192.168.24.1')-3063,
            inet('192.168.24.1')-inet('192.168.12.10')}
+
+# TWEAK.META - meta database
+- title: tweak.meta
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.meta]
+
+  # Load the addon
+  - load: demo
+    extensions:
+      tweak.meta: {}
+
+  # Tables
+  - uri: /table/:meta
+  - uri: /field/:meta
+  - uri: /column/:meta
+  - uri: /link/:meta
+
+  # Links
+  - uri: /(table?name='department').field/:meta
+  - uri: /(table?name='department').column/:meta
+  - uri: /(table?name='department').table_link/:meta
+  - uri: /(table?name='department').target_table_link/:meta
+  - uri: /(field?table_name='school').table/:meta
+  - uri: /(field?table_name='school').column/:meta
+  - uri: /(field?table_name='school').link/:meta
+  - uri: /(column?table_name='program').table/:meta
+  - uri: /(column?table_name='program').field/:meta
+  - uri: /(link?table_name='student').table/:meta
+  - uri: /(link?table_name='student').target_table/:meta
+  - uri: /(link?table_name='student').field/:meta
+  - uri: /(link?table_name='student').link/:meta
+  - uri: /(link?table_name='student').reverse_link/:meta
+
+  # Links and cardinality
+  - uri: /table?name='department'
+            {name, count(field), count(column),
+             count(table_link), count(target_table_link)}
+         /:meta
+  - uri: /field?table_name='school'
+            {table{name}, name, kind, column{domain}, link{is_singular}}
+         /:meta
+  - uri: /column?table_name='program'
+            {table{name}, field{name, sort}}
+         /:meta
+  - uri: /link?table_name='student'
+            {table{name}, target_table{name}, field{name},
+             link{name}, reverse_link{name}}
+         /:meta
+
+  # Scalar queries
+  - uri: /count(table)/:meta
+  # Alternative syntax
+  - uri: /meta(/count(table))
+
+  # Meta-meta database
+  - uri: /table/:meta/:meta
+  - uri: /field/:meta/:meta
+  - uri: /column/:meta/:meta
+  - uri: /link/:meta/:meta
+
+  # Invalid queries
+  - uri: /meta()
+    expect: 400
+  - uri: /meta(/column,/link)
+    expect: 400
+  - uri: /meta(/schema)
+    expect: 400
+  - uri: /meta(table)
+    expect: 400
+
+  # Describe columns of the `type` database
+  - load: type
+    extensions:
+      tweak.meta: {}
+  - uri: /meta(/column.sort(table.name, field.sort))
+
 

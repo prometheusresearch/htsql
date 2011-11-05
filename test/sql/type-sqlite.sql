@@ -12,7 +12,7 @@
 -- are represented by zero (FALSE) and any non-zero integer (TRUE).
 
 CREATE TABLE "boolean" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "boolean"       BOOLEAN
 );
 
@@ -31,7 +31,7 @@ INSERT INTO "boolean" ("code", "boolean") VALUES
 -- A type containing `INT` is assigned to the Integer domain.
 
 CREATE TABLE "integer" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "integer"       INTEGER
 );
 
@@ -53,7 +53,7 @@ INSERT INTO "integer" ("code", "integer") VALUES
 -- the Float domain.
 
 CREATE TABLE "float" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "real"          REAL
 );
 
@@ -76,7 +76,7 @@ INSERT INTO "float" ("code", "real") VALUES
 -- SQLite does not support the Decimal domain.
 
 CREATE TABLE "decimal" (
-    "code"          VARCHAR(32) PRIMARY KEY
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY
 );
 
 
@@ -85,7 +85,7 @@ CREATE TABLE "decimal" (
 -- rules for `TEXT` storage class.
 
 CREATE TABLE "string" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "text"          TEXT
 );
 
@@ -106,7 +106,7 @@ INSERT INTO "string" ("code", "text") VALUES
 -- SQLite engine does not support Enum domain.
 
 CREATE TABLE "enum" (
-    "code"          VARCHAR(32) PRIMARY KEY
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY
 );
 
 
@@ -115,7 +115,7 @@ CREATE TABLE "enum" (
 -- form: `YYYY-MM-DD hh:mm:ss`.
 
 CREATE TABLE "datetime" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "datetime"      DATETIME
 );
 
@@ -135,7 +135,7 @@ INSERT INTO "datetime" ("code", "datetime") VALUES
 -- are represented as a string of the form: `YYYY-MM-DD`.
 
 CREATE TABLE "date" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "date"          DATE
 );
 
@@ -155,7 +155,7 @@ INSERT INTO "date" ("code", "date") VALUES
 -- are represented as a string of the form: `hh:mm:ss.sss`.
 
 CREATE TABLE "time" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "time"          TIME
 );
 
@@ -172,7 +172,7 @@ INSERT INTO "time" ("code", "time") VALUES
 -- Any unrecognized data types are assigned to the Opaque domain.
 
 CREATE TABLE "other" (
-    "code"          VARCHAR(32) PRIMARY KEY,
+    "code"          VARCHAR(32) NOT NULL PRIMARY KEY,
     "blob"          BLOB
 );
 

@@ -99,7 +99,7 @@ tests:
   - db: *connect-sandbox
     save: sandbox
   - db: *connect-type
-    save: data
+    save: type
   - db: *connect-demo
     save: demo
   # The Regression Schema

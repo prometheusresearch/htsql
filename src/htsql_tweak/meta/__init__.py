@@ -11,19 +11,24 @@ from htsql.addon import Addon
 class TweakMetaAddon(Addon):
 
     name = 'tweak.meta'
-    hint = """meta-data introspection database"""
+    hint = """add support for meta database"""
     help = """
-      This plugin provides a command ``/meta()`` that is an
-      in-memory database providing introspection ability.
-      The introspection permits listing of tables, columns,
-      and links.  For example, ``/meta(/table)`` lists all
-      of the tables in the current database.
+    This addon provides a meta database, which describes tables,
+    columns and links of the primary database.
+
+    The meta database contains the following tables:
+
+    - `table`: available tables;
+    - `field`: table fields including columns and links;
+    - `column`: table columns;
+    - `link`: links between tables.
+
+    Use function `meta()` to make queries against the meta database.
+    For example, to get a list of all tables, run the query:
+
+        /table/:meta
     """
 
     prerequisites = []
-
-    def __init__(self, app, attributes):
-        super(TweakMetaAddon, self).__init__(app, attributes)
-        self.cached_slave_app = None
 
 

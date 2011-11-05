@@ -5,8 +5,9 @@
 
 from __future__ import with_statement
 from htsql.context import context
+from htsql.cache import once
 from htsql.connect import Connect
-from htsql.adapter import weigh
+from htsql.adapter import weigh, Utility
 from htsql.classify import classify, relabel
 from htsql.model import HomeNode, TableNode, TableArc, ColumnArc, ChainArc
 import sqlite3
@@ -17,142 +18,171 @@ class MetaSlaveConnect(Connect):
     weigh(2.0) # ensure connections here are not pooled
 
     def open(self):
-        app = context.app
-        connection = app.tweak.meta.slave.cached_connection
-        if connection is None:
-            connection = sqlite3.connect(':memory:', check_same_thread=False)
-            connection.text_factory = str
-            master_app = app.tweak.meta.slave.master()
-            with master_app:
-                self.create_meta_schema(connection)
-                self.populate_meta_schema(connection)
-            connection.commit()
-            app.tweak.meta.slave.cached_connection = connection
-        return connection
+        return build_meta()
 
-    def create_meta_schema(self, connection):
-        cursor = connection.cursor()
+
+class BuildMetaDatabase(Utility):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __call__(self):
+        master_app = context.app.tweak.meta.slave.master()
+        with master_app:
+            self.build_schema()
+            self.build_data()
+
+    def build_schema(self):
+        cursor = self.connection.cursor()
         cursor.executescript("""
             CREATE TABLE "table" (
-                name TEXT NOT NULL,
+                name                TEXT NOT NULL,
                 PRIMARY KEY (name)
             );
+
             CREATE TABLE "field" (
-                table_name TEXT NOT NULL,
-                name TEXT NOT NULL,
-                "kind" TEXT NOT NULL,
-                "sort" INTEGER,
+                table_name          TEXT NOT NULL,
+                name                TEXT NOT NULL,
+                kind                TEXT NOT NULL,
+                sort                INTEGER,
                 PRIMARY KEY (table_name, name),
+                UNIQUE (table_name, sort),
                 FOREIGN KEY (table_name)
                     REFERENCES "table"(name),
                 CHECK ("kind" IN ('column', 'link'))
             );
+
             CREATE TABLE "column" (
-                table_name TEXT NOT NULL,
-                name TEXT NOT NULL,
-                domain_type TEXT NOT NULL,
-                is_mandatory BOOLEAN NOT NULL,
+                table_name          TEXT NOT NULL,
+                name                TEXT NOT NULL,
+                domain              TEXT NOT NULL,
+                is_mandatory        BOOLEAN NOT NULL,
                 PRIMARY KEY (table_name, name),
                 FOREIGN KEY (table_name, name)
                    REFERENCES "field"(table_name, name),
                 FOREIGN KEY (table_name)
                    REFERENCES "table"(name)
             );
+
             CREATE TABLE "link" (
-                table_name TEXT NOT NULL,
-                name TEXT NOT NULL,
-                is_singular BOOLEAN NOT NULL,
-                target_table_name TEXT NOT NULL,
-                reverse_link_name TEXT,
+                table_name          TEXT NOT NULL,
+                name                TEXT NOT NULL,
+                is_singular         BOOLEAN NOT NULL,
+                target_table_name   TEXT NOT NULL,
+                reverse_name        TEXT,
                 PRIMARY KEY (table_name, name),
+                UNIQUE (target_table_name, reverse_name),
                 FOREIGN KEY (table_name, name)
                    REFERENCES "field"(table_name, name),
                 FOREIGN KEY (table_name)
                    REFERENCES "table"(name),
                 FOREIGN KEY (target_table_name)
                    REFERENCES "table"(name),
-                FOREIGN KEY (target_table_name, reverse_link_name)
+                FOREIGN KEY (target_table_name, reverse_name)
                    REFERENCES "link"(table_name, name)
             );
+
+            PRAGMA FOREIGN_KEYS = ON;
         """)
 
-    def populate_meta_schema(self, connection):
-        cursor = connection.cursor()
-        tables = classify(HomeNode())
-        table_handles = {}
+    def build_data(self):
+        cursor = self.connection.cursor()
 
-        for label in tables:
-            if not isinstance(label.arc, TableArc):
-                # only handle unambiguous top-level table links
+        home_arcs = []
+        duplicates = set()
+        for label in classify(HomeNode()):
+            arc = label.arc
+            if not isinstance(arc, TableArc):
                 continue
+            if arc in duplicates:
+                continue
+            home_arcs.append(arc)
+            duplicates.add(arc)
+
+        for arc in home_arcs:
+            labels = relabel(arc)
+            assert len(labels) > 0
+            label = labels[0]
+            name = label.name
             cursor.execute("""
-              INSERT INTO "table" (name)
-              VALUES (?)
-            """, [label.name])
-            table_handles[label.arc.table] = label.name
+                INSERT INTO "table" (name)
+                VALUES (?)
+            """, [name])
 
-        name_by_chain = {}
+        reverse_names = []
 
-        for label in tables:
-            if not isinstance(label.arc, TableArc):
-                # only handle unambiguous top-level table links
-                continue
-            fields = classify(TableNode(label.arc.table))
-            public = [field.name for field in fields if field.is_public]
+        for home_arc in home_arcs:
+            origin = home_arc.target
+            table_arcs = []
+            duplicates = set()
+            for label in classify(origin):
+                arc = label.arc
+                if not isinstance(arc, (ColumnArc, ChainArc)):
+                    continue
+                if arc in duplicates:
+                    continue
+                if (isinstance(arc, ChainArc) and
+                        not relabel(TableArc(arc.target.table))):
+                    continue
+                table_arcs.append(arc)
+                duplicates.add(arc)
 
-            def make_field(name, kind):
-                sort = None
-                if name in public:
-                    sort = public.index(name)
-                cursor.execute("""
-                  INSERT INTO field (table_name, name, kind, sort)
-                  VALUES (?,?,?,?)
-                """, [label.name, name, kind, sort])
-
-            def make_column(name, domain_type, is_mandatory):
-                cursor.execute("""
-                  INSERT INTO "column" (table_name, name,
-                                        domain_type, is_mandatory)
-                  VALUES (?,?,?,?)
-                """, [label.name, name, domain_type, is_mandatory])
-
-            def make_link(name, is_singular, target_table_name):
-                cursor.execute("""
-                  INSERT INTO "link" (table_name, name,
-                                      is_singular, target_table_name)
-                  VALUES (?,?,?,?)
-                """, [label.name, name, is_singular, target_table_name])
-
-            for field in fields:
-                name = field.name
-                arc = field.arc
-                all_labels = relabel(arc)
-
+            table_name = relabel(TableArc(origin.table))[0].name
+            last_sort = 0
+            for arc in table_arcs:
+                label = relabel(arc)[0]
+                name = label.name
+                kind = None
                 if isinstance(arc, ColumnArc):
-                    make_field(name, 'column')
-                    make_column(name, arc.column.domain.family,
-                                not arc.column.is_nullable)
+                    kind = 'column'
                 elif isinstance(arc, ChainArc):
-                    if arc in name_by_chain:
-                        continue
-                    target_table_name = table_handles.get(arc.target.table)
-                    if target_table_name:
-                        make_field(name, 'link')
-                        make_link(name, arc.is_contracting, target_table_name)
-                    name_by_chain[arc] = (label.name, name)
-                else:
-                    # at this point, we don't handle anything other
-                    # than Columns or Links (attached tables)
-                    pass
-
-        for arc in name_by_chain:
-            table_name, name = name_by_chain[arc]
-            reverse = arc.reverse()
-            if reverse in name_by_chain:
-                target_table_name, reverse_link_name = name_by_chain[reverse]
+                    kind = 'link'
+                sort = None
+                if label.is_public:
+                    last_sort += 1
+                    sort = last_sort
                 cursor.execute("""
-                  UPDATE "link" SET reverse_link_name = ?
-                   WHERE table_name = ? AND name = ?
-                """, [reverse_link_name, table_name, name])
+                    INSERT INTO "field" (table_name, name, kind, sort)
+                    VALUES (?, ?, ?, ?)
+                """, [table_name, name, kind, sort])
+                if isinstance(arc, ColumnArc):
+                    domain = arc.column.domain.family
+                    is_mandatory = (not arc.column.is_nullable)
+                    cursor.execute("""
+                        INSERT INTO "column" (table_name, name,
+                                              domain, is_mandatory)
+                        VALUES (?, ?, ?, ?)
+                    """, [table_name, name, domain, is_mandatory])
+                if isinstance(arc, ChainArc):
+                    is_singular = arc.is_contracting
+                    target_arc = TableArc(arc.target.table)
+                    target_table_name = relabel(target_arc)[0].name
+                    cursor.execute("""
+                        INSERT INTO "link" (table_name, name, is_singular,
+                                            target_table_name)
+                        VALUES (?, ?, ?, ?)
+                    """, [table_name, name, is_singular,
+                          target_table_name])
+                    reverse_labels = relabel(arc.reverse())
+                    if reverse_labels:
+                        reverse_name = reverse_labels[0].name
+                        reverse_names.append((table_name, name, reverse_name))
+
+        for table_name, name, reverse_name in reverse_names:
+            cursor.execute("""
+                UPDATE "link"
+                SET reverse_name = ?
+                WHERE table_name = ? AND name = ?
+            """, [reverse_name, table_name, name])
+
+
+@once
+def build_meta():
+    connection = sqlite3.connect(':memory:', check_same_thread=False)
+    connection.text_factory = str
+    build_meta = BuildMetaDatabase(connection)
+    build_meta()
+    connection.commit()
+    return connection
 
 

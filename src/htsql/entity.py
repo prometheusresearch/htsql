@@ -343,7 +343,7 @@ class MutableUniqueKeyEntity(UniqueKeyEntity, MutableEntity):
         if is_primary:
             assert not is_partial
             assert origin.primary_key is None
-            assert [not column.is_nullable for column in origin_columns]
+            assert all(not column.is_nullable for column in origin_columns)
         super(MutableUniqueKeyEntity, self).__init__(weakref.ref(origin))
         self.origin_columns = origin_columns
         self.is_primary = is_primary

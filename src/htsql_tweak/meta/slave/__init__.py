@@ -13,6 +13,7 @@ from htsql.validator import ClassVal
 class TweakMetaSlaveAddon(Addon):
 
     name = 'tweak.meta.slave'
+    hint = """implement meta database (auxiliary)"""
 
     prerequisites = []
     postrequisites = ['htsql']
@@ -28,9 +29,5 @@ class TweakMetaSlaveAddon(Addon):
                                      password=None,
                                      host=None, port=None) },
                  'engine.sqlite': {} }
-
-    def __init__(self, app, attributes):
-        super(TweakMetaSlaveAddon, self).__init__(app, attributes)
-        self.cached_connection = None
 
 

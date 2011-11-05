@@ -7,6 +7,7 @@
 from __future__ import with_statement
 from htsql import HTSQL
 from htsql.context import context
+from htsql.cache import once
 from htsql.adapter import adapts, named
 from htsql.cmd.command import ProducerCmd, DefaultCmd
 from htsql.cmd.act import Act, ProduceAction, act
@@ -20,13 +21,11 @@ from htsql.tr.lookup import lookup_command
 import weakref
 
 
+@once
 def get_slave_app():
-    slave_app = context.app.tweak.meta.cached_slave_app
-    if slave_app is None:
-        master = weakref.ref(context.app)
-        slave_app = HTSQL(None, {'tweak.meta.slave': {'master': master}})
-        context.app.tweak.meta.cached_slave_app = slave_app
-    return slave_app
+    master = weakref.ref(context.app)
+    slave = HTSQL(None, {'tweak.meta.slave': {'master': master}})
+    return slave
 
 
 class MetaCmd(ProducerCmd):
