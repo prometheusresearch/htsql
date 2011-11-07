@@ -65,8 +65,8 @@ class ConnectOracle(Connect):
             connection.autocommit = True
         connection.outputtypehandler = self.outputtypehandler
         cursor = connection.cursor()
-        cursor.execute("ALTER SESSION SET NLS_SORT = BINARY_CI");
-        cursor.execute("ALTER SESSION SET NLS_COMP = LINGUISTIC");
+        cursor.execute("ALTER SESSION SET NLS_SORT = BINARY_CI")
+        cursor.execute("ALTER SESSION SET NLS_COMP = LINGUISTIC")
         return connection
 
 

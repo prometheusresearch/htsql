@@ -81,7 +81,7 @@ def make_db(engine, name):
             if port:
                 host = "%s:%s" % (host, port)
         sid = os.environ.get("ORACLE_SID", "XE")
-        return "oracle://htsql_%s:secret@%s/%s" % (host, name, sid)
+        return "oracle://htsql_%s:secret@%s/%s" % (name, host, sid)
 
 
 def make_client(engine, name=None):

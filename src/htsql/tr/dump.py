@@ -958,8 +958,25 @@ class DumpTable(Dump):
         #   <schema>.<table>
         # otherwise, dump:
         #   <table>
-        table = self.frame.flow.family.table
+        table = self.frame.table
+        # Check if we need to serialize the schema name.
+        need_schema = False
+        # Missing schema name means schemas are not supported by the backend
+        # or the default schema.
         if table.schema.name:
+            need_schema = True
+            # Check if the table schema is in the search path and there is
+            # no higher priority schema having a table with the same name.
+            if table.schema.priority > 0:
+                need_schema = False
+                for schema in table.schema.catalog.schemas:
+                    if (schema != table.schema and
+                            schema.priority >= table.schema_priority and
+                            table.name in schema.tables):
+                        need_schema = True
+                        break
+        # Serialize the table name.
+        if need_schema:
             self.format("{schema:name}.{table:name}",
                         schema=table.schema.name,
                         table=table.name)
@@ -1228,9 +1245,18 @@ class DumpLeadingAnchor(Dump):
         # Dump:
         #   <frame> AS <alias>
         alias = self.state.frame_alias_by_tag[self.clause.frame.tag]
+        # Omit the alias if it coincides with the table name.
+        if isinstance(self.clause.frame, TableFrame):
+            table = self.clause.frame.table
+            if alias == table.name:
+                alias = None
+        # Dump the frame clause.
         self.state.push_hook(with_aliases=True)
-        self.format("{frame} AS {alias:name}",
-                    frame=self.clause.frame, alias=alias)
+        if alias is not None:
+            self.format("{frame} AS {alias:name}",
+                        frame=self.clause.frame, alias=alias)
+        else:
+            self.format("{frame}", frame=self.clause.frame)
         self.state.pop_hook()
 
 
@@ -1246,6 +1272,12 @@ class DumpAnchor(Dump):
         #   (CROSS|INNER|...) JOIN <frame> AS <alias>
         #                          ON <condition>
         alias = self.state.frame_alias_by_tag[self.clause.frame.tag]
+        # Omit the alias if it coincides with the table name.
+        if isinstance(self.clause.frame, TableFrame):
+            table = self.clause.frame.table
+            if alias == table.name:
+                alias = None
+        # Dump the `JOIN` clause.
         self.newline()
         if self.clause.is_cross:
             self.write("CROSS JOIN ")
@@ -1259,8 +1291,11 @@ class DumpAnchor(Dump):
             self.write("FULL OUTER JOIN ")
         self.indent()
         self.state.push_hook(with_aliases=True)
-        self.format("{frame} AS {alias:name}",
-                    frame=self.clause.frame, alias=alias)
+        if alias is not None:
+            self.format("{frame} AS {alias:name}",
+                        frame=self.clause.frame, alias=alias)
+        else:
+            self.format("{frame}", frame=self.clause.frame)
         self.state.pop_hook()
         if self.clause.condition is not None:
             self.newline()

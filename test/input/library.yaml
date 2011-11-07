@@ -306,7 +306,9 @@ tests:
     ignore: true
     ifdef: [pgsql, mssql]
   - uri: /{7*2147483647, 9223372036854775807+1}
-    ifndef: [pgsql, mssql]
+    # FIXME: Older SQLite silently truncates the result, newer SQLite
+    # converts the result to float.
+    ifndef: [pgsql, mssql, sqlite]
   # Division by zero
   - uri: /{7/0}
     expect: 409

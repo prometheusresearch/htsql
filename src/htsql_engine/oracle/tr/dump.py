@@ -15,7 +15,7 @@ This module adapts the SQL serializer for Oracle.
 from htsql.adapter import adapts
 from htsql.domain import (BooleanDomain, StringDomain, DateDomain, TimeDomain,
                           DateTimeDomain)
-from htsql.tr.frame import ScalarFrame
+from htsql.tr.frame import ScalarFrame, TableFrame
 from htsql.tr.dump import (SerializeSegment, Dump, DumpBranch, DumpAnchor,
                            DumpLeadingAnchor, DumpFromPredicate,
                            DumpToPredicate, DumpBoolean, DumpInteger,
@@ -82,9 +82,16 @@ class OracleDumpLeadingAnchor(DumpLeadingAnchor):
 
     def __call__(self):
         alias = self.state.frame_alias_by_tag[self.clause.frame.tag]
+        if isinstance(self.clause.frame, TableFrame):
+            table = self.clause.frame.table
+            if alias == table.name:
+                alias = None
         self.state.push_hook(with_aliases=True)
-        self.format("{frame} {alias:name}",
-                    frame=self.clause.frame, alias=alias)
+        if alias is not None:
+            self.format("{frame} {alias:name}",
+                        frame=self.clause.frame, alias=alias)
+        else:
+            self.format("{frame}", frame=self.clause.frame)
         self.state.pop_hook()
 
 
@@ -92,6 +99,10 @@ class OracleDumpAnchor(DumpAnchor):
 
     def __call__(self):
         alias = self.state.frame_alias_by_tag[self.clause.frame.tag]
+        if isinstance(self.clause.frame, TableFrame):
+            table = self.clause.frame.table
+            if alias == table.name:
+                alias = None
         self.newline()
         if self.clause.is_cross:
             self.write("CROSS JOIN ")
@@ -105,8 +116,11 @@ class OracleDumpAnchor(DumpAnchor):
             self.write("FULL OUTER JOIN ")
         self.indent()
         self.state.push_hook(with_aliases=True)
-        self.format("{frame} {alias:name}",
-                    frame=self.clause.frame, alias=alias)
+        if alias is not None:
+            self.format("{frame} {alias:name}",
+                        frame=self.clause.frame, alias=alias)
+        else:
+            self.format("{frame}", frame=self.clause.frame)
         self.state.pop_hook()
         if self.clause.condition is not None:
             self.newline()
