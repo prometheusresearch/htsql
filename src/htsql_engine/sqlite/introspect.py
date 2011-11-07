@@ -33,7 +33,7 @@ class IntrospectSQLite(Introspect):
 
         catalog = make_catalog()
 
-        schema = catalog.add_schema('_')
+        schema = catalog.add_schema('')
 
         cursor.execute("""
             SELECT *

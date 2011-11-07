@@ -42,12 +42,15 @@ class MutableEntity(Entity):
 class NamedEntity(Entity):
 
     def __init__(self, owner, name):
-        assert isinstance(name, str) and len(name) > 0
+        assert isinstance(name, str)
         super(NamedEntity, self).__init__(owner)
         self.name = name
 
     def __str__(self):
-        return self.name
+        if self.name:
+            return self.name
+        else:
+            return "<default>"
 
 
 class RemovedEntity(Printable):
@@ -192,6 +195,8 @@ class TableEntity(NamedEntity):
         return self.owner()
 
     def __str__(self):
+        if not self.schema.name:
+            return self.name
         return "%s.%s" % (self.schema, self.name)
 
 
@@ -200,6 +205,7 @@ class MutableTableEntity(TableEntity, MutableEntity):
     def __init__(self, schema, name):
         assert isinstance(schema, MutableSchemaEntity)
         assert name not in schema.tables
+        assert len(name) > 0
         super(MutableTableEntity, self).__init__(weakref.ref(schema), name)
         self.columns = MutableEntitySet()
         self.primary_key = None
@@ -278,6 +284,7 @@ class MutableColumnEntity(ColumnEntity, MutableEntity):
     def __init__(self, table, name, domain, is_nullable, has_default):
         assert isinstance(table, MutableTableEntity)
         assert name not in table.columns
+        assert len(name) > 0
         assert isinstance(domain, Domain)
         assert isinstance(is_nullable, bool)
         assert isinstance(has_default, bool)

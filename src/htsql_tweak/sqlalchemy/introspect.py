@@ -37,7 +37,7 @@ class SQLAlchemyIntrospect(Introspect):
         catalog = make_catalog()
 
         for table_record in metadata.sorted_tables:
-            schema_name = table_record.schema or '_'
+            schema_name = table_record.schema or ''
             if schema_name not in catalog.schemas:
                 catalog.add_schema(schema_name)
             schema = catalog.schemas[schema_name]
@@ -52,7 +52,7 @@ class SQLAlchemyIntrospect(Introspect):
                                  is_nullable, has_default)
 
         for table_record in metadata.sorted_tables:
-            schema_name = table_record.schema or '_'
+            schema_name = table_record.schema or ''
             schema = catalog.schemas[schema_name]
             table = schema.tables[table_record.name]
 
@@ -79,7 +79,7 @@ class SQLAlchemyIntrospect(Introspect):
                     target_records = [element.column
                                       for element in key_record.elements]
                     target_table_record = target_records[0].table
-                    target_schema_name = target_table_record.schema or '_'
+                    target_schema_name = target_table_record.schema or ''
                     if target_schema_name not in catalog.schemas:
                         continue
                     target_schema = catalog.schemas[target_schema_name]

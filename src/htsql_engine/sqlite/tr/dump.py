@@ -33,13 +33,6 @@ from htsql.tr.fn.dump import (DumpRoundTo, DumpTrunc, DumpTruncTo,
 from htsql.tr.error import SerializeError
 
 
-class SQLiteDumpTable(DumpTable):
-
-    def __call__(self):
-        table = self.frame.flow.family.table
-        self.format("{table:name}", table=table.name)
-
-
 class SQLiteDumpBoolean(DumpBoolean):
 
     def __call__(self):

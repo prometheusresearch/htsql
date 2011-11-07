@@ -953,13 +953,18 @@ class DumpTable(Dump):
     adapts(TableFrame)
 
     def __call__(self):
-        # Serialize a table reference in a `FROM` clause.  Dump:
+        # Serialize a table reference in a `FROM` clause.
+        # If the schema name is set, dump:
         #   <schema>.<table>
-        # Must be overridden for backends which lack schemas.
+        # otherwise, dump:
+        #   <table>
         table = self.frame.flow.family.table
-        self.format("{schema:name}.{table:name}",
-                    schema=table.schema.name,
-                    table=table.name)
+        if table.schema.name:
+            self.format("{schema:name}.{table:name}",
+                        schema=table.schema.name,
+                        table=table.name)
+        else:
+            self.format("{table:name}", table=table.name)
 
 
 class DumpBranch(Dump):
