@@ -19,7 +19,7 @@ from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      ApplicationSyntax, OperatorSyntax, QuotientSyntax,
-                     SieveSyntax, LinkSyntax, AssignmentSyntax,
+                     SieveSyntax, LinkSyntax, HomeSyntax, AssignmentSyntax,
                      SpecifierSyntax, FunctionSyntax, GroupSyntax,
                      IdentifierSyntax, WildcardSyntax, ReferenceSyntax,
                      ComplementSyntax, StringSyntax, NumberSyntax)
@@ -488,6 +488,17 @@ class BindLink(Bind):
             images.append((origin_image, target_image))
         # Generate a link scope.
         return LinkBinding(self.state.scope, seed, images, self.syntax)
+
+
+class BindHome(Bind):
+
+    adapts(HomeSyntax)
+
+    def __call__(self):
+        # Make the home scope.
+        home = HomeBinding(self.state.scope, self.syntax)
+        # Bind the operand against the home scope.
+        return self.state.bind(self.syntax.rbranch, scope=home)
 
 
 class BindAssignment(Bind):

@@ -17,10 +17,10 @@ from .scan import scan
 from .token import NameToken, StringToken, NumberToken, SymbolToken, EndToken
 from .syntax import (QuerySyntax, SegmentSyntax, CommandSyntax, SelectorSyntax,
                      FunctionSyntax, MappingSyntax, OperatorSyntax,
-                     QuotientSyntax, SieveSyntax, LinkSyntax, AssignmentSyntax,
-                     SpecifierSyntax, GroupSyntax, IdentifierSyntax,
-                     WildcardSyntax, ComplementSyntax, ReferenceSyntax,
-                     StringSyntax, NumberSyntax)
+                     QuotientSyntax, SieveSyntax, LinkSyntax, HomeSyntax,
+                     AssignmentSyntax, SpecifierSyntax, GroupSyntax,
+                     IdentifierSyntax, WildcardSyntax, ComplementSyntax,
+                     ReferenceSyntax, StringSyntax, NumberSyntax)
 
 
 class Parser(object):
@@ -123,7 +123,7 @@ class QueryParser(Parser):
         assignment      ::= ':=' top
 
         specifier       ::= atom ( '.' atom )*
-        atom            ::= '*' index? | '^' | selector | group |
+        atom            ::= '@' atom | '*' index? | '^' | selector | group |
                             identifier call? | reference | literal
         index           ::= NUMBER | '(' NUMBER ')'
 
@@ -528,7 +528,7 @@ class AtomParser(Parser):
     @classmethod
     def process(cls, tokens):
         # Expect:
-        #   atom        ::= '*' index? | '^' | selector | group |
+        #   atom        ::= '@' atom | '*' index? | '^' | selector | group |
         #                   identifier call? | reference | literal
         #   index       ::= NUMBER | '(' NUMBER ')'
         #   call        ::= '(' arguments? ')'
@@ -537,6 +537,13 @@ class AtomParser(Parser):
         #   reference   ::= '$' identifier
         #   literal     ::= STRING | NUMBER
 
+        # A home indicator.
+        if tokens.peek(SymbolToken, ['@']):
+            symbol_token = tokens.pop(SymbolToken, ['@'])
+            atom = AtomParser << tokens
+            mark = Mark.union(symbol_token, atom)
+            home = HomeSyntax(atom, mark)
+            return home
         # A wildcard expression.
         if tokens.peek(SymbolToken, ['*']):
             symbol_token = tokens.pop(SymbolToken, ['*'])

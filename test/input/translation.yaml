@@ -282,6 +282,18 @@ tests:
     - uri: /program.fork(part_of){root().program{school.code, code, part_of}, school.code, code, part_of}
     # fork().fork() is inefficient
     - uri: /school.fork().fork().fork().limit(1)
+    # Home indicator
+    - uri: /course{department.code,no,credits}?credits=max(@course.credits)
+    - uri: /course{department.code,no,credits}?credits=@max(course.credits)
+    - uri: /program{school_code,code,count(student)}?count(student)>avg(@program.count(student))
+    - uri: /program{school_code,code,count(student)}?count(student)>@avg(program.count(student))
+    - uri: /program^degree?count(^.student)=max(@(program^degree).count(^.student))
+    # Composition
+    - uri: /@@@@@true()
+    - uri: /@@@@@school.@@@@@true()
+    # Direct product
+    - uri: /school.@school
+    - uri: /@school.@department.@program.limit(1)
 
   - title: Table Expressions
     tests:

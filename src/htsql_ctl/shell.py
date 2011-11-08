@@ -434,7 +434,7 @@ class GetPostBaseCmd(Cmd):
 
     pattern = r"""
     ~ | < | > | = | ! | & | \| | -> | \. | , | \? | \^ |
-    / | \* | \+ | - | \( | \) | \{ | \} | := | : | \$ |
+    / | \* | \+ | - | \( | \) | \{ | \} | := | : | \$ | @ |
     ' (?: [^'] | '')* ' | \d+ [.eE]? |
     (?! \d) \w+
     """
@@ -460,7 +460,7 @@ class GetPostBaseCmd(Cmd):
                     state.push('_', state.identifiers+[token])
             elif token == '.':
                 pass
-            elif token == '->':
+            elif token == '->' or token == '@':
                 state.push('_', [])
             elif token == '?' or token == '^':
                 state_copy = state.clone()

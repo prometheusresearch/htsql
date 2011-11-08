@@ -733,7 +733,7 @@ $(document).ready(function() {
     }
 
     function scanQuery(query) {
-        var regexp = /->|:=|[~<>=!&|.,?(){}:$^/*+-]|'(?:[^']|'')*'|\d+[.eE]?|(?!\d)[_0-9a-zA-Z\u0080-\uFFFF]+/g;
+        var regexp = /->|:=|[~<>=!&|.,?(){}:$@^/*+-]|'(?:[^']|'')*'|\d+[.eE]?|(?!\d)[_0-9a-zA-Z\u0080-\uFFFF]+/g;
         var tokens = [];
         var match;
         while ((match = regexp.exec(query))) {
@@ -751,7 +751,7 @@ $(document).ready(function() {
             }
             else if (token == '.') {
             }
-            else if (token == '->') {
+            else if (token == '->' || token == '@') {
                 state.push('_', []);
             }
             else if (token == '?' || token == '^') {

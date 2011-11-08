@@ -363,6 +363,18 @@ class LinkSyntax(OperatorSyntax):
         super(LinkSyntax, self).__init__('->', lbranch, rbranch, mark)
 
 
+class HomeSyntax(OperatorSyntax):
+    """
+    Represents a home indicator.
+
+    ::
+
+        @ <rbranch>
+    """
+    def __init__(self, rbranch, mark):
+        super(HomeSyntax, self).__init__('@', None, rbranch, mark)
+
+
 class AssignmentSyntax(OperatorSyntax):
     """
     Represents an assignment operator.

@@ -192,7 +192,7 @@ class Scanner(object):
 
         *punctuation*
             ``(``, ``)``, ``[``, ``]``, ``{``, ``}``,
-            ``.``, ``,``, ``->``, ``/``, ``:``, ``$``.
+            ``.``, ``,``, ``->``, ``/``, ``:``, ``$``, ``@``.
 
     There are also two special token types:
 

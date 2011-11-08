@@ -22653,6 +22653,355 @@ tests:
                            ORDER BY 4 ASC, 5 ASC, 6 ASC, 1 ASC) "SCHOOL"
                      WHERE (ROWNUM < 2)) "SCHOOL"
                ORDER BY "SCHOOL"."CODE_2" ASC, "SCHOOL"."CODE_3" ASC, "SCHOOL"."CODE_4" ASC, 1 ASC
+          - uri: /course{department.code,no,credits}?credits=max(@course.credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course               |
+               +----------------------+
+               | code | no  | credits |
+              -+------+-----+---------+-
+               | be   | 415 |       8 |
+                                (1 row)
+
+               ----
+               /course{department.code,no,credits}?credits=max(@course.credits)
+               SELECT "DEPARTMENT"."CODE",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS"
+               FROM "COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
+                                     FROM "COURSE") "COURSE_2"
+                                    ON (1 <> 0)
+                    INNER JOIN "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
+          - uri: /course{department.code,no,credits}?credits=@max(course.credits)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | course               |
+               +----------------------+
+               | code | no  | credits |
+              -+------+-----+---------+-
+               | be   | 415 |       8 |
+                                (1 row)
+
+               ----
+               /course{department.code,no,credits}?credits=@max(course.credits)
+               SELECT "DEPARTMENT"."CODE",
+                      "COURSE_1"."NO",
+                      "COURSE_1"."CREDITS"
+               FROM "COURSE" "COURSE_1"
+                    LEFT OUTER JOIN (SELECT MAX("COURSE"."CREDITS") AS "max"
+                                     FROM "COURSE") "COURSE_2"
+                                    ON (1 <> 0)
+                    INNER JOIN "DEPARTMENT"
+                               ON ("COURSE_1"."DEPARTMENT_CODE" = "DEPARTMENT"."CODE")
+               WHERE ("COURSE_1"."CREDITS" = "COURSE_2"."max")
+               ORDER BY "COURSE_1"."DEPARTMENT_CODE" ASC, 2 ASC
+          - uri: /program{school_code,code,count(student)}?count(student)>avg(@program.count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                                 |
+               +-----------------------------------------+
+               | school_code | code     | count(student) |
+              -+-------------+----------+----------------+-
+               | art         | gart     |             16 |
+               | art         | uhist    |             20 |
+               | art         | ustudio  |             26 |
+               | bus         | pbusad   |             13 |
+               | edu         | glited   |             15 |
+               | edu         | gtch     |             13 |
+               | eng         | ucompsci |             12 |
+               | la          | gengl    |             13 |
+               | ns          | gmth     |             13 |
+               | ns          | umth     |             13 |
+               | ph          | phd      |             72 |
+                                                 (11 rows)
+
+               ----
+               /program{school_code,code,count(student)}?count(student)>avg(@program.count(student))
+               SELECT "PROGRAM_1"."SCHOOL_CODE",
+                      "PROGRAM_1"."CODE",
+                      COALESCE("STUDENT"."count", 0)
+               FROM "PROGRAM" "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL_CODE",
+                                            "STUDENT"."PROGRAM_CODE"
+                                     FROM "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
+                                    ON (("PROGRAM_1"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM_CODE"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("STUDENT"."count", 0) AS NUMBER)) AS "avg"
+                                     FROM "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "STUDENT"."SCHOOL_CODE",
+                                                                  "STUDENT"."PROGRAM_CODE"
+                                                           FROM "STUDENT"
+                                                           GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
+                                                          ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))) "PROGRAM_2"
+                                    ON (1 <> 0)
+               WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program{school_code,code,count(student)}?count(student)>@avg(program.count(student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                                 |
+               +-----------------------------------------+
+               | school_code | code     | count(student) |
+              -+-------------+----------+----------------+-
+               | art         | gart     |             16 |
+               | art         | uhist    |             20 |
+               | art         | ustudio  |             26 |
+               | bus         | pbusad   |             13 |
+               | edu         | glited   |             15 |
+               | edu         | gtch     |             13 |
+               | eng         | ucompsci |             12 |
+               | la          | gengl    |             13 |
+               | ns          | gmth     |             13 |
+               | ns          | umth     |             13 |
+               | ph          | phd      |             72 |
+                                                 (11 rows)
+
+               ----
+               /program{school_code,code,count(student)}?count(student)>@avg(program.count(student))
+               SELECT "PROGRAM_1"."SCHOOL_CODE",
+                      "PROGRAM_1"."CODE",
+                      COALESCE("STUDENT"."count", 0)
+               FROM "PROGRAM" "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "STUDENT"."SCHOOL_CODE",
+                                            "STUDENT"."PROGRAM_CODE"
+                                     FROM "STUDENT"
+                                     GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
+                                    ON (("PROGRAM_1"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM_1"."CODE" = "STUDENT"."PROGRAM_CODE"))
+                    LEFT OUTER JOIN (SELECT AVG(CAST(COALESCE("STUDENT"."count", 0) AS NUMBER)) AS "avg"
+                                     FROM "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "STUDENT"."SCHOOL_CODE",
+                                                                  "STUDENT"."PROGRAM_CODE"
+                                                           FROM "STUDENT"
+                                                           GROUP BY "STUDENT"."SCHOOL_CODE", "STUDENT"."PROGRAM_CODE") "STUDENT"
+                                                          ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))) "PROGRAM_2"
+                                    ON (1 <> 0)
+               WHERE (CAST(COALESCE("STUDENT"."count", 0) AS NUMBER) > "PROGRAM_2"."avg")
+               ORDER BY 1 ASC, 2 ASC
+          - uri: /program^degree?count(^.student)=max(@(program^degree).count(^.student))
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | bs             |
+                          (1 row)
+
+               ----
+               /program^degree?count(^.student)=max(@(program^degree).count(^.student))
+               SELECT "PROGRAM_1"."DEGREE"
+               FROM (SELECT "PROGRAM"."DEGREE"
+                     FROM "PROGRAM"
+                     WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
+                     GROUP BY "PROGRAM"."DEGREE") "PROGRAM_1"
+                    LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                            "PROGRAM"."DEGREE"
+                                     FROM "PROGRAM"
+                                          INNER JOIN "STUDENT"
+                                                     ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
+                                     GROUP BY "PROGRAM"."DEGREE") "STUDENT"
+                                    ON ("PROGRAM_1"."DEGREE" = "STUDENT"."DEGREE")
+                    LEFT OUTER JOIN (SELECT MAX(COALESCE("STUDENT"."count", 0)) AS "max"
+                                     FROM (SELECT "PROGRAM"."DEGREE"
+                                           FROM "PROGRAM"
+                                           WHERE ("PROGRAM"."DEGREE" IS NOT NULL)
+                                           GROUP BY "PROGRAM"."DEGREE") "PROGRAM"
+                                          LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                                                  "PROGRAM"."DEGREE"
+                                                           FROM "PROGRAM"
+                                                                INNER JOIN "STUDENT"
+                                                                           ON (("PROGRAM"."SCHOOL_CODE" = "STUDENT"."SCHOOL_CODE") AND ("PROGRAM"."CODE" = "STUDENT"."PROGRAM_CODE"))
+                                                           GROUP BY "PROGRAM"."DEGREE") "STUDENT"
+                                                          ON ("PROGRAM"."DEGREE" = "STUDENT"."DEGREE")) "PROGRAM_2"
+                                    ON (1 <> 0)
+               WHERE (COALESCE("STUDENT"."count", 0) = "PROGRAM_2"."max")
+               ORDER BY 1 ASC NULLS FIRST
+          - uri: /@@@@@true()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | true() |
+              -+--------+-
+               | true   |
+                  (1 row)
+
+               ----
+               /@@@@@true()
+               SELECT 1
+               FROM DUAL "!"
+          - uri: /@@@@@school.@@@@@true()
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | true() |
+              -+--------+-
+               | true   |
+                  (1 row)
+
+               ----
+               /@@@@@school.@@@@@true()
+               SELECT 1
+               FROM DUAL "!"
+          - uri: /school.@school
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | school                                        |
+               +-----------------------------------------------+
+               | code | name                          | campus |
+              -+------+-------------------------------+--------+-
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+               | art  | School of Art and Design      | old    |
+               | bus  | School of Business            | south  |
+               | edu  | College of Education          | old    |
+               | eng  | School of Engineering         | north  |
+               | la   | School of Arts and Humanities | old    |
+               | mus  | School of Music & Dance       | south  |
+               | ns   | School of Natural Sciences    | old    |
+               | ph   | Public Honorariums            |        |
+               | sc   | School of Continuing Studies  |        |
+                                                       (81 rows)
+
+               ----
+               /school.@school
+               SELECT "SCHOOL_2"."CODE",
+                      "SCHOOL_2"."NAME",
+                      "SCHOOL_2"."CAMPUS"
+               FROM "SCHOOL" "SCHOOL_1"
+                    CROSS JOIN "SCHOOL" "SCHOOL_2"
+               ORDER BY "SCHOOL_1"."CODE" ASC, 1 ASC
+          - uri: /@school.@department.@program.limit(1)
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | program                                                               |
+               +-----------------------------------------------------------------------+
+               | school_code | code | title                         | degree | part_of |
+              -+-------------+------+-------------------------------+--------+---------+-
+               | art         | gart | Post Baccalaureate in Art     | pb     |         |
+               :             :      : History                       :        :         :
+                                                                                 (1 row)
+
+               ----
+               /@school.@department.@program.limit(1)
+               SELECT "PROGRAM"."SCHOOL_CODE",
+                      "PROGRAM"."CODE_1",
+                      "PROGRAM"."TITLE",
+                      "PROGRAM"."DEGREE",
+                      "PROGRAM"."PART_OF"
+               FROM (SELECT "PROGRAM"."SCHOOL_CODE",
+                            "PROGRAM"."CODE_1",
+                            "PROGRAM"."TITLE",
+                            "PROGRAM"."DEGREE",
+                            "PROGRAM"."PART_OF",
+                            "PROGRAM"."CODE_2",
+                            "PROGRAM"."CODE_3"
+                     FROM (SELECT "PROGRAM"."SCHOOL_CODE",
+                                  "PROGRAM"."CODE" AS "CODE_1",
+                                  "PROGRAM"."TITLE",
+                                  "PROGRAM"."DEGREE",
+                                  "PROGRAM"."PART_OF",
+                                  "SCHOOL"."CODE" AS "CODE_2",
+                                  "DEPARTMENT"."CODE" AS "CODE_3"
+                           FROM "SCHOOL"
+                                CROSS JOIN "DEPARTMENT"
+                                CROSS JOIN "PROGRAM"
+                           ORDER BY 6 ASC, 7 ASC, 1 ASC, 2 ASC) "PROGRAM"
+                     WHERE (ROWNUM < 2)) "PROGRAM"
+               ORDER BY "PROGRAM"."CODE_2" ASC, "PROGRAM"."CODE_3" ASC, 1 ASC, 2 ASC
         - id: table-expressions
           tests:
           - uri: /(school?code='art').department

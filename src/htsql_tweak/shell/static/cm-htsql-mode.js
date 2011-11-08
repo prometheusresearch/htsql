@@ -23,7 +23,7 @@ CodeMirror.defineMode("htsql", function(conf) {
             if (stream.match(/~|!~|<=|<|>=|>|==|=|!==|!=|!|&|\||->|\?|\^|\/|\*|\+|-/)) {
                 return 'htsql-operator';
             }
-            if (stream.match(/\.|,|\(|\)|\{|\}|\[|\]|:=|:|\$/)) {
+            if (stream.match(/\.|,|\(|\)|\{|\}|\[|\]|:=|:|\$|@/)) {
                 return 'htsql-punctuation';
             }
             stream.next();
