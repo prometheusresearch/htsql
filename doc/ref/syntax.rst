@@ -136,6 +136,8 @@ lowest to highest.
 +----------------------+---------------------------+---------------------------+----------------------+
 | `S . T`              | composition               | ``school.program``        |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
+| `@ T`                | scope reset               | ``@school``               |                      |
++----------------------+---------------------------+---------------------------+----------------------+
 | `{x,y,...}`          | list                      | ``{'bs','ms'}``           |                      |
 +----------------------+---------------------------+---------------------------+----------------------+
 | `(...)`              | grouping                  | ``(7+4)*2``               | ``22``               |
@@ -473,6 +475,20 @@ respective rows coincide.
 
 .. htsql:: /student{name, dob+}?count(dob -> student)>2
    :cut: 3
+
+Scope Reset
+~~~~~~~~~~~
+
+The prefix `@` changes from the current scope to the initial scope:
+
+    `@ T`
+
+.. htsql:: /course?credits>avg(@course.credits)
+   :cut: 3
+
+The precedence of the scope reset operator is higher than of any
+other operator.  Therefore, to apply the operator to any expression
+other than an identifier or a function call, use parentheses.
 
 Sorting Decorators
 ~~~~~~~~~~~~~~~~~~

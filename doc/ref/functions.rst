@@ -1131,6 +1131,9 @@ Scope Operations
 |                      | with extra names in the   |                           |
 |                      | current scope             |                           |
 +----------------------+---------------------------+---------------------------+
+| `@ x`                | evaluate an expression in |                           |
+|                      | the initial scope         |                           |
++----------------------+---------------------------+---------------------------+
 | `root()`             | root scope                |                           |
 +----------------------+---------------------------+---------------------------+
 | `this()`             | current scope             |                           |
@@ -1154,6 +1157,8 @@ scope.
 Scopes
 ------
 
+`@ x`
+    Reset to the initial scope.
 `root()`
     The root scope.
 `this()`
