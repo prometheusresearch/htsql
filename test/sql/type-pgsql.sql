@@ -88,7 +88,7 @@ CREATE TABLE "string" (
 
 INSERT INTO "string" ("code", "bpchar", "bpchar_8", "varchar", "varchar_8", "text") VALUES
     ('1-regular', 'H', 'HTSQL', 'HTSQL', 'HTSQL', 'HTSQL'),
-    ('2-unicode', U&'\03BB', U&'\03BB\03CC\03B3\03BF\03C2', U&'\03BB\03CC\03B3\03BF\03C2', U&'\03BB\03CC\03B3\03BF\03C2', U&'\03BB\03CC\03B3\03BF\03C2'),
+    ('2-unicode', E'\xCE\xBB', E'\xce\xbb\xcf\x8c\xce\xb3\xce\xbf\xcf\x82', E'\xce\xbb\xcf\x8c\xce\xb3\xce\xbf\xcf\x82', E'\xce\xbb\xcf\x8c\xce\xb3\xce\xbf\xcf\x82', E'\xce\xbb\xcf\x8c\xce\xb3\xce\xbf\xcf\x82'),
     ('3-special', E'\x01', E'\x01\x02\x03\x04', E'\x01\x02\x03\x04', E'\x01\x02\x03\x04', E'\x01\x02\x03\x04'),
     ('4-empty', '', '', '', '', ''),
     ('5-null', NULL, NULL, NULL, NULL, NULL);
