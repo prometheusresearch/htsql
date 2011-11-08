@@ -24,6 +24,10 @@ DEBIAN_ISO_URLS = [
     "http://cdimage.debian.org/cdimage/release/6.0.3/i386/iso-cd/debian-6.0.3-i386-netinst.iso",
 ]
 
+CENTOS_ISO_URLS = [
+    "http://mirrors.cmich.edu/centos/6.0/isos/i386/CentOS-6.0-i386-minimal.iso",
+]
+
 WINDOWS_ISO_FILES = [
     "en_win_srv_2003_r2_standard_with_sp2_cd1_x13-04790.iso",
     "en_windows_xp_professional_with_service_pack_3_x86_cd_x14-80428.iso",
@@ -340,6 +344,49 @@ class DebianTemplateVM(VM):
             % (self.name, stop_time-start_time))
 
 
+class CentOSTemplateVM(VM):
+    # CentOS 6.0 (32-bit) VM.
+
+    def __init__(self, name):
+        super(CentOSTemplateVM, self).__init__(name, 'linux')
+
+    def build(self):
+        super(CentOSTemplateVM, self).build()
+        log("building VM: `%s`..." % self.name)
+        start_time = datetime.datetime.now()
+        src_iso_path = os.environ.get("CENTOS_ISO")
+        if not (src_iso_path and os.path.isfile(src_iso_path)):
+            src_iso_path = self.download(CENTOS_ISO_URLS)
+        unpack_path = TMP_DIR+"/"+self.name
+        if os.path.exists(unpack_path):
+            rmtree(unpack_path)
+        self.unpack_iso(src_iso_path, unpack_path)
+        cp(DATA_ROOT+"/%s-isolinux.cfg" % self.name,
+           unpack_path+"/isolinux/isolinux.cfg")
+        cp(DATA_ROOT+"/%s-ks.cfg" % self.name, unpack_path+"/ks.cfg")
+        cp(DATA_ROOT+"/%s-install.sh" % self.name, unpack_path+"/install.sh")
+        cp(CTL_DIR+"/identity.pub", unpack_path+"/identity.pub")
+        iso_path = TMP_DIR+"/%s.iso" % self.name
+        if os.path.exists(iso_path):
+            rm(iso_path)
+        run("mkisofs -o %s"
+            " -q -r -J -T -no-emul-boot -boot-load-size 4 -boot-info-table"
+            " -b isolinux/isolinux.bin -c isolinux/boot.cat %s"
+              % (iso_path, unpack_path))
+        rmtree(unpack_path)
+        try:
+            self.kvm_img()
+            self.kvm("-cdrom %s -boot d" % iso_path)
+            rm(iso_path)
+        except:
+            if os.path.exists(self.img_path):
+                rm(self.img_path)
+            raise
+        stop_time = datetime.datetime.now()
+        log("VM is built successfully: `%s` (%s)"
+            % (self.name, stop_time-start_time))
+
+
 class WindowsTemplateVM(VM):
     # Windows XP/2003 (32-bit) VM.
 
@@ -526,6 +573,7 @@ class WindowsBenchVM(VM):
 
 
 debian_vm = DebianTemplateVM('debian')
+centos_vm = CentOSTemplateVM('centos')
 windows_vm = WindowsTemplateVM('windows')
 
 
