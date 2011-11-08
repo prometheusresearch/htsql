@@ -14,7 +14,7 @@ IMG_DIR = VM_ROOT+"/img"
 CTL_DIR = VM_ROOT+"/ctl"
 TMP_DIR = VM_ROOT+"/tmp"
 
-DATA_ROOT = "./tool/data/vm"
+DATA_ROOT = "./tool/data"
 
 DISK_SIZE = "8G"
 MEM_SIZE = "512"
@@ -103,7 +103,7 @@ class VM(object):
             run("ssh-keygen -q -N \"\" -f %s" % identity_path)
         config_path = CTL_DIR+"/ssh_config"
         if not os.path.exists(config_path):
-            config_template_path = DATA_ROOT+"/ssh_config"
+            config_template_path = DATA_ROOT+"/vm/ssh_config"
             config_template = open(config_template_path).read()
             config = config_template.replace("$VM_ROOT", VM_ROOT)
             assert config != config_template
@@ -275,7 +275,7 @@ class VM(object):
             + ((" "+opts) if opts else "")
             + ("" if settings.verbose else " -vnc none"))
 
-    def ssh(self, command):
+    def run(self, command):
         # Run a shell command in the VM.
         self.forward(22)
         host = "linux-vm"
@@ -284,16 +284,25 @@ class VM(object):
         run("ssh -F %s %s \"%s\"" % (CTL_DIR+"/ssh_config", host, command))
         self.unforward(22)
 
-    def scp(self, src_filename, dst_filename):
+    def put(self, src_filename, dst_filename):
         # Copy a file to the VM.
         self.forward(22)
         host = "linux-vm"
         if self.system == 'windows':
             host = "windows-vm"
-        run("scp -F %s \"%s\" %s:\"%s\""
+        run("scp -rF %s \"%s\" %s:\"%s\""
             % (CTL_DIR+"/ssh_config", src_filename, host, dst_filename))
         self.unforward(22)
 
+    def get(self, src_filename, dst_filename):
+        # Read a file from VM.
+        self.forward(22)
+        host = "linux-vm"
+        if self.system == 'windows':
+            host = "windows-vm"
+        run("scp -rF %s %s:\"%s\" \"%s\""
+            % (CTL_DIR+"/ssh_config", host, src_filename, dst_filename))
+        self.unforward(22)
 
 class DebianTemplateVM(VM):
     # Debian 6.0 "squeeze" (32-bit) VM.
@@ -312,11 +321,11 @@ class DebianTemplateVM(VM):
         if os.path.exists(unpack_path):
             rmtree(unpack_path)
         self.unpack_iso(src_iso_path, unpack_path)
-        cp(DATA_ROOT+"/%s-isolinux.cfg" % self.name,
+        cp(DATA_ROOT+"/vm/%s-isolinux.cfg" % self.name,
            unpack_path+"/isolinux/isolinux.cfg")
-        cp(DATA_ROOT+"/%s-preseed.cfg" % self.name,
+        cp(DATA_ROOT+"/vm/%s-preseed.cfg" % self.name,
            unpack_path+"/preseed.cfg")
-        cp(DATA_ROOT+"/%s-install.sh" % self.name,
+        cp(DATA_ROOT+"/vm/%s-install.sh" % self.name,
            unpack_path+"/install.sh")
         cp(CTL_DIR+"/identity.pub", unpack_path+"/identity.pub")
         run("cd %s && md5sum"
@@ -361,10 +370,10 @@ class CentOSTemplateVM(VM):
         if os.path.exists(unpack_path):
             rmtree(unpack_path)
         self.unpack_iso(src_iso_path, unpack_path)
-        cp(DATA_ROOT+"/%s-isolinux.cfg" % self.name,
+        cp(DATA_ROOT+"/vm/%s-isolinux.cfg" % self.name,
            unpack_path+"/isolinux/isolinux.cfg")
-        cp(DATA_ROOT+"/%s-ks.cfg" % self.name, unpack_path+"/ks.cfg")
-        cp(DATA_ROOT+"/%s-install.sh" % self.name, unpack_path+"/install.sh")
+        cp(DATA_ROOT+"/vm/%s-ks.cfg" % self.name, unpack_path+"/ks.cfg")
+        cp(DATA_ROOT+"/vm/%s-install.sh" % self.name, unpack_path+"/install.sh")
         cp(CTL_DIR+"/identity.pub", unpack_path+"/identity.pub")
         iso_path = TMP_DIR+"/%s.iso" % self.name
         if os.path.exists(iso_path):
@@ -432,7 +441,7 @@ class WindowsTemplateVM(VM):
             rmtree(unpack_path)
         self.unpack_iso(src_iso_path, unpack_path)
         self.unpack_iso_boot(src_iso_path, boot_path)
-        sif_template_path = DATA_ROOT+"/%s-winnt.sif" % self.name
+        sif_template_path = DATA_ROOT+"/vm/%s-winnt.sif" % self.name
         sif_path = unpack_path+"/I386/WINNT.SIF"
         debug("translating: %s => %s" % (sif_template_path, sif_path))
         sif_template = open(sif_template_path).read()
@@ -443,7 +452,7 @@ class WindowsTemplateVM(VM):
         mktree(install_path)
         cp(wget_path, install_path)
         cp(CTL_DIR+"/identity.pub", install_path)
-        cp(DATA_ROOT+"/%s-install.cmd" % self.name, install_path+"/INSTALL.CMD")
+        cp(DATA_ROOT+"/vm/%s-install.cmd" % self.name, install_path+"/INSTALL.CMD")
         iso_path = TMP_DIR+"/%s.iso" % self.name
         if os.path.exists(iso_path):
             rm(iso_path)
@@ -487,10 +496,10 @@ class LinuxBenchVM(VM):
             cp(parent_vm.img_path, self.img_path)
             self.kvm("-daemonize")
             time.sleep(60.0)
-            self.scp(DATA_ROOT+"/%s-update.sh" % self.name, "/root/update.sh")
-            self.ssh("/root/update.sh")
-            self.ssh("rm /root/update.sh")
-            self.ssh("poweroff")
+            self.put(DATA_ROOT+"/vm/%s-update.sh" % self.name, "/root/update.sh")
+            self.run("/root/update.sh")
+            self.run("rm /root/update.sh")
+            self.run("poweroff")
             self.wait()
             self.kvm("-daemonize")
             time.sleep(60.0)
@@ -540,11 +549,11 @@ class WindowsBenchVM(VM):
             cp(parent_vm.img_path, self.img_path)
             self.kvm("-daemonize")
             time.sleep(120.0)
-            self.scp(DATA_ROOT+"/%s-update.cmd" % self.name,
+            self.put(DATA_ROOT+"/vm/%s-update.cmd" % self.name,
                      "/cygdrive/c/INSTALL/UPDATE.CMD")
-            self.ssh("reg add 'HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce'"
+            self.run("reg add 'HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce'"
                      " /v %s /t REG_SZ /d 'C:\INSTALL\UPDATE.CMD' /f" % self.name)
-            self.ssh("shutdown /r /t 0 /f")
+            self.run("shutdown /r /t 0 /f")
             self.wait()
             self.kvm("-daemonize")
             time.sleep(120.0)

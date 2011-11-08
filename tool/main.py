@@ -5,7 +5,7 @@
 
 
 from job import settings, FatalError, fatal
-import help, dist, test, vm, check
+import help, dist, test, vm, check, pkg
 import sys
 
 
