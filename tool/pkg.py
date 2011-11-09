@@ -73,7 +73,7 @@ def pkg_deb():
     if suffix:
         version = version + "~" + suffix
     changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
-    if ('htsql (%s-' % version) not in changelog:
+    if ('htsql (%s-1)' % version) not in changelog:
         raise fatal("update debian/changelog for %s release" % version)
     if deb_vm.running():
         deb_vm.stop()
