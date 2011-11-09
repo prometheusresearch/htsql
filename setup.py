@@ -10,7 +10,7 @@
 
 from setuptools import setup, find_packages
 from setuptools.command.sdist import sdist as _sdist, log
-import sys, os, os.path, re
+import sys, os, os.path, shutil, re
 
 # We use the merged content of `README`, `INSTALL`, and `NEWS` as the
 # long description of the package.
@@ -138,6 +138,8 @@ class sdist(_sdist):
                         confoverrides=None, status=None,
                         warningiserror=True, freshenv=True)
         sphinx.build()
+        if os.path.exists(doctreedir):
+            shutil.rmtree(doctreedir)
         if sphinx.statuscode:
             log.error("failed to compile documentation!")
 
