@@ -13,6 +13,7 @@ This module implements stitching utilities over flow nodes.
 
 
 from ..adapter import Adapter, adapts, adapts_many
+from ..classify import normalize
 from .error import CompileError
 from .syntax import IdentifierSyntax
 from .flow import (Flow, ScalarFlow, TableFlow, FiberTableFlow, QuotientFlow,
@@ -221,7 +222,8 @@ class ArrangeTable(Arrange):
                     # but in order to produce a better string representation,
                     # we replace the associated syntax node with a new
                     # identifier named after the column.
-                    identifier = IdentifierSyntax(column.name, self.flow.mark)
+                    identifier = IdentifierSyntax(normalize(column.name),
+                                                  self.flow.mark)
                     binding = self.flow.binding.clone(syntax=identifier)
                     code = ColumnUnit(column, flow, binding)
                     yield (code, +1)

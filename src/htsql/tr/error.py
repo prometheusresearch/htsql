@@ -29,7 +29,7 @@ class TranslateError(BadRequestError):
 
     def __str__(self):
         lines = self.mark.excerpt()
-        mark_detail = "\n".join("    "+line for line in lines)
+        mark_detail = "\n".join("    "+line.encode('utf-8') for line in lines)
         return "%s: %s:\n%s" % (self.kind, self.detail, mark_detail)
 
 

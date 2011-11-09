@@ -61,7 +61,7 @@ class TokenStream(object):
             If not ``None``, the method checks that the returned token
             is an instance of `token_class`.
 
-        `values` (a list of strings or ``None``)
+        `values` (a list of Unicode strings or ``None``)
             If not ``None``, the method checks that the value of the
             returned token belongs to the list.
 
@@ -79,7 +79,7 @@ class TokenStream(object):
         """
         # Sanity check on the arguments.
         assert token_class is None or issubclass(token_class, Token)
-        assert isinstance(values, maybe(listof(str)))
+        assert isinstance(values, maybe(listof(unicode)))
         assert token_class is not None or values is None
         assert isinstance(ahead, int) and ahead >= 0
         assert self.idx+ahead < len(self.tokens)
@@ -230,7 +230,12 @@ class Scanner(object):
     escape_regexp = re.compile(escape_pattern)
 
     def __init__(self, input):
-        assert isinstance(input, str)
+        # We accept both 8-bit and Unicode strings.  Since 8-bit strings
+        # could contain %-escaped UTF-8 octets, we postpone decoding the
+        # input till we process %-escapes.
+        assert isinstance(input, (str, unicode))
+        if isinstance(input, unicode):
+            input = input.encode('utf-8')
 
         self.input = input
         self.init_regexp()
@@ -261,7 +266,13 @@ class Scanner(object):
             code = match.group('code')
             # Complain if we get `%` not followed by two hexdecimal digits.
             if not code:
-                mark = Mark(match.string, match.start(), match.end())
+                # Prepare the marker object: convert the input to Unicode
+                # and adjust the pointers to respect multi-byte characters.
+                input = match.string.decode('utf-8', 'ignore')
+                start, end = match.span()
+                start = len(match.string[:start].decode('utf-8', 'ignore'))
+                end = len(match.string[:end].decode('utf-8', 'ignore'))
+                mark = Mark(input, start, end)
                 raise ScanError("invalid escape sequence", mark)
             # Return the character corresponding to the escape sequence.
             return chr(int(code, 16))
@@ -277,24 +288,21 @@ class Scanner(object):
         In case of syntax errors, raises :exc:`htsql.tr.error.ScanError`.
         """
         # Decode %-escape sequences.
-        unquoted_input = self.unquote(self.input)
-        # Since we want the `\w` pattern to match Unicode characters
-        # classified as alphanumeric, we have to convert the input query
-        # to Unicode.
+        input = self.unquote(self.input)
+        # Now that all UTF-8 octets are unquoted, we could convert
+        # the input to Unicode.
         try:
-            decoded_input = unquoted_input.decode('utf-8')
+            input = input.decode('utf-8')
         except UnicodeDecodeError, exc:
-            mark = Mark(unquoted_input, exc.start, exc.end)
+            # Prepare an error message.
+            start = len(input[:exc.start].decode('utf-8', 'ignore'))
+            end = len(input[:exc.end].decode('utf-8', 'ignore'))
+            mark = Mark(input.decode('utf-8', 'replace'), start, end)
             raise ScanError("cannot decode an UTF-8 character: %s"
                             % exc.reason, mark)
 
-        # The beginning of the next token.
+        # The beginning of the next token (and the start of the mark slice).
         start = 0
-        # The beginning of the mark slice.  Both `start` and `mark_start`
-        # point to the same position in the query string; however `start`
-        # is measured in Unicode characters while `mark_start` is measured
-        # in octets.
-        mark_start = 0
         # Have we reached the final token?
         is_end = False
         # The list of generated tokens.
@@ -303,11 +311,11 @@ class Scanner(object):
         # Loop till we get the final token.
         while not is_end:
             # Match the next token.
-            match = self.regexp.match(decoded_input, start)
+            match = self.regexp.match(input, start)
             if match is None:
-                mark = Mark(unquoted_input, mark_start, mark_start+1)
+                mark = Mark(input, start, start+1)
                 raise ScanError("unexpected character %r"
-                                % decoded_input[start].encode('utf-8'), mark)
+                                % input[start].encode('utf-8'), mark)
 
             # Find the token class that matched the token.
             for token_class in self.tokens:
@@ -318,16 +326,14 @@ class Scanner(object):
                 # Unreachable.
                 assert False
 
-            # The raw string that matched the token pattern.
-            group = group.encode('utf-8')
             # Unquote the token value.
             value = token_class.unquote(group)
-            # The end of the mark slice.
-            mark_end = mark_start+len(group)
+            # The end of the token (and the mark slice).
+            end = match.end()
 
             # Skip whitespace tokens; otherwise produce the next token.
             if not token_class.is_ws:
-                mark = Mark(unquoted_input, mark_start, mark_end)
+                mark = Mark(input, start, end)
                 token = token_class(value, mark)
                 tokens.append(token)
 
@@ -335,9 +341,8 @@ class Scanner(object):
             if token_class.is_end:
                 is_end = True
 
-            # Advance the pointers to the beginning of the next token.
-            start = match.end()
-            mark_start = mark_end
+            # Advance the pointer to the beginning of the next token.
+            start = end
 
         return TokenStream(tokens)
 

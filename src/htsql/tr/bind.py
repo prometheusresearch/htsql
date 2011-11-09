@@ -165,7 +165,6 @@ class BindingState(object):
         # Return the generated binding node.
         return binding
 
-
     def call(self, syntax, scope=None):
         """
         Binds a global function or a global identifier.
@@ -768,7 +767,7 @@ class BindByName(Protocol):
     def matches(component, dispatch_key):
         # Check if the component matches the given function name
         # and the number of arguments.
-        assert isinstance(dispatch_key, tupleof(str, maybe(int)))
+        assert isinstance(dispatch_key, tupleof(unicode, maybe(int)))
 
         # The name and the number of arguments of the call node.
         key_name, key_arity = dispatch_key
@@ -825,10 +824,10 @@ class BindByName(Protocol):
     def __call__(self):
         # The default implementation; override in subclasses.
         if isinstance(self.syntax, ApplicationSyntax):
-            raise BindError("unknown function %r" % self.name,
+            raise BindError("unknown function %r" % self.name.encode('utf-8'),
                             self.syntax.mark)
         if isinstance(self.syntax, IdentifierSyntax):
-            raise BindError("unknown attribute %r" % self.name,
+            raise BindError("unknown attribute %r" % self.name.encode('utf-8'),
                             self.syntax.mark)
 
 

@@ -59,6 +59,7 @@ class ShellRenderUniversal(Act):
                     if (addon.on_default and
                             syntax.segment.branch is not None):
                         query = unquote(self.command.query)
+                        query = query.decode('utf-8', 'replace')
                         command = ShellCmd(query, is_implicit=True)
                     else:
                         command = DefaultCmd(binding)
@@ -67,6 +68,7 @@ class ShellRenderUniversal(Act):
             if not addon.on_error:
                 raise
             query = unquote(self.command.query)
+            query = query.decode('utf-8', 'replace')
             command = ShellCmd(query, is_implicit=True)
             return act(command, self.action)
 

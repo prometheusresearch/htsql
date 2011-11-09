@@ -178,7 +178,7 @@ class MSSQLDumpDate(DumpDate):
 
     def __call__(self):
         self.format("CAST({value:literal} AS DATETIME)",
-                    value=str(self.value))
+                    value=unicode(self.value))
 
 
 class MSSQLDumpTime(DumpTime):
@@ -197,9 +197,9 @@ class MSSQLDumpDateTime(DumpDateTime):
     def __call__(self):
         value = self.value.replace(tzinfo=None)
         if not value.microsecond:
-            value = str(value)
+            value = unicode(value)
         else:
-            value = str(value)[:-3]
+            value = unicode(value)[:-3]
         self.format("CAST({value:literal} AS DATETIME)", value=value)
 
 

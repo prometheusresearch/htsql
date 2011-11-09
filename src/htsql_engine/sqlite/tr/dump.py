@@ -54,21 +54,21 @@ class SQLiteDumpDecimal(DumpDecimal):
 class SQLiteDumpDate(DumpDate):
 
     def __call__(self):
-        self.format("{value:literal}", value=str(self.value))
+        self.format("{value:literal}", value=unicode(self.value))
 
 
 class SQLiteDumpTime(DumpTime):
 
     def __call__(self):
         value = self.value.replace(tzinfo=None)
-        self.format("{value:literal}", value=str(value))
+        self.format("{value:literal}", value=unicode(value))
 
 
 class SQLiteDumpDateTime(DumpDateTime):
 
     def __call__(self):
         value = self.value.replace(tzinfo=None)
-        self.format("{value:literal}", value=str(value))
+        self.format("{value:literal}", value=unicode(value))
 
 
 class SQLiteDumpToFloat(DumpToFloat):

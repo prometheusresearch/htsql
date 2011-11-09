@@ -33,7 +33,7 @@ import wsgiref.util
 class ShellCmd(Command):
 
     def __init__(self, query=None, is_implicit=False):
-        assert isinstance(query, maybe(str))
+        assert isinstance(query, maybe(unicode))
         assert isinstance(is_implicit, bool)
         self.query = query
         self.is_implicit = is_implicit
@@ -42,15 +42,15 @@ class ShellCmd(Command):
 class CompleteCmd(Command):
 
     def __init__(self, names):
-        assert isinstance(names, listof(str))
+        assert isinstance(names, listof(unicode))
         self.names = names
 
 
 class EvaluateCmd(Command):
 
     def __init__(self, query, action=None, page=None):
-        assert isinstance(query, str)
-        assert isinstance(action, maybe(str))
+        assert isinstance(query, unicode)
+        assert isinstance(action, maybe(unicode))
         assert isinstance(page, maybe(int))
         self.query = query
         self.action = action
@@ -90,7 +90,7 @@ class BindShell(BindCommand):
             if isinstance(query, StringSyntax):
                 query = query.value
             elif isinstance(query, SegmentSyntax):
-                query = str(query)
+                query = unicode(query)
             else:
                 raise BindError("a query is required", query.mark)
         command = ShellCmd(query)
@@ -125,7 +125,7 @@ class BindEvaluate(BindCommand):
         if action is not None:
             if not isinstance(action, StringSyntax):
                 raise BindError("a string literal is required", action.mark)
-            if action.value not in ['produce', 'analyze']:
+            if action.value not in [u'produce', u'analyze']:
                 raise BindError("'produce' or 'analyze' is expected",
                                 action.mark)
             action = action.value
@@ -143,6 +143,8 @@ class RenderShell(Act):
 
     def __call__(self):
         query = self.command.query
+        if query is not None:
+            query = query.encode('utf-8')
         resource = locate('/shell/index.html')
         assert resource is not None
         database_name = context.app.htsql.db.database
@@ -199,7 +201,7 @@ class RenderComplete(Act):
         labels_by_node[node] = labels
         names_by_node[node] = dict((label.name, label) for label in labels)
         for identifier in identifiers:
-            identifier = normalize(identifier)
+            identifier = normalize(identifier.encode('utf-8'))
             nodes_copy = nodes[:]
             while nodes:
                 node = nodes[-1]
@@ -220,7 +222,7 @@ class RenderComplete(Act):
                                            for label in labels)
         node = nodes[-1]
         labels = labels_by_node[node]
-        names = [label.name for label in labels]
+        names = [label.name.encode('utf-8') for label in labels]
         status = '200 OK'
         headers = [('Content-Type', 'application/javascript')]
         body = self.render_names(names)
@@ -241,7 +243,7 @@ class RenderEvaluate(Act):
         addon = context.app.tweak.shell
         status = "200 OK"
         headers = [('Content-Type', 'application/javascript')]
-        command = UniversalCmd(self.command.query)
+        command = UniversalCmd(self.command.query.encode('utf-8'))
         limit = None
         try:
             if self.command.action == 'analyze':

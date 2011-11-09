@@ -30,20 +30,26 @@ class Syntax(Printable, Clonable):
 
     # The pattern to %-escape unsafe characters.
     escape_pattern = r"[\x00-\x1F%\x7F]"
-    escape_regexp = re.compile(escape_pattern)
-    escape_replace = (lambda s, m: "%%%02X" % ord(m.group()))
+    escape_regexp = re.compile(escape_pattern, re.U)
+    escape_replace = (lambda s, m: u"%%%02X" % ord(m.group()))
 
     def __init__(self, mark):
         assert isinstance(mark, Mark)
         self.mark = mark
 
-    def __str__(self):
+    def __unicode__(self):
         """
         Returns a fragment of an HTSQL query that, when parsed back, produces
         the same syntax node.
         """
         # Override when subclassing.
         raise NotImplementedError()
+
+    def __str__(self):
+        """
+        Returns a fragment of HTSQL encoded in UTF-8.
+        """
+        return unicode(self).encode('utf-8')
 
 
 class QuerySyntax(Syntax):
@@ -60,10 +66,10 @@ class QuerySyntax(Syntax):
         super(QuerySyntax, self).__init__(mark)
         self.segment = segment
 
-    def __str__(self):
+    def __unicode__(self):
         # Generate an HTSQL query:
         #   /<segment>
-        return str(self.segment)
+        return unicode(self.segment)
 
 
 class SegmentSyntax(Syntax):
@@ -80,15 +86,15 @@ class SegmentSyntax(Syntax):
         super(SegmentSyntax, self).__init__(mark)
         self.branch = branch
 
-    def __str__(self):
+    def __unicode__(self):
         # Display:
         #   /<branch>
         if self.branch is None:
-            return '/'
+            return u'/'
         elif isinstance(self.branch, CommandSyntax):
-            return str(self.branch)
+            return unicode(self.branch)
         else:
-            return '/%s' % self.branch
+            return u'/%s' % self.branch
 
 
 class SelectorSyntax(Syntax):
@@ -116,18 +122,19 @@ class SelectorSyntax(Syntax):
         self.lbranch = lbranch
         self.rbranches = rbranches
 
-    def __str__(self):
+    def __unicode__(self):
         # Generate an HTSQL fragment:
         #   {<rbranch>,...}
         # or
         #   <lbranch>{<rbranch>,...}
         chunks = []
         if self.lbranch is not None:
-            chunks.append(str(self.lbranch))
-        chunks.append('{')
-        chunks.append(','.join(str(rbranch) for rbranch in self.rbranches))
-        chunks.append('}')
-        return ''.join(chunks)
+            chunks.append(unicode(self.lbranch))
+        chunks.append(u'{')
+        chunks.append(u','.join(unicode(rbranch)
+                                for rbranch in self.rbranches))
+        chunks.append(u'}')
+        return u''.join(chunks)
 
 
 class ApplicationSyntax(Syntax):
@@ -138,7 +145,7 @@ class ApplicationSyntax(Syntax):
     corresponding to function calls, function calls in infix form
     and operators.
 
-    `name` (a string)
+    `name` (a Unicode string)
         The name of the function or the operator.
 
     `arguments` (a list of :class:`Syntax`)
@@ -146,7 +153,7 @@ class ApplicationSyntax(Syntax):
     """
 
     def __init__(self, name, arguments, mark):
-        assert isinstance(name, str)
+        assert isinstance(name, unicode)
         assert isinstance(arguments, listof(Syntax))
         super(ApplicationSyntax, self).__init__(mark)
         self.name = name
@@ -179,14 +186,14 @@ class FunctionSyntax(ApplicationSyntax):
         self.identifier = identifier
         self.branches = branches
 
-    def __str__(self):
+    def __unicode__(self):
         # Generate a fragment:
         #   <identifier>(<branch>,...)
         chunks = []
-        chunks.append(str(self.identifier))
-        chunks.append('(%s)' % ','.join(str(branch)
-                                        for branch in self.branches))
-        return ''.join(chunks)
+        chunks.append(unicode(self.identifier))
+        chunks.append(u'(%s)' % u','.join(unicode(branch)
+                                          for branch in self.branches))
+        return u''.join(chunks)
 
 
 class MappingSyntax(ApplicationSyntax):
@@ -225,16 +232,16 @@ class MappingSyntax(ApplicationSyntax):
         self.lbranch = lbranch
         self.rbranches = rbranches
 
-    def __str__(self):
+    def __unicode__(self):
         # Generate an HTSQL fragment:
         #   <lbranch>:<identifier>(<rbranch>,...)
         chunks = []
-        chunks.append(str(self.lbranch))
-        chunks.append(':%s' % self.identifier)
+        chunks.append(unicode(self.lbranch))
+        chunks.append(u':%s' % self.identifier)
         if self.rbranches:
-            chunks.append('(%s)' % ','.join(str(rbranch)
-                                            for rbranch in self.rbranches))
-        return ''.join(chunks)
+            chunks.append(u'(%s)' % u','.join(unicode(rbranch)
+                                              for rbranch in self.rbranches))
+        return u''.join(chunks)
 
 
 class CommandSyntax(MappingSyntax):
@@ -244,14 +251,14 @@ class CommandSyntax(MappingSyntax):
         super(CommandSyntax, self).__init__(identifier, lbranch, rbranches,
                                             mark)
 
-    def __str__(self):
+    def __unicode__(self):
         chunks = []
-        chunks.append(str(self.lbranch))
-        chunks.append('/:%s' % self.identifier)
+        chunks.append(unicode(self.lbranch))
+        chunks.append(u'/:%s' % self.identifier)
         if self.rbranches:
-            chunks.append('(%s)' % ','.join(str(rbranch)
-                                            for rbranch in self.rbranches))
-        return ''.join(chunks)
+            chunks.append(u'(%s)' % u','.join(unicode(rbranch)
+                                              for rbranch in self.rbranches))
+        return u''.join(chunks)
 
 
 class OperatorSyntax(ApplicationSyntax):
@@ -273,7 +280,7 @@ class OperatorSyntax(ApplicationSyntax):
     Some operators (those with non-standard precedence) are separated
     into subclasses of :class:`OperatorSyntax`.
 
-    `symbol` (a string)
+    `symbol` (a Unicode string)
         The operator symbol.
 
     `lbranch` (:class:`Syntax` or ``None``)
@@ -284,7 +291,7 @@ class OperatorSyntax(ApplicationSyntax):
     """
 
     def __init__(self, symbol, lbranch, rbranch, mark):
-        assert isinstance(symbol, str)
+        assert isinstance(symbol, unicode)
         assert isinstance(lbranch, maybe(Syntax))
         assert isinstance(rbranch, maybe(Syntax))
         assert lbranch is not None or rbranch is not None
@@ -296,9 +303,9 @@ class OperatorSyntax(ApplicationSyntax):
         # and `_+` respectively.
         name = symbol
         if lbranch is None:
-            name = name+'_'
+            name = name+u'_'
         if rbranch is None:
-            name = '_'+name
+            name = u'_'+name
         # Gather the arguments.  We distinguish prefix and postfix operators
         # by name, so we don't need to specifically note the original position
         # of the arguments.
@@ -312,16 +319,16 @@ class OperatorSyntax(ApplicationSyntax):
         self.lbranch = lbranch
         self.rbranch = rbranch
 
-    def __str__(self):
+    def __unicode__(self):
         # Generate a fragment:
         #   <lbranch><symbol><rbranch>
         chunks = []
         if self.lbranch is not None:
-            chunks.append(str(self.lbranch))
+            chunks.append(unicode(self.lbranch))
         chunks.append(self.symbol)
         if self.rbranch is not None:
-            chunks.append(str(self.rbranch))
-        return ''.join(chunks)
+            chunks.append(unicode(self.rbranch))
+        return u''.join(chunks)
 
 
 class QuotientSyntax(OperatorSyntax):
@@ -334,7 +341,7 @@ class QuotientSyntax(OperatorSyntax):
     """
 
     def __init__(self, lbranch, rbranch, mark):
-        super(QuotientSyntax, self).__init__('^', lbranch, rbranch, mark)
+        super(QuotientSyntax, self).__init__(u'^', lbranch, rbranch, mark)
 
 
 class SieveSyntax(OperatorSyntax):
@@ -347,7 +354,7 @@ class SieveSyntax(OperatorSyntax):
     """
 
     def __init__(self, lbranch, rbranch, mark):
-        super(SieveSyntax, self).__init__('?', lbranch, rbranch, mark)
+        super(SieveSyntax, self).__init__(u'?', lbranch, rbranch, mark)
 
 
 class LinkSyntax(OperatorSyntax):
@@ -360,7 +367,7 @@ class LinkSyntax(OperatorSyntax):
     """
 
     def __init__(self, lbranch, rbranch, mark):
-        super(LinkSyntax, self).__init__('->', lbranch, rbranch, mark)
+        super(LinkSyntax, self).__init__(u'->', lbranch, rbranch, mark)
 
 
 class HomeSyntax(OperatorSyntax):
@@ -372,7 +379,7 @@ class HomeSyntax(OperatorSyntax):
         @ <rbranch>
     """
     def __init__(self, rbranch, mark):
-        super(HomeSyntax, self).__init__('@', None, rbranch, mark)
+        super(HomeSyntax, self).__init__(u'@', None, rbranch, mark)
 
 
 class AssignmentSyntax(OperatorSyntax):
@@ -385,7 +392,7 @@ class AssignmentSyntax(OperatorSyntax):
     """
 
     def __init__(self, lbranch, rbranch, mark):
-        super(AssignmentSyntax, self).__init__(':=', lbranch, rbranch, mark)
+        super(AssignmentSyntax, self).__init__(u':=', lbranch, rbranch, mark)
 
 
 class SpecifierSyntax(OperatorSyntax):
@@ -398,7 +405,7 @@ class SpecifierSyntax(OperatorSyntax):
     """
 
     def __init__(self, lbranch, rbranch, mark):
-        super(SpecifierSyntax, self).__init__('.', lbranch, rbranch, mark)
+        super(SpecifierSyntax, self).__init__(u'.', lbranch, rbranch, mark)
 
 
 class GroupSyntax(Syntax):
@@ -418,26 +425,26 @@ class GroupSyntax(Syntax):
         super(GroupSyntax, self).__init__(mark)
         self.branch = branch
 
-    def __str__(self):
-        return '(%s)' % self.branch
+    def __unicode__(self):
+        return u'(%s)' % self.branch
 
 
 class IdentifierSyntax(Syntax):
     """
     Represents an identifier.
 
-    `value` (a string)
+    `value` (a Unicode string)
         The identifier value.
     """
 
     def __init__(self, value, mark):
-        assert isinstance(value, str)
+        assert isinstance(value, unicode)
         # FIXME: check for a valid identifier.
 
         super(IdentifierSyntax, self).__init__(mark)
         self.value = value
 
-    def __str__(self):
+    def __unicode__(self):
         return self.value
 
 
@@ -460,13 +467,13 @@ class WildcardSyntax(Syntax):
         super(WildcardSyntax, self).__init__(mark)
         self.index = index
 
-    def __str__(self):
+    def __unicode__(self):
         # Generate a fragment:
         #   *<index>
         # FIXME: may break if followed by a specifier (`.`) symbol.
         if self.index is not None:
-            return '*%s' % self.index
-        return '*'
+            return u'*%s' % self.index
+        return u'*'
 
 
 class ComplementSyntax(Syntax):
@@ -478,8 +485,8 @@ class ComplementSyntax(Syntax):
         ^
     """
 
-    def __str__(self):
-        return '^'
+    def __unicode__(self):
+        return u'^'
 
 
 class ReferenceSyntax(Syntax):
@@ -499,8 +506,8 @@ class ReferenceSyntax(Syntax):
         super(ReferenceSyntax, self).__init__(mark)
         self.identifier = identifier
 
-    def __str__(self):
-        return "$%s" % self.identifier
+    def __unicode__(self):
+        return u'$%s' % self.identifier
 
 
 class LiteralSyntax(Syntax):
@@ -510,12 +517,12 @@ class LiteralSyntax(Syntax):
     This is an abstract class with subclasses :class:`StringSyntax` and
     :class:`NumberSyntax`.
 
-    `value` (a string)
+    `value` (a Unicode string)
         The value.
     """
 
     def __init__(self, value, mark):
-        assert isinstance(value, str)
+        assert isinstance(value, unicode)
         super(LiteralSyntax, self).__init__(mark)
         self.value = value
 
@@ -525,9 +532,9 @@ class StringSyntax(LiteralSyntax):
     Represents a string literal.
     """
 
-    def __str__(self):
+    def __unicode__(self):
         # Quote and %-encode the value.
-        value = '\'%s\'' % self.value.replace('\'', '\'\'')
+        value = u'\'%s\'' % self.value.replace(u'\'', u'\'\'')
         value = self.escape_regexp.sub(self.escape_replace, value)
         return value
 
@@ -555,14 +562,14 @@ class NumberSyntax(LiteralSyntax):
         self.is_integer = False
         self.is_decimal = False
         self.is_exponential = False
-        if 'e' in value or 'E' in value:
+        if u'e' in value or u'E' in value:
             self.is_exponential = True
-        elif '.' in value:
+        elif u'.' in value:
             self.is_decimal = True
         else:
             self.is_integer = True
 
-    def __str__(self):
+    def __unicode__(self):
         # FIXME: may break when followed by a specifier (`.`) symbol.
         return self.value
 

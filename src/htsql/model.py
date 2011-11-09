@@ -38,7 +38,7 @@ class Arc(Model):
 class Label(Clonable, Printable):
 
     def __init__(self, name, arc, is_public):
-        assert isinstance(name, str)
+        assert isinstance(name, unicode)
         assert isinstance(arc, Arc)
         assert isinstance(is_public, bool)
         self.name = name
@@ -50,7 +50,7 @@ class Label(Clonable, Printable):
         self.is_public = is_public
 
     def __str__(self):
-        return "%s (%s): %s -> %s" % (self.name, self.arc,
+        return "%s (%s): %s -> %s" % (self.name.encode('utf-8'), self.arc,
                                       self.origin, self.target)
 
 
