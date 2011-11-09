@@ -123,6 +123,8 @@ class sdist(_sdist):
         except ImportError:
             log.warn("Sphinx is not installed"
                       " -- unable to compile documentation")
+        # Make sure `sphinxext_*` packages could be found.
+        sys.path.append(os.path.join(root, 'src'))
         # Instantiate and run Sphinx builder.
         log.info("compiling documentation")
         srcdir = os.path.abspath('doc')
@@ -133,6 +135,7 @@ class sdist(_sdist):
         doctreedir = os.path.join(self.dist_dir, '.doctrees')
         buildername = 'html'
         sphinx = Sphinx(srcdir, confdir, outdir, doctreedir, buildername,
+                        confoverrides=None, status=None,
                         warningiserror=True, freshenv=True)
         sphinx.build()
         if sphinx.statuscode:
