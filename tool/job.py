@@ -114,7 +114,7 @@ def exe(command):
         raise fatal("cannot execute command: %s" % exc)
 
 
-def run(command, verbose=None):
+def run(command, data=None, verbose=None):
     # Run the command.
     if verbose is None:
         verbose = settings.verbose
@@ -122,8 +122,9 @@ def run(command, verbose=None):
     if verbose:
         stream = None
         log("running: %s" % command)
-    proc = subprocess.Popen(command, shell=True, stdout=stream, stderr=stream)
-    proc.communicate()
+    proc = subprocess.Popen(command, shell=True, stdin=stream,
+                            stdout=stream, stderr=stream)
+    proc.communicate(data)
     if proc.returncode != 0:
         raise fatal("non-zero exit code: %s" % command)
 

@@ -104,7 +104,7 @@ def pypi():
     uploads them to PyPI.
     """
     setup_py("sdist --formats=zip,gztar --dist-dir=build/dist"
-             " register upload")
+             " register upload --sign --identity=8E70D862")
     log()
     log("Source distribution archives are uploaded to:")
     log("  `http://pypi.python.org/pypi/HTSQL/`")

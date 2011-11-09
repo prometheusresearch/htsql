@@ -6,7 +6,7 @@
 
 from job import (job, settings, run, pipe, exe, log, debug, warn, fatal, prompt,
                  cp, rm, mktree, rmtree)
-import os, os.path, glob, urllib2, socket, datetime, time, re
+import os, os.path, glob, urllib2, socket, datetime, time, re, tempfile
 
 
 VM_ROOT = "./vm-build"
@@ -293,6 +293,16 @@ class VM(object):
         run("scp -rF %s \"%s\" %s:\"%s\""
             % (CTL_DIR+"/ssh_config", src_filename, host, dst_filename))
         self.unforward(22)
+
+    def write(self, dst_filename, content):
+        # Create a file with given content.
+        try:
+            tf = tempfile.NamedTemporaryFile()
+            tf.write(content)
+            tf.flush()
+            self.put(tf.name, dst_filename)
+        finally:
+            tf.close()
 
     def get(self, src_filename, dst_filename):
         # Read a file from VM.

@@ -4,11 +4,11 @@
 #
 
 
-from job import job, log, debug, fatal, warn, run, rmtree, mktree
+from job import job, log, debug, fatal, warn, run, rmtree, mktree, pipe
 from vm import LinuxBenchVM, WindowsBenchVM, DATA_ROOT, CTL_DIR
 import os, glob, re
 
-
+KEYSIG = '8E70D862' # identifier for HTSQL package signing key
 src_vm = LinuxBenchVM('src', 'debian', 22)
 rpm_vm = LinuxBenchVM('rpm', 'centos', 22)
 deb_vm = LinuxBenchVM('deb', 'debian', 22)
@@ -46,6 +46,12 @@ def pkg_src():
         log("  `%s`" % filename)
     log()
 
+def register_signing_key(vm):
+    """ registers the HTSQL signing key in the given VM """
+    pubkey = pipe("gpg --armour --export %s" % KEYSIG)
+    seckey = pipe("gpg --armour --export-secret-key %s" % KEYSIG)
+    vm.write("/root/sign.key", pubkey + seckey)
+    vm.run("gpg --import /root/sign.key")
 
 @job
 def pkg_deb():
@@ -81,11 +87,13 @@ def pkg_deb():
         rmtree("build/pkg/deb")
     deb_vm.start()
     try:
+        register_signing_key(deb_vm)
         deb_vm.put(source_path, '/root')
         deb_vm.run("mv %s htsql_%s.orig.tar.gz" % (archive, version))
         deb_vm.run("tar xvfz htsql_%s.orig.tar.gz" % version)
         deb_vm.put(DATA_ROOT+"/pkg/debian", "HTSQL-%s" % upstream_version)
-        deb_vm.run("cd HTSQL-%s && dpkg-buildpackage" % upstream_version)
+        deb_vm.run("cd HTSQL-%s && dpkg-buildpackage -k%s" % \
+                     (upstream_version, KEYSIG))
         mktree("build/pkg/deb")
         deb_vm.get("htsql_%s-1_all.deb" % version, "build/pkg/deb")
         deb_vm.run("dpkg -i htsql_%s-1_all.deb" % version)
