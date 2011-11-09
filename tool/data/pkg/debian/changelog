@@ -1,4 +1,4 @@
-htsql (2.2.0b2-1) unstable; urgency=low
+htsql (2.2.0~b2-1) unstable; urgency=low
 
   * initial .deb distribution based on 9/22 release
 

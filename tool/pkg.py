@@ -14,11 +14,6 @@ rpm_vm = LinuxBenchVM('rpm', 'centos', 22)
 deb_vm = LinuxBenchVM('deb', 'debian', 22)
 
 
-VERSION = '2.2.0b2'
-ARCHIVE = 'HTSQL-%s.tar.gz' % VERSION
-PYPISRC = 'http://pypi.python.org/packages/source/H/HTSQL/%s' % ARCHIVE
-
-
 @job
 def pkg_src():
     """create a source package
@@ -56,7 +51,11 @@ def pkg_src():
 def pkg_deb():
     """create debian package
 
-    This job creates the debian source and binary packages.
+    This job creates the debian source and binary packages.  You must
+    also append a release note to tool/data/pkg/debian/changelog that
+    matches the current release version.  Debian's pre-release naming
+    convention is different than Python's since it requires a tilde 
+    before the b1, rc1, etc.
     """
     if deb_vm.missing():
         raise fatal("VM is not built: %s" % deb_vm.name)
@@ -67,8 +66,15 @@ def pkg_deb():
         raise fatal("too many source packages in `./build/pkg/src`")
     [source_path] = source_paths
     archive = os.path.basename(source_path)
-    version = re.match(r'^HTSQL-(?P<version>.+).tar.gz$',
-                       archive).group('version')
+    upstream_version = re.match(r'^HTSQL-(?P<version>.+).tar.gz$',
+                                archive).group('version')
+    (version, suffix) = re.match(r'^(\d+\.\d+.\d+)(.*)$',
+                                 upstream_version).groups()
+    if suffix:
+        version = version + "~" + suffix
+    changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
+    if ('htsql (%s-1)' % version) not in changelog:
+        raise fatal("update debian/changelog for %s release" % version)
     if deb_vm.running():
         deb_vm.stop()
     if os.path.exists("build/pkg/deb"):
@@ -78,8 +84,8 @@ def pkg_deb():
         deb_vm.put(source_path, '/root')
         deb_vm.run("mv %s htsql_%s.orig.tar.gz" % (archive, version))
         deb_vm.run("tar xvfz htsql_%s.orig.tar.gz" % version)
-        deb_vm.put(DATA_ROOT+"/pkg/debian", "HTSQL-%s" % version)
-        deb_vm.run("cd HTSQL-%s && dpkg-buildpackage" % version)
+        deb_vm.put(DATA_ROOT+"/pkg/debian", "HTSQL-%s" % upstream_version)
+        deb_vm.run("cd HTSQL-%s && dpkg-buildpackage" % upstream_version)
         mktree("build/pkg/deb")
         deb_vm.get("htsql_%s-1_all.deb" % version, "build/pkg/deb")
         deb_vm.run("dpkg -i htsql_%s-1_all.deb" % version)
