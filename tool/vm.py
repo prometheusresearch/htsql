@@ -9,7 +9,7 @@ from job import (job, settings, run, pipe, exe, log, debug, warn, fatal, prompt,
 import os, os.path, glob, urllib2, socket, datetime, time, re
 
 
-VM_ROOT = "./vm"
+VM_ROOT = "./vm-build"
 IMG_DIR = VM_ROOT+"/img"
 CTL_DIR = VM_ROOT+"/ctl"
 TMP_DIR = VM_ROOT+"/tmp"
