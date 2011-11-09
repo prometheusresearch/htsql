@@ -12,17 +12,18 @@ import socket
 class INetDomain(Domain):
 
     def parse(self, data):
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         if data is None:
             return None
+        data = data.encode('utf-8')
         try:
             data = socket.inet_ntoa(socket.inet_aton(data))
         except socket.error:
             raise ValueError("invalid IPv4 address")
-        return data
+        return data.decode('utf-8')
 
     def dump(self, value):
-        assert isinstance(value, maybe(str))
+        assert isinstance(value, maybe(unicode))
         return value
 
 

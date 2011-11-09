@@ -12,7 +12,10 @@ This module implements a :class:`Mark` object.
 """
 
 
-class Mark(object):
+from .util import Printable
+
+
+class Mark(Printable):
     """
     A slice of an HTSQL query.
 
@@ -26,7 +29,7 @@ class Mark(object):
     ``mark.value[mark.start:mark.end]`` would represent a valid HTSQL
     expression.
 
-    `input` (a string)
+    `input` (a Unicode string)
         The HTSQL query.
 
     `start` (an integer)
@@ -64,7 +67,7 @@ class Mark(object):
 
     def __init__(self, input, start, end):
         # Sanity check on the arguments.
-        assert isinstance(input, str)
+        assert isinstance(input, unicode)
         assert isinstance(start, int)
         assert isinstance(end, int)
         assert 0 <= start <= end <= len(input)
@@ -79,8 +82,8 @@ class Mark(object):
         query with ``^`` characters underlining the mark.
         """
         # Find the line that contains the mark.
-        excerpt_start = self.input.rfind('\n', 0, self.start)+1
-        excerpt_end = self.input.find('\n', excerpt_start)
+        excerpt_start = self.input.rfind(u'\n', 0, self.start)+1
+        excerpt_end = self.input.find(u'\n', excerpt_start)
         if excerpt_end == -1:
             excerpt_end = len(self.input)
 
@@ -89,33 +92,18 @@ class Mark(object):
         pointer_start = max(self.start, excerpt_start)
         pointer_end = min(self.end, excerpt_end)
 
-        # For the pointer to be displayed properly, the lengths of
-        # the indent and of the underline should be measured in Unicode
-        # characters.
-        try:
-            pointer_indent = len(self.input[excerpt_start:pointer_start]
-                                                        .decode('utf-8'))
-            pointer_length = len(self.input[pointer_start:pointer_end]
-                                                        .decode('utf-8'))
-        except UnicodeDecodeError:
-            # It might happen that the query is not UTF-8 encoded, in
-            # which case we could only approximate.
-            pointer_indent = pointer_start-excerpt_start
-            pointer_length = pointer_end-pointer_start
+        # The lenths of the indent and the underline.
+        pointer_indent = pointer_start - excerpt_start
+        pointer_length = pointer_end - pointer_start
 
         # Generate the exerpt and the pointer lines.
         lines = []
         lines.append(self.input[excerpt_start:excerpt_end])
-        lines.append(' '*pointer_indent + '^'*max(pointer_length, 1))
+        lines.append(u' '*pointer_indent + u'^'*max(pointer_length, 1))
         return lines
 
     def __str__(self):
-        return "%r >>> %r <<< %r" % (self.input[:self.start],
-                                     self.input[self.start:self.end],
-                                     self.input[self.end:])
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
+        return ">>> %s <<<" % self.input[self.start:self.end].encode('utf-8')
 
 
 class EmptyMark(Mark):

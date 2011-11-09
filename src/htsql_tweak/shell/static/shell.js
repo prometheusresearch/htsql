@@ -256,7 +256,7 @@ $(document).ready(function() {
             else
                 query = "/shell('" + query.replace(/'/g,"''") + "')";
         }
-        var url = config.serverRoot+escape(query);
+        var url = config.serverRoot+encodeURI(query).replace(/#/, '%23');
         if (replace)
             history.replaceState(data, title, url);
         else
@@ -283,7 +283,7 @@ $(document).ready(function() {
             page = 1;
         query = "/evaluate('" + query.replace(/'/g,"''") + "'"
                 + ",'" + action + "'" + "," + page + ")";
-        var url = config.serverRoot+escape(query);
+        var url = config.serverRoot+encodeURI(query).replace(/#/, '%23');
         $.ajax({
             url: url,
             dataType: 'json',
@@ -349,7 +349,7 @@ $(document).ready(function() {
             state.$panel.hide();
         state.$panel = null;
         if (!state.lastAction) {
-            var url = config.serverRoot+escape(state.lastQuery);
+            var url = config.serverRoot+encodeURI(state.lastQuery).replace(/#/, '%23');
             window.open(url, "_blank");
         }
         updateTitle();
@@ -668,7 +668,7 @@ $(document).ready(function() {
             query += "'"+name.replace(/'/g, "''")+"'";
         }
         query = "/complete(" + query + ")";
-        var url = config.serverRoot+escape(query);
+        var url = config.serverRoot+encodeURI(query).replace(/#/, '%23');
         $.ajax({
             url: url,
             dataType: 'json',

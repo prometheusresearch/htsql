@@ -50,7 +50,7 @@ class AttributeProbe(Probe):
     The result of this probe is a :class:`htsql.tr.binding.Recipe`
     instance.
 
-    `name` (a string)
+    `name` (a Unicode string)
         The attribute name.
 
     `arity` (an integer or ``None``)
@@ -63,12 +63,12 @@ class AttributeProbe(Probe):
     """
 
     def __init__(self, name, arity):
-        assert isinstance(name, str)
+        assert isinstance(name, unicode)
         assert isinstance(arity, maybe(int))
         assert arity is None or arity >= 0
         self.name = name
         self.arity = arity
-        self.key = normalize(name)
+        self.key = normalize(name.encode('utf-8'))
 
     def __str__(self):
         # Display:
@@ -76,9 +76,10 @@ class AttributeProbe(Probe):
         # or:
         #   ?<key>(_,...)
         if self.arity is None:
-            return "?%s" % self.key
+            return "?%s" % self.key.encode('utf-8')
         else:
-            return "?%s(%s)" % (self.key, ",".join(["_"]*self.arity))
+            return "?%s(%s)" % (self.key.encode('utf-8'),
+                                ",".join(["_"]*self.arity))
 
 
 class ReferenceProbe(Probe):
@@ -88,7 +89,7 @@ class ReferenceProbe(Probe):
     The result of this probe is a :class:`htsql.tr.binding.Recipe`
     instance.
 
-    `name` (a string)
+    `name` (a Unicode string)
         The reference name.
 
     Other attributes:
@@ -98,14 +99,14 @@ class ReferenceProbe(Probe):
     """
 
     def __init__(self, name):
-        assert isinstance(name, str)
+        assert isinstance(name, unicode)
         self.name = name
-        self.key = normalize(name)
+        self.key = normalize(name.encode('utf-8'))
 
     def __str__(self):
         # Display:
         #   ?$<key>
-        return "?$%s" % self.key
+        return "?$%s" % self.key.encode('utf-8')
 
 
 class ComplementProbe(Probe):
@@ -289,7 +290,7 @@ class GuessTitle(Lookup):
 
     def __call__(self):
         # Generate a header from the associated syntax node.
-        return [str(self.binding.syntax)]
+        return [unicode(self.binding.syntax)]
 
 
 class LookupReferenceInScoping(Lookup):
@@ -686,7 +687,8 @@ class LookupAttributeInDefinition(Lookup):
         # Check if the definition matches the probe.
         if not self.binding.is_reference:
             if self.binding.arity == self.probe.arity:
-                if normalize(self.binding.name) == self.probe.key:
+                binding_key = normalize(self.binding.name.encode('utf-8'))
+                if binding_key == self.probe.key:
                     # If it matches, produce the associated recipe.
                     return self.binding.recipe
         # Otherwise, delegate the probe to the parent binding.
@@ -701,7 +703,8 @@ class LookupReferenceInDefinition(Lookup):
     def __call__(self):
         # Check if the definition matches the probe.
         if self.binding.is_reference:
-            if normalize(self.binding.name) == self.probe.key:
+            binding_key = normalize(self.binding.name.encode('utf-8'))
+            if binding_key == self.probe.key:
                 # If it matches, produce the associated recipe.
                 return self.binding.recipe
         # Otherwise, delegate the probe to the parent binding.
@@ -826,7 +829,7 @@ def lookup_attribute(binding, name, arity=None):
     `binding` (:class:`htsql.tr.binding.Binding`)
         A binding node.
 
-    `name` (a string)
+    `name` (a Unicode string)
         An attribute name.
 
     `arity` (an integer or ``None``)
@@ -847,7 +850,7 @@ def lookup_reference(binding, name):
     `binding` (:class:`htsql.tr.binding.Binding`)
         A binding node.
 
-    `name` (a string)
+    `name` (a Unicode string)
         A reference name.
     """
     probe = ReferenceProbe(name)

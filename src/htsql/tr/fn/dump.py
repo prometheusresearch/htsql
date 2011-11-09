@@ -173,7 +173,7 @@ class DumpLike(DumpFunction):
 
     def __call__(self):
         self.format("({lop} {polarity:not}LIKE {rop} ESCAPE {escape:literal})",
-                    self.arguments, self.signature, escape="\\")
+                    self.arguments, self.signature, escape=u"\\")
 
 
 class DumpReplace(DumpFunction):

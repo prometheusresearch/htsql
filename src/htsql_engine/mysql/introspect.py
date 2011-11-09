@@ -201,7 +201,8 @@ class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):
     def __call__(self):
         column_type = self.column_type
         if column_type.startswith('enum(') and column_type.endswith(')'):
-            labels = [item[1:-1] for item in column_type[5:-1].split(',')]
+            labels = [item[1:-1].decode('utf-8')
+                      for item in column_type[5:-1].split(',')]
             return MySQLEnumDomain(self.data_type, labels=labels)
         return super(IntrospectMySQLEnumDomain, self).__call__()
 

@@ -26,7 +26,7 @@ from htsql.tr.fn.dump import (DumpLike, DumpDateIncrement,
 class PGSQLFormatLiteral(FormatLiteral):
 
     def __call__(self):
-        value = self.value.replace("'", "''")
+        value = self.value.encode('utf-8').replace("'", "''")
         if "\\" in value:
             value = value.replace("\\", "\\\\")
             self.stream.write("E'%s'" % value)
@@ -76,22 +76,24 @@ class PGSQLDumpDecimal(DumpDecimal):
 class PGSQLDumpDate(DumpDate):
 
     def __call__(self):
-        self.format("{value:literal}::DATE", value=str(self.value))
+        self.format("{value:literal}::DATE", value=unicode(self.value))
 
 
 class PGSQLDumpTime(DumpTime):
 
     def __call__(self):
-        self.format("{value:literal}::TIME", value=str(self.value))
+        self.format("{value:literal}::TIME", value=unicode(self.value))
 
 
 class PGSQLDumpDateTime(DumpDateTime):
 
     def __call__(self):
         if self.value.tzinfo is None:
-            self.format("{value:literal}::TIMESTAMP", value=str(self.value))
+            self.format("{value:literal}::TIMESTAMP",
+                        value=unicode(self.value))
         else:
-            self.format("{value:literal}::TIMESTAMPTZ", value=str(self.value))
+            self.format("{value:literal}::TIMESTAMPTZ",
+                        value=unicode(self.value))
 
 
 class PGSQLDumpToFloat(DumpToFloat):

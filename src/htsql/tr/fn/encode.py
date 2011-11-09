@@ -51,17 +51,17 @@ class EncodeContains(EncodeFunction):
         rop = self.state.encode(self.binding.rop)
         if isinstance(rop, LiteralCode):
             if rop.value is not None:
-                value = ("%" + rop.value.replace("\\", "\\\\")
-                                        .replace("%", "\\%")
-                                        .replace("_", "\\_") + "%")
+                value = (u"%" + rop.value.replace(u"\\", u"\\\\")
+                                         .replace(u"%", u"\\%")
+                                         .replace(u"_", u"\\_") + u"%")
                 rop = rop.clone(value=value)
         else:
-            backslash_literal = LiteralCode("\\", rop.domain, self.binding)
-            xbackslash_literal = LiteralCode("\\\\", rop.domain, self.binding)
-            percent_literal = LiteralCode("%", rop.domain, self.binding)
-            xpercent_literal = LiteralCode("\\%", rop.domain, self.binding)
-            underscore_literal = LiteralCode("_", rop.domain, self.binding)
-            xunderscore_literal = LiteralCode("\\_", rop.domain, self.binding)
+            backslash_literal = LiteralCode(u"\\", rop.domain, self.binding)
+            xbackslash_literal = LiteralCode(u"\\\\", rop.domain, self.binding)
+            percent_literal = LiteralCode(u"%", rop.domain, self.binding)
+            xpercent_literal = LiteralCode(u"\\%", rop.domain, self.binding)
+            underscore_literal = LiteralCode(u"_", rop.domain, self.binding)
+            xunderscore_literal = LiteralCode(u"\\_", rop.domain, self.binding)
             rop = FormulaCode(ReplaceSig(), rop.domain, self.binding,
                               op=rop, old=backslash_literal,
                               new=xbackslash_literal)
@@ -331,7 +331,7 @@ class EncodeReplace(EncodeFunction):
         op = self.state.encode(self.binding.op)
         old = self.state.encode(self.binding.old)
         new = self.state.encode(self.binding.new)
-        empty = LiteralCode('', old.domain, self.binding)
+        empty = LiteralCode(u'', old.domain, self.binding)
         old = FormulaCode(IfNullSig(), old.domain, self.binding,
                           lop=old, rop=empty)
         new = FormulaCode(IfNullSig(), old.domain, self.binding,
@@ -429,7 +429,7 @@ class WrapCountSum(WrapAggregate):
 
     def __call__(self):
         root = RootBinding(self.unit.syntax)
-        zero_literal = LiteralBinding(root, '0', UntypedDomain(),
+        zero_literal = LiteralBinding(root, u'0', UntypedDomain(),
                                       self.unit.syntax)
         zero_literal = CastBinding(zero_literal, self.unit.domain,
                                    self.unit.syntax)

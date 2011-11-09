@@ -44,13 +44,13 @@ class Domain(object):
 
         Raises :exc:`ValueError` if the literal is not in a valid format.
 
-        `data` (a string or ``None``)
+        `data` (a Unicode string or ``None``)
             An HTSQL literal representing a value of the given domain.
 
         Returns a native Python object representing the same value.
         """
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
 
         # `None` values are passed through.
         if data is None:
@@ -152,17 +152,17 @@ class BooleanDomain(Domain):
 
     def parse(self, data):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
 
         # Convert: `None` -> `None`, `'true'` -> `True`, `'false'` -> `False`.
         if data is None:
             return None
-        if data == 'true':
+        if data == u'true':
             return True
-        if data == 'false':
+        if data == u'false':
             return False
         raise ValueError("invalid Boolean literal: expected 'true' or 'false';"
-                         " got %r" % data)
+                         " got %r" % data.encode('utf-8'))
 
     def dump(self, value):
         # Sanity check on the argument.
@@ -172,9 +172,9 @@ class BooleanDomain(Domain):
         if value is None:
             return None
         if value is True:
-            return 'true'
+            return u'true'
         if value is False:
-            return 'false'
+            return u'false'
 
 
 class NumberDomain(Domain):
@@ -221,7 +221,7 @@ class IntegerDomain(NumberDomain):
 
     def parse(self, data):
         # Sanity check on the arguments.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
@@ -230,7 +230,8 @@ class IntegerDomain(NumberDomain):
             value = int(data, 10)
         except ValueError:
             raise ValueError("invalid integer literal: expected an integer"
-                             " in a decimal format; got %r" % data)
+                             " in a decimal format; got %r"
+                             % data.encode('utf-8'))
         return value
 
     def dump(self, value):
@@ -240,7 +241,7 @@ class IntegerDomain(NumberDomain):
         if value is None:
             return None
         # Represent an integer value as a decimal number.
-        return str(value)
+        return unicode(value)
 
     def __eq__(self, other):
         if not isinstance(other, Domain):
@@ -272,7 +273,7 @@ class FloatDomain(NumberDomain):
 
     def parse(self, data):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
@@ -280,7 +281,8 @@ class FloatDomain(NumberDomain):
         try:
             value = float(data)
         except ValueError:
-            raise ValueError("invalid float literal: %s" % data)
+            raise ValueError("invalid float literal: %s"
+                             % data.encode('utf-8'))
         # Check if we got a finite number.
         # FIXME: the check may break under Python 2.5; also, in Python 2.6
         # could use `math.isinf()` and `math.isnan()`.
@@ -295,7 +297,7 @@ class FloatDomain(NumberDomain):
         if value is None:
             return None
         # Use `repr` to avoid loss of precision.
-        return repr(value)
+        return unicode(repr(value))
 
     def __eq__(self, other):
         if not isinstance(other, Domain):
@@ -333,7 +335,7 @@ class DecimalDomain(NumberDomain):
 
     def parse(self, data):
         # Sanity check on the arguments.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
@@ -341,10 +343,12 @@ class DecimalDomain(NumberDomain):
         try:
             value = decimal.Decimal(data)
         except decimal.InvalidOperation:
-            raise ValueError("invalid decimal literal: %s" % data)
+            raise ValueError("invalid decimal literal: %s"
+                             % data.encode('utf-8'))
         # Verify that we got a finite number.
         if not value.is_finite():
-            raise ValueError("invalid decimal literal: %s" % data)
+            raise ValueError("invalid decimal literal: %s"
+                             % data.encode('utf-8'))
         return value
 
     def dump(self, value):
@@ -355,13 +359,13 @@ class DecimalDomain(NumberDomain):
             return None
         # Handle `inf` and `nan` values.
         if value.is_nan():
-            return 'nan'
+            return u'nan'
         elif value.is_infinite() and value > 0:
-            return 'inf'
+            return u'inf'
         elif value.is_infinite() and value < 0:
-            return '-inf'
+            return u'-inf'
         # Produce a decimal representation of the number.
-        return str(value)
+        return unicode(value)
 
     def __eq__(self, other):
         if not isinstance(other, Domain):
@@ -377,8 +381,7 @@ class StringDomain(Domain):
 
     Valid literal values: all literal values.
 
-    Valid native values: `str` objects in UTF-8 encoding;
-    the `NUL` character is not allowed.
+    Valid native values: `unicode` objects; the `NUL` character is not allowed.
 
     `length` (an integer or ``None``)
         The maximum length of the value; ``None`` if infinite or not known.
@@ -397,7 +400,7 @@ class StringDomain(Domain):
 
     def parse(self, data):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
@@ -406,10 +409,9 @@ class StringDomain(Domain):
 
     def dump(self, value):
         # Sanity check on the argument.
-        assert isinstance(value, maybe(str))
+        assert isinstance(value, maybe(unicode))
         if value is not None:
-            assert '\0' not in value
-            assert value.decode('utf-8', 'ignore').encode('utf-8') == value
+            assert u'\0' not in value
         # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
@@ -430,32 +432,33 @@ class EnumDomain(Domain):
 
     An enumeration domain has a predefined set of valid string values.
 
-    `labels` (a list of strings)
+    `labels` (a list of Unicode strings)
         List of valid values.
     """
     family = 'enum'
 
     def __init__(self, labels):
-        assert isinstance(labels, listof(str))
+        assert isinstance(labels, listof(unicode))
         self.labels = labels
 
     def parse(self, data):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
         # Check if the value belongs to the fixed list of valid values.
         if data not in self.labels:
             raise ValueError("invalid enum literal: expected one of %s; got %r"
-                             % (", ".join(repr(label)
-                                          for label in self.labels), data))
+                             % (", ".join(repr(label.encode('utf-8'))
+                                          for label in self.labels),
+                                data.encode('utf-8')))
         # No conversion is required.
         return data
 
     def dump(self, value):
         # Sanity check on the argument.
-        assert isinstance(value, maybe(str))
+        assert isinstance(value, maybe(unicode))
         if value is not None:
             assert value in self.labels
         # `None` represents `NULL` both in literal and native format.
@@ -496,7 +499,7 @@ class DateDomain(Domain):
 
     def parse(self, data):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
@@ -504,7 +507,8 @@ class DateDomain(Domain):
         match = self.regexp.match(data)
         if match is None:
             raise ValueError("invalid date literal: expected a valid date"
-                             " in a 'YYYY-MM-DD' format; got %r" % data)
+                             " in a 'YYYY-MM-DD' format; got %r"
+                             % data.encode('utf-8'))
         year = int(match.group('year'))
         month = int(match.group('month'))
         day = int(match.group('day'))
@@ -521,8 +525,8 @@ class DateDomain(Domain):
         # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
-        # `str` on `datetime.date` gives us the date in YYYY-MM-DD format.
-        return str(value)
+        # `unicode` on `datetime.date` gives us the date in YYYY-MM-DD format.
+        return unicode(value)
 
 
 class TimeDomain(Domain):
@@ -548,7 +552,7 @@ class TimeDomain(Domain):
 
     def parse(self, data):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
@@ -556,7 +560,8 @@ class TimeDomain(Domain):
         match = self.regexp.match(data)
         if match is None:
             raise ValueError("invalid time literal: expected a valid time"
-                             " in a 'HH:SS:MM.SSSSSS' format; got %r" % data)
+                             " in a 'HH:SS:MM.SSSSSS' format; got %r"
+                             % data.encode('utf-8'))
         hour = int(match.group('hour'))
         minute = int(match.group('minute'))
         second = match.group('second')
@@ -585,8 +590,9 @@ class TimeDomain(Domain):
         # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
-        # `str` on `datetime.date` gives us the date in HH:MM:SS.SSSSSS format.
-        return str(value)
+        # `unicode` on `datetime.date` gives us the date in HH:MM:SS.SSSSSS
+        # format.
+        return unicode(value)
 
 
 class DateTimeDomain(Domain):
@@ -628,7 +634,7 @@ class DateTimeDomain(Domain):
 
     def parse(self, data):
         # Sanity check on the argument.
-        assert isinstance(data, maybe(str))
+        assert isinstance(data, maybe(unicode))
         # `None` represents `NULL` both in literal and native format.
         if data is None:
             return None
@@ -637,7 +643,7 @@ class DateTimeDomain(Domain):
         if match is None:
             raise ValueError("invalid datetime literal: expected a valid time"
                              " in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format;"
-                             " got %r" % data)
+                             " got %r" % data.encode('utf-8'))
         year = int(match.group('year'))
         month = int(match.group('month'))
         day = int(match.group('day'))
@@ -685,14 +691,14 @@ class DateTimeDomain(Domain):
         # `None` represents `NULL` both in literal and native format.
         if value is None:
             return None
-        # `str` on `datetime.datetime` gives us the date in ISO format.
-        return str(value)
+        # `unicode` on `datetime.datetime` gives us the value in ISO format.
+        return unicode(value)
 
 
 class OpaqueDomain(Domain):
     """
     Represents an unsupported SQL data type.
-    
+
     Note: this is the only SQL domain with values that cannot be serialized
     using :meth:`dump`.
     """

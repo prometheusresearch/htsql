@@ -721,20 +721,21 @@ class FormatLiteral(Format):
     named('literal')
 
     def __init__(self, kind, value, modifier, state):
-        assert isinstance(value, str)
+        assert isinstance(value, unicode)
         assert modifier is None
         # This is the last place where we could prevent an injection attack,
         # so check that the string is well-formed.
-        assert "\0" not in value
-        value.decode('utf-8')
+        assert u"\0" not in value
         super(FormatLiteral, self).__init__(kind, value, modifier, state)
 
     def __call__(self):
         # Assume standard SQL quoting rules for literals:
         # - a value is enclosed by `'`;
         # - any `'` character must be replaced with `''`.
+        # We also assume the backend accepts UTF-8 encoded strings.
         # A backend with non-standard quoting rules must override this method.
-        self.stream.write("'%s'" % self.value.replace("'", "''"))
+        value = self.value.encode('utf-8')
+        self.stream.write("'%s'" % value.replace("'", "''"))
 
 
 class FormatNot(Format):
@@ -919,13 +920,13 @@ class DubPhrase(Dub):
         syntax = self.clause.syntax
         # For an identifier node, take the identifier name.
         if isinstance(syntax, IdentifierSyntax):
-            return syntax.value
+            return syntax.value.encode('utf-8')
         # For a function call node, take the function name.
         if isinstance(syntax, ApplicationSyntax):
-            return syntax.name
+            return syntax.name.encode('utf-8')
         # For a literal node, take the value of the literal.
         if isinstance(syntax, LiteralSyntax):
-            return syntax.value
+            return syntax.value.encode('utf-8')
         # Otherwise, use the default alias.
         return super(DubPhrase, self).__call__()
 
@@ -1585,7 +1586,7 @@ class DumpDate(DumpByDomain):
         #   DATE 'YYYY-MM-DD'
         # A backend with a different (or no) date represetation may need
         # to override this implementation.
-        self.format("DATE {value:literal}", value=str(self.value))
+        self.format("DATE {value:literal}", value=unicode(self.value))
 
 
 class DumpTime(DumpByDomain):
@@ -1596,7 +1597,7 @@ class DumpTime(DumpByDomain):
     adapts(TimeDomain)
 
     def __call__(self):
-        self.format("TIME {value:literal}", value=str(self.value))
+        self.format("TIME {value:literal}", value=unicode(self.value))
 
 
 class DumpDateTime(DumpByDomain):
@@ -1608,10 +1609,10 @@ class DumpDateTime(DumpByDomain):
 
     def __call__(self):
         if self.value.tzinfo is None:
-            self.format("TIMESTAMP {value:literal}", value=str(self.value))
+            self.format("TIMESTAMP {value:literal}", value=unicode(self.value))
         else:
             self.format("TIMESTAMP WITH TIME ZONE {value:literal}",
-                        value=str(self.value))
+                        value=unicode(self.value))
 
 
 class DumpCast(Dump):

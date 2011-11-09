@@ -33,7 +33,6 @@ def normalize(name):
     name = name.decode('utf-8')
     name = unicodedata.normalize('NFC', name).lower()
     name = re.sub(ur"(?u)^(?=\d)|\W", u"_", name)
-    name = name.encode('utf-8')
     return name
 
 
@@ -85,8 +84,8 @@ class ClassifyHome(Classify):
 
         duplicates = set(buckets)
         for table in collisions:
-            fq_name = "%s_%s" % (normalize(table.schema.name),
-                                 normalize(table.name))
+            fq_name = u"%s_%s" % (normalize(table.schema.name),
+                                  normalize(table.name))
             if fq_name in duplicates:
                 # TODO: find some way to report when this
                 # secondary naming scheme creates collisions
@@ -201,7 +200,7 @@ class ClassifyTable(Classify):
             origin_name = normalize(key.origin_columns[-1].name)
             target_name = normalize(key.target_columns[-1].name)
             if origin_name.endswith(target_name):
-                name = origin_name[:-len(target_name)].rstrip('_')
+                name = origin_name[:-len(target_name)].rstrip(u'_')
                 if name:
                     names.append((name, weight+2))
             names_by_key[key] = names
@@ -252,9 +251,9 @@ class ClassifyTable(Classify):
             origin_name = normalize(key.origin_columns[-1].name)
             target_name = normalize(key.target_columns[-1].name)
             if origin_name.endswith(target_name):
-                name = origin_name[:-len(target_name)].rstrip('_')
+                name = origin_name[:-len(target_name)].rstrip(u'_')
                 if name:
-                    name += '_'+normalize(key.origin.name)
+                    name += u'_'+normalize(key.origin.name)
                     names.append((name, weight+2))
             names_by_key[key] = names
             for name, weight in names:

@@ -50,7 +50,7 @@ class Parser(object):
             return parser_class.process(tokens)
 
     def __init__(self, input):
-        assert isinstance(input, str)
+        assert isinstance(input, (str, unicode))
         self.input = input
 
     def parse(self):
@@ -159,44 +159,44 @@ class SegmentParser(Parser):
         # Expect:
         #   segment     ::= '/' ( top command* )?
         #   command     ::= '/' ':' identifier ( '/' top? | call | flow )?
-        head_token = tokens.pop(SymbolToken, ['/'])
+        head_token = tokens.pop(SymbolToken, [u'/'])
         branch = None
         if not (tokens.peek(EndToken) or
-                tokens.peek(SymbolToken, [',', ')', '}'])):
+                tokens.peek(SymbolToken, [u',', u')', u'}'])):
             branch = TopParser << tokens
-            while tokens.peek(SymbolToken, ['/']):
-                tail_token = tokens.pop(SymbolToken, ['/'])
+            while tokens.peek(SymbolToken, [u'/']):
+                tail_token = tokens.pop(SymbolToken, [u'/'])
                 if not (tokens.peek(EndToken) or
-                        tokens.peek(SymbolToken, [',', ')', '}'])):
-                    tokens.pop(SymbolToken, [':'])
+                        tokens.peek(SymbolToken, [u',', u')', u'}'])):
+                    tokens.pop(SymbolToken, [u':'])
                     mark = Mark.union(head_token, branch)
                     lbranch = SegmentSyntax(branch, mark)
                     identifier = IdentifierParser << tokens
                     rbranches = []
                     if not (tokens.peek(EndToken) or
-                            tokens.peek(SymbolToken, [',', ')', '}'])):
-                        if tokens.peek(SymbolToken, ['/']):
-                            if not tokens.peek(SymbolToken, [':'], ahead=1):
-                                rbranch_token = tokens.pop(SymbolToken, ['/'])
+                            tokens.peek(SymbolToken, [u',', u')', u'}'])):
+                        if tokens.peek(SymbolToken, [u'/']):
+                            if not tokens.peek(SymbolToken, [u':'], ahead=1):
+                                rbranch_token = tokens.pop(SymbolToken, [u'/'])
                                 rbranch = None
                                 if not (tokens.peek(EndToken) or
                                         tokens.peek(SymbolToken,
-                                                    [',', ')', '}'])):
+                                                    [u',', u')', u'}'])):
                                     rbranch = TopParser << tokens
                                 mark = Mark.union(rbranch_token, rbranch)
                                 rbranch = SegmentSyntax(rbranch, mark)
                                 rbranches.append(rbranch)
-                        elif tokens.peek(SymbolToken, ['(']):
-                            tokens.pop(SymbolToken, ['('])
-                            while not tokens.peek(SymbolToken, [')']):
-                                if tokens.peek(SymbolToken, ['/']):
+                        elif tokens.peek(SymbolToken, [u'(']):
+                            tokens.pop(SymbolToken, [u'('])
+                            while not tokens.peek(SymbolToken, [u')']):
+                                if tokens.peek(SymbolToken, [u'/']):
                                     rbranch = SegmentParser << tokens
                                 else:
                                     rbranch = TopParser << tokens
                                 rbranches.append(rbranch)
-                                if not tokens.peek(SymbolToken, [')']):
-                                    tokens.pop(SymbolToken, [',', ')'])
-                            tail_token = tokens.pop(SymbolToken, [')'])
+                                if not tokens.peek(SymbolToken, [u')']):
+                                    tokens.pop(SymbolToken, [u',', u')'])
+                            tail_token = tokens.pop(SymbolToken, [u')'])
                         else:
                             rbranch = FlowParser << tokens
                             rbranches.append(rbranch)
@@ -220,31 +220,31 @@ class TopParser(Parser):
         #   mapping     ::= ':' identifier ( flow | call )?
         #   FOLLOW(mapping) = ['+','-',':',',',')','}']
         top = FlowParser << tokens
-        while tokens.peek(SymbolToken, ['+', '-', ':']):
+        while tokens.peek(SymbolToken, [u'+', u'-', u':']):
             # Parse `direction` decorator.
-            if tokens.peek(SymbolToken, ['+', '-']):
-                symbol_token = tokens.pop(SymbolToken, ['+', '-'])
+            if tokens.peek(SymbolToken, [u'+', u'-']):
+                symbol_token = tokens.pop(SymbolToken, [u'+', u'-'])
                 symbol = symbol_token.value
                 mark = Mark.union(top, symbol_token)
                 top = OperatorSyntax(symbol, top, None, mark)
             # Parse `mapping` application.
             else:
-                symbol_token = tokens.pop(SymbolToken, [':'])
+                symbol_token = tokens.pop(SymbolToken, [u':'])
                 identifier = IdentifierParser << tokens
                 lbranch = top
                 rbranches = []
                 # Mapping parameters in parentheses.
-                if tokens.peek(SymbolToken, ['(']):
-                    tokens.pop(SymbolToken, ['('])
-                    while not tokens.peek(SymbolToken, [')']):
-                        if tokens.peek(SymbolToken, ['/']):
+                if tokens.peek(SymbolToken, [u'(']):
+                    tokens.pop(SymbolToken, [u'('])
+                    while not tokens.peek(SymbolToken, [u')']):
+                        if tokens.peek(SymbolToken, [u'/']):
                             rbranch = SegmentParser << tokens
                         else:
                             rbranch = TopParser << tokens
                         rbranches.append(rbranch)
-                        if not tokens.peek(SymbolToken, [')']):
-                            tokens.pop(SymbolToken, [',', ')'])
-                    tail_token = tokens.pop(SymbolToken, [')'])
+                        if not tokens.peek(SymbolToken, [u')']):
+                            tokens.pop(SymbolToken, [u',', u')'])
+                    tail_token = tokens.pop(SymbolToken, [u')'])
                     mark = Mark.union(top, tail_token)
                 # No parenthesis: either no parameters or a single parameter.
                 else:
@@ -254,10 +254,10 @@ class TopParser(Parser):
                     # decorators).  We skip through `+` and `-` since they
                     # could also start a parameter as an unary prefix operator.
                     ahead = 0
-                    while tokens.peek(SymbolToken, ['+', '-'], ahead=ahead):
+                    while tokens.peek(SymbolToken, [u'+', u'-'], ahead=ahead):
                         ahead += 1
-                    if not (tokens.peek(SymbolToken,
-                                        [':', ',', ')', '}'], ahead=ahead) or
+                    if not (tokens.peek(SymbolToken, [u':', u',', u')', u'}'],
+                                                     ahead=ahead) or
                             tokens.peek(EndToken, ahead=ahead)):
                         rbranch = FlowParser << tokens
                         rbranches.append(rbranch)
@@ -279,35 +279,35 @@ class FlowParser(Parser):
         #   quotient    ::= '^' disjunction
         #   selection   ::= selector ( '.' atom )*
         flow = DisjunctionParser << tokens
-        while tokens.peek(SymbolToken, ['?', '^', '{']):
-            if tokens.peek(SymbolToken, ['?'], do_pop=True):
+        while tokens.peek(SymbolToken, [u'?', u'^', u'{']):
+            if tokens.peek(SymbolToken, [u'?'], do_pop=True):
                 lbranch = flow
                 rbranch = DisjunctionParser << tokens
                 mark = Mark.union(lbranch, rbranch)
                 flow = SieveSyntax(lbranch, rbranch, mark)
-            elif tokens.peek(SymbolToken, ['^'], do_pop=True):
+            elif tokens.peek(SymbolToken, [u'^'], do_pop=True):
                 lbranch = flow
                 rbranch = DisjunctionParser << tokens
                 mark = Mark.union(lbranch, rbranch)
                 flow = QuotientSyntax(lbranch, rbranch, mark)
-            elif tokens.peek(SymbolToken, ['{'], do_pop=True):
+            elif tokens.peek(SymbolToken, [u'{'], do_pop=True):
                 lbranch = flow
                 rbranches = []
-                while not tokens.peek(SymbolToken, ['}']):
-                    if tokens.peek(SymbolToken, ['/']):
+                while not tokens.peek(SymbolToken, [u'}']):
+                    if tokens.peek(SymbolToken, [u'/']):
                         rbranch = SegmentParser << tokens
                     else:
                         rbranch = TopParser << tokens
                     rbranches.append(rbranch)
-                    if not tokens.peek(SymbolToken, ['}']):
+                    if not tokens.peek(SymbolToken, [u'}']):
                         # We know it's not going to be '}', but we put it into
                         # the list of accepted values to generate a better
                         # error message.
-                        tokens.pop(SymbolToken, [',', '}'])
-                tail_token = tokens.pop(SymbolToken, ['}'])
+                        tokens.pop(SymbolToken, [u',', u'}'])
+                tail_token = tokens.pop(SymbolToken, [u'}'])
                 mark = Mark.union(flow, tail_token)
                 flow = SelectorSyntax(lbranch, rbranches, mark)
-                while tokens.peek(SymbolToken, ['.'], do_pop=True):
+                while tokens.peek(SymbolToken, [u'.'], do_pop=True):
                     lbranch = flow
                     rbranch = AtomParser << tokens
                     mark = Mark.union(flow, rbranch)
@@ -328,8 +328,8 @@ class DisjunctionParser(Parser):
         # Parses the production:
         #   disjunction ::= conjunction ( '|' conjunction )*
         test = ConjunctionParser << tokens
-        while tokens.peek(SymbolToken, ['|']):
-            symbol_token = tokens.pop(SymbolToken, ['|'])
+        while tokens.peek(SymbolToken, [u'|']):
+            symbol_token = tokens.pop(SymbolToken, [u'|'])
             symbol = symbol_token.value
             lbranch = test
             rbranch = ConjunctionParser << tokens
@@ -348,8 +348,8 @@ class ConjunctionParser(Parser):
         # Expect:
         #   conjunction ::= negation ( '&' negation )*
         test = NegationParser << tokens
-        while tokens.peek(SymbolToken, ['&']):
-            symbol_token = tokens.pop(SymbolToken, ['&'])
+        while tokens.peek(SymbolToken, [u'&']):
+            symbol_token = tokens.pop(SymbolToken, [u'&'])
             symbol = symbol_token.value
             lbranch = test
             rbranch = NegationParser << tokens
@@ -368,8 +368,8 @@ class NegationParser(Parser):
         # Expect:
         #   negation    ::= '!' negation | comparison
         symbol_tokens = []
-        while tokens.peek(SymbolToken, ['!']):
-            symbol_token = tokens.pop(SymbolToken, ['!'])
+        while tokens.peek(SymbolToken, [u'!']):
+            symbol_token = tokens.pop(SymbolToken, [u'!'])
             symbol_tokens.append(symbol_token)
         test = ComparisonParser << tokens
         while symbol_tokens:
@@ -394,8 +394,8 @@ class ComparisonParser(Parser):
         #                                expression )?
         expression = ExpressionParser << tokens
         symbol_token = tokens.peek(SymbolToken,
-                                   ['~', '!~', '<=', '<', '>=', '>',
-                                    '==', '=', '!==', '!='], do_pop=True)
+                                   [u'~', u'!~', u'<=', u'<', u'>=', u'>',
+                                    u'==', u'=', u'!==', u'!='], do_pop=True)
         if symbol_token is None:
             return expression
         symbol = symbol_token.value
@@ -417,13 +417,13 @@ class ExpressionParser(Parser):
         #   expression  ::= term ( ( '+' | '-' ) term )*
         expression = TermParser << tokens
         # Do a look-ahead to distinguish between infix and postfix `+` or `-`.
-        while tokens.peek(SymbolToken, ['+', '-']):
+        while tokens.peek(SymbolToken, [u'+', u'-']):
             ahead = 1
-            while tokens.peek(SymbolToken, ['+', '-'], ahead=ahead):
+            while tokens.peek(SymbolToken, [u'+', u'-'], ahead=ahead):
                 ahead += 1
-            if tokens.peek(SymbolToken, [':', ',', ')', '}'], ahead=ahead):
+            if tokens.peek(SymbolToken, [u':', u',', u')', u'}'], ahead=ahead):
                 break
-            symbol_token = tokens.pop(SymbolToken, ['+', '-'])
+            symbol_token = tokens.pop(SymbolToken, [u'+', u'-'])
             symbol = symbol_token.value
             lbranch = expression
             rbranch = TermParser << tokens
@@ -442,10 +442,10 @@ class TermParser(Parser):
         # Expect:
         #   term        ::= factor ( ( '*' | '/' ) factor )*
         term = FactorParser << tokens
-        while (tokens.peek(SymbolToken, ['*'])
-               or (tokens.peek(SymbolToken, ['/'], ahead=0)
-                   and not tokens.peek(SymbolToken, [':'], ahead=1))):
-            symbol_token = tokens.pop(SymbolToken, ['*', '/'])
+        while (tokens.peek(SymbolToken, [u'*'])
+               or (tokens.peek(SymbolToken, [u'/'], ahead=0)
+                   and not tokens.peek(SymbolToken, [u':'], ahead=1))):
+            symbol_token = tokens.pop(SymbolToken, [u'*', u'/'])
             symbol = symbol_token.value
             lbranch = term
             rbranch = FactorParser << tokens
@@ -464,8 +464,8 @@ class FactorParser(Parser):
         # Expect:
         #   factor      ::= ( '+' | '-' ) factor | pointer
         symbol_tokens = []
-        while tokens.peek(SymbolToken, ['+', '-']):
-            symbol_token = tokens.pop(SymbolToken, ['+', '-'])
+        while tokens.peek(SymbolToken, [u'+', u'-']):
+            symbol_token = tokens.pop(SymbolToken, [u'+', u'-'])
             symbol_tokens.append(symbol_token)
         factor = PointerParser << tokens
         while symbol_tokens:
@@ -488,12 +488,12 @@ class PointerParser(Parser):
         #   link        ::= '->' flow
         #   assignment  ::= ':=' top
         pointer = SpecifierParser << tokens
-        if tokens.peek(SymbolToken, ['->'], do_pop=True):
+        if tokens.peek(SymbolToken, [u'->'], do_pop=True):
             lbranch = pointer
             rbranch = FlowParser << tokens
             mark = Mark.union(lbranch, rbranch)
             pointer = LinkSyntax(lbranch, rbranch, mark)
-        elif tokens.peek(SymbolToken, [':='], do_pop=True):
+        elif tokens.peek(SymbolToken, [u':='], do_pop=True):
             lbranch = pointer
             rbranch = TopParser << tokens
             mark = Mark.union(lbranch, rbranch)
@@ -511,8 +511,8 @@ class SpecifierParser(Parser):
         # Expect:
         #   specifier   ::= atom ( '.' atom )*
         specifier = AtomParser << tokens
-        while tokens.peek(SymbolToken, ['.']):
-            tokens.pop(SymbolToken, ['.'])
+        while tokens.peek(SymbolToken, [u'.']):
+            tokens.pop(SymbolToken, [u'.'])
             lbranch = specifier
             rbranch = AtomParser << tokens
             mark = Mark.union(lbranch, rbranch)
@@ -538,15 +538,15 @@ class AtomParser(Parser):
         #   literal     ::= STRING | NUMBER
 
         # A home indicator.
-        if tokens.peek(SymbolToken, ['@']):
-            symbol_token = tokens.pop(SymbolToken, ['@'])
+        if tokens.peek(SymbolToken, [u'@']):
+            symbol_token = tokens.pop(SymbolToken, [u'@'])
             atom = AtomParser << tokens
             mark = Mark.union(symbol_token, atom)
             home = HomeSyntax(atom, mark)
             return home
         # A wildcard expression.
-        if tokens.peek(SymbolToken, ['*']):
-            symbol_token = tokens.pop(SymbolToken, ['*'])
+        if tokens.peek(SymbolToken, [u'*']):
+            symbol_token = tokens.pop(SymbolToken, [u'*'])
             index = None
             if tokens.peek(NumberToken):
                 index_token = tokens.pop(NumberToken)
@@ -555,41 +555,41 @@ class AtomParser(Parser):
             wildcard = WildcardSyntax(index, mark)
             return wildcard
         # A complement atom.
-        if tokens.peek(SymbolToken, ['^']):
-            symbol_token = tokens.pop(SymbolToken, ['^'])
+        if tokens.peek(SymbolToken, [u'^']):
+            symbol_token = tokens.pop(SymbolToken, [u'^'])
             complement = ComplementSyntax(symbol_token.mark)
             return complement
         # An expression in parentheses.
-        elif tokens.peek(SymbolToken, ['(']):
+        elif tokens.peek(SymbolToken, [u'(']):
             group = GroupParser << tokens
             return group
         # A selector.
-        elif tokens.peek(SymbolToken, ['{']):
+        elif tokens.peek(SymbolToken, [u'{']):
             selector = SelectorParser << tokens
             return selector
         # An identifier or a function call.
         elif tokens.peek(NameToken):
             identifier = IdentifierParser << tokens
-            if tokens.peek(SymbolToken, ['(']):
-                tokens.pop(SymbolToken, ['('])
+            if tokens.peek(SymbolToken, [u'(']):
+                tokens.pop(SymbolToken, [u'('])
                 branches = []
-                while not tokens.peek(SymbolToken, [')']):
-                    if tokens.peek(SymbolToken, ['/']):
+                while not tokens.peek(SymbolToken, [u')']):
+                    if tokens.peek(SymbolToken, [u'/']):
                         rbranch = SegmentParser << tokens
                     else:
                         rbranch = TopParser << tokens
                     branches.append(rbranch)
-                    if not tokens.peek(SymbolToken, [')']):
-                        tokens.pop(SymbolToken, [',', ')'])
-                tail_token = tokens.pop(SymbolToken, [')'])
+                    if not tokens.peek(SymbolToken, [u')']):
+                        tokens.pop(SymbolToken, [u',', u')'])
+                tail_token = tokens.pop(SymbolToken, [u')'])
                 mark = Mark.union(identifier, tail_token)
                 function = FunctionSyntax(identifier, branches, mark)
                 return function
             else:
                 return identifier
         # A reference.
-        elif tokens.peek(SymbolToken, ['$']):
-            head_token = tokens.pop(SymbolToken, ['$'])
+        elif tokens.peek(SymbolToken, [u'$']):
+            head_token = tokens.pop(SymbolToken, [u'$'])
             identifier = IdentifierParser << tokens
             mark = Mark.union(head_token, identifier)
             reference = ReferenceSyntax(identifier, mark)
@@ -617,9 +617,9 @@ class GroupParser(Parser):
     def process(self, tokens):
         # Expect:
         #   group       ::= '(' top ')'
-        head_token = tokens.pop(SymbolToken, ['('])
+        head_token = tokens.pop(SymbolToken, [u'('])
         branch = TopParser << tokens
-        tail_token = tokens.pop(SymbolToken, [')'])
+        tail_token = tokens.pop(SymbolToken, [u')'])
         mark = Mark.union(head_token, tail_token)
         group = GroupSyntax(branch, mark)
         return group
@@ -636,19 +636,19 @@ class SelectorParser(Parser):
         #   selector    ::= '{' arguments? '}'
         #   arguments   ::= argument ( ',' argument )* ','?
         #   argument    ::= segment | top
-        head_token = tokens.pop(SymbolToken, ['{'])
+        head_token = tokens.pop(SymbolToken, [u'{'])
         branches = []
-        while not tokens.peek(SymbolToken, ['}']):
-            if tokens.peek(SymbolToken, ['/']):
+        while not tokens.peek(SymbolToken, [u'}']):
+            if tokens.peek(SymbolToken, [u'/']):
                 rbranch = SegmentParser << tokens
             else:
                 rbranch = TopParser << tokens
             branches.append(rbranch)
-            if not tokens.peek(SymbolToken, ['}']):
+            if not tokens.peek(SymbolToken, [u'}']):
                 # We know it's not going to be '}', but we put it into the list
                 # of accepted values to generate a better error message.
-                tokens.pop(SymbolToken, [',', '}'])
-        tail_token = tokens.pop(SymbolToken, ['}'])
+                tokens.pop(SymbolToken, [u',', u'}'])
+        tail_token = tokens.pop(SymbolToken, [u'}'])
         mark = Mark.union(head_token, tail_token)
         selector = SelectorSyntax(None, branches, mark)
         return selector

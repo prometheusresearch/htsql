@@ -509,7 +509,7 @@ class GetPostBaseCmd(Cmd):
             chain = chain_copy
             chain.push(node)
         labels = chain.labels()
-        names = [label.name for label in labels]
+        names = [label.name.encode('utf-8') for label in labels]
         return names
 
     def execute(self):

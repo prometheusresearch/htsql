@@ -41,7 +41,7 @@ class Token(Printable):
 
     The constructor of :class:`Token` accepts the following parameters:
 
-    `value` (a string)
+    `value` (a Unicode string)
         The token value.
 
     `mark` (:class:`htsql.mark.Mark`)
@@ -68,14 +68,17 @@ class Token(Printable):
         return value
 
     def __init__(self, value, mark):
-        assert isinstance(value, str)
+        assert isinstance(value, unicode)
         assert isinstance(mark, Mark)
 
         self.value = value
         self.mark = mark
 
-    def __str__(self):
+    def __unicode__(self):
         return self.value
+
+    def __str__(self):
+        return self.value.encode('utf-8')
 
 
 class SpaceToken(Token):
@@ -125,13 +128,13 @@ class StringToken(Token):
     @classmethod
     def unquote(cls, value):
         # Strip leading and trailing quotes and replace `''` with `'`.
-        return value[1:-1].replace('\'\'', '\'')
+        return value[1:-1].replace(u'\'\'', u'\'')
 
     @classmethod
     def quote(cls, value):
         # Replace all occurences of `'` with `''`, enclose the string
         # in the quotes.
-        return '\'%s\'' % value.replace('\'', '\'\'')
+        return u'\'%s\'' % value.replace(u'\'', u'\'\'')
 
 
 class NumberToken(Token):

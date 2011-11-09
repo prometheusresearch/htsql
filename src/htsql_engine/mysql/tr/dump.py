@@ -39,7 +39,8 @@ class MySQLFormatName(FormatName):
 class MySQLFormatLiteral(FormatLiteral):
 
     def __call__(self):
-        self.stream.write("'%s'" % self.value.replace("\\", r"\\")
+        self.stream.write("'%s'" % self.value.encode('utf-8')
+                                             .replace("\\", r"\\")
                                              .replace("'", r"\'")
                                              .replace("\n", r"\n")
                                              .replace("\r", r"\r"))
@@ -74,13 +75,13 @@ class MySQLDumpDecimal(DumpDecimal):
 class MySQLDumpDate(DumpDate):
 
     def __call__(self):
-        self.format("DATE({value:literal})", value=str(self.value))
+        self.format("DATE({value:literal})", value=unicode(self.value))
 
 
 class MySQLDumpTime(DumpTime):
 
     def __call__(self):
-        self.format("TIME({value:literal})", value=str(self.value))
+        self.format("TIME({value:literal})", value=unicode(self.value))
 
 
 class MySQLDumpDateTime(DumpDateTime):
@@ -88,7 +89,7 @@ class MySQLDumpDateTime(DumpDateTime):
     def __call__(self):
         # MySQLdb driver does not handle datetime values with microseconds.
         value = self.value.replace(microsecond=0, tzinfo=None)
-        self.format("TIMESTAMP({value:literal})", value=str(value))
+        self.format("TIMESTAMP({value:literal})", value=unicode(value))
 
 
 class MySQLDumpToInteger(DumpToInteger):

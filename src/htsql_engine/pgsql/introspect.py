@@ -137,7 +137,8 @@ class IntrospectPGSQL(Introspect):
             if (isinstance(domain, PGOpaqueDomain) and typrow.typtype == 'e'
                                         and typrow.oid in enumrows_by_typid):
                 enumrows = enumrows_by_typid[typrow.oid]
-                labels = [enumrow.enumlabel for enumrow in enumrows]
+                labels = [enumrow.enumlabel.decode('utf-8')
+                          for enumrow in enumrows]
                 domain = PGEnumDomain(typrow.nspname, typrow.typname,
                                       labels=labels)
             column = table.add_column(name, domain, is_nullable, has_default)

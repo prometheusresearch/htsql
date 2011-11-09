@@ -426,13 +426,13 @@ class AssignmentBinding(Binding):
     """
     Represents an assignment expression.
 
-    `terms` (a list of pairs `(string, Boolean)`)
+    `terms` (a list of pairs `(Unicode string, Boolean)`)
         The terms of the assignment.
 
         Each term is represented by a pair of the term name and a flag
         indicating whether the name is a reference or not.
 
-    `parameters` (a list of pairs `(string, Boolean)` or ``None``)
+    `parameters` (a list of pairs `(Unicode string, Boolean)` or ``None``)
         The parameters; if not set, indicates the defined attribute
         does not accept any parameters.
 
@@ -444,9 +444,9 @@ class AssignmentBinding(Binding):
     """
 
     def __init__(self, base, terms, parameters, body, syntax):
-        assert isinstance(terms, listof(tupleof(str, bool)))
+        assert isinstance(terms, listof(tupleof(unicode, bool)))
         assert len(terms) > 0
-        assert isinstance(parameters, maybe(listof(tupleof(str, bool))))
+        assert isinstance(parameters, maybe(listof(tupleof(unicode, bool))))
         assert isinstance(body, Syntax)
         super(AssignmentBinding, self).__init__(base, VoidDomain(), syntax)
         self.terms = terms
@@ -458,7 +458,7 @@ class DefinitionBinding(WrappingBinding):
     """
     Represents a definition of a calculated attribute or a reference.
 
-    `name` (a string)
+    `name` (a Unicode string)
         The name of the attribute.
 
     `is_reference` (Boolean)
@@ -473,7 +473,7 @@ class DefinitionBinding(WrappingBinding):
     """
 
     def __init__(self, base, name, is_reference, arity, recipe, syntax):
-        assert isinstance(name, str)
+        assert isinstance(name, unicode)
         assert isinstance(is_reference, bool)
         assert isinstance(arity, maybe(int))
         # A reference cannot have parameters.
@@ -556,12 +556,12 @@ class TitleBinding(WrappingBinding):
     The title decorator is used to specify the column title explicitly
     (by default, a serialized syntax node is used as the title).
 
-    `title` (a string)
+    `title` (a Unicode string)
         The title.
     """
 
     def __init__(self, base, title, syntax):
-        assert isinstance(title, str)
+        assert isinstance(title, unicode)
         super(TitleBinding, self).__init__(base, syntax)
         self.title = title
 
@@ -586,14 +586,14 @@ class FormatBinding(WrappingBinding):
     as to how display column values.  How the format is interpreted
     by the renderer depends on the renderer and the type of the column.
 
-    `format` (a string)
+    `format` (a Unicode string)
         The formatting hint.
     """
 
     # FIXME: currently unused.
 
     def __init__(self, base, format, syntax):
-        assert isinstance(format, str)
+        assert isinstance(format, unicode)
         super(FormatBinding, self).__init__(base, syntax)
         self.format = format
 
@@ -768,12 +768,12 @@ class SubstitutionRecipe(Recipe):
     `base` (:class:`Binding`)
         The scope in which the calculation is defined.
 
-    `terms` (a list of pairs `(string, Boolean)`)
+    `terms` (a list of pairs `(Unicode string, Boolean)`)
         The tail of a qualified definition.  Each term is represented by a pair
         of the term name and a flag indicating whether the term is a reference
         or not.
 
-    `parameters` (a list of pairs `(string, Boolean)` or ``None``)
+    `parameters` (a list of pairs `(Unicode string, Boolean)` or ``None``)
         The parameters of the calculation.  Each parameter is a pair of the
         parameter name and a flag indicating whether the parameter is a
         reference.
@@ -784,8 +784,8 @@ class SubstitutionRecipe(Recipe):
 
     def __init__(self, base, terms, parameters, body):
         assert isinstance(base, Binding)
-        assert isinstance(terms, listof(tupleof(str, bool)))
-        assert isinstance(parameters, maybe(listof(tupleof(str, bool))))
+        assert isinstance(terms, listof(tupleof(unicode, bool)))
+        assert isinstance(parameters, maybe(listof(tupleof(unicode, bool))))
         assert isinstance(body, Syntax)
         self.base = base
         self.terms = terms
@@ -804,7 +804,7 @@ class SubstitutionRecipe(Recipe):
                 chunks.append(".")
             if is_reference:
                 chunks.append("$")
-            chunks.append(name)
+            chunks.append(name.encode('utf-8'))
         if self.parameters is not None:
             chunks.append("(")
             for index, (name, is_reference) in enumerate(self.parameters):
@@ -812,7 +812,7 @@ class SubstitutionRecipe(Recipe):
                     chunks.append(",")
                 if is_reference:
                     chunks.append("$")
-                chunks.append(name)
+                chunks.append(name.encode('utf-8'))
             chunks.append(")")
         if chunks:
             chunks.append(" := ")

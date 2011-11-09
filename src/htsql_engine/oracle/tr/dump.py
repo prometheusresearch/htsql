@@ -177,13 +177,14 @@ class OracleDumpFloat(DumpFloat):
 class OracleDumpTime(DumpTime):
 
     def __call__(self):
-        self.format("INTERVAL {value:literal} HOUR TO SECOND", value=str(self.value))
+        self.format("INTERVAL {value:literal} HOUR TO SECOND",
+                    value=unicode(self.value))
 
 
 class OracleDumpDateTime(DumpDateTime):
 
     def __call__(self):
-        self.format("TIMESTAMP {value:literal}", value=str(self.value))
+        self.format("TIMESTAMP {value:literal}", value=unicode(self.value))
 
 
 class OracleDumpToFloat(DumpToFloat):

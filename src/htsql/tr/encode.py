@@ -629,7 +629,7 @@ class ConvertStringToBoolean(Convert):
         # Encode the operand of the cast.
         code = self.state.encode(self.base)
         # An empty string.
-        empty_literal = LiteralCode('', self.base.domain, self.binding)
+        empty_literal = LiteralCode(u'', self.base.domain, self.binding)
         # Construct: `null_if(base,'')`.
         code = FormulaCode(NullIfSig(), self.base.domain, self.binding,
                            lop=code, rop=empty_literal)
