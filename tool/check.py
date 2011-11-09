@@ -14,6 +14,7 @@ py26_vm = LinuxBenchVM('py26', 'debian', 22)
 py27_vm = LinuxBenchVM('py27', 'debian', 22)
 pgsql84_vm = LinuxBenchVM('pgsql84', 'debian', 5432)
 pgsql90_vm = LinuxBenchVM('pgsql90', 'debian', 5432)
+pgsql91_vm = LinuxBenchVM('pgsql91', 'debian', 5432)
 mysql51_vm = LinuxBenchVM('mysql51', 'debian', 3306)
 oracle10g_vm = LinuxBenchVM('oracle10g', 'debian', 1521)
 mssql2005_vm = WindowsBenchVM('mssql2005', 'windows', 1433)
@@ -49,7 +50,7 @@ def check_all():
     This job runs HTSQL regression tests on all combinations of client
     and server platforms.
     """
-    vms = [py25_vm, py26_vm, py27_vm, pgsql84_vm, pgsql90_vm,
+    vms = [py25_vm, py26_vm, py27_vm, pgsql84_vm, pgsql90_vm, pgsql91_vm,
            mysql51_vm, oracle10g_vm, mssql2005_vm, mssql2008_vm]
     for vm in vms:
         if vm.missing():
@@ -73,6 +74,7 @@ def check_all():
                             "testing sqlite backend")
             for server_vm, suite in [(pgsql84_vm, 'pgsql'),
                                      (pgsql90_vm, 'pgsql'),
+                                     (pgsql91_vm, 'pgsql'),
                                      (mysql51_vm, 'mysql'),
                                      (oracle10g_vm, 'oracle'),
                                      (mssql2005_vm, 'mssql'),
