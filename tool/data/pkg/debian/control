@@ -12,7 +12,7 @@ Package: htsql
 Architecture: all
 Depends: python (>=2.6), python-yaml, python-pkg-resources, ${misc:Depends}
 Suggests: python-psycopg2, python-mysqldb
-Description: a navigational query language for relational databases
+Description: navigational query language for relational databases
  ***********************************************************
    HTSQL -- A Query Language for the Accidental Programmer
  ***********************************************************
