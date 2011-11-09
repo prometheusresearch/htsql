@@ -304,6 +304,7 @@ class VM(object):
             % (CTL_DIR+"/ssh_config", host, src_filename, dst_filename))
         self.unforward(22)
 
+
 class DebianTemplateVM(VM):
     # Debian 6.0 "squeeze" (32-bit) VM.
 
