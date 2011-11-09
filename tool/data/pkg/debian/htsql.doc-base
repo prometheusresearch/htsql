@@ -1,0 +1,10 @@
+Document: htsql
+Title: HTSQL Tutorial and Reference
+Author: Clark C. Evans & Kirill Siminov
+Abstract: This document contains the tutorial, reference,
+ and other guides for the HTSQL language and implementation.
+Section: Data Management
+
+Format: HTML
+Index: /usr/share/doc/htsql/doc/index.html
+Files: /usr/share/doc/htsql/doc/

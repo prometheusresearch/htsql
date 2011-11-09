@@ -49,11 +49,11 @@ def pkg_src():
 
 @job
 def pkg_deb():
-    """create debian package
+    """create a debian package
 
-    This job creates the debian source and binary packages.  You must
-    also append a release note to tool/data/pkg/debian/changelog that
-    matches the current release version.  Debian's pre-release naming
+    This job creates combined debian combined source & binary package.
+    You must also append a release note to tool/data/pkg/debian/changelog
+    that matches the current release version.  Debian's pre-release naming
     convention is different than Python's since it requires a tilde 
     before the b1, rc1, etc.
     """
@@ -73,7 +73,7 @@ def pkg_deb():
     if suffix:
         version = version + "~" + suffix
     changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
-    if ('htsql (%s-1)' % version) not in changelog:
+    if ('htsql (%s-' % version) not in changelog:
         raise fatal("update debian/changelog for %s release" % version)
     if deb_vm.running():
         deb_vm.stop()
