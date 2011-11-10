@@ -165,3 +165,17 @@ INSERT INTO [type].[other] ([code], [money], [binary_8], [uniqueidentifier], [xm
     ('2-null', NULL, NULL, NULL, NULL);
 
 
+-- Entity Names.
+
+CREATE SCHEMA [name];
+
+CREATE TABLE [name].[Три Поросенка] (
+    ["Ниф-Ниф"]     NVARCHAR(16),
+    [`Нуф-Нуф`]     NVARCHAR(16),
+    [[Наф-Наф]]]    NVARCHAR(16)
+);
+
+INSERT INTO [name].[Три Поросенка] (["Ниф-Ниф"], [`Нуф-Нуф`], [[Наф-Наф]]]) VALUES
+    ('соломенный', 'деревянный', 'каменный');
+
+

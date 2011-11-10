@@ -193,3 +193,15 @@ INSERT INTO "other" ("code", "blob") VALUES
     ('6-null', NULL);
 
 
+-- Entity Names.
+
+CREATE TABLE "Три Поросенка" (
+    """Ниф-Ниф"""   VARCHAR(16),
+    "`Нуф-Нуф`"     VARCHAR(16),
+    "[Наф-Наф]"     VARCHAR(16)
+);
+
+INSERT INTO "Три Поросенка" ("""Ниф-Ниф""", "`Нуф-Нуф`", "[Наф-Наф]") VALUES
+    ('соломенный', 'деревянный', 'каменный');
+
+

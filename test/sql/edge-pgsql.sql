@@ -193,3 +193,17 @@ INSERT INTO "type"."other" ("code", "money", "bytea", "interval", "inet", "uuid"
     ('2-null', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
+-- Entity Names.
+
+CREATE SCHEMA "name";
+
+CREATE TABLE "name"."Три Поросенка" (
+    """Ниф-Ниф"""   VARCHAR(16),
+    "`Нуф-Нуф`"     VARCHAR(16),
+    "[Наф-Наф]"     VARCHAR(16)
+);
+
+INSERT INTO "name"."Три Поросенка" ("""Ниф-Ниф""", "`Нуф-Нуф`", "[Наф-Наф]") VALUES
+    ('соломенный', 'деревянный', 'каменный');
+
+

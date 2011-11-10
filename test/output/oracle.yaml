@@ -28757,57 +28757,48 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | column                                               |
-             +------------------------------------------------------+
-             | table_name | name          | domain   | is_mandatory |
-            -+------------+---------------+----------+--------------+-
-             | boolean    | code          | string   | true         |
-             | boolean    | number_1      | boolean  | false        |
-             | date       | code          | string   | true         |
-             | datetime   | code          | string   | true         |
-             | datetime   | date          | datetime | false        |
-             | datetime   | timestamp     | opaque   | false        |
-             | datetime   | timestamptz   | opaque   | false        |
-             | datetime   | timestampltz  | opaque   | false        |
-             | decimal    | code          | string   | true         |
-             | decimal    | number        | decimal  | false        |
-             | decimal    | number_6      | decimal  | false        |
-             | decimal    | number_6_2    | decimal  | false        |
-             | enum       | code          | string   | true         |
-             | float      | code          | string   | true         |
-             | float      | binary_float  | float    | false        |
-             | float      | binary_double | float    | false        |
-             | integer    | code          | string   | true         |
-             | integer    | number_38     | integer  | false        |
-             | other      | code          | string   | true         |
-             | other      | interval_ym   | opaque   | false        |
-             | other      | interval_ds   | opaque   | false        |
-             | other      | blob          | opaque   | false        |
-             | other      | raw           | opaque   | false        |
-             | other      | long_raw      | opaque   | false        |
-             | other      | xml           | opaque   | false        |
-             | string     | code          | string   | true         |
-             | string     | char          | string   | false        |
-             | string     | char_8        | string   | false        |
-             | string     | nchar         | string   | false        |
-             | string     | nchar_8       | string   | false        |
-             | string     | varchar2_8    | string   | false        |
-             | string     | nvarchar2_8   | string   | false        |
-             | string     | clob          | string   | false        |
-             | string     | nclob         | string   | false        |
-             | time       | code          | string   | true         |
-                                                            (35 rows)
-
-             ----
-             /column.sort(table.name,field.sort)
-             SELECT "column"."table_name",
-                    "column"."name",
-                    "column"."domain",
-                    "column"."is_mandatory"
-             FROM "column"
-                  INNER JOIN "table"
-                             ON ("column"."table_name" = "table"."name")
-                  INNER JOIN "field"
-                             ON (("column"."table_name" = "field"."table_name") AND ("column"."name" = "field"."name"))
-             ORDER BY "table"."name" ASC, "field"."sort" ASC, 1 ASC, 2 ASC
+          body: " | column                                                  |\n +---------------------------------------------------------+\n
+            | table_name    | name          | domain   | is_mandatory |\n-+---------------+---------------+----------+--------------+-\n
+            | boolean       | code          | string   | true         |\n | boolean
+            \      | number_1      | boolean  | false        |\n | date          |
+            code          | string   | true         |\n | datetime      | code          |
+            string   | true         |\n | datetime      | date          | datetime
+            | false        |\n | datetime      | timestamp     | opaque   | false
+            \       |\n | datetime      | timestamptz   | opaque   | false        |\n
+            | datetime      | timestampltz  | opaque   | false        |\n | decimal
+            \      | code          | string   | true         |\n | decimal       |
+            number        | decimal  | false        |\n | decimal       | number_6
+            \     | decimal  | false        |\n | decimal       | number_6_2    |
+            decimal  | false        |\n | enum          | code          | string   |
+            true         |\n | float         | code          | string   | true         |\n
+            | float         | binary_float  | float    | false        |\n | float
+            \        | binary_double | float    | false        |\n | integer       |
+            code          | string   | true         |\n | integer       | number_38
+            \    | integer  | false        |\n | other         | code          | string
+            \  | true         |\n | other         | interval_ym   | opaque   | false
+            \       |\n | other         | interval_ds   | opaque   | false        |\n
+            | other         | blob          | opaque   | false        |\n | other
+            \        | raw           | opaque   | false        |\n | other         |
+            long_raw      | opaque   | false        |\n | other         | xml           |
+            opaque   | false        |\n | string        | code          | string   |
+            true         |\n | string        | char          | string   | false        |\n
+            | string        | char_8        | string   | false        |\n | string
+            \       | nchar         | string   | false        |\n | string        |
+            nchar_8       | string   | false        |\n | string        | varchar2_8
+            \   | string   | false        |\n | string        | nvarchar2_8   | string
+            \  | false        |\n | string        | clob          | string   | false
+            \       |\n | string        | nclob         | string   | false        |\n
+            | time          | code          | string   | true         |\n | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0438\u0444_\u043D\u0438\u0444_     | string   | false        |\n
+            | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0443\u0444_\u043D\u0443\u0444_     | string   | false        |\n
+            | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0430\u0444_\u043D\u0430\u0444_     | string   | false        |\n
+            \                                                  (38 rows)\n\n ----\n
+            /column.sort(table.name,field.sort)\n SELECT \"column\".\"table_name\",\n
+            \       \"column\".\"name\",\n        \"column\".\"domain\",\n        \"column\".\"is_mandatory\"\n
+            FROM \"column\"\n      INNER JOIN \"table\"\n                 ON (\"column\".\"table_name\"
+            = \"table\".\"name\")\n      INNER JOIN \"field\"\n                 ON
+            ((\"column\".\"table_name\" = \"field\".\"table_name\") AND (\"column\".\"name\"
+            = \"field\".\"name\"))\n ORDER BY \"table\".\"name\" ASC, \"field\".\"sort\"
+            ASC, 1 ASC, 2 ASC\n"

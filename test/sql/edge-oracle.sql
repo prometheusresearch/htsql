@@ -167,3 +167,16 @@ INSERT INTO "other" ("code", "interval_ym", "interval_ds", "blob", "raw", "long_
     ('2-null', NULL, NULL, NULL, NULL, NULL, NULL);
 
 
+-- Entity Names.
+
+CREATE TABLE "Три Поросенка" (
+    -- Oracle appears not to support `"` in names.
+    "?Ниф-Ниф?"     NVARCHAR2(16),
+    "`Нуф-Нуф`"     NVARCHAR2(16),
+    "[Наф-Наф]"     NVARCHAR2(16)
+);
+
+INSERT INTO "Три Поросенка" ("?Ниф-Ниф?", "`Нуф-Нуф`", "[Наф-Наф]") VALUES
+    ('соломенный', 'деревянный', 'каменный');
+
+

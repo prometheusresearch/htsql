@@ -28286,71 +28286,60 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | column                                               |
-             +------------------------------------------------------+
-             | table_name | name          | domain   | is_mandatory |
-            -+------------+---------------+----------+--------------+-
-             | boolean    | code          | string   | true         |
-             | boolean    | tinyint_1     | boolean  | false        |
-             | date       | code          | string   | true         |
-             | date       | date          | date     | false        |
-             | datetime   | code          | string   | true         |
-             | datetime   | datetime      | datetime | false        |
-             | datetime   | timestamp     | datetime | true         |
-             | decimal    | code          | string   | true         |
-             | decimal    | decimal       | decimal  | false        |
-             | decimal    | decimal_u     | decimal  | false        |
-             | decimal    | decimal_65_30 | decimal  | false        |
-             | decimal    | decimal_6     | decimal  | false        |
-             | decimal    | decimal_6_2   | decimal  | false        |
-             | enum       | code          | string   | true         |
-             | enum       | enum1         | enum     | false        |
-             | enum       | enum2         | enum     | false        |
-             | float      | code          | string   | true         |
-             | float      | float         | float    | false        |
-             | float      | float_u       | float    | false        |
-             | float      | double        | float    | false        |
-             | float      | double_u      | float    | false        |
-             | integer    | code          | string   | true         |
-             | integer    | tinyint       | integer  | false        |
-             | integer    | tinyint_u     | integer  | false        |
-             | integer    | smallint      | integer  | false        |
-             | integer    | smallint_u    | integer  | false        |
-             | integer    | mediumint     | integer  | false        |
-             | integer    | mediumint_u   | integer  | false        |
-             | integer    | int           | integer  | false        |
-             | integer    | int_u         | integer  | false        |
-             | integer    | bigint        | integer  | false        |
-             | integer    | bigint_u      | integer  | false        |
-             | other      | code          | string   | true         |
-             | other      | bit_8         | opaque   | false        |
-             | other      | year_4        | opaque   | false        |
-             | other      | binary_8      | opaque   | false        |
-             | other      | blob          | opaque   | false        |
-             | other      | set           | opaque   | false        |
-             | string     | code          | string   | true         |
-             | string     | char          | string   | false        |
-             | string     | char_8        | string   | false        |
-             | string     | varchar_8     | string   | false        |
-             | string     | tinytext      | string   | false        |
-             | string     | text          | string   | false        |
-             | string     | mediumtext    | string   | false        |
-             | string     | longtext      | string   | false        |
-             | string     | text_latin1   | string   | false        |
-             | time       | code          | string   | true         |
-             | time       | time          | time     | false        |
-                                                            (49 rows)
-
-             ----
-             /column.sort(table.name,field.sort)
-             SELECT "column"."table_name",
-                    "column"."name",
-                    "column"."domain",
-                    "column"."is_mandatory"
-             FROM "column"
-                  INNER JOIN "table"
-                             ON ("column"."table_name" = "table"."name")
-                  INNER JOIN "field"
-                             ON (("column"."table_name" = "field"."table_name") AND ("column"."name" = "field"."name"))
-             ORDER BY "table"."name" ASC, "field"."sort" ASC, 1 ASC, 2 ASC
+          body: " | column                                                  |\n +---------------------------------------------------------+\n
+            | table_name    | name          | domain   | is_mandatory |\n-+---------------+---------------+----------+--------------+-\n
+            | boolean       | code          | string   | true         |\n | boolean
+            \      | tinyint_1     | boolean  | false        |\n | date          |
+            code          | string   | true         |\n | date          | date          |
+            date     | false        |\n | datetime      | code          | string   |
+            true         |\n | datetime      | datetime      | datetime | false        |\n
+            | datetime      | timestamp     | datetime | true         |\n | decimal
+            \      | code          | string   | true         |\n | decimal       |
+            decimal       | decimal  | false        |\n | decimal       | decimal_u
+            \    | decimal  | false        |\n | decimal       | decimal_65_30 | decimal
+            \ | false        |\n | decimal       | decimal_6     | decimal  | false
+            \       |\n | decimal       | decimal_6_2   | decimal  | false        |\n
+            | enum          | code          | string   | true         |\n | enum          |
+            enum1         | enum     | false        |\n | enum          | enum2         |
+            enum     | false        |\n | float         | code          | string   |
+            true         |\n | float         | float         | float    | false        |\n
+            | float         | float_u       | float    | false        |\n | float
+            \        | double        | float    | false        |\n | float         |
+            double_u      | float    | false        |\n | integer       | code          |
+            string   | true         |\n | integer       | tinyint       | integer
+            \ | false        |\n | integer       | tinyint_u     | integer  | false
+            \       |\n | integer       | smallint      | integer  | false        |\n
+            | integer       | smallint_u    | integer  | false        |\n | integer
+            \      | mediumint     | integer  | false        |\n | integer       |
+            mediumint_u   | integer  | false        |\n | integer       | int           |
+            integer  | false        |\n | integer       | int_u         | integer
+            \ | false        |\n | integer       | bigint        | integer  | false
+            \       |\n | integer       | bigint_u      | integer  | false        |\n
+            | other         | code          | string   | true         |\n | other
+            \        | bit_8         | opaque   | false        |\n | other         |
+            year_4        | opaque   | false        |\n | other         | binary_8
+            \     | opaque   | false        |\n | other         | blob          |
+            opaque   | false        |\n | other         | set           | opaque   |
+            false        |\n | string        | code          | string   | true         |\n
+            | string        | char          | string   | false        |\n | string
+            \       | char_8        | string   | false        |\n | string        |
+            varchar_8     | string   | false        |\n | string        | tinytext
+            \     | string   | false        |\n | string        | text          |
+            string   | false        |\n | string        | mediumtext    | string   |
+            false        |\n | string        | longtext      | string   | false        |\n
+            | string        | text_latin1   | string   | false        |\n | time          |
+            code          | string   | true         |\n | time          | time          |
+            time     | false        |\n | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0438\u0444_\u043D\u0438\u0444_     | string   | false        |\n
+            | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0443\u0444_\u043D\u0443\u0444_     | string   | false        |\n
+            | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0430\u0444_\u043D\u0430\u0444_     | string   | false        |\n
+            \                                                  (52 rows)\n\n ----\n
+            /column.sort(table.name,field.sort)\n SELECT \"column\".\"table_name\",\n
+            \       \"column\".\"name\",\n        \"column\".\"domain\",\n        \"column\".\"is_mandatory\"\n
+            FROM \"column\"\n      INNER JOIN \"table\"\n                 ON (\"column\".\"table_name\"
+            = \"table\".\"name\")\n      INNER JOIN \"field\"\n                 ON
+            ((\"column\".\"table_name\" = \"field\".\"table_name\") AND (\"column\".\"name\"
+            = \"field\".\"name\"))\n ORDER BY \"table\".\"name\" ASC, \"field\".\"sort\"
+            ASC, 1 ASC, 2 ASC\n"

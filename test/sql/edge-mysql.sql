@@ -181,3 +181,15 @@ INSERT INTO `other` (`code`, `bit_8`, `year_4`, `binary_8`, `blob`, `set`) VALUE
     ('3-null', NULL, NULL, NULL, NULL, NULL);
 
 
+-- Entity Names.
+
+CREATE TABLE `Три Поросенка` (
+    `"Ниф-Ниф"`     VARCHAR(16),
+    ```Нуф-Нуф```   VARCHAR(16),
+    `[Наф-Наф]`     VARCHAR(16)
+);
+
+INSERT INTO `Три Поросенка` (`"Ниф-Ниф"`, ```Нуф-Нуф```, `[Наф-Наф]`) VALUES
+    ('соломенный', 'деревянный', 'каменный');
+
+

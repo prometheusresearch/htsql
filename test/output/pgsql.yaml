@@ -28471,64 +28471,54 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | column                                               |
-             +------------------------------------------------------+
-             | table_name | name          | domain   | is_mandatory |
-            -+------------+---------------+----------+--------------+-
-             | boolean    | code          | string   | true         |
-             | boolean    | bool          | boolean  | false        |
-             | date       | code          | string   | true         |
-             | date       | date          | date     | false        |
-             | datetime   | code          | string   | true         |
-             | datetime   | timestamp     | datetime | false        |
-             | datetime   | timestamp_0   | datetime | false        |
-             | datetime   | timestamptz   | datetime | false        |
-             | datetime   | timestamptz_0 | datetime | false        |
-             | decimal    | code          | string   | true         |
-             | decimal    | numeric       | decimal  | false        |
-             | decimal    | numeric_6     | decimal  | false        |
-             | decimal    | numeric_6_2   | decimal  | false        |
-             | enum       | code          | string   | true         |
-             | enum       | enum1         | enum     | false        |
-             | enum       | enum2         | enum     | false        |
-             | float      | code          | string   | true         |
-             | float      | float4        | float    | false        |
-             | float      | float8        | float    | false        |
-             | integer    | code          | string   | true         |
-             | integer    | int2          | integer  | false        |
-             | integer    | int4          | integer  | false        |
-             | integer    | int8          | integer  | false        |
-             | other      | code          | string   | true         |
-             | other      | money         | opaque   | false        |
-             | other      | bytea         | opaque   | false        |
-             | other      | interval      | opaque   | false        |
-             | other      | inet          | opaque   | false        |
-             | other      | uuid          | opaque   | false        |
-             | other      | xml           | opaque   | false        |
-             | other      | integer_array | opaque   | false        |
-             | other      | text_array2   | opaque   | false        |
-             | other      | composite     | opaque   | false        |
-             | string     | code          | string   | true         |
-             | string     | bpchar        | string   | false        |
-             | string     | bpchar_8      | string   | false        |
-             | string     | varchar       | string   | false        |
-             | string     | varchar_8     | string   | false        |
-             | string     | text          | string   | false        |
-             | time       | code          | string   | true         |
-             | time       | time          | time     | false        |
-             | time       | time_0        | time     | false        |
-                                                            (42 rows)
-
-             ----
-             /column.sort(table.name,field.sort)
-             SELECT "column"."table_name",
-                    "column"."name",
-                    "column"."domain",
-                    "column"."is_mandatory"
-             FROM "column"
-                  INNER JOIN "table"
-                             ON ("column"."table_name" = "table"."name")
-                  INNER JOIN "field"
-                             ON (("column"."table_name" = "field"."table_name") AND ("column"."name" = "field"."name"))
-             ORDER BY "table"."name" ASC, "field"."sort" ASC, 1 ASC, 2 ASC
+          body: " | column                                                  |\n +---------------------------------------------------------+\n
+            | table_name    | name          | domain   | is_mandatory |\n-+---------------+---------------+----------+--------------+-\n
+            | boolean       | code          | string   | true         |\n | boolean
+            \      | bool          | boolean  | false        |\n | date          |
+            code          | string   | true         |\n | date          | date          |
+            date     | false        |\n | datetime      | code          | string   |
+            true         |\n | datetime      | timestamp     | datetime | false        |\n
+            | datetime      | timestamp_0   | datetime | false        |\n | datetime
+            \     | timestamptz   | datetime | false        |\n | datetime      |
+            timestamptz_0 | datetime | false        |\n | decimal       | code          |
+            string   | true         |\n | decimal       | numeric       | decimal
+            \ | false        |\n | decimal       | numeric_6     | decimal  | false
+            \       |\n | decimal       | numeric_6_2   | decimal  | false        |\n
+            | enum          | code          | string   | true         |\n | enum          |
+            enum1         | enum     | false        |\n | enum          | enum2         |
+            enum     | false        |\n | float         | code          | string   |
+            true         |\n | float         | float4        | float    | false        |\n
+            | float         | float8        | float    | false        |\n | integer
+            \      | code          | string   | true         |\n | integer       |
+            int2          | integer  | false        |\n | integer       | int4          |
+            integer  | false        |\n | integer       | int8          | integer
+            \ | false        |\n | other         | code          | string   | true
+            \        |\n | other         | money         | opaque   | false        |\n
+            | other         | bytea         | opaque   | false        |\n | other
+            \        | interval      | opaque   | false        |\n | other         |
+            inet          | opaque   | false        |\n | other         | uuid          |
+            opaque   | false        |\n | other         | xml           | opaque   |
+            false        |\n | other         | integer_array | opaque   | false        |\n
+            | other         | text_array2   | opaque   | false        |\n | other
+            \        | composite     | opaque   | false        |\n | string        |
+            code          | string   | true         |\n | string        | bpchar        |
+            string   | false        |\n | string        | bpchar_8      | string   |
+            false        |\n | string        | varchar       | string   | false        |\n
+            | string        | varchar_8     | string   | false        |\n | string
+            \       | text          | string   | false        |\n | time          |
+            code          | string   | true         |\n | time          | time          |
+            time     | false        |\n | time          | time_0        | time     |
+            false        |\n | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0438\u0444_\u043D\u0438\u0444_     | string   | false        |\n
+            | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0443\u0444_\u043D\u0443\u0444_     | string   | false        |\n
+            | \u0442\u0440\u0438_\u043F\u043E\u0440\u043E\u0441\u0435\u043D\u043A\u0430
+            | _\u043D\u0430\u0444_\u043D\u0430\u0444_     | string   | false        |\n
+            \                                                  (45 rows)\n\n ----\n
+            /column.sort(table.name,field.sort)\n SELECT \"column\".\"table_name\",\n
+            \       \"column\".\"name\",\n        \"column\".\"domain\",\n        \"column\".\"is_mandatory\"\n
+            FROM \"column\"\n      INNER JOIN \"table\"\n                 ON (\"column\".\"table_name\"
+            = \"table\".\"name\")\n      INNER JOIN \"field\"\n                 ON
+            ((\"column\".\"table_name\" = \"field\".\"table_name\") AND (\"column\".\"name\"
+            = \"field\".\"name\"))\n ORDER BY \"table\".\"name\" ASC, \"field\".\"sort\"
+            ASC, 1 ASC, 2 ASC\n"
