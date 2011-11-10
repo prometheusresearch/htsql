@@ -4,7 +4,10 @@
 --
 
 
--- The `type` database contains columns of all available types.
+-- The `edge` database contains testing data for some edge cases.
+
+
+-- Data Types and Values.
 
 
 -- If the type contains `BOOL`, it is assigned to the Boolean domain.

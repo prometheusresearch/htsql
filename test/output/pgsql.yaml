@@ -27362,7 +27362,7 @@ tests:
                     "other"."inet",
                     HOST("other"."inet"),
                     ("other"."inet" - '0.0.0.0'::INET)
-             FROM "other"
+             FROM "type"."other"
              ORDER BY 2 ASC NULLS FIRST, 1 ASC
         - uri: /{inet('127.0.0.1')}
           status: 200 OK

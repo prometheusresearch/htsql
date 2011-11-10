@@ -24,7 +24,7 @@ tests:
     ignore: true
   - connect: *connect-admin
     sql: |
-        DROP USER htsql_type CASCADE;
+        DROP USER htsql_edge CASCADE;
     autocommit: true
     ignore: true
   - connect: *connect-admin
@@ -56,24 +56,24 @@ tests:
     sql-include: test/sql/demo-oracle.sql
   - db: *connect-demo
   - py-include: test/sql/demo-load.py
-  # Create the `type` database
+  # Create the `edge` database
   - connect: *connect-admin
     sql: |
-        CREATE USER htsql_type IDENTIFIED BY secret;
-        GRANT CREATE SESSION TO htsql_type;
-        GRANT CREATE TABLE TO htsql_type;
-        GRANT CREATE SEQUENCE TO htsql_type;
-        GRANT CREATE TRIGGER TO htsql_type;
-        GRANT UNLIMITED TABLESPACE TO htsql_type;
+        CREATE USER htsql_edge IDENTIFIED BY secret;
+        GRANT CREATE SESSION TO htsql_edge;
+        GRANT CREATE TABLE TO htsql_edge;
+        GRANT CREATE SEQUENCE TO htsql_edge;
+        GRANT CREATE TRIGGER TO htsql_edge;
+        GRANT UNLIMITED TABLESPACE TO htsql_edge;
     autocommit: true
-  - connect: &connect-type
+  - connect: &connect-edge
       engine: oracle
       database: ${ORACLE_SID:XE}
-      username: htsql_type
+      username: htsql_edge
       password: secret
       host: ${ORACLE_HOST}
       port: ${ORACLE_PORT}
-    sql-include: test/sql/type-oracle.sql
+    sql-include: test/sql/edge-oracle.sql
   # Create the `sandbox` database
   - connect: *connect-admin
     sql: |
@@ -100,8 +100,8 @@ tests:
   - define: oracle
   - db: *connect-sandbox
     save: sandbox
-  - db: *connect-type
-    save: type
+  - db: *connect-edge
+    save: edge
   - db: *connect-demo
     save: demo
   # The Regression Schema

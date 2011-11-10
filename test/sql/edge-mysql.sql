@@ -4,7 +4,10 @@
 --
 
 
--- The `type` database contains columns of all available types.
+-- The `edge` database contains testing data for some edge cases.
+
+
+-- Data Types and Values.
 
 
 -- In MySQL, BOOLEAN type is an alias for TINYINT(1); TRUE and FALSE constants

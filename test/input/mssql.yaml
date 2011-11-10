@@ -23,10 +23,10 @@ tests:
             DROP DATABASE [htsql_demo];
         IF SUSER_ID('htsql_demo') IS NOT NULL
             DROP LOGIN [htsql_demo];
-        IF DB_ID('htsql_type') IS NOT NULL
-            DROP DATABASE [htsql_type];
-        IF SUSER_ID('htsql_type') IS NOT NULL
-            DROP LOGIN [htsql_type];
+        IF DB_ID('htsql_edge') IS NOT NULL
+            DROP DATABASE [htsql_edge];
+        IF SUSER_ID('htsql_edge') IS NOT NULL
+            DROP LOGIN [htsql_edge];
         IF DB_ID('htsql_sandbox') IS NOT NULL
             DROP DATABASE [htsql_sandbox];
         IF SUSER_ID('htsql_sandbox') IS NOT NULL
@@ -56,23 +56,23 @@ tests:
     sql-include: test/sql/demo-mssql.sql
   - db: *connect-demo
   - py-include: test/sql/demo-load.py
-  # Create the `type` database
+  # Create the `edge` database
   - connect: *connect-admin
     sql: |
-        CREATE DATABASE [htsql_type] COLLATE Latin1_General_CI_AI;
-        CREATE LOGIN [htsql_type] WITH PASSWORD = 'secret', CHECK_POLICY = OFF;
-        USE [htsql_type];
-        CREATE USER [htsql_type] FOR LOGIN [htsql_type];
-        GRANT CONTROL TO [htsql_type] WITH GRANT OPTION;
+        CREATE DATABASE [htsql_edge] COLLATE Latin1_General_CI_AI;
+        CREATE LOGIN [htsql_edge] WITH PASSWORD = 'secret', CHECK_POLICY = OFF;
+        USE [htsql_edge];
+        CREATE USER [htsql_edge] FOR LOGIN [htsql_edge];
+        GRANT CONTROL TO [htsql_edge] WITH GRANT OPTION;
     autocommit: true
-  - connect: &connect-type
+  - connect: &connect-edge
       engine: mssql
-      database: htsql_type
-      username: htsql_type
+      database: htsql_edge
+      username: htsql_edge
       password: secret
       host: ${MSSQL_HOST}
       port: ${MSSQL_PORT}
-    sql-include: test/sql/type-mssql.sql
+    sql-include: test/sql/edge-mssql.sql
   # Create the `sandbox` database
   - connect: *connect-admin
     sql: |
@@ -98,8 +98,8 @@ tests:
   - define: mssql
   - db: *connect-sandbox
     save: sandbox
-  - db: *connect-type
-    save: type
+  - db: *connect-edge
+    save: edge
   - db: *connect-demo
     save: demo
   # The Regression Schema

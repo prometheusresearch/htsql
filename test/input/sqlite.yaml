@@ -23,10 +23,10 @@ tests:
     sql-include: test/sql/demo-sqlite.sql
   - db: *connect-demo
   - py-include: test/sql/demo-load.py
-  - connect: &connect-type
+  - connect: &connect-edge
       engine: sqlite
-      database: build/regress/sqlite/htsql_type.sqlite
-    sql-include: test/sql/type-sqlite.sql
+      database: build/regress/sqlite/htsql_edge.sqlite
+    sql-include: test/sql/edge-sqlite.sql
   - connect: &connect-sandbox
       engine: sqlite
       database: build/regress/sqlite/htsql_sandbox.sqlite
@@ -39,8 +39,8 @@ tests:
   - define: sqlite
   - db: *connect-sandbox
     save: sandbox
-  - db: *connect-type
-    save: type
+  - db: *connect-edge
+    save: edge
   - db: *connect-demo
     save: demo
   # The Regression Schema

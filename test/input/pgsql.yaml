@@ -21,8 +21,8 @@ tests:
     sql: |
         DROP DATABASE IF EXISTS "htsql_demo";
         DROP ROLE IF EXISTS "htsql_demo";
-        DROP DATABASE IF EXISTS "htsql_type";
-        DROP ROLE IF EXISTS "htsql_type";
+        DROP DATABASE IF EXISTS "htsql_edge";
+        DROP ROLE IF EXISTS "htsql_edge";
         DROP DATABASE IF EXISTS "htsql_sandbox";
         DROP ROLE IF EXISTS "htsql_sandbox";
     autocommit: true
@@ -47,21 +47,21 @@ tests:
     sql-include: test/sql/demo-pgsql.sql
   - db: *connect-demo
   - py-include: test/sql/demo-load.py
-  # Create the `type` database
+  # Create the `edge` database
   - connect: *admin-connect
     sql: |
-        CREATE DATABASE "htsql_type" WITH ENCODING = 'UTF-8';
-        CREATE ROLE "htsql_type" WITH LOGIN PASSWORD 'secret';
-        ALTER DATABASE "htsql_type" OWNER TO "htsql_type";
+        CREATE DATABASE "htsql_edge" WITH ENCODING = 'UTF-8';
+        CREATE ROLE "htsql_edge" WITH LOGIN PASSWORD 'secret';
+        ALTER DATABASE "htsql_edge" OWNER TO "htsql_edge";
     autocommit: true
-  - connect: &connect-type
+  - connect: &connect-edge
       engine: pgsql
-      database: htsql_type
-      username: htsql_type
+      database: htsql_edge
+      username: htsql_edge
       password: secret
       host: ${PGSQL_HOST}
       port: ${PGSQL_PORT}
-    sql-include: test/sql/type-pgsql.sql
+    sql-include: test/sql/edge-pgsql.sql
   # Create the `sandbox` database
   - connect: *admin-connect
     sql: |
@@ -85,8 +85,8 @@ tests:
   - define: pgsql
   - db: *connect-sandbox
     save: sandbox
-  - db: *connect-type
-    save: type
+  - db: *connect-edge
+    save: edge
   - db: *connect-demo
     save: demo
   # The Regression Schema

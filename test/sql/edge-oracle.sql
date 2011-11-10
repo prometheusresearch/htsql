@@ -4,7 +4,10 @@
 --
 
 
--- The `type` database contains columns of all available types.
+-- The `edge` database contains testing data for some edge cases.
+
+
+-- Data Types and Values.
 
 
 -- Oracle has no native Boolean type, so Boolean is emulated as

@@ -92,8 +92,8 @@ tests:
   # Addon description
   - ctl: [ext, tweak.inet]
 
-  # Use the `type` database to get `other{inet}`
-  - load: type
+  # Use the `edge` database to get `other{inet}`
+  - load: edge
     extensions:
       tweak.inet: {}
 
@@ -194,7 +194,7 @@ tests:
     expect: 400
 
   # Describe columns of the `type` database
-  - load: type
+  - load: edge
     extensions:
       tweak.meta: {}
   - uri: /meta(/column.sort(table.name, field.sort))

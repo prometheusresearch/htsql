@@ -27,11 +27,11 @@ tests:
     ignore: true
   - connect: *connect-admin
     sql: |
-        DROP DATABASE `htsql_type`;
+        DROP DATABASE `htsql_edge`;
     ignore: true
   - connect: *connect-admin
     sql: |
-        DROP USER `htsql_type`;
+        DROP USER `htsql_edge`;
     ignore: true
   - connect: *connect-admin
     sql: |
@@ -64,23 +64,23 @@ tests:
     sql-include: test/sql/demo-mysql.sql
   - db: *connect-demo
   - py-include: test/sql/demo-load.py
-  # Create the `type` database
+  # Create the `edge` database
   - connect: *connect-admin
     sql: |
-        CREATE DATABASE `htsql_type`
+        CREATE DATABASE `htsql_edge`
             CHARACTER SET utf8 COLLATE utf8_general_ci;
-        CREATE USER `htsql_type`
+        CREATE USER `htsql_edge`
             IDENTIFIED BY 'secret';
         GRANT ALL PRIVILEGES
-            ON `htsql_type`.* TO `htsql_type`;
-  - connect: &connect-type
+            ON `htsql_edge`.* TO `htsql_edge`;
+  - connect: &connect-edge
       engine: mysql
-      database: htsql_type
-      username: htsql_type
+      database: htsql_edge
+      username: htsql_edge
       password: secret
       host: ${MYSQL_HOST}
       port: ${MYSQL_PORT}
-    sql-include: test/sql/type-mysql.sql
+    sql-include: test/sql/edge-mysql.sql
   # Create the `sandbox` database
   - connect: *connect-admin
     sql: |
@@ -106,8 +106,8 @@ tests:
   - define: mysql
   - db: *connect-sandbox
     save: sandbox
-  - db: *connect-type
-    save: type
+  - db: *connect-edge
+    save: edge
   - db: *connect-demo
     save: demo
   # The Regression Schema
