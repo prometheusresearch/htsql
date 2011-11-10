@@ -40,7 +40,7 @@ class OracleDumpScalar(Dump):
     adapts(ScalarFrame)
 
     def __call__(self):
-        self.write("DUAL")
+        self.write(u"DUAL")
 
 
 class OracleDumpBranch(DumpBranch):
@@ -49,21 +49,21 @@ class OracleDumpBranch(DumpBranch):
         if not self.frame.group:
             return
         self.newline()
-        self.write("GROUP BY ")
+        self.write(u"GROUP BY ")
         for index, phrase in enumerate(self.frame.group):
             self.format("{kernel}", kernel=phrase)
             if index < len(self.frame.group)-1:
-                self.write(", ")
+                self.write(u", ")
 
     def dump_order(self):
         if not self.frame.order:
             return
         self.newline()
-        self.format("ORDER BY ")
+        self.write(u"ORDER BY ")
         for index, (phrase, direction) in enumerate(self.frame.order):
             if phrase in self.frame.select:
                 position = self.frame.select.index(phrase)+1
-                self.write(str(position))
+                self.write(unicode(position))
             else:
                 self.format("{kernel}", kernel=phrase)
             self.format(" {direction:switch{ASC|DESC}}", direction=direction)
@@ -71,7 +71,7 @@ class OracleDumpBranch(DumpBranch):
                 self.format(" NULLS {direction:switch{FIRST|LAST}}",
                             direction=direction)
             if index < len(self.frame.order)-1:
-                self.write(", ")
+                self.write(u", ")
 
     def dump_limit(self):
         assert self.frame.limit is None
@@ -105,15 +105,15 @@ class OracleDumpAnchor(DumpAnchor):
                 alias = None
         self.newline()
         if self.clause.is_cross:
-            self.write("CROSS JOIN ")
+            self.write(u"CROSS JOIN ")
         elif self.clause.is_inner:
-            self.write("INNER JOIN ")
+            self.write(u"INNER JOIN ")
         elif self.clause.is_left and not self.clause.is_right:
-            self.write("LEFT OUTER JOIN ")
+            self.write(u"LEFT OUTER JOIN ")
         elif self.clause.is_right and not self.clause.is_left:
-            self.write("RIGHT OUTER JOIN ")
+            self.write(u"RIGHT OUTER JOIN ")
         else:
-            self.write("FULL OUTER JOIN ")
+            self.write(u"FULL OUTER JOIN ")
         self.indent()
         self.state.push_hook(with_aliases=True)
         if alias is not None:
@@ -150,18 +150,18 @@ class OracleDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:
-            self.write("1")
+            self.write(u"1")
         if self.value is False:
-            self.write("0")
+            self.write(u"0")
 
 
 class OracleDumpInteger(DumpInteger):
 
     def __call__(self):
         if self.value >= 0:
-            self.write(str(self.value))
+            self.write(unicode(self.value))
         else:
-            self.write("(%s)" % self.value)
+            self.write(u"(%s)" % self.value)
 
 
 class OracleDumpFloat(DumpFloat):
@@ -169,9 +169,9 @@ class OracleDumpFloat(DumpFloat):
     def __call__(self):
         assert str(self.value) not in ['inf', '-inf', 'nan']
         if self.value >= 0.0:
-            self.write("%rD" % self.value)
+            self.write(u"%rD" % self.value)
         else:
-            self.write("(%rD)" % self.value)
+            self.write(u"(%rD)" % self.value)
 
 
 class OracleDumpTime(DumpTime):
@@ -300,7 +300,7 @@ class OracleDumpRowNumber(DumpBySignature):
     adapts(RowNumSig)
 
     def __call__(self):
-        self.write("ROWNUM")
+        self.write(u"ROWNUM")
 
 
 class OracleDumpLength(DumpLength):

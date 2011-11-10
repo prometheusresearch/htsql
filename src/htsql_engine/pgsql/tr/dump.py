@@ -26,12 +26,12 @@ from htsql.tr.fn.dump import (DumpLike, DumpDateIncrement,
 class PGSQLFormatLiteral(FormatLiteral):
 
     def __call__(self):
-        value = self.value.encode('utf-8').replace("'", "''")
-        if "\\" in value:
-            value = value.replace("\\", "\\\\")
-            self.stream.write("E'%s'" % value)
+        value = self.value.replace(u"'", u"''")
+        if u"\\" in value:
+            value = value.replace(u"\\", u"\\\\")
+            self.stream.write(u"E'%s'" % value)
         else:
-            self.stream.write("'%s'" % value)
+            self.stream.write(u"'%s'" % value)
 
 
 class PGSQLDumpBranch(DumpBranch):
@@ -40,11 +40,11 @@ class PGSQLDumpBranch(DumpBranch):
         if not self.frame.order:
             return
         self.newline()
-        self.format("ORDER BY ")
+        self.write(u"ORDER BY ")
         for index, (phrase, direction) in enumerate(self.frame.order):
             if phrase in self.frame.select:
                 position = self.frame.select.index(phrase)+1
-                self.write(str(position))
+                self.write(unicode(position))
             else:
                 self.format("{kernel}", kernel=phrase)
             self.format(" {direction:switch{ASC|DESC}}", direction=direction)
@@ -52,25 +52,25 @@ class PGSQLDumpBranch(DumpBranch):
                 self.format(" NULLS {direction:switch{FIRST|LAST}}",
                             direction=direction)
             if index < len(self.frame.order)-1:
-                self.write(", ")
+                self.write(u", ")
 
 
 class PGSQLDumpFloat(DumpFloat):
 
     def __call__(self):
         if self.value >= 0.0:
-            self.write("%s::FLOAT8" % repr(self.value))
+            self.write(u"%s::FLOAT8" % repr(self.value))
         else:
-            self.write("'%s'::FLOAT8" % repr(self.value))
+            self.write(u"'%s'::FLOAT8" % repr(self.value))
 
 
 class PGSQLDumpDecimal(DumpDecimal):
 
     def __call__(self):
         if not self.value.is_signed():
-            self.write("%s::NUMERIC" % self.value)
+            self.write(u"%s::NUMERIC" % self.value)
         else:
-            self.write("'%s'::NUMERIC" % self.value)
+            self.write(u"'%s'::NUMERIC" % self.value)
 
 
 class PGSQLDumpDate(DumpDate):

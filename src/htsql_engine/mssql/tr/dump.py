@@ -40,17 +40,17 @@ from .signature import RowNumberSig
 class MSSQLFormatName(FormatName):
 
     def __call__(self):
-        self.stream.write("[%s]" % self.value.replace("]", "]]"))
+        self.stream.write(u"[%s]" % self.value.replace(u"]", u"]]"))
 
 
 class MSSQLDumpBranch(DumpBranch):
 
     def dump_select(self):
         aliases = self.state.select_aliases_by_tag[self.frame.tag]
-        self.write("SELECT ")
+        self.write(u"SELECT ")
         self.indent()
         if self.frame.limit is not None:
-            self.write("TOP "+str(self.frame.limit))
+            self.write(u"TOP "+unicode(self.frame.limit))
             self.newline()
         for index, phrase in enumerate(self.frame.select):
             alias = None
@@ -71,7 +71,7 @@ class MSSQLDumpBranch(DumpBranch):
                 self.format("{selection}",
                             selection=phrase)
             if index < len(self.frame.select)-1:
-                self.write(",")
+                self.write(u",")
                 self.newline()
         self.dedent()
 
@@ -79,11 +79,11 @@ class MSSQLDumpBranch(DumpBranch):
         if not self.frame.group:
             return
         self.newline()
-        self.write("GROUP BY ")
+        self.write(u"GROUP BY ")
         for index, phrase in enumerate(self.frame.group):
             self.format("{kernel}", kernel=phrase)
             if index < len(self.frame.group)-1:
-                self.write(", ")
+                self.write(u", ")
 
     def dump_limit(self):
         assert self.frame.offset is None
@@ -128,9 +128,9 @@ class MSSQLDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is True:
-            self.write("1")
+            self.write(u"1")
         if self.value is False:
-            self.write("0")
+            self.write(u"0")
 
 
 class MSSQLDumpInteger(DumpInteger):
@@ -141,11 +141,11 @@ class MSSQLDumpInteger(DumpInteger):
                                  self.phrase.mark)
         if abs(self.value) < 2**31:
             if self.value >= 0:
-                self.write(str(self.value))
+                self.write(unicode(self.value))
             else:
-                self.write("(%s)" % self.value)
+                self.write(u"(%s)" % self.value)
         else:
-            self.write("CAST(%s AS BIGINT)" % self.value)
+            self.write(u"CAST(%s AS BIGINT)" % self.value)
 
 
 class MSSQLDumpFloat(DumpFloat):
@@ -157,7 +157,7 @@ class MSSQLDumpFloat(DumpFloat):
             value = value+'e0'
         if value[0] == '-':
             value = "(%s)" % value
-        self.write(value)
+        self.write(unicode(value))
 
 
 class MSSQLDumpDecimal(DumpDecimal):
@@ -171,7 +171,7 @@ class MSSQLDumpDecimal(DumpDecimal):
             value = "%s." % value
         if value[0] == '-':
             value = "(%s)" % value
-        self.write(value)
+        self.write(unicode(value))
 
 
 class MSSQLDumpDate(DumpDate):
@@ -189,7 +189,7 @@ class MSSQLDumpTime(DumpTime):
         value = repr(value)
         if 'e' not in value and 'E' not in value:
             value = value+'e0'
-        self.write(value)
+        self.write(unicode(value))
 
 
 class MSSQLDumpDateTime(DumpDateTime):
@@ -357,7 +357,7 @@ class MSSQLDumpRoundTo(DumpRoundTo):
         if scale is not None:
             self.format("CAST(ROUND({op}, {precision})"
                         " AS DECIMAL(38,{scale:pass}))",
-                        self.arguments, self.signature, scale=str(scale))
+                        self.arguments, self.signature, scale=unicode(scale))
         else:
             self.format("ROUND({op}, {precision})",
                         self.arguments, self.signature)
@@ -391,7 +391,7 @@ class MSSQLDumpTruncTo(DumpTruncTo):
                         " CAST(POWER(10e0, {precision}) AS DECIMAL(38,19)),"
                         " {precision})"
                         " AS DECIMAL(38,{scale:pass}))",
-                        self.arguments, self.signature, scale=str(scale))
+                        self.arguments, self.signature, scale=unicode(scale))
         else:
             self.format("ROUND({op} -"
                         " (CASE WHEN {op} >= 0 THEN 0.5 ELSE -0.5 END) /"

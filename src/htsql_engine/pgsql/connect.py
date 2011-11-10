@@ -12,7 +12,9 @@ This module implements the connection adapter for PostgreSQL.
 """
 
 
-from htsql.connect import Connect, DBError, NormalizeError
+from htsql.adapter import adapts
+from htsql.domain import StringDomain
+from htsql.connect import Connect, DBError, NormalizeError, Normalize
 from htsql.context import context
 import psycopg2, psycopg2.extensions
 
@@ -43,6 +45,16 @@ class ConnectPGSQL(Connect):
             parameters['password'] = db.password
         connection = psycopg2.connect(**parameters)
 
+        # All queries are UTF-8 encoded strings regardless of the database
+        # encoding.
+        connection.set_client_encoding('UTF8')
+
+        # Make TEXT values return as `unicode` objects.
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE,
+                                          connection)
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY,
+                                          connection)
+
         # Enable autocommit.
         if self.with_autocommit:
             connection.set_isolation_level(
@@ -62,5 +74,16 @@ class NormalizePGSQLError(NormalizeError):
 
         # Otherwise, let the superclass return `None`.
         return super(NormalizePGSQLError, self).__call__()
+
+
+class NormalizePGSQLString(Normalize):
+
+    adapts(StringDomain)
+
+    @staticmethod
+    def convert(value):
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+        return value
 
 

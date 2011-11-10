@@ -26,9 +26,10 @@ import fnmatch
 
 class IntrospectPGSQL(Introspect):
 
-    system_schema_names = ['pg_*', 'information_schema']
+    system_schema_names = [u'pg_*', u'information_schema']
     system_table_names = []
-    system_column_names = ['tableoid', 'cmax', 'xmax', 'cmin', 'xmin', 'ctid']
+    system_column_names = [u'tableoid', u'cmax', u'xmax',
+                           u'cmin', u'xmin', u'ctid']
 
     def __call__(self):
         connection = connect()
@@ -137,7 +138,7 @@ class IntrospectPGSQL(Introspect):
             if (isinstance(domain, PGOpaqueDomain) and typrow.typtype == 'e'
                                         and typrow.oid in enumrows_by_typid):
                 enumrows = enumrows_by_typid[typrow.oid]
-                labels = [enumrow.enumlabel.decode('utf-8')
+                labels = [enumrow.enumlabel
                           for enumrow in enumrows]
                 domain = PGEnumDomain(typrow.nspname, typrow.typname,
                                       labels=labels)
@@ -187,7 +188,7 @@ class IntrospectPGSQLDomain(Protocol):
 
     @classmethod
     def dispatch(component, schema_name, name, *args, **kwds):
-        return (schema_name, name)
+        return (schema_name.encode('utf-8'), name.encode('utf-8'))
 
     @classmethod
     def matches(component, dispatch_key):

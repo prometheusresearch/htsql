@@ -29,14 +29,14 @@ class OracleDomain(Domain):
 
     def __init__(self, name, **attributes):
         # Sanity check on the arguments.
-        assert isinstance(name, str)
+        assert isinstance(name, unicode)
 
         # Pass the attributes to the concrete domain constructor.
         super(OracleDomain, self).__init__(**attributes)
         self.name = name
 
     def __str__(self):
-        return self.name
+        return self.name.encode('utf-8')
 
     def __eq__(self, other):
         # The generic domain comparison checks if the types of the domains

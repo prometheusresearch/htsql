@@ -37,11 +37,11 @@ class SQLiteDumpBoolean(DumpBoolean):
 
     def __call__(self):
         if self.value is None:
-            self.write("NULL")
+            self.write(u"NULL")
         if self.value is True:
-            self.format("1")
+            self.write(u"1")
         if self.value is False:
-            self.format("0")
+            self.write(u"0")
 
 
 class SQLiteDumpDecimal(DumpDecimal):
@@ -134,11 +134,11 @@ class SQLiteDumpRoundTo(DumpRoundTo):
             scale = self.phrase.precision.value
             if scale >= 0:
                 self.format("ROUND({op}, {scale:pass})",
-                            self.arguments, scale=str(scale))
+                            self.arguments, scale=unicode(scale))
             else:
                 power = 10**(-scale)
                 self.format("(ROUND({op} / {power:pass}.0) * {power:pass}.0)",
-                            self.arguments, power=str(power))
+                            self.arguments, power=unicode(power))
         else:
             self.format("(ROUND({op} * POWER(10, {precision}))"
                         " / POWER(10, {precision}))",

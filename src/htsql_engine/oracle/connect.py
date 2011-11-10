@@ -46,6 +46,8 @@ class ConnectOracle(Connect):
         if defaultType == cx_Oracle.NUMBER:
             return cursor.var(str, 100, cursor.arraysize,
                               outconverter=cls.outconverter)
+        if defaultType in (cx_Oracle.STRING, cx_Oracle.FIXED_CHAR):
+            return cursor.var(unicode, size, cursor.arraysize)
 
     def open(self):
         db = context.app.htsql.db

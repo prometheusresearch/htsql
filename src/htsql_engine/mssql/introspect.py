@@ -25,7 +25,7 @@ import fnmatch
 
 class IntrospectMSSQL(Introspect):
 
-    system_schema_names = ['guest', 'INFORMATION_SCHEMA', 'sys', 'db_*']
+    system_schema_names = [u'guest', u'INFORMATION_SCHEMA', u'sys', u'db_*']
 
     def __call__(self):
         connection = connect()
@@ -43,7 +43,7 @@ class IntrospectMSSQL(Introspect):
             if any(fnmatch.fnmatchcase(row.name, pattern)
                    for pattern in self.system_schema_names):
                 continue
-            schema = catalog.add_schema(row.name.encode('utf-8'))
+            schema = catalog.add_schema(row.name)
             schema_by_id[row.schema_id] = schema
 
         cursor.execute("""
@@ -51,7 +51,7 @@ class IntrospectMSSQL(Introspect):
             FROM sys.database_principals
             WHERE principal_id = USER_ID()
         """)
-        default_schema_name = cursor.fetchone()[0].encode('utf-8')
+        default_schema_name = cursor.fetchone()[0]
         if default_schema_name in catalog.schemas:
             catalog.schemas[default_schema_name].set_priority(1)
 
@@ -66,7 +66,7 @@ class IntrospectMSSQL(Introspect):
             if row.schema_id not in schema_by_id:
                 continue
             schema = schema_by_id[row.schema_id]
-            table = schema.add_table(row.name.encode('utf-8'))
+            table = schema.add_table(row.name)
             table_by_id[row.object_id] = table
 
         column_by_id = {}
@@ -83,9 +83,9 @@ class IntrospectMSSQL(Introspect):
             if row.object_id not in table_by_id:
                 continue
             table = table_by_id[row.object_id]
-            name = row.name.encode('utf-8')
-            type_schema_name = row.type_schema_name.encode('utf-8')
-            type_name = row.type_name.encode('utf-8')
+            name = row.name
+            type_schema_name = row.type_schema_name
+            type_name = row.type_name
             length = row.max_length if row.max_length != -1 else None
             precision = row.precision
             scale = row.scale
@@ -186,7 +186,7 @@ class IntrospectMSSQLDomain(Protocol):
 
     @classmethod
     def dispatch(component, schema_name, type_name, *args, **kwds):
-        return (schema_name, type_name)
+        return (schema_name.encode('utf-8'), type_name.encode('utf-8'))
 
     @classmethod
     def matches(component, dispatch_key):

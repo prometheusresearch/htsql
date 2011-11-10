@@ -33,17 +33,16 @@ from htsql.tr.fn.dump import (DumpTrunc, DumpTruncTo,
 class MySQLFormatName(FormatName):
 
     def __call__(self):
-        self.stream.write("`%s`" % self.value.replace("`", "``"))
+        self.stream.write(u"`%s`" % self.value.replace(u"`", u"``"))
 
 
 class MySQLFormatLiteral(FormatLiteral):
 
     def __call__(self):
-        self.stream.write("'%s'" % self.value.encode('utf-8')
-                                             .replace("\\", r"\\")
-                                             .replace("'", r"\'")
-                                             .replace("\n", r"\n")
-                                             .replace("\r", r"\r"))
+        self.stream.write(u"'%s'" % self.value.replace(u"\\", ur"\\")
+                                              .replace(u"'", ur"\'")
+                                              .replace(u"\n", ur"\n")
+                                              .replace(u"\r", ur"\r"))
 
 
 class MySQLDumpFloat(DumpFloat):
@@ -55,7 +54,7 @@ class MySQLDumpFloat(DumpFloat):
             value = value+'e0'
         if value[0] == "-":
             value = "(%s)" % value
-        self.write(value)
+        self.write(unicode(value))
 
 
 class MySQLDumpDecimal(DumpDecimal):
@@ -69,7 +68,7 @@ class MySQLDumpDecimal(DumpDecimal):
             value = "%s." % value
         if value[0] == "-":
             value = "(%s)" % value
-        self.write(value)
+        self.write(unicode(value))
 
 
 class MySQLDumpDate(DumpDate):

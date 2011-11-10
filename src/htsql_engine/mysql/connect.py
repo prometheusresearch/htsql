@@ -46,7 +46,7 @@ class ConnectMySQL(Connect):
             parameters['user'] = db.username
         if db.password is not None:
             parameters['passwd'] = db.password
-        parameters['use_unicode'] = False
+        parameters['use_unicode'] = True
         parameters['charset'] = 'utf8'
         parameters['cursorclass'] = Cursor
         connection = MySQLdb.connect(**parameters)

@@ -20,7 +20,7 @@ def normalize(name):
     """
     Normalizes a name to provide a valid HTSQL identifier.
 
-    We assume `name` is a valid UTF-8 string.  Then it is:
+    We assume `name` is a Unicode string.  Then it is:
 
     - translated to Unicode normal form C;
     - converted to lowercase;
@@ -29,8 +29,7 @@ def normalize(name):
 
     The result is a valid HTSQL identifier.
     """
-    assert isinstance(name, str) and len(name) > 0
-    name = name.decode('utf-8')
+    assert isinstance(name, unicode) and len(name) > 0
     name = unicodedata.normalize('NFC', name).lower()
     name = re.sub(ur"(?u)^(?=\d)|\W", u"_", name)
     return name

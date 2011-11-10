@@ -194,6 +194,10 @@ class IntrospectOracle(Introspect):
 
 class IntrospectOracleDomain(Protocol):
 
+    @classmethod
+    def dispatch(self, data_type, *args, **kwds):
+        return data_type.encode('utf-8')
+
     def __init__(self, data_type, length, precision, scale, check):
         self.data_type = data_type
         self.length = length

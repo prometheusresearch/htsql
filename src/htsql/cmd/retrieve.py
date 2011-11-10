@@ -95,7 +95,7 @@ class ProduceRetrieve(Act):
                 connect = Connect()
                 connection = connect()
                 cursor = connection.cursor()
-                cursor.execute(plan.sql)
+                cursor.execute(plan.sql.encode('utf-8'))
                 records = []
                 for row in cursor:
                     values = []
@@ -159,7 +159,7 @@ class RenderSQL(Act):
         headers = [('Content-Type', 'text/plain; charset=UTF-8')]
         body = []
         if plan.sql:
-            body = [plan.sql]
+            body = [plan.sql.encode('utf-8')]
         return (status, headers, body)
 
 

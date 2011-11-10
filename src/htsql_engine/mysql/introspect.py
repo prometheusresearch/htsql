@@ -25,7 +25,7 @@ import itertools
 
 class IntrospectMySQL(Introspect):
 
-    system_schema_names = ['mysql', 'information_schema']
+    system_schema_names = [u'mysql', u'information_schema']
 
     def __call__(self):
         connection = connect()
@@ -163,6 +163,10 @@ class IntrospectMySQL(Introspect):
 
 class IntrospectMySQLDomain(Protocol):
 
+    @classmethod
+    def dispatch(component, data_type, *args, **kwds):
+        return data_type.encode('utf-8')
+
     def __init__(self, data_type, column_type, length, precision, scale):
         self.data_type = data_type
         self.column_type = column_type
@@ -201,7 +205,7 @@ class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):
     def __call__(self):
         column_type = self.column_type
         if column_type.startswith('enum(') and column_type.endswith(')'):
-            labels = [item[1:-1].decode('utf-8')
+            labels = [item[1:-1]
                       for item in column_type[5:-1].split(',')]
             return MySQLEnumDomain(self.data_type, labels=labels)
         return super(IntrospectMySQLEnumDomain, self).__call__()
