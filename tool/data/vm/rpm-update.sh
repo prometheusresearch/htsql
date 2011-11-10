@@ -10,3 +10,4 @@ echo "rpm-vm" >/etc/hostname
 yum -qy install rpmdevtools
 yum -qy install python-setuptools
 yum -qy install PyYAML
+yum -qy install python-devel

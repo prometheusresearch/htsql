@@ -90,7 +90,7 @@ class Packager(object):
         log("  %s/`%s`" % (self.build_path, self.build_file))
         log()
 
-class DebianPackager(Packager):
+class DEB_Packager(Packager):
 
     def __init__(self):
         Packager.__init__(self, deb_vm)
@@ -118,11 +118,43 @@ class DebianPackager(Packager):
 def pkg_deb():
     """create a debian package
 
-    This job creates combined debian combined source & binary package.
+    This job creates combined source & binary package.
+
     You must also append a release note to tool/data/pkg/debian/changelog
     that matches the current release version.  Debian's pre-release naming
     convention is different than Python's since it requires a tilde 
     before the b1, rc1, etc.
     """
-    packager = DebianPackager()
+    packager = DEB_Packager()
+    packager()
+
+class RPM_Packager(Packager):
+
+    def __init__(self):
+        Packager.__init__(self, rpm_vm)
+        self.distribution = 'el6'
+        self.build_file = "HTSQL-%s-1.%s.noarch.rpm" % \
+                             (self.upstream_version, self.distribution)
+        self.vm.write("/root/.rpmmacros", (
+            "%_signature gpg\n"
+            "%_gpg_name build@htsql.org\n"
+            "%_gpg_path $HOME/.gnupg\n"))
+        
+    def package(self):
+        self.vm.put(DATA_ROOT+"/pkg/rpmbuild", "rpmbuild")
+        self.vm.run("mkdir -p rpmbuild/{BUILD,RPMS,S{OURCE,PEC,RPM}S}")
+        self.vm.run("mv %s rpmbuild/SOURCES" % self.archive)
+        self.vm.run("rpmbuild -bb rpmbuild/SPECS/HTSQL.spec")
+        self.vm.run("mv rpmbuild/RPMS/noarch/%s ~" % self.build_file)
+        #self.vm.run("rpmsign --addsign %s" % self.build_file)
+        self.vm.run("rpm -i %s" % self.build_file)
+
+               
+@job
+def pkg_rpm():
+    """create a redhat package
+
+    This job creates combined source & binary package.
+    """
+    packager = RPM_Packager()
     packager()
