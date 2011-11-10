@@ -135,14 +135,12 @@ class RPM_Packager(Packager):
         self.distribution = 'el6'
         self.build_file = "HTSQL-%s-1.%s.noarch.rpm" % \
                              (self.upstream_version, self.distribution)
-        self.vm.write("/root/.rpmmacros", (
-            "%_signature gpg\n"
-            "%_gpg_name build@htsql.org\n"
-            "%_gpg_path $HOME/.gnupg\n"))
         
     def package(self):
-        self.vm.put(DATA_ROOT+"/pkg/rpmbuild", "rpmbuild")
         self.vm.run("mkdir -p rpmbuild/{BUILD,RPMS,S{OURCE,PEC,RPM}S}")
+        self.vm.put(DATA_ROOT+"/pkg/redhat", "redhat")
+        self.vm.run("cp redhat/.rpmmacros ~ ")
+        self.vm.run("mv redhat/HTSQL.spec rpmbuild/SPECS")
         self.vm.run("mv %s rpmbuild/SOURCES" % self.archive)
         self.vm.run("rpmbuild -bb rpmbuild/SPECS/HTSQL.spec")
         self.vm.run("mv rpmbuild/RPMS/noarch/%s ~" % self.build_file)
