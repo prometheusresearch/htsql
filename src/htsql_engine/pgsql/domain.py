@@ -23,17 +23,17 @@ class PGDomain(Domain):
 
     This is an abstract mixin class; see subclasses for concrete data types.
 
-    `schema_name` (a string)
+    `schema_name` (a Unicode string)
         The name of the type schema.
 
-    `name` (a string)
+    `name` (a Unicode string)
         The name of the type.
     """
 
     def __init__(self, schema_name, name, **attributes):
         # Sanity check on the arguments.
-        assert isinstance(schema_name, str)
-        assert isinstance(name, str)
+        assert isinstance(schema_name, unicode)
+        assert isinstance(name, unicode)
 
         # Pass the attributes to the concrete domain constructor.
         super(PGDomain, self).__init__(**attributes)
@@ -41,7 +41,8 @@ class PGDomain(Domain):
         self.name = name
 
     def __str__(self):
-        return "%s.%s" % (self.schema_name, self.name)
+        return "%s.%s" % (self.schema_name.encode('utf-8'),
+                          self.name.encode('utf-8'))
 
     def __eq__(self, other):
         # The generic domain comparison checks if the types of the domains

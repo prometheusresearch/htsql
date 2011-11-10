@@ -212,7 +212,7 @@ class TextRenderer(Renderer):
         yield "\n"
         yield " ----\n"
         yield " %s\n" % request_title
-        for line in product.profile.plan.sql.splitlines():
+        for line in product.profile.plan.sql.encode('utf-8').splitlines():
             yield " %s\n" % line
 
 

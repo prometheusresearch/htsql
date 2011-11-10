@@ -317,7 +317,7 @@ class RenderEvaluate(Act):
         yield "}\n"
 
     def render_sql(self, plan):
-        sql = plan.sql
+        sql = plan.sql.encode('utf-8')
         if not sql:
             sql = ''
         yield "{\n"

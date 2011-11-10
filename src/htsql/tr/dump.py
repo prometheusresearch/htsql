@@ -64,11 +64,12 @@ class Stream(StringIO.StringIO, object):
         """
         Writes a string to the stream.
         """
+        # Expect a Unicode string.
+        assert isinstance(data, unicode)
         # Call `StringIO.write`, which performs the action.
         super(Stream, self).write(data)
         # Update the cursor position.  Note that we count
         # Unicode codepoints rather than bytes.
-        data = data.decode('utf-8')
         if u"\n" in data:
             self.column = len(data)-data.rindex(u"\n")-1
         else:
@@ -79,9 +80,9 @@ class Stream(StringIO.StringIO, object):
         Sets the cursor to the current indentation level.
         """
         if self.column <= self.indentation:
-            self.write(" "*(self.indentation-self.column))
+            self.write(u" "*(self.indentation-self.column))
         else:
-            self.write("\n"+" "*self.indentation)
+            self.write(u"\n"+u" "*self.indentation)
 
     def indent(self):
         """
@@ -416,8 +417,8 @@ class SerializeSegment(Serialize):
                     alias = name[:self.max_alias_length]
                     number = 1
                 else:
-                    cut = self.max_alias_length - len(str(number)) - 1
-                    alias = "%s_%s" % (name[:cut], number)
+                    cut = self.max_alias_length - len(unicode(number)) - 1
+                    alias = u"%s_%s" % (name[:cut], number)
                     number += 1
                 next_number_by_name[name] = number
                 # Check if the alias is already reserved.
@@ -505,13 +506,15 @@ class DumpBase(Adapter):
 
         The :class:`Format` protocol defines various conversion methods.
 
-        `template` (a string)
+        `template` (a (Unicode) string)
             A template string.
 
         `namespaces`, `keywords` (dictionaries)
             Dictionaries containing substitution variables.
         """
-        assert isinstance(template, str)
+        assert isinstance(template, (str, unicode))
+        if isinstance(template, str):
+            template = template.decode()
         # Aggregate variables from the given namespaces.  A namespace is
         # either a dictionary or an object with variables as attributes.
         variables = {}
@@ -536,16 +539,18 @@ class DumpBase(Adapter):
             #   }} -> }
             chunk = match.group('chunk')
             if chunk is not None:
-                chunk = chunk.replace("{{", "{").replace("}}", "}")
+                chunk = chunk.replace(u"{{", u"{").replace(u"}}", u"}")
                 self.stream.write(chunk)
             # It must be variable substitution then.  Extract the value
             # of the variable and realize a `Format` instance to perform
             # the substitution.
             else:
-                name = match.group('name')
+                name = match.group('name').encode()
                 kind = match.group('kind')
                 if kind is None:
                     kind = 'default'
+                else:
+                    kind = kind.encode()
                 modifier = match.group('modifier')
                 assert name in variables, name
                 value = variables[name]
@@ -660,10 +665,10 @@ class FormatUnion(Format):
 
     def __init__(self, kind, value, modifier, state):
         assert isinstance(value, listof(Clause)) and len(value) > 0
-        assert isinstance(modifier, maybe(str))
+        assert isinstance(modifier, maybe(unicode))
         # The default separator is `', '`.
         if modifier is None:
-            modifier = ", "
+            modifier = u", "
         super(FormatUnion, self).__init__(kind, value, modifier, state)
 
     def __call__(self):
@@ -690,13 +695,12 @@ class FormatName(Format):
     named('name')
 
     def __init__(self, kind, value, modifier, state):
-        assert isinstance(value, str)
+        assert isinstance(value, unicode)
         assert modifier is None
         # This is the last place where we could prevent an injection attack,
         # so check that the string is well-formed.
-        assert "\0" not in value
+        assert u"\0" not in value
         assert len(value) > 0
-        value.decode('utf-8')
         super(FormatName, self).__init__(kind, value, modifier, state)
 
     def __call__(self):
@@ -704,7 +708,7 @@ class FormatName(Format):
         # - an identifier is enclosed by `"`;
         # - any `"` character must be replaced with `""`.
         # A backend with non-standard quoting rules must override this method.
-        self.stream.write("\"%s\"" % self.value.replace("\"", "\"\""))
+        self.stream.write(u"\"%s\"" % self.value.replace(u"\"", u"\"\""))
 
 
 class FormatLiteral(Format):
@@ -734,8 +738,7 @@ class FormatLiteral(Format):
         # - any `'` character must be replaced with `''`.
         # We also assume the backend accepts UTF-8 encoded strings.
         # A backend with non-standard quoting rules must override this method.
-        value = self.value.encode('utf-8')
-        self.stream.write("'%s'" % value.replace("'", "''"))
+        self.stream.write(u"'%s'" % self.value.replace(u"'", u"''"))
 
 
 class FormatNot(Format):
@@ -764,7 +767,7 @@ class FormatNot(Format):
         #   polarity=+1 => ""
         #   polarity=-1 => "NOT "
         if self.value < 0:
-            self.stream.write("NOT ")
+            self.stream.write(u"NOT ")
 
 
 class FormatSwitch(Format):
@@ -785,14 +788,14 @@ class FormatSwitch(Format):
 
     def __init__(self, kind, value, modifier, state):
         assert value in [+1, -1]
-        assert isinstance(modifier, str) and modifier.count("|")
+        assert isinstance(modifier, unicode) and modifier.count(u"|")
         super(FormatSwitch, self).__init__(kind, value, modifier, state)
 
     def __call__(self):
         # For `{polarity:switch{P|N}}`, dump
         #   polarity=+1 => P
         #   polarity=-1 => N
-        positive, negative = self.modifier.split("|")
+        positive, negative = self.modifier.split(u"|")
         if self.value > 0:
             self.stream.write(positive)
         else:
@@ -813,7 +816,7 @@ class FormatPass(Format):
     named('pass')
 
     def __init__(self, kind, value, modifier, state):
-        assert isinstance(value, str)
+        assert isinstance(value, unicode)
         assert modifier is None
         super(FormatPass, self).__init__(kind, value, modifier, state)
 
@@ -844,7 +847,7 @@ class Dub(Adapter):
     def __call__(self):
         # The adapter must never fail, so the default implementation
         # provides a valid, though meaningless, alias name.
-        return "!"
+        return u"!"
 
 
 class Dump(DumpBase):
@@ -920,13 +923,13 @@ class DubPhrase(Dub):
         syntax = self.clause.syntax
         # For an identifier node, take the identifier name.
         if isinstance(syntax, IdentifierSyntax):
-            return syntax.value.encode('utf-8')
+            return syntax.value
         # For a function call node, take the function name.
         if isinstance(syntax, ApplicationSyntax):
-            return syntax.name.encode('utf-8')
+            return syntax.name
         # For a literal node, take the value of the literal.
         if isinstance(syntax, LiteralSyntax):
-            return syntax.value.encode('utf-8')
+            return syntax.value
         # Otherwise, use the default alias.
         return super(DubPhrase, self).__call__()
 
@@ -1012,7 +1015,7 @@ class DumpBranch(Dump):
         aliases = self.state.select_aliases_by_tag[self.frame.tag]
         # Write `SELECT` and set the indentation level to the position
         # after `SELECT`.
-        self.write("SELECT ")
+        self.write(u"SELECT ")
         self.indent()
         # Serialize the selection phrases.
         for index, phrase in enumerate(self.frame.select):
@@ -1046,7 +1049,7 @@ class DumpBranch(Dump):
                             selection=phrase)
             # Write the trailing comma.
             if index < len(self.frame.select)-1:
-                self.write(",")
+                self.write(u",")
                 self.newline()
         # Restore the original indentation level.
         self.dedent()
@@ -1062,7 +1065,7 @@ class DumpBranch(Dump):
             return
         # Write `FROM` and set the indentation level to the next position.
         self.newline()
-        self.write("FROM ")
+        self.write(u"FROM ")
         self.indent()
         # Serialize the subframes.
         for index, anchor in enumerate(self.frame.include):
@@ -1084,13 +1087,13 @@ class DumpBranch(Dump):
         self.newline()
         # Handle the case when the condition is an `AND` operator.
         if isformula(self.frame.where, AndSig):
-            self.write("WHERE ")
+            self.write(u"WHERE ")
             self.indent()
             for index, op in enumerate(self.frame.where.ops):
                 self.format("{op}", op=op)
                 if index < len(self.frame.where.ops)-1:
                     self.newline()
-                    self.write("AND ")
+                    self.write(u"AND ")
             self.dedent()
         # Handle the regular case.
         else:
@@ -1105,7 +1108,7 @@ class DumpBranch(Dump):
         if not self.frame.group:
             return
         self.newline()
-        self.write("GROUP BY ")
+        self.write(u"GROUP BY ")
         # Write the `GROUP BY` items.
         for index, phrase in enumerate(self.frame.group):
             # SQL syntax allows us to refer to a `SELECT` column in
@@ -1114,13 +1117,13 @@ class DumpBranch(Dump):
             # serializing the same phrase twice.
             if phrase in self.frame.select:
                 position = self.frame.select.index(phrase)+1
-                self.write(str(position))
+                self.write(unicode(position))
             # Otherwise, just serialize the phrase.
             else:
                 self.format("{kernel}", kernel=phrase)
             # Dump the trailing comma.
             if index < len(self.frame.group)-1:
-                self.write(", ")
+                self.write(u", ")
 
     def dump_having(self):
         # Serialize a `HAVING` clause.  Dump:
@@ -1139,13 +1142,13 @@ class DumpBranch(Dump):
         self.newline()
         # Handle the case when the condition is an `AND` operator.
         if isformula(self.frame.having, AndSig):
-            self.write("HAVING ")
+            self.write(u"HAVING ")
             self.indent()
             for index, op in enumerate(self.frame.having.ops):
                 self.format("{op}", op=op)
                 if index < len(self.frame.having.ops)-1:
                     self.newline()
-                    self.write("AND ")
+                    self.write(u"AND ")
             self.dedent()
         # Handle the regular case.
         else:
@@ -1164,7 +1167,7 @@ class DumpBranch(Dump):
         if not self.frame.order:
             return
         self.newline()
-        self.format("ORDER BY ")
+        self.write(u"ORDER BY ")
         # Write the `GROUP BY` items.
         for index, (phrase, direction) in enumerate(self.frame.order):
             # Just as with `GROUP BY`, an `ORDER BY` item could refer
@@ -1172,7 +1175,7 @@ class DumpBranch(Dump):
             # to avoid serializing the same phrase node twice.
             if phrase in self.frame.select:
                 position = self.frame.select.index(phrase)+1
-                self.write(str(position))
+                self.write(unicode(position))
             # The regular case: serialize the node.
             else:
                 self.format("{kernel}", kernel=phrase)
@@ -1180,7 +1183,7 @@ class DumpBranch(Dump):
             self.format(" {direction:switch{ASC|DESC}}", direction=direction)
             # Write the trailing comma.
             if index < len(self.frame.order)-1:
-                self.write(", ")
+                self.write(u", ")
 
     def dump_limit(self):
         # Serialize `LIMIT` and `OFFSET` clauses.  Dump:
@@ -1196,11 +1199,11 @@ class DumpBranch(Dump):
         # Dump a `LIMIT` clause.
         if self.frame.limit is not None:
             self.newline()
-            self.format("LIMIT "+str(self.frame.limit))
+            self.write(u"LIMIT "+unicode(self.frame.limit))
         # Dump an `OFFSET` clause.
         if self.frame.offset is not None:
             self.newline()
-            self.format("OFFSET "+str(self.frame.offset))
+            self.write(u"OFFSET "+unicode(self.frame.offset))
 
 
 class DumpNested(Dump):
@@ -1214,11 +1217,11 @@ class DumpNested(Dump):
         # Dump:
         #   (SELECT ...
         #    ...)
-        self.format("(")
+        self.write(u"(")
         self.indent()
         super(DumpNested, self).__call__()
         self.dedent()
-        self.format(")")
+        self.write(u")")
 
 
 class DumpSegment(Dump):
@@ -1281,15 +1284,15 @@ class DumpAnchor(Dump):
         # Dump the `JOIN` clause.
         self.newline()
         if self.clause.is_cross:
-            self.write("CROSS JOIN ")
+            self.write(u"CROSS JOIN ")
         elif self.clause.is_inner:
-            self.write("INNER JOIN ")
+            self.write(u"INNER JOIN ")
         elif self.clause.is_left and not self.clause.is_right:
-            self.write("LEFT OUTER JOIN ")
+            self.write(u"LEFT OUTER JOIN ")
         elif self.clause.is_right and not self.clause.is_left:
-            self.write("RIGHT OUTER JOIN ")
+            self.write(u"RIGHT OUTER JOIN ")
         else:
-            self.write("FULL OUTER JOIN ")
+            self.write(u"FULL OUTER JOIN ")
         self.indent()
         self.state.push_hook(with_aliases=True)
         if alias is not None:
@@ -1420,7 +1423,7 @@ class DumpNull(Dump):
         # `NULL` in every implementation of `DumpByDomain`.
         # FIXME: This assumes that we never need to add an explicit type
         # specifier to a `NULL` value.
-        self.write("NULL")
+        self.write(u"NULL")
 
 
 class DumpByDomain(DumpBase):
@@ -1474,9 +1477,9 @@ class DumpBoolean(DumpByDomain):
         # Use the SQL standard constants: `TRUE` and `FALSE`.
         # Backends not supporting those must override this implementation.
         if self.value is True:
-            self.write("TRUE")
+            self.write(u"TRUE")
         if self.value is False:
-            self.write("FALSE")
+            self.write(u"FALSE")
 
 
 class DumpInteger(DumpByDomain):
@@ -1497,9 +1500,9 @@ class DumpInteger(DumpByDomain):
                                  self.phrase.mark)
         # Write the number; use `(...)` around a negative number.
         if self.value >= 0:
-            self.write(str(self.value))
+            self.write(unicode(self.value))
         else:
-            self.write("(%s)" % self.value)
+            self.write(u"(%s)" % self.value)
 
 
 class DumpFloat(DumpByDomain):
@@ -1521,9 +1524,9 @@ class DumpFloat(DumpByDomain):
         # the database could figure out its type from the context; use `(...)`
         # around a negative number.
         if self.value >= 0.0:
-            self.write(repr(self.value))
+            self.write(u"%r" % self.value)
         else:
-            self.write("(%r)" % self.value)
+            self.write(u"(%r)" % self.value)
 
 
 class DumpDecimal(DumpByDomain):
@@ -1544,9 +1547,9 @@ class DumpDecimal(DumpByDomain):
         # the database could figure out its type from the context; use `(...)`
         # around a negative number.
         if not self.value.is_signed():
-            self.write(str(self.value))
+            self.write(unicode(self.value))
         else:
-            self.write("(%s)" % self.value)
+            self.write(u"(%s)" % self.value)
 
 
 class DumpString(DumpByDomain):
@@ -1972,7 +1975,7 @@ class DumpCompare(DumpBySignature):
         # Dump:
         #   (<lop> (<|<=|>|>=) <rop>)
         self.format("({lop} {relation:pass} {rop})",
-                    self.arguments, self.signature)
+                    self.arguments, relation=unicode(self.signature.relation))
 
 
 class DumpToPredicate(DumpBySignature):

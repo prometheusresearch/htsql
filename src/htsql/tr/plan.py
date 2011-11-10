@@ -20,7 +20,7 @@ class Plan(Printable):
     """
     Represents a SQL execution plan.
 
-    `sql` (a string or ``None``)
+    `sql` (a Unicode string or ``None``)
         The SQL statement to execute.
 
     `frame` (:class:`htsql.tr.frame.QueryFrame`)
@@ -28,7 +28,7 @@ class Plan(Printable):
     """
 
     def __init__(self, sql, frame):
-        assert isinstance(sql, maybe(str))
+        assert isinstance(sql, maybe(unicode))
         assert isinstance(frame, QueryFrame)
         self.sql = sql
         self.frame = frame
@@ -39,7 +39,10 @@ class Plan(Printable):
         self.syntax = frame.syntax
         self.mark = frame.mark
 
+    def __unicode__(self):
+        return (u"<%s>" % self.sql if self.sql is not None else u"<>")
+
     def __str__(self):
-        return ("<%s>" % self.sql if self.sql is not None else "<>")
+        return unicode(self).encode('utf-8')
 
 

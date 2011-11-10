@@ -68,7 +68,7 @@ class AttributeProbe(Probe):
         assert arity is None or arity >= 0
         self.name = name
         self.arity = arity
-        self.key = normalize(name.encode('utf-8'))
+        self.key = normalize(name)
 
     def __str__(self):
         # Display:
@@ -101,7 +101,7 @@ class ReferenceProbe(Probe):
     def __init__(self, name):
         assert isinstance(name, unicode)
         self.name = name
-        self.key = normalize(name.encode('utf-8'))
+        self.key = normalize(name)
 
     def __str__(self):
         # Display:
@@ -687,7 +687,7 @@ class LookupAttributeInDefinition(Lookup):
         # Check if the definition matches the probe.
         if not self.binding.is_reference:
             if self.binding.arity == self.probe.arity:
-                binding_key = normalize(self.binding.name.encode('utf-8'))
+                binding_key = normalize(self.binding.name)
                 if binding_key == self.probe.key:
                     # If it matches, produce the associated recipe.
                     return self.binding.recipe
@@ -703,7 +703,7 @@ class LookupReferenceInDefinition(Lookup):
     def __call__(self):
         # Check if the definition matches the probe.
         if self.binding.is_reference:
-            binding_key = normalize(self.binding.name.encode('utf-8'))
+            binding_key = normalize(self.binding.name)
             if binding_key == self.probe.key:
                 # If it matches, produce the associated recipe.
                 return self.binding.recipe

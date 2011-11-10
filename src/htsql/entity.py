@@ -29,6 +29,12 @@ class Entity(Printable):
     def freeze(self):
         pass
 
+    def __unicode__(self):
+        return u"[%s]" % id(self)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
 
 class MutableEntity(Entity):
 
@@ -42,18 +48,21 @@ class MutableEntity(Entity):
 class NamedEntity(Entity):
 
     def __init__(self, owner, name):
-        assert isinstance(name, str)
+        assert isinstance(name, unicode)
         super(NamedEntity, self).__init__(owner)
         self.name = name
 
-    def __str__(self):
+    def __unicode__(self):
         if self.name:
             return self.name
         else:
-            return "<default>"
+            return u"<default>"
 
 
 class RemovedEntity(Printable):
+
+    def __unicode__(self):
+        return u"<removed>"
 
     def __str__(self):
         return "<removed>"
@@ -95,8 +104,11 @@ class EntitySet(Printable):
     def items(self):
         return [(entity.name, entity) for entity in self.entities]
 
+    def __unicode__(self):
+        return u"[%s]" % u", ".join(entity.name for entity in self.entities)
+
     def __str__(self):
-        return "[%s]" % ", ".join(entity.name for entity in self.entities)
+        return unicode(self).encode('utf-8')
 
 
 class MutableEntitySet(EntitySet):
@@ -194,10 +206,10 @@ class TableEntity(NamedEntity):
     def schema(self):
         return self.owner()
 
-    def __str__(self):
+    def __unicode__(self):
         if not self.schema.name:
             return self.name
-        return "%s.%s" % (self.schema, self.name)
+        return u"%s.%s" % (self.schema, self.name)
 
 
 class MutableTableEntity(TableEntity, MutableEntity):
@@ -275,8 +287,8 @@ class ColumnEntity(NamedEntity, MutableEntity):
                 for foreign_key in self.table.referring_foreign_keys
                 if self in foreign_key.target_columns]
 
-    def __str__(self):
-        return "%s.%s" % (self.table, self.name)
+    def __unicode__(self):
+        return u"%s.%s" % (self.table, self.name)
 
 
 class MutableColumnEntity(ColumnEntity, MutableEntity):
@@ -332,10 +344,10 @@ class UniqueKeyEntity(Entity):
     def origin(self):
         return self.owner()
 
-    def __str__(self):
-        return "%s(%s)" % (self.origin,
-                           ",".join(column.name
-                                    for column in self.origin_columns))
+    def __unicode__(self):
+        return u"%s(%s)" % (self.origin,
+                            u",".join(column.name
+                                      for column in self.origin_columns))
 
 
 class MutableUniqueKeyEntity(UniqueKeyEntity, MutableEntity):
@@ -403,12 +415,12 @@ class ForeignKeyEntity(Entity):
     def target(self):
         return self.coowner()
 
-    def __str__(self):
-        return ("%s(%s) -> %s(%s)"
+    def __unicode__(self):
+        return (u"%s(%s) -> %s(%s)"
                 % (self.origin,
-                   ",".join(column.name for column in self.origin_columns),
+                   u",".join(column.name for column in self.origin_columns),
                    self.target,
-                   ",".join(column.name for column in self.target_columns)))
+                   u",".join(column.name for column in self.target_columns)))
 
 
 class MutableForeignKeyEntity(ForeignKeyEntity, MutableEntity):
@@ -509,10 +521,13 @@ class Join(Printable, Comparable):
     def reverse(self):
         raise NotImplementedError()
 
-    def __str__(self):
+    def __unicode__(self):
         # Generate a string of the form:
         #   schema.table -> schema.table
-        return "%s -> %s" % (self.origin, self.target)
+        return u"%s -> %s" % (self.origin, self.target)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
 
 class DirectJoin(Join):

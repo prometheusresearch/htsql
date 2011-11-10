@@ -49,7 +49,6 @@ class ConnectSQLite(Connect):
         self.create_functions(connection)
         if self.with_autocommit:
             connection.isolation_level = None
-        connection.text_factory = str
         return connection
 
     def create_functions(self, connection):
@@ -92,10 +91,8 @@ class NormalizeSQLiteString(Normalize):
     def convert(value):
         if value is None:
             return None
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
         if not isinstance(value, str):
-            value = str(value)
+            value = value.encode('utf-8')
         return value
 
 

@@ -103,7 +103,7 @@ class BuildMetaDatabase(Utility):
             labels = relabel(arc)
             assert len(labels) > 0
             label = labels[0]
-            name = label.name.encode('utf-8')
+            name = label.name
             cursor.execute("""
                 INSERT INTO "table" (name)
                 VALUES (?)
@@ -127,11 +127,11 @@ class BuildMetaDatabase(Utility):
                 table_arcs.append(arc)
                 duplicates.add(arc)
 
-            table_name = relabel(TableArc(origin.table))[0].name.encode('utf-8')
+            table_name = relabel(TableArc(origin.table))[0].name
             last_sort = 0
             for arc in table_arcs:
                 label = relabel(arc)[0]
-                name = label.name.encode('utf-8')
+                name = label.name
                 kind = None
                 if isinstance(arc, ColumnArc):
                     kind = 'column'
@@ -157,7 +157,7 @@ class BuildMetaDatabase(Utility):
                     is_singular = arc.is_contracting
                     target_arc = TableArc(arc.target.table)
                     target_label = relabel(target_arc)[0]
-                    target_table_name = target_label.name.encode('utf-8')
+                    target_table_name = target_label.name
                     cursor.execute("""
                         INSERT INTO "link" (table_name, name, is_singular,
                                             target_table_name)
@@ -166,7 +166,7 @@ class BuildMetaDatabase(Utility):
                           target_table_name])
                     reverse_labels = relabel(arc.reverse())
                     if reverse_labels:
-                        reverse_name = reverse_labels[0].name.encode('utf-8')
+                        reverse_name = reverse_labels[0].name
                         reverse_names.append((table_name, name, reverse_name))
 
         for table_name, name, reverse_name in reverse_names:
@@ -180,7 +180,6 @@ class BuildMetaDatabase(Utility):
 @once
 def build_meta():
     connection = sqlite3.connect(':memory:', check_same_thread=False)
-    connection.text_factory = str
     build_meta = BuildMetaDatabase(connection)
     build_meta()
     connection.commit()
