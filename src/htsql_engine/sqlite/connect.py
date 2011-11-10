@@ -91,8 +91,10 @@ class NormalizeSQLiteString(Normalize):
     def convert(value):
         if value is None:
             return None
-        if not isinstance(value, str):
-            value = value.encode('utf-8')
+        if isinstance(value, str):
+            value = value.decode('utf-8')
+        if not isinstance(value, unicode):
+            value = unicode(value)
         return value
 
 

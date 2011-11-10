@@ -498,7 +498,7 @@ class GetPostBaseCmd(Cmd):
         chain = NodeChain(routine.state.app)
         chain.push(HomeNode())
         for identifier in identifiers:
-            identifier = normalize(identifier)
+            identifier = normalize(identifier.decode('utf-8'))
             chain_copy = chain.clone()
             while chain:
                 label = chain.label(identifier)

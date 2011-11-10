@@ -78,8 +78,8 @@ class NormalizeMSSQLString(Normalize):
 
     @staticmethod
     def convert(value):
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
+        if isinstance(value, str):
+            value = value.decode('utf-8')
         return value
 
 

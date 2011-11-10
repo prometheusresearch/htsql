@@ -60,7 +60,8 @@ class TextRenderer(Renderer):
         return [('Content-Type', 'text/plain; charset=UTF-8')]
 
     def calculate_header_layout(self, segment):
-        headers = [guess_title(element) for element in segment.elements]
+        headers = [[header.encode('utf-8') for header in guess_title(element)]
+                   for element in segment.elements]
         layouts = []
         height = max(len(header) for header in headers)
         width = len(segment.elements)
@@ -352,7 +353,6 @@ class FormatString(Format):
     def measure(self, value):
         if value is None:
             return 0
-        value = value.decode('utf-8')
         value = self.escape_string(value)
         if len(value) <= self.threshold:
             return len(value)
@@ -378,10 +378,9 @@ class FormatString(Format):
         return max_length
 
     def __call__(self, value, width):
-        assert isinstance(value, maybe(str))
+        assert isinstance(value, maybe(unicode))
         if value is None:
             return self.format_null(width)
-        value = value.decode('utf-8')
         value = self.escape_string(value)
         if len(value) <= width:
             line = u"%*s" % (-width, value)
@@ -433,15 +432,13 @@ class FormatEnum(Format):
     def measure(self, value):
         if value is None:
             return 0
-        value = value.decode('utf-8')
         value = self.escape_string(value)
         return len(value)
 
     def __call__(self, value, width):
-        assert isinstance(value, maybe(str))
+        assert isinstance(value, maybe(unicode))
         if value is None:
             return self.format_null(width)
-        value = value.decode('utf-8')
         value = self.escape_string(value)
         line = u"%*s" % (-width, value)
         return [line.encode('utf-8')]

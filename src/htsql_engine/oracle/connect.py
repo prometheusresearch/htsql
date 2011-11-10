@@ -119,8 +119,8 @@ class NormalizeOracleString(Normalize):
             except cx_Oracle.Error, exc:
                 message = str(exc)
                 raise OracleError(message, exc)
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
+        if isinstance(value, str):
+            value = value.decode('utf-8')
         return value
 
 

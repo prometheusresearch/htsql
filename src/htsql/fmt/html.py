@@ -125,8 +125,9 @@ class HTMLRenderer(Renderer):
 
     def serialize_content(self, product):
         segment = product.profile.binding.segment
-        caption = entitle(segment)
-        headers = [guess_title(element) for element in segment.elements]
+        caption = entitle(segment).encode('utf-8')
+        headers = [[header.encode('utf-8') for header in guess_title(element)]
+                   for element in segment.elements]
         height = max(len(header) for header in headers)
         width = len(segment.elements)
         domains = [element.domain for element in segment.elements]
@@ -255,6 +256,7 @@ class FormatString(Format):
     def __call__(self, value):
         if value is None:
             return self.format_null()
+        value = value.encode('utf-8')
         if value == "":
             return "&nbsp;"
         return cgi.escape(value)
@@ -267,6 +269,7 @@ class FormatEnum(Format):
     def __call__(self, value):
         if value is None:
             return self.format_null()
+        value = value.encode('utf-8')
         return cgi.escape(value)
 
 

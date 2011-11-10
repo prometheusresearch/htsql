@@ -83,8 +83,8 @@ class NormalizeMySQLString(Normalize):
 
     @staticmethod
     def convert(value):
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
+        if isinstance(value, str):
+            value = value.decode('utf-8')
         return value
 
 
@@ -93,8 +93,8 @@ class NormalizeMySQLEnum(Normalize):
     adapts(EnumDomain)
 
     def convert(self, value):
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
+        if isinstance(value, str):
+            value = value.decode('utf-8')
         if value not in self.domain.labels:
             value = None
         return value

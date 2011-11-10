@@ -13,7 +13,7 @@ This module implements the connection adapter for PostgreSQL.
 
 
 from htsql.adapter import adapts
-from htsql.domain import StringDomain
+from htsql.domain import StringDomain, EnumDomain
 from htsql.connect import Connect, DBError, NormalizeError, Normalize
 from htsql.context import context
 import psycopg2, psycopg2.extensions
@@ -82,8 +82,19 @@ class NormalizePGSQLString(Normalize):
 
     @staticmethod
     def convert(value):
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
+        if isinstance(value, str):
+            value = value.decode('utf-8')
+        return value
+
+
+class NormalizePGSQLEnum(Normalize):
+
+    adapts(EnumDomain)
+
+    @staticmethod
+    def convert(value):
+        if isinstance(value, str):
+            value = value.decode('utf-8')
         return value
 
 

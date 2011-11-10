@@ -201,7 +201,7 @@ class RenderComplete(Act):
         labels_by_node[node] = labels
         names_by_node[node] = dict((label.name, label) for label in labels)
         for identifier in identifiers:
-            identifier = normalize(identifier.encode('utf-8'))
+            identifier = normalize(identifier)
             nodes_copy = nodes[:]
             while nodes:
                 node = nodes[-1]
@@ -283,10 +283,10 @@ class RenderEvaluate(Act):
         last_column = 'null'
         if isinstance(exc, TranslateError) and exc.mark.input:
             mark = exc.mark
-            first_break = mark.input.rfind('\n', 0, mark.start)+1
-            last_break = mark.input.rfind('\n', 0, mark.end)+1
-            first_line = mark.input.count('\n', 0, first_break)
-            last_line = mark.input.count('\n', 0, last_break)
+            first_break = mark.input.rfind(u'\n', 0, mark.start)+1
+            last_break = mark.input.rfind(u'\n', 0, mark.end)+1
+            first_line = mark.input.count(u'\n', 0, first_break)
+            last_line = mark.input.count(u'\n', 0, last_break)
             first_column = mark.start-first_break
             last_column = mark.end-last_break
         yield "{\n"
@@ -335,7 +335,8 @@ class RenderEvaluate(Act):
 
     def make_head(self, product):
         rows = []
-        headers = [guess_title(element.binding)
+        headers = [[header.encode('utf-8')
+                    for header in guess_title(element.binding)]
                    for element in product.profile.segment.elements]
         height = max(len(header) for header in headers)
         width = len(product.profile.segment.elements)

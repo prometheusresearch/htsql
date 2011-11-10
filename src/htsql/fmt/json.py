@@ -41,7 +41,7 @@ class JSONRenderer(Renderer):
     def generate_headers(self, product):
         filename = None
         if product:
-            filename = entitle(product.profile.binding.segment)
+            filename = entitle(product.profile.binding.segment).encode('utf-8')
         if not filename:
             filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
@@ -53,7 +53,7 @@ class JSONRenderer(Renderer):
         if not product:
             yield "{}\n"
             return
-        titles = [escape(entitle(element.binding))
+        titles = [escape(entitle(element.binding).encode('utf-8'))
                   for element in product.profile.segment.elements]
         domains = [element.domain
                    for element in product.profile.segment.elements]
@@ -147,7 +147,7 @@ class FormatString(Format):
     def __call__(self, value):
         if value is None:
             return "null"
-        return escape(value)
+        return escape(value.encode('utf-8'))
 
 
 class FormatEnum(Format):
@@ -157,7 +157,7 @@ class FormatEnum(Format):
     def __call__(self, value):
         if value is None:
             return "null"
-        return escape(value)
+        return escape(value.encode('utf-8'))
 
 
 class FormatDate(Format):

@@ -17,11 +17,11 @@ def entitle(binding, with_strong=True, with_weak=True):
     if headers:
         return headers[-1]
     else:
-        return ""
+        return u""
 
 
 def guess_title(binding):
     from ..tr.lookup import guess_title
-    return [title.encode('utf-8') for title in guess_title(binding)]
+    return [title for title in guess_title(binding)]
 
 
