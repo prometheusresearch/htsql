@@ -12,9 +12,58 @@ This module declares HTSQL addons.
 """
 
 
+from __future__ import with_statement
 from .util import maybe, trim_doc
 from .validator import Validator
 import re
+import threading
+import pkg_resources
+
+
+class GlobalAddonRegistry(object):
+
+    global_state = {}
+
+    def __init__(self):
+        self.__dict__ = self.global_state
+        if self.global_state:
+            return
+        self.entry_by_name = None
+        self.lock = threading.Lock()
+
+    def refresh(self):
+        if self.entry_by_name is None:
+            with self.lock:
+                if self.entry_by_name is not None:
+                    return
+                self.entry_by_name = {}
+                for entry in pkg_resources.iter_entry_points('htsql.addons'):
+                    if entry.name in self.entry_by_name:
+                        continue
+                    self.entry_by_name[entry.name] = entry
+
+    def __iter__(self):
+        self.refresh()
+        return iter(sorted(self.entry_by_name))
+
+    def __contains__(self, name):
+        self.refresh()
+        return (name in self.entry_by_name)
+
+    def load(self, name):
+        self.refresh()
+        if name not in self.entry_by_name:
+            raise ImportError("unknown addon %r" % name)
+        entry = self.entry_by_name[name]
+        addon_class = entry.load()
+        if not (isinstance(addon_class, type) and
+                issubclass(addon_class, Addon) and
+                addon_class.name == name):
+            raise ImportError("invalid addon %r" % name)
+        return addon_class
+
+
+addon_registry = GlobalAddonRegistry()
 
 
 class Parameter(object):

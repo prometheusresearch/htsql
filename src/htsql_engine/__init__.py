@@ -12,7 +12,7 @@ This package contains adapters for various database engines.
 """
 
 
-from htsql.addon import Addon
+from htsql.addon import Addon, addon_registry
 
 
 class EngineAddon(Addon):
@@ -27,6 +27,9 @@ class EngineAddon(Addon):
     @classmethod
     def get_extension(cls, app, attributes):
         if app.htsql.db is not None:
-            return 'engine.%s' % app.htsql.db.engine
+            name = '%s.%s' % (cls.name, app.htsql.db.engine)
+            if name not in addon_registry:
+                raise ImportError("unknown engine %r" % app.htsql.db.engine)
+            return name
 
 

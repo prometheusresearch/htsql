@@ -15,7 +15,7 @@ This module implements the `extension` routine.
 from .error import ScriptError
 from .routine import Routine, Argument
 from htsql.validator import StrVal
-from htsql.addon import Addon
+from htsql.addon import addon_registry
 import pkg_resources
 
 
@@ -46,14 +46,10 @@ class ExtensionRoutine(Routine):
         entry_points = list(pkg_resources.iter_entry_points('htsql.addons'))
         entry_points.sort(key=(lambda e: e.name))
         self.ctl.out("Available extensions:")
-        for entry_point in entry_points:
+        for name in addon_registry:
             try:
-                addon_class = entry_point.load()
+                addon_class = addon_registry.load(name)
             except Exception:
-                addon_class = None
-            if not (isinstance(addon_class, type) and
-                    issubclass(addon_class, Addon) and
-                    addon_class.name == entry_point.name):
                 addon_class = None
             self.ctl.out("  ", end="")
             if addon_class is not None:
@@ -64,27 +60,17 @@ class ExtensionRoutine(Routine):
                 else:
                     self.ctl.out(name)
             else:
-                self.ctl.out("%-24s : [BROKEN]" % entry_point.name)
+                self.ctl.out("%-24s : [BROKEN]" % name)
         self.ctl.out()
 
     def describe_extension(self):
-        entry_points = list(pkg_resources.iter_entry_points('htsql.addons',
-                                                            self.addon))
-        if not entry_points:
+        if self.addon not in addon_registry:
             raise ScriptError("unknown extension %s" % self.addon)
-        if len(entry_points) > 1:
-            raise ScriptError("multiple implementations of extension %s"
-                              % self.addon)
-        [entry_point] = entry_points
         try:
-            addon_class = entry_point.load()
+            addon_class = addon_registry.load(self.addon)
         except Exception, exc:
             raise ScriptError("failed to load extension %s: %s"
                               % (self.addon, exc))
-        if not (isinstance(addon_class, type) and
-                issubclass(addon_class, Addon) and
-                addon_class.name == entry_point.name):
-            raise ScriptError("failed to load extension %s" % self.addon)
         hint = addon_class.get_hint()
         if hint is not None:
             self.ctl.out(addon_class.name.upper(), "-", hint)

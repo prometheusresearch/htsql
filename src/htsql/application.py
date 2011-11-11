@@ -14,11 +14,10 @@ This module implements an HTSQL application.
 
 from __future__ import with_statement
 from .context import context
-from .addon import Addon
+from .addon import addon_registry
 from .adapter import ComponentRegistry
 from .util import maybe, oneof, listof, dictof, tupleof
 from .wsgi import WSGI
-import pkg_resources
 
 
 class Application(object):
@@ -71,21 +70,7 @@ class Application(object):
                         if key not in configuration[addon_name]:
                             configuration[addon_name][key] = value
                     if addon_name not in addon_class_by_name:
-                        entry_points = list(pkg_resources.iter_entry_points(
-                                                'htsql.addons', addon_name))
-                        if len(entry_points) == 0:
-                            raise ImportError("unknown entry point %r"
-                                              % addon_name)
-                        elif len(entry_points) > 1:
-                            raise ImportError("ambiguous entry point %r"
-                                              % addon_name)
-                        [entry_point] = entry_points
-                        addon_class = entry_point.load()
-                        if not (isinstance(addon_class, type) and
-                                issubclass(addon_class, Addon) and
-                                addon_class.name == addon_name):
-                            raise ImportError("invalid entry point %r"
-                                              % addon_name)
+                        addon_class = addon_registry.load(addon_name)
                         addon_class_by_name[addon_name] = addon_class
                         prerequisites = addon_class.get_prerequisites()
                         postrequisites = addon_class.get_postrequisites()
