@@ -94,65 +94,65 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                      |
-             +------------------------------------------------------------------------------+
-             | school_code | code     | title                            | degree | part_of |
-            -+-------------+----------+----------------------------------+--------+---------+-
-             | art         | gart     | Post Baccalaureate in Art        | pb     |         |
-             :             :          : History                          :        :         :
-             | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |
-             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
-             | bus         | gecon    | Master of Arts in Economics      | ma     |         |
-             | bus         | pacc     | Graduate Certificate in          | ct     |         |
-             :             :          : Accounting                       :        :         :
-             | bus         | pbusad   | Certificate in Business          | ct     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uacct    | B.S. in Accounting               | bs     |         |
-             | bus         | ubusad   | Bachelor of Business             | bs     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |
-             | edu         | gedlead  | Master of Arts in Education      | ma     |         |
-             :             :          : Leadership                       :        :         :
-             | edu         | gedu     | M.S. in Education                | ms     |         |
-             | edu         | glited   | Master of Arts in Literacy       | ma     |         |
-             :             :          : Education                        :        :         :
-             | edu         | gtch     | Master of Arts in Teaching       | ma     |         |
-             | edu         | psci     | Certificate in Science Teaching  | ct     |         |
-             | edu         | umath    | Bachelor of Arts in Math         | ba     |         |
-             :             :          : Education                        :        :         :
-             | edu         | usci     | Bachelor of Arts in Science      | ba     |         |
-             :             :          : Education                        :        :         :
-             | eng         | gbe      | M.S. in Bioengineering           | ms     |         |
-             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-             | la          | gengl    | Master of Arts in English        | ma     |         |
-             | la          | glang    | Master of Arts in Modern         | ma     |         |
-             :             :          : Languages                        :        :         :
-             | la          | gscitch  | Master of Arts in Science        | ma     |         |
-             :             :          : Teaching                         :        :         :
-             | la          | psciwri  | Science Writing                  | ct     |         |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | pmth     | Doctorate of Science in          | ph     |         |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-             | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | ph          | phd      | Honorary PhD                     |        |         |
-                                                                                    (40 rows)
+             | program                                                                           |
+             +-----------------------------------------------------------------------------------+
+             | school_code | code     | title                            | degree | part_of_code |
+            -+-------------+----------+----------------------------------+--------+--------------+-
+             | art         | gart     | Post Baccalaureate in Art        | pb     |              |
+             :             :          : History                          :        :              :
+             | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
+             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
+             | bus         | gecon    | Master of Arts in Economics      | ma     |              |
+             | bus         | pacc     | Graduate Certificate in          | ct     |              |
+             :             :          : Accounting                       :        :              :
+             | bus         | pbusad   | Certificate in Business          | ct     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uacct    | B.S. in Accounting               | bs     |              |
+             | bus         | ubusad   | Bachelor of Business             | bs     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
+             | edu         | gedlead  | Master of Arts in Education      | ma     |              |
+             :             :          : Leadership                       :        :              :
+             | edu         | gedu     | M.S. in Education                | ms     |              |
+             | edu         | glited   | Master of Arts in Literacy       | ma     |              |
+             :             :          : Education                        :        :              :
+             | edu         | gtch     | Master of Arts in Teaching       | ma     |              |
+             | edu         | psci     | Certificate in Science Teaching  | ct     |              |
+             | edu         | umath    | Bachelor of Arts in Math         | ba     |              |
+             :             :          : Education                        :        :              :
+             | edu         | usci     | Bachelor of Arts in Science      | ba     |              |
+             :             :          : Education                        :        :              :
+             | eng         | gbe      | M.S. in Bioengineering           | ms     |              |
+             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
+             | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
+             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+             | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | pmth     | Doctorate of Science in          | ph     |              |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+             | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+             | ph          | phd      | Honorary PhD                     |        |              |
+                                                                                         (40 rows)
 
              ----
              /program.limit(50)
@@ -160,7 +160,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."program"
              ORDER BY 1 ASC, 2 ASC
              LIMIT 50
@@ -928,65 +928,65 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | classification                                                                                            |
-             +-----------------------------------------------------------------------------------------------------------+
-             | code        | type       | title                         | description                      | part_of     |
-            -+-------------+------------+-------------------------------+----------------------------------+-------------+-
-             | abnormpsych | department | Abnormal Psychology           |                                  | psychology  |
-             | accounting  | school     | Accounting                    |                                  | business    |
-             | algebra     | department | Algebra                       |                                  | math        |
-             | amhistory   | department | American History              |                                  | history     |
-             | ampolitics  | department | American Politics             |                                  | polisci     |
-             | analysis    | department | Mathematical Analysis         |                                  | math        |
-             | anclanguage | department | Ancient Languages             |                                  | language    |
-             | artdesign   | university | Art and Design                |                                  |             |
-             | arthistory  | school     | Art                           |                                  | humanities  |
-             | arttheory   | department | Visual Art Theory             |                                  | visual      |
-             | astrolab    | department | Astronomy Laboratory          |                                  | astronomy   |
-             | astronomy   | school     | Astronomy                     |                                  | science     |
-             | astrotheory | department | Astrophysics Theory           |                                  | astronomy   |
-             | be          | school     | Biological Engineering        |                                  | engineering |
-             | belab       | department | Bioengineering Practice       |                                  | be          |
-             | bioprocess  | department | Biological Processes          |                                  | be          |
-             | biopsych    | department | Biological Psychology         |                                  | psychology  |
-             | bmeng       | department | Biomedical Engineering        |                                  | be          |
-             | business    | university | Business                      |                                  |             |
-             | chemistry   | school     | Chemistry                     |                                  | science     |
-             | chemlab     | department | Chemistry Laboratory          |                                  | chemistry   |
-             | chemtheory  | department | Theoretical Chemistry         |                                  | chemistry   |
-             | comporg     | department | Computer Organization         |                                  | compsci     |
-             | compsci     | school     | Computer Science              |                                  | engineering |
-             | comptheory  | department | Computationial Theory         |                                  | compsci     |
-             | craft       | department | Arts and Crafts               |                                  | visual      |
-             | cross       |            | Cross-Cutting Requirements    |                                  |             |
-             | digital     | school     | Digital Media                 |                                  | artdesign   |
-             | dischistory | department | Interdisciplinary History     |                                  | history     |
-             | diversity   | university | Region and Ethnic Diversity   | Courses which provide a rich     | cross       |
-             :             :            :                               : exposure to foreign cultures and :             :
-             :             :            :                               : regions qualify for this         :             :
-             :             :            :                               : classification.                  :             :
-             | drawing     | department | Drawing                       |                                  | visual      |
-             | earlyed     | department | Early Education               |                                  | teached     |
-             | econ        | school     | Economics                     |                                  | business    |
-             | edpol       | school     | Educational Policy            |                                  | education   |
-             | edresearch  | department | Educational Research          |                                  | edpol       |
-             | edstudies   | department | Policy Studies                |                                  | edpol       |
-             | education   | university | Education                     |                                  |             |
-             | ee          | school     | Electrical Engineering        |                                  | engineering |
-             | eelab       | department | Electrical Engineering        |                                  | ee          |
-             :             :            : Laboratory                    :                                  :             :
-             | eetheory    | department | Electrical Engineering Theory |                                  | ee          |
-             | engineering | university | Engineering                   |                                  |             |
-             | englit      | department | English Language Literature   |                                  | literature  |
-             | euroart     | department | European Art                  |                                  | arthistory  |
-             | fiction     | department | Fiction Writing               |                                  | literature  |
-             | finance     | school     | Finance                       |                                  | business    |
-             | french      | department | French                        |                                  | modlanguage |
-             | genpsych    | department | Generic Psychology            |                                  | psychology  |
-             | geometry    | department | Geometry                      |                                  | math        |
-             | german      | department | German                        |                                  | modlanguage |
-             | histmethod  | department | Historical Method             |                                  | history     |
-                                                                                                                 (50 rows)
+             | classification                                                                                             |
+             +------------------------------------------------------------------------------------------------------------+
+             | code        | type       | title                         | description                      | part_of_code |
+            -+-------------+------------+-------------------------------+----------------------------------+--------------+-
+             | abnormpsych | department | Abnormal Psychology           |                                  | psychology   |
+             | accounting  | school     | Accounting                    |                                  | business     |
+             | algebra     | department | Algebra                       |                                  | math         |
+             | amhistory   | department | American History              |                                  | history      |
+             | ampolitics  | department | American Politics             |                                  | polisci      |
+             | analysis    | department | Mathematical Analysis         |                                  | math         |
+             | anclanguage | department | Ancient Languages             |                                  | language     |
+             | artdesign   | university | Art and Design                |                                  |              |
+             | arthistory  | school     | Art                           |                                  | humanities   |
+             | arttheory   | department | Visual Art Theory             |                                  | visual       |
+             | astrolab    | department | Astronomy Laboratory          |                                  | astronomy    |
+             | astronomy   | school     | Astronomy                     |                                  | science      |
+             | astrotheory | department | Astrophysics Theory           |                                  | astronomy    |
+             | be          | school     | Biological Engineering        |                                  | engineering  |
+             | belab       | department | Bioengineering Practice       |                                  | be           |
+             | bioprocess  | department | Biological Processes          |                                  | be           |
+             | biopsych    | department | Biological Psychology         |                                  | psychology   |
+             | bmeng       | department | Biomedical Engineering        |                                  | be           |
+             | business    | university | Business                      |                                  |              |
+             | chemistry   | school     | Chemistry                     |                                  | science      |
+             | chemlab     | department | Chemistry Laboratory          |                                  | chemistry    |
+             | chemtheory  | department | Theoretical Chemistry         |                                  | chemistry    |
+             | comporg     | department | Computer Organization         |                                  | compsci      |
+             | compsci     | school     | Computer Science              |                                  | engineering  |
+             | comptheory  | department | Computationial Theory         |                                  | compsci      |
+             | craft       | department | Arts and Crafts               |                                  | visual       |
+             | cross       |            | Cross-Cutting Requirements    |                                  |              |
+             | digital     | school     | Digital Media                 |                                  | artdesign    |
+             | dischistory | department | Interdisciplinary History     |                                  | history      |
+             | diversity   | university | Region and Ethnic Diversity   | Courses which provide a rich     | cross        |
+             :             :            :                               : exposure to foreign cultures and :              :
+             :             :            :                               : regions qualify for this         :              :
+             :             :            :                               : classification.                  :              :
+             | drawing     | department | Drawing                       |                                  | visual       |
+             | earlyed     | department | Early Education               |                                  | teached      |
+             | econ        | school     | Economics                     |                                  | business     |
+             | edpol       | school     | Educational Policy            |                                  | education    |
+             | edresearch  | department | Educational Research          |                                  | edpol        |
+             | edstudies   | department | Policy Studies                |                                  | edpol        |
+             | education   | university | Education                     |                                  |              |
+             | ee          | school     | Electrical Engineering        |                                  | engineering  |
+             | eelab       | department | Electrical Engineering        |                                  | ee           |
+             :             :            : Laboratory                    :                                  :              :
+             | eetheory    | department | Electrical Engineering Theory |                                  | ee           |
+             | engineering | university | Engineering                   |                                  |              |
+             | englit      | department | English Language Literature   |                                  | literature   |
+             | euroart     | department | European Art                  |                                  | arthistory   |
+             | fiction     | department | Fiction Writing               |                                  | literature   |
+             | finance     | school     | Finance                       |                                  | business     |
+             | french      | department | French                        |                                  | modlanguage  |
+             | genpsych    | department | Generic Psychology            |                                  | psychology   |
+             | geometry    | department | Geometry                      |                                  | math         |
+             | german      | department | German                        |                                  | modlanguage  |
+             | histmethod  | department | Historical Method             |                                  | history      |
+                                                                                                                  (50 rows)
 
              ----
              /classification.limit(50)
@@ -994,7 +994,7 @@ tests:
                     "classification"."type",
                     "classification"."title",
                     "classification"."description",
-                    "classification"."part_of"
+                    "classification"."part_of_code"
              FROM "rd"."classification"
              ORDER BY 1 ASC
              LIMIT 50
@@ -1331,15 +1331,15 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                    |
-             +----------------------------------------------------------------------------+
-             | school_code | code    | title                           | degree | part_of |
-            -+-------------+---------+---------------------------------+--------+---------+-
-             | art         | gart    | Post Baccalaureate in Art       | pb     |         |
-             :             :         : History                         :        :         :
-             | art         | uhist   | Bachelor of Arts in Art History | ba     |         |
-             | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |         |
-                                                                                   (3 rows)
+             | program                                                                         |
+             +---------------------------------------------------------------------------------+
+             | school_code | code    | title                           | degree | part_of_code |
+            -+-------------+---------+---------------------------------+--------+--------------+-
+             | art         | gart    | Post Baccalaureate in Art       | pb     |              |
+             :             :         : History                         :        :              :
+             | art         | uhist   | Bachelor of Arts in Art History | ba     |              |
+             | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |              |
+                                                                                        (3 rows)
 
              ----
              /(school?code='art').program
@@ -1347,7 +1347,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."school"
                   INNER JOIN "ad"."program"
                              ON ("school"."code" = "program"."school_code")
@@ -1518,29 +1518,37 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | part_of |
-            -+---------+-
-             | gengl   |
-                 (1 row)
+             | part_of                                                                 |
+             +-------------------------------------------------------------------------+
+             | school_code | code  | title                     | degree | part_of_code |
+            -+-------------+-------+---------------------------+--------+--------------+-
+             | la          | gengl | Master of Arts in English | ma     |              |
+                                                                                 (1 row)
 
              ----
              /(program?school_code='la'&code='uengl').part_of
-             SELECT "program"."part_of"
-             FROM "ad"."program"
-             WHERE ("program"."school_code" = 'la')
-                   AND ("program"."code" = 'uengl')
-             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+             SELECT "program_2"."school_code",
+                    "program_2"."code",
+                    "program_2"."title",
+                    "program_2"."degree",
+                    "program_2"."part_of_code"
+             FROM "ad"."program" AS "program_1"
+                  INNER JOIN "ad"."program" AS "program_2"
+                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of_code" = "program_2"."code"))
+             WHERE ("program_1"."school_code" = 'la')
+                   AND ("program_1"."code" = 'uengl')
+             ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
         - uri: /(program?school_code='la'&code='uengl').program
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                            |
-             +--------------------------------------------------------------------+
-             | school_code | code  | title                     | degree | part_of |
-            -+-------------+-------+---------------------------+--------+---------+-
-             | la          | gengl | Master of Arts in English | ma     |         |
-                                                                            (1 row)
+             | program                                                                 |
+             +-------------------------------------------------------------------------+
+             | school_code | code  | title                     | degree | part_of_code |
+            -+-------------+-------+---------------------------+--------+--------------+-
+             | la          | gengl | Master of Arts in English | ma     |              |
+                                                                                 (1 row)
 
              ----
              /(program?school_code='la'&code='uengl').program
@@ -1548,70 +1556,70 @@ tests:
                     "program_2"."code",
                     "program_2"."title",
                     "program_2"."degree",
-                    "program_2"."part_of"
+                    "program_2"."part_of_code"
              FROM "ad"."program" AS "program_1"
                   INNER JOIN "ad"."program" AS "program_2"
-                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of" = "program_2"."code"))
+                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of_code" = "program_2"."code"))
              WHERE ("program_1"."school_code" = 'la')
                    AND ("program_1"."code" = 'uengl')
              ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
-        - uri: /(program?school_code='la'&code='uengl') .({school_code,part_of} ->
-            program{school_code,code})
+        - uri: /(program?school_code='la'&code='uengl') .({school_code,part_of_code}
+            -> program{school_code,code})
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                            |
-             +--------------------------------------------------------------------+
-             | school_code | code  | title                     | degree | part_of |
-            -+-------------+-------+---------------------------+--------+---------+-
-             | la          | gengl | Master of Arts in English | ma     |         |
-                                                                            (1 row)
+             | program                                                                 |
+             +-------------------------------------------------------------------------+
+             | school_code | code  | title                     | degree | part_of_code |
+            -+-------------+-------+---------------------------+--------+--------------+-
+             | la          | gengl | Master of Arts in English | ma     |              |
+                                                                                 (1 row)
 
              ----
-             /(program?school_code='la'&code='uengl').({school_code,part_of}->program{school_code,code})
+             /(program?school_code='la'&code='uengl').({school_code,part_of_code}->program{school_code,code})
              SELECT "program_2"."school_code",
                     "program_2"."code",
                     "program_2"."title",
                     "program_2"."degree",
-                    "program_2"."part_of"
+                    "program_2"."part_of_code"
              FROM "ad"."program" AS "program_1"
                   INNER JOIN (SELECT "program"."school_code",
                                      "program"."code",
                                      "program"."title",
                                      "program"."degree",
-                                     "program"."part_of"
+                                     "program"."part_of_code"
                               FROM "ad"."program") AS "program_2"
-                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of" = "program_2"."code"))
+                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of_code" = "program_2"."code"))
              WHERE ("program_1"."school_code" = 'la')
                    AND ("program_1"."code" = 'uengl')
              ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC, 1 ASC, 2 ASC
-        - uri: /(program?school_code='la'&code='uengl') .({school_code,code} -> program{school_code,part_of})
+        - uri: /(program?school_code='la'&code='uengl') .({school_code,code} -> program{school_code,part_of_code})
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                       |
-             +-----------------------------------------------+
-             | school_code | code | title | degree | part_of |
-            -+-------------+------+-------+--------+---------+-
-                                                     (no rows)
+             | program                                            |
+             +----------------------------------------------------+
+             | school_code | code | title | degree | part_of_code |
+            -+-------------+------+-------+--------+--------------+-
+                                                          (no rows)
 
              ----
-             /(program?school_code='la'&code='uengl').({school_code,code}->program{school_code,part_of})
+             /(program?school_code='la'&code='uengl').({school_code,code}->program{school_code,part_of_code})
              SELECT "program_2"."school_code",
                     "program_2"."code",
                     "program_2"."title",
                     "program_2"."degree",
-                    "program_2"."part_of"
+                    "program_2"."part_of_code"
              FROM "ad"."program" AS "program_1"
                   INNER JOIN (SELECT "program"."school_code",
                                      "program"."code",
                                      "program"."title",
                                      "program"."degree",
-                                     "program"."part_of"
+                                     "program"."part_of_code"
                               FROM "ad"."program") AS "program_2"
-                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of"))
+                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of_code"))
              WHERE ("program_1"."school_code" = 'la')
                    AND ("program_1"."code" = 'uengl')
              ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC, 1 ASC, 2 ASC
@@ -2171,12 +2179,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                              |
-             +----------------------------------------------------------------------+
-             | school_code | code  | title                       | degree | part_of |
-            -+-------------+-------+-----------------------------+--------+---------+-
-             | la          | uspan | Bachelor of Arts in Spanish | ba     |         |
-                                                                              (1 row)
+             | program                                                                   |
+             +---------------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of_code |
+            -+-------------+-------+-----------------------------+--------+--------------+-
+             | la          | uspan | Bachelor of Arts in Spanish | ba     |              |
+                                                                                   (1 row)
 
              ----
              /(student?id=1010).program
@@ -2184,7 +2192,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ed"."student"
                   INNER JOIN "ad"."program"
                              ON (("student"."school_code" = "program"."school_code") AND ("student"."program_code" = "program"."code"))
@@ -2450,12 +2458,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | part_of                                               |         |
-             +-------------------------------------------------------+         |
-             | code    | type       | title            | description | part_of |
-            -+---------+------------+------------------+-------------+---------+-
-             | science | university | Natural Sciences |             |         |
-                                                                         (1 row)
+             | part_of                                                              |
+             +----------------------------------------------------------------------+
+             | code    | type       | title            | description | part_of_code |
+            -+---------+------------+------------------+-------------+--------------+-
+             | science | university | Natural Sciences |             |              |
+                                                                              (1 row)
 
              ----
              /(classification?code='math').part_of
@@ -2463,10 +2471,10 @@ tests:
                     "classification_2"."type",
                     "classification_2"."title",
                     "classification_2"."description",
-                    "classification_2"."part_of"
+                    "classification_2"."part_of_code"
              FROM "rd"."classification" AS "classification_1"
                   INNER JOIN "rd"."classification" AS "classification_2"
-                             ON ("classification_1"."part_of" = "classification_2"."code")
+                             ON ("classification_1"."part_of_code" = "classification_2"."code")
              WHERE ("classification_1"."code" = 'math')
              ORDER BY "classification_1"."code" ASC
         - uri: /(classification?code='math').classification
@@ -2474,12 +2482,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | classification                                                  |
-             +-----------------------------------------------------------------+
-             | code    | type       | title            | description | part_of |
-            -+---------+------------+------------------+-------------+---------+-
-             | science | university | Natural Sciences |             |         |
-                                                                         (1 row)
+             | classification                                                       |
+             +----------------------------------------------------------------------+
+             | code    | type       | title            | description | part_of_code |
+            -+---------+------------+------------------+-------------+--------------+-
+             | science | university | Natural Sciences |             |              |
+                                                                              (1 row)
 
              ----
              /(classification?code='math').classification
@@ -2487,42 +2495,42 @@ tests:
                     "classification_2"."type",
                     "classification_2"."title",
                     "classification_2"."description",
-                    "classification_2"."part_of"
+                    "classification_2"."part_of_code"
              FROM "rd"."classification" AS "classification_1"
                   INNER JOIN "rd"."classification" AS "classification_2"
-                             ON ("classification_1"."part_of" = "classification_2"."code")
+                             ON ("classification_1"."part_of_code" = "classification_2"."code")
              WHERE ("classification_1"."code" = 'math')
              ORDER BY "classification_1"."code" ASC
-        - uri: /(classification?code='math') .(code -> classification{part_of})
+        - uri: /(classification?code='math') .(code -> classification{part_of_code})
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | classification                                                               |
-             +------------------------------------------------------------------------------+
-             | code       | type       | title                      | description | part_of |
-            -+------------+------------+----------------------------+-------------+---------+-
-             | algebra    | department | Algebra                    |             | math    |
-             | analysis   | department | Mathematical Analysis      |             | math    |
-             | geometry   | department | Geometry                   |             | math    |
-             | statistics | department | Probability and Statistics |             | math    |
-                                                                                     (4 rows)
+             | classification                                                                    |
+             +-----------------------------------------------------------------------------------+
+             | code       | type       | title                      | description | part_of_code |
+            -+------------+------------+----------------------------+-------------+--------------+-
+             | algebra    | department | Algebra                    |             | math         |
+             | analysis   | department | Mathematical Analysis      |             | math         |
+             | geometry   | department | Geometry                   |             | math         |
+             | statistics | department | Probability and Statistics |             | math         |
+                                                                                          (4 rows)
 
              ----
-             /(classification?code='math').(code->classification{part_of})
+             /(classification?code='math').(code->classification{part_of_code})
              SELECT "classification_2"."code",
                     "classification_2"."type",
                     "classification_2"."title",
                     "classification_2"."description",
-                    "classification_2"."part_of"
+                    "classification_2"."part_of_code"
              FROM "rd"."classification" AS "classification_1"
                   INNER JOIN (SELECT "classification"."code",
                                      "classification"."type",
                                      "classification"."title",
                                      "classification"."description",
-                                     "classification"."part_of"
+                                     "classification"."part_of_code"
                               FROM "rd"."classification") AS "classification_2"
-                             ON ("classification_1"."code" = "classification_2"."part_of")
+                             ON ("classification_1"."code" = "classification_2"."part_of_code")
              WHERE ("classification_1"."code" = 'math')
              ORDER BY "classification_1"."code" ASC, 1 ASC
         - uri: /(classification?code='math').course_classification
@@ -2631,12 +2639,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | classification                                                           |
-             +--------------------------------------------------------------------------+
-             | code        | type       | title               | description | part_of   |
-            -+-------------+------------+---------------------+-------------+-----------+-
-             | astrotheory | department | Astrophysics Theory |             | astronomy |
-                                                                                  (1 row)
+             | classification                                                              |
+             +-----------------------------------------------------------------------------+
+             | code        | type       | title               | description | part_of_code |
+            -+-------------+------------+---------------------+-------------+--------------+-
+             | astrotheory | department | Astrophysics Theory |             | astronomy    |
+                                                                                     (1 row)
 
              ----
              /(course_classification?department_code='astro'&course_no=110&classification_code='astrotheory').classification
@@ -2644,7 +2652,7 @@ tests:
                     "classification"."type",
                     "classification"."title",
                     "classification"."description",
-                    "classification"."part_of"
+                    "classification"."part_of_code"
              FROM "rd"."course_classification"
                   INNER JOIN "rd"."classification"
                              ON ("course_classification"."classification_code" = "classification"."code")
@@ -2657,12 +2665,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                     |
-             +-------------------------------------------------------------+
-             | school_code | code  | title              | degree | part_of |
-            -+-------------+-------+--------------------+--------+---------+-
-             | bus         | uacct | B.S. in Accounting | bs     |         |
-                                                                     (1 row)
+             | program                                                          |
+             +------------------------------------------------------------------+
+             | school_code | code  | title              | degree | part_of_code |
+            -+-------------+-------+--------------------+--------+--------------+-
+             | bus         | uacct | B.S. in Accounting | bs     |              |
+                                                                          (1 row)
 
              ----
              /(program_requirement?school_code='bus'&program_code='uacct'&classification_code='accounting').program
@@ -2670,7 +2678,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "rd"."program_requirement"
                   INNER JOIN "ad"."program"
                              ON (("program_requirement"."school_code" = "program"."school_code") AND ("program_requirement"."program_code" = "program"."code"))
@@ -2683,12 +2691,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | classification                                            |
-             +-----------------------------------------------------------+
-             | code       | type   | title      | description | part_of  |
-            -+------------+--------+------------+-------------+----------+-
-             | accounting | school | Accounting |             | business |
-                                                                   (1 row)
+             | classification                                                |
+             +---------------------------------------------------------------+
+             | code       | type   | title      | description | part_of_code |
+            -+------------+--------+------------+-------------+--------------+-
+             | accounting | school | Accounting |             | business     |
+                                                                       (1 row)
 
              ----
              /(program_requirement?school_code='bus'&program_code='uacct'&classification_code='accounting').classification
@@ -2696,7 +2704,7 @@ tests:
                     "classification"."type",
                     "classification"."title",
                     "classification"."description",
-                    "classification"."part_of"
+                    "classification"."part_of_code"
              FROM "rd"."program_requirement"
                   INNER JOIN "rd"."classification"
                              ON ("program_requirement"."classification_code" = "classification"."code")
@@ -3924,15 +3932,15 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                    |
-             +----------------------------------------------------------------------------+
-             | school_code | code     | title                          | degree | part_of |
-            -+-------------+----------+--------------------------------+--------+---------+-
-             | edu         | glited   | Master of Arts in Literacy     | ma     |         |
-             :             :          : Education                      :        :         :
-             | la          | upolisci | Bachelor of Arts in Political  | ba     |         |
-             :             :          : Science                        :        :         :
-                                                                                   (2 rows)
+             | program                                                                         |
+             +---------------------------------------------------------------------------------+
+             | school_code | code     | title                          | degree | part_of_code |
+            -+-------------+----------+--------------------------------+--------+--------------+-
+             | edu         | glited   | Master of Arts in Literacy     | ma     |              |
+             :             :          : Education                      :        :              :
+             | la          | upolisci | Bachelor of Arts in Political  | ba     |              |
+             :             :          : Science                        :        :              :
+                                                                                        (2 rows)
 
              ----
              /program?title~'lit'
@@ -3940,7 +3948,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."program"
              WHERE ("program"."title" ILIKE '%lit%')
              ORDER BY 1 ASC, 2 ASC
@@ -3949,38 +3957,38 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                      |
-             +------------------------------------------------------------------------------+
-             | school_code | code     | title                            | degree | part_of |
-            -+-------------+----------+----------------------------------+--------+---------+-
-             | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |
-             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
-             | bus         | uacct    | B.S. in Accounting               | bs     |         |
-             | bus         | ubusad   | Bachelor of Business             | bs     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |
-             | edu         | umath    | Bachelor of Arts in Math         | ba     |         |
-             :             :          : Education                        :        :         :
-             | edu         | usci     | Bachelor of Arts in Science      | ba     |         |
-             :             :          : Education                        :        :         :
-             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-             | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-                                                                                    (21 rows)
+             | program                                                                           |
+             +-----------------------------------------------------------------------------------+
+             | school_code | code     | title                            | degree | part_of_code |
+            -+-------------+----------+----------------------------------+--------+--------------+-
+             | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
+             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
+             | bus         | uacct    | B.S. in Accounting               | bs     |              |
+             | bus         | ubusad   | Bachelor of Business             | bs     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
+             | edu         | umath    | Bachelor of Arts in Math         | ba     |              |
+             :             :          : Education                        :        :              :
+             | edu         | usci     | Bachelor of Arts in Science      | ba     |              |
+             :             :          : Education                        :        :              :
+             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+             | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+             | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+                                                                                         (21 rows)
 
              ----
              /program?degree={'ba','bs'}
@@ -3988,7 +3996,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."program"
              WHERE ("program"."degree" IN ('ba', 'bs'))
              ORDER BY 1 ASC, 2 ASC
@@ -3997,17 +4005,17 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                 |
-             +-------------------------------------------------------------------------+
-             | school_code | code   | title                         | degree | part_of |
-            -+-------------+--------+-------------------------------+--------+---------+-
-             | bus         | gecon  | Master of Arts in Economics   | ma     |         |
-             | bus         | pacc   | Graduate Certificate in       | ct     |         |
-             :             :        : Accounting                    :        :         :
-             | bus         | pbusad | Certificate in Business       | ct     |         |
-             :             :        : Administration                :        :         :
-             | bus         | uecon  | Bachelor of Arts in Economics | ba     | gecon   |
-                                                                                (4 rows)
+             | program                                                                      |
+             +------------------------------------------------------------------------------+
+             | school_code | code   | title                         | degree | part_of_code |
+            -+-------------+--------+-------------------------------+--------+--------------+-
+             | bus         | gecon  | Master of Arts in Economics   | ma     |              |
+             | bus         | pacc   | Graduate Certificate in       | ct     |              |
+             :             :        : Accounting                    :        :              :
+             | bus         | pbusad | Certificate in Business       | ct     |              |
+             :             :        : Administration                :        :              :
+             | bus         | uecon  | Bachelor of Arts in Economics | ba     | gecon        |
+                                                                                     (4 rows)
 
              ----
              /program?school.code='bus'&degree!='bs'
@@ -4015,7 +4023,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."program"
                   INNER JOIN "ad"."school"
                              ON ("program"."school_code" = "school"."code")
@@ -6129,18 +6137,18 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                   |
-             +---------------------------------------------------------------------------+
-             | school_code | code   | title                           | degree | part_of |
-            -+-------------+--------+---------------------------------+--------+---------+-
-             | edu         | gedu   | M.S. in Education               | ms     |         |
-             | edu         | glited | Master of Arts in Literacy      | ma     |         |
-             :             :        : Education                       :        :         :
-             | edu         | gtch   | Master of Arts in Teaching      | ma     |         |
-             | edu         | psci   | Certificate in Science Teaching | ct     |         |
-             | edu         | umath  | Bachelor of Arts in Math        | ba     |         |
-             :             :        : Education                       :        :         :
-                                                                                  (5 rows)
+             | program                                                                        |
+             +--------------------------------------------------------------------------------+
+             | school_code | code   | title                           | degree | part_of_code |
+            -+-------------+--------+---------------------------------+--------+--------------+-
+             | edu         | gedu   | M.S. in Education               | ms     |              |
+             | edu         | glited | Master of Arts in Literacy      | ma     |              |
+             :             :        : Education                       :        :              :
+             | edu         | gtch   | Master of Arts in Teaching      | ma     |              |
+             | edu         | psci   | Certificate in Science Teaching | ct     |              |
+             | edu         | umath  | Bachelor of Arts in Math        | ba     |              |
+             :             :        : Education                       :        :              :
+                                                                                       (5 rows)
 
              ----
              /program.limit(5,10)
@@ -6148,7 +6156,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."program"
              ORDER BY 1 ASC, 2 ASC
              LIMIT 5
@@ -15677,65 +15685,65 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                      |
-             +------------------------------------------------------------------------------+
-             | school_code | code     | title                            | degree | part_of |
-            -+-------------+----------+----------------------------------+--------+---------+-
-             | art         | gart     | Post Baccalaureate in Art        | pb     |         |
-             :             :          : History                          :        :         :
-             | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |
-             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
-             | bus         | gecon    | Master of Arts in Economics      | ma     |         |
-             | bus         | pacc     | Graduate Certificate in          | ct     |         |
-             :             :          : Accounting                       :        :         :
-             | bus         | pbusad   | Certificate in Business          | ct     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uacct    | B.S. in Accounting               | bs     |         |
-             | bus         | ubusad   | Bachelor of Business             | bs     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |
-             | edu         | gedlead  | Master of Arts in Education      | ma     |         |
-             :             :          : Leadership                       :        :         :
-             | edu         | gedu     | M.S. in Education                | ms     |         |
-             | edu         | glited   | Master of Arts in Literacy       | ma     |         |
-             :             :          : Education                        :        :         :
-             | edu         | gtch     | Master of Arts in Teaching       | ma     |         |
-             | edu         | psci     | Certificate in Science Teaching  | ct     |         |
-             | edu         | umath    | Bachelor of Arts in Math         | ba     |         |
-             :             :          : Education                        :        :         :
-             | edu         | usci     | Bachelor of Arts in Science      | ba     |         |
-             :             :          : Education                        :        :         :
-             | eng         | gbe      | M.S. in Bioengineering           | ms     |         |
-             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-             | la          | gengl    | Master of Arts in English        | ma     |         |
-             | la          | glang    | Master of Arts in Modern         | ma     |         |
-             :             :          : Languages                        :        :         :
-             | la          | gscitch  | Master of Arts in Science        | ma     |         |
-             :             :          : Teaching                         :        :         :
-             | la          | psciwri  | Science Writing                  | ct     |         |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | pmth     | Doctorate of Science in          | ph     |         |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-             | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | ph          | phd      | Honorary PhD                     |        |         |
-                                                                                    (40 rows)
+             | program                                                                           |
+             +-----------------------------------------------------------------------------------+
+             | school_code | code     | title                            | degree | part_of_code |
+            -+-------------+----------+----------------------------------+--------+--------------+-
+             | art         | gart     | Post Baccalaureate in Art        | pb     |              |
+             :             :          : History                          :        :              :
+             | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
+             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
+             | bus         | gecon    | Master of Arts in Economics      | ma     |              |
+             | bus         | pacc     | Graduate Certificate in          | ct     |              |
+             :             :          : Accounting                       :        :              :
+             | bus         | pbusad   | Certificate in Business          | ct     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uacct    | B.S. in Accounting               | bs     |              |
+             | bus         | ubusad   | Bachelor of Business             | bs     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
+             | edu         | gedlead  | Master of Arts in Education      | ma     |              |
+             :             :          : Leadership                       :        :              :
+             | edu         | gedu     | M.S. in Education                | ms     |              |
+             | edu         | glited   | Master of Arts in Literacy       | ma     |              |
+             :             :          : Education                        :        :              :
+             | edu         | gtch     | Master of Arts in Teaching       | ma     |              |
+             | edu         | psci     | Certificate in Science Teaching  | ct     |              |
+             | edu         | umath    | Bachelor of Arts in Math         | ba     |              |
+             :             :          : Education                        :        :              :
+             | edu         | usci     | Bachelor of Arts in Science      | ba     |              |
+             :             :          : Education                        :        :              :
+             | eng         | gbe      | M.S. in Bioengineering           | ms     |              |
+             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
+             | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
+             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+             | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | pmth     | Doctorate of Science in          | ph     |              |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+             | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+             | ph          | phd      | Honorary PhD                     |        |              |
+                                                                                         (40 rows)
 
              ----
              /school.program
@@ -15743,7 +15751,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."school"
                   INNER JOIN "ad"."program"
                              ON ("school"."code" = "program"."school_code")
@@ -16294,196 +16302,196 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                      |
-             +------------------------------------------------------------------------------+
-             | school_code | code     | title                            | degree | part_of |
-            -+-------------+----------+----------------------------------+--------+---------+-
-             | bus         | gecon    | Master of Arts in Economics      | ma     |         |
-             | bus         | pacc     | Graduate Certificate in          | ct     |         |
-             :             :          : Accounting                       :        :         :
-             | bus         | pbusad   | Certificate in Business          | ct     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uacct    | B.S. in Accounting               | bs     |         |
-             | bus         | ubusad   | Bachelor of Business             | bs     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |
-             | art         | gart     | Post Baccalaureate in Art        | pb     |         |
-             :             :          : History                          :        :         :
-             | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |
-             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | pmth     | Doctorate of Science in          | ph     |         |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-             | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | eng         | gbe      | M.S. in Bioengineering           | ms     |         |
-             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | pmth     | Doctorate of Science in          | ph     |         |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-             | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | eng         | gbe      | M.S. in Bioengineering           | ms     |         |
-             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-             | bus         | gecon    | Master of Arts in Economics      | ma     |         |
-             | bus         | pacc     | Graduate Certificate in          | ct     |         |
-             :             :          : Accounting                       :        :         :
-             | bus         | pbusad   | Certificate in Business          | ct     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uacct    | B.S. in Accounting               | bs     |         |
-             | bus         | ubusad   | Bachelor of Business             | bs     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |
-             | edu         | gedlead  | Master of Arts in Education      | ma     |         |
-             :             :          : Leadership                       :        :         :
-             | edu         | gedu     | M.S. in Education                | ms     |         |
-             | edu         | glited   | Master of Arts in Literacy       | ma     |         |
-             :             :          : Education                        :        :         :
-             | edu         | gtch     | Master of Arts in Teaching       | ma     |         |
-             | edu         | psci     | Certificate in Science Teaching  | ct     |         |
-             | edu         | umath    | Bachelor of Arts in Math         | ba     |         |
-             :             :          : Education                        :        :         :
-             | edu         | usci     | Bachelor of Arts in Science      | ba     |         |
-             :             :          : Education                        :        :         :
-             | eng         | gbe      | M.S. in Bioengineering           | ms     |         |
-             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-             | la          | gengl    | Master of Arts in English        | ma     |         |
-             | la          | glang    | Master of Arts in Modern         | ma     |         |
-             :             :          : Languages                        :        :         :
-             | la          | gscitch  | Master of Arts in Science        | ma     |         |
-             :             :          : Teaching                         :        :         :
-             | la          | psciwri  | Science Writing                  | ct     |         |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | la          | gengl    | Master of Arts in English        | ma     |         |
-             | la          | glang    | Master of Arts in Modern         | ma     |         |
-             :             :          : Languages                        :        :         :
-             | la          | gscitch  | Master of Arts in Science        | ma     |         |
-             :             :          : Teaching                         :        :         :
-             | la          | psciwri  | Science Writing                  | ct     |         |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | la          | gengl    | Master of Arts in English        | ma     |         |
-             | la          | glang    | Master of Arts in Modern         | ma     |         |
-             :             :          : Languages                        :        :         :
-             | la          | gscitch  | Master of Arts in Science        | ma     |         |
-             :             :          : Teaching                         :        :         :
-             | la          | psciwri  | Science Writing                  | ct     |         |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | eng         | gbe      | M.S. in Bioengineering           | ms     |         |
-             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |
-             | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |
-             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |
-             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-             | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-             | bus         | gecon    | Master of Arts in Economics      | ma     |         |
-             | bus         | pacc     | Graduate Certificate in          | ct     |         |
-             :             :          : Accounting                       :        :         :
-             | bus         | pbusad   | Certificate in Business          | ct     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uacct    | B.S. in Accounting               | bs     |         |
-             | bus         | ubusad   | Bachelor of Business             | bs     |         |
-             :             :          : Administration                   :        :         :
-             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | pmth     | Doctorate of Science in          | ph     |         |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-             | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | pmth     | Doctorate of Science in          | ph     |         |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-             | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-             :             :          : Mathematics                      :        :         :
-             | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-             | la          | gengl    | Master of Arts in English        | ma     |         |
-             | la          | glang    | Master of Arts in Modern         | ma     |         |
-             :             :          : Languages                        :        :         :
-             | la          | gscitch  | Master of Arts in Science        | ma     |         |
-             :             :          : Teaching                         :        :         :
-             | la          | psciwri  | Science Writing                  | ct     |         |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | la          | gengl    | Master of Arts in English        | ma     |         |
-             | la          | glang    | Master of Arts in Modern         | ma     |         |
-             :             :          : Languages                        :        :         :
-             | la          | gscitch  | Master of Arts in Science        | ma     |         |
-             :             :          : Teaching                         :        :         :
-             | la          | psciwri  | Science Writing                  | ct     |         |
-             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-             | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-             | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-             :             :          : Science                          :        :         :
-             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-             | art         | gart     | Post Baccalaureate in Art        | pb     |         |
-             :             :          : History                          :        :         :
-             | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |
-             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
-             | edu         | gedlead  | Master of Arts in Education      | ma     |         |
-             :             :          : Leadership                       :        :         :
-             | edu         | gedu     | M.S. in Education                | ms     |         |
-             | edu         | glited   | Master of Arts in Literacy       | ma     |         |
-             :             :          : Education                        :        :         :
-             | edu         | gtch     | Master of Arts in Teaching       | ma     |         |
-             | edu         | psci     | Certificate in Science Teaching  | ct     |         |
-             | edu         | umath    | Bachelor of Arts in Math         | ba     |         |
-             :             :          : Education                        :        :         :
-             | edu         | usci     | Bachelor of Arts in Science      | ba     |         |
-             :             :          : Education                        :        :         :
-                                                                                   (139 rows)
+             | program                                                                           |
+             +-----------------------------------------------------------------------------------+
+             | school_code | code     | title                            | degree | part_of_code |
+            -+-------------+----------+----------------------------------+--------+--------------+-
+             | bus         | gecon    | Master of Arts in Economics      | ma     |              |
+             | bus         | pacc     | Graduate Certificate in          | ct     |              |
+             :             :          : Accounting                       :        :              :
+             | bus         | pbusad   | Certificate in Business          | ct     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uacct    | B.S. in Accounting               | bs     |              |
+             | bus         | ubusad   | Bachelor of Business             | bs     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
+             | art         | gart     | Post Baccalaureate in Art        | pb     |              |
+             :             :          : History                          :        :              :
+             | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
+             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
+             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | pmth     | Doctorate of Science in          | ph     |              |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+             | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+             | eng         | gbe      | M.S. in Bioengineering           | ms     |              |
+             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
+             | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
+             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+             | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | pmth     | Doctorate of Science in          | ph     |              |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+             | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+             | eng         | gbe      | M.S. in Bioengineering           | ms     |              |
+             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
+             | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
+             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+             | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+             | bus         | gecon    | Master of Arts in Economics      | ma     |              |
+             | bus         | pacc     | Graduate Certificate in          | ct     |              |
+             :             :          : Accounting                       :        :              :
+             | bus         | pbusad   | Certificate in Business          | ct     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uacct    | B.S. in Accounting               | bs     |              |
+             | bus         | ubusad   | Bachelor of Business             | bs     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
+             | edu         | gedlead  | Master of Arts in Education      | ma     |              |
+             :             :          : Leadership                       :        :              :
+             | edu         | gedu     | M.S. in Education                | ms     |              |
+             | edu         | glited   | Master of Arts in Literacy       | ma     |              |
+             :             :          : Education                        :        :              :
+             | edu         | gtch     | Master of Arts in Teaching       | ma     |              |
+             | edu         | psci     | Certificate in Science Teaching  | ct     |              |
+             | edu         | umath    | Bachelor of Arts in Math         | ba     |              |
+             :             :          : Education                        :        :              :
+             | edu         | usci     | Bachelor of Arts in Science      | ba     |              |
+             :             :          : Education                        :        :              :
+             | eng         | gbe      | M.S. in Bioengineering           | ms     |              |
+             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
+             | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
+             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+             | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | eng         | gbe      | M.S. in Bioengineering           | ms     |              |
+             | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
+             | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
+             | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+             | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+             | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+             | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+             | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+             | bus         | gecon    | Master of Arts in Economics      | ma     |              |
+             | bus         | pacc     | Graduate Certificate in          | ct     |              |
+             :             :          : Accounting                       :        :              :
+             | bus         | pbusad   | Certificate in Business          | ct     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uacct    | B.S. in Accounting               | bs     |              |
+             | bus         | ubusad   | Bachelor of Business             | bs     |              |
+             :             :          : Administration                   :        :              :
+             | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
+             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | pmth     | Doctorate of Science in          | ph     |              |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+             | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | pmth     | Doctorate of Science in          | ph     |              |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+             | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+             | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+             :             :          : Mathematics                      :        :              :
+             | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | la          | gengl    | Master of Arts in English        | ma     |              |
+             | la          | glang    | Master of Arts in Modern         | ma     |              |
+             :             :          : Languages                        :        :              :
+             | la          | gscitch  | Master of Arts in Science        | ma     |              |
+             :             :          : Teaching                         :        :              :
+             | la          | psciwri  | Science Writing                  | ct     |              |
+             | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+             | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+             | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+             :             :          : Science                          :        :              :
+             | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+             | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+             | art         | gart     | Post Baccalaureate in Art        | pb     |              |
+             :             :          : History                          :        :              :
+             | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
+             | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
+             | edu         | gedlead  | Master of Arts in Education      | ma     |              |
+             :             :          : Leadership                       :        :              :
+             | edu         | gedu     | M.S. in Education                | ms     |              |
+             | edu         | glited   | Master of Arts in Literacy       | ma     |              |
+             :             :          : Education                        :        :              :
+             | edu         | gtch     | Master of Arts in Teaching       | ma     |              |
+             | edu         | psci     | Certificate in Science Teaching  | ct     |              |
+             | edu         | umath    | Bachelor of Arts in Math         | ba     |              |
+             :             :          : Education                        :        :              :
+             | edu         | usci     | Bachelor of Arts in Science      | ba     |              |
+             :             :          : Education                        :        :              :
+                                                                                        (139 rows)
 
              ----
              /department.(school_code->program)
@@ -16491,131 +16499,132 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."department"
                   INNER JOIN (SELECT "program"."school_code",
                                      "program"."code",
                                      "program"."title",
                                      "program"."degree",
-                                     "program"."part_of"
+                                     "program"."part_of_code"
                               FROM "ad"."program") AS "program"
                              ON ("department"."school_code" = "program"."school_code")
              ORDER BY "department"."code" ASC, 1 ASC, 2 ASC
-        - uri: /classification.(code -> classification{part_of}) {part_of, code}
+        - uri: /classification.(code -> classification{part_of_code}) {part_of_code,
+            code}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | classification               |
-             +------------------------------+
-             | part_of     | code           |
-            -+-------------+----------------+-
-             | artdesign   | digital        |
-             | artdesign   | industrial     |
-             | artdesign   | society        |
-             | artdesign   | visual         |
-             | arthistory  | euroart        |
-             | arthistory  | modernart      |
-             | arthistory  | worldart       |
-             | astronomy   | astrolab       |
-             | astronomy   | astrotheory    |
-             | astronomy   | observation    |
-             | be          | belab          |
-             | be          | bioprocess     |
-             | be          | bmeng          |
-             | business    | accounting     |
-             | business    | econ           |
-             | business    | finance        |
-             | business    | management     |
-             | business    | marketing      |
-             | chemistry   | chemlab        |
-             | chemistry   | chemtheory     |
-             | compsci     | comporg        |
-             | compsci     | comptheory     |
-             | compsci     | softdev        |
-             | cross       | diversity      |
-             | cross       | reasoning      |
-             | cross       | research       |
-             | cross       | writing        |
-             | econ        | interecon      |
-             | econ        | macroecon      |
-             | econ        | mathecon       |
-             | econ        | microecon      |
-             | edpol       | edresearch     |
-             | edpol       | edstudies      |
-             | education   | edpol          |
-             | education   | teached        |
-             | ee          | eelab          |
-             | ee          | eetheory       |
-             | engineering | be             |
-             | engineering | compsci        |
-             | engineering | ee             |
-             | engineering | me             |
-             | history     | amhistory      |
-             | history     | dischistory    |
-             | history     | histmethod     |
-             | history     | nonwesternhist |
-             | history     | westernhist    |
-             | humanities  | arthistory     |
-             | humanities  | history        |
-             | humanities  | language       |
-             | humanities  | literature     |
-             | humanities  | polisci        |
-             | humanities  | psychology     |
-             | language    | anclanguage    |
-             | language    | linguistics    |
-             | language    | modlanguage    |
-             | literature  | englit         |
-             | literature  | fiction        |
-             | literature  | journalism     |
-             | literature  | nonfiction     |
-             | literature  | poetry         |
-             | literature  | worldlit       |
-             | math        | algebra        |
-             | math        | analysis       |
-             | math        | geometry       |
-             | math        | statistics     |
-             | me          | medesign       |
-             | me          | melab          |
-             | me          | memechanics    |
-             | me          | mesystems      |
-             | modlanguage | french         |
-             | modlanguage | german         |
-             | modlanguage | spanish        |
-             | physics     | physlab        |
-             | physics     | phystheory     |
-             | polisci     | ampolitics     |
-             | polisci     | intrelations   |
-             | polisci     | poliecon       |
-             | polisci     | worldpol       |
-             | psychology  | abnormpsych    |
-             | psychology  | biopsych       |
-             | psychology  | genpsych       |
-             | psychology  | socpsych       |
-             | science     | astronomy      |
-             | science     | chemistry      |
-             | science     | math           |
-             | science     | physics        |
-             | teached     | earlyed        |
-             | teached     | pedagogy       |
-             | teached     | tmethods       |
-             | visual      | arttheory      |
-             | visual      | craft          |
-             | visual      | drawing        |
-             | visual      | painting       |
-             | visual      | photography    |
-             | visual      | printmaking    |
-                                    (95 rows)
+             | classification                |
+             +-------------------------------+
+             | part_of_code | code           |
+            -+--------------+----------------+-
+             | artdesign    | digital        |
+             | artdesign    | industrial     |
+             | artdesign    | society        |
+             | artdesign    | visual         |
+             | arthistory   | euroart        |
+             | arthistory   | modernart      |
+             | arthistory   | worldart       |
+             | astronomy    | astrolab       |
+             | astronomy    | astrotheory    |
+             | astronomy    | observation    |
+             | be           | belab          |
+             | be           | bioprocess     |
+             | be           | bmeng          |
+             | business     | accounting     |
+             | business     | econ           |
+             | business     | finance        |
+             | business     | management     |
+             | business     | marketing      |
+             | chemistry    | chemlab        |
+             | chemistry    | chemtheory     |
+             | compsci      | comporg        |
+             | compsci      | comptheory     |
+             | compsci      | softdev        |
+             | cross        | diversity      |
+             | cross        | reasoning      |
+             | cross        | research       |
+             | cross        | writing        |
+             | econ         | interecon      |
+             | econ         | macroecon      |
+             | econ         | mathecon       |
+             | econ         | microecon      |
+             | edpol        | edresearch     |
+             | edpol        | edstudies      |
+             | education    | edpol          |
+             | education    | teached        |
+             | ee           | eelab          |
+             | ee           | eetheory       |
+             | engineering  | be             |
+             | engineering  | compsci        |
+             | engineering  | ee             |
+             | engineering  | me             |
+             | history      | amhistory      |
+             | history      | dischistory    |
+             | history      | histmethod     |
+             | history      | nonwesternhist |
+             | history      | westernhist    |
+             | humanities   | arthistory     |
+             | humanities   | history        |
+             | humanities   | language       |
+             | humanities   | literature     |
+             | humanities   | polisci        |
+             | humanities   | psychology     |
+             | language     | anclanguage    |
+             | language     | linguistics    |
+             | language     | modlanguage    |
+             | literature   | englit         |
+             | literature   | fiction        |
+             | literature   | journalism     |
+             | literature   | nonfiction     |
+             | literature   | poetry         |
+             | literature   | worldlit       |
+             | math         | algebra        |
+             | math         | analysis       |
+             | math         | geometry       |
+             | math         | statistics     |
+             | me           | medesign       |
+             | me           | melab          |
+             | me           | memechanics    |
+             | me           | mesystems      |
+             | modlanguage  | french         |
+             | modlanguage  | german         |
+             | modlanguage  | spanish        |
+             | physics      | physlab        |
+             | physics      | phystheory     |
+             | polisci      | ampolitics     |
+             | polisci      | intrelations   |
+             | polisci      | poliecon       |
+             | polisci      | worldpol       |
+             | psychology   | abnormpsych    |
+             | psychology   | biopsych       |
+             | psychology   | genpsych       |
+             | psychology   | socpsych       |
+             | science      | astronomy      |
+             | science      | chemistry      |
+             | science      | math           |
+             | science      | physics        |
+             | teached      | earlyed        |
+             | teached      | pedagogy       |
+             | teached      | tmethods       |
+             | visual       | arttheory      |
+             | visual       | craft          |
+             | visual       | drawing        |
+             | visual       | painting       |
+             | visual       | photography    |
+             | visual       | printmaking    |
+                                     (95 rows)
 
              ----
-             /classification.(code->classification{part_of}){part_of,code}
-             SELECT "classification_2"."part_of",
+             /classification.(code->classification{part_of_code}){part_of_code,code}
+             SELECT "classification_2"."part_of_code",
                     "classification_2"."code"
              FROM "rd"."classification" AS "classification_1"
-                  INNER JOIN (SELECT "classification"."part_of",
+                  INNER JOIN (SELECT "classification"."part_of_code",
                                      "classification"."code"
                               FROM "rd"."classification") AS "classification_2"
-                             ON ("classification_1"."code" = "classification_2"."part_of")
+                             ON ("classification_1"."code" = "classification_2"."part_of_code")
              ORDER BY "classification_1"."code" ASC, 2 ASC
         - uri: /school.({} -> school){root().school.code, this().code}
           status: 200 OK
@@ -17922,12 +17931,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program                                                                   |
-               +---------------------------------------------------------------------------+
-               | school_code | code  | title                            | degree | part_of |
-              -+-------------+-------+----------------------------------+--------+---------+-
-               | ns          | uchem | Bachelor of Science in Chemistry | bs     |         |
-                                                                                     (1 row)
+               | program                                                                        |
+               +--------------------------------------------------------------------------------+
+               | school_code | code  | title                            | degree | part_of_code |
+              -+-------------+-------+----------------------------------+--------+--------------+-
+               | ns          | uchem | Bachelor of Science in Chemistry | bs     |              |
+                                                                                          (1 row)
 
                ----
                /program?school.code='ns'&code='uchem'
@@ -17935,7 +17944,7 @@ tests:
                       "program"."code",
                       "program"."title",
                       "program"."degree",
-                      "program"."part_of"
+                      "program"."part_of_code"
                FROM "ad"."program"
                     INNER JOIN "ad"."school"
                                ON ("program"."school_code" = "school"."code")
@@ -21661,7 +21670,7 @@ tests:
                WHERE ("course_1"."credits" = "course_2"."max")
                ORDER BY "course_1"."department_code" ASC, 2 ASC
           - uri: /program{school.code, code, degree, num_parts := count({school_code,code}
-              -> program{school_code,part_of})} ?num_parts=max(fork().num_parts)
+              -> program{school_code,part_of_code})} ?num_parts=max(fork().num_parts)
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
@@ -21680,7 +21689,7 @@ tests:
                                             (7 rows)
 
                ----
-               /program{school.code,code,degree,num_parts:=count({school_code,code}->program{school_code,part_of})}?num_parts=max(fork().num_parts)
+               /program{school.code,code,degree,num_parts:=count({school_code,code}->program{school_code,part_of_code})}?num_parts=max(fork().num_parts)
                SELECT "school"."code",
                       "program_1"."code",
                       "program_1"."degree",
@@ -21688,18 +21697,18 @@ tests:
                FROM "ad"."program" AS "program_1"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                             "program"."school_code",
-                                            "program"."part_of"
+                                            "program"."part_of_code"
                                      FROM "ad"."program"
                                      GROUP BY 2, 3) AS "program_2"
-                                    ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of"))
+                                    ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of_code"))
                     LEFT OUTER JOIN (SELECT MAX(COALESCE("program_2"."count", 0)) AS "max"
                                      FROM "ad"."program" AS "program_1"
                                           LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
                                                                   "program"."school_code",
-                                                                  "program"."part_of"
+                                                                  "program"."part_of_code"
                                                            FROM "ad"."program"
                                                            GROUP BY 2, 3) AS "program_2"
-                                                          ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of"))) AS "program_3"
+                                                          ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of_code"))) AS "program_3"
                                     ON TRUE
                     INNER JOIN "ad"."school"
                                ON ("program_1"."school_code" = "school"."code")
@@ -22308,41 +22317,41 @@ tests:
                                     ON TRUE
                WHERE (COALESCE("student"."count", 0) = "program_2"."max")
                ORDER BY 1 ASC NULLS FIRST
-          - uri: /program.fork(part_of){root().program{school.code, code, part_of},
-              school.code, code, part_of}
+          - uri: /program.fork(part_of_code){root().program{school.code, code, part_of_code},
+              school.code, code, part_of_code}
             status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | fork(part_of)                                   |
-               +-------------------------------------------------+
-               | program                |      |       |         |
-               +------------------------+      |       |         |
-               | code | code  | part_of | code | code  | part_of |
-              -+------+-------+---------+------+-------+---------+-
-               | bus  | uecon | gecon   | bus  | uecon | gecon   |
-               | eng  | ubio  | gbe     | eng  | ubio  | gbe     |
-               | eng  | uelec | gee     | eng  | uelec | gee     |
-               | eng  | umech | gme     | eng  | umech | gme     |
-               | la   | uengl | gengl   | la   | uengl | gengl   |
-               | ns   | gmth  | pmth    | ns   | gmth  | pmth    |
-               | ns   | umth  | gmth    | ns   | umth  | gmth    |
-                                                          (7 rows)
+               | fork(part_of_code)                                        |
+               +-----------------------------------------------------------+
+               | program                     |      |       |              |
+               +-----------------------------+      |       |              |
+               | code | code  | part_of_code | code | code  | part_of_code |
+              -+------+-------+--------------+------+-------+--------------+-
+               | bus  | uecon | gecon        | bus  | uecon | gecon        |
+               | eng  | ubio  | gbe          | eng  | ubio  | gbe          |
+               | eng  | uelec | gee          | eng  | uelec | gee          |
+               | eng  | umech | gme          | eng  | umech | gme          |
+               | la   | uengl | gengl        | la   | uengl | gengl        |
+               | ns   | gmth  | pmth         | ns   | gmth  | pmth         |
+               | ns   | umth  | gmth         | ns   | umth  | gmth         |
+                                                                    (7 rows)
 
                ----
-               /program.fork(part_of){root().program{school.code,code,part_of},school.code,code,part_of}
+               /program.fork(part_of_code){root().program{school.code,code,part_of_code},school.code,code,part_of_code}
                SELECT "school_1"."code",
                       "program_1"."code",
-                      "program_1"."part_of",
+                      "program_1"."part_of_code",
                       "school_2"."code",
                       "program_2"."code",
-                      "program_2"."part_of"
+                      "program_2"."part_of_code"
                FROM "ad"."program" AS "program_1"
                     INNER JOIN (SELECT "program"."code",
-                                       "program"."part_of",
+                                       "program"."part_of_code",
                                        "program"."school_code"
                                 FROM "ad"."program") AS "program_2"
-                               ON ("program_1"."part_of" = "program_2"."part_of")
+                               ON ("program_1"."part_of_code" = "program_2"."part_of_code")
                     INNER JOIN "ad"."school" AS "school_1"
                                ON ("program_1"."school_code" = "school_1"."code")
                     INNER JOIN "ad"."school" AS "school_2"
@@ -22688,13 +22697,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program                                                               |
-               +-----------------------------------------------------------------------+
-               | school_code | code | title                         | degree | part_of |
-              -+-------------+------+-------------------------------+--------+---------+-
-               | art         | gart | Post Baccalaureate in Art     | pb     |         |
-               :             :      : History                       :        :         :
-                                                                                 (1 row)
+               | program                                                                    |
+               +----------------------------------------------------------------------------+
+               | school_code | code | title                         | degree | part_of_code |
+              -+-------------+------+-------------------------------+--------+--------------+-
+               | art         | gart | Post Baccalaureate in Art     | pb     |              |
+               :             :      : History                       :        :              :
+                                                                                      (1 row)
 
                ----
                /@school.@department.@program.limit(1)
@@ -22702,7 +22711,7 @@ tests:
                       "program"."code",
                       "program"."title",
                       "program"."degree",
-                      "program"."part_of"
+                      "program"."part_of_code"
                FROM "ad"."school"
                     CROSS JOIN "ad"."department"
                     CROSS JOIN "ad"."program"
@@ -24777,19 +24786,19 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | ^                                                                          |
-               +----------------------------------------------------------------------------+
-               | school_code | code    | title                           | degree | part_of |
-              -+-------------+---------+---------------------------------+--------+---------+-
-               | art         | uhist   | Bachelor of Arts in Art History | ba     |         |
-               | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |         |
-               | art         | gart    | Post Baccalaureate in Art       | pb     |         |
-               :             :         : History                         :        :         :
-               | art         | uhist   | Bachelor of Arts in Art History | ba     |         |
-               | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |         |
-               | art         | gart    | Post Baccalaureate in Art       | pb     |         |
-               :             :         : History                         :        :         :
-                                                                                     (6 rows)
+               | ^                                                                               |
+               +---------------------------------------------------------------------------------+
+               | school_code | code    | title                           | degree | part_of_code |
+              -+-------------+---------+---------------------------------+--------+--------------+-
+               | art         | uhist   | Bachelor of Arts in Art History | ba     |              |
+               | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |              |
+               | art         | gart    | Post Baccalaureate in Art       | pb     |              |
+               :             :         : History                         :        :              :
+               | art         | uhist   | Bachelor of Arts in Art History | ba     |              |
+               | art         | ustudio | Bachelor of Arts in Studio Art  | ba     |              |
+               | art         | gart    | Post Baccalaureate in Art       | pb     |              |
+               :             :         : History                         :        :              :
+                                                                                          (6 rows)
 
                ----
                /department.((school?code='art').program^degree).^
@@ -24797,7 +24806,7 @@ tests:
                       "program"."code_1",
                       "program"."title",
                       "program"."degree",
-                      "program"."part_of"
+                      "program"."part_of_code"
                FROM "ad"."department"
                     LEFT OUTER JOIN "ad"."school"
                                     ON ("department"."school_code" = "school"."code")
@@ -24805,7 +24814,7 @@ tests:
                                        "program"."code" AS "code_1",
                                        "program"."title",
                                        "program"."degree",
-                                       "program"."part_of",
+                                       "program"."part_of_code",
                                        "school"."code" AS "code_2"
                                 FROM "ad"."school"
                                      INNER JOIN "ad"."program"
@@ -24819,64 +24828,64 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | ^                                                                            |
-               +------------------------------------------------------------------------------+
-               | school_code | code     | title                            | degree | part_of |
-              -+-------------+----------+----------------------------------+--------+---------+-
-               | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |
-               | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |
-               | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |
-               | edu         | umath    | Bachelor of Arts in Math         | ba     |         |
-               :             :          : Education                        :        :         :
-               | edu         | usci     | Bachelor of Arts in Science      | ba     |         |
-               :             :          : Education                        :        :         :
-               | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |
-               | la          | uhist    | Bachelor of Arts in History      | ba     |         |
-               | la          | upolisci | Bachelor of Arts in Political    | ba     |         |
-               :             :          : Science                          :        :         :
-               | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |
-               | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |
-               | bus         | uacct    | B.S. in Accounting               | bs     |         |
-               | bus         | ubusad   | Bachelor of Business             | bs     |         |
-               :             :          : Administration                   :        :         :
-               | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |
-               | eng         | ucompsci | B.S. in Computer Science         | bs     |         |
-               | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |
-               | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |
-               | ns          | gmth     | Masters of Science in            | bs     | pmth    |
-               :             :          : Mathematics                      :        :         :
-               | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |
-               | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |
-               | ns          | umth     | Bachelor of Science in           | bs     | gmth    |
-               :             :          : Mathematics                      :        :         :
-               | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |
-               | bus         | pacc     | Graduate Certificate in          | ct     |         |
-               :             :          : Accounting                       :        :         :
-               | bus         | pbusad   | Certificate in Business          | ct     |         |
-               :             :          : Administration                   :        :         :
-               | edu         | psci     | Certificate in Science Teaching  | ct     |         |
-               | la          | psciwri  | Science Writing                  | ct     |         |
-               | bus         | gecon    | Master of Arts in Economics      | ma     |         |
-               | edu         | gedlead  | Master of Arts in Education      | ma     |         |
-               :             :          : Leadership                       :        :         :
-               | edu         | glited   | Master of Arts in Literacy       | ma     |         |
-               :             :          : Education                        :        :         :
-               | edu         | gtch     | Master of Arts in Teaching       | ma     |         |
-               | la          | gengl    | Master of Arts in English        | ma     |         |
-               | la          | glang    | Master of Arts in Modern         | ma     |         |
-               :             :          : Languages                        :        :         :
-               | la          | gscitch  | Master of Arts in Science        | ma     |         |
-               :             :          : Teaching                         :        :         :
-               | edu         | gedu     | M.S. in Education                | ms     |         |
-               | eng         | gbe      | M.S. in Bioengineering           | ms     |         |
-               | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |
-               | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |
-               | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |
-               | art         | gart     | Post Baccalaureate in Art        | pb     |         |
-               :             :          : History                          :        :         :
-               | ns          | pmth     | Doctorate of Science in          | ph     |         |
-               :             :          : Mathematics                      :        :         :
-                                                                                      (39 rows)
+               | ^                                                                                 |
+               +-----------------------------------------------------------------------------------+
+               | school_code | code     | title                            | degree | part_of_code |
+              -+-------------+----------+----------------------------------+--------+--------------+-
+               | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
+               | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
+               | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
+               | edu         | umath    | Bachelor of Arts in Math         | ba     |              |
+               :             :          : Education                        :        :              :
+               | edu         | usci     | Bachelor of Arts in Science      | ba     |              |
+               :             :          : Education                        :        :              :
+               | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |
+               | la          | uhist    | Bachelor of Arts in History      | ba     |              |
+               | la          | upolisci | Bachelor of Arts in Political    | ba     |              |
+               :             :          : Science                          :        :              :
+               | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
+               | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
+               | bus         | uacct    | B.S. in Accounting               | bs     |              |
+               | bus         | ubusad   | Bachelor of Business             | bs     |              |
+               :             :          : Administration                   :        :              :
+               | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |
+               | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
+               | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
+               | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
+               | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+               :             :          : Mathematics                      :        :              :
+               | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
+               | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
+               | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
+               :             :          : Mathematics                      :        :              :
+               | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
+               | bus         | pacc     | Graduate Certificate in          | ct     |              |
+               :             :          : Accounting                       :        :              :
+               | bus         | pbusad   | Certificate in Business          | ct     |              |
+               :             :          : Administration                   :        :              :
+               | edu         | psci     | Certificate in Science Teaching  | ct     |              |
+               | la          | psciwri  | Science Writing                  | ct     |              |
+               | bus         | gecon    | Master of Arts in Economics      | ma     |              |
+               | edu         | gedlead  | Master of Arts in Education      | ma     |              |
+               :             :          : Leadership                       :        :              :
+               | edu         | glited   | Master of Arts in Literacy       | ma     |              |
+               :             :          : Education                        :        :              :
+               | edu         | gtch     | Master of Arts in Teaching       | ma     |              |
+               | la          | gengl    | Master of Arts in English        | ma     |              |
+               | la          | glang    | Master of Arts in Modern         | ma     |              |
+               :             :          : Languages                        :        :              :
+               | la          | gscitch  | Master of Arts in Science        | ma     |              |
+               :             :          : Teaching                         :        :              :
+               | edu         | gedu     | M.S. in Education                | ms     |              |
+               | eng         | gbe      | M.S. in Bioengineering           | ms     |              |
+               | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
+               | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
+               | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+               | art         | gart     | Post Baccalaureate in Art        | pb     |              |
+               :             :          : History                          :        :              :
+               | ns          | pmth     | Doctorate of Science in          | ph     |              |
+               :             :          : Mathematics                      :        :              :
+                                                                                           (39 rows)
 
                ----
                /(program^degree).^
@@ -24884,7 +24893,7 @@ tests:
                       "program"."code",
                       "program"."title",
                       "program"."degree",
-                      "program"."part_of"
+                      "program"."part_of_code"
                FROM "ad"."program"
                WHERE ("program"."degree" IS NOT NULL)
                ORDER BY 4 ASC NULLS FIRST, 1 ASC, 2 ASC
@@ -24893,64 +24902,64 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | ^                                                                                             |
-               +-----------------------------------------------------------------------------------------------+
-               | school_code | code     | title                            | degree | part_of | count(student) |
-              -+-------------+----------+----------------------------------+--------+---------+----------------+-
-               | la          | upolisci | Bachelor of Arts in Political    | ba     |         |              3 |
-               :             :          : Science                          :        :         :                :
-               | edu         | umath    | Bachelor of Arts in Math         | ba     |         |              5 |
-               :             :          : Education                        :        :         :                :
-               | la          | upsych   | Bachelor of Arts in Psychology   | ba     |         |              5 |
-               | edu         | usci     | Bachelor of Arts in Science      | ba     |         |              7 |
-               :             :          : Education                        :        :         :                :
-               | la          | uhist    | Bachelor of Arts in History      | ba     |         |              7 |
-               | la          | uengl    | Bachelor of Arts in English      | ba     | gengl   |              8 |
-               | la          | uspan    | Bachelor of Arts in Spanish      | ba     |         |             10 |
-               | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon   |             11 |
-               | art         | uhist    | Bachelor of Arts in Art History  | ba     |         |             20 |
-               | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |         |             26 |
-               | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe     |              5 |
-               | ns          | uastro   | Bachelor of Science in Astronomy | bs     |         |              5 |
-               | bus         | uacct    | B.S. in Accounting               | bs     |         |              9 |
-               | bus         | ubusad   | Bachelor of Business             | bs     |         |              9 |
-               :             :          : Administration                   :        :         :                :
-               | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee     |              9 |
-               | ns          | uphys    | Bachelor of Science in Physics   | bs     |         |              9 |
-               | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme     |             11 |
-               | ns          | uchem    | Bachelor of Science in Chemistry | bs     |         |             11 |
-               | eng         | ucompsci | B.S. in Computer Science         | bs     |         |             12 |
-               | ns          | gmth     | Masters of Science in            | bs     | pmth    |             13 |
-               :             :          : Mathematics                      :        :         :                :
-               | ns          | umth     | Bachelor of Science in           | bs     | gmth    |             13 |
-               :             :          : Mathematics                      :        :         :                :
-               | la          | psciwri  | Science Writing                  | ct     |         |              5 |
-               | edu         | psci     | Certificate in Science Teaching  | ct     |         |              8 |
-               | bus         | pacc     | Graduate Certificate in          | ct     |         |             11 |
-               :             :          : Accounting                       :        :         :                :
-               | bus         | pbusad   | Certificate in Business          | ct     |         |             13 |
-               :             :          : Administration                   :        :         :                :
-               | bus         | gecon    | Master of Arts in Economics      | ma     |         |              5 |
-               | edu         | gedlead  | Master of Arts in Education      | ma     |         |             10 |
-               :             :          : Leadership                       :        :         :                :
-               | la          | glang    | Master of Arts in Modern         | ma     |         |             10 |
-               :             :          : Languages                        :        :         :                :
-               | la          | gscitch  | Master of Arts in Science        | ma     |         |             11 |
-               :             :          : Teaching                         :        :         :                :
-               | edu         | gtch     | Master of Arts in Teaching       | ma     |         |             13 |
-               | la          | gengl    | Master of Arts in English        | ma     |         |             13 |
-               | edu         | glited   | Master of Arts in Literacy       | ma     |         |             15 |
-               :             :          : Education                        :        :         :                :
-               | eng         | gme      | M.S. in Mechanical Engineering   | ms     |         |              3 |
-               | eng         | gee      | M.S. in Electrical Engineering   | ms     |         |              5 |
-               | eng         | gbe      | M.S. in Bioengineering           | ms     |         |              8 |
-               | eng         | gbuseng  | M.S. in Business and Engineering | ms     |         |              9 |
-               | edu         | gedu     | M.S. in Education                | ms     |         |             11 |
-               | art         | gart     | Post Baccalaureate in Art        | pb     |         |             16 |
-               :             :          : History                          :        :         :                :
-               | ns          | pmth     | Doctorate of Science in          | ph     |         |             10 |
-               :             :          : Mathematics                      :        :         :                :
-                                                                                                       (39 rows)
+               | ^                                                                                                  |
+               +----------------------------------------------------------------------------------------------------+
+               | school_code | code     | title                            | degree | part_of_code | count(student) |
+              -+-------------+----------+----------------------------------+--------+--------------+----------------+-
+               | la          | upolisci | Bachelor of Arts in Political    | ba     |              |              3 |
+               :             :          : Science                          :        :              :                :
+               | edu         | umath    | Bachelor of Arts in Math         | ba     |              |              5 |
+               :             :          : Education                        :        :              :                :
+               | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |              5 |
+               | edu         | usci     | Bachelor of Arts in Science      | ba     |              |              7 |
+               :             :          : Education                        :        :              :                :
+               | la          | uhist    | Bachelor of Arts in History      | ba     |              |              7 |
+               | la          | uengl    | Bachelor of Arts in English      | ba     | gengl        |              8 |
+               | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |             10 |
+               | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |             11 |
+               | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |             20 |
+               | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |             26 |
+               | eng         | ubio     | B.S. in Bioengineering           | bs     | gbe          |              5 |
+               | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |              5 |
+               | bus         | uacct    | B.S. in Accounting               | bs     |              |              9 |
+               | bus         | ubusad   | Bachelor of Business             | bs     |              |              9 |
+               :             :          : Administration                   :        :              :                :
+               | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |              9 |
+               | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |              9 |
+               | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |             11 |
+               | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |             11 |
+               | eng         | ucompsci | B.S. in Computer Science         | bs     |              |             12 |
+               | ns          | gmth     | Masters of Science in            | bs     | pmth         |             13 |
+               :             :          : Mathematics                      :        :              :                :
+               | ns          | umth     | Bachelor of Science in           | bs     | gmth         |             13 |
+               :             :          : Mathematics                      :        :              :                :
+               | la          | psciwri  | Science Writing                  | ct     |              |              5 |
+               | edu         | psci     | Certificate in Science Teaching  | ct     |              |              8 |
+               | bus         | pacc     | Graduate Certificate in          | ct     |              |             11 |
+               :             :          : Accounting                       :        :              :                :
+               | bus         | pbusad   | Certificate in Business          | ct     |              |             13 |
+               :             :          : Administration                   :        :              :                :
+               | bus         | gecon    | Master of Arts in Economics      | ma     |              |              5 |
+               | edu         | gedlead  | Master of Arts in Education      | ma     |              |             10 |
+               :             :          : Leadership                       :        :              :                :
+               | la          | glang    | Master of Arts in Modern         | ma     |              |             10 |
+               :             :          : Languages                        :        :              :                :
+               | la          | gscitch  | Master of Arts in Science        | ma     |              |             11 |
+               :             :          : Teaching                         :        :              :                :
+               | edu         | gtch     | Master of Arts in Teaching       | ma     |              |             13 |
+               | la          | gengl    | Master of Arts in English        | ma     |              |             13 |
+               | edu         | glited   | Master of Arts in Literacy       | ma     |              |             15 |
+               :             :          : Education                        :        :              :                :
+               | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |              3 |
+               | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |              5 |
+               | eng         | gbe      | M.S. in Bioengineering           | ms     |              |              8 |
+               | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |              9 |
+               | edu         | gedu     | M.S. in Education                | ms     |              |             11 |
+               | art         | gart     | Post Baccalaureate in Art        | pb     |              |             16 |
+               :             :          : History                          :        :              :                :
+               | ns          | pmth     | Doctorate of Science in          | ph     |              |             10 |
+               :             :          : Mathematics                      :        :              :                :
+                                                                                                            (39 rows)
 
                ----
                /(program.sort(count(student))^degree).^{*,count(student)}
@@ -24958,7 +24967,7 @@ tests:
                       "program_1"."code",
                       "program_1"."title",
                       "program_1"."degree",
-                      "program_1"."part_of",
+                      "program_1"."part_of_code",
                       COALESCE("student"."count", 0)
                FROM "ad"."program" AS "program_1"
                     LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
@@ -25522,27 +25531,27 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | ^                                                                           |
-               +-----------------------------------------------------------------------------+
-               | school_code | code     | title                           | degree | part_of |
-              -+-------------+----------+---------------------------------+--------+---------+-
-               | art         | uhist    | Bachelor of Arts in Art History | ba     |         |
-               | art         | ustudio  | Bachelor of Arts in Studio Art  | ba     |         |
-               | la          | uengl    | Bachelor of Arts in English     | ba     | gengl   |
-               | la          | uhist    | Bachelor of Arts in History     | ba     |         |
-               | la          | upolisci | Bachelor of Arts in Political   | ba     |         |
-               :             :          : Science                         :        :         :
-               | la          | upsych   | Bachelor of Arts in Psychology  | ba     |         |
-               | la          | uspan    | Bachelor of Arts in Spanish     | ba     |         |
-               | la          | psciwri  | Science Writing                 | ct     |         |
-               | la          | gengl    | Master of Arts in English       | ma     |         |
-               | la          | glang    | Master of Arts in Modern        | ma     |         |
-               :             :          : Languages                       :        :         :
-               | la          | gscitch  | Master of Arts in Science       | ma     |         |
-               :             :          : Teaching                        :        :         :
-               | art         | gart     | Post Baccalaureate in Art       | pb     |         |
-               :             :          : History                         :        :         :
-                                                                                     (12 rows)
+               | ^                                                                                |
+               +----------------------------------------------------------------------------------+
+               | school_code | code     | title                           | degree | part_of_code |
+              -+-------------+----------+---------------------------------+--------+--------------+-
+               | art         | uhist    | Bachelor of Arts in Art History | ba     |              |
+               | art         | ustudio  | Bachelor of Arts in Studio Art  | ba     |              |
+               | la          | uengl    | Bachelor of Arts in English     | ba     | gengl        |
+               | la          | uhist    | Bachelor of Arts in History     | ba     |              |
+               | la          | upolisci | Bachelor of Arts in Political   | ba     |              |
+               :             :          : Science                         :        :              :
+               | la          | upsych   | Bachelor of Arts in Psychology  | ba     |              |
+               | la          | uspan    | Bachelor of Arts in Spanish     | ba     |              |
+               | la          | psciwri  | Science Writing                 | ct     |              |
+               | la          | gengl    | Master of Arts in English       | ma     |              |
+               | la          | glang    | Master of Arts in Modern        | ma     |              |
+               :             :          : Languages                       :        :              :
+               | la          | gscitch  | Master of Arts in Science       | ma     |              |
+               :             :          : Teaching                        :        :              :
+               | art         | gart     | Post Baccalaureate in Art       | pb     |              |
+               :             :          : History                         :        :              :
+                                                                                          (12 rows)
 
                ----
                /distinct(program{degree}?school.code={'art','la'}).^
@@ -25550,7 +25559,7 @@ tests:
                       "program"."code",
                       "program"."title",
                       "program"."degree",
-                      "program"."part_of"
+                      "program"."part_of_code"
                FROM "ad"."program"
                     INNER JOIN "ad"."school"
                                ON ("program"."school_code" = "school"."code")
@@ -25716,13 +25725,36 @@ tests:
                 /department^school_code{school_code.name, name}
                                                     ^^^^
         - uri: /program.part_of.*
-          status: 400 Bad Request
+          status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            bind error: unable to resolve a wildcard:
-                /program.part_of.*
-                                 ^
+          body: |2
+             | part_of                                                                      |
+             +------------------------------------------------------------------------------+
+             | school_code | code  | title                          | degree | part_of_code |
+            -+-------------+-------+--------------------------------+--------+--------------+-
+             | bus         | gecon | Master of Arts in Economics    | ma     |              |
+             | eng         | gbe   | M.S. in Bioengineering         | ms     |              |
+             | eng         | gee   | M.S. in Electrical Engineering | ms     |              |
+             | eng         | gme   | M.S. in Mechanical Engineering | ms     |              |
+             | la          | gengl | Master of Arts in English      | ma     |              |
+             | ns          | pmth  | Doctorate of Science in        | ph     |              |
+             :             :       : Mathematics                    :        :              :
+             | ns          | gmth  | Masters of Science in          | bs     | pmth         |
+             :             :       : Mathematics                    :        :              :
+                                                                                     (7 rows)
+
+             ----
+             /program.part_of.*
+             SELECT "program_2"."school_code",
+                    "program_2"."code",
+                    "program_2"."title",
+                    "program_2"."degree",
+                    "program_2"."part_of_code"
+             FROM "ad"."program" AS "program_1"
+                  INNER JOIN "ad"."program" AS "program_2"
+                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of_code" = "program_2"."code"))
+             ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
         - uri: /{sum(course{credits}?false()), sum(confidential{pay_grade}?false())}
           status: 200 OK
           headers:
@@ -26822,14 +26854,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                              |
-             +----------------------------------------------------------------------+
-             | school_code | code  | title                       | degree | part_of |
-            -+-------------+-------+-----------------------------+--------+---------+-
-             | bus         | gecon | Master of Arts in Economics | ma     |         |
-             | bus         | pacc  | Graduate Certificate in     | ct     |         |
-             :             :       : Accounting                  :        :         :
-                                                                             (2 rows)
+             | program                                                                   |
+             +---------------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of_code |
+            -+-------------+-------+-----------------------------+--------+--------------+-
+             | bus         | gecon | Master of Arts in Economics | ma     |              |
+             | bus         | pacc  | Graduate Certificate in     | ct     |              |
+             :             :       : Accounting                  :        :              :
+                                                                                  (2 rows)
 
              ----
              /program.limit(2,3)
@@ -26837,7 +26869,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."program"
              ORDER BY 1 ASC, 2 ASC
              LIMIT 2
@@ -26847,14 +26879,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                              |
-             +----------------------------------------------------------------------+
-             | school_code | code  | title                       | degree | part_of |
-            -+-------------+-------+-----------------------------+--------+---------+-
-             | bus         | pacc  | Graduate Certificate in     | ct     |         |
-             :             :       : Accounting                  :        :         :
-             | bus         | gecon | Master of Arts in Economics | ma     |         |
-                                                                             (2 rows)
+             | program                                                                   |
+             +---------------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of_code |
+            -+-------------+-------+-----------------------------+--------+--------------+-
+             | bus         | pacc  | Graduate Certificate in     | ct     |              |
+             :             :       : Accounting                  :        :              :
+             | bus         | gecon | Master of Arts in Economics | ma     |              |
+                                                                                  (2 rows)
 
              ----
              /program.limit(2,3).sort(title)
@@ -26862,12 +26894,12 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM (SELECT "program"."school_code",
                           "program"."code",
                           "program"."title",
                           "program"."degree",
-                          "program"."part_of"
+                          "program"."part_of_code"
                    FROM "ad"."program"
                    ORDER BY 1 ASC, 2 ASC
                    LIMIT 2
@@ -27062,14 +27094,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                              |
-             +----------------------------------------------------------------------+
-             | school_code | code  | title                       | degree | part_of |
-            -+-------------+-------+-----------------------------+--------+---------+-
-             | bus         | gecon | Master of Arts in Economics | ma     |         |
-             | bus         | pacc  | Graduate Certificate in     | ct     |         |
-             :             :       : Accounting                  :        :         :
-                                                                             (2 rows)
+             | program                                                                   |
+             +---------------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of_code |
+            -+-------------+-------+-----------------------------+--------+--------------+-
+             | bus         | gecon | Master of Arts in Economics | ma     |              |
+             | bus         | pacc  | Graduate Certificate in     | ct     |              |
+             :             :       : Accounting                  :        :              :
+                                                                                  (2 rows)
 
              ----
              /program.limit(2,3)
@@ -27077,7 +27109,7 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM "ad"."program"
              ORDER BY 1 ASC, 2 ASC
              LIMIT 2
@@ -27087,14 +27119,14 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                              |
-             +----------------------------------------------------------------------+
-             | school_code | code  | title                       | degree | part_of |
-            -+-------------+-------+-----------------------------+--------+---------+-
-             | bus         | pacc  | Graduate Certificate in     | ct     |         |
-             :             :       : Accounting                  :        :         :
-             | bus         | gecon | Master of Arts in Economics | ma     |         |
-                                                                             (2 rows)
+             | program                                                                   |
+             +---------------------------------------------------------------------------+
+             | school_code | code  | title                       | degree | part_of_code |
+            -+-------------+-------+-----------------------------+--------+--------------+-
+             | bus         | pacc  | Graduate Certificate in     | ct     |              |
+             :             :       : Accounting                  :        :              :
+             | bus         | gecon | Master of Arts in Economics | ma     |              |
+                                                                                  (2 rows)
 
              ----
              /program.limit(2,3).sort(title)
@@ -27102,12 +27134,12 @@ tests:
                     "program"."code",
                     "program"."title",
                     "program"."degree",
-                    "program"."part_of"
+                    "program"."part_of_code"
              FROM (SELECT "program"."school_code",
                           "program"."code",
                           "program"."title",
                           "program"."degree",
-                          "program"."part_of"
+                          "program"."part_of_code"
                    FROM "ad"."program"
                    ORDER BY 1 ASC, 2 ASC
                    LIMIT 2
@@ -27542,7 +27574,8 @@ tests:
              | classification        | code                   | column |    1 |
              | classification        | course_classification  | link   |      |
              | classification        | description            | column |    4 |
-             | classification        | part_of                | column |    5 |
+             | classification        | part_of_classification | link   |      |
+             | classification        | part_of_code           | column |    5 |
              | classification        | program_requirement    | link   |      |
              | classification        | title                  | column |    3 |
              | classification        | type                   | column |    2 |
@@ -27594,7 +27627,8 @@ tests:
              | prerequisite          | on_department_code     | column |    3 |
              | program               | code                   | column |    2 |
              | program               | degree                 | column |    4 |
-             | program               | part_of                | column |    5 |
+             | program               | part_of_code           | column |    5 |
+             | program               | part_of_program        | link   |      |
              | program               | program                | link   |      |
              | program               | program_requirement    | link   |      |
              | program               | school                 | link   |      |
@@ -27628,7 +27662,7 @@ tests:
              | student               | program_code           | column |    6 |
              | student               | school_code            | column |    5 |
              | student               | start_date             | column |    7 |
-                                                                     (106 rows)
+                                                                     (108 rows)
 
              ----
              /field
@@ -27659,7 +27693,7 @@ tests:
              | class                 | year                | decimal | true         |
              | classification        | code                | string  | true         |
              | classification        | description         | string  | false        |
-             | classification        | part_of             | string  | false        |
+             | classification        | part_of_code        | string  | false        |
              | classification        | title               | string  | true         |
              | classification        | type                | enum    | false        |
              | confidential          | home_phone          | string  | false        |
@@ -27692,7 +27726,7 @@ tests:
              | prerequisite          | on_department_code  | string  | true         |
              | program               | code                | string  | true         |
              | program               | degree              | string  | false        |
-             | program               | part_of             | string  | false        |
+             | program               | part_of_code        | string  | false        |
              | program               | school_code         | string  | true         |
              | program               | title               | string  | true         |
              | program_requirement   | classification_code | string  | true         |
@@ -27740,8 +27774,9 @@ tests:
              | class                 | enrollment             | false       | enrollment            | class                  |
              | class                 | instructor             | true        | instructor            | class                  |
              | class                 | semester               | true        | semester              | class                  |
-             | classification        | classification         | true        | classification        |                        |
+             | classification        | classification         | true        | classification        | part_of_classification |
              | classification        | course_classification  | false       | course_classification | classification         |
+             | classification        | part_of_classification | false       | classification        | classification         |
              | classification        | program_requirement    | false       | program_requirement   | classification         |
              | confidential          | instructor             | true        | instructor            | confidential           |
              | course                | class                  | false       | class                 | course                 |
@@ -27761,7 +27796,8 @@ tests:
              | instructor            | confidential           | true        | confidential          | instructor             |
              | prerequisite          | of_course              | true        | course                | of_course_prerequisite |
              | prerequisite          | on_course              | true        | course                | on_course_prerequisite |
-             | program               | program                | true        | program               |                        |
+             | program               | part_of_program        | false       | program               | program                |
+             | program               | program                | true        | program               | part_of_program        |
              | program               | program_requirement    | false       | program_requirement   | program                |
              | program               | school                 | true        | school                | program                |
              | program               | student                | false       | student               | program                |
@@ -27772,7 +27808,7 @@ tests:
              | semester              | class                  | false       | class                 | semester               |
              | student               | enrollment             | false       | enrollment            | student                |
              | student               | program                | true        | program               | student                |
-                                                                                                                     (38 rows)
+                                                                                                                     (40 rows)
 
              ----
              /link
@@ -27991,16 +28027,16 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | field                                    |
-             +------------------------------------------+
-             | table_name | name        | kind   | sort |
-            -+------------+-------------+--------+------+-
-             | program    | code        | column |    2 |
-             | program    | degree      | column |    4 |
-             | program    | part_of     | column |    5 |
-             | program    | school_code | column |    1 |
-             | program    | title       | column |    3 |
-                                                 (5 rows)
+             | field                                     |
+             +-------------------------------------------+
+             | table_name | name         | kind   | sort |
+            -+------------+--------------+--------+------+-
+             | program    | code         | column |    2 |
+             | program    | degree       | column |    4 |
+             | program    | part_of_code | column |    5 |
+             | program    | school_code  | column |    1 |
+             | program    | title        | column |    3 |
+                                                  (5 rows)
 
              ----
              /(column?table_name='program').field
@@ -28212,18 +28248,18 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | column                       |
-             +------------------------------+
-             | table   | field              |
-             +---------+--------------------+
-             | name    | name        | sort |
-            -+---------+-------------+------+-
-             | program | code        |    2 |
-             | program | degree      |    4 |
-             | program | part_of     |    5 |
-             | program | school_code |    1 |
-             | program | title       |    3 |
-                                     (5 rows)
+             | column                        |
+             +-------------------------------+
+             | table   | field               |
+             +---------+---------------------+
+             | name    | name         | sort |
+            -+---------+--------------+------+-
+             | program | code         |    2 |
+             | program | degree       |    4 |
+             | program | part_of_code |    5 |
+             | program | school_code  |    1 |
+             | program | title        |    3 |
+                                      (5 rows)
 
              ----
              /column?table_name='program'{table{name},field{name,sort}}

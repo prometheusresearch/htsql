@@ -58,7 +58,7 @@ which do not offer a degree.
   | no                  PK2 |              | code            PK2 |----\    
   | title                NN |              | title            NN |    |
   | credits              NN |              | degree           CK |    |
-  | description             |              | part_of          FK |>---/
+  | description             |              | part_of_code     FK |>---/
   +-------------------------+              +---------------------+
 
   PK - Primary Key   UK - Unique Key         FK - Foreign Key
@@ -95,7 +95,7 @@ CREATE TABLE ad.program (
     code                VARCHAR(16) NOT NULL,
     title               VARCHAR(64) NOT NULL,
     degree              CHAR(2),
-    part_of             VARCHAR(16),
+    part_of_code        VARCHAR(16),
     CONSTRAINT program_pk
       PRIMARY KEY (school_code, code),
     CONSTRAINT program_title_uk
@@ -106,7 +106,7 @@ CREATE TABLE ad.program (
       FOREIGN KEY (school_code)
       REFERENCES ad.school(code),
    CONSTRAINT program_part_of_fk
-      FOREIGN KEY (school_code, part_of)
+      FOREIGN KEY (school_code, part_of_code)
       REFERENCES ad.program(school_code, code)
 );
 
@@ -431,7 +431,7 @@ fulfill requirements of the latter.
   +-----------------------------+   | |  |  | type             NN |    |
   | department_code     FK1,PK1 |\__/ |  |  | title            NN |    |
   | course_no           FK2,PK2 |/    |  |  | description         |    |
-  | classification_code  FK,PK3 |>----/  |  | part_of          FK |>---/
+  | classification_code  FK,PK3 |>----/  |  | part_of_code     FK |>---/
   +-----------------------------+  .     |  +---------------------+  .
                                   .      |                          .
           a classification is used       |    a classification may be
@@ -475,13 +475,13 @@ CREATE TABLE rd.classification (
     type                rd.classification_type_t,
     title               VARCHAR(64) NOT NULL,
     description         TEXT,
-    part_of             VARCHAR(16),
+    part_of_code        VARCHAR(16),
     CONSTRAINT classification_pk
       PRIMARY KEY (code),
     CONSTRAINT classification_title_uk
       UNIQUE (title),
     CONSTRAINT classification_part_of_fk
-      FOREIGN KEY (part_of)
+      FOREIGN KEY (part_of_code)
       REFERENCES rd.classification(code)
 );
 

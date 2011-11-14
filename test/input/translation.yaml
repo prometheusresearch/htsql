@@ -259,7 +259,7 @@ tests:
     - uri: /course{department.code,no,credits,count(class)}
                   ?credits=max((count(class) -> course).credits)
     - uri: /program{school.code, code, degree,
-                    num_parts := count({school_code,code} -> program{school_code,part_of})}
+                    num_parts := count({school_code,code} -> program{school_code,part_of_code})}
                    ?num_parts=max(fork().num_parts)
     - uri: /'art'->school{code}
     # fork()
@@ -279,7 +279,8 @@ tests:
     # fork() with projections
     - uri: /program^degree?count(^.student)=max(fork().count(^.student))
     # fork() with nullable kernel
-    - uri: /program.fork(part_of){root().program{school.code, code, part_of}, school.code, code, part_of}
+    - uri: /program.fork(part_of_code){root().program{school.code, code, part_of_code},
+                         school.code, code, part_of_code}
     # fork().fork() is inefficient
     - uri: /school.fork().fork().fork().limit(1)
     # Home indicator
@@ -495,10 +496,8 @@ tests:
   - uri: /department^school_code{school_code.name, name}
     expect: 400
 
-  # Introspector is unable to assign a name to some links
-  # (see `schema.yaml` for other examples).
+  # Introspector is unable to assign a name to some links (FIXED)
   - uri: /program.part_of.*
-    expect: 400
 
   # `sum()` should never produce `NULL`.
   - uri: /{sum(course{credits}?false()),

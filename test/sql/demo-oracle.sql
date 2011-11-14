@@ -43,7 +43,7 @@ CREATE TABLE program (
     code                VARCHAR2(16) NOT NULL,
     title               VARCHAR2(64) NOT NULL,
     degree              CHAR(2),
-    part_of             VARCHAR2(16),
+    part_of_code        VARCHAR2(16),
     CONSTRAINT program_pk
       PRIMARY KEY (school_code, code),
     CONSTRAINT program_title_uk
@@ -54,7 +54,7 @@ CREATE TABLE program (
       FOREIGN KEY (school_code)
       REFERENCES school(code),
    CONSTRAINT program_part_of_fk
-      FOREIGN KEY (school_code, part_of)
+      FOREIGN KEY (school_code, part_of_code)
       REFERENCES program(school_code, code)
 );
 
@@ -234,7 +234,7 @@ CREATE TABLE classification (
     type                VARCHAR2(10),
     title               VARCHAR2(64) NOT NULL,
     description         CLOB,
-    part_of             VARCHAR2(16),
+    part_of_code        VARCHAR2(16),
     CONSTRAINT classification_pk
       PRIMARY KEY (code),
     CONSTRAINT classification_title_uk
@@ -242,7 +242,7 @@ CREATE TABLE classification (
     CONSTRAINT classification_type_ck
        CHECK (type IN ('department', 'school', 'university')),
     CONSTRAINT classification_part_of_fk
-      FOREIGN KEY (part_of)
+      FOREIGN KEY (part_of_code)
       REFERENCES classification(code)
 );
 

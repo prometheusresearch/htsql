@@ -45,7 +45,7 @@ CREATE TABLE ad.program (
     code                VARCHAR(16) NOT NULL,
     title               VARCHAR(64) NOT NULL,
     degree              CHAR(2),
-    part_of             VARCHAR(16),
+    part_of_code        VARCHAR(16),
     CONSTRAINT program_pk
       PRIMARY KEY (school_code, code),
     CONSTRAINT program_title_uk
@@ -56,7 +56,7 @@ CREATE TABLE ad.program (
       FOREIGN KEY (school_code)
       REFERENCES ad.school(code),
    CONSTRAINT program_part_of_fk
-      FOREIGN KEY (school_code, part_of)
+      FOREIGN KEY (school_code, part_of_code)
       REFERENCES ad.program(school_code, code)
 );
 
@@ -233,7 +233,7 @@ CREATE TABLE rd.classification (
     type                VARCHAR(10),
     title               VARCHAR(64) NOT NULL,
     description         VARCHAR(MAX),
-    part_of             VARCHAR(16),
+    part_of_code        VARCHAR(16),
     CONSTRAINT classification_pk
       PRIMARY KEY (code),
     CONSTRAINT classification_title_uk
@@ -241,7 +241,7 @@ CREATE TABLE rd.classification (
     CONSTRAINT classification_type_ck
        CHECK (type IN ('department', 'school', 'university')),
     CONSTRAINT classification_part_of_fk
-      FOREIGN KEY (part_of)
+      FOREIGN KEY (part_of_code)
       REFERENCES rd.classification(code)
 );
 

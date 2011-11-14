@@ -55,11 +55,11 @@ tests:
   - uri: /(program?school_code='la'&code='uengl').program
   # FIXME: need a name for the link.
   - uri: /(program?school_code='la'&code='uengl')
-          .({school_code,part_of} -> program{school_code,code})
+          .({school_code,part_of_code} -> program{school_code,code})
   # Program -> Program (reverse self-referential)
   # FIXME: no name for a reverse self-referential link.
   - uri: /(program?school_code='la'&code='uengl')
-          .({school_code,code} -> program{school_code,part_of})
+          .({school_code,code} -> program{school_code,part_of_code})
   # Program -> Student
   - uri: /(program?school_code='la'&code='uengl').student
   # Program -> Program Requirement
@@ -153,7 +153,7 @@ tests:
   # Classification -> Classification (reverse self-referential)
   # FIXME: need an explicit name.
   - uri: /(classification?code='math')
-          .(code -> classification{part_of})
+          .(code -> classification{part_of_code})
   # Classification -> Course Classification
   - uri: /(classification?code='math').course_classification
   # Classification -> Program Requirement

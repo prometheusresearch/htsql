@@ -53,7 +53,7 @@
   ]
 
 - table: ad.program
-  columns: [school_code, code, title, degree, part_of]
+  columns: [school_code, code, title, degree, part_of_code]
   data: [
     ['ns', 'uastro', 'Bachelor of Science in Astronomy', 'bs', null],
     ['ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs', null],
@@ -837,7 +837,7 @@
   ]
 
 - table: rd.classification
-  columns: [code, type, title, description, part_of]
+  columns: [code, type, title, description, part_of_code]
   data: [
     ['cross', null, 'Cross-Cutting Requirements', null, null],
       ['writing', 'university', 'Writing Intensive', 'Writing intensive courses involve 3 or more papers per semester; at least one of which is a research paper of 20 pages or more.', 'cross'],

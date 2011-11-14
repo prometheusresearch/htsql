@@ -182,7 +182,7 @@ class CollectionDictionaryLoader(object):
     def load_classification(self, columns, data):
         for record in data:
             code = self.get(columns, record, 'code')
-            part_of = self.get(columns, record, 'part_of')
+            part_of = self.get(columns, record, 'part_of_code')
             if code not in self.d.classification_tree:
                 self.d.classification_tree[code] = []
             if part_of not in self.d.classification_tree:
@@ -226,19 +226,6 @@ class CollectionDictionaryLoader(object):
                 self.d.course_classification[course_key] = []
             self.d.course_classification[course_key].append(classif)
 
-
-class DbDictionaryLoader(object):
-
-    SELECT_DEPARTMENTS = 'SELECT department_code, count(*) FROM ad.course GROUP BY department_code'
-    SELECT_SEMESTERS = 'SELECT year, season, begin_date, end_date FROM cd.semester'
-    SELECT_SCHOOL_PROGRAMS = 'SELECT s.code, p.code FROM ad.school s INNER JOIN ad.program p ON p.school_code = s.code'
-    SELECT_CLASSIFICATION = 'SELECT code, part_of FROM rd.classification'
-    SELECT_PROGRAM_REQ = 'SELECT school_code, program_code, classification_code, credit_hours FROM rd.program_requirement'
-    SELECT_COURSE_PREREQ = 'SELECT of_department_code, of_course_no, on_department_code, on_course_no FROM rd.prerequisite'
-    SELECT_COURSES = 'SELECT department_code, no, credits FROM ad.course'
-    SELECT_CLASSIFIED_COURSES = 'SELECT department_code, course_no, classification_code FROM rd.course_classification'
-
-    # TBD
 
 class BaseDataGenerator(object):
 

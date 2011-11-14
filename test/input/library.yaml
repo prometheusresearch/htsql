@@ -671,8 +671,8 @@ tests:
   - uri: /school.({} -> school)
   # Fiber join
   - uri: /department.(school_code -> program)
-  - uri: /classification.(code -> classification{part_of})
-            {part_of, code}
+  - uri: /classification.(code -> classification{part_of_code})
+            {part_of_code, code}
   # Context
   - uri: /school.({} -> school){root().school.code, this().code}
   # Invalid link
