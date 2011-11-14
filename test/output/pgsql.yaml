@@ -1513,6 +1513,14 @@ tests:
              WHERE ("program"."school_code" = 'la')
                    AND ("program"."code" = 'uengl')
              ORDER BY "program"."school_code" ASC, "program"."code" ASC
+        - uri: /(program?school_code='la'&code='uengl').program
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: ambiguous name:
+                /(program?school_code='la'&code='uengl').program
+                                                         ^^^^^^^
         - uri: /(program?school_code='la'&code='uengl').part_of
           status: 200 OK
           headers:
@@ -1538,20 +1546,19 @@ tests:
              WHERE ("program_1"."school_code" = 'la')
                    AND ("program_1"."code" = 'uengl')
              ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
-        - uri: /(program?school_code='la'&code='uengl').program
+        - uri: /(program?school_code='la'&code='uengl').program_via_part_of
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | program                                                                 |
-             +-------------------------------------------------------------------------+
-             | school_code | code  | title                     | degree | part_of_code |
-            -+-------------+-------+---------------------------+--------+--------------+-
-             | la          | gengl | Master of Arts in English | ma     |              |
-                                                                                 (1 row)
+             | program_via_part_of                                |
+             +----------------------------------------------------+
+             | school_code | code | title | degree | part_of_code |
+            -+-------------+------+-------+--------+--------------+-
+                                                          (no rows)
 
              ----
-             /(program?school_code='la'&code='uengl').program
+             /(program?school_code='la'&code='uengl').program_via_part_of
              SELECT "program_2"."school_code",
                     "program_2"."code",
                     "program_2"."title",
@@ -1559,66 +1566,6 @@ tests:
                     "program_2"."part_of_code"
              FROM "ad"."program" AS "program_1"
                   INNER JOIN "ad"."program" AS "program_2"
-                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of_code" = "program_2"."code"))
-             WHERE ("program_1"."school_code" = 'la')
-                   AND ("program_1"."code" = 'uengl')
-             ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
-        - uri: /(program?school_code='la'&code='uengl') .({school_code,part_of_code}
-            -> program{school_code,code})
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | program                                                                 |
-             +-------------------------------------------------------------------------+
-             | school_code | code  | title                     | degree | part_of_code |
-            -+-------------+-------+---------------------------+--------+--------------+-
-             | la          | gengl | Master of Arts in English | ma     |              |
-                                                                                 (1 row)
-
-             ----
-             /(program?school_code='la'&code='uengl').({school_code,part_of_code}->program{school_code,code})
-             SELECT "program_2"."school_code",
-                    "program_2"."code",
-                    "program_2"."title",
-                    "program_2"."degree",
-                    "program_2"."part_of_code"
-             FROM "ad"."program" AS "program_1"
-                  INNER JOIN (SELECT "program"."school_code",
-                                     "program"."code",
-                                     "program"."title",
-                                     "program"."degree",
-                                     "program"."part_of_code"
-                              FROM "ad"."program") AS "program_2"
-                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of_code" = "program_2"."code"))
-             WHERE ("program_1"."school_code" = 'la')
-                   AND ("program_1"."code" = 'uengl')
-             ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC, 1 ASC, 2 ASC
-        - uri: /(program?school_code='la'&code='uengl') .({school_code,code} -> program{school_code,part_of_code})
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | program                                            |
-             +----------------------------------------------------+
-             | school_code | code | title | degree | part_of_code |
-            -+-------------+------+-------+--------+--------------+-
-                                                          (no rows)
-
-             ----
-             /(program?school_code='la'&code='uengl').({school_code,code}->program{school_code,part_of_code})
-             SELECT "program_2"."school_code",
-                    "program_2"."code",
-                    "program_2"."title",
-                    "program_2"."degree",
-                    "program_2"."part_of_code"
-             FROM "ad"."program" AS "program_1"
-                  INNER JOIN (SELECT "program"."school_code",
-                                     "program"."code",
-                                     "program"."title",
-                                     "program"."degree",
-                                     "program"."part_of_code"
-                              FROM "ad"."program") AS "program_2"
                              ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of_code"))
              WHERE ("program_1"."school_code" = 'la')
                    AND ("program_1"."code" = 'uengl')
@@ -1763,12 +1710,12 @@ tests:
             bind error: ambiguous name:
                 /(course?department_code='lang'&no=345).prerequisite
                                                         ^^^^^^^^^^^^
-        - uri: /(course?department_code='lang'&no=345) .({department_code,no} -> prerequisite{on_department_code,on_course_no})
+        - uri: /(course?department_code='lang'&no=345).prerequisite_via_on_course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | prerequisite                                                          |
+             | prerequisite_via_on_course                                            |
              +-----------------------------------------------------------------------+
              | of_department_code | of_course_no | on_department_code | on_course_no |
             -+--------------------+--------------+--------------------+--------------+-
@@ -1777,27 +1724,23 @@ tests:
                                                                               (2 rows)
 
              ----
-             /(course?department_code='lang'&no=345).({department_code,no}->prerequisite{on_department_code,on_course_no})
+             /(course?department_code='lang'&no=345).prerequisite_via_on_course
              SELECT "prerequisite"."of_department_code",
                     "prerequisite"."of_course_no",
                     "prerequisite"."on_department_code",
                     "prerequisite"."on_course_no"
              FROM "ad"."course"
-                  INNER JOIN (SELECT "prerequisite"."of_department_code",
-                                     "prerequisite"."of_course_no",
-                                     "prerequisite"."on_department_code",
-                                     "prerequisite"."on_course_no"
-                              FROM "rd"."prerequisite") AS "prerequisite"
+                  INNER JOIN "rd"."prerequisite"
                              ON (("course"."department_code" = "prerequisite"."on_department_code") AND ("course"."no" = "prerequisite"."on_course_no"))
              WHERE ("course"."department_code" = 'lang')
                    AND ("course"."no" = 345)
              ORDER BY "course"."department_code" ASC, "course"."no" ASC, 1 ASC, 2 ASC, 3 ASC, 4 ASC
-        - uri: /(course?department_code='lang'&no=345) .({department_code,no} -> prerequisite{of_department_code,of_course_no})
+        - uri: /(course?department_code='lang'&no=345).prerequisite_via_of_course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | prerequisite                                                          |
+             | prerequisite_via_of_course                                            |
              +-----------------------------------------------------------------------+
              | of_department_code | of_course_no | on_department_code | on_course_no |
             -+--------------------+--------------+--------------------+--------------+-
@@ -1806,17 +1749,13 @@ tests:
                                                                               (2 rows)
 
              ----
-             /(course?department_code='lang'&no=345).({department_code,no}->prerequisite{of_department_code,of_course_no})
+             /(course?department_code='lang'&no=345).prerequisite_via_of_course
              SELECT "prerequisite"."of_department_code",
                     "prerequisite"."of_course_no",
                     "prerequisite"."on_department_code",
                     "prerequisite"."on_course_no"
              FROM "ad"."course"
-                  INNER JOIN (SELECT "prerequisite"."of_department_code",
-                                     "prerequisite"."of_course_no",
-                                     "prerequisite"."on_department_code",
-                                     "prerequisite"."on_course_no"
-                              FROM "rd"."prerequisite") AS "prerequisite"
+                  INNER JOIN "rd"."prerequisite"
                              ON (("course"."department_code" = "prerequisite"."of_department_code") AND ("course"."no" = "prerequisite"."of_course_no"))
              WHERE ("course"."department_code" = 'lang')
                    AND ("course"."no" = 345)
@@ -2326,40 +2265,20 @@ tests:
              WHERE ("enrollment"."student_id" = 1100)
                    AND ("enrollment"."class_seq" = 1110)
              ORDER BY "enrollment"."student_id" ASC, "enrollment"."class_seq" ASC
-        - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).department
+        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'department':
-                /(prerequisite?of_department_code='capmrk'&of_course_no=818 &on_department_code='acc'&on_course_no=315).department
-                                                                                                                        ^^^^^^^^^^
-        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).of_course_no
+            bind error: ambiguous name:
+                /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
+                                                                                                                        ^^^^^^
+        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).of_course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | of_course_no |
-            -+--------------+-
-             |          230 |
-                      (1 row)
-
-             ----
-             /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).of_course_no
-             SELECT "prerequisite"."of_course_no"
-             FROM "rd"."prerequisite"
-             WHERE ("prerequisite"."of_department_code" = 'astro')
-                   AND ("prerequisite"."of_course_no" = 230)
-                   AND ("prerequisite"."on_department_code" = 'phys')
-                   AND ("prerequisite"."on_course_no" = 130)
-             ORDER BY "prerequisite"."of_department_code" ASC, 1 ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC
-        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130)
-            .({of_department_code,of_course_no} -> course{department_code,no})
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | course                                                                                       |
+             | of_course                                                                                    |
              +----------------------------------------------------------------------------------------------+
              | department_code | no  | title                   | credits | description                      |
             -+-----------------+-----+-------------------------+---------+----------------------------------+-
@@ -2370,51 +2289,26 @@ tests:
                                                                                                       (1 row)
 
              ----
-             /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).({of_department_code,of_course_no}->course{department_code,no})
+             /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).of_course
              SELECT "course"."department_code",
                     "course"."no",
                     "course"."title",
                     "course"."credits",
                     "course"."description"
              FROM "rd"."prerequisite"
-                  INNER JOIN (SELECT "course"."department_code",
-                                     "course"."no",
-                                     "course"."title",
-                                     "course"."credits",
-                                     "course"."description"
-                              FROM "ad"."course") AS "course"
+                  INNER JOIN "ad"."course"
                              ON (("prerequisite"."of_department_code" = "course"."department_code") AND ("prerequisite"."of_course_no" = "course"."no"))
              WHERE ("prerequisite"."of_department_code" = 'astro')
                    AND ("prerequisite"."of_course_no" = 230)
                    AND ("prerequisite"."on_department_code" = 'phys')
                    AND ("prerequisite"."on_course_no" = 130)
-             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC, 1 ASC, 2 ASC
-        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).on_course_no
+             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC
+        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).on_course
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | on_course_no |
-            -+--------------+-
-             |          130 |
-                      (1 row)
-
-             ----
-             /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).on_course_no
-             SELECT "prerequisite"."on_course_no"
-             FROM "rd"."prerequisite"
-             WHERE ("prerequisite"."of_department_code" = 'astro')
-                   AND ("prerequisite"."of_course_no" = 230)
-                   AND ("prerequisite"."on_department_code" = 'phys')
-                   AND ("prerequisite"."on_course_no" = 130)
-             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, "prerequisite"."on_department_code" ASC, 1 ASC
-        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130)
-            .({on_department_code,on_course_no} -> course{department_code,no})
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | course                                                                                          |
+             | on_course                                                                                       |
              +-------------------------------------------------------------------------------------------------+
              | department_code | no  | title                      | credits | description                      |
             -+-----------------+-----+----------------------------+---------+----------------------------------+-
@@ -2426,33 +2320,28 @@ tests:
                                                                                                          (1 row)
 
              ----
-             /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).({on_department_code,on_course_no}->course{department_code,no})
+             /(prerequisite?of_department_code='astro'&of_course_no=230&on_department_code='phys'&on_course_no=130).on_course
              SELECT "course"."department_code",
                     "course"."no",
                     "course"."title",
                     "course"."credits",
                     "course"."description"
              FROM "rd"."prerequisite"
-                  INNER JOIN (SELECT "course"."department_code",
-                                     "course"."no",
-                                     "course"."title",
-                                     "course"."credits",
-                                     "course"."description"
-                              FROM "ad"."course") AS "course"
+                  INNER JOIN "ad"."course"
                              ON (("prerequisite"."on_department_code" = "course"."department_code") AND ("prerequisite"."on_course_no" = "course"."no"))
              WHERE ("prerequisite"."of_department_code" = 'astro')
                    AND ("prerequisite"."of_course_no" = 230)
                    AND ("prerequisite"."on_department_code" = 'phys')
                    AND ("prerequisite"."on_course_no" = 130)
-             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC, 1 ASC, 2 ASC
-        - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
+             ORDER BY "prerequisite"."of_department_code" ASC, "prerequisite"."of_course_no" ASC, "prerequisite"."on_department_code" ASC, "prerequisite"."on_course_no" ASC
+        - uri: /(classification?code='math').classification
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
             bind error: ambiguous name:
-                /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
-                                                                                                                        ^^^^^^
+                /(classification?code='math').classification
+                                              ^^^^^^^^^^^^^^
         - uri: /(classification?code='math').part_of
           status: 200 OK
           headers:
@@ -2477,36 +2366,12 @@ tests:
                              ON ("classification_1"."part_of_code" = "classification_2"."code")
              WHERE ("classification_1"."code" = 'math')
              ORDER BY "classification_1"."code" ASC
-        - uri: /(classification?code='math').classification
+        - uri: /(classification?code='math').classification_via_part_of
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | classification                                                       |
-             +----------------------------------------------------------------------+
-             | code    | type       | title            | description | part_of_code |
-            -+---------+------------+------------------+-------------+--------------+-
-             | science | university | Natural Sciences |             |              |
-                                                                              (1 row)
-
-             ----
-             /(classification?code='math').classification
-             SELECT "classification_2"."code",
-                    "classification_2"."type",
-                    "classification_2"."title",
-                    "classification_2"."description",
-                    "classification_2"."part_of_code"
-             FROM "rd"."classification" AS "classification_1"
-                  INNER JOIN "rd"."classification" AS "classification_2"
-                             ON ("classification_1"."part_of_code" = "classification_2"."code")
-             WHERE ("classification_1"."code" = 'math')
-             ORDER BY "classification_1"."code" ASC
-        - uri: /(classification?code='math') .(code -> classification{part_of_code})
-          status: 200 OK
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | classification                                                                    |
+             | classification_via_part_of                                                        |
              +-----------------------------------------------------------------------------------+
              | code       | type       | title                      | description | part_of_code |
             -+------------+------------+----------------------------+-------------+--------------+-
@@ -2517,19 +2382,14 @@ tests:
                                                                                           (4 rows)
 
              ----
-             /(classification?code='math').(code->classification{part_of_code})
+             /(classification?code='math').classification_via_part_of
              SELECT "classification_2"."code",
                     "classification_2"."type",
                     "classification_2"."title",
                     "classification_2"."description",
                     "classification_2"."part_of_code"
              FROM "rd"."classification" AS "classification_1"
-                  INNER JOIN (SELECT "classification"."code",
-                                     "classification"."type",
-                                     "classification"."title",
-                                     "classification"."description",
-                                     "classification"."part_of_code"
-                              FROM "rd"."classification") AS "classification_2"
+                  INNER JOIN "rd"."classification" AS "classification_2"
                              ON ("classification_1"."code" = "classification_2"."part_of_code")
              WHERE ("classification_1"."code" = 'math')
              ORDER BY "classification_1"."code" ASC, 1 ASC
@@ -27550,119 +27410,119 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | field                                                          |
-             +----------------------------------------------------------------+
-             | table_name            | name                   | kind   | sort |
-            -+-----------------------+------------------------+--------+------+-
-             | appointment           | department             | link   |      |
-             | appointment           | department_code        | column |    1 |
-             | appointment           | fraction               | column |    3 |
-             | appointment           | instructor             | link   |      |
-             | appointment           | instructor_code        | column |    2 |
-             | class                 | class_seq              | column |    7 |
-             | class                 | course                 | link   |      |
-             | class                 | course_no              | column |    2 |
-             | class                 | department_code        | column |    1 |
-             | class                 | enrollment             | link   |      |
-             | class                 | instructor             | link   |      |
-             | class                 | instructor_code        | column |    6 |
-             | class                 | season                 | column |    4 |
-             | class                 | section                | column |    5 |
-             | class                 | semester               | link   |      |
-             | class                 | year                   | column |    3 |
-             | classification        | classification         | link   |      |
-             | classification        | code                   | column |    1 |
-             | classification        | course_classification  | link   |      |
-             | classification        | description            | column |    4 |
-             | classification        | part_of_classification | link   |      |
-             | classification        | part_of_code           | column |    5 |
-             | classification        | program_requirement    | link   |      |
-             | classification        | title                  | column |    3 |
-             | classification        | type                   | column |    2 |
-             | confidential          | home_phone             | column |    4 |
-             | confidential          | instructor             | link   |      |
-             | confidential          | instructor_code        | column |    1 |
-             | confidential          | pay_grade              | column |    3 |
-             | confidential          | ssn                    | column |    2 |
-             | course                | class                  | link   |      |
-             | course                | course_classification  | link   |      |
-             | course                | credits                | column |    4 |
-             | course                | department             | link   |      |
-             | course                | department_code        | column |    1 |
-             | course                | description            | column |    5 |
-             | course                | no                     | column |    2 |
-             | course                | of_course_prerequisite | link   |      |
-             | course                | on_course_prerequisite | link   |      |
-             | course                | title                  | column |    3 |
-             | course_classification | classification         | link   |      |
-             | course_classification | classification_code    | column |    3 |
-             | course_classification | course                 | link   |      |
-             | course_classification | course_no              | column |    2 |
-             | course_classification | department_code        | column |    1 |
-             | department            | appointment            | link   |      |
-             | department            | code                   | column |    1 |
-             | department            | course                 | link   |      |
-             | department            | name                   | column |    2 |
-             | department            | school                 | link   |      |
-             | department            | school_code            | column |    3 |
-             | enrollment            | class                  | link   |      |
-             | enrollment            | class_seq              | column |    2 |
-             | enrollment            | grade                  | column |    4 |
-             | enrollment            | status                 | column |    3 |
-             | enrollment            | student                | link   |      |
-             | enrollment            | student_id             | column |    1 |
-             | instructor            | appointment            | link   |      |
-             | instructor            | class                  | link   |      |
-             | instructor            | code                   | column |    1 |
-             | instructor            | confidential           | link   |      |
-             | instructor            | email                  | column |    5 |
-             | instructor            | full_name              | column |    3 |
-             | instructor            | phone                  | column |    4 |
-             | instructor            | title                  | column |    2 |
-             | prerequisite          | of_course              | link   |      |
-             | prerequisite          | of_course_no           | column |    2 |
-             | prerequisite          | of_department_code     | column |    1 |
-             | prerequisite          | on_course              | link   |      |
-             | prerequisite          | on_course_no           | column |    4 |
-             | prerequisite          | on_department_code     | column |    3 |
-             | program               | code                   | column |    2 |
-             | program               | degree                 | column |    4 |
-             | program               | part_of_code           | column |    5 |
-             | program               | part_of_program        | link   |      |
-             | program               | program                | link   |      |
-             | program               | program_requirement    | link   |      |
-             | program               | school                 | link   |      |
-             | program               | school_code            | column |    1 |
-             | program               | student                | link   |      |
-             | program               | title                  | column |    3 |
-             | program_requirement   | classification         | link   |      |
-             | program_requirement   | classification_code    | column |    3 |
-             | program_requirement   | credit_hours           | column |    4 |
-             | program_requirement   | program                | link   |      |
-             | program_requirement   | program_code           | column |    2 |
-             | program_requirement   | rationale              | column |    5 |
-             | program_requirement   | school_code            | column |    1 |
-             | school                | campus                 | column |    3 |
-             | school                | code                   | column |    1 |
-             | school                | department             | link   |      |
-             | school                | name                   | column |    2 |
-             | school                | program                | link   |      |
-             | semester              | begin_date             | column |    3 |
-             | semester              | class                  | link   |      |
-             | semester              | end_date               | column |    4 |
-             | semester              | season                 | column |    2 |
-             | semester              | year                   | column |    1 |
-             | student               | dob                    | column |    4 |
-             | student               | enrollment             | link   |      |
-             | student               | gender                 | column |    3 |
-             | student               | id                     | column |    1 |
-             | student               | is_active              | column |    8 |
-             | student               | name                   | column |    2 |
-             | student               | program                | link   |      |
-             | student               | program_code           | column |    6 |
-             | student               | school_code            | column |    5 |
-             | student               | start_date             | column |    7 |
-                                                                     (108 rows)
+             | field                                                              |
+             +--------------------------------------------------------------------+
+             | table_name            | name                       | kind   | sort |
+            -+-----------------------+----------------------------+--------+------+-
+             | appointment           | department                 | link   |      |
+             | appointment           | department_code            | column |    1 |
+             | appointment           | fraction                   | column |    3 |
+             | appointment           | instructor                 | link   |      |
+             | appointment           | instructor_code            | column |    2 |
+             | class                 | class_seq                  | column |    7 |
+             | class                 | course                     | link   |      |
+             | class                 | course_no                  | column |    2 |
+             | class                 | department_code            | column |    1 |
+             | class                 | enrollment                 | link   |      |
+             | class                 | instructor                 | link   |      |
+             | class                 | instructor_code            | column |    6 |
+             | class                 | season                     | column |    4 |
+             | class                 | section                    | column |    5 |
+             | class                 | semester                   | link   |      |
+             | class                 | year                       | column |    3 |
+             | classification        | classification_via_part_of | link   |      |
+             | classification        | code                       | column |    1 |
+             | classification        | course_classification      | link   |      |
+             | classification        | description                | column |    4 |
+             | classification        | part_of                    | link   |      |
+             | classification        | part_of_code               | column |    5 |
+             | classification        | program_requirement        | link   |      |
+             | classification        | title                      | column |    3 |
+             | classification        | type                       | column |    2 |
+             | confidential          | home_phone                 | column |    4 |
+             | confidential          | instructor                 | link   |      |
+             | confidential          | instructor_code            | column |    1 |
+             | confidential          | pay_grade                  | column |    3 |
+             | confidential          | ssn                        | column |    2 |
+             | course                | class                      | link   |      |
+             | course                | course_classification      | link   |      |
+             | course                | credits                    | column |    4 |
+             | course                | department                 | link   |      |
+             | course                | department_code            | column |    1 |
+             | course                | description                | column |    5 |
+             | course                | no                         | column |    2 |
+             | course                | prerequisite_via_of_course | link   |      |
+             | course                | prerequisite_via_on_course | link   |      |
+             | course                | title                      | column |    3 |
+             | course_classification | classification             | link   |      |
+             | course_classification | classification_code        | column |    3 |
+             | course_classification | course                     | link   |      |
+             | course_classification | course_no                  | column |    2 |
+             | course_classification | department_code            | column |    1 |
+             | department            | appointment                | link   |      |
+             | department            | code                       | column |    1 |
+             | department            | course                     | link   |      |
+             | department            | name                       | column |    2 |
+             | department            | school                     | link   |      |
+             | department            | school_code                | column |    3 |
+             | enrollment            | class                      | link   |      |
+             | enrollment            | class_seq                  | column |    2 |
+             | enrollment            | grade                      | column |    4 |
+             | enrollment            | status                     | column |    3 |
+             | enrollment            | student                    | link   |      |
+             | enrollment            | student_id                 | column |    1 |
+             | instructor            | appointment                | link   |      |
+             | instructor            | class                      | link   |      |
+             | instructor            | code                       | column |    1 |
+             | instructor            | confidential               | link   |      |
+             | instructor            | email                      | column |    5 |
+             | instructor            | full_name                  | column |    3 |
+             | instructor            | phone                      | column |    4 |
+             | instructor            | title                      | column |    2 |
+             | prerequisite          | of_course                  | link   |      |
+             | prerequisite          | of_course_no               | column |    2 |
+             | prerequisite          | of_department_code         | column |    1 |
+             | prerequisite          | on_course                  | link   |      |
+             | prerequisite          | on_course_no               | column |    4 |
+             | prerequisite          | on_department_code         | column |    3 |
+             | program               | code                       | column |    2 |
+             | program               | degree                     | column |    4 |
+             | program               | part_of                    | link   |      |
+             | program               | part_of_code               | column |    5 |
+             | program               | program_requirement        | link   |      |
+             | program               | program_via_part_of        | link   |      |
+             | program               | school                     | link   |      |
+             | program               | school_code                | column |    1 |
+             | program               | student                    | link   |      |
+             | program               | title                      | column |    3 |
+             | program_requirement   | classification             | link   |      |
+             | program_requirement   | classification_code        | column |    3 |
+             | program_requirement   | credit_hours               | column |    4 |
+             | program_requirement   | program                    | link   |      |
+             | program_requirement   | program_code               | column |    2 |
+             | program_requirement   | rationale                  | column |    5 |
+             | program_requirement   | school_code                | column |    1 |
+             | school                | campus                     | column |    3 |
+             | school                | code                       | column |    1 |
+             | school                | department                 | link   |      |
+             | school                | name                       | column |    2 |
+             | school                | program                    | link   |      |
+             | semester              | begin_date                 | column |    3 |
+             | semester              | class                      | link   |      |
+             | semester              | end_date                   | column |    4 |
+             | semester              | season                     | column |    2 |
+             | semester              | year                       | column |    1 |
+             | student               | dob                        | column |    4 |
+             | student               | enrollment                 | link   |      |
+             | student               | gender                     | column |    3 |
+             | student               | id                         | column |    1 |
+             | student               | is_active                  | column |    8 |
+             | student               | name                       | column |    2 |
+             | student               | program                    | link   |      |
+             | student               | program_code               | column |    6 |
+             | student               | school_code                | column |    5 |
+             | student               | start_date                 | column |    7 |
+                                                                         (108 rows)
 
              ----
              /field
@@ -27764,58 +27624,58 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | link                                                                                                          |
-             +---------------------------------------------------------------------------------------------------------------+
-             | table_name            | name                   | is_singular | target_table_name     | reverse_name           |
-            -+-----------------------+------------------------+-------------+-----------------------+------------------------+-
-             | appointment           | department             | true        | department            | appointment            |
-             | appointment           | instructor             | true        | instructor            | appointment            |
-             | class                 | course                 | true        | course                | class                  |
-             | class                 | enrollment             | false       | enrollment            | class                  |
-             | class                 | instructor             | true        | instructor            | class                  |
-             | class                 | semester               | true        | semester              | class                  |
-             | classification        | classification         | true        | classification        | part_of_classification |
-             | classification        | course_classification  | false       | course_classification | classification         |
-             | classification        | part_of_classification | false       | classification        | classification         |
-             | classification        | program_requirement    | false       | program_requirement   | classification         |
-             | confidential          | instructor             | true        | instructor            | confidential           |
-             | course                | class                  | false       | class                 | course                 |
-             | course                | course_classification  | false       | course_classification | course                 |
-             | course                | department             | true        | department            | course                 |
-             | course                | of_course_prerequisite | false       | prerequisite          | of_course              |
-             | course                | on_course_prerequisite | false       | prerequisite          | on_course              |
-             | course_classification | classification         | true        | classification        | course_classification  |
-             | course_classification | course                 | true        | course                | course_classification  |
-             | department            | appointment            | false       | appointment           | department             |
-             | department            | course                 | false       | course                | department             |
-             | department            | school                 | true        | school                | department             |
-             | enrollment            | class                  | true        | class                 | enrollment             |
-             | enrollment            | student                | true        | student               | enrollment             |
-             | instructor            | appointment            | false       | appointment           | instructor             |
-             | instructor            | class                  | false       | class                 | instructor             |
-             | instructor            | confidential           | true        | confidential          | instructor             |
-             | prerequisite          | of_course              | true        | course                | of_course_prerequisite |
-             | prerequisite          | on_course              | true        | course                | on_course_prerequisite |
-             | program               | part_of_program        | false       | program               | program                |
-             | program               | program                | true        | program               | part_of_program        |
-             | program               | program_requirement    | false       | program_requirement   | program                |
-             | program               | school                 | true        | school                | program                |
-             | program               | student                | false       | student               | program                |
-             | program_requirement   | classification         | true        | classification        | program_requirement    |
-             | program_requirement   | program                | true        | program               | program_requirement    |
-             | school                | department             | false       | department            | school                 |
-             | school                | program                | false       | program               | school                 |
-             | semester              | class                  | false       | class                 | semester               |
-             | student               | enrollment             | false       | enrollment            | student                |
-             | student               | program                | true        | program               | student                |
-                                                                                                                     (40 rows)
+             | link                                                                                                                  |
+             +-----------------------------------------------------------------------------------------------------------------------+
+             | table_name            | name                       | is_singular | target_name           | reverse_name               |
+            -+-----------------------+----------------------------+-------------+-----------------------+----------------------------+-
+             | appointment           | department                 | true        | department            | appointment                |
+             | appointment           | instructor                 | true        | instructor            | appointment                |
+             | class                 | course                     | true        | course                | class                      |
+             | class                 | enrollment                 | false       | enrollment            | class                      |
+             | class                 | instructor                 | true        | instructor            | class                      |
+             | class                 | semester                   | true        | semester              | class                      |
+             | classification        | classification_via_part_of | false       | classification        | part_of                    |
+             | classification        | course_classification      | false       | course_classification | classification             |
+             | classification        | part_of                    | true        | classification        | classification_via_part_of |
+             | classification        | program_requirement        | false       | program_requirement   | classification             |
+             | confidential          | instructor                 | true        | instructor            | confidential               |
+             | course                | class                      | false       | class                 | course                     |
+             | course                | course_classification      | false       | course_classification | course                     |
+             | course                | department                 | true        | department            | course                     |
+             | course                | prerequisite_via_of_course | false       | prerequisite          | of_course                  |
+             | course                | prerequisite_via_on_course | false       | prerequisite          | on_course                  |
+             | course_classification | classification             | true        | classification        | course_classification      |
+             | course_classification | course                     | true        | course                | course_classification      |
+             | department            | appointment                | false       | appointment           | department                 |
+             | department            | course                     | false       | course                | department                 |
+             | department            | school                     | true        | school                | department                 |
+             | enrollment            | class                      | true        | class                 | enrollment                 |
+             | enrollment            | student                    | true        | student               | enrollment                 |
+             | instructor            | appointment                | false       | appointment           | instructor                 |
+             | instructor            | class                      | false       | class                 | instructor                 |
+             | instructor            | confidential               | true        | confidential          | instructor                 |
+             | prerequisite          | of_course                  | true        | course                | prerequisite_via_of_course |
+             | prerequisite          | on_course                  | true        | course                | prerequisite_via_on_course |
+             | program               | part_of                    | true        | program               | program_via_part_of        |
+             | program               | program_requirement        | false       | program_requirement   | program                    |
+             | program               | program_via_part_of        | false       | program               | part_of                    |
+             | program               | school                     | true        | school                | program                    |
+             | program               | student                    | false       | student               | program                    |
+             | program_requirement   | classification             | true        | classification        | program_requirement        |
+             | program_requirement   | program                    | true        | program               | program_requirement        |
+             | school                | department                 | false       | department            | school                     |
+             | school                | program                    | false       | program               | school                     |
+             | semester              | class                      | false       | class                 | semester                   |
+             | student               | enrollment                 | false       | enrollment            | student                    |
+             | student               | program                    | true        | program               | student                    |
+                                                                                                                             (40 rows)
 
              ----
              /link
              SELECT "link"."table_name",
                     "link"."name",
                     "link"."is_singular",
-                    "link"."target_table_name",
+                    "link"."target_name",
                     "link"."reverse_name"
              FROM "link"
              ORDER BY 1 ASC, 2 ASC
@@ -27872,56 +27732,56 @@ tests:
                              ON ("table"."name" = "column"."table_name")
              WHERE ("table"."name" = 'department')
              ORDER BY "table"."name" ASC, 1 ASC, 2 ASC
-        - uri: /(table?name='department').table_link/:meta
+        - uri: /(table?name='department').link/:meta
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | table_link                                                                |
-             +---------------------------------------------------------------------------+
-             | table_name | name        | is_singular | target_table_name | reverse_name |
-            -+------------+-------------+-------------+-------------------+--------------+-
-             | department | appointment | false       | appointment       | department   |
-             | department | course      | false       | course            | department   |
-             | department | school      | true        | school            | department   |
-                                                                                  (3 rows)
+             | link                                                                |
+             +---------------------------------------------------------------------+
+             | table_name | name        | is_singular | target_name | reverse_name |
+            -+------------+-------------+-------------+-------------+--------------+-
+             | department | appointment | false       | appointment | department   |
+             | department | course      | false       | course      | department   |
+             | department | school      | true        | school      | department   |
+                                                                            (3 rows)
 
              ----
-             /(table?name='department').table_link
+             /(table?name='department').link
              SELECT "link"."table_name",
                     "link"."name",
                     "link"."is_singular",
-                    "link"."target_table_name",
+                    "link"."target_name",
                     "link"."reverse_name"
              FROM "table"
                   INNER JOIN "link"
                              ON ("table"."name" = "link"."table_name")
              WHERE ("table"."name" = 'department')
              ORDER BY "table"."name" ASC, 1 ASC, 2 ASC
-        - uri: /(table?name='department').target_table_link/:meta
+        - uri: /(table?name='department').link_via_target/:meta
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | target_table_link                                                         |
-             +---------------------------------------------------------------------------+
-             | table_name  | name       | is_singular | target_table_name | reverse_name |
-            -+-------------+------------+-------------+-------------------+--------------+-
-             | appointment | department | true        | department        | appointment  |
-             | course      | department | true        | department        | course       |
-             | school      | department | false       | department        | school       |
-                                                                                  (3 rows)
+             | link_via_target                                                     |
+             +---------------------------------------------------------------------+
+             | table_name  | name       | is_singular | target_name | reverse_name |
+            -+-------------+------------+-------------+-------------+--------------+-
+             | appointment | department | true        | department  | appointment  |
+             | course      | department | true        | department  | course       |
+             | school      | department | false       | department  | school       |
+                                                                            (3 rows)
 
              ----
-             /(table?name='department').target_table_link
+             /(table?name='department').link_via_target
              SELECT "link"."table_name",
                     "link"."name",
                     "link"."is_singular",
-                    "link"."target_table_name",
+                    "link"."target_name",
                     "link"."reverse_name"
              FROM "table"
                   INNER JOIN "link"
-                             ON ("table"."name" = "link"."target_table_name")
+                             ON ("table"."name" = "link"."target_name")
              WHERE ("table"."name" = 'department')
              ORDER BY "table"."name" ASC, 1 ASC, 2 ASC
         - uri: /(field?table_name='school').table/:meta
@@ -27978,20 +27838,20 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | link                                                                     |
-             +--------------------------------------------------------------------------+
-             | table_name | name       | is_singular | target_table_name | reverse_name |
-            -+------------+------------+-------------+-------------------+--------------+-
-             | school     | department | false       | department        | school       |
-             | school     | program    | false       | program           | school       |
-                                                                                 (2 rows)
+             | link                                                               |
+             +--------------------------------------------------------------------+
+             | table_name | name       | is_singular | target_name | reverse_name |
+            -+------------+------------+-------------+-------------+--------------+-
+             | school     | department | false       | department  | school       |
+             | school     | program    | false       | program     | school       |
+                                                                           (2 rows)
 
              ----
              /(field?table_name='school').link
              SELECT "link"."table_name",
                     "link"."name",
                     "link"."is_singular",
-                    "link"."target_table_name",
+                    "link"."target_name",
                     "link"."reverse_name"
              FROM "field"
                   INNER JOIN "link"
@@ -28070,25 +27930,25 @@ tests:
                              ON ("link"."table_name" = "table"."name")
              WHERE ("link"."table_name" = 'student')
              ORDER BY "link"."table_name" ASC, "link"."name" ASC
-        - uri: /(link?table_name='student').target_table/:meta
+        - uri: /(link?table_name='student').target/:meta
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | target_table |
-             +--------------+
-             | name         |
-            -+--------------+-
-             | enrollment   |
-             | program      |
-                     (2 rows)
+             | target     |
+             +------------+
+             | name       |
+            -+------------+-
+             | enrollment |
+             | program    |
+                   (2 rows)
 
              ----
-             /(link?table_name='student').target_table
+             /(link?table_name='student').target
              SELECT "table"."name"
              FROM "link"
                   INNER JOIN "table"
-                             ON ("link"."target_table_name" = "table"."name")
+                             ON ("link"."target_name" = "table"."name")
              WHERE ("link"."table_name" = 'student')
              ORDER BY "link"."table_name" ASC, "link"."name" ASC
         - uri: /(link?table_name='student').field/:meta
@@ -28115,71 +27975,71 @@ tests:
                              ON (("link"."table_name" = "field"."table_name") AND ("link"."name" = "field"."name"))
              WHERE ("link"."table_name" = 'student')
              ORDER BY "link"."table_name" ASC, "link"."name" ASC
-        - uri: /(link?table_name='student').link/:meta
+        - uri: /(link?table_name='student').reverse/:meta
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | link                                                                  |
-             +-----------------------------------------------------------------------+
-             | table_name | name    | is_singular | target_table_name | reverse_name |
-            -+------------+---------+-------------+-------------------+--------------+-
-             | enrollment | student | true        | student           | enrollment   |
-             | program    | student | false       | student           | program      |
-                                                                              (2 rows)
+             | reverse                                                         |
+             +-----------------------------------------------------------------+
+             | table_name | name    | is_singular | target_name | reverse_name |
+            -+------------+---------+-------------+-------------+--------------+-
+             | enrollment | student | true        | student     | enrollment   |
+             | program    | student | false       | student     | program      |
+                                                                        (2 rows)
 
              ----
-             /(link?table_name='student').link
+             /(link?table_name='student').reverse
              SELECT "link_2"."table_name",
                     "link_2"."name",
                     "link_2"."is_singular",
-                    "link_2"."target_table_name",
+                    "link_2"."target_name",
                     "link_2"."reverse_name"
              FROM "link" AS "link_1"
                   INNER JOIN "link" AS "link_2"
-                             ON (("link_1"."target_table_name" = "link_2"."table_name") AND ("link_1"."reverse_name" = "link_2"."name"))
+                             ON (("link_1"."target_name" = "link_2"."table_name") AND ("link_1"."reverse_name" = "link_2"."name"))
              WHERE ("link_1"."table_name" = 'student')
              ORDER BY "link_1"."table_name" ASC, "link_1"."name" ASC
-        - uri: /(link?table_name='student').reverse_link/:meta
+        - uri: /(link?table_name='student').link_via_reverse/:meta
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | reverse_link                                                          |
-             +-----------------------------------------------------------------------+
-             | table_name | name    | is_singular | target_table_name | reverse_name |
-            -+------------+---------+-------------+-------------------+--------------+-
-             | enrollment | student | true        | student           | enrollment   |
-             | program    | student | false       | student           | program      |
-                                                                              (2 rows)
+             | link_via_reverse                                                |
+             +-----------------------------------------------------------------+
+             | table_name | name    | is_singular | target_name | reverse_name |
+            -+------------+---------+-------------+-------------+--------------+-
+             | enrollment | student | true        | student     | enrollment   |
+             | program    | student | false       | student     | program      |
+                                                                        (2 rows)
 
              ----
-             /(link?table_name='student').reverse_link
+             /(link?table_name='student').link_via_reverse
              SELECT "link_2"."table_name",
                     "link_2"."name",
                     "link_2"."is_singular",
-                    "link_2"."target_table_name",
+                    "link_2"."target_name",
                     "link_2"."reverse_name"
              FROM "link" AS "link_1"
                   INNER JOIN "link" AS "link_2"
-                             ON (("link_1"."table_name" = "link_2"."target_table_name") AND ("link_1"."name" = "link_2"."reverse_name"))
+                             ON (("link_1"."table_name" = "link_2"."target_name") AND ("link_1"."name" = "link_2"."reverse_name"))
              WHERE ("link_1"."table_name" = 'student')
              ORDER BY "link_1"."table_name" ASC, "link_1"."name" ASC
-        - uri: /table?name='department' {name, count(field), count(column), count(table_link),
-            count(target_table_link)} /:meta
+        - uri: /table?name='department' {name, count(field), count(column), count(link),
+            count(link_via_target)} /:meta
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | table                                                                                    |
-             +------------------------------------------------------------------------------------------+
-             | name       | count(field) | count(column) | count(table_link) | count(target_table_link) |
-            -+------------+--------------+---------------+-------------------+--------------------------+-
-             | department |            6 |             3 |                 3 |                        3 |
-                                                                                                  (1 row)
+             | table                                                                            |
+             +----------------------------------------------------------------------------------+
+             | name       | count(field) | count(column) | count(link) | count(link_via_target) |
+            -+------------+--------------+---------------+-------------+------------------------+-
+             | department |            6 |             3 |           3 |                      3 |
+                                                                                          (1 row)
 
              ----
-             /table?name='department'{name,count(field),count(column),count(table_link),count(target_table_link)}
+             /table?name='department'{name,count(field),count(column),count(link),count(link_via_target)}
              SELECT "table"."name",
                     COALESCE("field"."count", 0),
                     COALESCE("column"."count", 0),
@@ -28202,10 +28062,10 @@ tests:
                                    GROUP BY 2) AS "link_1"
                                   ON ("table"."name" = "link_1"."table_name")
                   LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
-                                          "link"."target_table_name"
+                                          "link"."target_name"
                                    FROM "link"
                                    GROUP BY 2) AS "link_2"
-                                  ON ("table"."name" = "link_2"."target_table_name")
+                                  ON ("table"."name" = "link_2"."target_name")
              WHERE ("table"."name" = 'department')
              ORDER BY 1 ASC
         - uri: /field?table_name='school' {table{name}, name, kind, column{domain},
@@ -28273,24 +28133,24 @@ tests:
                              ON (("column"."table_name" = "field"."table_name") AND ("column"."name" = "field"."name"))
              WHERE ("column"."table_name" = 'program')
              ORDER BY "column"."table_name" ASC, "column"."name" ASC
-        - uri: /link?table_name='student' {table{name}, target_table{name}, field{name},
-            link{name}, reverse_link{name}} /:meta
+        - uri: /link?table_name='student' {table{name}, target{name}, field{name},
+            reverse{name}, link_via_reverse{name}} /:meta
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | link                                                         |
-             +--------------------------------------------------------------+
-             | table   | target_table | field      |         | reverse_link |
-             +---------+--------------+------------+         +--------------+
-             | name    | name         | name       | name    | name         |
-            -+---------+--------------+------------+---------+--------------+-
-             | student | enrollment   | enrollment | student | student      |
-             | student | program      | program    | student | student      |
-                                                                     (2 rows)
+             | link                                                           |
+             +----------------------------------------------------------------+
+             | table   | target     | field      | reverse | link_via_reverse |
+             +---------+------------+------------+---------+------------------+
+             | name    | name       | name       | name    | name             |
+            -+---------+------------+------------+---------+------------------+-
+             | student | enrollment | enrollment | student | student          |
+             | student | program    | program    | student | student          |
+                                                                       (2 rows)
 
              ----
-             /link?table_name='student'{table{name},target_table{name},field{name},link{name},reverse_link{name}}
+             /link?table_name='student'{table{name},target{name},field{name},reverse{name},link_via_reverse{name}}
              SELECT "table_1"."name",
                     "table_2"."name",
                     "field"."name",
@@ -28300,13 +28160,13 @@ tests:
                   INNER JOIN "table" AS "table_1"
                              ON ("link_1"."table_name" = "table_1"."name")
                   INNER JOIN "table" AS "table_2"
-                             ON ("link_1"."target_table_name" = "table_2"."name")
+                             ON ("link_1"."target_name" = "table_2"."name")
                   INNER JOIN "field"
                              ON (("link_1"."table_name" = "field"."table_name") AND ("link_1"."name" = "field"."name"))
                   LEFT OUTER JOIN "link" AS "link_2"
-                                  ON (("link_1"."target_table_name" = "link_2"."table_name") AND ("link_1"."reverse_name" = "link_2"."name"))
+                                  ON (("link_1"."target_name" = "link_2"."table_name") AND ("link_1"."reverse_name" = "link_2"."name"))
                   LEFT OUTER JOIN "link" AS "link_3"
-                                  ON (("link_1"."table_name" = "link_3"."target_table_name") AND ("link_1"."name" = "link_3"."reverse_name"))
+                                  ON (("link_1"."table_name" = "link_3"."target_name") AND ("link_1"."name" = "link_3"."reverse_name"))
              WHERE ("link_1"."table_name" = 'student')
              ORDER BY "link_1"."table_name" ASC, "link_1"."name" ASC
         - uri: /count(table)/:meta
@@ -28362,39 +28222,39 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | field                                          |
-             +------------------------------------------------+
-             | table_name | name              | kind   | sort |
-            -+------------+-------------------+--------+------+-
-             | column     | domain            | column |    3 |
-             | column     | field             | link   |      |
-             | column     | is_mandatory      | column |    4 |
-             | column     | name              | column |    2 |
-             | column     | table             | link   |      |
-             | column     | table_name        | column |    1 |
-             | field      | column            | link   |      |
-             | field      | kind              | column |    3 |
-             | field      | link              | link   |      |
-             | field      | name              | column |    2 |
-             | field      | sort              | column |    4 |
-             | field      | table             | link   |      |
-             | field      | table_name        | column |    1 |
-             | link       | field             | link   |      |
-             | link       | is_singular       | column |    3 |
-             | link       | link              | link   |      |
-             | link       | name              | column |    2 |
-             | link       | reverse_link      | link   |      |
-             | link       | reverse_name      | column |    5 |
-             | link       | table             | link   |      |
-             | link       | table_name        | column |    1 |
-             | link       | target_table      | link   |      |
-             | link       | target_table_name | column |    4 |
-             | table      | column            | link   |      |
-             | table      | field             | link   |      |
-             | table      | name              | column |    1 |
-             | table      | table_link        | link   |      |
-             | table      | target_table_link | link   |      |
-                                                      (28 rows)
+             | field                                         |
+             +-----------------------------------------------+
+             | table_name | name             | kind   | sort |
+            -+------------+------------------+--------+------+-
+             | column     | domain           | column |    3 |
+             | column     | field            | link   |      |
+             | column     | is_mandatory     | column |    4 |
+             | column     | name             | column |    2 |
+             | column     | table            | link   |      |
+             | column     | table_name       | column |    1 |
+             | field      | column           | link   |      |
+             | field      | kind             | column |    3 |
+             | field      | link             | link   |      |
+             | field      | name             | column |    2 |
+             | field      | sort             | column |    4 |
+             | field      | table            | link   |      |
+             | field      | table_name       | column |    1 |
+             | link       | field            | link   |      |
+             | link       | is_singular      | column |    3 |
+             | link       | link_via_reverse | link   |      |
+             | link       | name             | column |    2 |
+             | link       | reverse          | link   |      |
+             | link       | reverse_name     | column |    5 |
+             | link       | table            | link   |      |
+             | link       | table_name       | column |    1 |
+             | link       | target           | link   |      |
+             | link       | target_name      | column |    4 |
+             | table      | column           | link   |      |
+             | table      | field            | link   |      |
+             | table      | link             | link   |      |
+             | table      | link_via_target  | link   |      |
+             | table      | name             | column |    1 |
+                                                     (28 rows)
 
              ----
              /field
@@ -28409,25 +28269,25 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | column                                                  |
-             +---------------------------------------------------------+
-             | table_name | name              | domain  | is_mandatory |
-            -+------------+-------------------+---------+--------------+-
-             | column     | domain            | string  | true         |
-             | column     | is_mandatory      | boolean | true         |
-             | column     | name              | string  | true         |
-             | column     | table_name        | string  | true         |
-             | field      | kind              | string  | true         |
-             | field      | name              | string  | true         |
-             | field      | sort              | integer | false        |
-             | field      | table_name        | string  | true         |
-             | link       | is_singular       | boolean | true         |
-             | link       | name              | string  | true         |
-             | link       | reverse_name      | string  | false        |
-             | link       | table_name        | string  | true         |
-             | link       | target_table_name | string  | true         |
-             | table      | name              | string  | true         |
-                                                               (14 rows)
+             | column                                             |
+             +----------------------------------------------------+
+             | table_name | name         | domain  | is_mandatory |
+            -+------------+--------------+---------+--------------+-
+             | column     | domain       | string  | true         |
+             | column     | is_mandatory | boolean | true         |
+             | column     | name         | string  | true         |
+             | column     | table_name   | string  | true         |
+             | field      | kind         | string  | true         |
+             | field      | name         | string  | true         |
+             | field      | sort         | integer | false        |
+             | field      | table_name   | string  | true         |
+             | link       | is_singular  | boolean | true         |
+             | link       | name         | string  | true         |
+             | link       | reverse_name | string  | false        |
+             | link       | table_name   | string  | true         |
+             | link       | target_name  | string  | true         |
+             | table      | name         | string  | true         |
+                                                          (14 rows)
 
              ----
              /column
@@ -28442,32 +28302,32 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | link                                                                                 |
-             +--------------------------------------------------------------------------------------+
-             | table_name | name              | is_singular | target_table_name | reverse_name      |
-            -+------------+-------------------+-------------+-------------------+-------------------+-
-             | column     | field             | true        | field             | column            |
-             | column     | table             | true        | table             | column            |
-             | field      | column            | true        | column            | field             |
-             | field      | link              | true        | link              | field             |
-             | field      | table             | true        | table             | field             |
-             | link       | field             | true        | field             | link              |
-             | link       | link              | true        | link              | reverse_link      |
-             | link       | reverse_link      | true        | link              | link              |
-             | link       | table             | true        | table             | table_link        |
-             | link       | target_table      | true        | table             | target_table_link |
-             | table      | column            | false       | column            | table             |
-             | table      | field             | false       | field             | table             |
-             | table      | table_link        | false       | link              | table             |
-             | table      | target_table_link | false       | link              | target_table      |
-                                                                                            (14 rows)
+             | link                                                                         |
+             +------------------------------------------------------------------------------+
+             | table_name | name             | is_singular | target_name | reverse_name     |
+            -+------------+------------------+-------------+-------------+------------------+-
+             | column     | field            | true        | field       | column           |
+             | column     | table            | true        | table       | column           |
+             | field      | column           | true        | column      | field            |
+             | field      | link             | true        | link        | field            |
+             | field      | table            | true        | table       | field            |
+             | link       | field            | true        | field       | link             |
+             | link       | link_via_reverse | true        | link        | reverse          |
+             | link       | reverse          | true        | link        | link_via_reverse |
+             | link       | table            | true        | table       | link             |
+             | link       | target           | true        | table       | link_via_target  |
+             | table      | column           | false       | column      | table            |
+             | table      | field            | false       | field       | table            |
+             | table      | link             | false       | link        | table            |
+             | table      | link_via_target  | false       | link        | target           |
+                                                                                    (14 rows)
 
              ----
              /link
              SELECT "link"."table_name",
                     "link"."name",
                     "link"."is_singular",
-                    "link"."target_table_name",
+                    "link"."target_name",
                     "link"."reverse_name"
              FROM "link"
              ORDER BY 1 ASC, 2 ASC

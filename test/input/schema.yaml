@@ -48,18 +48,14 @@ tests:
 
   # Program -> School (parental)
   - uri: /(program?school_code='la'&code='uengl').school
-  # Program -> Program (singular, self-referencial)
-  # FIXME: broken! Does not work as a link.
-  - uri: /(program?school_code='la'&code='uengl').part_of
-  # FIXME: should `program` generate an ambiguous name error?
+  # Program -> Program (ambiguous)
   - uri: /(program?school_code='la'&code='uengl').program
-  # FIXME: need a name for the link.
-  - uri: /(program?school_code='la'&code='uengl')
-          .({school_code,part_of_code} -> program{school_code,code})
+    expect: 400
+  # Program -> Program (singular, self-referencial)
+  - uri: /(program?school_code='la'&code='uengl').part_of
   # Program -> Program (reverse self-referential)
-  # FIXME: no name for a reverse self-referential link.
-  - uri: /(program?school_code='la'&code='uengl')
-          .({school_code,code} -> program{school_code,part_of_code})
+  # FIXME: not enough data
+  - uri: /(program?school_code='la'&code='uengl').program_via_part_of
   # Program -> Student
   - uri: /(program?school_code='la'&code='uengl').student
   # Program -> Program Requirement
@@ -69,16 +65,13 @@ tests:
   - uri: /(course?department_code='lang'&no=345).department
   # Course -> Class
   - uri: /(course?department_code='lang'&no=345).class
-  # Course -> Prerequisite
-  # FIXME: cannot choose between on_course and of_course links.
+  # Course -> Prerequisite (ambiguous)
   - uri: /(course?department_code='lang'&no=345).prerequisite
     expect: 400
-  # FIXME: need a name for the links.
-  # FIXME: not enough data in the table.
-  - uri: /(course?department_code='lang'&no=345)
-          .({department_code,no} -> prerequisite{on_department_code,on_course_no})
-  - uri: /(course?department_code='lang'&no=345)
-          .({department_code,no} -> prerequisite{of_department_code,of_course_no})
+  # Course -> Prerequisite (using on_course)
+  - uri: /(course?department_code='lang'&no=345).prerequisite_via_on_course
+  # Course -> Prerequisite (using of_course)
+  - uri: /(course?department_code='lang'&no=345).prerequisite_via_of_course
   # Course -> Course Classification
   - uri: /(course?department_code='lang'&no=345).course_classification
 
@@ -121,39 +114,24 @@ tests:
   # Enrollment -> Class (parental)
   - uri: /(enrollment?student_id=1100&class_seq=1110).class
 
-  # Prerequisite -> Department (ambiguous)
-  - uri: /(prerequisite?of_department_code='capmrk'&of_course_no=818
-                       &on_department_code='acc'&on_course_no=315).department
-    expect: 400
-  # Prerequisite -> Course (parental, using of_course)
-  # FIXME: not a link.
-  - uri: /(prerequisite?of_department_code='astro'&of_course_no=230
-                       &on_department_code='phys'&on_course_no=130).of_course_no
-  # FIXME: need a name.
-  - uri: /(prerequisite?of_department_code='astro'&of_course_no=230
-                       &on_department_code='phys'&on_course_no=130)
-          .({of_department_code,of_course_no} -> course{department_code,no})
-  # Prerequisite -> Course (parental, using on_course)
-  # FIXME: not a link.
-  - uri: /(prerequisite?of_department_code='astro'&of_course_no=230
-                       &on_department_code='phys'&on_course_no=130).on_course_no
-  # FIXME: need a name.
-  - uri: /(prerequisite?of_department_code='astro'&of_course_no=230
-                       &on_department_code='phys'&on_course_no=130)
-          .({on_department_code,on_course_no} -> course{department_code,no})
   # Prerequisite -> Course (ambiguous)
   - uri: /(prerequisite?of_department_code='astro'&of_course_no=230
                        &on_department_code='phys'&on_course_no=130).course
     expect: 400
+  # Prerequisite -> Course (parental, using of_course)
+  - uri: /(prerequisite?of_department_code='astro'&of_course_no=230
+                       &on_department_code='phys'&on_course_no=130).of_course
+  # Prerequisite -> Course (parental, using on_course)
+  - uri: /(prerequisite?of_department_code='astro'&of_course_no=230
+                       &on_department_code='phys'&on_course_no=130).on_course
 
+  # Classification -> Classification (ambiguous)
+  - uri: /(classification?code='math').classification
+    expect: 400
   # Classification -> Classification (singular, self-referencial)
   - uri: /(classification?code='math').part_of
-  # FIXME: shouldn't this generate an ambiguous name error?
-  - uri: /(classification?code='math').classification
   # Classification -> Classification (reverse self-referential)
-  # FIXME: need an explicit name.
-  - uri: /(classification?code='math')
-          .(code -> classification{part_of_code})
+  - uri: /(classification?code='math').classification_via_part_of
   # Classification -> Course Classification
   - uri: /(classification?code='math').course_classification
   # Classification -> Program Requirement

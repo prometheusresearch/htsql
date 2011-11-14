@@ -68,17 +68,17 @@ class BuildMetaDatabase(Utility):
                 table_name          TEXT NOT NULL,
                 name                TEXT NOT NULL,
                 is_singular         BOOLEAN NOT NULL,
-                target_table_name   TEXT NOT NULL,
+                target_name         TEXT NOT NULL,
                 reverse_name        TEXT,
                 PRIMARY KEY (table_name, name),
-                UNIQUE (target_table_name, reverse_name),
+                UNIQUE (target_name, reverse_name),
                 FOREIGN KEY (table_name, name)
                    REFERENCES "field"(table_name, name),
                 FOREIGN KEY (table_name)
                    REFERENCES "table"(name),
-                FOREIGN KEY (target_table_name)
+                FOREIGN KEY (target_name)
                    REFERENCES "table"(name),
-                FOREIGN KEY (target_table_name, reverse_name)
+                FOREIGN KEY (target_name, reverse_name)
                    REFERENCES "link"(table_name, name)
             );
 
@@ -157,13 +157,12 @@ class BuildMetaDatabase(Utility):
                     is_singular = arc.is_contracting
                     target_arc = TableArc(arc.target.table)
                     target_label = relabel(target_arc)[0]
-                    target_table_name = target_label.name
+                    target_name = target_label.name
                     cursor.execute("""
                         INSERT INTO "link" (table_name, name, is_singular,
-                                            target_table_name)
+                                            target_name)
                         VALUES (?, ?, ?, ?)
-                    """, [table_name, name, is_singular,
-                          target_table_name])
+                    """, [table_name, name, is_singular, target_name])
                     reverse_labels = relabel(arc.reverse())
                     if reverse_labels:
                         reverse_name = reverse_labels[0].name

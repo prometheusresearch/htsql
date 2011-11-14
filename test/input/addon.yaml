@@ -143,23 +143,23 @@ tests:
   # Links
   - uri: /(table?name='department').field/:meta
   - uri: /(table?name='department').column/:meta
-  - uri: /(table?name='department').table_link/:meta
-  - uri: /(table?name='department').target_table_link/:meta
+  - uri: /(table?name='department').link/:meta
+  - uri: /(table?name='department').link_via_target/:meta
   - uri: /(field?table_name='school').table/:meta
   - uri: /(field?table_name='school').column/:meta
   - uri: /(field?table_name='school').link/:meta
   - uri: /(column?table_name='program').table/:meta
   - uri: /(column?table_name='program').field/:meta
   - uri: /(link?table_name='student').table/:meta
-  - uri: /(link?table_name='student').target_table/:meta
+  - uri: /(link?table_name='student').target/:meta
   - uri: /(link?table_name='student').field/:meta
-  - uri: /(link?table_name='student').link/:meta
-  - uri: /(link?table_name='student').reverse_link/:meta
+  - uri: /(link?table_name='student').reverse/:meta
+  - uri: /(link?table_name='student').link_via_reverse/:meta
 
   # Links and cardinality
   - uri: /table?name='department'
             {name, count(field), count(column),
-             count(table_link), count(target_table_link)}
+             count(link), count(link_via_target)}
          /:meta
   - uri: /field?table_name='school'
             {table{name}, name, kind, column{domain}, link{is_singular}}
@@ -168,8 +168,8 @@ tests:
             {table{name}, field{name, sort}}
          /:meta
   - uri: /link?table_name='student'
-            {table{name}, target_table{name}, field{name},
-             link{name}, reverse_link{name}}
+            {table{name}, target{name}, field{name},
+             reverse{name}, link_via_reverse{name}}
          /:meta
 
   # Scalar queries

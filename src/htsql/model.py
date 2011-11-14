@@ -175,7 +175,7 @@ class InvalidArc(Arc):
 class AmbiguousArc(InvalidArc):
 
     def __init__(self, alternatives):
-        assert isinstance(alternatives, listof(Arc)) and len(alternatives) > 1
+        assert isinstance(alternatives, listof(Arc)) and len(alternatives) > 0
         origin = alternatives[0].origin
         assert all(alternative.origin == origin
                    for alternative in alternatives)
