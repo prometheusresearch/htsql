@@ -108,7 +108,7 @@ class Application(object):
                     valid_attributes.add(parameter.attribute)
                 for key in sorted(configuration[addon_name]):
                     if key not in valid_attributes:
-                        raise ImportError("uknown parameter %r of addon %r"
+                        raise ImportError("unknown parameter %r of addon %r"
                                           % (key, addon_name))
                 for parameter in addon_class.parameters:
                     if parameter.attribute in configuration[addon_name]:

@@ -13,11 +13,11 @@ This module defines syntax nodes for the HTSQL grammar.
 
 
 from ..mark import Mark
-from ..util import maybe, listof, Printable, Clonable
+from ..util import maybe, listof, Printable, Clonable, Comparable
 import re
 
 
-class Syntax(Printable, Clonable):
+class Syntax(Printable, Comparable, Clonable):
     """
     Represents a syntax node.
 
@@ -33,8 +33,9 @@ class Syntax(Printable, Clonable):
     escape_regexp = re.compile(escape_pattern, re.U)
     escape_replace = (lambda s, m: u"%%%02X" % ord(m.group()))
 
-    def __init__(self, mark):
+    def __init__(self, mark, equality_vector):
         assert isinstance(mark, Mark)
+        super(Syntax, self).__init__(equality_vector=equality_vector)
         self.mark = mark
 
     def __unicode__(self):
@@ -63,7 +64,7 @@ class QuerySyntax(Syntax):
     def __init__(self, segment, mark):
         assert isinstance(segment, SegmentSyntax)
 
-        super(QuerySyntax, self).__init__(mark)
+        super(QuerySyntax, self).__init__(mark, equality_vector=(segment,))
         self.segment = segment
 
     def __unicode__(self):
@@ -83,7 +84,7 @@ class SegmentSyntax(Syntax):
     def __init__(self, branch, mark):
         assert isinstance(branch, maybe(Syntax))
 
-        super(SegmentSyntax, self).__init__(mark)
+        super(SegmentSyntax, self).__init__(mark, equality_vector=(branch,))
         self.branch = branch
 
     def __unicode__(self):
@@ -118,7 +119,8 @@ class SelectorSyntax(Syntax):
         assert isinstance(lbranch, maybe(Syntax))
         assert isinstance(rbranches, listof(Syntax))
 
-        super(SelectorSyntax, self).__init__(mark)
+        super(SelectorSyntax, self).__init__(mark,
+                equality_vector=(lbranch, tuple(rbranches)))
         self.lbranch = lbranch
         self.rbranches = rbranches
 
@@ -152,10 +154,10 @@ class ApplicationSyntax(Syntax):
         The list of arguments.
     """
 
-    def __init__(self, name, arguments, mark):
+    def __init__(self, name, arguments, mark, equality_vector):
         assert isinstance(name, unicode)
         assert isinstance(arguments, listof(Syntax))
-        super(ApplicationSyntax, self).__init__(mark)
+        super(ApplicationSyntax, self).__init__(mark, equality_vector)
         self.name = name
         self.arguments = arguments
 
@@ -182,7 +184,8 @@ class FunctionSyntax(ApplicationSyntax):
 
         name = identifier.value
         arguments = branches
-        super(FunctionSyntax, self).__init__(name, arguments, mark)
+        super(FunctionSyntax, self).__init__(name, arguments, mark,
+                equality_vector=(identifier, tuple(branches)))
         self.identifier = identifier
         self.branches = branches
 
@@ -227,7 +230,8 @@ class MappingSyntax(ApplicationSyntax):
 
         name = identifier.value
         arguments = [lbranch] + rbranches
-        super(MappingSyntax, self).__init__(name, arguments, mark)
+        super(MappingSyntax, self).__init__(name, arguments, mark,
+                equality_vector=(identifier, lbranch, tuple(rbranches)))
         self.identifier = identifier
         self.lbranch = lbranch
         self.rbranches = rbranches
@@ -248,8 +252,8 @@ class CommandSyntax(MappingSyntax):
 
     def __init__(self, identifier, lbranch, rbranches, mark):
         assert isinstance(lbranch, SegmentSyntax)
-        super(CommandSyntax, self).__init__(identifier, lbranch, rbranches,
-                                            mark)
+        super(CommandSyntax, self).__init__(identifier,
+                lbranch, rbranches, mark)
 
     def __unicode__(self):
         chunks = []
@@ -314,7 +318,8 @@ class OperatorSyntax(ApplicationSyntax):
             arguments.append(lbranch)
         if rbranch is not None:
             arguments.append(rbranch)
-        super(OperatorSyntax, self).__init__(name, arguments, mark)
+        super(OperatorSyntax, self).__init__(name, arguments, mark,
+                equality_vector=(symbol, lbranch, rbranch))
         self.symbol = symbol
         self.lbranch = lbranch
         self.rbranch = rbranch
@@ -422,7 +427,7 @@ class GroupSyntax(Syntax):
     def __init__(self, branch, mark):
         assert isinstance(branch, Syntax)
 
-        super(GroupSyntax, self).__init__(mark)
+        super(GroupSyntax, self).__init__(mark, equality_vector=(branch,))
         self.branch = branch
 
     def __unicode__(self):
@@ -441,7 +446,7 @@ class IdentifierSyntax(Syntax):
         assert isinstance(value, unicode)
         # FIXME: check for a valid identifier.
 
-        super(IdentifierSyntax, self).__init__(mark)
+        super(IdentifierSyntax, self).__init__(mark, equality_vector=(value,))
         self.value = value
 
     def __unicode__(self):
@@ -464,7 +469,7 @@ class WildcardSyntax(Syntax):
     def __init__(self, index, mark):
         assert isinstance(index, maybe(NumberSyntax))
 
-        super(WildcardSyntax, self).__init__(mark)
+        super(WildcardSyntax, self).__init__(mark, equality_vector=(index,))
         self.index = index
 
     def __unicode__(self):
@@ -485,6 +490,9 @@ class ComplementSyntax(Syntax):
         ^
     """
 
+    def __init__(self, mark):
+        super(ComplementSyntax, self).__init__(mark, equality_vector=())
+
     def __unicode__(self):
         return u'^'
 
@@ -503,7 +511,8 @@ class ReferenceSyntax(Syntax):
 
     def __init__(self, identifier, mark):
         assert isinstance(identifier, IdentifierSyntax)
-        super(ReferenceSyntax, self).__init__(mark)
+        super(ReferenceSyntax, self).__init__(mark,
+                equality_vector=(identifier,))
         self.identifier = identifier
 
     def __unicode__(self):
@@ -523,7 +532,7 @@ class LiteralSyntax(Syntax):
 
     def __init__(self, value, mark):
         assert isinstance(value, unicode)
-        super(LiteralSyntax, self).__init__(mark)
+        super(LiteralSyntax, self).__init__(mark, equality_vector=(value,))
         self.value = value
 
 
