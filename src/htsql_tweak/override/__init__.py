@@ -4,12 +4,14 @@
 #
 
 
-from . import introspect, pattern
+from . import classify, introspect, pattern
 from htsql.addon import Addon, Parameter
-from htsql.validator import SeqVal
+from htsql.validator import SeqVal, MapVal
 from htsql.introspect import introspect
+from htsql.classify import classify
 from .pattern import (SchemaPatternVal, TablePatternVal, ColumnPatternVal,
-                      UniqueKeyPatternVal, ForeignKeyPatternVal)
+                      UniqueKeyPatternVal, ForeignKeyPatternVal,
+                      NodePatternVal, ArcPatternVal, LabelVal)
 from .introspect import UnusedPatternCache
 
 
@@ -36,6 +38,9 @@ class TweakOverrideAddon(Addon):
                       default=[]),
             Parameter('foreign_keys', SeqVal(ForeignKeyPatternVal()),
                       default=[]),
+            Parameter('labels', MapVal(NodePatternVal(),
+                                       MapVal(LabelVal(), ArcPatternVal())),
+                      default={}),  
     ]
 
     def __init__(self, app, attributes):

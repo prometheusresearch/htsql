@@ -186,6 +186,17 @@ class OverrideIntrospect(Introspect):
                         addon.foreign_keys):
             if pattern in unused:
                 unused_patterns.append(pattern)
+
+        #for pattern in sorted(addon.labels, key=(lambda node: str(node))):
+        #    node = pattern.extract(catalog)
+        #    if node is None:
+        #        unused_patterns.append(pattern)
+        #    for name in sorted(addon.labels[pattern]):
+        #        arc_pattern = addon.labels[pattern][name]
+        #        arc = arc_pattern.extract(node)
+        #        if arc is None:
+        #            unused_patterns.append(arc_pattern)
+
         addon.unused_pattern_cache.update(unused_patterns)
 
         return catalog

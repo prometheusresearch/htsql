@@ -4,57 +4,83 @@
 #
 
 
-from htsql.util import Printable, listof, maybe
+from htsql.util import Printable, Comparable, listof, maybe
 from htsql.validator import Validator
-from htsql.entity import SchemaEntity, TableEntity, ColumnEntity
+from htsql.entity import (CatalogEntity, NamedEntity, SchemaEntity,
+                          TableEntity, ColumnEntity, Join, DirectJoin,
+                          ReverseJoin)
+from htsql.model import (Node, HomeNode, TableNode, Arc, TableArc, ColumnArc,
+                         ChainArc, SyntaxArc)
+from htsql.introspect import introspect
 from htsql.classify import normalize
+from htsql.tr.parse import parse, GroupParser
+from htsql.tr.syntax import Syntax
+from htsql.tr.error import TranslateError
 import fnmatch
 import re
 
 
-class SchemaPattern(Printable):
+def matches(entity, pattern):
+    assert isinstance(entity, maybe(NamedEntity))
+    assert isinstance(pattern, maybe(unicode))
+    if entity is None:
+        return (pattern is None)
+    if pattern is None:
+        return True
+    name = normalize(entity.name) if entity.name else ""
+    return fnmatch.fnmatchcase(name, pattern)
+
+
+class Pattern(Printable):
+
+    def __unicode__(self):
+        raise NotImplementedError()
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+
+class SchemaPattern(Pattern):
 
     def __init__(self, schema_pattern):
-        assert isinstance(schema_pattern, str)
+        assert isinstance(schema_pattern, unicode)
         self.schema_pattern = schema_pattern
 
     def matches(self, entity):
         assert isinstance(entity, SchemaEntity)
-        return fnmatch.fnmatchcase(normalize(entity.name),
-                                   self.schema_pattern)
+        return matches(entity, self.schema_pattern)
 
-    def __str__(self):
+    def __unicode__(self):
         return self.schema_pattern
 
 
-class TablePattern(Printable):
+class TablePattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern):
-        assert isinstance(schema_pattern, str)
-        assert isinstance(table_pattern, str)
+        assert isinstance(schema_pattern, maybe(unicode))
+        assert isinstance(table_pattern, unicode)
         self.schema_pattern = schema_pattern
         self.table_pattern = table_pattern
 
     def matches(self, entity):
         assert isinstance(entity, (SchemaEntity, TableEntity))
         if isinstance(entity, SchemaEntity):
-            return fnmatch.fnmatchcase(normalize(entity.name),
-                                       self.schema_pattern)
-        return (fnmatch.fnmatchcase(normalize(entity.schema.name),
-                                    self.schema_pattern) and
-                fnmatch.fnmatchcase(normalize(entity.name),
-                                    self.table_pattern))
+            return matches(entity, self.schema_pattern)
+        return (matches(entity.schema, self.schema_pattern) and
+                matches(entity, self.table_pattern))
 
-    def __str__(self):
-        return "%s.%s" % (self.schema_pattern, self.table_pattern)
+    def __unicode__(self):
+        if self.schema_pattern is not None:
+            return u"%s.%s" % (self.schema_pattern, self.table_pattern)
+        return self.table_pattern
 
 
-class ColumnPattern(Printable):
+class ColumnPattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern, column_pattern):
-        assert isinstance(schema_pattern, str)
-        assert isinstance(table_pattern, str)
-        assert isinstance(column_pattern, str)
+        assert isinstance(schema_pattern, maybe(unicode))
+        assert isinstance(table_pattern, maybe(unicode))
+        assert isinstance(column_pattern, unicode)
         self.schema_pattern = schema_pattern
         self.table_pattern = table_pattern
         self.column_pattern = column_pattern
@@ -62,33 +88,31 @@ class ColumnPattern(Printable):
     def matches(self, entity):
         assert isinstance(entity, (SchemaEntity, TableEntity, ColumnEntity))
         if isinstance(entity, SchemaEntity):
-            return fnmatch.fnmatchcase(normalize(entity.name),
-                                       self.schema_pattern)
+            return matches(entity, self.schema_pattern)
         if isinstance(entity, TableEntity):
-            return (fnmatch.fnmatchcase(normalize(entity.schema.name),
-                                        self.schema_pattern) and
-                    fnmatch.fnmatchcase(normalize(entity.name),
-                                        self.table_pattern))
-        return (fnmatch.fnmatchcase(normalize(entity.table.schema.name),
-                                    self.schema_pattern) and
-                fnmatch.fnmatchcase(normalize(entity.table.name),
-                                    self.table_pattern) and
-                fnmatch.fnmatchcase(normalize(entity.name),
-                                    self.column_pattern))
+            return (matches(entity.schema, self.schema_pattern) and
+                    matches(entity, self.table_pattern))
+        return (matches(entity.table.schema, self.schema_pattern) and
+                matches(entity.table, self.table_pattern) and
+                matches(entity, self.column_pattern))
 
-    def __str__(self):
-        return "%s.%s.%s" % (self.schema_pattern,
-                             self.table_pattern,
-                             self.column_pattern)
+    def __unicode__(self):
+        chunks = []
+        if self.schema_pattern is not None:
+            chunks.append(self.schema_pattern)
+        if self.table_pattern is not None:
+            chunks.append(self.table_pattern)
+        chunks.append(self.column_pattern)
+        return u".".join(chunks)
 
 
-class UniqueKeyPattern(Printable):
+class UniqueKeyPattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern, column_patterns,
                  is_primary, is_partial):
-        assert isinstance(schema_pattern, str)
-        assert isinstance(table_pattern, str)
-        assert isinstance(column_patterns, listof(str))
+        assert isinstance(schema_pattern, maybe(unicode))
+        assert isinstance(table_pattern, unicode)
+        assert isinstance(column_patterns, listof(unicode))
         assert len(column_patterns) > 0
         assert isinstance(is_primary, bool)
         assert isinstance(is_partial, bool)
@@ -102,22 +126,17 @@ class UniqueKeyPattern(Printable):
     def matches(self, entity):
         assert isinstance(entity, (SchemaEntity, TableEntity))
         if isinstance(entity, SchemaEntity):
-            return fnmatch.fnmatchcase(normalize(entity.name),
-                                       self.schema_pattern)
-        return (fnmatch.fnmatchcase(normalize(entity.schema.name),
-                                    self.schema_pattern) and
-                fnmatch.fnmatchcase(normalize(entity.name),
-                                    self.table_pattern))
+            return matches(entity, self.schema_pattern)
+        return (matches(entity.schema, self.schema_pattern) and
+                matches(entity, self.table_pattern))
 
     def extract(self, table):
         assert isinstance(table, TableEntity)
         assert self.matches(table)
         columns = []
         for pattern in self.column_patterns:
-            matching = [column
-                        for column in table.columns
-                        if fnmatch.fnmatchcase(normalize(column.name),
-                                               pattern)]
+            matching = [column for column in table.columns
+                               if matches(column, pattern)]
             if len(matching) != 1:
                 return
             [column] = matching
@@ -126,26 +145,32 @@ class UniqueKeyPattern(Printable):
             columns.append(column)
         return columns
 
-    def __str__(self):
-        return ("%s.%s%s%s%s"
-                % (self.schema_pattern, self.table_pattern,
-                   "(%s)" % ",".join(self.column_patterns),
-                   "!" if self.is_primary else "",
-                   "?" if self.is_partial else ""))
+    def __unicode__(self):
+        chunks = []
+        if self.schema_pattern is not None:
+            chunks.append(self.schema_pattern)
+            chunks.append(u".")
+        chunks.append(self.table_pattern)
+        chunks.append(u"(%s)" % ",".join(self.column_patterns))
+        if self.is_primary:
+            chunks.append(u"!")
+        if self.is_partial:
+            chunks.append(u"?")
+        return u"".join(chunks)
 
 
-class ForeignKeyPattern(Printable):
+class ForeignKeyPattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern, column_patterns,
                  target_schema_pattern, target_table_pattern,
                  target_column_patterns, is_partial):
-        assert isinstance(schema_pattern, str)
-        assert isinstance(table_pattern, str)
-        assert isinstance(column_patterns, listof(str))
+        assert isinstance(schema_pattern, maybe(unicode))
+        assert isinstance(table_pattern, unicode)
+        assert isinstance(column_patterns, listof(unicode))
         assert len(column_patterns) > 0
-        assert isinstance(target_schema_pattern, str)
-        assert isinstance(target_table_pattern, str)
-        assert isinstance(target_column_patterns, maybe(listof(str)))
+        assert isinstance(target_schema_pattern, maybe(unicode))
+        assert isinstance(target_table_pattern, unicode)
+        assert isinstance(target_column_patterns, maybe(listof(unicode)))
         assert (target_column_patterns is None or
                 len(target_column_patterns) == len(column_patterns))
         assert isinstance(is_partial, bool)
@@ -160,32 +185,24 @@ class ForeignKeyPattern(Printable):
     def matches(self, entity):
         assert isinstance(entity, (SchemaEntity, TableEntity))
         if isinstance(entity, SchemaEntity):
-            return fnmatch.fnmatchcase(normalize(entity.name),
-                                       self.schema_pattern)
-        return (fnmatch.fnmatchcase(normalize(entity.schema.name),
-                                    self.schema_pattern) and
-                fnmatch.fnmatchcase(normalize(entity.name),
-                                    self.table_pattern))
+            return matches(entity, self.schema_pattern)
+        return (matches(entity.schema, self.schema_pattern) and
+                matches(entity.name, self.table_pattern))
 
     def matches_target(self, entity):
         assert isinstance(entity, (SchemaEntity, TableEntity))
         if isinstance(entity, SchemaEntity):
-            return fnmatch.fnmatchcase(normalize(entity.name),
-                                       self.target_schema_pattern)
-        return (fnmatch.fnmatchcase(normalize(entity.schema.name),
-                                    self.target_schema_pattern) and
-                fnmatch.fnmatchcase(normalize(entity.name),
-                                    self.target_table_pattern))
+            return matches(entity, self.target_schema_pattern)
+        return (matches(entity.schema, self.target_schema_pattern) and
+                matches(entity, self.target_table_pattern))
 
     def extract(self, table):
         assert isinstance(table, TableEntity)
         assert self.matches(table)
         columns = []
         for pattern in self.column_patterns:
-            matching = [column
-                        for column in table.columns
-                        if fnmatch.fnmatchcase(normalize(column.name),
-                                               pattern)]
+            matching = [column for column in table.columns
+                               if matches(column, pattern)]
             if len(matching) != 1:
                 return
             [column] = matching
@@ -201,10 +218,8 @@ class ForeignKeyPattern(Printable):
         if self.target_column_patterns:
             columns = []
             for pattern in self.target_column_patterns:
-                matching = [column
-                            for column in table.columns
-                            if fnmatch.fnmatchcase(normalize(column.name),
-                                                   pattern)]
+                matching = [column for column in table.columns
+                                   if matches(column.name, pattern)]
                 if len(matching) != 1:
                     return
                 [column] = matching
@@ -218,35 +233,322 @@ class ForeignKeyPattern(Printable):
                     return
         return columns
 
+    def __unicode__(self):
+        chunks = []
+        if self.schema_pattern is not None:
+            chunks.append(self.schema_pattern)
+            chunks.append(u".")
+        chunks.append(self.table_pattern)
+        chunks.append(u"(%s)" % u",".join(self.column_patterns))
+        if self.is_partial:
+            chunks.append("?")
+        chunks.append(" -> ")
+        if self.target_schema_pattern is not None:
+            chunks.append(self.target_schema_pattern)
+            chunks.append(u".")
+        chunks.append(self.target_table_pattern)
+        if self.target_column_patterns is not None:
+            chunks.append(u"(%s)" % u",".join(self.target_column_patterns))
+        return u"".join(chunks)
+
+
+class NodePattern(Pattern, Comparable):
+
+    is_home = False
+    is_table = False
+
+    def matches(self, node):
+        return False
+
+    def extract(self, catalog):
+        return None
+
+
+class HomeNodePattern(NodePattern):
+
+    is_home = True
+
+    def __init__(self):
+        super(HomeNodePattern, self).__init__(equality_vector=())
+
+    def matches(self, node):
+        assert isinstance(node, Node)
+        return isinstance(node, HomeNode)
+
+    def extract(self, catalog):
+        assert isinstance(catalog, CatalogEntity)
+        return HomeNode()
+
+    def __unicode__(self):
+        return u"@"
+
+
+class TableNodePattern(NodePattern):
+
+    is_table = True
+
+    def __init__(self, schema_pattern, table_pattern):
+        assert isinstance(schema_pattern, maybe(unicode))
+        assert isinstance(table_pattern, unicode)
+        super(TableNodePattern, self).__init__(
+                equality_vector=(schema_pattern, table_pattern))
+        self.schema_pattern = schema_pattern
+        self.table_pattern = table_pattern
+
+    def matches(self, node):
+        assert isinstance(node, Node)
+        if not isinstance(node, TableNode):
+            return False
+        return (matches(node.table.schema, self.schema_pattern) and
+                matches(node.table, self.table_pattern))
+
+    def extract(self, catalog):
+        assert isinstance(catalog, CatalogEntity)
+        matched_table = None
+        for schema in catalog.schemas:
+            if not matches(schema, self.schema_pattern):
+                continue
+            for table in schema.tables:
+                if not matches(table, self.table_pattern):
+                    continue
+                if matched_table is not None:
+                    return
+                matched_table = table
+        if matched_table is None:
+            return
+        return TableNode(matched_table)
+
     def __str__(self):
-        return ("%s.%s%s%s -> %s.%s%s"
-                % (self.schema_pattern, self.table_pattern,
-                   "(%s)" % ",".join(self.column_patterns),
-                   "?" if self.is_partial else "",
-                   self.target_schema_pattern,
-                   self.target_table_pattern,
-                   "(%s)" % ",".join(self.target_column_patterns)
-                   if self.target_column_patterns else ""))
+        if self.schema_pattern is not None:
+            return u"%s.%s" % (self.schema_pattern, self.table_pattern)
+        return self.table_pattern
+
+
+class ArcPattern(Printable):
+
+    is_column = False
+    is_chain = False
+    is_syntax = False
+
+    def matches(self, arc):
+        return False
+
+
+class EntityArcPattern(ArcPattern):
+
+    is_column = True
+
+    def __init__(self, owner_pattern, entity_pattern):
+        assert isinstance(owner_pattern, maybe(unicode))
+        assert isinstance(entity_pattern, unicode)
+        self.owner_pattern = owner_pattern
+        self.entity_pattern = entity_pattern
+
+    def matches(self, arc):
+        assert isinstance(arc, Arc)
+        if isinstance(arc, TableArc):
+            return (matches(arc.table.schema, self.owner_pattern) and
+                    matches(arc.table, self.entity_pattern))
+        if isinstance(arc, ColumnArc):
+            return (matches(None, self.owner_pattern) and
+                    matches(arc.column, self.entity_pattern))
+        return False
+
+    def extract(self, node):
+        assert isinstance(node, Node)
+        if isinstance(node, HomeNode):
+            catalog = introspect()
+            matched_table = None
+            for schema in catalog.schemas:
+                if not matches(schema, self.owner_pattern):
+                    continue
+                for table in schema.tables:
+                    if not matches(table, self.entity_pattern):
+                        continue
+                    if matched_table is not None:
+                        return
+                    matched_table = table
+            if matched_table is None:
+                return
+            return TableArc(matched_table)
+        if isinstance(node, TableNode):
+            if self.owner_pattern is not None:
+                return
+            matched_column = None
+            for column in node.table.columns:
+                if not matches(column, self.entity_pattern):
+                    continue
+                if matched_column is not None:
+                    return
+                matched_column = column
+            if matched_column is None:
+                return
+            return ColumnArc(node.table, matched_column)
+
+    def __unicode__(self):
+        if self.owner_pattern is not None:
+            return u"%s.%s" % (self.owner_pattern, self.entity_pattern)
+        return self.entity_pattern
+
+
+class JoinPattern(Pattern):
+
+    def __init__(self, schema_pattern, table_pattern, column_patterns,
+                 target_schema_pattern, target_table_pattern,
+                 target_column_patterns):
+        assert isinstance(schema_pattern, maybe(unicode))
+        assert isinstance(table_pattern, unicode)
+        assert isinstance(column_patterns, maybe(listof(unicode)))
+        assert column_patterns is None or len(column_patterns) > 0
+        assert isinstance(target_schema_pattern, maybe(unicode))
+        assert isinstance(target_table_pattern, unicode)
+        assert isinstance(target_column_patterns, maybe(listof(unicode)))
+        assert (target_column_patterns is None or
+                len(target_column_patterns) > 0)
+        assert (column_patterns is None or target_column_patterns is None or
+                len(column_patterns) == len(target_column_patterns))
+        self.schema_pattern = schema_pattern
+        self.table_pattern = table_pattern
+        self.column_patterns = column_patterns
+        self.target_schema_pattern = target_schema_pattern
+        self.target_table_pattern = target_table_pattern
+        self.target_column_patterns = target_column_patterns
+
+    def matches(self, join):
+        assert isinstance(join, Join)
+        return (matches(join.origin.schema, self.schema_pattern) and
+                matches(join.origin, self.table_pattern) and
+                (self.column_patterns is None or
+                    (len(join.origin_columns) == len(self.column_patterns) and
+                     all(matches(column, pattern)
+                         for column, pattern in zip(join.origin_columns,
+                                                    self.column_patterns)))) and
+                matches(join.target.schema, self.target_schema_pattern) and
+                matches(join.target, self.target_table_pattern) and
+                (self.target_column_patterns is None or
+                    (len(join.target_columns)
+                        == len(self.target_column_patterns) and
+                     all(matches(column, pattern)
+                         for column, pattern
+                                in zip(join.target_columns,
+                                       self.target_column_patterns)))))
+
+    def extract(self, node):
+        assert isinstance(node, TableNode)
+        matched_join = None
+        for is_direct, foreign_keys in [(True, node.table.foreign_keys),
+                                (False, node.table.referring_foreign_keys)]:
+            for foreign_key in foreign_keys:
+                if is_direct:
+                    join = DirectJoin(foreign_key)
+                else:
+                    join = ReverseJoin(foreign_key)
+                if not self.matches(join):
+                    continue
+                if matched_join is not None:
+                    return
+                matched_join = join
+        if matched_join is None:
+            return
+        return matched_join
+
+    def __unicode__(self):
+        chunks = []
+        if self.schema_pattern is not None:
+            chunks.append(self.schema_pattern)
+            chunks.append(u".")
+        chunks.append(self.table_pattern)
+        if self.column_patterns is not None:
+            chunks.append(u"(%s)" % u",".join(self.column_patterns))
+        if self.is_partial:
+            chunks.append("?")
+        chunks.append(" -> ")
+        if self.target_schema_pattern is not None:
+            chunks.append(self.target_schema_pattern)
+            chunks.append(u".")
+        chunks.append(self.target_table_pattern)
+        if self.target_column_patterns is not None:
+            chunks.append(u"(%s)" % u",".join(self.target_column_patterns))
+        return u"".join(chunks)
+
+
+class ChainArcPattern(ArcPattern):
+
+    is_chain = True
+
+    def __init__(self, join_patterns):
+        assert (isinstance(join_patterns, listof(JoinPattern))
+                and len(join_patterns) > 0)
+        self.join_patterns = join_patterns
+
+    def matches(self, arc):
+        assert isinstance(arc, Arc)
+        if not isinstance(arc, ChainArc):
+            return False
+        if len(arc.joins) != len(self.join_patterns):
+            return False
+        return all(join_pattern.matches(join)
+                   for join, join_pattern in zip(arc.joins, self.join_patterns))
+
+    def extract(self, node):
+        assert isinstance(node, Node)
+        if not isinstance(node, TableNode):
+            return
+        table = node.table
+        joins = []
+        for pattern in self.join_patterns:
+            join = pattern.extract(node)
+            if join is None:
+                return
+            joins.append(join)
+            node = TableNode(join.target)
+        return ChainArc(table, joins)
+
+    def __unicode__(self):
+        return u", ".join(self.join_patterns)
+
+
+class SyntaxArcPattern(ArcPattern):
+
+    is_syntax = True
+
+    def __init__(self, syntax):
+        assert isinstance(syntax, Syntax)
+        self.syntax = syntax
+
+    def matches(self, arc):
+        assert isinstance(arc, Arc)
+        if not isinstance(arc, SyntaxArc):
+            return False
+        return unicode(arc.syntax) == unicode(self.syntax)
+
+    def extract(self, node):
+        assert isinstance(node, Node)
+        return SyntaxArc(node, self.syntax)
+
+    def __str__(self):
+        return unicode(self.syntax)
 
 
 class SchemaPatternVal(Validator):
 
     pattern = r"""
-        ^ \s*
+        ^
         (?P<schema> [\w*?]+ )
-        \s* $
+        $
     """
-    regexp = re.compile(pattern, re.X)
+    regexp = re.compile(pattern, re.X|re.U)
 
     def __call__(self, value):
         if value is None:
             return ValueError("the null value is not permitted")
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
         if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
             match = self.regexp.match(value)
             if match is None:
-                raise ValueError("expected schema pattern, got %r" % value)
+                raise ValueError("expected schema pattern, got %r"
+                                 % value.encode('utf-8'))
             schema_pattern = match.group('schema').lower()
             value = SchemaPattern(schema_pattern)
         if not isinstance(value, SchemaPattern):
@@ -257,24 +559,26 @@ class SchemaPatternVal(Validator):
 class TablePatternVal(Validator):
 
     pattern = r"""
-        ^ \s*
+        ^
         (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
         (?P<table> [\w*?]+ )
-        \s* $
+        $
     """
-    regexp = re.compile(pattern, re.X)
+    regexp = re.compile(pattern, re.X|re.U)
 
     def __call__(self, value):
         if value is None:
             return ValueError("the null value is not permitted")
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
         if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
             match = self.regexp.match(value)
             if match is None:
-                raise ValueError("expected table pattern, got %r" % value)
+                raise ValueError("expected table pattern, got %r"
+                                 % value.encode('utf-8'))
             schema_pattern = match.group('schema')
-            schema_pattern = schema_pattern.lower() if schema_pattern else "*"
+            if schema_pattern is not None:
+                schema_pattern = schema_pattern.lower()
             table_pattern = match.group('table').lower()
             value = TablePattern(schema_pattern, table_pattern)
         if not isinstance(value, TablePattern):
@@ -285,27 +589,30 @@ class TablePatternVal(Validator):
 class ColumnPatternVal(Validator):
 
     pattern = r"""
-        ^ \s*
+        ^
         (?: (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
             (?P<table> [\w*?]+ ) \s*\.\s* )?
         (?P<column> [\w*?]+ )
-        \s* $
+        $
     """
-    regexp = re.compile(pattern, re.X)
+    regexp = re.compile(pattern, re.X|re.U)
 
     def __call__(self, value):
         if value is None:
             return ValueError("the null value is not permitted")
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
         if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
             match = self.regexp.match(value)
             if match is None:
-                raise ValueError("expected column pattern, got %r" % value)
+                raise ValueError("expected column pattern, got %r"
+                                 % value.encode('utf-8'))
             schema_pattern = match.group('schema')
-            schema_pattern = schema_pattern.lower() if schema_pattern else "*"
+            if schema_pattern is not None:
+                schema_pattern = schema_pattern.lower()
             table_pattern = match.group('table')
-            table_pattern = table_pattern.lower() if table_pattern else "*"
+            if table_pattern is not None:
+                table_pattern = table_pattern.lower()
             column_pattern = match.group('column').lower()
             value = ColumnPattern(schema_pattern, table_pattern, column_pattern)
         if not isinstance(value, ColumnPattern):
@@ -316,7 +623,7 @@ class ColumnPatternVal(Validator):
 class UniqueKeyPatternVal(Validator):
 
     pattern = r"""
-        ^ \s*
+        ^
         (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
         (?P<table> [\w*?]+ )
         \s*
@@ -325,21 +632,23 @@ class UniqueKeyPatternVal(Validator):
         \)
         \s*
         (?: (?P<primary> ! ) | (?P<partial> \? ) )?
-        \s* $
+        $
     """
-    regexp = re.compile(pattern, re.X)
+    regexp = re.compile(pattern, re.X|re.U)
 
     def __call__(self, value):
         if value is None:
             return ValueError("the null value is not permitted")
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
         if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
             match = self.regexp.match(value)
             if match is None:
-                raise ValueError("expected unique key pattern, got %r" % value)
+                raise ValueError("expected unique key pattern, got %r"
+                                 % value.encode('utf-8'))
             schema_pattern = match.group('schema')
-            schema_pattern = schema_pattern.lower() if schema_pattern else "*"
+            if schema_pattern is not None:
+                schema_pattern = schema_pattern.lower()
             table_pattern = match.group('table').lower()
             column_patterns = match.group('columns').lower()
             column_patterns = [pattern.strip()
@@ -357,7 +666,7 @@ class UniqueKeyPatternVal(Validator):
 class ForeignKeyPatternVal(Validator):
 
     pattern = r"""
-        ^ \s*
+        ^
         (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
         (?P<table> [\w*?]+ )
         \s*
@@ -372,30 +681,31 @@ class ForeignKeyPatternVal(Validator):
         (?: \(
            \s* (?P<target_columns> [\w*?]+ (?: \s*,\s* [\w*?]+ )* ) \s*,?\s*
         \) )?
-        \s* $
+        $
     """
-    regexp = re.compile(pattern, re.X)
+    regexp = re.compile(pattern, re.X|re.U)
 
     def __call__(self, value):
         if value is None:
             return ValueError("the null value is not permitted")
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
         if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
             match = self.regexp.match(value)
             if match is None:
                 raise ValueError("expected foreign key pattern, got %r"
-                                 % value)
+                                 % value.encode('utf-8'))
             schema_pattern = match.group('schema')
-            schema_pattern = schema_pattern.lower() if schema_pattern else "*"
+            if schema_pattern is not None:
+                schema_pattern = schema_pattern.lower()
             table_pattern = match.group('table').lower()
             column_patterns = match.group('columns').lower()
             column_patterns = [pattern.strip()
                                for pattern in column_patterns.split(",")
                                if pattern.strip()]
             target_schema_pattern = match.group('target_schema')
-            target_schema_pattern = (target_schema_pattern.lower()
-                                     if target_schema_pattern else "*")
+            if target_schema_pattern is not None:
+                target_schema_pattern = target_schema_pattern.lower()
             target_table_pattern = match.group('target_table').lower()
             target_column_patterns = match.group('target_columns')
             if target_column_patterns is not None:
@@ -405,7 +715,8 @@ class ForeignKeyPatternVal(Validator):
                          if pattern.strip()]
                 if len(target_column_patterns) != len(column_patterns):
                     raise ValueError("origin and target columns do not match"
-                                     " in foreign key pattern %r" % value)
+                                     " in foreign key pattern %r"
+                                     % value.encode('utf-8'))
             is_partial = bool(match.group('partial'))
             value = ForeignKeyPattern(schema_pattern, table_pattern,
                         column_patterns, target_schema_pattern,
@@ -414,5 +725,171 @@ class ForeignKeyPatternVal(Validator):
         if not isinstance(value, ForeignKeyPattern):
             raise ValueError("expected foreign key pattern, got %r" % value)
         return value
+
+
+class NodePatternVal(Validator):
+
+    pattern = r"""
+        ^ (?:
+        (?P<is_home> @ )
+        |
+        (?P<is_table>
+            (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
+            (?P<table> [\w*?]+ ) )
+        ) $
+    """
+    regexp = re.compile(pattern, re.X|re.U)
+
+    def __call__(self, value):
+        if value is None:
+            return ValueError("the null value is not permitted")
+        if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
+            match = self.regexp.match(value)
+            if match is None:
+                raise ValueError("expected node pattern, got %r"
+                                 % value.encode('utf-8'))
+            if match.group('is_home'):
+                value = HomeNodePattern()
+            elif match.group('is_table'):
+                schema_pattern = match.group('schema')
+                if schema_pattern is not None:
+                    schema_pattern = schema_pattern.lower()
+                table_pattern = match.group('table').lower()
+                value = TableNodePattern(schema_pattern, table_pattern)
+        if not isinstance(value, NodePattern):
+            raise ValueError("expected node pattern, got %r" % value)
+        return value
+
+
+class ArcPatternVal(Validator):
+
+    pattern = r"""
+        ^ (?:
+        (?P<is_entity>
+            (?: (?P<owner> [\w*?]+ ) \s*\.\s* )?
+            (?P<entity> [\w*?]+ ) )
+        |
+        (?P<is_chain>
+            (?: [\w*?]+ \s*\.\s* )? [\w*?]+
+            \s* (?: \( \s* [\w*?]+ (?: \s*,\s* [\w*?]+ )* \s*,?\s* \) )?
+            \s* -> \s*
+            (?: [\w*?]+ \s*\.\s* )? [\w*?]+
+            \s* (?: \( \s* [\w*?]+ (?: \s*,\s* [\w*?]+ )* \s*,?\s* \) )?
+            (?: \s*,\s*
+                (?: [\w*?]+ \s*\.\s* )? [\w*?]+
+                \s* (?: \( \s* [\w*?]+ (?: \s*,\s* [\w*?]+ )* \s*,?\s* \) )?
+                \s* -> \s*
+                (?: [\w*?]+ \s*\.\s* )? [\w*?]+
+                \s* (?: \( \s* [\w*?]+ (?: \s*,\s* [\w*?]+ )* \s*,?\s* \) )?
+                \s*,?\s* )* )
+        |
+        (?P<is_syntax>
+            (?P<syntax> \( .+ \) ) )
+        ) $
+    """
+    regexp = re.compile(pattern, re.X|re.U)
+    join_pattern = r"""
+        (?: (?P<schema> [\w*?]+ ) \s*\.\s* )?
+        (?P<table> [\w*?]+ )
+        \s*
+        (?: \(
+           \s* (?P<columns> [\w*?]+ (?: \s*,\s* [\w*?]+ )* ) \s*,?\s*
+        \) )?
+        \s* -> \s*
+        (?: (?P<target_schema> [\w*?]+ ) \s*\.\s* )?
+        (?P<target_table> [\w*?]+ )
+        \s*
+        (?: \(
+           \s* (?P<target_columns> [\w*?]+ (?: \s*,\s* [\w*?]+ )* ) \s*,?\s*
+        \) )?
+        \s*,?\s*
+    """
+    join_regexp = re.compile(join_pattern, re.X|re.U)
+
+    def __call__(self, value):
+        if value is None:
+            return ValueError("the null value is not permitted")
+        if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
+            match = self.regexp.match(value)
+            if match is None:
+                raise ValueError("expected node pattern, got %r"
+                                 % value.encode('utf-8'))
+            if match.group('is_entity'):
+                owner_pattern = match.group('owner')
+                if owner_pattern is not None:
+                    owner_pattern = owner_pattern.lower()
+                entity_pattern = match.group('entity').lower()
+                value = EntityArcPattern(owner_pattern, entity_pattern)
+            elif match.group('is_chain'):
+                join_patterns = []
+                start = 0
+                while start < len(value):
+                    match = self.join_regexp.match(value, start)
+                    assert match is not None
+                    schema_pattern = match.group('schema')
+                    if schema_pattern is not None:
+                        schema_pattern = schema_pattern.lower()
+                    table_pattern = match.group('table').lower()
+                    column_patterns = match.group('columns')
+                    if column_patterns is not None:
+                        column_patterns = \
+                                [pattern.strip().lower()
+                                 for pattern in column_patterns.split(",")
+                                 if pattern.strip()]
+                    target_schema_pattern = match.group('target_schema')
+                    if target_schema_pattern is not None:
+                        target_schema_pattern = target_schema_pattern.lower()
+                    target_table_pattern = match.group('target_table').lower()
+                    target_column_patterns = match.group('target_columns')
+                    if target_column_patterns is not None:
+                        target_column_patterns = \
+                                [pattern.strip().lower()
+                                 for pattern in target_column_patterns.split(",")
+                                 if pattern.strip()]
+                    if (column_patterns is not None and
+                            target_column_patterns is not None and
+                            len(column_patterns) != len(target_column_patterns)):
+                        raise ValueError("origin and target columns do not match"
+                                         " in join pattern %r"
+                                         % value.encode('utf-8'))
+                    join_pattern = JoinPattern(schema_pattern, table_pattern,
+                                               column_patterns,
+                                               target_schema_pattern,
+                                               target_table_pattern,
+                                               target_column_patterns)
+                    join_patterns.append(join_pattern)
+                    start = match.end()
+                value = ChainArcPattern(join_patterns)
+            elif match.group('is_syntax'):
+                input = match.group('syntax')
+                try:
+                    syntax = parse(input, GroupParser)
+                except TranslateError, exc:
+                    raise ValueError(str(exc))
+                value = SyntaxArcPattern(syntax)
+            else:
+                assert False
+        if not isinstance(value, ArcPattern):
+            raise ValueError("expected arc pattern, got %r" % value)
+        return value
+
+
+class LabelVal(Validator):
+
+    pattern = """ ^ [\w]+ $ """
+    regexp = re.compile(pattern, re.X|re.U)
+
+    def __call__(self, value):
+        if value is None:
+            return ValueError("the null value is not permitted")
+        if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if not (isinstance(value, unicode) and self.regexp.match(value)):
+            raise ValueError("expected label, got %r" % value)
+        return normalize(value)
 
 
