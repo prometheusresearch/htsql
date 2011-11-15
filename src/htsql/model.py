@@ -7,6 +7,7 @@
 from .util import Comparable, Printable, Clonable, maybe, listof
 from .domain import Domain
 from .entity import TableEntity, ColumnEntity, Join
+from .tr.syntax import Syntax
 
 
 class Model(Comparable, Clonable, Printable):
@@ -85,6 +86,15 @@ class DomainNode(Node):
         return str(self.domain)
 
 
+class UnknownNode(Node):
+
+    def __init__(self):
+        super(UnknownNode, self).__init__(equality_vector=())
+
+    def __str__(self):
+        return "?"
+
+
 class InvalidNode(Node):
 
     def __init__(self):
@@ -155,6 +165,22 @@ class ColumnArc(Arc):
 
     def __str__(self):
         return str(self.column)
+
+
+class SyntaxArc(Arc):
+
+    def __init__(self, origin, syntax):
+        assert isinstance(syntax, Syntax)
+        super(SyntaxArc, self).__init__(
+                origin=origin,
+                target=UnknownNode(),
+                is_expanding=False,
+                is_contracting=False,
+                equality_vector=(origin, syntax))
+        self.syntax = syntax
+
+    def __str__(self):
+        return str(self.syntax)
 
 
 class InvalidArc(Arc):

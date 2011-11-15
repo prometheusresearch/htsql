@@ -15,7 +15,7 @@ This module implements name resolution adapters.
 from ..util import Clonable, Printable, maybe
 from ..adapter import Adapter, adapts, adapts_many
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
-                     AmbiguousArc)
+                     SyntaxArc, AmbiguousArc)
 from ..classify import classify, normalize
 from .syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
@@ -27,7 +27,8 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       TitleBinding, AliasBinding, CommandBinding,
                       FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                       ComplementRecipe, KernelRecipe, BindingRecipe,
-                      InvalidRecipe, AmbiguousRecipe)
+                      SyntaxRecipe, ClosedRecipe, InvalidRecipe,
+                      AmbiguousRecipe)
 
 
 class Probe(Clonable, Printable):
@@ -225,6 +226,14 @@ class PrescribeChain(Prescribe):
 
     def __call__(self):
         return AttachedTableRecipe(self.arc.joins)
+
+
+class PrescribeSyntax(Prescribe):
+
+    adapts(SyntaxArc)
+
+    def __call__(self):
+        return ClosedRecipe(SyntaxRecipe(self.arc.syntax))
 
 
 class PrescribeAmbiguous(Prescribe):
