@@ -36,7 +36,7 @@ def once(service):
     @functools.wraps(service)
     def wrapper(*args, **kwds):
         cache = context.app.htsql.cache
-        key = (service.func_name,)+args
+        key = (service.__module__, service.__name__) + args
         try:
             return cache.values[key]
         except KeyError:

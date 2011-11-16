@@ -161,12 +161,47 @@ class OverrideIntrospect(Introspect):
                                               pattern.is_partial)
                         unused.discard(pattern)
 
+        if addon.unlabeled_tables:
+            unused.update(addon.unlabeled_tables)
+            for schema in catalog.schemas:
+                schema_matches = [pattern
+                                  for pattern in addon.unlabeled_tables
+                                  if pattern.matches(schema)]
+                if not schema_matches:
+                    continue
+                for table in schema.tables:
+                    matches = [pattern
+                               for pattern in schema_matches
+                               if pattern.matches(table)]
+                    unused.difference_update(matches)
+
+        if addon.unlabeled_columns:
+            unused.update(addon.unlabeled_columns)
+            for schema in catalog.schemas:
+                schema_matches = [pattern
+                                  for pattern in addon.unlabeled_columns
+                                  if pattern.matches(schema)]
+                if not schema_matches:
+                    continue
+                for table in schema.tables:
+                    table_matches = [pattern
+                                     for pattern in schema_matches
+                                     if pattern.matches(table)]
+                    if not table_matches:
+                        continue
+                    for column in table.columns:
+                        matches = [pattern
+                                   for pattern in table_matches
+                                   if pattern.matches(column)]
+                        unused.difference_update(matches)
+
         for pattern in (addon.include_tables + addon.exclude_tables +
                         addon.include_columns + addon.exclude_columns +
                         addon.not_nulls + addon.unique_keys +
-                        addon.foreign_keys):
+                        addon.foreign_keys +
+                        addon.unlabeled_tables + addon.unlabeled_columns):
             if pattern in unused:
-                addon.unused_pattern_cache.add(pattern)
+                addon.unused_pattern_cache.add(str(pattern))
 
         return catalog
 

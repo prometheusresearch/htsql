@@ -329,7 +329,7 @@ def relabel(arc):
             arcs.append(arc)
         labels_by_arc[arc].append(label)
     for arc in arcs:
-        key = ('relabel', arc)
+        key = (relabel.__module__, relabel.__name__, arc)
         value = labels_by_arc[arc]
         if key not in cache.values:
             cache.set(key, value)

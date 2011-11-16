@@ -238,7 +238,7 @@ class ForeignKeyPattern(Pattern):
         return u"".join(chunks)
 
 
-class ArcPattern(Printable):
+class ArcPattern(Pattern):
 
     is_column = False
     is_table = False
@@ -380,8 +380,6 @@ class JoinPattern(Pattern):
         chunks.append(self.table_pattern)
         if self.column_patterns is not None:
             chunks.append(u"(%s)" % u",".join(self.column_patterns))
-        if self.is_partial:
-            chunks.append("?")
         chunks.append(" -> ")
         if self.target_schema_pattern is not None:
             chunks.append(self.target_schema_pattern)
@@ -416,7 +414,7 @@ class ChainArcPattern(ArcPattern):
         return ChainArc(table, joins)
 
     def __unicode__(self):
-        return u", ".join(self.join_patterns)
+        return u", ".join(unicode(pattern) for pattern in self.join_patterns)
 
 
 class SyntaxArcPattern(ArcPattern):
@@ -431,7 +429,7 @@ class SyntaxArcPattern(ArcPattern):
         assert isinstance(node, Node)
         return SyntaxArc(node, self.syntax)
 
-    def __str__(self):
+    def __unicode__(self):
         return unicode(self.syntax)
 
 

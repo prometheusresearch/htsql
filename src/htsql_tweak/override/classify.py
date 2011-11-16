@@ -26,7 +26,7 @@ class ClassCache(object):
             pattern = addon.class_labels[name]
             arc = pattern.extract(node)
             if arc is None:
-                addon.unused_pattern_cache.add(pattern)
+                addon.unused_pattern_cache.add(str(pattern))
                 continue
             self.names_by_arc.setdefault(arc, []).append(name)
             self.arc_by_name[name] = arc
@@ -44,14 +44,15 @@ class FieldCache(object):
             self.node_by_name[label.name] = label.target
             self.name_by_node[label.target] = label.name
         for class_name, field_name in sorted(addon.field_labels):
+            name = u"%s.%s" % (class_name, field_name)
             pattern = addon.field_labels[class_name, field_name]
             if class_name not in self.node_by_name:
-                addon.unused_pattern_cache.add(pattern)
+                addon.unused_pattern_cache.add(name.encode('utf-8'))
                 continue
             node = self.node_by_name[class_name]
             arc = pattern.extract(node)
             if arc is None:
-                addon.unused_pattern_cache.add(pattern)
+                addon.unused_pattern_cache.add(str(pattern))
                 continue
             self.names_by_arc_by_node.setdefault(node, {})
             self.names_by_arc_by_node[node].setdefault(arc, [])
@@ -182,13 +183,29 @@ class OverrideOrderTable(OrderTable):
         class_name = cache.name_by_node.get(self.node)
         if class_name not in addon.field_orders:
             return super(OverrideOrderTable, self).__call__()
+        names = set(label.name for label in self.labels)
         orders = {}
         for idx, name in enumerate(addon.field_orders[class_name]):
             orders[name] = idx
+            if name not in names:
+                name = u"%s.%s" % (class_name, name)
+                addon.unused_pattern_cache.add(name.encode('utf-8'))
         labels = [label.clone(is_public=(label.name in orders))
                   for label in self.labels]
         labels.sort(key=(lambda label: (label.name not in orders,
                                         orders.get(label.name, 0))))
         return labels
+
+
+@once
+def validate():
+    addon = context.app.tweak.override
+    cache = field_cache()
+    for name in sorted(addon.field_orders):
+        if name not in cache.node_by_name:
+            addon.unused_pattern_cache.add(name.encode('utf-8'))
+            continue
+        node = cache.node_by_name[name]
+        classify(node)
 
 

@@ -7,12 +7,11 @@
 from . import classify, introspect, pattern
 from htsql.addon import Addon, Parameter
 from htsql.validator import SeqVal, MapVal
-from htsql.introspect import introspect
-from htsql.classify import classify
 from .pattern import (TablePatternVal, ColumnPatternVal,
                       UniqueKeyPatternVal, ForeignKeyPatternVal,
                       ClassPatternVal, FieldPatternVal, LabelVal, QLabelVal)
 from .introspect import UnusedPatternCache
+from .classify import validate
 
 
 class TweakOverrideAddon(Addon):
@@ -51,11 +50,10 @@ class TweakOverrideAddon(Addon):
         self.unused_pattern_cache = UnusedPatternCache()
 
     def validate(self):
-        catalog = introspect()
+        validate()
         unused_patterns = self.unused_pattern_cache.patterns
         if unused_patterns:
             raise ValueError("unused override patterns: %s"
-                             % ", ".join(str(pattern)
-                                         for pattern in unused_patterns))
+                             % ", ".join(unused_patterns))
 
 
