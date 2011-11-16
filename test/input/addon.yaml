@@ -345,4 +345,28 @@ tests:
   - uri: /;)/not-found
     expect: 404
 
+# TWEAK.SHELL - in-browser HTSQL editor
+- title: tweak.shell
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.shell]
+  - ctl: [ext, tweak.shell.default]
+
+  # A trivial test
+  - load: demo
+    extensions:
+      tweak.shell: {}
+  - uri: /shell()
+
+  # FIXME: add tests for auxiliary commands
+
+  # Using `/shell()` as the default command
+  - load: demo
+    extensions:
+      tweak.shell.default: {}
+  - uri: /
+  - uri: /
+    headers:
+      Accept: text/html
+
 

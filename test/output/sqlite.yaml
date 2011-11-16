@@ -28667,3 +28667,306 @@ tests:
           - [Content-Type, text/plain]
           body: |
             Resourse does not exist: '/not-found'.
+      - id: tweak.shell
+        tests:
+        - ctl: [ext, tweak.shell]
+          stdout: |+
+            TWEAK.SHELL - add in-browser editor for HTSQL
+
+            This addon adds command `/shell()` that creates an in-browser
+            HTSQL editor called HTSQL shell.
+
+            The HTSQL shell provides an edit area with support for syntax
+            hightlighting and code completion.
+
+            Parameter `server_root` specifies the root URL of the HTSQL
+            server.  Use this parameter when HTSQL is unable to determine
+            its root automatically.
+
+            Parameter `limit` specifies the maximum number of output rows
+            displayed by the shell.
+
+            Parameters:
+              server-root=URL          : root of HTSQL server
+              limit=LIMIT              : max. number of output rows (default: 1000)
+
+          exit: 0
+        - ctl: [ext, tweak.shell.default]
+          stdout: |+
+            TWEAK.SHELL.DEFAULT - make `/shell()` the default output format
+
+            This addon makes the default output format be the command
+            `/shell()`.  With this addon, any query without explicit
+            format indicator will show the output in the HTSQL shell.
+            Use indicator `/:html` to get HTML output.
+
+            Parameters `on_root`, `on_default` and `on_error` allows
+            you to configure when `/shell()` is invoked.
+
+            Parameters:
+              on-root=TRUE|FALSE       : invoke on an empty query
+              on-default=TRUE|FALSE    : invoke on a query without format
+              on-error=TRUE|FALSE      : invoke on errors
+
+          exit: 0
+        - uri: /shell()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |+
+            <!DOCTYPE html>
+
+            <html>
+
+              <head>
+                <base href="http://127.0.0.1/-/shell/">
+                <title>HTSQL</title>
+                <script type="text/javascript" src="external/jquery/jquery-1.6.4.min.js"></script>
+                <link rel="stylesheet" href="external/codemirror/lib/codemirror.css">
+                <link rel="stylesheet" href="external/codemirror/theme/default.css">
+                <link rel="stylesheet" href="cm-htsql-mode.css">
+                <script type="text/javascript" src="external/codemirror/lib/codemirror.js"></script>
+                <script type="text/javascript" src="cm-htsql-mode.js"></script>
+                <link rel="stylesheet" href="shell.css">
+                <script type="text/javascript" src="shell.js"></script>
+              </head>
+
+              <body data-database-name="build/regress/sqlite/htsql_demo.sqlite"
+                    data-htsql-version="2.2.0b2"
+                    data-server-root="http://127.0.0.1"
+                    data-query-on-start="/"
+                    data-evaluate-on-start="false"
+                    data-implicit-shell="false">
+
+                <div id="viewport">
+                  <div class="heading-area">
+                    <em id="database">HTSQL</em>
+                    <ul class="menu">
+                      <li><button id="schema">Schema</button></li>
+                      <li><button id="help">Help</button></li>
+                    </ul>
+                  </div>
+                  <div class="input-area">
+                    <div class="editor-box">
+                      <textarea id="editor"></textarea>
+                      <div class="expansion-control">
+                        <ul>
+                          <li><button id="shrink">&#x25B3;</button></li>
+                          <li><button id="expand">&#x25BD;</button></li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="button-box">
+                      <ul>
+                        <li><button id="run">Run</button></li>
+                        <li><button id="more">More&nbsp;&#x25BE;</button></li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="output-area">
+                    <div id="product-panel" class="panel">
+                      <div id="grid">
+                        <div id="grid-head"></div>
+                        <div id="grid-body"></div>
+                      </div>
+                    </div>
+                    <div id="request-panel" class="panel">
+                      <div class="notification">
+                        <strong>Executing a database request.  Please wait&hellip;</strong>
+                      </div>
+                    </div>
+                    <div id="sql-panel" class="panel">
+                      <div class="notification">
+                        <pre id="sql"></pre>
+                        <button id="close-sql" class="close">&times;</button>
+                      </div>
+                    </div>
+                    <div id="error-panel" class="panel">
+                      <div class="alert">
+                        <pre id="error"></pre>
+                        <button id="close-error" class="close">&times;</button>
+                      </div>
+                    </div>
+                    <div id="failure-panel" class="panel">
+                      <div class="alert">
+                        <strong>The server failed to perform the request.</strong>
+                        <button id="close-failure" class="close">&times;</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="footer-area"></div>
+                  <div id="popups" class="popup-area">
+                    <div id="more-popup" class="popup">
+                      <ul>
+                        <li><button id="export-html">Export to HTML</button></li>
+                        <li><button id="export-json">Export to JSON</button></li>
+                        <li><button id="export-csv">Export to CSV</button></li>
+                        <li><button id="show-sql">Show SQL</button></li>
+                      </ul>
+                    </div>
+                    <div id="complete-popup" class="popup code">
+                      <select id="complete">
+                      <select>
+                    </div>
+                    <div id="help-popup" class="popup">
+                      <h1>HTSQL</h1>
+                      <h2>version <strong id="version">2.0</strong></h2>
+                      <p>
+                        This is an editor for HTSQL database queries.  There
+                        are a few keyboard shortcuts that are available.
+                      </p>
+                      <dl>
+                        <dt>CTRL+ENTER</dt>
+                        <dd>run the current query</dd>
+                        <dt>CTRL+UP/DOWN</dt>
+                        <dd>change size of query area</dd>
+                        <dt>CTRL+SPACE</dt>
+                        <dd>auto-complete table, column and link names</dd>
+                      </dl>
+                      <p>
+                        For more help about HTSQL, please read the documentation
+                        at <a href="http://htsql.org/doc/" target="_blank">http://htsql.org/doc/</a>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </body>
+
+            </html>
+
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            (no data)
+
+             ----
+             /
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |+
+            <!DOCTYPE html>
+
+            <html>
+
+              <head>
+                <base href="http://127.0.0.1/-/shell/">
+                <title>HTSQL</title>
+                <script type="text/javascript" src="external/jquery/jquery-1.6.4.min.js"></script>
+                <link rel="stylesheet" href="external/codemirror/lib/codemirror.css">
+                <link rel="stylesheet" href="external/codemirror/theme/default.css">
+                <link rel="stylesheet" href="cm-htsql-mode.css">
+                <script type="text/javascript" src="external/codemirror/lib/codemirror.js"></script>
+                <script type="text/javascript" src="cm-htsql-mode.js"></script>
+                <link rel="stylesheet" href="shell.css">
+                <script type="text/javascript" src="shell.js"></script>
+              </head>
+
+              <body data-database-name="build/regress/sqlite/htsql_demo.sqlite"
+                    data-htsql-version="2.2.0b2"
+                    data-server-root="http://127.0.0.1"
+                    data-query-on-start="/"
+                    data-evaluate-on-start="false"
+                    data-implicit-shell="true">
+
+                <div id="viewport">
+                  <div class="heading-area">
+                    <em id="database">HTSQL</em>
+                    <ul class="menu">
+                      <li><button id="schema">Schema</button></li>
+                      <li><button id="help">Help</button></li>
+                    </ul>
+                  </div>
+                  <div class="input-area">
+                    <div class="editor-box">
+                      <textarea id="editor"></textarea>
+                      <div class="expansion-control">
+                        <ul>
+                          <li><button id="shrink">&#x25B3;</button></li>
+                          <li><button id="expand">&#x25BD;</button></li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="button-box">
+                      <ul>
+                        <li><button id="run">Run</button></li>
+                        <li><button id="more">More&nbsp;&#x25BE;</button></li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="output-area">
+                    <div id="product-panel" class="panel">
+                      <div id="grid">
+                        <div id="grid-head"></div>
+                        <div id="grid-body"></div>
+                      </div>
+                    </div>
+                    <div id="request-panel" class="panel">
+                      <div class="notification">
+                        <strong>Executing a database request.  Please wait&hellip;</strong>
+                      </div>
+                    </div>
+                    <div id="sql-panel" class="panel">
+                      <div class="notification">
+                        <pre id="sql"></pre>
+                        <button id="close-sql" class="close">&times;</button>
+                      </div>
+                    </div>
+                    <div id="error-panel" class="panel">
+                      <div class="alert">
+                        <pre id="error"></pre>
+                        <button id="close-error" class="close">&times;</button>
+                      </div>
+                    </div>
+                    <div id="failure-panel" class="panel">
+                      <div class="alert">
+                        <strong>The server failed to perform the request.</strong>
+                        <button id="close-failure" class="close">&times;</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="footer-area"></div>
+                  <div id="popups" class="popup-area">
+                    <div id="more-popup" class="popup">
+                      <ul>
+                        <li><button id="export-html">Export to HTML</button></li>
+                        <li><button id="export-json">Export to JSON</button></li>
+                        <li><button id="export-csv">Export to CSV</button></li>
+                        <li><button id="show-sql">Show SQL</button></li>
+                      </ul>
+                    </div>
+                    <div id="complete-popup" class="popup code">
+                      <select id="complete">
+                      <select>
+                    </div>
+                    <div id="help-popup" class="popup">
+                      <h1>HTSQL</h1>
+                      <h2>version <strong id="version">2.0</strong></h2>
+                      <p>
+                        This is an editor for HTSQL database queries.  There
+                        are a few keyboard shortcuts that are available.
+                      </p>
+                      <dl>
+                        <dt>CTRL+ENTER</dt>
+                        <dd>run the current query</dd>
+                        <dt>CTRL+UP/DOWN</dt>
+                        <dd>change size of query area</dd>
+                        <dt>CTRL+SPACE</dt>
+                        <dd>auto-complete table, column and link names</dd>
+                      </dl>
+                      <p>
+                        For more help about HTSQL, please read the documentation
+                        at <a href="http://htsql.org/doc/" target="_blank">http://htsql.org/doc/</a>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </body>
+
+            </html>
+
