@@ -142,7 +142,7 @@ tests:
              :             :          : Science                          :        :              :
              | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
              | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             | ns          | gmth     | Masters of Science in            | ms     | pmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | pmth     | Doctorate of Science in          | ph     |              |
              :             :          : Mathematics                      :        :              :
@@ -3841,14 +3841,12 @@ tests:
              :             :          : Science                          :        :              :
              | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
              | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
-             :             :          : Mathematics                      :        :              :
              | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
              | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
              | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
-                                                                                         (21 rows)
+                                                                                         (20 rows)
 
              ----
              /program?degree={'ba','bs'}
@@ -9454,7 +9452,7 @@ tests:
              | ba      |
              | ba      |
              | ba      |
-             | bs      |
+             | ms      |
              | ph      |
              | bs      |
              | bs      |
@@ -9550,7 +9548,7 @@ tests:
              | School of Engineering         |                     2 |
              | School of Arts and Humanities |                     3 |
              | School of Music & Dance       |                     0 |
-             | School of Natural Sciences    |                     2 |
+             | School of Natural Sciences    |                     3 |
              | Public Honorariums            |                     0 |
              | School of Continuing Studies  |                     0 |
                                                               (9 rows)
@@ -9658,10 +9656,10 @@ tests:
              | degree | count(program) |
             -+--------+----------------+-
              | ba     |             10 |
-             | bs     |             11 |
+             | bs     |             10 |
              | ct     |              4 |
              | ma     |              7 |
-             | ms     |              5 |
+             | ms     |              6 |
              | pb     |              1 |
              | ph     |              1 |
                                 (7 rows)
@@ -9707,7 +9705,8 @@ tests:
              | ba             |
              | bs             |
              | ma             |
-                       (3 rows)
+             | ms             |
+                       (4 rows)
 
              ----
              /(program^degree)?count(program)>5
@@ -9780,10 +9779,10 @@ tests:
              | degree | count(^) |
             -+--------+----------+-
              | ba     |       10 |
-             | bs     |       11 |
+             | bs     |       10 |
              | ct     |        4 |
              | ma     |        7 |
-             | ms     |        5 |
+             | ms     |        6 |
              | pb     |        1 |
              | ph     |        1 |
                           (7 rows)
@@ -15625,7 +15624,7 @@ tests:
              :             :          : Science                          :        :              :
              | la          | upsych   | Bachelor of Arts in Psychology   | ba     |              |
              | la          | uspan    | Bachelor of Arts in Spanish      | ba     |              |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             | ns          | gmth     | Masters of Science in            | ms     | pmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | pmth     | Doctorate of Science in          | ph     |              |
              :             :          : Mathematics                      :        :              :
@@ -16211,7 +16210,7 @@ tests:
              :             :          : History                          :        :              :
              | art         | uhist    | Bachelor of Arts in Art History  | ba     |              |
              | art         | ustudio  | Bachelor of Arts in Studio Art   | ba     |              |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             | ns          | gmth     | Masters of Science in            | ms     | pmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | pmth     | Doctorate of Science in          | ph     |              |
              :             :          : Mathematics                      :        :              :
@@ -16228,7 +16227,7 @@ tests:
              | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
              | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
              | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             | ns          | gmth     | Masters of Science in            | ms     | pmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | pmth     | Doctorate of Science in          | ph     |              |
              :             :          : Mathematics                      :        :              :
@@ -16326,7 +16325,7 @@ tests:
              | bus         | ubusad   | Bachelor of Business             | bs     |              |
              :             :          : Administration                   :        :              :
              | bus         | uecon    | Bachelor of Arts in Economics    | ba     | gecon        |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             | ns          | gmth     | Masters of Science in            | ms     | pmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | pmth     | Doctorate of Science in          | ph     |              |
              :             :          : Mathematics                      :        :              :
@@ -16335,7 +16334,7 @@ tests:
              | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | uphys    | Bachelor of Science in Physics   | bs     |              |
-             | ns          | gmth     | Masters of Science in            | bs     | pmth         |
+             | ns          | gmth     | Masters of Science in            | ms     | pmth         |
              :             :          : Mathematics                      :        :              :
              | ns          | pmth     | Doctorate of Science in          | ph     |              |
              :             :          : Mathematics                      :        :              :
@@ -19370,7 +19369,7 @@ tests:
                |      +---------------------------------------------------------+                                   |                                   |
                | code | count(program?degree='ph') | count(program?degree='bs') | count(school.program?degree='ph') | count(school.program?degree='bs') |
               -+------+----------------------------+----------------------------+-----------------------------------+-----------------------------------+-
-               | mth  |                          1 |                          5 |                                 1 |                                 5 |
+               | mth  |                          1 |                          4 |                                 1 |                                 4 |
                                                                                                                                                   (1 row)
 
                ----
@@ -21570,7 +21569,7 @@ tests:
                | eng  | gee   | ms     |         1 |
                | eng  | gme   | ms     |         1 |
                | la   | gengl | ma     |         1 |
-               | ns   | gmth  | bs     |         1 |
+               | ns   | gmth  | ms     |         1 |
                | ns   | pmth  | ph     |         1 |
                                             (7 rows)
 
@@ -22132,7 +22131,7 @@ tests:
                +----------------+
                | degree         |
               -+----------------+-
-               | bs             |
+               | ba             |
                           (1 row)
 
                ----
@@ -22381,7 +22380,7 @@ tests:
                +----------------+
                | degree         |
               -+----------------+-
-               | bs             |
+               | ba             |
                           (1 row)
 
                ----
@@ -23380,10 +23379,10 @@ tests:
                | degree     | count(^)     |
               -+------------+--------------+-
                | ba         |           10 |
-               | bs         |           11 |
+               | bs         |           10 |
                | ct         |            4 |
                | ma         |            7 |
-               | ms         |            5 |
+               | ms         |            6 |
                | pb         |            1 |
                | ph         |            1 |
                                     (7 rows)
@@ -23406,10 +23405,10 @@ tests:
                | degree  | count(program)  |
               -+---------+-----------------+-
                | ba      |              10 |
-               | bs      |              11 |
+               | bs      |              10 |
                | ct      |               4 |
                | ma      |               7 |
-               | ms      |               5 |
+               | ms      |               6 |
                | pb      |               1 |
                | ph      |               1 |
                                     (7 rows)
@@ -23432,10 +23431,10 @@ tests:
                | degree | count(^.student) |
               -+--------+------------------+-
                | ba     |              102 |
-               | bs     |              106 |
+               | bs     |               93 |
                | ct     |               37 |
                | ma     |               77 |
-               | ms     |               36 |
+               | ms     |               49 |
                | pb     |               16 |
                | ph     |               10 |
                                     (7 rows)
@@ -23466,10 +23465,10 @@ tests:
                | degree | count(program.student) |
               -+--------+------------------------+-
                | ba     |                    102 |
-               | bs     |                    106 |
+               | bs     |                     93 |
                | ct     |                     37 |
                | ma     |                     77 |
-               | ms     |                     36 |
+               | ms     |                     49 |
                | pb     |                     16 |
                | ph     |                     10 |
                                           (7 rows)
@@ -23720,8 +23719,9 @@ tests:
                | ct                        |
                | ma                        |
                | bs                        |
+               | ms                        |
                | ph                        |
-                                   (17 rows)
+                                   (18 rows)
 
                ----
                /school.distinct(program{degree})
@@ -23759,8 +23759,9 @@ tests:
                | ct                        |
                | ma                        |
                | bs                        |
+               | ms                        |
                | ph                        |
-                                   (17 rows)
+                                   (18 rows)
 
                ----
                /school.distinct(program{degree}){*}
@@ -23985,9 +23986,10 @@ tests:
                | ba         |            5 |
                | ct         |            1 |
                | ma         |            3 |
-               | bs         |            5 |
+               | bs         |            4 |
+               | ms         |            1 |
                | ph         |            1 |
-                                   (17 rows)
+                                   (18 rows)
 
                ----
                /school.distinct(program{degree}){*,count(^)}
@@ -24026,9 +24028,10 @@ tests:
                | ba     |               33 |
                | ct     |                5 |
                | ma     |               34 |
-               | bs     |               51 |
+               | bs     |               38 |
+               | ms     |               13 |
                | ph     |               10 |
-                                   (17 rows)
+                                   (18 rows)
 
                ----
                /school.distinct(program{degree}){*,count(^.student)}
@@ -24075,9 +24078,10 @@ tests:
                | ct                                      |
                | ma                                      |
                | bs                                      |
+               | ms                                      |
                | ph                                      |
                | --                                      |
-                                                 (18 rows)
+                                                 (19 rows)
 
                ----
                /school.distinct(program{degree:if_null('--')})
@@ -24362,9 +24366,10 @@ tests:
                | degree | count(^) |
               -+--------+----------+-
                | ba     |       10 |
-               | bs     |       11 |
+               | bs     |       10 |
                | ma     |        7 |
-                            (3 rows)
+               | ms     |        6 |
+                            (4 rows)
 
                ----
                /program^degree{*,count(^)}?count(^)>5
@@ -24506,8 +24511,9 @@ tests:
                | ct             |
                | ma             |
                | bs             |
+               | ms             |
                | ph             |
-                        (17 rows)
+                        (18 rows)
 
                ----
                /school.(program^degree)
@@ -24536,10 +24542,12 @@ tests:
                | ba                    |
                | pb                    |
                | bs                    |
+               | ms                    |
                | ph                    |
                | bs                    |
                | ms                    |
                | bs                    |
+               | ms                    |
                | ph                    |
                | bs                    |
                | ms                    |
@@ -24569,8 +24577,10 @@ tests:
                | ct                    |
                | ma                    |
                | bs                    |
+               | ms                    |
                | ph                    |
                | bs                    |
+               | ms                    |
                | ph                    |
                | ba                    |
                | ct                    |
@@ -24584,7 +24594,7 @@ tests:
                | ct                    |
                | ma                    |
                | ms                    |
-                               (55 rows)
+                               (59 rows)
 
                ----
                /department.(school.program^degree)
@@ -24699,8 +24709,6 @@ tests:
                | eng         | ucompsci | B.S. in Computer Science         | bs     |              |
                | eng         | uelec    | B.S. in Electrical Engineering   | bs     | gee          |
                | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |
-               | ns          | gmth     | Masters of Science in            | bs     | pmth         |
-               :             :          : Mathematics                      :        :              :
                | ns          | uastro   | Bachelor of Science in Astronomy | bs     |              |
                | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |
                | ns          | umth     | Bachelor of Science in           | bs     | gmth         |
@@ -24728,6 +24736,8 @@ tests:
                | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |
                | eng         | gee      | M.S. in Electrical Engineering   | ms     |              |
                | eng         | gme      | M.S. in Mechanical Engineering   | ms     |              |
+               | ns          | gmth     | Masters of Science in            | ms     | pmth         |
+               :             :          : Mathematics                      :        :              :
                | art         | gart     | Post Baccalaureate in Art        | pb     |              |
                :             :          : History                          :        :              :
                | ns          | pmth     | Doctorate of Science in          | ph     |              |
@@ -24776,8 +24786,6 @@ tests:
                | eng         | umech    | B.S. in Mechanical Engineering   | bs     | gme          |             11 |
                | ns          | uchem    | Bachelor of Science in Chemistry | bs     |              |             11 |
                | eng         | ucompsci | B.S. in Computer Science         | bs     |              |             12 |
-               | ns          | gmth     | Masters of Science in            | bs     | pmth         |             13 |
-               :             :          : Mathematics                      :        :              :                :
                | ns          | umth     | Bachelor of Science in           | bs     | gmth         |             13 |
                :             :          : Mathematics                      :        :              :                :
                | la          | psciwri  | Science Writing                  | ct     |              |              5 |
@@ -24802,6 +24810,8 @@ tests:
                | eng         | gbe      | M.S. in Bioengineering           | ms     |              |              8 |
                | eng         | gbuseng  | M.S. in Business and Engineering | ms     |              |              9 |
                | edu         | gedu     | M.S. in Education                | ms     |              |             11 |
+               | ns          | gmth     | Masters of Science in            | ms     | pmth         |             13 |
+               :             :          : Mathematics                      :        :              :                :
                | art         | gart     | Post Baccalaureate in Art        | pb     |              |             16 |
                :             :          : History                          :        :              :                :
                | ns          | pmth     | Doctorate of Science in          | ph     |              |             10 |
@@ -24846,10 +24856,10 @@ tests:
                | degree | exists(^) | count(^) |
               -+--------+-----------+----------+-
                | ba     | true      |       10 |
-               | bs     | true      |       11 |
+               | bs     | true      |       10 |
                | ct     | true      |        4 |
                | ma     | true      |        7 |
-               | ms     | true      |        5 |
+               | ms     | true      |        6 |
                | pb     | true      |        1 |
                | ph     | true      |        1 |
                                         (7 rows)
@@ -24881,7 +24891,7 @@ tests:
                | eng  |              8 |                                2 |
                | la   |              9 |                                3 |
                | mus  |              0 |                                0 |
-               | ns   |              6 |                                2 |
+               | ns   |              6 |                                3 |
                | ph   |              1 |                                0 |
                | sc   |              0 |                                0 |
                                                                    (9 rows)
@@ -24921,7 +24931,7 @@ tests:
                | eng  |              8 |                     2 |
                | la   |              9 |                     3 |
                | mus  |              0 |                     0 |
-               | ns   |              6 |                     2 |
+               | ns   |              6 |                     3 |
                | ph   |              1 |                     0 |
                | sc   |              0 |                     0 |
                                                         (9 rows)
@@ -24956,10 +24966,10 @@ tests:
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
                | ba     |       10 |              102 |
-               | bs     |       11 |              106 |
+               | bs     |       10 |               93 |
                | ct     |        4 |               37 |
                | ma     |        7 |               77 |
-               | ms     |        5 |               36 |
+               | ms     |        6 |               49 |
                | pb     |        1 |               16 |
                | ph     |        1 |               10 |
                                                (7 rows)
@@ -25226,10 +25236,10 @@ tests:
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
                | ba     |       10 |              102 |
-               | bs     |       11 |              106 |
+               | bs     |       10 |               93 |
                | ct     |        4 |               37 |
                | ma     |        7 |               77 |
-               | ms     |        5 |               36 |
+               | ms     |        6 |               49 |
                | pb     |        1 |               16 |
                | ph     |        1 |               10 |
                                                (7 rows)
@@ -25302,10 +25312,10 @@ tests:
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
                | ba     |       10 |              102 |
-               | bs     |       11 |              106 |
+               | bs     |       10 |               93 |
                | ct     |        4 |               37 |
                | ma     |        7 |               77 |
-               | ms     |        5 |               36 |
+               | ms     |        6 |               49 |
                | pb     |        1 |               16 |
                | ph     |        1 |               10 |
                                                (7 rows)
@@ -25588,7 +25598,7 @@ tests:
              | la          | gengl | Master of Arts in English      | ma     |              |
              | ns          | pmth  | Doctorate of Science in        | ph     |              |
              :             :       : Mathematics                    :        :              :
-             | ns          | gmth  | Masters of Science in          | bs     | pmth         |
+             | ns          | gmth  | Masters of Science in          | ms     | pmth         |
              :             :       : Mathematics                    :        :              :
                                                                                      (7 rows)
 
@@ -28615,7 +28625,7 @@ tests:
              | gee   | M.S. in Electrical Engineering | ms     |
              | gme   | M.S. in Mechanical Engineering | ms     |
              | gengl | Master of Arts in English      | ma     |
-             | gmth  | Masters of Science in          | bs     |
+             | gmth  | Masters of Science in          | ms     |
              :       : Mathematics                    :        :
              | pmth  | Doctorate of Science in        | ph     |
              :       : Mathematics                    :        :

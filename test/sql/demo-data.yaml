@@ -59,7 +59,7 @@
     ['ns', 'uchem', 'Bachelor of Science in Chemistry', 'bs', null],
     ['ns', 'uphys', 'Bachelor of Science in Physics', 'bs', null],
     ['ns', 'pmth', 'Doctorate of Science in Mathematics', 'ph', null],
-    ['ns', 'gmth', 'Masters of Science in Mathematics', 'bs', 'pmth'],
+    ['ns', 'gmth', 'Masters of Science in Mathematics', 'ms', 'pmth'],
     ['ns', 'umth', 'Bachelor of Science in Mathematics', 'bs', 'gmth'],
     ['la', 'upsych', 'Bachelor of Arts in Psychology', 'ba', null],
     ['la', 'upolisci', 'Bachelor of Arts in Political Science', 'ba', null],
