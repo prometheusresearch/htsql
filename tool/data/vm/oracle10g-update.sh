@@ -34,6 +34,13 @@ admin
 y
 END
 
+# Load Oracle environment variables so that we could run `sqlplus`.
+. /usr/lib/oracle/xe/app/oracle/product/10.2.0/server/bin/oracle_env.sh
+
+# Increase the number of connections.
+echo "ALTER SYSTEM SET PROCESSES=200 SCOPE=SPFILE;" | \
+sqlplus -S -L sys/admin AS SYSDBA
+
 # Set Oracle environment variables on login.
 cat <<END >>/root/.bashrc
 
