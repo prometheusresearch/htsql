@@ -975,7 +975,7 @@ class DumpTable(Dump):
                 need_schema = False
                 for schema in table.schema.catalog.schemas:
                     if (schema != table.schema and
-                            schema.priority >= table.schema_priority and
+                            schema.priority >= table.schema.priority and
                             table.name in schema.tables):
                         need_schema = True
                         break

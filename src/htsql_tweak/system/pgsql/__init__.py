@@ -12,5 +12,6 @@ class TweakSystemPGSQLAddon(Addon):
 
     name = 'tweak.system.pgsql'
     prerequisites = ['engine.pgsql']
+    hint = """implement `tweak.system` for PostgreSQL"""
 
 

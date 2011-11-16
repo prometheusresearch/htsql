@@ -4,11 +4,14 @@
 #
 
 
-from htsql_engine.pgsql.introspect import IntrospectPGSQL
-from htsql.entity import PrimaryKeyEntity, ForeignKeyEntity
+from htsql.adapter import named
+from htsql_engine.pgsql.introspect import IntrospectPGSQL, IntrospectPGSQLDomain
+from htsql_engine.pgsql.domain import PGTextDomain, PGIntegerDomain
 
 
 class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
+
+    system_schema_names = []
 
     primary_keys = {
             ('pg_catalog', 'pg_aggregate'): ['aggfnoid'],
@@ -281,40 +284,78 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
 
     }
 
-    def permit_schema(self, schema_name):
-        if schema_name == 'pg_catalog':
-            return True
-        return super(PGCatalogIntrospectPGSQL, self).permit_schema(schema_name)
-
-    def introspect_unique_keys(self, table_oid):
-        unique_keys = (super(PGCatalogIntrospectPGSQL, self)
-                        .introspect_unique_keys(table_oid))
-        rel = self.meta.pg_class[table_oid]
-        schema_name = self.meta.pg_namespace[rel.relnamespace].nspname
-        table_name = rel.relname
-        if (schema_name, table_name) in self.primary_keys:
+    def __call__(self):
+        catalog = super(PGCatalogIntrospectPGSQL, self).__call__()
+        for schema_name, table_name in sorted(self.primary_keys):
             column_names = self.primary_keys[schema_name, table_name]
-            unique_key = PrimaryKeyEntity(schema_name, table_name,
-                                          column_names)
-            unique_keys.append(unique_key)
-        return unique_keys
+            schema_name = unicode(schema_name)
+            table_name = unicode(table_name)
+            column_names = map(unicode, column_names)
+            if schema_name not in catalog.schemas:
+                continue
+            schema = catalog.schemas[schema_name]
+            if table_name not in schema.tables:
+                continue
+            table = schema.tables[table_name]
+            if any(column_name not in table.columns
+                   for column_name in column_names):
+                continue
+            columns = [table.columns[column_name]
+                       for column_name in column_names]
+            if table.primary_key is not None:
+                table.primary_key.set_is_primary(False)
+            for column in columns:
+                column.set_is_nullable(False)
+            table.add_primary_key(columns)
+        for origin_schema_name, origin_table_name in sorted(self.foreign_keys):
+            keys = self.foreign_keys[origin_schema_name, origin_table_name]
+            origin_schema_name = unicode(origin_schema_name)
+            origin_table_name = unicode(origin_table_name)
+            if origin_schema_name not in catalog.schemas:
+                continue
+            origin_schema = catalog.schemas[schema_name]
+            if origin_table_name not in origin_schema.tables:
+                continue
+            origin = origin_schema.tables[origin_table_name]
+            for (origin_column_names, (target_schema_name, target_table_name),
+                    target_column_names) in keys:
+                origin_column_names = map(unicode, origin_column_names)
+                target_schema_name = unicode(target_schema_name)
+                target_table_name = unicode(target_table_name)
+                target_column_names = map(unicode, target_column_names)
+                if any(column_name not in origin.columns
+                       for column_name in origin_column_names):
+                    continue
+                origin_columns = [origin.columns[column_name]
+                                  for column_name in origin_column_names]
+                if target_schema_name not in catalog.schemas:
+                    continue
+                target_schema = catalog.schemas[schema_name]
+                if target_table_name not in target_schema.tables:
+                    continue
+                target = target_schema.tables[target_table_name]
+                if any(column_name not in target.columns
+                       for column_name in target_column_names):
+                    continue
+                target_columns = [target.columns[column_name]
+                                  for column_name in target_column_names]
+                origin.add_foreign_key(origin_columns, target, target_columns)
+        return catalog
 
-    def introspect_foreign_keys(self, table_oid):
-        foreign_keys = (super(PGCatalogIntrospectPGSQL, self)
-                        .introspect_foreign_keys(table_oid))
-        rel = self.meta.pg_class[table_oid]
-        schema_name = self.meta.pg_namespace[rel.relnamespace].nspname
-        table_name = rel.relname
-        if (schema_name, table_name) in self.foreign_keys:
-            for key in self.foreign_keys[schema_name, table_name]:
-                column_names, target_name, target_column_names = key
-                target_schema_name, target_table_name = target_name
-                foreign_key = ForeignKeyEntity(schema_name, table_name,
-                                               column_names,
-                                               target_schema_name,
-                                               target_table_name,
-                                               target_column_names)
-                foreign_keys.append(foreign_key)
-        return foreign_keys
+
+class IntrospectPGSQLOIDDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'oid'))
+
+    def __call__(self):
+        return PGIntegerDomain(self.schema_name, self.name)
+
+
+class IntrospectPGSQLNameDomain(IntrospectPGSQLDomain):
+
+    named(('pg_catalog', 'name'))
+
+    def __call__(self):
+        return PGTextDomain(self.schema_name, self.name)
 
 

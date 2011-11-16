@@ -29215,3 +29215,46 @@ tests:
 
             </html>
 
+      - id: tweak.system
+        tests:
+        - ctl: [ext, tweak.system]
+          stdout: |+
+            TWEAK.SYSTEM - add access to system tables
+
+            This addon adds access to system catalog tables.
+
+            Currently, only PostgreSQL backend is supported.
+
+          exit: 0
+        - uri: /pg_class{relname, relkind}?pg_namespace.nspname='ad'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | pg_class                     |
+             +------------------------------+
+             | relname            | relkind |
+            -+--------------------+---------+-
+             | school             | r       |
+             | school_pk          | i       |
+             | school_name_uk     | i       |
+             | department         | r       |
+             | department_pk      | i       |
+             | department_name_uk | i       |
+             | program            | r       |
+             | program_pk         | i       |
+             | program_title_uk   | i       |
+             | course             | r       |
+             | course_pk          | i       |
+             | course_title_uk    | i       |
+                                    (12 rows)
+
+             ----
+             /pg_class{relname,relkind}?pg_namespace.nspname='ad'
+             SELECT "pg_class"."relname",
+                    "pg_class"."relkind"
+             FROM "pg_class"
+                  INNER JOIN "pg_namespace"
+                             ON ("pg_class"."relnamespace" = "pg_namespace"."oid")
+             WHERE ("pg_namespace"."nspname" = 'ad')
+             ORDER BY "pg_class"."oid" ASC

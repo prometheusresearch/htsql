@@ -19,7 +19,7 @@ CREATE TABLE school (
     campus              VARCHAR(5),
     CONSTRAINT school_pk
       PRIMARY KEY (code),
-    CONSTRAINT name_uk
+    CONSTRAINT school_name_uk
       UNIQUE (name),
     CONSTRAINT school_campus_ck
       CHECK (campus IN ('old', 'north', 'south'))

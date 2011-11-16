@@ -369,4 +369,17 @@ tests:
     headers:
       Accept: text/html
 
+# TWEAK.SYSTEM - add access to system tables
+- title: tweak.system
+  ifdef: pgsql
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.system]
+
+  # Test for added links
+  - load: demo
+    extensions:
+      tweak.system: {}
+  - uri: /pg_class{relname, relkind}?pg_namespace.nspname='ad'
+
 
