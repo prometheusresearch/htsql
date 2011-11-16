@@ -33,8 +33,8 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       LiteralBinding,
                       Recipe, FreeTableRecipe, AttachedTableRecipe,
                       ColumnRecipe, KernelRecipe, ComplementRecipe,
-                      SubstitutionRecipe, SyntaxRecipe, BindingRecipe,
-                      ClosedRecipe, PinnedRecipe, AmbiguousRecipe)
+                      SubstitutionRecipe, BindingRecipe, ClosedRecipe,
+                      PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
                      expand, direct, guess_name, lookup_command)
 from .coerce import coerce
@@ -982,19 +982,6 @@ class BindBySubstitution(BindByRecipe):
                                           recipe, scope.syntax)
         # Bind the syntax node associated with the recipe.
         binding = self.state.bind(self.recipe.body, scope=scope)
-        # Hide all referenced defined there.
-        binding = ReferenceRerouteBinding(binding, self.state.scope,
-                                          binding.syntax)
-        return binding
-
-
-class BindBySyntax(BindByRecipe):
-
-    adapts(SyntaxRecipe)
-
-    def __call__(self):
-        # Bind the syntax node associated with the recipe.
-        binding = self.state.bind(self.recipe.body)
         # Hide all referenced defined there.
         binding = ReferenceRerouteBinding(binding, self.state.scope,
                                           binding.syntax)

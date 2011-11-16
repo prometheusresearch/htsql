@@ -27,7 +27,7 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       TitleBinding, AliasBinding, CommandBinding,
                       FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                       ComplementRecipe, KernelRecipe, BindingRecipe,
-                      SyntaxRecipe, ClosedRecipe, InvalidRecipe,
+                      SubstitutionRecipe, ClosedRecipe, InvalidRecipe,
                       AmbiguousRecipe)
 
 
@@ -195,9 +195,11 @@ class Prescribe(Adapter):
 
     adapts(Arc)
 
-    def __init__(self, arc):
+    def __init__(self, arc, binding):
         assert isinstance(arc, Arc)
+        assert isinstance(binding, Binding)
         self.arc = arc
+        self.binding = binding
 
     def __call__(self):
         return InvalidRecipe()
@@ -216,7 +218,8 @@ class PrescribeColumn(Prescribe):
     adapts(ColumnArc)
 
     def __call__(self):
-        link = (prescribe(self.arc.link) if self.arc.link is not None else None)
+        link = (prescribe(self.arc.link, self.binding)
+                if self.arc.link is not None else None)
         return ColumnRecipe(self.arc.column, link)
 
 
@@ -233,7 +236,8 @@ class PrescribeSyntax(Prescribe):
     adapts(SyntaxArc)
 
     def __call__(self):
-        return ClosedRecipe(SyntaxRecipe(self.arc.syntax))
+        recipe = SubstitutionRecipe(self.binding, [], None, self.arc.syntax)
+        return ClosedRecipe(recipe)
 
 
 class PrescribeAmbiguous(Prescribe):
@@ -390,7 +394,7 @@ class LookupAttributeInHome(Lookup):
         if self.probe.key not in label_by_name:
             return None
         label = label_by_name[self.probe.key]
-        recipe = prescribe(label.arc)
+        recipe = prescribe(label.arc, self.binding)
         return recipe
 
 
@@ -409,7 +413,7 @@ class ExpandHome(Lookup):
                 if not label.is_public:
                     continue
                 identifier = IdentifierSyntax(label.name, self.binding.mark)
-                recipe = prescribe(label.arc)
+                recipe = prescribe(label.arc, self.binding)
                 recipes.append((identifier, recipe))
             return recipes
         # Otherwise, fail to expand.
@@ -445,7 +449,7 @@ class LookupAttributeInTable(Lookup):
         if self.probe.key not in label_by_name:
             return None
         label = label_by_name[self.probe.key]
-        recipe = prescribe(label.arc)
+        recipe = prescribe(label.arc, self.binding)
         return recipe
 
 
@@ -467,7 +471,7 @@ class ExpandTable(Lookup):
                 continue
             # Create a "virtual" syntax node for each column
             identifier = IdentifierSyntax(label.name, self.binding.mark)
-            recipe = prescribe(label.arc)
+            recipe = prescribe(label.arc, self.binding)
             yield (identifier, recipe)
 
 
@@ -805,8 +809,8 @@ class GuessTitleFromAlias(Lookup):
         return [str(self.binding.syntax)]
 
 
-def prescribe(arc):
-    prescribe = Prescribe(arc)
+def prescribe(arc, binding):
+    prescribe = Prescribe(arc, binding)
     return prescribe()
 
 

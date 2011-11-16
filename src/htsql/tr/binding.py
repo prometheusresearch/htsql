@@ -820,17 +820,6 @@ class SubstitutionRecipe(Recipe):
         return "".join(chunks)
 
 
-class SyntaxRecipe(Recipe):
-
-    def __init__(self, body):
-        assert isinstance(body, Syntax)
-        super(SyntaxRecipe, self).__init__(equality_vector=(body,))
-        self.body = body
-
-    def __str__(self):
-        return str(self.body)
-
-
 class BindingRecipe(Recipe):
     """
     Generates the given node.
