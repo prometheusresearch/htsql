@@ -10,9 +10,8 @@ from htsql_engine.pgsql.connect import ConnectPGSQL
 
 class TimeoutConnectPGSQL(ConnectPGSQL):
 
-    def open_connection(self, with_autocommit=False):
-        connection = super(TimeoutConnectPGSQL, self).open_connection(
-                                    with_autocommit=with_autocommit)
+    def open(self):
+        connection = super(TimeoutConnectPGSQL, self).open()
         timeout = context.app.tweak.timeout.timeout
         if timeout is not None:
             cursor = connection.cursor()

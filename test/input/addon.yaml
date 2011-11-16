@@ -382,4 +382,20 @@ tests:
       tweak.system: {}
   - uri: /pg_class{relname, relkind}?pg_namespace.nspname='ad'
 
+# TWEAK.TIMEOUT - limit query execution time
+- title: tweak.system
+  ifdef: pgsql
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.timeout]
+
+  # Test canceling of a query
+  - load: demo
+    extensions:
+      tweak.timeout:
+        timeout: 3
+  - uri: /count(enrollment.fork().fork())
+    expect: 409
+    ignore: true
+
 

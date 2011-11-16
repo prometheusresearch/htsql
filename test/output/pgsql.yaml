@@ -29258,3 +29258,29 @@ tests:
                              ON ("pg_class"."relnamespace" = "pg_namespace"."oid")
              WHERE ("pg_namespace"."nspname" = 'ad')
              ORDER BY "pg_class"."oid" ASC
+      - id: tweak.system
+        tests:
+        - ctl: [ext, tweak.timeout]
+          stdout: |+
+            TWEAK.TIMEOUT - limit query execution time
+
+            This addon limits all queries to a given amount of time.
+            Use it to ensure against accidental denial of service caused
+            by complex queries.
+
+            Parameter `timeout` sets the timeout value (the default is 60
+            seconds).
+
+            Currently, only PostgreSQL backend is supported.
+
+            Parameters:
+              timeout=SEC              : query timeout, in sec (default: 60)
+
+          exit: 0
+        - uri: /count(enrollment.fork().fork())
+          status: 409 Conflict
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |+
+            engine failure: failed to execute a database query: canceling statement due to statement timeout
+

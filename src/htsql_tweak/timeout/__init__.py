@@ -5,7 +5,7 @@
 
 
 from htsql.validator import PIntVal
-from htsql.addon import Addon, Parameter
+from htsql.addon import Addon, Parameter, addon_registry
 
 
 class TweakTimeoutAddon(Addon):
@@ -13,19 +13,29 @@ class TweakTimeoutAddon(Addon):
     name = 'tweak.timeout'
     hint = """limit query execution time"""
     help = """
-      To help deployments ensure against accidental denial of
-      service, this plugin automatically limits all queries to
-      a given number of seconds (the default is 60s).  This 
-      plugin is currently only supported by PostgreSQL.
+    This addon limits all queries to a given amount of time.
+    Use it to ensure against accidental denial of service caused
+    by complex queries.
+
+    Parameter `timeout` sets the timeout value (the default is 60
+    seconds).
+
+    Currently, only PostgreSQL backend is supported.
     """
 
     parameters = [
-            Parameter('timeout', PIntVal(is_nullable=True),
-                      default=60),
+            Parameter('timeout', PIntVal(is_nullable=True), default=60,
+                      value_name="SEC",
+                      hint="""query timeout, in sec (default: 60)"""),
     ]
 
     @classmethod
     def get_extension(cls, app, attributes):
-        return 'tweak.timeout.%s' % app.htsql.db.engine
+        if app.htsql.db is not None:
+            name = '%s.%s' % (cls.name, app.htsql.db.engine)
+            if name not in addon_registry:
+                raise ImportError("%s is not implemented for %s"
+                                  % (cls.name, app.htsql.db.engine))
+            return name
 
 
