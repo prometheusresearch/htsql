@@ -9,7 +9,7 @@ from .context import context
 from .cache import once
 from .adapter import Adapter, adapts
 from .model import (Node, Arc, Label, HomeNode, TableNode, TableArc, ChainArc,
-                    ColumnArc, AmbiguousArc)
+                    ColumnArc, SyntaxArc, AmbiguousArc)
 from .entity import DirectJoin, ReverseJoin
 from .introspect import introspect
 import re
@@ -45,13 +45,8 @@ class Classify(Adapter):
     def __call__(self):
         arcs = self.trace(self.node)
         bids_by_arc = {}
-        order_by_arc = {}
         for arc in arcs:
             bids_by_arc[arc] = self.call(arc)
-            order_by_arc[arc] = self.order(arc)
-
-        arcs.sort(key=(lambda arc: (order_by_arc[arc] is None,
-                                    order_by_arc[arc])))
 
         names_by_weight = {}
         arcs_by_bid = {}
@@ -87,8 +82,7 @@ class Classify(Adapter):
             if arc not in name_by_arc:
                 continue
             name = name_by_arc[arc]
-            is_public = (order_by_arc[arc] is not None)
-            label = Label(name, arc, is_public)
+            label = Label(name, arc, False)
             labels.append(label)
         for name in sorted(rejections_by_name):
             alternatives = []
@@ -101,6 +95,8 @@ class Classify(Adapter):
             arc = AmbiguousArc(alternatives)
             label = Label(name, arc, False)
             labels.append(label)
+
+        labels = self.order(labels)
 
         return labels
 
@@ -127,8 +123,8 @@ class Classify(Adapter):
             duplicates.add((name, weight))
         return bids
 
-    def order(self, arc):
-        order = Order(arc)
+    def order(self, labels):
+        order = Order(self.node, labels)
         return order()
 
 
@@ -275,23 +271,36 @@ class CallChain(Call):
             yield name, 1
 
 
+class CallSyntax(Call):
+
+    adapts(SyntaxArc)
+
+
 class Order(Adapter):
 
-    adapts(Arc)
+    adapts(Node)
 
-    def __init__(self, arc):
-        self.arc = arc
-
-    def __call__(self):
-        return None
-
-
-class OrderColumn(Order):
-
-    adapts(ColumnArc)
+    def __init__(self, node, labels):
+        self.node = node
+        self.labels = labels
 
     def __call__(self):
-        return 1
+        return self.labels
+
+
+class OrderHome(Order):
+
+    adapts(HomeNode)
+
+
+class OrderTable(Order):
+
+    adapts(TableNode)
+
+    def __call__(self):
+        return [label.clone(is_public=(label.is_public or
+                                       isinstance(label.arc, ColumnArc)))
+                for label in self.labels]
 
 
 @once

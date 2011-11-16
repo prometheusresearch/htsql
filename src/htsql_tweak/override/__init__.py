@@ -11,7 +11,7 @@ from htsql.introspect import introspect
 from htsql.classify import classify
 from .pattern import (SchemaPatternVal, TablePatternVal, ColumnPatternVal,
                       UniqueKeyPatternVal, ForeignKeyPatternVal,
-                      NodePatternVal, ArcPatternVal, LabelVal)
+                      ClassPatternVal, FieldPatternVal, LabelVal, QLabelVal)
 from .introspect import UnusedPatternCache
 
 
@@ -38,9 +38,16 @@ class TweakOverrideAddon(Addon):
                       default=[]),
             Parameter('foreign_keys', SeqVal(ForeignKeyPatternVal()),
                       default=[]),
-            Parameter('labels', MapVal(NodePatternVal(),
-                                       MapVal(LabelVal(), ArcPatternVal())),
-                      default={}),  
+            Parameter('class_labels', MapVal(LabelVal(), ClassPatternVal()),
+                      default={}),
+            Parameter('field_labels', MapVal(QLabelVal(), FieldPatternVal()),
+                      default={}),
+            Parameter('field_orders', MapVal(LabelVal(), SeqVal(LabelVal())),
+                      default={}),
+            Parameter('unlabeled_tables', SeqVal(TablePatternVal()),
+                      default=[]),
+            Parameter('unlabeled_columns', SeqVal(ColumnPatternVal()),
+                      default=[]),
     ]
 
     def __init__(self, app, attributes):

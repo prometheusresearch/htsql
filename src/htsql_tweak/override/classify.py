@@ -5,73 +5,190 @@
 
 
 from htsql.context import context
-from htsql.adapter import adapts_none, adapts
+from htsql.cache import once
+from htsql.introspect import introspect
 from htsql.model import (HomeNode, TableNode, TableArc, ColumnArc, ChainArc,
                          SyntaxArc)
-from htsql.classify import (Trace, TraceHome, TraceTable,
-                            Call, CallTable, CallColumn, CallChain)
+from htsql.classify import (classify, Trace, TraceHome, TraceTable,
+                            Call, CallTable, CallColumn, CallChain, CallSyntax,
+                            OrderTable)
 
 
-class OverrideTrace(Trace):
+class ClassCache(object):
 
-    adapts_none()
+    def __init__(self):
+        self.names_by_arc = {}
+        self.arc_by_name = {}
+        addon = context.app.tweak.override
+        catalog = introspect()
+        node = HomeNode()
+        for name in sorted(addon.class_labels):
+            pattern = addon.class_labels[name]
+            arc = pattern.extract(node)
+            if arc is None:
+                addon.unused_pattern_cache.add(pattern)
+                continue
+            self.names_by_arc.setdefault(arc, []).append(name)
+            self.arc_by_name[name] = arc
+
+
+class FieldCache(object):
+
+    def __init__(self):
+        self.names_by_arc_by_node = {}
+        self.arc_by_name_by_node = {}
+        self.node_by_name = {}
+        self.name_by_node = {}
+        addon = context.app.tweak.override
+        for label in classify(HomeNode()):
+            self.node_by_name[label.name] = label.target
+            self.name_by_node[label.target] = label.name
+        for class_name, field_name in sorted(addon.field_labels):
+            pattern = addon.field_labels[class_name, field_name]
+            if class_name not in self.node_by_name:
+                addon.unused_pattern_cache.add(pattern)
+                continue
+            node = self.node_by_name[class_name]
+            arc = pattern.extract(node)
+            if arc is None:
+                addon.unused_pattern_cache.add(pattern)
+                continue
+            self.names_by_arc_by_node.setdefault(node, {})
+            self.names_by_arc_by_node[node].setdefault(arc, [])
+            self.names_by_arc_by_node[node][arc].append(field_name)
+            self.arc_by_name_by_node.setdefault(node, {})
+            self.arc_by_name_by_node[node][field_name] = arc
+
+
+@once
+def class_cache():
+    return ClassCache()
+
+
+@once
+def field_cache():
+    return FieldCache()
+
+
+class OverrideTraceHome(TraceHome):
 
     def __call__(self):
         addon = context.app.tweak.override
-        for arc in super(OverrideTrace, self).__call__():
+        cache = class_cache()
+        arcs = []
+        arcs.extend(super(OverrideTraceHome, self).__call__())
+        for name in sorted(cache.arc_by_name):
+            arc = cache.arc_by_name[name]
+            arcs.append(arc)
+        for arc in arcs:
+            if isinstance(arc, TableArc):
+                if any(pattern.matches(arc.table)
+                       for pattern in addon.unlabeled_tables):
+                    continue
             yield arc
-        for pattern in sorted(addon.labels, key=(lambda node: str(node))):
-            if pattern.matches(self.node):
-                for name in sorted(addon.labels[pattern]):
-                    arc_pattern = addon.labels[pattern][name]
-                    arc = arc_pattern.extract(self.node)
-                    if arc is not None:
-                        yield arc
 
 
-class OverrideTraceHome(OverrideTrace, TraceHome):
-
-    adapts(HomeNode)
-
-
-class OverrideTraceTable(OverrideTrace, TraceTable):
-
-    adapts(TableNode)
-
-
-class OverrideCall(Call):
-
-    adapts_none()
+class OverrideTraceTable(TraceTable):
 
     def __call__(self):
         addon = context.app.tweak.override
-        for name, weight in super(OverrideCall, self).__call__():
+        cache = field_cache()
+        arcs = []
+        arcs.extend(super(OverrideTraceTable, self).__call__())
+        arc_by_name = cache.arc_by_name_by_node.get(self.node, {})
+        for name in sorted(arc_by_name):
+            arc = arc_by_name[name]
+            arcs.append(arc)
+        for arc in arcs:
+            if isinstance(arc, ColumnArc):
+                if any(pattern.matches(arc.column)
+                       for pattern in addon.unlabeled_columns):
+                    continue
+            if isinstance(arc, ChainArc):
+                if any(pattern.matches(arc.target.table)
+                       for pattern in addon.unlabeled_tables):
+                    continue
+            yield arc
+
+
+class OverrideCallTable(CallTable):
+
+    def __call__(self):
+        cache = class_cache()
+        names = cache.names_by_arc.get(self.arc)
+        if names is not None:
+            for name in cache.names_by_arc[self.arc]:
+                yield name, 20
+            return
+        for name, weight in super(OverrideCallTable, self).__call__():
             yield name, weight
-        for pattern in sorted(addon.labels, key=(lambda node: str(node))):
-            if pattern.matches(self.arc.origin):
-                for name in sorted(addon.labels[pattern]):
-                    arc_pattern = addon.labels[pattern][name]
-                    if arc_pattern.matches(self.arc):
-                        yield name, 20
 
 
-class OverrideCallTable(OverrideCall, CallTable):
+class OverrideCallColumn(CallColumn):
 
-    adapts(TableArc)
+    def __call__(self):
+        cache = field_cache()
+        names_by_arc = cache.names_by_arc_by_node.get(self.arc.origin, {})
+        names = names_by_arc.get(self.arc)
+        if names is not None:
+            for name in names:
+                yield name, 20
+            return
+        for name, weight in super(OverrideCallColumn, self).__call__():
+            yield name, weight
 
 
-class OverrideCallColumn(OverrideCall, CallColumn):
+class OverrideCallChain(CallChain):
 
-    adapts(ColumnArc)
+    def __call__(self):
+        cache = field_cache()
+        names_by_arc = cache.names_by_arc_by_node.get(self.arc.origin, {})
+        names = names_by_arc.get(self.arc)
+        if names is not None:
+            for name in names:
+                yield name, 20
+            return
+        for name, weight in super(OverrideCallChain, self).__call__():
+            yield name, weight
 
 
-class OverrideCallChain(OverrideCall, CallChain):
+class OverrideCallSyntax(CallSyntax):
 
-    adapts(ChainArc)
+    def __call__(self):
+        if isinstance(self.arc.origin, HomeNode):
+            cache = class_cache()
+            names = cache.names_by_arc.get(self.arc)
+            if names is not None:
+                for name in cache.names_by_arc[self.arc]:
+                    yield name, 20
+                return
+        elif isinstance(self.arc.origin, TableNode):
+            cache = field_cache()
+            names_by_arc = cache.names_by_arc_by_node.get(self.arc.origin, {})
+            names = names_by_arc.get(self.arc)
+            if names is not None:
+                for name in names:
+                    yield name, 20
+                return
+        for name, weight in super(OverrideCallSyntax, self).__call__():
+            yield name, weight
 
 
-class OverrideCallSyntax(OverrideCall):
+class OverrideOrderTable(OrderTable):
 
-    adapts(SyntaxArc)
+    def __call__(self):
+        addon = context.app.tweak.override
+        cache = field_cache()
+        class_name = cache.name_by_node.get(self.node)
+        if class_name not in addon.field_orders:
+            return super(OverrideOrderTable, self).__call__()
+        orders = {}
+        for idx, name in enumerate(addon.field_orders[class_name]):
+            orders[name] = idx
+        labels = [label.clone(is_public=(label.name in orders))
+                  for label in self.labels]
+        labels.sort(key=(lambda label: (label.name not in orders,
+                                        orders.get(label.name, 0))))
+        return labels
 
 
