@@ -199,4 +199,127 @@ tests:
       tweak.meta: {}
   - uri: /meta(/column.sort(table.name, field.sort))
 
+# TWEAK.OVERRIDE - adjust database metadata
+- title: tweak.override
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.override]
+
+  # Test `included-tables`
+  - load: demo
+    extensions:
+      tweak.override:
+        included-tables: [school, program]
+  - uri: /avg(school.count(program))
+  - uri: /avg(school.count(department))
+    expect: 400
+
+  # Test `excluded-tables`
+  - load: demo
+    extensions:
+      tweak.override:
+        excluded-tables: [department, course]
+  - uri: /avg(school.count(program))
+  - uri: /avg(school.count(department))
+    expect: 400
+
+  # Test `included-tables` and `excluded-tables` together
+  - load: demo
+    extensions:
+      tweak.override:
+        included-tables: [school, program, department, course]
+        excluded-tables: [department, course]
+  - uri: /avg(school.count(program))
+  - uri: /avg(school.count(department))
+    expect: 400
+
+  # Test schema qualifiers
+  - load: demo
+    extensions:
+      tweak.override:
+        included-tables: [ad.*]
+    ifdef: [pgsql, mssql]
+  - uri: /count(program)
+    ifdef: [pgsql, mssql]
+  - uri: /count(student)
+    expect: 400
+    ifdef: [pgsql, mssql]
+
+  # Test `included-columns`
+  - load: demo
+    extensions:
+      tweak.override:
+        included-columns: ["*code", "*name"]
+  - uri: /school{code, count(department)}
+  - uri: /student{name, count(enrollment)}
+    expect: 400
+
+  # Test `excluded-columns`
+  - load: demo
+    extensions:
+      tweak.override:
+        excluded-columns: [confidential.ssn]
+  - uri: /max(confidential.pay_grade)
+  - uri: /confidential.ssn
+    expect: 400
+
+  # Test `not-nulls`, `unique-keys` and `foreign-keys`
+  - load: demo
+    extensions:
+      tweak.override:
+        not-nulls: [student.school_code, student.program_code]
+        unique-keys:
+          - student(name, dob)!
+        foreign-keys:
+          - student(school_code) -> school
+          - student(name)? -> instructor(full_name)
+  - uri: /student{name, dob, school.code, program.code, exists(instructor)}.limit(1)
+
+  # Test `class-labels`
+  - load: demo
+    extensions:
+      tweak.override:
+        class-labels:
+          c14n: classification
+          campus: (school^campus)
+  - uri: /count(c14n)
+  - uri: /campus{campus, count(school)}
+  - uri: /classification
+    expect: 400
+
+  # Test `field-labels` and `field-orders`
+  - load: demo
+    extensions:
+      tweak.override:
+        field-labels:
+          program.includes: program -> program(*, part_of_code)
+          student.full_name: name
+          student.class: student -> enrollment, enrollment -> class
+          student.avg_grade: (avg(enrollment.grade))
+        field-orders:
+          student: [full_name, gender, dob, avg_grade]
+          program: [code, title, degree]
+  - uri: /program?exists(includes)
+  - uri: /program?exists(program_via_part_of)
+    expect: 400
+  - uri: /student?count(class)>55
+  - uri: /student.name
+    expect: 400
+
+  # Test `unlabeled_tables` and `unlabeled_columns`
+  - load: demo
+    extensions:
+      tweak.override:
+        field-labels:
+          student.class: student -> enrollment, enrollment -> class
+        unlabeled-tables: [enrollment]
+        unlabeled-columns: [id]
+  - uri: /student{name}?count(class)>55
+  - uri: /enrollment
+    expect: 400
+  - uri: /student.enrollment
+    expect: 400
+  - uri: /student.id
+    expect: 400
+
 

@@ -173,7 +173,7 @@ class ForeignKeyPattern(Pattern):
         if isinstance(entity, SchemaEntity):
             return matches(entity, self.schema_pattern)
         return (matches(entity.schema, self.schema_pattern) and
-                matches(entity.name, self.table_pattern))
+                matches(entity, self.table_pattern))
 
     def matches_target(self, entity):
         assert isinstance(entity, (SchemaEntity, TableEntity))
@@ -205,7 +205,7 @@ class ForeignKeyPattern(Pattern):
             columns = []
             for pattern in self.target_column_patterns:
                 matching = [column for column in table.columns
-                                   if matches(column.name, pattern)]
+                                   if matches(column, pattern)]
                 if len(matching) != 1:
                     return
                 [column] = matching
@@ -213,8 +213,8 @@ class ForeignKeyPattern(Pattern):
                     return
                 columns.append(column)
         else:
-            if self.table.primary_key:
-                columns = self.table.primary_key.origin_columns
+            if table.primary_key:
+                columns = table.primary_key.origin_columns
                 if len(columns) != len(self.column_patterns):
                     return
         return columns
