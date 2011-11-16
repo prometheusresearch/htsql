@@ -31,9 +31,9 @@ class OverrideIntrospect(Introspect):
         catalog = super(OverrideIntrospect, self).__call__()
         unused = set()
 
-        if addon.include_tables or addon.exclude_tables:
-            include = addon.include_tables
-            exclude = addon.exclude_tables
+        if addon.included_tables or addon.excluded_tables:
+            include = addon.included_tables
+            exclude = addon.excluded_tables
             unused.update(include)
             unused.update(exclude)
             for schema in catalog.schemas:
@@ -54,9 +54,9 @@ class OverrideIntrospect(Introspect):
                     unused.difference_update(include_matches)
                     unused.difference_update(exclude_matches)
 
-        if addon.include_columns or addon.exclude_columns:
-            include = addon.include_columns
-            exclude = addon.exclude_columns
+        if addon.included_columns or addon.excluded_columns:
+            include = addon.included_columns
+            exclude = addon.excluded_columns
             unused.update(include)
             unused.update(exclude)
             for schema in catalog.schemas:
@@ -195,8 +195,8 @@ class OverrideIntrospect(Introspect):
                                    if pattern.matches(column)]
                         unused.difference_update(matches)
 
-        for pattern in (addon.include_tables + addon.exclude_tables +
-                        addon.include_columns + addon.exclude_columns +
+        for pattern in (addon.included_tables + addon.excluded_tables +
+                        addon.included_columns + addon.excluded_columns +
                         addon.not_nulls + addon.unique_keys +
                         addon.foreign_keys +
                         addon.unlabeled_tables + addon.unlabeled_columns):
