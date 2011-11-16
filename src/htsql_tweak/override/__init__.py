@@ -9,7 +9,7 @@ from htsql.addon import Addon, Parameter
 from htsql.validator import SeqVal, MapVal
 from htsql.introspect import introspect
 from htsql.classify import classify
-from .pattern import (SchemaPatternVal, TablePatternVal, ColumnPatternVal,
+from .pattern import (TablePatternVal, ColumnPatternVal,
                       UniqueKeyPatternVal, ForeignKeyPatternVal,
                       ClassPatternVal, FieldPatternVal, LabelVal, QLabelVal)
 from .introspect import UnusedPatternCache
@@ -20,10 +20,6 @@ class TweakOverrideAddon(Addon):
     name = 'tweak.override'
 
     parameters = [
-            Parameter('include_schemas', SeqVal(SchemaPatternVal()),
-                      default=[]),
-            Parameter('exclude_schemas', SeqVal(SchemaPatternVal()),
-                      default=[]),
             Parameter('include_tables', SeqVal(TablePatternVal()),
                       default=[]),
             Parameter('exclude_tables', SeqVal(TablePatternVal()),

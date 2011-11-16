@@ -40,20 +40,6 @@ class Pattern(Printable):
         return unicode(self).encode('utf-8')
 
 
-class SchemaPattern(Pattern):
-
-    def __init__(self, schema_pattern):
-        assert isinstance(schema_pattern, unicode)
-        self.schema_pattern = schema_pattern
-
-    def matches(self, entity):
-        assert isinstance(entity, SchemaEntity)
-        return matches(entity, self.schema_pattern)
-
-    def __unicode__(self):
-        return self.schema_pattern
-
-
 class TablePattern(Pattern):
 
     def __init__(self, schema_pattern, table_pattern):
@@ -447,32 +433,6 @@ class SyntaxArcPattern(ArcPattern):
 
     def __str__(self):
         return unicode(self.syntax)
-
-
-class SchemaPatternVal(Validator):
-
-    pattern = r"""
-        ^
-        (?P<schema> [\w*?]+ )
-        $
-    """
-    regexp = re.compile(pattern, re.X|re.U)
-
-    def __call__(self, value):
-        if value is None:
-            return ValueError("the null value is not permitted")
-        if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
-            match = self.regexp.match(value)
-            if match is None:
-                raise ValueError("expected schema pattern, got %r"
-                                 % value.encode('utf-8'))
-            schema_pattern = match.group('schema').lower()
-            value = SchemaPattern(schema_pattern)
-        if not isinstance(value, SchemaPattern):
-            raise ValueError("expected schema pattern, got %r" % value)
-        return value
 
 
 class TablePatternVal(Validator):
