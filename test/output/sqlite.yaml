@@ -28630,3 +28630,40 @@ tests:
             bind error: unknown attribute 'id':
                 /student.id
                          ^^
+      - id: tweak.resource
+        tests:
+        - ctl: [ext, tweak.resource]
+          stdout: |+
+            TWEAK.RESOURCE - serve static files
+
+            This addon adds a mechanism for serving static files via HTTP.
+            This mechanism is used by other addons to provide access to static
+            resources such as Javascript and CSS files.
+
+            Normally, static files are served under HTTP prefix `/-/`.  Use
+            parameter `indicator` to change the prefix.
+
+            Parameters:
+              indicator=STR            : location for static files (default: `-`)
+
+          exit: 0
+        - uri: /-/not-found
+          status: 404 Not Found
+          headers:
+          - [Content-Type, text/plain]
+          body: |
+            Resourse does not exist: '/not-found'.
+        - uri: /-/not-found
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: expected NAME; got SYMBOL u'/':
+                /-/not-found
+                  ^
+        - uri: /;)/not-found
+          status: 404 Not Found
+          headers:
+          - [Content-Type, text/plain]
+          body: |
+            Resourse does not exist: '/not-found'.

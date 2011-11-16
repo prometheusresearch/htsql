@@ -322,4 +322,27 @@ tests:
   - uri: /student.id
     expect: 400
 
+# TWEAK.RESOURCE - serve static files
+- title: tweak.resource
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.resource]
+
+  # We can only test for `Not Found` error
+  - load: demo
+    extensions:
+      tweak.resource: {}
+  - uri: /-/not-found
+    expect: 404
+
+  # Non-standard prefix
+  - load: demo
+    extensions:
+      tweak.resource:
+        indicator: ;)
+  - uri: /-/not-found
+    expect: 400
+  - uri: /;)/not-found
+    expect: 404
+
 

@@ -13,15 +13,20 @@ import threading
 class TweakResourceAddon(Addon):
 
     name = 'tweak.resource'
-    hint = """static resource support"""
+    hint = """serve static files"""
     help = """
-      This plugin creates a mechanism for other plugins, such as
-      the ``tweak.shell`` to provide access to static resources
-      such as Javascript and CSS files. 
+    This addon adds a mechanism for serving static files via HTTP.
+    This mechanism is used by other addons to provide access to static
+    resources such as Javascript and CSS files.
+
+    Normally, static files are served under HTTP prefix `/-/`.  Use
+    parameter `indicator` to change the prefix.
     """
 
     parameters = [
-            Parameter('indicator', StrVal(r'^[^/]+$'), default='-'),
+            Parameter('indicator', StrVal(r'^[^/]+$'), default='-',
+                      value_name="STR",
+                      hint="""location for static files (default: `-`)"""),
     ]
 
     def __init__(self, app, attributes):
