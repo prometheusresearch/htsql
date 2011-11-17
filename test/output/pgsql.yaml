@@ -27226,6 +27226,61 @@ tests:
                     "school"."campus"
              FROM "ad"."school"
              ORDER BY 1 ASC
+      - py: has-django
+        stdout: ''
+      - id: tweak.django
+        tests:
+        - py: add-module-path
+          stdout: ''
+        - uri: /polls_poll{question, pub_date, count(polls_choice)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | polls_poll                                                   |
+             +--------------------------------------------------------------+
+             | question   | pub_date                  | count(polls_choice) |
+            -+------------+---------------------------+---------------------+-
+             | What's up? | 2011-01-01 01:00:00-05:00 |                   3 |
+                                                                      (1 row)
+
+             ----
+             /polls_poll{question,pub_date,count(polls_choice)}
+             SELECT "polls_poll"."question",
+                    "polls_poll"."pub_date",
+                    COALESCE("polls_choice"."count", 0)
+             FROM "polls_poll"
+                  LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count",
+                                          "polls_choice"."poll_id"
+                                   FROM "polls_choice"
+                                   GROUP BY 2) AS "polls_choice"
+                                  ON ("polls_poll"."id" = "polls_choice"."poll_id")
+             ORDER BY "polls_poll"."id" ASC
+        - uri: /polls_choice{poll.question, choice, votes}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | polls_choice                            |
+             +-----------------------------------------+
+             | question   | choice             | votes |
+            -+------------+--------------------+-------+-
+             | What's up? | Not much           |    10 |
+             | What's up? | The sky            |    20 |
+             | What's up? | Just hacking again |    30 |
+                                                (3 rows)
+
+             ----
+             /polls_choice{poll.question,choice,votes}
+             SELECT "polls_poll"."question",
+                    "polls_choice"."choice",
+                    "polls_choice"."votes"
+             FROM "polls_choice"
+                  INNER JOIN "polls_poll"
+                             ON ("polls_choice"."poll_id" = "polls_poll"."id")
+             ORDER BY "polls_choice"."id" ASC
+        - py: remove-module-path
+          stdout: ''
       - id: tweak.inet
         tests:
         - ctl: [ext, tweak.inet]
