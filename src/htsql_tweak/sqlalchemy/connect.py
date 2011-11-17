@@ -21,3 +21,5 @@ class SQLAlchemyConnect(Connect):
             # that is in the SQLAlchemy connection pool.
             return wrapper.connection
         return super(SQLAlchemyConnect, self).open()
+
+

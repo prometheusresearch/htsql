@@ -24,7 +24,7 @@ class UnusedPatternCache(object):
 
 class OverrideIntrospect(Introspect):
 
-    weigh(1.0)
+    weigh(2.0)
 
     def __call__(self):
         addon = context.app.tweak.override

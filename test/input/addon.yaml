@@ -369,6 +369,64 @@ tests:
     headers:
       Accept: text/html
 
+# TWEAK.SQLALCHEMY - adapt to SQLAlchemy
+- py: has-sqlalchemy
+  code: |
+    try:
+        import sqlalchemy
+        if sqlalchemy.__version__ > '0.7.':
+            state.toggles.add('sqlalchemy')
+    except ImportError:
+        pass
+- title: tweak.sqlalchemy
+  ifdef: sqlalchemy
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.sqlalchemy]
+
+  # Make sure `test_sqlalchemy` could be found
+  - py: add-module-path
+    code: |
+      import __builtin__, sys, os, os.path
+      path = os.path.join(os.getcwd(), "test/code")
+      sys.path.insert(0, path)
+      __builtin__.demo = state.saves['demo'][0]
+
+  # Initialize HTSQL using SQLAlchemy metadata
+  - db: null
+    extensions:
+      tweak.sqlalchemy:
+        engine: test_sqlalchemy.engine
+        metadata: test_sqlalchemy.metadata
+
+  # Check if columns are recognized
+  - uri: /school{code, name, campus}?code='art'
+  - uri: /program{school_code, code, title, degree, part_of_code}
+                ?school_code='ns'&code='gmth'
+  - uri: /department{code, name, school_code}
+                ?code='mth'
+  - uri: /course{department_code, no, title, credits, description}
+                ?department_code='astro'&no=215
+
+  # Check if links are recognized
+  - uri: /(school?code='art').department{name}
+  - uri: /(school?code='art').program{title}
+  - uri: /(department?code='mth').school{name}
+  - uri: /(department?code='mth').course{title}
+  - uri: /(program?school_code='ns'&code='gmth').school{name}
+  - uri: /(program?school_code='ns'&code='gmth').part_of{title}
+  - uri: /(program?school_code='ns'&code='gmth').program_via_part_of{title}
+  - uri: /(course?department_code='astro'&no=215).department{name}
+
+  # Restore the original `sys.path`
+  - py: remove-module-path
+    code: |
+      import __builtin__, sys, os, os.path
+      path = os.path.join(os.getcwd(), "test/code")
+      sys.path.remove(path)
+      del sys.modules['test_sqlalchemy']
+      del __builtin__.demo
+
 # TWEAK.SYSTEM - add access to system tables
 - title: tweak.system
   ifdef: pgsql

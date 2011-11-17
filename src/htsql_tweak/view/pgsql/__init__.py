@@ -12,5 +12,6 @@ class TweakViewPGSQLAddon(Addon):
 
     name = 'tweak.view.pgsql'
     prerequisites = ['engine.pgsql']
+    hint = """implement `tweak.view` for PostgreSQL"""
 
 

@@ -11,11 +11,7 @@ from htsql.addon import Addon
 class TweakTimeoutPGSQLAddon(Addon):
 
     name = 'tweak.timeout.pgsql'
-    hint = """implements query timeout for PostgreSQL"""
-    help = """
-      This plugin is used to set the query timeout using PostgreSQL
-      specific connection parameter.
-    """
+    hint = """implement `tweak.timeout` for PostgreSQL"""
     prerequisites = ['engine.pgsql']
 
 

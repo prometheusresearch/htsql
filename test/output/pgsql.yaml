@@ -29215,6 +29215,303 @@ tests:
 
             </html>
 
+      - py: has-sqlalchemy
+        stdout: ''
+      - id: tweak.sqlalchemy
+        tests:
+        - ctl: [ext, tweak.sqlalchemy]
+          stdout: |+
+            TWEAK.SQLALCHEMY - use SQLAlchemy engine and model
+
+            This addon provides SQLAlchemy integration in two ways.
+            First, it permits using database connections from SQLAlchemy.
+            Second, it uses SQLAlchemy model instead of introspecting
+            the database.
+
+            Parameter `engine` and `metadata` must point to the SQLAlchemy
+            `engine` and `metadata` objects.  The objects are specified
+            by a dotted string of module names.  The last component in
+            the dotted string is a module attribute.
+
+            Parameters:
+              engine=MODULE.NAME       : the SQLAlchemy `engine` object
+              metadata=MODULE.NAME     : the SQLAlchemy `metadata` object
+
+          exit: 0
+        - py: add-module-path
+          stdout: ''
+        - uri: /school{code, name, campus}?code='art'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                   |
+             +------------------------------------------+
+             | code | name                     | campus |
+            -+------+--------------------------+--------+-
+             | art  | School of Art and Design | old    |
+                                                  (1 row)
+
+             ----
+             /school{code,name,campus}?code='art'
+             SELECT "school"."code",
+                    "school"."name",
+                    "school"."campus"
+             FROM "ad"."school"
+             WHERE ("school"."code" = 'art')
+             ORDER BY 1 ASC
+        - uri: /program{school_code, code, title, degree, part_of_code} ?school_code='ns'&code='gmth'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | program                                                                 |
+             +-------------------------------------------------------------------------+
+             | school_code | code | title                      | degree | part_of_code |
+            -+-------------+------+----------------------------+--------+--------------+-
+             | ns          | gmth | Masters of Science in      | ms     | pmth         |
+             :             :      : Mathematics                :        :              :
+                                                                                 (1 row)
+
+             ----
+             /program{school_code,code,title,degree,part_of_code}?school_code='ns'&code='gmth'
+             SELECT "program"."school_code",
+                    "program"."code",
+                    "program"."title",
+                    "program"."degree",
+                    "program"."part_of_code"
+             FROM "ad"."program"
+             WHERE ("program"."school_code" = 'ns')
+                   AND ("program"."code" = 'gmth')
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /department{code, name, school_code} ?code='mth'
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | department                       |
+             +----------------------------------+
+             | code | name        | school_code |
+            -+------+-------------+-------------+-
+             | mth  | Mathematics | ns          |
+                                          (1 row)
+
+             ----
+             /department{code,name,school_code}?code='mth'
+             SELECT "department"."code",
+                    "department"."name",
+                    "department"."school_code"
+             FROM "ad"."department"
+             WHERE ("department"."code" = 'mth')
+             ORDER BY 1 ASC
+        - uri: /course{department_code, no, title, credits, description} ?department_code='astro'&no=215
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | course                                                                               |
+             +--------------------------------------------------------------------------------------+
+             | department_code | no  | title           | credits | description                      |
+            -+-----------------+-----+-----------------+---------+----------------------------------+-
+             | astro           | 215 | Space Mechanics |       4 | Principles of space objects      |
+             :                 :     :                 :         : motion, gravitation, General     :
+             :                 :     :                 :         : Theory of Relativity applied to  :
+             :                 :     :                 :         : Astronomy.                       :
+                                                                                              (1 row)
+
+             ----
+             /course{department_code,no,title,credits,description}?department_code='astro'&no=215
+             SELECT "course"."department_code",
+                    "course"."no",
+                    "course"."title",
+                    "course"."credits",
+                    "course"."description"
+             FROM "ad"."course"
+             WHERE ("course"."department_code" = 'astro')
+                   AND ("course"."no" = 215)
+             ORDER BY 1 ASC, 2 ASC
+        - uri: /(school?code='art').department{name}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | department  |
+             +-------------+
+             | name        |
+            -+-------------+-
+             | Art History |
+             | Studio Art  |
+                    (2 rows)
+
+             ----
+             /(school?code='art').department{name}
+             SELECT "department"."name"
+             FROM "ad"."school"
+                  INNER JOIN "ad"."department"
+                             ON ("school"."code" = "department"."school_code")
+             WHERE ("school"."code" = 'art')
+             ORDER BY "school"."code" ASC, "department"."code" ASC
+        - uri: /(school?code='art').program{title}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | program                         |
+             +---------------------------------+
+             | title                           |
+            -+---------------------------------+-
+             | Post Baccalaureate in Art       |
+             : History                         :
+             | Bachelor of Arts in Art History |
+             | Bachelor of Arts in Studio Art  |
+                                        (3 rows)
+
+             ----
+             /(school?code='art').program{title}
+             SELECT "program"."title"
+             FROM "ad"."school"
+                  INNER JOIN "ad"."program"
+                             ON ("school"."code" = "program"."school_code")
+             WHERE ("school"."code" = 'art')
+             ORDER BY "school"."code" ASC, "program"."school_code" ASC, "program"."code" ASC
+        - uri: /(department?code='mth').school{name}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                     |
+             +----------------------------+
+             | name                       |
+            -+----------------------------+-
+             | School of Natural Sciences |
+                                    (1 row)
+
+             ----
+             /(department?code='mth').school{name}
+             SELECT "school"."name"
+             FROM "ad"."department"
+                  INNER JOIN "ad"."school"
+                             ON ("department"."school_code" = "school"."code")
+             WHERE ("department"."code" = 'mth')
+             ORDER BY "department"."code" ASC
+        - uri: /(department?code='mth').course{title}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | course                          |
+             +---------------------------------+
+             | title                           |
+            -+---------------------------------+-
+             | College Algebra I               |
+             | College Algebra II              |
+             | Calculus I                      |
+             | Calculus II                     |
+             | Calculus III                    |
+             | Linear Algebra                  |
+             | Probability and Statistics      |
+             | Ordinary Differential Equations |
+             | College Geometry                |
+             | Partial Differential Equations  |
+             | Modern Algebra                  |
+                                       (11 rows)
+
+             ----
+             /(department?code='mth').course{title}
+             SELECT "course"."title"
+             FROM "ad"."department"
+                  INNER JOIN "ad"."course"
+                             ON ("department"."code" = "course"."department_code")
+             WHERE ("department"."code" = 'mth')
+             ORDER BY "department"."code" ASC, "course"."department_code" ASC, "course"."no" ASC
+        - uri: /(program?school_code='ns'&code='gmth').school{name}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                     |
+             +----------------------------+
+             | name                       |
+            -+----------------------------+-
+             | School of Natural Sciences |
+                                    (1 row)
+
+             ----
+             /(program?school_code='ns'&code='gmth').school{name}
+             SELECT "school"."name"
+             FROM "ad"."program"
+                  INNER JOIN "ad"."school"
+                             ON ("program"."school_code" = "school"."code")
+             WHERE ("program"."school_code" = 'ns')
+                   AND ("program"."code" = 'gmth')
+             ORDER BY "program"."school_code" ASC, "program"."code" ASC
+        - uri: /(program?school_code='ns'&code='gmth').part_of{title}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | part_of                    |
+             +----------------------------+
+             | title                      |
+            -+----------------------------+-
+             | Doctorate of Science in    |
+             : Mathematics                :
+                                    (1 row)
+
+             ----
+             /(program?school_code='ns'&code='gmth').part_of{title}
+             SELECT "program_2"."title"
+             FROM "ad"."program" AS "program_1"
+                  INNER JOIN "ad"."program" AS "program_2"
+                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."part_of_code" = "program_2"."code"))
+             WHERE ("program_1"."school_code" = 'ns')
+                   AND ("program_1"."code" = 'gmth')
+             ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC
+        - uri: /(program?school_code='ns'&code='gmth').program_via_part_of{title}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | program_via_part_of        |
+             +----------------------------+
+             | title                      |
+            -+----------------------------+-
+             | Bachelor of Science in     |
+             : Mathematics                :
+                                    (1 row)
+
+             ----
+             /(program?school_code='ns'&code='gmth').program_via_part_of{title}
+             SELECT "program_2"."title"
+             FROM "ad"."program" AS "program_1"
+                  INNER JOIN "ad"."program" AS "program_2"
+                             ON (("program_1"."school_code" = "program_2"."school_code") AND ("program_1"."code" = "program_2"."part_of_code"))
+             WHERE ("program_1"."school_code" = 'ns')
+                   AND ("program_1"."code" = 'gmth')
+             ORDER BY "program_1"."school_code" ASC, "program_1"."code" ASC, "program_2"."school_code" ASC, "program_2"."code" ASC
+        - uri: /(course?department_code='astro'&no=215).department{name}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | department |
+             +------------+
+             | name       |
+            -+------------+-
+             | Astronomy  |
+                    (1 row)
+
+             ----
+             /(course?department_code='astro'&no=215).department{name}
+             SELECT "department"."name"
+             FROM "ad"."course"
+                  INNER JOIN "ad"."department"
+                             ON ("course"."department_code" = "department"."code")
+             WHERE ("course"."department_code" = 'astro')
+                   AND ("course"."no" = 215)
+             ORDER BY "course"."department_code" ASC, "course"."no" ASC
+        - py: remove-module-path
+          stdout: ''
       - id: tweak.system
         tests:
         - ctl: [ext, tweak.system]

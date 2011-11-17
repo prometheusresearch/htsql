@@ -16,21 +16,26 @@ class TweakSQLAlchemyAddon(Addon):
     prerequisites = []
     postrequisites = ['htsql']
     name = 'tweak.sqlalchemy'
-    hint = """adapts to SQLAlchemy engine and model"""
+    hint = """use SQLAlchemy engine and model"""
     help = """
-      This plugin provides SQLAlchemy integration in two ways.
-      First, if the dburi is omitted, it attempts to use the
-      database connection from SQLAlchemy.  Secondly, it uses
-      the SQLAlchemy model instead of introspecting.
+    This addon provides SQLAlchemy integration in two ways.
+    First, it permits using database connections from SQLAlchemy.
+    Second, it uses SQLAlchemy model instead of introspecting
+    the database.
+
+    Parameter `engine` and `metadata` must point to the SQLAlchemy
+    `engine` and `metadata` objects.  The objects are specified
+    by a dotted string of module names.  The last component in
+    the dotted string is a module attribute.
     """
 
     parameters = [
             Parameter('engine', ClassVal(SQLAlchemyEngine),
-              hint='the SQLAlchemy ``engine`` object',
-              value_name='package.module.attribute'),
+              value_name="MODULE.NAME",
+              hint='the SQLAlchemy `engine` object'),
             Parameter('metadata', ClassVal(SQLAlchemyMetaData),
-              hint='the SQLAlchemy ``metadata`` object',
-              value_name='package.module.attribute')
+              value_name="MODULE.NAME",
+              hint='the SQLAlchemy `metadata` object')
     ]
 
     @classmethod
@@ -48,6 +53,9 @@ class TweakSQLAlchemyAddon(Addon):
         if sqlalchemy_engine:
             assert isinstance(sqlalchemy_engine, SQLAlchemyEngine)
             engine = sqlalchemy_engine.dialect.name
+            engine = {
+                    'postgresql': 'pgsql',
+            }.get(engine, engine)
             url = make_url(sqlalchemy_engine.url)
             return { 'htsql': { 'db': DB(engine=engine, 
                                          database=url.database,
@@ -56,4 +64,5 @@ class TweakSQLAlchemyAddon(Addon):
                                          host=url.host, port=url.port) },
                      'engine.%s' % engine : {}}
         return {}
+
 

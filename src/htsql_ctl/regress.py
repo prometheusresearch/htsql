@@ -876,7 +876,7 @@ class AppTestCase(SkipTestCase):
 
     class Input(TestData):
         fields = [
-                Field('db', DBVal(),
+                Field('db', DBVal(is_nullable=True),
                       hint="""the connection URI"""),
                 Field('extensions', MapVal(StrVal(),
                                            MapVal(StrVal(), AnyVal())),
@@ -891,13 +891,16 @@ class AppTestCase(SkipTestCase):
 
         # Clone `input.db`, but omit the password.
         db = self.input.db
-        sanitized_db = DB(engine=db.engine,
-                          username=db.username,
-                          password=None,
-                          host=db.host,
-                          port=db.port,
-                          database=db.database,
-                          options=db.options)
+        if db is not None:
+            sanitized_db = DB(engine=db.engine,
+                              username=db.username,
+                              password=None,
+                              host=db.host,
+                              port=db.port,
+                              database=db.database,
+                              options=db.options)
+        else:
+            sanitized_db = "-"
 
         # Print:
         # ---------------- ... -
@@ -919,11 +922,11 @@ class AppTestCase(SkipTestCase):
         # Create an application and update the testing state.  The created
         # application will be in effect for the subsequent tests in the
         # current suite and all the nested suites unless overridden.
-        from htsql.application import Application
+        from htsql import HTSQL
         self.state.app = None
         try:
-            self.state.app = Application(self.input.db,
-                                         self.input.extensions)
+            self.state.app = HTSQL(self.input.db,
+                                   self.input.extensions)
         except Exception:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"
@@ -978,10 +981,10 @@ class LoadAppTestCase(SkipTestCase):
         configuration = configuration+(self.input.extensions,)
 
         # Create an application and update the testing state.
-        from htsql.application import Application
+        from htsql import HTSQL
         self.state.app = None
         try:
-            self.state.app = Application(*configuration)
+            self.state.app = HTSQL(*configuration)
         except Exception:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"
@@ -2015,11 +2018,11 @@ class SQLTestCase(SkipTestCase):
         # Generate an HTSQL application.  We need an application instance
         # to split the SQL data and to connect to the database, but we
         # never use it for executing HTSQL queries.
-        from htsql.application import Application
+        from htsql import HTSQL
         from htsql.connect import connect, DBError
         from htsql.split_sql import SplitSQL
         try:
-            app = Application(self.input.connect)
+            app = HTSQL(self.input.connect)
         except Exception, exc:
             self.out_exception(sys.exc_info())
             return self.failed("*** an exception occured while"

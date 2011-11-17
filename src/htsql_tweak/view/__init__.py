@@ -4,21 +4,27 @@
 #
 
 
-from htsql.addon import Addon
+from htsql.addon import Addon, addon_registry
 
 
 class TweakViewAddon(Addon):
 
     name = 'tweak.view'
-    hint = """guesses links for views"""
+    hint = """add constraints for views"""
     help = """
-      This plugin attempts to guess at various links 
-      between views and tables (where foreign keys are
-      not defined).  This is only supported in PostgreSQL.
+    This addon attempts to infer foreign keys and other constraints
+    from a view definition.
+
+    Currently, only PostgreSQL backend is supported.
     """
 
     @classmethod
     def get_extension(cls, app, attributes):
-        return 'tweak.view.%s' % app.htsql.db.engine
+        if app.htsql.db is not None:
+            name = '%s.%s' % (cls.name, app.htsql.db.engine)
+            if name not in addon_registry:
+                raise ImportError("%s is not implemented for %s"
+                                  % (cls.name, app.htsql.db.engine))
+            return name
 
 
