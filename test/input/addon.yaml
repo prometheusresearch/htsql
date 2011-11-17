@@ -384,20 +384,23 @@ tests:
   # Addon description
   - ctl: [ext, tweak.sqlalchemy]
 
-  # Make sure `test_sqlalchemy` could be found
+  # Make sure `test_sqlalchemy_*` could be found
   - py: add-module-path
     code: |
       import __builtin__, sys, os, os.path
       path = os.path.join(os.getcwd(), "test/code")
       sys.path.insert(0, path)
       __builtin__.demo = state.saves['demo'][0]
+      __builtin__.sandbox = state.saves['sandbox'][0]
+      from test_sqlalchemy_sandbox import createdb
+      createdb()
 
-  # Initialize HTSQL using SQLAlchemy metadata
+  # Test SQLAlchemy integration with an existing schema
   - db: null
     extensions:
       tweak.sqlalchemy:
-        engine: test_sqlalchemy.engine
-        metadata: test_sqlalchemy.metadata
+        engine: test_sqlalchemy_demo.engine
+        metadata: test_sqlalchemy_demo.metadata
 
   # Check if columns are recognized
   - uri: /school{code, name, campus}?code='art'
@@ -418,14 +421,28 @@ tests:
   - uri: /(program?school_code='ns'&code='gmth').program_via_part_of{title}
   - uri: /(course?department_code='astro'&no=215).department{name}
 
+  # Test integration on SQLAlchemy-generated schema
+  - db: null
+    extensions:
+      tweak.sqlalchemy:
+        engine: test_sqlalchemy_sandbox.engine
+        metadata: test_sqlalchemy_sandbox.metadata
+
+  - uri: /users{name, fullname, count(addresses)}
+  - uri: /addresses{user.name, email_address}
+
   # Restore the original `sys.path`
   - py: remove-module-path
     code: |
+      from test_sqlalchemy_sandbox import dropdb
+      dropdb()
       import __builtin__, sys, os, os.path
       path = os.path.join(os.getcwd(), "test/code")
       sys.path.remove(path)
-      del sys.modules['test_sqlalchemy']
+      del sys.modules['test_sqlalchemy_demo']
+      del sys.modules['test_sqlalchemy_sandbox']
       del __builtin__.demo
+      del __builtin__.sandbox
 
 # TWEAK.SYSTEM - add access to system tables
 - title: tweak.system

@@ -2,7 +2,29 @@
 from sqlalchemy import (create_engine, MetaData, Table, Column, ForeignKey,
                         ForeignKeyConstraint, Integer, String, Text, Enum)
 
-metadata = MetaData()
+uri = None
+if demo.engine == 'sqlite':
+    uri = "sqlite:///%s" % demo.database
+else:
+    uri = ""
+    if demo.host is not None:
+        uri += demo.host
+        if demo.port is not None:
+            uri += ":"+str(demo.port)
+    if demo.username is not None:
+        uri = "@"+uri
+        if demo.password is not None:
+            uri = ":"+demo.password+uri
+        uri = demo.username+uri
+    scheme = {
+            'pgsql': "postgresql",
+            'mssql': "mssql+pymssql",
+    }.get(demo.engine, demo.engine)
+    uri = "%s://%s/%s" % (scheme, uri, demo.database)
+
+engine = create_engine(uri)
+
+metadata = MetaData(engine)
 
 schema = None
 prefix = ''
@@ -43,33 +65,5 @@ Table('course', metadata,
       Column('credits', Integer),
       Column('description', Text),
       schema=schema)
-
-uri = None
-if demo.engine == 'sqlite':
-    uri = "sqlite:///%s" % demo.database
-else:
-    uri = ""
-    if demo.host is not None:
-        uri += demo.host
-        if demo.port is not None:
-            uri += ":"+str(demo.port)
-    if demo.username is not None:
-        uri = "@"+uri
-        if demo.password is not None:
-            uri = ":"+demo.password+uri
-        uri = demo.username+uri
-    scheme = ""
-    if demo.engine == 'pgsql':
-        scheme = "postgresql"
-    elif demo.engine == 'mysql':
-        scheme = "mysql"
-    elif demo.engine == 'oracle':
-        scheme = "oracle"
-    elif demo.engine == 'mssql':
-        scheme = "mssql+pymssql"
-    uri = "%s://%s/%s" % (scheme, uri, demo.database)
-
-engine = create_engine(uri)
-metadata.bind = engine
 
 

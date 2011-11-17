@@ -29779,5 +29779,53 @@ tests:
              WHERE ("COURSE"."DEPARTMENT_CODE" = 'astro')
                    AND ("COURSE"."NO" = 215)
              ORDER BY "COURSE"."DEPARTMENT_CODE" ASC, "COURSE"."NO" ASC
+        - uri: /users{name, fullname, count(addresses)}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | users                                     |
+             +-------------------------------------------+
+             | name  | fullname       | count(addresses) |
+            -+-------+----------------+------------------+-
+             | jack  | Jack Jones     |                2 |
+             | wendy | Wendy Williams |                2 |
+                                                  (2 rows)
+
+             ----
+             /users{name,fullname,count(addresses)}
+             SELECT "USERS"."NAME",
+                    "USERS"."FULLNAME",
+                    COALESCE("ADDRESSES"."count", 0)
+             FROM "USERS"
+                  LEFT OUTER JOIN (SELECT COUNT(1) AS "count",
+                                          "ADDRESSES"."USER_ID"
+                                   FROM "ADDRESSES"
+                                   GROUP BY "ADDRESSES"."USER_ID") "ADDRESSES"
+                                  ON ("USERS"."ID" = "ADDRESSES"."USER_ID")
+             ORDER BY "USERS"."ID" ASC
+        - uri: /addresses{user.name, email_address}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | addresses              |
+             +------------------------+
+             | name  | email_address  |
+            -+-------+----------------+-
+             | jack  | jack@yahoo.com |
+             | jack  | jack@msn.com   |
+             | wendy | www@www.org    |
+             | wendy | wendy@aol.com  |
+                               (4 rows)
+
+             ----
+             /addresses{user.name,email_address}
+             SELECT "USERS"."NAME",
+                    "ADDRESSES"."EMAIL_ADDRESS"
+             FROM "ADDRESSES"
+                  INNER JOIN "USERS"
+                             ON ("ADDRESSES"."USER_ID" = "USERS"."ID")
+             ORDER BY "ADDRESSES"."ID" ASC
         - py: remove-module-path
           stdout: ''
