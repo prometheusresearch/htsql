@@ -1,15 +1,22 @@
 Installation Instructions
 =========================
 
-Download HTSQL source code::
+Binary packages for various platforms are available at:
 
-    $ hg clone http://bitbucket.org/prometheus/htsql
+    http://htsql.org/download.html
 
-Build and install HTSQL::
+To install HTSQL from source, download the latest source package from:
 
-    $ cd htsql
-    $ make build
+    http://pypi.python.org/pypi/HTSQL/
+
+Unpack the archive and run::
+
     # make install
+
+HTSQL requires database adapters for each supported database backend.
+To install all the adapters, run::
+
+    # make install-deps
 
 Installing HTSQL creates a ``htsql-ctl`` script.  For general help and
 a list of commands, run::

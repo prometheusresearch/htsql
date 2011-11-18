@@ -4,7 +4,7 @@
 
 This document describes administration of an HTSQL server.  We start
 with discussing installation and configuration.  This guide also
-contains a list of tweaks which can be used to augment the default
+contains a list of extensions which can be used to augment the default
 server behavior.
 
 .. toctree::

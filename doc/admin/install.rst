@@ -4,6 +4,17 @@
 
 .. highlight:: console
 
+
+Binary Packages
+===============
+
+We provide binary packages for various Linux platforms.  They are
+available at http://htsql.org/download.html.
+
+
+Installing from Source
+======================
+
 The following instructions assume a recent Debian_ or `Debian-derived`_
 system, but could be easily adapted to other Linux distributions and
 package managers.
@@ -11,89 +22,64 @@ package managers.
 .. _Debian: http://debian.org/
 .. _Debian-derived: http://ubuntu.com/
 
+Prerequisites
+-------------
 
-Quick Start
-===========
+HTSQL requires Python 2.5 or newer, but does not yet support Python 3.
+Python 2.7 is the recommended version.  In most Linux distributions,
+Python is already installed; if not, install it by running::
 
-1. Install Python_, the pip_ package manager and required Python modules
-   (setuptools_ and pyyaml_)::
+    # apt-get install python
 
-        # apt-get install python python-pip
-        # apt-get install python-setuptools python-yaml
+Installation of Python modules that have no system packages requires
+the pip_ package manager::
 
-2. Install database adapters.
+    # apt-get install python-pip
 
-   * SQLite requires no additional drivers.
+HTSQL needs setuptools_ and pyyaml_ libraries::
 
-   * For PostgreSQL, install psycopg2_::
+    # apt-get install python-setuptools python-yaml
 
-        # apt-get install python-psycopg2
+Furthermore, some database backends require an additional database
+driver.
 
-   * For MySQL, install `MySQL-python`_::
+* SQLite requires no additional drivers.
 
-        # apt-get install python-mysqldb
+* For PostgreSQL, install psycopg2_::
 
-   * For MS SQL Server, install `pymssql`_::
+    # apt-get install python-psycopg2
 
-        # apt-get install python-pymssql
+* For MySQL, install `MySQL-python`_::
 
-   * For Oracle, download and install `Oracle Instant Client`_ from
-     http://oracle.com/, then download, build and install cx_Oracle_.
-     The latter could be done with the pip_ package manager::
+    # apt-get install python-mysqldb
 
-        # pip install cx-oracle
+* For MS SQL Server, install `pymssql`_::
 
-3. Download, build and install HTSQL, either from a package or from
-   `HTSQL source`_ repository.
+    # apt-get install python-pymssql
 
-   * To install the latest released version of HTSQL, use pip_::
+* For Oracle, download and install `Oracle Instant Client`_ from
+  http://oracle.com/, then download, build and install cx_Oracle_.
+  The latter could be done with the pip_ package manager::
 
-        # pip install HTSQL
+    # pip install cx-oracle
 
-   * To use the latest development version of HTSQL, install Mercurial_,
-     download `HTSQL source`_, then build and install HTSQL::
+Installing HTSQL
+----------------
 
-        # apt-get install mercurial
-        $ hg clone http://bitbucket.org/prometheus/htsql
-        $ cd htsql
-        $ make build
-        # make install
+Download, build and install HTSQL, either from a source package
+or from `HTSQL source`_ repository.
 
-4. The last step creates an executable ``htsql-ctl``.  For general
-   help and a list of commands, run::
+* To install the latest released version of HTSQL, use pip_::
 
-        $ htsql-ctl help
+    # pip install HTSQL
 
-   To start a command-line HTSQL shell, run::
+* To use the latest development version of HTSQL, install Mercurial_,
+  download `HTSQL source`_, then build and install HTSQL::
 
-        $ htsql-ctl shell DBURI
-
-   To start an HTTP server running HTSQL on the address ``HOST:PORT``,
-   run::
-
-        $ htsql-ctl server DBURI [HOST [PORT]]
-
-   The parameter ``DBURI`` specifies how to connect to a database.  For
-   a SQLite database, dburi_ has the form:
-
-   .. sourcecode:: text
-
-        sqlite:/path/to/database
-
-   For other databases, ``DBURI`` has the form:
-
-   .. sourcecode:: text
-
-        engine://user:pass@host:port/database
-
-   The engine (one of ``sqlite``, ``pgsql``, ``mysql``, ``mssql`` 
-   or ``oracle``) and the database name are mandatory.  The other
-   components can be omitted if the default connection parameters
-   work or environment variables are setup properly.  For example, 
-   to connect to a local PostgreSQL database ``htsql_regress`` 
-   installed by the regression test suite, you could write::
-
-        $ htsql-ctl shell pgsql:htsql_regress
+    # apt-get install mercurial
+    $ hg clone http://bitbucket.org/prometheus/htsql
+    $ cd htsql
+    # make install
 
 .. _Python: http://python.org/
 .. _pip: http://pypi.python.org/pypi/pip
@@ -107,98 +93,6 @@ Quick Start
 .. _cx_Oracle: http://pypi.python.org/pypi/cx_Oracle
 .. _Mercurial: http://mercurial.selenic.com/
 .. _HTSQL source: http://bitbucket.org/prometheus/htsql
-
-
-Detailed Installation
-=====================
-
-Installing Prerequisites
-------------------------
-
-HTSQL requires Python 2.5 or newer, but does not yet support Python 3.
-Python 2.7 is the recommended version.  In most distributions, Python
-is already installed; if not, install it by running::
-
-    # apt-get install python
-
-Installation of Python modules that have no system packages requires
-the pip_ package manager::
-
-    # apt-get install python-pip
-
-HTSQL depends on the following Python libraries:
-
-* setuptools_ (``0.6c9`` or newer);
-* pyyaml_ (``3.07`` or newer);
-
-In addition, HTSQL requires database drivers:
-
-* SQLite is supported out of the box;
-* psycopg2_ (``2.0.10`` or newer), for PostgreSQL;
-* MySQL-python_ (``1.2.2`` or newer), for MySQL;
-* pymssql_ (``1.0.2`` or newer), for MS SQL Server;
-* cx_Oracle_ (``5.0`` or newer), for Oracle.
-
-To install the dependencies, run::
-
-    # apt-get install python-setuptools python-yaml
-
-You can install database drivers using system packages (when possible)
-or from source, using the pip_ package manager.  Installing drivers from
-source requires a C compiler and Python header files, which can be
-installed with::
-
-    # apt-get install build-essential python-dev
-
-To install the PostgreSQL driver from the system repository, run::
-
-    # apt-get install python-psycopg2
-
-To install the driver from source, first install the PostgreSQL client
-library::
-
-    # apt-get install libpq5
-
-Then run::
-
-    # pip install psycopg2
-
-To install the MySQL driver from the system repository, run::
-
-    # apt-get install python-mysqldb
-
-To install the same driver from source, run::
-
-    # apt-get install libmysqlclient16
-    # pip install mysql-python
-
-To install the MS SQL Server driver from the system repository, run::
-
-    # apt-get install python-pymssql
-
-To install the same driver from source, run::
-
-    # apt-get install libsybdb5
-    # pip install pymssql
-
-Oracle drivers usually not packaged with the system.  To install the
-drivers, first download and install `Oracle Instant Client`_.  Then
-build and install the Python driver::
-
-    # pip install cx-oracle
-
-
-Installing HTSQL
-----------------
-
-Then, to install the latest released version of HTSQL, run::
-
-    # pip install HTSQL
-
-You could then test that you installation worked by connecting
-to an existing database and running a basic query::
-
-    $ htsql-ctl shell DBURI
 
 
 Usage
@@ -300,73 +194,6 @@ and ``PORT`` are omitted, the server is started on ``*:8080``.
 For more details on the ``server`` routine, run::
 
     $ htsql-ctl help server
-
-
-Developer's Corner
-==================
-
-Following are instructions for those who wish to follow the 
-development version of HTSQL.
-
-Install From Source
--------------------
-
-To track HTSQL's progress, you'll want to install directly from the
-`HTSQL source`_ repository.  First, you'll need a Mercurial client::
-
-    # apt-get install mercurial
-
-To download `HTSQL source`_::
-
-    $ hg clone http://bitbucket.org/prometheus/htsql
-
-To build and install HTSQL, run::
-
-    $ cd htsql
-    $ make build
-    # make install
-
-That installs the HTSQL executable ``htsql-ctl`` to ``/usr/local/bin``
-and HTSQL library files to ``/usr/local/lib``.
-
-Alternatively, if you intend to update your distribution often to 
-follow daily commits, follow the above instructions, but instead 
-of ``make install`` instead run::
-
-    # make develop
-
-When HTSQL is installed in the development mode, any changes in the
-source files are reflected immediately without need to reinstall.
-Hence, you can update your HTSQL by using mercurial and restarting::
-
-    $ cd htsql && hg pull -u
-
-Regression Tests
-----------------
-
-HTSQL comes with a comprehensive suite of regression tests.  Running the
-tests requires a working database server for each of the supported database
-backends.  To specify connection parameters to the test servers, copy
-the file ``Makefile.env.sample`` to ``Makefile.env`` and edit the latter.
-For example, to to set the credentials of an administrative user for
-a PostgreSQL database, edit parameters ``PGSQL_ADMIN_USERNAME`` and
-``PGSQL_ADMIN_PASSWORD``; to set the address of the database server,
-edit parameters ``PGSQL_HOST`` and ``PGSQL_PORT``.
-
-To run the tests::
-
-    $ make test
-
-To run the tests against a specific database backend (e.g. SQLite), run::
-
-    # make test-sqlite
-
-Running regression tests creates a database ``htsql_regress`` and a
-database user with the same name.
-
-To learn other ``make`` targets, run::
-
-    $ make
 
 
 .. vim: set spell spelllang=en textwidth=72:
