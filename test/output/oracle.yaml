@@ -27652,6 +27652,20 @@ tests:
         stdout: ''
       - id: tweak.django
         tests:
+        - ctl: [ext, tweak.django]
+          stdout: |+
+            TWEAK.DJANGO - provide Django integration
+
+            This addon replaces built-in database introspection and
+            connection handling with Django facilities.
+
+            Parameter `settings` is the path to the settings module.  If not
+            set, environment variable `DJANGO_SETTINGS_MODULE` is used.
+
+            Parameters:
+              settings=PROJECT.MODULE  : name of the `settings` module
+
+          exit: 0
         - py: add-module-path
           stdout: ''
         - uri: /polls_poll{question, pub_date, count(polls_choice)}
@@ -27659,12 +27673,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | polls_poll                                             |
-             +--------------------------------------------------------+
-             | question   | pub_date            | count(polls_choice) |
-            -+------------+---------------------+---------------------+-
-             | What's up? | 2011-01-01 00:00:00 |                   3 |
-                                                                (1 row)
+             | polls_poll                                    |
+             +-----------------------------------------------+
+             | question   | pub_date   | count(polls_choice) |
+            -+------------+------------+---------------------+-
+             | What's up? | 2011-01-01 |                   3 |
+                                                       (1 row)
 
              ----
              /polls_poll{question,pub_date,count(polls_choice)}

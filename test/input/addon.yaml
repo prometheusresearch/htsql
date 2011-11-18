@@ -99,7 +99,7 @@ tests:
   ifdef: django
   tests:
   # Addon description
-#  - ctl: [ext, tweak.django]
+  - ctl: [ext, tweak.django]
 
   # Load `test_django_sandbox` and deploy the database
   - py: add-module-path
@@ -113,7 +113,10 @@ tests:
       createdb()
 
   # Test Django-generated database
-  - load: sandbox
+  - db: null
+    extensions:
+      tweak.django:
+        settings: test_django_sandbox.settings
   - uri: /polls_poll{question, pub_date, count(polls_choice)}
   - uri: /polls_choice{poll.question, choice, votes}
 

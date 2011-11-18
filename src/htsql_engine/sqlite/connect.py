@@ -78,6 +78,8 @@ class NormalizeSQLiteBoolean(Normalize):
     def convert(value):
         if value is None:
             return None
+        if isinstance(value, bool):
+            return value
         if not isinstance(value, int):
             raise SQLiteError("expected a Boolean value, got %r" % value)
         return (value != 0)
@@ -106,6 +108,8 @@ class NormalizeSQLiteDate(Normalize):
     def convert(value):
         if value is None:
             return None
+        if isinstance(value, datetime.date):
+            return value
         if not isinstance(value, (str, unicode)):
             raise SQLiteError("expected a date value, got %r" % value)
         converter = sqlite3.converters['DATE']
@@ -121,6 +125,8 @@ class NormalizeSQLiteTime(Normalize):
     def convert(value):
         if value is None:
             return None
+        if isinstance(value, datetime.time):
+            return value
         if not isinstance(value, (str, unicode)):
             raise SQLiteError("expected a time value, got %r" % value)
         # FIXME: verify that the value is in valid format.
@@ -146,6 +152,8 @@ class NormalizeSQLiteDateTime(Normalize):
     def convert(value):
         if value is None:
             return None
+        if isinstance(value, datetime.datetime):
+            return value
         if not isinstance(value, (str, unicode)):
             raise SQLiteError("expected a timestamp value, got %r" % value)
         converter = sqlite3.converters['TIMESTAMP']
