@@ -34,6 +34,10 @@ apt-get clean
 # Initialize Python virtual enviroment in `/root`.
 virtualenv -p python2.6 .
 
+# Install Django and SQLAlchemy.
+~/bin/pip -q install Django
+~/bin/pip -q install SQLAlchemy
+
 # Set the Oracle, FreeTDS and `virtualenv` environment variables on login.
 cat <<END >>/root/.bashrc
 
