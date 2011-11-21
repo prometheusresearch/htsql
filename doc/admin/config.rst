@@ -7,186 +7,648 @@
 The following instructions assume you've installed HTSQL and wish to
 configure extensions or "tweaks".
 
-Plugin Mechanism
-================
+
+Addon Mechanism
+===============
 
 HTSQL has an extensive addon system that can be used to override almost
-every aspect of server operation or query construction with an adapter.  
+every aspect of server operation or query construction with an adapter.
 Extensions can live in third party modules or be included in the HTSQL
 distribution as part of our supported "tweaks".  To list supported
 extensions, you could type::
 
-  $ htsql-ctl extension
+    $ htsql-ctl extension
 
-Extensions are registered via "entry points".  If you update your
-software distribution you will need to re-install, or for source
-distributions, re-run ``make deploy`` in order to see new extensions.
 To find out more about a plugin, such as ``tweak.autolimit``, write::
 
-  $ htsql-ctl extension tweak.autolimit
-
-Third parties can also register extensions with their own Python EGGs by
-adding a ``htsql.addons`` section to ``ENTRY_POINTS`` entry in their
-``setup.py``.  Each extension would implement HTSQL's addon protocol.
-
+    $ htsql-ctl extension tweak.autolimit
 
 Using Extensions
 ----------------
 
 An extension can be enabled using ``-E`` parameter on the ``htsql-ctl``
-command line.  For example, to enable the ``tweak.meta`` plugin on the
-PostgreSQL regression test suite, you'd write::
+command line.  For example, to enable the ``tweak.meta`` addon on the
+HTSQL demo database, you'd write::
 
-  $ htsql-ctl shell -E tweak.meta pgsql:htsql_regress
+    $ htsql-ctl shell -E tweak.meta pgsql:htsql_demo
 
-Then, you could use the ``/meta()`` command registered by this plugin::
+Then, you could use the ``/meta()`` command registered by this addon:
 
-  Interactive HTSQL Shell
-  Type 'help' for more information, 'exit' to quit the shell.
-  htsql_regress$ /meta(/table)
+.. sourcecode:: text
 
-Some plugins have parameters which can be added to the command line.
-For example, the ``autolimit`` extension truncates at ``limit`` number
-of rows.  The default is 10k, but this ``limit`` can be set::
+    Interactive HTSQL Shell
+    Type 'help' for more information, 'exit' to quit the shell.
+    htsql_demo$ /meta(/table)
 
-  $ htsql-ctl shell -E tweak.autolimit:limit=10 pgsql:htsql_regress
+Some addons have parameters which can be added to the command line.
+For example, the ``tweak.autolimit`` extension truncates output at
+``limit`` number of rows.  The default is 10k, but this value
+can be changed::
+
+    $ htsql-ctl shell -E tweak.autolimit:limit=10 pgsql:htsql_demo
 
 If more than one parameter is possible, use "," to separate them::
 
-  $ htsql-ctl shell -E tweak.hello:repeat=3,address=home pgsql:htsql_regress 
+    $ htsql-ctl shell -E tweak.hello:repeat=3,address=home pgsql:htsql_demo
 
-Config Files
-------------
+Configuration File
+------------------
 
-Plugins and configuration parameters can also be provided by a flat YAML
-(or JSON) file, and then included using ``-C`` on the command line.
-Here is an example configuration file against PostgreSQL database
-with most plugins enabled.
+Addons and configuration parameters can also be provided by a
+configuration file in YAML_ (or JSON_) format and then included
+using ``-C`` on the command line.  Here is an example configuration
+file for a PostgreSQL database with some addons enabled.
 
 .. sourcecode:: yaml
 
-      # demo-config.yaml
-      htsql:
-        db:
-          engine: pgsql
-          database: htsql_regress
-          username: htsql_regress
-          password: secret
-          host: localhost
-          port: 5432
-      tweak.autolimit:
-        limit: 1000
-      tweak.timeout:
-        timeout: 600
-      tweak.cors:
-      tweak.meta:
-      tweak.shell:
-        server-root: http://localhost:8080
-      tweak.shell.default:
+    # demo-config.yaml
+    htsql:
+      db:
+        engine: pgsql
+        database: htsql_demo
+        username: htsql_demo
+        password: secret
+        host: localhost
+        port: 5432
+    tweak.autolimit:
+      limit: 1000
+    tweak.cors:
+    tweak.meta:
+    tweak.shell:
+      server-root: http://demo.htsql.org
+    tweak.shell.default:
+    tweak.timeout:
+      timeout: 600
 
 You can then start the built-in demonstration web server::
 
   $ htsql-ctl serve -C demo-config.yaml
 
-For ``htsql-ctl serve`` the webserver host and port are *not* provided
-via plugin mechanism and must be provided if something other than
-``localhost:8080`` is desired.  If both ``-E`` and ``-C`` are used,
-explicit command line options override values provided in the
-configuration file.  This permits a configuration file to be used as a
-default perhaps using a different database URI.
+For ``htsql-ctl serve`` command, the web server host and port are *not*
+provided via extension mechanism and must be provided via command line
+if something other than ``localhost:8080`` is desired.  For instance,
+to run the server on ``localhost:80``, use::
 
-HTSQL "tweaks"
-==============
+    # htsql-ctl serve -C demo-config.yaml - localhost 80
 
-The HTSQL distribution ships with several built-in extensions
-we call ``htsql_tweaks``.   We list a few of them here.
+Here, we use ``-`` in place of the database address since the database
+connection parameters are already specified in the configuration file.
+
+If both ``-E`` and ``-C`` are used, explicit command line options override
+values provided in the configuration file.  This permits a configuration
+file to be used as a default perhaps using a different database URI.
+
+.. _YAML: http://yaml.org/
+.. _JSON: http://json.org/
+
+
+Extension Reference
+===================
+
+The HTSQL distribution ships with several built-in extensions which
+we describe here.
+
+``htsql``
+---------
+
+The HTSQL core that provides the SQL translator and an HTTP server
+is implemented in form of an addon ``htsql``.  This addon is always
+included.
+
+Parameters:
+
+`db`
+    The connection URI.
+
+The parameter ``db`` specifies how HTSQL connects to the database.  It
+could be written in a short or an expanded form.  In the short form,
+the parameter is an URI:
+
+.. sourcecode:: yaml
+
+    htsql:
+      db: pgsql://htsql_demo:secret@localhost:5432/htsql_demo
+
+In the expanded form, a mapping notation is used:
+
+.. sourcecode:: yaml
+
+    htsql:
+      db:
+        engine: pgsql
+        username: htsql_demo
+        password: secret
+        host: localhost
+        port: 5432
+        database: htsql_demo
+
+Every component except ``engine`` and ``database`` is optional.
+
+``engine.*``
+------------
+
+Extensions in the ``engine`` namespace implement database backends.
+An appropriate extension is loaded automatically based on the ``engine``
+parameter of the connection URI.
+
+HTSQL supports the following database servers:
+
+* SQLite 3+ (``engine.sqlite``)
+* PostgreSQL 8.3+ (``engine.pgsql``)
+* MySQL 5.1+ (``engine.mysql``)
+* Oracle 10g+ (``engine.oracle``)
+* Microsoft SQL Server 2005+ (``engine.mssql``)
+
+``tweak.autolimit``
+-------------------
+
+This addon truncates query output to a given number of rows
+(10,000 by default).  It could be used to prevent accidental
+denial of service caused by queries returning a large number
+of rows.
+
+The addon adds ``LIMIT <limit>`` to every generated SQL query.
+
+Parameters:
+
+`limit`
+    Truncation threshold (default: 10,000).
+
+.. sourcecode:: yaml
+
+    tweak.autolimit:
+      limit: 1000
+
+``tweak.cors``
+--------------
+
+This addon adds CORS_ support to permit AJAX requests to the
+HTSQL server by web pages hosted on a different domain.
+
+To prevent data leaks, web browsers do not allow AJAX
+requests to cross domain boundaries.  The CORS_
+(Cross-Origin Resource Sharing) specification defines
+a way for a server to provide a list of domains which
+are permitted to make AJAX requests.
+
+CORS_ relies on browser support and may not work with older
+web browsers.
+
+Parameters:
+
+`origin`
+    Domains allowed to access the server (default: ``*``).
+
+The ``origin`` parameter is a list of domains which are
+allowed to access the server.  The value must either be
+``*`` (means *any*, which is the default) or a space-separated
+list of host names::
+
+    http[s]://domain[:port]
+
+The default settings permit HTSQL queries from any domain.
+**Do not use the default settings with non-public data!**
+
+For example, to enable AJAX requests to the HTSQL demo server
+(located at http://demo.htsql.org/) from domains http://htsql.org/
+and http://htsql.com/, we could write:
+
+.. sourcecode:: yaml
+
+    tweak.cors:
+      origin: http://htsql.org http://htsql.com
+
+.. _CORS: http://www.w3.org/TR/cors/
+
+``tweak.django``
+----------------
+
+This extension provides integration with Django_ web framework.
+It replaces built-in database introspection and connection
+handling with facilities provided by Django.
+
+When using ``tweak.django`` addon, do not specify the connection
+URI as it is determined from the Django project database
+settings.
+
+Parameters:
+
+`settings`
+    Path to the settings module (default: use
+    ``DJANGO_SETTINGS_MODULE``).
+
+.. sourcecode:: yaml
+
+    tweak.django:
+      settings: mysite.settings
+
+.. _Django: https://www.djangoproject.com/
 
 ``tweak.meta``
 --------------
 
-This extension module creates an in-memory SQLite database that can be
-queried (using HTSQL) to return information about the system catalog.
-The schema has several tables:
+This extension provides a *meta* database describing tables,
+columns and links of the primary database.
 
-``table``
-   all tables accessable via the attached credentials
+The ``tweak.meta`` addon has no parameters.
 
-``field``
-   columns and links of a given table
+.. sourcecode:: yaml
 
-``column``
-   all columns accessable for the given table
+    tweak.meta:
 
-``link``
-   all links from one table to another
+The meta database is composed of the following tables:
 
-So, to enumerate links for a table, say ``course`` you could type:
+`table`
+    all available tables
+`field`
+    columns and links for a given table
+`column`
+    all columns for a given table
+`link`
+    all links from one table to another
 
-.. htsql:: /meta(/link?table_name='course')
+Use function ``meta()`` to make a query against the meta database.
 
-You could also run ``/meta()`` on the meta-data schema, for example:
+To get a list of tables:
+
+.. htsql:: /meta(/table)
+   :cut: 4
+
+Mapping call notation is also permitted:
+
+.. htsql:: /table/:meta
+   :cut: 4
+
+To list all columns of a given table in the output order:
+
+.. htsql:: /meta(/column.sort(field.sort)?table.name='course')
+   :cut: 4
+
+To get all links to and from a specific table:
+
+.. htsql:: /meta(/link?table.name='department'|target.name='department')
+   :cut: 4
+
+.. ** ||
+
+To describe the meta database itself, apply ``meta()`` twice:
 
 .. htsql:: /meta(/meta(/table))
+
+``tweak.override``
+------------------
+
+This extension provides several ways to adjust database metadata.
+It allows the user to restrict access to specific tables and columns,
+specify additional database constraints, change the generated names
+for tables, columns and links, and define calculated attributes.
+
+Parameters:
+
+`included-tables`
+    Tables permitted to use.
+`excluded-tables`
+    Tables forbidden to use.
+`included-columns`
+    Columns permitted to use.
+`excluded-columns`
+    Columns forbidden to use.
+`not-nulls`
+    Additional ``NOT NULL`` constraints.
+`unique-keys`
+    Additional ``PRIMARY KEY`` and ``UNIQUE`` constraints.
+`foreign-keys`
+    Additional ``FOREIGN KEY`` constraints.
+`class-labels`
+    Labels for tables and top-level calculations.
+`field-labels`
+    Labels for columns, links and calculated fields.
+`field-orders`
+    Default table fields.
+`unlabeled-tables`
+    Tables to hide.
+`unlabeled-columns`
+    Columns to hide.
+
+To restrict access to a specific set of tables, use parameters
+``included-tables`` and ``excluded-tables``.  Parameter
+``included-tables`` is a list of tables allowed to be used
+by HTSQL.  If this parameter is provided, any table not
+in this list is completely hidden from the HTSQL processor.
+Parameter ``excluded-tables`` allows you to forbid access
+to a set of tables.
+
+To forbid use of table ``confidential``:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      excluded-tables: [confidential]
+
+To allow access only to tables in ``ad`` and ``ed`` schemas:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      included-tables: [ad.*, ed.*]
+
+We could also use *block* form of a sequence:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      included-tables:
+        - ad.*
+        - ed.*
+
+In general, the table name may have the form ``<table>`` or
+``<schema>.<table>`` and could include ``*`` meta-character to
+indicate any number of characters.  Table names are
+case-insensitive and normalized: any non-alphanumeric
+character is replaced with ``_``.
+
+Similarly, to restrict access to a specific set of columns,
+use parameters ``included-columns`` and ``excluded-columns``.
+Parameter ``exclude-columns`` is a list of column forbidden
+for use by the HTSQL processor.
+
+To exclude column ``SSN`` of table ``confidential``, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      excluded-columns: [confidential.ssn]
+
+The column name may have the form ``<column>``, ``<table>.<column>``,
+or ``<schema>.<table>.<column>`` and could include ``*`` meta-character.
+
+Note that columns listed in ``excluded-columns`` are removed
+together with all associated key constraints.  If you want
+to hide a column from output, but keep associated primary and
+foreign keys, use the ``unlabeled-columns`` parameter.
+
+HTSQL discovers database constraints from the schema definition.
+If some constraints are not explicitly defined in the schema,
+you may provide them using parameters ``not-nulls``, ``unique-keys``
+and ``foreign-keys``.
+
+**When specifying additional constraints, make sure they are respected
+by the data; otherwise, the output produced by HTSQL may be invalid.**
+
+Parameter ``not-nulls`` is a list of columns with ``NOT NULL``
+constraints.
+
+To indicate that all columns named ``code`` and ``id``, as well as
+column ``student.full_name`` do not contain ``NULL`` value, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      not-nulls: ["*.code", "*.id", student.full_name]
+
+Note that we need to put the column patterns into quotes
+since YAML syntax does not permit ``*`` character at the
+beginning of a scalar value.
+
+Parameter ``unique-keys`` is a list of key specifications
+of the form ``<table>(<column>,...)[!]``.  The trailing
+symbol ``!`` indicates a ``PRIMARY KEY`` constraint.
+All columns in a primary key are marked as ``NOT NULL``.
+
+To indicate that ``school.code`` is a primary key and
+``school.name`` is unique, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      unique-keys:
+        - school(code)!
+        - school(name)
+
+Parameter ``foreign-keys`` is a list of foreign key
+specifications, which have the form
+``<origin>(<column>,...) -> <target>(<column>,...)``.
+Target columns could be omitted when they coincide with
+the target primary key.
+
+To define two foreign keys on table ``program``, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      foreign-keys:
+        - program(school_code) -> school(code)
+        - program(school_code, part_of_code) -> program
+
+In HTSQL, database tables, columns and links have a *label*,
+an identifier by which they are referred in HTSQL queries.
+Normally, entity labels coincide with their names, but parameters
+``class-labels`` and ``field-labels`` allow you to assign
+them arbitrary labels.  In addition, these parameters allow
+you to assign a label to an arbitrary HTSQL expression.
+
+Use parameter ``class-labels`` to assign custom labels
+to tables and top-level HTSQL expressions.  Parameter ``class-labels``
+is a mapping; each key is a label, the corresponding value
+is either a table name or an HTSQL expression enclosed in
+parentheses.
+
+To rename table ``classification`` to ``c14n`` and to assign
+a label to expression ``school^campus``, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      class-labels:
+        - c14n: classification
+        - campus: (school^campus)
+
+Use parameter ``field-labels`` to assign custom labels
+to table fields.  This parameter is a mapping; each
+key has a form ``<table>.<field>``, where ``<table>``
+is the table label, ``<field>`` is the field label
+to define.  The corresponding value is one of:
+
+* a column name;
+* a link specification;
+* an HTSQL expression enclosed in parentheses.
+
+A link specification is a comma-separated list of
+patterns ``<origin>(<column>,...) -> <target>(<column>,...)``.
+Each pattern must match a foreign key or a reverse foreign
+key.  Column lists could be omitted if the foreign key
+could be determined uniquely.
+
+To rename a column ``student.name`` to ``full_name``, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      field-labels:
+        student.full_name: name
+
+To add a many-to-many link between ``student`` and ``class``
+via ``enrollment`` table, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      field-labels:
+        student.class: student -> enrollment, enrollment -> class
+        class.student: class -> enrollment, enrollment -> student
+
+Note that link specifier ``student -> enrollment`` uniquely
+matches foreign key ``enrollment(student_id) -> student(id)``
+while ``enrollment -> class`` matches foreign key
+``enrollment(class_seq) -> class(class_seq)`` so we do not
+need to provide column lists.
+
+The self-referential link from ``program`` to all included
+programs is called, by default, ``program.program_via_part_of``.
+To assign a different label to this link, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      field-labels:
+        program.includes:
+          program(school_code, code) -> program(school_code, part_of_code)
+
+To define a calculated field ``student.avg_grade``, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      field-labels:
+        student.avg_grade: (avg(enrollment.grade))
+
+By default, when an HTSQL query does not contain a selector
+expression, all table columns are displayed.  To set a custom
+list of fields for this case, use parameter ``field-orders``.
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      field-orders:
+        program: [code, title, degree]
+
+Parameter ``unlabeled-tables`` is a list of tables without an
+assigned labels, which effectively hides the tables from the users.
+The tables could still be used in SQL generated by the HTSQL
+translator.
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      unlabeled-tables: [enrollment]
+
+Parameter ``unlabeled-columns`` is a list of columns without
+an assigned tables.  Unlabeled columns are hidden from the users,
+but could be used in SQL generated by the HTSQL translator.
+
+To hide all ``id`` columns, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      unlabeled-columns: [id, "*_id"]
+
+.. **
+
+``tweak.resource``
+------------------
+
+This extension adds a mechanism for serving static files via HTTP.
+This mechanism is used by other extensions to provide access to
+static resources such as Javascript and CSS files.
+
+Parameters:
+
+`indicator`
+    HTTP root for static files, excluding leading and trailing ``/``
+    (default: ``-``)
 
 
 ``tweak.shell``
 ---------------
 
-This extension module adds a command ``/shell()`` which takes any query
-and populates visual editor with syntax highlighting (using the
-excellent CodeMirror_ library).  As you modify the query, the URL
-changes so it can be bookmarked.
+This extension adds an in-browser HTSQL editor called the HTSQL shell.
+The shell provides a visual query editor (based on CodeMirror_) with
+support for syntax highlighting and code completion.
 
-The ``tweak.shell.default`` plugin will make ``/shell()`` the 
-default command, replacing the regular HTML output.
+The shell is invoked by command ``/shell()``, which takes an optional
+query to edit.
+
+Parameters:
+
+`server-root`
+    The root URL of the HTSQL server (default: guess)
+`limit`
+    Truncation threshold for shell output (default: 1000)
+
+.. sourcecode:: yaml
+
+    tweak.shell:
+      server-root: http://demo.htsql.org
+      limit: 100
+
+Enable addon ``tweak.shell.default`` to make the shell the default
+output format.
+
+.. sourcecode:: yaml
+
+    tweak.shell.default:
 
 .. _CodeMirror: http://codemirror.net/
-
-``tweak.autolimit``
--------------------
-
-To help deployments ensure against accidental denial of
-service, this plugin automatically truncates output from
-a query to a given number of rows (10k default).  The 
-``limit`` parameter can be customized to change the 
-truncation limit.
-
-``tweak.timeout``
------------------
-
-To help deployments ensure against accidental denial of
-service, this plugin automatically limits all queries to
-a given number of ``timeout`` seconds (the default is 60s).  
-This plugin is currently only supported by PostgreSQL.
-
-``tweak.cors``
---------------
-
-This plugin adds CORS headers in order to enable cross
-site scripting for public data servers.  This permits
-modern browsers to bypass JSONP and other hacks used
-to work around XSS protection.
 
 ``tweak.sqlalchemy``
 --------------------
 
-This plugin provides SQLAlchemy integration in two ways.
-First, if the dburi is omitted, it attempts to use the
-database connection from SQLAlchemy.  Secondly, it uses
-the SQLAlchemy model instead of introspecting.
+This extension provides integration with SQLAlchemy_ toolkit.
+It replaces built-in HTSQL database introspection and
+connection handling with SQLAlchemy facilities.
 
-``tweak.view``
---------------
+When using ``tweak.sqlalchemy`` addon, do not specify the
+connection URI as it is determined from the SQLAlchemy
+engine settings.
 
-This plugin attempts to guess at various links 
-between views and tables (where foreign keys are
-not defined).  This is only supported in PostgreSQL.
+Parameters:
 
-``tweak.system``
-----------------
+`engine`
+    The SQLAlchemy engine object.
+`metadata`
+    The SQLAlchemy metadata object.
 
-This plugin adds the system catalog tables and links for the
-database's native system catalog.  This is supported only for
-PostgreSQL.
+The value must have the form ``<module>.<attr>`` or
+``<package>.<module>.<attr>``.
+
+.. sourcecode:: yaml
+
+    tweak.sqlalchemy:
+      engine: sademo.engine
+      metadata: sademo.metadata
+
+.. _SQLAlchemy: http://www.sqlalchemy.org/
+
+``tweak.timeout``
+-----------------
+
+This extension limits query execution to a given amount
+of time (1 minute by default).  Use it to ensure
+against accidental denial of service caused by complex
+queries.
+
+Parameters:
+
+`timeout`
+    The timeout value, in seconds (default: 60).
+
+.. sourcecode:: yaml
+
+    tweak.timeout:
+      timeout: 300
+
+Currently, this addon is only supported with PostgreSQL.
+
 
 .. vim: set spell spelllang=en textwidth=72:
