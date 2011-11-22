@@ -1,15 +1,129 @@
-***********************
-  HTSQL Configuration
-***********************
+*******************************
+  Using and Configuring HTSQL
+*******************************
 
 .. highlight:: console
 
-The following instructions assume you've installed HTSQL and wish to
-configure extensions or "tweaks".
+
+Usage
+=====
+
+``htsql-ctl``
+-------------
+
+Installing HTSQL creates a command-line application ``htsql-ctl``::
+
+    $ htsql-ctl
+
+The ``htsql-ctl`` script is a collection of subcommands called
+*routines*.  The command-line syntax of ``htsql-ctl`` is
+
+::
+
+    $ htsql-ctl <routine> [options] [arguments]
+
+* ``<routine>`` is the routine name;
+* ``options`` are any routine options in short (``-X``)
+  or long (``--option-name``) form;
+* ``arguments`` are routine arguments.
+
+To get a list of routines, run::
+
+    $ htsql-ctl help
+
+To describe a specific routine, run::
+
+    $ htsql-ctl help <routine>
+
+Database Connection
+-------------------
+
+Many routines require a connection URI parameter, which specifies how to
+connect to a database.  The connection URI has the form:
+
+.. sourcecode:: text
+
+    <engine>://<user>:<pass>@<host>:<port>/<database>
+
+* ``<engine>`` is the type of the database server; ``sqlite`` for
+  SQLite, ``pgsql`` for PostgreSQL, ``mysql`` for MySQL, ``mssql`` for
+  MS SQL Server, ``oracle`` for Oracle.
+* ``<user>:<pass>`` are authentication parameters;
+* ``<host>:<port>`` is the address of the database server;
+* ``<database>`` is the name of the database.
+
+For SQLite, ``<user>:<pass>`` and ``<host>:<port>`` are omitted, and
+``<database>`` specifies the path to the database file.  Thus, to
+connect to SQLite database ``htsql_demo.db`` located in the
+current directory, use the URI:
+
+.. sourcecode:: text
+
+    sqlite:htsql_demo.db
+
+For PostgreSQL, if ``user:pass`` is omitted, the credentials of the
+current user are used; if ``host:port`` is omitted, the server is
+assumed to run on the local machine.  Thus, to connect to a database
+``htsql_demo`` running on the same host under credentials of the
+current user, use the URI:
+
+.. sourcecode:: text
+
+    pgsql:htsql_demo
+
+Other database servers use similar conventions.
+
+You can use option ``-p`` to prompt for a password if you do not want
+to specify the database password in a command line.
+
+Command-line Shell
+------------------
+
+To start a command-line HTSQL shell, run::
+
+    $ htsql-ctl shell <DBURI>
+
+That starts an interactive HTSQL shell, where you could type and execute
+HTSQL queries against the specified database.
+
+For example, to start the shell on a PostgreSQL database ``htsql_demo``,
+run::
+
+    $ htsql-ctl shell pgsql:htsql_demo
+
+    Interactive HTSQL Shell
+    Type 'help' for more information, 'exit' to quit the shell.
+    htsql_demo$
+
+For more details on the ``shell`` routine, run::
+
+    $ htsql-ctl help shell
+
+HTTP Server
+-----------
+
+To start a web server running HTSQL, run::
+
+    $ htsql-ctl server <DBURI> [<HOST> [<PORT>]]
+
+That starts an HTTP server on the address ``<HOST>:<PORT>``.
+If ``<HOST>`` and ``<PORT>`` are omitted, the server is started on
+``*:8080``.
+
+For example, to start the HTSQL web server against PostgreSQL
+database ``htsql_demo`` on ``localhost:3128``, run::
+
+    $ htsql-ctl server pgsql:htsql_demo localhost 3128
+
+    Starting an HTSQL server on localhost:3128 over htsql_demo
+
+For more details on the ``server`` routine, run::
+
+    $ htsql-ctl help server
 
 
-Addon Mechanism
-===============
+Extension Mechanism
+===================
 
 HTSQL has an extensive addon system that can be used to override almost
 every aspect of server operation or query construction with an adapter.
@@ -19,7 +133,7 @@ extensions, you could type::
 
     $ htsql-ctl extension
 
-To find out more about a plugin, such as ``tweak.autolimit``, write::
+To find out more about an extension, such as ``tweak.autolimit``, write::
 
     $ htsql-ctl extension tweak.autolimit
 
@@ -80,7 +194,7 @@ file for a PostgreSQL database with some addons enabled.
     tweak.timeout:
       timeout: 600
 
-You can then start the built-in demonstration web server::
+You can then start the built-in web server::
 
   $ htsql-ctl serve -C demo-config.yaml
 

@@ -1,17 +1,15 @@
-************************
-  HTSQL Administration
-************************
+******************************
+  HTSQL Administration Guide
+******************************
 
-This document describes administration of an HTSQL server.  We start
-with discussing installation and configuration.  This guide also
-contains a list of extensions which can be used to augment the default
-server behavior.
+This document describes how to install, run and configure HTSQL.  It also
+contains instructions on deploying HTSQL in various environments.
 
 .. toctree::
    :maxdepth: 2
 
    install
-   config
+   usage
    deploy
    cloud 
 

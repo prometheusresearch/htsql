@@ -5,7 +5,8 @@
 .. highlight:: console
 
 The following instructions assume you've installed HTSQL and wish
-to deploy it to an existing webserver.
+to deploy it to an existing web server.
+
 
 Deployment
 ==========
