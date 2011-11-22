@@ -5,5 +5,5 @@ Priority: optional
 Architecture: all
 Maintainer: Clark C. Evans <cce@clarkevans.com>
 Depends: htsql, python-mysqldb
-Description: HTSQL with PostgreSQL
- A meta-package for installing HTSQL with PostgreSQL client
+Description: HTSQL with MySQL
+ A meta-package for installing HTSQL with MySQL client.
