@@ -320,8 +320,10 @@ list of host names::
 
     http[s]://domain[:port]
 
-The default settings permit HTSQL queries from any domain.
-**Do not use the default settings with non-public data!**
+.. warning::
+
+    The default settings permit HTSQL queries from any domain.
+    Do not use the default settings with non-public data!
 
 For example, to enable AJAX requests to the HTSQL demo server
 (located at http://demo.htsql.org/) from domains http://htsql.org/
@@ -506,8 +508,10 @@ If some constraints are not explicitly defined in the schema,
 you may provide them using parameters ``not-nulls``, ``unique-keys``
 and ``foreign-keys``.
 
-**When specifying additional constraints, make sure they are respected
-by the data; otherwise, the output produced by HTSQL may be invalid.**
+.. warning::
+
+    When specifying additional constraints, make sure they are respected
+    by the data; otherwise, the output produced by HTSQL may be invalid.
 
 Parameter ``not-nulls`` is a list of columns with ``NOT NULL``
 constraints.

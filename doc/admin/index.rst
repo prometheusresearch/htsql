@@ -1,6 +1,6 @@
-******************************
-  HTSQL Administration Guide
-******************************
+************************
+  HTSQL Administration
+************************
 
 This document describes how to install, run and configure HTSQL.  It also
 contains instructions on deploying HTSQL in various environments.
