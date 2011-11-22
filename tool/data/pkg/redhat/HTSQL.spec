@@ -1,7 +1,7 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           HTSQL
-Version:        2.2.0b2
+Version:        2.2.0c1
 Release:        1%{?dist}
 Summary:        navigational query language for relational databases
 
@@ -88,5 +88,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*
 
 %changelog
+* Tue Nov 22 2011 Clark C. Evans <cce@clarkevans.com> - 2.2.0c1-1
+- Upstream release
 * Fri Nov 11 2011 Clark C. Evans <cce@clarkevans.com> - 2.2.0b2-1
 - Initial packaging 
