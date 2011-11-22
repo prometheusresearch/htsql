@@ -28801,7 +28801,7 @@ tests:
               </head>
 
               <body data-database-name="build/regress/sqlite/htsql_demo.sqlite"
-                    data-htsql-version="2.2.0b2"
+                    data-htsql-version="2.2.0c1"
                     data-server-root="http://127.0.0.1"
                     data-query-on-start="/"
                     data-evaluate-on-start="false"
@@ -28936,7 +28936,7 @@ tests:
               </head>
 
               <body data-database-name="build/regress/sqlite/htsql_demo.sqlite"
-                    data-htsql-version="2.2.0b2"
+                    data-htsql-version="2.2.0c1"
                     data-server-root="http://127.0.0.1"
                     data-query-on-start="/"
                     data-evaluate-on-start="false"

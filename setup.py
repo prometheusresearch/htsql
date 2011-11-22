@@ -109,11 +109,19 @@ INSTALL_REQUIRES = [
 class sdist(_sdist):
 
     def make_release_tree(self, base_dir, files):
+        # On `--dry-run`, create the `base_dir`; otherwise setuptools fails.
+        if self.dry_run:
+            if not os.path.exists(base_dir):
+                os.mkdir(base_dir)
         # Populate the release tree.
         _sdist.make_release_tree(self, base_dir, files)
+        # Remove `base_dir` if we previously created it.
+        if self.dry_run:
+            shutil.rmtree(base_dir)
         # `setup.cfg` is overriden by setuptools, so copy it back.
         release_setup_cfg = os.path.join(base_dir, 'setup.cfg')
-        os.unlink(release_setup_cfg)
+        if os.path.exists(release_setup_cfg):
+            os.unlink(release_setup_cfg)
         self.copy_file('setup.cfg', release_setup_cfg)
         # Check if we have source documentation.
         if not os.path.isfile('doc/conf.py'):
@@ -128,6 +136,9 @@ class sdist(_sdist):
         sys.path.append(os.path.join(root, 'src'))
         # Instantiate and run Sphinx builder.
         log.info("compiling documentation")
+        # Do not do anything on `--dry-run`.
+        if self.dry_run:
+            return
         srcdir = os.path.abspath('doc')
         confdir = srcdir
         outdir = os.path.abspath(os.path.join(base_dir, 'doc'))

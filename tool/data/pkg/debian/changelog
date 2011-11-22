@@ -1,3 +1,9 @@
+htsql (2.2.0~c1-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Kirill Simonov <xi@resolvent.net>  Mon, 21 Nov 2011 22:11:02 -0500
+
 htsql (2.2.0~b2-1) unstable; urgency=low
 
   * initial .deb distribution based on 9/22 release

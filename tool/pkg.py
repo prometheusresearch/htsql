@@ -6,6 +6,7 @@
 
 from job import job, log, debug, fatal, warn, run, rmtree, mktree, pipe
 from vm import LinuxBenchVM, WindowsBenchVM, DATA_ROOT, CTL_DIR
+from dist import setup_py
 import os, glob, re
 
 KEYSIG = '8E70D862' # identifier for HTSQL package signing key
@@ -45,6 +46,7 @@ def pkg_src():
     for filename in sorted(glob.glob("./build/pkg/src/*")):
         log("  `%s`" % filename)
     log()
+
 
 class Packager(object):
 
@@ -90,6 +92,7 @@ class Packager(object):
         log("  %s/`%s`" % (self.build_path, self.build_file))
         log()
 
+
 class DEB_Packager(Packager):
 
     def __init__(self):
@@ -128,6 +131,7 @@ def pkg_deb():
     packager = DEB_Packager()
     packager()
 
+
 class RPM_Packager(Packager):
 
     def __init__(self):
@@ -156,3 +160,24 @@ def pkg_rpm():
     """
     packager = RPM_Packager()
     packager()
+
+
+@job
+def pypi():
+    """upload the source distribution to PyPI
+
+    This job uploads `zip` and `tar.gz` source distributions
+    to PyPI.  The distributions must be already built with
+    `job pkg-src`.
+    """
+    if not (glob.glob("./build/pkg/src/HTSQL-*.tar.gz") and
+            glob.glob("./build/pkg/src/HTSQL-*.zip")):
+        raise fatal("cannot find a source package; run `job pkg-src` first")
+    setup_py("sdist --formats=zip,gztar --dist-dir=build/pkg/src --dry-run"
+             " register upload --sign --identity="+KEYSIG)
+    log()
+    log("Source distribution archives are uploaded to:")
+    log("  `http://pypi.python.org/pypi/HTSQL/`")
+    log()
+
+

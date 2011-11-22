@@ -1,6 +1,6 @@
-******************************
-  HTSQL Installation & Usage
-******************************
+********************
+  Installing HTSQL
+********************
 
 .. highlight:: console
 
@@ -93,107 +93,6 @@ or from `HTSQL source`_ repository.
 .. _cx_Oracle: http://pypi.python.org/pypi/cx_Oracle
 .. _Mercurial: http://mercurial.selenic.com/
 .. _HTSQL source: http://bitbucket.org/prometheus/htsql
-
-
-Usage
-=====
-
-The ``htsql-ctl`` Executable
-----------------------------
-
-Installing HTSQL creates a command-line application ``htsql-ctl``::
-
-    $ htsql-ctl
-
-The ``htsql-ctl`` script is a collection of subcommands called
-*routines*.  The command-line syntax of ``htsql-ctl`` is
-
-::
-
-    $ htsql-ctl <routine> [options] [arguments]
-
-* ``<routine>`` is the routine name;
-* ``options`` are any routine options in short (``-X``)
-  or long (``--option-name``) form;
-* ``arguments`` are routine arguments.
-
-To get a list of routines, run::
-
-    $ htsql-ctl help
-
-To describe a specific routine, run::
-
-    $ htsql-ctl help <routine>
-
-.. _dburi:
-
-Database Connection
--------------------
-
-Many routines require a ``DBURI`` parameter, which specifies how to
-connect to a database.  ``DBURI`` has the form:
-
-.. sourcecode:: text
-
-    engine://user:pass@host:port/database
-
-* ``engine`` is the type of the database server; ``sqlite`` for SQLite,
-  ``pgsql`` for PostgreSQL, ``mysql`` for MySQL, ``mssql`` for MS SQL Server,
-  ``oracle`` for Oracle.
-* ``user:pass`` are authentication parameters;
-* ``host:port`` is the address of the database server;
-* ``database`` is the name of the database.
-
-For SQLite, ``user:pass`` and ``host:port`` are omitted, and ``database``
-specifies the path to the database file.  Thus, for SQLite, ``DBURI`` has
-the form:
-
-.. sourcecode:: text
-
-    sqlite:/path/to/database
-
-For PostgreSQL, if ``user:pass`` is omitted, the credentials of the
-current user are used; if ``host:port`` is omitted, the server is
-assumed to run on the local machine.  Thus, to connect to a database
-running on the same host under credentials of the current user, use
-the form:
-
-.. sourcecode:: text
-
-    pgsql:database
-
-Other database servers use similar conventions.
-
-You can use option ``-p`` to prompt for a password if you do not want
-to specify the database password in a command line.
-
-Command-line Shell
-------------------
-
-To start a command-line HTSQL shell, run::
-
-    $ htsql-ctl shell DBURI
-
-That starts an interactive HTSQL shell, where you could type and execute
-HTSQL queries against the specified database.
-
-For more details on the ``shell`` routine, run::
-
-    $ htsql-ctl help shell
-
-HTTP Server
------------
-
-To start an HTTP server running HTSQL, run::
-
-    $ htsql-ctl server DBURI [HOST [PORT]]
-
-That starts an HTTP server on the address ``HOST:PORT``.  If ``HOST``
-and ``PORT`` are omitted, the server is started on ``*:8080``.
-
-For more details on the ``server`` routine, run::
-
-    $ htsql-ctl help server
 
 
 .. vim: set spell spelllang=en textwidth=72:
