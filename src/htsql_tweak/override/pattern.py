@@ -257,10 +257,12 @@ class ColumnArcPattern(ArcPattern):
         assert isinstance(column_pattern, unicode)
         self.column_pattern = column_pattern
 
-    def extract(self, node):
+    def extract(self, node, parameters):
         assert isinstance(node, Node)
         if not isinstance(node, TableNode):
-            return 
+            return
+        if parameters is not None:
+            return
         matched_column = None
         for column in node.table.columns:
             if not matches(column, self.column_pattern):
@@ -286,9 +288,11 @@ class TableArcPattern(ArcPattern):
         self.schema_pattern = schema_pattern
         self.table_pattern = table_pattern
 
-    def extract(self, node):
+    def extract(self, node, parameters):
         assert isinstance(node, Node)
         if not isinstance(node, HomeNode):
+            return
+        if parameters is not None:
             return
         catalog = introspect()
         matched_table = None
@@ -399,9 +403,11 @@ class ChainArcPattern(ArcPattern):
                 and len(join_patterns) > 0)
         self.join_patterns = join_patterns
 
-    def extract(self, node):
+    def extract(self, node, parameters):
         assert isinstance(node, Node)
         if not isinstance(node, TableNode):
+            return
+        if parameters is not None:
             return
         table = node.table
         joins = []
@@ -425,9 +431,9 @@ class SyntaxArcPattern(ArcPattern):
         assert isinstance(syntax, Syntax)
         self.syntax = syntax
 
-    def extract(self, node):
+    def extract(self, node, parameters):
         assert isinstance(node, Node)
-        return SyntaxArc(node, self.syntax)
+        return SyntaxArc(node, parameters, self.syntax)
 
     def __unicode__(self):
         return unicode(self.syntax)
@@ -761,29 +767,13 @@ class FieldPatternVal(Validator):
 
 class LabelVal(Validator):
 
-    pattern = """ ^ \w+ $ """
-    regexp = re.compile(pattern, re.X|re.U)
-
-    def __call__(self, value):
-        if value is None:
-            return ValueError("the null value is not permitted")
-        if isinstance(value, str):
-            value = value.decode('utf-8', 'replace')
-        if isinstance(value, unicode):
-            if not self.regexp.match(value):
-                raise ValueError("expected label, got %r"
-                                 % value.encode('utf-8'))
-            value = normalize(value)
-        else:
-            raise ValueError("expected label, got %r" % value)
-        return value
-
-
-class QLabelVal(Validator):
-
     pattern = """
         ^
-        (?P<qualifier> \w+ ) \s*\.\s* (?P<label> \w+ )
+        (?P<label> \w+ )
+        \s*
+        (?: \( \s*
+            (?P<parameters> (?: \$?\w+ (?: \s*,\s* \$?\w+ )* \s*,? )? )
+        \s* \) )?
         $
     """
     regexp = re.compile(pattern, re.X|re.U)
@@ -798,8 +788,68 @@ class QLabelVal(Validator):
             if match is None:
                 raise ValueError("expected label, got %r"
                                  % value.encode('utf-8'))
-            value = (normalize(match.group('qualifier')),
-                     normalize(match.group('label')))
+            label = normalize(match.group('label'))
+            parameters = None
+            if match.group('parameters') is not None:
+                parameters = []
+                for parameter in match.group('parameters').split(','):
+                    name = parameter.strip()
+                    if not name:
+                        continue
+                    is_reference = False
+                    if name.startswith(u"$"):
+                        is_reference = True
+                        name = name[1:]
+                    name = normalize(name)
+                    parameters.append((name, is_reference))
+                parameters = tuple(parameters)
+            value = (label, parameters)
+        else:
+            raise ValueError("expected label, got %r" % value)
+        return value
+
+
+class QLabelVal(Validator):
+
+    pattern = """
+        ^
+        (?P<qualifier> \w+ )
+        \s*\.\s* (?P<label> \w+ )
+        \s*
+        (?: \( \s*
+            (?P<parameters> (?: \$?\w+ (?: \s*,\s* \$?\w+ )* \s*,? )? )
+        \s* \) )?
+        $
+    """
+    regexp = re.compile(pattern, re.X|re.U)
+
+    def __call__(self, value):
+        if value is None:
+            return ValueError("the null value is not permitted")
+        if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
+            match = self.regexp.match(value)
+            if match is None:
+                raise ValueError("expected label, got %r"
+                                 % value.encode('utf-8'))
+            qualifier = normalize(match.group('qualifier'))
+            label = normalize(match.group('label'))
+            parameters = None
+            if match.group('parameters') is not None:
+                parameters = []
+                for parameter in match.group('parameters').split(','):
+                    name = parameter.strip()
+                    if not name:
+                        continue
+                    is_reference = False
+                    if name.startswith(u"$"):
+                        is_reference = True
+                        name = name[1:]
+                    name = normalize(name)
+                    parameters.append((name, is_reference))
+                parameters = tuple(parameters)
+            value = (qualifier, label, parameters)
         else:
             raise ValueError("expected label, got %r" % value)
         return value

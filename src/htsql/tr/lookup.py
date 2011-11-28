@@ -236,7 +236,8 @@ class PrescribeSyntax(Prescribe):
     adapts(SyntaxArc)
 
     def __call__(self):
-        recipe = SubstitutionRecipe(self.binding, [], None, self.arc.syntax)
+        recipe = SubstitutionRecipe(self.binding, [], self.arc.parameters,
+                                    self.arc.syntax)
         return ClosedRecipe(recipe)
 
 
@@ -386,14 +387,12 @@ class LookupAttributeInHome(Lookup):
     adapts(HomeBinding, AttributeProbe)
 
     def __call__(self):
-        # Ignore probes for parameterized attributes.
-        if self.probe.arity is not None:
-            return None
         labels = classify(HomeNode())
-        label_by_name = dict((label.name, label) for label in labels)
-        if self.probe.key not in label_by_name:
+        label_by_signature = dict(((label.name, label.arity), label)
+                                  for label in labels)
+        if (self.probe.key, self.probe.arity) not in label_by_signature:
             return None
-        label = label_by_name[self.probe.key]
+        label = label_by_signature[self.probe.key, self.probe.arity]
         recipe = prescribe(label.arc, self.binding)
         return recipe
 
@@ -441,14 +440,12 @@ class LookupAttributeInTable(Lookup):
     adapts(TableBinding, AttributeProbe)
 
     def __call__(self):
-        # Ignore probes for parameterized attributes.
-        if self.probe.arity is not None:
-            return None
         labels = classify(TableNode(self.binding.table))
-        label_by_name = dict((label.name, label) for label in labels)
-        if self.probe.key not in label_by_name:
+        label_by_signature = dict(((label.name, label.arity), label)
+                                  for label in labels)
+        if (self.probe.key, self.probe.arity) not in label_by_signature:
             return None
-        label = label_by_name[self.probe.key]
+        label = label_by_signature[self.probe.key, self.probe.arity]
         recipe = prescribe(label.arc, self.binding)
         return recipe
 

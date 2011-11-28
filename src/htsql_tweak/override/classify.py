@@ -18,47 +18,57 @@ class ClassCache(object):
 
     def __init__(self):
         self.names_by_arc = {}
-        self.arc_by_name = {}
+        self.arc_by_signature = {}
         addon = context.app.tweak.override
         catalog = introspect()
         node = HomeNode()
-        for name in sorted(addon.class_labels):
-            pattern = addon.class_labels[name]
-            arc = pattern.extract(node)
+        for name, parameters in sorted(addon.class_labels):
+            pattern = addon.class_labels[name, parameters]
+            arity = None
+            if parameters is not None:
+                parameters = list(parameters)
+                arity = len(parameters)
+            signature = (name, arity)
+            arc = pattern.extract(node, parameters)
             if arc is None:
                 addon.unused_pattern_cache.add(str(pattern))
                 continue
             self.names_by_arc.setdefault(arc, []).append(name)
-            self.arc_by_name[name] = arc
+            self.arc_by_signature[signature] = arc
 
 
 class FieldCache(object):
 
     def __init__(self):
         self.names_by_arc_by_node = {}
-        self.arc_by_name_by_node = {}
-        self.node_by_name = {}
+        self.arc_by_signature_by_node = {}
+        self.node_by_signature = {}
         self.name_by_node = {}
         addon = context.app.tweak.override
         for label in classify(HomeNode()):
-            self.node_by_name[label.name] = label.target
+            self.node_by_signature[label.name, label.arity] = label.target
             self.name_by_node[label.target] = label.name
-        for class_name, field_name in sorted(addon.field_labels):
+        for class_name, field_name, parameters in sorted(addon.field_labels):
+            pattern = addon.field_labels[class_name, field_name, parameters]
+            arity = None
+            if parameters is not None:
+                parameters = list(parameters)
+                arity = len(parameters)
+            signature = (field_name, arity)
             name = u"%s.%s" % (class_name, field_name)
-            pattern = addon.field_labels[class_name, field_name]
-            if class_name not in self.node_by_name:
+            if (class_name, None) not in self.node_by_signature:
                 addon.unused_pattern_cache.add(name.encode('utf-8'))
                 continue
-            node = self.node_by_name[class_name]
-            arc = pattern.extract(node)
+            node = self.node_by_signature[class_name, None]
+            arc = pattern.extract(node, parameters)
             if arc is None:
                 addon.unused_pattern_cache.add(str(pattern))
                 continue
             self.names_by_arc_by_node.setdefault(node, {})
             self.names_by_arc_by_node[node].setdefault(arc, [])
             self.names_by_arc_by_node[node][arc].append(field_name)
-            self.arc_by_name_by_node.setdefault(node, {})
-            self.arc_by_name_by_node[node][field_name] = arc
+            self.arc_by_signature_by_node.setdefault(node, {})
+            self.arc_by_signature_by_node[node][signature] = arc
 
 
 @once
@@ -78,8 +88,8 @@ class OverrideTraceHome(TraceHome):
         cache = class_cache()
         arcs = []
         arcs.extend(super(OverrideTraceHome, self).__call__())
-        for name in sorted(cache.arc_by_name):
-            arc = cache.arc_by_name[name]
+        for signature in sorted(cache.arc_by_signature):
+            arc = cache.arc_by_signature[signature]
             arcs.append(arc)
         for arc in arcs:
             if isinstance(arc, TableArc):
@@ -96,9 +106,9 @@ class OverrideTraceTable(TraceTable):
         cache = field_cache()
         arcs = []
         arcs.extend(super(OverrideTraceTable, self).__call__())
-        arc_by_name = cache.arc_by_name_by_node.get(self.node, {})
-        for name in sorted(arc_by_name):
-            arc = arc_by_name[name]
+        arc_by_signature = cache.arc_by_signature_by_node.get(self.node, {})
+        for signature in sorted(arc_by_signature):
+            arc = arc_by_signature[signature]
             arcs.append(arc)
         for arc in arcs:
             if isinstance(arc, ColumnArc):
@@ -181,15 +191,18 @@ class OverrideOrderTable(OrderTable):
         addon = context.app.tweak.override
         cache = field_cache()
         class_name = cache.name_by_node.get(self.node)
-        if class_name not in addon.field_orders:
+        if (class_name, None) not in addon.field_orders:
             return super(OverrideOrderTable, self).__call__()
-        names = set(label.name for label in self.labels)
+        names = set(label.name for label in self.labels
+                               if label.arity is None)
         orders = {}
-        for idx, name in enumerate(addon.field_orders[class_name]):
-            orders[name] = idx
-            if name not in names:
+        for idx, (name, parameters) \
+                in enumerate(addon.field_orders[class_name, None]):
+            if name not in names or parameters is not None:
                 name = u"%s.%s" % (class_name, name)
                 addon.unused_pattern_cache.add(name.encode('utf-8'))
+            else:
+                orders[name] = idx
         labels = [label.clone(is_public=(label.name in orders))
                   for label in self.labels]
         labels.sort(key=(lambda label: (label.name not in orders,
@@ -201,11 +214,12 @@ class OverrideOrderTable(OrderTable):
 def validate():
     addon = context.app.tweak.override
     cache = field_cache()
-    for name in sorted(addon.field_orders):
-        if name not in cache.node_by_name:
+    for name, parameters in sorted(addon.field_orders):
+        if (parameters is not None or
+                (name, None) not in cache.node_by_signature):
             addon.unused_pattern_cache.add(name.encode('utf-8'))
             continue
-        node = cache.node_by_name[name]
+        node = cache.node_by_signature[name, None]
         classify(node)
 
 

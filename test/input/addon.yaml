@@ -331,9 +331,21 @@ tests:
         class-labels:
           c14n: classification
           campus: (school^campus)
+          active_students(): (student?is_active)
+          students_by_year($year): (student?year(start_date)=$year)
   - uri: /count(c14n)
   - uri: /campus{campus, count(school)}
   - uri: /classification
+    expect: 400
+  - uri: /active_students().limit(10)
+  - uri: /students_by_year(2010){name, dob, start_date}.limit(10)
+  - uri: /active_students
+    expect: 400
+  - uri: /active_students(2010)
+    expect: 400
+  - uri: /students_by_year
+    expect: 400
+  - uri: /students_by_year()
     expect: 400
 
   # Test `field-labels` and `field-orders`
@@ -345,6 +357,8 @@ tests:
           student.full_name: name
           student.class: student -> enrollment, enrollment -> class
           student.avg_grade: (avg(enrollment.grade))
+          program.active_students(): (student?is_active)
+          program.students_by_year($year): (student?year(start_date)=$year)
         field-orders:
           student: [full_name, gender, dob, avg_grade]
           program: [code, title, degree]
@@ -353,6 +367,46 @@ tests:
     expect: 400
   - uri: /student?count(class)>55
   - uri: /student.name
+    expect: 400
+  - uri: /(program?code='gart').active_students()
+  - uri: /(program?code='gart').students_by_year(2010)
+                {full_name, dob, start_date}
+  - uri: /program.active_students
+    expect: 400
+  - uri: /program.active_students(2010)
+    expect: 400
+  - uri: /program.students_by_year
+    expect: 400
+  - uri: /program.students_by_year()
+    expect: 400
+
+  # Test duplicate labels with different number of parameters.
+  - load: demo
+    extensions:
+      tweak.override:
+        class-labels:
+          active_students: (active_students())
+          active_students(): (active_students(2010))
+          active_students($year): (active_students($year, {'f','m'}))
+          active_students($year, $gender):
+                (student?is_active&year(start_date)=$year&gender=$gender)
+        field-labels:
+          program.active_students: (active_students())
+          program.active_students(): (active_students(2010))
+          program.active_students($year): (active_students($year, {'f','m'}))
+          program.active_students($year, $gender):
+                (student?is_active&year(start_date)=$year&gender=$gender)
+  - uri: /active_students{name, gender, start_date}.limit(5)
+  - uri: /active_students(){name, gender, start_date}.limit(5)
+  - uri: /active_students(2009){name, gender, start_date}.limit(5)
+  - uri: /active_students(2009, 'm'){name, gender, start_date}.limit(5)
+  - uri: /active_students(2009, 'm', 'phd')
+    expect: 400
+  - uri: /(program?code='gart').active_students{name, gender, start_date}
+  - uri: /(program?code='gart').active_students(){name, gender, start_date}
+  - uri: /(program?code='gart').active_students(2009){name, gender, start_date}
+  - uri: /(program?code='gart').active_students(2009, 'm'){name, gender, start_date}
+  - uri: /(program?code='gart').active_students(2009, 'm', 'phd')
     expect: 400
 
   # Test `unlabeled_tables` and `unlabeled_columns`

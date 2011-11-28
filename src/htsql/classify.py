@@ -56,26 +56,33 @@ class Classify(Adapter):
                 names_by_weight.setdefault(weight, set()).add(name)
                 arcs_by_bid.setdefault(bid, []).append(arc)
 
-        arc_by_name = {}
+        arc_by_signature = {}
         name_by_arc = {}
-        rejections_by_name = {}
+        rejections_by_signature = {}
 
         for weight in sorted(names_by_weight, reverse=True):
             names = sorted(names_by_weight[weight],
                            key=(lambda name: (len(name), name)))
             for name in names:
-                contenders = arcs_by_bid[name, weight]
-                if name in arc_by_name:
-                    continue
-                if len(contenders) > 1 or name in rejections_by_name:
-                    rejections_by_name.setdefault(name, []).extend(contenders)
-                    continue
-                [arc] = contenders
-                if arc in name_by_arc:
-                    rejections_by_name[name] = [arc]
-                    continue
-                arc_by_name[name] = arc
-                name_by_arc[arc] = name
+                contenders_by_arity = {}
+                for arc in arcs_by_bid[name, weight]:
+                    contenders_by_arity.setdefault(arc.arity, []).append(arc)
+                for arity in sorted(contenders_by_arity):
+                    signature = (name, arity)
+                    contenders = contenders_by_arity[arity]
+                    if signature in arc_by_signature:
+                        continue
+                    if (len(contenders) > 1 or
+                            signature in rejections_by_signature):
+                        rejections_by_signature.setdefault(signature, [])
+                        rejections_by_signature[signature].extend(contenders)
+                        continue
+                    [arc] = contenders
+                    if arc in name_by_arc:
+                        rejections_by_signature[signature] = [arc]
+                        continue
+                    arc_by_signature[signature] = arc
+                    name_by_arc[arc] = name
 
         labels = []
         for arc in arcs:
@@ -84,15 +91,16 @@ class Classify(Adapter):
             name = name_by_arc[arc]
             label = Label(name, arc, False)
             labels.append(label)
-        for name in sorted(rejections_by_name):
+        for signature in sorted(rejections_by_signature):
+            name, arity = signature
             alternatives = []
             duplicates = set()
-            for arc in rejections_by_name[name]:
+            for arc in rejections_by_signature[signature]:
                 if arc in duplicates:
                     continue
                 alternatives.append(arc)
                 duplicates.add(arc)
-            arc = AmbiguousArc(alternatives)
+            arc = AmbiguousArc(arity, alternatives)
             label = Label(name, arc, False)
             labels.append(label)
 

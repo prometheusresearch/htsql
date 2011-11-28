@@ -4,7 +4,7 @@
 #
 
 
-from .util import Comparable, Printable, Clonable, maybe, listof
+from .util import Comparable, Printable, Clonable, maybe, listof, tupleof
 from .domain import Domain
 from .entity import TableEntity, ColumnEntity, Join
 from .tr.syntax import Syntax
@@ -20,15 +20,17 @@ class Node(Model):
 
 class Arc(Model):
 
-    def __init__(self, origin, target, is_expanding, is_contracting,
+    def __init__(self, origin, target, arity, is_expanding, is_contracting,
                  equality_vector):
         assert isinstance(origin, Node)
         assert isinstance(target, Node)
+        assert isinstance(arity, maybe(int))
         assert isinstance(is_expanding, bool)
         assert isinstance(is_contracting, bool)
         super(Arc, self).__init__(equality_vector)
         self.origin = origin
         self.target = target
+        self.arity = arity
         self.is_expanding = is_expanding
         self.is_contracting = is_contracting
 
@@ -42,17 +44,21 @@ class Label(Clonable, Printable):
         assert isinstance(name, unicode)
         assert isinstance(arc, Arc)
         assert isinstance(is_public, bool)
+        assert arc.arity is None or not is_public
         self.name = name
         self.arc = arc
         self.origin = arc.origin
         self.target = arc.target
+        self.arity = arc.arity
         self.is_expanding = arc.is_expanding
         self.is_contracting = arc.is_contracting
         self.is_public = is_public
 
     def __str__(self):
-        return "%s (%s): %s -> %s" % (self.name.encode('utf-8'), self.arc,
-                                      self.origin, self.target)
+        return "%s%s (%s): %s -> %s" % (self.name.encode('utf-8'),
+                                        "(%s)" % ",".join(["_"]*self.arity)
+                                        if self.arity is not None else "",
+                                        self.arc, self.origin, self.target)
 
 
 class HomeNode(Node):
@@ -111,6 +117,7 @@ class TableArc(Arc):
         super(TableArc, self).__init__(
                 origin=HomeNode(),
                 target=TableNode(table),
+                arity=None,
                 is_expanding=False,
                 is_contracting=False,
                 equality_vector=(table,))
@@ -129,6 +136,7 @@ class ChainArc(Arc):
         super(ChainArc, self).__init__(
                 origin=TableNode(joins[0].origin),
                 target=TableNode(joins[-1].target),
+                arity=None,
                 is_expanding=all(join.is_expanding for join in joins),
                 is_contracting=all(join.is_contracting for join in joins),
                 equality_vector=(table, tuple(joins),))
@@ -156,6 +164,7 @@ class ColumnArc(Arc):
         super(ColumnArc, self).__init__(
                 origin=TableNode(table),
                 target=DomainNode(column.domain),
+                arity=None,
                 is_expanding=(not column.is_nullable),
                 is_contracting=True,
                 equality_vector=(table, column))
@@ -169,14 +178,19 @@ class ColumnArc(Arc):
 
 class SyntaxArc(Arc):
 
-    def __init__(self, origin, syntax):
+    def __init__(self, origin, parameters, syntax):
+        assert isinstance(parameters, maybe(listof(tupleof(unicode, bool))))
         assert isinstance(syntax, Syntax)
         super(SyntaxArc, self).__init__(
                 origin=origin,
                 target=UnknownNode(),
+                arity=(len(parameters) if parameters is not None else None),
                 is_expanding=False,
                 is_contracting=False,
-                equality_vector=(origin, syntax))
+                equality_vector=(origin, tuple(parameters)
+                                         if parameters is not None else None,
+                                 syntax))
+        self.parameters = parameters
         self.syntax = syntax
 
     def __str__(self):
@@ -185,11 +199,12 @@ class SyntaxArc(Arc):
 
 class InvalidArc(Arc):
 
-    def __init__(self, origin, equality_vector):
+    def __init__(self, origin, arity, equality_vector):
         assert isinstance(origin, Node)
         super(InvalidArc, self).__init__(
                 origin=origin,
                 target=InvalidNode(),
+                arity=arity,
                 is_expanding=False,
                 is_contracting=False,
                 equality_vector=equality_vector)
@@ -200,13 +215,14 @@ class InvalidArc(Arc):
 
 class AmbiguousArc(InvalidArc):
 
-    def __init__(self, alternatives):
+    def __init__(self, arity, alternatives):
         assert isinstance(alternatives, listof(Arc)) and len(alternatives) > 0
         origin = alternatives[0].origin
         assert all(alternative.origin == origin
                    for alternative in alternatives)
         super(AmbiguousArc, self).__init__(
                 origin=origin,
+                arity=arity,
                 equality_vector=(origin, tuple(alternatives)))
         self.alternatives = alternatives
 

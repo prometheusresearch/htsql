@@ -28627,6 +28627,103 @@ tests:
             bind error: unknown attribute 'classification':
                 /classification
                  ^^^^^^^^^^^^^^
+        - uri: /active_students().limit(10)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students()                                                                                |
+             +--------------------------------------------------------------------------------------------------+
+             | id   | name          | gender | dob        | school_code | program_code | start_date | is_active |
+            -+------+---------------+--------+------------+-------------+--------------+------------+-----------+-
+             | 1001 | Linda Wright  | f      | 1988-10-03 | ns          | umth         | 2007-08-15 | true      |
+             | 1002 | Beth Thompson | f      | 1988-01-24 | ns          | gmth         | 2007-08-15 | true      |
+             | 1003 | Sheri Sanchez | f      | 1985-05-14 | edu         | gedu         | 2007-08-15 | true      |
+             | 1004 | John Stone    | m      | 1984-01-28 | bus         | pbusad       | 2007-08-15 | true      |
+             | 1005 | Helen Johnson | f      | 1986-02-03 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1006 | Anna Carroll  | f      | 1985-03-29 | edu         | gedu         | 2007-08-15 | true      |
+             | 1007 | Carol Walden  | f      | 1988-04-09 | ns          | uphys        | 2007-08-15 | true      |
+             | 1008 | Mark Melton   | m      | 1984-06-05 | edu         | psci         | 2007-08-15 | true      |
+             | 1009 | Frances Moore | f      | 1985-10-25 | eng         | ucompsci     | 2007-08-15 | true      |
+             | 1010 | Judy Flynn    | f      | 1986-09-02 | la          | uspan        | 2007-08-15 | true      |
+                                                                                                        (10 rows)
+
+             ----
+             /active_students().limit(10)
+             SELECT `student`.`id`,
+                    `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`dob`,
+                    `student`.`school_code`,
+                    `student`.`program_code`,
+                    `student`.`start_date`,
+                    `student`.`is_active`
+             FROM `student`
+             WHERE `student`.`is_active`
+             ORDER BY 1 ASC
+             LIMIT 10
+        - uri: /students_by_year(2010){name, dob, start_date}.limit(10)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | students_by_year(2010)                      |
+             +---------------------------------------------+
+             | name              | dob        | start_date |
+            -+-------------------+------------+------------+-
+             | Juanita Gustafson | 1988-12-27 | 2010-08-15 |
+             | Rochelle Adams    | 1988-12-28 | 2010-08-15 |
+             | Pamela Lee        | 1990-05-13 | 2010-08-15 |
+             | Adan Rodgers      | 1986-08-15 | 2010-08-15 |
+             | Deborah Williams  | 1989-11-18 | 2010-08-15 |
+             | Ross Roy          | 1986-10-03 | 2010-08-15 |
+             | Michael Moore     | 1987-09-22 | 2010-08-15 |
+             | Peggy Jones       | 1992-09-13 | 2010-08-15 |
+             | Marcia Carpenter  | 1992-03-12 | 2010-08-15 |
+             | Monica Bailey     | 1991-07-19 | 2010-08-15 |
+                                                   (10 rows)
+
+             ----
+             /students_by_year(2010){name,dob,start_date}.limit(10)
+             SELECT `student`.`name`,
+                    `student`.`dob`,
+                    `student`.`start_date`
+             FROM `student`
+             WHERE (EXTRACT(YEAR FROM `student`.`start_date`) = 2010)
+             ORDER BY `student`.`id` ASC
+             LIMIT 10
+        - uri: /active_students
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown attribute 'active_students':
+                /active_students
+                 ^^^^^^^^^^^^^^^
+        - uri: /active_students(2010)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown function 'active_students':
+                /active_students(2010)
+                 ^^^^^^^^^^^^^^^^^^^^^
+        - uri: /students_by_year
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown attribute 'students_by_year':
+                /students_by_year
+                 ^^^^^^^^^^^^^^^^
+        - uri: /students_by_year()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown function 'students_by_year':
+                /students_by_year()
+                 ^^^^^^^^^^^^^^^^^^
         - uri: /program?exists(includes)
           status: 200 OK
           headers:
@@ -28708,6 +28805,332 @@ tests:
             bind error: unknown attribute 'name':
                 /student.name
                          ^^^^
+        - uri: /(program?code='gart').active_students()
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students()                                |
+             +--------------------------------------------------+
+             | full_name      | gender | dob        | avg_grade |
+            -+----------------+--------+------------+-----------+-
+             | Robert Johnson | m      | 1982-08-24 |  2.365306 |
+             | Carlos Sanchez | m      | 1982-12-10 |  2.533333 |
+             | Justin Thomas  | m      | 1983-10-25 |  2.186111 |
+             | Merle Johnson  | m      | 1983-10-14 |  2.400000 |
+             | Eddie Lucas    | m      | 1984-06-28 |  2.329167 |
+             | Ronald Barber  | m      | 1984-12-14 |  2.295833 |
+             | Peter Molina   | m      | 1985-07-14 |  2.125000 |
+             | Lester Lewis   | m      | 1985-07-12 |  2.246154 |
+             | Sidney Delgado | m      | 1985-07-02 |  2.321429 |
+                                                         (9 rows)
+
+             ----
+             /(program?code='gart').active_students()
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`dob`,
+                    `enrollment`.`avg`
+             FROM `program`
+                  INNER JOIN `student`
+                             ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+                  LEFT OUTER JOIN (SELECT AVG(`enrollment`.`grade`) AS `avg`,
+                                          `enrollment`.`student_id`
+                                   FROM `enrollment`
+                                   GROUP BY 2) AS `enrollment`
+                                  ON (`student`.`id` = `enrollment`.`student_id`)
+             WHERE `student`.`is_active`
+                   AND (`program`.`code` = 'gart')
+             ORDER BY `program`.`school_code` ASC, `program`.`code` ASC, `student`.`id` ASC
+        - uri: /(program?code='gart').students_by_year(2010) {full_name, dob, start_date}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | students_by_year(2010)                   |
+             +------------------------------------------+
+             | full_name      | dob        | start_date |
+            -+----------------+------------+------------+-
+             | Peter Molina   | 1985-07-14 | 2010-08-15 |
+             | William Bell   | 1985-04-27 | 2010-08-15 |
+             | Lester Lewis   | 1985-07-12 | 2010-08-15 |
+             | Sidney Delgado | 1985-07-02 | 2010-08-15 |
+             | Micheal Joyner | 1985-04-16 | 2010-08-15 |
+                                                 (5 rows)
+
+             ----
+             /(program?code='gart').students_by_year(2010){full_name,dob,start_date}
+             SELECT `student`.`name`,
+                    `student`.`dob`,
+                    `student`.`start_date`
+             FROM `program`
+                  INNER JOIN `student`
+                             ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+             WHERE (EXTRACT(YEAR FROM `student`.`start_date`) = 2010)
+                   AND (`program`.`code` = 'gart')
+             ORDER BY `program`.`school_code` ASC, `program`.`code` ASC, `student`.`id` ASC
+        - uri: /program.active_students
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown attribute 'active_students':
+                /program.active_students
+                         ^^^^^^^^^^^^^^^
+        - uri: /program.active_students(2010)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown function 'active_students':
+                /program.active_students(2010)
+                         ^^^^^^^^^^^^^^^^^^^^^
+        - uri: /program.students_by_year
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown attribute 'students_by_year':
+                /program.students_by_year
+                         ^^^^^^^^^^^^^^^^
+        - uri: /program.students_by_year()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown function 'students_by_year':
+                /program.students_by_year()
+                         ^^^^^^^^^^^^^^^^^^
+        - uri: /active_students{name, gender, start_date}.limit(5)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students                         |
+             +-----------------------------------------+
+             | name              | gender | start_date |
+            -+-------------------+--------+------------+-
+             | Juanita Gustafson | f      | 2010-08-15 |
+             | Rochelle Adams    | f      | 2010-08-15 |
+             | Pamela Lee        | f      | 2010-08-15 |
+             | Adan Rodgers      | m      | 2010-08-15 |
+             | Deborah Williams  | f      | 2010-08-15 |
+                                                (5 rows)
+
+             ----
+             /active_students{name,gender,start_date}.limit(5)
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `student`
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2010)
+                   AND (`student`.`gender` IN ('f', 'm'))
+             ORDER BY `student`.`id` ASC
+             LIMIT 5
+        - uri: /active_students(){name, gender, start_date}.limit(5)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students()                       |
+             +-----------------------------------------+
+             | name              | gender | start_date |
+            -+-------------------+--------+------------+-
+             | Juanita Gustafson | f      | 2010-08-15 |
+             | Rochelle Adams    | f      | 2010-08-15 |
+             | Pamela Lee        | f      | 2010-08-15 |
+             | Adan Rodgers      | m      | 2010-08-15 |
+             | Deborah Williams  | f      | 2010-08-15 |
+                                                (5 rows)
+
+             ----
+             /active_students(){name,gender,start_date}.limit(5)
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `student`
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2010)
+                   AND (`student`.`gender` IN ('f', 'm'))
+             ORDER BY `student`.`id` ASC
+             LIMIT 5
+        - uri: /active_students(2009){name, gender, start_date}.limit(5)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students(2009)                  |
+             +----------------------------------------+
+             | name             | gender | start_date |
+            -+------------------+--------+------------+-
+             | Shannon Mays     | f      | 2009-08-15 |
+             | Rosemarie Haney  | f      | 2009-08-15 |
+             | Eric Dougherty   | m      | 2009-08-15 |
+             | Concepcion Crain | f      | 2009-08-15 |
+             | Denise Thomas    | f      | 2009-08-15 |
+                                               (5 rows)
+
+             ----
+             /active_students(2009){name,gender,start_date}.limit(5)
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `student`
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2009)
+                   AND (`student`.`gender` IN ('f', 'm'))
+             ORDER BY `student`.`id` ASC
+             LIMIT 5
+        - uri: /active_students(2009, 'm'){name, gender, start_date}.limit(5)
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students(2009,'m')            |
+             +--------------------------------------+
+             | name           | gender | start_date |
+            -+----------------+--------+------------+-
+             | Eric Dougherty | m      | 2009-08-15 |
+             | Travis Lee     | m      | 2009-08-15 |
+             | Dennis Hendrix | m      | 2009-08-15 |
+             | Earl Lewis     | m      | 2009-08-15 |
+             | Gary Jones     | m      | 2009-08-15 |
+                                             (5 rows)
+
+             ----
+             /active_students(2009,'m'){name,gender,start_date}.limit(5)
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `student`
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2009)
+                   AND (`student`.`gender` = 'm')
+             ORDER BY `student`.`id` ASC
+             LIMIT 5
+        - uri: /active_students(2009, 'm', 'phd')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown function 'active_students':
+                /active_students(2009, 'm', 'phd')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /(program?code='gart').active_students{name, gender, start_date}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students                      |
+             +--------------------------------------+
+             | name           | gender | start_date |
+            -+----------------+--------+------------+-
+             | Peter Molina   | m      | 2010-08-15 |
+             | Lester Lewis   | m      | 2010-08-15 |
+             | Sidney Delgado | m      | 2010-08-15 |
+                                             (3 rows)
+
+             ----
+             /(program?code='gart').active_students{name,gender,start_date}
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `program`
+                  INNER JOIN `student`
+                             ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2010)
+                   AND (`student`.`gender` IN ('f', 'm'))
+                   AND (`program`.`code` = 'gart')
+             ORDER BY `program`.`school_code` ASC, `program`.`code` ASC, `student`.`id` ASC
+        - uri: /(program?code='gart').active_students(){name, gender, start_date}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students()                    |
+             +--------------------------------------+
+             | name           | gender | start_date |
+            -+----------------+--------+------------+-
+             | Peter Molina   | m      | 2010-08-15 |
+             | Lester Lewis   | m      | 2010-08-15 |
+             | Sidney Delgado | m      | 2010-08-15 |
+                                             (3 rows)
+
+             ----
+             /(program?code='gart').active_students(){name,gender,start_date}
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `program`
+                  INNER JOIN `student`
+                             ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2010)
+                   AND (`student`.`gender` IN ('f', 'm'))
+                   AND (`program`.`code` = 'gart')
+             ORDER BY `program`.`school_code` ASC, `program`.`code` ASC, `student`.`id` ASC
+        - uri: /(program?code='gart').active_students(2009){name, gender, start_date}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students(2009)               |
+             +-------------------------------------+
+             | name          | gender | start_date |
+            -+---------------+--------+------------+-
+             | Eddie Lucas   | m      | 2009-08-15 |
+             | Ronald Barber | m      | 2009-08-15 |
+                                            (2 rows)
+
+             ----
+             /(program?code='gart').active_students(2009){name,gender,start_date}
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `program`
+                  INNER JOIN `student`
+                             ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2009)
+                   AND (`student`.`gender` IN ('f', 'm'))
+                   AND (`program`.`code` = 'gart')
+             ORDER BY `program`.`school_code` ASC, `program`.`code` ASC, `student`.`id` ASC
+        - uri: /(program?code='gart').active_students(2009, 'm'){name, gender, start_date}
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | active_students(2009,'m')           |
+             +-------------------------------------+
+             | name          | gender | start_date |
+            -+---------------+--------+------------+-
+             | Eddie Lucas   | m      | 2009-08-15 |
+             | Ronald Barber | m      | 2009-08-15 |
+                                            (2 rows)
+
+             ----
+             /(program?code='gart').active_students(2009,'m'){name,gender,start_date}
+             SELECT `student`.`name`,
+                    `student`.`gender`,
+                    `student`.`start_date`
+             FROM `program`
+                  INNER JOIN `student`
+                             ON ((`program`.`school_code` = `student`.`school_code`) AND (`program`.`code` = `student`.`program_code`))
+             WHERE `student`.`is_active`
+                   AND (EXTRACT(YEAR FROM `student`.`start_date`) = 2009)
+                   AND (`student`.`gender` = 'm')
+                   AND (`program`.`code` = 'gart')
+             ORDER BY `program`.`school_code` ASC, `program`.`code` ASC, `student`.`id` ASC
+        - uri: /(program?code='gart').active_students(2009, 'm', 'phd')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unknown function 'active_students':
+                /(program?code='gart').active_students(2009, 'm', 'phd')
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /student{name}?count(class)>55
           status: 200 OK
           headers:
