@@ -19287,6 +19287,21 @@ tests:
                       COUNT((CASE WHEN ("course"."credits" = 2) THEN 1 END)),
                       COUNT((CASE WHEN ("course"."credits" = 3) THEN 1 END))
                FROM "course"
+          - uri: /{count(student?is_active), count(student)}
+            status: 200 OK
+            headers:
+            - [Content-Type, text/plain; charset=UTF-8]
+            body: |2
+               | count(student?is_active) | count(student) |
+              -+--------------------------+----------------+-
+               |                      427 |            456 |
+                                                     (1 row)
+
+               ----
+               /{count(student?is_active),count(student)}
+               SELECT COUNT((CASE WHEN "student"."is_active" THEN 1 END)),
+                      COUNT(1)
+               FROM "student"
           - uri: /department{code, school{count(program?degree='ph'), count(program?degree='bs')},
               count(school.program?degree='ph'), count(school.program?degree='bs')}?code='mth'
             status: 200 OK

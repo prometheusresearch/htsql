@@ -120,6 +120,8 @@ tests:
              count(course?credits=1),
              count(course?credits=2),
              count(course?credits=3)}
+    # Test case for a bug when truncating candidate matching flows.
+    - uri: /{count(student?is_active), count(student)}
     # Reduce to two batches.
     - uri: /department{code,
                        school{count(program?degree='ph'), count(program?degree='bs')},

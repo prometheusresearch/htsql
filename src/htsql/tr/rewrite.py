@@ -410,7 +410,7 @@ class Recombine(Utility):
             # Find the common prefix of `candidate_flows` and
             # `alternate_flows`.
             if len(alternate_flows) < len(candidate_flows):
-                candidate_flows = candidate_flows[-len(alternate_flows):]
+                candidate_flows = candidate_flows[:len(alternate_flows)]
             for idx in range(len(candidate_flows)):
                 if candidate_flows[idx] != alternate_flows[idx]:
                     assert idx > 0
