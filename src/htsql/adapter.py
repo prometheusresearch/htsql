@@ -74,33 +74,7 @@ class Component(object):
         # A shortcut: return cached components.
         if registry.components is not None:
             return registry.components
-        # Packages exported by the addons of the active application.
-        packages = set()
-        for addon in context.app.addons:
-            # In Python 2.6+:
-            # root_package = sys.modules[addon.__module__].__package__
-            root_package = addon.__module__
-            if not hasattr(sys.modules[root_package], '__path__'):
-                root_package = root_package.rsplit('.', 1)[0]
-            # An addon exports packages defined in `packages` attribute.
-            for package in addon.packages:
-                # Resolve relative package names.
-                if package == '.':
-                    package = root_package
-                elif package.startswith('.'):
-                    package = root_package+package
-                packages.add(package)
-        # All modules exported by the addons.
-        modules = set()
-        for module in sorted(sys.modules):
-            # In Python 2.6+:
-            # package = sys.modules[module].__package__
-            package = module
-            if not hasattr(sys.modules[package], '__path__'):
-                package = package.rsplit('.', 1)[0]
-            if package in packages:
-                modules.add(module)
-        # A list of `Component` subclasses defined in the `modules`.
+        # A list of `Component` subclasses defined in modules exported by addons.
         components = [Component]
         idx = 0
         while idx < len(components):
@@ -108,7 +82,8 @@ class Component(object):
                 # Skip realizations.
                 if issubclass(subclass, Realization):
                     continue
-                if subclass.__module__ in modules:
+                # Check if the component belongs to the current application.
+                if subclass.active():
                     components.append(subclass)
             idx += 1
         # Cache and return the components.
@@ -232,6 +207,14 @@ class Component(object):
         # Cache and return the realization.
         registry.realizations[interface, dispatch_key] = realization
         return realization
+
+    @classmethod
+    def active(component):
+        """
+        Tests if the component is a part of the current application.
+        """
+        registry = context.app.component_registry
+        return (component.__module__ in registry.modules)
 
     @classmethod
     def implements(component, interface):
@@ -601,8 +584,35 @@ class ComponentRegistry(object):
     Contains cached components and realizations.
     """
 
-    def __init__(self):
-        # List of active components (populated by `Component.component()`).
+    def __init__(self, addons):
+        # Packages exported by addons.
+        packages = set()
+        for addon in addons:
+            # In Python 2.6+:
+            # root_package = sys.modules[addon.__module__].__package__
+            root_package = addon.__module__
+            if not hasattr(sys.modules[root_package], '__path__'):
+                root_package = root_package.rsplit('.', 1)[0]
+            # An addon exports packages defined in `packages` attribute.
+            for package in addon.packages:
+                # Resolve relative package names.
+                if package == '.':
+                    package = root_package
+                elif package.startswith('.'):
+                    package = root_package+package
+                packages.add(package)
+        # All modules exported by the addons.
+        modules = set()
+        for module in sorted(sys.modules):
+            # In Python 2.6+:
+            # package = sys.modules[module].__package__
+            package = module
+            if not hasattr(sys.modules[package], '__path__'):
+                package = package.rsplit('.', 1)[0]
+            if package in packages:
+                modules.add(module)
+        self.modules = modules
+        # List of active components (populated by `Component.components()`).
         self.components = None
         # A mapping: interface -> [components]  (populated by
         # `Component.implementations()`).

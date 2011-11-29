@@ -425,6 +425,18 @@ tests:
   - uri: /student.id
     expect: 400
 
+  # Test `globals`
+  - load: demo
+    extensions:
+      tweak.override:
+        globals:
+          curr_date: date('2010-04-15')
+          max_dob(): max(@student{dob})
+          trunc_year(d): date(year(d),1,1)
+  - uri: /(student{name, dob}?date(start_date)>curr_date).limit(10)
+  - uri: /student{name, dob}?dob>max_dob()-30
+  - uri: /student^trunc_year(dob){*, count(^)}
+
 # TWEAK.RESOURCE - serve static files
 - title: tweak.resource
   tests:

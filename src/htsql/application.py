@@ -36,7 +36,6 @@ class Application(object):
                 listof(oneof(str,
                              tupleof(str, maybe(dictof(str, object))),
                              dictof(str, maybe(dictof(str, object))))))
-        self.component_registry = ComponentRegistry()
         self.addons = []
         htsql_extension = {'htsql': {} }
         if db is not None:
@@ -130,6 +129,7 @@ class Application(object):
                 addon_instance_by_name[addon_name] = addon_instance
         for addon_name in sorted(addon_instance_by_name):
             self.addons.append(addon_instance_by_name[addon_name])
+        self.component_registry = ComponentRegistry(self.addons)
         with self:
             for addon in self.addons:
                 try:

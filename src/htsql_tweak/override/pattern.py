@@ -4,6 +4,7 @@
 #
 
 
+from htsql.context import context
 from htsql.util import Printable, Comparable, listof, maybe
 from htsql.validator import Validator
 from htsql.entity import (CatalogEntity, NamedEntity, SchemaEntity,
@@ -13,11 +14,14 @@ from htsql.model import (Node, HomeNode, TableNode, Arc, TableArc, ColumnArc,
                          ChainArc, SyntaxArc)
 from htsql.introspect import introspect
 from htsql.classify import normalize
-from htsql.tr.parse import parse, GroupParser
+from htsql.tr.parse import parse, GroupParser, TopParser
 from htsql.tr.syntax import Syntax
+from htsql.tr.bind import BindByName
+from htsql.tr.binding import SubstitutionRecipe, ClosedRecipe
 from htsql.tr.error import TranslateError
 import fnmatch
 import re
+import weakref
 
 
 def matches(entity, pattern):
@@ -439,6 +443,51 @@ class SyntaxArcPattern(ArcPattern):
         return unicode(self.syntax)
 
 
+class BindGlobal(BindByName):
+
+    app = None
+    parameters = None
+    body = None
+
+    @classmethod
+    def active(component):
+        if component.app is None:
+            return super(BindGlobal, component).active()
+        return (component.app() is context.app)
+
+    def __call__(self):
+        recipe = SubstitutionRecipe(self.state.scope, [],
+                                    self.parameters, self.body)
+        recipe = ClosedRecipe(recipe)
+        return self.state.use(recipe, self.syntax)
+
+
+class GlobalPattern(ArcPattern):
+
+    def __init__(self, syntax):
+        assert isinstance(syntax, Syntax)
+        self.syntax = syntax
+
+    def register(self, app, name, parameters):
+        assert isinstance(name, unicode)
+        class_name = "Bind%s" % name.title().replace('_', '').encode('utf-8')
+        arity = None
+        if parameters is not None:
+            arity = len(parameters)
+            parameters = list(parameters)
+        namespace = {
+            'app': weakref.ref(app),
+            'names': [(name.encode('utf-8'), arity)],
+            'parameters': parameters,
+            'body': self.syntax,
+        }
+        bind_class = type(class_name, (BindGlobal,), namespace)
+        return bind_class
+
+    def __unicode__(self):
+        return unicode(self.syntax)
+
+
 class TablePatternVal(Validator):
 
     pattern = r"""
@@ -762,6 +811,24 @@ class FieldPatternVal(Validator):
                 assert False
         if not isinstance(value, ArcPattern):
             raise ValueError("expected field pattern, got %r" % value)
+        return value
+
+
+class GlobalPatternVal(Validator):
+
+    def __call__(self, value):
+        if value is None:
+            return ValueError("the null value is not permitted")
+        if isinstance(value, str):
+            value = value.decode('utf-8', 'replace')
+        if isinstance(value, unicode):
+            try:
+                syntax = parse(value, TopParser)
+            except TranslateError, exc:
+                raise ValueError(str(exc))
+            value = GlobalPattern(syntax)
+        if not isinstance(value, GlobalPattern):
+            raise ValueError("expected global pattern, got %r" % value)
         return value
 
 

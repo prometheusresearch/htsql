@@ -839,7 +839,7 @@ class BindByRecipe(Adapter):
     from binding recipes.  The :class:`BindByRecipe` interface
     has the following signature::
 
-        BindByName: (Recipe, Syntax, BindingState) -> Binding
+        BindByRecipe: (Recipe, Syntax, BindingState) -> Binding
 
     The adapter is polymorphic by the first argument.
 
