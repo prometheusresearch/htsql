@@ -29251,7 +29251,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            parse error: expected NAME; got SYMBOL u'/':
+            parse error: unexpected symbol '/':
                 /-/not-found
                   ^
         - uri: /;)/not-found
@@ -29922,7 +29922,6 @@ tests:
             scan error: symbol '%' must be followed by two hexdecimal digits:
                 /%27?%@$'
                      ^
-            (use '%25' to represent '%' literally)
         - uri: /'%FF'
           status: 400 Bad Request
           headers:
@@ -29945,3 +29944,101 @@ tests:
             scan error: unexpected symbol '`':
                 /`Hello'
                  ^
+      - id: parse-errors
+        tests:
+        - uri: /'Hello','World'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: expected the end of query; got ',':
+                /'Hello','World'
+                        ^
+        - uri: school
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: query must start with symbol '/':
+                school
+                ^^^^^^
+        - uri: /school/:1
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: symbol '/' must be followed by ':' and an identifier:
+                /school/:1
+                       ^
+        - uri: /school/:html(/program}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: cannot find a matching ')':
+                /school/:html(/program}
+                             ^^^^^^^^^
+        - uri: /school:1
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: symbol ':' must be followed by an identifier:
+                /school:1
+                       ^
+        - uri: /school :as ('School'}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: cannot find a matching ')':
+                /school :as ('School'}
+                            ^^^^^^^^^
+        - uri: /school{code,name)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: cannot find a matching '}':
+                /school{code,name)
+                       ^^^^^^^^^^
+        - uri: /count(school}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: cannot find a matching ')':
+                /count(school}
+                      ^^^^^^^
+        - uri: /school{code,name,
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: unexpected end of query:
+                /school{code,name,
+                                  ^
+        - uri: /school{code,,name}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: unexpected symbol ',':
+                /school{code,,name}
+                             ^
+        - uri: /(2+2}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: cannot find a matching ')':
+                /(2+2}
+                 ^^^^
+        - uri: /{count(school))
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            parse error: cannot find a matching '}':
+                /{count(school))
+                 ^^^^^^^^^^^^^^

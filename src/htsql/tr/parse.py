@@ -21,6 +21,7 @@ from .syntax import (QuerySyntax, SegmentSyntax, CommandSyntax, SelectorSyntax,
                      AssignmentSyntax, SpecifierSyntax, GroupSyntax,
                      IdentifierSyntax, WildcardSyntax, ComplementSyntax,
                      ReferenceSyntax, StringSyntax, NumberSyntax)
+from .error import ParseError
 
 
 class Parser(object):
@@ -62,7 +63,10 @@ class Parser(object):
         # Parse the input query.
         syntax = self.process(tokens)
         # Ensure that we reached the end of the token stream.
-        tokens.pop(EndToken)
+        if not tokens.pop(EndToken, do_force=False):
+            token = tokens.pop()
+            raise ParseError("expected the end of query; got '%s'" % token,
+                             token.mark)
         return syntax
 
     @classmethod
@@ -159,7 +163,10 @@ class SegmentParser(Parser):
         # Expect:
         #   segment     ::= '/' ( top command* )?
         #   command     ::= '/' ':' identifier ( '/' top? | call | flow )?
-        head_token = tokens.pop(SymbolToken, [u'/'])
+        head_token = tokens.pop(SymbolToken, [u'/'], do_force=False)
+        if not head_token:
+            token = tokens.pop()
+            raise ParseError("query must start with symbol '/'", token.mark)
         branch = None
         if not (tokens.peek(EndToken) or
                 tokens.peek(SymbolToken, [u',', u')', u'}'])):
@@ -168,7 +175,10 @@ class SegmentParser(Parser):
                 tail_token = tokens.pop(SymbolToken, [u'/'])
                 if not (tokens.peek(EndToken) or
                         tokens.peek(SymbolToken, [u',', u')', u'}'])):
-                    tokens.pop(SymbolToken, [u':'])
+                    if not (tokens.pop(SymbolToken, [u':'], do_force=False) and
+                            tokens.peek(NameToken)):
+                        raise ParseError("symbol '/' must be followed by ':'"
+                                         " and an identifier", tail_token.mark)
                     mark = Mark.union(head_token, branch)
                     lbranch = SegmentSyntax(branch, mark)
                     identifier = IdentifierParser << tokens
@@ -187,15 +197,19 @@ class SegmentParser(Parser):
                                 rbranch = SegmentSyntax(rbranch, mark)
                                 rbranches.append(rbranch)
                         elif tokens.peek(SymbolToken, [u'(']):
-                            tokens.pop(SymbolToken, [u'('])
+                            open_token = tokens.pop(SymbolToken, [u'('])
                             while not tokens.peek(SymbolToken, [u')']):
                                 if tokens.peek(SymbolToken, [u'/']):
                                     rbranch = SegmentParser << tokens
                                 else:
                                     rbranch = TopParser << tokens
                                 rbranches.append(rbranch)
-                                if not tokens.peek(SymbolToken, [u')']):
-                                    tokens.pop(SymbolToken, [u',', u')'])
+                                if tokens.peek(SymbolToken, [u',']):
+                                    tokens.pop(SymbolToken, [u','])
+                                elif not tokens.peek(SymbolToken, [u')']):
+                                    mark = Mark.union(open_token, *rbranches)
+                                    raise ParseError("cannot find a matching"
+                                                     " ')'", mark)
                             tail_token = tokens.pop(SymbolToken, [u')'])
                         else:
                             rbranch = FlowParser << tokens
@@ -230,20 +244,27 @@ class TopParser(Parser):
             # Parse `mapping` application.
             else:
                 symbol_token = tokens.pop(SymbolToken, [u':'])
+                if not tokens.peek(NameToken):
+                    raise ParseError("symbol ':' must be followed by"
+                                     " an identifier", symbol_token.mark)
                 identifier = IdentifierParser << tokens
                 lbranch = top
                 rbranches = []
                 # Mapping parameters in parentheses.
                 if tokens.peek(SymbolToken, [u'(']):
-                    tokens.pop(SymbolToken, [u'('])
+                    open_token = tokens.pop(SymbolToken, [u'('])
                     while not tokens.peek(SymbolToken, [u')']):
                         if tokens.peek(SymbolToken, [u'/']):
                             rbranch = SegmentParser << tokens
                         else:
                             rbranch = TopParser << tokens
                         rbranches.append(rbranch)
-                        if not tokens.peek(SymbolToken, [u')']):
-                            tokens.pop(SymbolToken, [u',', u')'])
+                        if tokens.peek(SymbolToken, [u',']):
+                            tokens.pop(SymbolToken, [u','])
+                        elif not tokens.peek(SymbolToken, [u')']):
+                            mark = Mark.union(open_token, *rbranches)
+                            raise ParseError("cannot find a matching ')'",
+                                             mark)
                     tail_token = tokens.pop(SymbolToken, [u')'])
                     mark = Mark.union(top, tail_token)
                 # No parenthesis: either no parameters or a single parameter.
@@ -290,7 +311,8 @@ class FlowParser(Parser):
                 rbranch = DisjunctionParser << tokens
                 mark = Mark.union(lbranch, rbranch)
                 flow = QuotientSyntax(lbranch, rbranch, mark)
-            elif tokens.peek(SymbolToken, [u'{'], do_pop=True):
+            elif tokens.peek(SymbolToken, [u'{']):
+                open_token = tokens.pop(SymbolToken, [u'{'])
                 lbranch = flow
                 rbranches = []
                 while not tokens.peek(SymbolToken, [u'}']):
@@ -299,11 +321,12 @@ class FlowParser(Parser):
                     else:
                         rbranch = TopParser << tokens
                     rbranches.append(rbranch)
-                    if not tokens.peek(SymbolToken, [u'}']):
-                        # We know it's not going to be '}', but we put it into
-                        # the list of accepted values to generate a better
-                        # error message.
-                        tokens.pop(SymbolToken, [u',', u'}'])
+                    if tokens.peek(SymbolToken, [u',']):
+                        tokens.pop(SymbolToken, [u','])
+                    elif not tokens.peek(SymbolToken, [u'}']):
+                        mark = Mark.union(open_token, *rbranches)
+                        raise ParseError("cannot find a matching '}'",
+                                         mark)
                 tail_token = tokens.pop(SymbolToken, [u'}'])
                 mark = Mark.union(flow, tail_token)
                 flow = SelectorSyntax(lbranch, rbranches, mark)
@@ -571,7 +594,7 @@ class AtomParser(Parser):
         elif tokens.peek(NameToken):
             identifier = IdentifierParser << tokens
             if tokens.peek(SymbolToken, [u'(']):
-                tokens.pop(SymbolToken, [u'('])
+                open_token = tokens.pop(SymbolToken, [u'('])
                 branches = []
                 while not tokens.peek(SymbolToken, [u')']):
                     if tokens.peek(SymbolToken, [u'/']):
@@ -579,8 +602,11 @@ class AtomParser(Parser):
                     else:
                         rbranch = TopParser << tokens
                     branches.append(rbranch)
-                    if not tokens.peek(SymbolToken, [u')']):
-                        tokens.pop(SymbolToken, [u',', u')'])
+                    if tokens.peek(SymbolToken, [u',']):
+                        tokens.pop(SymbolToken, [u','])
+                    elif not tokens.peek(SymbolToken, [u')']):
+                        mark = Mark.union(open_token, *branches)
+                        raise ParseError("cannot find a matching ')'", mark)
                 tail_token = tokens.pop(SymbolToken, [u')'])
                 mark = Mark.union(identifier, tail_token)
                 function = FunctionSyntax(identifier, branches, mark)
@@ -590,6 +616,9 @@ class AtomParser(Parser):
         # A reference.
         elif tokens.peek(SymbolToken, [u'$']):
             head_token = tokens.pop(SymbolToken, [u'$'])
+            if not tokens.peek(NameToken):
+                raise ParseError("symbol '$' must be followed by an identifier",
+                                 head_token.mark)
             identifier = IdentifierParser << tokens
             mark = Mark.union(head_token, identifier)
             reference = ReferenceSyntax(identifier, mark)
@@ -602,8 +631,12 @@ class AtomParser(Parser):
         elif tokens.peek(NumberToken):
             token = tokens.pop(NumberToken)
             return NumberSyntax(token.value, token.mark)
-        # We expect it to always produce an error message.
-        tokens.pop(NameToken)
+        # Can't find anything suitable; produce an error message.
+        token = tokens.pop()
+        if token.is_end:
+            raise ParseError("unexpected end of query", token.mark)
+        else:
+            raise ParseError("unexpected symbol '%s'" % token, token.mark)
         # Not reachable.
         assert False
 
@@ -619,7 +652,10 @@ class GroupParser(Parser):
         #   group       ::= '(' top ')'
         head_token = tokens.pop(SymbolToken, [u'('])
         branch = TopParser << tokens
-        tail_token = tokens.pop(SymbolToken, [u')'])
+        tail_token = tokens.pop(SymbolToken, [u')'], do_force=False)
+        if tail_token is None:
+            mark = Mark.union(head_token, branch)
+            raise ParseError("cannot find a matching ')'", mark)
         mark = Mark.union(head_token, tail_token)
         group = GroupSyntax(branch, mark)
         return group
@@ -644,10 +680,11 @@ class SelectorParser(Parser):
             else:
                 rbranch = TopParser << tokens
             branches.append(rbranch)
-            if not tokens.peek(SymbolToken, [u'}']):
-                # We know it's not going to be '}', but we put it into the list
-                # of accepted values to generate a better error message.
-                tokens.pop(SymbolToken, [u',', u'}'])
+            if tokens.peek(SymbolToken, [u',']):
+                tokens.pop(SymbolToken, [u','])
+            elif not tokens.peek(SymbolToken, [u'}']):
+                mark = Mark.union(head_token, *branches)
+                raise ParseError("cannot find a matching '}'", mark)
         tail_token = tokens.pop(SymbolToken, [u'}'])
         mark = Mark.union(head_token, tail_token)
         selector = SelectorSyntax(None, branches, mark)

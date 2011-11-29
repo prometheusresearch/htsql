@@ -114,12 +114,12 @@ class TokenStream(object):
             expected = "%s" % token_class.name.upper()
             if values:
                 if len(values) == 1:
-                    expected = "%s %r" % (expected, values[0])
+                    expected = "%s %r" % (expected, values[0].encode('utf-8'))
                 else:
                     expected = "%s (%s)" % (expected,
-                                            ", ".join(repr(value)
-                                                      for value in values))
-            got = "%s %r" % (token.name.upper(), token.value)
+                                        ", ".join(repr(value.encode('utf-8'))
+                                                  for value in values))
+            got = "%s %r" % (token.name.upper(), token.value.encode('utf-8'))
             raise ParseError("expected %s; got %s" % (expected, got),
                              token.mark)
         # Advance the pointer.
@@ -128,7 +128,7 @@ class TokenStream(object):
 
         return token
 
-    def pop(self, token_class=None, values=None):
+    def pop(self, token_class=None, values=None, do_force=True):
         """
         Returns the active token and advances the pointer to the next token.
 
@@ -145,9 +145,15 @@ class TokenStream(object):
         `values` (a list of strings or ``None``)
             If not ``None``, the method checks that the value of the active
             token belongs to the list.
+
+        `do_force` (Boolean)
+            This flag affects the method behavior when any of the token
+            checks fail.  If set, the method will raise
+            :exc:`htsql.tr.error.ParseError`; otherwise it will return
+            ``None``.
         """
         return self.peek(token_class, values,
-                         do_pop=True, do_force=True)
+                         do_pop=True, do_force=do_force)
 
 
 class Scanner(object):
@@ -275,8 +281,7 @@ class Scanner(object):
                 end = len(match.string[:end].decode('utf-8', 'ignore'))
                 mark = Mark(input, start, end)
                 raise ScanError("symbol '%' must be followed by two hexdecimal"
-                                " digits", mark,
-                                hint="use '%25' to represent '%' literally")
+                                " digits", mark)
             # Return the character corresponding to the escape sequence.
             return chr(int(code, 16))
 

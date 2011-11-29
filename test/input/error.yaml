@@ -9,13 +9,59 @@ tests:
 
 - title: Scan Errors
   tests:
+  # % requires two hexdecimal digits
   - uri: /'?%@$'
     expect: 400
+  # invalid UTF-8 sequence
   - uri: /'%FF'
     expect: 400
+  # no matching quote
   - uri: /'Hello
     expect: 400
+  # unexpected symbol
   - uri: /`Hello'
+    expect: 400
+
+- title: Parse Errors
+  tests:
+  # expected the query end
+  - uri: /'Hello','World'
+    expect: 400
+  # expected `/`
+  - uri: school
+    expect: 400
+  # expected `/:<identifier>`
+  - uri: /school/department
+    expect: 400
+    skip: true  # interpreted as division
+  - uri: /school/:1
+    expect: 400
+  # expected `)`
+  - uri: /school/:html(/program}
+    expect: 400
+  # expected `:<identifier>`
+  - uri: /school:1
+    expect: 400
+  # expected `)`
+  - uri: /school :as ('School'}
+    expect: 400
+  # expected `}`
+  - uri: /school{code,name)
+    expect: 400
+  # expected `)`
+  - uri: /count(school}
+    expect: 400
+  # unexpected end of query
+  - uri: /school{code,name,
+    expect: 400
+  # unexpected symbol
+  - uri: /school{code,,name}
+    expect: 400
+  # expected ')'
+  - uri: /(2+2}
+    expect: 400
+  # expected '}'
+  - uri: /{count(school))
     expect: 400
 
 
