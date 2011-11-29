@@ -445,6 +445,8 @@ Parameters:
     Tables to hide.
 `unlabeled-columns`
     Columns to hide.
+`globals`
+    Global definitions.
 
 To restrict access to a specific set of tables, use parameters
 ``included-tables`` and ``excluded-tables``.  Parameter
@@ -578,8 +580,18 @@ a label to expression ``school^campus``, write:
 
     tweak.override:
       class-labels:
-        - c14n: classification
-        - campus: (school^campus)
+        c14n: classification
+        campus: (school^campus)
+
+Calculated classes defined by ``class-labels`` may accept
+parameters.  For instance, to add a class ``students_by_year()``
+which takes the year of admission as an argument, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      class-labels:
+        students_by_year($year): (student?year(start_date)=$year)
 
 Use parameter ``field-labels`` to assign custom labels
 to table fields.  This parameter is a mapping; each
@@ -640,6 +652,16 @@ To define a calculated field ``student.avg_grade``, write:
       field-labels:
         student.avg_grade: (avg(enrollment.grade))
 
+Calculated fields may accept a parameter.  To define a calculated
+field ``department.students_by_year()`` accepting the year of
+admission as a parameter, write:
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      field-labels:
+        department.students_by_year($year): (student?year(start_date)=$year)
+
 By default, when an HTSQL query does not contain a selector
 expression, all table columns are displayed.  To set a custom
 list of fields for this case, use parameter ``field-orders``.
@@ -672,6 +694,18 @@ To hide all ``id`` columns, write:
       unlabeled-columns: [id, "*_id"]
 
 .. **
+
+Use parameter ``globals`` define global attributes and functions.
+This parameter is a mapping: each key is the attribute name with
+an optional list of parameters, the value is an HTSQL expression.
+
+.. sourcecode:: yaml
+
+    tweak.override:
+      globals:
+        num_school: (count(@school))
+        trunc_month($d): (date(year($d), month($d), 1))
+
 
 ``tweak.resource``
 ------------------
