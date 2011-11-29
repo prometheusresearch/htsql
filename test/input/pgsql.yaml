@@ -101,4 +101,6 @@ tests:
   - include: test/input/format.yaml
   # Extensions
   - include: test/input/addon.yaml
+  # Error Reporting
+  - include: test/input/error.yaml
 

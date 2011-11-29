@@ -29952,3 +29952,39 @@ tests:
              ORDER BY `addresses`.`id` ASC
         - py: remove-module-path
           stdout: ''
+  - include: test/input/error.yaml
+    output:
+      id: error
+      tests:
+      - id: scan-errors
+        tests:
+        - uri: /'?%@$'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            scan error: expected two hexdecimal digits to follow symbol '%s':
+                /%27?%@$'
+                     ^
+        - uri: /'%FF'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: "scan error: cannot convert a byte sequence %FF to UTF-8: invalid
+            start byte:\n    /'\uFFFD'\n      ^\n"
+        - uri: /'Hello
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            scan error: cannot find a matching quote mark:
+                /'Hello
+                 ^
+        - uri: /`Hello'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            scan error: unexpected symbol '`':
+                /`Hello'
+                 ^

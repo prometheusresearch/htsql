@@ -1,0 +1,21 @@
+#
+# Copyright (c) 2006-2011, Prometheus Research, LLC
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+#
+
+title: Error Reporting
+id: error
+tests:
+
+- title: Scan Errors
+  tests:
+  - uri: /'?%@$'
+    expect: 400
+  - uri: /'%FF'
+    expect: 400
+  - uri: /'Hello
+    expect: 400
+  - uri: /`Hello'
+    expect: 400
+
+

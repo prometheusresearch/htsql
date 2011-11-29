@@ -18,6 +18,7 @@ from .error import ScanError, ParseError
 from ..mark import Mark
 from ..util import maybe, listof
 import re
+import urllib2
 
 
 class TokenStream(object):
@@ -273,7 +274,8 @@ class Scanner(object):
                 start = len(match.string[:start].decode('utf-8', 'ignore'))
                 end = len(match.string[:end].decode('utf-8', 'ignore'))
                 mark = Mark(input, start, end)
-                raise ScanError("invalid escape sequence", mark)
+                raise ScanError("expected two hexdecimal digits to follow"
+                                " symbol '%s'", mark)
             # Return the character corresponding to the escape sequence.
             return chr(int(code, 16))
 
@@ -298,8 +300,9 @@ class Scanner(object):
             start = len(input[:exc.start].decode('utf-8', 'ignore'))
             end = len(input[:exc.end].decode('utf-8', 'ignore'))
             mark = Mark(input.decode('utf-8', 'replace'), start, end)
-            raise ScanError("cannot decode an UTF-8 character: %s"
-                            % exc.reason, mark)
+            raise ScanError("cannot convert a byte sequence %s to UTF-8: %s"
+                            % (urllib2.quote(exc.object[exc.start:exc.end]),
+                               exc.reason), mark)
 
         # The beginning of the next token (and the start of the mark slice).
         start = 0
@@ -314,8 +317,12 @@ class Scanner(object):
             match = self.regexp.match(input, start)
             if match is None:
                 mark = Mark(input, start, start+1)
-                raise ScanError("unexpected character %r"
-                                % input[start].encode('utf-8'), mark)
+                # FIXME: generalize?
+                if input[start] == u"'":
+                    raise ScanError("cannot find a matching quote mark", mark)
+                else:
+                    raise ScanError("unexpected symbol %r"
+                                    % input[start].encode('utf-8'), mark)
 
             # Find the token class that matched the token.
             for token_class in self.tokens:
