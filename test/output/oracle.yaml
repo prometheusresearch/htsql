@@ -30502,9 +30502,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            scan error: expected two hexdecimal digits to follow symbol '%s':
+            scan error: symbol '%' must be followed by two hexdecimal digits:
                 /%27?%@$'
                      ^
+            (use '%25' to represent '%' literally)
         - uri: /'%FF'
           status: 400 Bad Request
           headers:

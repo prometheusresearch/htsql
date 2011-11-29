@@ -274,8 +274,9 @@ class Scanner(object):
                 start = len(match.string[:start].decode('utf-8', 'ignore'))
                 end = len(match.string[:end].decode('utf-8', 'ignore'))
                 mark = Mark(input, start, end)
-                raise ScanError("expected two hexdecimal digits to follow"
-                                " symbol '%s'", mark)
+                raise ScanError("symbol '%' must be followed by two hexdecimal"
+                                " digits", mark,
+                                hint="use '%25' to represent '%' literally")
             # Return the character corresponding to the escape sequence.
             return chr(int(code, 16))
 
