@@ -16,7 +16,7 @@ from ..util import Clonable, Printable, maybe
 from ..adapter import Adapter, adapts, adapts_many
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
                      SyntaxArc, AmbiguousArc)
-from ..classify import classify, normalize
+from ..classify import classify, relabel, normalize
 from .syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       SegmentBinding, HomeBinding, RootBinding, TableBinding,
@@ -246,7 +246,12 @@ class PrescribeAmbiguous(Prescribe):
     adapts(AmbiguousArc)
 
     def __call__(self):
-        return AmbiguousRecipe()
+        alternatives = []
+        for arc in self.arc.alternatives:
+            labels = relabel(arc)
+            if labels:
+                alternatives.append(labels[0].name)
+        return AmbiguousRecipe(alternatives)
 
 
 class Lookup(Adapter):

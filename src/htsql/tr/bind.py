@@ -16,11 +16,12 @@ from ..util import maybe, tupleof
 from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
+from ..classify import relabel
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
-                     ApplicationSyntax, OperatorSyntax, QuotientSyntax,
-                     SieveSyntax, LinkSyntax, HomeSyntax, AssignmentSyntax,
-                     SpecifierSyntax, FunctionSyntax, GroupSyntax,
+                     ApplicationSyntax, FunctionSyntax, MappingSyntax,
+                     OperatorSyntax, QuotientSyntax, SieveSyntax, LinkSyntax,
+                     HomeSyntax, AssignmentSyntax, SpecifierSyntax, GroupSyntax,
                      IdentifierSyntax, WildcardSyntax, ReferenceSyntax,
                      ComplementSyntax, StringSyntax, NumberSyntax)
 from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
@@ -258,7 +259,8 @@ class BindSegment(Bind):
     def __call__(self):
         # FIXME: an empty segment syntax should not be generated.
         if self.syntax.branch is None:
-            raise BindError("empty segment", self.syntax.mark)
+            raise BindError("output columns are not specified",
+                            self.syntax.mark)
         # Bind the segment expression.
         seed = self.state.bind(self.syntax.branch)
         if lookup_command(seed) is not None:
@@ -279,13 +281,15 @@ class BindSegment(Bind):
         for binding in bindings:
             domain = coerce(binding.domain)
             if domain is None:
-                raise BindError("invalid element type", binding.mark)
+                raise BindError("output column must be a scalar value",
+                                binding.mark)
             element = CastBinding(binding, domain, binding.syntax)
             elements.append(element)
         # Complain on an empty selector.
         # FIXME: an empty selector should be valid.
         if not elements:
-            raise BindError("empty selector", self.syntax.mark)
+            raise BindError("output columns are not specified",
+                            self.syntax.mark)
         # Generate a binding node.
         return SegmentBinding(self.state.scope, seed, elements, self.syntax)
 
@@ -306,8 +310,13 @@ class BindSelector(Bind):
             binding = self.state.bind(branch)
             # Handle in-selector assignments.
             if isinstance(binding, AssignmentBinding):
-                if len(binding.terms) != 1 or binding.parameters is not None:
-                    raise BindError("invalid selector assignment",
+                if len(binding.terms) != 1:
+                    raise BindError("qualified definition is not allowed"
+                                    " for an in-selector assignment",
+                                    binding.mark)
+                if binding.parameters is not None:
+                    raise BindError("parameterized definition is not allowed"
+                                    " for an in-selector assignment",
                                     binding.mark)
                 name, is_reference = binding.terms[0]
                 if is_reference:
@@ -400,7 +409,8 @@ class BindQuotient(Bind):
         for element in elements:
             domain = coerce(element.domain)
             if domain is None:
-                raise BindError("invalid element type", element.mark)
+                raise BindError("quotient column must be a scalar value",
+                                element.mark)
             kernel = CastBinding(element, domain, element.syntax)
             kernels.append(kernel)
         # Generate the quotient scope.
@@ -474,12 +484,14 @@ class BindLink(Bind):
             target_images.append(binding)
         # Correlate origin and target images.
         if len(origin_images) != len(target_images):
-            raise BindError("unbalanced link", self.syntax.mark)
+            raise BindError("unbalanced origin and target columns",
+                            self.syntax.mark)
         images = []
         for origin_image, target_image in zip(origin_images, target_images):
             domain = coerce(origin_image.domain, target_image.domain)
             if domain is None:
-                raise BindError("incompatible images", self.syntax.mark)
+                raise BindError("cannot convert origin and target columns"
+                                " to a common type", self.syntax.mark)
             origin_image = CastBinding(origin_image, domain,
                                        origin_image.syntax)
             target_image = CastBinding(target_image, domain,
@@ -610,19 +622,19 @@ class BindWildcard(Bind):
         # Get all public columns in the current lookup scope.
         recipies = expand(self.state.scope)
         if recipies is None:
-            raise BindError("unable to resolve a wildcard",
-                            self.syntax.mark)
+            raise BindError("cannot expand '*' since output columns"
+                            " are not defined", self.syntax.mark)
         # If a position is given, extract a specific element.
         if self.syntax.index is not None:
             try:
                 index = int(self.syntax.index.value)
             except ValueError:
-                raise BindError("an integer value is expected",
+                raise BindError("an integer value is required",
                                 self.syntax.mark)
             index -= 1
             if not (0 <= index < len(recipies)):
-                raise BindError("index is out of range",
-                                self.syntax.mark)
+                raise BindError("value in range 1-%s is required"
+                                % len(recipies), self.syntax.mark)
             syntax, recipe = recipies[index]
             syntax = syntax.clone(mark=self.syntax.mark)
             return self.state.use(recipe, syntax)
@@ -644,7 +656,7 @@ class BindReference(Bind):
         recipe = lookup_reference(self.state.scope,
                                   self.syntax.identifier.value)
         if recipe is None:
-            raise BindError("unable to resolve a reference: %s"
+            raise BindError("unrecognized reference '%s'"
                             % self.syntax, self.syntax.mark)
         return self.state.use(recipe, self.syntax)
 
@@ -657,7 +669,8 @@ class BindComplement(Bind):
         # Look for a complement, complain if not found.
         recipe = lookup_complement(self.state.scope)
         if recipe is None:
-            raise BindError("expected a quotient context", self.syntax.mark)
+            raise BindError("'^' could only be used in a quotient scope",
+                            self.syntax.mark)
         return self.state.use(recipe, self.syntax)
 
 
@@ -823,11 +836,16 @@ class BindByName(Protocol):
 
     def __call__(self):
         # The default implementation; override in subclasses.
-        if isinstance(self.syntax, ApplicationSyntax):
-            raise BindError("unknown function %r" % self.name.encode('utf-8'),
+        if isinstance(self.syntax, (FunctionSyntax, MappingSyntax)):
+            raise BindError("unrecognized function '%s'"
+                            % self.syntax.identifier,
+                            self.syntax.mark)
+        if isinstance(self.syntax, OperatorSyntax):
+            raise BindError("unrecognized operator '%s'"
+                            % self.syntax.symbol.encode('utf-8'),
                             self.syntax.mark)
         if isinstance(self.syntax, IdentifierSyntax):
-            raise BindError("unknown attribute %r" % self.name.encode('utf-8'),
+            raise BindError("unrecognized attribute '%s'" % self.syntax,
                             self.syntax.mark)
 
 
@@ -944,7 +962,7 @@ class BindBySubstitution(BindByRecipe):
                 arity = len(self.recipe.parameters)
             recipe = lookup_attribute(self.recipe.base, self.syntax.value)
             if recipe is None:
-                raise BindError("unknown attribute %r" % self.syntax,
+                raise BindError("unrecognized attribute '%s'" % self.syntax,
                                 self.syntax.mark)
             binding = self.state.use(recipe, self.syntax)
             # Check if the term is a reference.
@@ -1023,7 +1041,23 @@ class BindByAmbiguous(BindByRecipe):
     adapts(AmbiguousRecipe)
 
     def __call__(self):
-        raise BindError("ambiguous name", self.syntax.mark)
+        syntax = self.syntax
+        if isinstance(self.syntax, (FunctionSyntax, MappingSyntax)):
+            syntax = self.syntax.identifier
+        hint = None
+        if self.recipe.alternatives:
+            alternatives = self.recipe.alternatives
+            choices = ["try "]
+            if len(alternatives) == 1:
+                choices.append(repr(alternatives[0].encode('utf-8')))
+            else:
+                choices.extend(", ".join(repr(alternative.encode('utf-8'))
+                                         for alternative in alternatives[:-1]))
+                choices.append(" or ")
+                choices.append(repr(alternatives[-1].encode('utf-8')))
+            hint = "".join(choices)
+        raise BindError("ambiguous name '%s'" % self.syntax,
+                        self.syntax.mark, hint=hint)
 
 
 def bind(syntax, state=None, scope=None):

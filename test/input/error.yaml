@@ -64,4 +64,65 @@ tests:
   - uri: /{count(school))
     expect: 400
 
+- title: Bind Errors
+  tests:
+  # empty selector
+  - uri: /retrieve(/)
+    expect: 400
+  - uri: /{}
+    expect: 400
+  # invalid output column
+  - uri: /department{school, code}
+    expect: 400
+  # invalid in-selector assignment
+  - uri: /school{code, num_dept():=count(department)}
+    expect: 400
+  - uri: /school{code, department.num_course:=count(course)}
+    expect: 400
+  # invalid quotient column
+  - uri: /department^school
+    expect: 400
+  - uri: /department^(num_course:=count(course))
+    expect: 400
+  # unbalanced columns
+  - uri: /program.{school_code,code}->school{code}
+    expect: 400
+  # invalid pairs
+  - uri: /program.{code}->course{no}
+    expect: 400
+  # invalid assignments
+  - uri: /define((school).num_prog:=count(program)).true()
+    expect: 400
+  - uri: /define(true().school.num_prog:=count(program)).true()
+    expect: 400
+  - uri: /define(school.num_prog(1):=count(program)).true()
+    expect: 400
+  - uri: /define(school.(num_prog):=count(program)).true()
+    expect: 400
+  # invalid wildcard
+  - uri: /{*}
+    expect: 400
+  - uri: /school?*1.5
+    expect: 400
+  - uri: /school?*5
+    expect: 400
+  # invalid reference
+  - uri: /school?$code='art'
+    expect: 400
+  # invalid complement
+  - uri: /school{code, count(^)}
+    expect: 400
+  # invalid names
+  - uri: /invalid
+    expect: 400
+  - uri: /invalid()
+    expect: 400
+  - uri: /school :invalid
+    expect: 400
+  - uri: /define(invalid.value:=true()).invalid{value}
+    expect: 400
+  # ambiguous name
+  - uri: /program.program
+    expect: 400
+
 

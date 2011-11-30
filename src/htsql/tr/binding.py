@@ -890,4 +890,9 @@ class AmbiguousRecipe(InvalidRecipe):
     Generates an "ambiguous name" error when applied.
     """
 
+    def __init__(self, alternatives=None):
+        assert isinstance(alternatives, maybe(listof(unicode)))
+        super(AmbiguousRecipe, self).__init__()
+        self.alternatives = alternatives
+
 

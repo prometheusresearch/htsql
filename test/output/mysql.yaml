@@ -1518,9 +1518,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name:
+            bind error: ambiguous name 'program':
                 /(program?school_code='la'&code='uengl').program
                                                          ^^^^^^^
+            (try 'part_of' or 'program_via_part_of')
         - uri: /(program?school_code='la'&code='uengl').part_of
           status: 200 OK
           headers:
@@ -1707,9 +1708,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name:
+            bind error: ambiguous name 'prerequisite':
                 /(course?department_code='lang'&no=345).prerequisite
                                                         ^^^^^^^^^^^^
+            (try 'prerequisite_via_of_course' or 'prerequisite_via_on_course')
         - uri: /(course?department_code='lang'&no=345).prerequisite_via_on_course
           status: 200 OK
           headers:
@@ -2270,9 +2272,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name:
+            bind error: ambiguous name 'course':
                 /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).course
                                                                                                                         ^^^^^^
+            (try 'of_course' or 'on_course')
         - uri: /(prerequisite?of_department_code='astro'&of_course_no=230 &on_department_code='phys'&on_course_no=130).of_course
           status: 200 OK
           headers:
@@ -2339,9 +2342,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: ambiguous name:
+            bind error: ambiguous name 'classification':
                 /(classification?code='math').classification
                                               ^^^^^^^^^^^^^^
+            (try 'part_of' or 'classification_via_part_of')
         - uri: /(classification?code='math').part_of
           status: 200 OK
           headers:
@@ -7831,7 +7835,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'level':
+            bind error: unrecognized attribute 'level':
                 /department.define(course(level) := course?no>=level*100 &no<(level+1)*100) {name, count(course(1)), count(course(2)), count(course(3)), count(course(4))}
                                                                ^^^^^
         - uri: /department.define(course($level) := course?no>=$level*100 &no<($level+1)*100)
@@ -16560,7 +16564,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'instructor':
+            bind error: unrecognized attribute 'instructor':
                 /student.instructor
                          ^^^^^^^^^^
         - uri: /school?code='mus'
@@ -20336,7 +20340,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: empty selector:
+              bind error: output columns are not specified:
                   /home()
                   ^^^^^^^
           - uri: /home(){2+2}
@@ -22591,7 +22595,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: empty selector:
+              bind error: output columns are not specified:
                   /{}
                   ^^^
           - uri: /school{}
@@ -22599,7 +22603,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: empty selector:
+              bind error: output columns are not specified:
                   /school{}
                   ^^^^^^^^^
         - id: assignments
@@ -23048,7 +23052,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: unable to resolve a reference: $year:
+              bind error: unrecognized reference '$year':
                   /school.define(student_by_year($year) := program.student?year(dob)=$year) {code, student_by_year(1990).$year}
                                                                                                                          ^^^^^
           - uri: /define(f($x) := $x*2){{$x, f($x)} :where $x := 21}
@@ -23124,7 +23128,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              bind error: invalid selector assignment:
+              bind error: qualified definition is not allowed for an in-selector assignment:
                   /school{code, program.num_stud := count(student)}
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - id: projections
@@ -25436,7 +25440,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: empty selector:
+            bind error: output columns are not specified:
                 /{}
                 ^^^
         - uri: /school{}
@@ -25444,7 +25448,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: empty selector:
+            bind error: output columns are not specified:
                 /school{}
                 ^^^^^^^^^
         - uri: /school.true()
@@ -25576,7 +25580,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'name':
+            bind error: unrecognized attribute 'name':
                 /department^school_code{school_code.name, name}
                                                     ^^^^
         - uri: /program.part_of.*
@@ -25768,7 +25772,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown function 'unknown':
+            bind error: unrecognized function 'unknown':
                 /school/:unknown
                 ^^^^^^^^^^^^^^^^
       - id: format-selection-by-`accept`
@@ -28261,7 +28265,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'schema':
+            bind error: unrecognized attribute 'schema':
                 /meta(/schema)
                        ^^^^^^
         - uri: /meta(table)
@@ -28441,7 +28445,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'department':
+            bind error: unrecognized attribute 'department':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -28468,7 +28472,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'department':
+            bind error: unrecognized attribute 'department':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -28495,7 +28499,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'department':
+            bind error: unrecognized attribute 'department':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /school{code, count(department)}
@@ -28534,7 +28538,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'enrollment':
+            bind error: unrecognized attribute 'enrollment':
                 /student{name, count(enrollment)}
                                      ^^^^^^^^^^
         - uri: /max(confidential.pay_grade)
@@ -28556,7 +28560,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'ssn':
+            bind error: unrecognized attribute 'ssn':
                 /confidential.ssn
                               ^^^
         - uri: /student{name, dob, school.code, program.code, exists(instructor)}.limit(1)
@@ -28628,7 +28632,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'classification':
+            bind error: unrecognized attribute 'classification':
                 /classification
                  ^^^^^^^^^^^^^^
         - uri: /active_students().limit(10)
@@ -28701,7 +28705,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'active_students':
+            bind error: unrecognized attribute 'active_students':
                 /active_students
                  ^^^^^^^^^^^^^^^
         - uri: /active_students(2010)
@@ -28709,7 +28713,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown function 'active_students':
+            bind error: unrecognized function 'active_students':
                 /active_students(2010)
                  ^^^^^^^^^^^^^^^^^^^^^
         - uri: /students_by_year
@@ -28717,7 +28721,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'students_by_year':
+            bind error: unrecognized attribute 'students_by_year':
                 /students_by_year
                  ^^^^^^^^^^^^^^^^
         - uri: /students_by_year()
@@ -28725,7 +28729,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown function 'students_by_year':
+            bind error: unrecognized function 'students_by_year':
                 /students_by_year()
                  ^^^^^^^^^^^^^^^^^^
         - uri: /program?exists(includes)
@@ -28764,7 +28768,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'program_via_part_of':
+            bind error: unrecognized attribute 'program_via_part_of':
                 /program?exists(program_via_part_of)
                                 ^^^^^^^^^^^^^^^^^^^
         - uri: /student?count(class)>55
@@ -28806,7 +28810,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'name':
+            bind error: unrecognized attribute 'name':
                 /student.name
                          ^^^^
         - uri: /(program?code='gart').active_students()
@@ -28878,7 +28882,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'active_students':
+            bind error: unrecognized attribute 'active_students':
                 /program.active_students
                          ^^^^^^^^^^^^^^^
         - uri: /program.active_students(2010)
@@ -28886,7 +28890,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown function 'active_students':
+            bind error: unrecognized function 'active_students':
                 /program.active_students(2010)
                          ^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.students_by_year
@@ -28894,7 +28898,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'students_by_year':
+            bind error: unrecognized attribute 'students_by_year':
                 /program.students_by_year
                          ^^^^^^^^^^^^^^^^
         - uri: /program.students_by_year()
@@ -28902,7 +28906,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown function 'students_by_year':
+            bind error: unrecognized function 'students_by_year':
                 /program.students_by_year()
                          ^^^^^^^^^^^^^^^^^^
         - uri: /active_students{name, gender, start_date}.limit(5)
@@ -29018,7 +29022,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown function 'active_students':
+            bind error: unrecognized function 'active_students':
                 /active_students(2009, 'm', 'phd')
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /(program?code='gart').active_students{name, gender, start_date}
@@ -29132,7 +29136,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown function 'active_students':
+            bind error: unrecognized function 'active_students':
                 /(program?code='gart').active_students(2009, 'm', 'phd')
                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /student{name}?count(class)>55
@@ -29166,7 +29170,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'enrollment':
+            bind error: unrecognized attribute 'enrollment':
                 /enrollment
                  ^^^^^^^^^^
         - uri: /student.enrollment
@@ -29174,7 +29178,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'enrollment':
+            bind error: unrecognized attribute 'enrollment':
                 /student.enrollment
                          ^^^^^^^^^^
         - uri: /student.id
@@ -29182,7 +29186,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unknown attribute 'id':
+            bind error: unrecognized attribute 'id':
                 /student.id
                          ^^
         - uri: /(student{name, dob}?date(start_date)>curr_date).limit(10)
@@ -30086,3 +30090,190 @@ tests:
             parse error: cannot find a matching '}':
                 /{count(school))
                  ^^^^^^^^^^^^^^
+      - id: bind-errors
+        tests:
+        - uri: /retrieve(/)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: output columns are not specified:
+                /retrieve(/)
+                          ^
+        - uri: /{}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: output columns are not specified:
+                /{}
+                ^^^
+        - uri: /department{school, code}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: output column must be a scalar value:
+                /department{school, code}
+                            ^^^^^^
+        - uri: /school{code, num_dept():=count(department)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: parameterized definition is not allowed for an in-selector assignment:
+                /school{code, num_dept():=count(department)}
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /school{code, department.num_course:=count(course)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: qualified definition is not allowed for an in-selector assignment:
+                /school{code, department.num_course:=count(course)}
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /department^school
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: quotient column must be a scalar value:
+                /department^school
+                            ^^^^^^
+        - uri: /department^(num_course:=count(course))
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: quotient column must be a scalar value:
+                /department^(num_course:=count(course))
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /program.{school_code,code}->school{code}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unbalanced origin and target columns:
+                /program.{school_code,code}->school{code}
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /program.{code}->course{no}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot convert origin and target columns to a common type:
+                /program.{code}->course{no}
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /define((school).num_prog:=count(program)).true()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: an identifier is expected:
+                /define((school).num_prog:=count(program)).true()
+                        ^^^^^^^^
+        - uri: /define(true().school.num_prog:=count(program)).true()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: an identifier is expected:
+                /define(true().school.num_prog:=count(program)).true()
+                        ^^^^^^
+        - uri: /define(school.num_prog(1):=count(program)).true()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: an identifier is expected:
+                /define(school.num_prog(1):=count(program)).true()
+                                        ^
+        - uri: /define(school.(num_prog):=count(program)).true()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: an identifier is expected:
+                /define(school.(num_prog):=count(program)).true()
+                               ^^^^^^^^^^
+        - uri: /{*}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: output columns are not specified:
+                /{*}
+                ^^^^
+        - uri: /school?*1.5
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: an integer value is required:
+                /school?*1.5
+                        ^^^^
+        - uri: /school?*5
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: value in range 1-3 is required:
+                /school?*5
+                        ^^
+        - uri: /school?$code='art'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized reference '$code':
+                /school?$code='art'
+                        ^^^^^
+        - uri: /school{code, count(^)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: '^' could only be used in a quotient scope:
+                /school{code, count(^)}
+                                    ^
+        - uri: /invalid
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'invalid':
+                /invalid
+                 ^^^^^^^
+        - uri: /invalid()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized function 'invalid':
+                /invalid()
+                 ^^^^^^^^^
+        - uri: /school :invalid
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized function 'invalid':
+                /school :invalid
+                 ^^^^^^^^^^^^^^^
+        - uri: /define(invalid.value:=true()).invalid{value}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'invalid':
+                /define(invalid.value:=true()).invalid{value}
+                                               ^^^^^^^
+        - uri: /program.program
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: ambiguous name 'program':
+                /program.program
+                         ^^^^^^^
+            (try 'part_of' or 'program_via_part_of')
