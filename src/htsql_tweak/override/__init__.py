@@ -141,8 +141,11 @@ class TweakOverrideAddon(Addon):
     def __init__(self, app, attributes):
         super(TweakOverrideAddon, self).__init__(app, attributes)
         self.unused_pattern_cache = UnusedPatternCache()
+        self.globals_cache = []
         for name, parameters in sorted(self.globals):
-            self.globals[name, parameters].register(app, name, parameters)
+            adapter = self.globals[name, parameters].register(app, name,
+                                                              parameters)
+            self.globals_cache.append(adapter)
 
     def validate(self):
         validate()
