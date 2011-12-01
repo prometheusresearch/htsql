@@ -748,7 +748,7 @@ class UnmaskQuotient(UnmaskFlow):
         # Verify that the kernel is not scalar.  We can't do it earlier
         # because since unmasking may remove fantom units.
         if all(not code.units for code in kernels):
-            raise EncodeError("an empty or scalar kernel is not allowed",
+            raise EncodeError("an empty or constant kernel is not allowed",
                               self.flow.mark)
         # Unmask the seed against the quotient parent flow.
         seed = self.state.unmask(self.flow.family.seed, mask=self.flow.base)

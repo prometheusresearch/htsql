@@ -641,9 +641,9 @@ class DateTimeDomain(Domain):
         # Parse `data` as YYYY-DD-MM HH:MM:SS.SSSSSS.
         match = self.regexp.match(data)
         if match is None:
-            raise ValueError("invalid datetime literal: expected a valid time"
-                             " in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format;"
-                             " got %r" % data.encode('utf-8'))
+            raise ValueError("invalid datetime literal: expected a valid"
+                             " date/time in a 'YYYY-MM-DD HH:SS:MM.SSSSSS'"
+                             " format; got %r" % data.encode('utf-8'))
         year = int(match.group('year'))
         month = int(match.group('month'))
         day = int(match.group('day'))

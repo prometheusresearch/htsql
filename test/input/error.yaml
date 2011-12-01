@@ -261,4 +261,74 @@ tests:
   - uri: /max(school{code,name})
     expect: 400
 
+- title: Encode Errors
+  tests:
+  # invalid code expression
+  - uri: /true().fork()
+    expect: 400
+  # invalid flow expression
+  - uri: /true().fork(){true()}
+    expect: 400
+  # invalid segment flow
+  - uri: /school|department
+    expect: 400
+  # singular quotient base
+  - uri: /department.(school^campus)
+    expect: 400
+  # invalid plural quotient base
+  - uri: /department{code, count($school^campus)}
+          :where $school:=school
+    expect: 400
+  # invalid quotient kernel
+  - uri: /school^true()
+    expect: 400
+  # invalid type conversion
+  - uri: /date(true())
+    expect: 400
+  # invalid untyped conversion
+  - uri: /boolean('!')
+    expect: 400
+  - uri: /integer('!')
+    expect: 400
+  - uri: /decimal('!')
+    expect: 400
+  - uri: /float('!')
+    expect: 400
+  - uri: /date('!')
+    expect: 400
+  - uri: /time('!')
+    expect: 400
+  - uri: /datetime('!')
+    expect: 400
+  # invalid aggregate
+  - uri: /department{code, count(school)}
+    expect: 400
+  - uri: /department{code, count(school{code})}
+    expect: 400
+  - uri: /department{code, count($school{code})}
+          :where $school:=school
+    expect: 400
+  - uri: /school{code, count(program|department)}
+    expect: 400
+
+- title: Compile Errors
+  tests:
+  # invalid singular expression
+  - uri: /school{code, department.code}
+    expect: 400
+  - uri: /school{code, department.count(course)}
+    expect: 400
+  - uri: /school{code, department.avg(course.credits)}
+    expect: 400
+  - uri: /school{department^count(course){*}}
+    expect: 400
+  # FIXME: connection error in stitch.py
+
+- title: Serialize Errors
+  tests:
+  # invalid integer value
+  - uri: /18446744073709551616
+    ifndef: [oracle]
+    expect: 400
+
 

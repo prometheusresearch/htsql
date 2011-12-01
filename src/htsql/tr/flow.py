@@ -1097,8 +1097,9 @@ class ForkedFlow(Flow):
         # FIXME: this condition could be violated after the rewrite step
         # (also, equal-by-value is not implemented for `Family`):
         #assert base.family == seed.family
-        assert all(base.spans(unit.flow) for code in kernels
-                                          for unit in code.units)
+        # FIXME: we don't check for this constraint in the encoder anymore.
+        #assert all(base.spans(unit.flow) for code in kernels
+        #                                  for unit in code.units)
         assert isinstance(companions, listof(Code))
         ground = seed
         while not ground.is_axis:
@@ -1160,10 +1161,11 @@ class LinkedFlow(Flow):
         assert seed.spans(base)
         assert not base.spans(seed)
         assert isinstance(images, listof(tupleof(Code, Code)))
-        assert all(base.spans(unit.flow) for lop, rop in images
-                                         for unit in lop.units)
-        assert all(seed.spans(unit.flow) for lop, rop in images
-                                         for unit in rop.units)
+        # FIXME: the constraint may be violated after rewriting.
+        #assert all(base.spans(unit.flow) for lop, rop in images
+        #                                 for unit in lop.units)
+        #assert all(seed.spans(unit.flow) for lop, rop in images
+        #                                 for unit in rop.units)
         assert isinstance(companions, listof(Code))
         ground = seed
         while not base.spans(ground.base):

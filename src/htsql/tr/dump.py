@@ -1496,7 +1496,7 @@ class DumpInteger(DumpByDomain):
         # We assume that the database supports 8-byte signed integer values
         # natively and complain if the value is out of this range.
         if not (-2**63 <= self.value < 2**63):
-            raise SerializeError("invalid integer value",
+            raise SerializeError("integer value is out of range",
                                  self.phrase.mark)
         # Write the number; use `(...)` around a negative number.
         if self.value >= 0:

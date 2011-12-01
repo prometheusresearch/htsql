@@ -6738,7 +6738,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            compile error: expected a singular expression:
+            compile error: a singular expression is expected:
                 /department{name, course.credits}
                                          ^^^^^^^
         - uri: /department{name, max(course.credits)}
@@ -6795,7 +6795,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is required:
+            encode error: a plural operand is expected:
                 /department{name, count(school)}
                                   ^^^^^^^^^^^^^
         - uri: /max(course.credits)
@@ -13581,7 +13581,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'boolean' to 'decimal':
                 /{decimal(true())}
                   ^^^^^^^^^^^^^^^
         - uri: /{float(date('2010-04-15'))}
@@ -13589,7 +13589,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'date' to 'float':
                 /{float(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{integer(string('cinq'))}
@@ -14552,7 +14552,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'boolean' to 'date':
                 /{date(true())}
                   ^^^^^^^^^^^^
         - uri: /{date(7)}
@@ -14560,7 +14560,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'integer' to 'date':
                 /{date(7)}
                   ^^^^^^^
         - uri: /{date(time('20:13'))}
@@ -14568,7 +14568,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'time' to 'date':
                 /{date(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^
         - uri: /{date(string('birthday'))}
@@ -14710,7 +14710,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'boolean' to 'time':
                 /{time(true())}
                   ^^^^^^^^^^^^
         - uri: /{time(7)}
@@ -14718,7 +14718,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'integer' to 'time':
                 /{time(7)}
                   ^^^^^^^
         - uri: /{time(date('2010-04-15'))}
@@ -14726,7 +14726,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'date' to 'time':
                 /{time(date('2010-04-15'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{time(string('just a moment ago'))}
@@ -14823,7 +14823,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'boolean' to 'datetime':
                 /{datetime(true())}
                   ^^^^^^^^^^^^^^^^
         - uri: /{datetime(7)}
@@ -14831,7 +14831,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'integer' to 'datetime':
                 /{datetime(7)}
                   ^^^^^^^^^^^
         - uri: /{datetime(time('20:13'))}
@@ -14839,7 +14839,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: inadmissible conversion:
+            encode error: cannot convert a value of type 'time' to 'datetime':
                 /{datetime(time('20:13'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime(string('just a moment ago'))}
@@ -15383,7 +15383,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is required:
+            encode error: a plural operand is expected:
                 /{exists(true())}
                          ^^^^^^
         - uri: /{every(true())}
@@ -15391,7 +15391,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is required:
+            encode error: a plural operand is expected:
                 /{every(true())}
                         ^^^^^^
         - uri: /{count(true())}
@@ -15399,7 +15399,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: a plural operand is required:
+            encode error: a plural operand is expected:
                 /{count(true())}
                   ^^^^^^^^^^^^^
         - uri: /course{no,credits}?department_code='be'
@@ -18984,7 +18984,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: expected a singular expression:
+              compile error: a singular expression is expected:
                   /school{code,department.exists(course)}
                                           ^^^^^^^^^^^^^^
           - uri: /school{code,department.avg(course.credits)}
@@ -18992,7 +18992,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: expected a singular expression:
+              compile error: a singular expression is expected:
                   /school{code,department.avg(course.credits)}
                                           ^^^^^^^^^^^^^^^^^^^
           - uri: /department{sum(course.credits),count(course.credits), avg(course.credits)}?exists(course)
@@ -25458,7 +25458,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |
-              compile error: expected a singular expression:
+              compile error: a singular expression is expected:
                   /{(school^campus).campus}
                                     ^^^^^^
       - id: known-issues
@@ -25520,7 +25520,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school^{}{true()}
                  ^^^^^^^^^
         - uri: /school^{true()}{true()}
@@ -25528,7 +25528,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school^{true()}{true()}
                  ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{true()}
@@ -25536,7 +25536,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school?false()^{true()}{true()}
                  ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{}{*, count(school)}
@@ -25544,7 +25544,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school^{}{*, count(school)}
                  ^^^^^^^^^
         - uri: /school^{true()}{*, count(school)}
@@ -25552,7 +25552,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school^{true()}{*, count(school)}
                  ^^^^^^^^^^^^^^^
         - uri: /school?false()^{true()}{*, count(school)}
@@ -25560,7 +25560,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school?false()^{true()}{*, count(school)}
                  ^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /school^{null()}{*, count(school)}
@@ -25568,7 +25568,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school^{null()}{*, count(school)}
                  ^^^^^^^^^^^^^^^
         - uri: /{school^{}{count(school)}, school?false()^{}{count(school)}}
@@ -25576,7 +25576,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /{school^{}{count(school)}, school?false()^{}{count(school)}}
                   ^^^^^^^^^
         - uri: /school{program^{}{count(program)}, program?false()^{}{count(program)}}
@@ -25584,7 +25584,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /school{program^{}{count(program)}, program?false()^{}{count(program)}}
                         ^^^^^^^^^^
         - uri: /{count(school^true()), count(school?false()^true()), count(school^null())}
@@ -25592,7 +25592,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /{count(school^true()), count(school?false()^true()), count(school^null())}
                         ^^^^^^^^^^^^^
         - uri: /(school^null()).^
@@ -25600,7 +25600,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            encode error: an empty or scalar kernel is not allowed:
+            encode error: an empty or constant kernel is not allowed:
                 /(school^null()).^
                   ^^^^^^^^^^^^^
         - uri: /department^school_code{school_code.name, name}
@@ -30720,3 +30720,193 @@ tests:
             bind error: function 'max' expects 1 argument; got 2:
                 /max(school{code,name})
                      ^^^^^^^^^^^^^^^^^
+      - id: encode-errors
+        tests:
+        - uri: /true().fork()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a code expression is expected:
+                /true().fork()
+                        ^^^^^^
+        - uri: /true().fork(){true()}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a flow expression is expected:
+                /true().fork(){true()}
+                 ^^^^^^
+        - uri: /school|department
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: cannot deduce an unambiguous segment flow:
+                /school|department
+                ^^^^^^^^^^^^^^^^^^
+        - uri: /department.(school^campus)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a plural expression is expected:
+                /department.(school^campus)
+                             ^^^^^^
+        - uri: /department{code, count($school^campus)} :where $school:=school
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a valid plural expression is expected:
+                /department{code, count($school^campus)} :where $school:=school
+                                                                         ^^^^^^
+        - uri: /school^true()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: an empty or constant kernel is not allowed:
+                /school^true()
+                 ^^^^^^^^^^^^^
+        - uri: /date(true())
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: cannot convert a value of type 'boolean' to 'date':
+                /date(true())
+                 ^^^^^^^^^^^^
+        - uri: /boolean('!')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid Boolean literal: expected 'true' or 'false'; got '!':
+                /boolean('!')
+                 ^^^^^^^^^^^^
+        - uri: /integer('!')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid integer literal: expected an integer in a decimal format; got '!':
+                /integer('!')
+                 ^^^^^^^^^^^^
+        - uri: /decimal('!')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid decimal literal: !:
+                /decimal('!')
+                 ^^^^^^^^^^^^
+        - uri: /float('!')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid float literal: !:
+                /float('!')
+                 ^^^^^^^^^^
+        - uri: /date('!')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid date literal: expected a valid date in a 'YYYY-MM-DD' format; got '!':
+                /date('!')
+                 ^^^^^^^^^
+        - uri: /time('!')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid time literal: expected a valid time in a 'HH:SS:MM.SSSSSS' format; got '!':
+                /time('!')
+                 ^^^^^^^^^
+        - uri: /datetime('!')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: invalid datetime literal: expected a valid date/time in a 'YYYY-MM-DD HH:SS:MM.SSSSSS' format; got '!':
+                /datetime('!')
+                 ^^^^^^^^^^^^^
+        - uri: /department{code, count(school)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a plural operand is expected:
+                /department{code, count(school)}
+                                  ^^^^^^^^^^^^^
+        - uri: /department{code, count(school{code})}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a plural operand is expected:
+                /department{code, count(school{code})}
+                                  ^^^^^^^^^^^^^^^^^^^
+        - uri: /department{code, count($school{code})} :where $school:=school
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: a valid plural operand is expected:
+                /department{code, count($school{code})} :where $school:=school
+                                  ^^^^^^^^^^^^^^^^^^^^
+        - uri: /school{code, count(program|department)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            encode error: cannot deduce an unambiguous aggregate flow:
+                /school{code, count(program|department)}
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+      - id: compile-errors
+        tests:
+        - uri: /school{code, department.code}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            compile error: a singular expression is expected:
+                /school{code, department.code}
+                                         ^^^^
+        - uri: /school{code, department.count(course)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            compile error: a singular expression is expected:
+                /school{code, department.count(course)}
+                                         ^^^^^^^^^^^^^
+        - uri: /school{code, department.avg(course.credits)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            compile error: a singular expression is expected:
+                /school{code, department.avg(course.credits)}
+                                         ^^^^^^^^^^^^^^^^^^^
+        - uri: /school{department^count(course){*}}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            compile error: a singular expression is expected:
+                /school{department^count(course){*}}
+                                                 ^
+      - id: serialize-errors
+        tests:
+        - uri: /18446744073709551616
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            serialize error: invalid integer value:
+                /18446744073709551616
+                 ^^^^^^^^^^^^^^^^^^^^

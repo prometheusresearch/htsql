@@ -1466,7 +1466,7 @@ class InjectColumn(Inject):
             return self.term
         # Verify that the unit is singular on the term flow.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
+            raise CompileError("a singular expression is expected",
                                self.unit.mark)
         # Inject the unit flow into the term.
         return self.state.inject(self.term, [self.unit.flow])
@@ -1508,7 +1508,7 @@ class InjectScalar(Inject):
 
         # Verify that the unit is singular relative to the term.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
+            raise CompileError("a singular expression is expected",
                                self.unit.mark)
         # Extract the unit expressions.
         codes = [unit.code for unit in units]
@@ -1596,7 +1596,7 @@ class InjectAggregate(Inject):
 
         # Verify that the units are singular relative to the term.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
+            raise CompileError("a singular expression is expected",
                                self.unit.mark)
         # Extract the aggregate expressions.
         codes = [unit.code for unit in units]
@@ -1708,7 +1708,7 @@ class InjectCorrelated(Inject):
         if not self.term.flow.spans(self.flow):
             # This is not reachable: the error is already reported by
             # the wrapping scalar unit.
-            raise CompileError("expected a singular expression",
+            raise CompileError("a singular expression is expected",
                                self.unit.mark)
 
         # The general chain of operations is as follows:
@@ -1772,7 +1772,7 @@ class InjectKernel(Inject):
             return self.term
         # Check if the unit is singular against the term flow.
         if not self.term.flow.spans(self.flow):
-            raise CompileError("expected a singular expression",
+            raise CompileError("a singular expression is expected",
                                self.unit.mark)
         # Inject the quotient space -- this should automatically
         # provide the unit.
@@ -1796,7 +1796,7 @@ class InjectCovering(Inject):
         if not self.term.flow.spans(self.flow):
             # Not reachable since covering units are never generated
             # by the user directly, only by the compiler.
-            raise CompileError("expected a singular expression",
+            raise CompileError("a singular expression is expected",
                                self.unit.mark)
         # FIXME: the rewritter should optimize the flow graph
         # so that this code is not reachable.
