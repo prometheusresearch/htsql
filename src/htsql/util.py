@@ -969,3 +969,44 @@ class LocalTZ(datetime.tzinfo):
         return tt.tm_isdst > 0
 
 
+#
+# String similarity.
+#
+
+
+def similar(model, sample):
+    """
+    Checks if `sample` is similar to `model`.
+    """
+    assert isinstance(model, unicode)
+    assert isinstance(sample, unicode)
+    if not model or not sample:
+        return False
+    if len(model) > 1 and sample.startswith(model):
+        return True
+    M = len(model)
+    N = len(sample)
+    threshold = 1+M/5
+    INF = threshold+1
+    if abs(M-N) > threshold:
+        return False
+    distance = {}
+    for i in range(min(M, threshold)+1):
+        distance[i, 0] = i
+    for j in range(min(N, threshold)+1):
+        distance[0, j] = j
+    for i in range(1, M+1):
+        for j in range(max(1, i-threshold), min(N, i+threshold)+1):
+            k = distance.get((i-1, j-1), INF)
+            if model[i-1] != sample[j-1]:
+                k += 1
+            if (i > 1 and j > 1 and model[i-2] == sample[j-1]
+                                and model[i-1] == sample[j-2]):
+                k = min(k, distance.get((i-2, j-2), INF)+1)
+            k = min(k, distance.get((i-1, j), INF)+1,
+                       distance.get((i, j-1), INF)+1)
+            if k <= threshold:
+                distance[i, j] = k
+    return ((M, N) in distance)
+
+

@@ -12,7 +12,7 @@ This module implements the binding process.
 """
 
 
-from ..util import maybe, tupleof
+from ..util import maybe, listof, tupleof, similar
 from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
@@ -37,6 +37,7 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       SubstitutionRecipe, BindingRecipe, ClosedRecipe,
                       PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
+                     lookup_attribute_set, lookup_reference_set,
                      expand, direct, guess_name, lookup_command)
 from .coerce import coerce
 
@@ -227,6 +228,22 @@ class Bind(Adapter):
         # The default implementation raises an error.  It is actually
         # unreachable since we provide an implementation for all syntax nodes.
         raise BindError("unable to bind a node", self.syntax.mark)
+
+
+def hint_choices(choices):
+    # Generate a hint from a list of choices.
+    assert isinstance(choices, listof(unicode))
+    if not choices:
+        return None
+    chunks = ["did you mean:"]
+    if len(choices) == 1:
+        chunks.append("'%s'" % choices[0].encode('utf-8'))
+    else:
+        chunks.append(", ".join("'%s'" % choice.encode('utf-8')
+                                for choice in choices[:-1]))
+        chunks.append("or")
+        chunks.append("'%s'" % choices[-1].encode('utf-8'))
+    return " ".join(chunks)
 
 
 class BindQuery(Bind):
@@ -656,8 +673,14 @@ class BindReference(Bind):
         recipe = lookup_reference(self.state.scope,
                                   self.syntax.identifier.value)
         if recipe is None:
+            model = self.syntax.identifier.value.lower()
+            names = lookup_reference_set(self.state.scope)
+            choices = [u"$"+name for name in sorted(names)
+                                 if similar(model, name)]
+            hint = hint_choices(choices)
             raise BindError("unrecognized reference '%s'"
-                            % self.syntax, self.syntax.mark)
+                            % self.syntax, self.syntax.mark,
+                            hint=hint)
         return self.state.use(recipe, self.syntax)
 
 
@@ -836,17 +859,92 @@ class BindByName(Protocol):
 
     def __call__(self):
         # The default implementation; override in subclasses.
+        hint = None
+        # Generate a hint with a list of alternative names.
+        model = self.name.lower()
+        arity = None
+        if self.arguments is not None:
+            arity = len(self.arguments)
+        attributes = lookup_attribute_set(self.state.scope)
+        global_attributes = set()
+        for component in BindByName.implementations():
+            for component_name in component.names:
+                component_arity = -1
+                if isinstance(component_name, tuple):
+                    component_name, component_arity = component_name
+                if isinstance(component_name, str):
+                    component_name = component_name.decode('utf-8')
+                component_name = component_name.lower()
+                global_attributes.add((component_name, component_arity))
+        all_attributes = sorted(attributes|global_attributes)
+        if hint is None and arity is None:
+            names = lookup_reference_set(self.state.scope)
+            if model in names:
+                hint = "did you mean: a reference '$%s'" % model.encode('utf-8')
+        if hint is None and arity is None:
+            if any(model == sample
+                   for sample, sample_arity in all_attributes
+                   if sample_arity is not None):
+                hint = "did you mean: a function '%s'" % model.encode('utf-8')
+        if hint is None and arity is None:
+            choices = [sample
+                       for sample, sample_arity in all_attributes
+                       if sample_arity is None and sample != model
+                            and similar(model, sample)]
+            hint = hint_choices(choices)
+        if hint is None and arity is not None \
+                and not isinstance(self.syntax, OperatorSyntax):
+            arities = [sample_arity
+                       for sample, sample_arity in all_attributes
+                       if sample == model and
+                            sample_arity not in [None, -1, arity]]
+            if arities:
+                required_arity = []
+                arities.sort()
+                if len(arities) == 1:
+                    required_arity.append(str(arities[0]))
+                else:
+                    required_arity.append(", ".join(str(sample_arity)
+                                    for sample_arity in arities[:-1]))
+                    required_arity.append("or")
+                    required_arity.append(str(arities[-1]))
+                if required_arity[-1] == "1":
+                    required_arity.append("argument")
+                else:
+                    required_arity.append("arguments")
+                required_arity = " ".join(required_arity)
+                raise BindError("function '%s' requires %s; got %s"
+                                % (self.syntax.identifier,
+                                   required_arity, arity),
+                                self.syntax.mark)
+        if hint is None and arity is not None:
+            if any(model == sample
+                   for sample, sample_arity in all_attributes
+                   if sample_arity is None):
+                hint = "did you mean: an attribute '%s'" % model.encode('utf-8')
+        if hint is None and arity is not None:
+            choices = [sample
+                       for sample, sample_arity in all_attributes
+                       if sample_arity in [-1, arity] and sample != model
+                            and similar(model, sample)]
+            hint = hint_choices(choices)
+        scope_name = guess_name(self.state.scope)
+        if scope_name is not None:
+            scope_name = scope_name.encode('utf-8')
         if isinstance(self.syntax, (FunctionSyntax, MappingSyntax)):
             raise BindError("unrecognized function '%s'"
                             % self.syntax.identifier,
-                            self.syntax.mark)
+                            self.syntax.mark, hint=hint)
         if isinstance(self.syntax, OperatorSyntax):
             raise BindError("unrecognized operator '%s'"
                             % self.syntax.symbol.encode('utf-8'),
-                            self.syntax.mark)
+                            self.syntax.mark, hint=hint)
         if isinstance(self.syntax, IdentifierSyntax):
-            raise BindError("unrecognized attribute '%s'" % self.syntax,
-                            self.syntax.mark)
+            raise BindError("unrecognized attribute '%s'%s"
+                            % (self.syntax,
+                               " in scope of '%s'" % scope_name
+                               if scope_name is not None else ""),
+                            self.syntax.mark, hint=hint)
 
 
 class BindByRecipe(Adapter):

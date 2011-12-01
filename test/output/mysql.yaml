@@ -7835,7 +7835,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'level':
+            bind error: unrecognized attribute 'level' in scope of 'course':
                 /department.define(course(level) := course?no>=level*100 &no<(level+1)*100) {name, count(course(1)), count(course(2)), count(course(3)), count(course(4))}
                                                                ^^^^^
         - uri: /department.define(course($level) := course?no>=$level*100 &no<($level+1)*100)
@@ -16564,7 +16564,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'instructor':
+            bind error: unrecognized attribute 'instructor' in scope of 'student':
                 /student.instructor
                          ^^^^^^^^^^
         - uri: /school?code='mus'
@@ -25580,7 +25580,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'name':
+            bind error: unrecognized attribute 'name' in scope of 'school_code':
                 /department^school_code{school_code.name, name}
                                                     ^^^^
         - uri: /program.part_of.*
@@ -28445,7 +28445,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'department':
+            bind error: unrecognized attribute 'department' in scope of 'school':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -28472,7 +28472,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'department':
+            bind error: unrecognized attribute 'department' in scope of 'school':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /avg(school.count(program))
@@ -28499,7 +28499,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'department':
+            bind error: unrecognized attribute 'department' in scope of 'school':
                 /avg(school.count(department))
                                   ^^^^^^^^^^
         - uri: /school{code, count(department)}
@@ -28538,7 +28538,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'enrollment':
+            bind error: unrecognized attribute 'enrollment' in scope of 'student':
                 /student{name, count(enrollment)}
                                      ^^^^^^^^^^
         - uri: /max(confidential.pay_grade)
@@ -28560,7 +28560,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'ssn':
+            bind error: unrecognized attribute 'ssn' in scope of 'confidential':
                 /confidential.ssn
                               ^^^
         - uri: /student{name, dob, school.code, program.code, exists(instructor)}.limit(1)
@@ -28708,12 +28708,13 @@ tests:
             bind error: unrecognized attribute 'active_students':
                 /active_students
                  ^^^^^^^^^^^^^^^
+            (did you mean: a function 'active_students')
         - uri: /active_students(2010)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'active_students':
+            bind error: function 'active_students' requires 0 arguments; got 1:
                 /active_students(2010)
                  ^^^^^^^^^^^^^^^^^^^^^
         - uri: /students_by_year
@@ -28724,12 +28725,13 @@ tests:
             bind error: unrecognized attribute 'students_by_year':
                 /students_by_year
                  ^^^^^^^^^^^^^^^^
+            (did you mean: a function 'students_by_year')
         - uri: /students_by_year()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'students_by_year':
+            bind error: function 'students_by_year' requires 1 argument; got 0:
                 /students_by_year()
                  ^^^^^^^^^^^^^^^^^^
         - uri: /program?exists(includes)
@@ -28768,7 +28770,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'program_via_part_of':
+            bind error: unrecognized attribute 'program_via_part_of' in scope of 'program':
                 /program?exists(program_via_part_of)
                                 ^^^^^^^^^^^^^^^^^^^
         - uri: /student?count(class)>55
@@ -28810,7 +28812,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'name':
+            bind error: unrecognized attribute 'name' in scope of 'student':
                 /student.name
                          ^^^^
         - uri: /(program?code='gart').active_students()
@@ -28882,15 +28884,16 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'active_students':
+            bind error: unrecognized attribute 'active_students' in scope of 'program':
                 /program.active_students
                          ^^^^^^^^^^^^^^^
+            (did you mean: a function 'active_students')
         - uri: /program.active_students(2010)
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'active_students':
+            bind error: function 'active_students' requires 0 arguments; got 1:
                 /program.active_students(2010)
                          ^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.students_by_year
@@ -28898,15 +28901,16 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'students_by_year':
+            bind error: unrecognized attribute 'students_by_year' in scope of 'program':
                 /program.students_by_year
                          ^^^^^^^^^^^^^^^^
+            (did you mean: a function 'students_by_year')
         - uri: /program.students_by_year()
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'students_by_year':
+            bind error: function 'students_by_year' requires 1 argument; got 0:
                 /program.students_by_year()
                          ^^^^^^^^^^^^^^^^^^
         - uri: /active_students{name, gender, start_date}.limit(5)
@@ -29022,7 +29026,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'active_students':
+            bind error: function 'active_students' requires 0, 1 or 2 arguments; got 3:
                 /active_students(2009, 'm', 'phd')
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /(program?code='gart').active_students{name, gender, start_date}
@@ -29136,7 +29140,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized function 'active_students':
+            bind error: function 'active_students' requires 0, 1 or 2 arguments; got 3:
                 /(program?code='gart').active_students(2009, 'm', 'phd')
                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /student{name}?count(class)>55
@@ -29178,7 +29182,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'enrollment':
+            bind error: unrecognized attribute 'enrollment' in scope of 'student':
                 /student.enrollment
                          ^^^^^^^^^^
         - uri: /student.id
@@ -29186,7 +29190,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unrecognized attribute 'id':
+            bind error: unrecognized attribute 'id' in scope of 'student':
                 /student.id
                          ^^
         - uri: /(student{name, dob}?date(start_date)>curr_date).limit(10)
@@ -30277,3 +30281,130 @@ tests:
                 /program.program
                          ^^^^^^^
             (try 'part_of' or 'program_via_part_of')
+      - id: lookup-hints
+        tests:
+        - uri: /school?code=$scool_code :where $school_code:='art'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized reference '$scool_code':
+                /school?code=$scool_code :where $school_code:='art'
+                             ^^^^^^^^^^^
+            (did you mean: '$school_code')
+        - uri: /school?code=$code :where $school_code:='art'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized reference '$code':
+                /school?code=$code :where $school_code:='art'
+                             ^^^^^
+        - uri: /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng',
+            $school_code3:='mus')
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized reference '$scool_code':
+                /school?code=$scool_code :where ($school_code1:='art', $school_code2:='eng', $school_code3:='mus')
+                             ^^^^^^^^^^^
+            (did you mean: '$school_code1', '$school_code2' or '$school_code3')
+        - uri: /school?code=school_code :where $school_code:='art'
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'school_code' in scope of 'school':
+                /school?code=school_code :where $school_code:='art'
+                             ^^^^^^^^^^^
+            (did you mean: a reference '$school_code')
+        - uri: /school{code, count{department}}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'count' in scope of 'school':
+                /school{code, count{department}}
+                              ^^^^^
+            (did you mean: a function 'count')
+        - uri: /school{code, count(depatrment)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'depatrment' in scope of 'school':
+                /school{code, count(depatrment)}
+                                    ^^^^^^^^^^
+            (did you mean: 'department')
+        - uri: /department?school.code==nulll
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'nulll' in scope of 'department':
+                /department?school.code==nulll
+                                         ^^^^^
+            (did you mean: 'null')
+        - uri: /school{code, count(student)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized attribute 'student' in scope of 'school':
+                /school{code, count(student)}
+                                    ^^^^^^^
+        - uri: /program.define(student_by_year($year) := student?year(start_date)=$year)
+            {code, count(student_by_year())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'student_by_year' requires 1 argument; got 0:
+                /program.define(student_by_year($year) := student?year(start_date)=$year) {code, count(student_by_year())}
+                                                                                                       ^^^^^^^^^^^^^^^^^
+        - uri: /program.define(student_by_year($year) := student?year(start_date)=$year,
+            student_by_year() := student_by_year(2011)) {code, count(student_by_year(2009,2010))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'student_by_year' requires 0 or 1 argument; got 2:
+                /program.define(student_by_year($year) := student?year(start_date)=$year, student_by_year() := student_by_year(2011)) {code, count(student_by_year(2009,2010))}
+                                                                                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /department{school(), code}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized function 'school':
+                /department{school(), code}
+                            ^^^^^^^^
+            (did you mean: an attribute 'school')
+        - uri: /program.define(student_by_year($year) := student?year(start_date)=$year)
+            {code, count(students_by_year(2010))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized function 'students_by_year':
+                /program.define(student_by_year($year) := student?year(start_date)=$year) {code, count(students_by_year(2010))}
+                                                                                                       ^^^^^^^^^^^^^^^^^^^^^^
+            (did you mean: 'student_by_year')
+        - uri: /cont(program)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized function 'cont':
+                /cont(program)
+                 ^^^^^^^^^^^^^
+            (did you mean: 'count')
+        - uri: /program{code, count(student_by_year(2010))}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: unrecognized function 'student_by_year':
+                /program{code, count(student_by_year(2010))}
+                                     ^^^^^^^^^^^^^^^^^^^^^

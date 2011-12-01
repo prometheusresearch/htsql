@@ -15,7 +15,7 @@ This module implements name resolution adapters.
 from ..util import Clonable, Printable, maybe
 from ..adapter import Adapter, adapts, adapts_many
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
-                     SyntaxArc, AmbiguousArc)
+                     SyntaxArc, InvalidArc, AmbiguousArc)
 from ..classify import classify, relabel, normalize
 from .syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
@@ -83,6 +83,12 @@ class AttributeProbe(Probe):
                                 ",".join(["_"]*self.arity))
 
 
+class AttributeSetProbe(Probe):
+    """
+    Represents a request for a set of all attributes with their arities.
+    """
+
+
 class ReferenceProbe(Probe):
     """
     Represents a request for a reference.
@@ -108,6 +114,12 @@ class ReferenceProbe(Probe):
         # Display:
         #   ?$<key>
         return "?$%s" % self.key.encode('utf-8')
+
+
+class ReferenceSetProbe(Probe):
+    """
+    Represents a request for a set of all references.
+    """
 
 
 class ComplementProbe(Probe):
@@ -288,6 +300,26 @@ class Lookup(Adapter):
         return None
 
 
+class LookupAttributeSet(Lookup):
+    # Generate a set of all available attributes.
+
+    adapts(Binding, AttributeSetProbe)
+
+    def __call__(self):
+        # No attributes by default.
+        return set()
+
+
+class LookupReferenceSet(Lookup):
+    # Generate a set of all available references.
+
+    adapts(Binding, ReferenceSetProbe)
+
+    def __call__(self):
+        # No references by default.
+        return set()
+
+
 class GuessName(Lookup):
     # Generate an attribute name from a binging node.
 
@@ -325,6 +357,19 @@ class LookupReferenceInScoping(Lookup):
         return None
 
 
+class LookupReferenceSetInScoping(Lookup):
+    # Find all available references in a scoping node.
+
+    adapts(ScopingBinding, ReferenceSetProbe)
+
+    def __call__(self):
+        # Delegate reference lookups to the parent binding.
+        if self.binding.base is not None:
+            return lookup(self.binding.base, self.probe)
+        # Stop at the root binding.
+        return set()
+
+
 class LookupInChaining(Lookup):
     # Pass all lookup requests (except name guesses)
     # through chaining nodes.
@@ -332,7 +377,9 @@ class LookupInChaining(Lookup):
     # Everything but `GuessNameProbe`.  Can't use `Probe`
     # since it causes ambiguous ordering of components.
     adapts_many((ChainingBinding, AttributeProbe),
+                (ChainingBinding, AttributeSetProbe),
                 (ChainingBinding, ReferenceProbe),
+                (ChainingBinding, ReferenceSetProbe),
                 (ChainingBinding, ComplementProbe),
                 (ChainingBinding, ExpansionProbe),
                 (ChainingBinding, GuessTitleProbe),
@@ -402,6 +449,22 @@ class LookupAttributeInHome(Lookup):
         return recipe
 
 
+class LookupAttributeSetInHome(Lookup):
+    # Attributes of the *home* scope represent database tables.
+
+    adapts(HomeBinding, AttributeSetProbe)
+
+    def __call__(self):
+        attributes = set()
+        labels = classify(HomeNode())
+        for label in labels:
+            # Skip invalid labels.
+            if isinstance(label.arc, InvalidArc):
+                continue
+            attributes.add((label.name, label.arity))
+        return attributes
+
+
 class ExpandHome(Lookup):
     # The home class contains no public attributes.
 
@@ -455,6 +518,22 @@ class LookupAttributeInTable(Lookup):
         return recipe
 
 
+class LookupAttributeSetInTable(Lookup):
+    # Produce a set of all labels available in a table scope.
+
+    adapts(TableBinding, AttributeSetProbe)
+
+    def __call__(self):
+        attributes = set()
+        labels = classify(TableNode(self.binding.table))
+        for label in labels:
+            # Skip invalid labels.
+            if isinstance(label.arc, InvalidArc):
+                continue
+            attributes.add((label.name, label.arity))
+        return attributes
+
+
 class ExpandTable(Lookup):
     # Extract all the columns of the table.
 
@@ -487,14 +566,22 @@ class LookupAttributeInColumn(Lookup):
     adapts(ColumnBinding, AttributeProbe)
 
     def __call__(self):
-        # Ignore probes for parameterized attributes.
-        if self.probe.arity is not None:
-            return None
         # If there is an associated link node, delegate the request to it.
         if self.binding.link is not None:
             return lookup(self.binding.link, self.probe)
         # Otherwise, no luck.
         return None
+
+
+class LookupAttributeSetInColumn(Lookup):
+    # Find all available attributes in a column scope.
+
+    adapts(ColumnBinding, AttributeSetProbe)
+
+    def __call__(self):
+        if self.binding.link is not None:
+            return lookup(self.binding.link, self.probe)
+        return set()
 
 
 class ExpandColumn(Lookup):
@@ -546,6 +633,7 @@ class LookupAttributeInComplement(Lookup):
     # Find an attribute or a complement link in a complement scope.
 
     adapts_many((ComplementBinding, AttributeProbe),
+                (ComplementBinding, AttributeSetProbe),
                 (ComplementBinding, ComplementProbe))
 
     def __call__(self):
@@ -572,7 +660,8 @@ class ExpandComplement(Lookup):
 class LookupAttributeInCover(Lookup):
     # Find an attribute in a cover scope.
 
-    adapts(CoverBinding, AttributeProbe)
+    adapts_many((CoverBinding, AttributeProbe),
+                (CoverBinding, AttributeSetProbe))
 
     def __call__(self):
         # Delegate all lookup requests to the seed flow.
@@ -601,6 +690,7 @@ class LookupAttributeInFork(Lookup):
     # Find an attribute or a complement link in a fork scope.
 
     adapts_many((ForkBinding, AttributeProbe),
+                (ForkBinding, AttributeSetProbe),
                 (ForkBinding, ComplementProbe))
 
     def __call__(self):
@@ -624,7 +714,9 @@ class ExpandFork(Lookup):
 class LookupAttributeInLink(Lookup):
     # Find an attribute in a link scope.
 
-    adapts(LinkBinding, AttributeProbe)
+    adapts_many((LinkBinding, AttributeProbe),
+                (LinkBinding, AttributeSetProbe),
+                (LinkBinding, ComplementProbe))
 
     def __call__(self):
         # Delegate all lookup probes to the seed scope.
@@ -710,6 +802,18 @@ class LookupAttributeInDefinition(Lookup):
         return super(LookupAttributeInDefinition, self).__call__()
 
 
+class LookupAttributeSetInDefinition(Lookup):
+    # Find all attributes in a definition binding.
+
+    adapts(DefinitionBinding, AttributeSetProbe)
+
+    def __call__(self):
+        attributes = super(LookupAttributeSetInDefinition, self).__call__()
+        if not self.binding.is_reference:
+            attributes.add((normalize(self.binding.name), self.binding.arity))
+        return attributes
+
+
 class LookupReferenceInDefinition(Lookup):
     # Find a reference in a definition binding.
 
@@ -724,6 +828,18 @@ class LookupReferenceInDefinition(Lookup):
                 return self.binding.recipe
         # Otherwise, delegate the probe to the parent binding.
         return super(LookupReferenceInDefinition, self).__call__()
+
+
+class LookupReferenceSetInDefinition(Lookup):
+    # Find all references in a definition binding.
+
+    adapts(DefinitionBinding, ReferenceSetProbe)
+
+    def __call__(self):
+        references = super(LookupReferenceSetInDefinition, self).__call__()
+        if self.binding.is_reference:
+            references.add(normalize(self.binding.name))
+        return references
 
 
 class ExpandSelection(Lookup):
@@ -760,7 +876,9 @@ class LookupInReroute(Lookup):
 
     # All recipe-generating lookup requests.
     adapts_many((RerouteBinding, AttributeProbe),
+                (RerouteBinding, AttributeSetProbe),
                 (RerouteBinding, ReferenceProbe),
+                (RerouteBinding, ReferenceSetProbe),
                 (RerouteBinding, ComplementProbe),
                 (RerouteBinding, ExpansionProbe))
 
@@ -772,7 +890,8 @@ class LookupInReroute(Lookup):
 class LookupReferenceInReferenceReroute(Lookup):
     # Probe for a reference in a reference reroute binding.
 
-    adapts(ReferenceRerouteBinding, ReferenceProbe)
+    adapts_many((ReferenceRerouteBinding, ReferenceProbe),
+                (ReferenceRerouteBinding, ReferenceSetProbe))
 
     def __call__(self):
         # Reroute the probe to the target binding.
@@ -855,6 +974,14 @@ def lookup_attribute(binding, name, arity=None):
     return lookup(binding, probe)
 
 
+def lookup_attribute_set(binding):
+    """
+    Produces a set of all available attributes and their arities.
+    """
+    probe = AttributeSetProbe()
+    return lookup(binding, probe)
+
+
 def lookup_reference(binding, name):
     """
     Finds a reference in the scope of the given binding.
@@ -869,6 +996,14 @@ def lookup_reference(binding, name):
         A reference name.
     """
     probe = ReferenceProbe(name)
+    return lookup(binding, probe)
+
+
+def lookup_reference_set(binding):
+    """
+    Produces a set of all available references.
+    """
+    probe = ReferenceSetProbe()
     return lookup(binding, probe)
 
 
