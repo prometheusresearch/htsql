@@ -472,6 +472,7 @@ tests:
     extensions:
       tweak.shell: {}
   - uri: /shell()
+    ignore: true
 
   # FIXME: add tests for auxiliary commands
 
@@ -483,6 +484,7 @@ tests:
   - uri: /
     headers:
       Accept: text/html
+    ignore: true
 
 # TWEAK.SQLALCHEMY - adapt to SQLAlchemy
 - py: has-sqlalchemy

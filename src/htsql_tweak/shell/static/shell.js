@@ -327,6 +327,12 @@ $(document).ready(function() {
             state.$panel.hide();
         state.$panel = $errorPanel.show();
         $error.html(output.detail);
+        if (output.hint) {
+            $errorHint.html("("+output.hint+")");
+        }
+        else {
+            $errorHint.html("");
+        }
         if (state.marker) {
             state.marker();
             state.marker = null;
@@ -812,6 +818,7 @@ $(document).ready(function() {
     var $requestPanel = $('#request-panel');
     var $errorPanel = $('#error-panel');
     var $error = $('#error');
+    var $errorHint = $('#error-hint');
     var $failurePanel = $('#failure-panel');
     var $sqlPanel = $('#sql-panel');
     var $sql = $('#sql');

@@ -277,6 +277,7 @@ class RenderEvaluate(Act):
 
     def render_error(self, exc):
         detail = exc.detail
+        hint = None
         first_line = 'null'
         first_column = 'null'
         last_line = 'null'
@@ -289,9 +290,12 @@ class RenderEvaluate(Act):
             last_line = mark.input.count(u'\n', 0, last_break)
             first_column = mark.start-first_break
             last_column = mark.end-last_break
+            hint = exc.hint
         yield "{\n"
         yield "  \"type\": \"error\",\n"
         yield "  \"detail\": %s,\n" % escape(cgi.escape(detail))
+        yield "  \"hint\": %s,\n" % (escape(cgi.escape(hint))
+                                     if hint is not None else "null")
         yield "  \"first_line\": %s,\n" % first_line
         yield "  \"first_column\": %s,\n" % first_column
         yield "  \"last_line\": %s,\n" % last_line
