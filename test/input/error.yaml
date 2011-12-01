@@ -178,4 +178,87 @@ tests:
   - uri: /program{code, count(student_by_year(2010))}
     expect: 400
 
+- title: Function Bind Errors
+  tests:
+  # invalid number of arguments
+  - uri: /count()
+    expect: 400
+  - uri: /today(1)
+    expect: 400
+  - uri: /slice()
+    expect: 400
+  - uri: /slice('HTSQL',1,3,5)
+    expect: 400
+  - uri: /school.sort()
+    expect: 400
+  - uri: /'SQL'={}
+    expect: 400
+  - uri: /if(school)
+    expect: 400
+  - uri: /switch(school,department)
+    expect: 400
+  # invalid coersion
+  - uri: /department{code, school :if_null 'none'}
+    expect: 400
+  - uri: /department{code, is_null(school)}
+    expect: 400
+  - uri: /school?code=today()
+    expect: 400
+  - uri: /school?code==today()
+    expect: 400
+  - uri: /school?code={'art',5,today()}
+    expect: 400
+  - uri: /school?code<today()
+    expect: 400
+  - uri: /department{code, if(school,school.code,today())}
+    expect: 400
+  - uri: /department{code, if(school.code,school)}
+    expect: 400
+  - uri: /department{code, switch(school.code,today(),now())}
+    expect: 400
+  - uri: /department{code, switch(school.code,'art',today(),now())}
+    expect: 400
+  - uri: /department{code, switch(school.code,'art',school)}
+    expect: 400
+  # invalid comparison
+  - uri: /student?is_active<true()
+    expect: 400
+  # invalid correlation
+  - uri: /trunc(school)
+    expect: 400
+  - uri: /trunc(school,department)
+    expect: 400
+  - uri: /-school
+    expect: 400
+  - uri: /school*department
+    expect: 400
+  # invalid special arguments
+  - uri: /retrieve(school)
+    expect: 400
+  - uri: /html(school)
+    expect: 400
+  - uri: /distinct(department)
+    expect: 400
+  - uri: /distinct(department{school})
+    expect: 400
+  - uri: /school.limit(today())
+    expect: 400
+  - uri: /school.limit(1,-1)
+    expect: 400
+  - uri: /department.sort(school)
+    expect: 400
+  - uri: /define(today()){now()}
+    expect: 400
+  - uri: /today() :where now()
+    expect: 400
+  # invalid aggregate expansion
+  - uri: /exists(school{code,name})
+    expect: 400
+  - uri: /count(school{code,name})
+    expect: 400
+  - uri: /avg(school{code,name})
+    expect: 400
+  - uri: /max(school{code,name})
+    expect: 400
+
 

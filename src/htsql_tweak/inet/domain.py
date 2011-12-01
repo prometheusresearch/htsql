@@ -11,6 +11,8 @@ import socket
 
 class INetDomain(Domain):
 
+    family = 'inet'
+
     def parse(self, data):
         assert isinstance(data, maybe(unicode))
         if data is None:

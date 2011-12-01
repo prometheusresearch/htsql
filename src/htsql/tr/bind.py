@@ -298,7 +298,7 @@ class BindSegment(Bind):
         for binding in bindings:
             domain = coerce(binding.domain)
             if domain is None:
-                raise BindError("output column must be a scalar value",
+                raise BindError("output column must be scalar",
                                 binding.mark)
             element = CastBinding(binding, domain, binding.syntax)
             elements.append(element)
@@ -426,7 +426,7 @@ class BindQuotient(Bind):
         for element in elements:
             domain = coerce(element.domain)
             if domain is None:
-                raise BindError("quotient column must be a scalar value",
+                raise BindError("quotient column must be scalar",
                                 element.mark)
             kernel = CastBinding(element, domain, element.syntax)
             kernels.append(kernel)
@@ -507,7 +507,7 @@ class BindLink(Bind):
         for origin_image, target_image in zip(origin_images, target_images):
             domain = coerce(origin_image.domain, target_image.domain)
             if domain is None:
-                raise BindError("cannot convert origin and target columns"
+                raise BindError("cannot coerce origin and target columns"
                                 " to a common type", self.syntax.mark)
             origin_image = CastBinding(origin_image, domain,
                                        origin_image.syntax)

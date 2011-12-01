@@ -13082,7 +13082,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('boolean', 'integer') to a common type:
                 /{true()=1}
                   ^^^^^^^^
         - uri: /{'cinq'!=4.9}
@@ -13098,7 +13098,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('date', 'integer') to a common type:
                 /{date('2010-04-15')==1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{date('2010-04-15')=datetime('2010-04-15')}
@@ -13106,7 +13106,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('date', 'datetime') to a common type:
                 /{date('2010-04-15')=datetime('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')!==time('02:01')}
@@ -13114,7 +13114,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('datetime', 'time') to a common type:
                 /{datetime('2010-04-15 20:13')!==time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{1<10, 7.0<=7.0, 'omega'>'alpha'}
@@ -13213,7 +13213,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: uncomparable arguments:
+            bind error: values of type 'boolean' are not comparable:
                 /{false()<true()}
                   ^^^^^^^^^^^^^^
         - uri: /{'cinq'>4.9}
@@ -13229,7 +13229,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('date', 'integer') to a common type:
                 /{date('2010-04-15')>=1991}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{datetime('2010-04-15 20:13')>time('02:01')}
@@ -13237,7 +13237,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('datetime', 'time') to a common type:
                 /{datetime('2010-04-15 20:13')>time('02:01')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if_null('Victor', 'William'), if_null(null(), 'William'), if_null('Victor',
@@ -13310,7 +13310,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('date', 'integer') to a common type:
                 /{if_null(date('2010-04-15'),1991)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
@@ -13318,7 +13318,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('datetime', 'time') to a common type:
                 /{null_if(datetime('2010-04-15 20:13'),time('02:01'))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{if(true(), 'then'), if(false(), 'then'), if(null(), 'then')}
@@ -13436,7 +13436,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: cannot coerce values of types ('integer', 'date', 'date') to a common type:
                 /{switch(1, date('2010-04-15'), 1, date('1991-08-20'), 2)}
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /{switch(1, 1, 'George', 2, false())}
@@ -13771,25 +13771,28 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: operator '+' cannot be applied to values of types ('untyped', 'integer'):
                 /{'cinq'+7}
                   ^^^^^^^^
+            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('string', 'string'))
         - uri: /{2.125-date('2010-04-15')}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: operator '-' cannot be applied to values of types ('decimal', 'date'):
                 /{2.125-date('2010-04-15')}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
+            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('date', 'date'))
         - uri: /{true()/271828e-5}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: operator '/' cannot be applied to values of types ('boolean', 'float'):
                 /{true()/271828e-5}
                   ^^^^^^^^^^^^^^^^
+            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'))
         - uri: /{7*2147483647}
           status: 409 Conflict
           headers:
@@ -13985,17 +13988,19 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: function 'round' cannot be applied to values of types ('float', 'integer'):
                 /{round(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
+            (valid types: ('integer', 'integer'), ('decimal', 'integer'))
         - uri: /{trunc(271828e-5,2)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: function 'trunc' cannot be applied to values of types ('float', 'integer'):
                 /{trunc(271828e-5,2)}
                   ^^^^^^^^^^^^^^^^^^
+            (valid types: ('integer', 'integer'), ('decimal', 'integer'))
       - id: string-functions-and-operators
         tests:
         - uri: /{string(null()), string('OMGWTFBBQ')}
@@ -14112,9 +14117,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: function 'length' cannot be applied to a value of type 'date':
                 /{length(date(2010-04-15))}
                   ^^^^^^^^^^^^^^^^^^^^^^^^
+            (valid type: 'string')
         - uri: /{'OMG'+'WTF'+'BBQ'}
           status: 200 OK
           headers:
@@ -14148,9 +14154,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: operator '+' cannot be applied to values of types ('string', 'integer'):
                 /{string('LOL')+7}
                   ^^^^^^^^^^^^^^^
+            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'), ('date', 'integer'), ('datetime', 'integer'), ('datetime', 'decimal'), ('datetime', 'float'), ('string', 'string'))
         - uri: /{'OMGWTFBBQ'~'wtf', 'OMGWTFBBQ'!~'LOL'}
           status: 200 OK
           headers:
@@ -15486,9 +15493,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: function 'min' cannot be applied to a value of type 'boolean':
                 /{min(student.is_active), max(student.is_active)}
                   ^^^^^^^^^^^^^^^^^^^^^^
+            (valid type: 'integer', 'decimal', 'float', 'string', 'date', 'time', 'datetime')
         - uri: /{sum(course{credits}?department_code='be'), count(course{credits}?department_code='be'),
             avg(course{credits}?department_code='be')}
           status: 200 OK
@@ -15530,17 +15538,19 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: function 'sum' cannot be applied to a value of type 'date':
                 /{sum(student.dob)}
                   ^^^^^^^^^^^^^^^^
+            (valid type: 'integer', 'decimal', 'float')
         - uri: /{avg(student.name)}
           status: 400 Bad Request
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: incompatible arguments:
+            bind error: function 'avg' cannot be applied to a value of type 'string':
                 /{avg(student.name)}
                   ^^^^^^^^^^^^^^^^^
+            (valid type: 'integer', 'decimal', 'float')
       - id: table-functions-and-operators
         tests:
         - uri: /school.program
@@ -26548,7 +26558,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: missing argument op:
+            bind error: function 'retrieve' expects 1 argument; got 0:
                 /retrieve()
                  ^^^^^^^^^^
         - uri: /retrieve(school)
@@ -26556,7 +26566,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: a segment is required:
+            bind error: function 'retrieve' expects a segment argument:
                 /retrieve(school)
                           ^^^^^^
         - uri: /school/:html/:retrieve
@@ -26564,7 +26574,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: a segment is required:
+            bind error: function 'retrieve' expects a segment argument:
                 /school/:html/:retrieve
                 ^^^^^^^^^^^^^
         - uri: /school/:html/:json
@@ -28434,7 +28444,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: missing argument op:
+            bind error: function 'meta' expects 1 argument; got 0:
                 /meta()
                  ^^^^^^
         - uri: /meta(/column,/link)
@@ -28442,9 +28452,9 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: unexpected argument:
+            bind error: function 'meta' expects 1 argument; got 2:
                 /meta(/column,/link)
-                              ^^^^^
+                 ^^^^^^^^^^^^^^^^^^^
         - uri: /meta(/schema)
           status: 400 Bad Request
           headers:
@@ -30387,7 +30397,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: output column must be a scalar value:
+            bind error: output column must be scalar:
                 /department{school, code}
                             ^^^^^^
         - uri: /school{code, num_dept():=count(department)}
@@ -30411,7 +30421,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: quotient column must be a scalar value:
+            bind error: quotient column must be scalar:
                 /department^school
                             ^^^^^^
         - uri: /department^(num_course:=count(course))
@@ -30419,7 +30429,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: quotient column must be a scalar value:
+            bind error: quotient column must be scalar:
                 /department^(num_course:=count(course))
                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /program.{school_code,code}->school{code}
@@ -30435,7 +30445,7 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |
-            bind error: cannot convert origin and target columns to a common type:
+            bind error: cannot coerce origin and target columns to a common type:
                 /program.{code}->course{no}
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         - uri: /define((school).num_prog:=count(program)).true()
@@ -30678,3 +30688,305 @@ tests:
             bind error: unrecognized function 'student_by_year':
                 /program{code, count(student_by_year(2010))}
                                      ^^^^^^^^^^^^^^^^^^^^^
+      - id: function-bind-errors
+        tests:
+        - uri: /count()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'count' expects 1 argument; got 0:
+                /count()
+                 ^^^^^^^
+        - uri: /today(1)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'today' expects 0 arguments; got 1:
+                /today(1)
+                 ^^^^^^^^
+        - uri: /slice()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'slice' expects 1 to 3 arguments; got 0:
+                /slice()
+                 ^^^^^^^
+        - uri: /slice('HTSQL',1,3,5)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'slice' expects 1 to 3 arguments; got 4:
+                /slice('HTSQL',1,3,5)
+                 ^^^^^^^^^^^^^^^^^^^^
+        - uri: /school.sort()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'sort' expects 1 or more arguments; got 0:
+                /school.sort()
+                        ^^^^^^
+        - uri: /'SQL'={}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: at least one element is expected:
+                /'SQL'={}
+                       ^^
+        - uri: /if(school)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'if' expects 2 or more arguments; got 1:
+                /if(school)
+                 ^^^^^^^^^^
+        - uri: /switch(school,department)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'switch' expects 3 or more arguments; got 2:
+                /switch(school,department)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /department{code, school :if_null 'none'}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('tuple', 'untyped') to a common type:
+                /department{code, school :if_null 'none'}
+                                  ^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /department{code, is_null(school)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: a scalar value is expected:
+                /department{code, is_null(school)}
+                                  ^^^^^^^^^^^^^^^
+        - uri: /school?code=today()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('string', 'date') to a common type:
+                /school?code=today()
+                        ^^^^^^^^^^^^
+        - uri: /school?code==today()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('string', 'date') to a common type:
+                /school?code==today()
+                        ^^^^^^^^^^^^^
+        - uri: /school?code={'art',5,today()}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('string', 'untyped', 'integer', 'date') to a common type:
+                /school?code={'art',5,today()}
+                        ^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /school?code<today()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('string', 'date') to a common type:
+                /school?code<today()
+                        ^^^^^^^^^^^^
+        - uri: /department{code, if(school,school.code,today())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('string', 'date') to a common type:
+                /department{code, if(school,school.code,today())}
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /department{code, if(school.code,school)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: a scalar value is expected:
+                /department{code, if(school.code,school)}
+                                                 ^^^^^^
+        - uri: /department{code, switch(school.code,today(),now())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('string', 'date') to a common type:
+                /department{code, switch(school.code,today(),now())}
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /department{code, switch(school.code,'art',today(),now())}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: cannot coerce values of types ('date', 'datetime') to a common type:
+                /department{code, switch(school.code,'art',today(),now())}
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        - uri: /department{code, switch(school.code,'art',school)}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: a scalar value is expected:
+                /department{code, switch(school.code,'art',school)}
+                                                           ^^^^^^
+        - uri: /student?is_active<true()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: values of type 'boolean' are not comparable:
+                /student?is_active<true()
+                         ^^^^^^^^^^^^^^^^
+        - uri: /trunc(school)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'trunc' cannot be applied to a value of type 'tuple':
+                /trunc(school)
+                 ^^^^^^^^^^^^^
+            (valid type: 'integer', 'decimal', 'float')
+        - uri: /trunc(school,department)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'trunc' cannot be applied to values of types ('tuple', 'tuple'):
+                /trunc(school,department)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+            (valid types: ('integer', 'integer'), ('decimal', 'integer'))
+        - uri: /-school
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: operator '-' cannot be applied to a value of type 'tuple':
+                /-school
+                 ^^^^^^^
+            (valid type: 'integer', 'decimal', 'float')
+        - uri: /school*department
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: operator '*' cannot be applied to values of types ('tuple', 'tuple'):
+                /school*department
+                 ^^^^^^^^^^^^^^^^^
+            (valid types: ('integer', 'integer'), ('integer', 'decimal'), ('decimal', 'integer'), ('decimal', 'decimal'), ('integer', 'float'), ('decimal', 'float'), ('float', 'integer'), ('float', 'decimal'), ('float', 'float'))
+        - uri: /retrieve(school)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'retrieve' expects a segment argument:
+                /retrieve(school)
+                          ^^^^^^
+        - uri: /html(school)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'html' expects a segment argument:
+                /html(school)
+                      ^^^^^^
+        - uri: /distinct(department)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'distinct' expects an argument with a selector:
+                /distinct(department)
+                          ^^^^^^^^^^
+        - uri: /distinct(department{school})
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: quotient column must be scalar:
+                /distinct(department{school})
+                                     ^^^^^^
+        - uri: /school.limit(today())
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'limit' expects a non-negative integer:
+                /school.limit(today())
+                              ^^^^^^^
+        - uri: /school.limit(1,-1)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'limit' expects a non-negative integer:
+                /school.limit(1,-1)
+                                ^^
+        - uri: /department.sort(school)
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'sort' expects a scalar expression:
+                /department.sort(school)
+                                 ^^^^^^
+        - uri: /define(today()){now()}
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'define' expects an assignment expression:
+                /define(today()){now()}
+                        ^^^^^^^
+        - uri: /today() :where now()
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'where' expects an assignment expression:
+                /today() :where now()
+                                ^^^^^
+        - uri: /exists(school{code,name})
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'exists' expects 1 argument; got 2:
+                /exists(school{code,name})
+                        ^^^^^^^^^^^^^^^^^
+        - uri: /count(school{code,name})
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'count' expects 1 argument; got 2:
+                /count(school{code,name})
+                       ^^^^^^^^^^^^^^^^^
+        - uri: /avg(school{code,name})
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'avg' expects 1 argument; got 2:
+                /avg(school{code,name})
+                     ^^^^^^^^^^^^^^^^^
+        - uri: /max(school{code,name})
+          status: 400 Bad Request
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |
+            bind error: function 'max' expects 1 argument; got 2:
+                /max(school{code,name})
+                     ^^^^^^^^^^^^^^^^^

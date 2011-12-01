@@ -16,7 +16,8 @@ from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
-                      SpecifierSyntax, ApplicationSyntax, GroupSyntax)
+                      SpecifierSyntax, ApplicationSyntax, OperatorSyntax,
+                      GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        FormulaBinding, CastBinding, WrappingBinding,
                        TitleBinding, DirectionBinding, QuotientBinding,
@@ -25,7 +26,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
                        CommandBinding, SegmentBinding, QueryBinding, Binding,
                        BindingRecipe, ComplementRecipe, KernelRecipe,
                        SubstitutionRecipe, ClosedRecipe)
-from ..bind import BindByName, BindByRecipe, BindingState
+from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..lookup import direct, expand, guess_name, lookup_command
@@ -62,17 +63,37 @@ class BindFunction(BindByName):
     def match(self):
         assert self.signature is not None
         arguments = {}
-        if isinstance(self.syntax, ApplicationSyntax):
-            operands = self.syntax.arguments[:]
-        else:
+        if self.arguments is None:
             operands = []
+        else:
+            operands = self.arguments[:]
+        min_args = len([slot for slot in self.signature.slots
+                             if slot.is_mandatory])
+        max_args = len(self.signature.slots)
+        if self.signature.slots and not self.signature.slots[-1].is_singular:
+            max_args = None
+        if len(operands) < min_args or (max_args is not None and
+                                        len(operands) > max_args):
+            if min_args == max_args == 1:
+                message = "1 argument"
+            elif min_args == max_args:
+                message = "%s arguments" % min_args
+            elif max_args == 1:
+                message = "%s to %s argument" % (min_args, max_args)
+            elif max_args is not None:
+                message = "%s to %s arguments" % (min_args, max_args)
+            else:
+                message = "%s or more arguments" % min_args
+            raise BindError("function '%s' expects %s; got %s"
+                            % (self.name.encode('utf-8'),
+                               message, len(operands)),
+                            self.syntax.mark)
+
         for index, slot in enumerate(self.signature.slots):
             name = slot.name
             value = None
             if not operands:
-                if slot.is_mandatory:
-                    raise BindError("missing argument %s" % name,
-                                    self.syntax.mark)
+                assert not slot.is_mandatory
                 if not slot.is_singular:
                     value = []
             elif slot.is_singular:
@@ -84,8 +105,7 @@ class BindFunction(BindByName):
                 else:
                     value = [operands.pop(0)]
             arguments[name] = value
-        if operands:
-            raise BindError("unexpected argument", operands[0].mark)
+        assert not operands
         return arguments
 
     def bind(self):
@@ -111,15 +131,14 @@ class BindFunction(BindByName):
                     recipies = expand(bound_value, is_hard=False)
                     if slot.is_mandatory and (recipies is not None and
                                               not recipies):
-                        raise BindError("missing argument %s" % name,
+                        raise BindError("at least one element is expected",
                                         value.mark)
                     if recipies is None:
                         bound_value = [bound_value]
                     else:
                         bound_value = []
                         for syntax, recipe in recipies:
-                            bind = BindByRecipe(recipe, syntax, self.state)
-                            bound_value.append(bind())
+                            bound_value.append(self.state.use(recipe, syntax))
                 else:
                     bound_value = []
             bound_arguments[name] = bound_value
@@ -186,7 +205,15 @@ class BindHomoFunction(BindFunction):
                 domains.extend(item.domain for item in value)
         domain = coerce(*domains)
         if domain is None:
-            raise BindError("incompatible arguments", self.syntax.mark)
+            if len(domains) > 1:
+                raise BindError("cannot coerce values of types (%s)"
+                                " to a common type"
+                                % (", ".join("'%s'" % domain.family
+                                             for domain in domains)),
+                                self.syntax.mark)
+            else:
+                raise BindError("a scalar value is expected",
+                                self.syntax.mark)
         cast_arguments = {}
         for slot in self.signature.slots:
             name = slot.name
@@ -261,7 +288,45 @@ class Correlate(Component):
         self.arguments = binding.arguments
 
     def __call__(self):
-        raise BindError("incompatible arguments", self.binding.mark)
+        if isinstance(self.binding.syntax, OperatorSyntax):
+            name = "operator '%s'" % self.binding.syntax.symbol.encode('utf-8')
+        elif isinstance(self.binding.syntax, ApplicationSyntax):
+            name = "function '%s'" % self.binding.syntax.name.encode('utf-8')
+        else:
+            name = "'%s'" % self.binding.syntax
+        key_signature, domain_vector = self.dispatch_key
+        if len(domain_vector) > 1:
+            types = "types"
+            values = "values"
+        else:
+            types = "type"
+            values = "a value"
+        families = ", ".join("'%s'" % domain_class.family
+                             for domain_class in domain_vector)
+        if len(domain_vector) > 1:
+            families = "(%s)" % families
+        valid_types = []
+        for component in self.interface.implementations():
+            if component.input_signature is None:
+                continue
+            if not issubclass(key_signature, component.input_signature):
+                continue
+            for domain_vector in component.input_domains:
+                if any(issubclass(domain_class, UntypedDomain)
+                       for domain_class in domain_vector):
+                    continue
+                valid_families = ", ".join("'%s'" % domain_class.family
+                                           for domain_class in domain_vector)
+                if len(domain_vector) > 1:
+                    valid_families = "(%s)" % valid_families
+                if valid_families not in valid_types:
+                    valid_types.append(valid_families)
+        hint = None
+        if valid_types:
+            hint = "valid %s: %s" % (types, ", ".join(valid_types))
+        raise BindError("%s cannot be applied to %s of %s %s"
+                        % (name, values, types, families),
+                        self.binding.mark, hint=hint)
 
 
 def correlates(signature, *domain_vectors):
@@ -346,7 +411,8 @@ class BindRetrieve(BindCommand):
     def expand(self, op):
         op = self.state.bind(op)
         if not isinstance(op, SegmentBinding):
-            raise BindError("a segment is required", op.mark)
+            raise BindError("function '%s' expects a segment argument"
+                            % self.name.encode('utf-8'), op.mark)
         binding = QueryBinding(self.state.root, op, op.syntax)
         command = RetrieveCmd(binding)
         return CommandBinding(self.state.scope, command, self.syntax)
@@ -361,7 +427,8 @@ class BindFormat(BindCommand):
         producer = lookup_command(op)
         if producer is None:
             if not isinstance(op, SegmentBinding):
-                raise BindError("a segment is required", op.mark)
+                raise BindError("function '%s' expects a segment argument"
+                                % self.name.encode('utf-8'), op.mark)
             binding = QueryBinding(self.state.root, op, op.syntax)
             producer = DefaultCmd(binding)
         command = self.command(producer)
@@ -475,14 +542,15 @@ class BindDistinct(BindMacro):
         seed = self.state.bind(op)
         recipes = expand(seed, is_hard=False)
         if recipes is None:
-            raise BindError("a selector is required", op.mark)
+            raise BindError("function '%s' expects an argument with a selector"
+                            % self.name.encode('utf-8'), op.mark)
         kernels = []
         for syntax, recipe in recipes:
             element = self.state.use(recipe, syntax, scope=seed)
             element = RescopingBinding(element, seed, element.syntax)
             domain = coerce(element.domain)
             if domain is None:
-                raise BindError("invalid element type", element.mark)
+                raise BindError("quotient column must be scalar", element.mark)
             element = CastBinding(element, domain, element.syntax)
             kernels.append(element)
         quotient = QuotientBinding(self.state.scope, seed, kernels,
@@ -518,7 +586,8 @@ class BindAs(BindMacro):
 
     def expand(self, base, title):
         if not isinstance(title, (StringSyntax, IdentifierSyntax)):
-            raise BindError("expected a string literal or an identifier",
+            raise BindError("function '%s' expects a string literal"
+                            " or an identifier" % self.name.encode('utf-8'),
                             title.mark)
         base = self.state.bind(base)
         return TitleBinding(base, title.value, self.syntax)
@@ -563,8 +632,7 @@ class BindSelect(BindMacro):
                         syntax = GroupSyntax(syntax, syntax.mark)
                     syntax = SpecifierSyntax(element.syntax, syntax,
                                              syntax.mark)
-                    bind = BindByRecipe(recipe, syntax, self.state)
-                    elements.append(bind())
+                    elements.append(self.state.use(recipe, syntax))
             else:
                 elements.append(element)
         order = []
@@ -604,8 +672,7 @@ class BindFork(BindMacro):
                         syntax = GroupSyntax(syntax, syntax.mark)
                     syntax = SpecifierSyntax(element.syntax, syntax,
                                              syntax.mark)
-                    bind = BindByRecipe(recipe, syntax, self.state)
-                    elements.append(bind())
+                    elements.append(self.state.use(recipe, syntax))
             else:
                 elements.append(element)
         return ForkBinding(self.state.scope, elements, self.syntax)
@@ -652,7 +719,8 @@ class BindLimit(BindMacro):
             if not (value >= 0):
                 raise ValueError
         except ValueError:
-            raise BindError("expected a non-negative integer", argument.mark)
+            raise BindError("function '%s' expects a non-negative integer"
+                            % self.name.encode('utf-8'), argument.mark)
         return value
 
     def expand(self, limit, offset=None):
@@ -676,14 +744,14 @@ class BindSort(BindMacro):
             if recipies is None:
                 domain = coerce(binding.domain)
                 if domain is None:
-                    raise BindError("incompatible expression type",
+                    raise BindError("function '%s' expects a scalar"
+                                    " expression" % self.name.encode('utf-8'),
                                     binding.mark)
                 binding = CastBinding(binding, domain, binding.syntax)
                 bindings.append(binding)
             else:
                 for syntax, recipe in recipies:
-                    bind = BindByRecipe(recipe, syntax, self.state)
-                    binding = bind()
+                    binding = self.state.use(recipe, syntax)
                     bindings.append(binding)
         return SortBinding(self.state.scope, bindings, None, None, self.syntax)
 
@@ -698,7 +766,9 @@ class BindDefine(BindMacro):
         for op in ops:
             assignment = self.state.bind(op, scope=binding)
             if not isinstance(assignment, AssignmentBinding):
-                raise BindError("an assignment expected", op.mark)
+                raise BindError("function '%s' expects an assignment"
+                                " expression" % self.name.encode('utf-8'),
+                                op.mark)
             name, is_reference = assignment.terms[0]
             arity = None
             if is_reference:
@@ -727,7 +797,9 @@ class BindWhere(BindMacro):
         for op in rops:
             assignment = self.state.bind(op, scope=binding)
             if not isinstance(assignment, AssignmentBinding):
-                raise BindError("an assignment expected", op.mark)
+                raise BindError("function '%s' expects an assignment"
+                                " expression" % self.name.encode('utf-8'),
+                                op.mark)
             name, is_reference = assignment.terms[0]
             arity = None
             if is_reference:
@@ -845,9 +917,14 @@ class BindAmongBase(BindFunction):
     polarity = None
 
     def correlate(self, lop, rops):
-        domain = coerce(lop.domain, *(rop.domain for rop in rops))
+        domains = [lop.domain] + [rop.domain for rop in rops]
+        domain = coerce(*domains)
         if domain is None:
-            raise BindError("incompatible arguments", self.syntax.mark)
+            raise BindError("cannot coerce values of types (%s)"
+                            " to a common type"
+                            % (", ".join("'%s'" % domain.family
+                                         for domain in domains)),
+                            self.syntax.mark)
         lop = CastBinding(lop, domain, lop.syntax)
         rops = [CastBinding(rop, domain, rop.syntax) for rop in rops]
         if len(rops) == 1:
@@ -882,9 +959,14 @@ class BindTotallyEqualBase(BindFunction):
     polarity = None
 
     def correlate(self, lop, rop):
-        domain = coerce(lop.domain, rop.domain)
+        domains = [lop.domain, rop.domain]
+        domain = coerce(*domains)
         if domain is None:
-            raise BindError("incompatible arguments", self.syntax.mark)
+            raise BindError("cannot coerce values of types (%s)"
+                            " to a common type"
+                            % (", ".join("'%s'" % domain.family
+                                         for domain in domains)),
+                            self.syntax.mark)
         lop = CastBinding(lop, domain, lop.syntax)
         rop = CastBinding(rop, domain, rop.syntax)
         return FormulaBinding(self.state.scope,
@@ -954,14 +1036,20 @@ class BindCompare(BindFunction):
     relation = None
 
     def correlate(self, lop, rop):
-        domain = coerce(lop.domain, rop.domain)
+        domains = [lop.domain, rop.domain]
+        domain = coerce(*domains)
         if domain is None:
-            raise BindError("incompatible arguments", self.syntax.mark)
+            raise BindError("cannot coerce values of types (%s)"
+                            " to a common type"
+                            % (", ".join("'%s'" % domain.family
+                                         for domain in domains)),
+                            self.syntax.mark)
         lop = CastBinding(lop, domain, lop.syntax)
         rop = CastBinding(rop, domain, rop.syntax)
         comparable = Comparable(domain)
         if not comparable():
-            raise BindError("uncomparable arguments", self.syntax.mark)
+            raise BindError("values of type '%s' are not comparable"
+                            % domain.family, self.syntax.mark)
         return FormulaBinding(self.state.scope,
                               self.signature(self.relation),
                               coerce(BooleanDomain()),
@@ -1762,7 +1850,9 @@ class BindIf(BindFunction):
     def match(self):
         operands = list(reversed(self.syntax.arguments))
         if len(operands) < 2:
-            raise BindError("not enough arguments", self.syntax.mark)
+            raise BindError("function '%s' expects 2 or more arguments;"
+                            " got %s" % (self.name.encode('utf-8'),
+                                         len(operands)), self.syntax.mark)
         predicates = []
         consequents = []
         alternative = None
@@ -1787,7 +1877,16 @@ class BindIf(BindFunction):
             domains.append(alternative.domain)
         domain = coerce(*domains)
         if domain is None:
-            raise BindError("incompatible arguments", self.syntax.mark)
+            if len(domains) > 1:
+                raise BindError("cannot coerce values of types (%s)"
+                                " to a common type"
+                                % (", ".join("'%s'" % domain.family
+                                             for domain in domains)),
+                                self.syntax.mark)
+            else:
+                raise BindError("a scalar value is expected",
+                                consequents[0].mark
+                                if consequents else alternative.mark)
         consequents = [CastBinding(consequent, domain, consequent.syntax)
                        for consequent in consequents]
         if alternative is not None:
@@ -1808,7 +1907,9 @@ class BindSwitch(BindFunction):
     def match(self):
         operands = list(reversed(self.syntax.arguments))
         if len(operands) < 3:
-            raise BindError("not enough arguments", self.syntax.mark)
+            raise BindError("function '%s' expects 3 or more arguments;"
+                            " got %s" % (self.name.encode('utf-8'),
+                                         len(operands)), self.syntax.mark)
         variable = None
         variants = []
         consequents = []
@@ -1831,7 +1932,11 @@ class BindSwitch(BindFunction):
         domains = [variable.domain] + [variant.domain for variant in variants]
         domain = coerce(*domains)
         if domain is None:
-            raise BindError("incompatible arguments", self.syntax.mark)
+            raise BindError("cannot coerce values of types (%s)"
+                            " to a common type"
+                            % (", ".join("'%s'" % domain.family
+                                         for domain in domains)),
+                            self.syntax.mark)
         variable = CastBinding(variable, domain, variable.syntax)
         variants = [CastBinding(variant, domain, variant.syntax)
                     for variant in variants]
@@ -1840,7 +1945,16 @@ class BindSwitch(BindFunction):
             domains.append(alternative.domain)
         domain = coerce(*domains)
         if domain is None:
-            raise BindError("incompatible arguments", self.syntax.mark)
+            if len(domains) > 1:
+                raise BindError("cannot coerce values of types (%s)"
+                                " to a common type"
+                                % (", ".join("'%s'" % domain.family
+                                             for domain in domains)),
+                                self.syntax.mark)
+            else:
+                raise BindError("a scalar value is expected",
+                                consequents[0].mark
+                                if consequents else alternative.mark)
         consequents = [CastBinding(consequent, domain, consequent.syntax)
                        for consequent in consequents]
         if alternative is not None:
@@ -1863,11 +1977,12 @@ class BindExistsBase(BindFunction):
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:
-                raise BindError("one operand is expected", op.mark)
+                raise BindError("function '%s' expects 1 argument; got %s"
+                                % (self.name.encode('utf-8'), len(recipies)),
+                                op.mark)
             plural_base = op
             syntax, recipe = recipies[0]
-            bind = BindByRecipe(recipe, syntax, self.state)
-            op = bind()
+            op = self.state.use(recipe, syntax)
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         return FormulaBinding(self.state.scope,
                               QuantifySig(self.polarity), op.domain,
@@ -1899,11 +2014,12 @@ class BindCount(BindFunction):
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:
-                raise BindError("one operand is expected", op.mark)
+                raise BindError("function '%s' expects 1 argument; got %s"
+                                % (self.name.encode('utf-8'), len(recipies)),
+                                op.mark)
             plural_base = op
             syntax, recipe = recipies[0]
-            bind = BindByRecipe(recipe, syntax, self.state)
-            op = bind()
+            op = self.state.use(recipe, syntax)
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         op = FormulaBinding(self.state.scope,
                             CountSig(), coerce(IntegerDomain()),
@@ -1923,11 +2039,12 @@ class BindPolyAggregate(BindPolyFunction):
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:
-                raise BindError("one operand is expected", op.mark)
+                raise BindError("function '%s' expects 1 argument; got %s"
+                                % (self.name.encode('utf-8'), len(recipies)),
+                                op.mark)
             plural_base = op
             syntax, recipe = recipies[0]
-            bind = BindByRecipe(recipe, syntax, self.state)
-            op = bind()
+            op = self.state.use(recipe, syntax)
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), self.codomain, self.syntax,
                                  op=op)
@@ -1948,11 +2065,12 @@ class BindMinMaxBase(BindPolyAggregate):
         plural_base = None
         if recipies is not None:
             if len(recipies) != 1:
-                raise BindError("one operand is expected", op.mark)
+                raise BindError("function '%s' expects 1 argument; got %s"
+                                % (self.name.encode('utf-8'), len(recipies)),
+                                op.mark)
             plural_base = op
             syntax, recipe = recipies[0]
-            bind = BindByRecipe(recipe, syntax, self.state)
-            op = bind()
+            op = self.state.use(recipe, syntax)
         binding = FormulaBinding(self.state.scope,
                                  self.signature(self.polarity), self.codomain,
                                  self.syntax, op=op)
