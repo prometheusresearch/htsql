@@ -128,16 +128,16 @@ class BindFunction(BindByName):
                 elif len(value) == 1:
                     [value] = value
                     bound_value = self.state.bind(value)
-                    recipies = expand(bound_value, is_hard=False)
-                    if slot.is_mandatory and (recipies is not None and
-                                              not recipies):
+                    recipes = expand(bound_value, is_hard=False)
+                    if slot.is_mandatory and (recipes is not None and
+                                              not recipes):
                         raise BindError("at least one element is expected",
                                         value.mark)
-                    if recipies is None:
+                    if recipes is None:
                         bound_value = [bound_value]
                     else:
                         bound_value = []
-                        for syntax, recipe in recipies:
+                        for syntax, recipe in recipes:
                             bound_value.append(self.state.use(recipe, syntax))
                 else:
                     bound_value = []
@@ -625,9 +625,9 @@ class BindSelect(BindMacro):
         elements = []
         for op in ops:
             element = self.state.bind(op)
-            recipies = expand(element, is_hard=False)
-            if recipies is not None:
-                for syntax, recipe in recipies:
+            recipes = expand(element, is_hard=False)
+            if recipes is not None:
+                for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
                         syntax = GroupSyntax(syntax, syntax.mark)
                     syntax = SpecifierSyntax(element.syntax, syntax,
@@ -665,9 +665,9 @@ class BindFork(BindMacro):
         elements = []
         for op in ops:
             element = self.state.bind(op)
-            recipies = expand(element, is_hard=False)
-            if recipies is not None:
-                for syntax, recipe in recipies:
+            recipes = expand(element, is_hard=False)
+            if recipes is not None:
+                for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
                         syntax = GroupSyntax(syntax, syntax.mark)
                     syntax = SpecifierSyntax(element.syntax, syntax,
@@ -740,8 +740,8 @@ class BindSort(BindMacro):
         bindings = []
         for item in order:
             binding = self.state.bind(item)
-            recipies = expand(binding, is_hard=False)
-            if recipies is None:
+            recipes = expand(binding, is_hard=False)
+            if recipes is None:
                 domain = coerce(binding.domain)
                 if domain is None:
                     raise BindError("function '%s' expects a scalar"
@@ -750,7 +750,7 @@ class BindSort(BindMacro):
                 binding = CastBinding(binding, domain, binding.syntax)
                 bindings.append(binding)
             else:
-                for syntax, recipe in recipies:
+                for syntax, recipe in recipes:
                     binding = self.state.use(recipe, syntax)
                     bindings.append(binding)
         return SortBinding(self.state.scope, bindings, None, None, self.syntax)
@@ -1973,15 +1973,15 @@ class BindExistsBase(BindFunction):
     polarity = None
 
     def correlate(self, op):
-        recipies = expand(op, is_hard=False)
+        recipes = expand(op, is_hard=False)
         plural_base = None
-        if recipies is not None:
-            if len(recipies) != 1:
+        if recipes is not None:
+            if len(recipes) != 1:
                 raise BindError("function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipies)),
+                                % (self.name.encode('utf-8'), len(recipes)),
                                 op.mark)
             plural_base = op
-            syntax, recipe = recipies[0]
+            syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         return FormulaBinding(self.state.scope,
@@ -2010,15 +2010,15 @@ class BindCount(BindFunction):
     hint = """base.count(p) -> the number of p such that p = TRUE"""
 
     def correlate(self, op):
-        recipies = expand(op, is_hard=False)
+        recipes = expand(op, is_hard=False)
         plural_base = None
-        if recipies is not None:
-            if len(recipies) != 1:
+        if recipes is not None:
+            if len(recipes) != 1:
                 raise BindError("function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipies)),
+                                % (self.name.encode('utf-8'), len(recipes)),
                                 op.mark)
             plural_base = op
-            syntax, recipe = recipies[0]
+            syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
         op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
         op = FormulaBinding(self.state.scope,
@@ -2035,15 +2035,15 @@ class BindPolyAggregate(BindPolyFunction):
     codomain = UntypedDomain()
 
     def correlate(self, op):
-        recipies = expand(op, is_hard=False)
+        recipes = expand(op, is_hard=False)
         plural_base = None
-        if recipies is not None:
-            if len(recipies) != 1:
+        if recipes is not None:
+            if len(recipes) != 1:
                 raise BindError("function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipies)),
+                                % (self.name.encode('utf-8'), len(recipes)),
                                 op.mark)
             plural_base = op
-            syntax, recipe = recipies[0]
+            syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), self.codomain, self.syntax,
@@ -2061,15 +2061,15 @@ class BindMinMaxBase(BindPolyAggregate):
     polarity = None
 
     def correlate(self, op):
-        recipies = expand(op, is_hard=False)
+        recipes = expand(op, is_hard=False)
         plural_base = None
-        if recipies is not None:
-            if len(recipies) != 1:
+        if recipes is not None:
+            if len(recipes) != 1:
                 raise BindError("function '%s' expects 1 argument; got %s"
-                                % (self.name.encode('utf-8'), len(recipies)),
+                                % (self.name.encode('utf-8'), len(recipes)),
                                 op.mark)
             plural_base = op
-            syntax, recipe = recipies[0]
+            syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
         binding = FormulaBinding(self.state.scope,
                                  self.signature(self.polarity), self.codomain,

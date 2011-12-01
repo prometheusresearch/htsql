@@ -1038,10 +1038,10 @@ def expand(binding, is_soft=True, is_hard=True):
         If set, the function expands classes.
     """
     probe = ExpansionProbe(is_soft=is_soft, is_hard=is_hard)
-    recipies = lookup(binding, probe)
-    if recipies is not None:
-        recipies = list(recipies)
-    return recipies
+    recipes = lookup(binding, probe)
+    if recipes is not None:
+        recipes = list(recipes)
+    return recipes
 
 
 def guess_name(binding):

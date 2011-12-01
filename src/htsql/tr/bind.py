@@ -352,10 +352,10 @@ class BindSelector(Bind):
                 self.state.push_scope(scope)
             # Extract nested selectors, if any.
             bindings = []
-            recipies = expand(binding, is_hard=False)
-            if recipies is not None:
+            recipes = expand(binding, is_hard=False)
+            if recipes is not None:
                 seed = binding
-                for syntax, recipe in recipies:
+                for syntax, recipe in recipes:
                     binding = self.state.use(recipe, syntax)
                     binding = RescopingBinding(binding, seed, binding.syntax)
                     bindings.append(binding)
@@ -637,8 +637,8 @@ class BindWildcard(Bind):
 
     def __call__(self):
         # Get all public columns in the current lookup scope.
-        recipies = expand(self.state.scope)
-        if recipies is None:
+        recipes = expand(self.state.scope)
+        if recipes is None:
             raise BindError("cannot expand '*' since output columns"
                             " are not defined", self.syntax.mark)
         # If a position is given, extract a specific element.
@@ -649,15 +649,15 @@ class BindWildcard(Bind):
                 raise BindError("an integer value is required",
                                 self.syntax.mark)
             index -= 1
-            if not (0 <= index < len(recipies)):
+            if not (0 <= index < len(recipes)):
                 raise BindError("value in range 1-%s is required"
-                                % len(recipies), self.syntax.mark)
-            syntax, recipe = recipies[index]
+                                % len(recipes), self.syntax.mark)
+            syntax, recipe = recipes[index]
             syntax = syntax.clone(mark=self.syntax.mark)
             return self.state.use(recipe, syntax)
         # Otherwise, generate a selection node.
         elements = []
-        for syntax, recipe in recipies:
+        for syntax, recipe in recipes:
             syntax = syntax.clone(mark=self.syntax.mark)
             element = self.state.use(recipe, syntax)
             elements.append(element)
