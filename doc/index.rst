@@ -9,7 +9,7 @@
    tutorial
    ref/index
    admin/index
-   api
+   internals
 
 Indices and tables
 ==================
