@@ -1388,21 +1388,56 @@ class ReplaceAggregate(ReplaceUnit):
         return self.unit.clone(code=code, plural_flow=plural_flow, flow=flow)
 
 
+class RewriteKernel(RewriteUnit):
+
+    adapts(KernelUnit)
+
+    def __call__(self):
+        # At this stage, the kernel code is an element of the family kernel.
+        assert self.unit.code in self.unit.flow.family.kernels
+        index = self.unit.flow.family.kernels.index(self.unit.code)
+        # Rewrite the quotient flow.
+        flow = self.state.rewrite(self.unit.flow)
+        # Get the new kernel code.
+        code = flow.family.kernels[index]
+        return self.unit.clone(code=code, flow=flow)
+
+
 class UnmaskKernel(UnmaskUnit):
 
     adapts(KernelUnit)
 
     def __call__(self):
-        # The kernel expression is evaluated against the seed flow of
-        # the quotient, so use the seed as the mask.
-        code = self.state.unmask(self.unit.code,
-                                 mask=self.unit.flow.family.seed)
-        # Unmask the unit flow.
+        # At this stage, the kernel code is an element of the family kernel.
+        assert self.unit.code in self.unit.flow.family.kernels
+        index = self.unit.flow.family.kernels.index(self.unit.code)
+        # Unmask the quotient flow.
         flow = self.state.unmask(self.unit.flow)
+        # Get the new kernel code.
+        code = flow.family.kernels[index]
+        return self.unit.clone(code=code, flow=flow)
+
+
+class ReplaceKernel(ReplaceUnit):
+
+    adapts(KernelUnit)
+
+    def __call__(self):
+        # At this stage, the kernel code is an element of the family kernel.
+        assert self.unit.code in self.unit.flow.family.kernels
+        index = self.unit.flow.family.kernels.index(self.unit.code)
+        # Recombine the quotient flow.
+        substate = self.state.spawn()
+        substate.collect(self.unit.flow)
+        substate.recombine()
+        flow = substate.replace(self.unit.flow)
+        # Get the new kernel code.
+        code = flow.family.kernels[index]
         return self.unit.clone(code=code, flow=flow)
 
 
 class UnmaskCovering(UnmaskUnit):
+    # FIXME: not used?
 
     adapts(CoveringUnit)
 

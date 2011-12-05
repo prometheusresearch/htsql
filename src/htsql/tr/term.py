@@ -475,7 +475,8 @@ class CorrelationTerm(UnaryTerm):
     def __str__(self):
         # Display:
         #   (<kid> | <lop>=<rop>, ...)
-        conditions = ", ".join("%s=%s" % joint for joint in self.joints)
+        conditions = ", ".join("%s=%s" % (joint.lop, joint.rop)
+                               for joint in self.joints)
         if conditions:
             conditions = " | %s" % conditions
         return "(%s%s)" % (self.kid, conditions)
