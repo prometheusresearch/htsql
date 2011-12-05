@@ -169,9 +169,6 @@ decorator name.
 .. htsql:: /school/:csv
    :cut: 3
 
-See :class:`htsql.tr.parse.QueryParser` for a formal description of the
-HTSQL grammar.
-
 Next we describe individual syntax elements.
 
 Atomic Expressions

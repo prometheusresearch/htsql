@@ -20,7 +20,6 @@ div.htsql-input {
 }
 
 div.htsql-output {
-  max-height: 11em;
   overflow: auto;
 }
 
@@ -28,13 +27,8 @@ div.htsql-output table.docutils tr.htsql-cut td {
   border-bottom: 0;
 }
 
-div.htsql-hide {
-  display: none;
-}
-
-span.htsql-toggle {
-  float: right;
-  cursor: pointer;
+div.htsql-output div.highlight pre {
+  margin-top: 0;
 }
 
 a.htsql-link {
@@ -48,5 +42,16 @@ a.htsql-link:hover {
   background-color: inherit;
   text-decoration: none;
   opacity: 0.7;
+}
+
+a.htsql-arrow-link {
+  float: right;
+  font-size: 105%;
+  opacity: 0.9;
+}
+
+a.htsql-arrow-link:hover {
+  text-decoration: none;
+  opacity: 0.6;
 }
 

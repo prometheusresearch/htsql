@@ -118,17 +118,17 @@ class HTSQLDirective(Directive):
                 return [doc.reporter.error("failed to load: %s" % uri,
                                            line=self.lineno)]
             env.htsql_uris[uri] = result
+        query_container = nodes.container('', query_node,
+                                          classes=['htsql-input'])
+        if 'hide' in self.options:
+            return [query_container]
         content_type, content = env.htsql_uris[uri]
         if 'plain' in self.options:
             content_type = 'text/plain'
         result_node = build_result(self.content_offset, content_type, content,
                                    self.options.get('cut'))
-        query_container = nodes.container('', query_node,
-                                          classes=['htsql-input'])
         result_container = nodes.container('', result_node,
                                            classes=['htsql-output'])
-        if 'hide' in self.options:
-            result_container['classes'].append('htsql-hide')
         return [query_container, result_container]
 
 
@@ -185,11 +185,9 @@ def visit_htsql_block(self, node):
     if node.has_key('uri'):
         highlighted = '<a href="%s" target="_new" class="htsql-link">%s</a>' \
                 % (escape(node['uri'], True), highlighted)
-    toggle = "[-]"
-    if node.has_key('hide') and node['hide']:
-        toggle = "[+]"
-    highlighted = '<span class="htsql-toggle">%s</span>%s' \
-            % (toggle, highlighted)
+        highlighted = '<a href="%s" target="_new" class="htsql-arrow-link">' \
+                      '&#x25E5;</a>%s' \
+                % (escape(node['uri'], True), highlighted)
     highlighted = '<pre>%s</pre>' % highlighted
     highlighted = '<div class="highlight">%s</div>' % highlighted
     starttag = self.starttag(node, 'div', suffix='',
@@ -248,7 +246,7 @@ def build_result(line, content_type, content, cut=None):
             row_node += entry_node
             para_node = nodes.paragraph()
             entry_node += para_node
-            text_node = nodes.Text(title)
+            text_node = nodes.Text(title.replace(u' ', u'\xA0'))
             para_node += text_node
         body_node = nodes.tbody()
         group_node += body_node
@@ -319,7 +317,6 @@ def setup(app):
     app.add_node(htsql_block,
                  html=(visit_htsql_block, depart_htsql_block))
     app.add_stylesheet('htsqldoc.css')
-    app.add_javascript('htsqldoc.js')
     app.add_lexer('htsql', HtsqlLexer())
 
 

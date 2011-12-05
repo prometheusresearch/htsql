@@ -486,6 +486,7 @@ negative values are permitted.
    :cut: 3
 
 .. htsql::
+   :cut: 3
 
    /department^avg_credits {avg_credits, count(department)}
     :where department.avg_credits := avg(course.credits) :trunc(1)
