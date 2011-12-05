@@ -104,6 +104,8 @@ Logical Functions and Operators
 .. |switch-1-in| replace:: ``switch(1,1,'up',0,'down')``
 .. |switch-0-in| replace:: ``switch(0,1,'up',0,'down')``
 
+.. index:: boolean()
+
 Boolean Cast
 ------------
 
@@ -135,6 +137,8 @@ other data types
 .. htsql:: /{boolean(integer(null())), boolean(0.0),
              boolean(date('2010-04-15'))}
 
+.. index:: true(), false()
+
 Logical Values
 --------------
 
@@ -145,6 +149,8 @@ Logical Values
     Logical *FALSE* value.
 
 .. htsql:: /{true(), false()}
+
+.. index:: |, &, !
 
 Logical Operators
 -----------------
@@ -178,6 +184,8 @@ automatically converted to Boolean (see `boolean()` function).
 .. htsql:: /school?exists(program)&exists(department)|!campus
    :cut: 3
 
+.. index:: null(), is_null(), if_null(), null_if()
+
 NULL Checking
 -------------
 
@@ -206,6 +214,8 @@ if not, the arguments are coerced to the most general type.
 .. htsql:: /course{title, credits}?(credits :if_null 0)=0
 
 .. htsql:: /course{title, credits}?!(credits :null_if 0)
+
+.. index:: =, !=, ==, !==
 
 Equality Operators
 ------------------
@@ -253,6 +263,8 @@ compatible to each other.
 .. htsql:: /school{code, campus=='old', campus=='north', campus=='south'}
    :cut: 3
 
+.. index:: <, <=, >, >=
+
 Comparison Operators
 --------------------
 
@@ -277,6 +289,8 @@ type.
 
 .. htsql:: /school?count(department)>=4
    :cut: 3
+
+.. index:: if(), switch()
 
 Branching Functions
 -------------------
@@ -370,6 +384,8 @@ Numeric Functions
 .. |decimal-from-string-in| replace:: ``decimal(string('17.25'))``
 .. |float-from-string-in| replace:: ``float(string('223607e-5'))``
 
+.. index:: integer(), decimal(), float()
+
 Numeric Cast
 ------------
 
@@ -396,6 +412,10 @@ types:
     input values depends on the backend.
 
 .. htsql:: /{integer(2.125), decimal('271828e-5'), float(string(60))}
+
+.. index:: +, -, *, /
+
+.. **
 
 Arithmetic Expressions
 ----------------------
@@ -432,6 +452,8 @@ Note that some arithmetic operators are also defined for *string*
 and *date* values; they are described in respective sections.
 
 .. htsql:: /{(2+4)*7, -(98-140), 21/5}
+
+.. index:: round(), trunc()
 
 Rounding Functions
 ------------------
@@ -549,6 +571,8 @@ string typed values using single quotes in the output column.
 .. |slice-end-in| replace:: ``slice('HTSQL',2,null())``
 .. |replace-in| replace:: ``replace('HTSQL','SQL','RAF')``
 
+.. index:: string()
+
 String Cast
 -----------
 
@@ -568,6 +592,8 @@ respects the format for literals of the original type.
                +string(count(course))+' courses' :as text}
               ?exists(course)
 
+.. index:: length()
+
 String Length
 -------------
 
@@ -579,6 +605,8 @@ underlying SQL type.  The function returns ``0`` if the argument is
 *NULL*.
 
 .. htsql:: /{length('HTSQL'), length(''), length(null())}
+
+.. index:: +
 
 Concatenation
 -------------
@@ -592,6 +620,8 @@ The concatenation operator treats a *NULL* operand as an empty string.
 
 .. htsql:: /course{department_code+'.'+string(no) :as code, title}
    :cut: 3
+
+.. index:: ~, !~
 
 Substring Search
 ----------------
@@ -607,6 +637,8 @@ case-insensitivity depend on the backend.
 .. htsql:: /{'HTSQL'~'sql', 'sql'!~'HTSQL'}
 
 .. htsql:: /school?code~'art'
+
+.. index:: head(), tail(), slice(), at()
 
 Substring Extraction
 --------------------
@@ -649,6 +681,8 @@ be ``1``.
 
 .. htsql:: /{'HTSQL' :at(2), 'HTSQL' :at(1,3), 'HTSQL': at(-1,-3)}
 
+.. index:: upper(), lower()
+
 Case Conversion
 ---------------
 
@@ -660,6 +694,8 @@ Case Conversion
 The conversion semantics is backend-dependent.
 
 .. htsql:: /{'htsql' :upper, 'HTSQL' :lower}
+
+.. index:: trim(), ltrim(), rtrim()
 
 String Trimming
 ---------------
@@ -676,6 +712,8 @@ String Trimming
    /{'  HTSQL  ' :trim :replace(' ','!'),
      '  HTSQL  ' :ltrim :replace(' ','!'),
      '  HTSQL  ' :rtrim :replace(' ','!')}
+
+.. index:: replace()
 
 Search and Replace
 ------------------
@@ -758,6 +796,8 @@ Date/Time Functions
 .. |date-dec-in| replace:: ``date('2028-12-09')-6813``
 .. |date-diff-in| replace:: ``date('2028-12-09') - date('1991-08-20')``
 
+.. index:: date(), time(), datetime()
+
 Date/Time Cast
 --------------
 
@@ -777,6 +817,8 @@ type.  Conversion from a string value is backend-specific.
 
 .. htsql:: /student?dob<date('1982-06-01')
    :cut: 3
+
+.. index:: date(), datetime()
 
 Date/Time Construction
 ----------------------
@@ -798,6 +840,9 @@ regular range.
      datetime(date('2010-04-15'),time('20:13'))}
 
 .. htsql:: /{date(2010,4,15), date(2010,3,46), date(2011,-8,15)}
+
+.. index:: date(), time(), year(), month(), day(), hour(), minute(),
+           second()
 
 Component Extraction
 --------------------
@@ -830,6 +875,8 @@ extracted value is a float number.
     :where ($d := date('2010-04-15'),
             $t := time('20:13'),
             $dt := datetime($d,$t))
+
+.. index:: +, -
 
 Date/Time Arithmetics
 ---------------------
@@ -888,6 +935,8 @@ Aggregate functions accept a plural argument, which, when evaluated,
 produces a flow of values, and generates a single *aggregating* value
 from it.
 
+.. index:: exists(), every(), count()
+
 Boolean Aggregates
 ------------------
 
@@ -922,6 +971,8 @@ is converted to Boolean first (see function `boolean()`).
      count(pia_course.credits>=5)}
     :where pia_course := course?department.code='pia'
 
+.. index:: min(), max()
+
 Extrema
 -------
 
@@ -943,6 +994,8 @@ empty,  *NULL* is returned.
 
    /{min(pia_course.credits), max(pia_course.credits)}
     :where pia_course := course?department.code='pia'
+
+.. index:: sum(), avg()
 
 Sum and Average
 ---------------
@@ -1006,6 +1059,8 @@ Flow Operations
 .. |select-out| replace:: ``school.select(code,name)``
 .. |link-in| replace:: ``school.(campus -> school)``
 
+.. index:: ?, filter()
+
 Sieving
 -------
 
@@ -1020,6 +1075,8 @@ is not Boolean, it is implicitly converted to Boolean (see `boolean()`).
 .. htsql:: /school?campus='south'
 
 .. htsql:: /school.filter(campus='south')
+
+.. index:: ^, distinct()
 
 Projection
 ----------
@@ -1073,6 +1130,8 @@ may contain the following names:
     {*, count(school)}
 
 .. **
+
+.. index:: {}, select()
 
 Selection
 ---------
@@ -1142,6 +1201,8 @@ Scope Operations
 .. |define-in| replace:: ``define(num_prog:=count(program))``
 .. |where-in| replace:: ``count(course?credits>$c) :where $c:=avg(course.credits)``
 
+.. index:: define(), where()
+
 Calculated Attributes
 ---------------------
 
@@ -1153,6 +1214,8 @@ Calculated Attributes
 
 These functions add calculated attributes and references to the current
 scope.
+
+.. index:: @, root(), this()
 
 Scopes
 ------
@@ -1180,6 +1243,8 @@ Decorators
 
 .. |as-in| replace:: ``count(program) :as '# of programs'``
 
+.. index:: as()
+
 Title
 -----
 
@@ -1192,6 +1257,8 @@ selection operator.
 
 .. htsql:: /school{code :as ID, count(program) :as '# of Programs'}
    :cut: 3
+
+.. index:: +, -
 
 Direction Decorators
 --------------------
@@ -1207,6 +1274,8 @@ selection operator.
 .. htsql:: /school.sort(campus+)
    :cut: 3
 
+
+.. index:: html(), txt(), csv(), tsv(), json()
 
 Formatters
 ==========

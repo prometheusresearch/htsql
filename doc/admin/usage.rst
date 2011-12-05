@@ -8,8 +8,10 @@
 Usage
 =====
 
-``htsql-ctl``
--------------
+.. index:: htsql-ctl
+
+Invoking ``htsql-ctl``
+----------------------
 
 Installing HTSQL creates a command-line application ``htsql-ctl``::
 
@@ -34,6 +36,8 @@ To get a list of routines, run::
 To describe a specific routine, run::
 
     $ htsql-ctl help <routine>
+
+.. index:: connection URI
 
 Database Connection
 -------------------
@@ -76,6 +80,8 @@ Other database servers use similar conventions.
 You can use option ``-p`` to prompt for a password if you do not want
 to specify the database password in a command line.
 
+.. index:: htsql-ctl shell
+
 Command-line Shell
 ------------------
 
@@ -99,6 +105,8 @@ For more details on the ``shell`` routine, run::
 
     $ htsql-ctl help shell
 
+.. index:: htsql-ctl server
+
 HTTP Server
 -----------
 
@@ -121,6 +129,8 @@ For more details on the ``server`` routine, run::
 
     $ htsql-ctl help server
 
+
+.. index:: htsql-ctl extension
 
 Extension Mechanism
 ===================
@@ -258,6 +268,9 @@ In the expanded form, a mapping notation is used:
 
 Every component except ``engine`` and ``database`` is optional.
 
+.. index:: engine.sqlite, engine.pgsql, engine.mysql, engine.oracle,
+           engine.mssql
+
 ``engine.*``
 ------------
 
@@ -272,6 +285,8 @@ HTSQL supports the following database servers:
 * MySQL 5.1+ (``engine.mysql``)
 * Oracle 10g+ (``engine.oracle``)
 * Microsoft SQL Server 2005+ (``engine.mssql``)
+
+.. index:: tweak.autolimit
 
 ``tweak.autolimit``
 -------------------
@@ -292,6 +307,8 @@ Parameters:
 
     tweak.autolimit:
       limit: 1000
+
+.. index:: tweak.cors
 
 ``tweak.cors``
 --------------
@@ -336,6 +353,8 @@ and http://htsql.com/, we could write:
 
 .. _CORS: http://www.w3.org/TR/cors/
 
+.. index:: tweak.django, Django
+
 ``tweak.django``
 ----------------
 
@@ -359,6 +378,8 @@ Parameters:
       settings: mysite.settings
 
 .. _Django: https://www.djangoproject.com/
+
+.. index:: tweak.meta
 
 ``tweak.meta``
 --------------
@@ -410,6 +431,8 @@ To get all links to and from a specific table:
 To describe the meta database itself, apply ``meta()`` twice:
 
 .. htsql:: /meta(/meta(/table))
+
+.. index:: tweak.override
 
 ``tweak.override``
 ------------------
@@ -706,6 +729,7 @@ an optional list of parameters, the value is an HTSQL expression.
         num_school: (count(@school))
         trunc_month($d): (date(year($d), month($d), 1))
 
+.. index:: tweak.resource
 
 ``tweak.resource``
 ------------------
@@ -720,6 +744,7 @@ Parameters:
     HTTP root for static files, excluding leading and trailing ``/``
     (default: ``-``)
 
+.. index:: tweak.shell
 
 ``tweak.shell``
 ---------------
@@ -753,6 +778,8 @@ output format.
 
 .. _CodeMirror: http://codemirror.net/
 
+.. index:: tweak.sqlalchemy, SQLAlchemy
+
 ``tweak.sqlalchemy``
 --------------------
 
@@ -781,6 +808,8 @@ The value must have the form ``<module>.<attr>`` or
       metadata: sademo.metadata
 
 .. _SQLAlchemy: http://www.sqlalchemy.org/
+
+.. index:: tweak.timeout
 
 ``tweak.timeout``
 -----------------

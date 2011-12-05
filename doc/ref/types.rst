@@ -184,6 +184,8 @@ For instance, if an arithmetic operation has an integer and a decimal
 operands, the integer operand is converted to decimal.
 
 
+.. index:: boolean
+
 Boolean Type
 ============
 
@@ -216,6 +218,8 @@ native data types.
 
 .. |oracle-native-bool| replace:: ``NUMBER(1) CHECK (_ IN (0, 1))``
 
+
+.. index:: integer, decimal, float
 
 Numeric Types
 =============
@@ -312,6 +316,8 @@ The following table maps `float` to native data types:
 +----------------------+---------------------------+
 
 
+.. index:: string
+
 String Type
 ===========
 
@@ -342,6 +348,8 @@ characters.
 +----------------------+---------------------------+
 
 
+.. index:: enum
+
 Enum Type
 =========
 
@@ -365,6 +373,9 @@ with the respective set of values.
 
 Note: only PostgreSQL and MySQL support `enum` data type.
 
+
+
+.. index:: date, time, datetime
 
 Date/Time Types
 ===============

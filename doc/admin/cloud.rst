@@ -5,6 +5,9 @@ HTSQL in the Cloud
 These instructions outline how to use HTSQL using a cloud
 provider where you have a limited application environment.
 
+
+.. index:: Heroku
+
 Installing at Heroku
 ====================
 

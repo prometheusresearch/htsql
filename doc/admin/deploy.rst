@@ -15,6 +15,8 @@ The built-in HTSQL web server was designed for personal and testing use
 and may appear inadequate for production deployment.  In particular,
 it does not not provide any means for authentication and lacks SSL support.
 
+.. index:: Apache
+
 Integration with Apache
 -----------------------
 
@@ -57,6 +59,8 @@ see documentation for the respective projects, in particular,
 .. _Quick Configuration Guide for mod_wsgi:
     http://code.google.com/p/modwsgi/wiki/QuickConfigurationGuide
 
+
+.. index:: Security
 
 Security
 ========
