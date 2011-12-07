@@ -639,8 +639,15 @@ class Record(tuple):
     __fields__ = ()
 
     @classmethod
-    def make(cls, fields):
+    def make(cls, name, fields):
+        assert isinstance(name, maybe(str))
         assert isinstance(fields, listof(maybe(str)))
+        if name is not None and not re.match(r'^(?!\d)\w+$', name):
+            name = None
+        if name is not None and keyword.iskeyword(name):
+            name = name+'_'
+        if name is None:
+            name = cls.__name__
         duplicates = set()
         for idx, field in enumerate(fields):
             if field is None:
@@ -664,7 +671,7 @@ class Record(tuple):
             if field is None:
                 continue
             attributes[field] = property(operator.itemgetter(idx))
-        return type(cls.__name__, bases, attributes)
+        return type(name, bases, attributes)
 
     def __new__(cls, *args, **kwds):
         if kwds:
@@ -695,8 +702,9 @@ class Record(tuple):
     def __repr__(self):
         return ("%s(%s)"
                 % (self.__class__.__name__,
-                   ", ".join("%s=%r" % (name or '?', value)
-                             for name, value in zip(self.__fields__, self))))
+                   ", ".join("%s=%r" % (name or '[%s]' % idx, value)
+                             for idx, (name, value)
+                                in enumerate(zip(self.__fields__, self)))))
 
 
 class Printable(object):

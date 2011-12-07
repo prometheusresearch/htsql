@@ -16,7 +16,7 @@ from ..util import maybe, listof, tupleof, similar
 from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
-from ..classify import relabel
+from ..classify import relabel, normalize
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      ApplicationSyntax, FunctionSyntax, MappingSyntax,
@@ -32,7 +32,8 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       AssignmentBinding, DefinitionBinding, SelectionBinding,
                       RerouteBinding, ReferenceRerouteBinding, AliasBinding,
                       LiteralBinding,
-                      Recipe, FreeTableRecipe, AttachedTableRecipe,
+                      Recipe, LiteralRecipe, SelectionRecipe,
+                      FreeTableRecipe, AttachedTableRecipe,
                       ColumnRecipe, KernelRecipe, ComplementRecipe,
                       SubstitutionRecipe, BindingRecipe, ClosedRecipe,
                       PinnedRecipe, AmbiguousRecipe)
@@ -55,13 +56,15 @@ class BindingState(object):
         The current naming scope.
     """
 
-    def __init__(self):
+    def __init__(self, environment=None):
         # The root lookup scope.
         self.root = None
         # The current lookup scope.
         self.scope = None
         # The stack of previous lookup scopes.
         self.scope_stack = []
+        # References in the root scope.
+        self.environment = environment
 
     def set_root(self, root):
         """
@@ -79,6 +82,12 @@ class BindingState(object):
         assert isinstance(root, RootBinding)
         self.root = root
         self.scope = root
+        # Add global references.
+        if self.environment is not None:
+            for name, recipe in self.environment:
+                name = normalize(name)
+                self.scope = DefinitionBinding(self.scope, name, True, None,
+                                               recipe, self.scope.syntax)
 
     def flush(self):
         """
@@ -88,7 +97,7 @@ class BindingState(object):
         # scope to coincide with the root scope.
         assert self.root is not None
         assert not self.scope_stack
-        assert self.root is self.scope
+        #assert self.root is self.scope
         self.root = None
         self.scope = None
 
@@ -984,6 +993,29 @@ class BindByRecipe(Adapter):
         raise BindError("unable to bind a node", self.syntax.mark)
 
 
+class BindByLiteral(BindByRecipe):
+
+    adapts(LiteralRecipe)
+
+    def __call__(self):
+        return LiteralBinding(self.state.scope,
+                              self.recipe.value,
+                              self.recipe.domain,
+                              self.syntax)
+
+
+class BindBySelection(BindByRecipe):
+
+    adapts(SelectionRecipe)
+
+    def __call__(self):
+        elements = []
+        for recipe in self.recipe.recipes:
+            element = self.state.use(recipe, self.syntax)
+            elements.append(element)
+        return SelectionBinding(self.state.scope, elements, self.syntax)
+
+
 class BindByFreeTable(BindByRecipe):
 
     adapts(FreeTableRecipe)
@@ -1158,7 +1190,7 @@ class BindByAmbiguous(BindByRecipe):
                         self.syntax.mark, hint=hint)
 
 
-def bind(syntax, state=None, scope=None):
+def bind(syntax, state=None, scope=None, environment=None):
     """
     Binds the given syntax node.
 
@@ -1175,7 +1207,7 @@ def bind(syntax, state=None, scope=None):
     """
     # Create a new binding state if necessary.
     if state is None:
-        state = BindingState()
+        state = BindingState(environment)
     # If passed, set the new lookup scope.
     if scope is not None:
         state.push_scope(scope)

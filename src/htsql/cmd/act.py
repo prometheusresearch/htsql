@@ -11,6 +11,7 @@ from .command import (Command, UniversalCmd, DefaultCmd, RetrieveCmd,
 from ..tr.lookup import lookup_command
 from ..tr.parse import parse
 from ..tr.bind import bind
+from ..tr.embed import embed
 from ..fmt.format import FindRenderer
 
 
@@ -63,7 +64,15 @@ class ActUniversal(Act):
 
     def __call__(self):
         syntax = parse(self.command.query)
-        binding = bind(syntax)
+        environment = []
+        if self.command.parameters is not None:
+            for name in sorted(self.command.parameters):
+                value = self.command.parameters[name]
+                if isinstance(name, str):
+                    name = name.decode('utf-8')
+                recipe = embed(value)
+                environment.append((name, recipe))
+        binding = bind(syntax, environment=environment)
         command = lookup_command(binding)
         if command is None:
             command = DefaultCmd(binding)

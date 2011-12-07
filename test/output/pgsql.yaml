@@ -31180,3 +31180,117 @@ tests:
             serialize error: integer value is out of range:
                 /18446744073709551616
                  ^^^^^^^^^^^^^^^^^^^^
+  - include: test/input/embedding.yaml
+    output:
+      id: embedding
+      tests:
+      - py-include: test/code/test_embedding.py
+        stdout: 'URI: /school{code, count(program), count(department)}
+
+          school(code=u''art'', [1]=3L, [2]=2L)
+
+          school(code=u''bus'', [1]=6L, [2]=3L)
+
+          school(code=u''edu'', [1]=7L, [2]=2L)
+
+          school(code=u''eng'', [1]=8L, [2]=4L)
+
+          school(code=u''la'', [1]=9L, [2]=5L)
+
+          school(code=u''mus'', [1]=0L, [2]=4L)
+
+          school(code=u''ns'', [1]=6L, [2]=4L)
+
+          school(code=u''ph'', [1]=1L, [2]=0L)
+
+          school(code=u''sc'', [1]=0L, [2]=0L)
+
+
+          URI: /school{name, count(program)}?code=$school_code
+
+          $school_code: ''bus''
+
+          School of Business: 6
+
+
+          URI: /school{name, num_prog:=count(program)}?num_prog>=$min_prog&num_prog<=$max_prog
+
+          $min_prog: 6
+
+          $max_prog: 8
+
+          School of Business: 6
+
+          College of Education: 7
+
+          School of Engineering: 8
+
+          School of Natural Sciences: 6
+
+
+          URI: /school?campus==$campus
+
+          $campus: None
+
+          school(code=u''ph'', name=u''Public Honorariums'', campus=None)
+
+          school(code=u''sc'', name=u''School of Continuing Studies'', campus=None)
+
+
+          URI: /school?campus=$campus
+
+          $campus: [''north'', ''south'']
+
+          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
+
+          school(code=u''eng'', name=u''School of Engineering'', campus=u''north'')
+
+          school(code=u''mus'', name=u''School of Music & Dance'', campus=u''south'')
+
+
+          URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date,
+          $time, $datetime}
+
+          $untyped: ''HTSQL''
+
+          $selector: [''HTTP'', ''SQL'']
+
+          $boolean: True
+
+          $integer: 3571
+
+          $float: -0.57721
+
+          $decimal: Decimal(''0.875'')
+
+          $date: datetime.date(2010, 4, 15)
+
+          $time: datetime.time(20, 3)
+
+          $datetime: datetime.datetime(2010, 4, 15, 20, 3)
+
+          Record([0]=u''HTSQL'', [1]=u''HTTP'', [2]=u''SQL'', [3]=True, [4]=3571,
+          [5]=-0.57721, [6]=Decimal(''0.875''), [7]=datetime.date(2010, 4, 15), [8]=datetime.time(20,
+          3), [9]=datetime.datetime(2010, 4, 15, 20, 3))
+
+
+          URI: /meta(/link?table.name=$table_name)
+
+          $table_name: ''school''
+
+          link(table_name=u''school'', name=u''department'', is_singular=False, target_name=u''department'',
+          reverse_name=u''school'')
+
+          link(table_name=u''school'', name=u''program'', is_singular=False, target_name=u''program'',
+          reverse_name=u''school'')
+
+
+          URI: /school
+
+          school(code=u''art'', name=u''School of Art and Design'', campus=u''old'')
+
+          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
+
+          school(code=u''edu'', name=u''College of Education'', campus=u''old'')
+
+'

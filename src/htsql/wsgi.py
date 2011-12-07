@@ -12,8 +12,10 @@ This module provides a handler for WSGI requests.
 """
 
 from .adapter import Utility
-from .request import Request
 from .error import HTTPError
+from .cmd.command import UniversalCmd
+from .cmd.act import render
+import urllib
 
 
 class WSGI(Utility):
@@ -28,6 +30,17 @@ class WSGI(Utility):
         body = wsgi(environ, start_response)
     """
 
+    def request(self, environ):
+        """
+        Extracts HTSQL request from `environ`.
+        """
+        path_info = environ['PATH_INFO']
+        query_string = environ.get('QUERY_STRING')
+        uri = urllib.quote(path_info)
+        if query_string:
+            uri += '?'+query_string
+        return uri
+
     def __call__(self, environ, start_response):
         """
         Implements the WSGI entry point.
@@ -38,9 +51,10 @@ class WSGI(Utility):
             start_response('400 Bad Request', [('Content-Type', 'text/plain')])
             return ["%s requests are not permitted.\n" % method]
         # Process the query.
-        request = Request.build(environ)
+        uri = self.request(environ)
         try:
-            status, headers, body = request.render(environ)
+            command = UniversalCmd(uri)
+            status, headers, body = render(command, environ)
         except HTTPError, exc:
             return exc(environ, start_response)
         start_response(status, headers)

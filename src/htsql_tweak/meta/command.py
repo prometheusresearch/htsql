@@ -30,8 +30,9 @@ def get_slave_app():
 
 class MetaCmd(ProducerCmd):
 
-    def __init__(self, syntax):
+    def __init__(self, syntax, environment=None):
         self.syntax = syntax
+        self.environment = environment
 
 
 class BindMeta(BindCommand):
@@ -43,7 +44,7 @@ class BindMeta(BindCommand):
         if not isinstance(op, SegmentSyntax):
             raise BindError("a segment is required", op.mark)
         op = QuerySyntax(op, op.mark)
-        command = MetaCmd(op)
+        command = MetaCmd(op, environment=self.state.environment)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 
@@ -54,7 +55,8 @@ class ProduceMeta(Act):
     def __call__(self):
         slave_app = get_slave_app()
         with slave_app:
-            binding = bind(self.command.syntax)
+            binding = bind(self.command.syntax,
+                           environment=self.command.environment)
             command = lookup_command(binding)
             if command is None:
                 command = DefaultCmd(binding)

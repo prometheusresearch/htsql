@@ -643,6 +643,30 @@ class FormulaBinding(Formula, Binding):
                                              base, domain, syntax)
 
 
+class LiteralRecipe(Recipe):
+
+    def __init__(self, value, domain):
+        assert isinstance(domain, Domain)
+        super(LiteralRecipe, self).__init__(equality_vector=(value, domain))
+        self.value = value
+        self.domain = domain
+
+    def __str__(self):
+        return "%s: %s" % (self.value, self.domain)
+
+
+class SelectionRecipe(Recipe):
+
+    def __init__(self, recipes):
+        assert isinstance(recipes, listof(Recipe))
+        super(SelectionRecipe, self).__init__(
+            equality_vector=(tuple(recipes),))
+        self.recipes = recipes
+
+    def __str__(self):
+        return "{%s}" % ",".join(str(recipe) for recipe in self.recipes)
+
+
 class FreeTableRecipe(Recipe):
     """
     Generates a :class:`FreeTableBinding` node.

@@ -4,7 +4,7 @@
 #
 
 
-from ..util import Printable
+from ..util import Printable, maybe, dictof, oneof
 from ..fmt import (TextRenderer, HTMLRenderer, JSONRenderer,
                    CSVRenderer, TSVRenderer)
 
@@ -15,9 +15,12 @@ class Command(Printable):
 
 class UniversalCmd(Command):
 
-    def __init__(self, query):
+    def __init__(self, query, parameters=None):
         assert isinstance(query, str)
+        assert isinstance(parameters, maybe(dictof(oneof(str, unicode),
+                                                   object)))
         self.query = query
+        self.parameters = parameters
 
     def __str__(self):
         return repr(self.query)

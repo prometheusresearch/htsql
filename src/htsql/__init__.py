@@ -48,7 +48,7 @@ __version__ = '2.2.0c1'
 
 
 from . import (adapter, addon, application, cache, cmd, connect, context,
-               domain, entity, error, introspect, mark, request, split_sql,
+               domain, entity, error, introspect, mark, split_sql,
                tr, util, validator, wsgi)
 from .validator import DBVal
 from .addon import Addon, Parameter

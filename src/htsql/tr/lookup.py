@@ -412,6 +412,19 @@ class LookupCommandInWrapping(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
+class GuessNameFromSegment(Lookup):
+    # Generate an attribute name from a segment binding.
+
+    adapts(SegmentBinding, GuessNameProbe)
+
+    def __call__(self):
+        # If available, use the name of the segment seed.
+        if self.binding.seed is not None:
+            return lookup(self.binding.seed, self.probe)
+        # Otherwise, fail to generate a name.
+        return None
+
+
 class GuessTitleFromSegment(Lookup):
     # Generate a heading from a segment binding.
 

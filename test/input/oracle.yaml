@@ -118,4 +118,6 @@ tests:
   - include: test/input/addon.yaml
   # Error Reporting
   - include: test/input/error.yaml
+  # Embedding HTSQL
+  - include: test/input/embedding.yaml
 

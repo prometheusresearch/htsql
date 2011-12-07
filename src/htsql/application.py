@@ -18,6 +18,8 @@ from .addon import addon_registry
 from .adapter import ComponentRegistry
 from .util import maybe, oneof, listof, dictof, tupleof
 from .wsgi import WSGI
+from .cmd.command import UniversalCmd
+from .cmd.act import produce
 
 
 class Application(object):
@@ -159,5 +161,10 @@ class Application(object):
             body = wsgi(environ, start_response)
             for chunk in body:
                 yield chunk
+
+    def produce(self, uri, **parameters):
+        with self:
+            command = UniversalCmd(uri, parameters)
+            return produce(command)
 
 

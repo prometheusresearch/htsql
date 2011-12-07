@@ -5,6 +5,7 @@
 
 
 from ..adapter import adapts, Utility
+from ..util import Record
 from .command import RetrieveCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
                   AnalyzeAction, RenderAction)
@@ -15,6 +16,7 @@ from ..tr.compile import compile
 from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
+from ..tr.lookup import guess_name
 from ..connect import DBError, Connect, Normalize
 from ..error import EngineError
 
@@ -23,6 +25,9 @@ class ElementProfile(object):
 
     def __init__(self, binding):
         self.binding = binding
+        self.name = guess_name(binding)
+        if self.name is not None:
+            self.name = self.name.encode('utf-8')
         self.domain = binding.domain
         self.syntax = binding.syntax
         self.mark = binding.mark
@@ -32,6 +37,9 @@ class SegmentProfile(object):
 
     def __init__(self, binding):
         self.binding = binding
+        self.name = guess_name(binding)
+        if self.name is not None:
+            self.name = self.name.encode('utf-8')
         self.syntax = binding.syntax
         self.mark = binding.mark
         self.elements = [ElementProfile(element)
@@ -85,11 +93,15 @@ class ProduceRetrieve(Act):
         profile = RequestProfile(plan)
         records = None
         if plan.sql:
-            select = plan.frame.segment.select
+            assert profile.segment is not None
             normalizers = []
-            for phrase in select:
-                normalize = Normalize(phrase.domain)
+            for element in profile.segment.elements:
+                normalize = Normalize(element.domain)
                 normalizers.append(normalize())
+            record_name = profile.segment.name
+            element_names = [element.name
+                             for element in profile.segment.elements]
+            record_class = Record.make(record_name, element_names)
             connection = None
             try:
                 connect = Connect()
@@ -102,7 +114,7 @@ class ProduceRetrieve(Act):
                     for item, normalize in zip(row, normalizers):
                         value = normalize(item)
                         values.append(value)
-                    records.append((values))
+                    records.append(record_class(*values))
                 connection.commit()
                 connection.release()
             except DBError, exc:
