@@ -9,6 +9,7 @@
    tutorial
    ref/index
    admin/index
+   embed
 
 Indices and tables
 ==================
