@@ -5,12 +5,12 @@
 
 
 from htsql.context import context
-from htsql.util import Printable, Comparable, listof, maybe
+from htsql.util import Printable, listof, maybe
 from htsql.validator import Validator
-from htsql.entity import (CatalogEntity, NamedEntity, SchemaEntity,
+from htsql.entity import (NamedEntity, SchemaEntity,
                           TableEntity, ColumnEntity, Join, DirectJoin,
                           ReverseJoin)
-from htsql.model import (Node, HomeNode, TableNode, Arc, TableArc, ColumnArc,
+from htsql.model import (Node, HomeNode, TableNode, TableArc, ColumnArc,
                          ChainArc, SyntaxArc)
 from htsql.introspect import introspect
 from htsql.classify import normalize

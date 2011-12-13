@@ -3,7 +3,6 @@
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
-from htsql.context import context
 from htsql.connect import Connect
 from htsql.adapter import weigh
 

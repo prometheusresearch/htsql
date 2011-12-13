@@ -6,11 +6,9 @@
 
 from htsql.context import context
 from htsql.cache import once
-from htsql.introspect import introspect
-from htsql.model import (HomeNode, TableNode, TableArc, ColumnArc, ChainArc,
-                         SyntaxArc)
-from htsql.classify import (classify, Trace, TraceHome, TraceTable,
-                            Call, CallTable, CallColumn, CallChain, CallSyntax,
+from htsql.model import HomeNode, TableNode, TableArc, ColumnArc, ChainArc
+from htsql.classify import (classify, TraceHome, TraceTable,
+                            CallTable, CallColumn, CallChain, CallSyntax,
                             OrderTable)
 
 
@@ -20,7 +18,6 @@ class ClassCache(object):
         self.names_by_arc = {}
         self.arc_by_signature = {}
         addon = context.app.tweak.override
-        catalog = introspect()
         node = HomeNode()
         for name, parameters in sorted(addon.class_labels):
             pattern = addon.class_labels[name, parameters]

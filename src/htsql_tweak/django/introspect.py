@@ -4,7 +4,6 @@
 #
 
 
-from htsql.context import context
 from htsql.adapter import Protocol, weigh, named
 from htsql.introspect import Introspect
 from htsql.entity import make_catalog

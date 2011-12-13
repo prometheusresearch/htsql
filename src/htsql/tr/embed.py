@@ -8,7 +8,6 @@ from ..adapter import Adapter, adapts, adapts_many
 from ..domain import (UntypedDomain, BooleanDomain, IntegerDomain, FloatDomain,
                       DecimalDomain, DateDomain, TimeDomain, DateTimeDomain)
 from .binding import LiteralRecipe, SelectionRecipe
-from .coerce import coerce
 import types
 import datetime
 import decimal
@@ -35,7 +34,7 @@ class EmbedUntyped(Embed):
         if isinstance(value, str):
             try:
                 value = value.decode('utf-8')
-            except UnicodeDecodeError, exc:
+            except UnicodeDecodeError:
                 raise ValueError("a string is expected to be encoded in UTF-8:"
                                  " %s" % repr(value))
         if u"\0" in value:

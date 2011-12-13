@@ -15,7 +15,7 @@ This module adapts the SQL serializer for SQLite.
 from htsql.adapter import adapts
 from htsql.domain import BooleanDomain, StringDomain
 from htsql.tr.frame import LiteralPhrase
-from htsql.tr.dump import (DumpTable, DumpBoolean, DumpDecimal, DumpDate,
+from htsql.tr.dump import (DumpBoolean, DumpDecimal, DumpDate,
                            DumpTime, DumpDateTime,
                            DumpToFloat, DumpToDecimal, DumpToString,
                            DumpToDate, DumpToTime, DumpToDateTime,

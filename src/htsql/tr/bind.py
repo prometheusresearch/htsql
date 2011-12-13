@@ -16,7 +16,7 @@ from ..util import maybe, listof, tupleof, similar
 from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain)
-from ..classify import relabel, normalize
+from ..classify import normalize
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
                      ApplicationSyntax, FunctionSyntax, MappingSyntax,
@@ -1186,7 +1186,7 @@ class BindByAmbiguous(BindByRecipe):
                 choices.append(" or ")
                 choices.append(repr(alternatives[-1].encode('utf-8')))
             hint = "".join(choices)
-        raise BindError("ambiguous name '%s'" % self.syntax,
+        raise BindError("ambiguous name '%s'" % syntax,
                         self.syntax.mark, hint=hint)
 
 

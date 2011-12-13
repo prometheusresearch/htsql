@@ -19,7 +19,7 @@ from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
 from ..classify import classify, relabel, normalize
 from .syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
-                      SegmentBinding, HomeBinding, RootBinding, TableBinding,
+                      SegmentBinding, HomeBinding, TableBinding,
                       ColumnBinding, QuotientBinding, ComplementBinding,
                       CoverBinding, ForkBinding, LinkBinding, RescopingBinding,
                       DefinitionBinding, SelectionBinding, DirectionBinding,

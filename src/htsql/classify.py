@@ -4,7 +4,6 @@
 #
 
 
-from .util import listof
 from .context import context
 from .cache import once
 from .adapter import Adapter, adapts
