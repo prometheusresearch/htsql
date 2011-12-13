@@ -17,7 +17,7 @@ from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
 from ..tr.lookup import guess_name
-from ..connect import DBError, Connect, Normalize
+from ..connect import DBError, Connect, normalize
 from ..error import EngineError
 
 
@@ -96,8 +96,7 @@ class ProduceRetrieve(Act):
             assert profile.segment is not None
             normalizers = []
             for element in profile.segment.elements:
-                normalize = Normalize(element.domain)
-                normalizers.append(normalize())
+                normalizers.append(normalize(element.domain))
             record_name = profile.segment.name
             element_names = [element.name
                              for element in profile.segment.elements]
@@ -111,8 +110,8 @@ class ProduceRetrieve(Act):
                 records = []
                 for row in cursor:
                     values = []
-                    for item, normalize in zip(row, normalizers):
-                        value = normalize(item)
+                    for item, normalizer in zip(row, normalizers):
+                        value = normalizer(item)
                         values.append(value)
                     records.append(record_class(*values))
                 connection.commit()
