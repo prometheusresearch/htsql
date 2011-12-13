@@ -1,6 +1,6 @@
 
 from htsql import HTSQL
-import decimal, datetime
+import sys, decimal, datetime
 
 db = str(state.app.htsql.db)
 
@@ -66,7 +66,10 @@ print "$selector: %r" % selector_value
 print "$boolean: %r" % boolean_value
 print "$integer: %r" % integer_value
 print "$float: %r" % float_value
-print "$decimal: %r" % decimal_value
+if sys.version_info[:2] == (2, 5):
+    print ("$decimal: %r" % decimal_value).replace('"', '\'')
+else:
+    print "$decimal: %r" % decimal_value
 print "$date: %r" % date_value
 print "$time: %r" % time_value
 print "$datetime: %r" % datetime_value
@@ -79,7 +82,10 @@ for row in htsql.produce(uri, untyped=untyped_value,
                               date=date_value,
                               time=time_value,
                               datetime=datetime_value):
-    print row
+    if sys.version_info[:2] == (2, 5):
+        print str(row).replace('"', '\'')
+    else:
+        print row
 print
 
 htsql = HTSQL(db, {'tweak.meta': None})
