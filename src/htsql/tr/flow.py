@@ -1330,10 +1330,12 @@ class Code(Expression):
 
     def __init__(self, domain, units, binding, equality_vector=None):
         assert isinstance(domain, Domain)
-        assert isinstance(units, listof(Unit))
+        assert isinstance(units, maybe(listof(Unit)))
         super(Code, self).__init__(binding, equality_vector)
         self.domain = domain
-        self.units = units
+        # Do not assign when implemented as a property.
+        if units is not None:
+            self.units = units
 
 
 class LiteralCode(Code):
@@ -1477,10 +1479,15 @@ class Unit(Code):
         assert isinstance(flow, Flow)
         super(Unit, self).__init__(
                     domain=domain,
-                    units=[self],
+                    units=None,
                     binding=binding,
                     equality_vector=equality_vector)
         self.flow = flow
+
+    @property
+    def units(self):
+        # Implemented as a property to avoid creating a cycle.
+        return [self]
 
     def singular(self, flow):
         """

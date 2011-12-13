@@ -625,6 +625,9 @@ def toposort(elements, order, is_total=False):
     for element in elements:
         dfs(element)
 
+    # Break the cycle created by recursive nested function.
+    dfs = None
+
     return ordered
 
 
