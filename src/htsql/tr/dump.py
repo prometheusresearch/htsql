@@ -969,16 +969,13 @@ class DumpTable(Dump):
         # or the default schema.
         if table.schema.name:
             need_schema = True
-            # Check if the table schema is in the search path and there is
-            # no higher priority schema having a table with the same name.
+            # Check if the table schema is the first in the search path,
+            # in which case, we could omit the schema name.
             if table.schema.priority > 0:
                 need_schema = False
-                for schema in table.schema.catalog.schemas:
-                    if (schema != table.schema and
-                            schema.priority >= table.schema.priority and
-                            table.name in schema.tables):
-                        need_schema = True
-                        break
+                if any(schema.priority > table.schema.priority
+                       for schema in table.schema.catalog.schemas):
+                    need_schema = True
         # Serialize the table name.
         if need_schema:
             self.format("{schema:name}.{table:name}",
