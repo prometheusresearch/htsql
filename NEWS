@@ -2,6 +2,15 @@ List of Changes
 ===============
 
 
+2.2.1 (2011-12-13)
+------------------
+
+* Updated API for making HTSQL requests from Python application.
+* Improved error messages; added suggestions for lookup errors.
+* `tweak.override`: added support for global functions,
+  parameterized calculations.
+
+
 2.2.0 rc 1 (2011-11-22)
 -----------------------
 

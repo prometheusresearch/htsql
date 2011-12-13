@@ -30,6 +30,9 @@ features in this release, see ``NEWS``.  HTSQL documentation is in the
     http://htsql.org/doc/tutorial.html
         The HTSQL tutorial
 
+    http://htsql.org/doc/embed.html
+        Using HTSQL in Python
+
     http://bitbucket.org/prometheus/htsql
         HTSQL source code
 
