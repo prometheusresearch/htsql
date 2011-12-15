@@ -127,7 +127,6 @@ The HTSQL translation separates the row definition from the column
 selection.  The linking is implicit, and correct.  The encoded query can
 be read aloud as a verbal inquiry.
 
-
 SQL Conflates Filters & Links
 -----------------------------
 
@@ -170,7 +169,6 @@ The HTSQL translation keeps the filter criteria separate from linking
 and the row definition separate from output columns.  The query adheres
 the form of the original business inquiry.
 
-
 Conflating Projection with Aggregation
 --------------------------------------
 
@@ -207,14 +205,13 @@ operator), then we select correlated columns.  This way, the aggregation
 is indicated separately as part of the column selector rather than being
 conflated with the row definition.
 
-
 SQL Lacks Means of Encapsulation
 --------------------------------
 
     *"For each department, return the department name and the number of
     offered 100's, 200's, 300's and 400's courses."*
 
-In this business inquiry, we are asked to evaluate the same statistic 
+In this business inquiry, we are asked to evaluate the same statistic
 across multiple ranges.
 
 .. sourcecode:: sql
@@ -248,7 +245,6 @@ The HTSQL translation avoids this duplication by defining a calculated
 attribute ``count_courses($level)`` on the ``department`` table and
 then evaluating it for each course level.
 
-
 In SQL, Modest Complexity is Painful
 ------------------------------------
 
@@ -267,7 +263,6 @@ This business inquiry asks us to do the following:
   - for each associated department, count:
 
     - associated courses with credits>3
-
 
 .. sourcecode:: sql
 
@@ -313,7 +308,6 @@ In this section we introduce the fundamentals of HTSQL syntax and
 semantics.  For a more incremental approach, please read the
 :doc:`tutorial`.
 
-
 Scalar Expressions
 ------------------
 
@@ -328,7 +322,6 @@ Algebraic expressions:
 Predicate expressions:
 
 .. htsql:: /(7<13)&(1=0|1!=0)
-
 
 Navigation
 ----------
@@ -351,7 +344,6 @@ This query works as follows:
 * for each ``school`` record, ``department`` generates
   associated ``department`` records;
 
-
 Filtering
 ---------
 
@@ -367,7 +359,6 @@ Sorting operator reorders records:
 Truncating operator takes a slice from the record sequence:
 
 .. htsql:: /school.limit(2)
-
 
 Selection & Definition
 ----------------------
@@ -397,7 +388,6 @@ References carry over values across nested scopes:
    /define($avg_credits := avg(course.credits))
     .course{title, credits}?credits>$avg_credits
 
-
 Aggregation
 -----------
 
@@ -421,7 +411,6 @@ Various aggregation operations:
                      sum(course.credits),
                      avg(course.credits)}?exists(course)
 
-
 Projection
 ----------
 
@@ -435,55 +424,26 @@ In the scope of the projection, ``school`` refers to all records from
 
 .. htsql:: /school^campus {campus, count(school)}
 
-
 Linking
 -------
 
 Even though HTSQL provides automatic links inferred from foreign key
 constraints, arbitrary linking is also allowed:
 
-.. htsql:: /school.({code} -> department{school_code})
-   :cut: 4
-
-This query uses a linking operator to replicate an automatic link:
-
-.. htsql:: /school.department
-   :cut: 4
-   :hide:
-
-Forking operator links a table to itself by the given expression:
-
 .. htsql::
+   :cut: 4
 
-   /school{name, campus}
-          ?count(department)>avg(fork(campus).count(department))
+   /school{name, count(department)}
+          ?count(department)>avg(@school.count(department))
 
 This query returns schools with the number of departments above average
-among all schools in the same campus.  Using a linking operator, this
-query could be written as:
-
-.. htsql::
-   :hide:
-
-   /school{name, campus}
-          ?count(department)>avg((campus -> school).count(department))
+among all schools.
 
 
 What's up Next?
 ===============
 
 We intend to add to HTSQL many more features in the future.
-
-Usability
----------
-
-Currently, the HTSQL processor is not quite user friendly.  In the next
-major release we will focus on filling these gaps:
-
-* helpful error messages 
-* ability to list tables & columns
-* syntax highlighting & completion
-* installers & deployment documentation 
 
 Hierarchical Output
 -------------------
@@ -497,7 +457,7 @@ HTSQL should not be limited to tabular output.
            /department{name}}
 
 This query is to generate a tree-shaped output: for each school, it
-produces the school name, a list of titles of associated programs, 
+produces the school name, a list of titles of associated programs,
 and a list of names of associated departments.
 
 Analytical Processing
