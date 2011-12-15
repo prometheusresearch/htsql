@@ -46,7 +46,8 @@ class ThreadContext(threading.local):
         This property never returns ``None``; when there is no active
         application, it raises an exception.
         """
-        assert self.active_app is not None
+        if self.active_app is None:
+            raise RuntimeError("HTSQL application is not activated")
         return self.active_app
 
 
