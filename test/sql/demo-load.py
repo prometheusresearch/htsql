@@ -7,8 +7,8 @@
 
 
 from __future__ import with_statement
-from htsql.util import listof
-from htsql.connect import Connect
+from htsql.core.util import listof
+from htsql.core.connect import Connect
 import yaml, sys
 
 sys.path.append('test/sql/datagen')
