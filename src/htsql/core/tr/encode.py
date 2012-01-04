@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.encode`
-======================
+:mod:`htsql.core.tr.encode`
+===========================
 
 This module implements the encoding process.
 """
@@ -74,10 +74,10 @@ class EncodingState(object):
         """
         Encodes the given binding node to a code expression node.
 
-        Returns a :class:`htsql.tr.flow.Code` node (in some cases,
-        a :class:`htsql.tr.flow.Expression` node).
+        Returns a :class:`htsql.core.tr.flow.Code` node (in some cases,
+        a :class:`htsql.core.tr.flow.Expression` node).
 
-        `binding` (:class:`htsql.tr.binding.Binding`)
+        `binding` (:class:`htsql.core.tr.binding.Binding`)
             The binding node to encode.
         """
         # When caching is enabled, we check if `binding` was
@@ -95,9 +95,9 @@ class EncodingState(object):
         """
         Encodes the given binding node to a flow expression node.
 
-        Returns a :class:`htsql.tr.flow.Flow` node.
+        Returns a :class:`htsql.core.tr.flow.Flow` node.
 
-        `binding` (:class:`htsql.tr.binding.Binding`)
+        `binding` (:class:`htsql.core.tr.binding.Binding`)
             The binding node to encode.
         """
         # When caching is enabled, we check if `binding` was
@@ -123,7 +123,7 @@ class EncodeBase(Adapter):
     The encoding process translates binding nodes to data flows or
     expressions over data flows.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         The binding node to encode.
 
     `state` (:class:`EncodingState`)
@@ -484,7 +484,7 @@ class Convert(Adapter):
     Encodes a cast binding to a code node.
 
     This is an auxiliary adapter used to encode
-    :class:`htsql.tr.binding.CastBinding` nodes.  The adapter is polymorphic
+    :class:`htsql.core.tr.binding.CastBinding` nodes.  The adapter is polymorphic
     by the origin and the target domains.
 
     The purpose of the adapter is multifold.  The :class:`Convert` adapter:
@@ -493,11 +493,11 @@ class Convert(Adapter):
       domain is admissible;
     - eliminates redundant conversions;
     - handles conversion from the special types:
-      :class:`htsql.domain.UntypedDomain` and :class:`htsql.domain.TupleDomain`;
+      :class:`htsql.core.domain.UntypedDomain` and :class:`htsql.core.domain.TupleDomain`;
     - when possible, expresses the cast in terms of other operations; otherwise,
-      generates a new :class:`htsql.tr.flow.CastCode` node.
+      generates a new :class:`htsql.core.tr.flow.CastCode` node.
 
-    `binding` (:class:`htsql.tr.binding.CastBinding`)
+    `binding` (:class:`htsql.core.tr.binding.CastBinding`)
         The binding node to encode.
 
         Note that the adapter is dispatched on the pair
@@ -508,10 +508,10 @@ class Convert(Adapter):
 
     Aliases:
 
-    `base` (:class:`htsql.tr.binding.Binding`)
+    `base` (:class:`htsql.core.tr.binding.Binding`)
         An alias for `binding.base`; the operand of the cast expression.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         An alias for `binding.domain`; the target domain.
     """
 
@@ -835,7 +835,7 @@ class EncodeBySignatureBase(Adapter):
     The adapter accepts a binding formula node and is polymorphic
     on the formula signature.
 
-    `binding` (:class:`htsql.tr.binding.FormulaBinding`)
+    `binding` (:class:`htsql.core.tr.binding.FormulaBinding`)
         The formula node to encode.
 
     `state` (:class:`EncodingState`)
@@ -843,13 +843,13 @@ class EncodeBySignatureBase(Adapter):
 
     Aliases:
 
-    `signature` (:class:`htsql.tr.signature.Signature`)
+    `signature` (:class:`htsql.core.tr.signature.Signature`)
         The signature of the formula.
 
-    `domain` (:class:`htsql.tr.domain.Domain`)
+    `domain` (:class:`htsql.core.tr.domain.Domain`)
         The co-domain of the formula.
 
-    `arguments` (:class:`htsql.tr.signature.Bag`)
+    `arguments` (:class:`htsql.core.tr.signature.Bag`)
         The arguments of the formula.
     """
 
@@ -879,7 +879,7 @@ class EncodeBySignature(EncodeBySignatureBase):
     Translates a formula binding to a code node.
 
     This is an auxiliary adapter used to encode
-    class:`htsql.tr.binding.FormulaBinding` nodes.  The adapter is
+    class:`htsql.core.tr.binding.FormulaBinding` nodes.  The adapter is
     polymorphic on the formula signature.
 
     Unless overridden, the adapter encodes the arguments of the formula
@@ -901,7 +901,7 @@ class RelateBySignature(EncodeBySignatureBase):
     Translates a formula binding to a flow node.
 
     This is an auxiliary adapter used to relate
-    class:`htsql.tr.binding.FormulaBinding` nodes.  The adapter is
+    class:`htsql.core.tr.binding.FormulaBinding` nodes.  The adapter is
     polymorphic on the formula signature.
 
     Unless overridden, the adapter generates an error.
@@ -938,10 +938,10 @@ def encode(binding, state=None):
     """
     Encodes the given binding to an expression node.
 
-    Returns a :class:`htsql.tr.flow.Expression` instance (in most cases,
-    a :class:`htsql.tr.flow.Code` instance).
+    Returns a :class:`htsql.core.tr.flow.Expression` instance (in most cases,
+    a :class:`htsql.core.tr.flow.Code` instance).
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         The binding node to encode.
 
     `state` (:class:`EncodingState` or ``None``)
@@ -960,9 +960,9 @@ def relate(binding, state=None):
     """
     Encodes the given binding to a data flow node.
 
-    Returns a :class:`htsql.tr.flow.Flow` instance.
+    Returns a :class:`htsql.core.tr.flow.Flow` instance.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         The binding node to encode.
 
     `state` (:class:`EncodingState` or ``None``)

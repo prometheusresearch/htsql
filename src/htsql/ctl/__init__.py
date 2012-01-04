@@ -1,11 +1,11 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql_ctl`
+:mod:`htsql.ctl`
 ================
 
 This package implements the ``htsql-ctl`` script.
@@ -50,7 +50,7 @@ class HTSQL_CTL(Script):
     Run `%(executable)s help` for general usage and list of routines.
     Run `%(executable)s help <routine>` for help on a specific routine.
     """
-    copyright = """Copyright (c) 2006-2011, Prometheus Research, LLC"""
+    copyright = """Copyright (c) 2006-2012, Prometheus Research, LLC"""
 
 
 def main():

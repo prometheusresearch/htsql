@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.frame`
-=====================
+:mod:`htsql.core.tr.frame`
+==========================
 
 This module declares frame and phrase nodes.
 """
@@ -39,20 +39,20 @@ class Clause(Comparable, Clonable, Printable):
         Assemble: (Term, AssemblingState) -> Frame
         Evaluate: (Code, AssemblingState) -> Phrase
 
-    See :class:`htsql.tr.assemble.Assemble` and
-    :class:`htsql.tr.assemble.Evaluate` for more detail.
+    See :class:`htsql.core.tr.assemble.Assemble` and
+    :class:`htsql.core.tr.assemble.Evaluate` for more detail.
 
     The following adapter is associated with the serializing process::
 
         Dump: (Clause, DumpingState) -> str
 
-    See :class:`htsql.tr.dump.Dump` for more detail.
+    See :class:`htsql.core.tr.dump.Dump` for more detail.
 
     Clause nodes support equality by value.
 
     The constructor arguments:
 
-    `expression` (:class:`htsql.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.flow.Expression`)
         The expression node that gave rise to the clause; for debugging
         and error reporting only.
 
@@ -66,15 +66,15 @@ class Clause(Comparable, Clonable, Printable):
 
     Other attributes:
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         The binding node that gave rise to the expression; for debugging
         purposes only.
 
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
+    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
         The syntax node that gave rise to the expression; for debugging
         purposes only.
 
-    `mark` (:class:`htsql.mark.Mark`)
+    `mark` (:class:`htsql.core.mark.Mark`)
         The location of the node in the original query; for error reporting.
 
     `hash` (an integer)
@@ -137,7 +137,7 @@ class Frame(Clause):
     `kids` (a list of :class:`Frame`)
         A list of child frames.
 
-    `term` (:class:`htsql.tr.term.Term`)
+    `term` (:class:`htsql.core.tr.term.Term`)
         The term node that gave rise to the frame.
 
     Other attributes:
@@ -145,10 +145,10 @@ class Frame(Clause):
     `tag` (an integer)
         A unique identifier of the frame; inherited from the term.
 
-    `flow` (:class:`htsql.tr.flow.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         The flow represented by the frame; inherited from the term.
 
-    `baseline` (:class:`htsql.tr.flow.Flow`)
+    `baseline` (:class:`htsql.core.tr.flow.Flow`)
         The baseline flow of the frame; inherited from the term.
     """
 
@@ -205,7 +205,7 @@ class TableFrame(LeafFrame):
 
     In SQL, table frames are serialized as tables in the ``FROM`` list.
 
-    `table` (:class:`htsql.entity.TableEntity`)
+    `table` (:class:`htsql.core.entity.TableEntity`)
         The table represented by the frame.
     """
 
@@ -401,7 +401,7 @@ class Phrase(Clause):
     """
     Represents a SQL expression.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The co-domain of the expression.
 
     `is_nullable` (Boolean)
@@ -423,7 +423,7 @@ class LiteralPhrase(Phrase):
     `value` (valid type depends on the domain)
         The value.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The value type.
     """
 
@@ -487,7 +487,7 @@ class CastPhrase(Phrase):
     `base` (:class:`Phrase`)
         The expression to convert.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The target domain.
     """
 
@@ -506,7 +506,7 @@ class FormulaPhrase(Formula, Phrase):
     A formula phrase represents a function or an operator call as
     a phrase node.
 
-    `signature` (:class:`htsql.tr.signature.Signature`)
+    `signature` (:class:`htsql.core.tr.signature.Signature`)
         The signature of the formula.
 
     `domain` (:class:`Domain`)
@@ -559,7 +559,7 @@ class ColumnPhrase(ExportPhrase):
 
         The tag must point to an immediate child of the current frame.
 
-    `class` (:class:`htsql.entity.ColumnEntity`)
+    `class` (:class:`htsql.core.entity.ColumnEntity`)
         The column to export.
     """
 

@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql_ctl.help`
+:mod:`htsql.ctl.help`
 =====================
 
 This module implements the `help` routine.

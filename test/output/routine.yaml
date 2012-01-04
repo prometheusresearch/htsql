@@ -8,7 +8,7 @@ tests:
 - ctl: []
   stdout: |
     HTSQL-CTL - HTSQL command-line administrative application
-    Copyright (c) 2006-2011, Prometheus Research, LLC
+    Copyright (c) 2006-2012, Prometheus Research, LLC
 
     Run `htsql-ctl help` for general usage and list of routines.
     Run `htsql-ctl help <routine>` for help on a specific routine.
@@ -16,7 +16,7 @@ tests:
 - ctl: [help]
   stdout: |+
     HTSQL-CTL - HTSQL command-line administrative application
-    Copyright (c) 2006-2011, Prometheus Research, LLC
+    Copyright (c) 2006-2012, Prometheus Research, LLC
     Usage: htsql-ctl <routine> [options] [arguments]
 
     Run `htsql-ctl help` for general usage and list of routines.

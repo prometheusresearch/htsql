@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.error`
-=====================
+:mod:`htsql.core.tr.error`
+==========================
 
 This module declares exceptions that can be raised by the HTSQL-to-SQL
 translator.

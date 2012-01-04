@@ -3,7 +3,7 @@ Upstream-Name: HTSQL
 Source: https://bitbucket.org/prometheus/htsql
 
 Files: *
-Copyright: Copyright (c) 2006-2011 Prometheus Research, LLC.
+Copyright: Copyright (c) 2006-2012, Prometheus Research, LLC
 License: 
  This software is released through a "BSD" style license for use with
  open source databases (such as MySQL, PostgreSQL, SQLite). A commercial

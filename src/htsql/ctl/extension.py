@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql_ctl.extension`
+:mod:`htsql.ctl.extension`
 ==========================
 
 This module implements the `extension` routine.

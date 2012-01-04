@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.assemble`
-========================
+:mod:`htsql.core.tr.assemble`
+=============================
 
 This module implements the assembling process.
 """
@@ -52,7 +52,7 @@ class Claim(Comparable, Printable):
     are equal if their units, brokers, and targets are equal to each
     other.
 
-    `unit` (:class:`htsql.tr.flow.Unit`)
+    `unit` (:class:`htsql.core.tr.flow.Unit`)
         The exported unit.
 
     `broker` (an integer)
@@ -102,7 +102,7 @@ class Gate(object):
         The `dispatches` table is used when generating unit claims
         to determine the broker term by the target term.
 
-        See also the `offsprings` attribute of :class:`htsql.tr.term.Term`.
+        See also the `offsprings` attribute of :class:`htsql.core.tr.term.Term`.
 
     `routes` (a dictionary `Unit | Flow -> tag`)
         Maps a unit to a term capable of evaluating the unit.
@@ -110,15 +110,15 @@ class Gate(object):
         The `routes` table is used when generating unit claims
         to determine the target term by the unit.
 
-        A key of the `routes` table is either a :class:`htsql.tr.flow.Unit`
-        node or a :class:`htsql.tr.flow.Flow` node.  The latter indicates
+        A key of the `routes` table is either a :class:`htsql.core.tr.flow.Unit`
+        node or a :class:`htsql.core.tr.flow.Flow` node.  The latter indicates
         that the corresponding term is capable of exporting any primitive
         unit from the given flow.
 
-        See also the `routes` attribute of :class:`htsql.tr.term.Term`.
+        See also the `routes` attribute of :class:`htsql.core.tr.term.Term`.
 
     Note that `dispatches` and `routes` come from `offsprings` and `routes`
-    attributes of :class:`htsql.tr.term.Term`.  However they do not have to
+    attributes of :class:`htsql.core.tr.term.Term`.  However they do not have to
     come from the same term!  Typically, `dispatches` comes from the term
     which is currently translated to a frame, and `routes` comes either
     from the same term or from one of its direct children.
@@ -158,7 +158,7 @@ class AssemblingState(object):
         Satisfied claims.
 
         A key of the mapping is a :class:`Claim` object.  A value of the
-        mapping is a :class:`htsql.tr.frame.ExportPhrase` object.
+        mapping is a :class:`htsql.core.tr.frame.ExportPhrase` object.
     """
 
     def __init__(self):
@@ -179,7 +179,7 @@ class AssemblingState(object):
 
         This method must be called before assembling any frames.
 
-        `term` (:class:`htsql.tr.term.SegmentTerm`)
+        `term` (:class:`htsql.core.tr.term.SegmentTerm`)
             The term corresponding to the top-level ``SELECT`` statement.
         """
         assert isinstance(term, SegmentTerm)
@@ -222,7 +222,7 @@ class AssemblingState(object):
             constructed frame, this flag is used to determine whether
             the exported values are nullable or not.
 
-        `dispatcher` (:class:`htsql.tr.term.Term` or ``None``)
+        `dispatcher` (:class:`htsql.core.tr.term.Term` or ``None``)
             Specifies the dispatcher term.
 
             If ``None``, keeps the current dispatcher.
@@ -237,7 +237,7 @@ class AssemblingState(object):
             Typically, the dispatcher term is the one currently
             translated to a frame node.
 
-        `router` (:class:`htsql.tr.term.Term` or ``None``)
+        `router` (:class:`htsql.core.tr.term.Term` or ``None``)
             Specifies the router term.
 
             If ``None``, uses `dispatcher` as the router term.
@@ -287,7 +287,7 @@ class AssemblingState(object):
         """
         Assembles a frame node for the given term.
 
-        `term` (:class:`htsql.tr.term.Term`)
+        `term` (:class:`htsql.core.tr.term.Term`)
             A term node.
         """
         # Realize and call the `Assemble` adapter.
@@ -301,7 +301,7 @@ class AssemblingState(object):
         capable of evaluating the unit and returns the corresponding
         :class:`Claim` object.
 
-        `unit` (:class:`htsql.tr.flow.Unit`)
+        `unit` (:class:`htsql.core.tr.flow.Unit`)
             The unit to make a claim for.
         """
         # To make a claim, we need to find two terms:
@@ -362,15 +362,15 @@ class AssemblingState(object):
         """
         Appoints and assigns claims for all units of the given code.
 
-        `code` (:class:`htsql.tr.flow.Code`)
+        `code` (:class:`htsql.core.tr.flow.Code`)
             A code object to schedule.
 
-        `dispatcher` (:class:`htsql.tr.term.Term` or ``None``)
+        `dispatcher` (:class:`htsql.core.tr.term.Term` or ``None``)
             Specifies the dispatcher to use when appointing units.
 
             If ``None``, keeps the current dispatcher.
 
-        `router` (:class:`htsql.tr.term.Term` or ``None``)
+        `router` (:class:`htsql.core.tr.term.Term` or ``None``)
             Specifies the router to use when appointing units.
 
             If ``None``, uses `dispacher` as the router term;
@@ -391,20 +391,20 @@ class AssemblingState(object):
         """
         Evaluates the given code node.
 
-        Returns the corresponding :class:`htsql.tr.frame.Phrase` node.
+        Returns the corresponding :class:`htsql.core.tr.frame.Phrase` node.
 
         It is assumed that the code node was previously scheduled
         with :meth:`schedule` and all the claims were satisfied.
 
-        `code` (:class:`htsql.tr.flow.Code`)
+        `code` (:class:`htsql.core.tr.flow.Code`)
             The code node to evaluate.
 
-        `dispatcher` (:class:`htsql.tr.term.Term` or ``None``)
+        `dispatcher` (:class:`htsql.core.tr.term.Term` or ``None``)
             Specifies the dispatcher to use when appointing units.
 
             If ``None``, keeps the current dispatcher.
 
-        `router` (:class:`htsql.tr.term.Term` or ``None``)
+        `router` (:class:`htsql.core.tr.term.Term` or ``None``)
             Specifies the router to use when appointing units.
 
             If ``None`` uses `dispacher` as the router term;
@@ -442,7 +442,7 @@ class AssemblingState(object):
         `claim` (:class:`Claim`)
             The claim to satisfy.
 
-        `phrase` (:class:`htsql.tr.frame.Phrase`)
+        `phrase` (:class:`htsql.core.tr.frame.Phrase`)
             The phrase that satisfies the claim.
         """
         # A few sanity checks.  Verify that the claim was actually requested.
@@ -473,7 +473,7 @@ class Assemble(Adapter):
 
     The adapter is polymorphic on the `Term` argument.
 
-    `term` (:class:`htsql.tr.term.Term`)
+    `term` (:class:`htsql.core.tr.term.Term`)
         A term node.
 
     `state` (:class:`AssemblingState`)
@@ -499,7 +499,7 @@ class AssembleTerm(Assemble):
     Assembles a frame for a proper term node.
 
     This adapts :class:`Assemble` for proper term nodes (i.e., not a
-    :class:`htsql.tr.term.QueryTerm`).
+    :class:`htsql.core.tr.term.QueryTerm`).
 
     Attributes:
 
@@ -1170,7 +1170,7 @@ class Evaluate(Adapter):
 
     The adapter is polymorphic on the `Code` argument.
 
-    `code` (:class:`htsql.tr.flow.Code`)
+    `code` (:class:`htsql.core.tr.flow.Code`)
         The code node to translate.
 
     `state` (:class:`AssemblingState`)
@@ -1239,13 +1239,13 @@ class EvaluateBySignature(Adapter):
     Evaluates a formula node.
 
     This is an auxiliary adapter used to evaluate
-    :class:`htsql.tr.flow.FormulaCode` nodes.  The adapter is polymorphic
+    :class:`htsql.core.tr.flow.FormulaCode` nodes.  The adapter is polymorphic
     on the formula signature.
 
     Unless overridden, the adapter evaluates the arguments of the formula
     and generates a new formula phrase with the same signature.
 
-    `code` (:class:`htsql.tr.flow.FormulaCode`)
+    `code` (:class:`htsql.core.tr.flow.FormulaCode`)
         The formula node to evaluate.
 
     `state` (:class:`AssemblingState`)
@@ -1253,13 +1253,13 @@ class EvaluateBySignature(Adapter):
 
     Aliases:
 
-    `signature` (:class:`htsql.tr.signature.Signature`)
+    `signature` (:class:`htsql.core.tr.signature.Signature`)
         The signature of the formula.
 
-    `domain` (:class:`htsql.tr.domain.Domain`)
+    `domain` (:class:`htsql.core.tr.domain.Domain`)
         The co-domain of the formula.
 
-    `arguments` (:class:`htsql.tr.signature.Bag`)
+    `arguments` (:class:`htsql.core.tr.signature.Bag`)
         The arguments of the formula.
     """
 
@@ -1389,9 +1389,9 @@ def assemble(term, state=None):
     """
     Compiles a new frame node for the given term.
 
-    Returns a :class:`htsql.tr.frame.Frame` instance.
+    Returns a :class:`htsql.core.tr.frame.Frame` instance.
 
-    `term` (:class:`htsql.tr.term.Term`)
+    `term` (:class:`htsql.core.tr.term.Term`)
         A term node.
 
     `state` (:class:`AssemblingState` or ``None``)

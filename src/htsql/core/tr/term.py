@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.term`
-====================
+:mod:`htsql.core.tr.term`
+=========================
 
 This module declares term nodes.
 """
@@ -22,10 +22,10 @@ class Joint(Comparable, Clonable, Printable):
     """
     Represents a join condition.
 
-    `lop` (:class:`htsql.tr.flow.Code`)
+    `lop` (:class:`htsql.core.tr.flow.Code`)
         The left operand of join expression.
 
-    `rop` (:class:`htsql.tr.flow.Code`)
+    `rop` (:class:`htsql.core.tr.flow.Code`)
         The right operand of join expression.
     """
 
@@ -61,30 +61,30 @@ class PreTerm(Clonable, Printable):
         Compile: (Flow, CompilingState) -> Term
         Inject: (Unit, Term, CompilingState) -> Term
 
-    See :class:`htsql.tr.compile.Compile` and
-    :class:`htsql.tr.compile.Inject` for more detail.
+    See :class:`htsql.core.tr.compile.Compile` and
+    :class:`htsql.core.tr.compile.Inject` for more detail.
 
     The following adapter implements the assembling process::
 
         Assemble: (Term, AssemblingState) -> Frame
 
-    See :class:`htsql.tr.assemble.Assemble` for more detail.
+    See :class:`htsql.core.tr.assemble.Assemble` for more detail.
 
     Arguments:
 
-    `expression` (:class:`htsql.tr.code.Expression`)
+    `expression` (:class:`htsql.core.tr.flow.Expression`)
         The expression node which gave rise to the term node; used only for
         presentation or error reporting.
 
     Other attributes:
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         The binding node which gave rise to the term node; for debugging.
 
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
+    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
         The syntax node which gave rise to the term node; for debugging.
 
-    `mark` (:class:`htsql.mark.Mark`)
+    `mark` (:class:`htsql.core.mark.Mark`)
         The location of the node in the original query; for error reporting.
     """
 
@@ -144,15 +144,15 @@ class Term(PreTerm):
     `kids` (a list of zero, one or two :class:`Term` objects)
         The operands of the relational expression.
 
-    `flow` (:class:`htsql.tr.code.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         The flow represented by the term.
 
-    `routes` (a mapping from :class:`htsql.tr.code.Unit` to term tag)
+    `routes` (a mapping from :class:`htsql.core.tr.flow.Unit` to term tag)
         A mapping from unit objects to term tags that specifies the units
         which the term is capable to produce.
 
-        A key of the mapping is either a :class:`htsql.tr.code.Unit`
-        or a :class:`htsql.tr.code.Flow` node.  A value of the mapping
+        A key of the mapping is either a :class:`htsql.core.tr.flow.Unit`
+        or a :class:`htsql.core.tr.flow.Flow` node.  A value of the mapping
         is a term tag, either of the term itself or of one of its
         descendants.
 
@@ -166,10 +166,10 @@ class Term(PreTerm):
 
     Other attributes:
 
-    `backbone` (:class:`htsql.tr.code.Flow`)
+    `backbone` (:class:`htsql.core.tr.flow.Flow`)
         The inflation of the term flow.
 
-    `baseline` (:class:`htsql.tr.code.Flow`)
+    `baseline` (:class:`htsql.core.tr.flow.Flow`)
         The leftmost axis of the term flow that the term is capable
         to produce.
 
@@ -317,7 +317,7 @@ class FilterTerm(UnaryTerm):
     `kid` (:class:`Term`)
         The operand of the filter expression.
 
-    `filter` (:class:`htsql.tr.code.Code`)
+    `filter` (:class:`htsql.core.tr.flow.Code`)
         The conditional expression.
     """
 
@@ -362,7 +362,7 @@ class JoinTerm(BinaryTerm):
     `rkid` (:class:`Term`)
         The right operand of the join.
 
-    `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
+    `joints` (a list of pairs of :class:`htsql.core.tr.flow.Code`)
         A list of pairs `(lop, rop)` that establish join conditions
         of the form `lop = rop`.
 
@@ -459,7 +459,7 @@ class CorrelationTerm(UnaryTerm):
     `link` (:class:`Term`)
         The term to link to.
 
-    `joints` (a list of pairs of :class:`htsql.tr.code.Code`)
+    `joints` (a list of pairs of :class:`htsql.core.tr.flow.Code`)
         A list of pairs `(lop, rop)` that establish join conditions
         of the form `lop = rop`.
     """
@@ -499,7 +499,7 @@ class ProjectionTerm(UnaryTerm):
     `kid` (:class:`Term`)
         The operand of the projection.
 
-    `kernels` (a list of :class:`htsql.tr.code.Code`)
+    `kernels` (a list of :class:`htsql.core.tr.flow.Code`)
         The kernel expressions.
     """
 
@@ -534,7 +534,7 @@ class OrderTerm(UnaryTerm):
     `order` (a list of pairs `(code, direction)`)
         Expressions to sort the rows by.
 
-        Here `code` is a :class:`htsql.tr.code.Code` instance, `direction`
+        Here `code` is a :class:`htsql.core.tr.flow.Code` instance, `direction`
         is either ``+1`` (indicates ascending order) or ``-1`` (indicates
         descending order).
 
@@ -621,7 +621,7 @@ class SegmentTerm(UnaryTerm):
     `kid` (:class:`Term`)
         The operand.
 
-    `elements` (a list of :class:`htsql.tr.code.Code`)
+    `elements` (a list of :class:`htsql.core.tr.flow.Code`)
         A list of expressions to produce.
     """
 

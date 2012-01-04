@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.scan`
-====================
+:mod:`htsql.core.tr.scan`
+=========================
 
 This module implements the HTSQL scanner.
 """
@@ -28,7 +28,7 @@ class TokenStream(object):
     :class:`TokenStream` wraps a list of tokens with a convenient interface
     for consumption and look-ahead.
 
-    `tokens` (a list of :class:`htsql.tr.token.Token` objects)
+    `tokens` (a list of :class:`htsql.core.tr.token.Token` objects)
         A list of tokens.
     """
 
@@ -52,13 +52,13 @@ class TokenStream(object):
         instance of the given class.  When `values` is set, the method
         checks if the token value belongs to the given list of values.
         If any of the checks fail, the method either raises
-        :exc:`htsql.tr.error.ParseError` or returns ``None`` depending
+        :exc:`htsql.core.tr.error.ParseError` or returns ``None`` depending
         on the value of the `do_force` parameter.
 
         This method advances the active pointer to the next token if
         `do_pop` is enabled.
 
-        `token_class` (a subclass of :class:`htsql.tr.token.Token` or ``None``)
+        `token_class` (a subclass of :class:`htsql.core.tr.token.Token` or ``None``)
             If not ``None``, the method checks that the returned token
             is an instance of `token_class`.
 
@@ -75,7 +75,7 @@ class TokenStream(object):
         `do_force` (Boolean)
             This flag affects the method behavior when any of the token
             checks fail.  If set, the method will raise
-            :exc:`htsql.tr.error.ParseError`; otherwise it will return
+            :exc:`htsql.core.tr.error.ParseError`; otherwise it will return
             ``None``.
         """
         # Sanity check on the arguments.
@@ -136,9 +136,9 @@ class TokenStream(object):
         instance of the given class.  When `values` is set, the method
         checks if the token value belongs to the given list of values.
         If any of the checks fail, the method raises
-        :exc:`htsql.tr.error.ParseError`.
+        :exc:`htsql.core.tr.error.ParseError`.
 
-        `token_class` (a subclass of :class:`htsql.tr.token.Token` or ``None``)
+        `token_class` (a subclass of :class:`htsql.core.tr.token.Token` or ``None``)
             If not ``None``, the method checks that the active token
             is an instance of `token_class`.
 
@@ -149,7 +149,7 @@ class TokenStream(object):
         `do_force` (Boolean)
             This flag affects the method behavior when any of the token
             checks fail.  If set, the method will raise
-            :exc:`htsql.tr.error.ParseError`; otherwise it will return
+            :exc:`htsql.core.tr.error.ParseError`; otherwise it will return
             ``None``.
         """
         return self.peek(token_class, values,
@@ -293,7 +293,7 @@ class Scanner(object):
         """
         Tokenizes the query; returns a :class:`TokenStream` instance.
 
-        In case of syntax errors, raises :exc:`htsql.tr.error.ScanError`.
+        In case of syntax errors, raises :exc:`htsql.core.tr.error.ScanError`.
         """
         # Decode %-escape sequences.
         input = self.unquote(self.input)
@@ -366,7 +366,7 @@ def scan(input):
     
     Returns a stream of tokens (a :class:`TokenStream` instance).
 
-    In case of syntax errors, raises :exc:`htsql.tr.error.ScanError`.
+    In case of syntax errors, raises :exc:`htsql.core.tr.error.ScanError`.
     """
     scanner = Scanner(input)
     return scanner.scan()

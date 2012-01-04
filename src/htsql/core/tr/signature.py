@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.signature`
-=========================
+:mod:`htsql.core.tr.signature`
+==============================
 
 This module defines formula nodes and formula signatures.
 """
@@ -231,9 +231,10 @@ class Formula(Printable):
     """
     Represents a formula node.
 
-    This is a mixin class; it is mixed with :class:`htsql.tr.binding.Binding`,
-    :class:`htsql.tr.code.Code` and :class:`htsql.tr.frame.Phrase` to produce
-    respective formula node types.
+    This is a mixin class; it is mixed with
+    :class:`htsql.core.tr.binding.Binding`, :class:`htsql.core.tr.flow.Code`
+    and :class:`htsql.core.tr.frame.Phrase` to produce respective formula node
+    types.
 
     `signature` (:class:`Signature`)
         The formula signature.

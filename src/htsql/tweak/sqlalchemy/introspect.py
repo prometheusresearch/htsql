@@ -1,13 +1,8 @@
 #
-# Copyright (c) 2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
-"""
-:mod:`htsql_tweak.sqlalchemy.introspect`
-========================================
 
-This module implements the introspection adapter for SQLAlchemy MetaData.
-"""
 
 from ...core.context import context
 from ...core.adapter import Adapter, weigh, adapts, adapts_many
@@ -33,7 +28,6 @@ def decode(name, quote=None):
 
 
 class SQLAlchemyIntrospect(Introspect):
-    """ override normal introspection with SQLAlchemy's MetaData """
 
     weigh(1.0)
 

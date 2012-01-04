@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.flow`
-====================
+:mod:`htsql.core.tr.flow`
+=========================
 
 This module declares flow and code nodes.
 """
@@ -45,7 +45,7 @@ class Expression(Comparable, Clonable, Printable):
 
     The constructor arguments:
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         The binding node that gave rise to the expression; should be used
         only for presentation or error reporting.
 
@@ -60,11 +60,11 @@ class Expression(Comparable, Clonable, Printable):
 
     Other attributes:
 
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
+    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
         The syntax node that gave rise to the expression; for debugging
         purposes only.
 
-    `mark` (:class:`htsql.mark.Mark`)
+    `mark` (:class:`htsql.core.mark.Mark`)
         The location of the node in the original query; for error reporting.
 
     `hash` (an integer)
@@ -166,7 +166,7 @@ class TableFamily(Family):
 
     A table flow produces records from a database table.
 
-    `table` (:class:`htsql.entity.TableEntity`)
+    `table` (:class:`htsql.core.entity.TableEntity`)
         The table.
     """
 
@@ -797,7 +797,7 @@ class TableFlow(Flow):
     class, see concrete subclasses :class:`DirectTableFlow` and
     :class:`FiberTableFlow`.
 
-    `table` (:class:`htsql.entity.TableEntity`)
+    `table` (:class:`htsql.core.entity.TableEntity`)
         The table.
     """
 
@@ -815,7 +815,7 @@ class DirectTableFlow(TableFlow):
     `base` (:class:`Flow`)
         The base flow.
 
-    `table` (:class:`htsql.entity.TableEntity`)
+    `table` (:class:`htsql.core.entity.TableEntity`)
         The table.
     """
 
@@ -850,7 +850,7 @@ class FiberTableFlow(TableFlow):
     `base` (:class:`Flow`)
         The base flow.
 
-    `join` (:class:`htsql.entity.Join`)
+    `join` (:class:`htsql.core.entity.Join`)
         The join condition.
     """
 
@@ -1321,7 +1321,7 @@ class Code(Expression):
     must be taken to properly wrap them with appropriate
     :class:`ScalarUnit` and/or :class:`AggregateUnit` instances.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The co-domain of the code expression.
 
     `units` (a list of :class:`Unit`)
@@ -1345,7 +1345,7 @@ class LiteralCode(Code):
     `value` (valid type depends on the domain)
         The value.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The value type.
     """
 
@@ -1370,7 +1370,7 @@ class CastCode(Code):
     `base` (:class:`Code`)
         The expression to convert.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The target domain.
     """
 
@@ -1389,7 +1389,7 @@ class FormulaCode(Formula, Code):
 
     A formula code represents a function or an operator call as a code node.
 
-    `signature` (:class:`htsql.tr.signature.Signature`)
+    `signature` (:class:`htsql.core.tr.signature.Signature`)
         The signature of the formula.
 
     `domain` (:class:`Domain`)
@@ -1460,7 +1460,7 @@ class Unit(Code):
     `flow` (:class:`Flow`)
         The flow on which the unit is defined.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The unit co-domain.
 
     Class attributes:
@@ -1541,7 +1541,7 @@ class ColumnUnit(PrimitiveUnit):
     A column unit is a function on a flow that returns a column of the
     prominent table of the flow.
 
-    `column` (:class:`htsql.entity.ColumnEntity`)
+    `column` (:class:`htsql.core.entity.ColumnEntity`)
         The column produced by the unit.
 
     `flow` (:class:`Flow`)

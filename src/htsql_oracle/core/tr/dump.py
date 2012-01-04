@@ -1,15 +1,7 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
-
-
-"""
-:mod:`htsql_engine.oracle.tr.dump`
-==================================
-
-This module adapts the SQL serializer for Oracle.
-"""
 
 
 from htsql.core.adapter import adapts

@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.reduce`
-======================
+:mod:`htsql.core.tr.reduce`
+===========================
 
 This module implements the reducing process.
 """
@@ -53,7 +53,7 @@ class ReducingState(object):
 
         Returns an equivalent (possibly the same) clause.
 
-        `clause` (:class:`htsql.tr.frame.Clause`)
+        `clause` (:class:`htsql.core.tr.frame.Clause`)
             The clause to simplify.
         """
         # Realize and apply the `Reduce` adapter.
@@ -69,7 +69,7 @@ class ReducingState(object):
         to subframes which no longer exist.  To fix broken references,
         apply :meth:`reduce` to the returned frame.
 
-        `frame` (:class:`htsql.tr.frame.Frame`)
+        `frame` (:class:`htsql.core.tr.frame.Frame`)
             The frame to collapse.
         """
         # Realize and apply the `Collapse` adapter.
@@ -101,7 +101,7 @@ class Reduce(Adapter):
 
     The adapter is polymorphic on the `Claim` argument.
 
-    `clause` (:class:`htsql.tr.frame.Clause`)
+    `clause` (:class:`htsql.core.tr.frame.Clause`)
         The clause node.
 
     `state` (:class:`ReducingState`)
@@ -130,7 +130,7 @@ class ReduceFrame(Reduce):
     its clauses.  This is an abstract adapter; see subclasses for concrete
     implementations.
 
-    `frame` (:class:`htsql.tr.frame.Frame`)
+    `frame` (:class:`htsql.core.tr.frame.Frame`)
         The frame node.
 
     `state` (:class:`ReducingState`)
@@ -280,7 +280,7 @@ class Collapse(Adapter):
     invalidate any references to these frames.  Apply the :class:`Reduce`
     adapter to fix the references.
 
-    `frame` (:class:`htsql.tr.frame.Frame`)
+    `frame` (:class:`htsql.core.tr.frame.Frame`)
         The frame node.
 
     `state` (:class:`ReducingState`)
@@ -437,7 +437,7 @@ class CollapseBranch(Collapse):
             # other.  We also verify that their baseline flows are equal,
             # but this is a redundant check -- precense of a non-trivial
             # `LIMIT` or `OFFSET` implies that the baseline is the scalar
-            # flow (see `CompileOrdered` in `htsql.tr.compile`).
+            # flow (see `CompileOrdered` in `htsql.core.tr.compile`).
             # Other than that, we also need to check that the `ORDER BY`
             # clauses of the inner and outer frames coincide (if they
             # both are non-empty).  We cannot compare the clauses directly
@@ -649,13 +649,13 @@ class ReduceBySignature(Adapter):
     Reduces a formula node.
 
     This is an auxiliary adapter used to reduce
-    :class:`htsql.tr.frame.FormulaPhrase` nodes.  The adapter is polymorphic
+    :class:`htsql.core.tr.frame.FormulaPhrase` nodes.  The adapter is polymorphic
     on the formula signature.
 
     Unless overridden, the adapter reduces the arguments of the formula
     and generates a new formula with the same signature.
 
-    `phrase` (:class:`htsql.tr.frame.FormulaPhrase`)
+    `phrase` (:class:`htsql.core.tr.frame.FormulaPhrase`)
         The formula node to reduce.
 
     `state` (:class:`ReducingState`)
@@ -663,13 +663,13 @@ class ReduceBySignature(Adapter):
 
     Aliases:
 
-    `signature` (:class:`htsql.tr.signature.Signature`)
+    `signature` (:class:`htsql.core.tr.signature.Signature`)
         The signature of the formula.
 
-    `domain` (:class:`htsql.tr.domain.Domain`)
+    `domain` (:class:`htsql.core.tr.domain.Domain`)
         The co-domain of the formula.
 
-    `arguments` (:class:`htsql.tr.signature.Bag`)
+    `arguments` (:class:`htsql.core.tr.signature.Bag`)
         The arguments of the formula.
 
     `is_nullable` (Boolean)
@@ -1284,7 +1284,7 @@ def reduce(clause, state=None):
 
     Returns an equivalent (possibly the same) clause.
 
-    `clause` (:class:`htsql.tr.frame.Clause`)
+    `clause` (:class:`htsql.core.tr.frame.Clause`)
         The clause to simplify.
 
     `state` (:class:`ReducingState` or ``None``)

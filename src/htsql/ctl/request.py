@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql_ctl.request`
+:mod:`htsql.ctl.request`
 ========================
 
 This module implements the `get` and `post` routines.

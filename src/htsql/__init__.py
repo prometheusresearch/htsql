@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
@@ -8,7 +8,7 @@
 :mod:`htsql`
 ============
 
-:copyright: 2006-2011, Prometheus Research, LLC
+:copyright: 2006-2012, Prometheus Research, LLC
 :authors: Clark C. Evans <cce@clarkevans.com>,
           Kirill Simonov <xi@resolvent.net>;
           see ``AUTHORS`` file in the source distribution

@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql_ctl.server`
+:mod:`htsql.ctl.server`
 =======================
 
 This module implements the `server` routine.

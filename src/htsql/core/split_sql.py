@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.split_sql`
-======================
+:mod:`htsql.core.split_sql`
+===========================
 
 This module declares the SQL splitter adapter.
 """

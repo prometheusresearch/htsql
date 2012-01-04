@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.syntax`
-======================
+:mod:`htsql.core.tr.syntax`
+===========================
 
 This module defines syntax nodes for the HTSQL grammar.
 """
@@ -24,7 +24,7 @@ class Syntax(Printable, Comparable, Clonable):
     The syntax tree expresses the structure of the input HTSQL query, with each
     node corresponding to some rule in the HTSQL grammar.
 
-    `mark` (:class:`htsql.mark.Mark`)
+    `mark` (:class:`htsql.core.mark.Mark`)
         The location of the node in the original query.
     """
 

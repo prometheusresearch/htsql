@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.domain`
-===================
+:mod:`htsql.core.domain`
+========================
 
 This module defines HTSQL domains.
 """
@@ -131,11 +131,11 @@ class TupleDomain(Domain):
     family = 'tuple'
 
     # FIXME: add a reference to the underlying `TableEntity`.  This may
-    # require importing `TableEntity` from `htsql.entity`, which creates
+    # require importing `TableEntity` from `htsql.core.entity`, which creates
     # a circular module dependency.  To break it, we will have to split
-    # `htsql.domain` into two modules: `htsql.type`, containing `Domain`
+    # `htsql.core.domain` into two modules: `htsql.core.type`, containing `Domain`
     # and all its subclasses representing real database types, and
-    # `htsql.domain`, which imports all types from `htsql.type` and
+    # `htsql.core.domain`, which imports all types from `htsql.core.type` and
     # adds special domains like `VoidDomain`, `TupleDomain` and
     # `UntypedDomain`.
 

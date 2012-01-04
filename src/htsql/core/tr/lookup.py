@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.lookup`
-======================
+:mod:`htsql.core.tr.lookup`
+===========================
 
 This module implements name resolution adapters.
 """
@@ -48,7 +48,7 @@ class AttributeProbe(Probe):
     """
     Represents a request for an attribute.
 
-    The result of this probe is a :class:`htsql.tr.binding.Recipe`
+    The result of this probe is a :class:`htsql.core.tr.binding.Recipe`
     instance.
 
     `name` (a Unicode string)
@@ -93,7 +93,7 @@ class ReferenceProbe(Probe):
     """
     Represents a request for a reference.
 
-    The result of this probe is a :class:`htsql.tr.binding.Recipe`
+    The result of this probe is a :class:`htsql.core.tr.binding.Recipe`
     instance.
 
     `name` (a Unicode string)
@@ -126,7 +126,7 @@ class ComplementProbe(Probe):
     """
     Represents a request for a complement link.
 
-    The result of this probe is a :class:`htsql.tr.binding.Recipe`
+    The result of this probe is a :class:`htsql.core.tr.binding.Recipe`
     instance.
     """
 
@@ -139,8 +139,8 @@ class ExpansionProbe(Probe):
     Represents expansion requests.
 
     The result of this probe is a list of pairs `(recipe, syntax)`,
-    where `recipe` is an instance of :class:`htsql.tr.binding.Recipe` and
-    `syntax` is an instance of :class:`htsql.tr.syntax.Syntax`.
+    where `recipe` is an instance of :class:`htsql.core.tr.binding.Recipe` and
+    `syntax` is an instance of :class:`htsql.core.tr.syntax.Syntax`.
 
     `is_soft` (Boolean)
         If set, expand selections.
@@ -280,7 +280,7 @@ class Lookup(Adapter):
     value depends on the type of the `Probe` argument.  ``None`` is returned
     when the request cannot be satisfied.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         The binding node.
 
     `probe` (:class:`Probe`)
@@ -955,7 +955,7 @@ def lookup(binding, probe):
     The type of a returned value depends on the type of `probe`.
     The value of ``None`` indicates the lookup request failed.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         A binding node.
 
     `probe` (:class:`Probe`)
@@ -970,10 +970,10 @@ def lookup_attribute(binding, name, arity=None):
     """
     Finds an attribute in the scope of the given binding.
 
-    Returns an instance of :class:`htsql.tr.binding.Recipe`
+    Returns an instance of :class:`htsql.core.tr.binding.Recipe`
     or ``None`` if an attribute is not found.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         A binding node.
 
     `name` (a Unicode string)
@@ -999,10 +999,10 @@ def lookup_reference(binding, name):
     """
     Finds a reference in the scope of the given binding.
 
-    Returns an instance of :class:`htsql.tr.binding.Recipe`
+    Returns an instance of :class:`htsql.core.tr.binding.Recipe`
     or ``None`` if a reference is not found.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         A binding node.
 
     `name` (a Unicode string)
@@ -1024,10 +1024,10 @@ def lookup_complement(binding):
     """
     Extracts a complement link from the scope of the given binding.
 
-    Returns an instance of :class:`htsql.tr.binding.Recipe`
+    Returns an instance of :class:`htsql.core.tr.binding.Recipe`
     or ``None`` if a complement link is not found.
 
-    `binding` (:class:`htsql.tr.binding.Binding`)
+    `binding` (:class:`htsql.core.tr.binding.Binding`)
         A binding node.
     """
     probe = ComplementProbe()
@@ -1039,8 +1039,8 @@ def expand(binding, is_soft=True, is_hard=True):
     Extracts public attributes from the given binding.
 
     Returns a list of pairs `(syntax, recipe)`, where
-    `recipe` is an instance of :class:`htsql.tr.binding.Recipe` and
-    `syntax` is an instance of :class:`htsql.tr.syntax.Syntax`.
+    `recipe` is an instance of :class:`htsql.core.tr.binding.Recipe` and
+    `syntax` is an instance of :class:`htsql.core.tr.syntax.Syntax`.
     The function returns ``None`` if the scope does not support
     public attributes.
 

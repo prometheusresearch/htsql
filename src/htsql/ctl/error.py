@@ -1,11 +1,11 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql_ctl.error`
+:mod:`htsql.ctl.error`
 ======================
 
 This module implements exceptions raised by command-line scripts.

@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.rewrite`
-=======================
+:mod:`htsql.core.tr.rewrite`
+============================
 
 This module implements the rewriting process.
 """
@@ -23,7 +23,7 @@ from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
                    CompoundUnit, ScalarUnit, AggregateUnitBase, AggregateUnit,
                    KernelUnit, CoveringUnit)
 from .signature import Signature, OrSig, AndSig
-# FIXME: move `IfSig` and `SwitchSig` to `htsql.tr.signature`.
+# FIXME: move `IfSig` and `SwitchSig` to `htsql.core.tr.signature`.
 from .fn.signature import IfSig
 
 
@@ -33,14 +33,14 @@ class RewritingState(object):
 
     State attributes:
 
-    `root` (:class:`htsql.tr.flow.RootFlow`)
+    `root` (:class:`htsql.core.tr.flow.RootFlow`)
         The root data flow.
 
-    `mask` (:class:`htsql.tr.flow.Flow`)
+    `mask` (:class:`htsql.core.tr.flow.Flow`)
         The dominant flow; used to prune dependent flows on
         the *unmasking* phase.
 
-    `collection` (list of :class:`htsql.tr.flow.Unit`)
+    `collection` (list of :class:`htsql.core.tr.flow.Unit`)
         A list of units accumulated on the *collecting* phase.
     """
 
@@ -65,7 +65,7 @@ class RewritingState(object):
 
         This function initializes the rewriting state.
 
-        `root` (:class:`htsql.tr.flow.RootFlow`)
+        `root` (:class:`htsql.core.tr.flow.RootFlow`)
             The root flow.
         """
         assert isinstance(flow, RootFlow)
@@ -103,7 +103,7 @@ class RewritingState(object):
         """
         Sets a new mask flow.
 
-        `mask` (:class:`htsql.tr.flow.Flow`)
+        `mask` (:class:`htsql.core.tr.flow.Flow`)
             A new mask flow.
         """
         assert isinstance(mask, Flow)
@@ -120,10 +120,10 @@ class RewritingState(object):
         """
         Memorizes a replacement node for the given expression node.
 
-        `expression` (:class:`htsql.tr.flow.Expression`)
+        `expression` (:class:`htsql.core.tr.flow.Expression`)
             The expression node to replace.
 
-        `replacement` (:class:`htsql.tr.flow.Expression`)
+        `replacement` (:class:`htsql.core.tr.flow.Expression`)
             The replacement.
         """
         assert isinstance(expression, Expression)
@@ -138,7 +138,7 @@ class RewritingState(object):
         Returns an expression node semantically equivalent to the given node,
         but optimized for compilation.  May return the same node.
 
-        `expression` (:class:`htsql.tr.flow.Expression`)
+        `expression` (:class:`htsql.core.tr.flow.Expression`)
             The expression to rewrite.
         """
         # Check if the expression was already rewritten
@@ -157,10 +157,10 @@ class RewritingState(object):
         Unmasking prunes non-axial flow operations that are already
         enforced by the mask flow.
 
-        `expression` (:class:`htsql.tr.flow.Expression`)
+        `expression` (:class:`htsql.core.tr.flow.Expression`)
             The expression to unmask.
 
-        `mask` (:class:`htsql.tr.flow.Flow` or ``None``)
+        `mask` (:class:`htsql.core.tr.flow.Flow` or ``None``)
             If set, specifies the mask to use; otherwise, the current
             mask is to be used.
         """
@@ -192,7 +192,7 @@ class RewritingState(object):
         The collected units are stored in the state attribute
         :attr:`collection`.
 
-        `expression` (:class:`htsql.tr.flow.Expression`)
+        `expression` (:class:`htsql.core.tr.flow.Expression`)
             The expression to collect units from.
         """
         collect = Collect(expression, self)
@@ -218,7 +218,7 @@ class RewritingState(object):
         Returns a new expression node with scalar and aggregate units
         recombined.
 
-        `expression` (:class:`htsql.tr.flow.Expression`)
+        `expression` (:class:`htsql.core.tr.flow.Expression`)
             The expression to replace.
         """
         # Check if the expression is in the cache.
@@ -526,7 +526,7 @@ class RewriteBase(Adapter):
 
     The adapters are polymorphic on the first argument.
 
-    `expression` (:class:`htsql.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.flow.Expression`)
         The expression node to rewrite.
 
     `state` (:class:`RewritingState`)
@@ -1195,7 +1195,7 @@ class RewriteBySignature(Adapter):
     This is an auxiliary interface used by :class:`Rewrite` adapter.
     It is polymorphic on the signature of the formula.
 
-    `code` (:class:`htsql.tr.flow.FormulaCode`)
+    `code` (:class:`htsql.core.tr.flow.FormulaCode`)
         The formula node to rewrite.
 
     `state` (:class:`RewritingState`)
@@ -1457,7 +1457,7 @@ def rewrite(expression, state=None):
 
     Returns a clone of the given node optimized for compilation.
 
-    `expression` (:class:`htsql.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.flow.Expression`)
         The expression node to rewrite.
 
     `state` (:class:`RewritingState` or ``None``)

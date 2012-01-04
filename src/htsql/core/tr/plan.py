@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.plan`
-====================
+:mod:`htsql.core.tr.plan`
+=========================
 
 This module declares a SQL execution plan.
 """
@@ -23,7 +23,7 @@ class Plan(Printable):
     `sql` (a Unicode string or ``None``)
         The SQL statement to execute.
 
-    `frame` (:class:`htsql.tr.frame.QueryFrame`)
+    `frame` (:class:`htsql.core.tr.frame.QueryFrame`)
         The query frame corresponding to the plan.
     """
 

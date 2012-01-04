@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql_ctl.regress`
+:mod:`htsql.ctl.regress`
 ========================
 
 This module implements the `regress` routine.

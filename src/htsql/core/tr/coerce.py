@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.coerce`
-======================
+:mod:`htsql.core.tr.coerce`
+===========================
 
 This module implements the unary and binary coerce adapters.
 """
@@ -281,7 +281,7 @@ def coerce(*domains):
     """
     Reduces a list of domains to a single common domain.
 
-    `domains` (a list of :class:`htsql.domain.Domain`)
+    `domains` (a list of :class:`htsql.core.domain.Domain`)
         List of domains.
 
     Returns the most specialized domain covering the given domains;

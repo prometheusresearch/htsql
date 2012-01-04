@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.parse`
-=====================
+:mod:`htsql.core.tr.parse`
+==========================
 
 This module implements the HTSQL parser.
 """
@@ -82,7 +82,7 @@ class Parser(object):
             Parser << tokens
             Parser.process(tokens)
 
-        `tokens` (:class:`htsql.tr.scan.TokenStream`)
+        `tokens` (:class:`htsql.core.tr.scan.TokenStream`)
             The stream of tokens to parse.
         """
         # Override in subclasses.
@@ -709,8 +709,8 @@ def parse(input, Parser=QueryParser):
     """
     Parses the input HTSQL query; returns the corresponding syntax node.
 
-    In case of syntax errors, may raise :exc:`htsql.tr.error.ScanError`
-    or :exc:`htsql.tr.error.ParseError`.
+    In case of syntax errors, may raise :exc:`htsql.core.tr.error.ScanError`
+    or :exc:`htsql.core.tr.error.ParseError`.
 
     `input` (a string)
         An HTSQL query or an HTSQL expression.

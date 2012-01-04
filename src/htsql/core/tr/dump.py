@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.dump`
-====================
+:mod:`htsql.core.tr.dump`
+=========================
 
 This module implements the SQL serialization process.
 """
@@ -137,7 +137,7 @@ class SerializingState(object):
     `stream` (:class:`Stream`)
         A file-like object accumulating the generated SQL statement.
 
-    `frame_by_tag` (a mapping: integer -> :class:`htsql.tr.frame.Frame`)
+    `frame_by_tag` (a mapping: integer -> :class:`htsql.core.tr.frame.Frame`)
         Maps the frame tag to the respective frame.
 
     `select_aliases_by_tag` (a mapping: integer -> a list of aliases)
@@ -171,7 +171,7 @@ class SerializingState(object):
 
         This method must be called before dumping any clauses.
 
-        `frame` (:class:`htsql.tr.frame.SegmentFrame`)
+        `frame` (:class:`htsql.core.tr.frame.SegmentFrame`)
             The term corresponding to the top-level ``SELECT`` statement.
         """
         assert isinstance(frame, SegmentFrame)
@@ -219,7 +219,7 @@ class SerializingState(object):
         """
         Serializes the given clause.
 
-        `clause` (:class:`htsql.tr.frame.Clause`)
+        `clause` (:class:`htsql.core.tr.frame.Clause`)
             The clause to serialize.
         """
         # Realize and call the `Serialize` adapter.
@@ -229,7 +229,7 @@ class SerializingState(object):
         """
         Writes SQL for the given clause.
 
-        `clause` (:class:`htsql.tr.frame.Clause`)
+        `clause` (:class:`htsql.core.tr.frame.Clause`)
             The clause to dump.
         """
         # Realize and call the `Dump` adapter.
@@ -241,7 +241,7 @@ class SerializingState(object):
         """
         Generates a preform alias for the given clause.
 
-        `clause` (:class:`htsql.tr.frame.Clause`)
+        `clause` (:class:`htsql.core.tr.frame.Clause`)
             The clause to generate an alias for.
         """
         # Realize and call the `Dub` adapter.
@@ -261,7 +261,7 @@ class Serialize(Adapter):
 
     The adapter is polymorphic on the `Clause` argument.
 
-    `clause` (:class:`htsql.tr.frame.Clause`)
+    `clause` (:class:`htsql.core.tr.frame.Clause`)
         The clause to serialize.
 
     `state` (:class:`SerializingState`)
@@ -332,7 +332,7 @@ class SerializeSegment(Serialize):
         """
         Generates ``SELECT`` and ``FROM`` aliases.
 
-        `frame` (:class:`htsql.tr.frame.BranchFrame` or ``None``)
+        `frame` (:class:`htsql.core.tr.frame.BranchFrame` or ``None``)
             The frame to generate aliases for.
 
         `taken_select_aliases` (a set or ``None``)
@@ -442,7 +442,7 @@ class DumpBase(Adapter):
     phrase clause node and writes it to the stream that accumulates a SQL
     statement.
 
-    `clause` (:class:`htsql.tr.frame.Clause`)
+    `clause` (:class:`htsql.core.tr.frame.Clause`)
         A clause to serialize.
 
     `state` (:class:`SerializingState`)
@@ -629,7 +629,7 @@ class FormatDefault(Format):
 
         {clause}
 
-    Here, the value of `clause` is a :class:`htsql.tr.frame.Clause`
+    Here, the value of `clause` is a :class:`htsql.core.tr.frame.Clause`
     instance to serialize.
     """
 
@@ -657,7 +657,7 @@ class FormatUnion(Format):
     Here,
 
     * the value of the `clauses` variable is a list of
-      :class:`htsql.tr.frame.Clause` nodes;
+      :class:`htsql.core.tr.frame.Clause` nodes;
     * `separator` is a separator between clauses (``', '``, by default).
     """
 
@@ -831,7 +831,7 @@ class Dub(Adapter):
     This is an auxiliary adapter used to generate aliases for
     ``SELECT`` and ``FROM`` clauses.
 
-    `clause` (:class:`htsql.tr.frame.Clause`)
+    `clause` (:class:`htsql.core.tr.frame.Clause`)
         A clause node to make an alias for.
 
     `state` (:class:`SerializingState`)
@@ -865,7 +865,7 @@ class Dump(DumpBase):
     The adapter generates a SQL clause for the given node and
     writes it to the stream that accumulates a SQL statement.
 
-    `clause` (:class:`htsql.tr.frame.Clause`)
+    `clause` (:class:`htsql.core.tr.frame.Clause`)
         A clause to serialize.
 
     `state` (:class:`SerializingState`)
@@ -899,7 +899,7 @@ class DumpFrame(Dump):
     """
     Translates a frame node to SQL.
 
-    `frame` (:class:`htsql.tr.frame.Frame`)
+    `frame` (:class:`htsql.core.tr.frame.Frame`)
         A frame node to serialize.
     """
 
@@ -938,7 +938,7 @@ class DumpPhrase(Dump):
     """
     Translates a phrase node to SQL.
 
-    `phrase` (:class:`htsql.tr.frame.Phrase`)
+    `phrase` (:class:`htsql.core.tr.frame.Phrase`)
         A phrase node to serialize.
     """
 
@@ -1430,7 +1430,7 @@ class DumpByDomain(DumpBase):
     This is an auxiliary adapter used for serialization of literal nodes.
     The adapter is polymorphic on the domain of the literal.
 
-    `phrase` (:class:`htsql.tr.frame.LiteralPhrase`)
+    `phrase` (:class:`htsql.core.tr.frame.LiteralPhrase`)
         A literal node to serialize.
 
     `state` (:class:`SerializingState`)
@@ -1441,7 +1441,7 @@ class DumpByDomain(DumpBase):
     `value` (depends on the domain or ``None``)
         The value of the literal.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The domain of the literal.
     """
 
@@ -1638,7 +1638,7 @@ class DumpToDomain(DumpBase):
     The adapter is polymorphic on the pair of the origin and the target
     domains.
 
-    `phrase` (:class:`htsql.tr.frame.CastPhrase`)
+    `phrase` (:class:`htsql.core.tr.frame.CastPhrase`)
         A cast node to serialize.
 
     `state` (:class:`SerializingState`)
@@ -1646,10 +1646,10 @@ class DumpToDomain(DumpBase):
 
     Other attributes:
 
-    `base` (:class:`htsql.tr.frame.Phrase`)
+    `base` (:class:`htsql.core.tr.frame.Phrase`)
         The operand of the ``CAST`` expression.
 
-    `domain` (:class:`htsql.domain.Domain`)
+    `domain` (:class:`htsql.core.domain.Domain`)
         The target domain.
     """
 
@@ -1801,7 +1801,7 @@ class DumpBySignature(DumpBase):
     This is an auxiliary adapter used for serialization of formula nodes.
     The adapter is polymorphic on the formula signature.
 
-    `phrase` (:class:`htsql.tr.frame.FormulaPhrase`)
+    `phrase` (:class:`htsql.core.tr.frame.FormulaPhrase`)
         A formula node to serialize.
 
     `state` (:class:`SerializingState`)
@@ -1809,13 +1809,13 @@ class DumpBySignature(DumpBase):
 
     Other attributes:
 
-    `signature` (:class:`htsql.tr.signature.Signature`)
+    `signature` (:class:`htsql.core.tr.signature.Signature`)
         The signature of the formula.
 
-    `domain` (:class:`htsql.tr.domain.Domain`)
+    `domain` (:class:`htsql.core.tr.domain.Domain`)
         The co-domain of the formula.
 
-    `arguments` (:class:`htsql.tr.signature.Bag`)
+    `arguments` (:class:`htsql.core.tr.signature.Bag`)
         The arguments of the formula.
     """
 
@@ -1995,7 +1995,7 @@ def serialize(clause, state=None):
     """
     Translates a clause node to SQL.
 
-    `clause` (:class:`htsql.tr.frame.Clause`)
+    `clause` (:class:`htsql.core.tr.frame.Clause`)
         The clause to serialize.
 
     `state` (:class:`SerializingState` or ``None``)

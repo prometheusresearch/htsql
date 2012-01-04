@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.compile`
-=======================
+:mod:`htsql.core.tr.compile`
+============================
 
 This module implements the compiling process.
 """
@@ -36,10 +36,10 @@ class CompilingState(object):
 
     State attributes:
 
-    `root` (:class:`htsql.tr.flow.RootFlow`)
+    `root` (:class:`htsql.core.tr.flow.RootFlow`)
         The root flow.
 
-    `baseline` (:class:`htsql.tr.flow.Flow`)
+    `baseline` (:class:`htsql.core.tr.flow.Flow`)
         When compiling a new term, indicates the leftmost axis that must
         exported by the term.  Note that the baseline flow is always
         inflated.
@@ -70,7 +70,7 @@ class CompilingState(object):
         This function must be called before state attributes `root`,
         `baseline` and `mask` could be used.
 
-        `flow` (:class:`htsql.tr.flow.RootFlow`)
+        `flow` (:class:`htsql.core.tr.flow.RootFlow`)
             A root scalar flow.
         """
         assert isinstance(flow, RootFlow)
@@ -99,7 +99,7 @@ class CompilingState(object):
         This function masks the current baseline flow.  To restore
         the previous baseline flow, use :meth:`pop_baseline`.
 
-        `baseline` (:class:`htsql.tr.flow.Flow`)
+        `baseline` (:class:`htsql.core.tr.flow.Flow`)
             The new baseline flow.  Note that the baseline flow
             must be inflated.
         """
@@ -117,10 +117,10 @@ class CompilingState(object):
         """
         Compiles a new term node for the given expression.
 
-        `expression` (:class:`htsql.tr.flow.Expression`)
+        `expression` (:class:`htsql.core.tr.flow.Expression`)
             An expression node.
 
-        `baseline` (:class:`htsql.tr.flow.Flow` or ``None``)
+        `baseline` (:class:`htsql.core.tr.flow.Flow` or ``None``)
             The baseline flow.  Specifies an axis flow that the compiled
             term must export.  If not set, the current baseline flow of
             the state is used.
@@ -151,10 +151,10 @@ class CompilingState(object):
         we claim that a term could export an expression if it exports
         all the units of the expression.
 
-        `term` (:class:`htsql.tr.term.Term`)
+        `term` (:class:`htsql.core.tr.term.Term`)
             A term node.
 
-        `expressions` (a list of :class:`htsql.tr.flow.Expression`)
+        `expressions` (a list of :class:`htsql.core.tr.flow.Expression`)
             A list of expressions to inject into the given term.
         """
         assert isinstance(term, Term)
@@ -185,16 +185,16 @@ class CompileBase(Adapter):
         The compiled term is called *a shoot term* (relatively to
         the given *trunk term*).
 
-        `flow` (:class:`htsql.tr.flow.Flow`)
+        `flow` (:class:`htsql.core.tr.flow.Flow`)
             A flow node, for which the we compile a term.
 
-        `trunk` (:class:`htsql.tr.flow.Flow` or :class:`htsql.tr.term.Term`)
+        `trunk` (:class:`htsql.core.tr.flow.Flow` or :class:`htsql.core.tr.term.Term`)
            Expresses a promise that the compiled term will be
            (eventually) joined to a term corresponding to the
-           `trunk` flow.  If `trunk` is a :class:`htsql.tr.term.Term`
+           `trunk` flow.  If `trunk` is a :class:`htsql.core.tr.term.Term`
            instance, use the term flow.
 
-        `codes` (a list of :class:`htsql.tr.flow.Expression` or ``None``)
+        `codes` (a list of :class:`htsql.core.tr.flow.Expression` or ``None``)
            If provided, a list of expressions to be injected
            into the compiled term.
         """
@@ -248,20 +248,20 @@ class CompileBase(Adapter):
 
         The given flow nodes specify the shape of two term nodes:
         the trunk term and the shoot term.  The function returns
-        a list of :class:`htsql.tr.term.Joint` objects that could
+        a list of :class:`htsql.core.tr.term.Joint` objects that could
         be used to attach the shoot term to the trunk term without
         changing the cardinality of the latter.
 
-        `flow` (:class:`htsql.tr.flow.Flow`)
+        `flow` (:class:`htsql.core.tr.flow.Flow`)
             The flow of the trunk term.
 
-        `baseline` (:class:`htsql.tr.flow.Flow`)
+        `baseline` (:class:`htsql.core.tr.flow.Flow`)
             The baseline of the trunk term.
 
-        `shoot` (:class:`htsql.tr.flow.Flow`)
+        `shoot` (:class:`htsql.core.tr.flow.Flow`)
             The flow of the shoot term.
 
-        `shoot_baseline` (:class:`htsql.tr.flow.Flow`)
+        `shoot_baseline` (:class:`htsql.core.tr.flow.Flow`)
             The baseline of the shoot term.
         """
         # Sanity check on the arguments.
@@ -366,10 +366,10 @@ class CompileBase(Adapter):
         """
         Returns joints to attach the shoot term to the trunk term.
 
-        `trunk_term` (:class:`htsql.tr.term.Term`)
+        `trunk_term` (:class:`htsql.core.tr.term.Term`)
             The left (trunk) operand of the join.
 
-        `shoot_term` (:class:`htsql.tr.term.Term`)
+        `shoot_term` (:class:`htsql.core.tr.term.Term`)
             The right (shoot) operand of the join.
 
         Note that the trunk term may not export all the units necessary
@@ -388,13 +388,13 @@ class CompileBase(Adapter):
         Augments the term to ensure it can export all units required
         to generate join conditions.
 
-        `term` (:class:`htsql.tr.term.Term`)
+        `term` (:class:`htsql.core.tr.term.Term`)
             The term to update.
 
             It is assumed that `term` was the argument `trunk_term` of
             :meth:`glue_terms` when the joints were generated.
 
-        `joints` (a list of :class:`htsql.tr.term.Joint`)
+        `joints` (a list of :class:`htsql.core.tr.term.Joint`)
             The joints to inject.
 
             It is assumed the ties were generated by :meth:`glue_terms`.
@@ -414,10 +414,10 @@ class CompileBase(Adapter):
         table of the trunk term, but also includes the given
         extra routes.
 
-        `trunk_term` (:class:`htsql.tr.term.Term`)
+        `trunk_term` (:class:`htsql.core.tr.term.Term`)
             The left (trunk) operand of the join.
 
-        `shoot_term` (:class:`htsql.tr.term.Term`)
+        `shoot_term` (:class:`htsql.core.tr.term.Term`)
             The right (shoot) operand of the term.
 
             The shoot term must be singular relatively to the trunk term.
@@ -481,7 +481,7 @@ class Compile(CompileBase):
 
     The adapter is polymorphic on the `Expression` argument.
 
-    `expression` (:class:`htsql.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.flow.Expression`)
         An expression node.
 
     `state` (:class:`CompilingState`)
@@ -519,10 +519,10 @@ class Inject(CompileBase):
 
     The adapter is polymorphic on the `Expression` argument.
 
-    `expression` (:class:`htsql.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.flow.Expression`)
         An expression node to inject.
 
-    `term` (:class:`htsql.tr.term.Term`)
+    `term` (:class:`htsql.core.tr.term.Term`)
         A term node to inject into.
 
     `state` (:class:`CompilingState`)
@@ -608,7 +608,7 @@ class CompileFlow(Compile):
 
     Constructor arguments:
 
-    `flow` (:class:`htsql.tr.flow.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         A flow node.
 
     `state` (:class:`CompilingState`)
@@ -616,10 +616,10 @@ class CompileFlow(Compile):
 
     Other attributes:
 
-    `backbone` (:class:`htsql.tr.flow.Flow`)
+    `backbone` (:class:`htsql.core.tr.flow.Flow`)
         The inflation of the given flow.
 
-    `baseline` (:class:`htsql.tr.flow.Flow`)
+    `baseline` (:class:`htsql.core.tr.flow.Flow`)
         An alias to `state.baseline`.
     """
 
@@ -1827,16 +1827,16 @@ def compile(expression, state=None, baseline=None):
     """
     Compiles a new term node for the given expression.
 
-    Returns a :class:`htsql.tr.term.Term` instance.
+    Returns a :class:`htsql.core.tr.term.Term` instance.
 
-    `expression` (:class:`htsql.tr.flow.Expression`)
+    `expression` (:class:`htsql.core.tr.flow.Expression`)
         An expression node.
 
     `state` (:class:`CompilingState` or ``None``)
         The compiling state to use.  If not set, a new compiling state
         is instantiated.
 
-    `baseline` (:class:`htsql.tr.flow.Flow` or ``None``)
+    `baseline` (:class:`htsql.core.tr.flow.Flow` or ``None``)
         The baseline flow.  Specifies an axis that the compiled
         term must export.  If not set, the current baseline flow of
         the state is used.

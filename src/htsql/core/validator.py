@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.validator`
-======================
+:mod:`htsql.core.validator`
+===========================
 
 This module provides utilities for data validation and conversion.
 """
@@ -1029,7 +1029,7 @@ class DBVal(Validator):
     Verifies if the value is a connection URI.
 
     For description of the connection URI format, see
-    :meth:`htsql.util.DB.parse`.
+    :meth:`htsql.core.util.DB.parse`.
 
     `is_nullable` (Boolean)
         If set, ``None`` values are permitted.

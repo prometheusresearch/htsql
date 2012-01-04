@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.bind`
-====================
+:mod:`htsql.core.tr.bind`
+=========================
 
 This module implements the binding process.
 """
@@ -49,10 +49,10 @@ class BindingState(object):
 
     State attributes:
 
-    `root` (:class:`htsql.tr.binding.RootBinding`)
+    `root` (:class:`htsql.core.tr.binding.RootBinding`)
         The root naming scope.
 
-    `scope` (:class:`htsql.tr.binding.Binding`)
+    `scope` (:class:`htsql.core.tr.binding.Binding`)
         The current naming scope.
     """
 
@@ -73,7 +73,7 @@ class BindingState(object):
         This function initializes the lookup context stack and must be
         called before any calls of :meth:`push_scope` and :meth:`pop_scope`.
 
-        `root` (:class:`htsql.tr.binding.RootBinding`)
+        `root` (:class:`htsql.core.tr.binding.RootBinding`)
             The root lookup scope.
         """
         # Check that the lookup stack is not initialized.
@@ -110,7 +110,7 @@ class BindingState(object):
         attribute to get the current scope; :meth:`pop_scope` to restore
         the previous scope.
 
-        `scope` (:class:`htsql.tr.binding.Binding`)
+        `scope` (:class:`htsql.core.tr.binding.Binding`)
             The new lookup scope.
         """
         # Sanity check on the argument.
@@ -139,10 +139,10 @@ class BindingState(object):
 
         Returns a binding node.
 
-        `syntax` (:class:`htsql.tr.syntax.Syntax`)
+        `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
             The syntax node to bind.
 
-        `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+        `scope` (:class:`htsql.core.tr.binding.Binding` or ``None``)
             If set, the lookup scope is set to `scope` when
             binding the syntax node.
         """
@@ -154,13 +154,13 @@ class BindingState(object):
 
         Returns a binding node.
 
-        `recipe` (:class:`htsql.tr.binding.Recipe`)
+        `recipe` (:class:`htsql.core.tr.binding.Recipe`)
             The recipe to apply.
 
-        `syntax` (:class:`htsql.tr.syntax.Syntax`)
+        `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
             The syntax node associated with the recipe.
 
-        `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+        `scope` (:class:`htsql.core.tr.binding.Binding` or ``None``)
             If set, the lookup scope is set to `scope` when
             binding the syntax node.
         """
@@ -182,10 +182,10 @@ class BindingState(object):
 
         Returns a binding node.
 
-        `syntax` (:class:`htsql.tr.syntax.Syntax`)
+        `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
             The syntax node to bind.
 
-        `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+        `scope` (:class:`htsql.core.tr.binding.Binding` or ``None``)
             If set, the lookup context is set to `scope` when
             binding the syntax node.
         """
@@ -218,7 +218,7 @@ class Bind(Adapter):
 
     The adapter is polymorphic on the `Syntax` argument.
 
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
+    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
         The syntax node to bind.
 
     `state` (:class:`BindingState`)
@@ -817,7 +817,7 @@ class BindByName(Protocol):
         # The name and the number of arguments of the call node.
         key_name, key_arity = dispatch_key
         # We want to compare names case insensitive.  Unfortunately,
-        # we cannot use `normalize` from `htsql.tr.lookup` since it
+        # we cannot use `normalize` from `htsql.core.tr.lookup` since it
         # mangles symbols.
         key_name = key_name.lower()
 
@@ -968,10 +968,10 @@ class BindByRecipe(Adapter):
 
     The adapter is polymorphic by the first argument.
 
-    `recipe` (:class:`htsql.tr.binding.Recipe`)
+    `recipe` (:class:`htsql.core.tr.binding.Recipe`)
         A recipe to apply.
 
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
+    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
         The syntax node associated with the recipe.
 
     `state` (:class:`BindingState`)
@@ -1194,14 +1194,14 @@ def bind(syntax, state=None, scope=None, environment=None):
     """
     Binds the given syntax node.
 
-    `syntax` (:class:`htsql.tr.syntax.Syntax`)
+    `syntax` (:class:`htsql.core.tr.syntax.Syntax`)
         The syntax node to bind.
 
     `state` (:class:`BindingState` or ``None``).
         The binding state to use.  If not set, a new binding state
         is created.
 
-    `scope` (:class:`htsql.tr.binding.Binding` or ``None``)
+    `scope` (:class:`htsql.core.tr.binding.Binding` or ``None``)
         If specified, updates the lookup scope when binding
         the node.
     """

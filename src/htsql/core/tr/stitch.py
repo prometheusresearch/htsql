@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2006-2011, Prometheus Research, LLC
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 """
-:mod:`htsql.tr.stitch`
-======================
+:mod:`htsql.core.tr.stitch`
+===========================
 
 This module implements stitching utilities over flow nodes.
 """
@@ -27,7 +27,7 @@ class Arrange(Adapter):
     Produces the ordering of the given flow.
 
     Returns a list of pairs `(code, direction)`, where `code` is an instance
-    of :class:`htsql.tr.flow.Code` and `direction` is ``+1`` or ``-1``.
+    of :class:`htsql.core.tr.flow.Code` and `direction` is ``+1`` or ``-1``.
     This list uniquely identifies sorting order of the flow elements.
 
     This is an interface adapter with a signature::
@@ -36,7 +36,7 @@ class Arrange(Adapter):
 
     The adapter is polymorphic on the first argument.
 
-    `flow` (:class:`htsql.tr.flow.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         The flow to order.
 
     `with_strong` (Boolean)
@@ -77,7 +77,7 @@ class Spread(Adapter):
     by this adapter, a flow term should also export same units reparented
     against an inflated flow.
 
-    `flow` (:class:`htsql.tr.flow.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         The flow node to spread.
     """
 
@@ -110,7 +110,7 @@ class Sew(Adapter):
 
     Units in the joints always belong to an inflated flow.
 
-    `flow` (:class:`htsql.tr.flow.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         The flow node to sew.
     """
 
@@ -143,7 +143,7 @@ class Tie(Adapter):
 
     Units in the joints always belong to an inflated flow.
 
-    `flow` (:class:`htsql.tr.flow.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         The flow node to sew.
     """
 
@@ -548,7 +548,7 @@ def arrange(flow, with_strong=True, with_weak=True):
     """
     Returns the ordering of the given flow.
 
-    `flow` (:class:`htsql.tr.flow.Flow`)
+    `flow` (:class:`htsql.core.tr.flow.Flow`)
         The flow to order.
 
     `with_strong` (Boolean)

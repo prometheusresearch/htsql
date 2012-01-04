@@ -5,7 +5,7 @@
 
 
 """
-:mod:`htsql_ctl.version`
+:mod:`htsql.ctl.version`
 ========================
 
 This module implements the `version` routine.
