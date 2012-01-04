@@ -44,7 +44,7 @@ To execute a WSGI request, run
 """
 
 
-__version__ = '2.2.1'
+__version__ = '2.3.0+'
 
 
 from . import (adapter, addon, application, cache, cmd, connect, context,
