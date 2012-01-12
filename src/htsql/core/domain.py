@@ -12,13 +12,14 @@ This module defines HTSQL domains.
 """
 
 
-from .util import maybe, oneof, listof, UTC, FixedTZ
+from .util import (maybe, oneof, listof, UTC, FixedTZ,
+                   Printable, Clonable, Comparable)
 import re
 import decimal
 import datetime
 
 
-class Domain(object):
+class Domain(Comparable, Clonable, Printable):
     """
     Represents an HTSQL domain (data type).
 
@@ -77,29 +78,7 @@ class Domain(object):
     def __str__(self):
         # Domains corresponding to concrete SQL data types may override
         # this method to return the name of the type.
-        return self.__class__.__name__.lower()
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self)
-
-    def __eq__(self, other):
-        # Used when comparing some of the code objects.  The generic
-        # implementations check that the classes are identical and
-        # all attributes are equal; concrete SQL domains may override
-        # this method to provide engine-specific type equality.
-        if not isinstance(other, Domain):
-            return False
-        return (self.__class__ == other.__class__)
-
-    def __ne__(self, other):
-        # Have to override it since we override `__eq__`.
-        return not (self == other)
-
-    def __hash__(self):
-        # Have to override it since we override `__eq__`.  We use a rough hash
-        # which may generate false positives, but relieves us from the need
-        # to override `__hash__` for every subclass.
-        return hash(self.__class__)
+        return self.family
 
 
 class VoidDomain(Domain):
@@ -111,6 +90,9 @@ class VoidDomain(Domain):
     """
     family = 'void'
 
+    def __init__(self):
+        super(VoidDomain, self).__init__(equality_vector=())
+
 
 class UntypedDomain(Domain):
     """
@@ -120,6 +102,9 @@ class UntypedDomain(Domain):
     domain could be derived from the context.
     """
     family = 'untyped'
+
+    def __init__(self):
+        super(UntypedDomain, self).__init__(equality_vector=())
 
 
 class TupleDomain(Domain):
@@ -139,6 +124,9 @@ class TupleDomain(Domain):
     # adds special domains like `VoidDomain`, `TupleDomain` and
     # `UntypedDomain`.
 
+    def __init__(self):
+        super(TupleDomain, self).__init__(equality_vector=())
+
 
 class BooleanDomain(Domain):
     """
@@ -149,6 +137,9 @@ class BooleanDomain(Domain):
     Valid native values: `bool` objects.
     """
     family = 'boolean'
+
+    def __init__(self):
+        super(BooleanDomain, self).__init__(equality_vector=())
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -218,6 +209,7 @@ class IntegerDomain(NumberDomain):
         # Sanity check on the arguments.
         assert isinstance(size, maybe(int))
         self.size = size
+        super(IntegerDomain, self).__init__(equality_vector=(size,))
 
     def parse(self, data):
         # Sanity check on the arguments.
@@ -243,11 +235,6 @@ class IntegerDomain(NumberDomain):
         # Represent an integer value as a decimal number.
         return unicode(value)
 
-    def __eq__(self, other):
-        if not isinstance(other, Domain):
-            return False
-        return (self.__class__ == other.__class__ and self.size == other.size)
-
 
 class FloatDomain(NumberDomain):
     """
@@ -270,6 +257,7 @@ class FloatDomain(NumberDomain):
         # Sanity check on the arguments.
         assert isinstance(size, maybe(int))
         self.size = size
+        super(FloatDomain, self).__init__(equality_vector=(size,))
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -299,11 +287,6 @@ class FloatDomain(NumberDomain):
         # Use `repr` to avoid loss of precision.
         return unicode(repr(value))
 
-    def __eq__(self, other):
-        if not isinstance(other, Domain):
-            return False
-        return (self.__class__ == other.__class__ and self.size == other.size)
-
 
 class DecimalDomain(NumberDomain):
     """
@@ -332,6 +315,7 @@ class DecimalDomain(NumberDomain):
         assert isinstance(scale, maybe(int))
         self.precision = precision
         self.scale = scale
+        super(DecimalDomain, self).__init__(equality_vector=(precision, scale))
 
     def parse(self, data):
         # Sanity check on the arguments.
@@ -367,13 +351,6 @@ class DecimalDomain(NumberDomain):
         # Produce a decimal representation of the number.
         return unicode(value)
 
-    def __eq__(self, other):
-        if not isinstance(other, Domain):
-            return False
-        return (self.__class__ == other.__class__ and
-                self.precision == other.precision and
-                self.scale == other.scale)
-
 
 class StringDomain(Domain):
     """
@@ -397,6 +374,8 @@ class StringDomain(Domain):
         assert isinstance(is_varying, bool)
         self.length = length
         self.is_varying = is_varying
+        super(StringDomain, self).__init__(
+                equality_vector=(length, is_varying))
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -418,13 +397,6 @@ class StringDomain(Domain):
         # No conversion is required for string values.
         return value
 
-    def __eq__(self, other):
-        if not isinstance(other, Domain):
-            return False
-        return (self.__class__ == other.__class__ and
-                self.length == other.length and
-                self.is_varying == other.is_varying)
-
 
 class EnumDomain(Domain):
     """
@@ -440,6 +412,7 @@ class EnumDomain(Domain):
     def __init__(self, labels):
         assert isinstance(labels, listof(unicode))
         self.labels = labels
+        super(EnumDomain, self).__init__(equality_vector=(tuple(labels),))
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -467,15 +440,6 @@ class EnumDomain(Domain):
         # No conversion is required.
         return value
 
-    def __eq__(self, other):
-        if not isinstance(other, Domain):
-            return False
-        # Here we check equality by comparing the labels.  Concrete SQL enum
-        # types should probably override this method to provide engine-specific
-        # comparison.
-        return (self.__class__ == other.__class__ and
-                self.labels == other.labels)
-
 
 class DateDomain(Domain):
     """
@@ -496,6 +460,9 @@ class DateDomain(Domain):
         \s* $
     '''
     regexp = re.compile(pattern)
+
+    def __init__(self):
+        super(DateDomain, self).__init__(equality_vector=())
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -549,6 +516,9 @@ class TimeDomain(Domain):
         \s* $
     '''
     regexp = re.compile(pattern)
+
+    def __init__(self):
+        super(TimeDomain, self).__init__(equality_vector=())
 
     def parse(self, data):
         # Sanity check on the argument.
@@ -632,6 +602,9 @@ class DateTimeDomain(Domain):
     '''
     regexp = re.compile(pattern)
 
+    def __init__(self):
+        super(DateTimeDomain, self).__init__(equality_vector=())
+
     def parse(self, data):
         # Sanity check on the argument.
         assert isinstance(data, maybe(unicode))
@@ -703,5 +676,8 @@ class OpaqueDomain(Domain):
     using :meth:`dump`.
     """
     family = 'opaque'
+
+    def __init__(self):
+        super(OpaqueDomain, self).__init__(equality_vector=())
 
 

@@ -7,10 +7,9 @@
 from htsql.core.adapter import Protocol, named
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
-from .domain import (OracleBooleanDomain, OracleIntegerDomain,
-                     OracleDecimalDomain, OracleFloatDomain,
-                     OracleStringDomain, OracleDateTimeDomain,
-                     OracleOpaqueDomain)
+from htsql.core.domain import (BooleanDomain, IntegerDomain, DecimalDomain,
+                               FloatDomain, StringDomain, DateTimeDomain,
+                               OpaqueDomain)
 from htsql.core.connect import connect
 import re
 import itertools
@@ -198,7 +197,7 @@ class IntrospectOracleDomain(Protocol):
         self.check = check
 
     def __call__(self):
-        return OracleOpaqueDomain(self.data_type)
+        return OpaqueDomain()
 
 
 class IntrospectOracleCharDomain(IntrospectOracleDomain):
@@ -206,9 +205,7 @@ class IntrospectOracleCharDomain(IntrospectOracleDomain):
     named('CHAR', 'NCHAR')
 
     def __call__(self):
-        return OracleStringDomain(self.data_type,
-                                  length=self.length,
-                                  is_varying=False)
+        return StringDomain(length=self.length, is_varying=False)
 
 
 class IntrospectOracleVarCharDomain(IntrospectOracleDomain):
@@ -216,9 +213,7 @@ class IntrospectOracleVarCharDomain(IntrospectOracleDomain):
     named('VARCHAR2', 'NVARCHAR2', 'CLOB', 'NCLOB', 'LONG')
 
     def __call__(self):
-        return OracleStringDomain(self.data_type,
-                                  length=self.length,
-                                  is_varying=True)
+        return StringDomain(length=self.length, is_varying=True)
 
 
 class IntrospectOracleNumberDomain(IntrospectOracleDomain):
@@ -234,12 +229,10 @@ class IntrospectOracleNumberDomain(IntrospectOracleDomain):
         if (self.precision, self.scale) == (1, 0):
             if (self.check is not None and
                     self.boolean_regexp.match(self.check)):
-                return OracleBooleanDomain(self.data_type)
+                return BooleanDomain()
         if (self.precision, self.scale) == (38, 0):
-            return OracleIntegerDomain(self.data_type)
-        return OracleDecimalDomain(self.data_type,
-                                   precision=self.precision,
-                                   scale=self.scale)
+            return IntegerDomain()
+        return DecimalDomain(precision=self.precision, scale=self.scale)
 
 
 class IntrospectOracleFloatDomain(IntrospectOracleDomain):
@@ -247,7 +240,7 @@ class IntrospectOracleFloatDomain(IntrospectOracleDomain):
     named('BINARY_FLOAT', 'BINARY_DOUBLE')
 
     def __call__(self):
-        return OracleFloatDomain(self.data_type)
+        return FloatDomain()
 
 
 class IntrospectOracleDateTimeDomain(IntrospectOracleDomain):
@@ -255,6 +248,6 @@ class IntrospectOracleDateTimeDomain(IntrospectOracleDomain):
     named('DATE', 'TIMESTAMP')
 
     def __call__(self):
-        return OracleDateTimeDomain(self.data_type)
+        return DateTimeDomain()
 
 

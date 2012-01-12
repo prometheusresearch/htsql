@@ -7,10 +7,10 @@
 from htsql.core.adapter import Protocol, named
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
-from .domain import (PGBooleanDomain, PGIntegerDomain, PGFloatDomain,
-                     PGDecimalDomain, PGCharDomain, PGVarCharDomain,
-                     PGTextDomain, PGEnumDomain, PGDateDomain,
-                     PGTimeDomain, PGDateTimeDomain, PGOpaqueDomain)
+from htsql.core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
+                               DecimalDomain, CharDomain, VarCharDomain,
+                               TextDomain, EnumDomain, DateDomain,
+                               TimeDomain, DateTimeDomain, OpaqueDomain)
 from htsql.core.connect import connect
 import itertools
 import fnmatch
@@ -119,7 +119,7 @@ class IntrospectPGSQL(Introspect):
                                                       typrow.typname,
                                                       length, modifier)
             domain = introspect_domain()
-            while isinstance(domain, PGOpaqueDomain) and typrow.typtype == 'd':
+            while isinstance(domain, OpaqueDomain) and typrow.typtype == 'd':
                 typrow = typrows_by_oid[typrow.typbasetype]
                 if modifier == -1:
                     modifier = typrow.typtypmod
@@ -127,13 +127,12 @@ class IntrospectPGSQL(Introspect):
                                                           typrow.typname,
                                                           length, modifier)
                 domain = introspect_domain()
-            if (isinstance(domain, PGOpaqueDomain) and typrow.typtype == 'e'
+            if (isinstance(domain, OpaqueDomain) and typrow.typtype == 'e'
                                         and typrow.oid in enumrows_by_typid):
                 enumrows = enumrows_by_typid[typrow.oid]
                 labels = [enumrow.enumlabel
                           for enumrow in enumrows]
-                domain = PGEnumDomain(typrow.nspname, typrow.typname,
-                                      labels=labels)
+                domain = EnumDomain(labels=labels)
             column = table.add_column(name, domain, is_nullable, has_default)
             column_by_num[row.attrelid, row.attnum] = column
 
@@ -193,7 +192,7 @@ class IntrospectPGSQLDomain(Protocol):
         self.modifier = modifier
 
     def __call__(self):
-        return PGOpaqueDomain(self.schema_name, self.name)
+        return OpaqueDomain()
 
 
 class IntrospectPGSQLBooleanDomain(IntrospectPGSQLDomain):
@@ -201,7 +200,7 @@ class IntrospectPGSQLBooleanDomain(IntrospectPGSQLDomain):
     named(('pg_catalog', 'bool'))
 
     def __call__(self):
-        return PGBooleanDomain(self.schema_name, self.name)
+        return BooleanDomain()
 
 
 class IntrospectPGSQLIntegerDomain(IntrospectPGSQLDomain):
@@ -211,8 +210,7 @@ class IntrospectPGSQLIntegerDomain(IntrospectPGSQLDomain):
           ('pg_catalog', 'int8'))
 
     def __call__(self):
-        return PGIntegerDomain(self.schema_name, self.name,
-                               size=8*self.length)
+        return IntegerDomain(size=8*self.length)
 
 
 class IntrospectPGSQLFloatDomain(IntrospectPGSQLDomain):
@@ -220,8 +218,7 @@ class IntrospectPGSQLFloatDomain(IntrospectPGSQLDomain):
     named(('pg_catalog', 'float4'), ('pg_catalog', 'float8'))
 
     def __call__(self):
-        return PGFloatDomain(self.schema_name, self.name,
-                              size=8*self.length)
+        return FloatDomain(size=8*self.length)
 
 
 class IntrospectPGSQLDecimalDomain(IntrospectPGSQLDomain):
@@ -234,8 +231,7 @@ class IntrospectPGSQLDecimalDomain(IntrospectPGSQLDomain):
         if self.modifier != -1:
             precision = ((self.modifier-4) >> 0x10) & 0xFFFF
             scale = (self.modifier-4) & 0xFFFF
-        return PGDecimalDomain(self.schema_name, self.name,
-                               precision=precision, scale=scale)
+        return DecimalDomain(precision=precision, scale=scale)
 
 
 class IntrospectPGSQLCharDomain(IntrospectPGSQLDomain):
@@ -244,7 +240,7 @@ class IntrospectPGSQLCharDomain(IntrospectPGSQLDomain):
 
     def __call__(self):
         length = self.modifier-4 if self.modifier != -1 else None
-        return PGCharDomain(self.schema_name, self.name, length=length)
+        return StringDomain(length=length, is_varying=False)
 
 
 class IntrospectPGSQLVarCharDomain(IntrospectPGSQLDomain):
@@ -253,7 +249,7 @@ class IntrospectPGSQLVarCharDomain(IntrospectPGSQLDomain):
 
     def __call__(self):
         length = self.modifier-4 if self.modifier != -1 else None
-        return PGVarCharDomain(self.schema_name, self.name, length=length)
+        return StringDomain(length=length, is_varying=True)
 
 
 class IntrospectPGSQLTextDomain(IntrospectPGSQLDomain):
@@ -261,7 +257,7 @@ class IntrospectPGSQLTextDomain(IntrospectPGSQLDomain):
     named(('pg_catalog', 'text'))
 
     def __call__(self):
-        return PGTextDomain(self.schema_name, self.name)
+        return StringDomain()
 
 
 class IntrospectPGSQLDateDomain(IntrospectPGSQLDomain):
@@ -269,7 +265,7 @@ class IntrospectPGSQLDateDomain(IntrospectPGSQLDomain):
     named(('pg_catalog', 'date'))
 
     def __call__(self):
-        return PGDateDomain(self.schema_name, self.name)
+        return DateDomain()
 
 
 class IntrospectPGSQLTimeDomain(IntrospectPGSQLDomain):
@@ -277,7 +273,7 @@ class IntrospectPGSQLTimeDomain(IntrospectPGSQLDomain):
     named(('pg_catalog', 'time'), ('pg_catalog', 'timetz'))
 
     def __call__(self):
-        return PGTimeDomain(self.schema_name, self.name)
+        return TimeDomain()
 
 
 class IntrospectPGSQLDateTimeDomain(IntrospectPGSQLDomain):
@@ -285,6 +281,6 @@ class IntrospectPGSQLDateTimeDomain(IntrospectPGSQLDomain):
     named(('pg_catalog', 'timestamp'), ('pg_catalog', 'timestamptz'))
 
     def __call__(self):
-        return PGDateTimeDomain(self.schema_name, self.name)
+        return DateTimeDomain()
 
 

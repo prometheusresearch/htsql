@@ -7,9 +7,8 @@
 from htsql.core.adapter import Protocol, named
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
-from .domain import (MSSQLBooleanDomain, MSSQLIntegerDomain,
-                     MSSQLDecimalDomain, MSSQLFloatDomain, MSSQLStringDomain,
-                     MSSQLDateTimeDomain, MSSQLOpaqueDomain)
+from .domain import (BooleanDomain, IntegerDomain, DecimalDomain, FloatDomain,
+                     StringDomain, DateTimeDomain, OpaqueDomain)
 from htsql.core.connect import connect
 import itertools
 import fnmatch
@@ -193,7 +192,7 @@ class IntrospectMSSQLDomain(Protocol):
         self.scale = scale
 
     def __call__(self):
-        return MSSQLOpaqueDomain(self.schema_name, self.type_name)
+        return OpaqueDomain()
 
 
 class IntrospectMSSQLCharDomain(IntrospectMSSQLDomain):
@@ -201,8 +200,7 @@ class IntrospectMSSQLCharDomain(IntrospectMSSQLDomain):
     named(('sys', 'char'), ('sys', 'nchar'))
 
     def __call__(self):
-        return MSSQLStringDomain(self.schema_name, self.type_name,
-                                 length=self.length, is_varying=False)
+        return StringDomain(length=self.length, is_varying=False)
 
 
 class IntrospectMSSQLVarCharDomain(IntrospectMSSQLDomain):
@@ -210,8 +208,7 @@ class IntrospectMSSQLVarCharDomain(IntrospectMSSQLDomain):
     named(('sys', 'varchar'), ('sys', 'nvarchar'))
 
     def __call__(self):
-        return MSSQLStringDomain(self.schema_name, self.type_name,
-                                 length=self.length, is_varying=False)
+        return StringDomain(length=self.length, is_varying=False)
 
 
 class IntrospectMSSQLBitDomain(IntrospectMSSQLDomain):
@@ -219,7 +216,7 @@ class IntrospectMSSQLBitDomain(IntrospectMSSQLDomain):
     named(('sys', 'bit'))
 
     def __call__(self):
-        return MSSQLBooleanDomain(self.schema_name, self.type_name)
+        return BooleanDomain()
 
 
 class IntrospectMSSQLIntegerDomain(IntrospectMSSQLDomain):
@@ -228,8 +225,7 @@ class IntrospectMSSQLIntegerDomain(IntrospectMSSQLDomain):
           ('sys', 'int'), ('sys', 'bigint'))
 
     def __call__(self):
-        return MSSQLIntegerDomain(self.schema_name, self.type_name,
-                                  size=self.length*8)
+        return IntegerDomain(size=self.length*8)
 
 
 class IntrospectMSSQLDecimalDomain(IntrospectMSSQLDomain):
@@ -237,8 +233,7 @@ class IntrospectMSSQLDecimalDomain(IntrospectMSSQLDomain):
     named(('sys', 'decimal'), ('sys', 'numeric'))
 
     def __call__(self):
-        return MSSQLDecimalDomain(self.schema_name, self.type_name,
-                                  precision=self.precision, scale=self.scale)
+        return DecimalDomain(precision=self.precision, scale=self.scale)
 
 
 class IntrospectMSSQLFloatDomain(IntrospectMSSQLDomain):
@@ -246,8 +241,7 @@ class IntrospectMSSQLFloatDomain(IntrospectMSSQLDomain):
     named(('sys', 'real'), ('sys', 'float'))
 
     def __call__(self):
-        return MSSQLFloatDomain(self.schema_name, self.type_name,
-                                size=self.length*8)
+        return FloatDomain(size=self.length*8)
 
 
 class IntrospectMSSQLDateTimeDomain(IntrospectMSSQLDomain):
@@ -255,6 +249,6 @@ class IntrospectMSSQLDateTimeDomain(IntrospectMSSQLDomain):
     named(('sys', 'datetime'), ('sys', 'smalldatetime'))
 
     def __call__(self):
-        return MSSQLDateTimeDomain(self.schema_name, self.type_name)
+        return DateTimeDomain()
 
 

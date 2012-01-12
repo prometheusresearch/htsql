@@ -7,10 +7,10 @@
 from htsql.core.adapter import Protocol, named
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
-from .domain import (MySQLBooleanDomain, MySQLIntegerDomain,
-                     MySQLDecimalDomain, MySQLFloatDomain, MySQLStringDomain,
-                     MySQLEnumDomain, MySQLDateDomain, MySQLTimeDomain,
-                     MySQLDateTimeDomain, MySQLOpaqueDomain)
+from htsql.core.domain import (BooleanDomain, IntegerDomain,
+                               DecimalDomain, FloatDomain, StringDomain,
+                               EnumDomain, DateDomain, TimeDomain,
+                               DateTimeDomain, OpaqueDomain)
 from htsql.core.connect import connect
 import itertools
 
@@ -167,7 +167,7 @@ class IntrospectMySQLDomain(Protocol):
         self.scale = scale
 
     def __call__(self):
-        return MySQLOpaqueDomain(self.data_type)
+        return OpaqueDomain()
 
 
 class IntrospectMySQLCharDomain(IntrospectMySQLDomain):
@@ -175,9 +175,7 @@ class IntrospectMySQLCharDomain(IntrospectMySQLDomain):
     named('char')
 
     def __call__(self):
-        return MySQLStringDomain(self.data_type,
-                                 length=self.length,
-                                 is_varying=False)
+        return StringDomain(length=self.length, is_varying=False)
 
 
 class IntrospectMySQLVarCharDomain(IntrospectMySQLDomain):
@@ -185,9 +183,7 @@ class IntrospectMySQLVarCharDomain(IntrospectMySQLDomain):
     named('varchar', 'tinytext', 'text', 'mediumtext', 'longtext')
 
     def __call__(self):
-        return MySQLStringDomain(self.data_type,
-                                 length=self.length,
-                                 is_varying=True)
+        return StringDomain(length=self.length, is_varying=True)
 
 
 class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):
@@ -199,7 +195,7 @@ class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):
         if column_type.startswith('enum(') and column_type.endswith(')'):
             labels = [item[1:-1]
                       for item in column_type[5:-1].split(',')]
-            return MySQLEnumDomain(self.data_type, labels=labels)
+            return EnumDomain(labels=labels)
         return super(IntrospectMySQLEnumDomain, self).__call__()
 
 
@@ -209,8 +205,8 @@ class IntrospectMySQLIntegerDomain(IntrospectMySQLDomain):
 
     def __call__(self):
         if self.data_type == 'tinyint' and self.column_type == 'tinyint(1)':
-            return MySQLBooleanDomain(self.data_type)
-        return MySQLIntegerDomain(self.data_type)
+            return BooleanDomain()
+        return IntegerDomain()
 
 
 class IntrospectMySQLDecimalDomain(IntrospectMySQLDomain):
@@ -218,9 +214,7 @@ class IntrospectMySQLDecimalDomain(IntrospectMySQLDomain):
     named('decimal')
 
     def __call__(self):
-        return MySQLDecimalDomain(self.data_type,
-                                  precision=self.precision,
-                                  scale=self.scale)
+        return DecimalDomain(precision=self.precision, scale=self.scale)
 
 
 class IntrospectMySQLFloatDomain(IntrospectMySQLDomain):
@@ -228,7 +222,7 @@ class IntrospectMySQLFloatDomain(IntrospectMySQLDomain):
     named('float', 'double')
 
     def __call__(self):
-        return MySQLFloatDomain(self.data_type)
+        return FloatDomain()
 
 
 class IntrospectMySQLDateDomain(IntrospectMySQLDomain):
@@ -236,7 +230,7 @@ class IntrospectMySQLDateDomain(IntrospectMySQLDomain):
     named('date')
 
     def __call__(self):
-        return MySQLDateDomain(self.data_type)
+        return DateDomain()
 
 
 class IntrospectMySQLTimeDomain(IntrospectMySQLDomain):
@@ -244,7 +238,7 @@ class IntrospectMySQLTimeDomain(IntrospectMySQLDomain):
     named('time')
 
     def __call__(self):
-        return MySQLTimeDomain(self.data_type)
+        return TimeDomain()
 
 
 class IntrospectMySQLDateTimeDomain(IntrospectMySQLDomain):
@@ -252,6 +246,6 @@ class IntrospectMySQLDateTimeDomain(IntrospectMySQLDomain):
     named('datetime', 'timestamp')
 
     def __call__(self):
-        return MySQLDateTimeDomain(self.data_type)
+        return DateTimeDomain()
 
 

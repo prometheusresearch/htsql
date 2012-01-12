@@ -7,9 +7,9 @@
 from htsql.core.adapter import Protocol, named
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
-from .domain import (SQLiteBooleanDomain, SQLiteIntegerDomain,
-                     SQLiteFloatDomain, SQLiteTextDomain, SQLiteDateDomain,
-                     SQLiteTimeDomain, SQLiteDateTimeDomain, SQLiteOpaqueDomain)
+from htsql.core.domain import (BooleanDomain, IntegerDomain,
+                               FloatDomain, StringDomain, DateDomain,
+                               TimeDomain, DateTimeDomain, OpaqueDomain)
 from htsql.core.connect import connect
 
 
@@ -122,7 +122,7 @@ class IntrospectSQLiteDomain(Protocol):
         self.name = name
 
     def __call__(self):
-        return SQLiteOpaqueDomain(self.name)
+        return OpaqueDomain()
 
 
 class IntrospectSQLiteIntegerDomain(IntrospectSQLiteDomain):
@@ -130,15 +130,15 @@ class IntrospectSQLiteIntegerDomain(IntrospectSQLiteDomain):
     named('int')
 
     def __call__(self):
-        return SQLiteIntegerDomain(self.name)
+        return IntegerDomain()
 
 
-class IntrospectSQLiteTextDomain(IntrospectSQLiteDomain):
+class IntrospectSQLiteStringDomain(IntrospectSQLiteDomain):
 
     named('char', 'clob', 'text')
 
     def __call__(self):
-        return SQLiteTextDomain(self.name)
+        return StringDomain()
 
 
 class IntrospectSQLiteFloatDomain(IntrospectSQLiteDomain):
@@ -146,7 +146,7 @@ class IntrospectSQLiteFloatDomain(IntrospectSQLiteDomain):
     named('real', 'floa', 'doub')
 
     def __call__(self):
-        return SQLiteFloatDomain(self.name)
+        return FloatDomain()
 
 
 class IntrospectSQLiteBooleanDomain(IntrospectSQLiteDomain):
@@ -154,7 +154,7 @@ class IntrospectSQLiteBooleanDomain(IntrospectSQLiteDomain):
     named('bool')
 
     def __call__(self):
-        return SQLiteBooleanDomain(self.name)
+        return BooleanDomain()
 
 
 class IntrospectSQLiteDateTimeDomain(IntrospectSQLiteDomain):
@@ -164,10 +164,10 @@ class IntrospectSQLiteDateTimeDomain(IntrospectSQLiteDomain):
     def __call__(self):
         key = self.name.encode('utf-8').lower()
         if 'datetime' in key or 'timestamp' in key:
-            return SQLiteDateTimeDomain(self.name)
+            return DateTimeDomain()
         if 'date' in key:
-            return SQLiteDateDomain(self.name)
+            return DateDomain()
         if 'time' in key:
-            return SQLiteTimeDomain(self.name)
+            return TimeDomain()
 
 

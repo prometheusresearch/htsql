@@ -4,7 +4,7 @@
 #
 
 
-from . import connect, domain, introspect, split_sql, tr
+from . import connect, introspect, split_sql, tr
 from htsql.core.addon import Addon
 
 
