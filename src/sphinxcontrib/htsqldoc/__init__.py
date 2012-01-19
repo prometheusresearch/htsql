@@ -118,10 +118,12 @@ class HTSQLDirective(Directive):
                 return [doc.reporter.error("failed to load: %s" % uri,
                                            line=self.lineno)]
             env.htsql_uris[uri] = result
+        htsql_container = nodes.container(classes=['htsql-io'])
         query_container = nodes.container('', query_node,
                                           classes=['htsql-input'])
+        htsql_container += query_container
         if 'hide' in self.options:
-            return [query_container]
+            return [htsql_container]
         content_type, content = env.htsql_uris[uri]
         if 'plain' in self.options:
             content_type = 'text/plain'
@@ -129,7 +131,8 @@ class HTSQLDirective(Directive):
                                    self.options.get('cut'))
         result_container = nodes.container('', result_node,
                                            classes=['htsql-output'])
-        return [query_container, result_container]
+        htsql_container += result_container
+        return [htsql_container]
 
 
 class VSplitDirective(Directive):
