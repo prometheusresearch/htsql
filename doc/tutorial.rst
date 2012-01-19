@@ -2,6 +2,10 @@
   HTSQL Tutorial
 ******************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 *A query language for the accidental programmer*
 
 HTSQL makes accessing data as easy as browsing the web.  An HTSQL
