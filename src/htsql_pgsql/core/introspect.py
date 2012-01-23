@@ -8,9 +8,9 @@ from htsql.core.adapter import Protocol, named
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
-                               DecimalDomain, CharDomain, VarCharDomain,
-                               TextDomain, EnumDomain, DateDomain,
-                               TimeDomain, DateTimeDomain, OpaqueDomain)
+                               DecimalDomain, StringDomain, EnumDomain,
+                               DateDomain, TimeDomain, DateTimeDomain,
+                               OpaqueDomain)
 from htsql.core.connect import connect
 import itertools
 import fnmatch
