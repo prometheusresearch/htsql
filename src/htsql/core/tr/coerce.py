@@ -14,10 +14,10 @@ This module implements the unary and binary coerce adapters.
 
 from ..util import listof
 from ..adapter import Adapter, adapts, adapts_many
-from ..domain import (Domain, VoidDomain, TupleDomain, UntypedDomain,
-                      BooleanDomain, IntegerDomain, DecimalDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain, TimeDomain,
-                      DateTimeDomain, OpaqueDomain)
+from ..domain import (Domain, VoidDomain, ListDomain, RecordDomain,
+                      EntityDomain, UntypedDomain, BooleanDomain, IntegerDomain,
+                      DecimalDomain, FloatDomain, StringDomain, EnumDomain,
+                      DateDomain, TimeDomain, DateTimeDomain, OpaqueDomain)
 
 
 class UnaryCoerce(Adapter):
@@ -96,10 +96,12 @@ class UnaryCoerceSpecial(UnaryCoerce):
     """
 
     adapts_many(VoidDomain,
-                TupleDomain)
+                ListDomain,
+                RecordDomain,
+                EntityDomain)
 
     def __call__(self):
-        # `VoidDomain` and `TupleDomain` values cannot be compared.
+        # Special domains are not coercable.
         return None
 
 

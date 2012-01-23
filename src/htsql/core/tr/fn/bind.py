@@ -14,7 +14,8 @@ from ...util import aresubclasses
 from ...adapter import Adapter, Component, adapts, adapts_many, named
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
-                       DateDomain, TimeDomain, DateTimeDomain, EnumDomain)
+                       DateDomain, TimeDomain, DateTimeDomain, EnumDomain,
+                       ListDomain, RecordDomain)
 from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
                       SpecifierSyntax, ApplicationSyntax, OperatorSyntax,
                       GroupSyntax)
@@ -29,6 +30,7 @@ from ..binding import (LiteralBinding, SortBinding, SieveBinding,
 from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
+from ..decorate import decorate
 from ..lookup import direct, expand, guess_name, lookup_command
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
@@ -413,7 +415,8 @@ class BindRetrieve(BindCommand):
         if not isinstance(op, SegmentBinding):
             raise BindError("function '%s' expects a segment argument"
                             % self.name.encode('utf-8'), op.mark)
-        binding = QueryBinding(self.state.root, op, op.syntax)
+        profile = decorate(op)
+        binding = QueryBinding(self.state.root, op, profile, op.syntax)
         command = RetrieveCmd(binding)
         return CommandBinding(self.state.scope, command, self.syntax)
 
@@ -429,7 +432,8 @@ class BindFormat(BindCommand):
             if not isinstance(op, SegmentBinding):
                 raise BindError("function '%s' expects a segment argument"
                                 % self.name.encode('utf-8'), op.mark)
-            binding = QueryBinding(self.state.root, op, op.syntax)
+            profile = decorate(op)
+            binding = QueryBinding(self.state.root, op, profile, op.syntax)
             producer = DefaultCmd(binding)
         command = self.command(producer)
         return CommandBinding(self.state.scope, command, self.syntax)
@@ -643,7 +647,9 @@ class BindSelect(BindMacro):
         base = self.state.scope
         if order:
             base = SortBinding(base, order, None, None, base.syntax)
-        return SelectionBinding(base, elements, base.syntax)
+        fields = [decorate(element) for element in elements]
+        domain = RecordDomain(fields)
+        return SelectionBinding(base, elements, domain, base.syntax)
 
 
 class BindMoniker(BindMacro):

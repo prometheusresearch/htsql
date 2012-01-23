@@ -107,25 +107,52 @@ class UntypedDomain(Domain):
         super(UntypedDomain, self).__init__(equality_vector=())
 
 
-class TupleDomain(Domain):
-    """
-    Represents a table domain.
+class Profile(Comparable, Clonable, Printable):
 
-    This domain is assigned to table expressions.
-    """
-    family = 'tuple'
+    def __init__(self, domain, **attributes):
+        assert isinstance(domain, Domain)
+        super(Profile, self).__init__(equality_vector=(domain,))
+        self.domain = domain
+        for key in attributes:
+            setattr(self, key, attributes[key])
+        self.attributes = attributes
 
-    # FIXME: add a reference to the underlying `TableEntity`.  This may
-    # require importing `TableEntity` from `htsql.core.entity`, which creates
-    # a circular module dependency.  To break it, we will have to split
-    # `htsql.core.domain` into two modules: `htsql.core.type`, containing `Domain`
-    # and all its subclasses representing real database types, and
-    # `htsql.core.domain`, which imports all types from `htsql.core.type` and
-    # adds special domains like `VoidDomain`, `TupleDomain` and
-    # `UntypedDomain`.
+    def __str__(self):
+        return str(self.domain)
+
+
+class EntityDomain(Domain):
+
+    family = 'entity'
 
     def __init__(self):
-        super(TupleDomain, self).__init__(equality_vector=())
+        super(EntityDomain, self).__init__(equality_vector=())
+
+
+class RecordDomain(Domain):
+
+    family = 'record'
+
+    def __init__(self, fields):
+        assert isinstance(fields, listof(Profile))
+        super(RecordDomain, self).__init__(equality_vector=(tuple(fields),))
+        self.fields = fields
+
+    def __str__(self):
+        return "{%s}" % ", ".join(str(field) for field in self.fields)
+
+
+class ListDomain(Domain):
+
+    family = 'list'
+
+    def __init__(self, item_domain):
+        assert isinstance(item_domain, Domain)
+        super(ListDomain, self).__init__(equality_vector=(item_domain,))
+        self.item_domain = item_domain
+
+    def __str__(self):
+        return "/%s" % self.item_domain
 
 
 class BooleanDomain(Domain):

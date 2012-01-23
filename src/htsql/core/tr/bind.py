@@ -15,7 +15,8 @@ This module implements the binding process.
 from ..util import maybe, listof, tupleof, similar
 from ..adapter import Adapter, Protocol, adapts
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
-                      FloatDomain, UntypedDomain)
+                      FloatDomain, UntypedDomain, RecordDomain, ListDomain,
+                      VoidDomain)
 from ..classify import normalize
 from .error import BindError
 from .syntax import (Syntax, QuerySyntax, SegmentSyntax, SelectorSyntax,
@@ -41,6 +42,7 @@ from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
                      lookup_attribute_set, lookup_reference_set,
                      expand, direct, guess_name, lookup_command)
 from .coerce import coerce
+from .decorate import decorate
 
 
 class BindingState(object):
@@ -274,8 +276,11 @@ class BindQuery(Bind):
         if segment is not None:
             if lookup_command(segment) is not None:
                 return segment
+            profile = decorate(segment)
+        else:
+            profile = decorate(Binding(root, VoidDomain(), self.syntax))
         # Construct and return the top-level binding node.
-        return QueryBinding(root, segment, self.syntax)
+        return QueryBinding(root, segment, profile, self.syntax)
 
 
 class BindSegment(Bind):
@@ -317,7 +322,10 @@ class BindSegment(Bind):
             raise BindError("output columns are not specified",
                             self.syntax.mark)
         # Generate a binding node.
-        return SegmentBinding(self.state.scope, seed, elements, self.syntax)
+        fields = [decorate(element) for element in elements]
+        domain = ListDomain(RecordDomain(fields))
+        return SegmentBinding(self.state.scope, seed, elements, domain,
+                              self.syntax)
 
 
 class BindSelector(Bind):
@@ -383,7 +391,9 @@ class BindSelector(Bind):
             elements.extend(bindings)
         self.state.pop_scope()
         # Generate a selection scope.
-        return SelectionBinding(scope, elements, self.syntax)
+        fields = [decorate(element) for element in elements]
+        domain = RecordDomain(fields)
+        return SelectionBinding(scope, elements, domain, self.syntax)
 
 
 class BindApplication(Bind):
@@ -670,7 +680,9 @@ class BindWildcard(Bind):
             syntax = syntax.clone(mark=self.syntax.mark)
             element = self.state.use(recipe, syntax)
             elements.append(element)
-        return SelectionBinding(self.state.scope, elements, self.syntax)
+        fields = [decorate(element) for element in elements]
+        domain = RecordDomain(fields)
+        return SelectionBinding(self.state.scope, elements, domain, self.syntax)
 
 
 class BindReference(Bind):
@@ -1013,7 +1025,9 @@ class BindBySelection(BindByRecipe):
         for recipe in self.recipe.recipes:
             element = self.state.use(recipe, self.syntax)
             elements.append(element)
-        return SelectionBinding(self.state.scope, elements, self.syntax)
+        fields = [decorate(element) for element in elements]
+        domain = RecordDomain(fields)
+        return SelectionBinding(self.state.scope, elements, domain, self.syntax)
 
 
 class BindByFreeTable(BindByRecipe):

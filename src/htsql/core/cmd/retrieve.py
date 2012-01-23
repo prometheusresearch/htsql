@@ -74,6 +74,23 @@ class Product(Utility):
         return (self.records is not None)
 
 
+class _Product(object):
+
+    def __init__(self, meta, data=None):
+        assert isinstance(meta, Profile)
+        self.meta = meta
+        self.data = data
+
+    def __iter__(self):
+        if self.data is None:
+            return iter([])
+        else:
+            return iter(self.data)
+
+    def __nonzero__(self):
+        return (self.data is not None)
+
+
 class ProduceRetrieve(Act):
 
     adapts(RetrieveCmd, ProduceAction)

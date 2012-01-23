@@ -14,7 +14,8 @@ This module declares binding nodes and recipe objects.
 
 from ..util import maybe, listof, tupleof, Clonable, Printable, Comparable
 from ..entity import TableEntity, ColumnEntity, Join
-from ..domain import Domain, VoidDomain, BooleanDomain, TupleDomain
+from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
+                      RecordDomain, EntityDomain, Profile)
 from .syntax import Syntax
 from .signature import Signature, Bag, Formula
 from ..cmd.command import Command
@@ -93,11 +94,13 @@ class QueryBinding(Binding):
         The top segment.
     """
 
-    def __init__(self, base, segment, syntax):
+    def __init__(self, base, segment, profile, syntax):
         assert isinstance(base, RootBinding)
         assert isinstance(segment, maybe(SegmentBinding))
+        assert isinstance(profile, Profile)
         super(QueryBinding, self).__init__(base, VoidDomain(), syntax)
         self.segment = segment
+        self.profile = profile
 
 
 class SegmentBinding(Binding):
@@ -112,11 +115,11 @@ class SegmentBinding(Binding):
         The output columns.
     """
 
-    def __init__(self, base, seed, elements, syntax):
+    def __init__(self, base, seed, elements, domain, syntax):
         assert isinstance(base, Binding)
         assert isinstance(seed, maybe(Binding))
         assert isinstance(elements, listof(Binding))
-        super(SegmentBinding, self).__init__(base, VoidDomain(), syntax)
+        super(SegmentBinding, self).__init__(base, domain, syntax)
         self.seed = seed
         self.elements = elements
 
@@ -165,7 +168,7 @@ class HomeBinding(ScopingBinding):
     """
 
     def __init__(self, base, syntax):
-        super(HomeBinding, self).__init__(base, VoidDomain(), syntax)
+        super(HomeBinding, self).__init__(base, EntityDomain(), syntax)
 
 
 class RootBinding(HomeBinding):
@@ -195,7 +198,7 @@ class TableBinding(ScopingBinding):
 
     def __init__(self, base, table, syntax):
         assert isinstance(table, TableEntity)
-        super(TableBinding, self).__init__(base, TupleDomain(), syntax)
+        super(TableBinding, self).__init__(base, EntityDomain(), syntax)
         self.table = table
 
 
@@ -261,7 +264,7 @@ class QuotientBinding(ScopingBinding):
     def __init__(self, base, seed, kernels, syntax):
         assert isinstance(seed, Binding)
         assert isinstance(kernels, listof(Binding))
-        super(QuotientBinding, self).__init__(base, TupleDomain(), syntax)
+        super(QuotientBinding, self).__init__(base, EntityDomain(), syntax)
         self.seed = seed
         self.kernels = kernels
 
@@ -344,7 +347,7 @@ class LinkBinding(ScopingBinding):
     def __init__(self, base, seed, images, syntax):
         assert isinstance(seed, Binding)
         assert isinstance(images, listof(tupleof(Binding, Binding)))
-        super(LinkBinding, self).__init__(base, seed.domain, syntax)
+        super(LinkBinding, self).__init__(base, EntityDomain(), syntax)
         self.seed = seed
         self.images = images
 
@@ -422,6 +425,22 @@ class RescopingBinding(ChainingBinding):
         self.scope = scope
 
 
+class SelectionBinding(ChainingBinding):
+    """
+    Represents a selector expression (``{...}`` operator).
+
+    A selector specifies output columns of a flow.
+
+    `elements` (a list of :class:`Binding`)
+        The output columns.
+    """
+
+    def __init__(self, base, elements, domain, syntax):
+        assert isinstance(elements, listof(Binding))
+        super(SelectionBinding, self).__init__(base, domain, syntax)
+        self.elements = elements
+
+
 class AssignmentBinding(Binding):
     """
     Represents an assignment expression.
@@ -484,22 +503,6 @@ class DefinitionBinding(WrappingBinding):
         self.is_reference = is_reference
         self.arity = arity
         self.recipe = recipe
-
-
-class SelectionBinding(WrappingBinding):
-    """
-    Represents a selector expression (``{...}`` operator).
-
-    A selector specifies output columns of a flow.
-
-    `elements` (a list of :class:`Binding`)
-        The output columns.
-    """
-
-    def __init__(self, base, elements, syntax):
-        assert isinstance(elements, listof(Binding))
-        super(SelectionBinding, self).__init__(base, syntax)
-        self.elements = elements
 
 
 class DirectionBinding(WrappingBinding):

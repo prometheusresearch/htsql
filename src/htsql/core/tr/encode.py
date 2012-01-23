@@ -13,15 +13,15 @@ This module implements the encoding process.
 
 
 from ..adapter import Adapter, adapts, adapts_many
-from ..domain import (Domain, UntypedDomain, TupleDomain, BooleanDomain,
-                      NumberDomain, IntegerDomain, DecimalDomain, FloatDomain,
-                      StringDomain, EnumDomain, DateDomain, TimeDomain,
-                      DateTimeDomain, OpaqueDomain)
+from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
+                      BooleanDomain, NumberDomain, IntegerDomain,
+                      DecimalDomain, FloatDomain, StringDomain, EnumDomain,
+                      DateDomain, TimeDomain, DateTimeDomain, OpaqueDomain)
 from .error import EncodeError
 from .coerce import coerce
 from .binding import (Binding, QueryBinding, SegmentBinding, WrappingBinding,
-                      HomeBinding, RootBinding, FreeTableBinding,
-                      AttachedTableBinding, ColumnBinding,
+                      SelectionBinding, HomeBinding, RootBinding,
+                      FreeTableBinding, AttachedTableBinding, ColumnBinding,
                       QuotientBinding, KernelBinding, ComplementBinding,
                       CoverBinding, ForkBinding, LinkBinding, SieveBinding,
                       SortBinding, CastBinding, RescopingBinding,
@@ -493,7 +493,8 @@ class Convert(Adapter):
       domain is admissible;
     - eliminates redundant conversions;
     - handles conversion from the special types:
-      :class:`htsql.core.domain.UntypedDomain` and :class:`htsql.core.domain.TupleDomain`;
+      :class:`htsql.core.domain.UntypedDomain` and
+      :class:`htsql.core.domain.RecordDomain`;
     - when possible, expresses the cast in terms of other operations; otherwise,
       generates a new :class:`htsql.core.tr.flow.CastCode` node.
 
@@ -603,10 +604,11 @@ class ConvertToItself(Convert):
         return self.state.encode(self.binding.base)
 
 
-class ConvertTupleToBoolean(Convert):
-    # Converts a tuple expression to a conditional expression.
+class ConvertEntityToBoolean(Convert):
+    # Converts a record expression to a conditional expression.
 
-    adapts(TupleDomain, BooleanDomain)
+    adapts_many((EntityDomain, BooleanDomain),
+                (RecordDomain, BooleanDomain))
 
     def __call__(self):
         # When the binding domain is tuple, we assume that the binding
@@ -915,7 +917,8 @@ class RelateBySignature(EncodeBySignatureBase):
 
 class EncodeWrapping(Encode):
 
-    adapts_many(WrappingBinding)
+    adapts_many(WrappingBinding,
+                SelectionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -927,7 +930,8 @@ class RelateWrapping(Relate):
     Translates a wrapper binding to a flow node.
     """
 
-    adapts_many(WrappingBinding)
+    adapts_many(WrappingBinding,
+                SelectionBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
