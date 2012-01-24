@@ -14,10 +14,9 @@ This module implements the HTML renderer.
 
 from ..adapter import adapts
 from .format import Format, Formatter, Renderer
-from .entitle import entitle, guess_title
 from ..domain import (Domain, BooleanDomain, NumberDomain,
                       StringDomain, EnumDomain, DateDomain,
-                      TimeDomain, DateTimeDomain)
+                      TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
 import cgi
 
 
@@ -58,7 +57,8 @@ class HTMLRenderer(Renderer):
         yield "</html>\n"
 
     def serialize_head(self, product):
-        title = str(product.profile.syntax)
+        title = (str(product.meta.syntax)
+                 if product.meta.syntax is not None else "")
         yield "<meta http-equiv=\"Content-Type\""
         yield " content=\"text/html; charset=UTF-8\">\n"
         yield "<title>%s</title>\n" % cgi.escape(title)
@@ -102,7 +102,8 @@ class HTMLRenderer(Renderer):
         yield" border-color: #c3c3c3; border-width: 1px 0 }\n"
 
     def serialize_body(self, product):
-        title = str(product.profile.syntax)
+        title = (str(product.meta.syntax)
+                 if product.meta.syntax is not None else "")
         yield "<table class=\"page\" summary=\"%s\">\n" \
                 % cgi.escape(title, True)
         yield "<tr>\n"
@@ -124,13 +125,16 @@ class HTMLRenderer(Renderer):
         yield "</table>\n"
 
     def serialize_content(self, product):
-        segment = product.profile.binding.segment
-        caption = entitle(segment).encode('utf-8')
-        headers = [[header.encode('utf-8') for header in guess_title(element)]
-                   for element in segment.elements]
+        assert isinstance(product.meta.domain, ListDomain)
+        assert isinstance(product.meta.domain.item_domain, RecordDomain)
+        fields = product.meta.domain.item_domain.fields
+        caption = (product.meta.title[-1].encode('utf-8')
+                   if product.meta.title else "")
+        headers = [[header.encode('utf-8') for header in field.title]
+                   for field in fields]
         height = max(len(header) for header in headers)
-        width = len(segment.elements)
-        domains = [element.domain for element in segment.elements]
+        width = len(fields)
+        domains = [field.domain for field in fields]
         tool = HTMLFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         colspan = " colspan=\"%s\"" % width if width > 1 else ""

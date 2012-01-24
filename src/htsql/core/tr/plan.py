@@ -13,7 +13,7 @@ This module declares a SQL execution plan.
 
 
 from ..util import maybe, Printable
-from .frame import QueryFrame
+from ..domain import Profile
 
 
 class Plan(Printable):
@@ -22,22 +22,13 @@ class Plan(Printable):
 
     `sql` (a Unicode string or ``None``)
         The SQL statement to execute.
-
-    `frame` (:class:`htsql.core.tr.frame.QueryFrame`)
-        The query frame corresponding to the plan.
     """
 
-    def __init__(self, sql, frame):
+    def __init__(self, sql, profile):
         assert isinstance(sql, maybe(unicode))
-        assert isinstance(frame, QueryFrame)
+        assert isinstance(profile, Profile)
         self.sql = sql
-        self.frame = frame
-        # Extract nodes that gave rise to the generated SQL.
-        self.term = frame.term
-        self.code = frame.expression
-        self.binding = frame.binding
-        self.syntax = frame.syntax
-        self.mark = frame.mark
+        self.profile = profile
 
     def __unicode__(self):
         return (u"<%s>" % self.sql if self.sql is not None else u"<>")

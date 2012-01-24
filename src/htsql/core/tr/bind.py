@@ -279,6 +279,7 @@ class BindQuery(Bind):
             profile = decorate(segment)
         else:
             profile = decorate(Binding(root, VoidDomain(), self.syntax))
+            profile = profile.clone(title=[])
         # Construct and return the top-level binding node.
         return QueryBinding(root, segment, profile, self.syntax)
 

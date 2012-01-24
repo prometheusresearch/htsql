@@ -6,6 +6,7 @@
 
 from ..adapter import adapts, Utility
 from ..util import Record
+from ..domain import ListDomain, RecordDomain, Profile
 from .command import RetrieveCmd, SQLCmd
 from .act import (analyze, Act, ProduceAction, SafeProduceAction,
                   AnalyzeAction, RenderAction)
@@ -21,60 +22,7 @@ from ..connect import DBError, Connect, normalize
 from ..error import EngineError
 
 
-class ElementProfile(object):
-
-    def __init__(self, binding):
-        self.binding = binding
-        self.name = guess_name(binding)
-        if self.name is not None:
-            self.name = self.name.encode('utf-8')
-        self.domain = binding.domain
-        self.syntax = binding.syntax
-        self.mark = binding.mark
-
-
-class SegmentProfile(object):
-
-    def __init__(self, binding):
-        self.binding = binding
-        self.name = guess_name(binding)
-        if self.name is not None:
-            self.name = self.name.encode('utf-8')
-        self.syntax = binding.syntax
-        self.mark = binding.mark
-        self.elements = [ElementProfile(element)
-                         for element in binding.elements]
-
-
-class RequestProfile(object):
-
-    def __init__(self, plan):
-        self.plan = plan
-        self.binding = plan.binding
-        self.syntax = plan.syntax
-        self.mark = plan.mark
-        self.segment = None
-        if plan.frame.segment is not None:
-            self.segment = SegmentProfile(plan.binding.segment)
-
-
-class Product(Utility):
-
-    def __init__(self, profile, records=None):
-        self.profile = profile
-        self.records = records
-
-    def __iter__(self):
-        if self.records is not None:
-            return iter(self.records)
-        else:
-            return iter([])
-
-    def __nonzero__(self):
-        return (self.records is not None)
-
-
-class _Product(object):
+class Product(object):
 
     def __init__(self, meta, data=None):
         assert isinstance(meta, Profile)
@@ -107,17 +55,18 @@ class ProduceRetrieve(Act):
         frame = assemble(term)
         frame = reduce(frame)
         plan = serialize(frame)
-        profile = RequestProfile(plan)
+        profile = plan.profile.clone(plan=plan)
         records = None
         if plan.sql:
-            assert profile.segment is not None
+            assert isinstance(profile.domain, ListDomain)
+            assert isinstance(profile.domain.item_domain, RecordDomain)
+            fields = profile.domain.item_domain.fields
             normalizers = []
-            for element in profile.segment.elements:
-                normalizers.append(normalize(element.domain))
-            record_name = profile.segment.name
-            element_names = [element.name
-                             for element in profile.segment.elements]
-            record_class = Record.make(record_name, element_names)
+            for field in fields:
+                normalizers.append(normalize(field.domain))
+            record_name = profile.name
+            field_names = [field.name for field in fields]
+            record_class = Record.make(record_name, field_names)
             connection = None
             try:
                 connect = Connect()

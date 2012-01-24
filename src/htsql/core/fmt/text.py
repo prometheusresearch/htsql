@@ -15,10 +15,10 @@ This module implements the plain text renderer.
 from ..adapter import adapts
 from ..util import maybe, oneof
 from .format import Format, Formatter, Renderer
-from .entitle import guess_title
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
-                      DateDomain, TimeDomain, DateTimeDomain)
+                      DateDomain, TimeDomain, DateTimeDomain,
+                      ListDomain, RecordDomain)
 import re
 import decimal
 import datetime
@@ -59,12 +59,13 @@ class TextRenderer(Renderer):
     def generate_headers(self, product):
         return [('Content-Type', 'text/plain; charset=UTF-8')]
 
-    def calculate_header_layout(self, segment):
-        headers = [[header.encode('utf-8') for header in guess_title(element)]
-                   for element in segment.elements]
+    def calculate_header_layout(self, profile):
+        fields = profile.domain.item_domain.fields
+        headers = [[header.encode('utf-8') for header in field.title]
+                   for field in fields]
         layouts = []
         height = max(len(header) for header in headers)
-        width = len(segment.elements)
+        width = len(fields)
         for line in range(height):
             index = 0
             while index < width:
@@ -89,9 +90,9 @@ class TextRenderer(Renderer):
         return layouts
 
     def calculate_layout(self, product, formats):
-        segment = product.profile.binding.segment
-        headers = self.calculate_header_layout(segment)
-        column_widths = [1 for element in segment.elements]
+        fields = product.meta.domain.item_domain.fields
+        headers = self.calculate_header_layout(product.meta)
+        column_widths = [1 for field in fields]
         total = 0
         for record in product:
             for idx, (format, value) in enumerate(zip(formats, record)):
@@ -105,7 +106,7 @@ class TextRenderer(Renderer):
         else:
             total = "(%s rows)" % total
         constraints = []
-        constraints.append((0, len(segment.elements), len(total)-4))
+        constraints.append((0, len(fields), len(total)-4))
         for header in headers:
             constraints.append((header.column, header.column+header.colspan,
                                 len(header.text.decode('utf-8'))))
@@ -126,19 +127,22 @@ class TextRenderer(Renderer):
         return Layout(headers, total, column_widths)
 
     def generate_body(self, product):
-        request_title = str(product.profile.syntax)
+        request_title = (str(product.meta.syntax)
+                         if product.meta.syntax is not None else "")
         if not product:
             yield "(no data)\n"
             yield "\n"
             yield " ----\n"
             yield " %s\n" % request_title
             return
-        domains = [element.domain
-                   for element in product.profile.segment.elements]
+        assert isinstance(product.meta.domain, ListDomain)
+        assert isinstance(product.meta.domain.item_domain, RecordDomain)
+        fields = product.meta.domain.item_domain.fields
+        domains = [field.domain for field in fields]
         tool = TextFormatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         layout = self.calculate_layout(product, formats)
-        if product.profile.segment.elements:
+        if fields:
             height = max(header.row+header.rowspan
                          for header in layout.headers)
             for line in range(height):
@@ -213,8 +217,9 @@ class TextRenderer(Renderer):
         yield "\n"
         yield " ----\n"
         yield " %s\n" % request_title
-        for line in product.profile.plan.sql.encode('utf-8').splitlines():
-            yield " %s\n" % line
+        if product.meta.plan is not None and product.meta.plan.sql is not None:
+            for line in product.meta.plan.sql.encode('utf-8').splitlines():
+                yield " %s\n" % line
 
 
 class TextFormatter(Formatter):

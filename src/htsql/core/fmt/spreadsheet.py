@@ -16,8 +16,7 @@ from ..adapter import adapts
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain, TimeDomain,
-                      DateTimeDomain)
-from .entitle import entitle
+                      DateTimeDomain, ListDomain, RecordDomain)
 import csv
 import cStringIO
 
@@ -41,8 +40,8 @@ class CSVRenderer(Renderer):
 
     def generate_headers(self, product):
         filename = None
-        if product:
-            filename = entitle(product.profile.binding.segment).encode('utf-8')
+        if product.meta.title:
+            filename = product.meta.title[-1].encode('utf-8')
         if not filename:
             filename = '_'
         filename = filename.replace('\\', '\\\\').replace('"', '\\"')
@@ -54,10 +53,12 @@ class CSVRenderer(Renderer):
     def generate_body(self, product):
         if not product:
             return
-        titles = [entitle(element.binding).encode('utf-8')
-                  for element in product.profile.segment.elements]
-        domains = [element.domain
-                   for element in product.profile.segment.elements]
+        assert isinstance(product.meta.domain, ListDomain)
+        assert isinstance(product.meta.domain.item_domain, RecordDomain)
+        fields = product.meta.domain.item_domain.fields
+        titles = [field.title[-1].encode('utf-8')
+                  if field.title else "" for field in fields]
+        domains = [field.domain for field in fields]
         tool = Formatter(self)
         formats = [Format(self, domain, tool) for domain in domains]
         output = cStringIO.StringIO()

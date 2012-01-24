@@ -9,7 +9,8 @@ from ...core.util import maybe, listof
 from ...core.context import context
 from ...core.adapter import Adapter, adapts, named
 from ...core.error import HTTPError
-from ...core.domain import Domain, BooleanDomain, NumberDomain, DateTimeDomain
+from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
+                            ListDomain, RecordDomain)
 from ...core.cmd.command import UniversalCmd, Command
 from ...core.cmd.act import (Act, RenderAction, UnsupportedActionError,
                              produce, safe_produce, analyze)
@@ -22,7 +23,6 @@ from ...core.tr.binding import CommandBinding
 from ...core.tr.signature import Signature, Slot
 from ...core.tr.error import BindError
 from ...core.tr.fn.bind import BindCommand
-from ...core.fmt.entitle import guess_title
 from ...core.fmt.json import escape
 from ..resource.locate import locate
 import re
@@ -303,6 +303,8 @@ class RenderEvaluate(Act):
         yield "}\n"
 
     def render_product(self, product, limit):
+        assert isinstance(product.meta.domain, ListDomain)
+        assert isinstance(product.meta.domain.item_domain, RecordDomain)
         style = self.make_style(product)
         head = self.make_head(product)
         body = self.make_body(product, limit)
@@ -330,8 +332,8 @@ class RenderEvaluate(Act):
         yield "}\n"
 
     def make_style(self, product):
-        domains = [element.domain
-                   for element in product.profile.segment.elements]
+        domains = [field.domain
+                   for field in product.meta.domain.item_domain.fields]
         styles = [get_style(domain) for domain in domains]
         return "[%s]" % ", ".join((escape(cgi.escape(style))
                                    if style is not None else "null")
@@ -340,10 +342,10 @@ class RenderEvaluate(Act):
     def make_head(self, product):
         rows = []
         headers = [[header.encode('utf-8')
-                    for header in guess_title(element.binding)]
-                   for element in product.profile.segment.elements]
+                    for header in field.title]
+                   for field in product.meta.domain.item_domain.fields]
         height = max(len(header) for header in headers)
-        width = len(product.profile.segment.elements)
+        width = len(product.meta.domain.item_domain.fields)
         for line in range(height):
             cells = []
             idx = 0
@@ -372,8 +374,8 @@ class RenderEvaluate(Act):
 
     def make_body(self, product, limit):
         rows = []
-        domains = [element.domain
-                   for element in product.profile.segment.elements]
+        domains = [field.domain
+                   for field in product.meta.domain.item_domain.fields]
         formats = [get_format(domain) for domain in domains]
         for record in product:
             cells = []
@@ -389,7 +391,7 @@ class RenderEvaluate(Act):
         return "[%s]" % ", ".join(rows)
 
     def make_more(self, product, limit):
-        if limit is not None and len(product.records) > limit:
+        if limit is not None and len(product.data) > limit:
             return "true"
         return "false"
 

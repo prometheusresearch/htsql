@@ -295,7 +295,7 @@ class SerializeQuery(Serialize):
         if self.clause.segment is not None:
             sql = self.state.serialize(self.clause.segment)
         # Produce an execution plan.
-        return Plan(sql, self.clause)
+        return Plan(sql, self.clause.binding.profile)
 
 
 class SerializeSegment(Serialize):

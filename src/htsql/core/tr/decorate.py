@@ -6,7 +6,7 @@
 
 from ..adapter import Protocol, named
 from ..domain import Profile
-from .lookup import guess_name
+from .lookup import guess_name, guess_title
 from .binding import Binding
 
 
@@ -55,6 +55,14 @@ class DecorateName(Decorate):
         if name is not None:
             name = name.encode('utf-8')
         return name
+
+
+class DecorateTitle(Decorate):
+
+    named('title')
+
+    def __call__(self):
+        return guess_title(self.binding)
 
 
 class DecoratePlan(Decorate):
