@@ -220,8 +220,10 @@ class TextRenderer(Renderer):
         yield "\n"
         yield " ----\n"
         yield " %s\n" % request_title
-        if product.meta.plan is not None and product.meta.plan.sql is not None:
-            for line in product.meta.plan.sql.encode('utf-8').splitlines():
+        if (product.meta.plan is not None and
+                product.meta.plan.statement is not None):
+            sql = product.meta.plan.statement.sql.encode('utf-8')
+            for line in sql.splitlines():
                 yield " %s\n" % line
 
 

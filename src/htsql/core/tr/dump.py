@@ -12,12 +12,12 @@ This module implements the SQL serialization process.
 """
 
 
-from ..util import listof, maybe
+from ..util import listof, maybe, Record
 from ..adapter import Adapter, Protocol, adapts, named
-from .error import SerializeError
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, StringDomain, EnumDomain, DateDomain,
-                      TimeDomain, DateTimeDomain)
+                      TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
+from .error import SerializeError
 from .syntax import IdentifierSyntax, ApplicationSyntax, LiteralSyntax
 from .frame import (Clause, Frame, TableFrame, BranchFrame, NestedFrame,
                     SegmentFrame, QueryFrame,
@@ -28,7 +28,7 @@ from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
                         AndSig, OrSig, NotSig, ToPredicateSig,
                         FromPredicateSig)
-from .plan import Plan
+from .plan import Plan, Statement, ComposeRecord, ComposeValue, ComposeNone
 import StringIO
 import re
 
@@ -291,11 +291,25 @@ class SerializeQuery(Serialize):
 
     def __call__(self):
         # When exists, serialize the query segment.
-        sql = None
+        profile = self.clause.binding.profile
+        statement = None
+        compose = ComposeNone()
         if self.clause.segment is not None:
             sql = self.state.serialize(self.clause.segment)
+            assert isinstance(profile.domain, ListDomain)
+            assert isinstance(profile.domain.item_domain, RecordDomain)
+            fields = profile.domain.item_domain.fields
+            domains = [field.domain for field in fields]
+            record_name = profile.name
+            field_names = [field.name for field in fields]
+            record_class = Record.make(record_name, field_names)
+            compose_fields = [ComposeValue(index)
+                              for index in range(len(fields))]
+            compose = ComposeRecord(record_class, None, compose_fields)
+            statement = Statement(sql, domains)
+
         # Produce an execution plan.
-        return Plan(sql, self.clause.binding.profile)
+        return Plan(profile, statement, compose)
 
 
 class SerializeSegment(Serialize):

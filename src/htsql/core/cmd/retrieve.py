@@ -57,29 +57,20 @@ class ProduceRetrieve(Act):
         plan = serialize(frame)
         profile = plan.profile.clone(plan=plan)
         records = None
-        if plan.sql:
-            assert isinstance(profile.domain, ListDomain)
-            assert isinstance(profile.domain.item_domain, RecordDomain)
-            fields = profile.domain.item_domain.fields
-            normalizers = []
-            for field in fields:
-                normalizers.append(normalize(field.domain))
-            record_name = profile.name
-            field_names = [field.name for field in fields]
-            record_class = Record.make(record_name, field_names)
+        if plan.statement:
+            normalizers = [normalize(domain)
+                           for domain in plan.statement.domains]
             connection = None
             try:
                 connect = Connect()
                 connection = connect()
                 cursor = connection.cursor()
-                cursor.execute(plan.sql.encode('utf-8'))
+                cursor.execute(plan.statement.sql.encode('utf-8'))
                 records = []
                 for row in cursor:
-                    values = []
-                    for item, normalizer in zip(row, normalizers):
-                        value = normalizer(item)
-                        values.append(value)
-                    records.append(record_class(*values))
+                    row = tuple(normalizer(item)
+                                for item, normalizer in zip(row, normalizers))
+                    records.append(plan.compose(row))
                 connection.commit()
                 connection.release()
             except DBError, exc:
@@ -135,8 +126,8 @@ class RenderSQL(Act):
         status = '200 OK'
         headers = [('Content-Type', 'text/plain; charset=UTF-8')]
         body = []
-        if plan.sql:
-            body = [plan.sql.encode('utf-8')]
+        if plan.statement:
+            body = [plan.statement.sql.encode('utf-8')]
         return (status, headers, body)
 
 
