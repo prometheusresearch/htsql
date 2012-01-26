@@ -109,6 +109,6 @@ class Mark(Printable):
 class EmptyMark(Mark):
 
     def __init__(self):
-        super(EmptyMark, self).__init__("", 0, 0)
+        super(EmptyMark, self).__init__(u"", 0, 0)
 
 

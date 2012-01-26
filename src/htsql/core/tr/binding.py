@@ -16,7 +16,7 @@ from ..util import maybe, listof, tupleof, Clonable, Printable, Comparable
 from ..entity import TableEntity, ColumnEntity, Join
 from ..domain import (Domain, VoidDomain, BooleanDomain, ListDomain,
                       RecordDomain, EntityDomain, Profile)
-from .syntax import Syntax
+from .syntax import Syntax, VoidSyntax
 from .signature import Signature, Bag, Formula
 from ..cmd.command import Command
 
@@ -84,6 +84,13 @@ class Recipe(Comparable, Printable):
     A recipe is a generator of binding nodes.  Recipes are produced by lookup
     requests and used to construct the binding graph.
     """
+
+
+class VoidBinding(Binding):
+
+    def __init__(self):
+        base = RootBinding(VoidSyntax())
+        super(VoidBinding, self).__init__(base, VoidDomain(), VoidSyntax())
 
 
 class QueryBinding(Binding):

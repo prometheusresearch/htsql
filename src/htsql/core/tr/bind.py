@@ -32,7 +32,7 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       SieveBinding, SortBinding, CastBinding, RescopingBinding,
                       AssignmentBinding, DefinitionBinding, SelectionBinding,
                       RerouteBinding, ReferenceRerouteBinding, AliasBinding,
-                      LiteralBinding,
+                      LiteralBinding, VoidBinding,
                       Recipe, LiteralRecipe, SelectionRecipe,
                       FreeTableRecipe, AttachedTableRecipe,
                       ColumnRecipe, KernelRecipe, ComplementRecipe,
@@ -278,8 +278,7 @@ class BindQuery(Bind):
                 return segment
             profile = decorate(segment)
         else:
-            profile = decorate(Binding(root, VoidDomain(), self.syntax))
-            profile = profile.clone(title=[])
+            profile = decorate(VoidBinding())
         # Construct and return the top-level binding node.
         return QueryBinding(root, segment, profile, self.syntax)
 

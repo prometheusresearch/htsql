@@ -26240,11 +26240,11 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |
+          body: |+
             (no data)
 
              ----
-             /
+
         - uri: /
           status: 200 OK
           headers:
@@ -26254,7 +26254,7 @@ tests:
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-            <title>/</title>
+            <title></title>
             <style type="text/css">
             body { font-family: sans-serif; font-size: 90%; color: #515151; background: #ffffff }
             a:link, a:visited { color: #1f4884; text-decoration: none }
@@ -26280,7 +26280,7 @@ tests:
             </style>
             </head>
             <body>
-            <table class="page" summary="/">
+            <table class="page" summary="">
             <tr>
             <td class="content">
             <table class="void">
@@ -26288,7 +26288,7 @@ tests:
             </table>
             </td>
             </tr>
-            <tr><td class="footer">/</td></tr>
+            <tr><td class="footer"></td></tr>
             </table>
             </body>
             </html>
@@ -30033,11 +30033,11 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
-          body: |
+          body: |+
             (no data)
 
              ----
-             /
+
         - uri: /
           status: 200 OK
           headers:

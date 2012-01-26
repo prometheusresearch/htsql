@@ -133,7 +133,10 @@ class TextRenderer(Renderer):
             yield "(no data)\n"
             yield "\n"
             yield " ----\n"
-            yield " %s\n" % request_title
+            if request_title:
+                yield " %s\n" % request_title
+            else:
+                yield "\n"
             return
         assert isinstance(product.meta.domain, ListDomain)
         assert isinstance(product.meta.domain.item_domain, RecordDomain)

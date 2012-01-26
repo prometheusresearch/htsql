@@ -12,7 +12,7 @@ This module defines syntax nodes for the HTSQL grammar.
 """
 
 
-from ..mark import Mark
+from ..mark import Mark, EmptyMark
 from ..util import maybe, listof, Printable, Clonable, Comparable
 import re
 
@@ -51,6 +51,15 @@ class Syntax(Printable, Comparable, Clonable):
         Returns a fragment of HTSQL encoded in UTF-8.
         """
         return unicode(self).encode('utf-8')
+
+
+class VoidSyntax(Syntax):
+
+    def __init__(self):
+        super(VoidSyntax, self).__init__(EmptyMark(), equality_vector=())
+
+    def __unicode__(self):
+        return u''
 
 
 class QuerySyntax(Syntax):
