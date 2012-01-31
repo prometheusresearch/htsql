@@ -130,7 +130,7 @@ class BindFunction(BindByName):
                 elif len(value) == 1:
                     [value] = value
                     bound_value = self.state.bind(value)
-                    recipes = expand(bound_value, is_hard=False)
+                    recipes = expand(bound_value, with_syntax=True)
                     if slot.is_mandatory and (recipes is not None and
                                               not recipes):
                         raise BindError("at least one element is expected",
@@ -544,7 +544,7 @@ class BindDistinct(BindMacro):
 
     def expand(self, op):
         seed = self.state.bind(op)
-        recipes = expand(seed, is_hard=False)
+        recipes = expand(seed, with_syntax=True)
         if recipes is None:
             raise BindError("function '%s' expects an argument with a selector"
                             % self.name.encode('utf-8'), op.mark)
@@ -629,7 +629,7 @@ class BindSelect(BindMacro):
         elements = []
         for op in ops:
             element = self.state.bind(op)
-            recipes = expand(element, is_hard=False)
+            recipes = expand(element, with_syntax=True)
             if recipes is not None:
                 for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
@@ -671,7 +671,7 @@ class BindFork(BindMacro):
         elements = []
         for op in ops:
             element = self.state.bind(op)
-            recipes = expand(element, is_hard=False)
+            recipes = expand(element, with_syntax=True)
             if recipes is not None:
                 for syntax, recipe in recipes:
                     if not isinstance(syntax, (IdentifierSyntax, GroupSyntax)):
@@ -746,7 +746,7 @@ class BindSort(BindMacro):
         bindings = []
         for item in order:
             binding = self.state.bind(item)
-            recipes = expand(binding, is_hard=False)
+            recipes = expand(binding, with_syntax=True)
             if recipes is None:
                 domain = coerce(binding.domain)
                 if domain is None:
@@ -1979,7 +1979,7 @@ class BindExistsBase(BindFunction):
     polarity = None
 
     def correlate(self, op):
-        recipes = expand(op, is_hard=False)
+        recipes = expand(op, with_syntax=True)
         plural_base = None
         if recipes is not None:
             if len(recipes) != 1:
@@ -2016,7 +2016,7 @@ class BindCount(BindFunction):
     hint = """base.count(p) -> the number of p such that p = TRUE"""
 
     def correlate(self, op):
-        recipes = expand(op, is_hard=False)
+        recipes = expand(op, with_syntax=True)
         plural_base = None
         if recipes is not None:
             if len(recipes) != 1:
@@ -2041,7 +2041,7 @@ class BindPolyAggregate(BindPolyFunction):
     codomain = UntypedDomain()
 
     def correlate(self, op):
-        recipes = expand(op, is_hard=False)
+        recipes = expand(op, with_syntax=True)
         plural_base = None
         if recipes is not None:
             if len(recipes) != 1:
@@ -2067,7 +2067,7 @@ class BindMinMaxBase(BindPolyAggregate):
     polarity = None
 
     def correlate(self, op):
-        recipes = expand(op, is_hard=False)
+        recipes = expand(op, with_syntax=True)
         plural_base = None
         if recipes is not None:
             if len(recipes) != 1:

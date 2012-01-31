@@ -298,7 +298,8 @@ class BindSegment(Bind):
             return seed
         # Extract output flow and columns.
         bindings = []
-        recipes = expand(seed)
+        recipes = expand(seed, with_syntax=True, with_wild=True,
+                         with_class=True)
         if recipes is None:
             bindings.append(seed)
             seed = None
@@ -369,7 +370,7 @@ class BindSelector(Bind):
                 self.state.push_scope(scope)
             # Extract nested selectors, if any.
             bindings = []
-            recipes = expand(binding, is_hard=False)
+            recipes = expand(binding, with_wild=True, with_syntax=True)
             if recipes is not None:
                 seed = binding
                 for syntax, recipe in recipes:
@@ -432,7 +433,7 @@ class BindQuotient(Bind):
         # get the kernel expressions.
         elements = []
         binding = self.state.bind(self.syntax.rbranch, scope=seed)
-        recipes = expand(binding, is_hard=False)
+        recipes = expand(binding, with_syntax=True)
         if recipes is not None:
             for syntax, recipe in recipes:
                 element = self.state.use(recipe, syntax, scope=binding)
@@ -492,7 +493,7 @@ class BindLink(Bind):
         # Bind the origin images.
         origin_images = []
         binding = self.state.bind(self.syntax.lbranch)
-        recipes = expand(binding, is_hard=False)
+        recipes = expand(binding, with_syntax=True)
         if recipes is not None:
             for syntax, recipe in recipes:
                 element = self.state.use(recipe, syntax)
@@ -507,10 +508,10 @@ class BindLink(Bind):
         # of the origin images.
         binding = seed
         target_images = []
-        recipes = expand(seed, is_hard=False)
+        recipes = expand(seed, with_syntax=True)
         if recipes is None:
             binding = self.state.bind(self.syntax.lbranch, scope=seed)
-            recipes = expand(binding, is_hard=False)
+            recipes = expand(binding, with_syntax=True)
         if recipes is not None:
             for syntax, recipe in recipes:
                 element = self.state.use(recipe, syntax, scope=seed)
@@ -656,7 +657,8 @@ class BindWildcard(Bind):
 
     def __call__(self):
         # Get all public columns in the current lookup scope.
-        recipes = expand(self.state.scope)
+        recipes = expand(self.state.scope, with_syntax=True, with_wild=True,
+                         with_class=True, with_link=True)
         if recipes is None:
             raise BindError("cannot expand '*' since output columns"
                             " are not defined", self.syntax.mark)

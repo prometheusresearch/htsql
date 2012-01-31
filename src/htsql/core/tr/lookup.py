@@ -22,8 +22,8 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       SegmentBinding, HomeBinding, TableBinding,
                       ColumnBinding, QuotientBinding, ComplementBinding,
                       CoverBinding, ForkBinding, LinkBinding, RescopingBinding,
-                      DefinitionBinding, SelectionBinding, DirectionBinding,
-                      RerouteBinding, ReferenceRerouteBinding,
+                      DefinitionBinding, SelectionBinding, WildSelectionBinding,
+                      DirectionBinding, RerouteBinding, ReferenceRerouteBinding,
                       TitleBinding, AliasBinding, CommandBinding,
                       FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                       ComplementRecipe, KernelRecipe, BindingRecipe,
@@ -141,27 +141,25 @@ class ExpansionProbe(Probe):
     The result of this probe is a list of pairs `(recipe, syntax)`,
     where `recipe` is an instance of :class:`htsql.core.tr.binding.Recipe` and
     `syntax` is an instance of :class:`htsql.core.tr.syntax.Syntax`.
-
-    `is_soft` (Boolean)
-        If set, expand selections.
-
-    `is_hard` (Boolean)
-        If set, expand classes.
     """
 
-    def __init__(self, is_soft=True, is_hard=True):
-        self.is_soft = is_soft
-        self.is_hard = is_hard
+    def __init__(self, with_syntax=False, with_wild=False,
+                 with_class=False, with_link=False):
+        self.with_syntax = with_syntax
+        self.with_wild = with_wild
+        self.with_class = with_class
+        self.with_link = with_link
 
     def __str__(self):
-        # Display:
-        #   ?<*|**>
-        symbols = []
-        if self.is_soft:
-            symbols.append("*")
-        if self.is_hard:
-            symbols.append("**")
-        return "?<%s>" % "|".join(symbols)
+        ## Display:
+        ##   ?<*|**>
+        #symbols = []
+        #if self.is_soft:
+        #    symbols.append("*")
+        #if self.is_hard:
+        #    symbols.append("**")
+        #return "?<%s>" % "|".join(symbols)
+        return "?<*>"
 
 
 class GuessNameProbe(Probe):
@@ -486,7 +484,7 @@ class ExpandHome(Lookup):
     def __call__(self):
         # Expand the home class: there should be no public attributes, but try
         # it anyway.
-        if self.probe.is_hard:
+        if self.probe.with_class:
             labels = classify(HomeNode())
             recipes = []
             for label in labels:
@@ -554,7 +552,7 @@ class ExpandTable(Lookup):
 
     def __call__(self):
         # Only expand on a class probe.
-        if not self.probe.is_hard:
+        if not self.probe.with_class:
             return super(ExpandTable, self).__call__()
         return self.itemize_columns()
 
@@ -607,7 +605,7 @@ class ExpandColumn(Lookup):
 
     def __call__(self):
         # If there is an associated link node, delegate the request to it.
-        if self.binding.link is not None:
+        if self.probe.with_link and self.binding.link is not None:
             return lookup(self.binding.link, self.probe)
         # Otherwise, no luck.
         return None
@@ -629,7 +627,7 @@ class ExpandQuotient(Lookup):
 
     def __call__(self):
         # Ignore non-class expansion requests.
-        if not self.probe.is_hard:
+        if not self.probe.with_class:
             return super(ExpandQuotient, self).__call__()
         # Expand the kernel.
         return self.itemize_kernels()
@@ -661,12 +659,12 @@ class ExpandComplement(Lookup):
 
     def __call__(self):
         # Ignore selection expand probes.
-        if not self.probe.is_hard:
+        if not self.probe.with_class:
             return super(ExpandComplement, self).__call__()
         # Delegate class expansion probe to the seed flow;
         # turn off selection expansion to avoid expanding the
         # selector in `distinct(table{kernel})`.
-        probe = self.probe.clone(is_soft=False)
+        probe = self.probe.clone(with_syntax=False, with_wild=False)
         return lookup(self.binding.quotient.seed, probe)
 
 
@@ -688,14 +686,14 @@ class ExpandCover(Lookup):
 
     def __call__(self):
         # Ignore pure selector expansion probes.
-        if not self.probe.is_hard:
+        if not self.probe.with_class:
             return super(ExpandCover, self).__call__()
         # FIXME: selector expansion does not work between scopes.
         ## Turn on selector expansion.
         #probe = self.probe.clone(is_soft=True)
         # Delegate the probe to the seed class;
         #return lookup(self.binding.seed, probe)
-        probe = self.probe.clone(is_soft=False)
+        probe = self.probe.clone(with_syntax=False, with_wild=False)
         return lookup(self.binding.seed, probe)
 
 
@@ -720,7 +718,7 @@ class ExpandFork(Lookup):
         # Delegate the expansion probe to the parent binding.
         # FIXME: selector expansion does not work between scopes.
         #return lookup(self.binding.base, self.probe)
-        probe = self.probe.clone(is_soft=False)
+        probe = self.probe.clone(with_syntax=False, with_wild=False)
         return lookup(self.binding.base, probe)
 
 
@@ -743,12 +741,12 @@ class ExpandLink(Lookup):
 
     def __call__(self):
         # Ignore selection expand probes.
-        if not self.probe.is_hard:
+        if not self.probe.with_class:
             return super(ExpandLink, self).__call__()
         # Delegate class expansion probe to the seed flow;
         # turn off selection expansion to avoid expanding the
         # selector in `image -> table{image}`.
-        probe = self.probe.clone(is_soft=False)
+        probe = self.probe.clone(with_syntax=False, with_wild=False)
         return lookup(self.binding.seed, probe)
 
 
@@ -862,8 +860,9 @@ class ExpandSelection(Lookup):
 
     def __call__(self):
         # Skip class expansion probes.
-        if not self.probe.is_soft:
-            return super(ExpandSelection, self).__call__()
+        if not self.probe.with_syntax:
+            probe = self.probe.clone(with_wild=False)
+            return lookup(self.binding.base, probe)
         # Emit elements of the selector.
         return self.itemize()
 
@@ -873,6 +872,20 @@ class ExpandSelection(Lookup):
             syntax = element.syntax
             recipe = BindingRecipe(element)
             yield (syntax, recipe)
+
+
+class ExpandWildSelection(Lookup):
+    # Expand a *-selector.
+
+    adapts(WildSelectionBinding, ExpansionProbe)
+
+    def __call__(self):
+        # Skip class expansion probes.
+        if not self.probe.with_wild:
+            probe = self.probe.clone(with_syntax=False)
+            return lookup(self.binding.base, probe)
+        # Emit elements of the selector.
+        return self.itemize()
 
 
 class DirectDirection(Lookup):
@@ -1034,7 +1047,8 @@ def lookup_complement(binding):
     return lookup(binding, probe)
 
 
-def expand(binding, is_soft=True, is_hard=True):
+def expand(binding, with_syntax=False, with_wild=False,
+           with_class=False, with_link=False):
     """
     Extracts public attributes from the given binding.
 
@@ -1043,14 +1057,9 @@ def expand(binding, is_soft=True, is_hard=True):
     `syntax` is an instance of :class:`htsql.core.tr.syntax.Syntax`.
     The function returns ``None`` if the scope does not support
     public attributes.
-
-    `is_soft` (Boolean)
-        If set, the function expands selector expressions.
-
-    `is_hard` (Boolean)
-        If set, the function expands classes.
     """
-    probe = ExpansionProbe(is_soft=is_soft, is_hard=is_hard)
+    probe = ExpansionProbe(with_syntax=with_syntax, with_wild=with_wild,
+                           with_class=with_class, with_link=with_link)
     recipes = lookup(binding, probe)
     if recipes is not None:
         recipes = list(recipes)
