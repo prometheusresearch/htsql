@@ -25,6 +25,7 @@ from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
                       DefinitionBinding, SelectionBinding, WildSelectionBinding,
                       DirectionBinding, RerouteBinding, ReferenceRerouteBinding,
                       TitleBinding, AliasBinding, CommandBinding,
+                      ImplicitCastBinding,
                       FreeTableRecipe, AttachedTableRecipe, ColumnRecipe,
                       ComplementRecipe, KernelRecipe, BindingRecipe,
                       SubstitutionRecipe, ClosedRecipe, InvalidRecipe,
@@ -185,6 +186,14 @@ class GuessTitleProbe(Probe):
         return "?<:as>"
 
 
+class GuessLabelProbe(Probe):
+    pass
+
+
+class GuessHeaderProbe(Probe):
+    pass
+
+
 class DirectionProbe(Probe):
     """
     Represents a request for a direction modifier.
@@ -342,6 +351,27 @@ class GuessTitle(Lookup):
         return [unicode(self.binding.syntax)]
 
 
+class GuessLabel(Lookup):
+
+    adapts(Binding, GuessLabelProbe)
+
+    def __call__(self):
+        if isinstance(self.binding.syntax, IdentifierSyntax):
+            return self.binding.syntax.value
+        return None
+
+
+class GuessHeader(Lookup):
+
+    adapts(Binding, GuessHeaderProbe)
+
+    def __call__(self):
+        value = unicode(self.binding.syntax)
+        if value:
+            return value
+        return None
+
+
 class LookupReferenceInScoping(Lookup):
     # Find a reference in a scoping node.
 
@@ -402,6 +432,36 @@ class GuessNameFromChaining(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
+class GuessLabelFromChaining(Lookup):
+
+    adapts(ChainingBinding, GuessLabelProbe)
+
+    def __call__(self):
+        if isinstance(self.binding.syntax, IdentifierSyntax):
+            return self.binding.syntax.value
+        return lookup(self.binding.base, self.probe)
+
+
+class GuessHeaderInChaining(Lookup):
+
+    adapts(ChainingBinding, GuessHeaderProbe)
+
+    def __call__(self):
+        return lookup(self.binding.base, self.probe)
+
+
+class LookupInImplicitCast(Lookup):
+
+    adapts_many((ImplicitCastBinding, GuessNameProbe),
+                (ImplicitCastBinding, GuessTitleProbe),
+                (ImplicitCastBinding, GuessLabelProbe),
+                (ImplicitCastBinding, GuessHeaderProbe),
+                (ImplicitCastBinding, DirectionProbe))
+
+    def __call__(self):
+        return lookup(self.binding.base, self.probe)
+
+
 class LookupCommandInWrapping(Lookup):
 
     adapts(WrappingBinding, CommandProbe)
@@ -434,6 +494,26 @@ class GuessTitleFromSegment(Lookup):
             return lookup(self.binding.seed, self.probe)
         # Otherwise, produce an empty heading.
         return []
+
+
+class GuessLabelFromSegment(Lookup):
+
+    adapts(SegmentBinding, GuessLabelProbe)
+
+    def __call__(self):
+        if self.binding.seed is not None:
+            return lookup(self.binding.seed, self.probe)
+        return None
+
+
+class GuessHeaderFromSegment(Lookup):
+
+    adapts(SegmentBinding, GuessHeaderProbe)
+
+    def __call__(self):
+        if self.binding.seed is not None:
+            return lookup(self.binding.seed, self.probe)
+        return None
 
 
 class LookupCommandInCommand(Lookup):
@@ -506,6 +586,14 @@ class GuessTitleFromHome(Lookup):
     def __call__(self):
         # Produce no headers.
         return []
+
+
+class GuessHeaderFromHome(Lookup):
+
+    adapts(HomeBinding, GuessHeaderProbe)
+
+    def __call__(self):
+        return None
 
 
 class LookupAttributeInTable(Lookup):
@@ -640,6 +728,24 @@ class ExpandQuotient(Lookup):
             yield (syntax, recipe)
 
 
+class GuessHeaderFromQuotient(Lookup):
+
+    adapts(QuotientBinding, GuessHeaderProbe)
+
+    def __call__(self):
+        seed_header = lookup(self.binding.seed, self.probe)
+        kernel_headers = [lookup(kernel, self.probe)
+                          for kernel in self.binding.kernels]
+        if seed_header is None or any(header is None
+                                      for header in kernel_headers):
+            return super(GuessHeaderFromQuotient, self).__call__()
+        if len(kernel_headers) == 1:
+            [kernel_header] = kernel_headers
+            return u"%s^%s" % (seed_header, kernel_header)
+        else:
+            return u"%s^{%s}" % (seed_header, u",".join(kernel_headers))
+
+
 class LookupAttributeInComplement(Lookup):
     # Find an attribute or a complement link in a complement scope.
 
@@ -666,6 +772,7 @@ class ExpandComplement(Lookup):
         # selector in `distinct(table{kernel})`.
         probe = self.probe.clone(with_syntax=False, with_wild=False)
         return lookup(self.binding.quotient.seed, probe)
+
 
 
 class LookupAttributeInCover(Lookup):
@@ -757,6 +864,14 @@ class GuessTitleFromLink(Lookup):
 
     def __call__(self):
         # Generate a heading from the link target.
+        return lookup(self.binding.seed, self.probe)
+
+
+class GuessHeaderFromLink(Lookup):
+
+    adapts(LinkBinding, GuessHeaderProbe)
+
+    def __call__(self):
         return lookup(self.binding.seed, self.probe)
 
 
@@ -933,6 +1048,14 @@ class GuessTitleFromTitle(Lookup):
         return [self.binding.title]
 
 
+class GuessHeaderFromTitle(Lookup):
+
+    adapts(TitleBinding, GuessHeaderProbe)
+
+    def __call__(self):
+        return self.binding.title
+
+
 class GuessNameFromAlias(Lookup):
     # Extract an attribute name from a syntax decorator.
 
@@ -954,6 +1077,24 @@ class GuessTitleFromAlias(Lookup):
 
     def __call__(self):
         return [str(self.binding.syntax)]
+
+
+class GuessLabelFromAlias(Lookup):
+
+    adapts(AliasBinding, GuessLabelProbe)
+
+    def __call__(self):
+        if isinstance(self.binding.syntax, IdentifierSyntax):
+            return self.binding.syntax.value
+        return None
+
+
+class GuessHeaderFromAlias(Lookup):
+
+    adapts(AliasBinding, GuessHeaderProbe)
+
+    def __call__(self):
+        return unicode(self.binding.syntax)
 
 
 def prescribe(arc, binding):
@@ -1066,25 +1207,35 @@ def expand(binding, with_syntax=False, with_wild=False,
     return recipes
 
 
-def guess_name(binding):
-    """
-    Extracts an attribute name from the given binding.
+#def guess_name(binding):
+#    """
+#    Extracts an attribute name from the given binding.
+#
+#    Returns a string value; ``None`` if the node is not associated
+#    with any attribute.
+#    """
+#    probe = GuessNameProbe()
+#    return lookup(binding, probe)
 
-    Returns a string value; ``None`` if the node is not associated
-    with any attribute.
-    """
-    probe = GuessNameProbe()
+
+#def guess_title(binding):
+#    """
+#    Extracts a heading from the given binding.
+#
+#    Returns a list of string values: the header associated with
+#    the binding node.
+#    """
+#    probe = GuessTitleProbe()
+#    return lookup(binding, probe)
+
+
+def guess_label(binding):
+    probe = GuessLabelProbe()
     return lookup(binding, probe)
 
 
-def guess_title(binding):
-    """
-    Extracts a heading from the given binding.
-
-    Returns a list of string values: the header associated with
-    the binding node.
-    """
-    probe = GuessTitleProbe()
+def guess_header(binding):
+    probe = GuessHeaderProbe()
     return lookup(binding, probe)
 
 

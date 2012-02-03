@@ -30,7 +30,6 @@ class Plan(Printable):
     def __init__(self, profile, statement, compose):
         assert isinstance(profile, Profile)
         assert isinstance(statement, maybe(Statement))
-        assert compose is not None
         self.profile = profile
         self.statement = statement
         self.compose = compose
@@ -41,36 +40,5 @@ class Plan(Printable):
 
     def __str__(self):
         return unicode(self).encode('utf-8')
-
-
-class ComposeNone(object):
-
-    def __call__(self, rows):
-        return None
-
-
-class ComposeRecord(object):
-
-    def __init__(self, record_class, null_index, compose_fields):
-        self.record_class = record_class
-        self.null_index = null_index
-        self.compose_fields = compose_fields
-
-    def __call__(self, row):
-        if self.null_index is not None and row[self.null_index] is None:
-            return None
-        else:
-            fields = [compose_field(row)
-                      for compose_field in self.compose_fields]
-            return self.record_class(*fields)
-
-
-class ComposeValue(object):
-
-    def __init__(self, index):
-        self.index = index
-
-    def __call__(self, row):
-        return row[self.index]
 
 

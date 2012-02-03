@@ -105,18 +105,15 @@ class SegmentExpr(Expression):
 
     `flow` (:class:`Flow`)
         The output flow of the segment.
-
-    `elements` (a list of :class:`Code`)
-        The output columns of the segment.
     """
 
-    def __init__(self, flow, elements, binding):
+    def __init__(self, flow, code, binding):
         assert isinstance(flow, Flow)
-        assert isinstance(elements, listof(Code))
+        assert isinstance(code, Code)
         assert isinstance(binding, SegmentBinding)
         super(SegmentExpr, self).__init__(binding)
         self.flow = flow
-        self.elements = elements
+        self.code = code
 
 
 class Family(object):
@@ -1381,6 +1378,35 @@ class CastCode(Code):
                     binding=binding,
                     equality_vector=(base, domain))
         self.base = base
+
+
+class RecordCode(Code):
+
+    def __init__(self, fields, domain, binding):
+        assert isinstance(fields, listof(Code))
+        units = []
+        for field in fields:
+            units.extend(field.units)
+        super(RecordCode, self).__init__(
+                domain=domain,
+                units=units,
+                binding=binding,
+                equality_vector=(tuple(fields), domain))
+        self.fields = fields
+
+
+class AnnihilatorCode(Code):
+
+    def __init__(self, code, indicator, binding):
+        assert isinstance(code, Code)
+        assert isinstance(indicator, Unit)
+        super(AnnihilatorCode, self).__init__(
+                domain=code.domain,
+                units=[indicator]+code.units,
+                binding=binding,
+                equality_vector=(code, indicator))
+        self.code = code
+        self.indicator = indicator
 
 
 class FormulaCode(Formula, Code):

@@ -389,11 +389,12 @@ class QueryFrame(Clause):
         The query segment.
     """
 
-    def __init__(self, segment, term):
+    def __init__(self, segment, compose, term):
         assert isinstance(segment, maybe(SegmentFrame))
         assert isinstance(term, QueryTerm)
         super(QueryFrame, self).__init__(term.expression)
         self.segment = segment
+        self.compose = compose
         self.term = term
 
 

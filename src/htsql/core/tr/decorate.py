@@ -6,7 +6,7 @@
 
 from ..adapter import Protocol, named
 from ..domain import Profile
-from .lookup import guess_name, guess_title
+from .lookup import guess_label, guess_header
 from .binding import Binding
 
 
@@ -46,23 +46,23 @@ class DecorateSyntax(Decorate):
         return self.binding.syntax
 
 
-class DecorateName(Decorate):
+class DecorateLabel(Decorate):
 
-    named('name')
-
-    def __call__(self):
-        name = guess_name(self.binding)
-        if name is not None:
-            name = name.encode('utf-8')
-        return name
-
-
-class DecorateTitle(Decorate):
-
-    named('title')
+    named('label')
 
     def __call__(self):
-        return guess_title(self.binding)
+        label = guess_label(self.binding)
+        if label is not None:
+            label = label.encode('utf-8')
+        return label
+
+
+class DecorateHeader(Decorate):
+
+    named('header')
+
+    def __call__(self):
+        return guess_header(self.binding)
 
 
 class DecoratePlan(Decorate):

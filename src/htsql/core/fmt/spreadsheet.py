@@ -30,6 +30,7 @@ class CSVRenderer(Renderer):
     dialect = 'excel'
 
     def render(self, product):
+        self.flatten_product(product)
         status = self.generate_status(product)
         headers = self.generate_headers(product)
         body = self.generate_body(product)

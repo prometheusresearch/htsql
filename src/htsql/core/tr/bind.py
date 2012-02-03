@@ -29,9 +29,11 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       RootBinding, HomeBinding, FreeTableBinding,
                       AttachedTableBinding, ColumnBinding, QuotientBinding,
                       KernelBinding, ComplementBinding, LinkBinding,
-                      SieveBinding, SortBinding, CastBinding, RescopingBinding,
+                      SieveBinding, SortBinding, CastBinding,
+                      ImplicitCastBinding, RescopingBinding,
                       AssignmentBinding, DefinitionBinding, SelectionBinding,
-                      RerouteBinding, ReferenceRerouteBinding, AliasBinding,
+                      WildSelectionBinding, RerouteBinding,
+                      ReferenceRerouteBinding, AliasBinding,
                       LiteralBinding, VoidBinding,
                       Recipe, LiteralRecipe, SelectionRecipe,
                       FreeTableRecipe, AttachedTableRecipe,
@@ -40,7 +42,7 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
                      lookup_attribute_set, lookup_reference_set,
-                     expand, direct, guess_name, lookup_command)
+                     expand, direct, guess_label, lookup_command)
 from .coerce import coerce
 from .decorate import decorate
 
@@ -296,37 +298,34 @@ class BindSegment(Bind):
         seed = self.state.bind(self.syntax.branch)
         if lookup_command(seed) is not None:
             return seed
-        # Extract output flow and columns.
-        bindings = []
-        recipes = expand(seed, with_syntax=True, with_wild=True,
+        seed = self.normalize(seed)
+        domain = ListDomain(seed.domain)
+        return SegmentBinding(self.state.scope, seed, domain,
+                              self.syntax)
+
+    def normalize(self, binding):
+        recipes = expand(binding, with_syntax=True, with_wild=True,
                          with_class=True)
-        if recipes is None:
-            bindings.append(seed)
-            seed = None
-        else:
+        if recipes is not None:
+            elements = []
             for syntax, recipe in recipes:
-                binding = self.state.use(recipe, syntax, scope=seed)
-                binding = RescopingBinding(binding, seed, binding.syntax)
-                bindings.append(binding)
-        # Validate the types of the output columns.
-        elements = []
-        for binding in bindings:
+                element = self.state.use(recipe, syntax, scope=binding)
+                element = self.normalize(element)
+                elements.append(element)
+            if not elements:
+                raise BindError("output columns are not specified",
+                                binding.syntax.mark)
+            fields = [decorate(element) for element in elements]
+            domain = RecordDomain(fields)
+            binding = SelectionBinding(binding, elements, domain,
+                                       binding.syntax)
+        else:
             domain = coerce(binding.domain)
             if domain is None:
                 raise BindError("output column must be scalar",
                                 binding.mark)
-            element = CastBinding(binding, domain, binding.syntax)
-            elements.append(element)
-        # Complain on an empty selector.
-        # FIXME: an empty selector should be valid.
-        if not elements:
-            raise BindError("output columns are not specified",
-                            self.syntax.mark)
-        # Generate a binding node.
-        fields = [decorate(element) for element in elements]
-        domain = ListDomain(RecordDomain(fields))
-        return SegmentBinding(self.state.scope, seed, elements, domain,
-                              self.syntax)
+            binding = ImplicitCastBinding(binding, domain, binding.syntax)
+        return binding
 
 
 class BindSelector(Bind):
@@ -370,7 +369,7 @@ class BindSelector(Bind):
                 self.state.push_scope(scope)
             # Extract nested selectors, if any.
             bindings = []
-            recipes = expand(binding, with_wild=True, with_syntax=True)
+            recipes = expand(binding, with_wild=True)
             if recipes is not None:
                 seed = binding
                 for syntax, recipe in recipes:
@@ -448,21 +447,21 @@ class BindQuotient(Bind):
             if domain is None:
                 raise BindError("quotient column must be scalar",
                                 element.mark)
-            kernel = CastBinding(element, domain, element.syntax)
+            kernel = ImplicitCastBinding(element, domain, element.syntax)
             kernels.append(kernel)
         # Generate the quotient scope.
         quotient = QuotientBinding(self.state.scope, seed, kernels,
                                    self.syntax)
         # Assign names to the kernel and the complement links when possible.
         binding = quotient
-        name = guess_name(seed)
+        name = guess_label(seed)
         if name is not None:
             recipe = ComplementRecipe(quotient)
             recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, False, None, recipe,
                                         self.syntax)
         for index, kernel in enumerate(kernels):
-            name = guess_name(kernel)
+            name = guess_label(kernel)
             if name is not None:
                 recipe = KernelRecipe(quotient, index)
                 recipe = ClosedRecipe(recipe)
@@ -480,7 +479,8 @@ class BindSieve(Bind):
         base = self.state.bind(self.syntax.lbranch)
         # Bind the filter and force the Boolean type on it.
         filter = self.state.bind(self.syntax.rbranch, scope=base)
-        filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
+        filter = ImplicitCastBinding(filter, coerce(BooleanDomain()),
+                                     filter.syntax)
         # Produce a sieve scope.
         return SieveBinding(base, filter, self.syntax)
 
@@ -529,10 +529,10 @@ class BindLink(Bind):
             if domain is None:
                 raise BindError("cannot coerce origin and target columns"
                                 " to a common type", self.syntax.mark)
-            origin_image = CastBinding(origin_image, domain,
-                                       origin_image.syntax)
-            target_image = CastBinding(target_image, domain,
-                                       target_image.syntax)
+            origin_image = ImplicitCastBinding(origin_image, domain,
+                                               origin_image.syntax)
+            target_image = ImplicitCastBinding(target_image, domain,
+                                               target_image.syntax)
             images.append((origin_image, target_image))
         # Generate a link scope.
         return LinkBinding(self.state.scope, seed, images, self.syntax)
@@ -684,7 +684,8 @@ class BindWildcard(Bind):
             elements.append(element)
         fields = [decorate(element) for element in elements]
         domain = RecordDomain(fields)
-        return SelectionBinding(self.state.scope, elements, domain, self.syntax)
+        return WildSelectionBinding(self.state.scope, elements, domain,
+                                    self.syntax)
 
 
 class BindReference(Bind):
@@ -754,7 +755,7 @@ class BindNumber(Bind):
             domain = coerce(DecimalDomain())
         elif self.syntax.is_integer:
             domain = coerce(IntegerDomain())
-        binding = CastBinding(binding, domain, self.syntax)
+        binding = ImplicitCastBinding(binding, domain, self.syntax)
         return binding
 
 
@@ -951,7 +952,7 @@ class BindByName(Protocol):
                        if sample_arity in [-1, arity] and sample != model
                             and similar(model, sample)]
             hint = hint_choices(choices)
-        scope_name = guess_name(self.state.scope)
+        scope_name = guess_label(self.state.scope)
         if scope_name is not None:
             scope_name = scope_name.encode('utf-8')
         if isinstance(self.syntax, (FunctionSyntax, MappingSyntax)):

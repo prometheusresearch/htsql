@@ -19,7 +19,8 @@ from .coerce import coerce
 from .flow import (Expression, QueryExpr, SegmentExpr, Flow, RootFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
                    LinkedFlow, FilteredFlow, OrderedFlow,
-                   Code, LiteralCode, CastCode, FormulaCode, Unit,
+                   Code, LiteralCode, CastCode, RecordCode,
+                   AnnihilatorCode, FormulaCode, Unit,
                    CompoundUnit, ScalarUnit, AggregateUnitBase, AggregateUnit,
                    KernelUnit, CoveringUnit)
 from .signature import Signature, OrSig, AndSig
@@ -609,11 +610,10 @@ class RewriteSegment(Rewrite):
     adapts(SegmentExpr)
 
     def __call__(self):
-        # Rewrite the output flow and output columns.
+        # Rewrite the output flow and output record.
         flow = self.state.rewrite(self.expression.flow)
-        elements = [self.state.rewrite(element)
-                    for element in self.expression.elements]
-        return self.expression.clone(flow=flow, elements=elements)
+        code = self.state.rewrite(self.expression.code)
+        return self.expression.clone(flow=flow, code=code)
 
 
 class UnmaskSegment(Unmask):
@@ -621,13 +621,13 @@ class UnmaskSegment(Unmask):
     adapts(SegmentExpr)
 
     def __call__(self):
-        # Unmask output columns against the output flow.
-        elements = [self.state.unmask(element, mask=self.expression.flow)
-                    for element in self.expression.elements]
+        # Unmask the output record against the output flow.
+        code = self.state.unmask(self.expression.code,
+                                 mask=self.expression.flow)
         # Unmask the flow itself.
         flow = self.state.unmask(self.expression.flow)
         # Produce a clone of the segment with new flow and output columns.
-        return self.expression.clone(flow=flow, elements=elements)
+        return self.expression.clone(flow=flow, code=code)
 
 
 class CollectSegment(Collect):
@@ -637,8 +637,7 @@ class CollectSegment(Collect):
     def __call__(self):
         # Collect units in the output flow and output columns.
         self.state.collect(self.expression.flow)
-        for element in self.expression.elements:
-            self.state.collect(element)
+        self.state.collect(self.expression.code)
 
 
 class ReplaceSegment(Replace):
@@ -648,9 +647,8 @@ class ReplaceSegment(Replace):
     def __call__(self):
         # Rewrite the output flow and output columns.
         flow = self.state.replace(self.expression.flow)
-        elements = [self.state.replace(element)
-                    for element in self.expression.elements]
-        return self.expression.clone(flow=flow, elements=elements)
+        code = self.state.replace(self.expression.code)
+        return self.expression.clone(flow=flow, code=code)
 
 
 class RewriteFlow(Rewrite):
@@ -1226,6 +1224,86 @@ class RewriteBySignature(Adapter):
         arguments = self.arguments.map(self.state.rewrite)
         return FormulaCode(self.signature, self.domain,
                            self.code.binding, **arguments)
+
+
+class RewriteRecord(Rewrite):
+
+    adapts(RecordCode)
+
+    def __call__(self):
+        fields = [self.state.rewrite(field)
+                  for field in self.code.fields]
+        return self.code.clone(fields=fields)
+
+
+class UnmaskRecord(Unmask):
+
+    adapts(RecordCode)
+
+    def __call__(self):
+        fields = [self.state.unmask(field)
+                  for field in self.code.fields]
+        return self.code.clone(fields=fields)
+
+
+class CollectRecord(Collect):
+
+    adapts(RecordCode)
+
+    def __call__(self):
+        for field in self.code.fields:
+            self.state.collect(field)
+
+
+class ReplaceRecord(Replace):
+
+    adapts(RecordCode)
+
+    def __call__(self):
+        fields = [self.state.replace(field)
+                  for field in self.code.fields]
+        return self.code.clone(fields=fields)
+
+
+class RewriteAnnihilator(Rewrite):
+
+    adapts(AnnihilatorCode)
+
+    def __call__(self):
+        code = self.state.rewrite(self.code.code)
+        indicator = self.state.rewrite(self.code.indicator)
+        return self.code.clone(code=code, indicator=indicator)
+
+
+class UnmaskAnnihilator(Unmask):
+
+    adapts(AnnihilatorCode)
+
+    def __call__(self):
+        code = self.state.unmask(self.code.code)
+        indicator = self.state.unmask(self.code.indicator)
+        if not isinstance(indicator, Unit):
+            return code
+        return self.code.clone(code=code, indicator=indicator)
+
+
+class CollectAnnihilator(Collect):
+
+    adapts(AnnihilatorCode)
+
+    def __call__(self):
+        self.state.collect(self.code.code)
+        self.state.collect(self.code.indicator)
+
+
+class ReplaceAnnihilator(Replace):
+
+    adapts(AnnihilatorCode)
+
+    def __call__(self):
+        code = self.state.replace(self.code.code)
+        indicator = self.state.replace(self.code.indicator)
+        return self.code.clone(code=code, indicator=indicator)
 
 
 class RewriteUnit(RewriteCode):

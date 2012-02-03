@@ -122,13 +122,11 @@ class SegmentBinding(Binding):
         The output columns.
     """
 
-    def __init__(self, base, seed, elements, domain, syntax):
+    def __init__(self, base, seed, domain, syntax):
         assert isinstance(base, Binding)
-        assert isinstance(seed, maybe(Binding))
-        assert isinstance(elements, listof(Binding))
+        assert isinstance(seed, Binding)
         super(SegmentBinding, self).__init__(base, domain, syntax)
         self.seed = seed
-        self.elements = elements
 
 
 class CommandBinding(Binding):
@@ -406,18 +404,6 @@ class SortBinding(ChainingBinding):
         self.offset = offset
 
 
-class CastBinding(ChainingBinding):
-    """
-    Represents a type conversion operation.
-
-    `domain` (:class:`htsql.core.domain.Domain`)
-        The target domain.
-    """
-
-    def __init__(self, base, domain, syntax):
-        super(CastBinding, self).__init__(base, domain, syntax)
-
-
 class RescopingBinding(ChainingBinding):
     """
     Represents a rescoping operation.
@@ -628,6 +614,22 @@ class LiteralBinding(Binding):
     def __init__(self, base, value, domain, syntax):
         super(LiteralBinding, self).__init__(base, domain, syntax)
         self.value = value
+
+
+class CastBinding(Binding):
+    """
+    Represents a type conversion operation.
+
+    `domain` (:class:`htsql.core.domain.Domain`)
+        The target domain.
+    """
+
+    def __init__(self, base, domain, syntax):
+        super(CastBinding, self).__init__(base, domain, syntax)
+
+
+class ImplicitCastBinding(CastBinding):
+    pass
 
 
 class FormulaBinding(Formula, Binding):

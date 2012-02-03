@@ -616,29 +616,27 @@ class SegmentTerm(UnaryTerm):
 
     A segment term generates the following SQL clause::
 
-        (SELECT <elements> FROM <kid>)
+        (SELECT <code> FROM <kid>)
 
     `kid` (:class:`Term`)
         The operand.
-
-    `elements` (a list of :class:`htsql.core.tr.flow.Code`)
-        A list of expressions to produce.
     """
 
-    def __init__(self, tag, kid, elements, flow, routes):
-        assert isinstance(elements, listof(Code))
+    def __init__(self, tag, kid, code, flow, routes):
+        assert isinstance(code, Code)
         root = flow
         while not root.is_root:
             root = root.base
         super(SegmentTerm, self).__init__(tag, kid,
                                           flow, root, routes)
-        self.elements = elements
+        self.code = code
 
     def __str__(self):
-        # Display:
-        #   <kid> {<element>,...}
-        return "%s {%s}" % (self.kid, ",".join(str(element)
-                                               for element in self.elements))
+        ## Display:
+        ##   <kid> {<element>,...}
+        #return "%s {%s}" % (self.kid, ",".join(str(element)
+        #                                       for element in self.elements))
+        return "%s {}" % self.kid
 
 
 class QueryTerm(PreTerm):

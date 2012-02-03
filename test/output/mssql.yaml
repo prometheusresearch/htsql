@@ -2622,6 +2622,7 @@ tests:
              ----
              /(3+4)*6
              SELECT ((3 + 4) * 6)
+             WHERE (((3 + 4) * 6) IS NOT NULL)
         - uri: /count(school)
           status: 200 OK
           headers:
@@ -2634,8 +2635,10 @@ tests:
 
              ----
              /count(school)
-             SELECT COUNT(1)
-             FROM [ad].[school]
+             SELECT [school].[count]
+             FROM (SELECT COUNT(1) AS [count]
+                   FROM [ad].[school]) AS [school]
+             WHERE ([school].[count] IS NOT NULL)
         - uri: /{count(school), count(program), count(department)}
           status: 200 OK
           headers:
@@ -3723,8 +3726,6 @@ tests:
           body: |2
              | department                                                                                    |
              +-----------------------------------------------------------------------------------------------+
-             |        |                        |             | school                                        |
-             |        |                        |             +-----------------------------------------------+
              | code   | name                   | school_code | code | name                          | campus |
             -+--------+------------------------+-------------+------+-------------------------------+--------+-
              | acc    | Accounting             | bus         | bus  | School of Business            | south  |
@@ -6810,8 +6811,10 @@ tests:
 
              ----
              /max(course.credits)
-             SELECT MAX([course].[credits])
-             FROM [ad].[course]
+             SELECT [course].[max]
+             FROM (SELECT MAX([course].[credits]) AS [max]
+                   FROM [ad].[course]) AS [course]
+             WHERE ([course].[max] IS NOT NULL)
         - uri: /school{name, count(program), count(department)}
           status: 200 OK
           headers:
@@ -7615,6 +7618,8 @@ tests:
           body: |2
              | department                                                                                                           |
              +----------------------------------------------------------------------------------------------------------------------+
+             |                        | department                                                                                  |
+             |                        +---------------------------------------------------------------------------------------------+
              | name                   | count(sophomore) | max(sophomore.credits) | min(sophomore.credits) | avg(sophomore.credits) |
             -+------------------------+------------------+------------------------+------------------------+------------------------+-
              | Accounting             |                2 |                      3 |                      3 |               3.000000 |
@@ -9475,18 +9480,18 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | distinct(program{degree}) |
-             +---------------------------+
-             | degree                    |
-            -+---------------------------+-
-             | ba                        |
-             | bs                        |
-             | ct                        |
-             | ma                        |
-             | ms                        |
-             | pb                        |
-             | ph                        |
-                                  (7 rows)
+             | program^degree |
+             +----------------+
+             | degree         |
+            -+----------------+-
+             | ba             |
+             | bs             |
+             | ct             |
+             | ma             |
+             | ms             |
+             | pb             |
+             | ph             |
+                       (7 rows)
 
              ----
              /distinct(program{degree})
@@ -9532,11 +9537,13 @@ tests:
 
              ----
              /count(program^degree)
-             SELECT COUNT(1)
-             FROM (SELECT 1 AS [^]
-                   FROM [ad].[program]
-                   WHERE ([program].[degree] IS NOT NULL)
-                   GROUP BY [program].[degree]) AS [program]
+             SELECT [program].[count]
+             FROM (SELECT COUNT(1) AS [count]
+                   FROM (SELECT 1 AS [^]
+                         FROM [ad].[program]
+                         WHERE ([program].[degree] IS NOT NULL)
+                         GROUP BY [program].[degree]) AS [program]) AS [program]
+             WHERE ([program].[count] IS NOT NULL)
         - uri: /school{name, count(program^degree)}
           status: 200 OK
           headers:
@@ -9681,13 +9688,13 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | (program?school_code='eng')^degree |
-             +------------------------------------+
-             | degree                             |
-            -+------------------------------------+-
-             | bs                                 |
-             | ms                                 |
-                                           (2 rows)
+             | program^degree |
+             +----------------+
+             | degree         |
+            -+----------------+-
+             | bs             |
+             | ms             |
+                       (2 rows)
 
              ----
              /(program?school_code='eng')^degree
@@ -9725,44 +9732,44 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | course^{level:=round(no/100),credits} |
-             +---------------------------------------+
-             | level            | credits            |
-            -+------------------+--------------------+-
-             |                8 |                  3 |
-             |                7 |                  4 |
-             |                7 |                  3 |
-             |                7 |                  0 |
-             |                6 |                  6 |
-             |                6 |                  5 |
-             |                6 |                  4 |
-             |                6 |                  3 |
-             |                5 |                  6 |
-             |                5 |                  5 |
-             |                5 |                  4 |
-             |                5 |                  3 |
-             |                4 |                  8 |
-             |                4 |                  5 |
-             |                4 |                  4 |
-             |                4 |                  3 |
-             |                4 |                  2 |
-             |                3 |                  6 |
-             |                3 |                  5 |
-             |                3 |                  4 |
-             |                3 |                  3 |
-             |                3 |                  2 |
-             |                2 |                  6 |
-             |                2 |                  5 |
-             |                2 |                  4 |
-             |                2 |                  3 |
-             |                2 |                  2 |
-             |                2 |                  1 |
-             |                1 |                  6 |
-             |                1 |                  5 |
-             |                1 |                  4 |
-             |                1 |                  3 |
-             |                1 |                  2 |
-                                             (33 rows)
+             | course^{level,credits} |
+             +------------------------+
+             | level     | credits    |
+            -+-----------+------------+-
+             |         8 |          3 |
+             |         7 |          4 |
+             |         7 |          3 |
+             |         7 |          0 |
+             |         6 |          6 |
+             |         6 |          5 |
+             |         6 |          4 |
+             |         6 |          3 |
+             |         5 |          6 |
+             |         5 |          5 |
+             |         5 |          4 |
+             |         5 |          3 |
+             |         4 |          8 |
+             |         4 |          5 |
+             |         4 |          4 |
+             |         4 |          3 |
+             |         4 |          2 |
+             |         3 |          6 |
+             |         3 |          5 |
+             |         3 |          4 |
+             |         3 |          3 |
+             |         3 |          2 |
+             |         2 |          6 |
+             |         2 |          5 |
+             |         2 |          4 |
+             |         2 |          3 |
+             |         2 |          2 |
+             |         2 |          1 |
+             |         1 |          6 |
+             |         1 |          5 |
+             |         1 |          4 |
+             |         1 |          3 |
+             |         1 |          2 |
+                              (33 rows)
 
              ----
              /(course^{level:=round(no/100),credits}){level-,credits-}
@@ -12385,10 +12392,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | 'true' | 'false' |
-            -+--------+---------+-
-             | true   | false   |
-                          (1 row)
+             | boolean('true') | boolean('false') |
+            -+-----------------+------------------+-
+             | true            | false            |
+                                            (1 row)
 
              ----
              /{boolean('true'),boolean('false')}
@@ -12427,10 +12434,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '832040' |
-            -+----------+-
-             | 832040   |
-                  (1 row)
+             | string('832040') |
+            -+------------------+-
+             | 832040           |
+                          (1 row)
 
              ----
              /{string('832040')}
@@ -12456,10 +12463,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '4862' | '-9694845' |
-            -+--------+------------+-
-             |   4862 |   -9694845 |
-                             (1 row)
+             | integer('4862') | integer('-9694845') |
+            -+-----------------+---------------------+-
+             |            4862 |            -9694845 |
+                                               (1 row)
 
              ----
              /{integer('4862'),integer('-9694845')}
@@ -12470,10 +12477,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '-9223372036854775808' | '9223372036854775807' |
-            -+------------------------+-----------------------+-
-             |   -9223372036854775808 |   9223372036854775807 |
-                                                        (1 row)
+             | integer('-9223372036854775808') | integer('9223372036854775807') |
+            -+---------------------------------+--------------------------------+-
+             |            -9223372036854775808 |            9223372036854775807 |
+                                                                          (1 row)
 
              ----
              /{integer('-9223372036854775808'),integer('9223372036854775807')}
@@ -12515,10 +12522,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '1E-10'         |
-            -+-----------------+-
-             | 1.000000000E-10 |
-                         (1 row)
+             | decimal('1E-10') |
+            -+------------------+-
+             |  1.000000000E-10 |
+                          (1 row)
 
              ----
              /{decimal('1E-10')}
@@ -12551,10 +12558,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2147483647' |
-            -+--------------+-
-             | 2147483647.0 |
-                      (1 row)
+             | float('2147483647') |
+            -+---------------------+-
+             |        2147483647.0 |
+                             (1 row)
 
              ----
              /{float('2147483647')}
@@ -12588,10 +12595,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15' |
-            -+--------------+-
-             | 2010-04-15   |
-                      (1 row)
+             | date('2010-04-15') |
+            -+--------------------+-
+             | 2010-04-15         |
+                            (1 row)
 
              ----
              /{date('2010-04-15')}
@@ -12609,10 +12616,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '20:03'  | '20:13:04.5'    |
-            -+----------+-----------------+-
-             | 20:03:00 | 20:13:04.500000 |
-                                    (1 row)
+             | time('20:03') | time('20:13:04.5') |
+            -+---------------+--------------------+-
+             | 20:03:00      | 20:13:04.500000    |
+                                            (1 row)
 
              ----
              /{time('20:03'),time('20:13:04.5')}
@@ -12632,10 +12639,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15' | '2010-04-15 20:13'  | '2010-04-15T20:13:04.5'    | '2010-04-15 20:13:04.5 -0400' |
-            -+--------------+---------------------+----------------------------+-------------------------------+-
-             | 2010-04-15   | 2010-04-15 20:13:00 | 2010-04-15 20:13:04.500000 | 2010-04-15 20:13:04.500000    |
-                                                                                                         (1 row)
+             | datetime('2010-04-15') | datetime('2010-04-15 20:13') | datetime('2010-04-15T20:13:04.5') | datetime('2010-04-15 20:13:04.5 -0400') |
+            -+------------------------+------------------------------+-----------------------------------+-----------------------------------------+-
+             | 2010-04-15             | 2010-04-15 20:13:00          | 2010-04-15 20:13:04.500000        | 2010-04-15 20:13:04.500000              |
+                                                                                                                                             (1 row)
 
              ----
              /{datetime('2010-04-15'),datetime('2010-04-15 20:13'),datetime('2010-04-15T20:13:04.5'),datetime('2010-04-15 20:13:04.5 -0400')}
@@ -12680,10 +12687,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | 'true' | 'false' |
-            -+--------+--------+---------+-
-             |        | true   | false   |
-                                   (1 row)
+             | boolean(null()) | boolean('true') | boolean('false') |
+            -+-----------------+-----------------+------------------+-
+             |                 | true            | false            |
+                                                              (1 row)
 
              ----
              /{boolean(null()),boolean('true'),boolean('false')}
@@ -12695,10 +12702,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | 0.0  | 1e0  |
-            -+--------+------+------+-
-             | false  | true | true |
-                              (1 row)
+             | boolean(integer(null())) | boolean(0.0) | boolean(1e0) |
+            -+--------------------------+--------------+--------------+-
+             | false                    | true         | true         |
+                                                                (1 row)
 
              ----
              /{boolean(integer(null())),boolean(0.0),boolean(1e0)}
@@ -12710,10 +12717,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | ''    | 'FALSE' |
-            -+--------+-------+---------+-
-             | false  | false | true    |
-                                  (1 row)
+             | boolean(string(null())) | boolean(string('')) | boolean(string('FALSE')) |
+            -+-------------------------+---------------------+--------------------------+-
+             | false                   | false               | true                     |
+                                                                                  (1 row)
 
              ----
              /{boolean(string(null())),boolean(string('')),boolean(string('FALSE'))}
@@ -12725,10 +12732,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | '2010-04-15' |
-            -+--------+--------------+-
-             | false  | true         |
-                               (1 row)
+             | boolean(date(null())) | boolean(date('2010-04-15')) |
+            -+-----------------------+-----------------------------+-
+             | false                 | true                        |
+                                                             (1 row)
 
              ----
              /{boolean(date(null())),boolean(date('2010-04-15'))}
@@ -13447,55 +13454,52 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | '60' | 60 |
-            -+--------+------+----+-
-             |        |   60 | 60 |
-                            (1 row)
+             | integer(null()) | integer('60') | integer(60) |
+            -+-----------------+---------------+-------------+-
+             |                 |            60 |          60 |
+                                                       (1 row)
 
              ----
              /{integer(null()),integer('60'),integer(60)}
              SELECT NULL,
-                    60,
                     60
         - uri: /{decimal(null()), decimal('2.125'), decimal(2.125)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | '2.125' | 2.125 |
-            -+--------+---------+-------+-
-             |        |   2.125 | 2.125 |
-                                  (1 row)
+             | decimal(null()) | decimal('2.125') | decimal(2.125) |
+            -+-----------------+------------------+----------------+-
+             |                 |            2.125 |          2.125 |
+                                                             (1 row)
 
              ----
              /{decimal(null()),decimal('2.125'),decimal(2.125)}
              SELECT NULL,
-                    2.125,
                     2.125
         - uri: /{float(null()), float('271828e-5'), float('271828e-5')}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | '271828e-5' | '271828e-5' |
-            -+--------+-------------+-------------+-
-             |        |     2.71828 |     2.71828 |
-                                            (1 row)
+             | float(null()) | float('271828e-5') | float('271828e-5') |
+            -+---------------+--------------------+--------------------+-
+             |               |            2.71828 |            2.71828 |
+                                                                 (1 row)
 
              ----
              /{float(null()),float('271828e-5'),float('271828e-5')}
              SELECT NULL,
-                    2.71828e0,
                     2.71828e0
         - uri: /{integer(2.125), integer(271828e-5)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | 2.125 | 271828e-5 |
-            -+-------+-----------+-
-             |     2 |         2 |
-                           (1 row)
+             | integer(2.125) | integer(271828e-5) |
+            -+----------------+--------------------+-
+             |              2 |                  2 |
+                                             (1 row)
 
              ----
              /{integer(2.125),integer(271828e-5)}
@@ -13506,10 +13510,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | 60 | 271828e-5             |
-            -+----+-----------------------+-
-             | 60 | 2.7182800000000000000 |
-                                    (1 row)
+             | decimal(60) | decimal(271828e-5)    |
+            -+-------------+-----------------------+-
+             |          60 | 2.7182800000000000000 |
+                                             (1 row)
 
              ----
              /{decimal(60),decimal(271828e-5)}
@@ -13520,10 +13524,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | 60   | 2.125 |
-            -+------+-------+-
-             | 60.0 | 2.125 |
-                      (1 row)
+             | float(60) | float(2.125) |
+            -+-----------+--------------+-
+             |      60.0 |        2.125 |
+                                  (1 row)
 
              ----
              /{float(60),float(2.125)}
@@ -13534,10 +13538,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '60' |
-            -+------+-
-             |   60 |
-              (1 row)
+             | integer(string('60')) |
+            -+-----------------------+-
+             |                    60 |
+                               (1 row)
 
              ----
              /{integer(string('60'))}
@@ -13547,10 +13551,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2.125'               |
-            -+-----------------------+-
-             | 2.1250000000000000000 |
-                               (1 row)
+             | decimal(string('2.125')) |
+            -+--------------------------+-
+             |    2.1250000000000000000 |
+                                  (1 row)
 
              ----
              /{decimal(string('2.125'))}
@@ -13560,10 +13564,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '271828e-5' |
-            -+-------------+-
-             |     2.71828 |
-                     (1 row)
+             | float(string('271828e-5')) |
+            -+----------------------------+-
+             |                    2.71828 |
+                                    (1 row)
 
              ----
              /{float(string('271828e-5'))}
@@ -14010,10 +14014,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | 'OMGWTFBBQ' |
-            -+--------+-------------+-
-             |        | OMGWTFBBQ   |
-                              (1 row)
+             | string(null()) | string('OMGWTFBBQ') |
+            -+----------------+---------------------+-
+             |                | OMGWTFBBQ           |
+                                              (1 row)
 
              ----
              /{string(null()),string('OMGWTFBBQ')}
@@ -14024,10 +14028,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | true() | false() |
-            -+--------+---------+-
-             | true   | false   |
-                          (1 row)
+             | string(true()) | string(false()) |
+            -+----------------+-----------------+-
+             | true           | false           |
+                                          (1 row)
 
              ----
              /{string(true()),string(false())}
@@ -14038,10 +14042,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | 60 | 2.125 | -57721e-5 |
-            -+----+-------+-----------+-
-             | 60 | 2.125 | -0.57721  |
-                                (1 row)
+             | string(60) | string(2.125) | string(-57721e-5) |
+            -+------------+---------------+-------------------+-
+             | 60         | 2.125         | -0.57721          |
+                                                        (1 row)
 
              ----
              /{string(60),string(2.125),string(-57721e-5)}
@@ -14053,10 +14057,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15' |
-            -+--------------+-
-             | 2010-04-15   |
-                      (1 row)
+             | string(date('2010-04-15')) |
+            -+----------------------------+-
+             | 2010-04-15                 |
+                                    (1 row)
 
              ----
              /{string(date('2010-04-15'))}
@@ -14066,10 +14070,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '20:03'      |
-            -+--------------+-
-             | 20:03:00.000 |
-                      (1 row)
+             | string(time('20:03')) |
+            -+-----------------------+-
+             | 20:03:00.000          |
+                               (1 row)
 
              ----
              /{string(time('20:03'))}
@@ -14079,10 +14083,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15 20:13'      |
-            -+-------------------------+-
-             | 2010-04-15 20:13:00.000 |
-                                 (1 row)
+             | string(datetime('2010-04-15 20:13')) |
+            -+--------------------------------------+-
+             | 2010-04-15 20:13:00.000              |
+                                              (1 row)
 
              ----
              /{string(datetime('2010-04-15 20:13'))}
@@ -14272,7 +14276,6 @@ tests:
              ----
              /{head(null()),tail(null()),head('OMGWTFBBQ',null()),tail('OMGWTFBBQ',null())}
              SELECT NULL,
-                    NULL,
                     SUBSTRING('OMGWTFBBQ', 1, 1),
                     SUBSTRING('OMGWTFBBQ', (CASE WHEN (1 < 0) THEN (1 - 1) WHEN (1 <= LEN('OMGWTFBBQ')) THEN (LEN('OMGWTFBBQ') + (1 - 1)) ELSE 1 END), LEN('OMGWTFBBQ'))
         - uri: /{slice('OMGWTFBBQ',3,6), slice('OMGWTFBBQ',3,-3), slice('OMGWTFBBQ',-6,6),
@@ -14385,7 +14388,6 @@ tests:
              ----
              /{at(null(),3),at('OMGWTFBBQ',null(),3),at('OMGWTFBBQ',3,null())}
              SELECT NULL,
-                    NULL,
                     SUBSTRING('OMGWTFBBQ', 4, 1)
         - uri: /{upper('lol'), lower('LOL')}
           status: 200 OK
@@ -14504,10 +14506,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | '2010-04-15' |
-            -+--------+--------------+-
-             |        | 2010-04-15   |
-                               (1 row)
+             | date(null()) | date('2010-04-15') |
+            -+--------------+--------------------+-
+             |              | 2010-04-15         |
+                                           (1 row)
 
              ----
              /{date(null()),date('2010-04-15')}
@@ -14518,10 +14520,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15' |
-            -+--------------+-
-             | 2010-04-15   |
-                      (1 row)
+             | date(string('2010-04-15')) |
+            -+----------------------------+-
+             | 2010-04-15                 |
+                                    (1 row)
 
              ----
              /{date(string('2010-04-15'))}
@@ -14531,10 +14533,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15 20:13' |
-            -+--------------------+-
-             | 2010-04-15         |
-                            (1 row)
+             | date(datetime('2010-04-15 20:13')) |
+            -+------------------------------------+-
+             | 2010-04-15                         |
+                                            (1 row)
 
              ----
              /{date(datetime('2010-04-15 20:13'))}
@@ -14662,10 +14664,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | '20:03'  |
-            -+--------+----------+-
-             |        | 20:03:00 |
-                           (1 row)
+             | time(null()) | time('20:03') |
+            -+--------------+---------------+-
+             |              | 20:03:00      |
+                                      (1 row)
 
              ----
              /{time(null()),time('20:03')}
@@ -14676,10 +14678,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '20:03'  |
-            -+----------+-
-             | 20:03:00 |
-                  (1 row)
+             | time(string('20:03')) |
+            -+-----------------------+-
+             | 20:03:00              |
+                               (1 row)
 
              ----
              /{time(string('20:03'))}
@@ -14689,10 +14691,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15 20:13' |
-            -+--------------------+-
-             | 20:13:00           |
-                            (1 row)
+             | time(datetime('2010-04-15 20:13')) |
+            -+------------------------------------+-
+             | 20:13:00                           |
+                                            (1 row)
 
              ----
              /{time(datetime('2010-04-15 20:13'))}
@@ -14775,10 +14777,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | '2010-04-15 20:13'  |
-            -+--------+---------------------+-
-             |        | 2010-04-15 20:13:00 |
-                                      (1 row)
+             | datetime(null()) | datetime('2010-04-15 20:13') |
+            -+------------------+------------------------------+-
+             |                  | 2010-04-15 20:13:00          |
+                                                         (1 row)
 
              ----
              /{datetime(null()),datetime('2010-04-15 20:13')}
@@ -14789,10 +14791,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15 20:13'  |
-            -+---------------------+-
-             | 2010-04-15 20:13:00 |
-                             (1 row)
+             | datetime(string('2010-04-15 20:13')) |
+            -+--------------------------------------+-
+             | 2010-04-15 20:13:00                  |
+                                              (1 row)
 
              ----
              /{datetime(string('2010-04-15 20:13'))}
@@ -14802,10 +14804,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | '2010-04-15' |
-            -+--------------+-
-             | 2010-04-15   |
-                      (1 row)
+             | datetime(date('2010-04-15')) |
+            -+------------------------------+-
+             | 2010-04-15                   |
+                                      (1 row)
 
              ----
              /{datetime(date('2010-04-15'))}
@@ -15300,38 +15302,38 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | department             |
-             +------------------------+
-             | code   | code | school |
-            -+--------+------+--------+-
-             | acc    | bus  | true   |
-             | arthis | art  | true   |
-             | astro  | ns   | true   |
-             | be     | eng  | true   |
-             | bursar |      | false  |
-             | career |      | false  |
-             | chem   | ns   | true   |
-             | comp   | eng  | true   |
-             | econ   | bus  | true   |
-             | edpol  | edu  | true   |
-             | ee     | eng  | true   |
-             | eng    | la   | true   |
-             | hist   | la   | true   |
-             | lang   | la   | true   |
-             | me     | eng  | true   |
-             | mm     | bus  | true   |
-             | mth    | ns   | true   |
-             | parent |      | false  |
-             | phys   | ns   | true   |
-             | pia    | mus  | true   |
-             | poli   | la   | true   |
-             | psych  | la   | true   |
-             | stdart | art  | true   |
-             | str    | mus  | true   |
-             | tched  | edu  | true   |
-             | voc    | mus  | true   |
-             | win    | mus  | true   |
-                              (27 rows)
+             | department                      |
+             +---------------------------------+
+             | code   | code | boolean(school) |
+            -+--------+------+-----------------+-
+             | acc    | bus  | true            |
+             | arthis | art  | true            |
+             | astro  | ns   | true            |
+             | be     | eng  | true            |
+             | bursar |      | false           |
+             | career |      | false           |
+             | chem   | ns   | true            |
+             | comp   | eng  | true            |
+             | econ   | bus  | true            |
+             | edpol  | edu  | true            |
+             | ee     | eng  | true            |
+             | eng    | la   | true            |
+             | hist   | la   | true            |
+             | lang   | la   | true            |
+             | me     | eng  | true            |
+             | mm     | bus  | true            |
+             | mth    | ns   | true            |
+             | parent |      | false           |
+             | phys   | ns   | true            |
+             | pia    | mus  | true            |
+             | poli   | la   | true            |
+             | psych  | la   | true            |
+             | stdart | art  | true            |
+             | str    | mus  | true            |
+             | tched  | edu  | true            |
+             | voc    | mus  | true            |
+             | win    | mus  | true            |
+                                       (27 rows)
 
              ----
              /department{code,school.code,boolean(school)}
@@ -17562,8 +17564,6 @@ tests:
           body: |2
              | department                                                                                    |
              +-----------------------------------------------------------------------------------------------+
-             | school                                        |        |                        |             |
-             +-----------------------------------------------+        |                        |             |
              | code | name                          | campus | code   | name                   | school_code |
             -+------+-------------------------------+--------+--------+------------------------+-------------+-
              | bus  | School of Business            | south  | acc    | Accounting             | bus         |
@@ -18169,8 +18169,6 @@ tests:
             body: |2
                | department                                                                                    |
                +-----------------------------------------------------------------------------------------------+
-               | school                                        |        |                        |             |
-               +-----------------------------------------------+        |                        |             |
                | code | name                          | campus | code   | name                   | school_code |
               -+------+-------------------------------+--------+--------+------------------------+-------------+-
                | bus  | School of Business            | south  | acc    | Accounting             | bus         |
@@ -18310,6 +18308,8 @@ tests:
             body: |2
                | department                                                                                    |
                +-----------------------------------------------------------------------------------------------+
+               | school                                        | department                                    |
+               +-----------------------------------------------+-----------------------------------------------+
                | code | name                          | campus | code   | name                   | school_code |
               -+------+-------------------------------+--------+--------+------------------------+-------------+-
                | bus  | School of Business            | south  | acc    | Accounting             | bus         |
@@ -18343,16 +18343,21 @@ tests:
 
                ----
                /department.select(school.*,*)
-               SELECT [school].[code],
+               SELECT [school].[!],
+                      [school].[code],
                       [school].[name],
                       [school].[campus],
                       [department].[code],
                       [department].[name],
                       [department].[school_code]
                FROM [ad].[department]
-                    LEFT OUTER JOIN [ad].[school]
+                    LEFT OUTER JOIN (SELECT 1 AS [!],
+                                            [school].[code],
+                                            [school].[name],
+                                            [school].[campus]
+                                     FROM [ad].[school]) AS [school]
                                     ON ([department].[school_code] = [school].[code])
-               ORDER BY 4 ASC
+               ORDER BY 5 ASC
         - id: aggregates
           tests:
           - uri: /exists(school)
@@ -18370,6 +18375,9 @@ tests:
                SELECT (CASE WHEN EXISTS(SELECT 1
                                         FROM [ad].[school]
                                         WHERE (1 <> 0)) THEN 1 ELSE 0 END)
+               WHERE ((CASE WHEN EXISTS(SELECT 1
+                                        FROM [ad].[school]
+                                        WHERE (1 <> 0)) THEN 1 ELSE 0 END) IS NOT NULL)
           - uri: /count(school)
             status: 200 OK
             headers:
@@ -18382,8 +18390,10 @@ tests:
 
                ----
                /count(school)
-               SELECT COUNT(1)
-               FROM [ad].[school]
+               SELECT [school].[count]
+               FROM (SELECT COUNT(1) AS [count]
+                     FROM [ad].[school]) AS [school]
+               WHERE ([school].[count] IS NOT NULL)
           - uri: /exists(school?exists(department))
             status: 200 OK
             headers:
@@ -18403,6 +18413,13 @@ tests:
                                                          FROM [ad].[department]
                                                          WHERE ([school].[code] = [department].[school_code])
                                                                AND (1 <> 0))) THEN 1 ELSE 0 END)
+               WHERE ((CASE WHEN EXISTS(SELECT 1
+                                        FROM [ad].[school]
+                                        WHERE (1 <> 0)
+                                              AND EXISTS(SELECT 1
+                                                         FROM [ad].[department]
+                                                         WHERE ([school].[code] = [department].[school_code])
+                                                               AND (1 <> 0))) THEN 1 ELSE 0 END) IS NOT NULL)
           - uri: /count(school?exists(department))
             status: 200 OK
             headers:
@@ -18415,12 +18432,14 @@ tests:
 
                ----
                /count(school?exists(department))
-               SELECT COUNT(1)
-               FROM [ad].[school]
-               WHERE EXISTS(SELECT 1
-                            FROM [ad].[department]
-                            WHERE ([school].[code] = [department].[school_code])
-                                  AND (1 <> 0))
+               SELECT [school].[count]
+               FROM (SELECT COUNT(1) AS [count]
+                     FROM [ad].[school]
+                     WHERE EXISTS(SELECT 1
+                                  FROM [ad].[department]
+                                  WHERE ([school].[code] = [department].[school_code])
+                                        AND (1 <> 0))) AS [school]
+               WHERE ([school].[count] IS NOT NULL)
           - uri: /{exists(school?!exists(department)), count(school?!exists(department))}
             status: 200 OK
             headers:
@@ -19404,12 +19423,14 @@ tests:
                ----
                /department{code,school{count(program?degree='ph'),count(program?degree='bs')},count(school.program?degree='ph'),count(school.program?degree='bs')}?code='mth'
                SELECT [department].[code],
+                      [school_1].[?],
                       [school_1].[count_1],
                       [school_1].[count_2],
                       COALESCE([program].[count_1], 0),
                       COALESCE([program].[count_2], 0)
                FROM [ad].[department]
-                    LEFT OUTER JOIN (SELECT COALESCE([program].[count_1], 0) AS [count_1],
+                    LEFT OUTER JOIN (SELECT 1 AS [?],
+                                            COALESCE([program].[count_1], 0) AS [count_1],
                                             COALESCE([program].[count_2], 0) AS [count_2],
                                             [school].[code]
                                      FROM [ad].[school]
@@ -19703,7 +19724,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | course^{level:=integer(no/100)}                            |
+               | course^level                                               |
                +------------------------------------------------------------+
                | level | count(course) | count(course?credits=$max_credits) |
               -+-------+---------------+------------------------------------+-
@@ -19753,13 +19774,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school?min(department.course.credits)>1&max(department.course.credits)<8^campus |
-               +---------------------------------------------------------------------------------+
-               | campus                              | count(school)                             |
-              -+-------------------------------------+-------------------------------------------+-
-               | old                                 |                                         2 |
-               | south                               |                                         1 |
-                                                                                          (2 rows)
+               | school^campus          |
+               +------------------------+
+               | campus | count(school) |
+              -+--------+---------------+-
+               | old    |             2 |
+               | south  |             1 |
+                                 (2 rows)
 
                ----
                /school?min(department.course.credits)>1&max(department.course.credits)<8^campus{campus,count(school)}
@@ -19786,16 +19807,16 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).department^school_code |
-               +-------------------------------------------------------------------------------------------------------------------------------------+
-               | school_code                     | avg(department.credit_diff)                     | sum(department.credit_diff)                     |
-              -+---------------------------------+-------------------------------------------------+-------------------------------------------------+-
-               | art                             |                                        6.000000 |                                               6 |
-               | bus                             |                                        4.000000 |                                               4 |
-               | eng                             |                                        5.000000 |                                              10 |
-               | la                              |                                        4.000000 |                                               4 |
-               | ns                              |                                        4.000000 |                                               8 |
-                                                                                                                                              (5 rows)
+               | department^school_code                                                  |
+               +-------------------------------------------------------------------------+
+               | school_code | avg(department.credit_diff) | sum(department.credit_diff) |
+              -+-------------+-----------------------------+-----------------------------+-
+               | art         |                    6.000000 |                           6 |
+               | bus         |                    4.000000 |                           4 |
+               | eng         |                    5.000000 |                          10 |
+               | la          |                    4.000000 |                           4 |
+               | ns          |                    4.000000 |                           8 |
+                                                                                  (5 rows)
 
                ----
                /define(department.credit_diff:=max(course.credits)-min(course.credits),department:=department?credit_diff>3).department^school_code{*,avg(department.credit_diff),sum(department.credit_diff)}
@@ -20244,11 +20265,12 @@ tests:
                ----
                /{count(school),{count(school)}?true(),{count(school)}?false()}
                SELECT [school].[count],
-                      [school].[count],
+                      [!].[school],
                       [!].[count]
                FROM (SELECT COUNT(1) AS [count]
                      FROM [ad].[school]) AS [school]
-                    LEFT OUTER JOIN (SELECT [school].[count]
+                    LEFT OUTER JOIN (SELECT 1 AS [school],
+                                            [school].[count]
                                      FROM (SELECT COUNT(1) AS [count]
                                            FROM [ad].[school]) AS [school]
                                      WHERE (0 <> 0)) AS [!]
@@ -20260,6 +20282,8 @@ tests:
             body: |2
                | school                                             |
                +----------------------------------------------------+
+               |      |                               | school      |
+               |      |                               +-------------+
                | code | name                          | code | code |
               -+------+-------------------------------+------+------+-
                | art  | School of Art and Design      |      |      |
@@ -20277,10 +20301,11 @@ tests:
                /school{code,name,{code}?name!~'art',root().school{code}?name!~'art'}
                SELECT [school_1].[code],
                       [school_1].[name],
-                      [school_2].[code],
+                      [school_2].[?],
                       [school_2].[code]
                FROM [ad].[school] AS [school_1]
-                    LEFT OUTER JOIN (SELECT [school].[code]
+                    LEFT OUTER JOIN (SELECT 1 AS [?],
+                                            [school].[code]
                                      FROM [ad].[school]
                                      WHERE ([school].[name] NOT LIKE '%art%' ESCAPE '\')) AS [school_2]
                                     ON ([school_1].[code] = [school_2].[code])
@@ -20292,6 +20317,8 @@ tests:
             body: |2
                | school                                                                |
                +-----------------------------------------------------------------------+
+               |                               |                   | school            |
+               |                               |                   +-------------------+
                | name                          | count(department) | count(department) |
               -+-------------------------------+-------------------+-------------------+-
                | School of Art and Design      |                 2 |                   |
@@ -20309,6 +20336,7 @@ tests:
                /school{name,count(department),{count(department)}?name!~'art'}
                SELECT [school_1].[name],
                       COALESCE([department].[count], 0),
+                      [school_2].[department],
                       [school_2].[count]
                FROM [ad].[school] AS [school_1]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
@@ -20316,7 +20344,8 @@ tests:
                                      FROM [ad].[department]
                                      GROUP BY [department].[school_code]) AS [department]
                                     ON ([school_1].[code] = [department].[school_code])
-                    LEFT OUTER JOIN (SELECT COALESCE([department].[count], 0) AS [count],
+                    LEFT OUTER JOIN (SELECT 1 AS [department],
+                                            COALESCE([department].[count], 0) AS [count],
                                             [school].[code]
                                      FROM [ad].[school]
                                           LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
@@ -20334,6 +20363,8 @@ tests:
             body: |2
                | school                                                                  |
                +-------------------------------------------------------------------------+
+               |                               |                    | school             |
+               |                               |                    +--------------------+
                | name                          | exists(department) | exists(department) |
               -+-------------------------------+--------------------+--------------------+-
                | School of Art and Design      | true               |                    |
@@ -20354,12 +20385,14 @@ tests:
                                         FROM [ad].[department]
                                         WHERE ([school_1].[code] = [department].[school_code])
                                               AND (1 <> 0)) THEN 1 ELSE 0 END),
-                      [school_2].[exists]
+                      [school_2].[exists_1],
+                      [school_2].[exists_2]
                FROM [ad].[school] AS [school_1]
-                    LEFT OUTER JOIN (SELECT (CASE WHEN EXISTS(SELECT 1
+                    LEFT OUTER JOIN (SELECT 1 AS [exists_1],
+                                            (CASE WHEN EXISTS(SELECT 1
                                                               FROM [ad].[department]
                                                               WHERE ([school].[code] = [department].[school_code])
-                                                                    AND (1 <> 0)) THEN 1 ELSE 0 END) AS [exists],
+                                                                    AND (1 <> 0)) THEN 1 ELSE 0 END) AS [exists_2],
                                             [school].[code]
                                      FROM [ad].[school]
                                      WHERE ([school].[name] NOT LIKE '%art%' ESCAPE '\')) AS [school_2]
@@ -20390,12 +20423,17 @@ tests:
                ----
                /department{code,school{code},school{code}?name!~'art'}?code~'a'
                SELECT [department].[code],
+                      [school_1].[!],
                       [school_1].[code],
+                      [school_2].[!],
                       [school_2].[code]
                FROM [ad].[department]
-                    LEFT OUTER JOIN [ad].[school] AS [school_1]
+                    LEFT OUTER JOIN (SELECT 1 AS [!],
+                                            [school].[code]
+                                     FROM [ad].[school]) AS [school_1]
                                     ON ([department].[school_code] = [school_1].[code])
-                    LEFT OUTER JOIN (SELECT [school].[code]
+                    LEFT OUTER JOIN (SELECT 1 AS [!],
+                                            [school].[code]
                                      FROM [ad].[school]
                                      WHERE ([school].[name] NOT LIKE '%art%' ESCAPE '\')) AS [school_2]
                                     ON ([department].[school_code] = [school_2].[code])
@@ -20408,7 +20446,7 @@ tests:
             body: |
               bind error: output columns are not specified:
                   /home()
-                  ^^^^^^^
+                   ^^^^^^
           - uri: /home(){2+2}
             status: 200 OK
             headers:
@@ -20593,19 +20631,17 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?school.code='la')           |
-               +------------------------------------------------------+
-               | distinct(program{degree}?school.code='art') |        |
-               +---------------------------------------------+        |
-               | degree                                      | degree |
-              -+---------------------------------------------+--------+-
-               | ba                                          | ba     |
-               | ba                                          | ct     |
-               | ba                                          | ma     |
-               | pb                                          | ba     |
-               | pb                                          | ct     |
-               | pb                                          | ma     |
-                                                               (6 rows)
+               | program^degree  |
+               +-----------------+
+               | degree | degree |
+              -+--------+--------+-
+               | ba     | ba     |
+               | ba     | ct     |
+               | ba     | ma     |
+               | pb     | ba     |
+               | pb     | ct     |
+               | pb     | ma     |
+                          (6 rows)
 
                ----
                /distinct(program{degree}?school.code='art').home().distinct(program{degree}?school.code='la'){root().distinct(program{degree}?school.code='art').*,*}
@@ -21152,13 +21188,14 @@ tests:
                ----
                /{moniker(this()){count(school)},moniker(this()?true()){count(school)},moniker(this()?false()){count(school)}}
                SELECT COALESCE([school].[count], 0),
-                      COALESCE([school].[count], 0),
+                      [!_2].[school],
                       [!_2].[count]
                FROM (SELECT 1 AS [!]) AS [!_1]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count]
                                      FROM [ad].[school]) AS [school]
                                     ON (1 <> 0)
-                    LEFT OUTER JOIN (SELECT COALESCE([school].[count], 0) AS [count]
+                    LEFT OUTER JOIN (SELECT 1 AS [school],
+                                            COALESCE([school].[count], 0) AS [count]
                                      FROM (SELECT 1 AS [!]) AS [!]
                                           LEFT OUTER JOIN (SELECT COUNT(1) AS [count]
                                                            FROM [ad].[school]) AS [school]
@@ -22215,10 +22252,11 @@ tests:
 
                ----
                /program.fork(part_of_code){root().program{school.code,code,part_of_code},school.code,code,part_of_code}
-               SELECT [school_1].[code],
-                      [program_1].[code],
-                      [program_1].[part_of_code],
-                      [school_2].[code],
+               SELECT [program_3].[!],
+                      [program_3].[code_1],
+                      [program_3].[code_2],
+                      [program_3].[part_of_code],
+                      [school].[code],
                       [program_2].[code],
                       [program_2].[part_of_code]
                FROM [ad].[program] AS [program_1]
@@ -22227,11 +22265,18 @@ tests:
                                        [program].[school_code]
                                 FROM [ad].[program]) AS [program_2]
                                ON ([program_1].[part_of_code] = [program_2].[part_of_code])
-                    INNER JOIN [ad].[school] AS [school_1]
-                               ON ([program_1].[school_code] = [school_1].[code])
-                    INNER JOIN [ad].[school] AS [school_2]
-                               ON ([program_2].[school_code] = [school_2].[code])
-               ORDER BY [program_1].[school_code] ASC, 2 ASC, [program_2].[school_code] ASC, 5 ASC
+                    INNER JOIN (SELECT 1 AS [!],
+                                       [school].[code] AS [code_1],
+                                       [program].[code] AS [code_2],
+                                       [program].[part_of_code],
+                                       [program].[school_code]
+                                FROM [ad].[program]
+                                     INNER JOIN [ad].[school]
+                                                ON ([program].[school_code] = [school].[code])) AS [program_3]
+                               ON (([program_1].[school_code] = [program_3].[school_code]) AND ([program_1].[code] = [program_3].[code_2]))
+                    INNER JOIN [ad].[school]
+                               ON ([program_2].[school_code] = [school].[code])
+               ORDER BY [program_1].[school_code] ASC, [program_1].[code] ASC, [program_2].[school_code] ASC, 6 ASC
           - uri: /school.fork().fork().fork().limit(1)
             status: 200 OK
             headers:
@@ -22454,6 +22499,7 @@ tests:
                ----
                /@@@@@true()
                SELECT 1
+               WHERE (1 <> 0)
           - uri: /@@@@@school.@@@@@true()
             status: 200 OK
             headers:
@@ -22467,6 +22513,7 @@ tests:
                ----
                /@@@@@school.@@@@@true()
                SELECT 1
+               WHERE (1 <> 0)
           - uri: /school.@school
             status: 200 OK
             headers:
@@ -22624,7 +22671,7 @@ tests:
             body: |
               bind error: output columns are not specified:
                   /{}
-                  ^^^
+                   ^^
           - uri: /school{}
             status: 400 Bad Request
             headers:
@@ -22632,7 +22679,7 @@ tests:
             body: |
               bind error: output columns are not specified:
                   /school{}
-                  ^^^^^^^^^
+                   ^^^^^^^^
         - id: assignments
           tests:
           - uri: /school.define(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
@@ -22730,7 +22777,6 @@ tests:
                /school{code,count(program.student),count((program.define(s:=student)?degree='bs').s),count((program?degree='bs').define(s:=student).s)}?code='eng'
                SELECT [school].[code],
                       COALESCE([student_1].[count], 0),
-                      COALESCE([student_2].[count], 0),
                       COALESCE([student_2].[count], 0)
                FROM [ad].[school]
                     LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
@@ -22823,14 +22869,16 @@ tests:
 
                ----
                /define(school.program.student:=student?is_active).count((school?code='bus').program.student)
-               SELECT COUNT(1)
-               FROM [ad].[school]
-                    INNER JOIN [ad].[program]
-                               ON ([school].[code] = [program].[school_code])
-                    INNER JOIN [ed].[student]
-                               ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
-               WHERE ([student].[is_active] <> 0)
-                     AND ([school].[code] = 'bus')
+               SELECT [student].[count]
+               FROM (SELECT COUNT(1) AS [count]
+                     FROM [ad].[school]
+                          INNER JOIN [ad].[program]
+                                     ON ([school].[code] = [program].[school_code])
+                          INNER JOIN [ed].[student]
+                                     ON (([program].[school_code] = [student].[school_code]) AND ([program].[code] = [student].[program_code]))
+                     WHERE ([student].[is_active] <> 0)
+                           AND ([school].[code] = 'bus')) AS [student]
+               WHERE ([student].[count] IS NOT NULL)
           - uri: /define(school.department.course:=course?credits>2, school.department.course:=course?credits<5,
               school.department:=department?code='acc') .school.department.course{department.code,no,title,credits}
             status: 200 OK
@@ -22943,6 +22991,8 @@ tests:
             body: |2
                | school                                                                        |
                +-------------------------------------------------------------------------------+
+               |      | school                                                                 |
+               |      +------------------------------------------------------------------------+
                | code | count(student) | count(student?gender='m') | count(student?gender='f') |
               -+------+----------------+---------------------------+---------------------------+-
                | art  |             33 |                        33 |                         0 |
@@ -23165,18 +23215,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | bs                        |
-               | ct                        |
-               | ma                        |
-               | ms                        |
-               | pb                        |
-               | ph                        |
-                                    (7 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | ms             |
+               | pb             |
+               | ph             |
+                         (7 rows)
 
                ----
                /distinct(program{degree})
@@ -23190,18 +23240,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | bs                        |
-               | ct                        |
-               | ma                        |
-               | ms                        |
-               | pb                        |
-               | ph                        |
-                                    (7 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | ms             |
+               | pb             |
+               | ph             |
+                         (7 rows)
 
                ----
                /distinct(program{degree}){*}
@@ -23215,18 +23265,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | bs                        |
-               | ct                        |
-               | ma                        |
-               | ms                        |
-               | pb                        |
-               | ph                        |
-                                    (7 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | ms             |
+               | pb             |
+               | ph             |
+                         (7 rows)
 
                ----
                /distinct(program{degree}){degree}
@@ -23240,11 +23290,11 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-                                   (no rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+                        (no rows)
 
                ----
                /distinct(program{degree})?false()
@@ -23259,13 +23309,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | bs                        |
-                                    (2 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | bs             |
+                         (2 rows)
 
                ----
                /distinct(program{degree})?head(*1)='b'
@@ -23280,13 +23330,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | bs                        |
-                                    (2 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | bs             |
+                         (2 rows)
 
                ----
                /distinct(program{degree})?head(degree)='b'
@@ -23301,13 +23351,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | bs                        |
-                                    (2 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | bs             |
+                         (2 rows)
 
                ----
                /distinct(program{degree}){*}?head(*1)='b'
@@ -23322,11 +23372,11 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?false()) |
-               +-----------------------------------+
-               | degree                            |
-              -+-----------------------------------+-
-                                           (no rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+                        (no rows)
 
                ----
                /distinct(program{degree}?false())
@@ -23341,13 +23391,13 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?tail(*1)='a') |
-               +----------------------------------------+
-               | degree                                 |
-              -+----------------------------------------+-
-               | ba                                     |
-               | ma                                     |
-                                                 (2 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | ma             |
+                         (2 rows)
 
                ----
                /distinct(program{degree}?tail(*1)='a')
@@ -23362,11 +23412,11 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?false()) |
-               +-----------------------------------+
-               | degree                            |
-              -+-----------------------------------+-
-                                           (no rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+                        (no rows)
 
                ----
                /distinct(program{degree}?false())?false()
@@ -23382,12 +23432,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?tail(*1)='a') |
-               +----------------------------------------+
-               | degree                                 |
-              -+----------------------------------------+-
-               | ba                                     |
-                                                  (1 row)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+                          (1 row)
 
                ----
                /distinct(program{degree}?tail(*1)='a')?head(*1)='b'
@@ -23403,18 +23453,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree     | count(^)     |
-              -+------------+--------------+-
-               | ba         |           10 |
-               | bs         |           10 |
-               | ct         |            4 |
-               | ma         |            7 |
-               | ms         |            6 |
-               | pb         |            1 |
-               | ph         |            1 |
-                                    (7 rows)
+               | program^degree    |
+               +-------------------+
+               | degree | count(^) |
+              -+--------+----------+-
+               | ba     |       10 |
+               | bs     |       10 |
+               | ct     |        4 |
+               | ma     |        7 |
+               | ms     |        6 |
+               | pb     |        1 |
+               | ph     |        1 |
+                            (7 rows)
 
                ----
                /distinct(program{degree}){*,count(^)}
@@ -23429,18 +23479,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree  | count(program)  |
-              -+---------+-----------------+-
-               | ba      |              10 |
-               | bs      |              10 |
-               | ct      |               4 |
-               | ma      |               7 |
-               | ms      |               6 |
-               | pb      |               1 |
-               | ph      |               1 |
-                                    (7 rows)
+               | program^degree          |
+               +-------------------------+
+               | degree | count(program) |
+              -+--------+----------------+-
+               | ba     |             10 |
+               | bs     |             10 |
+               | ct     |              4 |
+               | ma     |              7 |
+               | ms     |              6 |
+               | pb     |              1 |
+               | ph     |              1 |
+                                  (7 rows)
 
                ----
                /distinct(program{degree}){degree,count(program)}
@@ -23455,7 +23505,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
+               | program^degree            |
                +---------------------------+
                | degree | count(^.student) |
               -+--------+------------------+-
@@ -23489,7 +23539,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree})       |
+               | program^degree                  |
                +---------------------------------+
                | degree | count(program.student) |
               -+--------+------------------------+-
@@ -23523,19 +23573,19 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree:if_null('--')}) |
-               +-----------------------------------------+
-               | degree:if_null('--')                    |
-              -+-----------------------------------------+-
-               | --                                      |
-               | ba                                      |
-               | bs                                      |
-               | ct                                      |
-               | ma                                      |
-               | ms                                      |
-               | pb                                      |
-               | ph                                      |
-                                                  (8 rows)
+               | program^degree:if_null('--') |
+               +------------------------------+
+               | degree:if_null('--')         |
+              -+------------------------------+-
+               | --                           |
+               | ba                           |
+               | bs                           |
+               | ct                           |
+               | ma                           |
+               | ms                           |
+               | pb                           |
+               | ph                           |
+                                       (8 rows)
 
                ----
                /distinct(program{degree:if_null('--')})
@@ -23549,15 +23599,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(student{year(dob),gender}?!is_active) |
-               +------------------------------------------------+
-               | year(dob)               | gender               |
-              -+-------------------------+----------------------+-
-               |                    1982 | m                    |
-               |                    1983 | m                    |
-               |                    1984 | m                    |
-               |                    1985 | m                    |
-                                                         (4 rows)
+               | student^{year(dob),gender} |
+               +----------------------------+
+               | year(dob)     | gender     |
+              -+---------------+------------+-
+               |          1982 | m          |
+               |          1983 | m          |
+               |          1984 | m          |
+               |          1985 | m          |
+                                     (4 rows)
 
                ----
                /distinct(student{year(dob),gender}?!is_active)
@@ -23574,21 +23624,19 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(student{year(dob),gender}?!is_active) |
-               +------------------------------------------------+
-               | year(dob)   | gender   | year(dob)   | gender  |
-              -+-------------+----------+-------------+---------+-
-               |        1982 | m        |        1982 | m       |
-               |        1983 | m        |        1983 | m       |
-               |        1984 | m        |        1984 | m       |
-               |        1985 | m        |        1985 | m       |
-                                                         (4 rows)
+               | student^{year(dob),gender}              |
+               +-----------------------------------------+
+               | year(dob) | gender | year(dob) | gender |
+              -+-----------+--------+-----------+--------+-
+               |      1982 | m      |      1982 | m      |
+               |      1983 | m      |      1983 | m      |
+               |      1984 | m      |      1984 | m      |
+               |      1985 | m      |      1985 | m      |
+                                                  (4 rows)
 
                ----
                /distinct(student{year(dob),gender}?!is_active){*,*1,*2}
                SELECT DATEPART(YEAR, [student].[dob]),
-                      [student].[gender],
-                      DATEPART(YEAR, [student].[dob]),
                       [student].[gender]
                FROM [ed].[student]
                WHERE (DATEPART(YEAR, [student].[dob]) IS NOT NULL)
@@ -23601,15 +23649,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(student{year(dob),gender}?!is_active) |
-               +------------------------------------------------+
-               | year(dob)       | gender       | count(^)      |
-              -+-----------------+--------------+---------------+-
-               |            1982 | m            |             4 |
-               |            1983 | m            |             9 |
-               |            1984 | m            |             8 |
-               |            1985 | m            |             8 |
-                                                         (4 rows)
+               | student^{year(dob),gender}    |
+               +-------------------------------+
+               | year(dob) | gender | count(^) |
+              -+-----------+--------+----------+-
+               |      1982 | m      |        4 |
+               |      1983 | m      |        9 |
+               |      1984 | m      |        8 |
+               |      1985 | m      |        8 |
+                                        (4 rows)
 
                ----
                /distinct(student{year(dob),gender}?!is_active){*,count(^)}
@@ -23627,15 +23675,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(student{y_dob:=year(dob),gender}?!is_active) |
-               +-------------------------------------------------------+
-               | y_dob         | gender        | count(student)        |
-              -+---------------+---------------+-----------------------+-
-               |          1982 | m             |                     4 |
-               |          1983 | m             |                     9 |
-               |          1984 | m             |                     8 |
-               |          1985 | m             |                     8 |
-                                                                (4 rows)
+               | student^{y_dob,gender}          |
+               +---------------------------------+
+               | y_dob | gender | count(student) |
+              -+-------+--------+----------------+-
+               |  1982 | m      |              4 |
+               |  1983 | m      |              9 |
+               |  1984 | m      |              8 |
+               |  1985 | m      |              8 |
+                                          (4 rows)
 
                ----
                /distinct(student{y_dob:=year(dob),gender}?!is_active){y_dob,gender,count(student)}
@@ -23654,12 +23702,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(distinct(student{year(dob)}?!is_active).^{gender}) |
-               +-------------------------------------------------------------+
-               | gender        | count(^)        | count(^.is_active)        |
-              -+---------------+-----------------+---------------------------+-
-               | m             |              29 |                         0 |
-                                                                       (1 row)
+               | ^^gender                               |
+               +----------------------------------------+
+               | gender | count(^) | count(^.is_active) |
+              -+--------+----------+--------------------+-
+               | m      |       29 |                  0 |
+                                                  (1 row)
 
                ----
                /distinct(distinct(student{year(dob)}?!is_active).^{gender}){*,count(^),count(^.is_active)}
@@ -23678,15 +23726,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(distinct(student{year(dob),gender}?!is_active){*1}) |
-               +--------------------------------------------------------------+
-               | year(dob)  | count(^)  | count(^.^)  | count(^.^.is_active)  |
-              -+------------+-----------+-------------+-----------------------+-
-               |       1982 |         1 |           4 |                     0 |
-               |       1983 |         1 |           9 |                     0 |
-               |       1984 |         1 |           8 |                     0 |
-               |       1985 |         1 |           8 |                     0 |
-                                                                       (4 rows)
+               | student^{year(dob),gender}^year(dob)                     |
+               +----------------------------------------------------------+
+               | year(dob) | count(^) | count(^.^) | count(^.^.is_active) |
+              -+-----------+----------+------------+----------------------+-
+               |      1982 |        1 |          4 |                    0 |
+               |      1983 |        1 |          9 |                    0 |
+               |      1984 |        1 |          8 |                    0 |
+               |      1985 |        1 |          8 |                    0 |
+                                                                   (4 rows)
 
                ----
                /distinct(distinct(student{year(dob),gender}?!is_active){*1}){*,count(^),count(^.^),count(^.^.is_active)}
@@ -23728,29 +23776,29 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | pb                        |
-               | ba                        |
-               | bs                        |
-               | ct                        |
-               | ma                        |
-               | ba                        |
-               | ct                        |
-               | ma                        |
-               | ms                        |
-               | bs                        |
-               | ms                        |
-               | ba                        |
-               | ct                        |
-               | ma                        |
-               | bs                        |
-               | ms                        |
-               | ph                        |
-                                   (18 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | pb             |
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ms             |
+               | bs             |
+               | ms             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | bs             |
+               | ms             |
+               | ph             |
+                        (18 rows)
 
                ----
                /school.distinct(program{degree})
@@ -23768,29 +23816,29 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | pb                        |
-               | ba                        |
-               | bs                        |
-               | ct                        |
-               | ma                        |
-               | ba                        |
-               | ct                        |
-               | ma                        |
-               | ms                        |
-               | bs                        |
-               | ms                        |
-               | ba                        |
-               | ct                        |
-               | ma                        |
-               | bs                        |
-               | ms                        |
-               | ph                        |
-                                   (18 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | pb             |
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ms             |
+               | bs             |
+               | ms             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | bs             |
+               | ms             |
+               | ph             |
+                        (18 rows)
 
                ----
                /school.distinct(program{degree}){*}
@@ -23808,11 +23856,11 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-                                   (no rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+                        (no rows)
 
                ----
                /school.distinct(program{degree})?false()
@@ -23831,18 +23879,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | ba                        |
-               | bs                        |
-               | ba                        |
-               | bs                        |
-               | ba                        |
-               | bs                        |
-                                    (7 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | ba             |
+               | bs             |
+               | ba             |
+               | bs             |
+               | ba             |
+               | bs             |
+                         (7 rows)
 
                ----
                /school.distinct(program{degree})?head(*1)='b'
@@ -23861,18 +23909,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree                    |
-              -+---------------------------+-
-               | ba                        |
-               | ba                        |
-               | bs                        |
-               | ba                        |
-               | bs                        |
-               | ba                        |
-               | bs                        |
-                                    (7 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | ba             |
+               | bs             |
+               | ba             |
+               | bs             |
+               | ba             |
+               | bs             |
+                         (7 rows)
 
                ----
                /school.distinct(program{degree}){*}?head(*1)='b'
@@ -23891,11 +23939,11 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?false()) |
-               +-----------------------------------+
-               | degree                            |
-              -+-----------------------------------+-
-                                           (no rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+                        (no rows)
 
                ----
                /school.distinct(program{degree}?false())
@@ -23914,18 +23962,18 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?tail(*1)='a') |
-               +----------------------------------------+
-               | degree                                 |
-              -+----------------------------------------+-
-               | ba                                     |
-               | ba                                     |
-               | ma                                     |
-               | ba                                     |
-               | ma                                     |
-               | ba                                     |
-               | ma                                     |
-                                                 (7 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | ba             |
+               | ma             |
+               | ba             |
+               | ma             |
+               | ba             |
+               | ma             |
+                         (7 rows)
 
                ----
                /school.distinct(program{degree}?tail(*1)='a')
@@ -23944,11 +23992,11 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?false()) |
-               +-----------------------------------+
-               | degree                            |
-              -+-----------------------------------+-
-                                           (no rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+                        (no rows)
 
                ----
                /school.distinct(program{degree}?false())?false()
@@ -23968,15 +24016,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?tail(*1)='a') |
-               +----------------------------------------+
-               | degree                                 |
-              -+----------------------------------------+-
-               | ba                                     |
-               | ba                                     |
-               | ba                                     |
-               | ba                                     |
-                                                 (4 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | ba             |
+               | ba             |
+               | ba             |
+                         (4 rows)
 
                ----
                /school.distinct(program{degree}?tail(*1)='a')?head(*1)='b'
@@ -23996,29 +24044,29 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
-               +---------------------------+
-               | degree     | count(^)     |
-              -+------------+--------------+-
-               | ba         |            2 |
-               | pb         |            1 |
-               | ba         |            1 |
-               | bs         |            2 |
-               | ct         |            2 |
-               | ma         |            1 |
-               | ba         |            2 |
-               | ct         |            1 |
-               | ma         |            3 |
-               | ms         |            1 |
-               | bs         |            4 |
-               | ms         |            4 |
-               | ba         |            5 |
-               | ct         |            1 |
-               | ma         |            3 |
-               | bs         |            4 |
-               | ms         |            1 |
-               | ph         |            1 |
-                                   (18 rows)
+               | program^degree    |
+               +-------------------+
+               | degree | count(^) |
+              -+--------+----------+-
+               | ba     |        2 |
+               | pb     |        1 |
+               | ba     |        1 |
+               | bs     |        2 |
+               | ct     |        2 |
+               | ma     |        1 |
+               | ba     |        2 |
+               | ct     |        1 |
+               | ma     |        3 |
+               | ms     |        1 |
+               | bs     |        4 |
+               | ms     |        4 |
+               | ba     |        5 |
+               | ct     |        1 |
+               | ma     |        3 |
+               | bs     |        4 |
+               | ms     |        1 |
+               | ph     |        1 |
+                           (18 rows)
 
                ----
                /school.distinct(program{degree}){*,count(^)}
@@ -24038,7 +24086,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}) |
+               | program^degree            |
                +---------------------------+
                | degree | count(^.student) |
               -+--------+------------------+-
@@ -24087,30 +24135,30 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree:if_null('--')}) |
-               +-----------------------------------------+
-               | degree:if_null('--')                    |
-              -+-----------------------------------------+-
-               | ba                                      |
-               | pb                                      |
-               | ba                                      |
-               | bs                                      |
-               | ct                                      |
-               | ma                                      |
-               | ba                                      |
-               | ct                                      |
-               | ma                                      |
-               | ms                                      |
-               | bs                                      |
-               | ms                                      |
-               | ba                                      |
-               | ct                                      |
-               | ma                                      |
-               | bs                                      |
-               | ms                                      |
-               | ph                                      |
-               | --                                      |
-                                                 (19 rows)
+               | program^degree:if_null('--') |
+               +------------------------------+
+               | degree:if_null('--')         |
+              -+------------------------------+-
+               | ba                           |
+               | pb                           |
+               | ba                           |
+               | bs                           |
+               | ct                           |
+               | ma                           |
+               | ba                           |
+               | ct                           |
+               | ma                           |
+               | ms                           |
+               | bs                           |
+               | ms                           |
+               | ba                           |
+               | ct                           |
+               | ma                           |
+               | bs                           |
+               | ms                           |
+               | ph                           |
+               | --                           |
+                                      (19 rows)
 
                ----
                /school.distinct(program{degree:if_null('--')})
@@ -24157,22 +24205,22 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(student{year(dob),gender}?!is_active) |
-               +------------------------------------------------+
-               | year(dob)               | gender               |
-              -+-------------------------+----------------------+-
-               |                    1983 | m                    |
-               |                    1984 | m                    |
-               |                    1985 | m                    |
-               |                    1982 | m                    |
-               |                    1983 | m                    |
-               |                    1984 | m                    |
-               |                    1985 | m                    |
-               |                    1982 | m                    |
-               |                    1983 | m                    |
-               |                    1984 | m                    |
-               |                    1985 | m                    |
-                                                        (11 rows)
+               | student^{year(dob),gender} |
+               +----------------------------+
+               | year(dob)     | gender     |
+              -+---------------+------------+-
+               |          1983 | m          |
+               |          1984 | m          |
+               |          1985 | m          |
+               |          1982 | m          |
+               |          1983 | m          |
+               |          1984 | m          |
+               |          1985 | m          |
+               |          1982 | m          |
+               |          1983 | m          |
+               |          1984 | m          |
+               |          1985 | m          |
+                                    (11 rows)
 
                ----
                /school.program.distinct(student{year(dob),gender}?!is_active)
@@ -24198,28 +24246,26 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(student{year(dob),gender}?!is_active) |
-               +------------------------------------------------+
-               | year(dob)   | gender   | year(dob)   | gender  |
-              -+-------------+----------+-------------+---------+-
-               |        1983 | m        |        1983 | m       |
-               |        1984 | m        |        1984 | m       |
-               |        1985 | m        |        1985 | m       |
-               |        1982 | m        |        1982 | m       |
-               |        1983 | m        |        1983 | m       |
-               |        1984 | m        |        1984 | m       |
-               |        1985 | m        |        1985 | m       |
-               |        1982 | m        |        1982 | m       |
-               |        1983 | m        |        1983 | m       |
-               |        1984 | m        |        1984 | m       |
-               |        1985 | m        |        1985 | m       |
-                                                        (11 rows)
+               | student^{year(dob),gender}              |
+               +-----------------------------------------+
+               | year(dob) | gender | year(dob) | gender |
+              -+-----------+--------+-----------+--------+-
+               |      1983 | m      |      1983 | m      |
+               |      1984 | m      |      1984 | m      |
+               |      1985 | m      |      1985 | m      |
+               |      1982 | m      |      1982 | m      |
+               |      1983 | m      |      1983 | m      |
+               |      1984 | m      |      1984 | m      |
+               |      1985 | m      |      1985 | m      |
+               |      1982 | m      |      1982 | m      |
+               |      1983 | m      |      1983 | m      |
+               |      1984 | m      |      1984 | m      |
+               |      1985 | m      |      1985 | m      |
+                                                 (11 rows)
 
                ----
                /school.program.distinct(student{year(dob),gender}?!is_active){*,*1,*2}
                SELECT [student].[year],
-                      [student].[gender],
-                      [student].[year],
                       [student].[gender]
                FROM [ad].[school]
                     INNER JOIN [ad].[program]
@@ -24241,22 +24287,22 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(student{year(dob),gender}?!is_active) |
-               +------------------------------------------------+
-               | year(dob)       | gender       | count(^)      |
-              -+-----------------+--------------+---------------+-
-               |            1983 | m            |             2 |
-               |            1984 | m            |             3 |
-               |            1985 | m            |             2 |
-               |            1982 | m            |             2 |
-               |            1983 | m            |             3 |
-               |            1984 | m            |             3 |
-               |            1985 | m            |             2 |
-               |            1982 | m            |             2 |
-               |            1983 | m            |             4 |
-               |            1984 | m            |             2 |
-               |            1985 | m            |             4 |
-                                                        (11 rows)
+               | student^{year(dob),gender}    |
+               +-------------------------------+
+               | year(dob) | gender | count(^) |
+              -+-----------+--------+----------+-
+               |      1983 | m      |        2 |
+               |      1984 | m      |        3 |
+               |      1985 | m      |        2 |
+               |      1982 | m      |        2 |
+               |      1983 | m      |        3 |
+               |      1984 | m      |        3 |
+               |      1985 | m      |        2 |
+               |      1982 | m      |        2 |
+               |      1983 | m      |        4 |
+               |      1984 | m      |        2 |
+               |      1985 | m      |        4 |
+                                       (11 rows)
 
                ----
                /school.program.distinct(student{year(dob),gender}?!is_active){*,count(^)}
@@ -24284,14 +24330,14 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(distinct(student{year(dob)}?!is_active).^{gender}) |
-               +-------------------------------------------------------------+
-               | gender        | count(^)        | count(^.is_active)        |
-              -+---------------+-----------------+---------------------------+-
-               | m             |               7 |                         0 |
-               | m             |              10 |                         0 |
-               | m             |              12 |                         0 |
-                                                                      (3 rows)
+               | ^^gender                               |
+               +----------------------------------------+
+               | gender | count(^) | count(^.is_active) |
+              -+--------+----------+--------------------+-
+               | m      |        7 |                  0 |
+               | m      |       10 |                  0 |
+               | m      |       12 |                  0 |
+                                                 (3 rows)
 
                ----
                /school.program.distinct(distinct(student{year(dob)}?!is_active).^{gender}){*,count(^),count(^.is_active)}
@@ -24319,22 +24365,22 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(distinct(student{year(dob),gender}?!is_active){*1}) |
-               +--------------------------------------------------------------+
-               | year(dob)  | count(^)  | count(^.^)  | count(^.^.is_active)  |
-              -+------------+-----------+-------------+-----------------------+-
-               |       1983 |         1 |           2 |                     0 |
-               |       1984 |         1 |           3 |                     0 |
-               |       1985 |         1 |           2 |                     0 |
-               |       1982 |         1 |           2 |                     0 |
-               |       1983 |         1 |           3 |                     0 |
-               |       1984 |         1 |           3 |                     0 |
-               |       1985 |         1 |           2 |                     0 |
-               |       1982 |         1 |           2 |                     0 |
-               |       1983 |         1 |           4 |                     0 |
-               |       1984 |         1 |           2 |                     0 |
-               |       1985 |         1 |           4 |                     0 |
-                                                                      (11 rows)
+               | student^{year(dob),gender}^year(dob)                     |
+               +----------------------------------------------------------+
+               | year(dob) | count(^) | count(^.^) | count(^.^.is_active) |
+              -+-----------+----------+------------+----------------------+-
+               |      1983 |        1 |          2 |                    0 |
+               |      1984 |        1 |          3 |                    0 |
+               |      1985 |        1 |          2 |                    0 |
+               |      1982 |        1 |          2 |                    0 |
+               |      1983 |        1 |          3 |                    0 |
+               |      1984 |        1 |          3 |                    0 |
+               |      1985 |        1 |          2 |                    0 |
+               |      1982 |        1 |          2 |                    0 |
+               |      1983 |        1 |          4 |                    0 |
+               |      1984 |        1 |          2 |                    0 |
+               |      1985 |        1 |          4 |                    0 |
+                                                                  (11 rows)
 
                ----
                /school.program.distinct(distinct(student{year(dob),gender}?!is_active){*1}){*,count(^),count(^.^),count(^.^.is_active)}
@@ -24463,14 +24509,14 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (department?code='stdart').course^credits |
-               +-------------------------------------------+
-               | credits             | count(^)            |
-              -+---------------------+---------------------+-
-               |                   4 |                   9 |
-               |                   5 |                   1 |
-               |                   6 |                   2 |
-                                                    (3 rows)
+               | course^credits     |
+               +--------------------+
+               | credits | count(^) |
+              -+---------+----------+-
+               |       4 |        9 |
+               |       5 |        1 |
+               |       6 |        2 |
+                             (3 rows)
 
                ----
                /(department?code='stdart').course^credits?*1>3{*,count(^)}
@@ -24560,70 +24606,70 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school.program^degree |
-               +-----------------------+
-               | degree                |
-              -+-----------------------+-
-               | ba                    |
-               | bs                    |
-               | ct                    |
-               | ma                    |
-               | ba                    |
-               | pb                    |
-               | bs                    |
-               | ms                    |
-               | ph                    |
-               | bs                    |
-               | ms                    |
-               | bs                    |
-               | ms                    |
-               | ph                    |
-               | bs                    |
-               | ms                    |
-               | ba                    |
-               | bs                    |
-               | ct                    |
-               | ma                    |
-               | ba                    |
-               | ct                    |
-               | ma                    |
-               | ms                    |
-               | bs                    |
-               | ms                    |
-               | ba                    |
-               | ct                    |
-               | ma                    |
-               | ba                    |
-               | ct                    |
-               | ma                    |
-               | ba                    |
-               | ct                    |
-               | ma                    |
-               | bs                    |
-               | ms                    |
-               | ba                    |
-               | bs                    |
-               | ct                    |
-               | ma                    |
-               | bs                    |
-               | ms                    |
-               | ph                    |
-               | bs                    |
-               | ms                    |
-               | ph                    |
-               | ba                    |
-               | ct                    |
-               | ma                    |
-               | ba                    |
-               | ct                    |
-               | ma                    |
-               | ba                    |
-               | pb                    |
-               | ba                    |
-               | ct                    |
-               | ma                    |
-               | ms                    |
-                               (59 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | pb             |
+               | bs             |
+               | ms             |
+               | ph             |
+               | bs             |
+               | ms             |
+               | bs             |
+               | ms             |
+               | ph             |
+               | bs             |
+               | ms             |
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ms             |
+               | bs             |
+               | ms             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | bs             |
+               | ms             |
+               | ba             |
+               | bs             |
+               | ct             |
+               | ma             |
+               | bs             |
+               | ms             |
+               | ph             |
+               | bs             |
+               | ms             |
+               | ph             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ba             |
+               | pb             |
+               | ba             |
+               | ct             |
+               | ma             |
+               | ms             |
+                        (59 rows)
 
                ----
                /department.(school.program^degree)
@@ -24643,15 +24689,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | (school?code='art').program^degree |
-               +------------------------------------+
-               | degree                             |
-              -+------------------------------------+-
-               | ba                                 |
-               | pb                                 |
-               | ba                                 |
-               | pb                                 |
-                                             (4 rows)
+               | program^degree |
+               +----------------+
+               | degree         |
+              -+----------------+-
+               | ba             |
+               | pb             |
+               | ba             |
+               | pb             |
+                         (4 rows)
 
                ----
                /department.((school?code='art').program^degree)
@@ -25026,7 +25072,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | student?!is_active^{year(dob),gender}              |
+               | student^{year(dob),gender}                         |
                +----------------------------------------------------+
                | year(dob) | gender | count(^) | count(^?is_active) |
               -+-----------+--------+----------+--------------------+-
@@ -25054,7 +25100,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | student?!is_active^{y_dob:=year(dob),gender}               |
+               | student^{y_dob,gender}                                     |
                +------------------------------------------------------------+
                | y_dob | gender | count(student) | count(student?is_active) |
               -+-------+--------+----------------+--------------------------+-
@@ -25136,7 +25182,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | student^({year(dob),gender}?!is_active)            |
+               | student^{year(dob),gender}                         |
                +----------------------------------------------------+
                | year(dob) | gender | count(^) | count(^?is_active) |
               -+-----------+--------+----------+--------------------+-
@@ -25169,7 +25215,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | student^({y_dob:=year(dob),gender}?!is_active)             |
+               | student^{y_dob,gender}                                     |
                +------------------------------------------------------------+
                | y_dob | gender | count(student) | count(student?is_active) |
               -+-------+--------+----------------+--------------------------+-
@@ -25208,11 +25254,13 @@ tests:
 
                ----
                /count(program^degree)
-               SELECT COUNT(1)
-               FROM (SELECT 1 AS [^]
-                     FROM [ad].[program]
-                     WHERE ([program].[degree] IS NOT NULL)
-                     GROUP BY [program].[degree]) AS [program]
+               SELECT [program].[count]
+               FROM (SELECT COUNT(1) AS [count]
+                     FROM (SELECT 1 AS [^]
+                           FROM [ad].[program]
+                           WHERE ([program].[degree] IS NOT NULL)
+                           GROUP BY [program].[degree]) AS [program]) AS [program]
+               WHERE ([program].[count] IS NOT NULL)
           - uri: /(program^degree).define($degree:=degree) {*, count(^.student?name~$degree)}
             status: 200 OK
             headers:
@@ -25260,7 +25308,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree})            |
+               | program^degree                       |
                +--------------------------------------+
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
@@ -25297,15 +25345,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree}?school.code={'art','la'}) |
-               +----------------------------------------------------+
-               | degree      | count(^)      | count(^.student)     |
-              -+-------------+---------------+----------------------+-
-               | ba          |             7 |                   79 |
-               | ct          |             1 |                    5 |
-               | ma          |             3 |                   34 |
-               | pb          |             1 |                   16 |
-                                                             (4 rows)
+               | program^degree                       |
+               +--------------------------------------+
+               | degree | count(^) | count(^.student) |
+              -+--------+----------+------------------+-
+               | ba     |        7 |               79 |
+               | ct     |        1 |                5 |
+               | ma     |        3 |               34 |
+               | pb     |        1 |               16 |
+                                               (4 rows)
 
                ----
                /distinct(program{degree}?school.code={'art','la'}){*,count(^),count(^.student)}
@@ -25336,7 +25384,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree})            |
+               | program^degree                       |
                +--------------------------------------+
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
@@ -25374,7 +25422,7 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | distinct(program{degree})            |
+               | program^degree                       |
                +--------------------------------------+
                | degree | count(^) | count(^.student) |
               -+--------+----------+------------------+-
@@ -25470,7 +25518,7 @@ tests:
           body: |
             bind error: output columns are not specified:
                 /{}
-                ^^^
+                 ^^
         - uri: /school{}
           status: 400 Bad Request
           headers:
@@ -25478,7 +25526,7 @@ tests:
           body: |
             bind error: output columns are not specified:
                 /school{}
-                ^^^^^^^^^
+                 ^^^^^^^^
         - uri: /school.true()
           status: 200 OK
           headers:
@@ -25492,6 +25540,7 @@ tests:
              ----
              /school.true()
              SELECT 1
+             WHERE (1 <> 0)
         - uri: /school.campus
           status: 200 OK
           headers:
@@ -25506,14 +25555,13 @@ tests:
              | old    |
              | south  |
              | old    |
-             |        |
-             |        |
-               (9 rows)
+               (7 rows)
 
              ----
              /school.campus
              SELECT [school].[campus]
              FROM [ad].[school]
+             WHERE ([school].[campus] IS NOT NULL)
              ORDER BY [school].[code] ASC
         - uri: /school^{}{true()}
           status: 400 Bad Request
@@ -26170,9 +26218,9 @@ tests:
                 {"title": "2.125", "domain": "number"},
                 {"title": "271828e-5", "domain": "number"},
                 {"title": "'HTSQL'", "domain": "string"},
-                {"title": "'2010-04-15'", "domain": "date"},
-                {"title": "'20:13:04.5'", "domain": "time"},
-                {"title": "'2010-04-15 20:13'", "domain": "datetime"}
+                {"title": "date('2010-04-15')", "domain": "date"},
+                {"title": "time('20:13:04.5')", "domain": "time"},
+                {"title": "datetime('2010-04-15 20:13')", "domain": "datetime"}
               ],
               "data": [
                 [null, true, false, 60, 2.125, 2.71828, "HTSQL", "2010-04-15", "20:13:04.500000", "2010-04-15 20:13:00"]
@@ -26184,8 +26232,8 @@ tests:
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.csv"]
-          body: "null(),true(),false(),60,2.125,271828e-5,'HTSQL','2010-04-15','20:13:04.5','2010-04-15
-            20:13'\r\n,true,false,60,2.125,2.71828,HTSQL,2010-04-15,20:13:04.500000,2010-04-15
+          body: "null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15
+            20:13')\r\n,true,false,60,2.125,2.71828,HTSQL,2010-04-15,20:13:04.500000,2010-04-15
             20:13:00\r\n"
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
             time('20:13:04.5'), datetime('2010-04-15 20:13')} /:tsv
@@ -26193,8 +26241,8 @@ tests:
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.tsv"]
-          body: "null()\ttrue()\tfalse()\t60\t2.125\t271828e-5\t'HTSQL'\t'2010-04-15'\t'20:13:04.5'\t'2010-04-15
-            20:13'\r\n\ttrue\tfalse\t60\t2.125\t2.71828\tHTSQL\t2010-04-15\t20:13:04.500000\t2010-04-15
+          body: "null()\ttrue()\tfalse()\t60\t2.125\t271828e-5\t'HTSQL'\tdate('2010-04-15')\ttime('20:13:04.5')\tdatetime('2010-04-15
+            20:13')\r\n\ttrue\tfalse\t60\t2.125\t2.71828\tHTSQL\t2010-04-15\t20:13:04.500000\t2010-04-15
             20:13:00\r\n"
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
             time('20:13:04.5'), datetime('2010-04-15 20:13')} /:txt
@@ -26202,10 +26250,10 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | null() | true() | false() | 60 | 2.125 | 271828e-5 | 'HTSQL' | '2010-04-15' | '20:13:04.5'    | '2010-04-15 20:13'  |
-            -+--------+--------+---------+----+-------+-----------+---------+--------------+-----------------+---------------------+-
-             |        | true   | false   | 60 | 2.125 |   2.71828 | HTSQL   | 2010-04-15   | 20:13:04.500000 | 2010-04-15 20:13:00 |
-                                                                                                                             (1 row)
+             | null() | true() | false() | 60 | 2.125 | 271828e-5 | 'HTSQL' | date('2010-04-15') | time('20:13:04.5') | datetime('2010-04-15 20:13') |
+            -+--------+--------+---------+----+-------+-----------+---------+--------------------+--------------------+------------------------------+-
+             |        | true   | false   | 60 | 2.125 |   2.71828 | HTSQL   | 2010-04-15         | 20:13:04.500000    | 2010-04-15 20:13:00          |
+                                                                                                                                               (1 row)
 
              ----
              /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
@@ -26259,7 +26307,7 @@ tests:
             <tr>
             <td class="content">
             <table class="list" summary="">
-            <tr class="header"><th>null()</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>'HTSQL'</th><th>'2010-04-15'</th><th>'20:13:04.5'</th><th>'2010-04-15 20:13'</th></tr>
+            <tr class="header"><th>null()</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>'HTSQL'</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15 20:13')</th></tr>
             <tr class="odd"><td><em>&mdash;</em></td><td><em>true</em></td><td><em>false</em></td><td class="number">60</td><td class="number">2.125</td><td class="number">2.71828</td><td>HTSQL</td><td>2010-04-15</td><td>20:13:04.500000</td><td>2010-04-15 20:13:00</td></tr>
             <tr class="total"><td colspan="10">(1 row)</td></tr></table></td>
             </tr>
@@ -27998,14 +28046,24 @@ tests:
              SELECT "table"."name",
                     "field"."name",
                     "field"."kind",
+                    "column"."!",
                     "column"."domain",
+                    "link"."!",
                     "link"."is_singular"
              FROM "field"
                   INNER JOIN "table"
                              ON ("field"."table_name" = "table"."name")
-                  LEFT OUTER JOIN "column"
+                  LEFT OUTER JOIN (SELECT 1 AS "!",
+                                          "column"."domain",
+                                          "column"."table_name",
+                                          "column"."name"
+                                   FROM "column") AS "column"
                                   ON (("field"."table_name" = "column"."table_name") AND ("field"."name" = "column"."name"))
-                  LEFT OUTER JOIN "link"
+                  LEFT OUTER JOIN (SELECT 1 AS "!",
+                                          "link"."is_singular",
+                                          "link"."table_name",
+                                          "link"."name"
+                                   FROM "link") AS "link"
                                   ON (("field"."table_name" = "link"."table_name") AND ("field"."name" = "link"."name"))
              WHERE ("field"."table_name" = 'school')
              ORDER BY "field"."table_name" ASC, 2 ASC
@@ -28060,7 +28118,9 @@ tests:
              SELECT "table_1"."name",
                     "table_2"."name",
                     "field"."name",
+                    "link_2"."!",
                     "link_2"."name",
+                    "link_3"."!",
                     "link_3"."name"
              FROM "link" AS "link_1"
                   INNER JOIN "table" AS "table_1"
@@ -28069,9 +28129,16 @@ tests:
                              ON ("link_1"."target_name" = "table_2"."name")
                   INNER JOIN "field"
                              ON (("link_1"."table_name" = "field"."table_name") AND ("link_1"."name" = "field"."name"))
-                  LEFT OUTER JOIN "link" AS "link_2"
+                  LEFT OUTER JOIN (SELECT 1 AS "!",
+                                          "link"."name",
+                                          "link"."table_name"
+                                   FROM "link") AS "link_2"
                                   ON (("link_1"."target_name" = "link_2"."table_name") AND ("link_1"."reverse_name" = "link_2"."name"))
-                  LEFT OUTER JOIN "link" AS "link_3"
+                  LEFT OUTER JOIN (SELECT 1 AS "!",
+                                          "link"."name",
+                                          "link"."target_name",
+                                          "link"."reverse_name"
+                                   FROM "link") AS "link_3"
                                   ON (("link_1"."table_name" = "link_3"."target_name") AND ("link_1"."name" = "link_3"."reverse_name"))
              WHERE ("link_1"."table_name" = 'student')
              ORDER BY "link_1"."table_name" ASC, "link_1"."name" ASC
@@ -28087,8 +28154,10 @@ tests:
 
              ----
              /count(table)
-             SELECT COUNT(1)
-             FROM "table"
+             SELECT "table"."count"
+             FROM (SELECT COUNT(1) AS "count"
+                   FROM "table") AS "table"
+             WHERE ("table"."count" IS NOT NULL)
         - uri: /meta(/count(table))
           status: 200 OK
           headers:
@@ -28101,8 +28170,10 @@ tests:
 
              ----
              /count(table)
-             SELECT COUNT(1)
-             FROM "table"
+             SELECT "table"."count"
+             FROM (SELECT COUNT(1) AS "count"
+                   FROM "table") AS "table"
+             WHERE ("table"."count" IS NOT NULL)
         - uri: /table/:meta/:meta
           status: 200 OK
           headers:
@@ -28419,13 +28490,15 @@ tests:
 
              ----
              /avg(school.count(program))
-             SELECT AVG(CAST(COALESCE([program].[count], 0) AS DECIMAL(38)))
-             FROM [ad].[school]
-                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                          [program].[school_code]
-                                   FROM [ad].[program]
-                                   GROUP BY [program].[school_code]) AS [program]
-                                  ON ([school].[code] = [program].[school_code])
+             SELECT [school].[avg]
+             FROM (SELECT AVG(CAST(COALESCE([program].[count], 0) AS DECIMAL(38))) AS [avg]
+                   FROM [ad].[school]
+                        LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                [program].[school_code]
+                                         FROM [ad].[program]
+                                         GROUP BY [program].[school_code]) AS [program]
+                                        ON ([school].[code] = [program].[school_code])) AS [school]
+             WHERE ([school].[avg] IS NOT NULL)
         - uri: /avg(school.count(department))
           status: 400 Bad Request
           headers:
@@ -28446,13 +28519,15 @@ tests:
 
              ----
              /avg(school.count(program))
-             SELECT AVG(CAST(COALESCE([program].[count], 0) AS DECIMAL(38)))
-             FROM [ad].[school]
-                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                          [program].[school_code]
-                                   FROM [ad].[program]
-                                   GROUP BY [program].[school_code]) AS [program]
-                                  ON ([school].[code] = [program].[school_code])
+             SELECT [school].[avg]
+             FROM (SELECT AVG(CAST(COALESCE([program].[count], 0) AS DECIMAL(38))) AS [avg]
+                   FROM [ad].[school]
+                        LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                [program].[school_code]
+                                         FROM [ad].[program]
+                                         GROUP BY [program].[school_code]) AS [program]
+                                        ON ([school].[code] = [program].[school_code])) AS [school]
+             WHERE ([school].[avg] IS NOT NULL)
         - uri: /avg(school.count(department))
           status: 400 Bad Request
           headers:
@@ -28473,13 +28548,15 @@ tests:
 
              ----
              /avg(school.count(program))
-             SELECT AVG(CAST(COALESCE([program].[count], 0) AS DECIMAL(38)))
-             FROM [ad].[school]
-                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                          [program].[school_code]
-                                   FROM [ad].[program]
-                                   GROUP BY [program].[school_code]) AS [program]
-                                  ON ([school].[code] = [program].[school_code])
+             SELECT [school].[avg]
+             FROM (SELECT AVG(CAST(COALESCE([program].[count], 0) AS DECIMAL(38))) AS [avg]
+                   FROM [ad].[school]
+                        LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                                [program].[school_code]
+                                         FROM [ad].[program]
+                                         GROUP BY [program].[school_code]) AS [program]
+                                        ON ([school].[code] = [program].[school_code])) AS [school]
+             WHERE ([school].[avg] IS NOT NULL)
         - uri: /avg(school.count(department))
           status: 400 Bad Request
           headers:
@@ -28500,8 +28577,10 @@ tests:
 
              ----
              /count(program)
-             SELECT COUNT(1)
-             FROM [ad].[program]
+             SELECT [program].[count]
+             FROM (SELECT COUNT(1) AS [count]
+                   FROM [ad].[program]) AS [program]
+             WHERE ([program].[count] IS NOT NULL)
         - uri: /count(student)
           status: 400 Bad Request
           headers:
@@ -28561,8 +28640,10 @@ tests:
 
              ----
              /max(confidential.pay_grade)
-             SELECT MAX([confidential].[pay_grade])
-             FROM [id].[confidential]
+             SELECT [confidential].[max]
+             FROM (SELECT MAX([confidential].[pay_grade]) AS [max]
+                   FROM [id].[confidential]) AS [confidential]
+             WHERE ([confidential].[max] IS NOT NULL)
         - uri: /confidential.ssn
           status: 400 Bad Request
           headers:
@@ -28612,15 +28693,17 @@ tests:
 
              ----
              /count(c14n)
-             SELECT COUNT(1)
-             FROM [rd].[classification]
+             SELECT [classification].[count]
+             FROM (SELECT COUNT(1) AS [count]
+                   FROM [rd].[classification]) AS [classification]
+             WHERE ([classification].[count] IS NOT NULL)
         - uri: /campus{campus, count(school)}
           status: 200 OK
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             |        | campus        |
-             |        +---------------+
+             | campus                 |
+             +------------------------+
              | campus | count(school) |
             -+--------+---------------+-
              | north  |             1 |
@@ -30121,7 +30204,7 @@ tests:
           body: |
             bind error: output columns are not specified:
                 /{}
-                ^^^
+                 ^^
         - uri: /department{school, code}
           status: 400 Bad Request
           headers:
@@ -30217,7 +30300,7 @@ tests:
           body: |
             bind error: output columns are not specified:
                 /{*}
-                ^^^^
+                 ^^^
         - uri: /school?*1.5
           status: 400 Bad Request
           headers:
@@ -30899,7 +30982,7 @@ tests:
           body: |
             compile error: a singular expression is expected:
                 /school{department^count(course){*}}
-                                                 ^
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
       - id: serialize-errors
         tests:
         - uri: /18446744073709551616
@@ -30915,59 +30998,113 @@ tests:
       id: embedding
       tests:
       - py-include: test/code/test_embedding.py
-        stdout: |
-          URI: /school{code, count(program), count(department)}
-          school(code=u'art', [1]=3, [2]=2)
-          school(code=u'bus', [1]=6, [2]=3)
-          school(code=u'edu', [1]=7, [2]=2)
-          school(code=u'eng', [1]=8, [2]=4)
-          school(code=u'la', [1]=9, [2]=5)
-          school(code=u'mus', [1]=0, [2]=4)
-          school(code=u'ns', [1]=6, [2]=4)
-          school(code=u'ph', [1]=1, [2]=0)
-          school(code=u'sc', [1]=0, [2]=0)
+        stdout: 'URI: /school{code, count(program), count(department)}
+
+          school(code=u''art'', [1]=3, [2]=2)
+
+          school(code=u''bus'', [1]=6, [2]=3)
+
+          school(code=u''edu'', [1]=7, [2]=2)
+
+          school(code=u''eng'', [1]=8, [2]=4)
+
+          school(code=u''la'', [1]=9, [2]=5)
+
+          school(code=u''mus'', [1]=0, [2]=4)
+
+          school(code=u''ns'', [1]=6, [2]=4)
+
+          school(code=u''ph'', [1]=1, [2]=0)
+
+          school(code=u''sc'', [1]=0, [2]=0)
+
 
           URI: /school{name, count(program)}?code=$school_code
-          $school_code: 'bus'
+
+          $school_code: ''bus''
+
           School of Business: 6
+
 
           URI: /school{name, num_prog:=count(program)}?num_prog>=$min_prog&num_prog<=$max_prog
+
           $min_prog: 6
+
           $max_prog: 8
+
           School of Business: 6
+
           College of Education: 7
+
           School of Engineering: 8
+
           School of Natural Sciences: 6
 
+
           URI: /school?campus==$campus
+
           $campus: None
-          school(code=u'ph', name=u'Public Honorariums', campus=None)
-          school(code=u'sc', name=u'School of Continuing Studies', campus=None)
+
+          school(code=u''ph'', name=u''Public Honorariums'', campus=None)
+
+          school(code=u''sc'', name=u''School of Continuing Studies'', campus=None)
+
 
           URI: /school?campus=$campus
-          $campus: ['north', 'south']
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'eng', name=u'School of Engineering', campus=u'north')
-          school(code=u'mus', name=u'School of Music & Dance', campus=u'south')
 
-          URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date, $time, $datetime}
-          $untyped: 'HTSQL'
-          $selector: ['HTTP', 'SQL']
+          $campus: [''north'', ''south'']
+
+          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
+
+          school(code=u''eng'', name=u''School of Engineering'', campus=u''north'')
+
+          school(code=u''mus'', name=u''School of Music & Dance'', campus=u''south'')
+
+
+          URI: /{$untyped, $selector, $boolean, $integer, $float, $decimal, $date,
+          $time, $datetime}
+
+          $untyped: ''HTSQL''
+
+          $selector: [''HTTP'', ''SQL'']
+
           $boolean: True
+
           $integer: 3571
+
           $float: -0.57721
-          $decimal: Decimal('0.875')
+
+          $decimal: Decimal(''0.875'')
+
           $date: datetime.date(2010, 4, 15)
+
           $time: datetime.time(20, 3)
+
           $datetime: datetime.datetime(2010, 4, 15, 20, 3)
-          Record([0]=u'HTSQL', [1]=u'HTTP', [2]=u'SQL', [3]=True, [4]=3571, [5]=-0.57721, [6]=Decimal('0.875'), [7]=datetime.date(2010, 4, 15), [8]=datetime.time(20, 3), [9]=datetime.datetime(2010, 4, 15, 20, 3))
+
+          Record([0]=u''HTSQL'', [1]=Record([0]=u''HTTP'', [1]=u''SQL''), [2]=True,
+          [3]=3571, [4]=-0.57721, [5]=Decimal(''0.875''), [6]=datetime.date(2010,
+          4, 15), [7]=datetime.time(20, 3), [8]=datetime.datetime(2010, 4, 15, 20,
+          3))
+
 
           URI: /meta(/link?table.name=$table_name)
-          $table_name: 'school'
-          link(table_name=u'school', name=u'department', is_singular=False, target_name=u'department', reverse_name=u'school')
-          link(table_name=u'school', name=u'program', is_singular=False, target_name=u'program', reverse_name=u'school')
+
+          $table_name: ''school''
+
+          link(table_name=u''school'', name=u''department'', is_singular=False, target_name=u''department'',
+          reverse_name=u''school'')
+
+          link(table_name=u''school'', name=u''program'', is_singular=False, target_name=u''program'',
+          reverse_name=u''school'')
+
 
           URI: /school
-          school(code=u'art', name=u'School of Art and Design', campus=u'old')
-          school(code=u'bus', name=u'School of Business', campus=u'south')
-          school(code=u'edu', name=u'College of Education', campus=u'old')
+
+          school(code=u''art'', name=u''School of Art and Design'', campus=u''old'')
+
+          school(code=u''bus'', name=u''School of Business'', campus=u''south'')
+
+          school(code=u''edu'', name=u''College of Education'', campus=u''old'')
+
+'

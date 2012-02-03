@@ -569,7 +569,7 @@ class CompileSegment(Compile):
         # Get the ordering of the segment flow.
         order = arrange(self.expression.flow)
         # List of expressions we need the term to export.
-        codes = (self.expression.elements +
+        codes = ([self.expression.code] +
                  [code for code, direction in order])
         # Construct a term corresponding to the segment flow.
         kid = self.state.compile(self.expression.flow)
@@ -582,7 +582,7 @@ class CompileSegment(Compile):
             kid = OrderTerm(self.state.tag(), kid, order, None, None,
                             kid.flow, kid.baseline, kid.routes.copy())
         # Construct a segment term.
-        return SegmentTerm(self.state.tag(), kid, self.expression.elements,
+        return SegmentTerm(self.state.tag(), kid, self.expression.code,
                            kid.flow, kid.routes.copy())
 
 

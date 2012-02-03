@@ -31,7 +31,8 @@ from .flow import (RootFlow, ScalarFlow, DirectTableFlow, FiberTableFlow,
                    QuotientFlow, ComplementFlow, MonikerFlow, ForkedFlow,
                    LinkedFlow, FilteredFlow, OrderedFlow,
                    QueryExpr, SegmentExpr, LiteralCode, FormulaCode,
-                   CastCode, ColumnUnit, ScalarUnit, KernelUnit)
+                   CastCode, RecordCode, AnnihilatorCode,
+                   ColumnUnit, ScalarUnit, KernelUnit)
 from .signature import Signature, IsNullSig, NullIfSig
 import decimal
 
@@ -203,46 +204,36 @@ class EncodeSegment(Encode):
     adapts(SegmentBinding)
 
     def __call__(self):
-        # List of output columns.
-        elements = []
-        # Encode output columns of the segment.
-        for binding in self.binding.elements:
-            # Encode the node.
-            element = self.state.encode(binding)
-            elements.append(element)
-        # Determine the output flow.  If a flow binding is provided,
-        # use it to generate a flow node.
-        if self.binding.seed is not None:
-            flow = self.state.relate(self.binding.seed)
-        # Otherwise, infer the output flow from output columns.
+        code = self.state.encode(self.binding.seed)
+        # List of all unit expressions.
+        units = code.units
+        # No units means a root scalar flow.
+        if not units:
+            flow = RootFlow(None, self.binding)
+        # Otherwise, find a dominating unit flow.
         else:
-            # List of all unit expressions.
-            units = []
-            for element in elements:
-                units.extend(element.units)
-            # No units means a root scalar flow.
-            if not units:
-                flow = RootFlow(None, self.binding)
-            # Otherwise, find a dominating unit flow.
+            # List of dominating flows.
+            flows = []
+            for unit in units:
+                if any(flow.dominates(unit.flow) for flow in flows):
+                    continue
+                flows = [flow for flow in flows
+                              if not unit.flow.dominates(flow)]
+                flows.append(unit.flow)
+            # More than one dominating flow means the output flow
+            # cannot be inferred from the columns unambiguously.
+            if len(flows) > 1:
+                raise EncodeError("cannot deduce an unambiguous"
+                                  " segment flow",
+                                  self.binding.mark)
+            # Otherwise, `flows` contains a single maximal flow node.
             else:
-                # List of dominating flows.
-                flows = []
-                for unit in units:
-                    if any(flow.dominates(unit.flow) for flow in flows):
-                        continue
-                    flows = [flow for flow in flows
-                                  if not unit.flow.dominates(flow)]
-                    flows.append(unit.flow)
-                # More than one dominating flow means the output flow
-                # cannot be inferred from the columns unambiguously.
-                if len(flows) > 1:
-                    raise EncodeError("cannot deduce an unambiguous"
-                                      " segment flow",
-                                      self.binding.mark)
-                # Otherwise, `flows` contains a single maximal flow node.
-                else:
-                    [flow] = flows
-        return SegmentExpr(flow, elements, self.binding)
+                [flow] = flows
+        if coerce(code.domain) is not None:
+            filter = FormulaCode(IsNullSig(-1), coerce(BooleanDomain()),
+                                 code.binding, op=code)
+            flow = FilteredFlow(flow, filter, flow.binding)
+        return SegmentExpr(flow, code, self.binding)
 
 
 class RelateRoot(Relate):
@@ -915,10 +906,32 @@ class RelateBySignature(EncodeBySignatureBase):
                           self.binding.mark)
 
 
+class EncodeSelection(Encode):
+
+    adapts(SelectionBinding)
+
+    def __call__(self):
+        flow = self.state.relate(self.binding)
+        fields = [self.state.encode(element)
+                  for element in self.binding.elements]
+        code = RecordCode(fields, self.binding.domain, self.binding)
+        unit = ScalarUnit(code, flow, self.binding)
+        indicator = LiteralCode(True, coerce(BooleanDomain()), self.binding)
+        indicator = ScalarUnit(indicator, flow, self.binding)
+        return AnnihilatorCode(unit, indicator, self.binding)
+
+
+class RelateSelection(Relate):
+
+    adapts(SelectionBinding)
+
+    def __call__(self):
+        return self.state.relate(self.binding.base)
+
+
 class EncodeWrapping(Encode):
 
-    adapts_many(WrappingBinding,
-                SelectionBinding)
+    adapts(WrappingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -930,8 +943,7 @@ class RelateWrapping(Relate):
     Translates a wrapper binding to a flow node.
     """
 
-    adapts_many(WrappingBinding,
-                SelectionBinding)
+    adapts(WrappingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.

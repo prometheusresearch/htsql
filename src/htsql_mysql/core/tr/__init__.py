@@ -4,6 +4,6 @@
 #
 
 
-from . import dump
+from . import dump, reduce
 
 

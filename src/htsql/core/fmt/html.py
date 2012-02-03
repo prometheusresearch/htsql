@@ -26,6 +26,7 @@ class HTMLRenderer(Renderer):
     aliases = ['html']
 
     def render(self, product):
+        self.flatten_product(product)
         status = self.generate_status(product)
         headers = self.generate_headers(product)
         body = list(self.generate_body(product))

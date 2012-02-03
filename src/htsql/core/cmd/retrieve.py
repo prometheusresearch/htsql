@@ -17,7 +17,6 @@ from ..tr.compile import compile
 from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
-from ..tr.lookup import guess_name
 from ..connect import DBError, Connect, normalize
 from ..error import EngineError
 

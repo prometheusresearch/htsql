@@ -38,7 +38,7 @@ class EvaluateFunction(EvaluateBySignature):
                                **arguments)
         if self.is_predicate:
             phrase = self.state.from_predicate(phrase)
-        return phrase
+        yield phrase
 
 
 class EvaluateWrapExists(EvaluateFunction):
@@ -92,7 +92,7 @@ class EvaluateIf(EvaluateFunction):
                                self.code, predicates=predicates,
                                consequents=consequents,
                                alternative=alternative)
-        return phrase
+        yield phrase
 
 
 class EvaluateSwitch(EvaluateFunction):
@@ -108,8 +108,6 @@ class EvaluateSwitch(EvaluateFunction):
             is_nullable = True
         phrase = FormulaPhrase(self.signature, self.domain, is_nullable,
                                self.code, **arguments)
-        return phrase
-
-
+        yield phrase
 
 

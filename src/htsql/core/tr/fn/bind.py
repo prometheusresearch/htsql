@@ -20,18 +20,19 @@ from ..syntax import (NumberSyntax, StringSyntax, IdentifierSyntax,
                       SpecifierSyntax, ApplicationSyntax, OperatorSyntax,
                       GroupSyntax)
 from ..binding import (LiteralBinding, SortBinding, SieveBinding,
-                       FormulaBinding, CastBinding, WrappingBinding,
-                       TitleBinding, DirectionBinding, QuotientBinding,
-                       AssignmentBinding, DefinitionBinding, SelectionBinding,
-                       HomeBinding, RescopingBinding, CoverBinding, ForkBinding,
-                       CommandBinding, SegmentBinding, QueryBinding, Binding,
+                       FormulaBinding, CastBinding, ImplicitCastBinding,
+                       WrappingBinding, TitleBinding, DirectionBinding,
+                       QuotientBinding, AssignmentBinding, DefinitionBinding,
+                       SelectionBinding, HomeBinding, RescopingBinding,
+                       CoverBinding, ForkBinding, CommandBinding,
+                       SegmentBinding, QueryBinding, Binding,
                        BindingRecipe, ComplementRecipe, KernelRecipe,
                        SubstitutionRecipe, ClosedRecipe)
 from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..decorate import decorate
-from ..lookup import direct, expand, guess_name, lookup_command
+from ..lookup import direct, expand, guess_label, lookup_command
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -180,9 +181,9 @@ class BindMonoFunction(BindFunction):
             value = arguments[name]
             if slot.is_singular:
                 if value is not None:
-                    value = CastBinding(value, domain, value.syntax)
+                    value = ImplicitCastBinding(value, domain, value.syntax)
             else:
-                value = [CastBinding(item, domain, item.syntax)
+                value = [ImplicitCastBinding(item, domain, item.syntax)
                          for item in value]
             cast_arguments[name] = value
         return FormulaBinding(self.state.scope,
@@ -222,9 +223,9 @@ class BindHomoFunction(BindFunction):
             value = arguments[name]
             if slot.is_singular:
                 if value is not None:
-                    value = CastBinding(value, domain, value.syntax)
+                    value = ImplicitCastBinding(value, domain, value.syntax)
             else:
-                value = [CastBinding(item, domain, item.syntax)
+                value = [ImplicitCastBinding(item, domain, item.syntax)
                          for item in value]
             cast_arguments[name] = value
         if self.codomain is None:
@@ -375,9 +376,10 @@ class CorrelateFunction(Correlate):
                 domain = coerce(self.domains[index])
                 if slot.is_singular:
                     if value is not None:
-                        value = CastBinding(value, domain, value.syntax)
+                        value = ImplicitCastBinding(value, domain,
+                                                    value.syntax)
                 else:
-                    value = [CastBinding(item, domain, item.syntax)
+                    value = [ImplicitCastBinding(item, domain, item.syntax)
                              for item in value]
             arguments[slot.name] = value
         domain = self.binding.domain
@@ -555,19 +557,19 @@ class BindDistinct(BindMacro):
             domain = coerce(element.domain)
             if domain is None:
                 raise BindError("quotient column must be scalar", element.mark)
-            element = CastBinding(element, domain, element.syntax)
+            element = ImplicitCastBinding(element, domain, element.syntax)
             kernels.append(element)
         quotient = QuotientBinding(self.state.scope, seed, kernels,
                                    self.syntax)
         binding = quotient
-        name = guess_name(seed)
+        name = guess_label(seed)
         if name is not None:
             recipe = ComplementRecipe(quotient)
             recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, False, None, recipe,
                                         self.syntax)
         for index, kernel in enumerate(kernels):
-            name = guess_name(kernel)
+            name = guess_label(kernel)
             if name is not None:
                 recipe = KernelRecipe(quotient, index)
                 recipe = ClosedRecipe(recipe)
@@ -597,16 +599,17 @@ class BindAs(BindMacro):
         return TitleBinding(base, title.value, self.syntax)
 
 
-class BindSieve(BindMacro):
-
-    named('?')
-    signature = BinarySig
-
-    def expand(self, lop, rop):
-        base = self.state.bind(lop)
-        filter = self.state.bind(rop, base)
-        filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
-        return SieveBinding(base, filter, self.syntax)
+#class BindSieve(BindMacro):
+#
+#    named('?')
+#    signature = BinarySig
+#
+#    def expand(self, lop, rop):
+#        base = self.state.bind(lop)
+#        filter = self.state.bind(rop, base)
+#        filter = ImplicitCastBinding(filter, coerce(BooleanDomain()),
+#                                     filter.syntax)
+#        return SieveBinding(base, filter, self.syntax)
 
 
 class BindFilter(BindMacro):
@@ -616,7 +619,8 @@ class BindFilter(BindMacro):
 
     def expand(self, op):
         filter = self.state.bind(op)
-        filter = CastBinding(filter, coerce(BooleanDomain()), filter.syntax)
+        filter = ImplicitCastBinding(filter, coerce(BooleanDomain()),
+                                     filter.syntax)
         return SieveBinding(self.state.scope, filter, self.syntax)
 
 
@@ -753,10 +757,11 @@ class BindSort(BindMacro):
                     raise BindError("function '%s' expects a scalar"
                                     " expression" % self.name.encode('utf-8'),
                                     binding.mark)
-                binding = CastBinding(binding, domain, binding.syntax)
+                binding = ImplicitCastBinding(binding, domain, binding.syntax)
                 bindings.append(binding)
             else:
                 for syntax, recipe in recipes:
+                    # FIXME: coerce?
                     binding = self.state.use(recipe, syntax)
                     bindings.append(binding)
         return SortBinding(self.state.scope, bindings, None, None, self.syntax)
@@ -931,8 +936,8 @@ class BindAmongBase(BindFunction):
                             % (", ".join("'%s'" % domain.family
                                          for domain in domains)),
                             self.syntax.mark)
-        lop = CastBinding(lop, domain, lop.syntax)
-        rops = [CastBinding(rop, domain, rop.syntax) for rop in rops]
+        lop = ImplicitCastBinding(lop, domain, lop.syntax)
+        rops = [ImplicitCastBinding(rop, domain, rop.syntax) for rop in rops]
         if len(rops) == 1:
             return FormulaBinding(self.state.scope,
                                   IsEqualSig(self.polarity),
@@ -973,8 +978,8 @@ class BindTotallyEqualBase(BindFunction):
                             % (", ".join("'%s'" % domain.family
                                          for domain in domains)),
                             self.syntax.mark)
-        lop = CastBinding(lop, domain, lop.syntax)
-        rop = CastBinding(rop, domain, rop.syntax)
+        lop = ImplicitCastBinding(lop, domain, lop.syntax)
+        rop = ImplicitCastBinding(rop, domain, rop.syntax)
         return FormulaBinding(self.state.scope,
                               IsTotallyEqualSig(self.polarity),
                               coerce(BooleanDomain()), self.syntax,
@@ -1003,8 +1008,8 @@ class BindAnd(BindFunction):
 
     def correlate(self, lop, rop):
         domain = coerce(BooleanDomain())
-        lop = CastBinding(lop, domain, lop.syntax)
-        rop = CastBinding(rop, domain, rop.syntax)
+        lop = ImplicitCastBinding(lop, domain, lop.syntax)
+        rop = ImplicitCastBinding(rop, domain, rop.syntax)
         return FormulaBinding(self.state.scope,
                               AndSig(), domain, self.syntax, ops=[lop, rop])
 
@@ -1017,8 +1022,8 @@ class BindOr(BindFunction):
 
     def correlate(self, lop, rop):
         domain = coerce(BooleanDomain())
-        lop = CastBinding(lop, domain, lop.syntax)
-        rop = CastBinding(rop, domain, rop.syntax)
+        lop = ImplicitCastBinding(lop, domain, lop.syntax)
+        rop = ImplicitCastBinding(rop, domain, rop.syntax)
         return FormulaBinding(self.state.scope,
                               OrSig(), domain, self.syntax, ops=[lop, rop])
 
@@ -1031,7 +1036,7 @@ class BindNot(BindFunction):
 
     def correlate(self, op):
         domain = coerce(BooleanDomain())
-        op = CastBinding(op, domain, op.syntax)
+        op = ImplicitCastBinding(op, domain, op.syntax)
         return FormulaBinding(self.state.scope,
                               self.signature(), domain, self.syntax, op=op)
 
@@ -1050,8 +1055,8 @@ class BindCompare(BindFunction):
                             % (", ".join("'%s'" % domain.family
                                          for domain in domains)),
                             self.syntax.mark)
-        lop = CastBinding(lop, domain, lop.syntax)
-        rop = CastBinding(rop, domain, rop.syntax)
+        lop = ImplicitCastBinding(lop, domain, lop.syntax)
+        rop = ImplicitCastBinding(rop, domain, rop.syntax)
         comparable = Comparable(domain)
         if not comparable():
             raise BindError("values of type '%s' are not comparable"
@@ -1507,7 +1512,8 @@ class BindHeadTailBase(BindPolyFunction):
 
     def correlate(self, op, length):
         if length is not None:
-            length = CastBinding(length, coerce(IntegerDomain()), length.syntax)
+            length = ImplicitCastBinding(length, coerce(IntegerDomain()),
+                                         length.syntax)
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), UntypedDomain(),
                                  self.syntax, op=op, length=length)
@@ -1553,9 +1559,11 @@ class BindSlice(BindPolyFunction):
 
     def correlate(self, op, left, right):
         if left is not None:
-            left = CastBinding(left, coerce(IntegerDomain()), left.syntax)
+            left = ImplicitCastBinding(left, coerce(IntegerDomain()),
+                                       left.syntax)
         if right is not None:
-            right = CastBinding(right, coerce(IntegerDomain()), right.syntax)
+            right = ImplicitCastBinding(right, coerce(IntegerDomain()),
+                                        right.syntax)
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), UntypedDomain(),
                                  self.syntax, op=op, left=left, right=right)
@@ -1578,10 +1586,11 @@ class BindAt(BindPolyFunction):
     hint = """at(s, i[, len=1]) -> i-th to (i+len)-th elements of s"""
 
     def correlate(self, op, index, length):
-        index = CastBinding(index, coerce(IntegerDomain()), index.syntax)
+        index = ImplicitCastBinding(index, coerce(IntegerDomain()),
+                                    index.syntax)
         if length is not None:
-            length = CastBinding(length, coerce(IntegerDomain()),
-                                 length.syntax)
+            length = ImplicitCastBinding(length, coerce(IntegerDomain()),
+                                         length.syntax)
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), UntypedDomain(),
                                  self.syntax, op=op, index=index, length=length)
@@ -1875,8 +1884,8 @@ class BindIf(BindFunction):
         }
 
     def correlate(self, predicates, consequents, alternative):
-        predicates = [CastBinding(predicate, coerce(BooleanDomain()),
-                                  predicate.syntax)
+        predicates = [ImplicitCastBinding(predicate, coerce(BooleanDomain()),
+                                          predicate.syntax)
                       for predicate in predicates]
         domains = [consequent.domain for consequent in consequents]
         if alternative is not None:
@@ -1893,10 +1902,12 @@ class BindIf(BindFunction):
                 raise BindError("a scalar value is expected",
                                 consequents[0].mark
                                 if consequents else alternative.mark)
-        consequents = [CastBinding(consequent, domain, consequent.syntax)
+        consequents = [ImplicitCastBinding(consequent, domain,
+                                           consequent.syntax)
                        for consequent in consequents]
         if alternative is not None:
-            alternative = CastBinding(alternative, domain, consequent.syntax)
+            alternative = ImplicitCastBinding(alternative, domain,
+                                              alternative.syntax)
         return FormulaBinding(self.state.scope,
                               self.signature(), domain, self.syntax,
                               predicates=predicates,
@@ -1943,8 +1954,8 @@ class BindSwitch(BindFunction):
                             % (", ".join("'%s'" % domain.family
                                          for domain in domains)),
                             self.syntax.mark)
-        variable = CastBinding(variable, domain, variable.syntax)
-        variants = [CastBinding(variant, domain, variant.syntax)
+        variable = ImplicitCastBinding(variable, domain, variable.syntax)
+        variants = [ImplicitCastBinding(variant, domain, variant.syntax)
                     for variant in variants]
         domains = [consequent.domain for consequent in consequents]
         if alternative is not None:
@@ -1961,10 +1972,12 @@ class BindSwitch(BindFunction):
                 raise BindError("a scalar value is expected",
                                 consequents[0].mark
                                 if consequents else alternative.mark)
-        consequents = [CastBinding(consequent, domain, consequent.syntax)
+        consequents = [ImplicitCastBinding(consequent, domain,
+                                           consequent.syntax)
                        for consequent in consequents]
         if alternative is not None:
-            alternative = CastBinding(alternative, domain, consequent.syntax)
+            alternative = ImplicitCastBinding(alternative, domain,
+                                              alternative.syntax)
         return FormulaBinding(self.state.scope,
                               self.signature(), domain, self.syntax,
                               variable=variable,
@@ -1989,7 +2002,7 @@ class BindExistsBase(BindFunction):
             plural_base = op
             syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
-        op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
+        op = ImplicitCastBinding(op, coerce(BooleanDomain()), op.syntax)
         return FormulaBinding(self.state.scope,
                               QuantifySig(self.polarity), op.domain,
                               self.syntax, plural_base=plural_base, op=op)
@@ -2026,7 +2039,7 @@ class BindCount(BindFunction):
             plural_base = op
             syntax, recipe = recipes[0]
             op = self.state.use(recipe, syntax)
-        op = CastBinding(op, coerce(BooleanDomain()), op.syntax)
+        op = ImplicitCastBinding(op, coerce(BooleanDomain()), op.syntax)
         op = FormulaBinding(self.state.scope,
                             CountSig(), coerce(IntegerDomain()),
                             self.syntax, op=op)

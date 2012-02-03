@@ -28,7 +28,7 @@ from .signature import (Signature, isformula, IsEqualSig, IsTotallyEqualSig,
                         IsInSig, IsNullSig, IfNullSig, NullIfSig, CompareSig,
                         AndSig, OrSig, NotSig, ToPredicateSig,
                         FromPredicateSig)
-from .plan import Plan, Statement, ComposeRecord, ComposeValue, ComposeNone
+from .plan import Plan, Statement
 import StringIO
 import re
 
@@ -292,20 +292,11 @@ class SerializeQuery(Serialize):
     def __call__(self):
         # When exists, serialize the query segment.
         profile = self.clause.binding.profile
+        compose = self.clause.compose
         statement = None
-        compose = ComposeNone()
         if self.clause.segment is not None:
             sql = self.state.serialize(self.clause.segment)
-            assert isinstance(profile.domain, ListDomain)
-            assert isinstance(profile.domain.item_domain, RecordDomain)
-            fields = profile.domain.item_domain.fields
-            domains = [field.domain for field in fields]
-            record_name = profile.name
-            field_names = [field.name for field in fields]
-            record_class = Record.make(record_name, field_names)
-            compose_fields = [ComposeValue(index)
-                              for index in range(len(fields))]
-            compose = ComposeRecord(record_class, None, compose_fields)
+            domains = [phrase.domain for phrase in self.clause.segment.select]
             statement = Statement(sql, domains)
 
         # Produce an execution plan.
