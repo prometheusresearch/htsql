@@ -6,7 +6,7 @@
 
 from ..adapter import Protocol, named
 from ..domain import Profile
-from .lookup import guess_label, guess_header
+from .lookup import guess_label, guess_header, guess_path
 from .binding import Binding
 
 
@@ -63,6 +63,14 @@ class DecorateHeader(Decorate):
 
     def __call__(self):
         return guess_header(self.binding)
+
+
+class DecoratePath(Decorate):
+
+    named('path')
+
+    def __call__(self):
+        return guess_path(self.binding)
 
 
 class DecoratePlan(Decorate):

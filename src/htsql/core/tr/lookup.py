@@ -19,7 +19,8 @@ from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
 from ..classify import classify, relabel, normalize
 from .syntax import IdentifierSyntax
 from .binding import (Binding, ScopingBinding, ChainingBinding, WrappingBinding,
-                      SegmentBinding, HomeBinding, TableBinding,
+                      SegmentBinding, HomeBinding, RootBinding, TableBinding,
+                      FreeTableBinding, AttachedTableBinding,
                       ColumnBinding, QuotientBinding, ComplementBinding,
                       CoverBinding, ForkBinding, LinkBinding, RescopingBinding,
                       DefinitionBinding, SelectionBinding, WildSelectionBinding,
@@ -191,6 +192,10 @@ class GuessLabelProbe(Probe):
 
 
 class GuessHeaderProbe(Probe):
+    pass
+
+
+class GuessPathProbe(Probe):
     pass
 
 
@@ -450,12 +455,21 @@ class GuessHeaderInChaining(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
+class GuessPathFromChaining(Lookup):
+
+    adapts(ChainingBinding, GuessPathProbe)
+
+    def __call__(self):
+        return lookup(self.binding.base, self.probe)
+
+
 class LookupInImplicitCast(Lookup):
 
     adapts_many((ImplicitCastBinding, GuessNameProbe),
                 (ImplicitCastBinding, GuessTitleProbe),
                 (ImplicitCastBinding, GuessLabelProbe),
                 (ImplicitCastBinding, GuessHeaderProbe),
+                (ImplicitCastBinding, GuessPathProbe),
                 (ImplicitCastBinding, DirectionProbe))
 
     def __call__(self):
@@ -496,24 +510,14 @@ class GuessTitleFromSegment(Lookup):
         return []
 
 
-class GuessLabelFromSegment(Lookup):
+class GuessFromSegment(Lookup):
 
-    adapts(SegmentBinding, GuessLabelProbe)
-
-    def __call__(self):
-        if self.binding.seed is not None:
-            return lookup(self.binding.seed, self.probe)
-        return None
-
-
-class GuessHeaderFromSegment(Lookup):
-
-    adapts(SegmentBinding, GuessHeaderProbe)
+    adapts_many((SegmentBinding, GuessLabelProbe),
+                (SegmentBinding, GuessHeaderProbe),
+                (SegmentBinding, GuessPathProbe))
 
     def __call__(self):
-        if self.binding.seed is not None:
-            return lookup(self.binding.seed, self.probe)
-        return None
+        return lookup(self.binding.seed, self.probe)
 
 
 class LookupCommandInCommand(Lookup):
@@ -596,6 +600,14 @@ class GuessHeaderFromHome(Lookup):
         return None
 
 
+class GuessPathFromRoot(Lookup):
+
+    adapts(RootBinding, GuessPathProbe)
+
+    def __call__(self):
+        return []
+
+
 class LookupAttributeInTable(Lookup):
     # A table context contains three types of members:
     # - table columns;
@@ -655,6 +667,49 @@ class ExpandTable(Lookup):
             yield (identifier, recipe)
 
 
+class GuessPathForFreeTable(Lookup):
+
+    adapts(FreeTableBinding, GuessPathProbe)
+
+    def __call__(self):
+        path = lookup(self.binding.base, self.probe)
+        if path is None:
+            return None
+        if path:
+            node = path[-1].target
+        else:
+            node = HomeNode()
+        arc = None
+        for label in classify(node):
+            if (isinstance(label.arc, TableArc) and
+                    (label.arc.table == self.binding.table)):
+                arc = label.arc
+                break
+        if arc is None:
+            return None
+        return path+[arc]
+
+
+class GuessPathForAttachedTable(Lookup):
+
+    adapts(AttachedTableBinding, GuessPathProbe)
+
+    def __call__(self):
+        path = lookup(self.binding.base, self.probe)
+        if not path:
+            return None
+        arc = None
+        # FIXME: fails for multi-join links.
+        for label in classify(path[-1].target):
+            if (isinstance(label.arc, ChainArc) and
+                    (label.arc.joins == [self.binding.join])):
+                arc = label.arc
+                break
+        if arc is None:
+            return None
+        return path+[arc]
+
+
 class LookupAttributeInColumn(Lookup):
     # Find a member with the given name in a column scope.
     #
@@ -697,6 +752,25 @@ class ExpandColumn(Lookup):
             return lookup(self.binding.link, self.probe)
         # Otherwise, no luck.
         return None
+
+
+class GuessPathForColumn(Lookup):
+
+    adapts(ColumnBinding, GuessPathProbe)
+
+    def __call__(self):
+        path = lookup(self.binding.base, self.probe)
+        if not path:
+            return None
+        arc = None
+        for label in classify(path[-1].target):
+            if (isinstance(label.arc, ColumnArc) and
+                    (label.arc.column == self.binding.column)):
+                arc = label.arc
+                break
+        if arc is None:
+            return None
+        return path+[arc]
 
 
 class LookupComplementInQuotient(Lookup):
@@ -1236,6 +1310,11 @@ def guess_label(binding):
 
 def guess_header(binding):
     probe = GuessHeaderProbe()
+    return lookup(binding, probe)
+
+
+def guess_path(binding):
+    probe = GuessPathProbe()
     return lookup(binding, probe)
 
 
