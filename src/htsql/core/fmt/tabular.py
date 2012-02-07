@@ -5,8 +5,8 @@
 
 
 """
-:mod:`htsql.core.fmt.spreadsheet`
-=================================
+:mod:`htsql.core.fmt.tabular`
+=============================
 
 This module implements the CSV and TSV renderers.
 """
