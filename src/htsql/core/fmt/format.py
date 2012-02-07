@@ -29,6 +29,13 @@ class ObjFormat(Format):
     pass
 
 
+class CSVFormat(Format):
+
+    def __init__(self, dialect='excel'):
+        assert dialect in ['excel', 'excel-tab']
+        self.dialect = dialect
+
+
 class EmitHeaders(Adapter):
 
     adapts(Format)

@@ -98,7 +98,7 @@ def dump_json(iterator):
             else:
                 line = unicode(token)
         elif isinstance(token, decimal.Decimal):
-            if not token.is_finite:
+            if not token.is_finite():
                 line = u"null"
             else:
                 line = unicode(token)
