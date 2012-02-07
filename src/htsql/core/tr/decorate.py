@@ -6,8 +6,9 @@
 
 from ..adapter import Protocol, named
 from ..domain import Profile
-from .lookup import guess_label, guess_header, guess_path
-from .binding import Binding
+from .lookup import guess_tag, guess_header, guess_path
+from .binding import Binding, VoidBinding
+from .syntax import VoidSyntax
 
 
 class Decorate(Protocol):
@@ -35,6 +36,8 @@ class DecorateBinding(Decorate):
     named('binding')
 
     def __call__(self):
+        if isinstance(self.binding, VoidBinding):
+            return None
         return self.binding
 
 
@@ -43,18 +46,20 @@ class DecorateSyntax(Decorate):
     named('syntax')
 
     def __call__(self):
+        if isinstance(self.binding.syntax, VoidSyntax):
+            return None
         return self.binding.syntax
 
 
-class DecorateLabel(Decorate):
+class DecorateTag(Decorate):
 
-    named('label')
+    named('tag')
 
     def __call__(self):
-        label = guess_label(self.binding)
-        if label is not None:
-            label = label.encode('utf-8')
-        return label
+        tag = guess_tag(self.binding)
+        if tag is not None:
+            tag = tag.encode('utf-8')
+        return tag
 
 
 class DecorateHeader(Decorate):

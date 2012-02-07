@@ -187,7 +187,7 @@ class GuessTitleProbe(Probe):
         return "?<:as>"
 
 
-class GuessLabelProbe(Probe):
+class GuessTagProbe(Probe):
     pass
 
 
@@ -356,9 +356,9 @@ class GuessTitle(Lookup):
         return [unicode(self.binding.syntax)]
 
 
-class GuessLabel(Lookup):
+class GuessTag(Lookup):
 
-    adapts(Binding, GuessLabelProbe)
+    adapts(Binding, GuessTagProbe)
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
@@ -437,9 +437,9 @@ class GuessNameFromChaining(Lookup):
         return lookup(self.binding.base, self.probe)
 
 
-class GuessLabelFromChaining(Lookup):
+class GuessTagFromChaining(Lookup):
 
-    adapts(ChainingBinding, GuessLabelProbe)
+    adapts(ChainingBinding, GuessTagProbe)
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
@@ -467,7 +467,7 @@ class LookupInImplicitCast(Lookup):
 
     adapts_many((ImplicitCastBinding, GuessNameProbe),
                 (ImplicitCastBinding, GuessTitleProbe),
-                (ImplicitCastBinding, GuessLabelProbe),
+                (ImplicitCastBinding, GuessTagProbe),
                 (ImplicitCastBinding, GuessHeaderProbe),
                 (ImplicitCastBinding, GuessPathProbe),
                 (ImplicitCastBinding, DirectionProbe))
@@ -512,7 +512,7 @@ class GuessTitleFromSegment(Lookup):
 
 class GuessFromSegment(Lookup):
 
-    adapts_many((SegmentBinding, GuessLabelProbe),
+    adapts_many((SegmentBinding, GuessTagProbe),
                 (SegmentBinding, GuessHeaderProbe),
                 (SegmentBinding, GuessPathProbe))
 
@@ -1153,9 +1153,9 @@ class GuessTitleFromAlias(Lookup):
         return [str(self.binding.syntax)]
 
 
-class GuessLabelFromAlias(Lookup):
+class GuessTagFromAlias(Lookup):
 
-    adapts(AliasBinding, GuessLabelProbe)
+    adapts(AliasBinding, GuessTagProbe)
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
@@ -1303,8 +1303,8 @@ def expand(binding, with_syntax=False, with_wild=False,
 #    return lookup(binding, probe)
 
 
-def guess_label(binding):
-    probe = GuessLabelProbe()
+def guess_tag(binding):
+    probe = GuessTagProbe()
     return lookup(binding, probe)
 
 

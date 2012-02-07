@@ -6032,21 +6032,95 @@ tests:
           - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
-              "meta": [
-                {"title": "code", "domain": "string"},
-                {"title": "name", "domain": "string"},
-                {"title": "campus", "domain": "string"}
-              ],
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school",
+                "tag": "school"
+              },
               "data": [
-                ["art", "School of Art and Design", "old"],
-                ["bus", "School of Business", "south"],
-                ["edu", "College of Education", "old"],
-                ["eng", "School of Engineering", "north"],
-                ["la", "School of Arts and Humanities", "old"],
-                ["mus", "School of Music & Dance", "south"],
-                ["ns", "School of Natural Sciences", "old"],
-                ["ph", "Public Honorariums", null],
-                ["sc", "School of Continuing Studies", null]
+                [
+                  "art",
+                  "School of Art and Design",
+                  "old"
+                ],
+                [
+                  "bus",
+                  "School of Business",
+                  "south"
+                ],
+                [
+                  "edu",
+                  "College of Education",
+                  "old"
+                ],
+                [
+                  "eng",
+                  "School of Engineering",
+                  "north"
+                ],
+                [
+                  "la",
+                  "School of Arts and Humanities",
+                  "old"
+                ],
+                [
+                  "mus",
+                  "School of Music & Dance",
+                  "south"
+                ],
+                [
+                  "ns",
+                  "School of Natural Sciences",
+                  "old"
+                ],
+                [
+                  "ph",
+                  "Public Honorariums",
+                  null
+                ],
+                [
+                  "sc",
+                  "School of Continuing Studies",
+                  null
+                ]
               ]
             }
         - uri: /course{department_code, no, title}?credits<3
@@ -25701,21 +25775,148 @@ tests:
           - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
-              "meta": [
-                {"title": "code", "domain": "string"},
-                {"title": "name", "domain": "string"},
-                {"title": "campus", "domain": "string"}
-              ],
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school",
+                "tag": "school"
+              },
               "data": [
-                ["art", "School of Art and Design", "old"],
-                ["bus", "School of Business", "south"],
-                ["edu", "College of Education", "old"],
-                ["eng", "School of Engineering", "north"],
-                ["la", "School of Arts and Humanities", "old"],
-                ["mus", "School of Music & Dance", "south"],
-                ["ns", "School of Natural Sciences", "old"],
-                ["ph", "Public Honorariums", null],
-                ["sc", "School of Continuing Studies", null]
+                [
+                  "art",
+                  "School of Art and Design",
+                  "old"
+                ],
+                [
+                  "bus",
+                  "School of Business",
+                  "south"
+                ],
+                [
+                  "edu",
+                  "College of Education",
+                  "old"
+                ],
+                [
+                  "eng",
+                  "School of Engineering",
+                  "north"
+                ],
+                [
+                  "la",
+                  "School of Arts and Humanities",
+                  "old"
+                ],
+                [
+                  "mus",
+                  "School of Music & Dance",
+                  "south"
+                ],
+                [
+                  "ns",
+                  "School of Natural Sciences",
+                  "old"
+                ],
+                [
+                  "ph",
+                  "Public Honorariums",
+                  null
+                ],
+                [
+                  "sc",
+                  "School of Continuing Studies",
+                  null
+                ]
+              ]
+            }
+        - uri: /school/:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "school": [
+                {
+                  "code": "art",
+                  "name": "School of Art and Design",
+                  "campus": "old"
+                },
+                {
+                  "code": "bus",
+                  "name": "School of Business",
+                  "campus": "south"
+                },
+                {
+                  "code": "edu",
+                  "name": "College of Education",
+                  "campus": "old"
+                },
+                {
+                  "code": "eng",
+                  "name": "School of Engineering",
+                  "campus": "north"
+                },
+                {
+                  "code": "la",
+                  "name": "School of Arts and Humanities",
+                  "campus": "old"
+                },
+                {
+                  "code": "mus",
+                  "name": "School of Music & Dance",
+                  "campus": "south"
+                },
+                {
+                  "code": "ns",
+                  "name": "School of Natural Sciences",
+                  "campus": "old"
+                },
+                {
+                  "code": "ph",
+                  "name": "Public Honorariums"
+                },
+                {
+                  "code": "sc",
+                  "name": "School of Continuing Studies"
+                }
               ]
             }
         - uri: /school/:csv
@@ -25838,21 +26039,95 @@ tests:
           - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
-              "meta": [
-                {"title": "code", "domain": "string"},
-                {"title": "name", "domain": "string"},
-                {"title": "campus", "domain": "string"}
-              ],
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school",
+                "tag": "school"
+              },
               "data": [
-                ["art", "School of Art and Design", "old"],
-                ["bus", "School of Business", "south"],
-                ["edu", "College of Education", "old"],
-                ["eng", "School of Engineering", "north"],
-                ["la", "School of Arts and Humanities", "old"],
-                ["mus", "School of Music & Dance", "south"],
-                ["ns", "School of Natural Sciences", "old"],
-                ["ph", "Public Honorariums", null],
-                ["sc", "School of Continuing Studies", null]
+                [
+                  "art",
+                  "School of Art and Design",
+                  "old"
+                ],
+                [
+                  "bus",
+                  "School of Business",
+                  "south"
+                ],
+                [
+                  "edu",
+                  "College of Education",
+                  "old"
+                ],
+                [
+                  "eng",
+                  "School of Engineering",
+                  "north"
+                ],
+                [
+                  "la",
+                  "School of Arts and Humanities",
+                  "old"
+                ],
+                [
+                  "mus",
+                  "School of Music & Dance",
+                  "south"
+                ],
+                [
+                  "ns",
+                  "School of Natural Sciences",
+                  "old"
+                ],
+                [
+                  "ph",
+                  "Public Honorariums",
+                  null
+                ],
+                [
+                  "sc",
+                  "School of Continuing Studies",
+                  null
+                ]
               ]
             }
         - uri: /school
@@ -25964,7 +26239,13 @@ tests:
           - [Content-Type, application/javascript]
           - [Content-Disposition, inline; filename="_.js"]
           body: |
-            {}
+            {
+              "meta": {
+                "domain": {
+                  "type": "void"
+                }
+              }
+            }
         - uri: /
           status: 200 OK
           headers:
@@ -26037,20 +26318,122 @@ tests:
           - [Content-Disposition, inline; filename="List of Schools.js"]
           body: |
             {
-              "meta": [
-                {"title": "Name", "domain": "string"},
-                {"title": "# of Departments", "domain": "number"}
-              ],
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "Name",
+                          "path": "school.name",
+                          "syntax": "name:as(Name)",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "integer"
+                          },
+                          "header": "# of Departments",
+                          "syntax": "count(department):as('# of Departments')"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "List of Schools",
+                "path": "school",
+                "syntax": "\/(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}",
+                "tag": "school"
+              },
               "data": [
-                ["School of Art and Design", 2],
-                ["School of Business", 3],
-                ["College of Education", 2],
-                ["School of Engineering", 4],
-                ["School of Arts and Humanities", 5],
-                ["School of Music & Dance", 4],
-                ["School of Natural Sciences", 4],
-                ["Public Honorariums", 0],
-                ["School of Continuing Studies", 0]
+                [
+                  "School of Art and Design",
+                  2
+                ],
+                [
+                  "School of Business",
+                  3
+                ],
+                [
+                  "College of Education",
+                  2
+                ],
+                [
+                  "School of Engineering",
+                  4
+                ],
+                [
+                  "School of Arts and Humanities",
+                  5
+                ],
+                [
+                  "School of Music & Dance",
+                  4
+                ],
+                [
+                  "School of Natural Sciences",
+                  4
+                ],
+                [
+                  "Public Honorariums",
+                  0
+                ],
+                [
+                  "School of Continuing Studies",
+                  0
+                ]
+              ]
+            }
+        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
+            '# of Departments'} /:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="List of Schools.js"]
+          body: |
+            {
+              "school": [
+                {
+                  "name": "School of Art and Design",
+                  "1": 2
+                },
+                {
+                  "name": "School of Business",
+                  "1": 3
+                },
+                {
+                  "name": "College of Education",
+                  "1": 2
+                },
+                {
+                  "name": "School of Engineering",
+                  "1": 4
+                },
+                {
+                  "name": "School of Arts and Humanities",
+                  "1": 5
+                },
+                {
+                  "name": "School of Music & Dance",
+                  "1": 4
+                },
+                {
+                  "name": "School of Natural Sciences",
+                  "1": 4
+                },
+                {
+                  "name": "Public Honorariums",
+                  "1": 0
+                },
+                {
+                  "name": "School of Continuing Studies",
+                  "1": 0
+                }
               ]
             }
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
@@ -26172,20 +26555,125 @@ tests:
           - [Content-Disposition, inline; filename="_.js"]
           body: |
             {
-              "meta": [
-                {"title": "null()", "domain": "string"},
-                {"title": "true()", "domain": "boolean"},
-                {"title": "false()", "domain": "boolean"},
-                {"title": "60", "domain": "number"},
-                {"title": "2.125", "domain": "number"},
-                {"title": "271828e-5", "domain": "number"},
-                {"title": "'HTSQL'", "domain": "string"},
-                {"title": "date('2010-04-15')", "domain": "date"},
-                {"title": "time('20:13:04.5')", "domain": "time"},
-                {"title": "datetime('2010-04-15 20:13')", "domain": "datetime"}
-              ],
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "null()",
+                          "syntax": "null()"
+                        },
+                        {
+                          "domain": {
+                            "type": "boolean"
+                          },
+                          "header": "true()",
+                          "syntax": "true()"
+                        },
+                        {
+                          "domain": {
+                            "type": "boolean"
+                          },
+                          "header": "false()",
+                          "syntax": "false()"
+                        },
+                        {
+                          "domain": {
+                            "type": "integer"
+                          },
+                          "header": "60",
+                          "syntax": "60"
+                        },
+                        {
+                          "domain": {
+                            "type": "decimal"
+                          },
+                          "header": "2.125",
+                          "syntax": "2.125"
+                        },
+                        {
+                          "domain": {
+                            "type": "float"
+                          },
+                          "header": "271828e-5",
+                          "syntax": "271828e-5"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "'HTSQL'",
+                          "syntax": "'HTSQL'"
+                        },
+                        {
+                          "domain": {
+                            "type": "date"
+                          },
+                          "header": "date('2010-04-15')",
+                          "syntax": "date('2010-04-15')"
+                        },
+                        {
+                          "domain": {
+                            "type": "time"
+                          },
+                          "header": "time('20:13:04.5')",
+                          "syntax": "time('20:13:04.5')"
+                        },
+                        {
+                          "domain": {
+                            "type": "datetime"
+                          },
+                          "header": "datetime('2010-04-15 20:13')",
+                          "syntax": "datetime('2010-04-15 20:13')"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "path": "",
+                "syntax": "\/{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}"
+              },
               "data": [
-                [null, true, false, 60, 2.125, 2.71828, "HTSQL", "2010-04-15", "20:13:04.500000", "2010-04-15 20:13:00"]
+                [
+                  null,
+                  true,
+                  false,
+                  60,
+                  2.125,
+                  2.71828,
+                  "HTSQL",
+                  "2010-04-15",
+                  "20:13:04.500000",
+                  "2010-04-15 20:13:00"
+                ]
+              ]
+            }
+        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
+            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "0": [
+                {
+                  "1": true,
+                  "2": false,
+                  "3": 60,
+                  "4": 2.125,
+                  "5": 2.71828,
+                  "6": "HTSQL",
+                  "7": "2010-04-15",
+                  "8": "20:13:04.500000",
+                  "9": "2010-04-15 20:13:00"
+                }
               ]
             }
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
@@ -26286,13 +26774,59 @@ tests:
           - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
-              "meta": [
-                {"title": "code", "domain": "string"},
-                {"title": "name", "domain": "string"},
-                {"title": "campus", "domain": "string"}
-              ],
-              "data": [
-              ]
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school?false()",
+                "tag": "school"
+              },
+              "data": []
+            }
+        - uri: /school?false()/:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "school": []
             }
         - uri: /school?false()/:csv
           status: 200 OK
@@ -26380,14 +26914,37 @@ tests:
           headers:
           - [Content-Type, application/javascript]
           - [Content-Disposition, inline; filename="_.js"]
-          body: "{\n  \"meta\": [\n    {\"title\": \"'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\",
-            \"domain\": \"string\"},\n    {\"title\": \"'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\",
-            \"domain\": \"string\"},\n    {\"title\": \"'\u03BE'\", \"domain\": \"string\"},\n
-            \   {\"title\": \"'\\\\\\/%25''\\\"&<>#'\", \"domain\": \"string\"},\n
-            \   {\"title\": \"''\", \"domain\": \"string\"}\n  ],\n  \"data\": [\n
-            \   [\"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000B\\f\\r\\u000E\\u000F\\u0010\",
-            \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F\x7F\",
-            \"\u03BE\", \"\\\\\\/%'\\\"&<>#\", \"\"]\n  ]\n}\n"
+          body: "{\n  \"meta\": {\n    \"domain\": {\n      \"type\": \"list\",\n
+            \     \"item\": {\n        \"domain\": {\n          \"type\": \"record\",\n
+            \         \"fields\": [\n            {\n              \"domain\": {\n
+            \               \"type\": \"string\"\n              },\n              \"header\":
+            \"'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\",\n              \"syntax\":
+            \"'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\"\n            },\n
+            \           {\n              \"domain\": {\n                \"type\":
+            \"string\"\n              },\n              \"header\": \"'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\",\n
+            \             \"syntax\": \"'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\"\n
+            \           },\n            {\n              \"domain\": {\n                \"type\":
+            \"string\"\n              },\n              \"header\": \"'\u03BE'\",\n
+            \             \"syntax\": \"'\u03BE'\"\n            },\n            {\n
+            \             \"domain\": {\n                \"type\": \"string\"\n              },\n
+            \             \"header\": \"'\\\\\\/%25''\\\"&<>#'\",\n              \"syntax\":
+            \"'\\\\\\/%25''\\\"&<>#'\"\n            },\n            {\n              \"domain\":
+            {\n                \"type\": \"string\"\n              },\n              \"header\":
+            \"''\",\n              \"syntax\": \"''\"\n            }\n          ]\n
+            \       }\n      }\n    },\n    \"path\": \"\",\n    \"syntax\": \"\\/{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\\\\\/%25''\\\"&<>#',''}\"\n
+            \ },\n  \"data\": [\n    [\n      \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000B\\f\\r\\u000E\\u000F\\u0010\",\n
+            \     \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F\x7F\",\n
+            \     \"\u03BE\",\n      \"\\\\\\/%'\\\"&<>#\",\n      \"\"\n    ]\n  ]\n}\n"
+        - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
+            '%CE%BE', '\/%25''"&<>#', ''}/:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: "{\n  \"0\": [\n    {\n      \"0\": \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000B\\f\\r\\u000E\\u000F\\u0010\",\n
+            \     \"1\": \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F\x7F\",\n
+            \     \"2\": \"\u03BE\",\n      \"3\": \"\\\\\\/%'\\\"&<>#\",\n      \"4\":
+            \"\"\n    }\n  ]\n}\n"
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
             '%CE%BE', '\/%25''"&<>#', ''}/:csv
           status: 200 OK
@@ -26511,21 +27068,95 @@ tests:
           - [Content-Disposition, inline; filename="school.js"]
           body: |
             {
-              "meta": [
-                {"title": "code", "domain": "string"},
-                {"title": "name", "domain": "string"},
-                {"title": "campus", "domain": "string"}
-              ],
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "code",
+                          "path": "school.code",
+                          "syntax": "code",
+                          "tag": "code"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "school.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "campus",
+                          "path": "school.campus",
+                          "syntax": "campus",
+                          "tag": "campus"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school",
+                "tag": "school"
+              },
               "data": [
-                ["art", "School of Art and Design", "old"],
-                ["bus", "School of Business", "south"],
-                ["edu", "College of Education", "old"],
-                ["eng", "School of Engineering", "north"],
-                ["la", "School of Arts and Humanities", "old"],
-                ["mus", "School of Music & Dance", "south"],
-                ["ns", "School of Natural Sciences", "old"],
-                ["ph", "Public Honorariums", null],
-                ["sc", "School of Continuing Studies", null]
+                [
+                  "art",
+                  "School of Art and Design",
+                  "old"
+                ],
+                [
+                  "bus",
+                  "School of Business",
+                  "south"
+                ],
+                [
+                  "edu",
+                  "College of Education",
+                  "old"
+                ],
+                [
+                  "eng",
+                  "School of Engineering",
+                  "north"
+                ],
+                [
+                  "la",
+                  "School of Arts and Humanities",
+                  "old"
+                ],
+                [
+                  "mus",
+                  "School of Music & Dance",
+                  "south"
+                ],
+                [
+                  "ns",
+                  "School of Natural Sciences",
+                  "old"
+                ],
+                [
+                  "ph",
+                  "Public Honorariums",
+                  null
+                ],
+                [
+                  "sc",
+                  "School of Continuing Studies",
+                  null
+                ]
               ]
             }
         - uri: /school/:sql

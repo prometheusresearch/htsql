@@ -17,6 +17,46 @@ from ..adapter import Adapter, Utility, adapts
 from ..domain import Domain, ListDomain, RecordDomain, Profile
 
 
+class Format(object):
+    pass
+
+
+class JSONFormat(Format):
+    pass
+
+
+class ObjFormat(Format):
+    pass
+
+
+class EmitHeaders(Adapter):
+
+    adapts(Format)
+
+    def __init__(self, format, product):
+        self.format = format
+        self.product = product
+        self.meta = product.meta
+        self.data = product.data
+
+    def __call__(self):
+        raise NotImplementedError()
+
+
+class Emit(Adapter):
+
+    adapts(Format)
+
+    def __init__(self, format, product):
+        self.format = format
+        self.product = product
+        self.meta = product.meta
+        self.data = product.data
+
+    def __call__(self):
+        raise NotImplementedError()
+
+
 class Renderer(object):
 
     name = None

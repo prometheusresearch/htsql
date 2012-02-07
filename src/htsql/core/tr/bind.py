@@ -42,7 +42,7 @@ from .binding import (Binding, WrappingBinding, QueryBinding, SegmentBinding,
                       PinnedRecipe, AmbiguousRecipe)
 from .lookup import (lookup_attribute, lookup_reference, lookup_complement,
                      lookup_attribute_set, lookup_reference_set,
-                     expand, direct, guess_label, lookup_command)
+                     expand, direct, guess_tag, lookup_command)
 from .coerce import coerce
 from .decorate import decorate
 
@@ -454,14 +454,14 @@ class BindQuotient(Bind):
                                    self.syntax)
         # Assign names to the kernel and the complement links when possible.
         binding = quotient
-        name = guess_label(seed)
+        name = guess_tag(seed)
         if name is not None:
             recipe = ComplementRecipe(quotient)
             recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, False, None, recipe,
                                         self.syntax)
         for index, kernel in enumerate(kernels):
-            name = guess_label(kernel)
+            name = guess_tag(kernel)
             if name is not None:
                 recipe = KernelRecipe(quotient, index)
                 recipe = ClosedRecipe(recipe)
@@ -952,7 +952,7 @@ class BindByName(Protocol):
                        if sample_arity in [-1, arity] and sample != model
                             and similar(model, sample)]
             hint = hint_choices(choices)
-        scope_name = guess_label(self.state.scope)
+        scope_name = guess_tag(self.state.scope)
         if scope_name is not None:
             scope_name = scope_name.encode('utf-8')
         if isinstance(self.syntax, (FunctionSyntax, MappingSyntax)):

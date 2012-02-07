@@ -6,7 +6,7 @@
 
 from ..util import Printable, maybe, dictof, oneof
 from ..fmt import (TextRenderer, HTMLRenderer, JSONRenderer,
-                   CSVRenderer, TSVRenderer)
+                   ObjRenderer, CSVRenderer, TSVRenderer)
 
 
 class Command(Printable):
@@ -70,6 +70,11 @@ class HTMLCmd(RendererCmd):
 class JSONCmd(RendererCmd):
 
     format = JSONRenderer
+
+
+class ObjCmd(RendererCmd):
+
+    format = ObjRenderer
 
 
 class CSVCmd(RendererCmd):

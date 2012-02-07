@@ -14,7 +14,7 @@ This package implements product formatters.
 
 from . import format, html, json, spreadsheet, text
 from .format import FindRenderer
-from .json import JSONRenderer
+from .json import JSONRenderer, ObjRenderer
 from .spreadsheet import CSVRenderer, TSVRenderer
 from .html import HTMLRenderer
 from .text import TextRenderer

@@ -32,7 +32,7 @@ from ..bind import BindByName, BindingState
 from ..error import BindError
 from ..coerce import coerce
 from ..decorate import decorate
-from ..lookup import direct, expand, guess_label, lookup_command
+from ..lookup import direct, expand, guess_tag, lookup_command
 from ..signature import (Signature, NullarySig, UnarySig, BinarySig,
                          CompareSig, IsEqualSig, IsTotallyEqualSig, IsInSig,
                          IsNullSig, IfNullSig, NullIfSig, AndSig, OrSig,
@@ -53,7 +53,7 @@ from .signature import (AsSig, SortDirectionSig, LimitSig, SortSig, CastSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         DefineSig, WhereSig, SelectSig, LinkSig)
 from ...cmd.command import (DefaultCmd, RetrieveCmd, TextCmd, HTMLCmd, JSONCmd,
-                            CSVCmd, TSVCmd, SQLCmd)
+                            ObjCmd, CSVCmd, TSVCmd, SQLCmd)
 import sys
 
 
@@ -459,6 +459,12 @@ class BindJSON(BindFormat):
     command = JSONCmd
 
 
+class BindObj(BindFormat):
+
+    named('obj')
+    command = ObjCmd
+
+
 class BindCSV(BindFormat):
 
     named('csv')
@@ -562,14 +568,14 @@ class BindDistinct(BindMacro):
         quotient = QuotientBinding(self.state.scope, seed, kernels,
                                    self.syntax)
         binding = quotient
-        name = guess_label(seed)
+        name = guess_tag(seed)
         if name is not None:
             recipe = ComplementRecipe(quotient)
             recipe = ClosedRecipe(recipe)
             binding = DefinitionBinding(binding, name, False, None, recipe,
                                         self.syntax)
         for index, kernel in enumerate(kernels):
-            name = guess_label(kernel)
+            name = guess_tag(kernel)
             if name is not None:
                 recipe = KernelRecipe(quotient, index)
                 recipe = ClosedRecipe(recipe)

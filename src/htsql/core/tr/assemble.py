@@ -1180,7 +1180,7 @@ class AssembleQuery(Assemble):
             segment = self.state.assemble(self.term.segment)
             compose = decompose(self.term.segment.code,
                                 self.state.segment_indexes,
-                                self.term.binding.profile.label)
+                                self.term.binding.profile.tag)
             # Clean up the state.
             self.state.flush()
         # Generate a frame node.
@@ -1474,11 +1474,11 @@ class DecomposeRecord(Decompose):
         field_names = []
         for field, profile in zip(self.code.fields,
                                   self.code.domain.fields):
-            compose_field = decompose(field, indexes, profile.label)
+            compose_field = decompose(field, indexes, profile.tag)
             compose_fields.append(compose_field)
             indexes = indexes[compose_field.width:]
             width += compose_field.width
-            field_names.append(profile.label)
+            field_names.append(profile.tag)
         record_class = Record.make(self.name, field_names)
         def compose_record(row, record_class=record_class,
                            compose_fields=compose_fields):
