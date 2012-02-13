@@ -56,10 +56,7 @@ class DecorateTag(Decorate):
     named('tag')
 
     def __call__(self):
-        tag = guess_tag(self.binding)
-        if tag is not None:
-            tag = tag.encode('utf-8')
-        return tag
+        return guess_tag(self.binding)
 
 
 class DecorateHeader(Decorate):

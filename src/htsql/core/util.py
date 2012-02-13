@@ -643,8 +643,10 @@ class Record(tuple):
 
     @classmethod
     def make(cls, name, fields):
-        assert isinstance(name, maybe(str))
-        assert isinstance(fields, listof(maybe(str)))
+        assert isinstance(name, maybe(oneof(str, unicode)))
+        assert isinstance(fields, listof(maybe(oneof(str, unicode))))
+        if isinstance(name, unicode):
+            name = name.encode('utf-8')
         if name is not None and not re.match(r'^(?!\d)\w+$', name):
             name = None
         if name is not None and keyword.iskeyword(name):
@@ -655,6 +657,8 @@ class Record(tuple):
         for idx, field in enumerate(fields):
             if field is None:
                 continue
+            if isinstance(field, unicode):
+                field = field.encode('utf-8')
             if not re.match(r'^(?!\d)\w+$', field):
                 field = None
             elif field.startswith('__'):

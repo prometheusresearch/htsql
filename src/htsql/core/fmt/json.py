@@ -16,7 +16,7 @@ from ..util import Printable
 from ..adapter import Adapter, Protocol, adapts, adapts_many, named
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain, TimeDomain,
-                      DateTimeDomain, ListDomain, RecordDomain)
+                      DateTimeDomain, ListDomain, RecordDomain, Profile)
 from .format import JSONFormat, ObjFormat, EmitHeaders, Emit
 from .format import Renderer, Format
 import re
@@ -179,21 +179,15 @@ class EmitJSON(Emit):
         return dump_json(purge_null_keys(self.emit()))
 
     def emit(self):
+        data_to_json = to_json(self.meta.domain)
         yield JS_MAP
         yield u"meta"
-        for token in self.emit_meta():
+        for token in profile_to_json(self.meta):
             yield token
         yield u"data"
-        for token in self.emit_data():
+        for token in data_to_json(self.data):
             yield token
         yield JS_END
-
-    def emit_meta(self):
-        return serialize_profile(self.meta)
-
-    def emit_data(self):
-        serialize = to_json(self.meta.domain)
-        return serialize(self.data)
 
 
 class EmitObj(Emit):
@@ -204,14 +198,14 @@ class EmitObj(Emit):
         return dump_json(purge_null_keys(self.emit()))
 
     def emit(self):
+        product_to_obj = to_obj(self.meta.domain)
         if self.meta.tag:
-            key = unicode(self.meta.tag)
+            key = self.meta.tag
         else:
-            key = u"0"
-        serialize = to_obj(self.meta.domain)
+            key = unicode(0)
         yield JS_MAP
         yield key
-        for token in serialize(self.data):
+        for token in product_to_obj(self.data):
             yield token
         yield JS_END
 
@@ -221,188 +215,103 @@ class ToJSON(Adapter):
     adapts(Domain)
 
     def __init__(self, domain):
+        assert isinstance(domain, Domain)
         self.domain = domain
 
     def __call__(self):
-        def serialize(value, dump=self.domain.dump):
-            if value is None:
-                yield None
-            else:
-                yield dump(value)
-        return serialize
+        return self.scatter
+
+    def scatter(self, value):
+        if value is None:
+            yield None
+        else:
+            yield self.domain.dump(value)
 
 
 class RecordToJSON(ToJSON):
 
     adapts(RecordDomain)
 
-    def __call__(self):
-        serializers = [to_json(field.domain)
-                       for field in self.domain.fields]
-        def serialize_record(value, serializers=serializers):
-            if value is None:
-                yield None
-            else:
-                yield JS_SEQ
-                for item, serializer in zip(value, serializers):
-                    for token in serializer(item):
-                        yield token
-                yield JS_END
-        return serialize_record
+    def __init__(self, domain):
+        super(RecordToJSON, self).__init__(domain)
+        self.fields_to_json = [to_json(field.domain)
+                               for field in domain.fields]
+
+    def scatter(self, value):
+        if value is None:
+            yield None
+        else:
+            yield JS_SEQ
+            for item, field_to_json in zip(value, self.fields_to_json):
+                for token in field_to_json(item):
+                    yield token
+            yield JS_END
 
 
 class ListToJSON(ToJSON):
 
     adapts(ListDomain)
 
-    def __call__(self):
-        serializer = to_json(self.domain.item_domain)
-        def serialize_list(value, serializer=serializer):
-            if value is None:
-                yield None
-            else:
-                yield JS_SEQ
-                for item in value:
-                    for token in serializer(item):
-                        yield token
-                yield JS_END
-        return serialize_list
+    def __init__(self, domain):
+        super(ListToJSON, self).__init__(domain)
+        self.item_to_json = to_json(domain.item_domain)
+
+    def scatter(self, value):
+        if value is None:
+            yield None
+        else:
+            item_to_json = self.item_to_json
+            yield JS_SEQ
+            for item in value:
+                for token in item_to_json(item):
+                    yield token
+            yield JS_END
 
 
-class BooleanToJSON(ToJSON):
+class NativeToJSON(ToJSON):
 
-    adapts(BooleanDomain)
-
-    def __call__(self):
-        def serialize_boolean(value):
-            yield value
-        return serialize_boolean
-
-
-class NumberToJSON(ToJSON):
-
-    adapts(NumberDomain)
-
-    def __call__(self):
-        def serialize_number(value):
-            yield value
-        return serialize_number
-
-
-class StringToJSON(ToJSON):
-
-    adapts_many(StringDomain,
+    adapts_many(BooleanDomain,
+                NumberDomain,
+                StringDomain,
                 EnumDomain)
 
-    def __call__(self):
-        def serialize_string(value):
-            yield value
-        return serialize_string
+    @staticmethod
+    def scatter(value):
+        yield value
 
 
-class DateToJSON(ToJSON):
+class NativeStringToJSON(ToJSON):
 
-    adapts(DateDomain)
+    adapts_many(DateDomain,
+                TimeDomain)
 
-    def __call__(self):
-        def serialize_date(value):
-            if value is None:
-                yield None
-            else:
-                yield unicode(value)
-        return serialize_date
-
-
-class TimeToJSON(ToJSON):
-
-    adapts(TimeDomain)
-
-    def __call__(self):
-        def serialize_time(value):
-            if value is None:
-                yield None
-            else:
-                yield unicode(value)
-        return serialize_time
+    @staticmethod
+    def scatter(value):
+        if value is None:
+            yield None
+        else:
+            yield unicode(value)
 
 
 class DateTimeToJSON(ToJSON):
 
     adapts(DateTimeDomain)
 
-    def __call__(self):
-        def serialize_datetime(value):
-            if value is None:
-                yield None
-            elif not value.time():
-                yield unicode(value.date())
-            else:
-                yield unicode(value)
-        return serialize_datetime
+    @staticmethod
+    def scatter(value):
+        if value is None:
+            yield None
+        elif not value.time():
+            yield unicode(value.date())
+        else:
+            yield unicode(value)
 
 
-class ToObj(Adapter):
-
-    adapts(Domain)
-
-    def __init__(self, domain):
-        self.domain = domain
-
-    def __call__(self):
-        return to_json(self.domain)
-
-
-class RecordToObj(ToObj):
-
-    adapts(RecordDomain)
-
-    def __call__(self):
-        serializers = []
-        keys = []
-        duplicates = set()
-        for idx, field in enumerate(self.domain.fields):
-            serializer = to_obj(field.domain)
-            if field.tag and field.tag not in duplicates:
-                key = unicode(field.tag)
-                duplicates.add(field.tag)
-            else:
-                key = unicode(idx)
-            serializers.append(serializer)
-            keys.append(key)
-        def serialize_record(value, serializers=serializers, keys=keys):
-            if value is None:
-                yield None
-            else:
-                yield JS_MAP
-                for item, serializer, key in zip(value, serializers, keys):
-                    yield key
-                    for token in serializer(item):
-                        yield token
-                yield JS_END
-        return serialize_record
-
-
-class ListToObj(ToObj):
-
-    adapts(ListDomain)
-
-    def __call__(self):
-        serializer = to_obj(self.domain.item_domain)
-        def serialize_list(value, serializer=serializer):
-            if value is None:
-                yield None
-            else:
-                yield JS_SEQ
-                for item in value:
-                    for token in serializer(item):
-                        yield token
-                yield JS_END
-        return serialize_list
-
-
-class SerializeProfile(Protocol):
+class MetaToJSON(Protocol):
 
     def __init__(self, name, profile):
+        assert isinstance(name, str)
+        assert isinstance(profile, Profile)
         self.name = name
         self.profile = profile
 
@@ -410,16 +319,15 @@ class SerializeProfile(Protocol):
         yield None
 
 
-class SerializeProfileDomain(SerializeProfile):
+class DomainMetaToJSON(MetaToJSON):
 
     named('domain')
 
     def __call__(self):
-        serialize = SerializeDomain(self.profile.domain)
-        return serialize()
+        return domain_to_json(self.profile.domain)
 
 
-class SerializeProfileSyntax(SerializeProfile):
+class SyntaxMetaToJSON(MetaToJSON):
 
     named('syntax')
 
@@ -430,7 +338,7 @@ class SerializeProfileSyntax(SerializeProfile):
             yield unicode(self.profile.syntax)
 
 
-class SerializeProfileTag(SerializeProfile):
+class TagMetaToJSON(MetaToJSON):
 
     named('tag')
 
@@ -438,10 +346,10 @@ class SerializeProfileTag(SerializeProfile):
         if self.profile.tag is None:
             yield None
         else:
-            yield unicode(self.profile.tag)
+            yield self.profile.tag
 
 
-class SerializeProfileHeader(SerializeProfile):
+class HeaderMetaToJSON(MetaToJSON):
 
     named('header')
 
@@ -449,11 +357,12 @@ class SerializeProfileHeader(SerializeProfile):
         yield self.profile.header
 
 
-class SerializeProfilePath(SerializeProfile):
+class PathMetaToJSON(MetaToJSON):
 
     named('path')
 
     def __call__(self):
+        # FIXME: circular import?
         from ..classify import relabel
         if self.profile.path is None:
             yield None
@@ -468,11 +377,12 @@ class SerializeProfilePath(SerializeProfile):
             yield u".".join(names)
 
 
-class SerializeDomain(Adapter):
+class DomainToJSON(Adapter):
 
     adapts(Domain)
 
     def __init__(self, domain):
+        assert isinstance(domain, Domain)
         self.domain = domain
 
     def __call__(self):
@@ -482,7 +392,7 @@ class SerializeDomain(Adapter):
         yield JS_END
 
 
-class SerializeList(SerializeDomain):
+class ListDomainToJSON(DomainToJSON):
 
     adapts(ListDomain)
 
@@ -493,14 +403,13 @@ class SerializeList(SerializeDomain):
         yield u"item"
         yield JS_MAP
         yield u"domain"
-        serialize = SerializeDomain(self.domain.item_domain)
-        for token in serialize():
+        for token in domain_to_json(self.domain.item_domain):
             yield token
         yield JS_END
         yield JS_END
 
 
-class SerializeRecord(SerializeDomain):
+class RecordDomainToJSON(DomainToJSON):
 
     adapts(RecordDomain)
 
@@ -511,24 +420,97 @@ class SerializeRecord(SerializeDomain):
         yield u"fields"
         yield JS_SEQ
         for field in self.domain.fields:
-            for token in serialize_profile(field):
+            for token in profile_to_json(field):
                 yield token
         yield JS_END
         yield JS_END
 
 
-def serialize_profile(profile):
+class ToObj(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, domain):
+        assert isinstance(domain, Domain)
+        self.domain = domain
+
+    def __call__(self):
+        return to_json(self.domain)
+
+
+class RecordToObj(ToObj):
+
+    adapts(RecordDomain)
+
+    def __init__(self, domain):
+        super(RecordToObj, self).__init__(domain)
+        self.fields_to_obj = [to_obj(field.domain) for field in domain.fields]
+        self.field_keys = []
+        duplicates = set()
+        for idx, field in enumerate(self.domain.fields):
+            if field.tag and field.tag not in duplicates:
+                key = field.tag
+                duplicates.add(key)
+            else:
+                key = unicode(idx)
+            self.field_keys.append(key)
+
+    def __call__(self):
+        return self.scatter
+
+    def scatter(self, value):
+        if value is None:
+            yield None
+        else:
+            yield JS_MAP
+            for item, field_to_obj, field_key in zip(value, self.fields_to_obj,
+                                                     self.field_keys):
+                yield field_key
+                for token in field_to_obj(item):
+                    yield token
+            yield JS_END
+
+
+class ListToObj(ToObj):
+
+    adapts(ListDomain)
+
+    def __init__(self, domain):
+        super(ListToObj, self).__init__(domain)
+        self.item_to_obj = to_obj(domain.item_domain)
+
+    def __call__(self):
+        return self.scatter
+
+    def scatter(self, value):
+        if value is None:
+            yield None
+        else:
+            yield JS_SEQ
+            item_to_obj = self.item_to_obj
+            for item in value:
+                for token in item_to_obj(item):
+                    yield token
+            yield JS_END
+
+
+def profile_to_json(profile):
     names = set()
-    for component in SerializeProfile.implementations():
+    for component in MetaToJSON.implementations():
         for name in component.names:
             names.add(name)
     yield JS_MAP
     for name in sorted(names):
-        serialize = SerializeProfile(name, profile)
+        meta_to_json = MetaToJSON(name, profile)
         yield unicode(name)
-        for token in serialize():
+        for token in meta_to_json():
             yield token
     yield JS_END
+
+
+def domain_to_json(domain):
+    domain_to_json = DomainToJSON(domain)
+    return domain_to_json()
 
 
 def to_json(domain):

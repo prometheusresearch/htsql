@@ -1441,7 +1441,7 @@ class Decompose(Adapter):
     def __init__(self, code, indexes, name):
         assert isinstance(code, Code)
         assert isinstance(indexes, listof(int))
-        assert isinstance(name, maybe(str))
+        assert isinstance(name, maybe(unicode))
         self.code = code
         self.indexes = indexes
         self.name = name
