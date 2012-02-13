@@ -167,9 +167,8 @@ class EmitJSONHeaders(EmitHeaders):
         # The specification `http://www.ietf.org/rfc/rfc4627.txt` recommends
         # `application/json`, but we use `application/javascript` to prevent
         # the browser from opening "Save As" window.
-        return [('Content-Type', 'application/javascript'),
-                ('Content-Disposition',
-                 'inline; filename="%s.js"' % filename)]
+        yield ('Content-Type', 'application/javascript')
+        yield ('Content-Disposition', 'inline; filename="%s.js"' % filename)
 
 
 class EmitJSON(Emit):
@@ -559,7 +558,7 @@ class JSONRenderer(Renderer):
     def generate_headers(self, product):
         format = JSONFormat()
         emit_headers = EmitHeaders(format, product)
-        return emit_headers()
+        return list(emit_headers())
 
     def generate_body(self, product):
         format = JSONFormat()
@@ -586,7 +585,7 @@ class ObjRenderer(Renderer):
     def generate_headers(self, product):
         format = ObjFormat()
         emit_headers = EmitHeaders(format, product)
-        return emit_headers()
+        return list(emit_headers())
 
     def generate_body(self, product):
         format = ObjFormat()

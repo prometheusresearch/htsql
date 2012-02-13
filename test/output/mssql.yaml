@@ -26721,7 +26721,7 @@ tests:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.csv"]
           body: "null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15
-            20:13')\r\n,1,0,60,,2.71828,HTSQL,2010-04-15,20:13:04.500000,2010-04-15
+            20:13')\r\n,1,0,60,2.125,2.71828,HTSQL,2010-04-15,20:13:04.500000,2010-04-15
             20:13:00\r\n"
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
             time('20:13:04.5'), datetime('2010-04-15 20:13')} /:tsv
@@ -26730,7 +26730,7 @@ tests:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.tsv"]
           body: "null()\ttrue()\tfalse()\t60\t2.125\t271828e-5\t'HTSQL'\tdate('2010-04-15')\ttime('20:13:04.5')\tdatetime('2010-04-15
-            20:13')\r\n\t1\t0\t60\t\t2.71828\tHTSQL\t2010-04-15\t20:13:04.500000\t2010-04-15
+            20:13')\r\n\t1\t0\t60\t2.125\t2.71828\tHTSQL\t2010-04-15\t20:13:04.500000\t2010-04-15
             20:13:00\r\n"
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
             time('20:13:04.5'), datetime('2010-04-15 20:13')} /:txt
