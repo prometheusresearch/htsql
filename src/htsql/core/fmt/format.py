@@ -36,6 +36,10 @@ class CSVFormat(Format):
         self.dialect = dialect
 
 
+class HTMLFormat(Format):
+    pass
+
+
 class EmitHeaders(Adapter):
 
     adapts(Format)

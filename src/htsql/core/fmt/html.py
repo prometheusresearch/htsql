@@ -12,12 +12,397 @@ This module implements the HTML renderer.
 """
 
 
-from ..adapter import adapts
+from ..adapter import Adapter, adapts, adapts_many
+from .format import HTMLFormat, EmitHeaders, Emit
 from .format import Format, Formatter, Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain,
                       StringDomain, EnumDomain, DateDomain,
-                      TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
+                      TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
+                      VoidDomain, Profile)
 import cgi
+
+
+class EmitHTMLHeaders(EmitHeaders):
+
+    adapts(HTMLFormat)
+
+    def __call__(self):
+        yield ('Content-Type', 'text/html; charset=UTF-8')
+
+
+class EmitHTML(Emit):
+
+    adapts(HTMLFormat)
+
+    def __call__(self):
+        product_to_html = profile_to_html(self.meta)
+        headers_height = product_to_html.headers_height()
+        cells_height = product_to_html.cells_height(self.data)
+        title = self.meta.header
+        if not title:
+            title = u""
+        yield u"<!DOCTYPE html>\n"
+        yield u"<html>\n"
+        yield u"<head>\n"
+        yield u"<meta http-equiv=\"Content-Type\"" \
+              u" content=\"text/html; charset=UTF-8\">\n"
+        yield u"<title>%s</title>\n" % cgi.escape(title)
+        yield u"<style type=\"text/css\">\n"
+        yield u"table.htsql-output {" \
+              u" font-family: \"Arial\", sans-serif;" \
+              u" font-size: 14px; line-height: 1.4; margin: 1em auto;" \
+              u" color: #000000; background-color: #ffffff;" \
+              u" border-collapse: collapse; border-style: hidden;" \
+              u" box-shadow: 1px 1px 2px rgba(0,0,0,0.25) }\n"
+        yield u"table.htsql-output > thead {" \
+              u" background-color: #f2f2f2 }\n"
+        yield u"table.htsql-output > thead > tr > th {" \
+              u" font-weight: bold; padding: 0.2em 0.5em;" \
+              u" text-align: center; vertical-align: bottom;" \
+              u" overflow: hidden; word-wrap: break-word;" \
+              u" border-color: #999999; border-width: 1px 1px 0;" \
+              u" border-style: solid }\n"
+        yield u"table.htsql-output > tbody > tr:first-child {" \
+              u" border-color: #1a1a1a; border-width: 1px 0 0;" \
+              u" border-style: solid }\n"
+        yield u"table.htsql-output > tbody > tr.htsql-odd-row {" \
+              u" background-color: #ffffff }\n"
+        yield u"table.htsql-output > tbody > tr.htsql-even-row {" \
+              u" background-color: #f2f2f2 }\n"
+        yield "table.htsql-output > tbody > tr:hover {" \
+              u" color: #ffffff; background-color: #333333 }\n"
+        yield u"table.htsql-output > tbody > tr > td {" \
+              u" padding: 0.2em 0.5em; vertical-align: baseline;" \
+              u" overflow: hidden; word-wrap: break-word;" \
+              u" border-color: #999999; border-width: 0 1px;" \
+              u" border-style: solid; }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-index {" \
+              u" font-size: 90%; font-weight: bold;" \
+              u" text-align: right; width: 0;" \
+              u" border-color: #1a1a1a }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-boolean-value {" \
+              u" font-weight: bold; text-align: center }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-integer-value {" \
+              u" text-align: right }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-decimal-value {" \
+              u" text-align: right }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-float-value {" \
+              u" text-align: right }\n"
+        yield u"</style>\n"
+        yield u"</head>\n"
+        yield u"<body>\n"
+        if headers_height > 0 or cells_height > 0:
+            yield u"<table class=\"htsql-output\" summary=\"%s\">\n" \
+                    % cgi.escape(title, True)
+            if headers_height > 0:
+                yield u"<thead>\n"
+                for row in product_to_html.headers(headers_height):
+                    yield u"<tr>%s</tr>\n" % u"".join(row)
+                yield u"</thead>\n"
+            if cells_height > 0:
+                yield u"<tbody>\n"
+                index = 0
+                for row in product_to_html.cells(self.data, cells_height):
+                    index += 1
+                    attributes = []
+                    if index % 2:
+                        attributes.append(" class=\"htsql-odd-row\"")
+                    else:
+                        attributes.append(" class=\"htsql-even-row\"")
+                    yield u"<tr%s>%s</tr>\n" % (u"".join(attributes),
+                                                u"".join(row))
+                yield u"</tbody>\n"
+            yield u"</table>\n"
+        yield u"</body>\n"
+        yield u"</html>\n"
+
+
+class ToHTML(Adapter):
+
+    adapts(Domain)
+
+    def __init__(self, domain):
+        assert isinstance(domain, Domain)
+        self.domain = domain
+        self.width = 1
+
+    def __call__(self):
+        return self
+
+    def headers(self, height):
+        if height > 0:
+            if height == 1:
+                yield [u"<th>&nbsp;</th>"]
+            else:
+                yield [u"<th rowspan=\"%s\">&nbsp;</th>" % height]
+
+    def headers_height(self):
+        return 0
+
+    def cells(self, value, height):
+        assert height > 0
+        content = self.dump(value)
+        if content is None:
+            content = u"&mdash;"
+        elif not content:
+            content = u"&nbsp;"
+        else:
+            content = cgi.escape(content)
+        attributes = []
+        if height > 1:
+            attributes.append(u" rowspan=\"%s\"" % height)
+        attributes.append(u" class=\"htsql-%s-value\"" % self.domain.family)
+        yield [u"<td%s>%s</td>" % (u"".join(attributes), content)]
+
+    def cells_height(self, value):
+        return 1
+
+    def dump(self, value):
+        return self.domain.dump(value)
+
+
+class VoidToHTML(ToHTML):
+
+    adapts(VoidDomain)
+
+    def __init__(self, domain):
+        super(VoidToHTML, self).__init__(domain)
+        self.width = 0
+
+    def cells_height(self, value):
+        return 0
+
+
+class RecordToHTML(ToHTML):
+
+    adapts(RecordDomain)
+
+    def __init__(self, domain):
+        super(RecordToHTML, self).__init__(domain)
+        self.fields_to_html = [profile_to_html(field)
+                               for field in domain.fields]
+        self.width = sum(field_to_html.width
+                         for field_to_html in self.fields_to_html)
+
+    def headers(self, height):
+        if not self.width:
+            return
+        streams = [field_to_html.headers(height)
+                   for field_to_html in self.fields_to_html]
+        is_done = False
+        while not is_done:
+            is_done = True
+            row = []
+            for stream in streams:
+                subrow = next(stream, None)
+                if subrow is not None:
+                    row.extend(subrow)
+                    is_done = False
+            if not is_done:
+                yield row
+
+    def headers_height(self):
+        if not self.width:
+            return 0
+        return max(field_to_html.headers_height()
+                   for field_to_html in self.fields_to_html)
+
+    def cells(self, value, height):
+        if not self.width or not height:
+            return
+        if value is None:
+            attributes = []
+            if self.width > 1:
+                attributes.append(u" colspan=\"%s\"" % self.width)
+            if height > 1:
+                attributes.append(u" rowspan=\"%s\"" % height)
+            yield [u"<td%s>&nbsp;</td>" % u"".join(attributes)]
+        else:
+            streams = [field_to_html.cells(item, height)
+                       for item, field_to_html in zip(value,
+                                                      self.fields_to_html)]
+            is_done = False
+            while not is_done:
+                is_done = True
+                row = []
+                for stream in streams:
+                    subrow = next(stream, None)
+                    if subrow is not None:
+                        row.extend(subrow)
+                        is_done = False
+                if not is_done:
+                    yield row
+
+    def cells_height(self, value):
+        if not self.width or value is None:
+            return 0
+        return max(field_to_html.cells_height(item)
+                   for field_to_html, item in zip(self.fields_to_html, value))
+
+
+class ListToHTML(ToHTML):
+
+    adapts(ListDomain)
+
+    def __init__(self, domain):
+        super(ListToHTML, self).__init__(domain)
+        self.item_to_html = to_html(domain.item_domain)
+        self.width = self.item_to_html.width+1
+
+    def headers(self, height):
+        if height > 0:
+            item_stream = self.item_to_html.headers(height)
+            first_row = next(item_stream)
+            attributes = []
+            if height > 1:
+                attributes.append(u" rowspan=\"%s\"" % height)
+            first_row.insert(0, u"<th%s>&nbsp;</th>" % u"".join(attributes))
+            yield first_row
+            for row in item_stream:
+                yield row
+
+    def headers_height(self):
+        return self.item_to_html.headers_height()
+
+    def cells(self, value, height):
+        if not height:
+            return
+        if not value:
+            attributes = []
+            if self.width > 1:
+                attributes.append(u" colspan=\"%s\"" % self.width)
+            if height > 1:
+                attributes.append(u" rowspan=\"%s\"" % height)
+            yield [u"<td%s>&nbsp;</td>" % u"".join(attributes)]
+        items = iter(value)
+        item = next(items)
+        is_last = False
+        total_height = height
+        index = 1
+        while not is_last:
+            try:
+                next_item = next(items)
+            except StopIteration:
+                next_item = None
+                is_last = True
+            item_height = max(1, self.item_to_html.cells_height(item))
+            if is_last:
+                item_height = total_height
+            total_height -= item_height
+            item_stream = self.item_to_html.cells(item, item_height)
+            first_row = next(item_stream)
+            attributes = []
+            if item_height > 1:
+                attributes.append(u" rowspan=\"%s\"" % height)
+            attributes.append(u" class=\"htsql-index\"")
+            first_row.insert(0, u"<td%s>%s</td>"
+                                % (u"".join(attributes), index))
+            yield first_row
+            for row in item_stream:
+                yield row
+            item = next_item
+            index += 1
+
+    def cells_height(self, value):
+        if not value:
+            return 0
+        return sum(max(1, self.item_to_html.cells_height(item))
+                   for item in value)
+
+
+class NativeToHTML(ToHTML):
+
+    adapts_many(StringDomain,
+                EnumDomain)
+
+    def dump(self, value):
+        return value
+
+
+class NativeStringToHTML(ToHTML):
+
+    adapts_many(NumberDomain,
+                DateDomain,
+                TimeDomain)
+
+    def dump(self, value):
+        if value is None:
+            return None
+        return unicode(value)
+
+
+class BooleanToHTML(ToHTML):
+
+    adapts(BooleanDomain)
+
+    def dump(self, value):
+        if value is None:
+            return None
+        elif value is True:
+            return u"+"
+        elif value is False:
+            return u"\u2212"
+
+
+class DateTimeToHTML(ToHTML):
+
+    adapts(DateTimeDomain)
+
+    def dump(self, value):
+        if value is None:
+            return None
+        elif not value.time():
+            return unicode(value.date())
+        else:
+            return unicode(value)
+
+
+class MetaToHTML(object):
+
+    def __init__(self, profile):
+        assert isinstance(profile, Profile)
+        self.profile = profile
+        self.domain_to_html = to_html(profile.domain)
+        self.width = self.domain_to_html.width
+        self.header_level = self.domain_to_html.headers_height()+1
+
+    def headers(self, height):
+        if not self.width or not height:
+            return
+        if not self.profile.header:
+            for row in self.domain_to_html.headers(height):
+                yield row
+            return
+        content = cgi.escape(self.profile.header)
+        attributes = []
+        if self.width > 1:
+            attributes.append(u" colspan=\"%s\"" % self.width)
+        if height > 1 and self.header_level == 1:
+            attributes.append(u" rowspan=\"%s\"" % height)
+        yield [u"<th%s>%s</th>" % (u"".join(attributes), content)]
+        if self.header_level > 1:
+            for row in self.domain_to_html.headers(height-1):
+                yield row
+
+    def headers_height(self):
+        height = self.domain_to_html.headers_height()
+        if self.profile.header:
+            height += 1
+        return height
+
+    def cells(self, value, height):
+        return self.domain_to_html.cells(value, height)
+
+    def cells_height(self, value):
+        return self.domain_to_html.cells_height(value)
+
+
+def to_html(domain):
+    to_html = ToHTML(domain)
+    return to_html
+
+def profile_to_html(profile):
+    return MetaToHTML(profile)
 
 
 class HTMLRenderer(Renderer):
@@ -26,7 +411,6 @@ class HTMLRenderer(Renderer):
     aliases = ['html']
 
     def render(self, product):
-        self.flatten_product(product)
         status = self.generate_status(product)
         headers = self.generate_headers(product)
         body = list(self.generate_body(product))
@@ -36,277 +420,16 @@ class HTMLRenderer(Renderer):
         return "200 OK"
 
     def generate_headers(self, product):
-        return [('Content-Type', 'text/html; charset=UTF-8')]
+        format = HTMLFormat()
+        emit_headers = EmitHeaders(format, product)
+        return list(emit_headers())
 
     def generate_body(self, product):
-        for chunk in self.serialize_html(product):
-            yield chunk
-
-    def serialize_html(self, product):
-        yield "<!DOCTYPE HTML PUBLIC"
-        yield " \"-//W3C//DTD HTML 4.01 Transitional//EN\""
-        yield " \"http://www.w3.org/TR/html4/loose.dtd\">\n"
-        yield "<html>\n"
-        yield "<head>\n"
-        for chunk in self.serialize_head(product):
-            yield chunk
-        yield "</head>\n"
-        yield "<body>\n"
-        for chunk in self.serialize_body(product):
-            yield chunk
-        yield "</body>\n"
-        yield "</html>\n"
-
-    def serialize_head(self, product):
-        title = (str(product.meta.syntax)
-                 if product.meta.syntax is not None else "")
-        yield "<meta http-equiv=\"Content-Type\""
-        yield " content=\"text/html; charset=UTF-8\">\n"
-        yield "<title>%s</title>\n" % cgi.escape(title)
-        yield "<style type=\"text/css\">\n"
-        for chunk in self.serialize_style():
-            yield chunk
-        yield "</style>\n"
-
-    def serialize_style(self):
-        yield "body { font-family: sans-serif; font-size: 90%;"
-        yield " color: #515151; background: #ffffff }\n"
-        yield "a:link, a:visited { color: #1f4884; text-decoration: none }\n"
-        yield "a:hover { text-decoration: underline }\n"
-        yield "table { border-collapse: collapse;"
-        yield " margin: 0.5em auto; width: 100% }\n"
-        yield "table, tr { border-style: solid; border-width: 0 }\n"
-        yield "td, th { padding: 0.2em 0.5em; text-align: left }\n"
-        yield "td { vertical-align: top }\n"
-        yield "th { vertical-align: bottom }\n"
-        yield "table.page { border: 0; padding: 1em; width: auto }\n"
-        yield "tr.content { padding: 1em 1em 0.5em }\n"
-        yield "tr.footer { padding: 0 1em 1em; text-align: left;"
-        yield " font-style: italic }\n"
-        yield "table.list .number { text-align: right }\n"
-        yield "table.list td, table.list th { border-color: #c3c3c3;"
-        yield " border-width: 0 1px; border-style: solid }\n"
-        yield "tr.header { background: #dae3ea; border-color: #c3c3c3;"
-        yield " border-width: 1px 1px 0 }\n"
-        yield "tr.header th.spanning { text-align: center; font-size: 105%;"
-        yield " background: transparent }\n"
-        yield "tr.odd { background: #ffffff; border-color: #c3c3c3;"
-        yield " border-width: 0 1px }\n"
-        yield "tr.even { background: #f2f2f2; border-color: #c3c3c3;"
-        yield " border-width: 0 1px }\n"
-        yield "tr.odd:hover, tr.even:hover { background: #ffe3bd }\n"
-        yield "tr.total { background: transparent;"
-        yield "border-color: #c3c3c3; border-width: 1px 0 0 }\n"
-        yield "tr.total td { text-align: right; font-size: 75%;"
-        yield " font-style: italic; padding: 0.3em 0.5em 0; border-width: 0 }\n"
-        yield "table.void { text-align: center;"
-        yield" border-color: #c3c3c3; border-width: 1px 0 }\n"
-
-    def serialize_body(self, product):
-        title = (str(product.meta.syntax)
-                 if product.meta.syntax is not None else "")
-        yield "<table class=\"page\" summary=\"%s\">\n" \
-                % cgi.escape(title, True)
-        yield "<tr>\n"
-        yield "<td class=\"content\">\n"
-        if product:
-            for chunk in self.serialize_content(product):
-                yield chunk
-        else:
-            for chunk in self.serialize_no_content():
-                yield chunk
-        yield "</td>\n"
-        yield "</tr>\n"
-        yield "<tr><td class=\"footer\">%s</td></tr>\n" % cgi.escape(title)
-        yield "</table>\n"
-
-    def serialize_no_content(self):
-        yield "<table class=\"void\">\n"
-        yield "<tr><td>no data</td></tr>\n"
-        yield "</table>\n"
-
-    def serialize_content(self, product):
-        assert isinstance(product.meta.domain, ListDomain)
-        assert isinstance(product.meta.domain.item_domain, RecordDomain)
-        fields = product.meta.domain.item_domain.fields
-        caption = (product.meta.title[-1].encode('utf-8')
-                   if product.meta.title else "")
-        headers = [[header.encode('utf-8') for header in field.title]
-                   for field in fields]
-        height = max(len(header) for header in headers)
-        width = len(fields)
-        domains = [field.domain for field in fields]
-        tool = HTMLFormatter(self)
-        formats = [Format(self, domain, tool) for domain in domains]
-        colspan = " colspan=\"%s\"" % width if width > 1 else ""
-        yield "<table class=\"list\" summary=\"%s\">\n" \
-                % cgi.escape(caption, True)
-        for line in range(height):
-            yield "<tr class=\"header\">"
-            index = 0
-            while index < width:
-                while index < width and len(headers[index]) <= line:
-                    index += 1
-                if index == width:
-                    break
-                is_spanning = (len(headers[index]) > line+1)
-                colspan = 1
-                if is_spanning:
-                    while (index+colspan < width and
-                           len(headers[index+colspan]) > line+1 and
-                           headers[index][:line+1] ==
-                               headers[index+colspan][:line+1]):
-                        colspan += 1
-                rowspan = 1
-                if len(headers[index]) == line+1:
-                    rowspan = height-line
-                chunks = ["th"]
-                if is_spanning:
-                    chunks.append("class=\"spanning\"")
-                if colspan > 1:
-                    chunks.append("colspan=\"%s\"" % colspan)
-                if rowspan > 1:
-                    chunks.append("rowspan=\"%s\"" % rowspan)
-                tag = " ".join(chunks)
-                title = cgi.escape(headers[index][line])
-                yield "<%s>%s</th>" % (tag, title)
-                index += colspan
-            yield "</tr>\n"
-        is_odd = False
-        total = 0
-        for record in product:
-            total += 1
-            is_odd = not is_odd
-            if width:
-                if is_odd:
-                    style = " class=\"odd\""
-                else:
-                    style = " class=\"even\""
-                yield "<tr%s>" % style
-                for value, format in zip(record, formats):
-                    style = (" class=\"%s\"" % format.style
-                             if format.style is not None else "")
-                    output = format(value)
-                    yield "<td%s>%s</td>" % (style, output)
-                yield "</tr>\n"
-        if total == 0:
-            total = "(no rows)"
-        elif total == 1:
-            total = "(1 row)"
-        else:
-            total = "(%s rows)" % total
-        colspan = " colspan=\"%s\"" % width if width > 1 else ""
-        yield "<tr class=\"total\"><td%s>%s</td></tr>" % (colspan, total)
-        yield "</table>"
-
-
-class HTMLFormatter(Formatter):
-
-    adapts(HTMLRenderer)
-
-
-class FormatDomain(Format):
-
-    adapts(HTMLRenderer, Domain)
-
-    style = None
-
-    def format_null(self):
-        return "<em>&mdash;</em>"
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        if isinstance(value, str):
-            try:
-                value.decode('utf-8')
-            except UnicodeDecodeError:
-                value = repr(value)
-        elif isinstance(value, unicode):
-            value = value.encode('utf-8')
-        else:
-            value = str(value)
-        return "<em>%s</em>" % cgi.escape(value)
-
-
-class FormatBoolean(Format):
-
-    adapts(HTMLRenderer, BooleanDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        if value is True:
-            return "<em>true</em>"
-        if value is False:
-            return "<em>false</em>"
-
-
-class FormatNumber(Format):
-
-    adapts(HTMLRenderer, NumberDomain)
-
-    style = 'number'
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        return str(value)
-
-
-class FormatString(Format):
-
-    adapts(HTMLRenderer, StringDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        value = value.encode('utf-8')
-        if value == "":
-            return "&nbsp;"
-        return cgi.escape(value)
-
-
-class FormatEnum(Format):
-
-    adapts(HTMLRenderer, EnumDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        value = value.encode('utf-8')
-        return cgi.escape(value)
-
-
-class FormatDate(Format):
-
-    adapts(HTMLRenderer, DateDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        return str(value)
-
-
-class FormatTime(Format):
-
-    adapts(HTMLRenderer, TimeDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        return str(value)
-
-
-class FormatDateTime(Format):
-
-    adapts(HTMLRenderer, DateTimeDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return self.format_null()
-        if not value.time():
-            return str(value.date())
-        return str(value)
+        format = HTMLFormat()
+        emit_body = Emit(format, product)
+        for line in emit_body():
+            if isinstance(line, unicode):
+                line = line.encode('utf-8')
+            yield line
 
 
