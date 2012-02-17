@@ -285,6 +285,7 @@ button:active {
 
 #grid table {
   border-style: hidden none none none;
+  border-style: hidden hidden none hidden;
 }
 
 #grid thead {
@@ -298,6 +299,7 @@ button:active {
   border-width: 1px 0 0 0;
 }
 
+/*
 #grid thead tr:first-child {
   border: solid #f2f2f2;
   border-width: 1px 0 0 0;
@@ -312,7 +314,9 @@ button:active {
   border: 1px solid;
   border-color: #fff #1a1a1a #1a1a1a #fff;
 }
+*/
 
+/*
 #grid tbody th {
   border: solid;
   border-width: 0 1px;
@@ -327,6 +331,28 @@ button:active {
 #grid tbody th+td {
   border: 0;
 }
+*/
+
+#grid thead th {
+  border: solid #999999;
+  border-width: 0 1px;
+}
+
+#grid tbody td {
+  border: solid #999999;
+  border-width: 0 1px;
+}
+
+/*
+#grid tbody td.dummy {
+  border-color: transparent;
+}
+*/
+
+#grid tbody td.index {
+  border-color: transparent #1a1a1a transparent transparent;
+  border-color: #1a1a1a;
+}
 
 #grid tr.alt {
   background: #f2f2f2;
@@ -337,7 +363,7 @@ button:active {
   color: #fff;
 }
 
-#grid tbody tr.dummy:hover {
+#grid tbody tr.foot:hover {
   background: inherit;
   color: inherit;
 }
@@ -352,30 +378,29 @@ button:active {
   word-wrap: break-word;
 }
 
-#grid th {
-  font-weight: bold;
-}
-
 #grid thead th {
+  font-weight: bold;
   text-align: center;
   vertical-align: bottom;
-}
-
-#grid tbody th {
-  font-size: 90%;
-  text-align: right;
 }
 
 #grid td {
   font-size: 105%;
 }
 
-#grid .number {
+#grid .index {
+  font-size: 90%;
+  font-weight: bold;
+  text-align: right;
+}
+
+#grid .integer,
+#grid .decimal,
+#grid .float {
   text-align: right;
 }
 
 #grid .boolean {
-  text-align: right;
   font-style: italic;
 }
 

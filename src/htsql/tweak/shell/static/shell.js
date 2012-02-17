@@ -326,12 +326,12 @@ $(document).ready(function() {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = $errorPanel.show();
-        $error.html(output.detail);
+        $error.text(output.detail);
         if (output.hint) {
-            $errorHint.html("("+output.hint+")");
+            $errorHint.text("("+output.hint+")");
         }
         else {
-            $errorHint.html("");
+            $errorHint.text("");
         }
         if (state.marker) {
             state.marker();
@@ -372,17 +372,26 @@ $(document).ready(function() {
         if (state.$panel)
             state.$panel.hide();
         state.$panel = $sqlPanel.show();
-        $sql.html(output.sql);
+        $sql.text(output.sql);
         updateTitle();
     }
 
     function handleProduct(output) {
 //        timing("rendering table");
-        var style = output.style;
-        var head = output.head;
-        var body = output.body;
-        var size = style.length;
+        if (state.$panel)
+            state.$panel.hide();
+        state.$panel = null;
         var width = $viewport.width();
+        var build = makeBuild(output.meta, output.data, output.more);
+//        log("build.head():");
+        var head = build.head();
+//        log(head);
+//        log("build.body():");
+        var body = build.body();
+//        log(body);
+//        log("build.foot():");
+        var foot = build.foot();
+//        log(foot);
         var constraint = null;
         if (width < 640)
             constraint = 'w640';
@@ -397,32 +406,16 @@ $(document).ready(function() {
         var table = '';
         table += '<table'+(constraint ? ' class="'+constraint+'"' : '')+'>';
         table += '<colgroup>';
-        table += '<col>';
-        for (var i = 0; i < size; i ++) {
-            table += '<col>';
+        for (var i = 0; i < build.size; i ++) {
+            table += '<col' + (i == build.size-1 ? (' style="width: '+width+'px">') : '>');
         }
-        table += '<col style="width: '+width+'px">';
         table += '</colgroup>';
         table += '<thead>';
         for (var k = 0; k < head.length; k ++) {
             var row = head[k];
             table += '<tr>';
-            if (k == 0) {
-                table += '<th' + (head.length > 1 ? ' rowspan="'+head.length+'"' : '')
-                              + ' class="dummy">&nbsp;</th>';
-            }
-            for (var i = 0; i < head[k].length; i ++) {
-                var cell = row[i];
-                var title = cell[0];
-                var colspan = cell[1];
-                var rowspan = cell[2];
-                table += '<th' + (colspan>1 ? ' colspan="'+colspan+'"' : '')
-                                    + (rowspan>1 ? ' rowspan="'+rowspan+'"' : '') + '>'
-                              + title + '</th>';
-            }
-            if (k == 0) {
-                table += '<th' + (head.length > 1 ? ' rowspan="'+head.length+'"' : '')
-                              + ' class="dummy">&nbsp;</th>';
+            for (var i = 0; i < row.length; i ++) {
+                table += row[i];
             }
             table += '</tr>';
         }
@@ -431,25 +424,19 @@ $(document).ready(function() {
         for (var k = 0; k < body.length; k ++) {
             var row = body[k];
             table += '<tr' + (k % 2 == 1 ? ' class="alt">' : '>');
-            table += '<th>'+(k+1)+'</th>';
-            for (var i = 0; i < size; i ++) {
-                var value = row[i];
-                if (value == null) {
-                    value = '&nbsp;'
-                }
-                table += '<td' + (style[i] ? ' class="'+style[i]+'">' : '>')
-                              + value + '</td>';
+            for (var i = 0; i < row.length; i ++) {
+                table += row[i];
             }
-            table += '<td class="dummy">&nbsp;</td>';
             table += '</tr>';
         }
-        var ch = output.more ? "&#x22EE;" : "&nbsp;"
-        table += '<tr class="dummy">';
-        table += '<th class="dummy">'+ch+'</th>';
-        for (var i = 0; i < size; i ++) {
-            table += '<td class="dummy">'+ch+'</td>';
+        for (var k = 0; k < foot.length; k ++) {
+            var row = foot[k];
+            table += '<tr class="foot">';
+            for (var i = 0; i < row.length; i ++) {
+                table += row[i];
+            }
+            table += '</tr>';
         }
-        table += '<td class="dummy">&nbsp;</td>';
         table += '</tbody>';
         table += '</table>';
         if (output.more) {
@@ -458,22 +445,14 @@ $(document).ready(function() {
         $gridHead.empty();
         $gridBody.empty()
             .css({ top: 0,
-                   width: size*width+"px",
+                   width: build.size*width+"px",
                    right: "auto",
                    "overflow-y": "hidden",
                    "overflow-x": "hidden" });
-        if (state.$panel)
-            state.$panel.hide();
         state.$panel = $productPanel.show();
         var title = '';
-        if (head.length > 0) {
-            for (var i = 0; i < head[0].length; i ++) {
-                if (title)
-                    title += ', ';
-                title += head[0][i][0].replace(/&lt;/g, '<')
-                                      .replace(/&gt;/g, '>')
-                                      .replace(/&amp;/g, '&');
-            }
+        if (output.meta.header) {
+            title = output.meta.header;
         }
         updateTitle(title);
         $gridBody.html(table);
@@ -484,6 +463,389 @@ $(document).ready(function() {
         }
         $('#load').click(clickLoad);
         setTimeout(configureGrid, 0);
+    }
+
+    function makeBuild(meta, data, more) {
+        var profileBuild = buildForProfile(meta);
+        var headHeight = profileBuild.headHeight();
+        if (headHeight < 1) {
+            headHeight = 1;
+        }
+        return {
+            size: profileBuild.size+1,
+            head: function () {
+                var height = profileBuild.headHeight();
+                if (height < 1) {
+                    height = 1;
+                }
+                var rows = profileBuild.head(height);
+                var attrs = '';
+                attrs += height > 1 ? (' rowspan="'+height+'"') : '';
+                attrs += (rows.length == 0 && profileBuild.size > 0) ?
+                        (' colspan="'+(profileBuild.size+1)+'"') : '';
+                while (rows.length < height) {
+                    rows.push([]);
+                }
+                rows[0].push('<th'+attrs+'>&nbsp;</th>');
+                return rows;
+            },
+            body: function () {
+                var height = profileBuild.bodyHeight(data);
+                var rows = profileBuild.body(data, height);
+                for (var k = 0; k < rows.length; k ++) {
+                    rows[k].push('<td class="dummy">&nbsp;</td>');
+                }
+                return rows;
+            },
+            foot: function () {
+                var height = profileBuild.footHeight(more);
+                var rows = profileBuild.foot(more, height);
+                for (var k = 0; k < rows.length; k ++) {
+                    rows[k].push('<td class="dummy">&nbsp;</td>');
+                }
+                return rows;
+            }
+        };
+    }
+
+    function buildForProfile(meta) {
+        var domainBuild = buildForDomain(meta.domain);
+        if (!meta.header || domainBuild.size == 0) {
+            return domainBuild;
+        }
+        return {
+            size: domainBuild.size,
+            headHeight: function () {
+                return domainBuild.headHeight()+1;
+            },
+            head: function(height) {
+                var rows = [];
+                if (domainBuild.headHeight() > 0) {
+                    rows = domainBuild.head(height-1);
+                    rows.unshift([]);
+                }
+                else {
+                    for (var k = 0; k < height; k ++) {
+                        rows.push([]);
+                    }
+                }
+                var attrs = '';
+                attrs += (height > 1 && domainBuild.headHeight() == 0)
+                        ? (' rowspan="'+height+'"') : '';
+                attrs += domainBuild.size > 1 ? (' colspan="'+domainBuild.size+'"') : '';
+                var cell = meta.header.replace(/&/g, '&amp;')
+                                      .replace(/</g, '&lt;')
+                                      .replace(/>/g, '&gt;');
+                rows[0].push('<th'+attrs+'>'+cell+'</th>');
+                return rows;
+            },
+            bodyHeight: function (data) {
+                return domainBuild.bodyHeight(data);
+            },
+            body: function (data, height) {
+                return domainBuild.body(data, height);
+            },
+            footHeight: function (more) {
+                return domainBuild.footHeight(more);
+            },
+            foot: function (more, height) {
+                return domainBuild.foot(more, height);
+            }
+        };
+    }
+
+    function buildForDomain(meta) {
+        if (meta.type == "record") {
+            return buildForRecord(meta);
+        }
+        else if (meta.type == "list") {
+            return buildForList(meta);
+        }
+        else if (meta.type == "void") {
+            return buildForVoid(meta);
+        }
+        return {
+            size: 1,
+            headHeight: function () {
+                return 0;
+            },
+            head: function(height) {
+                var rows = [];
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                if (height > 0) {
+                    var attrs = '';
+                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
+                    rows[0].push('<th'+attrs+'>&nbsp;</th>');
+                }
+                return rows;
+            },
+            bodyHeight: function (data) {
+                return 1;
+            },
+            body: function (data, height) {
+                var rows = [];
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                var attrs = '';
+                attrs += height > 1 ? ' rowspan="'+height+'"' : '';
+                attrs += meta.type ? ' class="'+meta.type+'"' : '';
+                var cell = data;
+                if (cell === null) {
+                    cell = '';
+                }
+                else {
+                    cell = ''+cell;
+                }
+                cell = cell.replace(/&/g, '&amp;')
+                           .replace(/</g, '&lt;')
+                           .replace(/>/g, '&gt;');
+                rows[0].push('<td'+attrs+'>'+cell+'</td>');
+                return rows;
+            },
+            footHeight: function (more) {
+                return 1;
+            },
+            foot: function (more, height) {
+                var rows = [];
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                var attrs = '';
+                attrs += height > 1 ? ' rowspan="'+height+'"' : '';
+                attrs += meta.type ? ' class="'+meta.type+'"' : '';
+                var cell = more ? '&#x22EE;' : '&nbsp;';
+                rows[0].push('<td'+attrs+'>'+cell+'</td>');
+                return rows;
+            }
+        };
+    }
+
+    function buildForRecord(meta) {
+        var fieldBuilds = [];
+        var size = 0;
+        for (var k = 0; k < meta.fields.length; k ++) {
+            var fieldBuild = buildForProfile(meta.fields[k]);
+            fieldBuilds.push(fieldBuild);
+            size += fieldBuild.size;
+        }
+        return {
+            size: size,
+            headHeight: function () {
+                if (!size) {
+                    return 0;
+                }
+                var height = 0;
+                for (var k = 0; k < fieldBuilds.length; k ++) {
+                    var fieldHeight = fieldBuilds[k].headHeight();
+                    height = fieldHeight > height ? fieldHeight : height;
+                }
+                return height;
+            },
+            head: function(height) {
+                var rows = [];
+                if (!height) {
+                    return rows;
+                }
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                for (var k = 0; k < fieldBuilds.length; k ++) {
+                    var fieldHead = fieldBuilds[k].head(height);
+                    for (var i = 0; i < height; i ++) {
+                        for (var j = 0; j < fieldHead[i].length; j ++) {
+                            rows[i].push(fieldHead[i][j]);
+                        }
+                    }
+                }
+                return rows;
+            },
+            bodyHeight: function (data) {
+                if (data === null || !size) {
+                    return 0;
+                }
+                var height = 0;
+                for (var k = 0; k < fieldBuilds.length; k ++) {
+                    var fieldHeight = fieldBuilds[k].bodyHeight(data[k]);
+                    height = fieldHeight > height ? fieldHeight : height;
+                }
+                return height;
+            },
+            body: function (data, height) {
+                var rows = [];
+                if (!height) {
+                    return rows;
+                }
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                if (data === null) {
+                    data = [];
+                    for (var k = 0; k < fieldBuilds.length; k ++) {
+                        data.push(null);
+                    }
+                }
+                for (var k = 0; k < fieldBuilds.length; k ++) {
+                    var fieldBody = fieldBuilds[k].body(data[k], height);
+                    for (var i = 0; i < height; i ++) {
+                        for (var j = 0; j < fieldBody[i].length; j ++) {
+                            rows[i].push(fieldBody[i][j]);
+                        }
+                    }
+                }
+                return rows;
+            },
+            footHeight: function (more) {
+                if (!size) {
+                    return 0;
+                }
+                return 1;
+            },
+            foot: function (more, height) {
+                var rows = [];
+                if (height == 0) {
+                    return rows;
+                }
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                for (var k = 0; k < fieldBuilds.length; k ++) {
+                    var fieldFoot = fieldBuilds[k].foot(more, height);
+                    for (var i = 0; i < height; i ++) {
+                        for (var j = 0; j < fieldFoot[i].length; j ++) {
+                            rows[i].push(fieldFoot[i][j]);
+                        }
+                    }
+                }
+                return rows;
+            }
+        };
+    }
+
+    function buildForList(meta) {
+        var itemBuild = buildForDomain(meta.item.domain);
+        return {
+            size: itemBuild.size+1,
+            headHeight: function () {
+                return itemBuild.headHeight();
+            },
+            head: function(height) {
+                var rows = itemBuild.head(height);
+                if (height > 0) {
+                    var attrs = '';
+                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
+                    rows[0].unshift('<th'+attrs+'>&nbsp;</th>');
+                }
+                return rows;
+            },
+            bodyHeight: function (data) {
+                if (data === null) {
+                    return 0;
+                }
+                height = 0;
+                for (var k = 0; k < data.length; k ++) {
+                    var itemHeight = itemBuild.bodyHeight(data[k]);
+                    if (itemHeight == 0) {
+                        itemHeight = 1;
+                    }
+                    height += itemHeight;
+                }
+                return height;
+            },
+            body: function (data, height) {
+                var rows = [];
+                if (!height) {
+                    return rows;
+                }
+                if (data === null) {
+                    for (var k = 0; k < height; k ++) {
+                        rows.push([]);
+                    }
+                    var attrs = '';
+                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
+                    attrs += itemBuild.size > 0 ? ' colspan="'+(itemBuild.size+1)+'"' : '';
+                    attrs += ' class="dummy"';
+                    rows[0].unshift('<td'+attrs+'>&nbsp;</td>');
+                }
+                else {
+                    for (var k = 0; k < data.length; k ++) {
+                        var itemHeight = itemBuild.bodyHeight(data[k]);
+                        if (itemHeight == 0) {
+                            itemHeight = 1;
+                        }
+                        if (k == data.length-1) {
+                            itemHeight = height;
+                        }
+                        height -= itemHeight;
+                        var itemRows = itemBuild.body(data[k], itemHeight);
+                        var attrs = '';
+                        attrs += itemHeight > 1 ? ' rowspan="'+itemHeight+'"' : '';
+                        attrs += ' class="index"';
+                        itemRows[0].unshift('<td'+attrs+'>'+(k+1)+'</td>');
+                        for (var i = 0; i < itemRows.length; i ++) {
+                            rows.push(itemRows[i]);
+                        }
+                    }
+                }
+                return rows;
+            },
+            footHeight: function (more) {
+                var height = itemBuild.footHeight(more);
+                if (height == 0) {
+                    height = 1;
+                }
+                return height;
+            },
+            foot: function (more, height) {
+                var rows = itemBuild.foot(more, height);
+                if (height > 0) {
+                    var attrs = '';
+                    attrs += height > 1 ? ' rowspan="'+height+'"' : '';
+                    attrs += ' class="index"';
+                    var cell = more ? '&#x22EE;' : '&nbsp;';
+                    rows[0].unshift('<td'+attrs+'>'+cell+'</th>');
+                }
+                return rows;
+            }
+        };
+    }
+
+    function buildForVoid(meta) {
+        return {
+            size: 0,
+            headHeight: function () {
+                return 0;
+            },
+            head: function(height) {
+                var rows = [];
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                return rows;
+            },
+            bodyHeight: function (data) {
+                return 0;
+            },
+            body: function (data, height) {
+                var rows = [];
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                return rows;
+            },
+            footHeight: function (more) {
+                return 0;
+            },
+            foot: function (more, height) {
+                var rows = [];
+                for (var k = 0; k < height; k ++) {
+                    rows.push([]);
+                }
+                return rows;
+            }
+        };
     }
 
     function configureGrid() {
