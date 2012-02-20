@@ -6,8 +6,8 @@
 What is HTSQL?
 ==============
 
-**HTSQL is a comprehensive navigational query language for relational
-databases.**
+HTSQL is a comprehensive navigational query language for relational
+databases and web service gateway.
 
 HTSQL is a Web Service
 ----------------------
@@ -16,13 +16,13 @@ HTSQL is a Web Service
 
    .. sourcecode:: text
 
-      GET /school HTTP/1.1
+      http://demo.htsql.org/school
 
    .. image:: img/show_school.png
       :alt: output of /school query
       :target: http://demo.htsql.org/school
 
-*On the left is a URL, on the right is what a browser would show*
+*On the left is a URL, on the right is what a browser would show.*
 
 HTSQL is a query language for the web.  Queries are URLs that can be
 directly typed into a browser; the output could be returned in a variety
@@ -47,7 +47,7 @@ HTSQL is a Relational Database Gateway
       FROM "ad"."school" AS "school"
       ORDER BY 1 ASC
 
-*On the left is an HTSQL query, on the right is the equivalent SQL*
+*On the left is an HTSQL query, on the right is SQL it is translated to.*
 
 HTSQL wraps your existing existing relational database, transparently
 handling SQL complexities for you.  The current version of HTSQL supports
@@ -75,19 +75,19 @@ HTSQL is an Advanced Query Language
       LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school_code" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON ("school"."code" = "department"."school_code")
       ORDER BY "school"."code" ASC
 
-*On the left is an HTSQL query, on the right is the equivalent SQL*
+*On the left is an HTSQL query, on the right is SQL it is translated to.*
 
-Besides typical expression algebra and rich set of functions, HTSQL provides 
-sophisicated navigational query mechanism, composable query fragments and an 
-extensive macro inclusion system.  In particular, nested aggregations and 
-projections are easy to understand and use.
+Besides typical expression algebra and function set, HTSQL provides
+sophisicated navigational query mechanism, composable query fragments
+and an extensive macro inclusion system.  In particular, nested
+aggregations and projections are easy to understand and use.
 
 HTSQL is Human Parsable
 -----------------------
 
 .. vsplit::
 
-   .. container::
+   .. sourcecode:: html
 
       Show me schools, and, for each school, 
       its name, campus, number of programs, 
@@ -103,7 +103,7 @@ HTSQL is Human Parsable
               avg(department.
                   count(course))}
 
-*On the left is a business inquiry, on the right is the HTSQL translation*
+*On the left is a business inquiry, on the right is the HTSQL translation.*
 
 
 HTSQL is first and formost designed for the *accidental programmer* and
