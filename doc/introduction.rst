@@ -6,7 +6,8 @@
 What is HTSQL?
 ==============
 
-HTSQL is a query language and web service for relational databases.
+**HTSQL is a comprehensive navigational query language for relational
+databases.**
 
 HTSQL is a Web Service
 ----------------------
@@ -21,9 +22,13 @@ HTSQL is a Web Service
       :alt: output of /school query
       :target: http://demo.htsql.org/school
 
+*On the left is a URL, on the right is what a browser would show*
+
 HTSQL is a query language for the web.  Queries are URLs that can be
 directly typed into a browser; the output could be returned in a variety
-of formats including HTML, CSV, JSON, etc.
+of formats including HTML, CSV, JSON, etc.  HTSQL can be used as the basis
+for dashboarding tools and other browser-based applications.  In this way, 
+database queries can be shared, tweaked, and used in any number of ways.
 
 HTSQL is a Relational Database Gateway
 --------------------------------------
@@ -42,9 +47,14 @@ HTSQL is a Relational Database Gateway
       FROM "ad"."school" AS "school"
       ORDER BY 1 ASC
 
-HTSQL wraps an existing relational database and translates incoming
-queries into SQL.  The current version of HTSQL supports *SQLite*,
-*PostgreSQL*, *MySQL*, *Oracle*, and *Microsoft SQL Server*.
+*On the left is an HTSQL query, on the right is the equivalent SQL*
+
+HTSQL wraps your existing existing relational database, transparently
+handling SQL complexities for you.  The current version of HTSQL supports
+*SQLite*, *PostgreSQL*, *MySQL*, *Oracle*, and *Microsoft SQL Server*.  
+We've taken care to abstract differences between these SQL dialects 
+so that a given HTSQL query has consistent semantics across database 
+server implementations.
 
 HTSQL is an Advanced Query Language
 -----------------------------------
@@ -65,8 +75,71 @@ HTSQL is an Advanced Query Language
       LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school_code" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON ("school"."code" = "department"."school_code")
       ORDER BY "school"."code" ASC
 
-HTSQL is a compact, high-level navigational query language designed
-for data analysts and web developers.
+*On the left is an HTSQL query, on the right is the equivalent SQL*
+
+Besides typical expression algebra and rich set of functions, HTSQL provides 
+sophisicated navigational query mechanism, composable query fragments and an 
+extensive macro inclusion system.  In particular, nested aggregations and 
+projections are easy to understand and use.
+
+HTSQL is Human Parsable
+-----------------------
+
+.. vsplit::
+
+   .. container::
+
+      Show me schools, and, for each school, 
+      its name, campus, number of programs, 
+      number of departments, and the 
+      average number of courses across each
+      of its departments?
+
+   .. sourcecode:: htsql
+
+      /school{name, campus, 
+              count(program), 
+              count(department),
+              avg(department.
+                  count(course))}
+
+*On the left is a business inquiry, on the right is the HTSQL translation*
+
+
+HTSQL is first and formost designed for the *accidental programmer* and
+as such provides a direct mapping of common business inquiries onto a
+computer parsable and executable syntax.  Just because a query must be
+processable by a machine, doesn't mean it shouldn't be human readable.
+
+
+HTSQL is a Python Library
+-------------------------
+
+.. vsplit::
+
+   .. sourcecode:: python
+
+      from htsql import HTSQL
+      conn = HTSQL("pgsql:///htsql_demo")
+      rows = conn.produce("/school")
+      for row in rows: 
+         print row
+
+   .. sourcecode:: python
+
+      school(code=u'art', 
+             name=u'School of Art & Design', 
+             campus=u'old')
+      school(code=u'bus', 
+             name=u'School of Business', 
+             campus=u'south')
+      ...
+
+HTSQL can be embedded into any Python application to provide an 
+intuitive object based query engine for complex reporting.  It 
+works out of the box with Jinja and other tools.  We provide
+meta-data adapters for Django and SQLAlchemy.
+
 
 Our Philosophy
 ==============
@@ -119,6 +192,196 @@ accessible, transparent, rigorous and embeddable manner.
 
 .. |mdash| unicode:: U+2014
    :trim:
+
+
+HTSQL in a Nutshell
+===================
+
+HTSQL was designed from the ground up as a self-serve reporting tool
+for data analysts.  With HTSQL, the easy stuff is truly easy; and,
+the complex stuff is easy too.
+
+In this section we introduce the fundamentals of HTSQL syntax and
+semantics.  For a more incremental approach, please read the
+:doc:`tutorial`.
+
+Scalar Expressions
+------------------
+
+Literal values:
+
+.. htsql:: /{3.14159, 'Hello World!'}
+
+Algebraic expressions:
+
+.. htsql:: /(3+4)*6
+
+Predicate expressions:
+
+.. htsql:: /(7<13)&(1=0|1!=0)
+
+Navigation
+----------
+
+A table name by itself produces all records from that table:
+
+.. htsql:: /school
+   :cut: 4
+
+In the scope of ``school`` table, ``department`` is a link to
+associated records from ``department`` table.  The following query
+returns ``department`` records via navigation though ``school``:
+
+.. htsql:: /school.department
+   :cut: 4
+
+This query works as follows:
+
+* ``school`` generates all records from ``school`` table;
+* for each ``school`` record, ``department`` generates
+  associated ``department`` records;
+
+Filtering
+---------
+
+Sieve operator produces records satisfying the specified condition:
+
+.. htsql:: /school?campus='south'
+
+Sorting operator reorders records:
+
+.. htsql:: /school.sort(campus)
+   :cut: 4
+
+Truncating operator takes a slice from the record sequence:
+
+.. htsql:: /school.limit(2)
+
+Selection & Definition
+----------------------
+
+Selection specifies output columns:
+
+.. htsql:: /school{name, campus}
+   :cut: 4
+
+Title decorator defines the title of an output column:
+
+.. htsql:: /school{name, count(department) :as '# of Dept'}
+   :cut: 4
+
+Calculated attributes factor out repeating expressions:
+
+.. htsql::
+
+   /school.define(num_dept := count(department))
+          {code, num_dept}?num_dept>3
+
+References carry over values across nested scopes:
+
+.. htsql::
+   :cut: 4
+
+   /define($avg_credits := avg(course.credits))
+    .course{title, credits}?credits>$avg_credits
+
+Aggregation
+-----------
+
+Aggregates convert plural expressions to singular values.
+
+Scalar aggregates:
+
+.. htsql:: /count(department)
+
+Nested aggregates:
+
+.. htsql:: /avg(school.count(department))
+
+Various aggregation operations:
+
+.. htsql::
+   :cut: 4
+
+   /department{name, count(course),
+                     max(course.credits),
+                     sum(course.credits),
+                     avg(course.credits)}?exists(course)
+
+Projection
+----------
+
+Projection operator returns distinct values.  This example returns
+distinct ``campus`` values from the ``school`` table:
+
+.. htsql:: /school^campus
+
+In the scope of the projection, ``school`` refers to all records from
+``school`` table having the same value of ``campus`` attribute:
+
+.. htsql:: /school^campus {campus, count(school)}
+
+Linking
+-------
+
+Even though HTSQL provides automatic links inferred from foreign key
+constraints, arbitrary linking is also allowed:
+
+.. htsql::
+   :cut: 4
+
+   /school{name, count(department)}
+          ?count(department)>avg(@school.count(department))
+
+This query returns schools with the number of departments above average
+among all schools.
+
+
+What's up Next?
+===============
+
+We intend to add to HTSQL many more features in the future.
+
+Hierarchical Output
+-------------------
+
+HTSQL should not be limited to tabular output.
+
+.. sourcecode:: htsql
+
+   /school{name,
+           /program{title},
+           /department{name}}
+
+This query is to generate a tree-shaped output: for each school, it
+produces the school name, a list of titles of associated programs,
+and a list of names of associated departments.
+
+Analytical Processing
+---------------------
+
+HTSQL should support OLAP cube operations.
+
+.. sourcecode:: htsql
+
+   /rollup(school^campus){campus, count(school.department)}
+
+This query is to produce the number of departments per school's campus
+followed by a total value for all campuses.
+
+Recursive Queries
+-----------------
+
+HTSQL should be able to construct hierarchies from parent-child
+relationships.
+
+.. sourcecode:: htsql
+
+   /program{title, /recurse(part_of){title}}
+
+This query is to return programs together with a list of all
+dependent subprograms.
+
 
 Why not SQL?
 ============
@@ -346,194 +609,4 @@ correct, but aren't.
 
 Each syntactic component of the HTSQL query is self-contained; when
 assembled, they form a cohesive translation of the business inquiry.
-
-
-HTSQL in a Nutshell
-===================
-
-HTSQL was designed from the ground up as a self-serve reporting tool
-for data analysts.  With HTSQL, the easy stuff is truly easy; and,
-the complex stuff is easy too.
-
-In this section we introduce the fundamentals of HTSQL syntax and
-semantics.  For a more incremental approach, please read the
-:doc:`tutorial`.
-
-Scalar Expressions
-------------------
-
-Literal values:
-
-.. htsql:: /{3.14159, 'Hello World!'}
-
-Algebraic expressions:
-
-.. htsql:: /(3+4)*6
-
-Predicate expressions:
-
-.. htsql:: /(7<13)&(1=0|1!=0)
-
-Navigation
-----------
-
-A table name by itself produces all records from that table:
-
-.. htsql:: /school
-   :cut: 4
-
-In the scope of ``school`` table, ``department`` is a link to
-associated records from ``department`` table.  The following query
-returns ``department`` records via navigation though ``school``:
-
-.. htsql:: /school.department
-   :cut: 4
-
-This query works as follows:
-
-* ``school`` generates all records from ``school`` table;
-* for each ``school`` record, ``department`` generates
-  associated ``department`` records;
-
-Filtering
----------
-
-Sieve operator produces records satisfying the specified condition:
-
-.. htsql:: /school?campus='south'
-
-Sorting operator reorders records:
-
-.. htsql:: /school.sort(campus)
-   :cut: 4
-
-Truncating operator takes a slice from the record sequence:
-
-.. htsql:: /school.limit(2)
-
-Selection & Definition
-----------------------
-
-Selection specifies output columns:
-
-.. htsql:: /school{name, campus}
-   :cut: 4
-
-Title decorator defines the title of an output column:
-
-.. htsql:: /school{name, count(department) :as '# of Dept'}
-   :cut: 4
-
-Calculated attributes factor out repeating expressions:
-
-.. htsql::
-
-   /school.define(num_dept := count(department))
-          {code, num_dept}?num_dept>3
-
-References carry over values across nested scopes:
-
-.. htsql::
-   :cut: 4
-
-   /define($avg_credits := avg(course.credits))
-    .course{title, credits}?credits>$avg_credits
-
-Aggregation
------------
-
-Aggregates convert plural expressions to singular values.
-
-Scalar aggregates:
-
-.. htsql:: /count(department)
-
-Nested aggregates:
-
-.. htsql:: /avg(school.count(department))
-
-Various aggregation operations:
-
-.. htsql::
-   :cut: 4
-
-   /department{name, count(course),
-                     max(course.credits),
-                     sum(course.credits),
-                     avg(course.credits)}?exists(course)
-
-Projection
-----------
-
-Projection operator returns distinct values.  This example returns
-distinct ``campus`` values from the ``school`` table:
-
-.. htsql:: /school^campus
-
-In the scope of the projection, ``school`` refers to all records from
-``school`` table having the same value of ``campus`` attribute:
-
-.. htsql:: /school^campus {campus, count(school)}
-
-Linking
--------
-
-Even though HTSQL provides automatic links inferred from foreign key
-constraints, arbitrary linking is also allowed:
-
-.. htsql::
-   :cut: 4
-
-   /school{name, count(department)}
-          ?count(department)>avg(@school.count(department))
-
-This query returns schools with the number of departments above average
-among all schools.
-
-
-What's up Next?
-===============
-
-We intend to add to HTSQL many more features in the future.
-
-Hierarchical Output
--------------------
-
-HTSQL should not be limited to tabular output.
-
-.. sourcecode:: htsql
-
-   /school{name,
-           /program{title},
-           /department{name}}
-
-This query is to generate a tree-shaped output: for each school, it
-produces the school name, a list of titles of associated programs,
-and a list of names of associated departments.
-
-Analytical Processing
----------------------
-
-HTSQL should support OLAP cube operations.
-
-.. sourcecode:: htsql
-
-   /rollup(school^campus){campus, count(school.department)}
-
-This query is to produce the number of departments per school's campus
-followed by a total value for all campuses.
-
-Recursive Queries
------------------
-
-HTSQL should be able to construct hierarchies from parent-child
-relationships.
-
-.. sourcecode:: htsql
-
-   /program{title, /recurse(part_of){title}}
-
-This query is to return programs together with a list of all
-dependent subprograms.
-
 
