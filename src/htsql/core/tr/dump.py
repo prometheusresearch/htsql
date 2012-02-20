@@ -933,7 +933,7 @@ class DubPhrase(Dub):
         if isinstance(syntax, ApplicationSyntax):
             return syntax.name
         # For a literal node, take the value of the literal.
-        if isinstance(syntax, LiteralSyntax):
+        if isinstance(syntax, LiteralSyntax) and syntax.value:
             return syntax.value
         # Otherwise, use the default alias.
         return super(DubPhrase, self).__call__()

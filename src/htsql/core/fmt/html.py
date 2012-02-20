@@ -15,7 +15,7 @@ This module implements the HTML renderer.
 from ..adapter import Adapter, adapts, adapts_many
 from .format import HTMLFormat, EmitHeaders, Emit
 from .format import Format, Formatter, Renderer
-from ..domain import (Domain, BooleanDomain, NumberDomain,
+from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
                       StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
                       VoidDomain, Profile)
@@ -52,19 +52,24 @@ class EmitHTML(Emit):
               u" font-family: \"Arial\", sans-serif;" \
               u" font-size: 14px; line-height: 1.4; margin: 1em auto;" \
               u" color: #000000; background-color: #ffffff;" \
-              u" border-collapse: collapse; border-style: hidden;" \
-              u" box-shadow: 1px 1px 2px rgba(0,0,0,0.25) }\n"
+              u" border-collapse: collapse; border: 1px double #f2f2f2;" \
+              u" -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25);" \
+              u" -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25);" \
+              u" box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }\n"
         yield u"table.htsql-output > thead {" \
               u" background-color: #f2f2f2 }\n"
+        yield u"table.htsql-output > thead {" \
+              u" border-color: #1a1a1a; border-width: 0 0 1px;" \
+              u" border-style: solid }\n"
         yield u"table.htsql-output > thead > tr > th {" \
               u" font-weight: bold; padding: 0.2em 0.5em;" \
               u" text-align: center; vertical-align: bottom;" \
               u" overflow: hidden; word-wrap: break-word;" \
               u" border-color: #999999; border-width: 1px 1px 0;" \
               u" border-style: solid }\n"
-        yield u"table.htsql-output > tbody > tr:first-child {" \
-              u" border-color: #1a1a1a; border-width: 1px 0 0;" \
-              u" border-style: solid }\n"
+        yield u"table.htsql-output > thead > tr" \
+              u" > th.htsql-empty-header:after {" \
+              u" content: \"\\A0\" }\n"
         yield u"table.htsql-output > tbody > tr.htsql-odd-row {" \
               u" background-color: #ffffff }\n"
         yield u"table.htsql-output > tbody > tr.htsql-even-row {" \
@@ -78,16 +83,29 @@ class EmitHTML(Emit):
               u" border-style: solid; }\n"
         yield u"table.htsql-output > tbody > tr > td.htsql-index {" \
               u" font-size: 90%; font-weight: bold;" \
-              u" text-align: right; width: 0;" \
-              u" border-color: #1a1a1a }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-boolean-value {" \
-              u" font-weight: bold; text-align: center }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-integer-value {" \
+              u" text-align: right; width: 0; color: #999999;" \
+              u" border-color: #1a1a1a;" \
+              u" -moz-user-select: none; -webkit-user-select: none;"\
+              u" user-select: none }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-integer-type {" \
               u" text-align: right }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-decimal-value {" \
+        yield u"table.htsql-output > tbody > tr > td.htsql-decimal-type {" \
               u" text-align: right }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-float-value {" \
+        yield u"table.htsql-output > tbody > tr > td.htsql-float-type {" \
               u" text-align: right }\n"
+        yield u"table.htsql-output > tbody > tr" \
+              u" > td.htsql-null-value:after {" \
+              u" content: \"\\A0\" }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-empty-value {" \
+              u" color: #999999 }\n"
+        yield u"table.htsql-output > tbody > tr" \
+              u" > td.htsql-empty-value:after {" \
+              u" content: \"\\2B1A\" }\n"
+        yield u"table.htsql-output > tbody > tr > td.htsql-false-value {" \
+                u" font-style: italic }\n"
+        yield u"table.htsql-output > tbody > tr" \
+              u" > td.htsql-null-record-value {" \
+              u" border-style: dashed }\n"
         yield u"</style>\n"
         yield u"</head>\n"
         yield u"<body>\n"
@@ -131,31 +149,39 @@ class ToHTML(Adapter):
 
     def headers(self, height):
         if height > 0:
+            attributes = []
             if height == 1:
-                yield [u"<th>&nbsp;</th>"]
-            else:
-                yield [u"<th rowspan=\"%s\">&nbsp;</th>" % height]
+                attributes.append(u" rowspan=\"%s\"" % height)
+            attributes.append(u" class=\"htsql-empty-header\"")
+            yield [u"<th%s></th>" % "".join(attributes)]
 
     def headers_height(self):
         return 0
 
     def cells(self, value, height):
         assert height > 0
+        classes = []
+        classes.append(u"htsql-%s-type" % self.domain.family)
         content = self.dump(value)
         if content is None:
-            content = u"&mdash;"
+            content = u""
+            classes.append(u"htsql-null-value")
         elif not content:
-            content = u"&nbsp;"
+            classes.append(u"htsql-empty-value")
         else:
             content = cgi.escape(content)
+        classes.extend(self.classes(value))
         attributes = []
         if height > 1:
             attributes.append(u" rowspan=\"%s\"" % height)
-        attributes.append(u" class=\"htsql-%s-value\"" % self.domain.family)
+        attributes.append(u" class=\"%s\"" % u" ".join(classes))
         yield [u"<td%s>%s</td>" % (u"".join(attributes), content)]
 
     def cells_height(self, value):
         return 1
+
+    def classes(self, value):
+        return []
 
     def dump(self, value):
         return self.domain.dump(value)
@@ -212,11 +238,10 @@ class RecordToHTML(ToHTML):
             return
         if value is None:
             attributes = []
-            if self.width > 1:
-                attributes.append(u" colspan=\"%s\"" % self.width)
             if height > 1:
                 attributes.append(u" rowspan=\"%s\"" % height)
-            yield [u"<td%s>&nbsp;</td>" % u"".join(attributes)]
+            attributes.append(u" class=\"htsql-null-record-value\"")
+            yield [u"<td%s></td>" % u"".join(attributes)]*self.width
         else:
             streams = [field_to_html.cells(item, height)
                        for item, field_to_html in zip(value,
@@ -256,7 +281,8 @@ class ListToHTML(ToHTML):
             attributes = []
             if height > 1:
                 attributes.append(u" rowspan=\"%s\"" % height)
-            first_row.insert(0, u"<th%s>&nbsp;</th>" % u"".join(attributes))
+            attributes.append(" class=\"htsql-empty-header\"")
+            first_row.insert(0, u"<th%s></th>" % u"".join(attributes))
             yield first_row
             for row in item_stream:
                 yield row
@@ -273,7 +299,8 @@ class ListToHTML(ToHTML):
                 attributes.append(u" colspan=\"%s\"" % self.width)
             if height > 1:
                 attributes.append(u" rowspan=\"%s\"" % height)
-            yield [u"<td%s>&nbsp;</td>" % u"".join(attributes)]
+            attributes.append(u" class=\"htsql-null-value\"")
+            yield [u"<td%s></td>" % u"".join(attributes)]
         items = iter(value)
         item = next(items)
         is_last = False
@@ -317,6 +344,9 @@ class NativeToHTML(ToHTML):
 
     def dump(self, value):
         return value
+        if value == u"":
+            return u"\u2B1A"
+        return value
 
 
 class NativeStringToHTML(ToHTML):
@@ -331,17 +361,41 @@ class NativeStringToHTML(ToHTML):
         return unicode(value)
 
 
+class DecimalToHTML(ToHTML):
+
+    adapts(DecimalDomain)
+
+    def dump(self, value):
+        if value is None:
+            return value
+        sign, digits, exp = value.as_tuple()
+        if not digits:
+            return value
+        if exp < -6:
+            value = value.normalize()
+            sign, digits, exp = value.as_tuple()
+        if exp > 0:
+            value = value.quantize(decimal.Decimal(1))
+        return unicode(value)
+
+
 class BooleanToHTML(ToHTML):
 
     adapts(BooleanDomain)
+
+    def classes(self, value):
+        if value is True:
+            return [u"htsql-true-value"]
+        if value is False:
+            return [u"htsql-false-value"]
 
     def dump(self, value):
         if value is None:
             return None
         elif value is True:
-            return u"+"
+            return u"true"
         elif value is False:
-            return u"\u2212"
+            return u"false"
 
 
 class DateTimeToHTML(ToHTML):
@@ -379,6 +433,8 @@ class MetaToHTML(object):
             attributes.append(u" colspan=\"%s\"" % self.width)
         if height > 1 and self.header_level == 1:
             attributes.append(u" rowspan=\"%s\"" % height)
+        if not content:
+            attributes.append(u" class=\"htsql-empty-header\"")
         yield [u"<th%s>%s</th>" % (u"".join(attributes), content)]
         if self.header_level > 1:
             for row in self.domain_to_html.headers(height-1):

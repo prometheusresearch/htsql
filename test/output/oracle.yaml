@@ -26287,37 +26287,42 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>school</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border-style: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
-            table.htsql-output > tbody > tr:first-child { border-color: #1a1a1a; border-width: 1px 0 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
             table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
             table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
             table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
             table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
-            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; border-color: #1a1a1a }
-            table.htsql-output > tbody > tr > td.htsql-boolean-value { font-weight: bold; text-align: center }
-            table.htsql-output > tbody > tr > td.htsql-integer-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-decimal-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-float-value { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
             </style>
             </head>
             <body>
             <table class="htsql-output" summary="school">
             <thead>
             <tr><th colspan="4">school</th></tr>
-            <tr><th>&nbsp;</th><th>code</th><th>name</th><th>campus</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-value">art</td><td class="htsql-string-value">School of Art and Design</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-value">bus</td><td class="htsql-string-value">School of Business</td><td class="htsql-string-value">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-value">edu</td><td class="htsql-string-value">College of Education</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-value">eng</td><td class="htsql-string-value">School of Engineering</td><td class="htsql-string-value">north</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-value">la</td><td class="htsql-string-value">School of Arts and Humanities</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-value">mus</td><td class="htsql-string-value">School of Music &amp; Dance</td><td class="htsql-string-value">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-value">ns</td><td class="htsql-string-value">School of Natural Sciences</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-value">ph</td><td class="htsql-string-value">Public Honorariums</td><td class="htsql-string-value">&mdash;</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-value">sc</td><td class="htsql-string-value">School of Continuing Studies</td><td class="htsql-string-value">&mdash;</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art and Design</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">edu</td><td class="htsql-string-type">College of Education</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">eng</td><td class="htsql-string-type">School of Engineering</td><td class="htsql-string-type">north</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">la</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">mus</td><td class="htsql-string-type">School of Music &amp; Dance</td><td class="htsql-string-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">ns</td><td class="htsql-string-type">School of Natural Sciences</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">ph</td><td class="htsql-string-type">Public Honorariums</td><td class="htsql-string-type htsql-null-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">sc</td><td class="htsql-string-type">School of Continuing Studies</td><td class="htsql-string-type htsql-null-value"></td></tr>
             </tbody>
             </table>
             </body>
@@ -26488,37 +26493,42 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>school</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border-style: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
-            table.htsql-output > tbody > tr:first-child { border-color: #1a1a1a; border-width: 1px 0 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
             table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
             table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
             table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
             table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
-            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; border-color: #1a1a1a }
-            table.htsql-output > tbody > tr > td.htsql-boolean-value { font-weight: bold; text-align: center }
-            table.htsql-output > tbody > tr > td.htsql-integer-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-decimal-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-float-value { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
             </style>
             </head>
             <body>
             <table class="htsql-output" summary="school">
             <thead>
             <tr><th colspan="4">school</th></tr>
-            <tr><th>&nbsp;</th><th>code</th><th>name</th><th>campus</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-value">art</td><td class="htsql-string-value">School of Art and Design</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-value">bus</td><td class="htsql-string-value">School of Business</td><td class="htsql-string-value">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-value">edu</td><td class="htsql-string-value">College of Education</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-value">eng</td><td class="htsql-string-value">School of Engineering</td><td class="htsql-string-value">north</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-value">la</td><td class="htsql-string-value">School of Arts and Humanities</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-value">mus</td><td class="htsql-string-value">School of Music &amp; Dance</td><td class="htsql-string-value">south</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-value">ns</td><td class="htsql-string-value">School of Natural Sciences</td><td class="htsql-string-value">old</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-value">ph</td><td class="htsql-string-value">Public Honorariums</td><td class="htsql-string-value">&mdash;</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-value">sc</td><td class="htsql-string-value">School of Continuing Studies</td><td class="htsql-string-value">&mdash;</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">art</td><td class="htsql-string-type">School of Art and Design</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">bus</td><td class="htsql-string-type">School of Business</td><td class="htsql-string-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">edu</td><td class="htsql-string-type">College of Education</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">eng</td><td class="htsql-string-type">School of Engineering</td><td class="htsql-string-type">north</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">la</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">mus</td><td class="htsql-string-type">School of Music &amp; Dance</td><td class="htsql-string-type">south</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">ns</td><td class="htsql-string-type">School of Natural Sciences</td><td class="htsql-string-type">old</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">ph</td><td class="htsql-string-type">Public Honorariums</td><td class="htsql-string-type htsql-null-value"></td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">sc</td><td class="htsql-string-type">School of Continuing Studies</td><td class="htsql-string-type htsql-null-value"></td></tr>
             </tbody>
             </table>
             </body>
@@ -26530,11 +26540,7 @@ tests:
           - [Content-Disposition, inline; filename="_.js"]
           body: |
             {
-              "meta": {
-                "domain": {
-                  "type": "void"
-                }
-              }
+              "meta": {}
             }
         - uri: /
           status: 200 OK
@@ -26562,19 +26568,24 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title></title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border-style: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
-            table.htsql-output > tbody > tr:first-child { border-color: #1a1a1a; border-width: 1px 0 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
             table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
             table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
             table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
             table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
-            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; border-color: #1a1a1a }
-            table.htsql-output > tbody > tr > td.htsql-boolean-value { font-weight: bold; text-align: center }
-            table.htsql-output > tbody > tr > td.htsql-integer-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-decimal-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-float-value { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
             </style>
             </head>
             <body>
@@ -26772,37 +26783,42 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>List of Schools</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border-style: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
-            table.htsql-output > tbody > tr:first-child { border-color: #1a1a1a; border-width: 1px 0 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
             table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
             table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
             table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
             table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
-            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; border-color: #1a1a1a }
-            table.htsql-output > tbody > tr > td.htsql-boolean-value { font-weight: bold; text-align: center }
-            table.htsql-output > tbody > tr > td.htsql-integer-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-decimal-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-float-value { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
             </style>
             </head>
             <body>
             <table class="htsql-output" summary="List of Schools">
             <thead>
             <tr><th colspan="3">List of Schools</th></tr>
-            <tr><th>&nbsp;</th><th>Name</th><th># of Departments</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>Name</th><th># of Departments</th></tr>
             </thead>
             <tbody>
-            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-value">School of Art and Design</td><td class="htsql-integer-value">2</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-value">School of Business</td><td class="htsql-integer-value">3</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-value">College of Education</td><td class="htsql-integer-value">2</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-value">School of Engineering</td><td class="htsql-integer-value">4</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-value">School of Arts and Humanities</td><td class="htsql-integer-value">5</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-value">School of Music &amp; Dance</td><td class="htsql-integer-value">4</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-value">School of Natural Sciences</td><td class="htsql-integer-value">4</td></tr>
-            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-value">Public Honorariums</td><td class="htsql-integer-value">0</td></tr>
-            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-value">School of Continuing Studies</td><td class="htsql-integer-value">0</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">School of Art and Design</td><td class="htsql-integer-type">2</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">School of Business</td><td class="htsql-integer-type">3</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">College of Education</td><td class="htsql-integer-type">2</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">School of Engineering</td><td class="htsql-integer-type">4</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">School of Arts and Humanities</td><td class="htsql-integer-type">5</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">School of Music &amp; Dance</td><td class="htsql-integer-type">4</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">School of Natural Sciences</td><td class="htsql-integer-type">4</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">8</td><td class="htsql-string-type">Public Honorariums</td><td class="htsql-integer-type">0</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">9</td><td class="htsql-string-type">School of Continuing Studies</td><td class="htsql-integer-type">0</td></tr>
             </tbody>
             </table>
             </body>
@@ -26985,37 +27001,44 @@ tests:
           status: 200 OK
           headers:
           - [Content-Type, text/html; charset=UTF-8]
-          body: "<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\"
-            content=\"text/html; charset=UTF-8\">\n<title></title>\n<style type=\"text/css\">\ntable.htsql-output
-            { font-family: \"Arial\", sans-serif; font-size: 14px; line-height: 1.4;
-            margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse:
-            collapse; border-style: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.25)
-            }\ntable.htsql-output > thead { background-color: #f2f2f2 }\ntable.htsql-output
-            > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align:
-            center; vertical-align: bottom; overflow: hidden; word-wrap: break-word;
-            border-color: #999999; border-width: 1px 1px 0; border-style: solid }\ntable.htsql-output
-            > tbody > tr:first-child { border-color: #1a1a1a; border-width: 1px 0
-            0; border-style: solid }\ntable.htsql-output > tbody > tr.htsql-odd-row
-            { background-color: #ffffff }\ntable.htsql-output > tbody > tr.htsql-even-row
-            { background-color: #f2f2f2 }\ntable.htsql-output > tbody > tr:hover {
-            color: #ffffff; background-color: #333333 }\ntable.htsql-output > tbody
-            > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow:
-            hidden; word-wrap: break-word; border-color: #999999; border-width: 0
-            1px; border-style: solid; }\ntable.htsql-output > tbody > tr > td.htsql-index
-            { font-size: 90%; font-weight: bold; text-align: right; width: 0; border-color:
-            #1a1a1a }\ntable.htsql-output > tbody > tr > td.htsql-boolean-value {
-            font-weight: bold; text-align: center }\ntable.htsql-output > tbody >
-            tr > td.htsql-integer-value { text-align: right }\ntable.htsql-output
-            > tbody > tr > td.htsql-decimal-value { text-align: right }\ntable.htsql-output
-            > tbody > tr > td.htsql-float-value { text-align: right }\n</style>\n</head>\n<body>\n<table
-            class=\"htsql-output\" summary=\"\">\n<thead>\n<tr><th>&nbsp;</th><th>null()</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>'HTSQL'</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15
-            20:13')</th></tr>\n</thead>\n<tbody>\n<tr class=\"htsql-odd-row\"><td
-            class=\"htsql-index\">1</td><td class=\"htsql-string-value\">&mdash;</td><td
-            class=\"htsql-boolean-value\">+</td><td class=\"htsql-boolean-value\">\u2212</td><td
-            class=\"htsql-integer-value\">60</td><td class=\"htsql-decimal-value\">2.125</td><td
-            class=\"htsql-float-value\">2.71828</td><td class=\"htsql-string-value\">HTSQL</td><td
-            class=\"htsql-date-value\">2010-04-15</td><td class=\"htsql-time-value\">20:13:04.500000</td><td
-            class=\"htsql-datetime-value\">2010-04-15 20:13:00</td></tr>\n</tbody>\n</table>\n</body>\n</html>\n"
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title></title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="">
+            <thead>
+            <tr><th class="htsql-empty-header"></th><th>null()</th><th>true()</th><th>false()</th><th>60</th><th>2.125</th><th>271828e-5</th><th>'HTSQL'</th><th>date('2010-04-15')</th><th>time('20:13:04.5')</th><th>datetime('2010-04-15 20:13')</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type htsql-null-value"></td><td class="htsql-boolean-type htsql-true-value">true</td><td class="htsql-boolean-type htsql-false-value">false</td><td class="htsql-integer-type">60</td><td class="htsql-decimal-type">2.125</td><td class="htsql-float-type">2.71828</td><td class="htsql-string-type">HTSQL</td><td class="htsql-date-type">2010-04-15</td><td class="htsql-time-type">20:13:04.500000</td><td class="htsql-datetime-type">2010-04-15 20:13:00</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
       - id: no-rows
         tests:
         - uri: /school?false()/:json
@@ -27121,26 +27144,31 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>school</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border-style: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
-            table.htsql-output > tbody > tr:first-child { border-color: #1a1a1a; border-width: 1px 0 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
             table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
             table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
             table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
             table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
-            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; border-color: #1a1a1a }
-            table.htsql-output > tbody > tr > td.htsql-boolean-value { font-weight: bold; text-align: center }
-            table.htsql-output > tbody > tr > td.htsql-integer-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-decimal-value { text-align: right }
-            table.htsql-output > tbody > tr > td.htsql-float-value { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
             </style>
             </head>
             <body>
             <table class="htsql-output" summary="school">
             <thead>
             <tr><th colspan="4">school</th></tr>
-            <tr><th>&nbsp;</th><th>code</th><th>name</th><th>campus</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th></tr>
             </thead>
             </table>
             </body>
@@ -27221,30 +27249,37 @@ tests:
             content=\"text/html; charset=UTF-8\">\n<title></title>\n<style type=\"text/css\">\ntable.htsql-output
             { font-family: \"Arial\", sans-serif; font-size: 14px; line-height: 1.4;
             margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse:
-            collapse; border-style: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.25)
-            }\ntable.htsql-output > thead { background-color: #f2f2f2 }\ntable.htsql-output
-            > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align:
-            center; vertical-align: bottom; overflow: hidden; word-wrap: break-word;
-            border-color: #999999; border-width: 1px 1px 0; border-style: solid }\ntable.htsql-output
-            > tbody > tr:first-child { border-color: #1a1a1a; border-width: 1px 0
-            0; border-style: solid }\ntable.htsql-output > tbody > tr.htsql-odd-row
-            { background-color: #ffffff }\ntable.htsql-output > tbody > tr.htsql-even-row
-            { background-color: #f2f2f2 }\ntable.htsql-output > tbody > tr:hover {
-            color: #ffffff; background-color: #333333 }\ntable.htsql-output > tbody
-            > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow:
+            collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25);
+            -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px
+            3px rgba(0,0,0,0.25) }\ntable.htsql-output > thead { background-color:
+            #f2f2f2 }\ntable.htsql-output > thead { border-color: #1a1a1a; border-width:
+            0 0 1px; border-style: solid }\ntable.htsql-output > thead > tr > th {
+            font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align:
+            bottom; overflow: hidden; word-wrap: break-word; border-color: #999999;
+            border-width: 1px 1px 0; border-style: solid }\ntable.htsql-output > thead
+            > tr > th.htsql-empty-header:after { content: \"\\A0\" }\ntable.htsql-output
+            > tbody > tr.htsql-odd-row { background-color: #ffffff }\ntable.htsql-output
+            > tbody > tr.htsql-even-row { background-color: #f2f2f2 }\ntable.htsql-output
+            > tbody > tr:hover { color: #ffffff; background-color: #333333 }\ntable.htsql-output
+            > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow:
             hidden; word-wrap: break-word; border-color: #999999; border-width: 0
             1px; border-style: solid; }\ntable.htsql-output > tbody > tr > td.htsql-index
-            { font-size: 90%; font-weight: bold; text-align: right; width: 0; border-color:
-            #1a1a1a }\ntable.htsql-output > tbody > tr > td.htsql-boolean-value {
-            font-weight: bold; text-align: center }\ntable.htsql-output > tbody >
-            tr > td.htsql-integer-value { text-align: right }\ntable.htsql-output
-            > tbody > tr > td.htsql-decimal-value { text-align: right }\ntable.htsql-output
-            > tbody > tr > td.htsql-float-value { text-align: right }\n</style>\n</head>\n<body>\n<table
-            class=\"htsql-output\" summary=\"\">\n<thead>\n<tr><th>&nbsp;</th><th>'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'</th><th>'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'</th><th>'\u03BE'</th><th>'\\/%25''\"&amp;&lt;&gt;#'</th><th>''</th></tr>\n</thead>\n<tbody>\n<tr
-            class=\"htsql-odd-row\"><td class=\"htsql-index\">1</td><td class=\"htsql-string-value\">\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10</td><td
-            class=\"htsql-string-value\">\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F</td><td
-            class=\"htsql-string-value\">\u03BE</td><td class=\"htsql-string-value\">\\/%'\"&amp;&lt;&gt;#</td><td
-            class=\"htsql-string-value\">&mdash;</td></tr>\n</tbody>\n</table>\n</body>\n</html>\n"
+            { font-size: 90%; font-weight: bold; text-align: right; width: 0; color:
+            #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select:
+            none; user-select: none }\ntable.htsql-output > tbody > tr > td.htsql-integer-type
+            { text-align: right }\ntable.htsql-output > tbody > tr > td.htsql-decimal-type
+            { text-align: right }\ntable.htsql-output > tbody > tr > td.htsql-float-type
+            { text-align: right }\ntable.htsql-output > tbody > tr > td.htsql-null-value:after
+            { content: \"\\A0\" }\ntable.htsql-output > tbody > tr > td.htsql-empty-value
+            { color: #999999 }\ntable.htsql-output > tbody > tr > td.htsql-empty-value:after
+            { content: \"\\2B1A\" }\ntable.htsql-output > tbody > tr > td.htsql-false-value
+            { font-style: italic }\ntable.htsql-output > tbody > tr > td.htsql-null-record-value
+            { border-style: dashed }\n</style>\n</head>\n<body>\n<table class=\"htsql-output\"
+            summary=\"\">\n<thead>\n<tr><th class=\"htsql-empty-header\"></th><th>'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'</th><th>'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'</th><th>'\u03BE'</th><th>'\\/%25''\"&amp;&lt;&gt;#'</th><th>''</th></tr>\n</thead>\n<tbody>\n<tr
+            class=\"htsql-odd-row\"><td class=\"htsql-index\">1</td><td class=\"htsql-string-type\">\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10</td><td
+            class=\"htsql-string-type\">\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F</td><td
+            class=\"htsql-string-type\">\u03BE</td><td class=\"htsql-string-type\">\\/%'\"&amp;&lt;&gt;#</td><td
+            class=\"htsql-string-type htsql-null-value\"></td></tr>\n</tbody>\n</table>\n</body>\n</html>\n"
       - id: commands
         tests:
         - uri: /school/:retrieve

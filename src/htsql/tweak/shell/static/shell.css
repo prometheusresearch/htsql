@@ -299,40 +299,6 @@ button:active {
   border-width: 1px 0 0 0;
 }
 
-/*
-#grid thead tr:first-child {
-  border: solid #f2f2f2;
-  border-width: 1px 0 0 0;
-}
-
-#grid thead th {
-  border: solid #999999;
-  border-width: 0 0 0 1px;
-}
-
-#grid thead tr:first-child th:first-child {
-  border: 1px solid;
-  border-color: #fff #1a1a1a #1a1a1a #fff;
-}
-*/
-
-/*
-#grid tbody th {
-  border: solid;
-  border-width: 0 1px;
-  border-color: #fff #1a1a1a #fff #fff;
-}
-
-#grid tbody td {
-  border: solid #999999;
-  border-width: 0 0 0 1px;
-}
-
-#grid tbody th+td {
-  border: 0;
-}
-*/
-
 #grid thead th {
   border: solid #999999;
   border-width: 0 1px;
@@ -342,16 +308,21 @@ button:active {
   border: solid #999999;
   border-width: 0 1px;
 }
-
-/*
-#grid tbody td.dummy {
-  border-color: transparent;
-}
-*/
 
 #grid tbody td.index {
-  border-color: transparent #1a1a1a transparent transparent;
+  color: #999999;
   border-color: #1a1a1a;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#grid tbody td.null-rec-val {
+  border-style: dashed;
+}
+
+#grid tbody td.empty-val:after {
+  color: #999999;
 }
 
 #grid tr.alt {
@@ -400,13 +371,33 @@ button:active {
   text-align: right;
 }
 
-#grid .boolean {
-  font-style: italic;
-}
-
 #grid .dummy {
   padding: 0;
   text-align: center;
+}
+
+#grid .dummy:after {
+  content: "\A0";
+}
+
+#grid .more:after {
+  content: "\22EE";
+}
+
+#grid .null-val:after {
+  content: "\A0";
+}
+
+#grid .null-rec-val:after {
+  content: "\A0";
+}
+
+#grid .empty-val:after {
+  content: "\2B1A";
+}
+
+#grid .false-val {
+  font-style: italic;
 }
 
 #grid .w640 td {

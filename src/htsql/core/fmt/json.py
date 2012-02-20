@@ -16,7 +16,8 @@ from ..util import Printable
 from ..adapter import Adapter, Protocol, adapts, adapts_many, named
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain, TimeDomain,
-                      DateTimeDomain, ListDomain, RecordDomain, Profile)
+                      DateTimeDomain, ListDomain, RecordDomain,
+                      VoidDomain, Profile)
 from .format import JSONFormat, ObjFormat, EmitHeaders, Emit
 from .format import Renderer, Format
 import re
@@ -392,6 +393,14 @@ class DomainToJSON(Adapter):
         yield JS_END
 
 
+class VoidDomainToJSON(DomainToJSON):
+
+    adapts(VoidDomain)
+
+    def __call__(self):
+        yield None
+
+
 class ListDomainToJSON(DomainToJSON):
 
     adapts(ListDomain)
@@ -576,200 +585,5 @@ class ObjRenderer(Renderer):
             if isinstance(line, unicode):
                 line = line.encode('utf-8')
             yield line
-
-
-class FormatDomain(Format):
-
-    adapts(JSONRenderer, Domain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        if isinstance(value, unicode):
-            value = value.encode('utf-8')
-        else:
-            value = str(value)
-        try:
-            value.decode('utf-8')
-        except UnicodeDecodeError:
-            value = repr(value)
-        return escape(value)
-
-
-class FormatBoolean(Format):
-
-    adapts(JSONRenderer, BooleanDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        if value is True:
-            return "true"
-        if value is False:
-            return "false"
-
-
-class FormatNumber(Format):
-
-    adapts(JSONRenderer, NumberDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        return str(value)
-
-
-class FormatFloat(Format):
-
-    adapts(JSONRenderer, FloatDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        return repr(value)
-
-
-class FormatString(Format):
-
-    adapts(JSONRenderer, StringDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        return escape(value.encode('utf-8'))
-
-
-class FormatEnum(Format):
-
-    adapts(JSONRenderer, EnumDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        return escape(value.encode('utf-8'))
-
-
-class FormatDate(Format):
-
-    adapts(JSONRenderer, DateDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        return escape(str(value))
-
-
-class FormatTime(Format):
-
-    adapts(JSONRenderer, TimeDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        return escape(str(value))
-
-
-class FormatDateTime(Format):
-
-    adapts(JSONRenderer, DateTimeDomain)
-
-    def __call__(self, value):
-        if value is None:
-            return "null"
-        if not value.time():
-            return escape(str(value.date()))
-        return escape(str(value))
-
-
-class EntitleDomain(Adapter):
-
-    adapts(Domain)
-    name = "unknown"
-
-    def __init__(self, domain):
-        self.domain = domain
-
-    def __call__(self):
-        return self.name
-
-
-class EntitleBoolean(EntitleDomain):
-
-    adapts(BooleanDomain)
-    name = "boolean"
-
-
-class EntitleNumber(EntitleDomain):
-
-    adapts(NumberDomain)
-    name = "number"
-
-
-class EntitleString(EntitleDomain):
-
-    adapts(StringDomain)
-    name = "string"
-
-
-class EntitleEnum(EntitleDomain):
-
-    adapts(EnumDomain)
-    name = "enum"
-
-
-class EntitleDate(EntitleDomain):
-
-    adapts(DateDomain)
-    name = "date"
-
-
-class EntitleTime(EntitleDomain):
-
-    adapts(TimeDomain)
-    name = "time"
-
-
-class EntitleDateTime(EntitleDomain):
-
-    adapts(DateTimeDomain)
-    name = "datetime"
-
-
-class Escape(object):
-
-    escape_pattern = r"""[\x00-\x1F\\/"]"""
-    escape_regexp = re.compile(escape_pattern)
-    escape_table = {
-            '"': '"',
-            '\\': '\\',
-            '/': '/',
-            '\x08': 'b',
-            '\x0C': 'f',
-            '\x0A': 'n',
-            '\x0D': 'r',
-            '\x09': 't',
-    }
-
-    @classmethod
-    def replace(cls, match):
-        char = match.group()
-        if char in cls.escape_table:
-            return '\\'+cls.escape_table[char]
-        return '\\u%04X' % ord(char)
-
-    @classmethod
-    def escape(cls, value):
-        value = value.decode('utf-8')
-        value = cls.escape_regexp.sub(cls.replace, value)
-        value = value.encode('utf-8')
-        return '"%s"' % value
-
-
-escape = Escape.escape
-
-
-def entitle_domain(domain):
-    entitle = EntitleDomain(domain)
-    return entitle()
 
 

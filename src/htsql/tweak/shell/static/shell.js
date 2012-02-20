@@ -486,14 +486,15 @@ $(document).ready(function() {
                 while (rows.length < height) {
                     rows.push([]);
                 }
-                rows[0].push('<th'+attrs+'>&nbsp;</th>');
+                attrs += ' class="dummy"'
+                rows[0].push('<th'+attrs+'></th>');
                 return rows;
             },
             body: function () {
                 var height = profileBuild.bodyHeight(data);
                 var rows = profileBuild.body(data, height);
                 for (var k = 0; k < rows.length; k ++) {
-                    rows[k].push('<td class="dummy">&nbsp;</td>');
+                    rows[k].push('<td class="dummy"></td>');
                 }
                 return rows;
             },
@@ -501,7 +502,7 @@ $(document).ready(function() {
                 var height = profileBuild.footHeight(more);
                 var rows = profileBuild.foot(more, height);
                 for (var k = 0; k < rows.length; k ++) {
-                    rows[k].push('<td class="dummy">&nbsp;</td>');
+                    rows[k].push('<td class="dummy"></td>');
                 }
                 return rows;
             }
@@ -577,7 +578,8 @@ $(document).ready(function() {
                 if (height > 0) {
                     var attrs = '';
                     attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                    rows[0].push('<th'+attrs+'>&nbsp;</th>');
+                    attrs += ' class="dummy"';
+                    rows[0].push('<th'+attrs+'></th>');
                 }
                 return rows;
             },
@@ -591,13 +593,32 @@ $(document).ready(function() {
                 }
                 var attrs = '';
                 attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                attrs += meta.type ? ' class="'+meta.type+'"' : '';
+                classes = [];
+                if (meta.type) {
+                    classes.push(meta.type);
+                }
                 var cell = data;
                 if (cell === null) {
                     cell = '';
+                    classes.push('null-val');
+                }
+                else if (cell === true) {
+                    cell = 'true';
+                    classes.push('true-val');
+                }
+                else if (cell === false) {
+                    cell = 'false';
+                    classes.push('false-val');
                 }
                 else {
                     cell = ''+cell;
+                    if (cell === '') {
+                        classes.push('empty-val');
+                    }
+                }
+                classes = classes.join(' ');
+                if (classes) {
+                    attrs += ' class="'+classes+'"';
                 }
                 cell = cell.replace(/&/g, '&amp;')
                            .replace(/</g, '&lt;')
@@ -615,9 +636,18 @@ $(document).ready(function() {
                 }
                 var attrs = '';
                 attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                attrs += meta.type ? ' class="'+meta.type+'"' : '';
-                var cell = more ? '&#x22EE;' : '&nbsp;';
-                rows[0].push('<td'+attrs+'>'+cell+'</td>');
+                classes = [];
+                if (meta.type) {
+                    classes.push(meta.type);
+                }
+                if (more) {
+                    classes.push('more');
+                }
+                else {
+                    classes.push('dummy');
+                }
+                attrs += ' class="'+classes.join(' ')+'"';
+                rows[0].push('<td'+attrs+'></td>');
                 return rows;
             }
         };
@@ -683,15 +713,20 @@ $(document).ready(function() {
                 }
                 if (data === null) {
                     data = [];
+                    attrs = '';
+                    attrs += (height > 1) ? ' rowspan="'+height+'"' : '';
+                    attrs += ' class="null-rec-val"';
                     for (var k = 0; k < fieldBuilds.length; k ++) {
-                        data.push(null);
+                        rows[0].push('<td'+attrs+'></td>');
                     }
                 }
-                for (var k = 0; k < fieldBuilds.length; k ++) {
-                    var fieldBody = fieldBuilds[k].body(data[k], height);
-                    for (var i = 0; i < height; i ++) {
-                        for (var j = 0; j < fieldBody[i].length; j ++) {
-                            rows[i].push(fieldBody[i][j]);
+                else {
+                    for (var k = 0; k < fieldBuilds.length; k ++) {
+                        var fieldBody = fieldBuilds[k].body(data[k], height);
+                        for (var i = 0; i < height; i ++) {
+                            for (var j = 0; j < fieldBody[i].length; j ++) {
+                                rows[i].push(fieldBody[i][j]);
+                            }
                         }
                     }
                 }
@@ -736,7 +771,8 @@ $(document).ready(function() {
                 if (height > 0) {
                     var attrs = '';
                     attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                    rows[0].unshift('<th'+attrs+'>&nbsp;</th>');
+                    attrs += ' class="dummy"';
+                    rows[0].unshift('<th'+attrs+'></th>');
                 }
                 return rows;
             },
@@ -767,7 +803,7 @@ $(document).ready(function() {
                     attrs += height > 1 ? ' rowspan="'+height+'"' : '';
                     attrs += itemBuild.size > 0 ? ' colspan="'+(itemBuild.size+1)+'"' : '';
                     attrs += ' class="dummy"';
-                    rows[0].unshift('<td'+attrs+'>&nbsp;</td>');
+                    rows[0].unshift('<td'+attrs+'></td>');
                 }
                 else {
                     for (var k = 0; k < data.length; k ++) {
@@ -803,9 +839,16 @@ $(document).ready(function() {
                 if (height > 0) {
                     var attrs = '';
                     attrs += height > 1 ? ' rowspan="'+height+'"' : '';
-                    attrs += ' class="index"';
-                    var cell = more ? '&#x22EE;' : '&nbsp;';
-                    rows[0].unshift('<td'+attrs+'>'+cell+'</th>');
+                    classes = [];
+                    classes.push('index');
+                    if (more) {
+                        classes.push('more');
+                    }
+                    else {
+                        classes.push('dummy');
+                    }
+                    attrs += ' class="'+classes.join(' ')+'"';
+                    rows[0].unshift('<td'+attrs+'></th>');
                 }
                 return rows;
             }
