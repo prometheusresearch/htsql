@@ -86,6 +86,7 @@ class HTSQLDirective(Directive):
     def run(self):
         doc = self.state.document
         env = doc.settings.env
+
         if self.arguments:
             if self.content:
                 return [doc.reporter.error("directive cannot have both"
@@ -98,6 +99,7 @@ class HTSQLDirective(Directive):
         else:
             return [doc.reporter.error("directive must have either content"
                                        " or an argument", lineno=self.lineno)]
+        output = []
         query_node = htsql_block(query, query)
         query_node['language'] = 'htsql'
         if not hasattr(env, 'htsql_server') or not env.htsql_server:
@@ -120,16 +122,19 @@ class HTSQLDirective(Directive):
             env.htsql_uris[uri] = result
         query_container = nodes.container('', query_node,
                                           classes=['htsql-input'])
+        output.append(query_container)
         if 'hide' in self.options:
-            return [query_container]
+            return output
         content_type, content = env.htsql_uris[uri]
         if 'plain' in self.options:
             content_type = 'text/plain'
         result_node = build_result(self.content_offset, content_type, content,
                                    self.options.get('cut'))
-        result_container = nodes.container('', result_node,
-                                           classes=['htsql-output'])
-        return [query_container, result_container]
+        if result_node is not None:
+            result_container = nodes.container('', result_node,
+                                               classes=['htsql-output'])
+            output.append(result_container)
+        return output
 
 
 class VSplitDirective(Directive):
@@ -221,76 +226,377 @@ def build_result(line, content_type, content, cut=None):
     if content_type == 'application/javascript':
         data = loads(content)
         if isinstance(data, dict):
-            data = [[meta['title'] for meta in data['meta']]] + data['data']
-        is_cut = False
-        if cut and len(data) > cut+1:
-            data = data[:cut+1]
-            is_cut = True
-        size = len(data[0])
-        widths = [1]*size
-        for row in data:
-            for idx, value in enumerate(row):
-                widths[idx] = max(widths[idx], len(unicode(value)))
-        table_node = nodes.table()
-        group_node = nodes.tgroup(cols=size)
-        table_node += group_node
-        for width in widths:
-            colspec_node = nodes.colspec(colwidth=width)
-            group_node += colspec_node
-        head_node = nodes.thead()
-        group_node += head_node
+            if isinstance(data.get('meta'), list):
+                return build_result_table_old(data, cut)
+            if isinstance(data.get('meta'), dict):
+                return build_result_table(data, cut)
+    content = content.decode('utf-8', 'replace')
+    if cut and content.count('\n') > cut:
+        start = 0
+        while cut:
+            start = content.find('\n', start)+1
+            cut -= 1
+        content = content[:start]+u"\u2026\n"
+    result_node = nodes.literal_block(content, content)
+    result_node['language'] = 'text'
+    return result_node
+
+def build_result_table_old(data, cut):
+    data = [[meta['title'] for meta in data['meta']]] + data['data']
+    is_cut = False
+    if cut and len(data) > cut+1:
+        data = data[:cut+1]
+        is_cut = True
+    size = len(data[0])
+    widths = [1]*size
+    for row in data:
+        for idx, value in enumerate(row):
+            widths[idx] = max(widths[idx], len(unicode(value)))
+    table_node = nodes.table()
+    group_node = nodes.tgroup(cols=size)
+    table_node += group_node
+    for width in widths:
+        colspec_node = nodes.colspec(colwidth=width)
+        group_node += colspec_node
+    head_node = nodes.thead()
+    group_node += head_node
+    row_node = nodes.row()
+    head_node += row_node
+    for title in data[0]:
+        entry_node = nodes.entry()
+        row_node += entry_node
+        para_node = nodes.paragraph()
+        entry_node += para_node
+        text_node = nodes.Text(title.replace(u' ', u'\xA0'))
+        para_node += text_node
+    body_node = nodes.tbody()
+    group_node += body_node
+    for row in data[1:]:
         row_node = nodes.row()
-        head_node += row_node
-        for title in data[0]:
+        body_node += row_node
+        for value in row:
             entry_node = nodes.entry()
             row_node += entry_node
             para_node = nodes.paragraph()
             entry_node += para_node
-            text_node = nodes.Text(title.replace(u' ', u'\xA0'))
+            if value is None:
+                text_node = nodes.Text(u"\u2014")
+            elif value is True:
+                text_node = nodes.emphasis()
+                text_node += nodes.Text(u"true")
+            elif value is False:
+                text_node = nodes.emphasis()
+                text_node += nodes.Text(u"false")
+            else:
+                text_node = nodes.Text(unicode(value))
             para_node += text_node
-        body_node = nodes.tbody()
-        group_node += body_node
-        for row in data[1:]:
+    if is_cut:
+        row_node = nodes.row(classes=['htsql-cut'])
+        body_node += row_node
+        for idx in range(size):
+            entry_node = nodes.entry()
+            row_node += entry_node
+            para_node = nodes.paragraph()
+            entry_node += para_node
+            text_node = nodes.Text(u"\u2026")
+            para_node += text_node
+    return table_node
+
+
+def build_result_table(result, cut):
+    meta = result.get('meta')
+    data = result.get('data')
+    if 'domain' not in meta:
+        return
+    build = get_build_by_domain(meta['domain'])
+    if not build.span:
+        return
+    table_node = nodes.table()
+    measures = build.measures(data, cut)
+    group_node = nodes.tgroup(cols=build.span)
+    table_node += group_node
+    for measure in measures:
+        colspec_node = nodes.colspec(colwidth=measure)
+        group_node += colspec_node
+    head_node = nodes.thead()
+    group_node += head_node
+    head_rows = build.head(build.head_height())
+    if head_rows:
+        for row in head_rows:
+            row_node = nodes.row()
+            head_node += row_node
+            for cell, rowspan, colspan, classes in row:
+                entry_node = nodes.entry(classes=classes)
+                if rowspan > 1:
+                    entry_node['morerows'] = rowspan-1
+                if colspan > 1:
+                    entry_node['morecols'] = colspan-1
+                row_node += entry_node
+                para_node = nodes.paragraph()
+                entry_node += para_node
+                text_node = nodes.Text(cell)
+                para_node += text_node
+    body_node = nodes.tbody()
+    group_node += body_node
+    body_rows = build.body(build.body_height(data, cut), data, cut)
+    if body_rows:
+        for row in body_rows:
             row_node = nodes.row()
             body_node += row_node
-            for value in row:
-                entry_node = nodes.entry()
+            for cell, rowspan, colspan, classes in row:
+                entry_node = nodes.entry(classes=classes)
+                if rowspan > 1:
+                    entry_node['morerows'] = rowspan-1
+                if colspan > 1:
+                    entry_node['morecols'] = colspan-1
                 row_node += entry_node
                 para_node = nodes.paragraph()
                 entry_node += para_node
-                if value is None:
-                    text_node = nodes.Text(u"\u2014")
-                elif value is True:
-                    text_node = nodes.emphasis()
-                    text_node += nodes.Text(u"true")
-                elif value is False:
-                    text_node = nodes.emphasis()
-                    text_node += nodes.Text(u"false")
-                else:
-                    text_node = nodes.Text(unicode(value))
+                text_node = nodes.Text(cell)
                 para_node += text_node
-        if is_cut:
-            row_node = nodes.row(classes=['htsql-cut'])
-            body_node += row_node
-            for idx in range(size):
-                entry_node = nodes.entry()
-                row_node += entry_node
-                para_node = nodes.paragraph()
-                entry_node += para_node
-                text_node = nodes.Text(u"\u2026")
-                para_node += text_node
-        result_node = table_node
+    return table_node
+
+def get_build_by_domain(domain):
+    if domain['type'] == 'list':
+        return ListBuild(domain)
+    elif domain['type'] == 'record':
+        return RecordBuild(domain)
     else:
-        content = content.decode('utf-8', 'replace')
-        if cut and content.count('\n') > cut:
-            start = 0
-            while cut:
-                start = content.find('\n', start)+1
-                cut -= 1
-            content = content[:start]+u"\u2026\n"
-        result_node = nodes.literal_block(content, content)
-        result_node['language'] = 'text'
-    return result_node
+        return ScalarBuild(domain)
+
+
+class MetaBuild(object):
+
+    def __init__(self, profile):
+        self.profile = profile
+        self.header = profile.get('header')
+        if not self.header:
+            self.header = u""
+        self.domain_build = get_build_by_domain(profile['domain'])
+        self.span = self.domain_build.span
+
+    def head_height(self):
+        if not self.span:
+            return 0
+        height = self.domain_build.head_height()
+        if self.header:
+            height += 1
+        return height
+
+    def head(self, height):
+        rows = [[] for idx in range(height)]
+        if not self.span or not height:
+            return rows
+        is_last = (not self.domain_build.head_height())
+        if not is_last:
+            rows = [[]] + self.domain_build.head(height-1)
+        rowspan = 1
+        if is_last:
+            rowspan = height
+        colspan = self.span
+        classes = []
+        if not self.header:
+            classes.append(u'htsql-dummy')
+        rows[0].append((self.header.replace(u" ", u"\xA0"),
+                        rowspan, colspan, classes))
+        return rows
+
+    def body_height(self, data, cut):
+        return self.domain_build.body_height(data, cut)
+
+    def body(self, height, data, cut):
+        return self.domain_build.body(height, data, cut)
+
+    def cut(self, height):
+        return self.domain_build.cut(height)
+
+    def measures(self, data, cut):
+        measures = self.domain_build.measures(data, cut)
+        if len(measures) == 1:
+            measures[0] = max(measures[0], len(self.header))
+        return measures
+
+
+class ListBuild(object):
+
+    def __init__(self, domain):
+        self.item_build = get_build_by_domain(domain['item']['domain'])
+        self.span = self.item_build.span
+
+    def head_height(self):
+        if not self.span:
+            return []
+        return self.item_build.head_height()
+
+    def head(self, height):
+        if not self.span or not height:
+            return [[] for idx in range(height)]
+        return self.item_build.head(height)
+
+    def body_height(self, data, cut):
+        if not self.span or not data:
+            return 0
+        height = 0
+        for item in data:
+            item_height = self.item_build.body_height(item, None)
+            if cut and height+item_height > cut:
+                return height+1
+            height += item_height
+        return height
+
+    def body(self, height, data, cut):
+        if not self.span or not height:
+            return [[] for idx in range(height)]
+        if not data:
+            rows = [[] for idx in range(height)]
+            rows[0].append((u"", height, self.span, [u'htsql-dummy']))
+            return rows
+        rows = []
+        for idx, item in enumerate(data):
+            item_height = self.item_build.body_height(item, None)
+            if cut and len(rows)+item_height > cut:
+                rows += self.item_build.cut(height)
+                break
+            if idx == len(data)-1 and item_height < height:
+                item_height = height
+            height -= item_height
+            rows += self.item_build.body(item_height, item, None)
+        return rows
+
+    def cut(self, height):
+        if not self.span or not height:
+            return [[] for idx in range(height)]
+        return self.item_build.cut(height)
+
+    def measures(self, data, cut):
+        measures = [1 for idx in range(self.span)]
+        if not self.span or not data:
+            return measures
+        height = 0
+        for idx, item in enumerate(data):
+            height += self.item_build.body_height(item, None)
+            if cut and height > cut:
+                break
+            item_measures = self.item_build.measures(item, None)
+            measures = [max(measure, item_measure)
+                        for measure, item_measure
+                            in zip(measures, item_measures)]
+        return measures
+
+
+class RecordBuild(object):
+
+    def __init__(self, domain):
+        self.field_builds = [MetaBuild(field) for field in domain['fields']]
+        self.span = sum(field_build.span for field_build in self.field_builds)
+
+    def head_height(self):
+        if not self.span:
+            return 0
+        return max(field_build.head_height()
+                   for field_build in self.field_builds)
+
+    def head(self, height):
+        rows = [[] for idx in range(height)]
+        if not self.span or not height:
+            return rows
+        for field_build in self.field_builds:
+            field_rows = field_build.head(height)
+            rows = [row+field_row
+                    for row, field_row in zip(rows, field_rows)]
+        return rows
+
+    def body_height(self, data, cut):
+        if not self.span:
+            return 0
+        if not data:
+            data = [None]*len(self.field_builds)
+        return max(field_build.body_height(item, cut)
+                   for field_build, item in zip(self.field_builds, data))
+
+    def body(self, height, data, cut):
+        rows = [[] for idx in range(height)]
+        if not self.span:
+            return rows
+        if not data:
+            data = [None]*len(self.field_builds)
+        for field_build, item in zip(self.field_builds, data):
+            field_rows = field_build.body(height, item, cut)
+            rows = [row+field_row
+                    for row, field_row in zip(rows, field_rows)]
+        return rows
+
+    def cut(self, height):
+        rows = [[] for idx in range(height)]
+        if not self.span or not height:
+            return rows
+        for field_build in self.field_builds:
+            field_rows = field_build.cut(height)
+            rows = [row+field_row
+                    for row, field_row in zip(rows, field_rows)]
+        return rows
+
+    def measures(self, data, cut):
+        if not data:
+            data = [None]*self.span
+        measures = []
+        for field_build, item in zip(self.field_builds, data):
+            measures += field_build.measures(item, cut)
+        return measures
+
+
+class ScalarBuild(object):
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.span = 1
+
+    def head_height(self):
+        return 0
+
+    def head(self, height):
+        rows = [[] for idx in range(height)]
+        if not height:
+            return rows
+        rows[0].append((u"", 1, height, [u'htsql-dummy']))
+        return rows
+
+    def body_height(self, data, cut):
+        return 1
+
+    def body(self, height, data, cut):
+        rows = [[] for idx in range(height)]
+        if not height:
+            return rows
+        classes = [u'htsql-%s-type' % self.domain['type']]
+        if data is None:
+            classes.append(u'htsql-null-val')
+            data = u""
+        elif data is True:
+            classes.append(u'htsql-true-val')
+            data = u"true"
+        elif data is False:
+            classes.append(u'htsql-false-val')
+            data = u"false"
+        else:
+            data = unicode(data)
+            if not data:
+                classes.append(u'htsql-empty-val')
+        rows[0].append((data, 1, height, classes))
+        return rows
+
+    def cut(self, height):
+        rows = [[] for idx in range(height)]
+        if not height:
+            return rows
+        classes = [u'htsql-%s-type' % self.domain['type'], u'htsql-cut']
+        rows[0].append((u"", 1, height, classes))
+        return rows
+
+    def measures(self, data, cut):
+        if data is None:
+            return [1]
+        return [max(1, len(unicode(data)))]
 
 
 def copy_static(app, exception):

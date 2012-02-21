@@ -27,6 +27,27 @@ div.htsql-output table.docutils tr.htsql-cut td {
   border-bottom: 0;
 }
 
+div.htsql-output table.docutils tbody tr:first-child td {
+  border-top: 1px solid #AAAAAA;
+}
+
+div.htsql-output table.docutils tbody tr td.htsql-cut {
+  border-bottom: 0;
+}
+
+div.htsql-output table.docutils tbody tr td.htsql-cut:after {
+  content: "\2026";
+}
+
+div.htsql-output table.docutils tbody tr td.htsql-false-val {
+  font-style: italic;
+}
+
+div.htsql-output table.docutils tbody tr td.htsql-null-val:after,
+div.htsql-output table.docutils tbody tr td.htsql-empty-val:after {
+  content: "\A0";
+}
+
 div.htsql-output div.highlight pre {
   margin-top: 0;
 }
