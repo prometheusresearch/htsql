@@ -2,6 +2,23 @@
   Introduction to HTSQL
 *************************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
+HTSQL was created in 2005 to provide an XPath_-like HTTP interface to
+PostgreSQL_ for client-side XSLT_ screens and reports.  HTSQL found its
+audience when analysts and researchers bypassed the user interface and
+started to use URLs directly.  The language has evolved since then.
+
+.. _Prometheus: http://prometheusresearch.com
+.. _RexDB: http://rexdb.org
+.. _XPath: http://www.w3.org/TR/xpath/
+.. _PostgreSQL: http://postgresql.org/
+.. _XSLT: http://www.w3.org/TR/xslt/
+
+.. |mdash| unicode:: U+2014
+   :trim:
 
 What is HTSQL?
 ==============
@@ -203,7 +220,16 @@ the complex stuff is easy too.
 
 In this section we introduce the fundamentals of HTSQL syntax and
 semantics.  For a more incremental approach, please read the
-:doc:`tutorial`.
+:doc:`tutorial`.  For the purposes of this section, we use a
+fictitious university schema.
+
+.. diagram:: dia/administrative-directory-small-schema.tex
+   :align: center
+
+This data model has two top-level tables, ``school`` and ``department``,
+where ``department`` has an optional link to ``school``.  Subordinate
+tables, ``course`` and ``program``, have mandatory links to their parents.
+
 
 Scalar Expressions
 ------------------
@@ -337,52 +363,6 @@ This query returns schools with the number of departments above average
 among all schools.
 
 
-What's up Next?
-===============
-
-We intend to add to HTSQL many more features in the future.
-
-Hierarchical Output
--------------------
-
-HTSQL should not be limited to tabular output.
-
-.. sourcecode:: htsql
-
-   /school{name,
-           /program{title},
-           /department{name}}
-
-This query is to generate a tree-shaped output: for each school, it
-produces the school name, a list of titles of associated programs,
-and a list of names of associated departments.
-
-Analytical Processing
----------------------
-
-HTSQL should support OLAP cube operations.
-
-.. sourcecode:: htsql
-
-   /rollup(school^campus){campus, count(school.department)}
-
-This query is to produce the number of departments per school's campus
-followed by a total value for all campuses.
-
-Recursive Queries
------------------
-
-HTSQL should be able to construct hierarchies from parent-child
-relationships.
-
-.. sourcecode:: htsql
-
-   /program{title, /recurse(part_of){title}}
-
-This query is to return programs together with a list of all
-dependent subprograms.
-
-
 Why not SQL?
 ============
 
@@ -398,16 +378,6 @@ naturally reflect business inquiries.  The HTSQL translator uses SQL as
 a target assembly language, which allows us to fix the query model and
 language while keeping current investment in relational systems.
 
-To demonstrate this point, we walk through a set of business inquires
-expressed over a fictitious university schema.
-
-.. diagram:: dia/administrative-directory-small-schema.tex
-   :align: center
-
-This data model has two top-level tables, ``school`` and ``department``,
-where ``department`` has an optional link to ``school``.  Subordinate
-tables, ``course`` and ``program``, have mandatory links to their
-parents.
 
 SQL Conflates Rows & Columns
 ----------------------------
