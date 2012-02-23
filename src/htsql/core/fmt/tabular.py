@@ -15,11 +15,11 @@ This module implements the CSV and TSV renderers.
 from ..util import listof
 from ..adapter import Adapter, adapts, adapts_many
 from .format import Emit, EmitHeaders, CSVFormat
-from .format import Format, Formatter, Renderer
+from .format import Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       DecimalDomain, StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
-                      VoidDomain, Profile)
+                      VoidDomain, OpaqueDomain, Profile)
 import csv
 import cStringIO
 
@@ -268,6 +268,22 @@ class DateTimeToCSV(ToCSV):
             yield [unicode(value.date())]
         else:
             yield [unicode(value)]
+
+
+class OpaqueToCSV(ToCSV):
+
+    adapts(OpaqueDomain)
+
+    def cells(self, value):
+        if value is None:
+            yield [None]
+            return
+        if not isinstance(value, unicode):
+            try:
+                value = str(value).decode('utf-8')
+            except UnicodeDecodeError:
+                value = unicode(repr(value))
+        yield [value]
 
 
 def to_csv(domain, profiles):

@@ -4,7 +4,7 @@
 #
 
 
-from ...core.util import maybe
+from ...core.util import maybe, oneof
 from ...core.domain import Domain
 import socket
 
@@ -28,7 +28,7 @@ class INetDomain(Domain):
         return data.decode('utf-8')
 
     def dump(self, value):
-        assert isinstance(value, maybe(unicode))
-        return value
+        assert isinstance(value, maybe(oneof(str, unicode)))
+        return unicode(value)
 
 

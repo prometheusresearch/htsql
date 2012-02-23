@@ -14,11 +14,11 @@ This module implements the HTML renderer.
 
 from ..adapter import Adapter, adapts, adapts_many
 from .format import HTMLFormat, EmitHeaders, Emit
-from .format import Format, Formatter, Renderer
+from .format import Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
                       StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
-                      VoidDomain, Profile)
+                      VoidDomain, OpaqueDomain, Profile)
 import cgi
 
 
@@ -370,8 +370,8 @@ class DecimalToHTML(ToHTML):
             return value
         sign, digits, exp = value.as_tuple()
         if not digits:
-            return value
-        if exp < -6:
+            return unicode(value)
+        if exp < -6 and value == value.normalize():
             value = value.normalize()
             sign, digits, exp = value.as_tuple()
         if exp > 0:
@@ -409,6 +409,21 @@ class DateTimeToHTML(ToHTML):
             return unicode(value.date())
         else:
             return unicode(value)
+
+
+class OpaqueToHTML(ToHTML):
+
+    adapts(OpaqueDomain)
+
+    def dump(self, value):
+        if value is None:
+            return None
+        if not isinstance(value, unicode):
+            try:
+                value = str(value).decode('utf-8')
+            except UnicodeDecodeError:
+                value = unicode(repr(value))
+        return value
 
 
 class MetaToHTML(object):

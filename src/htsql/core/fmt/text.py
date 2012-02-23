@@ -12,230 +12,192 @@ This module implements the plain text renderer.
 """
 
 
-from ..adapter import adapts
+from ..adapter import Adapter, adapts, adapts_many
 from ..util import maybe, oneof
-from .format import Format, Formatter, Renderer
+from .format import TextFormat, EmitHeaders, Emit
+from .format import Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
                       DateDomain, TimeDomain, DateTimeDomain,
-                      ListDomain, RecordDomain)
+                      ListDomain, RecordDomain, VoidDomain,
+                      OpaqueDomain, Profile)
 import re
 import decimal
 import datetime
 
 
-class HeaderLayout(object):
+class EmitTextHeaders(EmitHeaders):
 
-    def __init__(self, text, row, column, colspan, rowspan):
-        self.text = text
-        self.row = row
-        self.column = column
-        self.colspan = colspan
-        self.rowspan = rowspan
+    adapts(TextFormat)
+
+    def __call__(self):
+        yield ('Content-Type', 'text/plain; charset=UTF-8')
 
 
-class Layout(object):
+class EmitText(Emit):
 
-    def __init__(self, headers, total, column_widths):
-        self.headers = headers
-        self.total = total
-        self.column_widths = column_widths
+    adapts(TextFormat)
 
-
-class TextRenderer(Renderer):
-
-    name = 'text/plain'
-    aliases = ['txt', '']
-
-    def render(self, product):
-        self.flatten_product(product)
-        status = self.generate_status(product)
-        headers = self.generate_headers(product)
-        body = list(self.generate_body(product))
-        return status, headers, body
-
-    def generate_status(self, product):
-        return "200 OK"
-
-    def generate_headers(self, product):
-        return [('Content-Type', 'text/plain; charset=UTF-8')]
-
-    def calculate_header_layout(self, profile):
-        fields = profile.domain.item_domain.fields
-        headers = [[header.encode('utf-8') for header in field.title]
-                   for field in fields]
-        layouts = []
-        height = max(len(header) for header in headers)
-        width = len(fields)
-        for line in range(height):
-            index = 0
-            while index < width:
-                while index < width and len(headers[index]) <= line:
-                    index += 1
-                if index == width:
-                    break
-                colspan = 1
-                if len(headers[index]) > line+1:
-                    while (index+colspan < width and
-                           len(headers[index+colspan]) > line+1 and
-                           headers[index][:line+1] ==
-                               headers[index+colspan][:line+1]):
-                        colspan += 1
-                rowspan = 1
-                if len(headers[index]) == line+1:
-                    rowspan = height-line
-                title = headers[index][line]
-                layout = HeaderLayout(title, line, index, colspan, rowspan)
-                layouts.append(layout)
-                index += colspan
-        return layouts
-
-    def calculate_layout(self, product, formats):
-        fields = product.meta.domain.item_domain.fields
-        headers = self.calculate_header_layout(product.meta)
-        column_widths = [1 for field in fields]
-        total = 0
-        for record in product:
-            for idx, (format, value) in enumerate(zip(formats, record)):
-                width = format.measure(value)
-                column_widths[idx] = max(column_widths[idx], width)
-            total += 1
-        if total == 0:
-            total = "(no rows)"
-        elif total == 1:
-            total = "(1 row)"
-        else:
-            total = "(%s rows)" % total
-        constraints = []
-        constraints.append((0, len(fields), len(total)-4))
-        for header in headers:
-            constraints.append((header.column, header.column+header.colspan,
-                                len(header.text.decode('utf-8'))))
-        constraints.reverse()
-        for start, end, width in constraints:
-            current_width = (end-start-1)*3
-            for index in range(start, end):
-                current_width += column_widths[index]
-            if width <= current_width:
-                continue
-            extra = width-current_width
-            inc = extra/(end-start)
-            rem = extra - inc*(end-start)
-            for index in range(start, end):
-                column_widths[index] += inc
-                if index < start+rem:
-                    column_widths[index] += 1
-        return Layout(headers, total, column_widths)
-
-    def generate_body(self, product):
-        request_title = (str(product.meta.syntax)
-                         if product.meta.syntax is not None else "")
-        if not product:
-            yield "(no data)\n"
-            yield "\n"
-            yield " ----\n"
-            if request_title:
-                yield " %s\n" % request_title
-            else:
-                yield "\n"
-            return
-        assert isinstance(product.meta.domain, ListDomain)
-        assert isinstance(product.meta.domain.item_domain, RecordDomain)
-        fields = product.meta.domain.item_domain.fields
-        domains = [field.domain for field in fields]
-        tool = TextFormatter(self)
-        formats = [Format(self, domain, tool) for domain in domains]
-        layout = self.calculate_layout(product, formats)
-        if fields:
-            height = max(header.row+header.rowspan
-                         for header in layout.headers)
-            for line in range(height):
-                cells = []
-                borders = []
-                is_prior_solid = False
-                is_solid = False
-                idx = 0
-                while idx < len(layout.column_widths):
-                    headers = [header for header in layout.headers
-                               if header.row <= line
-                                             < header.row+header.rowspan and
-                                  header.column == idx]
-                    assert len(headers) == 1, headers
-                    header = headers[0]
-                    cell_width = (header.colspan-1)*3
-                    for width in layout.column_widths[idx:idx+header.colspan]:
-                        cell_width += width
-                    if line < header.row+header.rowspan-1:
-                        cell = " "*cell_width
-                        border = " "*(cell_width+2)
-                        is_solid = False
-                    else:
-                        cell = u"%-*s" % (cell_width,
-                                          header.text.decode('utf-8'))
-                        cell = cell.encode('utf-8')
-                        border = "-"*(cell_width+2)
-                        is_solid = True
-                    cells.append(cell)
-                    if is_prior_solid or is_solid:
-                        borders.append("+")
-                    else:
-                        borders.append("|")
-                    borders.append(border)
-                    is_prior_solid = is_solid
-                    idx += header.colspan
-                if is_prior_solid:
-                    borders.append("+")
-                else:
-                    borders.append("|")
-                yield " | " + " | ".join(cells) + " |\n"
-                if line < height-1:
-                    yield " " + "".join(borders) + "\n"
-            yield ("-+-" +
-                   "-+-".join("-"*width for width in layout.column_widths) +
-                   "-+-\n")
-            for record in product:
-                columns = [format(value, width)
-                           for format, value, width
-                                in zip(formats, record, layout.column_widths)]
-                height = max(len(column) for column in columns)
-                for row_idx in range(height):
-                    if row_idx == 0:
-                        left, mid, right = " | ", " | ", " |\n"
-                    else:
-                        left, mid, right = " : ", " : ", " :\n"
-                    cells = []
-                    for idx, column in enumerate(columns):
-                        if row_idx < len(column):
-                            cell = column[row_idx]
+    def __call__(self):
+        product_to_text = profile_to_text(self.meta)
+        size = product_to_text.size
+        if size > 0:
+            widths = product_to_text.widths(self.data)
+            depth = product_to_text.head_depth()
+            head = product_to_text.head(depth)
+            if depth > 0:
+                bar = [(None, 0)]*size
+                for row_idx in range(depth):
+                    row = next(head, [])
+                    last_bar = bar
+                    bar = []
+                    while len(bar) < size:
+                        idx = len(bar)
+                        text, tail = last_bar[idx]
+                        if tail > 0:
+                            bar.append((text, tail-1))
                         else:
-                            cell = " "*layout.column_widths[idx]
-                        cells.append(cell)
-                    if row_idx == 0:
-                        yield " | " + " | ".join(cells) + " |\n"
+                            text, rowspan, colspan = row.pop(0)
+                            bar.append((text, rowspan-1))
+                            for span in range(colspan-1):
+                                bar.append((None, rowspan-1))
+                    assert not row
+                    if row_idx > 0:
+                        line = [u" "]
+                        for idx in range(0, size+1):
+                            is_horiz = False
+                            is_vert = False
+                            if idx > 0:
+                                text, tail = last_bar[idx-1]
+                                if tail == 0:
+                                    is_horiz = True
+                            if idx < size:
+                                text, tail = last_bar[idx]
+                                if tail == 0:
+                                    is_horiz = True
+                            if idx < size:
+                                text, tail = last_bar[idx]
+                                if text is not None:
+                                    is_vert = True
+                                text, tail = bar[idx]
+                                if text is not None:
+                                    is_vert = True
+                            else:
+                                is_vert = True
+                            if is_horiz and is_vert:
+                                line.append(u"+")
+                            elif is_horiz:
+                                line.append(u"-")
+                            elif is_vert:
+                                line.append(u"|")
+                            else:
+                                line.append(u" ")
+                            if idx < size:
+                                text, tail = last_bar[idx]
+                                if tail == 0:
+                                    line.append(u"-"*(widths[idx]+2))
+                                else:
+                                    line.append(u" "*(widths[idx]+2))
+                            else:
+                                line.append(u"\n")
+                        yield "".join(line)
+                    extent = 0
+                    line = []
+                    for idx in range(size):
+                        text, tail = bar[idx]
+                        if text is not None:
+                            assert extent == 0, extent
+                            line.append(u" | ")
+                        else:
+                            if extent < 3:
+                                line.append(u" "*(3-extent))
+                                extent = 0
+                            else:
+                                extent -= 3
+                        width = widths[idx]
+                        if text is not None and tail == 0:
+                            line.append(text)
+                            extent = len(text)
+                        if extent < width:
+                            line.append(u" "*(width-extent))
+                            extent = 0
+                        else:
+                            extent -= width
+                    assert extent == 0
+                    line.append(u" |\n")
+                    yield "".join(line)
+                line = [u"-+-"]
+                for width in widths:
+                    line.append(u"-"*width)
+                    line.append(u"-+-")
+                line.append(u"\n")
+                yield u"".join(line)
+            body = product_to_text.body(self.data, widths)
+            for row in body:
+                line = []
+                is_last_solid = False
+                for chunk, is_solid in row:
+                    if is_last_solid or is_solid:
+                        line.append(u" | ")
                     else:
-                        yield " : " + " : ".join(cells) + " :\n"
-        table_width = len(layout.column_widths)*3+1
-        for width in layout.column_widths:
-            table_width += width
-        yield " " + "%*s" % (table_width, layout.total) + "\n"
-        yield "\n"
-        yield " ----\n"
-        yield " %s\n" % request_title
-        if (product.meta.plan is not None and
-                product.meta.plan.statement is not None):
-            sql = product.meta.plan.statement.sql.encode('utf-8')
+                        line.append(u" : ")
+                    line.append(chunk)
+                    is_last_solid = is_solid
+                if is_last_solid:
+                    line.append(u" |\n")
+                else:
+                    line.append(u" :\n")
+                yield "".join(line)
+            yield u"\n"
+        if (self.meta.plan is not None and
+                self.meta.plan.statement is not None):
+            yield u" ----\n"
+            if self.meta.syntax:
+                yield u" %s\n" % self.meta.syntax
+            sql = self.meta.plan.statement.sql
             for line in sql.splitlines():
-                yield " %s\n" % line
+                yield u" %s\n" % line
 
 
-class TextFormatter(Formatter):
+class ToText(Adapter):
 
-    adapts(TextRenderer)
+    adapts(Domain)
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.size = 1
+
+    def head_depth(self):
+        return 0
+
+    def head(self, depth):
+        if not self.size or not depth:
+            return
+        yield [(u"", depth, self.size)]
+
+    def body(self, data, widths):
+        [width] = widths
+        cell = self.dump(data)
+        yield [(u"%*s" % (-width, cell), True)]
+
+    def widths(self, data):
+        return [len(self.dump(data))]
+
+    def dump(self, value):
+        if value is None:
+            return u""
+        return self.domain.dump(value)
 
 
-class FormatDomain(Format):
+class StringToText(ToText):
 
-    adapts(TextRenderer, Domain)
+    adapts_many(StringDomain,
+                EnumDomain)
+
+    threshold = 32
+
+    boundary_pattern = u"""(?<=\S) (?=\S)"""
+    boundary_regexp = re.compile(boundary_pattern)
 
     unescaped_pattern = ur"""^(?=[^ "])[^\x00-\x1F]+(?<=[^ "])$"""
     unescaped_regexp = re.compile(unescaped_pattern)
@@ -258,144 +220,20 @@ class FormatDomain(Format):
             return self.escape_table[char]
         return u"\\u%04x" % ord(char)
 
-    def escape_string(self, value):
+    def escape(self, value):
         if self.unescaped_regexp.match(value):
             return value
         return u'"%s"' % self.escape_regexp.sub(self.escape_replace, value)
 
-    def format_null(self, width):
-        return [" "*width]
-
-    def measure(self, value):
-        if value is None:
-            return 0
-        if not isinstance(value, unicode):
-            try:
-                value = self.escape_string(str(value).decode('utf-8'))
-            except UnicodeDecodeError:
-                value = unicode(repr(value))
-        return len(value)
-
-    def __call__(self, value, width):
-        if value is None:
-            return self.format_null(width)
-        if not isinstance(value, unicode):
-            try:
-                value = self.escape_string(str(value).decode('utf-8'))
-            except UnicodeDecodeError:
-                value = unicode(repr(value))
-        line = u"%*s" % (-width, value)
-        return [line.encode('utf-8')]
-
-
-class FormatBoolean(Format):
-
-    adapts(TextRenderer, BooleanDomain)
-
-    def measure(self, value):
-        if value is None:
-            return 0
-        if value is True:
-            return 4
-        if value is False:
-            return 5
-
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(bool))
-        if value is None:
-            return self.format_null(width)
-        if value is True:
-            return ["%*s" % (-width, "true")]
-        if value is False:
-            return ["%*s" % (-width, "false")]
-
-
-class FormatNumber(Format):
-
-    adapts(TextRenderer, NumberDomain)
-
-    def measure(self, value):
-        if value is None:
-            return 0
-        return len(str(value))
-
-    def __call__(self, value, width):
-        if value is None:
-            return self.format_null(width)
-        return ["%*s" % (width, value)]
-
-
-class FormatInteger(Format):
-
-    adapts(TextRenderer, IntegerDomain)
-
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(oneof(int, long)))
-        return super(FormatInteger, self).__call__(value, width)
-
-
-class FormatDecimal(Format):
-
-    adapts(TextRenderer, DecimalDomain)
-
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(decimal.Decimal))
-        return super(FormatDecimal, self).__call__(value, width)
-
-
-class FormatFloat(Format):
-
-    adapts(TextRenderer, FloatDomain)
-
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(float))
-        return super(FormatFloat, self).__call__(value, width)
-
-
-class FormatString(Format):
-
-    adapts(TextRenderer, StringDomain)
-
-    threshold = 32
-
-    boundary_pattern = u"""(?<=\S) (?=\S)"""
-    boundary_regexp = re.compile(boundary_pattern)
-
-    def measure(self, value):
-        if value is None:
-            return 0
-        value = self.escape_string(value)
-        if len(value) <= self.threshold:
-            return len(value)
-        chunks = self.boundary_regexp.split(value)
-        max_length = max(len(chunk) for chunk in chunks)
-        if max_length >= self.threshold:
-            return max_length
-        max_length = length = 0
-        start = end = 0
-        while end < len(chunks):
-            length += len(chunks[end])
-            if end != 0:
-                length += 1
-            end += 1
-            while length > self.threshold:
-                length -= len(chunks[start])
-                if start != 0:
-                    length -= 1
-                start += 1
-            assert start < end
-            if length > max_length:
-                max_length = length
-        return max_length
-
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(unicode))
-        if value is None:
-            return self.format_null(width)
-        value = self.escape_string(value)
+    def body(self, data, widths):
+        [width] = widths
+        if data is None:
+            yield [(u" "*width, True)]
+            return
+        value = self.escape(data)
         if len(value) <= width:
-            line = u"%*s" % (-width, value)
-            return [line.encode('utf-8')]
+            yield [(u"%*s" % (-width, value), True)]
+            return
         chunks = self.boundary_regexp.split(value)
         best_badnesses = []
         best_lengths = []
@@ -433,77 +271,302 @@ class FormatString(Format):
             line = u"%*s" % (-width, group)
             lines.insert(0, line.encode('utf-8'))
             idx -= size
-        return lines
+        is_first = True
+        for line in lines:
+            yield [(line, is_first)]
+            is_first = False
+
+    def widths(self, data):
+        if data is None:
+            return [0]
+        value = self.escape(data)
+        if len(value) <= self.threshold:
+            return [len(value)]
+        chunks = self.boundary_regexp.split(value)
+        max_length = max(len(chunk) for chunk in chunks)
+        if max_length >= self.threshold:
+            return [max_length]
+        max_length = length = 0
+        start = end = 0
+        while end < len(chunks):
+            length += len(chunks[end])
+            if end != 0:
+                length += 1
+            end += 1
+            while length > self.threshold:
+                length -= len(chunks[start])
+                if start != 0:
+                    length -= 1
+                start += 1
+            assert start < end
+            if length > max_length:
+                max_length = length
+        return [max_length]
 
 
-class FormatEnum(Format):
+class NativeStringToText(ToText):
 
-    adapts(TextRenderer, EnumDomain)
+    adapts_many(NumberDomain,
+                DateDomain,
+                TimeDomain)
 
-    def measure(self, value):
+    def dump(self, value):
         if value is None:
+            return u""
+        return unicode(value)
+
+
+class NumberToText(NativeStringToText):
+
+    adapts(NumberDomain)
+
+    def body(self, data, widths):
+        [width] = widths
+        cell = self.dump(data)
+        yield [(u"%*s" % (width, cell), True)]
+
+
+class DecimalToText(ToText):
+
+    adapts(DecimalDomain)
+
+    def dump(self, value):
+        if value is None:
+            return u""
+        sign, digits, exp = value.as_tuple()
+        if not digits:
+            return unicode(value)
+        if exp < -6 and value == value.normalize():
+            value = value.normalize()
+            sign, digits, exp = value.as_tuple()
+        if exp > 0:
+            value = value.quantize(decimal.Decimal(1))
+        return unicode(value)
+
+
+class DateTimeToText(ToText):
+
+    adapts(DateTimeDomain)
+
+    def dump(self, value):
+        if value is None:
+            return u""
+        elif not value.time():
+            return unicode(value.date())
+        else:
+            return unicode(value)
+
+
+class OpaqueToText(ToText):
+
+    adapts(OpaqueDomain)
+
+    def dump(self, value):
+        if value is None:
+            return u""
+        if not isinstance(value, unicode):
+            try:
+                value = str(value).decode('utf-8')
+            except UnicodeDecodeError:
+                value = unicode(repr(value))
+        return value
+
+
+class VoidToText(ToText):
+
+    adapts(VoidDomain)
+
+    def __init__(self, domain):
+        super(VoidToText, self).__init__(domain)
+        self.size = 0
+
+
+class RecordToText(ToText):
+
+    adapts(RecordDomain)
+
+    def __init__(self, domain):
+        super(RecordToText, self).__init__(domain)
+        self.fields_to_text = [profile_to_text(field)
+                               for field in domain.fields]
+        self.size = sum(field_to_text.size
+                        for field_to_text in self.fields_to_text)
+
+    def head_depth(self):
+        if not self.size:
             return 0
-        value = self.escape_string(value)
-        return len(value)
+        return max(field_to_text.head_depth()
+                   for field_to_text in self.fields_to_text)
 
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(unicode))
-        if value is None:
-            return self.format_null(width)
-        value = self.escape_string(value)
-        line = u"%*s" % (-width, value)
-        return [line.encode('utf-8')]
+    def head(self, depth):
+        if not self.size or not depth:
+            return
+        streams = [field_to_text.head(depth)
+                   for field_to_text in self.fields_to_text]
+        is_done = False
+        while not is_done:
+            is_done = True
+            row = []
+            for stream in streams:
+                subrow = next(stream, None)
+                if subrow is not None:
+                    row.extend(subrow)
+                    is_done = False
+            if not is_done:
+                yield row
+
+    def body(self, data, widths):
+        if not self.size:
+            return
+        dummies = [(u" "*width, False) for width in widths]
+        if data is None:
+            yield dummies
+            return
+        streams = []
+        start = 0
+        for field_to_text, item in zip(self.fields_to_text, data):
+            size = field_to_text.size
+            stream = field_to_text.body(item, widths[start:start+size])
+            streams.append((stream, size))
+            start += size
+        is_done = False
+        while not is_done:
+            is_done = True
+            row = []
+            for stream, size in streams:
+                subrow = next(stream, None)
+                if subrow is not None:
+                    row.extend(subrow)
+                    is_done = False
+                else:
+                    row.extend(dummies[len(row):len(row)+size])
+            if not is_done:
+                yield row
+
+    def widths(self, data):
+        widths = []
+        if data is None:
+            data = [None]*self.size
+        for item, field_to_text in zip(data, self.fields_to_text):
+            widths += field_to_text.widths(item)
+        return widths
 
 
-class FormatDate(Format):
+class ListToText(ToText):
 
-    adapts(TextRenderer, DateDomain)
+    adapts(ListDomain)
 
-    def measure(self, value):
-        if value is None:
-            return 0
-        return 10
+    def __init__(self, domain):
+        self.item_to_text = to_text(domain.item_domain)
+        self.size = self.item_to_text.size
 
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(datetime.date))
-        if value is None:
-            return self.format_null(width)
-        return ["%*s" % (-width, value)]
+    def head_depth(self):
+        return self.item_to_text.head_depth()
+
+    def head(self, depth):
+        return self.item_to_text.head(depth)
+
+    def body(self, data, widths):
+        if not data:
+            return
+        for item in data:
+            for row in self.item_to_text.body(item, widths):
+                yield row
+
+    def widths(self, data):
+        widths = [0]*self.size
+        if not data:
+            data = [None]
+        for item in data:
+            widths = [max(width, item_width)
+                      for width, item_width
+                            in zip(widths, self.item_to_text.widths(item))]
+        return widths
 
 
-class FormatTime(Format):
+class MetaToText(object):
 
-    adapts(TextRenderer, TimeDomain)
+    def __init__(self, profile):
+        self.profile = profile
+        self.domain_to_text = to_text(profile.domain)
+        self.size = self.domain_to_text.size
 
-    def measure(self, value):
-        if value is None:
-            return 0
-        return len(str(value))
+    def head_depth(self):
+        depth = self.domain_to_text.head_depth()
+        if self.profile.header:
+            depth += 1
+        return depth
 
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(datetime.time))
-        if value is None:
-            return self.format_null(width)
-        return ["%*s" % (-width, value)]
+    def head(self, depth):
+        if not self.size or not depth:
+            return
+        if not self.profile.header:
+            for row in self.domain_to_text.head(depth):
+                yield row
+            return
+        domain_depth = self.domain_to_text.head_depth()
+        if domain_depth > 0:
+            head_depth = 1
+        else:
+            head_depth = depth
+        yield [(self.profile.header, head_depth, self.size)]
+        if domain_depth > 0:
+            for row in self.domain_to_text.head(depth-1):
+                yield row
+
+    def body(self, data, widths):
+        return self.domain_to_text.body(data, widths)
+
+    def widths(self, data):
+        if not self.size:
+            return []
+        widths = self.domain_to_text.widths(data)
+        total = sum(widths) + 3*(self.size-1)
+        if self.profile.header and len(self.profile.header) > total:
+            extra = len(self.profile.header) - total
+            inc = extra/self.size
+            rem = extra - inc*self.size
+            for idx in range(len(widths)):
+                widths[idx] += inc
+                if idx < rem:
+                    widths[idx] += 1
+        return widths
 
 
-class FormatDateTime(Format):
+def to_text(domain):
+    to_text = ToText(domain)
+    return to_text
 
-    adapts(TextRenderer, DateTimeDomain)
 
-    def measure(self, value):
-        if value is None:
-            return 0
-        if not value.time():
-            return 10
-        return len(str(value))
+def profile_to_text(profile):
+    return MetaToText(profile)
 
-    def __call__(self, value, width):
-        assert isinstance(value, maybe(datetime.datetime))
-        if value is None:
-            return self.format_null(width)
-        if not value.time():
-            return ["%*s" % (-width, value.date())]
-        return ["%*s" % (-width, value)]
+
+class TextRenderer(Renderer):
+
+    name = 'text/plain'
+    aliases = ['txt', '']
+
+    def render(self, product):
+        status = self.generate_status(product)
+        headers = self.generate_headers(product)
+        body = list(self.generate_body(product))
+        return status, headers, body
+
+    def generate_status(self, product):
+        return "200 OK"
+
+    def generate_headers(self, product):
+        format = TextFormat()
+        emit_headers = EmitHeaders(format, product)
+        return list(emit_headers())
+
+    def generate_body(self, product):
+        format = TextFormat()
+        emit_body = Emit(format, product)
+        for line in emit_body():
+            if isinstance(line, unicode):
+                line = line.encode('utf-8')
+            yield line
 
 

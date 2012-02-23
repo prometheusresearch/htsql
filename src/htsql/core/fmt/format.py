@@ -40,6 +40,10 @@ class HTMLFormat(Format):
     pass
 
 
+class TextFormat(Format):
+    pass
+
+
 class EmitHeaders(Adapter):
 
     adapts(Format)
@@ -83,64 +87,6 @@ class Renderer(object):
     def render(self, product):
         raise NotImplementedError()
 
-    def flatten_product(self, product):
-        if not isinstance(product.meta.domain, ListDomain):
-            product.meta.title = []
-            return
-        self.flatten_data(product)
-        self.flatten_meta(product)
-
-    def flatten_data(self, product):
-        domain = product.meta.domain.item_domain
-        rows = []
-        for row in product.data:
-            if isinstance(domain, RecordDomain):
-                row = self.flatten_row(row, domain)
-            else:
-                row = (row,)
-            rows.append(row)
-        product.data = rows
-
-    def flatten_row(self, row, domain):
-        if row is None:
-            row = (None,)*len(domain.fields)
-        items = []
-        for item, field in zip(row, domain.fields):
-            if isinstance(field.domain, RecordDomain):
-                item = self.flatten_row(item, field.domain)
-                items.extend(item)
-            else:
-                items.append(item)
-        return tuple(items)
-
-    def flatten_meta(self, product):
-        header = product.meta.header
-        title = []
-        if header is not None:
-            title.append(header)
-        domain = product.meta.domain.item_domain
-        if not isinstance(domain, RecordDomain):
-            field = Profile(domain=domain, title=title)
-            domain = RecordDomain([field])
-        else:
-            domain = self.flatten_meta_record(domain, title)
-        product.meta.title = title
-        product.meta.domain.item_domain = domain
-
-    def flatten_meta_record(self, domain, title_prefix):
-        fields = []
-        for field in domain.fields:
-            title = title_prefix
-            if field.header is not None:
-                title = title+[field.header]
-            if isinstance(field.domain, RecordDomain):
-                field_domain = self.flatten_meta_record(field.domain, title)
-                fields.extend(field_domain.fields)
-            else:
-                field.title = title
-                fields.append(field)
-        return RecordDomain(fields)
-
 
 class Formatter(Adapter):
 
@@ -152,19 +98,6 @@ class Formatter(Adapter):
     def format(self, value, domain):
         format = Format(self.renderer, domain, self)
         return format(value)
-
-
-class Format(Adapter):
-
-    adapts(Renderer, Domain)
-
-    def __init__(self, renderer, domain, tool):
-        self.renderer = renderer
-        self.domain = domain
-        self.tool = tool
-
-    def __call__(self, value):
-        raise NotImplementedError()
 
 
 class FindRenderer(Utility):

@@ -17,9 +17,9 @@ from ..adapter import Adapter, Protocol, adapts, adapts_many, named
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain, TimeDomain,
                       DateTimeDomain, ListDomain, RecordDomain,
-                      VoidDomain, Profile)
+                      VoidDomain, OpaqueDomain, Profile)
 from .format import JSONFormat, ObjFormat, EmitHeaders, Emit
-from .format import Renderer, Format
+from .format import Renderer
 import re
 import decimal
 
@@ -306,6 +306,23 @@ class DateTimeToJSON(ToJSON):
             yield unicode(value.date())
         else:
             yield unicode(value)
+
+
+class OpaqueToJSON(ToJSON):
+
+    adapts(OpaqueDomain)
+
+    @staticmethod
+    def scatter(value):
+        if value is None:
+            yield None
+            return
+        if not isinstance(value, unicode):
+            try:
+                value = str(value).decode('utf-8')
+            except UnicodeDecodeError:
+                value = unicode(repr(value))
+        yield value
 
 
 class MetaToJSON(Protocol):
