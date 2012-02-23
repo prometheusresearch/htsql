@@ -12,14 +12,312 @@ This module implements the HTML renderer.
 """
 
 
+from ..util import listof, tupleof, maybe, Printable
 from ..adapter import Adapter, adapts, adapts_many
 from .format import HTMLFormat, EmitHeaders, Emit
 from .format import Renderer
+from ..mark import Mark
+from ..error import InternalServerError
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
                       StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
                       VoidDomain, OpaqueDomain, Profile)
+import pkg_resources
 import cgi
+import re
+
+
+class Block(Printable):
+
+    def __init__(self, mark):
+        assert isinstance(mark, Mark)
+        self.mark = mark
+
+
+class TextBlock(Block):
+
+    def __init__(self, text, mark):
+        assert isinstance(text, unicode)
+        super(TextBlock, self).__init__(mark)
+        self.text = text
+
+    def __str__(self):
+        lines = self.text.splitlines()
+        if len(lines) == 0:
+            line = ""
+        elif len(lines) == 1:
+            line = lines[0].rstrip().encode('utf-8')
+        else:
+            line = lines[0].rstrip().encode('utf-8')+'...'
+        return line
+
+
+class EchoBlock(Block):
+
+    def __init__(self, name, mark):
+        assert isinstance(name, str)
+        super(EchoBlock, self).__init__(mark)
+        self.name = name
+
+    def __str__(self):
+        return "{{ %s }}" % self.name
+
+
+class ClauseBlock(Block):
+
+    def __init__(self, action, names, mark):
+        assert isinstance(action, str)
+        assert isinstance(names, listof(str))
+        super(ClauseBlock, self).__init__(mark)
+        self.action = action
+        self.names = names
+
+    def __str__(self):
+        if self.names:
+            return "{%% %s %s %%}" % (self.action, " ".join(self.names))
+        else:
+            return "{%% %s %%}" % self.action
+
+
+class Case(Printable):
+    pass
+
+
+class TextCase(Case):
+
+    def __init__(self, text):
+        assert isinstance(text, unicode)
+        self.text = text
+
+    def __str__(self):
+        lines = self.text.splitlines()
+        if len(lines) == 0:
+            line = ""
+        elif len(lines) == 1:
+            line = lines[0].rstrip().encode('utf-8')
+        else:
+            line = lines[0].rstrip().encode('utf-8')+'...'
+        return line
+
+
+class EchoCase(Case):
+
+    def __init__(self, name, mark):
+        assert isinstance(name, str)
+        assert isinstance(mark, Mark)
+        self.name = name
+        self.mark = mark
+
+    def __str__(self):
+        return "{{ %s }}" % self.name
+
+
+class BranchCase(Case):
+
+    def __init__(self, choices):
+        assert isinstance(choices, listof(tupleof(maybe(str), Case, Mark)))
+        self.choices = choices
+
+    def __str__(self):
+        chunks = []
+        is_first = True
+        for name, case, mark in self.choices:
+            if name is not None:
+                if is_first:
+                    chunks.append("{%% if %s %%}" % name)
+                    is_first = False
+                else:
+                    chunks.append("{%% elif %s %%}" % name)
+            else:
+                chunks.append("{% else %}")
+            chunks.append(str(case))
+        chunks.append("{% endif %}")
+        return "".join(chunks)
+
+
+class SequenceCase(Case):
+
+    def __init__(self, cases):
+        assert isinstance(cases, listof(Case))
+        self.cases = cases
+
+    def __str__(self):
+        return "".join(str(case) for case in self.cases)
+
+
+class TemplateError(InternalServerError):
+
+    def __init__(self, detail, mark):
+        self.detail = detail
+        self.mark = mark
+
+    def __str__(self):
+        excerpt = "\n".join("    "+line.encode('utf-8')
+                            for line in self.mark.excerpt())
+        return "%s: %s:\n%s" % (self.kind, self.detail, excerpt)
+
+
+class Template(object):
+
+    text_pattern = r"""
+        (?: [^{] | [{] [^{%#] )+
+    """
+    expr_pattern = r"""
+        (?:
+            (?P<echo>
+                [{][{] \s*
+                (?P<name> [A-Za-z_][0-9A-Za-z_]* )
+                \s* [}][}]
+            ) |
+            (?P<clause>
+                [{][%] \s*
+                (?P<action> [A-Za-z_][0-9A-Za-z_]* )
+                (?P<names> (?: \s+ [A-Za-z_][0-9A-Za-z_]* )* )
+                \s* [%][}]
+            ) |
+            (?P<comment>
+                [{][#] (?: [^#] | [#][^}] )* [#][}]
+            )
+        ) (?: [ \t]* \r?\n )?
+    """
+    text_regexp = re.compile(text_pattern, re.X)
+    expr_regexp = re.compile(expr_pattern, re.X)
+
+    def __init__(self, stream):
+        blocks = self.scan(stream)
+        case = self.parse(blocks)
+        self.case = case
+
+    def scan(self, stream):
+        input = stream.read()
+        if isinstance(input, str):
+            try:
+                input = input.decode('utf-8')
+            except UnicodeDecodeError, exc:
+                mark = Mark(input.decode('utf-8', 'replace'),
+                            exc.start, exc.end)
+                raise TemplateError("invalid UTF-8 character (%s)"
+                                    % exc.reason, mark)
+        pos = 0
+        while pos < len(input):
+            match = self.text_regexp.match(input, pos)
+            if match is not None:
+                text = match.group()
+                mark = Mark(input, match.start(), match.end())
+                yield TextBlock(text, mark)
+                pos = match.end()
+                if pos == len(input):
+                    break
+            match = self.expr_regexp.match(input, pos)
+            if match is None:
+                mark = Mark(input, pos, pos)
+                raise TemplateError("invalid template expression", mark)
+            if match.group('echo') is not None:
+                name = match.group('name').encode('utf-8')
+                mark = Mark(input, match.start('echo'), match.end('echo'))
+                yield EchoBlock(name, mark)
+            elif match.group('clause') is not None:
+                action = match.group('action').encode('utf-8')
+                names = match.group('names').encode('utf-8').split()
+                mark = Mark(input, match.start('clause'), match.end('clause'))
+                yield ClauseBlock(action, names, mark)
+            pos = match.end()
+
+    def parse(self, blocks):
+        blocks = list(blocks)
+        case = self.parse_sequence(blocks)
+        if blocks:
+            raise TemplateError("unexpected clause", blocks[0].mark)
+        return case
+
+    def parse_sequence(self, blocks):
+        cases = []
+        while blocks:
+            if isinstance(blocks[0], TextBlock):
+                block = blocks.pop(0)
+                case = TextCase(block.text)
+            elif isinstance(blocks[0], EchoBlock):
+                block = blocks.pop(0)
+                case = EchoCase(block.name, block.mark)
+            elif (isinstance(blocks[0], ClauseBlock) and
+                    blocks[0].action == "if"):
+                case = self.parse_branch(blocks)
+            else:
+                break
+            cases.append(case)
+        if len(cases) == 1:
+            return cases[0]
+        return SequenceCase(cases)
+
+    def parse_branch(self, blocks):
+        choices = []
+        assert blocks
+        block = blocks.pop(0)
+        assert isinstance(block, ClauseBlock) and block.action == "if"
+        if len(block.names) != 1:
+            raise TemplateError("expected one parameter", block.mark)
+        name = block.names[0]
+        case = self.parse_sequence(blocks)
+        mark = block.mark
+        choices.append((name, case, mark))
+        has_else = False
+        while True:
+            if not blocks:
+                raise TemplateError("missing `endif` clause", mark)
+            block = blocks.pop(0)
+            assert isinstance(block, ClauseBlock)
+            if block.action == 'elif' and not has_else:
+                if len(block.names) != 1:
+                    raise TemplateError("expected one parameter", block.mark)
+                name = block.names[0]
+                case = self.parse_sequence(blocks)
+                choices.append((name, case, block.mark))
+            elif block.action == 'else' and not has_else:
+                if len(block.names) != 0:
+                    raise TemplateError("expected no parameters", block.mark)
+                case = self.parse_sequence(blocks)
+                choices.append((None, case, block.mark))
+                has_else = True
+            elif block.action == 'endif':
+                if len(block.names) != 0:
+                    raise TemplateError("expected no parameters", block.mark)
+                break
+            else:
+                raise TemplateError("unexpected clause", block.mark)
+        return BranchCase(choices)
+
+    def __call__(self, **context):
+        return self.emit(self.case, context)
+
+    def emit(self, case, context):
+        if isinstance(case, TextCase):
+            yield case.text
+        elif isinstance(case, EchoCase):
+            if case.name not in context:
+                raise TemplateError("undefined context variable", case.mark)
+            value = context[case.name]
+            if value is not None:
+                assert not isinstance(value, str)
+                if isinstance(value, unicode):
+                    yield value
+                else:
+                    for chunk in value:
+                        yield chunk
+        elif isinstance(case, BranchCase):
+            for name, case, mark in case.choices:
+                if name is not None:
+                    if name not in context:
+                        raise TemplateError("undefined context variable", mark)
+                    value = context[case.name]
+                    if value is None or value == u"":
+                        continue
+                for chunk in self.emit(case, context):
+                    yield chunk
+                break
+        elif isinstance(case, SequenceCase):
+            for case in case.cases:
+                for chunk in self.emit(case, context):
+                    yield chunk
 
 
 class EmitHTMLHeaders(EmitHeaders):
@@ -38,101 +336,40 @@ class EmitHTML(Emit):
         product_to_html = profile_to_html(self.meta)
         headers_height = product_to_html.headers_height()
         cells_height = product_to_html.cells_height(self.data)
-        title = self.meta.header
-        if not title:
+        if self.meta.header:
+            title = cgi.escape(self.meta.header, True)
+        else:
             title = u""
-        yield u"<!DOCTYPE html>\n"
-        yield u"<html>\n"
-        yield u"<head>\n"
-        yield u"<meta http-equiv=\"Content-Type\"" \
-              u" content=\"text/html; charset=UTF-8\">\n"
-        yield u"<title>%s</title>\n" % cgi.escape(title)
-        yield u"<style type=\"text/css\">\n"
-        yield u"table.htsql-output {" \
-              u" font-family: \"Arial\", sans-serif;" \
-              u" font-size: 14px; line-height: 1.4; margin: 1em auto;" \
-              u" color: #000000; background-color: #ffffff;" \
-              u" border-collapse: collapse; border: 1px double #f2f2f2;" \
-              u" -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25);" \
-              u" -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25);" \
-              u" box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }\n"
-        yield u"table.htsql-output > thead {" \
-              u" background-color: #f2f2f2 }\n"
-        yield u"table.htsql-output > thead {" \
-              u" border-color: #1a1a1a; border-width: 0 0 1px;" \
-              u" border-style: solid }\n"
-        yield u"table.htsql-output > thead > tr > th {" \
-              u" font-weight: bold; padding: 0.2em 0.5em;" \
-              u" text-align: center; vertical-align: bottom;" \
-              u" overflow: hidden; word-wrap: break-word;" \
-              u" border-color: #999999; border-width: 1px 1px 0;" \
-              u" border-style: solid }\n"
-        yield u"table.htsql-output > thead > tr" \
-              u" > th.htsql-empty-header:after {" \
-              u" content: \"\\A0\" }\n"
-        yield u"table.htsql-output > tbody > tr.htsql-odd-row {" \
-              u" background-color: #ffffff }\n"
-        yield u"table.htsql-output > tbody > tr.htsql-even-row {" \
-              u" background-color: #f2f2f2 }\n"
-        yield "table.htsql-output > tbody > tr:hover {" \
-              u" color: #ffffff; background-color: #333333 }\n"
-        yield u"table.htsql-output > tbody > tr > td {" \
-              u" padding: 0.2em 0.5em; vertical-align: baseline;" \
-              u" overflow: hidden; word-wrap: break-word;" \
-              u" border-color: #999999; border-width: 0 1px;" \
-              u" border-style: solid; }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-index {" \
-              u" font-size: 90%; font-weight: bold;" \
-              u" text-align: right; width: 0; color: #999999;" \
-              u" border-color: #1a1a1a;" \
-              u" -moz-user-select: none; -webkit-user-select: none;"\
-              u" user-select: none }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-integer-type {" \
-              u" text-align: right }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-decimal-type {" \
-              u" text-align: right }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-float-type {" \
-              u" text-align: right }\n"
-        yield u"table.htsql-output > tbody > tr" \
-              u" > td.htsql-null-value:after {" \
-              u" content: \"\\A0\" }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-empty-value {" \
-              u" color: #999999 }\n"
-        yield u"table.htsql-output > tbody > tr" \
-              u" > td.htsql-empty-value:after {" \
-              u" content: \"\\2B1A\" }\n"
-        yield u"table.htsql-output > tbody > tr > td.htsql-false-value {" \
-                u" font-style: italic }\n"
-        yield u"table.htsql-output > tbody > tr" \
-              u" > td.htsql-null-record-value {" \
-              u" border-style: dashed }\n"
-        yield u"</style>\n"
-        yield u"</head>\n"
-        yield u"<body>\n"
-        if headers_height > 0 or cells_height > 0:
-            yield u"<table class=\"htsql-output\" summary=\"%s\">\n" \
-                    % cgi.escape(title, True)
-            if headers_height > 0:
-                yield u"<thead>\n"
-                for row in product_to_html.headers(headers_height):
-                    yield u"<tr>%s</tr>\n" % u"".join(row)
-                yield u"</thead>\n"
-            if cells_height > 0:
-                yield u"<tbody>\n"
-                index = 0
-                for row in product_to_html.cells(self.data, cells_height):
-                    index += 1
-                    attributes = []
-                    if index % 2:
-                        attributes.append(" class=\"htsql-odd-row\"")
-                    else:
-                        attributes.append(" class=\"htsql-even-row\"")
-                    yield u"<tr%s>%s</tr>\n" % (u"".join(attributes),
-                                                u"".join(row))
-                yield u"</tbody>\n"
-            yield u"</table>\n"
-        yield u"</body>\n"
-        yield u"</html>\n"
+        content = None
+        if headers_height or cells_height:
+            content = self.table(product_to_html,
+                                 headers_height, cells_height, title)
+        stream = pkg_resources.resource_stream(__name__,
+                                               "static/template.html")
+        template = Template(stream)
+        return template(title=title, content=content)
+
+    def table(self, product_to_html, headers_height, cells_height, title):
+        yield u"<table class=\"htsql-output\" summary=\"%s\">\n" % title
+        if headers_height > 0:
+            yield u"<thead>\n"
+            for row in product_to_html.headers(headers_height):
+                yield u"<tr>%s</tr>\n" % u"".join(row)
+            yield u"</thead>\n"
+        if cells_height > 0:
+            yield u"<tbody>\n"
+            index = 0
+            for row in product_to_html.cells(self.data, cells_height):
+                index += 1
+                attributes = []
+                if index % 2:
+                    attributes.append(" class=\"htsql-odd-row\"")
+                else:
+                    attributes.append(" class=\"htsql-even-row\"")
+                yield u"<tr%s>%s</tr>\n" % (u"".join(attributes),
+                                            u"".join(row))
+            yield u"</tbody>\n"
+        yield u"</table>\n"
 
 
 class ToHTML(Adapter):
