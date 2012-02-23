@@ -20012,13 +20012,10 @@ tests:
                WHERE ("department"."code" LIKE '%a%' ESCAPE '\')
                ORDER BY 1 ASC
           - uri: /home()
-            status: 400 Bad Request
+            status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
-            body: |
-              bind error: output columns are not specified:
-                  /home()
-                   ^^^^^^
+            body: ''
           - uri: /home(){2+2}
             status: 200 OK
             headers:
@@ -22223,21 +22220,15 @@ tests:
                WHERE ("school"."code" = 'art')
                ORDER BY "school"."code" ASC, 1 ASC
           - uri: /{}
-            status: 400 Bad Request
+            status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
-            body: |
-              bind error: output columns are not specified:
-                  /{}
-                   ^^
+            body: ''
           - uri: /school{}
-            status: 400 Bad Request
+            status: 200 OK
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
-            body: |
-              bind error: output columns are not specified:
-                  /school{}
-                   ^^^^^^^^
+            body: ''
         - id: assignments
           tests:
           - uri: /school.define(c:=department.course.credits) {code,min(c),max(c),sum(c),avg(c)}?exists(c)
@@ -24984,22 +24975,6 @@ tests:
                                     ^^^^^^
       - id: known-issues
         tests:
-        - uri: /{}
-          status: 400 Bad Request
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            bind error: output columns are not specified:
-                /{}
-                 ^^
-        - uri: /school{}
-          status: 400 Bad Request
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            bind error: output columns are not specified:
-                /school{}
-                 ^^^^^^^^
         - uri: /school.true()
           status: 200 OK
           headers:
@@ -26288,6 +26263,416 @@ tests:
             <tr><th colspan="4">school</th></tr>
             <tr><th class="htsql-empty-header"></th><th>code</th><th>name</th><th>campus</th></tr>
             </thead>
+            </table>
+            </body>
+            </html>
+      - id: empty-selector
+        tests:
+        - uri: /{}/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": []
+                    }
+                  }
+                },
+                "path": "",
+                "syntax": "\/{}"
+              },
+              "data": [
+                []
+              ]
+            }
+        - uri: /{}/:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="_.js"]
+          body: |
+            {
+              "0": [
+                {}
+              ]
+            }
+        - uri: /{}/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.csv"]
+          body: ''
+        - uri: /{}/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="_.tsv"]
+          body: ''
+        - uri: /{}/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: ''
+        - uri: /{}/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title></title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="">
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /school{}?campus='old'/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": []
+                    }
+                  }
+                },
+                "header": "school",
+                "path": "school",
+                "syntax": "\/school{}?campus='old'",
+                "tag": "school"
+              },
+              "data": [
+                [],
+                [],
+                [],
+                []
+              ]
+            }
+        - uri: /school{}?campus='old'/:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="school.js"]
+          body: |
+            {
+              "school": [
+                {},
+                {},
+                {},
+                {}
+              ]
+            }
+        - uri: /school{}?campus='old'/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.csv"]
+          body: ''
+        - uri: /school{}?campus='old'/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="school.tsv"]
+          body: ''
+        - uri: /school{}?campus='old'/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: ''
+        - uri: /school{}?campus='old'/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>school</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="school">
+            <thead>
+            <tr><th>school</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td></tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+        - uri: /department{name, school{}}?!school|school.campus='north'/:json
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="department.js"]
+          body: |
+            {
+              "meta": {
+                "domain": {
+                  "type": "list",
+                  "item": {
+                    "domain": {
+                      "type": "record",
+                      "fields": [
+                        {
+                          "domain": {
+                            "type": "string"
+                          },
+                          "header": "name",
+                          "path": "department.name",
+                          "syntax": "name",
+                          "tag": "name"
+                        },
+                        {
+                          "domain": {
+                            "type": "record",
+                            "fields": []
+                          },
+                          "header": "school",
+                          "path": "department.school",
+                          "syntax": "school{}",
+                          "tag": "school"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "header": "department",
+                "path": "department",
+                "syntax": "\/department{name,school{}}?!school|school.campus='north'",
+                "tag": "department"
+              },
+              "data": [
+                [
+                  "Bioengineering",
+                  []
+                ],
+                [
+                  "Bursar's Office",
+                  null
+                ],
+                [
+                  "Career Development",
+                  null
+                ],
+                [
+                  "Computer Science",
+                  []
+                ],
+                [
+                  "Electrical Engineering",
+                  []
+                ],
+                [
+                  "Mechanical Engineering",
+                  []
+                ],
+                [
+                  "Parents & Alumni",
+                  null
+                ]
+              ]
+            }
+        - uri: /department{name, school{}}?!school|school.campus='north'/:obj
+          status: 200 OK
+          headers:
+          - [Content-Type, application/javascript]
+          - [Content-Disposition, inline; filename="department.js"]
+          body: |
+            {
+              "department": [
+                {
+                  "name": "Bioengineering",
+                  "school": {}
+                },
+                {
+                  "name": "Bursar's Office"
+                },
+                {
+                  "name": "Career Development"
+                },
+                {
+                  "name": "Computer Science",
+                  "school": {}
+                },
+                {
+                  "name": "Electrical Engineering",
+                  "school": {}
+                },
+                {
+                  "name": "Mechanical Engineering",
+                  "school": {}
+                },
+                {
+                  "name": "Parents & Alumni"
+                }
+              ]
+            }
+        - uri: /department{name, school{}}?!school|school.campus='north'/:csv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/csv; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="department.csv"]
+          body: "name\r\nBioengineering\r\nBursar's Office\r\nCareer Development\r\nComputer
+            Science\r\nElectrical Engineering\r\nMechanical Engineering\r\nParents
+            & Alumni\r\n"
+        - uri: /department{name, school{}}?!school|school.campus='north'/:tsv
+          status: 200 OK
+          headers:
+          - [Content-Type, text/tab-separated-values; charset=UTF-8]
+          - [Content-Disposition, attachment; filename="department.tsv"]
+          body: "name\r\nBioengineering\r\nBursar's Office\r\nCareer Development\r\nComputer
+            Science\r\nElectrical Engineering\r\nMechanical Engineering\r\nParents
+            & Alumni\r\n"
+        - uri: /department{name, school{}}?!school|school.campus='north'/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | department             |
+             +------------------------+
+             | name                   |
+            -+------------------------+-
+             | Bioengineering         |
+             | Bursar's Office        |
+             | Career Development     |
+             | Computer Science       |
+             | Electrical Engineering |
+             | Mechanical Engineering |
+             | Parents & Alumni       |
+
+             ----
+             /department{name,school{}}?!school|school.campus='north'
+             SELECT "department"."name",
+                    "school_1"."school"
+             FROM "department"
+                  LEFT OUTER JOIN (SELECT 1 AS "school",
+                                          "school"."code"
+                                   FROM "school") AS "school_1"
+                                  ON ("department"."school_code" = "school_1"."code")
+                  LEFT OUTER JOIN "school" AS "school_2"
+                                  ON ("department"."school_code" = "school_2"."code")
+             WHERE (("school_1"."school" IS NULL) OR ("school_2"."campus" = 'north'))
+             ORDER BY "department"."code" ASC
+        - uri: /department{name, school{}}?!school|school.campus='north'/:html
+          status: 200 OK
+          headers:
+          - [Content-Type, text/html; charset=UTF-8]
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>department</title>
+            <style type="text/css">
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output > thead { background-color: #f2f2f2 }
+            table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
+            table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
+            table.htsql-output > thead > tr > th.htsql-empty-header:after { content: "\A0" }
+            table.htsql-output > tbody > tr.htsql-odd-row { background-color: #ffffff }
+            table.htsql-output > tbody > tr.htsql-even-row { background-color: #f2f2f2 }
+            table.htsql-output > tbody > tr:hover { color: #ffffff; background-color: #333333 }
+            table.htsql-output > tbody > tr > td { padding: 0.2em 0.5em; vertical-align: baseline; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 0 1px; border-style: solid; }
+            table.htsql-output > tbody > tr > td.htsql-index { font-size: 90%; font-weight: bold; text-align: right; width: 0; color: #999999; border-color: #1a1a1a; -moz-user-select: none; -webkit-user-select: none; user-select: none }
+            table.htsql-output > tbody > tr > td.htsql-integer-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-decimal-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-float-type { text-align: right }
+            table.htsql-output > tbody > tr > td.htsql-null-value:after { content: "\A0" }
+            table.htsql-output > tbody > tr > td.htsql-empty-value { color: #999999 }
+            table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
+            table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
+            table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
+            div.htsql-welcome > p { margin: 1px 0 0 }
+            </style>
+            </head>
+            <body>
+            <table class="htsql-output" summary="department">
+            <thead>
+            <tr><th colspan="2">department</th></tr>
+            <tr><th class="htsql-empty-header"></th><th>name</th></tr>
+            </thead>
+            <tbody>
+            <tr class="htsql-odd-row"><td class="htsql-index">1</td><td class="htsql-string-type">Bioengineering</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">2</td><td class="htsql-string-type">Bursar's Office</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">3</td><td class="htsql-string-type">Career Development</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">4</td><td class="htsql-string-type">Computer Science</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">5</td><td class="htsql-string-type">Electrical Engineering</td></tr>
+            <tr class="htsql-even-row"><td class="htsql-index">6</td><td class="htsql-string-type">Mechanical Engineering</td></tr>
+            <tr class="htsql-odd-row"><td class="htsql-index">7</td><td class="htsql-string-type">Parents &amp; Alumni</td></tr>
+            </tbody>
             </table>
             </body>
             </html>
@@ -30083,22 +30468,6 @@ tests:
                  ^^^^^^^^^^^^^^
       - id: bind-errors
         tests:
-        - uri: /retrieve(/)
-          status: 400 Bad Request
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            bind error: output columns are not specified:
-                /retrieve(/)
-                          ^
-        - uri: /{}
-          status: 400 Bad Request
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            bind error: output columns are not specified:
-                /{}
-                 ^^
         - uri: /department{school, code}
           status: 400 Bad Request
           headers:
@@ -30187,14 +30556,6 @@ tests:
             bind error: an identifier is expected:
                 /define(school.(num_prog):=count(program)).true()
                                ^^^^^^^^^^
-        - uri: /{*}
-          status: 400 Bad Request
-          headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |
-            bind error: output columns are not specified:
-                /{*}
-                 ^^^
         - uri: /school?*1.5
           status: 400 Bad Request
           headers:

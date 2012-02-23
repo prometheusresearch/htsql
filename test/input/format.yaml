@@ -100,6 +100,27 @@ tests:
   - uri: /school?false()/:txt
   - uri: /school?false()/:html
 
+- title: Empty Selector
+  tests:
+  - uri: /{}/:json
+  - uri: /{}/:obj
+  - uri: /{}/:csv
+  - uri: /{}/:tsv
+  - uri: /{}/:txt
+  - uri: /{}/:html
+  - uri: /school{}?campus='old'/:json
+  - uri: /school{}?campus='old'/:obj
+  - uri: /school{}?campus='old'/:csv
+  - uri: /school{}?campus='old'/:tsv
+  - uri: /school{}?campus='old'/:txt
+  - uri: /school{}?campus='old'/:html
+  - uri: /department{name, school{}}?!school|school.campus='north'/:json
+  - uri: /department{name, school{}}?!school|school.campus='north'/:obj
+  - uri: /department{name, school{}}?!school|school.campus='north'/:csv
+  - uri: /department{name, school{}}?!school|school.campus='north'/:tsv
+  - uri: /department{name, school{}}?!school|school.campus='north'/:txt
+  - uri: /department{name, school{}}?!school|school.campus='north'/:html
+
 - title: Special Characters
   tests:
   - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10',

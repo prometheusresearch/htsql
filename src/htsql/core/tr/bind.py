@@ -290,12 +290,15 @@ class BindSegment(Bind):
     adapts(SegmentSyntax)
 
     def __call__(self):
-        # FIXME: an empty segment syntax should not be generated.
-        if self.syntax.branch is None:
-            raise BindError("output columns are not specified",
-                            self.syntax.mark)
+        ## FIXME: an empty segment syntax should not be generated.
+        #if self.syntax.branch is None:
+        #    raise BindError("output columns are not specified",
+        #                    self.syntax.mark)
         # Bind the segment expression.
-        seed = self.state.bind(self.syntax.branch)
+        if self.syntax.branch is not None:
+            seed = self.state.bind(self.syntax.branch)
+        else:
+            seed = self.state.scope
         if lookup_command(seed) is not None:
             return seed
         seed = self.normalize(seed)
@@ -312,9 +315,9 @@ class BindSegment(Bind):
                 element = self.state.use(recipe, syntax, scope=binding)
                 element = self.normalize(element)
                 elements.append(element)
-            if not elements:
-                raise BindError("output columns are not specified",
-                                binding.syntax.mark)
+            #if not elements:
+            #    raise BindError("output columns are not specified",
+            #                    binding.syntax.mark)
             fields = [decorate(element) for element in elements]
             domain = RecordDomain(fields)
             binding = SelectionBinding(binding, elements, domain,

@@ -41,114 +41,115 @@ class EmitText(Emit):
     def __call__(self):
         product_to_text = profile_to_text(self.meta)
         size = product_to_text.size
-        if size > 0:
-            widths = product_to_text.widths(self.data)
-            depth = product_to_text.head_depth()
-            head = product_to_text.head(depth)
-            if depth > 0:
-                bar = [(None, 0)]*size
-                for row_idx in range(depth):
-                    row = next(head, [])
-                    last_bar = bar
-                    bar = []
-                    while len(bar) < size:
-                        idx = len(bar)
-                        text, tail = last_bar[idx]
-                        if tail > 0:
-                            bar.append((text, tail-1))
-                        else:
-                            text, rowspan, colspan = row.pop(0)
-                            bar.append((text, rowspan-1))
-                            for span in range(colspan-1):
-                                bar.append((None, rowspan-1))
-                    assert not row
-                    if row_idx > 0:
-                        line = [u" "]
-                        for idx in range(0, size+1):
-                            is_horiz = False
-                            is_vert = False
-                            if idx > 0:
-                                text, tail = last_bar[idx-1]
-                                if tail == 0:
-                                    is_horiz = True
-                            if idx < size:
-                                text, tail = last_bar[idx]
-                                if tail == 0:
-                                    is_horiz = True
-                            if idx < size:
-                                text, tail = last_bar[idx]
-                                if text is not None:
-                                    is_vert = True
-                                text, tail = bar[idx]
-                                if text is not None:
-                                    is_vert = True
-                            else:
+        if size == 0:
+            return
+        widths = product_to_text.widths(self.data)
+        depth = product_to_text.head_depth()
+        head = product_to_text.head(depth)
+        if depth > 0:
+            bar = [(None, 0)]*size
+            for row_idx in range(depth):
+                row = next(head, [])
+                last_bar = bar
+                bar = []
+                while len(bar) < size:
+                    idx = len(bar)
+                    text, tail = last_bar[idx]
+                    if tail > 0:
+                        bar.append((text, tail-1))
+                    else:
+                        text, rowspan, colspan = row.pop(0)
+                        bar.append((text, rowspan-1))
+                        for span in range(colspan-1):
+                            bar.append((None, rowspan-1))
+                assert not row
+                if row_idx > 0:
+                    line = [u" "]
+                    for idx in range(0, size+1):
+                        is_horiz = False
+                        is_vert = False
+                        if idx > 0:
+                            text, tail = last_bar[idx-1]
+                            if tail == 0:
+                                is_horiz = True
+                        if idx < size:
+                            text, tail = last_bar[idx]
+                            if tail == 0:
+                                is_horiz = True
+                        if idx < size:
+                            text, tail = last_bar[idx]
+                            if text is not None:
                                 is_vert = True
-                            if is_horiz and is_vert:
-                                line.append(u"+")
-                            elif is_horiz:
-                                line.append(u"-")
-                            elif is_vert:
-                                line.append(u"|")
-                            else:
-                                line.append(u" ")
-                            if idx < size:
-                                text, tail = last_bar[idx]
-                                if tail == 0:
-                                    line.append(u"-"*(widths[idx]+2))
-                                else:
-                                    line.append(u" "*(widths[idx]+2))
-                            else:
-                                line.append(u"\n")
-                        yield "".join(line)
-                    extent = 0
-                    line = []
-                    for idx in range(size):
-                        text, tail = bar[idx]
-                        if text is not None:
-                            assert extent == 0, extent
-                            line.append(u" | ")
+                            text, tail = bar[idx]
+                            if text is not None:
+                                is_vert = True
                         else:
-                            if extent < 3:
-                                line.append(u" "*(3-extent))
-                                extent = 0
-                            else:
-                                extent -= 3
-                        width = widths[idx]
-                        if text is not None and tail == 0:
-                            line.append(text)
-                            extent = len(text)
-                        if extent < width:
-                            line.append(u" "*(width-extent))
-                            extent = 0
+                            is_vert = True
+                        if is_horiz and is_vert:
+                            line.append(u"+")
+                        elif is_horiz:
+                            line.append(u"-")
+                        elif is_vert:
+                            line.append(u"|")
                         else:
-                            extent -= width
-                    assert extent == 0
-                    line.append(u" |\n")
+                            line.append(u" ")
+                        if idx < size:
+                            text, tail = last_bar[idx]
+                            if tail == 0:
+                                line.append(u"-"*(widths[idx]+2))
+                            else:
+                                line.append(u" "*(widths[idx]+2))
+                        else:
+                            line.append(u"\n")
                     yield "".join(line)
-                line = [u"-+-"]
-                for width in widths:
-                    line.append(u"-"*width)
-                    line.append(u"-+-")
-                line.append(u"\n")
-                yield u"".join(line)
-            body = product_to_text.body(self.data, widths)
-            for row in body:
+                extent = 0
                 line = []
-                is_last_solid = False
-                for chunk, is_solid in row:
-                    if is_last_solid or is_solid:
+                for idx in range(size):
+                    text, tail = bar[idx]
+                    if text is not None:
+                        assert extent == 0, extent
                         line.append(u" | ")
                     else:
-                        line.append(u" : ")
-                    line.append(chunk)
-                    is_last_solid = is_solid
-                if is_last_solid:
-                    line.append(u" |\n")
-                else:
-                    line.append(u" :\n")
+                        if extent < 3:
+                            line.append(u" "*(3-extent))
+                            extent = 0
+                        else:
+                            extent -= 3
+                    width = widths[idx]
+                    if text is not None and tail == 0:
+                        line.append(text)
+                        extent = len(text)
+                    if extent < width:
+                        line.append(u" "*(width-extent))
+                        extent = 0
+                    else:
+                        extent -= width
+                assert extent == 0
+                line.append(u" |\n")
                 yield "".join(line)
-            yield u"\n"
+            line = [u"-+-"]
+            for width in widths:
+                line.append(u"-"*width)
+                line.append(u"-+-")
+            line.append(u"\n")
+            yield u"".join(line)
+        body = product_to_text.body(self.data, widths)
+        for row in body:
+            line = []
+            is_last_solid = False
+            for chunk, is_solid in row:
+                if is_last_solid or is_solid:
+                    line.append(u" | ")
+                else:
+                    line.append(u" : ")
+                line.append(chunk)
+                is_last_solid = is_solid
+            if is_last_solid:
+                line.append(u" |\n")
+            else:
+                line.append(u" :\n")
+            yield "".join(line)
+        yield u"\n"
         if (self.meta.plan is not None and
                 self.meta.plan.statement is not None):
             yield u" ----\n"

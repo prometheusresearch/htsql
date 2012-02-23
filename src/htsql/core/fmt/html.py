@@ -554,7 +554,7 @@ class ListToHTML(ToHTML):
                 item_height = total_height
             total_height -= item_height
             item_stream = self.item_to_html.cells(item, item_height)
-            first_row = next(item_stream)
+            first_row = next(item_stream, [])
             attributes = []
             if item_height > 1:
                 attributes.append(u" rowspan=\"%s\"" % height)

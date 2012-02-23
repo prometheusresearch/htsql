@@ -67,11 +67,6 @@ tests:
 
 - title: Bind Errors
   tests:
-  # empty selector
-  - uri: /retrieve(/)
-    expect: 400
-  - uri: /{}
-    expect: 400
   # invalid output column
   - uri: /department{school, code}
     expect: 400
@@ -102,8 +97,6 @@ tests:
   - uri: /define(school.(num_prog):=count(program)).true()
     expect: 400
   # invalid wildcard
-  - uri: /{*}
-    expect: 400
   - uri: /school?*1.5
     expect: 400
   - uri: /school?*5

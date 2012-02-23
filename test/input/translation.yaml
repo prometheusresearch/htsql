@@ -219,7 +219,6 @@ tests:
     # The `home()` function.
     # Empty selector
     - uri: /home()
-      expect: 400
     - uri: /home(){2+2}
     - uri: /school.home(){2+2}
     - uri: /school.home().school{root().school.*, *}
@@ -303,9 +302,7 @@ tests:
     - uri: /(school?code='art').department
     # An empty segment
     - uri: /{}
-      expect: 400
     - uri: /school{}
-      expect: 400
 
   - title: Assignments
     tests:
@@ -452,13 +449,6 @@ tests:
 
 - title: Known issues
   tests:
-  # Queries with no output columns should be permitted
-  # (and report the number of rows).
-  - uri: /{}
-    expect: 400
-  - uri: /school{}
-    expect: 400
-
   # Should produce a row for each record of `school`.
   - uri: /school.true()
   # If `school.campus` is treated as a link to a scalar class,
