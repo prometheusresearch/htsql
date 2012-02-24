@@ -8,7 +8,7 @@
 - table: ad.school
   columns: [code, name, campus]
   data: [
-    ['art', 'School of Art and Design', 'old'],
+    ['art', 'School of Art & Design', 'old'],
     ['bus', 'School of Business', 'south'],
     ['edu', 'College of Education', 'old'],
     ['eng', 'School of Engineering', 'north'],
