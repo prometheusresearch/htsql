@@ -5,7 +5,8 @@
 .. toctree::
    :maxdepth: 2
 
-   introduction
+   overview
+   starting
    tutorial
    ref/index
    admin/index

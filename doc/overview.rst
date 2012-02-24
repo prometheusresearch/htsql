@@ -1,6 +1,6 @@
-*************************
-  Introduction to HTSQL
-*************************
+*********************
+  Overview of HTSQL
+*********************
 
 .. contents:: Table of Contents
    :depth: 1
@@ -10,15 +10,6 @@ HTSQL was created in 2005 to provide an XPath_-like HTTP interface to
 PostgreSQL_ for client-side XSLT_ screens and reports.  HTSQL found its
 audience when analysts and researchers bypassed the user interface and
 started to use URLs directly.  The language has evolved since then.
-
-.. _Prometheus: http://prometheusresearch.com
-.. _RexDB: http://rexdb.org
-.. _XPath: http://www.w3.org/TR/xpath/
-.. _PostgreSQL: http://postgresql.org/
-.. _XSLT: http://www.w3.org/TR/xslt/
-
-.. |mdash| unicode:: U+2014
-   :trim:
 
 What is HTSQL?
 ==============
@@ -206,9 +197,6 @@ accessible, transparent, rigorous and embeddable manner.
   interface for those who wish to add features to HTSQL itself.  Between
   web service wrappers or plug-ins, it should be possible to customize
   almost every aspect of HTSQL without requiring a code fork.
-
-.. |mdash| unicode:: U+2014
-   :trim:
 
 
 HTSQL in a Nutshell
@@ -579,4 +567,14 @@ correct, but aren't.
 
 Each syntactic component of the HTSQL query is self-contained; when
 assembled, they form a cohesive translation of the business inquiry.
+
+
+.. _Prometheus: http://prometheusresearch.com
+.. _RexDB: http://rexdb.org
+.. _XPath: http://www.w3.org/TR/xpath/
+.. _PostgreSQL: http://postgresql.org/
+.. _XSLT: http://www.w3.org/TR/xslt/
+
+.. |mdash| unicode:: U+2014
+   :trim:
 

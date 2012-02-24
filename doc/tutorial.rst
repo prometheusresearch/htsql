@@ -54,8 +54,8 @@ careful balance between clarity and functionality.
 We hope you like it.
 
 
-Getting Started
-===============
+First Steps
+===========
 
 The following examples show output from the HTSQL command-line system,
 which is plain text.  HTSQL can output HTML, CSV, XML and many other
