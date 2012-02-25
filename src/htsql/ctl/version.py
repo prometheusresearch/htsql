@@ -13,6 +13,7 @@ This module implements the `version` routine.
 
 
 from .routine import Routine
+from ..core.util import trim_doc
 
 
 class VersionRoutine(Routine):
@@ -27,9 +28,13 @@ class VersionRoutine(Routine):
     help = """
     Run '%(executable)s version' to display the version of HTSQL.
     """
+    message = """
+        This is ... %s
+        %s
+    """
 
     def run(self):
         import htsql
-        self.ctl.out(htsql.__version__)
-
+        self.ctl.out(trim_doc(self.message) % (self.ctl.copyright, 
+                                               htsql.__version__))
 

@@ -12,3 +12,6 @@
     provide initial bootstrap including installation, 
     configuration, usage, and basic queries.
 
+    For now, you could start with our :doc:`admin/usage`.
+
+
