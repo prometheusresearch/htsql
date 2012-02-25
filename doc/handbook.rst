@@ -1,5 +1,5 @@
 *******************
-  Getting Started
+  HTSQL Handbook
 *******************
 
 .. contents:: Table of Contents
@@ -11,3 +11,4 @@
     This document will be linked from the front page and
     provide initial bootstrap including installation, 
     configuration, usage, and basic queries.
+

@@ -158,45 +158,49 @@ but who must write database queries or data processing code to get
 things done.  HTSQL handles routine data processing needs in an
 accessible, transparent, rigorous and embeddable manner.
 
-**Accessible**
+Accessible
+----------
 
-  We want HTSQL to be broadly usable.  Our query language should provide
-  business analysts, information scientists, and data curators
-  self-service access and control over their database.  Not only should
-  these *accidental programmers* be able able to answer complex business
-  inquiries themselves, they should be able to share the queries they
-  create with their colleagues.  HTSQL must be a productive tool for
-  problem solving with a small learning curve.
+We want HTSQL to be broadly usable.  Our query language should provide
+business analysts, information scientists, and data curators
+self-service access and control over their database.  Not only should
+these *accidental programmers* be able able to answer complex business
+inquiries themselves, they should be able to share the queries they
+create with their colleagues.  HTSQL must be a productive tool for
+problem solving with a small learning curve.
 
-**Transparent**
+Transparent
+-----------
 
-  We think aesthetics matter.  When a data analyst is focusing on a domain 
-  specific problem, the HTSQL query language should do the heavy lifting
-  but otherwise stay in the background.  Translation of a business inquiry 
-  into the HTSQL query language must be natural and obvious.  Initial query 
-  authoring is just the beginning.  A database query is often the only human 
-  readable expression of a business rule, so each and every query must be a 
-  pleasure to review, share and maintain.
+We think aesthetics matter.  When a data analyst is focusing on a domain 
+specific problem, the HTSQL query language should do the heavy lifting
+but otherwise stay in the background.  Translation of a business inquiry 
+into the HTSQL query language must be natural and obvious.  Initial query 
+authoring is just the beginning.  A database query is often the only human 
+readable expression of a business rule, so each and every query must be a 
+pleasure to review, share and maintain.
 
-**Rigorous**
+Rigorous
+--------
 
-  We know correctness is critical.  The HTSQL query language is based upon
-  a navigational data linking and flow processing model having consistent
-  semantics that are independent of the underlying database architecture.
-  The language designed to be composable so that query fragments can be
-  independently tested and combined.  HTSQL's syntax is regular enough
-  that syntax highlighting and context sensitive name lookup is possible.
+We know correctness is critical.  The HTSQL query language is based upon
+a navigational data linking and flow processing model having consistent
+semantics that are independent of the underlying database architecture.
+The language designed to be composable so that query fragments can be
+independently tested and combined.  HTSQL's syntax is regular enough
+that syntax highlighting and context sensitive name lookup is possible.
 
-**Embeddable**
+Embeddable
+----------
 
-  We realize a query language is not a product.  Instead, HTSQL is a tool
-  used as part of a workflow solution or embedded into an application.
-  Our public application program interface is be simple and stable.
-  Further, since *accidental programmers* might require features which
-  other software developers could build, we have an extensive plug-in
-  interface for those who wish to add features to HTSQL itself.  Between
-  web service wrappers or plug-ins, it should be possible to customize
-  almost every aspect of HTSQL without requiring a code fork.
+We realize a query language is not a product.  Instead, HTSQL is a tool
+used as part of a workflow solution or embedded into an application.
+Our public application program interface is be simple and stable.
+Further, since *accidental programmers* might require features which
+other software developers could build, we have an extensive plug-in
+interface for those who wish to add features to HTSQL itself.  Between
+web service wrappers or plug-ins, it should be possible to customize
+almost every aspect of HTSQL without requiring a code fork.
 
 
 HTSQL in a Nutshell

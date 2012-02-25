@@ -6,7 +6,7 @@
    :maxdepth: 2
 
    overview
-   starting
+   handbook
    tutorial
    ref/index
    admin/index
