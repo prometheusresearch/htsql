@@ -25708,7 +25708,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>school</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -25726,7 +25726,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -25916,7 +25916,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>school</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -25934,7 +25934,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -25990,7 +25990,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title></title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -26008,7 +26008,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -26211,7 +26211,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>List of Schools</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -26229,7 +26229,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -26438,7 +26438,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title></title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -26456,7 +26456,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -26576,7 +26576,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>school</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -26594,7 +26594,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -26673,7 +26673,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title></title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -26691,7 +26691,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -26775,7 +26775,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>school</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -26793,7 +26793,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -26977,7 +26977,7 @@ tests:
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>department</title>
             <style type="text/css">
-            table.htsql-output { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
+            table.htsql-output { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse: collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px 3px rgba(0,0,0,0.25) }
             table.htsql-output > thead { background-color: #f2f2f2 }
             table.htsql-output > thead { border-color: #1a1a1a; border-width: 0 0 1px; border-style: solid }
             table.htsql-output > thead > tr > th { font-weight: bold; padding: 0.2em 0.5em; text-align: center; vertical-align: bottom; overflow: hidden; word-wrap: break-word; border-color: #999999; border-width: 1px 1px 0; border-style: solid }
@@ -26995,7 +26995,7 @@ tests:
             table.htsql-output > tbody > tr > td.htsql-empty-value:after { content: "\2B1A" }
             table.htsql-output > tbody > tr > td.htsql-false-value { font-style: italic }
             table.htsql-output > tbody > tr > td.htsql-null-record-value { border-style: dashed }
-            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
+            div.htsql-welcome { font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin: 1em auto; color: #000000; background-color: #ffffff }
             div.htsql-welcome > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }
             div.htsql-welcome > p { margin: 1px 0 0 }
             </style>
@@ -27092,7 +27092,7 @@ tests:
           - [Content-Type, text/html; charset=UTF-8]
           body: "<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\"
             content=\"text/html; charset=UTF-8\">\n<title></title>\n<style type=\"text/css\">\ntable.htsql-output
-            { font-family: \"Arial\", sans-serif; font-size: 14px; line-height: 1.4;
+            { font-family: \"Arial\", sans-serif; font-size: 13px; line-height: 1.3;
             margin: 1em auto; color: #000000; background-color: #ffffff; border-collapse:
             collapse; border: 1px double #f2f2f2; -moz-box-shadow: 1px 1px 3px rgba(0,0,0,0.25);
             -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.25); box-shadow: 1px 1px
@@ -27120,7 +27120,7 @@ tests:
             { content: \"\\2B1A\" }\ntable.htsql-output > tbody > tr > td.htsql-false-value
             { font-style: italic }\ntable.htsql-output > tbody > tr > td.htsql-null-record-value
             { border-style: dashed }\ndiv.htsql-welcome { font-family: \"Arial\",
-            sans-serif; font-size: 14px; line-height: 1.4; text-align: center; margin:
+            sans-serif; font-size: 13px; line-height: 1.3; text-align: center; margin:
             1em auto; color: #000000; background-color: #ffffff }\ndiv.htsql-welcome
             > h1 { font-size: 200%; font-weight: bold; margin: 1px 0 0 }\ndiv.htsql-welcome
             > p { margin: 1px 0 0 }\n</style>\n</head>\n<body>\n<table class=\"htsql-output\"
