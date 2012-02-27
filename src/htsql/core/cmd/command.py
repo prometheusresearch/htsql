@@ -6,7 +6,8 @@
 
 from ..util import Printable, maybe, dictof, oneof
 from ..fmt import (TextRenderer, HTMLRenderer, JSONRenderer,
-                   ObjRenderer, CSVRenderer, TSVRenderer)
+                   ObjRenderer, CSVRenderer, TSVRenderer,
+                   XMLRenderer)
 
 
 class Command(Printable):
@@ -85,6 +86,11 @@ class CSVCmd(RendererCmd):
 class TSVCmd(RendererCmd):
 
     format = TSVRenderer
+
+
+class XMLCmd(RendererCmd):
+
+    format = XMLRenderer
 
 
 class SQLCmd(Command):

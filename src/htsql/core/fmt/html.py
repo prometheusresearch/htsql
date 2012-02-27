@@ -581,9 +581,6 @@ class NativeToHTML(ToHTML):
 
     def dump(self, value):
         return value
-        if value == u"":
-            return u"\u2B1A"
-        return value
 
 
 class NativeStringToHTML(ToHTML):

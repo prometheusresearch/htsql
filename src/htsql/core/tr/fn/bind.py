@@ -53,7 +53,7 @@ from .signature import (AsSig, SortDirectionSig, LimitSig, SortSig, CastSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         DefineSig, WhereSig, SelectSig, LinkSig)
 from ...cmd.command import (DefaultCmd, RetrieveCmd, TextCmd, HTMLCmd, JSONCmd,
-                            ObjCmd, CSVCmd, TSVCmd, SQLCmd)
+                            ObjCmd, CSVCmd, TSVCmd, XMLCmd, SQLCmd)
 import sys
 
 
@@ -475,6 +475,12 @@ class BindTSV(BindFormat):
 
     named('tsv')
     command = TSVCmd
+
+
+class BindXML(BindFormat):
+
+    named('xml')
+    command = XMLCmd
 
 
 class BindSQL(BindFormat):

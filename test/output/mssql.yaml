@@ -25400,32 +25400,58 @@ tests:
             Engineering\tnorth\r\nla\tSchool of Arts and Humanities\told\r\nmus\tSchool
             of Music & Dance\tsouth\r\nns\tSchool of Natural Sciences\told\r\nph\tPublic
             Honorariums\t\r\nsc\tSchool of Continuing Studies\t\r\n"
-        - uri: /school/:txt
+        - uri: /school/:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | school                                        |
-             +------+-------------------------------+--------+
-             | code | name                          | campus |
-            -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
-             | bus  | School of Business            | south  |
-             | edu  | College of Education          | old    |
-             | eng  | School of Engineering         | north  |
-             | la   | School of Arts and Humanities | old    |
-             | mus  | School of Music & Dance       | south  |
-             | ns   | School of Natural Sciences    | old    |
-             | ph   | Public Honorariums            |        |
-             | sc   | School of Continuing Studies  |        |
-
-             ----
-             /school
-             SELECT [school].[code],
-                    [school].[name],
-                    [school].[campus]
-             FROM [ad].[school]
-             ORDER BY 1 ASC
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="school.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <school>
+                <code>art</code>
+                <name>School of Art and Design</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>bus</code>
+                <name>School of Business</name>
+                <campus>south</campus>
+              </school>
+              <school>
+                <code>edu</code>
+                <name>College of Education</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>eng</code>
+                <name>School of Engineering</name>
+                <campus>north</campus>
+              </school>
+              <school>
+                <code>la</code>
+                <name>School of Arts and Humanities</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>mus</code>
+                <name>School of Music &amp; Dance</name>
+                <campus>south</campus>
+              </school>
+              <school>
+                <code>ns</code>
+                <name>School of Natural Sciences</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>ph</code>
+                <name>Public Honorariums</name>
+              </school>
+              <school>
+                <code>sc</code>
+                <name>School of Continuing Studies</name>
+              </school>
+            </htsql:result>
         - uri: /school/:html
           status: 200 OK
           headers:
@@ -25480,6 +25506,32 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /school/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +------+-------------------------------+--------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+
+             ----
+             /school
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school]
+             ORDER BY 1 ASC
         - uri: /school/:unknown
           status: 400 Bad Request
           headers:
@@ -25611,29 +25663,55 @@ tests:
         - uri: /school
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | school                                        |
-             +------+-------------------------------+--------+
-             | code | name                          | campus |
-            -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
-             | bus  | School of Business            | south  |
-             | edu  | College of Education          | old    |
-             | eng  | School of Engineering         | north  |
-             | la   | School of Arts and Humanities | old    |
-             | mus  | School of Music & Dance       | south  |
-             | ns   | School of Natural Sciences    | old    |
-             | ph   | Public Honorariums            |        |
-             | sc   | School of Continuing Studies  |        |
-
-             ----
-             /school
-             SELECT [school].[code],
-                    [school].[name],
-                    [school].[campus]
-             FROM [ad].[school]
-             ORDER BY 1 ASC
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="school.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <school>
+                <code>art</code>
+                <name>School of Art and Design</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>bus</code>
+                <name>School of Business</name>
+                <campus>south</campus>
+              </school>
+              <school>
+                <code>edu</code>
+                <name>College of Education</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>eng</code>
+                <name>School of Engineering</name>
+                <campus>north</campus>
+              </school>
+              <school>
+                <code>la</code>
+                <name>School of Arts and Humanities</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>mus</code>
+                <name>School of Music &amp; Dance</name>
+                <campus>south</campus>
+              </school>
+              <school>
+                <code>ns</code>
+                <name>School of Natural Sciences</name>
+                <campus>old</campus>
+              </school>
+              <school>
+                <code>ph</code>
+                <name>Public Honorariums</name>
+              </school>
+              <school>
+                <code>sc</code>
+                <name>School of Continuing Studies</name>
+              </school>
+            </htsql:result>
         - uri: /school
           status: 200 OK
           headers:
@@ -25688,6 +25766,32 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /school
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school                                        |
+             +------+-------------------------------+--------+
+             | code | name                          | campus |
+            -+------+-------------------------------+--------+-
+             | art  | School of Art and Design      | old    |
+             | bus  | School of Business            | south  |
+             | edu  | College of Education          | old    |
+             | eng  | School of Engineering         | north  |
+             | la   | School of Arts and Humanities | old    |
+             | mus  | School of Music & Dance       | south  |
+             | ns   | School of Natural Sciences    | old    |
+             | ph   | Public Honorariums            |        |
+             | sc   | School of Continuing Studies  |        |
+
+             ----
+             /school
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school]
+             ORDER BY 1 ASC
         - uri: /
           status: 200 OK
           headers:
@@ -25706,8 +25810,11 @@ tests:
         - uri: /
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: ''
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="_.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml" />
         - uri: /
           status: 200 OK
           headers:
@@ -25749,6 +25856,11 @@ tests:
             </div>
             </body>
             </html>
+        - uri: /
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: ''
       - id: the-`as`-decorator
         tests:
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
@@ -25898,36 +26010,51 @@ tests:
             of Arts and Humanities\t5\r\nSchool of Music & Dance\t4\r\nSchool of Natural
             Sciences\t4\r\nPublic Honorariums\t0\r\nSchool of Continuing Studies\t0\r\n"
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
-            '# of Departments'} /:txt
+            '# of Departments'} /:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | List of Schools                                  |
-             +-------------------------------+------------------+
-             | Name                          | # of Departments |
-            -+-------------------------------+------------------+-
-             | School of Art and Design      |                2 |
-             | School of Business            |                3 |
-             | College of Education          |                2 |
-             | School of Engineering         |                4 |
-             | School of Arts and Humanities |                5 |
-             | School of Music & Dance       |                4 |
-             | School of Natural Sciences    |                4 |
-             | Public Honorariums            |                0 |
-             | School of Continuing Studies  |                0 |
-
-             ----
-             /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}
-             SELECT [school].[name],
-                    COALESCE([department].[count], 0)
-             FROM [ad].[school]
-                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
-                                          [department].[school_code]
-                                   FROM [ad].[department]
-                                   GROUP BY [department].[school_code]) AS [department]
-                                  ON ([school].[code] = [department].[school_code])
-             ORDER BY [school].[code] ASC
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="List of Schools.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <school>
+                <name>School of Art and Design</name>
+                <_2>2</_2>
+              </school>
+              <school>
+                <name>School of Business</name>
+                <_2>3</_2>
+              </school>
+              <school>
+                <name>College of Education</name>
+                <_2>2</_2>
+              </school>
+              <school>
+                <name>School of Engineering</name>
+                <_2>4</_2>
+              </school>
+              <school>
+                <name>School of Arts and Humanities</name>
+                <_2>5</_2>
+              </school>
+              <school>
+                <name>School of Music &amp; Dance</name>
+                <_2>4</_2>
+              </school>
+              <school>
+                <name>School of Natural Sciences</name>
+                <_2>4</_2>
+              </school>
+              <school>
+                <name>Public Honorariums</name>
+                <_2>0</_2>
+              </school>
+              <school>
+                <name>School of Continuing Studies</name>
+                <_2>0</_2>
+              </school>
+            </htsql:result>
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:html
           status: 200 OK
@@ -25983,6 +26110,37 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
+            '# of Departments'} /:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | List of Schools                                  |
+             +-------------------------------+------------------+
+             | Name                          | # of Departments |
+            -+-------------------------------+------------------+-
+             | School of Art and Design      |                2 |
+             | School of Business            |                3 |
+             | College of Education          |                2 |
+             | School of Engineering         |                4 |
+             | School of Arts and Humanities |                5 |
+             | School of Music & Dance       |                4 |
+             | School of Natural Sciences    |                4 |
+             | Public Honorariums            |                0 |
+             | School of Continuing Studies  |                0 |
+
+             ----
+             /(school:as('List of Schools')){name:as(Name),count(department):as('# of Departments')}
+             SELECT [school].[name],
+                    COALESCE([department].[count], 0)
+             FROM [ad].[school]
+                  LEFT OUTER JOIN (SELECT COUNT(1) AS [count],
+                                          [department].[school_code]
+                                   FROM [ad].[department]
+                                   GROUP BY [department].[school_code]) AS [department]
+                                  ON ([school].[code] = [department].[school_code])
+             ORDER BY [school].[code] ASC
       - id: data-types
         tests:
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
@@ -26133,27 +26291,26 @@ tests:
             20:13')\r\n\t1\t0\t60\t2.125\t2.71828\tHTSQL\t2010-04-15\t20:13:04.500000\t2010-04-15
             20:13:00\r\n"
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
-            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:txt
+            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | null() | true() | false() | 60 | 2.125 | 271828e-5 | 'HTSQL' | date('2010-04-15') | time('20:13:04.5') | datetime('2010-04-15 20:13') |
-            -+--------+--------+---------+----+-------+-----------+---------+--------------------+--------------------+------------------------------+-
-             |        | true   | false   | 60 | 2.125 |   2.71828 | HTSQL   | 2010-04-15         | 20:13:04.500000    | 2010-04-15 20:13:00          |
-
-             ----
-             /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
-             SELECT NULL,
-                    1,
-                    0,
-                    60,
-                    2.125,
-                    2.71828e0,
-                    'HTSQL',
-                    CAST('2010-04-15' AS DATETIME),
-                    0.8424131944444444e0,
-                    CAST('2010-04-15 20:13:00' AS DATETIME)
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="_.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <_>
+                <_2>true</_2>
+                <_3>false</_3>
+                <_4>60</_4>
+                <_5>2.125</_5>
+                <_6>2.71828</_6>
+                <_7>HTSQL</_7>
+                <_8>2010-04-15</_8>
+                <_9>20:13:04.500000</_9>
+                <_10>2010-04-15 20:13:00</_10>
+              </_>
+            </htsql:result>
         - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
             time('20:13:04.5'), datetime('2010-04-15 20:13')} /:html
           status: 200 OK
@@ -26200,6 +26357,28 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /{null(), true(), false(), 60, 2.125, 271828e-5, 'HTSQL', date('2010-04-15'),
+            time('20:13:04.5'), datetime('2010-04-15 20:13')} /:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | null() | true() | false() | 60 | 2.125 | 271828e-5 | 'HTSQL' | date('2010-04-15') | time('20:13:04.5') | datetime('2010-04-15 20:13') |
+            -+--------+--------+---------+----+-------+-----------+---------+--------------------+--------------------+------------------------------+-
+             |        | true   | false   | 60 | 2.125 |   2.71828 | HTSQL   | 2010-04-15         | 20:13:04.500000    | 2010-04-15 20:13:00          |
+
+             ----
+             /{null(),true(),false(),60,2.125,271828e-5,'HTSQL',date('2010-04-15'),time('20:13:04.5'),datetime('2010-04-15 20:13')}
+             SELECT NULL,
+                    1,
+                    0,
+                    60,
+                    2.125,
+                    2.71828e0,
+                    'HTSQL',
+                    CAST('2010-04-15' AS DATETIME),
+                    0.8424131944444444e0,
+                    CAST('2010-04-15 20:13:00' AS DATETIME)
       - id: no-rows
         tests:
         - uri: /school?false()/:json
@@ -26275,24 +26454,14 @@ tests:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="school.tsv"]
           body: "code\tname\tcampus\r\n"
-        - uri: /school?false()/:txt
+        - uri: /school?false()/:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | school               |
-             +------+------+--------+
-             | code | name | campus |
-            -+------+------+--------+-
-
-             ----
-             /school?false()
-             SELECT [school].[code],
-                    [school].[name],
-                    [school].[campus]
-             FROM [ad].[school]
-             WHERE (0 <> 0)
-             ORDER BY 1 ASC
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="school.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml" />
         - uri: /school?false()/:html
           status: 200 OK
           headers:
@@ -26336,6 +26505,24 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /school?false()/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | school               |
+             +------+------+--------+
+             | code | name | campus |
+            -+------+------+--------+-
+
+             ----
+             /school?false()
+             SELECT [school].[code],
+                    [school].[name],
+                    [school].[campus]
+             FROM [ad].[school]
+             WHERE (0 <> 0)
+             ORDER BY 1 ASC
       - id: empty-selector
         tests:
         - uri: /{}/:json
@@ -26385,11 +26572,16 @@ tests:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="_.tsv"]
           body: ''
-        - uri: /{}/:txt
+        - uri: /{}/:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: ''
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="_.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <_ />
+            </htsql:result>
         - uri: /{}/:html
           status: 200 OK
           headers:
@@ -26432,6 +26624,11 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /{}/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: ''
         - uri: /school{}?campus='old'/:json
           status: 200 OK
           headers:
@@ -26487,11 +26684,19 @@ tests:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="school.tsv"]
           body: ''
-        - uri: /school{}?campus='old'/:txt
+        - uri: /school{}?campus='old'/:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: ''
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="school.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <school />
+              <school />
+              <school />
+              <school />
+            </htsql:result>
         - uri: /school{}?campus='old'/:html
           status: 200 OK
           headers:
@@ -26540,6 +26745,11 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /school{}?campus='old'/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: ''
         - uri: /department{name, school{}}?!school|school.campus='north'/:json
           status: 200 OK
           headers:
@@ -26664,36 +26874,40 @@ tests:
           body: "name\r\nBioengineering\r\nBursar's Office\r\nCareer Development\r\nComputer
             Science\r\nElectrical Engineering\r\nMechanical Engineering\r\nParents
             & Alumni\r\n"
-        - uri: /department{name, school{}}?!school|school.campus='north'/:txt
+        - uri: /department{name, school{}}?!school|school.campus='north'/:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: |2
-             | department             |
-             +------------------------+
-             | name                   |
-            -+------------------------+-
-             | Bioengineering         |
-             | Bursar's Office        |
-             | Career Development     |
-             | Computer Science       |
-             | Electrical Engineering |
-             | Mechanical Engineering |
-             | Parents & Alumni       |
-
-             ----
-             /department{name,school{}}?!school|school.campus='north'
-             SELECT [department].[name],
-                    [school_1].[school]
-             FROM [ad].[department]
-                  LEFT OUTER JOIN (SELECT 1 AS [school],
-                                          [school].[code]
-                                   FROM [ad].[school]) AS [school_1]
-                                  ON ([department].[school_code] = [school_1].[code])
-                  LEFT OUTER JOIN [ad].[school] AS [school_2]
-                                  ON ([department].[school_code] = [school_2].[code])
-             WHERE (([school_1].[school] IS NULL) OR ([school_2].[campus] = 'north'))
-             ORDER BY [department].[code] ASC
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="department.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <department>
+                <name>Bioengineering</name>
+                <school />
+              </department>
+              <department>
+                <name>Bursar's Office</name>
+              </department>
+              <department>
+                <name>Career Development</name>
+              </department>
+              <department>
+                <name>Computer Science</name>
+                <school />
+              </department>
+              <department>
+                <name>Electrical Engineering</name>
+                <school />
+              </department>
+              <department>
+                <name>Mechanical Engineering</name>
+                <school />
+              </department>
+              <department>
+                <name>Parents &amp; Alumni</name>
+              </department>
+            </htsql:result>
         - uri: /department{name, school{}}?!school|school.campus='north'/:html
           status: 200 OK
           headers:
@@ -26746,6 +26960,36 @@ tests:
             </table>
             </body>
             </html>
+        - uri: /department{name, school{}}?!school|school.campus='north'/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: |2
+             | department             |
+             +------------------------+
+             | name                   |
+            -+------------------------+-
+             | Bioengineering         |
+             | Bursar's Office        |
+             | Career Development     |
+             | Computer Science       |
+             | Electrical Engineering |
+             | Mechanical Engineering |
+             | Parents & Alumni       |
+
+             ----
+             /department{name,school{}}?!school|school.campus='north'
+             SELECT [department].[name],
+                    [school_1].[school]
+             FROM [ad].[department]
+                  LEFT OUTER JOIN (SELECT 1 AS [school],
+                                          [school].[code]
+                                   FROM [ad].[school]) AS [school_1]
+                                  ON ([department].[school_code] = [school_1].[code])
+                  LEFT OUTER JOIN [ad].[school] AS [school_2]
+                                  ON ([department].[school_code] = [school_2].[code])
+             WHERE (([school_1].[school] IS NULL) OR ([school_2].[campus] = 'north'))
+             ORDER BY [department].[code] ASC
       - id: special-characters
         tests:
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
@@ -26800,18 +27044,22 @@ tests:
           - [Content-Disposition, attachment; filename="_.tsv"]
           body: "'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'\t'%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'\t'\u03BE'\t\"'\\/%25''\"\"&<>#'\"\t''\r\n\"\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0E\x0F\x10\"\t\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F\t?\t\"\\/%'\"\"&<>#\"\t\r\n"
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
-            '%CE%BE', '\/%25''"&<>#', ''}/:txt
+            '%CE%BE', '\/%25''"&<>#', ''}/:xml
           status: 200 OK
           headers:
-          - [Content-Type, text/plain; charset=UTF-8]
-          body: " | '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'                             |
-            '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'                                            |
-            '\u03BE' | '\\/%25''\"&<>#' | '' |\n-+--------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+-----+----------------+----+-\n
-            | \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\\u0010\"
-            | \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\x7F\"
-            | ?   | \\/%'\"&<>#      | \"\" |\n\n ----\n /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&<>#',''}\n
-            SELECT '\x01\x02\x03\x04\x05\x06\a\b\t\n \n \n \n \x0E\x0F\x10',\n        '\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\n
-            \n \n \x1F\x7F',\n        '\u03BE',\n        '\\/%''\"&<>#',\n        ''\n"
+          - [Content-Type, application/xml]
+          - [Content-Disposition, inline; filename="_.xml"]
+          body: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <htsql:result xmlns:htsql="http://htsql.org/2010/xml">
+              <_>
+                <_1>&#x01;&#x02;&#x03;&#x04;&#x05;&#x06;&#x07;&#x08;&#x09;&#x0A;&#x0B;&#x0C;&#x0D;&#x0E;&#x0F;&#x10;</_1>
+                <_2>&#x11;&#x12;&#x13;&#x14;&#x15;&#x16;&#x17;&#x18;&#x19;&#x1A;&#x1B;&#x1C;&#x1D;&#x1E;&#x1F;&#x7F;</_2>
+                <_3>?</_3>
+                <_4>\/%'&quot;&amp;&lt;&gt;#</_4>
+                <_5></_5>
+              </_>
+            </htsql:result>
         - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
             '%CE%BE', '\/%25''"&<>#', ''}/:html
           status: 200 OK
@@ -26856,6 +27104,19 @@ tests:
             class=\"htsql-string-type\">\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\x1C\x1D\x1E\x1F\x7F</td><td
             class=\"htsql-string-type\">?</td><td class=\"htsql-string-type\">\\/%'\"&amp;&lt;&gt;#</td><td
             class=\"htsql-string-type htsql-empty-value\"></td></tr>\n</tbody>\n</table>\n</body>\n</html>\n"
+        - uri: /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10', '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F',
+            '%CE%BE', '\/%25''"&<>#', ''}/:txt
+          status: 200 OK
+          headers:
+          - [Content-Type, text/plain; charset=UTF-8]
+          body: " | '%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10'                             |
+            '%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F'                                            |
+            '\u03BE' | '\\/%25''\"&<>#' | '' |\n-+--------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+-----+----------------+----+-\n
+            | \"\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\\u0010\"
+            | \"\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\x7F\"
+            | ?   | \\/%'\"&<>#      | \"\" |\n\n ----\n /{'%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10','%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F','\u03BE','\\/%25''\"&<>#',''}\n
+            SELECT '\x01\x02\x03\x04\x05\x06\a\b\t\n \n \n \n \x0E\x0F\x10',\n        '\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\e\n
+            \n \n \x1F\x7F',\n        '\u03BE',\n        '\\/%''\"&<>#',\n        ''\n"
       - id: commands
         tests:
         - uri: /school/:retrieve

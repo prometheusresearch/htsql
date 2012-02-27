@@ -44,6 +44,10 @@ class TextFormat(Format):
     pass
 
 
+class XMLFormat(Format):
+    pass
+
+
 class EmitHeaders(Adapter):
 
     adapts(Format)
