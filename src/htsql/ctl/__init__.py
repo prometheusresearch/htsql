@@ -3,14 +3,12 @@
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
-
 """
 :mod:`htsql.ctl`
 ================
 
 This package implements the ``htsql-ctl`` script.
 """
-
 
 from .script import Script
 from .default import DefaultRoutine

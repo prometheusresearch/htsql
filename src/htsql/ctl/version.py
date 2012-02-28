@@ -3,7 +3,6 @@
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
-
 """
 :mod:`htsql.ctl.version`
 ========================
@@ -11,10 +10,8 @@
 This module implements the `version` routine.
 """
 
-
 from .routine import Routine
 from ..core.util import trim_doc
-
 
 class VersionRoutine(Routine):
     """
@@ -29,12 +26,15 @@ class VersionRoutine(Routine):
     Run '%(executable)s version' to display the version of HTSQL.
     """
     message = """
-        This is ... %s
+        HTSQL %s
         %s
+
+        There is NO WARRANTY, to the extent permitted by law.
     """
 
     def run(self):
         import htsql
-        self.ctl.out(trim_doc(self.message) % (self.ctl.copyright, 
-                                               htsql.__version__))
+        self.ctl.out(trim_doc(self.message) % (htsql.__version__,
+                                               self.ctl.copyright))
+
 

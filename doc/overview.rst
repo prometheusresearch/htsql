@@ -6,10 +6,10 @@
    :depth: 1
    :local:
 
-HTSQL was created in 2005 to provide an XPath_-like HTTP interface to
-PostgreSQL_ for client-side XSLT_ screens and reports.  HTSQL found its
-audience when analysts and researchers bypassed the user interface and
-started to use URLs directly.  The language has evolved since then.
+HTSQL was created in 2005 to provide an *XPath*-like HTTP interface to
+*PostgreSQL* for client-side *XSLT* screens and reports.  HTSQL found 
+its audience when analysts and researchers bypassed the user interface
+and started to use URLs directly.  The language has evolved since then.
 
 What is HTSQL?
 ==============
@@ -90,8 +90,8 @@ sophisicated navigational query mechanism, composable query fragments
 and an extensive macro inclusion system.  In particular, nested
 aggregations and projections are easy to understand and use.
 
-HTSQL is Human Parsable
------------------------
+HTSQL is a Communication Tool
+-----------------------------
 
 .. vsplit::
 
@@ -112,7 +112,6 @@ HTSQL is Human Parsable
                   count(course))}
 
 *On the left is a business inquiry, on the right is the HTSQL translation.*
-
 
 HTSQL is first and formost designed for the *accidental programmer* and
 as such provides a direct mapping of common business inquiries onto a
@@ -329,8 +328,8 @@ Various aggregation operations:
 Projection
 ----------
 
-Projection operator returns distinct values.  This example returns
-distinct ``campus`` values from the ``school`` table:
+Projection (``^``) returns distinct values.  This example 
+returns distinct ``campus`` values from the ``school`` table:
 
 .. htsql:: /school^campus
 
@@ -349,8 +348,8 @@ offered by each school:
 Linking
 -------
 
-Even though HTSQL provides automatic links inferred from foreign key
-constraints, arbitrary linking is also allowed:
+Links between tables are automatic and relative, inferred from foreign
+key constraints.  Unlink (``@``) permits arbitrary, non-relative linking.
 
 .. htsql::
    :cut: 4
@@ -358,9 +357,8 @@ constraints, arbitrary linking is also allowed:
    /school{name, count(department)}
           ?count(department)>avg(@school.count(department))
 
-This query returns schools with the number of departments above average
-among all schools.
-
+The query above returns schools with the number of departments above
+average among all schools. 
 
 Why not SQL?
 ============

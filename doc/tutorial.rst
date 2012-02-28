@@ -436,6 +436,22 @@ either lack correlated ``course`` records or where every one of those
             ?every(course.credits=3)
    :cut: 3
 
+Arbitrary Linking
+-----------------
+
+The unlink operator (``@``) permits arbitrary, non-relative links; it
+relates the current entity with all other records of another table.
+
+.. htsql:: /school?count(department)>avg(@school.count(department))
+   :cut: 3
+
+The query above returns schools that have above average number of
+departments.  This could also be written with the link function
+``fork()`` which generates the current graph node to itself:
+
+.. htsql:: /school?count(department)>avg(@school.count(department))
+   :cut: 3
+
 
 Compositional Navigation
 ------------------------
