@@ -101,10 +101,6 @@ class Script(object):
     hint = None
     # Override to provide a long description of the application.
     help = None
-    # Override to provide a copyright notice.
-    copyright = None
-    # Override to provide licensing information.
-    license = None
     # Override to provide a list of supported routines.
     routines = []
 
@@ -269,13 +265,13 @@ class Script(object):
         """
         Returns a copyright notice.
         """
-        return trim_doc(self.copyright)
+        return None
 
     def get_license(self):
         """
         Returns licensing information.
         """
-        return trim_doc(self.license)
+        return None
 
     def get_version(self):
         """

@@ -11,6 +11,7 @@
 This package implements the ``htsql-ctl`` script.
 """
 
+from ..core.util import trim_doc
 from .script import Script
 from .default import DefaultRoutine
 from .help import HelpRoutine
@@ -49,12 +50,18 @@ class HTSQL_CTL(Script):
     Run `%(executable)s help` for general usage and list of routines.
     Run `%(executable)s help <routine>` for help on a specific routine.
     """
-    copyright = """Copyright (c) 2006-2012, Prometheus Research, LLC"""
-    license = None
 
     def get_version(self):
         import htsql
-        return "HTSQL %s" % htsql.__version__
+        return "%s %s" % (htsql.__name__.upper(), htsql.__version__)
+
+    def get_copyright(self):
+        import htsql
+        return trim_doc(htsql.__copyright__)
+
+    def get_license(self):
+        import htsql
+        return trim_doc(htsql.__license__)
 
 
 def main():
