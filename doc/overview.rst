@@ -52,7 +52,7 @@ HTSQL is a Relational Database Gateway
       SELECT "school"."code",
              "school"."name",
              "school"."campus"
-      FROM "ad"."school" AS "school"
+      FROM "ad"."school"
       ORDER BY 1 ASC
 
 *On the left is an HTSQL query, on the right is SQL it is translated to.*
@@ -78,9 +78,9 @@ HTSQL is an Advanced Query Language
    .. sourcecode:: sql
 
       SELECT "school"."name", COALESCE("program"."count", 0), COALESCE("department"."count", 0)
-      FROM "ad"."school" AS "school"
-      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school_code" FROM "ad"."program" AS "program" GROUP BY 2) AS "program" ON ("school"."code" = "program"."school_code")
-      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school_code" FROM "ad"."department" AS "department" GROUP BY 2) AS "department" ON ("school"."code" = "department"."school_code")
+      FROM "ad"."school"
+      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "program"."school_code" FROM "ad"."program" GROUP BY 2) AS "program" ON ("school"."code" = "program"."school_code")
+      LEFT OUTER JOIN (SELECT COUNT(TRUE) AS "count", "department"."school_code" FROM "ad"."department" GROUP BY 2) AS "department" ON ("school"."code" = "department"."school_code")
       ORDER BY "school"."code" ASC
 
 *On the left is an HTSQL query, on the right is SQL it is translated to.*
@@ -98,10 +98,10 @@ HTSQL is Human Parsable
    .. sourcecode:: html
 
       Show me schools, and, for each school, 
-      its name, campus, number of programs, 
-      number of departments, and the 
-      average number of courses across each
-      of its departments?
+      - its name, its location,
+      - number of programs and departments,
+      - and the average number of courses
+        across each of its departments?
 
    .. sourcecode:: htsql
 
@@ -338,6 +338,13 @@ In the scope of the projection, ``school`` refers to all records from
 ``school`` table having the same value of ``campus`` attribute:
 
 .. htsql:: /school^campus {campus, count(school)}
+
+Projections combine with other language features in a natural way.
+The next example displays the number of distinct program degrees
+offered by each school:
+
+.. htsql:: /school{name, count(program^degree)}
+   :cut: 4
 
 Linking
 -------
