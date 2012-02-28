@@ -1,0 +1,40 @@
+HTSQL Permissive License
+========================
+
+Copyright (c) 2006-2012 Prometheus Research, LLC.
+All rights reserved.
+
+Redistribution and use, with or without modification, are permitted
+provided that the following conditions are met:
+
+1. The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the software.
+
+2. If this software or any Derivative Work is used or distributed for
+use with a database system, that database system must be Open Source.
+
+A database system is "Open Source" if, at the time of distribution or
+use in conjunction with this software, the system may be distributed
+or used without charge, the preferred source code for the database
+system is generally available, and this code is either in the public
+domain or licensed under terms approved by the Open Source Initiative.
+
+By "Derivative Work" we mean any derivative work under U.S. copyright
+law (or, for distribution or use outside the United States, the most
+closely equivalent concept under applicable law), including, without
+limitation, any improvement, translation, transformation, adaptation,
+modification, arrangement, plugin, wrapper, shim, or extension based
+on this software.
+
+THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY, AGAINST INFRINGEMENT, TITLE AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+

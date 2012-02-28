@@ -1,0 +1,51 @@
+HTSQL Evaluation License
+========================
+
+Copyright (c) 2006-2012 Prometheus Research, LLC.
+All rights reserved.
+
+This license is meant for the express purpose of permitting public
+evaluation (but not commercial use) of proprietary database adapters.
+By distributing, installing, modifying, or using this software you
+agree to be bound to the terms of this agreement.
+
+Limited redistribution and use, as well as the creation of Derivative
+Works, are permitted provided that the following conditions are met:
+
+1. The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of this software.
+
+2. You may only use this software for evaluation purposes, which are
+limited to: the discovery of how HTSQL works, testing of function or
+performance, the creation of prototype applications used for
+demonstrations, and communicating bug reports and/or feature requests.
+
+3. You may not use or distribute this software, or any Derivative
+Work, in any form for commercial purposes.  Examples of commercial
+purposes would be running business operations, licensing, leasing,
+or selling this software, or distributing this software for use
+with commercial products or services.
+
+4. You may distribute this software or Derivative Works, provided
+that such copies of this software or Derivative Works are licensed
+under this HTSQL Evaluation License.
+
+By "Derivative Work" we mean any derivative work under U.S. copyright
+law (or, for distribution or use outside the United States, the most
+closely equivalent concept under applicable law), including, without
+limitation, any improvement, translation, transformation, adaptation,
+modification, arrangement, plugin, wrapper, shim, or extension based
+on this software.
+
+THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY, AGAINST INFRINGEMENT, TITLE AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
