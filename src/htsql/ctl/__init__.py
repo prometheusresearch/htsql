@@ -3,6 +3,7 @@
 # See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
+
 """
 :mod:`htsql.ctl`
 ================
@@ -49,6 +50,11 @@ class HTSQL_CTL(Script):
     Run `%(executable)s help <routine>` for help on a specific routine.
     """
     copyright = """Copyright (c) 2006-2012, Prometheus Research, LLC"""
+    license = None
+
+    def get_version(self):
+        import htsql
+        return "HTSQL %s" % htsql.__version__
 
 
 def main():

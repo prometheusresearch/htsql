@@ -143,6 +143,16 @@ class Option(object):
 #
 
 
+HelpOption = Option(
+        attribute='help',
+        long_name='--help',
+        hint="""describe the usage of the application""")
+
+VersionOption = Option(
+        attribute='version',
+        long_name='--version',
+        hint="""report the version of the application""")
+
 QuietOption = Option(
         attribute='quiet',
         short_name='-q',

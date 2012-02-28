@@ -103,6 +103,8 @@ class Script(object):
     help = None
     # Override to provide a copyright notice.
     copyright = None
+    # Override to provide licensing information.
+    license = None
     # Override to provide a list of supported routines.
     routines = []
 
@@ -267,7 +269,19 @@ class Script(object):
         """
         Returns a copyright notice.
         """
-        return self.copyright
+        return trim_doc(self.copyright)
+
+    def get_license(self):
+        """
+        Returns licensing information.
+        """
+        return trim_doc(self.license)
+
+    def get_version(self):
+        """
+        Returns version information.
+        """
+        return None
 
     def parse_argv(self, argv):
         # Parses the command-line arguments; returns a triple:
