@@ -26,7 +26,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -2749,7 +2749,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -2897,7 +2897,7 @@ tests:
              +---------------------------------------------------+
              | name                          | count(department) |
             -+-------------------------------+-------------------+-
-             | School of Art and Design      |                 2 |
+             | School of Art & Design        |                 2 |
              | School of Business            |                 3 |
              | College of Education          |                 2 |
              | School of Engineering         |                 4 |
@@ -2928,7 +2928,7 @@ tests:
              +--------------------------------------------+
              | name                          | # of Dept. |
             -+-------------------------------+------------+-
-             | School of Art and Design      |          2 |
+             | School of Art & Design        |          2 |
              | School of Business            |          3 |
              | College of Education          |          2 |
              | School of Engineering         |          4 |
@@ -2959,10 +2959,10 @@ tests:
              +------------------------------------------------------------------+
              | name                          | title                            |
             -+-------------------------------+----------------------------------+-
-             | School of Art and Design      | Post Baccalaureate in Art        |
+             | School of Art & Design        | Post Baccalaureate in Art        |
              :                               : History                          :
-             | School of Art and Design      | Bachelor of Arts in Art History  |
-             | School of Art and Design      | Bachelor of Arts in Studio Art   |
+             | School of Art & Design        | Bachelor of Arts in Art History  |
+             | School of Art & Design        | Bachelor of Arts in Studio Art   |
              | School of Business            | Master of Arts in Economics      |
              | School of Business            | Graduate Certificate in          |
              :                               : Accounting                       :
@@ -3045,26 +3045,26 @@ tests:
              | School of Business            | Accounting             | Audit                            |
              | School of Business            | Accounting             | Advanced Accounting              |
              | School of Business            | Accounting             | Accounting Internship            |
-             | School of Art and Design      | Art History            | History of Art Criticism I       |
-             | School of Art and Design      | Art History            | History of Art Criticism II      |
-             | School of Art and Design      | Art History            | North American Native Art        |
-             | School of Art and Design      | Art History            | Antique Art: Greece and Rome     |
-             | School of Art and Design      | Art History            | Antique Art: The Middle East     |
-             | School of Art and Design      | Art History            | Arts of Asia                     |
-             | School of Art and Design      | Art History            | Medieval Christian Art           |
-             | School of Art and Design      | Art History            | Asian Architecture               |
-             | School of Art and Design      | Art History            | Italian Renaissance Art          |
-             | School of Art and Design      | Art History            | Dutch and Flemish Painting       |
-             | School of Art and Design      | Art History            | Impressionism                    |
-             | School of Art and Design      | Art History            | Modernism                        |
-             | School of Art and Design      | Art History            | Postmodernism                    |
-             | School of Art and Design      | Art History            | Islamic Art                      |
-             | School of Art and Design      | Art History            | Art of Photography               |
-             | School of Art and Design      | Art History            | Industrial Architecture          |
-             | School of Art and Design      | Art History            | Contemporary Latin American Art  |
-             | School of Art and Design      | Art History            | Methods in Art History           |
-             | School of Art and Design      | Art History            | Museum and Gallery Management    |
-             | School of Art and Design      | Art History            | Materials and Construction in    |
+             | School of Art & Design        | Art History            | History of Art Criticism I       |
+             | School of Art & Design        | Art History            | History of Art Criticism II      |
+             | School of Art & Design        | Art History            | North American Native Art        |
+             | School of Art & Design        | Art History            | Antique Art: Greece and Rome     |
+             | School of Art & Design        | Art History            | Antique Art: The Middle East     |
+             | School of Art & Design        | Art History            | Arts of Asia                     |
+             | School of Art & Design        | Art History            | Medieval Christian Art           |
+             | School of Art & Design        | Art History            | Asian Architecture               |
+             | School of Art & Design        | Art History            | Italian Renaissance Art          |
+             | School of Art & Design        | Art History            | Dutch and Flemish Painting       |
+             | School of Art & Design        | Art History            | Impressionism                    |
+             | School of Art & Design        | Art History            | Modernism                        |
+             | School of Art & Design        | Art History            | Postmodernism                    |
+             | School of Art & Design        | Art History            | Islamic Art                      |
+             | School of Art & Design        | Art History            | Art of Photography               |
+             | School of Art & Design        | Art History            | Industrial Architecture          |
+             | School of Art & Design        | Art History            | Contemporary Latin American Art  |
+             | School of Art & Design        | Art History            | Methods in Art History           |
+             | School of Art & Design        | Art History            | Museum and Gallery Management    |
+             | School of Art & Design        | Art History            | Materials and Construction in    |
              :                               :                        : European Art                     :
              | School of Natural Sciences    | Astronomy              | General Astronomy I              |
              | School of Natural Sciences    | Astronomy              | General Astronomy I Lab          |
@@ -3392,25 +3392,25 @@ tests:
              | School of Arts and Humanities | Psychology             | Examination of Real-Time         |
              :                               :                        : Language Processing              :
              | School of Arts and Humanities | Psychology             | Applied Child Psychology         |
-             | School of Art and Design      | Studio Art             | Introduction to Drawing          |
-             | School of Art and Design      | Studio Art             | Observational Drawing            |
-             | School of Art and Design      | Studio Art             | Spring Basket Weaving Workshop   |
-             | School of Art and Design      | Studio Art             | Ceramics I                       |
-             | School of Art and Design      | Studio Art             | Field Drawing                    |
-             | School of Art and Design      | Studio Art             | Composition                      |
-             | School of Art and Design      | Studio Art             | Ceramics II                      |
-             | School of Art and Design      | Studio Art             | Introduction to Painting         |
-             | School of Art and Design      | Studio Art             | Photography                      |
-             | School of Art and Design      | Studio Art             | Printmaking I                    |
-             | School of Art and Design      | Studio Art             | Life Drawing                     |
-             | School of Art and Design      | Studio Art             | Digital Photography              |
-             | School of Art and Design      | Studio Art             | Printmaking II                   |
-             | School of Art and Design      | Studio Art             | Underwater Basket Weaving        |
-             | School of Art and Design      | Studio Art             | Advanced Painting                |
-             | School of Art and Design      | Studio Art             | Twentieth Century Printmaking    |
-             | School of Art and Design      | Studio Art             | Art in Therapy                   |
-             | School of Art and Design      | Studio Art             | Drawing Master Class             |
-             | School of Art and Design      | Studio Art             | Peer Portfolio Review            |
+             | School of Art & Design        | Studio Art             | Introduction to Drawing          |
+             | School of Art & Design        | Studio Art             | Observational Drawing            |
+             | School of Art & Design        | Studio Art             | Spring Basket Weaving Workshop   |
+             | School of Art & Design        | Studio Art             | Ceramics I                       |
+             | School of Art & Design        | Studio Art             | Field Drawing                    |
+             | School of Art & Design        | Studio Art             | Composition                      |
+             | School of Art & Design        | Studio Art             | Ceramics II                      |
+             | School of Art & Design        | Studio Art             | Introduction to Painting         |
+             | School of Art & Design        | Studio Art             | Photography                      |
+             | School of Art & Design        | Studio Art             | Printmaking I                    |
+             | School of Art & Design        | Studio Art             | Life Drawing                     |
+             | School of Art & Design        | Studio Art             | Digital Photography              |
+             | School of Art & Design        | Studio Art             | Printmaking II                   |
+             | School of Art & Design        | Studio Art             | Underwater Basket Weaving        |
+             | School of Art & Design        | Studio Art             | Advanced Painting                |
+             | School of Art & Design        | Studio Art             | Twentieth Century Printmaking    |
+             | School of Art & Design        | Studio Art             | Art in Therapy                   |
+             | School of Art & Design        | Studio Art             | Drawing Master Class             |
+             | School of Art & Design        | Studio Art             | Peer Portfolio Review            |
              | College of Education          | Teacher Education      | Teaching Methodology             |
              | College of Education          | Teacher Education      | Theory and Practice of Early     |
              :                               :                        : Childhood Education              :
@@ -3472,26 +3472,26 @@ tests:
              | School of Business            | Accounting             | Audit                            |
              | School of Business            | Accounting             | Advanced Accounting              |
              | School of Business            | Accounting             | Accounting Internship            |
-             | School of Art and Design      | Art History            | History of Art Criticism I       |
-             | School of Art and Design      | Art History            | History of Art Criticism II      |
-             | School of Art and Design      | Art History            | North American Native Art        |
-             | School of Art and Design      | Art History            | Antique Art: Greece and Rome     |
-             | School of Art and Design      | Art History            | Antique Art: The Middle East     |
-             | School of Art and Design      | Art History            | Arts of Asia                     |
-             | School of Art and Design      | Art History            | Medieval Christian Art           |
-             | School of Art and Design      | Art History            | Asian Architecture               |
-             | School of Art and Design      | Art History            | Italian Renaissance Art          |
-             | School of Art and Design      | Art History            | Dutch and Flemish Painting       |
-             | School of Art and Design      | Art History            | Impressionism                    |
-             | School of Art and Design      | Art History            | Modernism                        |
-             | School of Art and Design      | Art History            | Postmodernism                    |
-             | School of Art and Design      | Art History            | Islamic Art                      |
-             | School of Art and Design      | Art History            | Art of Photography               |
-             | School of Art and Design      | Art History            | Industrial Architecture          |
-             | School of Art and Design      | Art History            | Contemporary Latin American Art  |
-             | School of Art and Design      | Art History            | Methods in Art History           |
-             | School of Art and Design      | Art History            | Museum and Gallery Management    |
-             | School of Art and Design      | Art History            | Materials and Construction in    |
+             | School of Art & Design        | Art History            | History of Art Criticism I       |
+             | School of Art & Design        | Art History            | History of Art Criticism II      |
+             | School of Art & Design        | Art History            | North American Native Art        |
+             | School of Art & Design        | Art History            | Antique Art: Greece and Rome     |
+             | School of Art & Design        | Art History            | Antique Art: The Middle East     |
+             | School of Art & Design        | Art History            | Arts of Asia                     |
+             | School of Art & Design        | Art History            | Medieval Christian Art           |
+             | School of Art & Design        | Art History            | Asian Architecture               |
+             | School of Art & Design        | Art History            | Italian Renaissance Art          |
+             | School of Art & Design        | Art History            | Dutch and Flemish Painting       |
+             | School of Art & Design        | Art History            | Impressionism                    |
+             | School of Art & Design        | Art History            | Modernism                        |
+             | School of Art & Design        | Art History            | Postmodernism                    |
+             | School of Art & Design        | Art History            | Islamic Art                      |
+             | School of Art & Design        | Art History            | Art of Photography               |
+             | School of Art & Design        | Art History            | Industrial Architecture          |
+             | School of Art & Design        | Art History            | Contemporary Latin American Art  |
+             | School of Art & Design        | Art History            | Methods in Art History           |
+             | School of Art & Design        | Art History            | Museum and Gallery Management    |
+             | School of Art & Design        | Art History            | Materials and Construction in    |
              :                               :                        : European Art                     :
              | School of Natural Sciences    | Astronomy              | General Astronomy I              |
              | School of Natural Sciences    | Astronomy              | General Astronomy I Lab          |
@@ -3819,25 +3819,25 @@ tests:
              | School of Arts and Humanities | Psychology             | Examination of Real-Time         |
              :                               :                        : Language Processing              :
              | School of Arts and Humanities | Psychology             | Applied Child Psychology         |
-             | School of Art and Design      | Studio Art             | Introduction to Drawing          |
-             | School of Art and Design      | Studio Art             | Observational Drawing            |
-             | School of Art and Design      | Studio Art             | Spring Basket Weaving Workshop   |
-             | School of Art and Design      | Studio Art             | Ceramics I                       |
-             | School of Art and Design      | Studio Art             | Field Drawing                    |
-             | School of Art and Design      | Studio Art             | Composition                      |
-             | School of Art and Design      | Studio Art             | Ceramics II                      |
-             | School of Art and Design      | Studio Art             | Introduction to Painting         |
-             | School of Art and Design      | Studio Art             | Photography                      |
-             | School of Art and Design      | Studio Art             | Printmaking I                    |
-             | School of Art and Design      | Studio Art             | Life Drawing                     |
-             | School of Art and Design      | Studio Art             | Digital Photography              |
-             | School of Art and Design      | Studio Art             | Printmaking II                   |
-             | School of Art and Design      | Studio Art             | Underwater Basket Weaving        |
-             | School of Art and Design      | Studio Art             | Advanced Painting                |
-             | School of Art and Design      | Studio Art             | Twentieth Century Printmaking    |
-             | School of Art and Design      | Studio Art             | Art in Therapy                   |
-             | School of Art and Design      | Studio Art             | Drawing Master Class             |
-             | School of Art and Design      | Studio Art             | Peer Portfolio Review            |
+             | School of Art & Design        | Studio Art             | Introduction to Drawing          |
+             | School of Art & Design        | Studio Art             | Observational Drawing            |
+             | School of Art & Design        | Studio Art             | Spring Basket Weaving Workshop   |
+             | School of Art & Design        | Studio Art             | Ceramics I                       |
+             | School of Art & Design        | Studio Art             | Field Drawing                    |
+             | School of Art & Design        | Studio Art             | Composition                      |
+             | School of Art & Design        | Studio Art             | Ceramics II                      |
+             | School of Art & Design        | Studio Art             | Introduction to Painting         |
+             | School of Art & Design        | Studio Art             | Photography                      |
+             | School of Art & Design        | Studio Art             | Printmaking I                    |
+             | School of Art & Design        | Studio Art             | Life Drawing                     |
+             | School of Art & Design        | Studio Art             | Digital Photography              |
+             | School of Art & Design        | Studio Art             | Printmaking II                   |
+             | School of Art & Design        | Studio Art             | Underwater Basket Weaving        |
+             | School of Art & Design        | Studio Art             | Advanced Painting                |
+             | School of Art & Design        | Studio Art             | Twentieth Century Printmaking    |
+             | School of Art & Design        | Studio Art             | Art in Therapy                   |
+             | School of Art & Design        | Studio Art             | Drawing Master Class             |
+             | School of Art & Design        | Studio Art             | Peer Portfolio Review            |
              | College of Education          | Teacher Education      | Teaching Methodology             |
              | College of Education          | Teacher Education      | Theory and Practice of Early     |
              :                               :                        : Childhood Education              :
@@ -3887,7 +3887,7 @@ tests:
              | code   | name                   | school_code | code | name                          | campus |
             -+--------+------------------------+-------------+------+-------------------------------+--------+-
              | acc    | Accounting             | bus         | bus  | School of Business            | south  |
-             | arthis | Art History            | art         | art  | School of Art and Design      | old    |
+             | arthis | Art History            | art         | art  | School of Art & Design        | old    |
              | astro  | Astronomy              | ns          | ns   | School of Natural Sciences    | old    |
              | be     | Bioengineering         | eng         | eng  | School of Engineering         | north  |
              | bursar | Bursar's Office        |             |      |                               |        |
@@ -3908,7 +3908,7 @@ tests:
              | pia    | Piano                  | mus         | mus  | School of Music & Dance       | south  |
              | poli   | Political Science      | la          | la   | School of Arts and Humanities | old    |
              | psych  | Psychology             | la          | la   | School of Arts and Humanities | old    |
-             | stdart | Studio Art             | art         | art  | School of Art and Design      | old    |
+             | stdart | Studio Art             | art         | art  | School of Art & Design        | old    |
              | str    | Strings                | mus         | mus  | School of Music & Dance       | south  |
              | tched  | Teacher Education      | edu         | edu  | College of Education          | old    |
              | voc    | Vocals                 | mus         | mus  | School of Music & Dance       | south  |
@@ -4104,7 +4104,7 @@ tests:
             -+------+-------------------------------+--------+-
              | edu  | College of Education          | old    |
              | ph   | Public Honorariums            |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | la   | School of Arts and Humanities | old    |
              | bus  | School of Business            | south  |
              | sc   | School of Continuing Studies  |        |
@@ -6207,7 +6207,7 @@ tests:
                 {"title": "campus", "domain": "string"}
               ],
               "data": [
-                ["art", "School of Art and Design", "old"],
+                ["art", "School of Art & Design", "old"],
                 ["bus", "School of Business", "south"],
                 ["edu", "College of Education", "old"],
                 ["eng", "School of Engineering", "north"],
@@ -6488,9 +6488,9 @@ tests:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="department.csv"]
           body: "name,name,count(course)\r\nSchool of Arts and Humanities,English,21\r\nSchool
-            of Arts and Humanities,Foreign Languages,21\r\nSchool of Art and Design,Art
+            of Arts and Humanities,Foreign Languages,21\r\nSchool of Art & Design,Art
             History,20\r\nSchool of Arts and Humanities,Political Science,19\r\nSchool
-            of Art and Design,Studio Art,19\r\n"
+            of Art & Design,Studio Art,19\r\n"
       - id: relating-and-aggregating-data
         tests:
         - uri: /course{department.name, title}
@@ -7003,7 +7003,7 @@ tests:
              +--------------------------------------------------------------------+
              | name                          | count(program) | count(department) |
             -+-------------------------------+----------------+-------------------+-
-             | School of Art and Design      |              3 |                 2 |
+             | School of Art & Design        |              3 |                 2 |
              | School of Business            |              6 |                 3 |
              | College of Education          |              7 |                 2 |
              | School of Engineering         |              8 |                 4 |
@@ -7090,7 +7090,7 @@ tests:
              +---------------------------------------------------------------------------+
              | name                          | avg(department.count(course))             |
             -+-------------------------------+-------------------------------------------+-
-             | School of Art and Design      |                                      19.5 |
+             | School of Art & Design        |                                      19.5 |
              | School of Business            | 14.66666666666666666666666666666666666667 |
              | College of Education          |                                      17.5 |
              | School of Engineering         |                                     17.75 |
@@ -7126,7 +7126,7 @@ tests:
              +----------------------------------------------------------------------------+
              | name                          | count(department?exists(course?credits>3)) |
             -+-------------------------------+--------------------------------------------+-
-             | School of Art and Design      |                                          2 |
+             | School of Art & Design        |                                          2 |
              | School of Business            |                                          3 |
              | College of Education          |                                          1 |
              | School of Engineering         |                                          4 |
@@ -9728,7 +9728,7 @@ tests:
              +-------------------------------------------------------+
              | name                          | count(program^degree) |
             -+-------------------------------+-----------------------+-
-             | School of Art and Design      |                     2 |
+             | School of Art & Design        |                     2 |
              | School of Business            |                     4 |
              | College of Education          |                     4 |
              | School of Engineering         |                     2 |
@@ -15898,9 +15898,9 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
-             | art  | School of Art and Design      | old    |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
+             | art  | School of Art & Design        | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | bus  | School of Business            | south  |
              | bus  | School of Business            | south  |
@@ -16292,7 +16292,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16301,7 +16301,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16310,7 +16310,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16319,7 +16319,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16328,7 +16328,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16337,7 +16337,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16346,7 +16346,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16355,7 +16355,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -16364,7 +16364,7 @@ tests:
              | ns   | School of Natural Sciences    | old    |
              | ph   | Public Honorariums            |        |
              | sc   | School of Continuing Studies  |        |
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -17688,7 +17688,7 @@ tests:
              +-------------------------------+
              | name                          |
             -+-------------------------------+-
-             | School of Art and Design      |
+             | School of Art & Design        |
              | School of Business            |
              | College of Education          |
              | School of Engineering         |
@@ -17714,7 +17714,7 @@ tests:
              | name                          | name                   |
             -+-------------------------------+------------------------+-
              | School of Business            | Accounting             |
-             | School of Art and Design      | Art History            |
+             | School of Art & Design        | Art History            |
              | School of Natural Sciences    | Astronomy              |
              | School of Engineering         | Bioengineering         |
              |                               | Bursar's Office        |
@@ -17735,7 +17735,7 @@ tests:
              | School of Music & Dance       | Piano                  |
              | School of Arts and Humanities | Political Science      |
              | School of Arts and Humanities | Psychology             |
-             | School of Art and Design      | Studio Art             |
+             | School of Art & Design        | Studio Art             |
              | School of Music & Dance       | Strings                |
              | College of Education          | Teacher Education      |
              | School of Music & Dance       | Vocals                 |
@@ -17759,7 +17759,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -17789,7 +17789,7 @@ tests:
              | code | name                          | campus | code   | name                   | school_code |
             -+------+-------------------------------+--------+--------+------------------------+-------------+-
              | bus  | School of Business            | south  | acc    | Accounting             | bus         |
-             | art  | School of Art and Design      | old    | arthis | Art History            | art         |
+             | art  | School of Art & Design        | old    | arthis | Art History            | art         |
              | ns   | School of Natural Sciences    | old    | astro  | Astronomy              | ns          |
              | eng  | School of Engineering         | north  | be     | Bioengineering         | eng         |
              |      |                               |        | bursar | Bursar's Office        |             |
@@ -17810,7 +17810,7 @@ tests:
              | mus  | School of Music & Dance       | south  | pia    | Piano                  | mus         |
              | la   | School of Arts and Humanities | old    | poli   | Political Science      | la          |
              | la   | School of Arts and Humanities | old    | psych  | Psychology             | la          |
-             | art  | School of Art and Design      | old    | stdart | Studio Art             | art         |
+             | art  | School of Art & Design        | old    | stdart | Studio Art             | art         |
              | mus  | School of Music & Dance       | south  | str    | Strings                | mus         |
              | edu  | College of Education          | old    | tched  | Teacher Education      | edu         |
              | mus  | School of Music & Dance       | south  | voc    | Vocals                 | mus         |
@@ -17840,7 +17840,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -17867,7 +17867,7 @@ tests:
              +-------------------------------+
              | Name                          |
             -+-------------------------------+-
-             | School of Art and Design      |
+             | School of Art & Design        |
              | School of Business            |
              | College of Education          |
              | School of Engineering         |
@@ -17893,7 +17893,7 @@ tests:
              +--------------------------------------------------+
              | Name                          | # of Departments |
             -+-------------------------------+------------------+-
-             | School of Art and Design      |                2 |
+             | School of Art & Design        |                2 |
              | School of Business            |                3 |
              | College of Education          |                2 |
              | School of Engineering         |                4 |
@@ -17926,7 +17926,7 @@ tests:
             -+-------------------------------+-
              | College of Education          |
              | Public Honorariums            |
-             | School of Art and Design      |
+             | School of Art & Design        |
              | School of Arts and Humanities |
              | School of Business            |
              | School of Continuing Studies  |
@@ -18290,15 +18290,15 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | program                                                    |
-               +------------------------------------------------------------+
-               | name                     | title                           |
-              -+--------------------------+---------------------------------+-
-               | School of Art and Design | Post Baccalaureate in Art       |
-               :                          : History                         :
-               | School of Art and Design | Bachelor of Arts in Art History |
-               | School of Art and Design | Bachelor of Arts in Studio Art  |
-                                                                     (3 rows)
+               | program                                                  |
+               +----------------------------------------------------------+
+               | name                   | title                           |
+              -+------------------------+---------------------------------+-
+               | School of Art & Design | Post Baccalaureate in Art       |
+               :                        : History                         :
+               | School of Art & Design | Bachelor of Arts in Art History |
+               | School of Art & Design | Bachelor of Arts in Studio Art  |
+                                                                   (3 rows)
 
                ----
                /program{school.name,title}?school.code='art'
@@ -18368,7 +18368,7 @@ tests:
                +-------------------------------+
                | name                          |
               -+-------------------------------+-
-               | School of Art and Design      |
+               | School of Art & Design        |
                | School of Business            |
                | College of Education          |
                | School of Engineering         |
@@ -18396,7 +18396,7 @@ tests:
                | code | name                          | campus | code   | name                   | school_code |
               -+------+-------------------------------+--------+--------+------------------------+-------------+-
                | bus  | School of Business            | south  | acc    | Accounting             | bus         |
-               | art  | School of Art and Design      | old    | arthis | Art History            | art         |
+               | art  | School of Art & Design        | old    | arthis | Art History            | art         |
                | ns   | School of Natural Sciences    | old    | astro  | Astronomy              | ns          |
                | eng  | School of Engineering         | north  | be     | Bioengineering         | eng         |
                |      |                               |        | bursar | Bursar's Office        |             |
@@ -18417,7 +18417,7 @@ tests:
                | mus  | School of Music & Dance       | south  | pia    | Piano                  | mus         |
                | la   | School of Arts and Humanities | old    | poli   | Political Science      | la          |
                | la   | School of Arts and Humanities | old    | psych  | Psychology             | la          |
-               | art  | School of Art and Design      | old    | stdart | Studio Art             | art         |
+               | art  | School of Art & Design        | old    | stdart | Studio Art             | art         |
                | mus  | School of Music & Dance       | south  | str    | Strings                | mus         |
                | edu  | College of Education          | old    | tched  | Teacher Education      | edu         |
                | mus  | School of Music & Dance       | south  | voc    | Vocals                 | mus         |
@@ -18446,7 +18446,7 @@ tests:
                | school.name+' - '+name           |
               -+----------------------------------+-
                | School of Business - Accounting  |
-               | School of Art and Design - Art   |
+               | School of Art & Design - Art     |
                : History                          :
                | School of Natural Sciences -     |
                : Astronomy                        :
@@ -18483,8 +18483,8 @@ tests:
                : Political Science                :
                | School of Arts and Humanities -  |
                : Psychology                       :
-               | School of Art and Design -       |
-               : Studio Art                       :
+               | School of Art & Design - Studio  |
+               : Art                              :
                | School of Music & Dance -        |
                : Strings                          :
                | College of Education - Teacher   |
@@ -18509,7 +18509,7 @@ tests:
                +-------------------------------+
                | name                          |
               -+-------------------------------+-
-               | School of Art and Design      |
+               | School of Art & Design        |
                | School of Business            |
                | College of Education          |
                | School of Engineering         |
@@ -18535,7 +18535,7 @@ tests:
                | code | name                          | campus | code   | name                   | school_code |
               -+------+-------------------------------+--------+--------+------------------------+-------------+-
                | bus  | School of Business            | south  | acc    | Accounting             | bus         |
-               | art  | School of Art and Design      | old    | arthis | Art History            | art         |
+               | art  | School of Art & Design        | old    | arthis | Art History            | art         |
                | ns   | School of Natural Sciences    | old    | astro  | Astronomy              | ns          |
                | eng  | School of Engineering         | north  | be     | Bioengineering         | eng         |
                |      |                               |        | bursar | Bursar's Office        |             |
@@ -18556,7 +18556,7 @@ tests:
                | mus  | School of Music & Dance       | south  | pia    | Piano                  | mus         |
                | la   | School of Arts and Humanities | old    | poli   | Political Science      | la          |
                | la   | School of Arts and Humanities | old    | psych  | Psychology             | la          |
-               | art  | School of Art and Design      | old    | stdart | Studio Art             | art         |
+               | art  | School of Art & Design        | old    | stdart | Studio Art             | art         |
                | mus  | School of Music & Dance       | south  | str    | Strings                | mus         |
                | edu  | College of Education          | old    | tched  | Teacher Education      | edu         |
                | mus  | School of Music & Dance       | south  | voc    | Vocals                 | mus         |
@@ -19043,7 +19043,7 @@ tests:
                +-------------------------------------------------------------------+
                | code | name                          | campus | count(department) |
               -+------+-------------------------------+--------+-------------------+-
-               | art  | School of Art and Design      | old    |                 2 |
+               | art  | School of Art & Design        | old    |                 2 |
                | bus  | School of Business            | south  |                 3 |
                | edu  | College of Education          | old    |                 2 |
                | eng  | School of Engineering         | north  |                 4 |
@@ -19076,7 +19076,7 @@ tests:
                +----------------------------------------------------------------------------------+
                | code | name                          | campus | count(department?exists(course)) |
               -+------+-------------------------------+--------+----------------------------------+-
-               | art  | School of Art and Design      | old    |                                2 |
+               | art  | School of Art & Design        | old    |                                2 |
                | bus  | School of Business            | south  |                                3 |
                | edu  | College of Education          | old    |                                2 |
                | eng  | School of Engineering         | north  |                                4 |
@@ -19113,7 +19113,7 @@ tests:
                +----------------------------------------------------------------------------------+
                | code | name                          | campus | count(department.exists(course)) |
               -+------+-------------------------------+--------+----------------------------------+-
-               | art  | School of Art and Design      | old    |                                2 |
+               | art  | School of Art & Design        | old    |                                2 |
                | bus  | School of Business            | south  |                                3 |
                | edu  | College of Education          | old    |                                2 |
                | eng  | School of Engineering         | north  |                                4 |
@@ -20139,12 +20139,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                   |
-               +------------------------------------------+
-               | code | name                     | campus |
-              -+------+--------------------------+--------+-
-               | art  | School of Art and Design | old    |
-                                                    (1 row)
+               | school                                 |
+               +----------------------------------------+
+               | code | name                   | campus |
+              -+------+------------------------+--------+-
+               | art  | School of Art & Design | old    |
+                                                  (1 row)
 
                ----
                /(program?school.code='art').school.limit(1)
@@ -20532,7 +20532,7 @@ tests:
                +----------------------------------------------------+
                | code | name                          | code | code |
               -+------+-------------------------------+------+------+-
-               | art  | School of Art and Design      |      |      |
+               | art  | School of Art & Design        |      |      |
                | bus  | School of Business            | bus  | bus  |
                | edu  | College of Education          | edu  | edu  |
                | eng  | School of Engineering         | eng  | eng  |
@@ -20564,7 +20564,7 @@ tests:
                +-----------------------------------------------------------------------+
                | name                          | count(department) | count(department) |
               -+-------------------------------+-------------------+-------------------+-
-               | School of Art and Design      |                 2 |                   |
+               | School of Art & Design        |                 2 |                   |
                | School of Business            |                 3 |                 3 |
                | College of Education          |                 2 |                 2 |
                | School of Engineering         |                 4 |                 4 |
@@ -20606,7 +20606,7 @@ tests:
                +-------------------------------------------------------------------------+
                | name                          | exists(department) | exists(department) |
               -+-------------------------------+--------------------+--------------------+-
-               | School of Art and Design      | true               |                    |
+               | School of Art & Design        | true               |                    |
                | School of Business            | true               | true               |
                | College of Education          | true               | true               |
                | School of Engineering         | true               | true               |
@@ -20725,16 +20725,16 @@ tests:
                +-----------------------------------------------------------------------------------------------+
                | code | name                          | campus | code | name                          | campus |
               -+------+-------------------------------+--------+------+-------------------------------+--------+-
-               | art  | School of Art and Design      | old    | art  | School of Art and Design      | old    |
-               | art  | School of Art and Design      | old    | bus  | School of Business            | south  |
-               | art  | School of Art and Design      | old    | edu  | College of Education          | old    |
-               | art  | School of Art and Design      | old    | eng  | School of Engineering         | north  |
-               | art  | School of Art and Design      | old    | la   | School of Arts and Humanities | old    |
-               | art  | School of Art and Design      | old    | mus  | School of Music & Dance       | south  |
-               | art  | School of Art and Design      | old    | ns   | School of Natural Sciences    | old    |
-               | art  | School of Art and Design      | old    | ph   | Public Honorariums            |        |
-               | art  | School of Art and Design      | old    | sc   | School of Continuing Studies  |        |
-               | bus  | School of Business            | south  | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    | art  | School of Art & Design        | old    |
+               | art  | School of Art & Design        | old    | bus  | School of Business            | south  |
+               | art  | School of Art & Design        | old    | edu  | College of Education          | old    |
+               | art  | School of Art & Design        | old    | eng  | School of Engineering         | north  |
+               | art  | School of Art & Design        | old    | la   | School of Arts and Humanities | old    |
+               | art  | School of Art & Design        | old    | mus  | School of Music & Dance       | south  |
+               | art  | School of Art & Design        | old    | ns   | School of Natural Sciences    | old    |
+               | art  | School of Art & Design        | old    | ph   | Public Honorariums            |        |
+               | art  | School of Art & Design        | old    | sc   | School of Continuing Studies  |        |
+               | bus  | School of Business            | south  | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  | bus  | School of Business            | south  |
                | bus  | School of Business            | south  | edu  | College of Education          | old    |
                | bus  | School of Business            | south  | eng  | School of Engineering         | north  |
@@ -20743,7 +20743,7 @@ tests:
                | bus  | School of Business            | south  | ns   | School of Natural Sciences    | old    |
                | bus  | School of Business            | south  | ph   | Public Honorariums            |        |
                | bus  | School of Business            | south  | sc   | School of Continuing Studies  |        |
-               | edu  | College of Education          | old    | art  | School of Art and Design      | old    |
+               | edu  | College of Education          | old    | art  | School of Art & Design        | old    |
                | edu  | College of Education          | old    | bus  | School of Business            | south  |
                | edu  | College of Education          | old    | edu  | College of Education          | old    |
                | edu  | College of Education          | old    | eng  | School of Engineering         | north  |
@@ -20752,7 +20752,7 @@ tests:
                | edu  | College of Education          | old    | ns   | School of Natural Sciences    | old    |
                | edu  | College of Education          | old    | ph   | Public Honorariums            |        |
                | edu  | College of Education          | old    | sc   | School of Continuing Studies  |        |
-               | eng  | School of Engineering         | north  | art  | School of Art and Design      | old    |
+               | eng  | School of Engineering         | north  | art  | School of Art & Design        | old    |
                | eng  | School of Engineering         | north  | bus  | School of Business            | south  |
                | eng  | School of Engineering         | north  | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  | eng  | School of Engineering         | north  |
@@ -20761,7 +20761,7 @@ tests:
                | eng  | School of Engineering         | north  | ns   | School of Natural Sciences    | old    |
                | eng  | School of Engineering         | north  | ph   | Public Honorariums            |        |
                | eng  | School of Engineering         | north  | sc   | School of Continuing Studies  |        |
-               | la   | School of Arts and Humanities | old    | art  | School of Art and Design      | old    |
+               | la   | School of Arts and Humanities | old    | art  | School of Art & Design        | old    |
                | la   | School of Arts and Humanities | old    | bus  | School of Business            | south  |
                | la   | School of Arts and Humanities | old    | edu  | College of Education          | old    |
                | la   | School of Arts and Humanities | old    | eng  | School of Engineering         | north  |
@@ -20770,7 +20770,7 @@ tests:
                | la   | School of Arts and Humanities | old    | ns   | School of Natural Sciences    | old    |
                | la   | School of Arts and Humanities | old    | ph   | Public Honorariums            |        |
                | la   | School of Arts and Humanities | old    | sc   | School of Continuing Studies  |        |
-               | mus  | School of Music & Dance       | south  | art  | School of Art and Design      | old    |
+               | mus  | School of Music & Dance       | south  | art  | School of Art & Design        | old    |
                | mus  | School of Music & Dance       | south  | bus  | School of Business            | south  |
                | mus  | School of Music & Dance       | south  | edu  | College of Education          | old    |
                | mus  | School of Music & Dance       | south  | eng  | School of Engineering         | north  |
@@ -20779,7 +20779,7 @@ tests:
                | mus  | School of Music & Dance       | south  | ns   | School of Natural Sciences    | old    |
                | mus  | School of Music & Dance       | south  | ph   | Public Honorariums            |        |
                | mus  | School of Music & Dance       | south  | sc   | School of Continuing Studies  |        |
-               | ns   | School of Natural Sciences    | old    | art  | School of Art and Design      | old    |
+               | ns   | School of Natural Sciences    | old    | art  | School of Art & Design        | old    |
                | ns   | School of Natural Sciences    | old    | bus  | School of Business            | south  |
                | ns   | School of Natural Sciences    | old    | edu  | College of Education          | old    |
                | ns   | School of Natural Sciences    | old    | eng  | School of Engineering         | north  |
@@ -20788,7 +20788,7 @@ tests:
                | ns   | School of Natural Sciences    | old    | ns   | School of Natural Sciences    | old    |
                | ns   | School of Natural Sciences    | old    | ph   | Public Honorariums            |        |
                | ns   | School of Natural Sciences    | old    | sc   | School of Continuing Studies  |        |
-               | ph   | Public Honorariums            |        | art  | School of Art and Design      | old    |
+               | ph   | Public Honorariums            |        | art  | School of Art & Design        | old    |
                | ph   | Public Honorariums            |        | bus  | School of Business            | south  |
                | ph   | Public Honorariums            |        | edu  | College of Education          | old    |
                | ph   | Public Honorariums            |        | eng  | School of Engineering         | north  |
@@ -20797,7 +20797,7 @@ tests:
                | ph   | Public Honorariums            |        | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        | ph   | Public Honorariums            |        |
                | ph   | Public Honorariums            |        | sc   | School of Continuing Studies  |        |
-               | sc   | School of Continuing Studies  |        | art  | School of Art and Design      | old    |
+               | sc   | School of Continuing Studies  |        | art  | School of Art & Design        | old    |
                | sc   | School of Continuing Studies  |        | bus  | School of Business            | south  |
                | sc   | School of Continuing Studies  |        | edu  | College of Education          | old    |
                | sc   | School of Continuing Studies  |        | eng  | School of Engineering         | north  |
@@ -21553,7 +21553,7 @@ tests:
               -+------+-------------------------------+--------+-
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | edu  | College of Education          | old    |
                | bus  | School of Business            | south  |
                | eng  | School of Engineering         | north  |
@@ -21904,12 +21904,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | school                                   |
-               +------------------------------------------+
-               | code | name                     | campus |
-              -+------+--------------------------+--------+-
-               | art  | School of Art and Design | old    |
-                                                    (1 row)
+               | school                                 |
+               +----------------------------------------+
+               | code | name                   | campus |
+              -+------+------------------------+--------+-
+               | art  | School of Art & Design | old    |
+                                                  (1 row)
 
                ----
                /'art'->school{code}
@@ -22514,12 +22514,12 @@ tests:
             headers:
             - [Content-Type, text/plain; charset=UTF-8]
             body: |2
-               | fork()                                   |
-               +------------------------------------------+
-               | code | name                     | campus |
-              -+------+--------------------------+--------+-
-               | art  | School of Art and Design | old    |
-                                                    (1 row)
+               | fork()                                 |
+               +----------------------------------------+
+               | code | name                   | campus |
+              -+------+------------------------+--------+-
+               | art  | School of Art & Design | old    |
+                                                  (1 row)
 
                ----
                /school.fork().fork().fork().limit(1)
@@ -22768,7 +22768,7 @@ tests:
                +-----------------------------------------------+
                | code | name                          | campus |
               -+------+-------------------------------+--------+-
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22777,7 +22777,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22786,7 +22786,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22795,7 +22795,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22804,7 +22804,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22813,7 +22813,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22822,7 +22822,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22831,7 +22831,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -22840,7 +22840,7 @@ tests:
                | ns   | School of Natural Sciences    | old    |
                | ph   | Public Honorariums            |        |
                | sc   | School of Continuing Studies  |        |
-               | art  | School of Art and Design      | old    |
+               | art  | School of Art & Design        | old    |
                | bus  | School of Business            | south  |
                | edu  | College of Education          | old    |
                | eng  | School of Engineering         | north  |
@@ -25972,7 +25972,7 @@ tests:
                 {"title": "campus", "domain": "string"}
               ],
               "data": [
-                ["art", "School of Art and Design", "old"],
+                ["art", "School of Art & Design", "old"],
                 ["bus", "School of Business", "south"],
                 ["edu", "College of Education", "old"],
                 ["eng", "School of Engineering", "north"],
@@ -25988,7 +25988,7 @@ tests:
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="school.csv"]
-          body: "code,name,campus\r\nart,School of Art and Design,old\r\nbus,School
+          body: "code,name,campus\r\nart,School of Art & Design,old\r\nbus,School
             of Business,south\r\nedu,College of Education,old\r\neng,School of Engineering,north\r\nla,School
             of Arts and Humanities,old\r\nmus,School of Music & Dance,south\r\nns,School
             of Natural Sciences,old\r\nph,Public Honorariums,\r\nsc,School of Continuing
@@ -25998,7 +25998,7 @@ tests:
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="school.tsv"]
-          body: "code\tname\tcampus\r\nart\tSchool of Art and Design\told\r\nbus\tSchool
+          body: "code\tname\tcampus\r\nart\tSchool of Art & Design\told\r\nbus\tSchool
             of Business\tsouth\r\nedu\tCollege of Education\told\r\neng\tSchool of
             Engineering\tnorth\r\nla\tSchool of Arts and Humanities\told\r\nmus\tSchool
             of Music & Dance\tsouth\r\nns\tSchool of Natural Sciences\told\r\nph\tPublic
@@ -26012,7 +26012,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -26071,7 +26071,7 @@ tests:
             <table class="list" summary="school">
             <tr class="header"><th class="spanning" colspan="3">school</th></tr>
             <tr class="header"><th>code</th><th>name</th><th>campus</th></tr>
-            <tr class="odd"><td>art</td><td>School of Art and Design</td><td>old</td></tr>
+            <tr class="odd"><td>art</td><td>School of Art &amp; Design</td><td>old</td></tr>
             <tr class="even"><td>bus</td><td>School of Business</td><td>south</td></tr>
             <tr class="odd"><td>edu</td><td>College of Education</td><td>old</td></tr>
             <tr class="even"><td>eng</td><td>School of Engineering</td><td>north</td></tr>
@@ -26109,7 +26109,7 @@ tests:
                 {"title": "campus", "domain": "string"}
               ],
               "data": [
-                ["art", "School of Art and Design", "old"],
+                ["art", "School of Art & Design", "old"],
                 ["bus", "School of Business", "south"],
                 ["edu", "College of Education", "old"],
                 ["eng", "School of Engineering", "north"],
@@ -26125,7 +26125,7 @@ tests:
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="school.csv"]
-          body: "code,name,campus\r\nart,School of Art and Design,old\r\nbus,School
+          body: "code,name,campus\r\nart,School of Art & Design,old\r\nbus,School
             of Business,south\r\nedu,College of Education,old\r\neng,School of Engineering,north\r\nla,School
             of Arts and Humanities,old\r\nmus,School of Music & Dance,south\r\nns,School
             of Natural Sciences,old\r\nph,Public Honorariums,\r\nsc,School of Continuing
@@ -26135,7 +26135,7 @@ tests:
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="school.tsv"]
-          body: "code\tname\tcampus\r\nart\tSchool of Art and Design\told\r\nbus\tSchool
+          body: "code\tname\tcampus\r\nart\tSchool of Art & Design\told\r\nbus\tSchool
             of Business\tsouth\r\nedu\tCollege of Education\told\r\neng\tSchool of
             Engineering\tnorth\r\nla\tSchool of Arts and Humanities\told\r\nmus\tSchool
             of Music & Dance\tsouth\r\nns\tSchool of Natural Sciences\told\r\nph\tPublic
@@ -26149,7 +26149,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -26208,7 +26208,7 @@ tests:
             <table class="list" summary="school">
             <tr class="header"><th class="spanning" colspan="3">school</th></tr>
             <tr class="header"><th>code</th><th>name</th><th>campus</th></tr>
-            <tr class="odd"><td>art</td><td>School of Art and Design</td><td>old</td></tr>
+            <tr class="odd"><td>art</td><td>School of Art &amp; Design</td><td>old</td></tr>
             <tr class="even"><td>bus</td><td>School of Business</td><td>south</td></tr>
             <tr class="odd"><td>edu</td><td>College of Education</td><td>old</td></tr>
             <tr class="even"><td>eng</td><td>School of Engineering</td><td>north</td></tr>
@@ -26307,7 +26307,7 @@ tests:
                 {"title": "# of Departments", "domain": "number"}
               ],
               "data": [
-                ["School of Art and Design", 2],
+                ["School of Art & Design", 2],
                 ["School of Business", 3],
                 ["College of Education", 2],
                 ["School of Engineering", 4],
@@ -26324,17 +26324,17 @@ tests:
           headers:
           - [Content-Type, text/csv; charset=UTF-8]
           - [Content-Disposition, attachment; filename="List of Schools.csv"]
-          body: "Name,# of Departments\r\nSchool of Art and Design,2\r\nSchool of
-            Business,3\r\nCollege of Education,2\r\nSchool of Engineering,4\r\nSchool
-            of Arts and Humanities,5\r\nSchool of Music & Dance,4\r\nSchool of Natural
-            Sciences,4\r\nPublic Honorariums,0\r\nSchool of Continuing Studies,0\r\n"
+          body: "Name,# of Departments\r\nSchool of Art & Design,2\r\nSchool of Business,3\r\nCollege
+            of Education,2\r\nSchool of Engineering,4\r\nSchool of Arts and Humanities,5\r\nSchool
+            of Music & Dance,4\r\nSchool of Natural Sciences,4\r\nPublic Honorariums,0\r\nSchool
+            of Continuing Studies,0\r\n"
         - uri: /(school :as 'List of Schools') {name :as Name, count(department) :as
             '# of Departments'} /:tsv
           status: 200 OK
           headers:
           - [Content-Type, text/tab-separated-values; charset=UTF-8]
           - [Content-Disposition, attachment; filename="List of Schools.tsv"]
-          body: "Name\t# of Departments\r\nSchool of Art and Design\t2\r\nSchool of
+          body: "Name\t# of Departments\r\nSchool of Art & Design\t2\r\nSchool of
             Business\t3\r\nCollege of Education\t2\r\nSchool of Engineering\t4\r\nSchool
             of Arts and Humanities\t5\r\nSchool of Music & Dance\t4\r\nSchool of Natural
             Sciences\t4\r\nPublic Honorariums\t0\r\nSchool of Continuing Studies\t0\r\n"
@@ -26348,7 +26348,7 @@ tests:
              +--------------------------------------------------+
              | Name                          | # of Departments |
             -+-------------------------------+------------------+-
-             | School of Art and Design      |                2 |
+             | School of Art & Design        |                2 |
              | School of Business            |                3 |
              | College of Education          |                2 |
              | School of Engineering         |                4 |
@@ -26412,7 +26412,7 @@ tests:
             <table class="list" summary="List of Schools">
             <tr class="header"><th class="spanning" colspan="2">List of Schools</th></tr>
             <tr class="header"><th>Name</th><th># of Departments</th></tr>
-            <tr class="odd"><td>School of Art and Design</td><td class="number">2</td></tr>
+            <tr class="odd"><td>School of Art &amp; Design</td><td class="number">2</td></tr>
             <tr class="even"><td>School of Business</td><td class="number">3</td></tr>
             <tr class="odd"><td>College of Education</td><td class="number">2</td></tr>
             <tr class="even"><td>School of Engineering</td><td class="number">4</td></tr>
@@ -26725,7 +26725,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -26752,7 +26752,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -26783,7 +26783,7 @@ tests:
                 {"title": "campus", "domain": "string"}
               ],
               "data": [
-                ["art", "School of Art and Design", "old"],
+                ["art", "School of Art & Design", "old"],
                 ["bus", "School of Business", "south"],
                 ["edu", "College of Education", "old"],
                 ["eng", "School of Engineering", "north"],
@@ -26902,7 +26902,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -26937,7 +26937,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -26980,7 +26980,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27015,7 +27015,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27239,7 +27239,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27270,7 +27270,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27309,7 +27309,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27336,15 +27336,15 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                   |
-             +------------------------------------------+
-             | code | name                     | campus |
-            -+------+--------------------------+--------+-
-             | art  | School of Art and Design | old    |
-             | bus  | School of Business       | south  |
-             | edu  | College of Education     | old    |
-             | eng  | School of Engineering    | north  |
-                                                 (4 rows)
+             | school                                 |
+             +----------------------------------------+
+             | code | name                   | campus |
+            -+------+------------------------+--------+-
+             | art  | School of Art & Design | old    |
+             | bus  | School of Business     | south  |
+             | edu  | College of Education   | old    |
+             | eng  | School of Engineering  | north  |
+                                               (4 rows)
 
              ----
              /school.limit(4)
@@ -27548,7 +27548,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27604,7 +27604,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27632,7 +27632,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -27659,7 +27659,7 @@ tests:
              +-----------------------------------------------+
              | code | name                          | campus |
             -+------+-------------------------------+--------+-
-             | art  | School of Art and Design      | old    |
+             | art  | School of Art & Design        | old    |
              | bus  | School of Business            | south  |
              | edu  | College of Education          | old    |
              | eng  | School of Engineering         | north  |
@@ -30194,12 +30194,12 @@ tests:
           headers:
           - [Content-Type, text/plain; charset=UTF-8]
           body: |2
-             | school                                   |
-             +------------------------------------------+
-             | code | name                     | campus |
-            -+------+--------------------------+--------+-
-             | art  | School of Art and Design | old    |
-                                                  (1 row)
+             | school                                 |
+             +----------------------------------------+
+             | code | name                   | campus |
+            -+------+------------------------+--------+-
+             | art  | School of Art & Design | old    |
+                                                (1 row)
 
              ----
              /school{code,name,campus}?code='art'
@@ -31546,7 +31546,7 @@ tests:
 
           URI: /school
 
-          school(code=u''art'', name=u''School of Art and Design'', campus=u''old'')
+          school(code=u''art'', name=u''School of Art & Design'', campus=u''old'')
 
           school(code=u''bus'', name=u''School of Business'', campus=u''south'')
 

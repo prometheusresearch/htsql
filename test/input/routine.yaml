@@ -8,7 +8,10 @@ id: routine
 output: test/output/routine.yaml
 tests:
 - ctl: []
+- ctl: [--help]
+- ctl: [--version]
 - ctl: [help]
 - ctl: [help, help]
+- ctl: [version]
 # FIXME: need comprehensive tests for each routine.
 
