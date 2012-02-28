@@ -43,9 +43,8 @@ HTSQL is a Relational Database Gateway
 
 .. vsplit::
 
-   .. sourcecode:: htsql
-
-      /school
+   .. htsql:: /school
+      :hide:
 
    .. sourcecode:: sql
 
@@ -69,7 +68,8 @@ HTSQL is an Advanced Query Language
 
 .. vsplit::
 
-   .. sourcecode:: htsql
+   .. htsql::
+      :hide:
 
       /school{name,
               count(program),
@@ -103,7 +103,8 @@ HTSQL is a Communication Tool
       - and the average number of courses
         across each of its departments?
 
-   .. sourcecode:: htsql
+   .. htsql::
+      :hide:
 
       /school{name, campus, 
               count(program), 
