@@ -8,9 +8,9 @@
 Binary Packages
 ===============
 
-We provide binary packages for various Linux platforms.  They are
-available at http://htsql.org/download.html.
+We provide binary packages for various Linux platforms.  
 
+They are available at http://htsql.org/download/.
 
 Installing from Source
 ======================
