@@ -11,12 +11,13 @@ referenced as a source package.  Our free software source packages
 exclude these proprietary adapters.
 
 In this repository, some components considered broadly useful, but
-ancillary to HTSQL itself, are released under the MIT license. Example
+ancillary to HTSQL itself, are released under the MIT license.  Example
 code snippets, configuration, and applications are placed into the
-public domain using the CC0 copyright dedication. These exceptions to
+public domain using the CC0 copyright dedication.  These exceptions to
 the general license outline above are marked on a file by file basis.
 
 To join this project or learn about how to contribute, please read
 http://htsql.org/community/.  In particular, most enhancements for HTSQL
 could be added through a runtime extension mechanism and do not require
 write access to this source code repository.
+

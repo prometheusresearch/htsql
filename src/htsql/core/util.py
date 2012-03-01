@@ -50,7 +50,7 @@ class DB(object):
     `database`
         The database name.
 
-        For SQLite, the path to the database file.
+        For SQLite, the path to the database file, or `:memory:`.
 
     `options`
         A dictionary containing extra connection parameters.
@@ -170,6 +170,8 @@ class DB(object):
 
         # If a string is given, assume it is a connection URI and parse it.
         if isinstance(value, str):
+            if value in ('sqlite:memory:', 'sqlite::memory:', 'sqlite:///:memory:'):
+                 value = 'sqlite:///%3Amemory%3A'
             match = cls.regexp.search(value)
             if match is None:
                 raise ValueError("expected a connection URI of the form"
