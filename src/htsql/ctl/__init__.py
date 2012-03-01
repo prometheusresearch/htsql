@@ -39,7 +39,6 @@ class HTSQL_CTL(Script):
             DefaultRoutine,
             HelpRoutine,
             VersionRoutine,
-            EncodeRoutine,
             ExtensionRoutine,
             ServerRoutine,
             ShellRoutine,
