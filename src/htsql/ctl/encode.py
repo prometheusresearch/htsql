@@ -33,21 +33,7 @@ class EncodeRoutine(Routine):
     """
 
     def run(self):
-        isatty = os.isatty(self.ctl.stdin.fileno())
-        if isatty:
-           self.ctl.out("Type your query fragment and finish with a blank line.")
-        if isatty:
-            chunks = []
-            while True:
-                chunk = self.ctl.stdin.readline().rstrip()
-                if not chunk:
-                    self.ctl.out("The percent-encoded fragment is:")
-                    self.ctl.out()
-                    break
-                chunks.append(chunk)
-            input = "\n".join(chunks)
-        else:
-            input = self.ctl.stdin.read().rstrip()
+        input = self.ctl.input("What is the query fragment?")
         self.ctl.out(urllib.quote(input))
-        if isatty:
+        if self.ctl.isatty:
             self.ctl.out()
