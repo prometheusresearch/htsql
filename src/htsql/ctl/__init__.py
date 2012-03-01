@@ -21,6 +21,7 @@ from .server import ServerRoutine
 from .shell import ShellRoutine
 from .request import GetRoutine, PostRoutine
 from .regress import RegressRoutine
+from .encode import EncodeRoutine
 import sys
 
 
@@ -38,6 +39,7 @@ class HTSQL_CTL(Script):
             DefaultRoutine,
             HelpRoutine,
             VersionRoutine,
+            EncodeRoutine,
             ExtensionRoutine,
             ServerRoutine,
             ShellRoutine,
