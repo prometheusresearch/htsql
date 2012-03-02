@@ -332,7 +332,7 @@ class PagerCmd(Cmd):
             return
         if self.argument == 'on':
             # `stdin` and `stdout` must come from a terminal.
-            if not self.routine.is_interactive:
+            if not self.ctl.is_interactive:
                 self.ctl.out("** pager cannot be enabled"
                              " in the non-interactive mode")
                 return
@@ -529,7 +529,7 @@ class GetPostBaseCmd(Cmd):
         # Prepare the WSGI `environ` for a POST request.
         if self.method == 'POST':
             # Get the name of the file containing POST data of the request.
-            if self.routine.is_interactive:
+            if self.ctl.is_interactive:
                 self.ctl.out("File with POST data:", end=" ")
             content_path = self.ctl.stdin.readline().strip()
             if not content_path:
@@ -544,7 +544,7 @@ class GetPostBaseCmd(Cmd):
             default_content_type = mimetypes.guess_type(content_path)[0]
             if default_content_type is None:
                 default_content_type = 'application/octet-stream'
-            if self.routine.is_interactive:
+            if self.ctl.is_interactive:
                 self.ctl.out("Content type [%s]:" % default_content_type,
                              end=" ")
             content_type = self.ctl.stdin.readline().strip()
@@ -890,12 +890,6 @@ class ShellRoutine(Routine):
 
     def __init__(self, ctl, attributes):
         super(ShellRoutine, self).__init__(ctl, attributes)
-        self.is_interactive = (hasattr(ctl.stdin, 'isatty') and
-                               ctl.stdin.isatty() and
-                               ctl.stdin is sys.stdin and
-                               hasattr(ctl.stdout, 'isatty') and
-                               ctl.stdout.isatty() and
-                               ctl.stdout is sys.stdout)
         # A mapping of command_class.name -> command_class
         self.command_by_name = {}
         # Path to the pager.
