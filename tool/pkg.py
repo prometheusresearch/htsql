@@ -113,6 +113,7 @@ def pkg_src():
     addons = yaml.load(pipe_python("-c 'import setup, yaml;"
                                    " print yaml.dump(setup.get_addons())'"))
     cfg_all = list(yaml.load_all(open(DATA_ROOT+"/pkg/source/setup.yaml").read()))
+    with_doc = True
     src_vm.start()
     try:
         cfg_common = cfg_all[0]
@@ -133,6 +134,10 @@ def pkg_src():
                 % (CTL_DIR+"/ssh_config"))
             src_vm.unforward(22)
             src_vm.run("cd htsql && hg update")
+            if with_doc:
+                src_vm.run("cd htsql &&"
+                           " PYTHONPATH=src sphinx-build -d doc doc doc/html")
+                with_doc = False
             for filename, data in extra:
                 src_vm.write("htsql/"+filename, data)
             src_vm.run("cd htsql && python setup.py sdist --formats=zip,gztar")
