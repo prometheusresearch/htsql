@@ -18,7 +18,8 @@ from .option import PasswordOption, ExtensionsOption, ConfigOption
 from .request import Request, ConfigYAMLLoader
 from ..core.validator import DBVal
 from ..core.util import DB, listof, trim_doc
-from ..core.model import HomeNode, InvalidNode, InvalidArc
+from ..core.model import (HomeNode, InvalidNode, InvalidArc, TableArc, 
+                          ColumnArc, ChainArc, AmbiguousArc)
 from ..core.classify import classify, normalize
 import traceback
 import StringIO
@@ -743,6 +744,86 @@ class ShellState(object):
         self.completer_delims = completer_delims
         self.completions = completions
 
+class DescribeCmd(Cmd):
+    """
+    Implements the `describe` command.
+    """
+
+    name = 'describe'
+    signature = """describe [table]"""
+    hint = """lists tables, or, if given a table, it's columns and links"""
+    help = """
+    Type `describe` to list all tables or `describe <table>` to list
+    all columns and links for a given table.
+    """
+
+    @classmethod
+    def complete(cls, routine, argument):
+        if argument:
+            return None
+        with routine.state.app:
+             return [label.name for label in classify(HomeNode())]
+
+    def execute(self):
+        with self.state.app:
+             root_labels = classify(HomeNode())
+
+        if not self.argument:
+            #
+            # Enumerate introspected tables if one isn't provided
+            #
+            if not(root_labels):
+                 self.ctl.out("No tables introspected or configured.")
+                 return
+            self.ctl.out("Tables introspected for this database are:")
+            for label in root_labels:
+                if not isinstance(label.arc, TableArc):
+                     continue
+                if label.name == label.arc.target.table.name:
+                    self.ctl.out("\t%s" % label.name)
+                else:
+                    self.ctl.out("\t%s (%s)" % (label.name,
+                                                label.arc.target.table.name))
+            self.ctl.out()
+            return
+        #
+        # Dump table attributes if a specific table is requested.
+        #
+        slots = None
+        with self.state.app:
+            for label in root_labels:
+                if label.name == self.argument:
+                    slots = classify(label.arc.target)
+        if slots is None:
+            self.ctl.out("Unable to find table: %s" % self.argument)
+            self.ctl.out()
+            return
+
+        max_width = 0
+        for slot in slots:
+            if isinstance(slot.arc, AmbiguousArc):
+                continue
+            if len(slot.name) > max_width:
+                max_width = len(slot.name)
+        if not max_width:
+            self.ctl.out("Table `%s` has no slots." % self.argument)
+            self.ctl.out()
+            return
+
+        self.ctl.out("Slots for `%s` are:" % self.argument)
+        for slot in slots:
+            name = slot.name.ljust(max_width)
+            post = str(slot.arc.target)
+            if isinstance(slot.arc, ChainArc):
+                if slot.arc.is_expanding:
+                    post = "SINGULAR(%s)" % post
+                else:
+                    post = "PLURAL(%s)" % post
+            if isinstance(slot.arc, AmbiguousArc):
+                continue
+            self.ctl.out("\t %s %s" % (name, post))
+        self.ctl.out()
+
 
 class ShellRoutine(Routine):
     """
@@ -795,6 +876,7 @@ class ShellRoutine(Routine):
             HelpCmd,
             ExitCmd,
             UserCmd,
+            DescribeCmd,
             HeadersCmd,
             PagerCmd,
             GetCmd,
