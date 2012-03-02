@@ -437,6 +437,14 @@ tests:
   - uri: /student{name, dob}?dob>max_dob()-30
   - uri: /student^trunc_year(dob){*, count(^)}
 
+# TWEAK.POOL - cache database connections
+- title: tweak.pool
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.pool]
+  # No need for special tests since `tweak.pool` is already used
+  # with regular tests for all database adapters except SQLite.
+
 # TWEAK.RESOURCE - serve static files
 - title: tweak.resource
   tests:

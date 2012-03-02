@@ -45,6 +45,7 @@ def get_addons():
         'tweak.meta = htsql.tweak.meta:TweakMetaAddon',
         'tweak.meta.slave = htsql.tweak.meta.slave:TweakMetaSlaveAddon',
         'tweak.override = htsql.tweak.override:TweakOverrideAddon',
+        'tweak.pool = htsql.tweak.pool:TweakPoolAddon',
         'tweak.resource = htsql.tweak.resource:TweakResourceAddon',
         'tweak.shell = htsql.tweak.shell:TweakShellAddon',
         'tweak.shell.default = htsql.tweak.shell.default:TweakShellDefaultAddon',

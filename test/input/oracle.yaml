@@ -99,10 +99,16 @@ tests:
   tests:
   - define: oracle
   - db: *connect-sandbox
+    extensions:
+      tweak.pool: {}
     save: sandbox
   - db: *connect-edge
+    extensions:
+      tweak.pool: {}
     save: edge
   - db: *connect-demo
+    extensions:
+      tweak.pool: {}
     save: demo
   # The Regression Schema
   - include: test/input/schema.yaml
