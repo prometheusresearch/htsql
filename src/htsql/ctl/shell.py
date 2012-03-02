@@ -901,7 +901,7 @@ class ShellRoutine(Routine):
         # Set `pager` and `pager_line_threshold`.
         self.init_pager()
         # The mutable shell state.
-        self.state = ShellState(with_pager=(self.is_interactive and
+        self.state = ShellState(with_pager=(self.ctl.is_interactive and
                                             self.pager is not None))
 
     def init_commands(self):
@@ -980,7 +980,7 @@ class ShellRoutine(Routine):
 
     def setup(self):
         # Load the `readline` history; initialize completion.
-        if self.is_interactive and readline is not None:
+        if self.ctl.is_interactive and readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             if os.path.exists(path):
                 readline.read_history_file(path)
@@ -992,14 +992,14 @@ class ShellRoutine(Routine):
             readline.parse_and_bind("tab: complete")
 
         # Display the welcome notice.
-        if self.is_interactive:
+        if self.ctl.is_interactive:
             intro = self.get_intro()
             if intro:
                 self.ctl.out(intro)
 
     def shutdown(self):
         # Save the `readline` history; restore the original state of completion.
-        if self.is_interactive and readline is not None:
+        if self.ctl.is_interactive and readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             readline.write_history_file(path)
             readline.set_completer(self.state.completer)
@@ -1008,7 +1008,7 @@ class ShellRoutine(Routine):
     def loop(self):
         # Display the prompt and read the command from the console.
         # On EOF, exit the loop.
-        if self.is_interactive:
+        if self.ctl.is_interactive:
             prompt = "$ "
             app = self.state.app
             if app is not None and app.htsql.db is not None:

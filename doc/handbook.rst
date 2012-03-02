@@ -29,25 +29,23 @@ First Steps
 -----------
 
 The HTSQL interpreter requires a database to be useful.  You could test
-things out with our ``htsql_demo`` demo SQLite database.  You could
-download this database::
+things out with our ``htsql_demo`` demo SQLite database.  To get a copy
+of this, you could download it using ``wget`` or some other tool::
 
    $ wget http://htsql.org/dist/htsql_demo.sqlite
 
-The ``get`` routine of ``htsql-ctl`` could be used to list the data
-found in a table, such as ``school``::
+For starters, you could use the ``get`` routine of ``htsql-ctl`` to list
+the contents of a given table, such as ``school``::
 
    $ htsql-ctl get sqlite:htsql_demo.sqlite /school
    ...
 
-If this returns an error, you could enumerate tables, using ``describe``
-routine to see if the introspection was successful::
+At this point, you could then use ``htsql-ctl shell`` to try examples in
+our :doc:`overview <overview>` and/or :doc:`tutorial <tutorial>`::
 
-   $ htsql-ctl describe sqlite:htsql_demo.sqlite
+   $ htsql-ctl shell sqlite:htsql_demo.sqlite
 
-This command ``shell`` has limited schema-based completion.  So, you
-could type ``/s`` then the TAB character to list tables that start 
-with ``s``.  At this point, you should be able to walk through our
-:doc:`overview <overview>` and/or :doc:`tutorial <tutorial>` with your
-local installation.
+The ``shell`` command has limited schema-based completion.  For example,
+if you type ``/s`` and then press the TAB character, it will list all of
+of the possibe completions: ``school``, ``semester``, and ``student``.
 

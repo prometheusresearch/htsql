@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
+# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -24,7 +25,7 @@ DEBIAN_ISO_URLS = [
 ]
 
 CENTOS_ISO_URLS = [
-    "http://mirrors.cmich.edu/centos/6.0/isos/i386/CentOS-6.0-i386-minimal.iso",
+    "http://mirrors.cmich.edu/centos/6.2/isos/i386/CentOS-6.2-i386-minimal.iso",
 ]
 
 WINDOWS_ISO_FILES = [
@@ -364,7 +365,7 @@ class DebianTemplateVM(VM):
 
 
 class CentOSTemplateVM(VM):
-    # CentOS 6.0 (32-bit) VM.
+    # CentOS 6.2 (32-bit) VM.
 
     def __init__(self, name):
         super(CentOSTemplateVM, self).__init__(name, 'linux')
