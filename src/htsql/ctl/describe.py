@@ -18,7 +18,7 @@ from .option import PasswordOption, ExtensionsOption, ConfigOption
 from .request import Request, ConfigYAMLLoader
 from ..core.validator import DBVal
 from ..core.util import DB, listof, trim_doc
-from ..core.model import HomeNode, ChainArc, ColumnArc
+from ..core.model import HomeNode, ChainArc, ColumnArc, TableArc, AmbiguousArc
 from ..core.classify import classify, normalize
 from .error import ScriptError
 from .routine import Routine, Argument
@@ -92,42 +92,62 @@ class DescribeRoutine(Routine):
             raise ScriptError("failed to construct application: %s" % exc)
       
         with app:
-            def describe_table(label, show_columns=False):
-                self.ctl.out("table: %s" % label.name)
-                children = classify(label.arc.target)
-                if show_columns:
-                    for label in children:
-                        if not isinstance(label.arc, ColumnArc):
-                            continue
-                        self.ctl.out(" %s is %s" % (label.name, label.arc.target))
-                for label in children:
-                    if isinstance(label.arc, ChainArc):
-                        if label.name == label.arc.target.table.name:
-                            description = label.name
-                        else:
-                            description = "%s [%s]" % (label.name, label.arc.target)
-                        if label.arc.is_expanding:
-                            self.ctl.out(" -> %s" % description)
-                for label in children:
-                    if isinstance(label.arc, ChainArc):
-                        if label.name == label.arc.target.table.name:
-                            description = label.name
-                        else:
-                            description = "%s [%s]" % (label.name, label.arc.target)
-                        if not label.arc.is_expanding:
-                            self.ctl.out(" => %s" % description)
-                   
-            labels = classify(HomeNode())
+            root_labels = classify(HomeNode())
+             
+            #
+            # Enumerate introspected tables if one isn't provided
+            #
             if self.table is None:
-                for label in labels:
-                    describe_table(label, show_columns=False)
-            else:
-                found = False
-                for label in labels:
-                    if self.table == label.name:
-                        describe_table(label, show_columns=True)
-                        found = True
-                if not found:
-                    self.ctl.out("Couldn't find table %s" % self.table)
+                if not(root_labels):
+                     self.ctl.out("No tables introspected or configured.")
+                     return
+                self.ctl.out("Tables introspected for this database are:")
+                for label in root_labels:
+                    if not isinstance(label.arc, TableArc):
+                         continue
+                    if label.name == label.arc.target.table.name:
+                        self.ctl.out("\t%s" % label.name)
+                    else:
+                        self.ctl.out("\t%s (%s)" % (label.name,
+                                                    label.arc.target.table.name))
+                self.ctl.out()
+                return
 
 
+            #
+            # Dump table attributes if a specific table is requested.
+            #
+
+            slots = None
+            for label in root_labels:
+                if label.name == self.table:
+                    slots = classify(label.arc.target)
+            if slots is None:
+                self.ctl.out("Unable to find table %s." % self.table)
+                self.ctl.out()
+                return
+
+            max_width = 0
+            for slot in slots:
+                if isinstance(slot.arc, AmbiguousArc):
+                    continue
+                if len(slot.name) > max_width:
+                    max_width = len(slot.name)
+            if not max_width:
+                self.ctl.out("Table %s has no slots." % self.table)
+                self.ctl.out()
+                return
+
+            self.ctl.out("Slots for %s are:" % self.table)
+            for slot in slots:
+                name = slot.name.ljust(max_width)
+                post = str(slot.arc.target)
+                if isinstance(slot.arc, ChainArc):
+                    if slot.arc.is_expanding:
+                        post = "SINGULAR(%s)" % post
+                    else:
+                        post = "PLURAL(%s)" % post
+                if isinstance(slot.arc, AmbiguousArc):
+                    continue
+                self.ctl.out("\t %s %s" % (name, post))
+            self.ctl.out()
