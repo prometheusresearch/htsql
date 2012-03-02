@@ -270,8 +270,9 @@ class VM(object):
         run("kvm -name %s -monitor unix:%s,server,nowait"
             " -drive file=%s,cache=writeback"
             " -net nic,model=%s -net user -vga cirrus"
-            " -rtc clock=vm"
-            % (self.name, self.ctl_path, self.img_path, net_model)
+            " -rtc clock=vm -m %s"
+            % (self.name, self.ctl_path, self.img_path, 
+               net_model, MEM_SIZE)
             + ((" "+opts) if opts else "")
             + ("" if settings.verbose else " -vnc none"))
 
