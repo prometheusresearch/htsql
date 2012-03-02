@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -13,7 +12,6 @@
           Kirill Simonov <xi@resolvent.net>;
           see ``AUTHORS`` file in the source distribution
           for the full list of contributors
-:license: See ``LICENSE`` file in the source distribution
 
 This package provides HTSQL, a query language for the accidental programmer.
 
