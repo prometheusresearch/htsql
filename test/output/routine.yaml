@@ -30,12 +30,13 @@ tests:
       shell (sh)               : start an HTSQL shell
       get                      : execute and render an HTSQL query
       post                     : execute and render an HTSQL query with POST data
+      describe                 : describe the metadata catalog for the database
       regress (test)           : run regression tests
 
   exit: 0
 - ctl: [--version]
   stdout: |
-    HTSQL 2.3.0+
+    HTSQL 2.3.1.dev
     Copyright (c) 2006-2012, Prometheus Research, LLC
   exit: 0
 - ctl: [help]
@@ -55,6 +56,7 @@ tests:
       shell (sh)               : start an HTSQL shell
       get                      : execute and render an HTSQL query
       post                     : execute and render an HTSQL query with POST data
+      describe                 : describe the metadata catalog for the database
       regress (test)           : run regression tests
 
   exit: 0
@@ -80,6 +82,6 @@ tests:
   exit: 0
 - ctl: [version]
   stdout: |
-    HTSQL 2.3.0+
+    HTSQL 2.3.1.dev
     Copyright (c) 2006-2012, Prometheus Research, LLC
   exit: 0

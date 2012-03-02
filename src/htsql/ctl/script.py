@@ -109,8 +109,7 @@ class Script(object):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        self.isatty = os.isatty(self.stdin.fileno())
-       
+
         # A mapping of routine_class.name -> routine_class.
         self.routine_by_name = {}
         # A mapping of option.short_name | option.long_name -> option.
@@ -214,22 +213,6 @@ class Script(object):
             # - `KeyboardInterrupt`: the user pressed `Ctrl-C`.  We display
             #   nothing.
             return exc
-
-    def input(self, prompt):
-        """
-        If this is a terminal, get input from the user with a prompt,
-        reading to first blank line.  Otherwise, read standard input.
-        """ 
-        if not self.isatty:
-            return self.stdin.read().rstrip()
-        self.out(prompt)
-        chunks = []
-        while True:
-            chunk = self.stdin.readline().rstrip()
-            if not chunk:
-                break
-            chunks.append(chunk)
-        return "\n".join(chunks)
 
     def out(self, *values, **options):
         """
