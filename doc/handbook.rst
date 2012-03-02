@@ -29,12 +29,21 @@ First Steps
 -----------
 
 The HTSQL interpreter requires a database to be useful.  You could test
-things out with our ``htsql_demo`` regression test database::
+things out with our ``htsql_demo`` demo SQLite database.  You could
+download this database::
 
    $ wget http://htsql.org/dist/htsql_demo.sqlite
-   $ htsql-ctl shell sqlite:htsql_demo.sqlite
-   htsql_demo.sqlite$ /count(school)
+
+The ``get`` routine of ``htsql-ctl`` could be used to list the data
+found in a table, such as ``school``::
+
+   $ htsql-ctl get sqlite:htsql_demo.sqlite /school
    ...
+
+If this returns an error, you could enumerate tables, using ``describe``
+routine to see if the introspection was successful::
+
+   $ htsql-ctl describe sqlite:htsql_demo.sqlite
 
 This command ``shell`` has limited schema-based completion.  So, you
 could type ``/s`` then the TAB character to list tables that start 
