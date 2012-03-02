@@ -37,6 +37,7 @@ def colorize(msg):
     msg = expand(msg, r'\[!!\] (?P<data>[^:!]+[:!])', "\x1b[1;31m", "\x1b[0m")
     return msg
 
+
 def out(*msgs, **opts):
     # Display given messages.
     sep = opts.pop('sep', " ")

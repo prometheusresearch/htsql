@@ -537,6 +537,11 @@ class LinuxBenchVM(VM):
             self.wait()
             raise
 
+    def unforward(self, port):
+        if port == self.port:
+            return
+        super(LinuxBenchVM, self).unforward(port)
+
 
 class WindowsBenchVM(VM):
     # A windows-based working VM.
@@ -590,6 +595,11 @@ class WindowsBenchVM(VM):
             self.ctl("quit")
             self.wait()
             raise
+
+    def unforward(self, port):
+        if port == self.port:
+            return
+        super(LinuxBenchVM, self).unforward(port)
 
 
 debian_vm = DebianTemplateVM('debian')

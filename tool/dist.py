@@ -4,8 +4,14 @@
 #
 
 
-from job import job, rm, rmtree, run, log
+from job import job, rm, rmtree, run, pipe, log
 import os, os.path, glob
+
+
+def pipe_python(command):
+    # Run `python <command>` and return the output.
+    PYTHON = os.environ.get("PYTHON", "python")
+    return pipe(PYTHON+" "+command)
 
 
 def python(command):
