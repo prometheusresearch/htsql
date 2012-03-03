@@ -17,7 +17,7 @@ Up & Running
 =============
 
 To verify your installation, try the ``htsql-ctl`` command line
-utility's ``version`` or ``help`` routine::
+utility's ``version`` routine::
 
   $ htsql-ctl version
   ...
@@ -28,24 +28,56 @@ installation issue.
 First Steps
 -----------
 
-The HTSQL interpreter requires a database to be useful.  You could test
-things out with our ``htsql_demo`` demo SQLite database.  To get a copy
-of this, you could download it using ``wget`` or some other tool::
+To get started, you could test queries with our ``htsql_demo`` demo
+SQLite database.  To get a copy of this, download it using ``wget`` or
+some other tool::
 
    $ wget http://htsql.org/dist/htsql_demo.sqlite
 
-For starters, you could use the ``get`` routine of ``htsql-ctl`` to list
-the contents of a given table, such as ``school``::
-
-   $ htsql-ctl get sqlite:htsql_demo.sqlite /school
-   ...
-
-At this point, you could then use ``htsql-ctl shell`` to try examples in
-our :doc:`overview <overview>` and/or :doc:`tutorial <tutorial>`::
+Then use ``htsql-ctl shell`` to browse, trying queries from the
+:doc:`overview <overview>` and/or :doc:`tutorial <tutorial>`::
 
    $ htsql-ctl shell sqlite:htsql_demo.sqlite
+   Type 'help' for more information, 'exit' to quit the shell
+   htsql_demo$ /school
+   school                                       
+   ---------------------------------------------
+   code | name                          | campus
+   -----+-------------------------------+-------
+   art  | School of Art & Design        | old   
+   bus  | School of Business            | south 
+   edu  | College of Education          | old   
+   ...
+   htsql_demo$ exit
 
-The ``shell`` command has limited schema-based completion.  For example,
-if you type ``/s`` and then press the TAB character, it will list all of
-of the possibe completions: ``school``, ``semester``, and ``student``.
+There is a ``describe`` command within this ``shell`` which lists
+tables, or, if you provide a table, its columns and links::
+
+   $ htsql-ctl shell sqlite:htsql_demo.sqlite
+   htsql_demo$ describe school
+   Slots for `school` are:
+        code       VARCHAR(16)
+        name       VARCHAR(64)
+        campus     VARCHAR(5)
+        department PLURAL(department)
+        program    PLURAL(program)
+   htsql_demo$ exit
+
+This ``shell`` command has schema-based completion.  For example, if you
+type ``/s`` and then press *TAB*, it will list all of of the possibe
+completions: ``school``, ``semester``, and ``student``. 
+
+Connecting
+----------
+
+The first step to connecting to your database is to ensure that you have
+the proper database adapter.
+
+
+
+
+
+
+
+
 
