@@ -6,8 +6,12 @@ set -ex
 # Update the hostname.
 echo "rpm-vm" >/etc/hostname
 
+# Add EPEL repository.
+rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm
+
 # install packages
-yum -qy install rpmdevtools
-yum -qy install python-setuptools
-yum -qy install PyYAML
-yum -qy install python-devel
+yum -q -y install rpmdevtools
+yum -q -y install python-setuptools
+yum -q -y install PyYAML
+yum -q -y install python-devel
+

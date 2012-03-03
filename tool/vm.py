@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -600,7 +599,7 @@ class WindowsBenchVM(VM):
     def unforward(self, port):
         if port == self.port:
             return
-        super(LinuxBenchVM, self).unforward(port)
+        super(WindowsBenchVM, self).unforward(port)
 
 
 debian_vm = DebianTemplateVM('debian')

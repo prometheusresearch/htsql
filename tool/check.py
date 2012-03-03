@@ -65,7 +65,7 @@ def check_all():
             client_vm.start()
             run("hg clone --ssh='ssh -F %s' . ssh://linux-vm/src/htsql"
                 % (CTL_DIR+"/ssh_config"))
-            errors += trial("hg update && make install install-deps",
+            errors += trial("hg update && python setup.py install",
                             "installing HTSQL under %s" % client_vm.name)
             errors += trial("htsql-ctl regress -qi test/regress.yaml routine",
                             "testing htsql-ctl routines")
