@@ -3,7 +3,7 @@
 #
 
 
-from job import job, log, debug, fatal, warn, run, rmtree, mktree, pipe
+from job import job, log, debug, fatal, warn, run, cp, rmtree, mktree, pipe
 from vm import LinuxBenchVM, WindowsBenchVM, DATA_ROOT, CTL_DIR
 from dist import pipe_python, setup_py
 import os, glob, re, StringIO, pprint
@@ -277,12 +277,30 @@ def pypi():
     """
     if not (glob.glob("./build/pkg/src/HTSQL-*.tar.gz") and
             glob.glob("./build/pkg/src/HTSQL-*.zip")):
-        raise fatal("cannot find a source package; run `job pkg-src` first")
-    setup_py("sdist --formats=zip,gztar --dist-dir=build/pkg/src --dry-run"
-             " register upload --sign --identity="+KEYSIG)
+        raise fatal("cannot find source packages; run `job pkg-src` first")
+    if os.path.exists("./build/pkg/stage"):
+        rmtree("./build/pkg/stage")
+    mktree("./build/pkg/stage")
+    archives = []
+    for tgzname in sorted(glob.glob("./build/pkg/src/*.tar.gz")):
+        dirname = tgzname[:-7]
+        zipname = dirname+".zip"
+        dirname = os.path.basename(dirname)
+        project, version = dirname.rsplit('-', 1)
+        dirname = "./build/pkg/stage/"+dirname
+        run("tar -xzf %s -C ./build/pkg/stage" % tgzname)
+        mktree(dirname+"/dist")
+        cp(tgzname, dirname+"/dist")
+        cp(zipname, dirname+"/dist")
+        setup_py("sdist --formats=zip,gztar --dry-run"
+                 " register upload --sign --identity="+KEYSIG,
+                 cd=dirname)
+        archives.append((project, version))
+    rmtree("./build/pkg/stage")
     log()
     log("Source distribution archives are uploaded to:")
-    log("  `http://pypi.python.org/pypi/HTSQL/`")
+    for project, version in archives:
+        log("  `http://pypi.python.org/pypi/%s/%s/`" % (project, version))
     log()
 
 

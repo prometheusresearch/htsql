@@ -114,10 +114,12 @@ def exe(command):
         raise fatal("cannot execute command: %s" % exc)
 
 
-def run(command, data=None, verbose=None):
+def run(command, data=None, verbose=None, cd=None):
     # Run the command.
     if verbose is None:
         verbose = settings.verbose
+    if cd is not None:
+        command = "cd %s && %s" % (cd, command)
     stream = subprocess.PIPE
     if verbose:
         stream = None
@@ -129,10 +131,12 @@ def run(command, data=None, verbose=None):
         raise fatal("non-zero exit code: %s" % command)
 
 
-def pipe(command, data=None, verbose=None):
+def pipe(command, data=None, verbose=None, cd=None):
     # Run the command, return the output.
     if verbose is None:
         verbose = settings.verbose
+    if cd is not None:
+        command = "cd %s && %s" % (cd, command)
     stream = subprocess.PIPE
     if verbose:
         log("piping: %s" % command)
