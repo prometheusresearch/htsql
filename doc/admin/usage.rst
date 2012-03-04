@@ -10,6 +10,8 @@ Usage
 
 .. index:: htsql-ctl
 
+.. _htsql-ctl:
+
 Invoking ``htsql-ctl``
 ----------------------
 
@@ -38,6 +40,8 @@ To describe a specific routine, run::
     $ htsql-ctl help <routine>
 
 .. index:: connection URI
+.. index:: DBURI
+.. _dburi:
 
 Database Connection
 -------------------
