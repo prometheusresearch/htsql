@@ -744,6 +744,30 @@ class ShellState(object):
         self.completer_delims = completer_delims
         self.completions = completions
 
+class VersionCmd(Cmd):
+    """
+    Implements the `version` command.
+    """
+
+    name = 'version'
+    signature = """version"""
+    hint = """prints version and license information"""
+    help = """
+    Type `version` to list the current software version and
+    license information.
+    """
+
+    def execute(self):
+        version = self.ctl.get_version()
+        if version is not None:
+            self.ctl.out(version)
+        copyright = self.ctl.get_copyright()
+        if copyright is not None:
+            self.ctl.out(copyright)
+        license = self.ctl.get_license()
+        if license is not None:
+            self.ctl.out(license)
+
 class DescribeCmd(Cmd):
     """
     Implements the `describe` command.
@@ -751,7 +775,7 @@ class DescribeCmd(Cmd):
 
     name = 'describe'
     signature = """describe [table]"""
-    hint = """lists tables, or, if given a table, it's columns and links"""
+    hint = """list tables, or slots for a given table"""
     help = """
     Type `describe` to list all tables or `describe <table>` to list
     all columns and links for a given table.
@@ -815,7 +839,7 @@ class DescribeCmd(Cmd):
             name = slot.name.ljust(max_width)
             post = str(slot.arc.target)
             if isinstance(slot.arc, ChainArc):
-                if slot.arc.is_expanding:
+                if slot.arc.is_contracting:
                     post = "SINGULAR(%s)" % post
                 else:
                     post = "PLURAL(%s)" % post
@@ -882,11 +906,11 @@ class ShellRoutine(Routine):
             GetCmd,
             PostCmd,
             RunCmd,
+            VersionCmd,
     ]
 
     # A notice displayed when the shell is started.
     intro = """
-    Interactive HTSQL Shell
     Type 'help' for more information, 'exit' to quit the shell.
     """
 
@@ -1094,7 +1118,7 @@ class ShellRoutine(Routine):
             prompt = "$ "
             app = self.state.app
             if app is not None and app.htsql.db is not None:
-                prompt = "%s$ " % app.htsql.db.database
+                prompt = "%s$ " % app.htsql.db.database.strip(".sqlite")
             try:
                 line = raw_input(prompt)
             except EOFError:
