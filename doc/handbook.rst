@@ -67,17 +67,10 @@ This ``shell`` command has schema-based completion.  For example, if you
 type ``/s`` and then press *TAB*, it will list all of of the possibe
 completions: ``school``, ``semester``, and ``student``. 
 
-Connecting
-----------
-
-The first step to connecting to your database is to ensure that you have
-the proper database adapter.
 
 
-
-
-
-
-
-
+.. note::
+   
+   This handbook is currently under construction.  You could refer
+   to :doc:`admin/usage` for additional material.
 
