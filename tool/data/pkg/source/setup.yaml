@@ -51,27 +51,31 @@ readme-file: [README-CORE]
 name: HTSQL-PGSQL
 description: A Database Query Language (PostgreSQL backend)
 packages: ['htsql_pgsql']
-install-requires: ['psycopg2']
+install-requires: ['HTSQL', 'psycopg2']
+readme-file: [README-PGSQL]
 
 ---
 name: HTSQL-MYSQL
 description: A Database Query Language (MySQL backend)
 packages: ['htsql_mysql']
-install-requires: ['MySQL-python']
+install-requires: ['HTSQL', 'MySQL-python']
+readme-file: [README-MYSQL]
 
 ---
 name: HTSQL-ORACLE
 description: A Database Query Language (Oracle backend)
 license: Evaluation
 packages: ['htsql_oracle']
-install-requires: ['cx_Oracle']
+install-requires: ['HTSQL', 'cx_Oracle']
 license-file: [LICENSE-EVALUATION]
+readme-file: [README-ORACLE]
 
 ---
 name: HTSQL-MSSQL
 description: A Database Query Language (Microsoft SQL Server backend)
 license: Evaluation
 packages: ['htsql_mssql']
-install-requires: ['pymssql']
+install-requires: ['HTSQL', 'pymssql']
 license-file: [LICENSE-EVALUATION]
+readme-file: [README-MSSQL]
 
