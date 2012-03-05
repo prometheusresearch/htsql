@@ -741,6 +741,14 @@ an optional list of parameters, the value is an HTSQL expression.
 
 .. index:: tweak.resource
 
+``tweak.pool``
+--------------
+
+This addons caches open database connections so that the same
+connection could be reused to execute more than one query.
+Use this addon with backends where opening a database connection
+is an expensive operation.
+
 ``tweak.resource``
 ------------------
 
