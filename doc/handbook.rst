@@ -89,29 +89,6 @@ connection details will depend upon your local configuration::
        program
        ...
 
-To test a few queries, it is often handy to limit the number of rows
-returned by default.  This can be done with the ``tweak.autolimit``
-extension.  In this case, we set it to 5 rows::
-  
-    $ htsql-ctl shell -E tweak.autolimit:limit=5 sqlite:htsql_demo.sqlite
-    Type 'help' for more information, 'exit' to quit the shell.
-    htsql_demo$ /count(department)
-        count(department)
-        -----------------
-                       27
-        (1 row)
-    htsql_demo$ /department
-        department
-        --------------------------------------
-        code   | name            | school_code
-        -------+-----------------+------------
-        acc    | Accounting      | bus        
-        arthis | Art History     | art        
-        astro  | Astronomy       | ns         
-        be     | Bioengineering  | eng        
-        bursar | Bursar's Office |            
-        (5 rows)
-
 If it seems links arn't working properly, you could verify links for a
 specific table using ``describe``::
 
@@ -132,7 +109,100 @@ tables that reference this one.   In this example, we see that
 If links arn't introspected, you've got a few options.  The best option
 is to create them in your database if they don't exist.  Otherwise, you
 have a few configuration options, including manually specifying links or
-bridging link detail from a SQLAlchemy or Django model.
+bridging relationship detail from a SQLAlchemy or Django model.
+
+Setting up HTSQL
+================
+
+Everything is an Extension
+--------------------------
+
+An important thing to know about HTSQL is that everything (even database
+adapters) are plugins that can be independently installed, loaded and
+configured.  Extensions can be loaded on the command line using ``-E``
+or in a configuration file format we'll discuss later.  You could list
+extensions at the command line::
+
+    $ htsql-ctl extension
+        Available extensions:
+        engine          :  provides implementations of HTSQL for specific servers
+        engine.mssql    : [BROKEN]
+        engine.mysql    : implements HTSQL for MySQL
+        engine.pgsql    : implements HTSQL for PostgreSQL
+        engine.sqlite   : implements HTSQL for SQLite
+        htsql           : HTSQL translator and HTTP service
+        tweak           : contain various tweaks for HTSQL
+        tweak.autolimit : limit number of rows returned by queries
+        ...
+
+One handy is :ref:`tweak.autolimit` which limits the number of rows
+returned by default.  Using this plugin lets you explore tables with
+lots of rows without having to constantly add ``.limit(n)`` to each of
+your queries.  In this example, we set ``autolimit`` to 5 rows::
+  
+    $ htsql-ctl shell -E tweak.autolimit:limit=5 sqlite:htsql_demo.sqlite
+    Type 'help' for more information, 'exit' to quit the shell.
+    htsql_demo$ /count(department)
+        count(department)
+        -----------------
+                       27
+        (1 row)
+    htsql_demo$ /department
+        department
+        --------------------------------------
+        code   | name            | school_code
+        -------+-----------------+------------
+        acc    | Accounting      | bus        
+        arthis | Art History     | art        
+        astro  | Astronomy       | ns         
+        be     | Bioengineering  | eng        
+        bursar | Bursar's Office |            
+        (5 rows)
+
+One of the more interesting plugins is :ref:`tweak.meta`.  This adds a
+in-memory SQLite database with table and link detail based upon the
+current configuration, and a function ``meta()`` to let you query it::
+
+    $ htsql-ctl shell -E tweak.meta sqlite:htsql_demo.sqlite
+    Type 'help' for more information, 'exit' to quit the shell.
+    htsql_demo$  /meta(/link{name, is_singular}?table_name='school')
+       link                    
+       ------------------------
+       name       | is_singular
+       -----------+------------
+       department | false      
+       program    | false      
+      (2 rows)
+
+The query above returns all link names for the ``school`` table.  You
+could also query meta data about the meta data::
+
+    htsql_demo$ /meta(/meta(/table))
+        table 
+        ------
+        name  
+        ------
+        column
+        field 
+        link  
+        table 
+        (4 rows)
+
+Some plugins are database specific.  PostgreSQL has a wonderful query
+timeout feature that kills your query after a certain amount of time has
+elapsed.  It is brutal, but effective.  The :ref:`tweak.timeout` plugin
+enables access to this feature.  
+
+    $ htsql-ctl shell -E tweak.timeout:timeout=3 pgsql:htsql_demo
+    Type 'help' for more information, 'exit' to quit the shell.
+    htsql_demo$  /count(enrollment.fork().fork())
+    engine failure: failed to execute database query:
+    canceling statement due to statement timeout
+
+The ``enrollment`` table has 15k rows, and ``fork()`` associates each
+row with every row of the same table (a CROSS JOIN).  Hence, this query
+would count 15K^3 rows, or 3T rows.  Having a query like this auto
+killed after 3s is a great way to keep everyone happy.
 
 Basic Configuration
 -------------------

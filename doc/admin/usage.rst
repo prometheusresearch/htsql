@@ -291,6 +291,7 @@ HTSQL supports the following database servers:
 * Microsoft SQL Server 2005+ (``engine.mssql``)
 
 .. index:: tweak.autolimit
+.. _tweak.autolimit:
 
 ``tweak.autolimit``
 -------------------
@@ -359,6 +360,9 @@ and http://htsql.com/, we could write:
 
 .. index:: tweak.django, Django
 
+
+.. _tweak.django:
+
 ``tweak.django``
 ----------------
 
@@ -384,6 +388,8 @@ Parameters:
 .. _Django: https://www.djangoproject.com/
 
 .. index:: tweak.meta
+
+.. _tweak.meta:
 
 ``tweak.meta``
 --------------
@@ -783,6 +789,8 @@ output format.
 .. _CodeMirror: http://codemirror.net/
 
 .. index:: tweak.sqlalchemy, SQLAlchemy
+
+.. _tweak.sqlalchemy:
 
 ``tweak.sqlalchemy``
 --------------------
