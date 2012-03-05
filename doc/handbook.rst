@@ -47,12 +47,10 @@ Then use ``htsql-ctl shell`` to walk through our
        bus  | School of Business            | south 
        edu  | College of Education          | old   
        ...
-   htsql_demo$ exit
 
 There is a ``describe`` command within this ``shell`` which lists
 tables, or, if you provide a table, its columns and links::
 
-   $ htsql-ctl shell sqlite:htsql_demo.sqlite
    htsql_demo$ describe school
        Slots for `school` are:
        code       VARCHAR(16)
@@ -60,7 +58,6 @@ tables, or, if you provide a table, its columns and links::
        campus     VARCHAR(5)
        department PLURAL(department)
        program    PLURAL(program)
-   htsql_demo$ exit
 
 This ``shell`` command has schema-based completion.  For example, if you
 type ``/s`` and then press *TAB*, it will list all of of the possibe
@@ -76,8 +73,8 @@ To attach HTSQL to your database, you'll need a :ref:`Database URI
    <engine>://<user>:<pass>@<host>:<port>/<database>
 
 For this example, we'll use the ``pgsql`` engine on a local demo
-database using the ``-p`` option to prompt for a password.  The exact
-connection details will depend upon your local configuration::
+database using the ``-p`` option to prompt for a password.  The 
+exact connection details will depend upon your local configuration::
    
    $ htsql-ctl shell -p pgsql://demo@localhost:5432/htsql_demo
    Password: ******
@@ -107,9 +104,39 @@ tables that reference this one.   In this example, we see that
 ``department`` is singular to ``school`` and plural to ``course``.
 
 If links arn't introspected, you've got a few options.  The best option
-is to create them in your database if they don't exist.  Otherwise, you
-have a few configuration options, including manually specifying links or
-bridging relationship detail from a SQLAlchemy or Django model.
+is to create them in your database if they don't exist (this isn't an
+option for MyISAM).  Otherwise, you have a few configuration options, 
+including manually specifying links or bridging relationship detail 
+from a SQLAlchemy or Django model.
+
+Web Service
+-----------
+
+Besides ``shell``, the ``htsql-ctl`` program provides a built-in
+*demonstration* webserver.  You could start it as follows::
+
+   $ htsql-ctl serve sqlite:htsql_demo.sqlite
+       Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
+
+Then, it might be accessed using any user agent, such as ``wget``::
+
+   $ wget -q -O - --header='Accept: text/csv' http://localhost:8080/school
+       code,name,campus
+       art,School of Art & Design,old
+       bus,School of Business,south
+       edu,College of Education,old
+       ...
+
+On http://demo.htsql.org, we enable a :ref:`tweak.shell` extension::
+
+    $ htsql-ctl serve -E tweak.shell.default sqlite:htsql_demo.sqlite
+        Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
+  
+You could then navigate to http://localhost:8080 with your web browser
+and type in queries there.  This plugin replaces the default HTML
+formatter with our visual shell.  If you press ``CTRL+SPACE`` it should
+bring up a context sensitive menu item.
+
 
 Setting up HTSQL
 ================
@@ -117,11 +144,10 @@ Setting up HTSQL
 Everything is an Extension
 --------------------------
 
-An important thing to know about HTSQL is that everything (even database
-adapters) are plugins that can be independently installed, loaded and
-configured.  Extensions can be loaded on the command line using ``-E``
-or in a configuration file format we'll discuss later.  You could list
-extensions at the command line::
+For HTSQL, everything (even database adapters) are plugins that are
+independently installed, loaded and configured.  Extensions can be
+loaded on the command line using ``-E`` or in a configuration file
+format.  You could list installed extensions at the command line::
 
     $ htsql-ctl extension
         Available extensions:
@@ -135,10 +161,10 @@ extensions at the command line::
         tweak.autolimit : limit number of rows returned by queries
         ...
 
-One handy is :ref:`tweak.autolimit` which limits the number of rows
-returned by default.  Using this plugin lets you explore tables with
-lots of rows without having to constantly add ``.limit(n)`` to each of
-your queries.  In this example, we set ``autolimit`` to 5 rows::
+One handy extension is :ref:`tweak.autolimit` which limits the number of
+rows returned by default.  Using this plugin lets you explore tables
+with lots of rows without having to constantly add ``.limit(n)`` to each
+of your queries.  In this example, we set ``autolimit`` to 5 rows::
   
     $ htsql-ctl shell -E tweak.autolimit:limit=5 sqlite:htsql_demo.sqlite
     Type 'help' for more information, 'exit' to quit the shell.
@@ -174,24 +200,9 @@ current configuration, and a function ``meta()`` to let you query it::
        program    | false      
       (2 rows)
 
-The query above returns all link names for the ``school`` table.  You
-could also query meta data about the meta data::
-
-    htsql_demo$ /meta(/meta(/table))
-        table 
-        ------
-        name  
-        ------
-        column
-        field 
-        link  
-        table 
-        (4 rows)
-
-Some plugins are database specific.  PostgreSQL has a wonderful query
-timeout feature that kills your query after a certain amount of time has
-elapsed.  It is brutal, but effective.  The :ref:`tweak.timeout` plugin
-enables access to this feature.  
+The PostgreSQL specific :ref:`tweak.timeout` plugin provides a way to
+automatically kill expensive queries after a specified number of seconds
+have elapsed::
 
     $ htsql-ctl shell -E tweak.timeout:timeout=3 pgsql:htsql_demo
     Type 'help' for more information, 'exit' to quit the shell.
@@ -201,8 +212,8 @@ enables access to this feature.
 
 The ``enrollment`` table has 15k rows, and ``fork()`` associates each
 row with every row of the same table (a CROSS JOIN).  Hence, this query
-would count 15K^3 rows, or 3T rows.  Having a query like this auto
-killed after 3s is a great way to keep everyone happy.
+would count 15K^3 rows.  Having a query like this auto killed after 3s
+is a great way to keep everyone happy.
 
 Basic Configuration
 -------------------

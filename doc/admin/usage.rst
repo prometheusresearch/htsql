@@ -755,6 +755,7 @@ Parameters:
     (default: ``-``)
 
 .. index:: tweak.shell
+.. _tweak.shell:
 
 ``tweak.shell``
 ---------------
@@ -822,6 +823,7 @@ The value must have the form ``<module>.<attr>`` or
 .. _SQLAlchemy: http://www.sqlalchemy.org/
 
 .. index:: tweak.timeout
+.. _tweak.timeout:
 
 ``tweak.timeout``
 -----------------
