@@ -31,7 +31,7 @@ To get started, you could test queries with our ``htsql_demo`` demo
 SQLite database.  To get a copy of this, download it using ``wget`` or
 some other tool::
 
-   $ wget http://htsql.org/dist/htsql_demo.sqlite
+   $ wget -q http://dist.htsql.org/misc/htsql_demo.sqlite
 
 Then use ``htsql-ctl shell`` to walk through our
 :doc:`overview <overview>` and/or :doc:`tutorial <tutorial>`::

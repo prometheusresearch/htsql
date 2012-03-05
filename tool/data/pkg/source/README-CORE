@@ -52,7 +52,7 @@ To verify that HTSQL is installed correctly, run::
 
 You can use HTSQL on top of any relational database.  In our examples,
 we use the HTSQL Demo database, which can be downloaded from
-http://htsql.org/dist/htsql_demo.sqlite.
+http://dist.htsql.org/misc/htsql_demo.sqlite.
 
 To start a command-line shell where you can type and execute HTSQL
 queries, run::
@@ -105,7 +105,7 @@ Using HTSQL from Python
 Create an HTSQL instance::
 
     >>> from htsql import HTSQL
-    >>> demo = HTSQL("pgsql:htsql_demo")
+    >>> demo = HTSQL("sqlite:htsql_demo")
 
 Use the instance to execute HTSQL queries.  For example, to
 find all school records matching the given pattern, write::
