@@ -109,12 +109,13 @@ For more details on the ``shell`` routine, run::
 
     $ htsql-ctl help shell
 
-.. index:: htsql-ctl server
+.. index:: htsql-ctl serve
+.. _htsql-ctl serve:
 
 HTTP Server
 -----------
 
-To start a web server running HTSQL, run::
+To start a *demonstration* web server running HTSQL, run::
 
     $ htsql-ctl server <DBURI> [<HOST> [<PORT>]]
 
@@ -129,10 +130,16 @@ database ``htsql_demo`` on ``localhost:3128``, run::
 
     Starting an HTSQL server on localhost:3128 over htsql_demo
 
+If database connection :ref:`configuration <configuration>` is provided
+by ``-C``, you could use ``-`` as a place holder for the mandatory
+database URI parameter so that you could provide a HOST and PORT.  For
+example, to run the server on ``localhost:80`` you would write::
+
+    # htsql-ctl serve -C demo-config.yaml - localhost 80
+
 For more details on the ``server`` routine, run::
 
     $ htsql-ctl help server
-
 
 .. index:: htsql-ctl extension
 
@@ -147,7 +154,7 @@ extensions, you could type::
 
     $ htsql-ctl extension
 
-To find out more about an extension, such as ``tweak.autolimit``, write::
+To find out more about an extension, such as :ref:`tweak.autolimit`, write::
 
     $ htsql-ctl extension tweak.autolimit
 
@@ -155,7 +162,7 @@ Using Extensions
 ----------------
 
 An extension can be enabled using ``-E`` parameter on the ``htsql-ctl``
-command line.  For example, to enable the ``tweak.meta`` addon on the
+command line.  For example, to enable the :ref:`tweak.meta` addon on the
 HTSQL demo database, you'd write::
 
     $ htsql-ctl shell -E tweak.meta pgsql:htsql_demo
@@ -169,7 +176,7 @@ Then, you could use the ``/meta()`` command registered by this addon:
     htsql_demo$ /meta(/table)
 
 Some addons have parameters which can be added to the command line.
-For example, the ``tweak.autolimit`` extension truncates output at
+For example, the :ref:`tweak.autolimit` extension truncates output at
 ``limit`` number of rows.  The default is 10k, but this value
 can be changed::
 
@@ -179,13 +186,19 @@ If more than one parameter is possible, use "," to separate them::
 
     $ htsql-ctl shell -E tweak.hello:repeat=3,address=home pgsql:htsql_demo
 
-Configuration File
-------------------
+HTSQL plugins are found using Python's entry point feature.  When a
+Python package is installed, it can register itself as an
+``htsql.addon`` extension so that it could be loaded in this manner.
 
-Addons and configuration parameters can also be provided by a
-configuration file in YAML_ (or JSON_) format and then included
-using ``-C`` on the command line.  Here is an example configuration
-file for a PostgreSQL database with some addons enabled.
+.. _configuration:
+
+Configuration Files
+-------------------
+
+Extension configuration can be provided with a YAML_ (or JSON_) file
+using ``-C`` on the command line.  The top level of this file is a
+dictionary listing the plugins that are enabled.  The second nesting
+level are plugin parameters, if any. 
 
 .. sourcecode:: yaml
 
@@ -200,27 +213,15 @@ file for a PostgreSQL database with some addons enabled.
         port: 5432
     tweak.autolimit:
       limit: 1000
-    tweak.cors:
-    tweak.meta:
-    tweak.shell:
-      server-root: http://demo.htsql.org
     tweak.shell.default:
-    tweak.timeout:
-      timeout: 600
 
-You can then start the built-in web server::
-
-  $ htsql-ctl serve -C demo-config.yaml
-
-For ``htsql-ctl serve`` command, the web server host and port are *not*
-provided via extension mechanism and must be provided via command line
-if something other than ``localhost:8080`` is desired.  For instance,
-to run the server on ``localhost:80``, use::
-
-    # htsql-ctl serve -C demo-config.yaml - localhost 80
-
-Here, we use ``-`` in place of the database address since the database
-connection parameters are already specified in the configuration file.
+In this example, there are three plugins enabled, ``htsql`` (which is a
+mandatory plugin), :ref:`tweak.autolimit` and ref:`tweak.shell.default`.
+The ``htsql`` plugin has one argument, ``db`` which has sub-structure
+providing connection information.  You could then use this
+configuration file using ``-C``::
+  
+    # htsql-ctl shell -C demo-config.yaml
 
 If both ``-E`` and ``-C`` are used, explicit command line options override
 values provided in the configuration file.  This permits a configuration
@@ -443,6 +444,8 @@ To describe the meta database itself, apply ``meta()`` twice:
 .. htsql:: /meta(/meta(/table))
 
 .. index:: tweak.override
+
+.. _tweak.override:
 
 ``tweak.override``
 ------------------

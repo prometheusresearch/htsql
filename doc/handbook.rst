@@ -113,7 +113,8 @@ Web Service
 -----------
 
 Besides ``shell``, the ``htsql-ctl`` program provides a built-in
-*demonstration* webserver.  You could start it as follows::
+*demonstration* :ref:`webserver <htsql-ctl serve>`.  You could start it
+as follows::
 
    $ htsql-ctl serve sqlite:htsql_demo.sqlite
        Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
@@ -137,8 +138,7 @@ and type in queries there.  This plugin replaces the default HTML
 formatter with our visual shell.  If you press ``CTRL+SPACE`` it should
 bring up a context sensitive menu item.
 
-
-Setting up HTSQL
+HTSQL Extensions
 ================
 
 Everything is an Extension
@@ -152,7 +152,6 @@ format.  You could list installed extensions at the command line::
     $ htsql-ctl extension
         Available extensions:
         engine          :  provides implementations of HTSQL for specific servers
-        engine.mssql    : [BROKEN]
         engine.mysql    : implements HTSQL for MySQL
         engine.pgsql    : implements HTSQL for PostgreSQL
         engine.sqlite   : implements HTSQL for SQLite
@@ -164,26 +163,26 @@ format.  You could list installed extensions at the command line::
 One handy extension is :ref:`tweak.autolimit` which limits the number of
 rows returned by default.  Using this plugin lets you explore tables
 with lots of rows without having to constantly add ``.limit(n)`` to each
-of your queries.  In this example, we set ``autolimit`` to 5 rows::
+of your queries.  In this example, we set the ``limit`` to 5 rows::
   
     $ htsql-ctl shell -E tweak.autolimit:limit=5 sqlite:htsql_demo.sqlite
     Type 'help' for more information, 'exit' to quit the shell.
     htsql_demo$ /count(department)
-        count(department)
-        -----------------
-                       27
-        (1 row)
+         | count(department) |
+        -+-------------------+-
+         |                27 |
+                   (1 row)
     htsql_demo$ /department
-        department
-        --------------------------------------
-        code   | name            | school_code
-        -------+-----------------+------------
-        acc    | Accounting      | bus        
-        arthis | Art History     | art        
-        astro  | Astronomy       | ns         
-        be     | Bioengineering  | eng        
-        bursar | Bursar's Office |            
-        (5 rows)
+         | department                             |
+         +----------------------------------------+
+         | code   | name            | school_code |
+        -+--------+-----------------+-------------+-
+         | acc    | Accounting      | bus         |
+         | arthis | Art History     | art         |
+         | astro  | Astronomy       | ns          |
+         | be     | Bioengineering  | eng         |
+         | bursar | Bursar's Office |             |
+                                           (5 rows)
 
 One of the more interesting plugins is :ref:`tweak.meta`.  This adds a
 in-memory SQLite database with table and link detail based upon the
@@ -192,13 +191,13 @@ current configuration, and a function ``meta()`` to let you query it::
     $ htsql-ctl shell -E tweak.meta sqlite:htsql_demo.sqlite
     Type 'help' for more information, 'exit' to quit the shell.
     htsql_demo$  /meta(/link{name, is_singular}?table_name='school')
-       link                    
-       ------------------------
-       name       | is_singular
-       -----------+------------
-       department | false      
-       program    | false      
-      (2 rows)
+         | link                     |
+         +--------------------------+
+         | name       | is_singular |
+        -+------------+-------------+-
+         | department | false       |
+         | program    | false       |
+                             (2 rows)
 
 The PostgreSQL specific :ref:`tweak.timeout` plugin provides a way to
 automatically kill expensive queries after a specified number of seconds
@@ -215,10 +214,57 @@ row with every row of the same table (a CROSS JOIN).  Hence, this query
 would count 15K^3 rows.  Having a query like this auto killed after 3s
 is a great way to keep everyone happy.
 
-Basic Configuration
--------------------
+Extension Configuration
+-----------------------
 
-Typically, you'll want to put your connection information as well as
-other configuration options into a flat file.  For more information,
-please see :doc:`admin/usage`.
+Addons and :ref:`configuration <configuration>` parameters can also be
+provided by a configuration file in YAML_ (or JSON_) format and then
+included using ``-C`` on the command line.  Here is an example
+configuration file for a PostgreSQL database with some addons enabled.
+
+.. sourcecode:: yaml
+
+    # demo-config.yaml
+    htsql:
+      db:
+        engine: pgsql
+        database: htsql_demo
+        username: htsql_demo
+        password: secret
+        host: localhost
+        port: 5432
+    tweak.autolimit:
+      limit: 1000
+    tweak.cors:
+    tweak.meta:
+    tweak.shell:
+      server-root: http://demo.htsql.org
+    tweak.shell.default:
+    tweak.timeout:
+      timeout: 600
+
+You can then start the shell using these parameters::
+
+  $ htsql-ctl serve -C demo-config.yaml
+
+If both ``-E`` and ``-C`` are used, explicit command line options override
+values provided in the configuration file.  This permits a configuration
+file to be used as a default perhaps using a different database URI.
+
+.. _YAML: http://yaml.org/
+.. _JSON: http://json.org/
+
+
+MetaData Configuration
+======================
+
+The :ref:`tweak.override` plugin provides comprehensive control over the
+HTSQL system catalog.  
+
+
+.. note:: 
+   
+    For more information about configuring and using HTSQL, please
+    see our :doc:`admin/usage` guide.
+
 
