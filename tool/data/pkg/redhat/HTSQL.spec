@@ -6,7 +6,7 @@ Release:        1%{?dist}
 Summary:        ${SUMMARY}
 
 Group:          Application/Databases
-License:        Free To Use But Restricted
+License:        AGPLv3 with 7b attribution and GPLv2 exception
 URL:            http://htsql.org 
 Source:         ${PACKAGE}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -22,8 +22,7 @@ HTSQL is a comprehensive navigational query language for relational
 databases.  HTSQL is designed for data analysts and other accidental
 programmers who have complex business inquiries to solve and need a
 productive tool to write and share database queries.  HTSQL is free
-and open source software.  For more information, please see
-http://htsql.org/.
+and open source software.  For more detail, visit http://htsql.org/.
 
 ${DESCRIPTION}
 

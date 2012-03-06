@@ -6,8 +6,7 @@ HTSQL is a comprehensive navigational query language for relational
 databases.  HTSQL is designed for data analysts and other *accidental
 programmers* who have complex business inquiries to solve and need a
 productive tool to write and share database queries.  HTSQL is *free
-and open source* software.  For more information, please see
-http://htsql.org/.
+and open source* software.  For more detail, visit http://htsql.org/.
 
 This package provides HTSQL core and *SQLite* backend.
 
