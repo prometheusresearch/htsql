@@ -44,9 +44,12 @@ class Move(object):
                 parts = [parts]
             assert isinstance(parts, list) and all(isinstance(part, str)
                                                    for part in parts)
+            filename = os.path.join(dst, filename)
+            if filename.endswith("/"):
+                assert not parts
+                os.makedirs(filename)
             if not parts:
                 continue
-            filename = os.path.join(dst, filename)
             dirname = os.path.dirname(filename)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
@@ -174,51 +177,6 @@ def pkg_src():
     log()
 
 
-class Packager(object):
-
-    def __init__(self, vm):
-        self.vm = vm
-        if self.vm.missing():
-             raise fatal("VM is not built: %s" % self.vm.name)
-        source_paths = ls("./build/pkg/src/HTSQL-*.tar.gz")
-        if not source_paths:
-            raise fatal("cannot find a source package; run `job pkg-src` first")
-        if len(source_paths) > 1:
-            raise fatal("too many source packages in `./build/pkg/src`")
-        [self.source_path] = source_paths
-        self.archive = os.path.basename(self.source_path)
-        self.upstream_version = re.match(r'^HTSQL-(?P<version>.+).tar.gz$',
-                                         self.archive).group('version')
-        (self.version, self.suffix) = re.match(r'^(\d+\.\d+.\d+)(.*)$', 
-                                               self.upstream_version).groups()
-        self.build_path = "build/pkg/%s" % self.vm.name
-
-    def __call__(self):
-        if self.vm.running():
-            self.vm.stop()
-        if os.path.exists(self.build_path):
-            rmtree(self.build_path)
-        self.vm.start()
-        try:
-            # install signing key
-            pubkey = pipe("gpg --armour --export %s" % KEYSIG)
-            seckey = pipe("gpg --armour --export-secret-key %s" % KEYSIG)
-            self.vm.write("/root/sign.key", pubkey + seckey)
-            self.vm.run("gpg --import /root/sign.key")
-            # upload package source, build and test
-            self.vm.put(self.source_path, '/root')
-            mktree(self.build_path)
-            self.package()
-            self.vm.run("htsql-ctl get sqlite:test.db /%27Hello%20World%27")
-            self.vm.get(self.build_file, self.build_path)
-        finally:
-            self.vm.stop()
-        log()
-        log("Package is built successfully:")
-        log("  %s/`%s`" % (self.build_path, self.build_file))
-        log()
-
-
 @job
 def pkg_deb():
     """create Debian packages
@@ -234,10 +192,7 @@ def pkg_deb():
     if os.path.exists("./build/tmp"):
         rmtree("./build/tmp")
     version = get_version()
-    debian_version = version
-    if len(version.split(".")) > 3:
-        debian_version = (".".join(version.split(".")[:3]) + "~" +
-                          ".".join(version.split(".")[3:]))
+    debian_version = ".".join(version.split(".")[:3])
     moves = load_moves(DATA_ROOT+"/pkg/debian/moves.yaml")
     deb_vm.start()
     pubkey = pipe("gpg --armour --export %s" % KEYSIG)
@@ -289,10 +244,7 @@ def pkg_deb_changelog(message=None):
     if message is None:
         message = "new upstream release"
     version = get_version()
-    debian_version = version
-    if len(version.split(".")) > 3:
-        debian_version = (".".join(version.split(".")[:3]) + "~" +
-                          ".".join(version.split(".")[3:]))
+    debian_version = ".".join(version.split(".")[:3])
     debian_version += "-1"
     changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
     if ('htsql (%s)' % debian_version) in changelog:
@@ -305,34 +257,57 @@ def pkg_deb_changelog(message=None):
     log()
 
 
-class RPM_Packager(Packager):
-
-    def __init__(self):
-        Packager.__init__(self, rpm_vm)
-        self.distribution = 'el6'
-        self.build_file = "HTSQL-%s-1.%s.noarch.rpm" % \
-                             (self.upstream_version, self.distribution)
-        
-    def package(self):
-        self.vm.run("mkdir -p rpmbuild/{BUILD,RPMS,S{OURCE,PEC,RPM}S}")
-        self.vm.put(DATA_ROOT+"/pkg/redhat", "redhat")
-        self.vm.run("cp redhat/.rpmmacros ~ ")
-        self.vm.run("mv redhat/HTSQL.spec rpmbuild/SPECS")
-        self.vm.run("mv %s rpmbuild/SOURCES" % self.archive)
-        self.vm.run("rpmbuild -bb rpmbuild/SPECS/HTSQL.spec")
-        self.vm.run("mv rpmbuild/RPMS/noarch/%s ~" % self.build_file)
-        #self.vm.run("rpmsign --addsign %s" % self.build_file)
-        self.vm.run("rpm -i %s" % self.build_file)
-
-               
 @job
 def pkg_rpm():
-    """create a redhat package
+    """create RedHat/CentOS packages
 
-    This job creates combined source & binary package.
+    This job creates RedHat/CentOS packages from source packages.
     """
-    packager = RPM_Packager()
-    packager()
+    if rpm_vm.missing():
+        raise fatal("VM is not built: %s" % rpm_vm.name)
+    if rpm_vm.running():
+        rpm_vm.stop()
+    if os.path.exists("./build/pkg/rpm"):
+        rmtree("./build/pkg/rpm")
+    if os.path.exists("./build/tmp"):
+        rmtree("./build/tmp")
+    version = get_version()
+    redhat_version = ".".join(version.split(".")[:3])
+    moves = load_moves(DATA_ROOT+"/pkg/redhat/moves.yaml")
+    rpm_vm.start()
+    pubkey = pipe("gpg --armour --export %s" % KEYSIG)
+    seckey = pipe("gpg --armour --export-secret-key %s" % KEYSIG)
+    rpm_vm.write("/root/sign.key", pubkey + seckey)
+    rpm_vm.run("gpg --import /root/sign.key")
+    rpm_vm.put(DATA_ROOT+"/pkg/redhat/.rpmmacros", ".")
+    try:
+        for move in moves:
+            name = move.variables['name']
+            move.variables['version'] = redhat_version
+            move.variables['package'] = "%s-%s" % (name, version)
+            package = "%s-%s" % (name, version)
+            archive = "./build/pkg/src/%s.tar.gz" % package
+            if not os.path.exists(archive):
+                raise fatal("cannot find a source package;"
+                            " run `job pkg-src` first")
+            mktree("./build/tmp")
+            move(DATA_ROOT+"/pkg/redhat", "./build/tmp")
+            cp(archive, "./build/tmp/SOURCES")
+            rpm_vm.put("./build/tmp", "./rpmbuild")
+            rpm_vm.run("rpmbuild -bb rpmbuild/SPECS/%s.spec" % name)
+            if not os.path.exists("./build/pkg/rpm"):
+                mktree("./build/pkg/rpm")
+            #rpm_vm.run("rpmsign --addsign ./rpmbuild/RPMS/noarch/*.rpm")
+            rpm_vm.get("./rpmbuild/RPMS/noarch/*.rpm", "./build/pkg/rpm")
+            rpm_vm.run("rm -rf rpmbuild")
+            rmtree("./build/tmp")
+    finally:
+        rpm_vm.stop()
+    log()
+    log("The generated RedHat/CentOS packages are placed in:")
+    for filename in ls("./build/pkg/rpm/*"):
+        log("  `%s`" % filename)
+    log()
 
 
 @job
