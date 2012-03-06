@@ -582,3 +582,10 @@ button:active {
    padding-left: 20px;
    font-size: 80%
 }
+
+#help-popup img {
+   float: right;
+   position: relative;
+   right: 0;
+   bottom: 0;
+}

@@ -53,13 +53,10 @@ This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.  This software
 is released under the AGPLv3 as well as a permissive license for use
 with open source databases.  See http://htsql.org/license/
+
+The HTSQL language and implementation was developed by members 
+of the HTSQL Project (http://htsql.org).
 """
-__credits__ = [
-"This work is developed by the HTSQL Project (http://htsql.org)",
-"This work incorporates Python Programming Language (http://python.org)",
-"This work incorporates SQLite Relational Database (http://sqlite.org)",
-"This work incorporates PyYAML Processor (http://pyyaml.org)"
-]
 
 from .core.application import Application as HTSQL
 
