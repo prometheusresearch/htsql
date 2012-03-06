@@ -142,7 +142,7 @@ class VM(object):
         if self.state:
             self.kvm("-daemonize -loadvm %s" % self.state)
         else:
-            self.kvm("-daemonize")
+            self.kvm("-daemonize -snapshot")
 
     def stop(self):
         # Stop a VM.
