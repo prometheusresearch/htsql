@@ -2160,8 +2160,8 @@ class WriteToFileTestCase(SkipTestCase):
         # Display the header.
         self.out_header()
         # Write the data to the file.
-        stream = open(input.write, 'wb')
-        stream.write(input.data)
+        stream = open(self.input.write, 'wb')
+        stream.write(self.input.data)
         stream.close()
 
 
