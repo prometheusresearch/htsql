@@ -23,6 +23,14 @@ DEBIAN_ISO_URLS = [
     "http://cdimage.debian.org/cdimage/release/6.0.3/i386/iso-cd/debian-6.0.3-i386-netinst.iso",
 ]
 
+UBUNTU_ISO_URLS = [
+    "http://releases.ubuntu.com/oneiric/ubuntu-11.10-server-i386.iso",
+]
+
+UBUNTU_LTS_ISO_URLS = [
+    "http://releases.ubuntu.com/lucid/ubuntu-10.04.4-server-i386.iso",
+]
+
 CENTOS_ISO_URLS = [
     "http://mirrors.cmich.edu/centos/6.2/isos/i386/CentOS-6.2-i386-minimal.iso",
 ]
@@ -318,16 +326,18 @@ class VM(object):
 class DebianTemplateVM(VM):
     # Debian 6.0 "squeeze" (32-bit) VM.
 
-    def __init__(self, name):
+    def __init__(self, name, iso_env="DEBIAN_ISO", iso_urls=DEBIAN_ISO_URLS):
         super(DebianTemplateVM, self).__init__(name, 'linux')
+        self.iso_env = iso_env
+        self.iso_urls = iso_urls
 
     def build(self):
         super(DebianTemplateVM, self).build()
         log("building VM: `%s`..." % self.name)
         start_time = datetime.datetime.now()
-        src_iso_path = os.environ.get("DEBIAN_ISO")
+        src_iso_path = os.environ.get(self.iso_env)
         if not (src_iso_path and os.path.isfile(src_iso_path)):
-            src_iso_path = self.download(DEBIAN_ISO_URLS)
+            src_iso_path = self.download(self.iso_urls)
         unpack_path = TMP_DIR+"/"+self.name
         if os.path.exists(unpack_path):
             rmtree(unpack_path)
@@ -605,6 +615,12 @@ class WindowsBenchVM(VM):
 debian_vm = DebianTemplateVM('debian')
 centos_vm = CentOSTemplateVM('centos')
 windows_vm = WindowsTemplateVM('windows')
+ubuntu_vm = DebianTemplateVM('ubuntu',
+                             iso_env="UBUNTU_ISO",
+                             iso_urls=UBUNTU_ISO_URLS)
+ubuntu_lts_vm = DebianTemplateVM('ubuntu-lts',
+                                 iso_env="UBUNTU_LTS_ISO",
+                                 iso_urls=UBUNTU_LTS_ISO_URLS)
 
 
 @job
