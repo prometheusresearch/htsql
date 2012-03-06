@@ -12,9 +12,14 @@
 # serve to show the default.
 
 import sys, os, re, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from setup import get_version
-del sys.path[0]
+
+def get_version():
+    # Fetch `htsql.__version__`.
+    root = os.path.dirname(__file__)
+    source = open(os.path.join(root, '../src/htsql/__init__.py')).read()
+    version = re.search(r"__version__ = '(?P<version>[^']+)'",
+                        source).group('version')
+    return version
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
