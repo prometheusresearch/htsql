@@ -2,6 +2,10 @@
   Data Model
 **************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 HTSQL is not a full-fledged database system.  As opposed to regular data
 stores, it does not include a storage layer, but relies on a relational
 database server to physically store and retrieve data.

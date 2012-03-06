@@ -2,6 +2,10 @@
 HTSQL in the Cloud
 ******************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 These instructions outline how to use HTSQL using a cloud
 provider where you have a limited application environment.
 

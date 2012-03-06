@@ -2,6 +2,10 @@
   Using and Configuring HTSQL
 *******************************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 .. highlight:: console
 
 

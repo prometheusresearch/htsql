@@ -2,6 +2,10 @@
   Data Types
 **************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 Every HTSQL expression has an associated type.  The type defines the set
 of valid values produced by the expression and permitted operations over
 the expression.  The type also indicates how returned values are
