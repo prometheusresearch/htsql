@@ -47,6 +47,8 @@ ${FILES}
 %{python_sitelib}/*
 
 %changelog
+* Tue Mar 06 2012 Clark C. Evans <cce@clarkevans.com> - 2.3.0-1
+- Upstream release
 * Thu Dec 15 2011 Clark C. Evans <cce@clarkevans.com> - 2.2.1-1
 - Upstream release
 * Tue Nov 22 2011 Clark C. Evans <cce@clarkevans.com> - 2.2.0c1-1
