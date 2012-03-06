@@ -2,6 +2,10 @@
   Deploying HTSQL
 *******************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 .. highlight:: console
 
 The following instructions assume you've installed HTSQL and wish

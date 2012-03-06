@@ -2,6 +2,10 @@
   Functions and Operators
 ***************************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 This document describes built-in functions and operators.
 
 

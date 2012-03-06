@@ -2,6 +2,10 @@
   HTSQL in Python Applications
 ********************************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 HTSQL is a Python library which can be used to make HTSQL requests
 directly from Python applications.
 
