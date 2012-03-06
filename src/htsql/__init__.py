@@ -46,10 +46,20 @@ To execute a raw HTSQL request, run::
 """
 
 
-__version__ = '2.3.0.dev'
+__version__ = '2.3.0'
 __copyright__ = """Copyright (c) 2006-2012, Prometheus Research, LLC"""
-__license__ = None
-
+__license__ = """
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  This software
+is released under the AGPLv3 as well as a permissive license for use
+with open source databases.  See http://htsql.org/license/
+"""
+__credits__ = [
+"This work is developed by the HTSQL Project (http://htsql.org)",
+"This work incorporates Python Programming Language (http://python.org)",
+"This work incorporates SQLite Relational Database (http://sqlite.org)",
+"This work incorporates PyYAML Processor (http://pyyaml.org)"
+]
 
 from .core.application import Application as HTSQL
 

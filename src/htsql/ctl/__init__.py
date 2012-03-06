@@ -62,6 +62,27 @@ class HTSQL_CTL(Script):
         import htsql
         return trim_doc(htsql.__license__)
 
+    def get_credits(self):
+        import htsql
+        return [trim_doc(credit) for credit in htsql.__credits__]
+
+    def get_appropriate_legal_notices(self):
+        notices = []
+        version = self.get_version()
+        if version is not None:
+            notices.append(version)
+        copyright = self.get_copyright()
+        if copyright is not None:
+            notices.append(copyright)
+        license = self.get_license()
+        if license is not None:
+            notices.append(license)
+        credits = self.get_credits()
+        if credits:
+            notices.append("\nAttributions\n------------")
+        for credit in credits:
+            notices.append(credit)
+        return "\n".join(notices)
 
 def main():
     # This function is called when the `htsql-ctl` script is started.

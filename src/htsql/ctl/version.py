@@ -29,14 +29,5 @@ class VersionRoutine(Routine):
     """
 
     def run(self):
-        version = self.ctl.get_version()
-        if version is not None:
-            self.ctl.out(version)
-        copyright = self.ctl.get_copyright()
-        if copyright is not None:
-            self.ctl.out(copyright)
-        license = self.ctl.get_license()
-        if license is not None:
-            self.ctl.out(license)
-
-
+        self.ctl.out(self.ctl.get_appropriate_legal_notices())
+        self.ctl.out()
