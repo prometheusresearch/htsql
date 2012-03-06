@@ -6,7 +6,7 @@
 from job import job, log, debug, fatal, warn, run, ls, cp, rmtree, mktree, pipe
 from vm import LinuxBenchVM, WindowsBenchVM, DATA_ROOT, CTL_DIR
 from dist import pipe_python, setup_py
-import os, re, StringIO, pprint
+import os, re, shutil
 import setuptools
 import yaml
 
@@ -36,9 +36,11 @@ class Move(object):
         assert os.path.isdir(dst)
         for filename in sorted(self.files):
             parts = self.files[filename]
+            origin = None
             if parts is None:
                 parts = []
             elif isinstance(parts, str):
+                origin = parts
                 parts = [parts]
             assert isinstance(parts, list) and all(isinstance(part, str)
                                                    for part in parts)
@@ -58,6 +60,9 @@ class Move(object):
                 part = open(part).read()
                 part = self.substitute(part)
                 stream.write(part)
+            stream.close()
+            if origin:
+                shutil.copystat(os.path.join(src, origin), filename)
 
     def substitute(self, data):
         def replace(match):
@@ -98,6 +103,15 @@ class Move(object):
 load_moves = Move.load
 
 
+def get_version():
+    return yaml.load(pipe_python("-c 'import setup, yaml;"
+                                 " print yaml.dump(setup.get_version())'"))
+
+def get_addons():
+    return yaml.load(pipe_python("-c 'import setup, yaml;"
+                                 " print yaml.dump(setup.get_addons())'"))
+
+
 @job
 def pkg_src():
     """create a source package
@@ -112,10 +126,8 @@ def pkg_src():
         rmtree("./build/pkg/src")
     if os.path.exists("./build/tmp"):
         rmtree("./build/tmp")
-    version = yaml.load(pipe_python("-c 'import setup, yaml;"
-                                    " print yaml.dump(setup.get_version())'"))
-    all_addons = yaml.load(pipe_python("-c 'import setup, yaml;"
-                                       " print yaml.dump(setup.get_addons())'"))
+    version = get_version()
+    all_addons = get_addons()
     moves = load_moves(DATA_ROOT+"/pkg/source/moves.yaml")
     src_vm.start()
     try:
@@ -207,43 +219,90 @@ class Packager(object):
         log()
 
 
-class DEB_Packager(Packager):
-
-    def __init__(self):
-        Packager.__init__(self, deb_vm)
-        # create debian_version variable
-        if self.suffix:
-            version = self.version + "~" + self.suffix
-        else:
-            version = self.version
-        changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
-        if ('htsql (%s-1)' % version) not in changelog:
-            raise fatal("update debian/changelog for %s release" % version)
-        self.debian_version = version
-        self.build_file = "htsql_%s-1_all.deb" % version
-        
-    def package(self):
-        self.vm.run("mv %s htsql_%s.orig.tar.gz" % (self.archive, self.debian_version))
-        self.vm.run("tar xvfz htsql_%s.orig.tar.gz" % self.debian_version)
-        self.vm.put(DATA_ROOT+"/pkg/debian", "HTSQL-%s" % self.upstream_version)
-        self.vm.run("cd HTSQL-%s && dpkg-buildpackage -k%s" % \
-                     (self.upstream_version, KEYSIG))
-        self.vm.run("dpkg -i %s" % self.build_file)
-
-               
 @job
 def pkg_deb():
-    """create a debian package
+    """create Debian packages
 
-    This job creates combined source & binary package.
-
-    You must also append a release note to tool/data/pkg/debian/changelog
-    that matches the current release version.  Debian's pre-release naming
-    convention is different than Python's since it requires a tilde 
-    before the b1, rc1, etc.
+    This job creates Debian packages from source packages.
     """
-    packager = DEB_Packager()
-    packager()
+    if deb_vm.missing():
+        raise fatal("VM is not built: %s" % deb_vm.name)
+    if deb_vm.running():
+        deb_vm.stop()
+    if os.path.exists("./build/pkg/deb"):
+        rmtree("./build/pkg/deb")
+    if os.path.exists("./build/tmp"):
+        rmtree("./build/tmp")
+    version = get_version()
+    debian_version = version
+    if len(version.split(".")) > 3:
+        debian_version = (".".join(version.split(".")[:3]) + "~" +
+                          ".".join(version.split(".")[3:]))
+    moves = load_moves(DATA_ROOT+"/pkg/debian/moves.yaml")
+    deb_vm.start()
+    pubkey = pipe("gpg --armour --export %s" % KEYSIG)
+    seckey = pipe("gpg --armour --export-secret-key %s" % KEYSIG)
+    deb_vm.write("/root/sign.key", pubkey + seckey)
+    deb_vm.run("gpg --import /root/sign.key")
+    try:
+        for move in moves:
+            package = "%s-%s" % (move.code.upper(), version)
+            debian_package = "%s_%s" % (move.code, debian_version)
+            archive = "./build/pkg/src/%s.tar.gz" % package
+            if not os.path.exists(archive):
+                raise fatal("cannot find a source package;"
+                            " run `job pkg-src` first")
+            changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
+            if ('htsql (%s-1)' % debian_version) not in changelog:
+                raise fatal("run `job pkg-deb-changelog`"
+                            " to update the changelog file")
+            changelog = changelog.replace('htsql (', '%s (' % move.code)
+            mktree("./build/tmp")
+            cp(archive, "./build/tmp/%s.orig.tar.gz" % debian_package)
+            run("tar -xzf %s -C ./build/tmp" % archive)
+            move(DATA_ROOT+"/pkg/debian", "./build/tmp/%s" % package)
+            open("./build/tmp/%s/debian/changelog" % package, 'w') \
+                    .write(changelog)
+            deb_vm.put("./build/tmp", "./build")
+            deb_vm.run("cd ./build/%s && dpkg-buildpackage -k%s"
+                       % (package, KEYSIG))
+            if not os.path.exists("./build/pkg/deb"):
+                mktree("./build/pkg/deb")
+            deb_vm.get("./build/*.deb", "./build/pkg/deb")
+            deb_vm.run("rm -rf build")
+            rmtree("./build/tmp")
+    finally:
+        deb_vm.stop()
+    log()
+    log("The generated Debian packages are placed in:")
+    for filename in ls("./build/pkg/deb/*"):
+        log("  `%s`" % filename)
+    log()
+
+
+@job
+def pkg_deb_changelog(message=None):
+    """update the Debian changelog
+
+    This job updates the Debian changelog to the current HTSQL version.
+    """
+    if message is None:
+        message = "new upstream release"
+    version = get_version()
+    debian_version = version
+    if len(version.split(".")) > 3:
+        debian_version = (".".join(version.split(".")[:3]) + "~" +
+                          ".".join(version.split(".")[3:]))
+    debian_version += "-1"
+    changelog = open(DATA_ROOT+"/pkg/debian/changelog").read()
+    if ('htsql (%s)' % debian_version) in changelog:
+        raise fatal("changelog is already up-to-date")
+    run("dch --check-dirname-level 0 -D unstable -v %s %s"
+        % (debian_version, message),
+        cd=DATA_ROOT+"/pkg/debian")
+    log("The Debian changelog is updated to version:")
+    log("  `%s`" % debian_version)
+    log()
 
 
 class RPM_Packager(Packager):

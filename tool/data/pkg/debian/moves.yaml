@@ -1,0 +1,60 @@
+#
+# Copyright (c) 2006-2012, Prometheus Research, LLC
+#
+
+---
+code:
+files:
+  debian/changelog: changelog
+  debian/compat: compat
+  debian/control: control
+  debian/copyright: copyright
+  debian/docs: docs
+  debian/rules: rules
+  debian/source/format: source/format
+variables:
+  name:
+  source-name:
+  depends:
+  suggests:
+  description-head:
+  description-tail:
+
+---
+code: htsql
+files:
+  debian/docs: htsql.docs
+  debian/htsql.doc-base: htsql.doc-base
+  debian/manpages: htsql.manpages
+variables:
+  name: htsql
+  source-name: HTSQL
+  depends: python (>=2.6), python-yaml, python-pkg-resources, ${misc:Depends}
+  suggests: htsql-pgsql, htsql-mysql
+  description-head:
+    a database query language (core & SQLite backend)
+  description-tail:
+    This package provides HTSQL core and SQLite backend.
+
+---
+code: htsql-pgsql
+variables:
+  name: htsql-pgsql
+  source-name: HTSQL-PGSQL
+  depends: htsql, python-psycopg2
+  description-head:
+    a database query language (PostgreSQL backend)
+  description-tail:
+    This package provides HTSQL backend for PostgreSQL.
+
+---
+code: htsql-mysql
+variables:
+  name: htsql-mysql
+  source-name: HTSQL-MYSQL
+  depends: htsql, python-mysqldb
+  description-head:
+    a database query language (MySQL backend)
+  description-tail:
+    This package provides HTSQL backend for MySQL.
+
