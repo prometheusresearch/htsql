@@ -23,6 +23,7 @@ $(document).ready(function() {
         return {
             databaseName: $body.attr('data-database-name') || "",
             htsqlVersion: $body.attr('data-htsql-version') || "",
+            htsqlLegal: $body.attr('data-htsql-legal') || "",
             serverRoot: $body.attr('data-server-root') || "",
             queryOnStart: $body.attr('data-query-on-start') || "/",
             evaluateOnStart: ($body.attr('data-evaluate-on-start') == 'true'),
@@ -132,6 +133,7 @@ $(document).ready(function() {
 
     function clickHelp() {
         $('#version').text(config.htsqlVersion);
+        $('#legal').text(config.htsqlLegal);
         $popups.show();
         $helpPopup.show();
     }

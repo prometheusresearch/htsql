@@ -758,7 +758,7 @@ class VersionCmd(Cmd):
     """
 
     def execute(self):
-        self.ctl.out(self.ctl.get_appropriate_legal_notices())
+        self.ctl.out(self.ctl.get_legal())
         self.ctl.out()
 
 class DescribeCmd(Cmd):

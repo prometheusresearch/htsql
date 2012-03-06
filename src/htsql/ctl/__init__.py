@@ -50,30 +50,14 @@ class HTSQL_CTL(Script):
     Run `%(executable)s help <routine>` for help on a specific routine.
     """
 
-    def get_version(self):
-        import htsql
-        return "%s %s" % (htsql.__name__.upper(), htsql.__version__)
-
     def get_copyright(self):
         import htsql
         return trim_doc(htsql.__copyright__)
 
-    def get_license(self):
+    def get_legal(self):
         import htsql
-        return trim_doc(htsql.__license__)
+        return trim_doc(htsql.__legal__)
 
-    def get_appropriate_legal_notices(self):
-        notices = []
-        version = self.get_version()
-        if version is not None:
-            notices.append(version)
-        copyright = self.get_copyright()
-        if copyright is not None:
-            notices.append(copyright)
-        license = self.get_license()
-        if license is not None:
-            notices.append(license)
-        return "\n".join(notices)
 
 def main():
     # This function is called when the `htsql-ctl` script is started.

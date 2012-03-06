@@ -292,19 +292,13 @@ class Script(object):
         """
         Returns a copyright notice.
         """
-        return None
+        raise NotImplementedError()
 
-    def get_license(self):
+    def get_legal(self):
         """
-        Returns licensing information.
+        Returns the application version, copyright and licensing notices.
         """
-        return None
-
-    def get_version(self):
-        """
-        Returns version information.
-        """
-        return None
+        raise NotImplementedError()
 
     def parse_argv(self, argv):
         # Parses the command-line arguments; returns a triple:

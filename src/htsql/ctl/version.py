@@ -29,5 +29,5 @@ class VersionRoutine(Routine):
     """
 
     def run(self):
-        self.ctl.out(self.ctl.get_appropriate_legal_notices())
+        self.ctl.out(self.ctl.get_legal())
         self.ctl.out()

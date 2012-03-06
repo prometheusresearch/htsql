@@ -577,15 +577,18 @@ button:active {
   color: #1a1a1a;
 }
 
-#help-popup pre {
-   padding-top: 30px;
-   padding-left: 20px;
-   font-size: 80%
+#help-popup .legal {
+  font-size: 80%;
+  margin: 2em 2em 1em;
 }
 
-#help-popup img {
-   float: right;
-   position: relative;
-   right: 0;
-   bottom: 0;
+#help-popup .banner {
+  position: relative;
 }
+
+#help-popup .banner img {
+  position: absolute;
+  right: 0.5em;
+  bottom: 0.5em;
+}
+

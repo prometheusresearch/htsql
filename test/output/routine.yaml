@@ -34,12 +34,18 @@ tests:
 
   exit: 0
 - ctl: [--version]
-  stdout: "HTSQL 2.3.0\nCopyright (c) 2006-2012, Prometheus Research, LLC\nThis is
-    free software: you are free to change and redistribute it.\nThere is NO WARRANTY,
-    to the extent permitted by law.  This software\nis released under the AGPLv3 as
-    well as a permissive license for use\nwith open source databases.  See http://htsql.org/license/\n\nThe
-    HTSQL language and implementation was developed by members \nof the HTSQL Project
-    (http://htsql.org).\n\n"
+  stdout: |+
+    HTSQL 2.3.0
+    Copyright (c) 2006-2012, Prometheus Research, LLC
+
+    This is free software: you are free to change and redistribute it.
+    There is NO WARRANTY, to the extent permitted by law.  This software
+    is released under the AGPLv3 as well as a permissive license for use
+    with open source databases.  See http://htsql.org/license/.
+
+    The HTSQL language and implementation were developed by members
+    of the HTSQL Project (http://htsql.org/).
+
   exit: 0
 - ctl: [help]
   stdout: |+
@@ -82,10 +88,16 @@ tests:
 
   exit: 0
 - ctl: [version]
-  stdout: "HTSQL 2.3.0\nCopyright (c) 2006-2012, Prometheus Research, LLC\nThis is
-    free software: you are free to change and redistribute it.\nThere is NO WARRANTY,
-    to the extent permitted by law.  This software\nis released under the AGPLv3 as
-    well as a permissive license for use\nwith open source databases.  See http://htsql.org/license/\n\nThe
-    HTSQL language and implementation was developed by members \nof the HTSQL Project
-    (http://htsql.org).\n\n"
+  stdout: |+
+    HTSQL 2.3.0
+    Copyright (c) 2006-2012, Prometheus Research, LLC
+
+    This is free software: you are free to change and redistribute it.
+    There is NO WARRANTY, to the extent permitted by law.  This software
+    is released under the AGPLv3 as well as a permissive license for use
+    with open source databases.  See http://htsql.org/license/.
+
+    The HTSQL language and implementation were developed by members
+    of the HTSQL Project (http://htsql.org/).
+
   exit: 0
