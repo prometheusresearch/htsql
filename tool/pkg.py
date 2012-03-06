@@ -3,10 +3,10 @@
 #
 
 
-from job import job, log, debug, fatal, warn, run, cp, rmtree, mktree, pipe
+from job import job, log, debug, fatal, warn, run, ls, cp, rmtree, mktree, pipe
 from vm import LinuxBenchVM, WindowsBenchVM, DATA_ROOT, CTL_DIR
 from dist import pipe_python, setup_py
-import os, glob, re, StringIO, pprint
+import os, re, StringIO, pprint
 import setuptools
 import yaml
 
@@ -129,7 +129,7 @@ def pkg_src():
             move.variables['htsql-addons'] = addons
             mktree("./build/tmp")
             run("hg archive ./build/tmp/htsql")
-            for dirname in sorted(glob.glob("./build/tmp/htsql/src/*")):
+            for dirname in ls("./build/tmp/htsql/src/*"):
                 if os.path.basename(dirname) not in packages:
                     rmtree(dirname)
             packages = setuptools.find_packages("./build/tmp/htsql/src")
@@ -142,6 +142,11 @@ def pkg_src():
             if with_doc:
                 src_vm.run("cd htsql &&"
                            " PYTHONPATH=src sphinx-build -d doc doc doc/html")
+                for filename in ls("./build/tmp/htsql/doc/man/*.?.rst"):
+                    basename = os.path.basename(filename)
+                    target = basename[:-4]
+                    src_vm.run("rst2man htsql/doc/man/%s htsql/doc/man/%s"
+                               % (basename, target))
             src_vm.run("cd htsql && python setup.py sdist --formats=zip,gztar")
             if not os.path.exists("./build/pkg/src"):
                 mktree("./build/pkg/src")
@@ -152,7 +157,7 @@ def pkg_src():
         src_vm.stop()
     log()
     log("The generated source packages are placed in:")
-    for filename in sorted(glob.glob("./build/pkg/src/*")):
+    for filename in ls("./build/pkg/src/*"):
         log("  `%s`" % filename)
     log()
 
@@ -163,7 +168,7 @@ class Packager(object):
         self.vm = vm
         if self.vm.missing():
              raise fatal("VM is not built: %s" % self.vm.name)
-        source_paths = glob.glob("./build/pkg/src/HTSQL-*.tar.gz")
+        source_paths = ls("./build/pkg/src/HTSQL-*.tar.gz")
         if not source_paths:
             raise fatal("cannot find a source package; run `job pkg-src` first")
         if len(source_paths) > 1:
@@ -279,14 +284,14 @@ def pypi():
     to PyPI.  The distributions must be already built with
     `job pkg-src`.
     """
-    if not (glob.glob("./build/pkg/src/HTSQL-*.tar.gz") and
-            glob.glob("./build/pkg/src/HTSQL-*.zip")):
+    if not (ls("./build/pkg/src/HTSQL-*.tar.gz") and
+            ls("./build/pkg/src/HTSQL-*.zip")):
         raise fatal("cannot find source packages; run `job pkg-src` first")
     if os.path.exists("./build/tmp"):
         rmtree("./build/tmp")
     mktree("./build/tmp")
     archives = []
-    for tgzname in sorted(glob.glob("./build/pkg/src/*.tar.gz")):
+    for tgzname in ls("./build/pkg/src/*.tar.gz"):
         dirname = tgzname[:-7]
         zipname = dirname+".zip"
         dirname = os.path.basename(dirname)

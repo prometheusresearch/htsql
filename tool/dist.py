@@ -3,8 +3,8 @@
 #
 
 
-from job import job, rm, rmtree, run, pipe, log
-import os, os.path, glob
+from job import job, ls, rm, rmtree, run, pipe, log
+import os, os.path
 
 
 def pipe_python(command, cd=None):
@@ -99,7 +99,7 @@ def clean():
             if filename.endswith(".pyc") or filename.endswith(".pyo"):
                 filename = os.path.join(dirpath, filename)
                 rm(filename)
-    for filename in glob.glob("./HTSQL-*"):
+    for filename in ls("./HTSQL-*"):
         if os.path.isdir(filename):
             rmtree(filename)
 

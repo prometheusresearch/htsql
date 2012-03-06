@@ -3,7 +3,7 @@
 #
 
 
-import sys, os, re, shutil, subprocess
+import sys, os, re, shutil, glob, subprocess
 
 
 class settings(object):
@@ -78,6 +78,11 @@ def prompt(msg):
     while not value:
         value = raw_input(msg+" ").strip()
     return value
+
+
+def ls(pattern):
+    # Return list of files matching the pattern.
+    return sorted(glob.glob(pattern))
 
 
 def cp(src_filename, dst_filename):

@@ -4,8 +4,8 @@
 
 
 from job import (job, settings, run, pipe, exe, log, debug, warn, fatal, prompt,
-                 cp, rm, mktree, rmtree)
-import os, os.path, glob, urllib2, socket, datetime, time, re, tempfile
+                 ls, cp, rm, mktree, rmtree)
+import os, os.path, urllib2, socket, datetime, time, re, tempfile
 
 
 VM_ROOT = "./vm-build"
@@ -90,7 +90,7 @@ class VM(object):
         if not self.running():
             return []
         ports = []
-        for filename in glob.glob(CTL_DIR+"/port.*"):
+        for filename in ls(CTL_DIR+"/port.*"):
             name = open(filename).read().strip()
             if name == self.name:
                 port = int(filename.rsplit(".", 1)[-1])
@@ -135,7 +135,7 @@ class VM(object):
         if self.running():
             raise fatal("VM is already running: %s" % self.name)
         log("starting VM: %s" % self.name)
-        for filename in glob.glob(CTL_DIR+"/port.*"):
+        for filename in ls(CTL_DIR+"/port.*"):
             name = open(filename).read().strip()
             if name == self.name:
                 rm(filename)
