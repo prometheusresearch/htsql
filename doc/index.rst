@@ -11,6 +11,7 @@
    ref/index
    admin/index
    embed
+   man/index
 
 Indices and tables
 ==================
