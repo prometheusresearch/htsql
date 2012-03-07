@@ -1,9 +1,0 @@
-Package: htsql-mysql
-Section: non-free/python
-Version: 2.2
-Priority: optional
-Architecture: all
-Maintainer: Clark C. Evans <cce@clarkevans.com>
-Depends: htsql, python-mysqldb
-Description: HTSQL with MySQL
- A meta-package for installing HTSQL with MySQL client.

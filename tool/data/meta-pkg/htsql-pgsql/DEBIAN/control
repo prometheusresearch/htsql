@@ -1,9 +1,0 @@
-Package: htsql-pgsql
-Section: non-free/python
-Version: 2.2
-Priority: optional
-Architecture: all
-Maintainer: Clark C. Evans <cce@clarkevans.com>
-Depends: htsql, python-psycopg2
-Description: HTSQL with PostgreSQL
- A meta-package for installing HTSQL with PostgreSQL client.
