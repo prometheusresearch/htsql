@@ -91,6 +91,12 @@ def cp(src_filename, dst_filename):
     shutil.copy(src_filename, dst_filename)
 
 
+def mv(src_filename, dst_filename):
+    # Rename a file.
+    debug("moving: %s => %s" % (src_filename, dst_filename))
+    os.rename(src_filename, dst_filename)
+
+
 def rm(filename):
     # Remove a file.
     debug("removing: %s" % filename)

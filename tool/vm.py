@@ -4,7 +4,7 @@
 
 
 from job import (job, settings, run, pipe, exe, log, debug, warn, fatal, prompt,
-                 ls, cp, rm, mktree, rmtree)
+                 ls, cp, mv, rm, mktree, rmtree)
 import os, os.path, urllib2, socket, datetime, time, re, tempfile
 
 
@@ -269,6 +269,16 @@ class VM(object):
         # Run `kvm-img create -f qcow2 <img_path> <DISK_SIZE>`.
         run("kvm-img create -f qcow2 %s %s" % (self.img_path, DISK_SIZE))
 
+    def compress(self, backing_name=None):
+        # Run `kvm-img convert -c ...`.
+        opts = "convert -c -f qcow2 -O qcow2"
+        if backing_name:
+            opts += " -o backing_file=%s.qcow2" % backing_name
+        run("kvm-img %s %s.qcow2 %s-compressed.qcow2"
+            % (opts, self.name, self.name), cd=IMG_DIR)
+        mv(IMG_DIR+"/%s-compressed.qcow2" % self.name,
+           IMG_DIR+"/%s.qcow2" % self.name)
+
     def kvm(self, opts=None):
         # Run `kvm`.
         net_model = "virtio"
@@ -365,6 +375,7 @@ class DebianTemplateVM(VM):
             self.kvm_img()
             self.kvm("-cdrom %s -boot d" % iso_path)
             rm(iso_path)
+            self.compress()
         except:
             if os.path.exists(self.img_path):
                 rm(self.img_path)
@@ -408,6 +419,7 @@ class CentOSTemplateVM(VM):
             self.kvm_img()
             self.kvm("-cdrom %s -boot d" % iso_path)
             rm(iso_path)
+            self.compress()
         except:
             if os.path.exists(self.img_path):
                 rm(self.img_path)
@@ -486,6 +498,7 @@ class WindowsTemplateVM(VM):
             self.kvm_img()
             self.kvm("-cdrom %s -boot d" % iso_path)
             rm(iso_path)
+            self.compress()
         except:
             if os.path.exists(self.img_path):
                 rm(self.img_path)
@@ -514,7 +527,8 @@ class LinuxBenchVM(VM):
         log("building VM: `%s`..." % self.name)
         start_time = datetime.datetime.now()
         try:
-            cp(parent_vm.img_path, self.img_path)
+            run("kvm-img create -b %s.qcow2 -f qcow2 %s.qcow2"
+                % (parent_vm.name, self.name), cd=IMG_DIR)
             self.kvm("-daemonize")
             time.sleep(60.0)
             self.put(DATA_ROOT+"/vm/%s-update.sh" % self.name, "/root/update.sh")
@@ -522,6 +536,7 @@ class LinuxBenchVM(VM):
             self.run("rm /root/update.sh")
             self.run("poweroff")
             self.wait()
+            self.compress(parent_vm.name)
             self.kvm("-daemonize")
             time.sleep(60.0)
             self.ctl("savevm %s" % self.state)
@@ -581,6 +596,7 @@ class WindowsBenchVM(VM):
                      " /v %s /t REG_SZ /d 'C:\INSTALL\UPDATE.CMD' /f" % self.name)
             self.run("shutdown /r /t 0 /f")
             self.wait()
+            self.compress(parent_vm.name)
             self.kvm("-daemonize")
             time.sleep(120.0)
             self.ctl("savevm %s" % self.state)
