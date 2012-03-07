@@ -7,7 +7,7 @@ Summary:        ${SUMMARY}
 
 Group:          Application/Databases
 License:        AGPLv3 with 7b attribution and GPLv2 exception
-URL:            http://htsql.org 
+URL:            http://htsql.org/
 Source:         ${PACKAGE}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Prefix:         %{_prefix}
