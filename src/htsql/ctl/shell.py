@@ -1079,7 +1079,8 @@ class ShellRoutine(Routine):
 
     def setup(self):
         # Load the `readline` history; initialize completion.
-        if self.ctl.is_interactive and readline is not None:
+        is_free = self.db.engine in ('sqlite', 'mysql', 'pgsql')
+        if self.ctl.is_interactive and readline is not None and is_free:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             if os.path.exists(path):
                 readline.read_history_file(path)
