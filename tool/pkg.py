@@ -333,6 +333,7 @@ def pypi():
         dirname = "./build/tmp/"+dirname
         run("tar -xzf %s -C ./build/tmp" % tgzname)
         mktree(dirname+"/dist")
+        run("tar -xzf %s -C %s" % (tgzname, dirname))
         cp(tgzname, dirname+"/dist")
         cp(zipname, dirname+"/dist")
         setup_py("sdist --formats=zip,gztar --dry-run"
