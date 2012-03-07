@@ -1,3 +1,9 @@
+htsql (2.3.0-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Clark C. Evans <cce@cantor>  Tue, 06 Mar 2012 11:53:26 -0500
+
 htsql (2.2.1-1) unstable; urgency=low
 
   * new upstream release

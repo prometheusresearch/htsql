@@ -1,9 +1,13 @@
 # This file specifies non-source code files that should be
 # included to the source distribution.
 
-# README files and build scripts.
-include README INSTALL NEWS LICENSE AUTHORS Makefile setup.cfg
+# README files.
+include README LICENSE NEWS AUTHORS
 
 # Package resources.
 recursive-include src *.html *.css *.js
+
+# Generated HTML documentation and MAN pages.
+recursive-include doc/html *
+recursive-include doc/man *.1
 

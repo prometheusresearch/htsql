@@ -1,10 +1,9 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
-from ... import __version__
+from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
 from ...core.adapter import Adapter, adapts, named
@@ -150,6 +149,7 @@ class RenderShell(Act):
         assert resource is not None
         database_name = context.app.htsql.db.database
         htsql_version = __version__
+        htsql_legal = __legal__
         server_root = context.app.tweak.shell.server_root
         if server_root is None:
             server_root = wsgiref.util.application_uri(self.action.environ)
@@ -168,6 +168,7 @@ class RenderShell(Act):
         data = self.patch(data, 'base href', resource_root)
         data = self.patch(data, 'data-database-name', database_name)
         data = self.patch(data, 'data-htsql-version', htsql_version)
+        data = self.patch(data, 'data-htsql-legal', htsql_legal)
         data = self.patch(data, 'data-server-root', server_root)
         data = self.patch(data, 'data-query-on-start', query_on_start)
         data = self.patch(data, 'data-evaluate-on-start', evaluate_on_start)

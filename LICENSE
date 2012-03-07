@@ -1,34 +1,23 @@
-Copyright (c) 2006-2012, Prometheus Research, LLC.
-All rights reserved.
+HTSQL and its adapters for open source database systems are released under
+a Permissive, Free Software and Evaluation licenses.  You may distribute
+HTSQL under your choice of these licenses, so long as you respect the
+licenses of other works it may be distributed and/or used in conjunction
+with.  For more information, please see http://htsql.org/license/. 
 
-This software is released through a "BSD" style license for use with
-open source databases (such as MySQL, PostgreSQL, SQLite). A commercial
-license is needed for use with a commercial database system, such as
-Oracle, IBM's DB2, or Microsoft SQL Server.
+In this repository, we also include adapters for proprietary database
+systems, but only under an Evaluation license.  Hence, this repository,
+as a whole, is not completely free software and therefore should not be
+referenced as a source package.  Our free software source packages
+exclude these proprietary adapters.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions 
-are met:
+In this repository, some components considered broadly useful, but
+ancillary to HTSQL itself, are released under the MIT license.  Example
+code snippets, configuration, and applications are placed into the
+public domain using the CC0 copyright dedication.  These exceptions to
+the general license outline above are marked on a file by file basis.
 
-1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
+To join this project or learn about how to contribute, please read
+http://htsql.org/community/.  In particular, most enhancements for HTSQL
+could be added through a runtime extension mechanism and do not require
+write access to this source code repository.
 
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY, AGAINST INFRINGEMENT, TITLE AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
-AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-If this software is used in conjunction with a database system, said
-database system must be published under a license approved by the Open
-Source Initiative or released in the public domain.

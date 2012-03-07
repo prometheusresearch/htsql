@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -14,10 +13,9 @@ This module declares the database connection adapter.
 
 from __future__ import with_statement
 from .util import Record
-from .adapter import Adapter, Utility, adapts, weigh
+from .adapter import Adapter, Utility, adapts
 from .domain import Domain
 from .context import context
-import threading
 
 
 class DBError(Exception):
@@ -306,34 +304,6 @@ class Connect(Utility):
         """
         # Override when subclassing.
         raise NotImplementedError()
-
-
-class ConnectionPool(object):
-
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.items = []
-
-
-class PoolConnect(Connect):
-
-    weigh(1.0)
-
-    def __call__(self):
-        if self.with_autocommit:
-            return super(PoolConnect, self).__call__()
-        pool = context.app.htsql.pool
-        with pool.lock:
-            for connection in pool.items[:]:
-                if not connection.is_valid:
-                    pool.items.remove(connection)
-            for connection in pool.items:
-                if not connection.is_busy:
-                    connection.acquire()
-                    return connection
-            connection = super(PoolConnect, self).__call__()
-            pool.items.append(connection)
-            return connection
 
 
 class Normalize(Adapter):

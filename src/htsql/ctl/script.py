@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -16,7 +15,8 @@ from .error import ScriptError
 from .routine import Argument, Routine
 from .option import Option
 from ..core.util import listof, trim_doc
-
+import os
+import sys
 
 class Script(object):
     """
@@ -101,8 +101,6 @@ class Script(object):
     hint = None
     # Override to provide a long description of the application.
     help = None
-    # Override to provide a copyright notice.
-    copyright = None
     # Override to provide a list of supported routines.
     routines = []
 
@@ -111,6 +109,15 @@ class Script(object):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
+
+        # Is this script being run interactively?
+        self.is_interactive = (hasattr(self.stdin, 'isatty') and
+                               self.stdin.isatty() and
+                               self.stdin is sys.stdin and
+                               hasattr(self.stdout, 'isatty') and
+                               self.stdout.isatty() and
+                               self.stdout is sys.stdout)
+
         # A mapping of routine_class.name -> routine_class.
         self.routine_by_name = {}
         # A mapping of option.short_name | option.long_name -> option.
@@ -232,6 +239,24 @@ class Script(object):
         """
         return self.out_to(self.stdout, *values, **options)
 
+
+    def input(self, prompt):
+        """
+        If this is a terminal, get input from the user with a prompt,
+        reading to first blank line.  Otherwise, read standard input.
+        """ 
+        if not self.is_interactive:
+            return self.stdin.read().rstrip()
+        self.out(prompt)
+        chunks = []
+        while True:
+            chunk = self.stdin.readline().rstrip()
+            if not chunk:
+                break
+            chunks.append(chunk)
+        return "\n".join(chunks)
+
+
     def err(self, *values, **options):
         """
         Print the values to the standard error stream.
@@ -267,7 +292,13 @@ class Script(object):
         """
         Returns a copyright notice.
         """
-        return self.copyright
+        raise NotImplementedError()
+
+    def get_legal(self):
+        """
+        Returns the application version, copyright and licensing notices.
+        """
+        raise NotImplementedError()
 
     def parse_argv(self, argv):
         # Parses the command-line arguments; returns a triple:

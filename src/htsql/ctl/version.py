@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2006-2008, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 #
 
 
@@ -13,6 +12,7 @@ This module implements the `version` routine.
 
 
 from .routine import Routine
+from ..core.util import trim_doc
 
 
 class VersionRoutine(Routine):
@@ -29,7 +29,5 @@ class VersionRoutine(Routine):
     """
 
     def run(self):
-        import htsql
-        self.ctl.out(htsql.__version__)
-
-
+        self.ctl.out(self.ctl.get_legal())
+        self.ctl.out()

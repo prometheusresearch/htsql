@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2006-2008, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 #
 
 
@@ -2161,8 +2160,8 @@ class WriteToFileTestCase(SkipTestCase):
         # Display the header.
         self.out_header()
         # Write the data to the file.
-        stream = open(input.write, 'wb')
-        stream.write(input.data)
+        stream = open(self.input.write, 'wb')
+        stream.write(self.input.data)
         stream.close()
 
 

@@ -46,11 +46,18 @@ apt-get -qy install oracle-xe-client
 apt-get clean
 
 # Initialize Python virtual enviroment in `/root`.
-virtualenv -p python2.7 .
+virtualenv -p python2.7 --system-site-packages .
 
 # Install Django and SQLAlchemy.
 ~/bin/pip -q install Django
 ~/bin/pip -q install SQLAlchemy
+
+# Install database adapters.
+~/bin/pip -q install psycopg2
+~/bin/pip -q install mysql-python
+ORACLE_HOME=/usr/lib/oracle/xe/app/oracle/product/10.2.0/client \
+~/bin/pip -q install cx-oracle
+~/bin/pip -q install pymssql -f http://pypi.python.org/pypi/pymssql/ --no-index
 
 # Set the Oracle, FreeTDS and `virtualenv` environment variables on login.
 cat <<END >>/root/.bashrc

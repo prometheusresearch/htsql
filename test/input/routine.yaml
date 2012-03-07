@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 title: HTSQL-CTL Command-Line Tool
@@ -8,7 +7,10 @@ id: routine
 output: test/output/routine.yaml
 tests:
 - ctl: []
+- ctl: [--help]
+- ctl: [--version]
 - ctl: [help]
 - ctl: [help, help]
+- ctl: [version]
 # FIXME: need comprehensive tests for each routine.
 

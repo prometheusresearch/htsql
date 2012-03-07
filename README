@@ -1,46 +1,12 @@
-***********************************************************
-  HTSQL -- A Query Language for the Accidental Programmer
-***********************************************************
+HTSQL is a comprehensive navigational query language for relational
+databases.  HTSQL is designed for data analysts and other *accidental
+programmers* who have complex business inquiries to solve and need a
+productive tool to write and share database queries.  HTSQL is *free
+and open source* software.  For more detail, visit http://htsql.org/.
 
-HTSQL ("Hyper Text Structured Query Language") is a high-level query
-language for relational databases.   The target audience for HTSQL is
-the accidental programmer -- one who is not a SQL expert, yet needs a
-usable, comprehensive query tool for data access and reporting.  
-
-HTSQL is also a web service which takes a request via HTTP, translates
-it into a SQL query, executes the query against a relational database,
-and returns the results in a format requested by the user agent (JSON,
-CSV, HTML, etc.).
-
-Use of HTSQL with open source databases (PostgreSQL, MySQL, SQLite) is
-royalty free under BSD-style conditions.  Use of HTSQL with proprietary
-database systems (Oracle, Microsoft SQL) requires a commercial license.
-See ``LICENSE`` for details.
-
-For installation instructions, see ``INSTALL``.  For list of new
-features in this release, see ``NEWS``.  HTSQL documentation is in the
-``doc`` directory. 
-
-    http://htsql.org/
-        The HTSQL homepage
-
-    http://htsql.org/doc/introduction.html
-        Get taste of HTSQL
-
-    http://htsql.org/doc/tutorial.html
-        The HTSQL tutorial
-
-    http://htsql.org/doc/embed.html
-        Using HTSQL in Python
-
-    http://bitbucket.org/prometheus/htsql
-        HTSQL source code
-
-    irc://irc.freenode.net#htsql
-        IRC chat in #htsql on freenode
-
-    http://lists.htsql.org/mailman/listinfo/htsql-users
-        The mailing list for users of HTSQL
+This is a source repository for HTSQL.  It contains the source of
+HTSQL core and database backends, documentation, regression tests,
+and build scripts.
 
 HTSQL is copyright by Prometheus Research, LLC.  HTSQL is written by
 Clark C. Evans <cce@clarkevans.com> and Kirill Simonov <xi@resolvent.net>.

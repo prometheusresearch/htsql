@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 title: Edge Cases of HTSQL-to-SQL Translation
@@ -348,6 +347,13 @@ tests:
     - uri: /school{code, $num_dept := count(department)}?$num_dept>3
     - uri: /school{code, program.num_stud := count(student)}
       expect: 400
+    - uri: /school.define(match($code) := filter(code=$code))
+            {*, count(department)}.match('art'){*4}
+      skip: true
+    - uri: /school.define(match($code) := filter(code=$code),
+                          num_dept := count(department))
+                  .match('art'){num_dept}
+      skip: true
 
   - title: Projections
     tests:

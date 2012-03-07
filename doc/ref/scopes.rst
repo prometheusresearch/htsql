@@ -2,6 +2,10 @@
   Naming Scopes
 *****************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 In HTSQL, identifiers are used to refer to class names, attributes,
 links as so on.  A collection of available names and associated objects
 is called a naming *scope*.

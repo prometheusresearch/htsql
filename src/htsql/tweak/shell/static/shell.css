@@ -594,3 +594,18 @@ button:active {
   color: #1a1a1a;
 }
 
+#help-popup .legal {
+  font-size: 80%;
+  margin: 2em 2em 1em;
+}
+
+#help-popup .banner {
+  position: relative;
+}
+
+#help-popup .banner img {
+  position: absolute;
+  right: 0.5em;
+  bottom: 0.5em;
+}
+

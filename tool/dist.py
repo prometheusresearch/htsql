@@ -1,28 +1,33 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
-from job import job, rm, rmtree, run, log
-import os, os.path, glob
+from job import job, ls, rm, rmtree, run, pipe, log
+import os, os.path
 
 
-def python(command):
+def pipe_python(command, cd=None):
+    # Run `python <command>` and return the output.
+    PYTHON = os.environ.get("PYTHON", "python")
+    return pipe(PYTHON+" "+command, cd=cd)
+
+
+def python(command, cd=None):
     # Run `python <command>`.
     PYTHON = os.environ.get("PYTHON", "python")
-    run(PYTHON+" "+command, verbose=True)
+    run(PYTHON+" "+command, verbose=True, cd=cd)
 
 
-def setup_py(command):
+def setup_py(command, cd=None):
     # Run `python setup.py <command>`.
-    python("setup.py "+command)
+    python("setup.py "+command, cd=cd)
 
 
-def sphinx(command):
+def sphinx(command, cd=None):
     # Run `sphinx-build <command>`.
     SPHINX = os.environ.get("SPHINX_BUILD", "sphinx-build")
-    run(SPHINX+" "+command, verbose=True)
+    run(SPHINX+" "+command, verbose=True, cd=cd)
 
 
 @job
@@ -82,21 +87,6 @@ def doc():
 
 
 @job
-def dist():
-    """build the source distribution
-
-    This job builds `zip` and `tar.gz` source distributions and places
-    them to the directory:
-      `./build/dist/`
-    """
-    setup_py("sdist --formats=zip,gztar --dist-dir=build/dist")
-    log()
-    log("The generated source distribution archives are put in:")
-    log("  `./build/dist/`")
-    log()
-
-
-@job
 def clean():
     """delete generated files
 
@@ -109,7 +99,7 @@ def clean():
             if filename.endswith(".pyc") or filename.endswith(".pyo"):
                 filename = os.path.join(dirpath, filename)
                 rm(filename)
-    for filename in glob.glob("./HTSQL-*"):
+    for filename in ls("./HTSQL-*"):
         if os.path.isdir(filename):
             rmtree(filename)
 

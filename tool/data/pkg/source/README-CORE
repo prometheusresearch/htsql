@@ -1,0 +1,144 @@
+**************************************
+  HTSQL -- A Database Query Language
+**************************************
+
+HTSQL is a comprehensive navigational query language for relational
+databases.  HTSQL is designed for data analysts and other *accidental
+programmers* who have complex business inquiries to solve and need a
+productive tool to write and share database queries.  HTSQL is *free
+and open source* software.  For more detail, visit http://htsql.org/.
+
+This package provides HTSQL core and *SQLite* backend.
+
+
+Installation Instructions
+=========================
+
+To install HTSQL using ``pip`` package manager, run::
+
+    # pip install HTSQL
+
+HTSQL works out of the box with SQLite databases.  To run HTSQL
+on top of other database servers, you need to install additional
+database backends.
+
+To install a PostgreSQL backend, run::
+
+    # pip install HTSQL-PGSQL
+
+To install a MySQL backend, run::
+
+    # pip install HTSQL-MYSQL
+
+To install an Oracle backend, run::
+
+    # pip install HTSQL-ORACLE
+
+To install a backend for Microsoft SQL Server, run::
+
+    # pip install HTSQL-MSSQL
+
+Alternatively, you may download binary packages for various
+Linux distributions from http://htsql.org/download/.
+
+
+Quick Start
+===========
+
+To verify that HTSQL is installed correctly, run::
+
+    $ htsql-ctl --version
+
+You can use HTSQL on top of any relational database.  In our examples,
+we use the HTSQL Demo database, which can be downloaded from
+http://dist.htsql.org/misc/htsql_demo.sqlite.
+
+To start a command-line shell where you can type and execute HTSQL
+queries, run::
+
+    $ htsql-ctl shell sqlite:htsql_demo.sqlite
+    Type 'help' for more information, 'exit' to quit the shell.
+
+The parameter ``sqlite:htsql_demo.sqlite`` is a database connection
+URI, which has the general form::
+
+    <engine>://<user>:<pass>@<host>:<port>/<database>
+
+For example, the following are valid connection URI::
+
+    sqlite:htsql_demo.sqlite
+    pgsql://localhost/htsql_demo
+    mysql://root@localhost:3306/htsql_demo
+
+Use option ``--password`` to make ``htsql-ctl`` ask you to type
+the password.
+
+In the shell, you can type and execute HTSQL queries::
+
+    htsql_demo$ /school
+     | school                                        |
+     +-----------------------------------------------+
+     | code | name                          | campus |
+    -+------+-------------------------------+--------+-
+     | art  | School of Art & Design        | old    |
+     | bus  | School of Business            | south  |
+     | edu  | College of Education          | old    |
+    ...
+
+The ``htsql-ctl`` script also provides a built-in web server.  It could
+be started as follows::
+
+    $ htsql-ctl serve sqlite:htsql_demo.sqlite
+    Starting an HTSQL server on localhost:8080 over htsql_demo.sqlite
+
+You could then access HTSQL using your browser or any other HTTP user
+agent.
+
+For more information on using and configuring HTSQL, see
+http://htsql.org/doc/handbook.html.
+
+
+Using HTSQL from Python
+=======================
+
+Create an HTSQL instance::
+
+    >>> from htsql import HTSQL
+    >>> demo = HTSQL("sqlite:htsql_demo")
+
+Use the instance to execute HTSQL queries.  For example, to
+find all school records matching the given pattern, write::
+
+    >>> query = "/school?name~$pattern"
+    >>> for row in demo.produce(query, pattern='art'):
+    ...     print row
+    ...
+    school(code=u'art', name=u'School of Art & Design', campus=u'old')
+    school(code=u'la', name=u'School of Arts and Humanities', campus=u'old')
+
+In the next example, for all schools in the old campus, we get the
+number of associated programs and departments::
+
+    >>> query = "/school{name, count(program), count(department)}?campus='old'"
+    >>> for row in demo.produce(query):
+    ...     print "%s: %d programs, %d departments" % row
+    ...
+    School of Art & Design: 3 programs, 2 departments
+    College of Education: 7 programs, 2 departments
+    School of Arts and Humanities: 9 programs, 5 departments
+    School of Natural Sciences: 6 programs, 4 departments
+
+For detailed instructions on use of HTSQL with Python, see
+http://htsql.org/doc/embed.html.
+
+
+Acknowledgements
+================
+
+HTSQL is copyright by Prometheus Research, LLC.  HTSQL is written by
+Clark C. Evans <cce@clarkevans.com> and Kirill Simonov <xi@resolvent.net>.
+
+Generous support for HTSQL was provided by the Simons Foundation.
+This material is also based upon work supported by the National
+Science Foundation under Grant #0944460.
+

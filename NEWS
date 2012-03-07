@@ -2,6 +2,31 @@ List of Changes
 ===============
 
 
+2.3.0 (2012-03-07)
+------------------
+
+* Clarified HTSQL licensing: HTSQL is now released under three
+  licenses: Free (AGPLv3), Permissive for use with open source
+  databases, and Evaluation for use with proprietary database servers.
+  See http://htsql.org/license/ for more information.
+* Switched to a new version numbering scheme: each public release
+  is marked by three numbers `X.Y.Z`.  Here `X.Y` are the major
+  and minor version number and `Z` is a release number.  An even (odd)
+  value of `Y` identifies stable (development) releases respectively.
+  Thus `2.3.0` starts a new series of development  releases, which will
+  conclude with the release of `2.4.0`.  Stable releases maintain
+  syntax, semantics and API compatibility while development releases
+  don't.
+* Separated HTSQL core and database backends into different source
+  packages: `HTSQL` (includes the core and SQLite backend),
+  `HTSQL-PGSQL`, `HTSQL-MYSQL`, `HTSQL-ORACLE`, `HTSQL-MSSQL`.
+* Extracted connection pooling to a separate addon `tweak.pool` since
+  it was causing issues with SQLite and MySQL backends.
+* Added a shell command `describe` to describe database metadata.
+* Added a quick start guide: "HTSQL Handbook", other documentation
+  updates.
+
+
 2.2.1 (2011-12-15)
 ------------------
 

@@ -1,0 +1,19 @@
+********************************************
+  HTSQL-ORACLE -- HTSQL backend for Oracle
+********************************************
+
+HTSQL is a comprehensive navigational query language for relational
+databases.  This package provides HTSQL backend for *Oracle*.
+
+To install this package, run::
+
+    # pip install HTSQL-ORACLE
+
+For more information, please see:
+
+    http://htsql.org/
+        The HTSQL homepage
+
+    http://pypi.python.org/pypi/HTSQL/
+        The source package for HTSQL
+

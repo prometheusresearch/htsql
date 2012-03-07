@@ -1,0 +1,20 @@
+*********************************************************
+  HTSQL-MSSQL -- HTSQL backend for Microsoft SQL Server
+*********************************************************
+
+HTSQL is a comprehensive navigational query language for relational
+databases.  This package provides HTSQL backend for *Microsoft SQL
+Server*.
+
+To install this package, run::
+
+    # pip install HTSQL-MSSQL
+
+For more information, please see:
+
+    http://htsql.org/
+        The HTSQL homepage
+
+    http://pypi.python.org/pypi/HTSQL/
+        The source package for HTSQL
+

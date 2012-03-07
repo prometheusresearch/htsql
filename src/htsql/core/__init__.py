@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -9,7 +8,7 @@ from . import (adapter, addon, application, cache, cmd, connect, context,
                tr, util, validator, wsgi)
 from .validator import DBVal
 from .addon import Addon, Parameter, addon_registry
-from .connect import ConnectionPool, connect, DBError
+from .connect import connect, DBError
 from .introspect import introspect
 from .cache import GeneralCache
 
@@ -51,7 +50,6 @@ class HTSQLAddon(Addon):
     def __init__(self, app, attributes):
         super(HTSQLAddon, self).__init__(app, attributes)
         self.cache = GeneralCache()
-        self.pool = ConnectionPool()
 
     def validate(self):
         if self.db is None:

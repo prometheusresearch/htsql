@@ -1,0 +1,62 @@
+#
+# Copyright (c) 2006-2012, Prometheus Research, LLC
+#
+
+---
+code:
+files:
+  BUILD/:
+  RPMS/:
+  SOURCES/:
+  SPECS/:
+  SRPMS/:
+variables:
+  name:
+  version: # set by the build script
+  package: # set by the build script
+  requires:
+  summary:
+  description:
+  doc-files:
+  files:
+
+---
+code: htsql
+files:
+  SPECS/HTSQL.spec: HTSQL.spec
+variables:
+  name: HTSQL
+  requires: PyYAML, python-setuptools
+  summary:
+    a database query language (core & SQLite backend)
+  description:
+    This package provides HTSQL core and SQLite backend.
+  doc-files: README LICENSE NEWS AUTHORS doc
+  files: /usr/bin/htsql-ctl
+
+---
+code: htsql-pgsql
+files:
+  SPECS/HTSQL-PGSQL.spec: HTSQL.spec
+variables:
+  name: HTSQL-PGSQL
+  requires: HTSQL, python-psycopg2
+  summary:
+    a database query language (PostgreSQL backend)
+  description:
+    This package provides HTSQL backend for PostgreSQL.
+  doc-files: README LICENSE NEWS AUTHORS
+
+---
+code: htsql-mysql
+files:
+  SPECS/HTSQL-MYSQL.spec: HTSQL.spec
+variables:
+  name: HTSQL-MYSQL
+  requires: HTSQL, MySQL-python
+  summary:
+    a database query language (MySQL backend)
+  description:
+    This package provides HTSQL backend for MySQL.
+  doc-files: README LICENSE NEWS AUTHORS
+

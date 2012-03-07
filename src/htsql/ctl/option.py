@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -142,6 +141,16 @@ class Option(object):
 # Options used by ``htsql-ctl``.
 #
 
+
+HelpOption = Option(
+        attribute='help',
+        long_name='--help',
+        hint="""describe the usage of the application""")
+
+VersionOption = Option(
+        attribute='version',
+        long_name='--version',
+        hint="""report the version of the application""")
 
 QuietOption = Option(
         attribute='quiet',

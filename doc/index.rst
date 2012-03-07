@@ -5,11 +5,13 @@
 .. toctree::
    :maxdepth: 2
 
-   introduction
+   overview
+   handbook
    tutorial
    ref/index
    admin/index
    embed
+   man/index
 
 Indices and tables
 ==================

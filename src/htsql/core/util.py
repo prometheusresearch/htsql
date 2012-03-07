@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -50,7 +49,7 @@ class DB(object):
     `database`
         The database name.
 
-        For SQLite, the path to the database file.
+        For SQLite, the path to the database file, or `:memory:`.
 
     `options`
         A dictionary containing extra connection parameters.

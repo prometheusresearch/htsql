@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 title: HTSQL Extensions
@@ -436,6 +435,14 @@ tests:
   - uri: /(student{name, dob}?date(start_date)>curr_date).limit(10)
   - uri: /student{name, dob}?dob>max_dob()-30
   - uri: /student^trunc_year(dob){*, count(^)}
+
+# TWEAK.POOL - cache database connections
+- title: tweak.pool
+  tests:
+  # Addon description
+  - ctl: [ext, tweak.pool]
+  # No need for special tests since `tweak.pool` is already used
+  # with regular tests for all database adapters except SQLite.
 
 # TWEAK.RESOURCE - serve static files
 - title: tweak.resource

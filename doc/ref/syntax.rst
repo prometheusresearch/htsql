@@ -2,6 +2,10 @@
   HTSQL Grammar
 *****************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 A valid input of an HTSQL processor is called an HTSQL query.
 
 In a regular mode of operation, an HTSQL processor is started as a web

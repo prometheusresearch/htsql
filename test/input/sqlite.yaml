@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 title: SQLite regression tests
@@ -17,16 +16,22 @@ tests:
   id: create-sqlite
   tests:
   - mkdir: build/regress/sqlite
+  - write: build/regress/sqlite/htsql_demo.sqlite
+    data: ""
   - connect: &connect-demo
       engine: sqlite
       database: build/regress/sqlite/htsql_demo.sqlite
     sql-include: test/sql/demo-sqlite.sql
   - db: *connect-demo
   - py-include: test/sql/demo-load.py
+  - write: build/regress/sqlite/htsql_edge.sqlite
+    data: ""
   - connect: &connect-edge
       engine: sqlite
       database: build/regress/sqlite/htsql_edge.sqlite
     sql-include: test/sql/edge-sqlite.sql
+  - write: build/regress/sqlite/htsql_sandbox.sqlite
+    data: ""
   - connect: &connect-sandbox
       engine: sqlite
       database: build/regress/sqlite/htsql_sandbox.sqlite

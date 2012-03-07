@@ -1,10 +1,9 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
-import sys, os, re, shutil, subprocess
+import sys, os, re, shutil, glob, subprocess
 
 
 class settings(object):
@@ -36,6 +35,7 @@ def colorize(msg):
     msg = expand(msg, r'`(?P<data>[^`]+)`', "\x1b[1;37m", "\x1b[0m")
     msg = expand(msg, r'\[!!\] (?P<data>[^:!]+[:!])', "\x1b[1;31m", "\x1b[0m")
     return msg
+
 
 def out(*msgs, **opts):
     # Display given messages.
@@ -80,10 +80,21 @@ def prompt(msg):
     return value
 
 
+def ls(pattern):
+    # Return list of files matching the pattern.
+    return sorted(glob.glob(pattern))
+
+
 def cp(src_filename, dst_filename):
     # Copy a file.
     debug("copying: %s => %s" % (src_filename, dst_filename))
     shutil.copy(src_filename, dst_filename)
+
+
+def mv(src_filename, dst_filename):
+    # Rename a file.
+    debug("moving: %s => %s" % (src_filename, dst_filename))
+    os.rename(src_filename, dst_filename)
 
 
 def rm(filename):
@@ -114,10 +125,12 @@ def exe(command):
         raise fatal("cannot execute command: %s" % exc)
 
 
-def run(command, data=None, verbose=None):
+def run(command, data=None, verbose=None, cd=None):
     # Run the command.
     if verbose is None:
         verbose = settings.verbose
+    if cd is not None:
+        command = "cd %s && %s" % (cd, command)
     stream = subprocess.PIPE
     if verbose:
         stream = None
@@ -129,10 +142,12 @@ def run(command, data=None, verbose=None):
         raise fatal("non-zero exit code: %s" % command)
 
 
-def pipe(command, data=None, verbose=None):
+def pipe(command, data=None, verbose=None, cd=None):
     # Run the command, return the output.
     if verbose is None:
         verbose = settings.verbose
+    if cd is not None:
+        command = "cd %s && %s" % (cd, command)
     stream = subprocess.PIPE
     if verbose:
         log("piping: %s" % command)

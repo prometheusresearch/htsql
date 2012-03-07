@@ -1,6 +1,5 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
@@ -11,6 +10,7 @@ from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
                                TimeDomain, DateTimeDomain)
 import sqlite3
 import datetime
+import os.path
 
 
 class SQLiteError(DBError):
@@ -36,6 +36,10 @@ class ConnectSQLite(Connect):
         # authentications parameters are not `None`?
         # Get the path to the database file.
         db = context.app.htsql.db
+        # Check if the database file exists.
+        if not ((db.database.startswith(":") and db.database.endswith(":")) or
+                os.path.exists(db.database)):
+            raise SQLiteError("file does not exist")
         # Generate and return the DBAPI connection.
         connection = sqlite3.connect(db.database)
         self.create_functions(connection)

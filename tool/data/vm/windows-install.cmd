@@ -14,7 +14,7 @@ wget -q http://downloads.sourceforge.net/sevenzip/7z465.exe
 set PATH=%PATH%;"%programfiles%\7-Zip"
 
 rem Download and install Copssh.
-wget -q http://downloads.sourceforge.net/project/sereds/Copssh/4.0.4/Copssh_4.0.4_Installer.zip
+wget -q http://mirror.transact.net.au/sourceforge/s/project/se/sereds/Copssh/4.0.4/Copssh_4.0.4_Installer.zip
 7z x Copssh_4.0.4_Installer.zip
 Copssh_4.0.4_Installer.exe /S
 set PATH=%PATH%;"%programfiles%\ICW\bin"

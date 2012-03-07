@@ -1,0 +1,48 @@
+HTSQL Free Software License
+===========================
+
+Copyright (c) 2006-2012 Prometheus Research, LLC.
+All rights reserved.
+
+This program is free software: you can use, redistribute, and/or modify
+it under the terms of the GNU Affero General Public License, version 3
+("AGPL"), as published by the Free Software Foundation, and as
+supplemented by additional terms according to section 7 of the AGPL:
+
+This Program was created by members and contributors to the HTSQL
+Project (http://htsql.org).  As permitted by section 7b of the AGPL,
+we require preservation of copyright notices and author attributions
+in this Program's documentation and Appropriate Legal Notices.  This
+Program displays such notices in its "htsql-ctl version" command line
+option, and also in its "About HTSQL" dialog box.  In the graphical
+display of these notices, author attributions include "Powered By"
+logos for HTSQL and for other software projects.
+
+For works containing this Program or any covered work, each interactive
+user interface must include a prominent and conveniently accessible
+feature for the display of Appropriate Legal Notices.  This display
+must include author attributions and copyright notices as found in this
+Program.  This display of these author attributions must be convenient
+for a user wishing to browse credits, shown in a manner separate and
+distinct from license texts, and commensurately prominent with respect
+to other author attributions.  To the extent that it is technically
+feasible and not obtrusive, the graphical form of these author
+attributions, such as a "Powered By" logo, must be preserved;
+otherwise, a textual equivalent is permitted.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Additional permissions, which may be removed at your option, under
+GNU AGPL version 3 section 7:
+
+If you modify this Program, or any covered work, by linking or combining
+it with parts that are otherwise independent works covered by the terms
+of GNU GPL version 2, the licensors of this Program grant you additional
+permission to convey the entire combined work containing those parts.
+

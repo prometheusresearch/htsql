@@ -2,6 +2,10 @@
   Data Flows
 **************
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+
 A central concept in HTSQL is *data flow*, a sequence of homogeneous
 values.
 

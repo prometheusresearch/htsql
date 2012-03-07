@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2006-2008, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 #
 
 
@@ -19,7 +18,8 @@ from .option import PasswordOption, ExtensionsOption, ConfigOption
 from .request import Request, ConfigYAMLLoader
 from ..core.validator import DBVal
 from ..core.util import DB, listof, trim_doc
-from ..core.model import HomeNode, InvalidNode, InvalidArc
+from ..core.model import (HomeNode, InvalidNode, InvalidArc, TableArc, 
+                          ColumnArc, ChainArc, AmbiguousArc)
 from ..core.classify import classify, normalize
 import traceback
 import StringIO
@@ -332,7 +332,7 @@ class PagerCmd(Cmd):
             return
         if self.argument == 'on':
             # `stdin` and `stdout` must come from a terminal.
-            if not self.routine.is_interactive:
+            if not self.ctl.is_interactive:
                 self.ctl.out("** pager cannot be enabled"
                              " in the non-interactive mode")
                 return
@@ -529,7 +529,7 @@ class GetPostBaseCmd(Cmd):
         # Prepare the WSGI `environ` for a POST request.
         if self.method == 'POST':
             # Get the name of the file containing POST data of the request.
-            if self.routine.is_interactive:
+            if self.ctl.is_interactive:
                 self.ctl.out("File with POST data:", end=" ")
             content_path = self.ctl.stdin.readline().strip()
             if not content_path:
@@ -544,7 +544,7 @@ class GetPostBaseCmd(Cmd):
             default_content_type = mimetypes.guess_type(content_path)[0]
             if default_content_type is None:
                 default_content_type = 'application/octet-stream'
-            if self.routine.is_interactive:
+            if self.ctl.is_interactive:
                 self.ctl.out("Content type [%s]:" % default_content_type,
                              end=" ")
             content_type = self.ctl.stdin.readline().strip()
@@ -744,6 +744,103 @@ class ShellState(object):
         self.completer_delims = completer_delims
         self.completions = completions
 
+class VersionCmd(Cmd):
+    """
+    Implements the `version` command.
+    """
+
+    name = 'version'
+    signature = """version"""
+    hint = """prints version and license information"""
+    help = """
+    Type `version` to list the current software version and
+    license information.
+    """
+
+    def execute(self):
+        self.ctl.out(self.ctl.get_legal())
+        self.ctl.out()
+
+class DescribeCmd(Cmd):
+    """
+    Implements the `describe` command.
+    """
+
+    name = 'describe'
+    signature = """describe [table]"""
+    hint = """list tables, or slots for a given table"""
+    help = """
+    Type `describe` to list all tables or `describe <table>` to list
+    all columns and links for a given table.
+    """
+
+    @classmethod
+    def complete(cls, routine, argument):
+        if argument:
+            return None
+        with routine.state.app:
+             return [label.name for label in classify(HomeNode())]
+
+    def execute(self):
+        with self.state.app:
+             root_labels = classify(HomeNode())
+
+        if not self.argument:
+            #
+            # Enumerate introspected tables if one isn't provided
+            #
+            if not(root_labels):
+                 self.ctl.out("No tables introspected or configured.")
+                 return
+            self.ctl.out("Tables introspected for this database are:")
+            for label in root_labels:
+                if not isinstance(label.arc, TableArc):
+                     continue
+                if label.name == label.arc.target.table.name:
+                    self.ctl.out("\t%s" % label.name)
+                else:
+                    self.ctl.out("\t%s (%s)" % (label.name,
+                                                label.arc.target.table.name))
+            self.ctl.out()
+            return
+        #
+        # Dump table attributes if a specific table is requested.
+        #
+        slots = None
+        with self.state.app:
+            for label in root_labels:
+                if label.name == self.argument:
+                    slots = classify(label.arc.target)
+        if slots is None:
+            self.ctl.out("Unable to find table: %s" % self.argument)
+            self.ctl.out()
+            return
+
+        max_width = 0
+        for slot in slots:
+            if isinstance(slot.arc, AmbiguousArc):
+                continue
+            if len(slot.name) > max_width:
+                max_width = len(slot.name)
+        if not max_width:
+            self.ctl.out("Table `%s` has no slots." % self.argument)
+            self.ctl.out()
+            return
+
+        self.ctl.out("Slots for `%s` are:" % self.argument)
+        for slot in slots:
+            name = slot.name.ljust(max_width)
+            post = str(slot.arc.target)
+            if isinstance(slot.arc, ChainArc):
+                if slot.arc.is_contracting:
+                    post = "SINGULAR(%s)" % post
+                else:
+                    post = "PLURAL(%s)" % post
+            if isinstance(slot.arc, AmbiguousArc):
+                continue
+            self.ctl.out("\t %s %s" % (name, post))
+        self.ctl.out()
+
 
 class ShellRoutine(Routine):
     """
@@ -796,16 +893,17 @@ class ShellRoutine(Routine):
             HelpCmd,
             ExitCmd,
             UserCmd,
+            DescribeCmd,
             HeadersCmd,
             PagerCmd,
             GetCmd,
             PostCmd,
             RunCmd,
+            VersionCmd,
     ]
 
     # A notice displayed when the shell is started.
     intro = """
-    Interactive HTSQL Shell
     Type 'help' for more information, 'exit' to quit the shell.
     """
 
@@ -890,12 +988,6 @@ class ShellRoutine(Routine):
 
     def __init__(self, ctl, attributes):
         super(ShellRoutine, self).__init__(ctl, attributes)
-        self.is_interactive = (hasattr(ctl.stdin, 'isatty') and
-                               ctl.stdin.isatty() and
-                               ctl.stdin is sys.stdin and
-                               hasattr(ctl.stdout, 'isatty') and
-                               ctl.stdout.isatty() and
-                               ctl.stdout is sys.stdout)
         # A mapping of command_class.name -> command_class
         self.command_by_name = {}
         # Path to the pager.
@@ -908,7 +1000,7 @@ class ShellRoutine(Routine):
         # Set `pager` and `pager_line_threshold`.
         self.init_pager()
         # The mutable shell state.
-        self.state = ShellState(with_pager=(self.is_interactive and
+        self.state = ShellState(with_pager=(self.ctl.is_interactive and
                                             self.pager is not None))
 
     def init_commands(self):
@@ -987,7 +1079,7 @@ class ShellRoutine(Routine):
 
     def setup(self):
         # Load the `readline` history; initialize completion.
-        if self.is_interactive and readline is not None:
+        if self.ctl.is_interactive and readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             if os.path.exists(path):
                 readline.read_history_file(path)
@@ -999,14 +1091,14 @@ class ShellRoutine(Routine):
             readline.parse_and_bind("tab: complete")
 
         # Display the welcome notice.
-        if self.is_interactive:
+        if self.ctl.is_interactive:
             intro = self.get_intro()
             if intro:
                 self.ctl.out(intro)
 
     def shutdown(self):
         # Save the `readline` history; restore the original state of completion.
-        if self.is_interactive and readline is not None:
+        if self.ctl.is_interactive and readline is not None:
             path = os.path.abspath(os.path.expanduser(self.history_path))
             readline.write_history_file(path)
             readline.set_completer(self.state.completer)
@@ -1015,11 +1107,11 @@ class ShellRoutine(Routine):
     def loop(self):
         # Display the prompt and read the command from the console.
         # On EOF, exit the loop.
-        if self.is_interactive:
+        if self.ctl.is_interactive:
             prompt = "$ "
             app = self.state.app
             if app is not None and app.htsql.db is not None:
-                prompt = "%s$ " % app.htsql.db.database
+                prompt = "%s$ " % app.htsql.db.database.strip(".sqlite")
             try:
                 line = raw_input(prompt)
             except EOFError:

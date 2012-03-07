@@ -1,38 +1,49 @@
 Format: http://dep.debian.net/deps/dep5
-Upstream-Name: HTSQL
-Source: https://bitbucket.org/prometheus/htsql
+Upstream-Name: ${SOURCE_NAME}
+Source: http://pypi.python.org/pypi/${SOURCE_NAME}/
 
 Files: *
 Copyright: Copyright (c) 2006-2012, Prometheus Research, LLC
-License: 
- This software is released through a "BSD" style license for use with
- open source databases (such as MySQL, PostgreSQL, SQLite). A commercial
- license is needed for use with a commercial database system, such as
- Oracle, IBM's DB2, or Microsoft SQL Server.
+License: AGPL-3 with 7b attribution and GPL-2 exception
+ This program is free software: you can use, redistribute, and/or modify
+ it under the terms of the GNU Affero General Public License, version 3
+ ("AGPL"), as published by the Free Software Foundation, and as
+ supplemented by additional terms according to section 7 of the AGPL:
  .
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions 
- are met:
+ This Program was created by members and contributors to the HTSQL
+ Project (http://htsql.org).  As permitted by section 7b of the AGPL,
+ we require preservation of copyright notices and author attributions
+ in this Program's documentation and Appropriate Legal Notices.  This
+ Program displays such notices in its "htsql-ctl version" command line
+ option, and also in its "About HTSQL" dialog box.  In the graphical
+ display of these notices, author attributions include "Powered By"
+ logos for HTSQL and for other software projects.
  .
- 1. Redistributions of source code must retain the above copyright
- notice, this list of conditions and the following disclaimer.
+ For works containing this Program or any covered work, each interactive
+ user interface must include a prominent and conveniently accessible
+ feature for the display of Appropriate Legal Notices.  This display
+ must include author attributions and copyright notices as found in this
+ Program.  This display of these author attributions must be convenient
+ for a user wishing to browse credits, shown in a manner separate and
+ distinct from license texts, and commensurately prominent with respect
+ to other author attributions.  To the extent that it is technically
+ feasible and not obtrusive, the graphical form of these author
+ attributions, such as a "Powered By" logo, must be preserved;
+ otherwise, a textual equivalent is permitted.
  .
- 2. Redistributions in binary form must reproduce the above copyright
- notice, this list of conditions and the following disclaimer in the
- documentation and/or other materials provided with the distribution.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
  .
- THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS "AS IS" AND ANY
- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY, AGAINST INFRINGEMENT, TITLE AND
- FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
- TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  .
- If this software is used in conjunction with a database system, said
- database system must be published under a license approved by the Open
- Source Initiative or released in the public domain.
+ Additional permissions, which may be removed at your option, under
+ GNU AGPL version 3 section 7:
+ .
+ If you modify this Program, or any covered work, by linking or combining
+ it with parts that are otherwise independent works covered by the terms
+ of GNU GPL version 2, the licensors of this Program grant you additional
+ permission to convey the entire combined work containing those parts.
+

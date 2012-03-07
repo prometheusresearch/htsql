@@ -1,34 +1,23 @@
-Source: htsql
-Section: non-free/python
+Source: ${NAME}
+Section: database
 Priority: optional
 Maintainer: Clark C. Evans <cce@clarkevans.com>
 Build-Depends: python-all, debhelper (>= 7.4.3), python-setuptools (>= 0.6b3)
-Homepage: http://htsql.org
-Vcs-Browser: https://bitbucket.org/prometheus/htsql
+Homepage: http://htsql.org/
+Vcs-Browser: https://bitbucket.org/prometheus/htsql/
 Standards-Version: 3.9.2
 X-Python-Version: >= 2.6
 
-Package: htsql
+Package: ${NAME}
 Architecture: all
-Depends: python (>=2.6), python-yaml, python-pkg-resources, ${misc:Depends}
-Suggests: python-psycopg2, python-mysqldb
-Description: navigational query language for relational databases
- ***********************************************************
-   HTSQL -- A Query Language for the Accidental Programmer
- ***********************************************************
+Depends: ${DEPENDS}
+Suggests: ${SUGGESTS}
+Description: ${DESCRIPTION_HEAD}
+ HTSQL is a comprehensive navigational query language for relational
+ databases.  HTSQL is designed for data analysts and other accidental
+ programmers who have complex business inquiries to solve and need a
+ productive tool to write and share database queries.  HTSQL is free
+ and open source software.  For more detail, visit http://htsql.org/.
  .
- HTSQL ("Hyper Text Structured Query Language") is a high-level query
- language for relational databases.   The target audience for HTSQL is
- the accidental programmer -- one who is not a SQL expert, yet needs a
- usable, comprehensive query tool for data access and reporting.  
- .
- HTSQL is also a web service which takes a request via HTTP, translates
- it into a SQL query, executes the query against a relational database,
- and returns the results in a format requested by the user agent (JSON,
- CSV, HTML, etc.).
- .
- Use of HTSQL with open source databases (PostgreSQL, MySQL, SQLite) is
- royalty free under BSD-style conditions.  Use of HTSQL with proprietary
- database systems (Oracle, Microsoft SQL) requires a commercial license.
- See ``LICENSE`` for details.
+ ${DESCRIPTION_TAIL}
 

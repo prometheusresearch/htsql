@@ -13,6 +13,40 @@ tests:
     Run `htsql-ctl help` for general usage and list of routines.
     Run `htsql-ctl help <routine>` for help on a specific routine.
   exit: 0
+- ctl: [--help]
+  stdout: |+
+    HTSQL-CTL - HTSQL command-line administrative application
+    Copyright (c) 2006-2012, Prometheus Research, LLC
+    Usage: htsql-ctl <routine> [options] [arguments]
+
+    Run `htsql-ctl help` for general usage and list of routines.
+    Run `htsql-ctl help <routine>` for help on a specific routine.
+
+    Available routines:
+      help (h, ?)              : describe the usage of the application and its routines
+      version                  : display the version of the application
+      extension (ext)          : list and describe HTSQL extensions
+      server (serve, s)        : start an HTTP server handling HTSQL requests
+      shell (sh)               : start an HTSQL shell
+      get                      : execute and render an HTSQL query
+      post                     : execute and render an HTSQL query with POST data
+      regress (test)           : run regression tests
+
+  exit: 0
+- ctl: [--version]
+  stdout: |+
+    HTSQL 2.3.0
+    Copyright (c) 2006-2012, Prometheus Research, LLC
+
+    This is free software: you are free to change and redistribute it.
+    There is NO WARRANTY, to the extent permitted by law.  This software
+    is released under the AGPLv3 as well as a permissive license for use
+    with open source databases.  See http://htsql.org/license/.
+
+    The HTSQL language and implementation were developed by members
+    of the HTSQL Project (http://htsql.org/).
+
+  exit: 0
 - ctl: [help]
   stdout: |+
     HTSQL-CTL - HTSQL command-line administrative application
@@ -51,5 +85,19 @@ tests:
     Arguments:
       ROUTINE                  : the name of the routine to describe
       FEATURE                  : the feature to describe
+
+  exit: 0
+- ctl: [version]
+  stdout: |+
+    HTSQL 2.3.0
+    Copyright (c) 2006-2012, Prometheus Research, LLC
+
+    This is free software: you are free to change and redistribute it.
+    There is NO WARRANTY, to the extent permitted by law.  This software
+    is released under the AGPLv3 as well as a permissive license for use
+    with open source databases.  See http://htsql.org/license/.
+
+    The HTSQL language and implementation were developed by members
+    of the HTSQL Project (http://htsql.org/).
 
   exit: 0

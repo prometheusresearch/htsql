@@ -15,20 +15,20 @@
   clear: both;
 }
 
-div.htsql-input {
-  font-size: 95%;
+div.htsql-input a.htsql-link {
+  color: inherit;
+  background-color: inherit;
+  text-decoration: none;
+}
+
+div.htsql-input a.htsql-arrow-link {
+  float: right;
+  font-size: 105%;
+  text-decoration: none;
 }
 
 div.htsql-output {
   overflow: auto;
-}
-
-div.htsql-output table.docutils tr.htsql-cut td {
-  border-bottom: 0;
-}
-
-div.htsql-output table.docutils tbody tr:first-child td {
-  border-top: 1px solid #AAAAAA;
 }
 
 div.htsql-output table.docutils tbody tr td.htsql-cut {
@@ -46,33 +46,5 @@ div.htsql-output table.docutils tbody tr td.htsql-false-val {
 div.htsql-output table.docutils tbody tr td.htsql-null-val:after,
 div.htsql-output table.docutils tbody tr td.htsql-empty-val:after {
   content: "\A0";
-}
-
-div.htsql-output div.highlight pre {
-  margin-top: 0;
-}
-
-a.htsql-link {
-  color: inherit;
-  background-color: inherit;
-  text-decoration: none;
-}
-
-a.htsql-link:hover {
-  color: inherit;
-  background-color: inherit;
-  text-decoration: none;
-  opacity: 0.7;
-}
-
-a.htsql-arrow-link {
-  float: right;
-  font-size: 105%;
-  opacity: 0.9;
-}
-
-a.htsql-arrow-link:hover {
-  text-decoration: none;
-  opacity: 0.6;
 }
 

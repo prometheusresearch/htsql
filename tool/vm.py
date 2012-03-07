@@ -1,12 +1,11 @@
 #
 # Copyright (c) 2006-2012, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
 #
 
 
 from job import (job, settings, run, pipe, exe, log, debug, warn, fatal, prompt,
-                 cp, rm, mktree, rmtree)
-import os, os.path, glob, urllib2, socket, datetime, time, re, tempfile
+                 ls, cp, mv, rm, mktree, rmtree)
+import os, os.path, urllib2, socket, datetime, time, re, tempfile
 
 
 VM_ROOT = "./vm-build"
@@ -24,8 +23,16 @@ DEBIAN_ISO_URLS = [
     "http://cdimage.debian.org/cdimage/release/6.0.3/i386/iso-cd/debian-6.0.3-i386-netinst.iso",
 ]
 
+UBUNTU_ISO_URLS = [
+    "http://releases.ubuntu.com/oneiric/ubuntu-11.10-server-i386.iso",
+]
+
+UBUNTU_LTS_ISO_URLS = [
+    "http://releases.ubuntu.com/lucid/ubuntu-10.04.4-server-i386.iso",
+]
+
 CENTOS_ISO_URLS = [
-    "http://mirrors.cmich.edu/centos/6.0/isos/i386/CentOS-6.0-i386-minimal.iso",
+    "http://mirrors.cmich.edu/centos/6.2/isos/i386/CentOS-6.2-i386-minimal.iso",
 ]
 
 WINDOWS_ISO_FILES = [
@@ -83,7 +90,7 @@ class VM(object):
         if not self.running():
             return []
         ports = []
-        for filename in glob.glob(CTL_DIR+"/port.*"):
+        for filename in ls(CTL_DIR+"/port.*"):
             name = open(filename).read().strip()
             if name == self.name:
                 port = int(filename.rsplit(".", 1)[-1])
@@ -128,14 +135,14 @@ class VM(object):
         if self.running():
             raise fatal("VM is already running: %s" % self.name)
         log("starting VM: %s" % self.name)
-        for filename in glob.glob(CTL_DIR+"/port.*"):
+        for filename in ls(CTL_DIR+"/port.*"):
             name = open(filename).read().strip()
             if name == self.name:
                 rm(filename)
         if self.state:
             self.kvm("-daemonize -loadvm %s" % self.state)
         else:
-            self.kvm("-daemonize")
+            self.kvm("-daemonize -snapshot")
 
     def stop(self):
         # Stop a VM.
@@ -262,6 +269,16 @@ class VM(object):
         # Run `kvm-img create -f qcow2 <img_path> <DISK_SIZE>`.
         run("kvm-img create -f qcow2 %s %s" % (self.img_path, DISK_SIZE))
 
+    def compress(self, backing_name=None):
+        # Run `kvm-img convert -c ...`.
+        opts = "convert -c -f qcow2 -O qcow2"
+        if backing_name:
+            opts += " -o backing_file=%s.qcow2" % backing_name
+        run("kvm-img %s %s.qcow2 %s-compressed.qcow2"
+            % (opts, self.name, self.name), cd=IMG_DIR)
+        mv(IMG_DIR+"/%s-compressed.qcow2" % self.name,
+           IMG_DIR+"/%s.qcow2" % self.name)
+
     def kvm(self, opts=None):
         # Run `kvm`.
         net_model = "virtio"
@@ -270,8 +287,9 @@ class VM(object):
         run("kvm -name %s -monitor unix:%s,server,nowait"
             " -drive file=%s,cache=writeback"
             " -net nic,model=%s -net user -vga cirrus"
-            " -rtc clock=vm"
-            % (self.name, self.ctl_path, self.img_path, net_model)
+            " -rtc clock=vm -m %s"
+            % (self.name, self.ctl_path, self.img_path, 
+               net_model, MEM_SIZE)
             + ((" "+opts) if opts else "")
             + ("" if settings.verbose else " -vnc none"))
 
@@ -318,16 +336,18 @@ class VM(object):
 class DebianTemplateVM(VM):
     # Debian 6.0 "squeeze" (32-bit) VM.
 
-    def __init__(self, name):
+    def __init__(self, name, iso_env="DEBIAN_ISO", iso_urls=DEBIAN_ISO_URLS):
         super(DebianTemplateVM, self).__init__(name, 'linux')
+        self.iso_env = iso_env
+        self.iso_urls = iso_urls
 
     def build(self):
         super(DebianTemplateVM, self).build()
         log("building VM: `%s`..." % self.name)
         start_time = datetime.datetime.now()
-        src_iso_path = os.environ.get("DEBIAN_ISO")
+        src_iso_path = os.environ.get(self.iso_env)
         if not (src_iso_path and os.path.isfile(src_iso_path)):
-            src_iso_path = self.download(DEBIAN_ISO_URLS)
+            src_iso_path = self.download(self.iso_urls)
         unpack_path = TMP_DIR+"/"+self.name
         if os.path.exists(unpack_path):
             rmtree(unpack_path)
@@ -355,6 +375,7 @@ class DebianTemplateVM(VM):
             self.kvm_img()
             self.kvm("-cdrom %s -boot d" % iso_path)
             rm(iso_path)
+            self.compress()
         except:
             if os.path.exists(self.img_path):
                 rm(self.img_path)
@@ -365,7 +386,7 @@ class DebianTemplateVM(VM):
 
 
 class CentOSTemplateVM(VM):
-    # CentOS 6.0 (32-bit) VM.
+    # CentOS 6.2 (32-bit) VM.
 
     def __init__(self, name):
         super(CentOSTemplateVM, self).__init__(name, 'linux')
@@ -398,6 +419,7 @@ class CentOSTemplateVM(VM):
             self.kvm_img()
             self.kvm("-cdrom %s -boot d" % iso_path)
             rm(iso_path)
+            self.compress()
         except:
             if os.path.exists(self.img_path):
                 rm(self.img_path)
@@ -476,6 +498,7 @@ class WindowsTemplateVM(VM):
             self.kvm_img()
             self.kvm("-cdrom %s -boot d" % iso_path)
             rm(iso_path)
+            self.compress()
         except:
             if os.path.exists(self.img_path):
                 rm(self.img_path)
@@ -504,7 +527,8 @@ class LinuxBenchVM(VM):
         log("building VM: `%s`..." % self.name)
         start_time = datetime.datetime.now()
         try:
-            cp(parent_vm.img_path, self.img_path)
+            run("kvm-img create -b %s.qcow2 -f qcow2 %s.qcow2"
+                % (parent_vm.name, self.name), cd=IMG_DIR)
             self.kvm("-daemonize")
             time.sleep(60.0)
             self.put(DATA_ROOT+"/vm/%s-update.sh" % self.name, "/root/update.sh")
@@ -512,6 +536,7 @@ class LinuxBenchVM(VM):
             self.run("rm /root/update.sh")
             self.run("poweroff")
             self.wait()
+            self.compress(parent_vm.name)
             self.kvm("-daemonize")
             time.sleep(60.0)
             self.ctl("savevm %s" % self.state)
@@ -536,6 +561,11 @@ class LinuxBenchVM(VM):
             self.ctl("quit")
             self.wait()
             raise
+
+    def unforward(self, port):
+        if port == self.port:
+            return
+        super(LinuxBenchVM, self).unforward(port)
 
 
 class WindowsBenchVM(VM):
@@ -566,6 +596,7 @@ class WindowsBenchVM(VM):
                      " /v %s /t REG_SZ /d 'C:\INSTALL\UPDATE.CMD' /f" % self.name)
             self.run("shutdown /r /t 0 /f")
             self.wait()
+            self.compress(parent_vm.name)
             self.kvm("-daemonize")
             time.sleep(120.0)
             self.ctl("savevm %s" % self.state)
@@ -591,10 +622,21 @@ class WindowsBenchVM(VM):
             self.wait()
             raise
 
+    def unforward(self, port):
+        if port == self.port:
+            return
+        super(WindowsBenchVM, self).unforward(port)
+
 
 debian_vm = DebianTemplateVM('debian')
 centos_vm = CentOSTemplateVM('centos')
 windows_vm = WindowsTemplateVM('windows')
+ubuntu_vm = DebianTemplateVM('ubuntu',
+                             iso_env="UBUNTU_ISO",
+                             iso_urls=UBUNTU_ISO_URLS)
+ubuntu_lts_vm = DebianTemplateVM('ubuntu-lts',
+                                 iso_env="UBUNTU_LTS_ISO",
+                                 iso_urls=UBUNTU_LTS_ISO_URLS)
 
 
 @job

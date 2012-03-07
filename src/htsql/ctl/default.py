@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2006-2008, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 #
 
 
@@ -13,6 +12,9 @@ This module implements the default routine.
 
 
 from .routine import Routine
+from .option import HelpOption, VersionOption
+from .help import HelpRoutine
+from .version import VersionRoutine
 import os.path
 
 
@@ -24,6 +26,10 @@ class DefaultRoutine(Routine):
     """
 
     name = ''
+    options = [
+            HelpOption,
+            VersionOption,
+    ]
 
     def run(self):
         # Display the following information:
@@ -31,6 +37,14 @@ class DefaultRoutine(Routine):
         # {copyright}
         #
         # {help}
+        if self.help:
+            routine = HelpRoutine(self.ctl, {'executable': self.executable,
+                                             'routine': None,
+                                             'feature': None})
+            return routine.run()
+        if self.version:
+            routine = VersionRoutine(self.ctl, {})
+            return routine.run()
         executable = os.path.basename(self.executable)
         hint = self.ctl.get_hint()
         if hint is not None:

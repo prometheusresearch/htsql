@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2006-2008, Prometheus Research, LLC
-# See `LICENSE` for license information, `AUTHORS` for the list of authors.
+# Copyright (c) 2006-2012, Prometheus Research, LLC
 #
 
 
@@ -19,6 +18,7 @@ from .option import (InputOption, OutputOption, PasswordOption,
                      ContentTypeOption, ExtensionsOption, ConfigOption)
 from ..core.util import DB, maybe, oneof, listof, tupleof, dictof, filelike
 from ..core.validator import DBVal, StrVal
+import os
 import sys
 import wsgiref.util
 import urllib
@@ -320,7 +320,7 @@ class GetPostBaseRoutine(Routine):
     arguments = [
             Argument('db', DBVal(),
                      hint="""the connection URI"""),
-            Argument('query', StrVal(),
+            Argument('query', StrVal(), default=None,
                      hint="""the HTSQL query"""),
     ]
     # These are common options for both routines.  The `post` routine
@@ -349,6 +349,10 @@ class GetPostBaseRoutine(Routine):
                     port=db.port,
                     database=db.database,
                     options=db.options)
+
+        # read query from stdin if not on command line
+        if self.query is None:
+            self.query = self.ctl.input("What is the query?")
 
         # Load addon configuration.
         extensions = self.extensions
