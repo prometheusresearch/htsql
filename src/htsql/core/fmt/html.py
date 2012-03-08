@@ -14,7 +14,6 @@ This module implements the HTML renderer.
 from ..util import listof, tupleof, maybe, Printable
 from ..adapter import Adapter, adapts, adapts_many
 from .format import HTMLFormat, EmitHeaders, Emit
-from .format import Renderer
 from ..mark import Mark
 from ..error import InternalServerError
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
@@ -707,33 +706,5 @@ def to_html(domain):
 
 def profile_to_html(profile):
     return MetaToHTML(profile)
-
-
-class HTMLRenderer(Renderer):
-
-    name = 'text/html'
-    aliases = ['html']
-
-    def render(self, product):
-        status = self.generate_status(product)
-        headers = self.generate_headers(product)
-        body = list(self.generate_body(product))
-        return status, headers, body
-
-    def generate_status(self, product):
-        return "200 OK"
-
-    def generate_headers(self, product):
-        format = HTMLFormat()
-        emit_headers = EmitHeaders(format, product)
-        return list(emit_headers())
-
-    def generate_body(self, product):
-        format = HTMLFormat()
-        emit_body = Emit(format, product)
-        for line in emit_body():
-            if isinstance(line, unicode):
-                line = line.encode('utf-8')
-            yield line
 
 

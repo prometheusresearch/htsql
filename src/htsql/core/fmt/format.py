@@ -35,6 +35,12 @@ class CSVFormat(Format):
         self.dialect = dialect
 
 
+class TSVFormat(CSVFormat):
+
+    def __init__(self, dialect='excel-tab'):
+        super(TSVFormat, self).__init__(dialect)
+
+
 class HTMLFormat(Format):
     pass
 
@@ -45,6 +51,13 @@ class TextFormat(Format):
 
 class XMLFormat(Format):
     pass
+
+
+class ProxyFormat(Format):
+
+    def __init__(self, format):
+        assert isinstance(format, Format)
+        self.format = format
 
 
 class EmitHeaders(Adapter):
@@ -75,45 +88,16 @@ class Emit(Adapter):
         raise NotImplementedError()
 
 
-class Renderer(object):
-
-    name = None
-    aliases = []
-
-    @classmethod
-    def names(cls):
-        if cls.name is not None:
-            yield cls.name
-        for name in cls.aliases:
-            yield name
-
-    def render(self, product):
-        raise NotImplementedError()
+def emit_headers(format, product):
+    emit_headers = EmitHeaders(format, product)
+    return list(emit_headers())
 
 
-class Formatter(Adapter):
-
-    adapts(Renderer)
-
-    def __init__(self, renderer):
-        self.renderer = renderer
-
-    def format(self, value, domain):
-        format = Format(self.renderer, domain, self)
-        return format(value)
-
-
-class FindRenderer(Utility):
-
-    def get_renderers(self):
-        return []
-
-    def __call__(self, names):
-        assert isinstance(names, setof(str))
-        for renderer_class in self.get_renderers():
-            for name in renderer_class.names():
-                if name in names:
-                    return renderer_class
-        return None
+def emit(format, headers):
+    emit = Emit(format, headers)
+    for line in emit():
+        if isinstance(line, unicode):
+            line = line.encode('utf-8')
+        yield line
 
 

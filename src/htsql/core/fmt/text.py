@@ -14,7 +14,6 @@ This module implements the plain text renderer.
 from ..adapter import Adapter, adapts, adapts_many
 from ..util import maybe, oneof
 from .format import TextFormat, EmitHeaders, Emit
-from .format import Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
                       DateDomain, TimeDomain, DateTimeDomain,
@@ -540,33 +539,5 @@ def to_text(domain):
 
 def profile_to_text(profile):
     return MetaToText(profile)
-
-
-class TextRenderer(Renderer):
-
-    name = 'text/plain'
-    aliases = ['txt', '']
-
-    def render(self, product):
-        status = self.generate_status(product)
-        headers = self.generate_headers(product)
-        body = list(self.generate_body(product))
-        return status, headers, body
-
-    def generate_status(self, product):
-        return "200 OK"
-
-    def generate_headers(self, product):
-        format = TextFormat()
-        emit_headers = EmitHeaders(format, product)
-        return list(emit_headers())
-
-    def generate_body(self, product):
-        format = TextFormat()
-        emit_body = Emit(format, product)
-        for line in emit_body():
-            if isinstance(line, unicode):
-                line = line.encode('utf-8')
-            yield line
 
 

@@ -51,8 +51,9 @@ from .signature import (AsSig, SortDirectionSig, LimitSig, SortSig, CastSig,
                         ContainsSig, ExistsSig, CountSig, MinMaxSig,
                         SumSig, AvgSig, AggregateSig, QuantifySig,
                         DefineSig, WhereSig, SelectSig, LinkSig)
-from ...cmd.command import (DefaultCmd, RetrieveCmd, TextCmd, HTMLCmd, JSONCmd,
-                            ObjCmd, CSVCmd, TSVCmd, XMLCmd, SQLCmd)
+from ...cmd.command import RendererCmd, DefaultCmd, RetrieveCmd, SQLCmd
+from ...fmt.format import (JSONFormat, ObjFormat, CSVFormat, TSVFormat,
+                           HTMLFormat, TextFormat, XMLFormat)
 import sys
 
 
@@ -424,7 +425,7 @@ class BindRetrieve(BindCommand):
 
 class BindFormat(BindCommand):
 
-    command = None
+    format = None
 
     def expand(self, op):
         op = self.state.bind(op)
@@ -436,56 +437,69 @@ class BindFormat(BindCommand):
             profile = decorate(op)
             binding = QueryBinding(self.state.root, op, profile, op.syntax)
             producer = DefaultCmd(binding)
-        command = self.command(producer)
+        format = self.format()
+        command = RendererCmd(format, producer)
         return CommandBinding(self.state.scope, command, self.syntax)
 
 
 class BindText(BindFormat):
 
     named('txt')
-    command = TextCmd
+    format = TextFormat
 
 
 class BindHTML(BindFormat):
 
     named('html')
-    command = HTMLCmd
+    format = HTMLFormat
 
 
 class BindJSON(BindFormat):
 
     named('json')
-    command = JSONCmd
+    format = JSONFormat
 
 
 class BindObj(BindFormat):
 
     named('obj')
-    command = ObjCmd
+    format = ObjFormat
 
 
 class BindCSV(BindFormat):
 
     named('csv')
-    command = CSVCmd
+    format = CSVFormat
 
 
 class BindTSV(BindFormat):
 
     named('tsv')
-    command = TSVCmd
+    format = TSVFormat
 
 
 class BindXML(BindFormat):
 
     named('xml')
-    command = XMLCmd
+    format = XMLFormat
 
 
-class BindSQL(BindFormat):
+class BindSQL(BindCommand):
 
     named('sql')
-    command = SQLCmd
+
+    def expand(self, op):
+        op = self.state.bind(op)
+        producer = lookup_command(op)
+        if producer is None:
+            if not isinstance(op, SegmentBinding):
+                raise BindError("function '%s' expects a segment argument"
+                                % self.name.encode('utf-8'), op.mark)
+            profile = decorate(op)
+            binding = QueryBinding(self.state.root, op, profile, op.syntax)
+            producer = DefaultCmd(binding)
+        command = SQLCmd(producer)
+        return CommandBinding(self.state.scope, command, self.syntax)
 
 
 class BindNull(BindMacro):

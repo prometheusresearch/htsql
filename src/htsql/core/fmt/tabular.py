@@ -14,7 +14,6 @@ This module implements the CSV and TSV renderers.
 from ..util import listof
 from ..adapter import Adapter, adapts, adapts_many
 from .format import Emit, EmitHeaders, CSVFormat
-from .format import Renderer
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       DecimalDomain, StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain,
@@ -288,42 +287,5 @@ class OpaqueToCSV(ToCSV):
 def to_csv(domain, profiles):
     to_csv = ToCSV(domain, profiles)
     return to_csv()
-
-
-class CSVRenderer(Renderer):
-
-    name = 'text/csv'
-    aliases = ['csv']
-    content_type = 'text/csv'
-    extension = 'csv'
-    dialect = 'excel'
-
-    def render(self, product):
-        status = self.generate_status(product)
-        headers = self.generate_headers(product)
-        body = self.generate_body(product)
-        return status, headers, body
-
-    def generate_status(self, product):
-        return "200 OK"
-
-    def generate_headers(self, product):
-        format = CSVFormat(self.dialect)
-        emit_headers = EmitHeaders(format, product)
-        return list(emit_headers())
-
-    def generate_body(self, product):
-        format = CSVFormat(self.dialect)
-        emit = Emit(format, product)
-        return emit()
-
-
-class TSVRenderer(CSVRenderer):
-
-    name = 'text/tab-separated-values'
-    aliases = ['tsv']
-    content_type = 'text/tab-separated-values'
-    extension = 'tsv'
-    dialect = 'excel-tab'
 
 

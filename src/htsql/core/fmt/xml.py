@@ -10,7 +10,6 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
                       DateTimeDomain, ListDomain, RecordDomain,
                       VoidDomain, OpaqueDomain, Profile)
 from .format import XMLFormat, EmitHeaders, Emit
-from .format import Renderer
 import re
 import decimal
 
@@ -308,33 +307,5 @@ class OpaqueToXML(ToXML):
 def to_xml(domain, tag):
     to_xml = ToXML(domain, tag)
     return to_xml()
-
-
-class XMLRenderer(Renderer):
-
-    name = 'application/xml'
-    aliases = ['xml']
-
-    def render(self, product):
-        status = self.generate_status(product)
-        headers = self.generate_headers(product)
-        body = self.generate_body(product)
-        return status, headers, body
-
-    def generate_status(self, product):
-        return "200 OK"
-
-    def generate_headers(self, product):
-        format = XMLFormat()
-        emit_headers = EmitHeaders(format, product)
-        return list(emit_headers())
-
-    def generate_body(self, product):
-        format = XMLFormat()
-        emit_body = Emit(format, product)
-        for line in emit_body():
-            if isinstance(line, unicode):
-                line = line.encode('utf-8')
-            yield line
 
 

@@ -18,7 +18,6 @@ from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       DateTimeDomain, ListDomain, RecordDomain,
                       VoidDomain, OpaqueDomain, Profile)
 from .format import JSONFormat, ObjFormat, EmitHeaders, Emit
-from .format import Renderer
 import re
 import decimal
 
@@ -546,60 +545,5 @@ def to_json(domain):
 def to_obj(domain):
     to_obj = ToObj(domain)
     return to_obj()
-
-
-class JSONRenderer(Renderer):
-
-    name = 'application/javascript'
-    aliases = ['js', 'application/json', 'json']
-
-    def render(self, product):
-        status = self.generate_status(product)
-        headers = self.generate_headers(product)
-        body = self.generate_body(product)
-        return status, headers, body
-
-    def generate_status(self, product):
-        return "200 OK"
-
-    def generate_headers(self, product):
-        format = JSONFormat()
-        emit_headers = EmitHeaders(format, product)
-        return list(emit_headers())
-
-    def generate_body(self, product):
-        format = JSONFormat()
-        emit_body = Emit(format, product)
-        for line in emit_body():
-            if isinstance(line, unicode):
-                line = line.encode('utf-8')
-            yield line
-
-
-class ObjRenderer(Renderer):
-
-    name = 'obj'
-
-    def render(self, product):
-        status = self.generate_status(product)
-        headers = self.generate_headers(product)
-        body = self.generate_body(product)
-        return status, headers, body
-
-    def generate_status(self, product):
-        return "200 OK"
-
-    def generate_headers(self, product):
-        format = ObjFormat()
-        emit_headers = EmitHeaders(format, product)
-        return list(emit_headers())
-
-    def generate_body(self, product):
-        format = ObjFormat()
-        emit_body = Emit(format, product)
-        for line in emit_body():
-            if isinstance(line, unicode):
-                line = line.encode('utf-8')
-            yield line
 
 

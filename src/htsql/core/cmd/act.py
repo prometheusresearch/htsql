@@ -11,7 +11,8 @@ from ..tr.lookup import lookup_command
 from ..tr.parse import parse
 from ..tr.bind import bind
 from ..tr.embed import embed
-from ..fmt.format import FindRenderer
+from ..fmt.format import emit, emit_headers
+from ..fmt.accept import accept
 
 
 class UnsupportedActionError(BadRequestError):
@@ -92,20 +93,12 @@ class RenderProducer(Act):
     adapts(ProducerCmd, RenderAction)
 
     def __call__(self):
+        format = accept(self.action.environ)
         product = produce(self.command)
-        environ = self.action.environ
-        find_renderer = FindRenderer()
-        accept = set([''])
-        if 'HTTP_ACCEPT' in environ:
-            for name in environ['HTTP_ACCEPT'].split(','):
-                if ';' in name:
-                    name = name.split(';', 1)[0]
-                name = name.strip()
-                accept.add(name)
-        renderer_class = find_renderer(accept)
-        assert renderer_class is not None
-        renderer = renderer_class()
-        return renderer.render(product)
+        status = "200 OK"
+        headers = emit_headers(format, product)
+        body = emit(format, product)
+        return (status, headers, body)
 
 
 class RenderRenderer(Act):
@@ -113,10 +106,12 @@ class RenderRenderer(Act):
     adapts(RendererCmd, RenderAction)
 
     def __call__(self):
+        format = self.command.format
         product = produce(self.command.producer)
-        renderer_class = self.command.format
-        renderer = renderer_class()
-        return renderer.render(product)
+        status = "200 OK"
+        headers = emit_headers(format, product)
+        body = emit(format, product)
+        return (status, headers, body)
 
 
 def act(command, action):

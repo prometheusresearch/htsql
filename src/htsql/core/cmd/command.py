@@ -4,9 +4,7 @@
 
 
 from ..util import Printable, maybe, dictof, oneof
-from ..fmt import (TextRenderer, HTMLRenderer, JSONRenderer,
-                   ObjRenderer, CSVRenderer, TSVRenderer,
-                   XMLRenderer)
+from ..fmt.format import Format
 
 
 class Command(Printable):
@@ -50,46 +48,11 @@ class RetrieveCmd(ProducerCmd):
 
 class RendererCmd(Command):
 
-    format = None
-
-    def __init__(self, producer):
+    def __init__(self, format, producer):
+        assert isinstance(format, Format)
         assert isinstance(producer, Command)
+        self.format = format
         self.producer = producer
-
-
-class TextCmd(RendererCmd):
-
-    format = TextRenderer
-
-
-class HTMLCmd(RendererCmd):
-
-    format = HTMLRenderer
-
-
-class JSONCmd(RendererCmd):
-
-    format = JSONRenderer
-
-
-class ObjCmd(RendererCmd):
-
-    format = ObjRenderer
-
-
-class CSVCmd(RendererCmd):
-
-    format = CSVRenderer
-
-
-class TSVCmd(RendererCmd):
-
-    format = TSVRenderer
-
-
-class XMLCmd(RendererCmd):
-
-    format = XMLRenderer
 
 
 class SQLCmd(Command):
