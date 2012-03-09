@@ -14,7 +14,8 @@ This module implements the `server` routine.
 from __future__ import with_statement
 from .error import ScriptError
 from .routine import Argument, Routine
-from .option import QuietOption, PasswordOption, ExtensionsOption, ConfigOption
+from .option import (HostOption, PortOption, QuietOption, PasswordOption,
+                     ExtensionsOption, ConfigOption)
 from .request import ConfigYAMLLoader
 from ..core.util import DB
 from ..core.validator import StrVal, IntVal, DBVal
@@ -96,12 +97,10 @@ class ServerRoutine(Routine):
     arguments = [
             Argument('db', DBVal(), None,
                      hint="""the connection URI"""),
-            Argument('host', StrVal(), '',
-                     hint="""the host address (by default, *)"""),
-            Argument('port', IntVal(1, 65535), 8080,
-                     hint="""the port number (by default, 8080)"""),
     ]
     options = [
+            HostOption,
+            PortOption,
             PasswordOption,
             ExtensionsOption,
             ConfigOption,
@@ -130,8 +129,8 @@ class ServerRoutine(Routine):
     All parameters except ENGINE and DATABASE are optional.
 
     By default, the HTTP server listens on the port 8080 on all available
-    interfaces.  Specify the optional arguments HOST and PORT to override
-    the default values.
+    interfaces.  Use options `--host` and `--port` to override the defalut
+    values.
 
     The HTTP logs are dumped to the standard output in the Apache Common Log
     Format.  Use option `--quiet` to suppress the logs.

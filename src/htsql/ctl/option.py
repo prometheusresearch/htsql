@@ -12,7 +12,7 @@ This module defines script options.
 
 
 from ..core.util import maybe
-from ..core.validator import Validator, StrVal, ExtensionVal
+from ..core.validator import Validator, StrVal, UIntVal, ExtensionVal
 import re
 
 
@@ -178,6 +178,22 @@ DryRunOption = Option(
         attribute='dry_run',
         long_name='--dry-run',
         hint="""simulate execution of the routine""")
+
+HostOption = Option(
+        attribute='host',
+        long_name='--host',
+        with_value=True,
+        validator=StrVal(),
+        default='',
+        hint="""host to listen for incoming connections""")
+
+PortOption = Option(
+        attribute='port',
+        long_name='--port',
+        with_value=True,
+        validator=UIntVal(65535),
+        default=8080,
+        hint="""port to listen for incoming connections""")
 
 InputOption = Option(
         attribute='input',
