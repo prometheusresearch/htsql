@@ -4,12 +4,12 @@
 
 from ...core.context import context
 from ...core.connect import Connect
-from ...core.adapter import weigh
+from ...core.adapter import rank
 
 class SQLAlchemyConnect(Connect):
     """ override normal connection with one from SQLAlchemy """
 
-    weigh(2.0) # ensure connections here are not pooled
+    rank(2.0) # ensure connections here are not pooled
 
     def open(self):
         sqlalchemy_engine = context.app.tweak.sqlalchemy.engine

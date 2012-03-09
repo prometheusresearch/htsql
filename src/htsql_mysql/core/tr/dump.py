@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import adapts
+from htsql.core.adapter import adapt
 from htsql.core.domain import (BooleanDomain, NumberDomain, IntegerDomain,
                                StringDomain)
 from htsql.core.tr.dump import (FormatName, FormatLiteral,
@@ -118,7 +118,7 @@ class MySQLDumpToDateTime(DumpToDateTime):
 
 class MySQLDumpBooleanToString(DumpToDomain):
 
-    adapts(BooleanDomain, StringDomain)
+    adapt(BooleanDomain, StringDomain)
 
     def __call__(self):
         if self.base.is_nullable:

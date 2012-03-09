@@ -3,29 +3,29 @@
 #
 
 
-from ...core.adapter import named, adapts
+from ...core.adapter import call, adapt
 from ...core.domain import IntegerDomain
 from ...core.tr.fn.signature import AddSig, SubtractSig
 from ...core.tr.fn.bind import (BindCast, ComparableDomains, CorrelateFunction,
-                                correlates)
+                                match)
 from .domain import INetDomain
 from .signature import INetIncrementSig, INetDecrementSig, INetDifferenceSig
 
 
 class BindINetCast(BindCast):
 
-    named('inet')
+    call('inet')
     codomain = INetDomain()
 
 
 class ComparableINet(ComparableDomains):
 
-    adapts(INetDomain)
+    adapt(INetDomain)
 
 
 class CorrelateINetIncrement(CorrelateFunction):
 
-    correlates(AddSig, (INetDomain, IntegerDomain))
+    match(AddSig, (INetDomain, IntegerDomain))
     signature = INetIncrementSig
     domains = [INetDomain(), IntegerDomain()]
     codomain = INetDomain()
@@ -33,7 +33,7 @@ class CorrelateINetIncrement(CorrelateFunction):
 
 class CorrelateINetDecrement(CorrelateFunction):
 
-    correlates(SubtractSig, (INetDomain, IntegerDomain))
+    match(SubtractSig, (INetDomain, IntegerDomain))
     signature = INetDecrementSig
     domains = [INetDomain(), IntegerDomain()]
     codomain = INetDomain()
@@ -41,7 +41,7 @@ class CorrelateINetDecrement(CorrelateFunction):
 
 class CorrelateINetDifference(CorrelateFunction):
 
-    correlates(SubtractSig, (INetDomain, INetDomain))
+    match(SubtractSig, (INetDomain, INetDomain))
     signature = INetDifferenceSig
     domains = [INetDomain(), INetDomain()]
     codomain = IntegerDomain()

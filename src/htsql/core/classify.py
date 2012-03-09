@@ -5,7 +5,7 @@
 
 from .context import context
 from .cache import once
-from .adapter import Adapter, adapts
+from .adapter import Adapter, adapt
 from .model import (Node, Arc, Label, HomeNode, TableNode, TableArc, ChainArc,
                     ColumnArc, SyntaxArc, AmbiguousArc)
 from .entity import DirectJoin, ReverseJoin
@@ -35,7 +35,7 @@ def normalize(name):
 
 class Classify(Adapter):
 
-    adapts(Node)
+    adapt(Node)
 
     def __init__(self, node):
         self.node = node
@@ -107,10 +107,9 @@ class Classify(Adapter):
         return labels
 
     def trace(self, node):
-        trace = Trace(node)
         arcs = []
         duplicates = set()
-        for arc in trace():
+        for arc in Trace.__invoke__(node):
             if arc in duplicates:
                 continue
             arcs.append(arc)
@@ -118,10 +117,9 @@ class Classify(Adapter):
         return arcs
 
     def call(self, arc):
-        call = Call(arc)
         bids = []
         duplicates = set()
-        for name, weight in call():
+        for name, weight in Call.__invoke__(arc):
             name = normalize(name)
             if (name, weight) in duplicates:
                 continue
@@ -130,13 +128,12 @@ class Classify(Adapter):
         return bids
 
     def order(self, labels):
-        order = Order(self.node, labels)
-        return order()
+        return Order.__invoke__(self.node, labels)
 
 
 class Trace(Adapter):
 
-    adapts(Node)
+    adapt(Node)
 
     def __init__(self, node):
         self.node = node
@@ -147,7 +144,7 @@ class Trace(Adapter):
 
 class TraceHome(Trace):
 
-    adapts(HomeNode)
+    adapt(HomeNode)
 
     def __call__(self):
         catalog = introspect()
@@ -158,7 +155,7 @@ class TraceHome(Trace):
 
 class TraceTable(Trace):
 
-    adapts(TableNode)
+    adapt(TableNode)
 
     def __call__(self):
         table = self.node.table
@@ -200,7 +197,7 @@ class TraceTable(Trace):
 
 class Call(Adapter):
 
-    adapts(Arc)
+    adapt(Arc)
 
     def __init__(self, arc):
         self.arc = arc
@@ -211,7 +208,7 @@ class Call(Adapter):
 
 class CallTable(Call):
 
-    adapts(TableArc)
+    adapt(TableArc)
 
     def __call__(self):
         table = self.arc.table
@@ -223,7 +220,7 @@ class CallTable(Call):
 
 class CallColumn(Call):
 
-    adapts(ColumnArc)
+    adapt(ColumnArc)
 
     def __call__(self):
         yield self.arc.column.name, 10
@@ -231,7 +228,7 @@ class CallColumn(Call):
 
 class CallChain(Call):
 
-    adapts(ChainArc)
+    adapt(ChainArc)
 
     path_word = u"via"
 
@@ -279,12 +276,12 @@ class CallChain(Call):
 
 class CallSyntax(Call):
 
-    adapts(SyntaxArc)
+    adapt(SyntaxArc)
 
 
 class Order(Adapter):
 
-    adapts(Node)
+    adapt(Node)
 
     def __init__(self, node, labels):
         self.node = node
@@ -296,12 +293,12 @@ class Order(Adapter):
 
 class OrderHome(Order):
 
-    adapts(HomeNode)
+    adapt(HomeNode)
 
 
 class OrderTable(Order):
 
-    adapts(TableNode)
+    adapt(TableNode)
 
     def __call__(self):
         return [label.clone(is_public=(label.is_public or
@@ -312,9 +309,7 @@ class OrderTable(Order):
 @once
 def classify(node):
     assert isinstance(node, Node)
-    classify = Classify(node)
-    labels = classify()
-    return labels
+    return Classify.__invoke__(node)
 
 
 @once

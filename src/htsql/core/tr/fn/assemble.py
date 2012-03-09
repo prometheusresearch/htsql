@@ -9,7 +9,7 @@
 """
 
 
-from ...adapter import adapts, adapts_none
+from ...adapter import adapt, adapt_none
 from ..assemble import EvaluateBySignature
 from ..frame import FormulaPhrase
 from .signature import (ConcatenateSig, ExistsSig, CountSig, ContainsSig,
@@ -18,7 +18,7 @@ from .signature import (ConcatenateSig, ExistsSig, CountSig, ContainsSig,
 
 class EvaluateFunction(EvaluateBySignature):
 
-    adapts_none()
+    adapt_none()
 
     is_null_regular = True
     is_nullable = True
@@ -42,7 +42,7 @@ class EvaluateFunction(EvaluateBySignature):
 
 class EvaluateWrapExists(EvaluateFunction):
 
-    adapts(ExistsSig)
+    adapt(ExistsSig)
     is_null_regular = False
     is_nullable = False
     is_predicate = True
@@ -50,33 +50,33 @@ class EvaluateWrapExists(EvaluateFunction):
 
 class EvaluateTakeCount(EvaluateFunction):
 
-    adapts(CountSig)
+    adapt(CountSig)
     is_null_regular = False
     is_nullable = False
 
 
 class EvaluateConcatenate(EvaluateFunction):
 
-    adapts(ConcatenateSig)
+    adapt(ConcatenateSig)
     is_null_regular = False
     is_nullable = False
 
 
 class EvaluateContains(EvaluateFunction):
 
-    adapts(ContainsSig)
+    adapt(ContainsSig)
     is_predicate = True
 
 
 class EvalutateLike(EvaluateFunction):
 
-    adapts(LikeSig)
+    adapt(LikeSig)
     is_predicate = True
 
 
 class EvaluateIf(EvaluateFunction):
 
-    adapts(IfSig)
+    adapt(IfSig)
 
     def __call__(self):
         arguments = self.arguments.map(self.state.evaluate)
@@ -96,7 +96,7 @@ class EvaluateIf(EvaluateFunction):
 
 class EvaluateSwitch(EvaluateFunction):
 
-    adapts(SwitchSig)
+    adapt(SwitchSig)
 
     def __call__(self):
         arguments = self.arguments.map(self.state.evaluate)

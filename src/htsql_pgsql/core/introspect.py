@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import Protocol, named
+from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
@@ -114,18 +114,16 @@ class IntrospectPGSQL(Introspect):
                 modifier = typrow.typtypmod
             is_nullable = (not row.attnotnull)
             has_default = (row.atthasdef or typrow.typdefault is not None)
-            introspect_domain = IntrospectPGSQLDomain(typrow.nspname,
+            domain = IntrospectPGSQLDomain.__invoke__(typrow.nspname,
                                                       typrow.typname,
                                                       length, modifier)
-            domain = introspect_domain()
             while isinstance(domain, OpaqueDomain) and typrow.typtype == 'd':
                 typrow = typrows_by_oid[typrow.typbasetype]
                 if modifier == -1:
                     modifier = typrow.typtypmod
-                introspect_domain = IntrospectPGSQLDomain(typrow.nspname,
+                domain = IntrospectPGSQLDomain.__invoke__(typrow.nspname,
                                                           typrow.typname,
                                                           length, modifier)
-                domain = introspect_domain()
             if (isinstance(domain, OpaqueDomain) and typrow.typtype == 'e'
                                         and typrow.oid in enumrows_by_typid):
                 enumrows = enumrows_by_typid[typrow.oid]
@@ -177,12 +175,12 @@ class IntrospectPGSQL(Introspect):
 class IntrospectPGSQLDomain(Protocol):
 
     @classmethod
-    def dispatch(component, schema_name, name, *args, **kwds):
+    def __dispatch__(component, schema_name, name, *args, **kwds):
         return (schema_name.encode('utf-8'), name.encode('utf-8'))
 
     @classmethod
-    def matches(component, dispatch_key):
-        return (dispatch_key in component.names)
+    def __matches__(component, dispatch_key):
+        return (dispatch_key in component.__names__)
 
     def __init__(self, schema_name, name, length, modifier):
         self.schema_name = schema_name
@@ -196,7 +194,7 @@ class IntrospectPGSQLDomain(Protocol):
 
 class IntrospectPGSQLBooleanDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'bool'))
+    call(('pg_catalog', 'bool'))
 
     def __call__(self):
         return BooleanDomain()
@@ -204,7 +202,7 @@ class IntrospectPGSQLBooleanDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLIntegerDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'int2'),
+    call(('pg_catalog', 'int2'),
           ('pg_catalog', 'int4'),
           ('pg_catalog', 'int8'))
 
@@ -214,7 +212,7 @@ class IntrospectPGSQLIntegerDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLFloatDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'float4'), ('pg_catalog', 'float8'))
+    call(('pg_catalog', 'float4'), ('pg_catalog', 'float8'))
 
     def __call__(self):
         return FloatDomain(size=8*self.length)
@@ -222,7 +220,7 @@ class IntrospectPGSQLFloatDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLDecimalDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'numeric'))
+    call(('pg_catalog', 'numeric'))
 
     def __call__(self):
         precision = None
@@ -235,7 +233,7 @@ class IntrospectPGSQLDecimalDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLCharDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'bpchar'))
+    call(('pg_catalog', 'bpchar'))
 
     def __call__(self):
         length = self.modifier-4 if self.modifier != -1 else None
@@ -244,7 +242,7 @@ class IntrospectPGSQLCharDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLVarCharDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'varchar'))
+    call(('pg_catalog', 'varchar'))
 
     def __call__(self):
         length = self.modifier-4 if self.modifier != -1 else None
@@ -253,7 +251,7 @@ class IntrospectPGSQLVarCharDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLTextDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'text'))
+    call(('pg_catalog', 'text'))
 
     def __call__(self):
         return StringDomain()
@@ -261,7 +259,7 @@ class IntrospectPGSQLTextDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLDateDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'date'))
+    call(('pg_catalog', 'date'))
 
     def __call__(self):
         return DateDomain()
@@ -269,7 +267,7 @@ class IntrospectPGSQLDateDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLTimeDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'time'), ('pg_catalog', 'timetz'))
+    call(('pg_catalog', 'time'), ('pg_catalog', 'timetz'))
 
     def __call__(self):
         return TimeDomain()
@@ -277,7 +275,7 @@ class IntrospectPGSQLTimeDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLDateTimeDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'timestamp'), ('pg_catalog', 'timestamptz'))
+    call(('pg_catalog', 'timestamp'), ('pg_catalog', 'timestamptz'))
 
     def __call__(self):
         return DateTimeDomain()

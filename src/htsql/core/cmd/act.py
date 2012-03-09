@@ -3,7 +3,7 @@
 #
 
 
-from ..adapter import Adapter, adapts
+from ..adapter import Adapter, adapt
 from ..error import BadRequestError
 from .command import (Command, UniversalCmd, DefaultCmd, RetrieveCmd,
                       ProducerCmd, RendererCmd)
@@ -46,7 +46,7 @@ class RenderAction(Action):
 
 class Act(Adapter):
 
-    adapts(Command, Action)
+    adapt(Command, Action)
 
     def __init__(self, command, action):
         assert isinstance(command, Command)
@@ -60,7 +60,7 @@ class Act(Adapter):
 
 class ActUniversal(Act):
 
-    adapts(UniversalCmd, Action)
+    adapt(UniversalCmd, Action)
 
     def __call__(self):
         syntax = parse(self.command.query)
@@ -81,7 +81,7 @@ class ActUniversal(Act):
 
 class ActDefault(Act):
 
-    adapts(DefaultCmd, Action)
+    adapt(DefaultCmd, Action)
 
     def __call__(self):
         command = RetrieveCmd(self.command.binding)
@@ -90,7 +90,7 @@ class ActDefault(Act):
 
 class RenderProducer(Act):
 
-    adapts(ProducerCmd, RenderAction)
+    adapt(ProducerCmd, RenderAction)
 
     def __call__(self):
         format = accept(self.action.environ)
@@ -103,7 +103,7 @@ class RenderProducer(Act):
 
 class RenderRenderer(Act):
 
-    adapts(RendererCmd, RenderAction)
+    adapt(RendererCmd, RenderAction)
 
     def __call__(self):
         format = self.command.format
@@ -114,9 +114,7 @@ class RenderRenderer(Act):
         return (status, headers, body)
 
 
-def act(command, action):
-    act = Act(command, action)
-    return act()
+act = Act.__invoke__
 
 
 def produce(command):

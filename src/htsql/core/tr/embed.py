@@ -3,7 +3,7 @@
 #
 
 
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (UntypedDomain, BooleanDomain, IntegerDomain, FloatDomain,
                       DecimalDomain, DateDomain, TimeDomain, DateTimeDomain)
 from .binding import LiteralRecipe, SelectionRecipe
@@ -14,7 +14,7 @@ import decimal
 
 class Embed(Adapter):
 
-    adapts(object)
+    adapt(object)
 
     def __init__(self, value):
         self.value = value
@@ -26,7 +26,7 @@ class Embed(Adapter):
 
 class EmbedUntyped(Embed):
 
-    adapts_many(str, unicode)
+    adapt_many(str, unicode)
 
     def __call__(self):
         value = self.value
@@ -44,7 +44,7 @@ class EmbedUntyped(Embed):
 
 class EmbedNull(Embed):
 
-    adapts(types.NoneType)
+    adapt(types.NoneType)
 
     def __call__(self):
         return LiteralRecipe(None, UntypedDomain())
@@ -52,7 +52,7 @@ class EmbedNull(Embed):
 
 class EmbedBoolean(Embed):
 
-    adapts(bool)
+    adapt(bool)
 
     def __call__(self):
         return LiteralRecipe(self.value, BooleanDomain())
@@ -60,7 +60,7 @@ class EmbedBoolean(Embed):
 
 class EmbedInteger(Embed):
 
-    adapts_many(int, long)
+    adapt_many(int, long)
 
     def __call__(self):
         return LiteralRecipe(self.value, IntegerDomain())
@@ -68,7 +68,7 @@ class EmbedInteger(Embed):
 
 class EmbedFloat(Embed):
 
-    adapts(float)
+    adapt(float)
 
     def __call__(self):
         return LiteralRecipe(self.value, FloatDomain())
@@ -76,7 +76,7 @@ class EmbedFloat(Embed):
 
 class EmbedDecimal(Embed):
 
-    adapts(decimal.Decimal)
+    adapt(decimal.Decimal)
 
     def __call__(self):
         return LiteralRecipe(self.value, DecimalDomain())
@@ -84,7 +84,7 @@ class EmbedDecimal(Embed):
 
 class EmbedDate(Embed):
 
-    adapts(datetime.date)
+    adapt(datetime.date)
 
     def __call__(self):
         return LiteralRecipe(self.value, DateDomain())
@@ -92,7 +92,7 @@ class EmbedDate(Embed):
 
 class EmbedTime(Embed):
 
-    adapts(datetime.time)
+    adapt(datetime.time)
 
     def __call__(self):
         return LiteralRecipe(self.value, TimeDomain())
@@ -100,7 +100,7 @@ class EmbedTime(Embed):
 
 class EmbedDateTime(Embed):
 
-    adapts(datetime.datetime)
+    adapt(datetime.datetime)
 
     def __call__(self):
         return LiteralRecipe(self.value, DateTimeDomain())
@@ -108,7 +108,7 @@ class EmbedDateTime(Embed):
 
 class EmbedList(Embed):
 
-    adapts_many(list, tuple)
+    adapt_many(list, tuple)
 
     def __call__(self):
         recipes = []
@@ -118,8 +118,6 @@ class EmbedList(Embed):
         return SelectionRecipe(recipes)
 
 
-def embed(value):
-    embed = Embed(value)
-    return embed()
+embed = Embed.__invoke__
 
 

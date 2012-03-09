@@ -9,7 +9,7 @@
 """
 
 
-from ...adapter import adapts
+from ...adapter import adapt
 from ..reduce import ReduceBySignature
 from ..frame import LiteralPhrase, FormulaPhrase
 from ..signature import IfNullSig
@@ -18,7 +18,7 @@ from .signature import KeepPolaritySig, ReversePolaritySig, ConcatenateSig
 
 class ReduceKeepPolarity(ReduceBySignature):
 
-    adapts(KeepPolaritySig)
+    adapt(KeepPolaritySig)
 
     def __call__(self):
         return self.state.reduce(self.phrase.op)
@@ -26,7 +26,7 @@ class ReduceKeepPolarity(ReduceBySignature):
 
 class ReduceReversePolarity(ReduceBySignature):
 
-    adapts(ReversePolaritySig)
+    adapt(ReversePolaritySig)
 
     def __call__(self):
         op = self.state.reduce(self.phrase.op)
@@ -39,7 +39,7 @@ class ReduceReversePolarity(ReduceBySignature):
 
 class ReduceConcatenate(ReduceBySignature):
 
-    adapts(ConcatenateSig)
+    adapt(ConcatenateSig)
 
     def __call__(self):
         empty = LiteralPhrase(u'', self.phrase.domain, self.phrase.expression)

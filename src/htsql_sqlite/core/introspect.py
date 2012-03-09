@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import Protocol, named
+from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain,
@@ -41,8 +41,7 @@ class IntrospectSQLite(Introspect):
             primary_key_columns = []
             for row in cursor.fetchnamed():
                 name = row.name
-                introspect_domain = IntrospectSQLiteDomain(row.type)
-                domain = introspect_domain()
+                domain = IntrospectSQLiteDomain.__invoke__(row.type)
                 is_nullable = (not row.notnull)
                 has_default = (row.dflt_value is not None)
                 column = table.add_column(name, domain,
@@ -109,13 +108,13 @@ class IntrospectSQLite(Introspect):
 class IntrospectSQLiteDomain(Protocol):
 
     @classmethod
-    def dispatch(interface, name, *args, **kwds):
+    def __dispatch__(interface, name, *args, **kwds):
         return name.lower().encode('utf-8')
 
     @classmethod
-    def matches(component, dispatch_key):
+    def __matches__(component, dispatch_key):
         assert isinstance(dispatch_key, str)
-        return any(name in dispatch_key for name in component.names)
+        return any(name in dispatch_key for name in component.__names__)
 
     def __init__(self, name):
         self.name = name
@@ -126,7 +125,7 @@ class IntrospectSQLiteDomain(Protocol):
 
 class IntrospectSQLiteIntegerDomain(IntrospectSQLiteDomain):
 
-    named('int')
+    call('int')
 
     def __call__(self):
         return IntegerDomain()
@@ -134,7 +133,7 @@ class IntrospectSQLiteIntegerDomain(IntrospectSQLiteDomain):
 
 class IntrospectSQLiteStringDomain(IntrospectSQLiteDomain):
 
-    named('char', 'clob', 'text')
+    call('char', 'clob', 'text')
 
     def __call__(self):
         return StringDomain()
@@ -142,7 +141,7 @@ class IntrospectSQLiteStringDomain(IntrospectSQLiteDomain):
 
 class IntrospectSQLiteFloatDomain(IntrospectSQLiteDomain):
 
-    named('real', 'floa', 'doub')
+    call('real', 'floa', 'doub')
 
     def __call__(self):
         return FloatDomain()
@@ -150,7 +149,7 @@ class IntrospectSQLiteFloatDomain(IntrospectSQLiteDomain):
 
 class IntrospectSQLiteBooleanDomain(IntrospectSQLiteDomain):
 
-    named('bool')
+    call('bool')
 
     def __call__(self):
         return BooleanDomain()
@@ -158,7 +157,7 @@ class IntrospectSQLiteBooleanDomain(IntrospectSQLiteDomain):
 
 class IntrospectSQLiteDateTimeDomain(IntrospectSQLiteDomain):
 
-    named('date', 'time')
+    call('date', 'time')
 
     def __call__(self):
         key = self.name.encode('utf-8').lower()

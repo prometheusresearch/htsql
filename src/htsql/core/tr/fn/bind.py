@@ -10,7 +10,7 @@
 
 
 from ...util import aresubclasses
-from ...adapter import Adapter, Component, adapts, adapts_many, named
+from ...adapter import Adapter, Component, adapt, adapt_many, call
 from ...domain import (Domain, UntypedDomain, BooleanDomain, StringDomain,
                        IntegerDomain, DecimalDomain, FloatDomain,
                        DateDomain, TimeDomain, DateTimeDomain, EnumDomain,
@@ -239,40 +239,40 @@ class BindHomoFunction(BindFunction):
 
 class Correlate(Component):
 
-    input_signature = Signature
-    input_domains = []
-    input_arity = 0
+    __signature__ = None
+    __domains__ = []
+    __arity__ = 0
 
     @classmethod
-    def dominates(component, other):
-        if component.input_signature is None:
+    def __dominates__(component, other):
+        if component.__signature__ is None:
             return False
-        if other.input_signature is None:
+        if other.__signature__ is None:
             return False
         if issubclass(component, other):
             return True
-        if (issubclass(component.input_signature, other.input_signature)
-            and component.input_signature is not other.input_signature):
+        if (issubclass(component.__signature__, other.__signature__)
+            and component.__signature__ is not other.__signature__):
             return True
         return False
 
     @classmethod
-    def matches(component, dispatch_key):
-        if component.input_signature is None:
+    def __matches__(component, dispatch_key):
+        if component.__signature__ is None:
             return False
         key_signature, key_domain_vector = dispatch_key
-        if not issubclass(key_signature, component.input_signature):
+        if not issubclass(key_signature, component.__signature__):
             return False
-        if len(key_domain_vector) < component.input_arity:
+        if len(key_domain_vector) < component.__arity__:
             return False
-        key_domain_vector = key_domain_vector[:component.input_arity]
-        for domain_vector in component.input_domains:
+        key_domain_vector = key_domain_vector[:component.__arity__]
+        for domain_vector in component.__domains__:
             if aresubclasses(key_domain_vector, domain_vector):
                 return True
         return False
 
     @classmethod
-    def dispatch(interface, binding, *args, **kwds):
+    def __dispatch__(interface, binding, *args, **kwds):
         assert isinstance(binding, FormulaBinding)
         signature = type(binding.signature)
         domain_vector = []
@@ -297,7 +297,7 @@ class Correlate(Component):
             name = "function '%s'" % self.binding.syntax.name.encode('utf-8')
         else:
             name = "'%s'" % self.binding.syntax
-        key_signature, domain_vector = self.dispatch_key
+        key_signature, domain_vector = self.__dispatch_key__
         if len(domain_vector) > 1:
             types = "types"
             values = "values"
@@ -309,12 +309,12 @@ class Correlate(Component):
         if len(domain_vector) > 1:
             families = "(%s)" % families
         valid_types = []
-        for component in self.interface.implementations():
-            if component.input_signature is None:
+        for component in self.__interface__.__implementations__():
+            if component.__signature__ is None:
                 continue
-            if not issubclass(key_signature, component.input_signature):
+            if not issubclass(key_signature, component.__signature__):
                 continue
-            for domain_vector in component.input_domains:
+            for domain_vector in component.__domains__:
                 if any(issubclass(domain_class, UntypedDomain)
                        for domain_class in domain_vector):
                     continue
@@ -332,7 +332,7 @@ class Correlate(Component):
                         self.binding.mark, hint=hint)
 
 
-def correlates(signature, *domain_vectors):
+def match(signature, *domain_vectors):
     assert issubclass(signature, Signature)
     domain_vectors = [domain_vector if isinstance(domain_vector, tuple)
                                   else (domain_vector,)
@@ -342,21 +342,13 @@ def correlates(signature, *domain_vectors):
     assert all(len(domain_vector) == arity
                for domain_vector in domain_vectors)
     frame = sys._getframe(1)
-    frame.f_locals['input_signature'] = signature
-    frame.f_locals['input_domains'] = domain_vectors
-    frame.f_locals['input_arity'] = arity
-
-
-def correlates_none():
-    frame = sys._getframe(1)
-    frame.f_locals['input_signature'] = None
-    frame.f_locals['input_domains'] = []
-    frame.f_locals['input_arity'] = 0
+    frame.f_locals['__signature__'] = signature
+    frame.f_locals['__domains__'] = domain_vectors
+    frame.f_locals['__arity__'] = arity
 
 
 class CorrelateFunction(Correlate):
 
-    correlates_none()
     signature = None
     domains = []
     codomain = None
@@ -399,8 +391,7 @@ class BindPolyFunction(BindFunction):
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), self.codomain, self.syntax,
                                  **arguments)
-        correlate = Correlate(binding, self.state)
-        return correlate()
+        return Correlate.__invoke__(binding, self.state)
 
 
 class BindCommand(BindMacro):
@@ -410,7 +401,7 @@ class BindCommand(BindMacro):
 
 class BindRetrieve(BindCommand):
 
-    named('retrieve')
+    call('retrieve')
 
     def expand(self, op):
         op = self.state.bind(op)
@@ -444,49 +435,49 @@ class BindFormat(BindCommand):
 
 class BindText(BindFormat):
 
-    named('txt')
+    call('txt')
     format = TextFormat
 
 
 class BindHTML(BindFormat):
 
-    named('html')
+    call('html')
     format = HTMLFormat
 
 
 class BindJSON(BindFormat):
 
-    named('json')
+    call('json')
     format = JSONFormat
 
 
 class BindObj(BindFormat):
 
-    named('obj')
+    call('obj')
     format = ObjFormat
 
 
 class BindCSV(BindFormat):
 
-    named('csv')
+    call('csv')
     format = CSVFormat
 
 
 class BindTSV(BindFormat):
 
-    named('tsv')
+    call('tsv')
     format = TSVFormat
 
 
 class BindXML(BindFormat):
 
-    named('xml')
+    call('xml')
     format = XMLFormat
 
 
 class BindSQL(BindCommand):
 
-    named('sql')
+    call('sql')
 
     def expand(self, op):
         op = self.state.bind(op)
@@ -504,7 +495,7 @@ class BindSQL(BindCommand):
 
 class BindNull(BindMacro):
 
-    named('null', ('null', None))
+    call('null', ('null', None))
     signature = NullarySig
     hint = """null() -> NULL"""
 
@@ -515,7 +506,7 @@ class BindNull(BindMacro):
 
 class BindTrue(BindMacro):
 
-    named('true', ('true', None))
+    call('true', ('true', None))
     signature = NullarySig
     hint = """true() -> TRUE"""
 
@@ -526,7 +517,7 @@ class BindTrue(BindMacro):
 
 class BindFalse(BindMacro):
 
-    named('false', ('false', None))
+    call('false', ('false', None))
     signature = NullarySig
     hint = """false() -> FALSE"""
 
@@ -537,7 +528,7 @@ class BindFalse(BindMacro):
 
 class BindRoot(BindMacro):
 
-    named('root')
+    call('root')
     signature = NullarySig
     hint = """base.root() -> the root space"""
 
@@ -547,7 +538,7 @@ class BindRoot(BindMacro):
 
 class BindThis(BindMacro):
 
-    named('this')
+    call('this')
     signature = NullarySig
     hint = """base.this() -> the current base space"""
 
@@ -557,7 +548,7 @@ class BindThis(BindMacro):
 
 class BindHome(BindMacro):
 
-    named('home')
+    call('home')
     signature = NullarySig
 
     def expand(self):
@@ -566,7 +557,7 @@ class BindHome(BindMacro):
 
 class BindDistinct(BindMacro):
 
-    named('distinct')
+    call('distinct')
     signature = UnarySig
 
     def expand(self, op):
@@ -605,7 +596,7 @@ class BindDistinct(BindMacro):
 
 class BindAs(BindMacro):
 
-    named('as')
+    call('as')
     signature = AsSig
     hint = """as(expr, title) -> expression with a title"""
     help = """
@@ -626,7 +617,7 @@ class BindAs(BindMacro):
 
 #class BindSieve(BindMacro):
 #
-#    named('?')
+#    call('?')
 #    signature = BinarySig
 #
 #    def expand(self, lop, rop):
@@ -639,7 +630,7 @@ class BindAs(BindMacro):
 
 class BindFilter(BindMacro):
 
-    named('filter')
+    call('filter')
     signature = UnarySig
 
     def expand(self, op):
@@ -651,7 +642,7 @@ class BindFilter(BindMacro):
 
 class BindSelect(BindMacro):
 
-    named('select')
+    call('select')
     signature = SelectSig
 
     def expand(self, ops):
@@ -683,7 +674,7 @@ class BindSelect(BindMacro):
 
 class BindMoniker(BindMacro):
 
-    named('moniker')
+    call('moniker')
     signature = LinkSig
 
     def expand(self, seed):
@@ -693,7 +684,7 @@ class BindMoniker(BindMacro):
 
 class BindFork(BindMacro):
 
-    named('fork')
+    call('fork')
     signature = SelectSig
 
     def expand(self, ops):
@@ -725,7 +716,7 @@ class BindDirectionBase(BindMacro):
 
 class BindAscDir(BindDirectionBase):
 
-    named('_+')
+    call('_+')
     direction = +1
     hint = """(expr +) -> sort in ascending order"""
     help = """
@@ -735,14 +726,14 @@ class BindAscDir(BindDirectionBase):
 
 class BindDescDir(BindDirectionBase):
 
-    named('_-')
+    call('_-')
     direction = -1
     hint = """(expr -) -> sort in descending order"""
 
 
 class BindLimit(BindMacro):
 
-    named('limit')
+    call('limit')
     signature = LimitSig
     hint = """base.limit(N[, skip]) -> slice of the base space"""
 
@@ -767,7 +758,7 @@ class BindLimit(BindMacro):
 
 class BindSort(BindMacro):
 
-    named('sort')
+    call('sort')
     signature = SortSig
     hint = """base.sort(expr[, ...]) -> sorted space"""
 
@@ -794,7 +785,7 @@ class BindSort(BindMacro):
 
 class BindDefine(BindMacro):
 
-    named('define')
+    call('define')
     signature = DefineSig
 
     def expand(self, ops):
@@ -825,7 +816,7 @@ class BindDefine(BindMacro):
 
 class BindWhere(BindMacro):
 
-    named('where')
+    call('where')
     signature = WhereSig
 
     def expand(self, lop, rops):
@@ -866,61 +857,61 @@ class BindCast(BindFunction):
 
 class BindBooleanCast(BindCast):
 
-    named('boolean', 'bool')
+    call('boolean', 'bool')
     codomain = BooleanDomain()
     hint = """boolean(expr) -> expression converted to Boolean"""
 
 
 class BindStringCast(BindCast):
 
-    named('string', 'str')
+    call('string', 'str')
     codomain = StringDomain()
     hint = """string(expr) -> expression converted to a string"""
 
 
 class BindIntegerCast(BindCast):
 
-    named('integer', 'int')
+    call('integer', 'int')
     codomain = IntegerDomain()
     hint = """integer(expr) -> expression converted to integer"""
 
 
 class BindDecimalCast(BindCast):
 
-    named('decimal', 'dec')
+    call('decimal', 'dec')
     codomain = DecimalDomain()
     hint = """decimal(expr) -> expression converted to decimal"""
 
 
 class BindFloatCast(BindCast):
 
-    named('float')
+    call('float')
     codomain = FloatDomain()
     hint = """float(expr) -> expression converted to float"""
 
 
 class BindDateCast(BindCast):
 
-    named('date')
+    call('date')
     codomain = DateDomain()
     hint = """date(expr) -> expression converted to date"""
 
 
 class BindTimeCast(BindCast):
 
-    named('time')
+    call('time')
     codomain = TimeDomain()
 
 
 class BindDateTimeCast(BindCast):
 
-    named('datetime')
+    call('datetime')
     codomain = DateTimeDomain()
 
 
 class BindMakeDate(BindMonoFunction):
 
-    named(('date', 3))
+    call(('date', 3))
     signature = MakeDateSig
     domains = [IntegerDomain(), IntegerDomain(), IntegerDomain()]
     codomain = DateDomain()
@@ -929,7 +920,7 @@ class BindMakeDate(BindMonoFunction):
 
 class BindMakeDateTime(BindMonoFunction):
 
-    named(('datetime', 3),
+    call(('datetime', 3),
           ('datetime', 4),
           ('datetime', 5),
           ('datetime', 6))
@@ -941,7 +932,7 @@ class BindMakeDateTime(BindMonoFunction):
 
 class BindCombineDateTime(BindMonoFunction):
 
-    named(('datetime', 2))
+    call(('datetime', 2))
     signature = CombineDateTimeSig
     domains = [DateDomain(), TimeDomain()]
     codomain = DateTimeDomain()
@@ -977,14 +968,14 @@ class BindAmongBase(BindFunction):
 
 class BindAmong(BindAmongBase):
 
-    named('=')
+    call('=')
     polarity = +1
     hint = """(x = y) -> TRUE if x is equal to y"""
 
 
 class BindNotAmong(BindAmongBase):
 
-    named('!=')
+    call('!=')
     polarity = -1
     hint = """(x != y) -> TRUE if x is not equal to y"""
 
@@ -1013,21 +1004,21 @@ class BindTotallyEqualBase(BindFunction):
 
 class BindTotallyEqual(BindTotallyEqualBase):
 
-    named('==')
+    call('==')
     polarity = +1
     hint = """(x == y) -> TRUE if x is equal to y"""
 
 
 class BindTotallyNotEqual(BindTotallyEqualBase):
 
-    named('!==')
+    call('!==')
     polarity = -1
     hint = """(x !== y) -> TRUE if x is not equal to y"""
 
 
 class BindAnd(BindFunction):
 
-    named('&')
+    call('&')
     signature = BinarySig
     hint = """(p & q) -> TRUE if both p and q are TRUE"""
 
@@ -1041,7 +1032,7 @@ class BindAnd(BindFunction):
 
 class BindOr(BindFunction):
 
-    named('|')
+    call('|')
     signature = BinarySig
     hint = """(p | q) -> TRUE if either p or q is TRUE"""
 
@@ -1055,7 +1046,7 @@ class BindOr(BindFunction):
 
 class BindNot(BindFunction):
 
-    named('!_')
+    call('!_')
     signature = NotSig
     hint = """(! p) -> TRUE if p is FALSE"""
 
@@ -1082,8 +1073,8 @@ class BindCompare(BindFunction):
                             self.syntax.mark)
         lop = ImplicitCastBinding(lop, domain, lop.syntax)
         rop = ImplicitCastBinding(rop, domain, rop.syntax)
-        comparable = Comparable(domain)
-        if not comparable():
+        is_comparable = Comparable.__invoke__(domain)
+        if not is_comparable:
             raise BindError("values of type '%s' are not comparable"
                             % domain.family, self.syntax.mark)
         return FormulaBinding(self.state.scope,
@@ -1094,35 +1085,35 @@ class BindCompare(BindFunction):
 
 class BindLessThan(BindCompare):
 
-    named('<')
+    call('<')
     relation = '<'
     hint = """(x < y) -> TRUE if x is less than y"""
 
 
 class BindLessThanOrEqual(BindCompare):
 
-    named('<=')
+    call('<=')
     relation = '<='
     hint = """(x < y) -> TRUE if x is less than or equal to y"""
 
 
 class BindGreaterThan(BindCompare):
 
-    named('>')
+    call('>')
     relation = '>'
     hint = """(x > y) -> TRUE if x is greater than y"""
 
 
 class BindGreaterThanOrEqual(BindCompare):
 
-    named('>=')
+    call('>=')
     relation = '>='
     hint = """(x >= y) -> TRUE if x is greater than or equal to y"""
 
 
 class Comparable(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain):
         self.domain = domain
@@ -1133,9 +1124,9 @@ class Comparable(Adapter):
 
 class ComparableDomains(Comparable):
 
-    adapts_many(IntegerDomain, DecimalDomain, FloatDomain,
-                StringDomain, EnumDomain, DateDomain, TimeDomain,
-                DateTimeDomain)
+    adapt_many(IntegerDomain, DecimalDomain, FloatDomain,
+               StringDomain, EnumDomain, DateDomain, TimeDomain,
+               DateTimeDomain)
 
     def __call__(self):
         return True
@@ -1143,14 +1134,14 @@ class ComparableDomains(Comparable):
 
 class BindAdd(BindPolyFunction):
 
-    named('+')
+    call('+')
     signature = AddSig
     hint = """(x + y) -> sum of x and y"""
 
 
 class CorrelateIntegerAdd(CorrelateFunction):
 
-    correlates(AddSig, (IntegerDomain, IntegerDomain))
+    match(AddSig, (IntegerDomain, IntegerDomain))
     signature = AddSig
     domains = [IntegerDomain(), IntegerDomain()]
     codomain = IntegerDomain()
@@ -1158,9 +1149,9 @@ class CorrelateIntegerAdd(CorrelateFunction):
 
 class CorrelateDecimalAdd(CorrelateFunction):
 
-    correlates(AddSig, (IntegerDomain, DecimalDomain),
-                       (DecimalDomain, IntegerDomain),
-                       (DecimalDomain, DecimalDomain))
+    match(AddSig, (IntegerDomain, DecimalDomain),
+                  (DecimalDomain, IntegerDomain),
+                  (DecimalDomain, DecimalDomain))
     signature = AddSig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
@@ -1168,11 +1159,11 @@ class CorrelateDecimalAdd(CorrelateFunction):
 
 class CorrelateFloatAdd(CorrelateFunction):
 
-    correlates(AddSig, (IntegerDomain, FloatDomain),
-                       (DecimalDomain, FloatDomain),
-                       (FloatDomain, IntegerDomain),
-                       (FloatDomain, DecimalDomain),
-                       (FloatDomain, FloatDomain))
+    match(AddSig, (IntegerDomain, FloatDomain),
+                  (DecimalDomain, FloatDomain),
+                  (FloatDomain, IntegerDomain),
+                  (FloatDomain, DecimalDomain),
+                  (FloatDomain, FloatDomain))
     signature = AddSig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
@@ -1180,7 +1171,7 @@ class CorrelateFloatAdd(CorrelateFunction):
 
 class CorrelateDateIncrement(CorrelateFunction):
 
-    correlates(AddSig, (DateDomain, IntegerDomain))
+    match(AddSig, (DateDomain, IntegerDomain))
     signature = DateIncrementSig
     domains = [DateDomain(), IntegerDomain()]
     codomain = DateDomain()
@@ -1188,9 +1179,9 @@ class CorrelateDateIncrement(CorrelateFunction):
 
 class CorrelateDateTimeIncrement(CorrelateFunction):
 
-    correlates(AddSig, (DateTimeDomain, IntegerDomain),
-                       (DateTimeDomain, DecimalDomain),
-                       (DateTimeDomain, FloatDomain))
+    match(AddSig, (DateTimeDomain, IntegerDomain),
+                  (DateTimeDomain, DecimalDomain),
+                  (DateTimeDomain, FloatDomain))
     signature = DateTimeIncrementSig
     domains = [DateTimeDomain(), FloatDomain()]
     codomain = DateTimeDomain()
@@ -1198,10 +1189,10 @@ class CorrelateDateTimeIncrement(CorrelateFunction):
 
 class CorrelateConcatenate(CorrelateFunction):
 
-    correlates(AddSig, (UntypedDomain, UntypedDomain),
-                       (UntypedDomain, StringDomain),
-                       (StringDomain, UntypedDomain),
-                       (StringDomain, StringDomain))
+    match(AddSig, (UntypedDomain, UntypedDomain),
+                  (UntypedDomain, StringDomain),
+                  (StringDomain, UntypedDomain),
+                  (StringDomain, StringDomain))
     signature = ConcatenateSig
     domains = [StringDomain(), StringDomain()]
     codomain = StringDomain()
@@ -1209,14 +1200,14 @@ class CorrelateConcatenate(CorrelateFunction):
 
 class BindSubtract(BindPolyFunction):
 
-    named('-')
+    call('-')
     signature = SubtractSig
     hint = """(x - y) -> difference between x and y"""
 
 
 class CorrelateIntegerSubtract(CorrelateFunction):
 
-    correlates(SubtractSig, (IntegerDomain, IntegerDomain))
+    match(SubtractSig, (IntegerDomain, IntegerDomain))
     signature = SubtractSig
     domains = [IntegerDomain(), IntegerDomain()]
     codomain = IntegerDomain()
@@ -1224,9 +1215,9 @@ class CorrelateIntegerSubtract(CorrelateFunction):
 
 class CorrelateDecimalSubtract(CorrelateFunction):
 
-    correlates(SubtractSig, (IntegerDomain, DecimalDomain),
-                            (DecimalDomain, IntegerDomain),
-                            (DecimalDomain, DecimalDomain))
+    match(SubtractSig, (IntegerDomain, DecimalDomain),
+                       (DecimalDomain, IntegerDomain),
+                       (DecimalDomain, DecimalDomain))
     signature = SubtractSig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
@@ -1234,11 +1225,11 @@ class CorrelateDecimalSubtract(CorrelateFunction):
 
 class CorrelateFloatSubtract(CorrelateFunction):
 
-    correlates(SubtractSig, (IntegerDomain, FloatDomain),
-                            (DecimalDomain, FloatDomain),
-                            (FloatDomain, IntegerDomain),
-                            (FloatDomain, DecimalDomain),
-                            (FloatDomain, FloatDomain))
+    match(SubtractSig, (IntegerDomain, FloatDomain),
+                       (DecimalDomain, FloatDomain),
+                       (FloatDomain, IntegerDomain),
+                       (FloatDomain, DecimalDomain),
+                       (FloatDomain, FloatDomain))
     signature = SubtractSig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
@@ -1246,7 +1237,7 @@ class CorrelateFloatSubtract(CorrelateFunction):
 
 class CorrelateDateDecrement(CorrelateFunction):
 
-    correlates(SubtractSig, (DateDomain, IntegerDomain))
+    match(SubtractSig, (DateDomain, IntegerDomain))
     signature = DateDecrementSig
     domains = [DateDomain(), IntegerDomain()]
     codomain = DateDomain()
@@ -1254,9 +1245,9 @@ class CorrelateDateDecrement(CorrelateFunction):
 
 class CorrelateDateTimeDecrement(CorrelateFunction):
 
-    correlates(SubtractSig, (DateTimeDomain, IntegerDomain),
-                            (DateTimeDomain, DecimalDomain),
-                            (DateTimeDomain, FloatDomain))
+    match(SubtractSig, (DateTimeDomain, IntegerDomain),
+                       (DateTimeDomain, DecimalDomain),
+                       (DateTimeDomain, FloatDomain))
     signature = DateTimeDecrementSig
     domains = [DateTimeDomain(), FloatDomain()]
     codomain = DateTimeDomain()
@@ -1264,7 +1255,7 @@ class CorrelateDateTimeDecrement(CorrelateFunction):
 
 class CorrelateDateDifference(CorrelateFunction):
 
-    correlates(SubtractSig, (DateDomain, DateDomain))
+    match(SubtractSig, (DateDomain, DateDomain))
     signature = DateDifferenceSig
     domains = [DateDomain(), DateDomain()]
     codomain = IntegerDomain()
@@ -1272,14 +1263,14 @@ class CorrelateDateDifference(CorrelateFunction):
 
 class BindMultiply(BindPolyFunction):
 
-    named('*')
+    call('*')
     signature = MultiplySig
     hint = """(x * y) -> product of x and y"""
 
 
 class CorrelateIntegerMultiply(CorrelateFunction):
 
-    correlates(MultiplySig, (IntegerDomain, IntegerDomain))
+    match(MultiplySig, (IntegerDomain, IntegerDomain))
     signature = MultiplySig
     domains = [IntegerDomain(), IntegerDomain()]
     codomain = IntegerDomain()
@@ -1287,9 +1278,9 @@ class CorrelateIntegerMultiply(CorrelateFunction):
 
 class CorrelateDecimalMultiply(CorrelateFunction):
 
-    correlates(MultiplySig, (IntegerDomain, DecimalDomain),
-                            (DecimalDomain, IntegerDomain),
-                            (DecimalDomain, DecimalDomain))
+    match(MultiplySig, (IntegerDomain, DecimalDomain),
+                       (DecimalDomain, IntegerDomain),
+                       (DecimalDomain, DecimalDomain))
     signature = MultiplySig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
@@ -1297,11 +1288,11 @@ class CorrelateDecimalMultiply(CorrelateFunction):
 
 class CorrelateFloatMultiply(CorrelateFunction):
 
-    correlates(MultiplySig, (IntegerDomain, FloatDomain),
-                            (DecimalDomain, FloatDomain),
-                            (FloatDomain, IntegerDomain),
-                            (FloatDomain, DecimalDomain),
-                            (FloatDomain, FloatDomain))
+    match(MultiplySig, (IntegerDomain, FloatDomain),
+                       (DecimalDomain, FloatDomain),
+                       (FloatDomain, IntegerDomain),
+                       (FloatDomain, DecimalDomain),
+                       (FloatDomain, FloatDomain))
     signature = MultiplySig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
@@ -1309,17 +1300,17 @@ class CorrelateFloatMultiply(CorrelateFunction):
 
 class BindDivide(BindPolyFunction):
 
-    named('/')
+    call('/')
     signature = DivideSig
     hint = """(x / y) -> quotient of x divided by y"""
 
 
 class CorrelateDecimalDivide(CorrelateFunction):
 
-    correlates(DivideSig, (IntegerDomain, IntegerDomain),
-                          (IntegerDomain, DecimalDomain),
-                          (DecimalDomain, IntegerDomain),
-                          (DecimalDomain, DecimalDomain))
+    match(DivideSig, (IntegerDomain, IntegerDomain),
+                     (IntegerDomain, DecimalDomain),
+                     (DecimalDomain, IntegerDomain),
+                     (DecimalDomain, DecimalDomain))
     signature = DivideSig
     domains = [DecimalDomain(), DecimalDomain()]
     codomain = DecimalDomain()
@@ -1327,11 +1318,11 @@ class CorrelateDecimalDivide(CorrelateFunction):
 
 class CorrelateFloatDivide(CorrelateFunction):
 
-    correlates(DivideSig, (IntegerDomain, FloatDomain),
-                          (DecimalDomain, FloatDomain),
-                          (FloatDomain, IntegerDomain),
-                          (FloatDomain, DecimalDomain),
-                          (FloatDomain, FloatDomain))
+    match(DivideSig, (IntegerDomain, FloatDomain),
+                     (DecimalDomain, FloatDomain),
+                     (FloatDomain, IntegerDomain),
+                     (FloatDomain, DecimalDomain),
+                     (FloatDomain, FloatDomain))
     signature = DivideSig
     domains = [FloatDomain(), FloatDomain()]
     codomain = FloatDomain()
@@ -1339,14 +1330,14 @@ class CorrelateFloatDivide(CorrelateFunction):
 
 class BindKeepPolarity(BindPolyFunction):
 
-    named('+_')
+    call('+_')
     signature = KeepPolaritySig
     hint = """(+ x) -> x"""
 
 
 class CorrelateIntegerKeepPolarity(CorrelateFunction):
 
-    correlates(KeepPolaritySig, IntegerDomain)
+    match(KeepPolaritySig, IntegerDomain)
     signature = KeepPolaritySig
     domains = [IntegerDomain()]
     codomain = IntegerDomain()
@@ -1354,7 +1345,7 @@ class CorrelateIntegerKeepPolarity(CorrelateFunction):
 
 class CorrelateDecimalKeepPolarity(CorrelateFunction):
 
-    correlates(KeepPolaritySig, DecimalDomain)
+    match(KeepPolaritySig, DecimalDomain)
     signature = KeepPolaritySig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
@@ -1362,7 +1353,7 @@ class CorrelateDecimalKeepPolarity(CorrelateFunction):
 
 class CorrelateFloatKeepPolarity(CorrelateFunction):
 
-    correlates(KeepPolaritySig, FloatDomain)
+    match(KeepPolaritySig, FloatDomain)
     signature = KeepPolaritySig
     domains = [FloatDomain()]
     codomain = FloatDomain()
@@ -1370,14 +1361,14 @@ class CorrelateFloatKeepPolarity(CorrelateFunction):
 
 class BindReversePolarity(BindPolyFunction):
 
-    named('-_')
+    call('-_')
     signature = ReversePolaritySig
     hint = """(- x) -> negation of x"""
 
 
 class CorrelateIntegerReversePolarity(CorrelateFunction):
 
-    correlates(ReversePolaritySig, IntegerDomain)
+    match(ReversePolaritySig, IntegerDomain)
     signature = ReversePolaritySig
     domains = [IntegerDomain()]
     codomain = IntegerDomain()
@@ -1385,7 +1376,7 @@ class CorrelateIntegerReversePolarity(CorrelateFunction):
 
 class CorrelateDecimalReversePolarity(CorrelateFunction):
 
-    correlates(ReversePolaritySig, DecimalDomain)
+    match(ReversePolaritySig, DecimalDomain)
     signature = ReversePolaritySig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
@@ -1393,7 +1384,7 @@ class CorrelateDecimalReversePolarity(CorrelateFunction):
 
 class CorrelateFloatReversePolarity(CorrelateFunction):
 
-    correlates(ReversePolaritySig, FloatDomain)
+    match(ReversePolaritySig, FloatDomain)
     signature = ReversePolaritySig
     domains = [FloatDomain()]
     codomain = FloatDomain()
@@ -1401,15 +1392,15 @@ class CorrelateFloatReversePolarity(CorrelateFunction):
 
 class BindRound(BindPolyFunction):
 
-    named('round')
+    call('round')
     signature = RoundSig
     hint = """round(x) -> x rounded to zero"""
 
 
 class CorrelateDecimalRound(CorrelateFunction):
 
-    correlates(RoundSig, IntegerDomain,
-                         DecimalDomain)
+    match(RoundSig, IntegerDomain,
+                    DecimalDomain)
     signature = RoundSig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
@@ -1417,7 +1408,7 @@ class CorrelateDecimalRound(CorrelateFunction):
 
 class CorrelateFloatRound(CorrelateFunction):
 
-    correlates(RoundSig, FloatDomain)
+    match(RoundSig, FloatDomain)
     signature = RoundSig
     domains = [FloatDomain()]
     codomain = FloatDomain()
@@ -1425,15 +1416,15 @@ class CorrelateFloatRound(CorrelateFunction):
 
 class BindRoundTo(BindPolyFunction):
 
-    named(('round', 2))
+    call(('round', 2))
     signature = RoundToSig
     hint = """round(x, n) -> x rounded to a given precision"""
 
 
 class CorrelateDecimalRoundTo(CorrelateFunction):
 
-    correlates(RoundToSig, (IntegerDomain, IntegerDomain),
-                           (DecimalDomain, IntegerDomain))
+    match(RoundToSig, (IntegerDomain, IntegerDomain),
+                      (DecimalDomain, IntegerDomain))
     signature = RoundToSig
     domains = [DecimalDomain(), IntegerDomain()]
     codomain = DecimalDomain()
@@ -1441,14 +1432,14 @@ class CorrelateDecimalRoundTo(CorrelateFunction):
 
 class BindTrunc(BindPolyFunction):
 
-    named('trunc')
+    call('trunc')
     signature = TruncSig
 
 
 class CorrelateDecimalTrunc(CorrelateFunction):
 
-    correlates(TruncSig, IntegerDomain,
-                         DecimalDomain)
+    match(TruncSig, IntegerDomain,
+                    DecimalDomain)
     signature = TruncSig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
@@ -1456,7 +1447,7 @@ class CorrelateDecimalTrunc(CorrelateFunction):
 
 class CorrelateFloatTrunc(CorrelateFunction):
 
-    correlates(TruncSig, FloatDomain)
+    match(TruncSig, FloatDomain)
     signature = TruncSig
     domains = [FloatDomain()]
     codomain = FloatDomain()
@@ -1464,14 +1455,14 @@ class CorrelateFloatTrunc(CorrelateFunction):
 
 class BindTruncTo(BindPolyFunction):
 
-    named(('trunc', 2))
+    call(('trunc', 2))
     signature = TruncToSig
 
 
 class CorrelateDecimalTruncTo(CorrelateFunction):
 
-    correlates(TruncToSig, (IntegerDomain, IntegerDomain),
-                           (DecimalDomain, IntegerDomain))
+    match(TruncToSig, (IntegerDomain, IntegerDomain),
+                      (DecimalDomain, IntegerDomain))
     signature = TruncToSig
     domains = [DecimalDomain(), IntegerDomain()]
     codomain = DecimalDomain()
@@ -1479,15 +1470,15 @@ class CorrelateDecimalTruncTo(CorrelateFunction):
 
 class BindLength(BindPolyFunction):
 
-    named('length')
+    call('length')
     signature = LengthSig
     hint = """length(s) -> length of s"""
 
 
 class CorrelateStringLength(CorrelateFunction):
 
-    correlates(LengthSig, StringDomain,
-                          UntypedDomain)
+    match(LengthSig, StringDomain,
+                     UntypedDomain)
     signature = LengthSig
     domains = [StringDomain()]
     codomain = IntegerDomain()
@@ -1502,30 +1493,29 @@ class BindContainsBase(BindPolyFunction):
         binding = FormulaBinding(self.state.scope,
                                  self.signature(self.polarity),
                                  self.codomain, self.syntax, **arguments)
-        correlate = Correlate(binding, self.state)
-        return correlate()
+        return Correlate.__invoke__(binding, self.state)
 
 
 class BindContains(BindContainsBase):
 
-    named('~')
+    call('~')
     polarity = +1
     hint = """(s ~ sub) -> TRUE if s contains sub"""
 
 
 class BindNotContains(BindContainsBase):
 
-    named('!~')
+    call('!~')
     polarity = -1
     hint = """(s !~ sub) -> TRUE if s does not contain sub"""
 
 
 class CorrelateStringContains(CorrelateFunction):
 
-    correlates(ContainsSig, (StringDomain, StringDomain),
-                            (StringDomain, UntypedDomain),
-                            (UntypedDomain, StringDomain),
-                            (UntypedDomain, UntypedDomain))
+    match(ContainsSig, (StringDomain, StringDomain),
+                       (StringDomain, UntypedDomain),
+                       (UntypedDomain, StringDomain),
+                       (UntypedDomain, UntypedDomain))
     signature = ContainsSig
     domains = [StringDomain(), StringDomain()]
     codomain = BooleanDomain()
@@ -1542,43 +1532,42 @@ class BindHeadTailBase(BindPolyFunction):
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), UntypedDomain(),
                                  self.syntax, op=op, length=length)
-        correlate = Correlate(binding, self.state)
-        return correlate()
+        return Correlate.__invoke__(binding, self.state)
 
 
 class BindHead(BindPolyFunction):
 
-    named('head')
+    call('head')
     signature = HeadSig
     hint = """head(s[, N=1]) -> the first N elements of s"""
 
 
 class BindTail(BindPolyFunction):
 
-    named('tail')
+    call('tail')
     signature = TailSig
     hint = """tail(s[, N=1]) -> the last N elements of s"""
 
 
 class CorrelateHead(CorrelateFunction):
 
-    correlates(HeadSig, UntypedDomain,
-                        StringDomain)
+    match(HeadSig, UntypedDomain,
+                   StringDomain)
     domains = [StringDomain()]
     codomain = StringDomain()
 
 
 class CorrelateTail(CorrelateFunction):
 
-    correlates(TailSig, UntypedDomain,
-                        StringDomain)
+    match(TailSig, UntypedDomain,
+                   StringDomain)
     domains = [StringDomain()]
     codomain = StringDomain()
 
 
 class BindSlice(BindPolyFunction):
 
-    named('slice')
+    call('slice')
     signature = SliceSig
     hint = """slice(s, i, j) -> slice of s from i-th to j-th elements"""
 
@@ -1592,21 +1581,20 @@ class BindSlice(BindPolyFunction):
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), UntypedDomain(),
                                  self.syntax, op=op, left=left, right=right)
-        correlate = Correlate(binding, self.state)
-        return correlate()
+        return Correlate.__invoke__(binding, self.state)
 
 
 class CorrelateSlice(CorrelateFunction):
 
-    correlates(SliceSig, UntypedDomain,
-                         StringDomain)
+    match(SliceSig, UntypedDomain,
+                    StringDomain)
     domains = [StringDomain()]
     codomain = StringDomain()
 
 
 class BindAt(BindPolyFunction):
 
-    named('at')
+    call('at')
     signature = AtSig
     hint = """at(s, i[, len=1]) -> i-th to (i+len)-th elements of s"""
 
@@ -1619,59 +1607,58 @@ class BindAt(BindPolyFunction):
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), UntypedDomain(),
                                  self.syntax, op=op, index=index, length=length)
-        correlate = Correlate(binding, self.state)
-        return correlate()
+        return Correlate.__invoke__(binding, self.state)
 
 
 class CorrelateAt(CorrelateFunction):
 
-    correlates(AtSig, UntypedDomain,
-                      StringDomain)
+    match(AtSig, UntypedDomain,
+                 StringDomain)
     domains = [StringDomain()]
     codomain = StringDomain()
 
 
 class BindReplace(BindPolyFunction):
 
-    named('replace')
+    call('replace')
     signature = ReplaceSig
     hint = """replace(s, o, n) -> s with occurences of o replaced by n"""
 
 
 class CorrelateReplace(CorrelateFunction):
 
-    correlates(ReplaceSig, UntypedDomain,
-                           StringDomain)
+    match(ReplaceSig, UntypedDomain,
+                      StringDomain)
     domains = [StringDomain(), StringDomain(), StringDomain()]
     codomain = StringDomain()
 
 
 class BindUpper(BindPolyFunction):
 
-    named('upper')
+    call('upper')
     signature = UpperSig
     hint = """upper(s) -> s converted to uppercase"""
 
 
 class CorrelateUpper(CorrelateFunction):
 
-    correlates(UpperSig, UntypedDomain,
-                         StringDomain)
+    match(UpperSig, UntypedDomain,
+                    StringDomain)
     domains = [StringDomain()]
     codomain = StringDomain()
 
 
 class BindLower(BindPolyFunction):
 
-    named('lower')
+    call('lower')
     signature = LowerSig
     hint = """lower(s) -> s converted to lowercase"""
 
 
 class CorrelateLower(CorrelateFunction):
 
-    correlates(LowerSig, UntypedDomain,
-                         StringDomain)
+    match(LowerSig, UntypedDomain,
+                    StringDomain)
     domains = [StringDomain()]
     codomain = StringDomain()
 
@@ -1687,13 +1674,12 @@ class BindTrimBase(BindPolyFunction):
                                    is_right=self.is_right)
         binding = FormulaBinding(self.state.scope,
                                  signature, UntypedDomain(), self.syntax, op=op)
-        correlate = Correlate(binding, self.state)
-        return correlate()
+        return Correlate.__invoke__(binding, self.state)
 
 
 class BindTrim(BindTrimBase):
 
-    named('trim')
+    call('trim')
     is_left = True
     is_right = True
     hint = """trim(s) -> s with leading and trailing whitespaces removed"""
@@ -1701,21 +1687,21 @@ class BindTrim(BindTrimBase):
 
 class BindLTrim(BindTrimBase):
 
-    named('ltrim')
+    call('ltrim')
     is_left = True
     hint = """ltrim(s) -> s with leading whitespaces removed"""
 
 
 class BindRTrim(BindTrimBase):
 
-    named('rtrim')
+    call('rtrim')
     is_right = True
     hint = """rtrim(s) -> s with trailing whitespaces removed"""
 
 
 class BindToday(BindMonoFunction):
 
-    named('today')
+    call('today')
     signature = TodaySig
     codomain = DateDomain()
     hint = """today() -> the current date"""
@@ -1723,145 +1709,145 @@ class BindToday(BindMonoFunction):
 
 class BindNow(BindMonoFunction):
 
-    named('now')
+    call('now')
     signature = NowSig
     codomain = DateTimeDomain()
 
 
 class BindExtractYear(BindPolyFunction):
 
-    named('year')
+    call('year')
     signature = ExtractYearSig
     hint = """year(date) -> the year of a given date"""
 
 
 class BindExtractMonth(BindPolyFunction):
 
-    named('month')
+    call('month')
     signature = ExtractMonthSig
     hint = """month(date) -> the month of a given date"""
 
 
 class BindExtractDay(BindPolyFunction):
 
-    named('day')
+    call('day')
     signature = ExtractDaySig
     hint = """day(date) -> the day of a given date"""
 
 
 class BindExtractHour(BindPolyFunction):
 
-    named('hour')
+    call('hour')
     signature = ExtractHourSig
 
 
 class BindExtractMinute(BindPolyFunction):
 
-    named('minute')
+    call('minute')
     signature = ExtractMinuteSig
 
 
 class BindExtractSecond(BindPolyFunction):
 
-    named('second')
+    call('second')
     signature = ExtractSecondSig
 
 
 class CorrelateExtractYearFromDate(CorrelateFunction):
 
-    correlates(ExtractYearSig, DateDomain)
+    match(ExtractYearSig, DateDomain)
     domains = [DateDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractYearFromDateTime(CorrelateFunction):
 
-    correlates(ExtractYearSig, DateTimeDomain)
+    match(ExtractYearSig, DateTimeDomain)
     domains = [DateTimeDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractMonthFromDate(CorrelateFunction):
 
-    correlates(ExtractMonthSig, DateDomain)
+    match(ExtractMonthSig, DateDomain)
     domains = [DateDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractMonthFromDateTime(CorrelateFunction):
 
-    correlates(ExtractMonthSig, DateTimeDomain)
+    match(ExtractMonthSig, DateTimeDomain)
     domains = [DateTimeDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractDayFromDate(CorrelateFunction):
 
-    correlates(ExtractDaySig, DateDomain)
+    match(ExtractDaySig, DateDomain)
     domains = [DateDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractDayFromDateTime(CorrelateFunction):
 
-    correlates(ExtractDaySig, DateTimeDomain)
+    match(ExtractDaySig, DateTimeDomain)
     domains = [DateTimeDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractHourFromTime(CorrelateFunction):
 
-    correlates(ExtractHourSig, TimeDomain)
+    match(ExtractHourSig, TimeDomain)
     domains = [TimeDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractHourFromDateTime(CorrelateFunction):
 
-    correlates(ExtractHourSig, DateTimeDomain)
+    match(ExtractHourSig, DateTimeDomain)
     domains = [DateTimeDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractMinuteFromTime(CorrelateFunction):
 
-    correlates(ExtractMinuteSig, TimeDomain)
+    match(ExtractMinuteSig, TimeDomain)
     domains = [TimeDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractMinuteFromDateTime(CorrelateFunction):
 
-    correlates(ExtractMinuteSig, DateTimeDomain)
+    match(ExtractMinuteSig, DateTimeDomain)
     domains = [DateTimeDomain()]
     codomain = IntegerDomain()
 
 
 class CorrelateExtractSecondFromTime(CorrelateFunction):
 
-    correlates(ExtractSecondSig, TimeDomain)
+    match(ExtractSecondSig, TimeDomain)
     domains = [TimeDomain()]
     codomain = FloatDomain()
 
 
 class CorrelateExtractSecondFromDateTime(CorrelateFunction):
 
-    correlates(ExtractSecondSig, DateTimeDomain)
+    match(ExtractSecondSig, DateTimeDomain)
     domains = [DateTimeDomain()]
     codomain = FloatDomain()
 
 
 class CorrelateTrim(CorrelateFunction):
 
-    correlates(TrimSig, UntypedDomain,
-                        StringDomain)
+    match(TrimSig, UntypedDomain,
+                   StringDomain)
     domains = [StringDomain()]
     codomain = StringDomain()
 
 
 class BindIsNull(BindHomoFunction):
 
-    named('is_null')
+    call('is_null')
     signature = IsNullSig(+1)
     codomain = BooleanDomain()
     hint = """is_null(x) -> TRUE if x is NULL"""
@@ -1869,21 +1855,21 @@ class BindIsNull(BindHomoFunction):
 
 class BindNullIf(BindHomoFunction):
 
-    named('null_if')
+    call('null_if')
     signature = NullIfSig()
     hint = """null_if(x, y) -> NULL if x is equal to y; x otherwise"""
 
 
 class BindIfNull(BindHomoFunction):
 
-    named('if_null')
+    call('if_null')
     signature = IfNullSig()
     hint = """if_null(x, y) -> y if x is NULL; x otherwise"""
 
 
 class BindIf(BindFunction):
 
-    named('if')
+    call('if')
     signature = IfSig
     hint = """if(p, c[, ...][, a=NULL]) -> c if p; a otherwise"""
 
@@ -1942,7 +1928,7 @@ class BindIf(BindFunction):
 
 class BindSwitch(BindFunction):
 
-    named('switch')
+    call('switch')
     signature = SwitchSig
     hint = """switch(x, v, c, [...][, a=NULL]) -> c if x = v; a otherwise"""
 
@@ -2035,21 +2021,21 @@ class BindExistsBase(BindFunction):
 
 class BindExists(BindExistsBase):
 
-    named('exists')
+    call('exists')
     polarity = +1
     hint = """base.exists(p) -> TRUE if there exists p such that p = TRUE"""
 
 
 class BindEvery(BindExistsBase):
 
-    named('every')
+    call('every')
     polarity = -1
     hint = """base.every(p) -> TRUE if p = TRUE for every p"""
 
 
 class BindCount(BindFunction):
 
-    named('count')
+    call('count')
     signature = CountSig
     hint = """base.count(p) -> the number of p such that p = TRUE"""
 
@@ -2092,8 +2078,7 @@ class BindPolyAggregate(BindPolyFunction):
         binding = FormulaBinding(self.state.scope,
                                  self.signature(), self.codomain, self.syntax,
                                  op=op)
-        correlate = Correlate(binding, self.state)
-        binding = correlate()
+        binding = Correlate.__invoke__(binding, self.state)
         return FormulaBinding(self.state.scope,
                               AggregateSig(), binding.domain, binding.syntax,
                               plural_base=plural_base, op=binding)
@@ -2118,8 +2103,7 @@ class BindMinMaxBase(BindPolyAggregate):
         binding = FormulaBinding(self.state.scope,
                                  self.signature(self.polarity), self.codomain,
                                  self.syntax, op=op)
-        correlate = Correlate(binding, self.state)
-        binding = correlate()
+        binding = Correlate.__invoke__(binding, self.state)
         return FormulaBinding(self.state.scope,
                               AggregateSig(), binding.domain, binding.syntax,
                               plural_base=plural_base, op=binding)
@@ -2127,7 +2111,7 @@ class BindMinMaxBase(BindPolyAggregate):
 
 class BindMinMaxBase(BindMinMaxBase):
 
-    named('min')
+    call('min')
     signature = MinMaxSig
     polarity = +1
     hint = """base.min(x) -> the minimal value in the set of x"""
@@ -2135,7 +2119,7 @@ class BindMinMaxBase(BindMinMaxBase):
 
 class BindMinMaxBase(BindMinMaxBase):
 
-    named('max')
+    call('max')
     signature = MinMaxSig
     polarity = -1
     hint = """base.avg(x) -> the maximal value in the set of x"""
@@ -2143,7 +2127,7 @@ class BindMinMaxBase(BindMinMaxBase):
 
 class CorrelateIntegerMinMax(CorrelateFunction):
 
-    correlates(MinMaxSig, IntegerDomain)
+    match(MinMaxSig, IntegerDomain)
     signature = MinMaxSig
     domains = [IntegerDomain()]
     codomain = IntegerDomain()
@@ -2151,7 +2135,7 @@ class CorrelateIntegerMinMax(CorrelateFunction):
 
 class CorrelateDecimalMinMax(CorrelateFunction):
 
-    correlates(MinMaxSig, DecimalDomain)
+    match(MinMaxSig, DecimalDomain)
     signature = MinMaxSig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
@@ -2159,7 +2143,7 @@ class CorrelateDecimalMinMax(CorrelateFunction):
 
 class CorrelateFloatMinMax(CorrelateFunction):
 
-    correlates(MinMaxSig, FloatDomain)
+    match(MinMaxSig, FloatDomain)
     signature = MinMaxSig
     domains = [FloatDomain()]
     codomain = FloatDomain()
@@ -2167,7 +2151,7 @@ class CorrelateFloatMinMax(CorrelateFunction):
 
 class CorrelateStringMinMax(CorrelateFunction):
 
-    correlates(MinMaxSig, StringDomain)
+    match(MinMaxSig, StringDomain)
     signature = MinMaxSig
     domains = [StringDomain()]
     codomain = StringDomain()
@@ -2175,7 +2159,7 @@ class CorrelateStringMinMax(CorrelateFunction):
 
 class CorrelateDateMinMax(CorrelateFunction):
 
-    correlates(MinMaxSig, DateDomain)
+    match(MinMaxSig, DateDomain)
     signature = MinMaxSig
     domains = [DateDomain()]
     codomain = DateDomain()
@@ -2183,7 +2167,7 @@ class CorrelateDateMinMax(CorrelateFunction):
 
 class CorrelateTimeMinMax(CorrelateFunction):
 
-    correlates(MinMaxSig, TimeDomain)
+    match(MinMaxSig, TimeDomain)
     signature = MinMaxSig
     domains = [TimeDomain()]
     codomain = TimeDomain()
@@ -2191,7 +2175,7 @@ class CorrelateTimeMinMax(CorrelateFunction):
 
 class CorrelateDateTimeMinMax(CorrelateFunction):
 
-    correlates(MinMaxSig, DateTimeDomain)
+    match(MinMaxSig, DateTimeDomain)
     signature = MinMaxSig
     domains = [DateTimeDomain()]
     codomain = DateTimeDomain()
@@ -2199,14 +2183,14 @@ class CorrelateDateTimeMinMax(CorrelateFunction):
 
 class BindSum(BindPolyAggregate):
 
-    named('sum')
+    call('sum')
     signature = SumSig
     hint = """base.sum(x) -> the sum of x"""
 
 
 class CorrelateIntegerSum(CorrelateFunction):
 
-    correlates(SumSig, IntegerDomain)
+    match(SumSig, IntegerDomain)
     signature = SumSig
     domains = [IntegerDomain()]
     codomain = IntegerDomain()
@@ -2214,7 +2198,7 @@ class CorrelateIntegerSum(CorrelateFunction):
 
 class CorrelateDecimalSum(CorrelateFunction):
 
-    correlates(SumSig, DecimalDomain)
+    match(SumSig, DecimalDomain)
     signature = SumSig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
@@ -2222,7 +2206,7 @@ class CorrelateDecimalSum(CorrelateFunction):
 
 class CorrelateFloatSum(CorrelateFunction):
 
-    correlates(SumSig, FloatDomain)
+    match(SumSig, FloatDomain)
     signature = SumSig
     domains = [FloatDomain()]
     codomain = FloatDomain()
@@ -2230,15 +2214,15 @@ class CorrelateFloatSum(CorrelateFunction):
 
 class BindAvg(BindPolyAggregate):
 
-    named('avg')
+    call('avg')
     signature = AvgSig
     hint = """base.avg(x) -> the average value of x"""
 
 
 class CorrelateDecimalAvg(CorrelateFunction):
 
-    correlates(AvgSig, IntegerDomain,
-                       DecimalDomain)
+    match(AvgSig, IntegerDomain,
+                  DecimalDomain)
     signature = AvgSig
     domains = [DecimalDomain()]
     codomain = DecimalDomain()
@@ -2246,7 +2230,7 @@ class CorrelateDecimalAvg(CorrelateFunction):
 
 class CorrelateFloatAvg(CorrelateFunction):
 
-    correlates(AvgSig, FloatDomain)
+    match(AvgSig, FloatDomain)
     signature = AvgSig
     domains = [FloatDomain()]
     codomain = FloatDomain()

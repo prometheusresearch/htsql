@@ -9,7 +9,7 @@
 """
 
 
-from ...adapter import Adapter, adapts, adapts_many, adapts_none
+from ...adapter import Adapter, adapt, adapt_many, adapt_none
 from ...domain import UntypedDomain, BooleanDomain, IntegerDomain
 from ..encode import EncodeBySignature, EncodingState
 from ..error import EncodeError
@@ -27,12 +27,12 @@ from .signature import (ExistsSig, AggregateSig, QuantifySig,
 
 class EncodeFunction(EncodeBySignature):
 
-    adapts_none()
+    adapt_none()
 
 
 class EncodeLength(EncodeFunction):
 
-    adapts(LengthSig)
+    adapt(LengthSig)
 
     def __call__(self):
         code = super(EncodeLength, self).__call__()
@@ -43,7 +43,7 @@ class EncodeLength(EncodeFunction):
 
 class EncodeContains(EncodeFunction):
 
-    adapts(ContainsSig)
+    adapt(ContainsSig)
 
     def __call__(self):
         lop = self.state.encode(self.binding.lop)
@@ -80,7 +80,7 @@ class EncodeContains(EncodeFunction):
 
 class EncodeHead(EncodeFunction):
 
-    adapts(HeadSig)
+    adapt(HeadSig)
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
@@ -118,7 +118,7 @@ class EncodeHead(EncodeFunction):
 
 class EncodeTail(EncodeFunction):
 
-    adapts(TailSig)
+    adapt(TailSig)
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
@@ -158,7 +158,7 @@ class EncodeTail(EncodeFunction):
 
 class EncodeSlice(EncodeFunction):
 
-    adapts(SliceSig)
+    adapt(SliceSig)
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
@@ -245,7 +245,7 @@ class EncodeSlice(EncodeFunction):
 
 class EncodeAt(EncodeFunction):
 
-    adapts(AtSig)
+    adapt(AtSig)
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
@@ -324,7 +324,7 @@ class EncodeAt(EncodeFunction):
 
 class EncodeReplace(EncodeFunction):
 
-    adapts(ReplaceSig)
+    adapt(ReplaceSig)
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
@@ -341,7 +341,7 @@ class EncodeReplace(EncodeFunction):
 
 class EncodeAggregate(EncodeFunction):
 
-    adapts(AggregateSig)
+    adapt(AggregateSig)
 
     def aggregate(self, op, flow, plural_flow):
         if plural_flow is None:
@@ -382,18 +382,17 @@ class EncodeAggregate(EncodeFunction):
             plural_flow = self.state.relate(self.binding.plural_base)
         plural_flow = self.aggregate(op, flow, plural_flow)
         aggregate = AggregateUnit(op, plural_flow, flow, self.binding)
-        wrap = WrapAggregate(aggregate, self.state)
-        wrapper = wrap()
+        wrapper = WrapAggregate.__invoke__(aggregate, self.state)
         wrapper = ScalarUnit(wrapper, flow, self.binding)
         return wrapper
 
 
 class WrapAggregate(Adapter):
 
-    adapts(Signature)
+    adapt(Signature)
 
     @classmethod
-    def dispatch(cls, unit, *args, **kwds):
+    def __dispatch__(interface, unit, *args, **kwds):
         assert isinstance(unit, AggregateUnit)
         if not isinstance(unit.code, FormulaCode):
             return (Signature,)
@@ -412,7 +411,7 @@ class WrapAggregate(Adapter):
 
 class EncodeCount(EncodeFunction):
 
-    adapts(CountSig)
+    adapt(CountSig)
 
     def __call__(self):
         op = self.state.encode(self.binding.op)
@@ -425,7 +424,7 @@ class EncodeCount(EncodeFunction):
 
 class WrapCountSum(WrapAggregate):
 
-    adapts_many(CountSig, SumSig)
+    adapt_many(CountSig, SumSig)
 
     def __call__(self):
         root = RootBinding(self.unit.syntax)
@@ -440,7 +439,7 @@ class WrapCountSum(WrapAggregate):
 
 class EncodeQuantify(EncodeAggregate):
 
-    adapts(QuantifySig)
+    adapt(QuantifySig)
 
     def __call__(self):
         op = self.state.encode(self.binding.op)

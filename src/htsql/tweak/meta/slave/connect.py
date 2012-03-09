@@ -6,7 +6,7 @@ from __future__ import with_statement
 from ....core.context import context
 from ....core.cache import once
 from ....core.connect import Connect
-from ....core.adapter import weigh, Utility
+from ....core.adapter import rank, Utility
 from ....core.classify import classify, relabel
 from ....core.model import HomeNode, TableArc, ColumnArc, ChainArc
 import sqlite3
@@ -14,7 +14,7 @@ import sqlite3
 
 class MetaSlaveConnect(Connect):
 
-    weigh(2.0) # ensure connections here are not pooled
+    rank(2.0) # ensure connections here are not pooled
 
     def open(self):
         return build_meta()
@@ -178,8 +178,7 @@ class BuildMetaDatabase(Utility):
 @once
 def build_meta():
     connection = sqlite3.connect(':memory:', check_same_thread=False)
-    build_meta = BuildMetaDatabase(connection)
-    build_meta()
+    BuildMetaDatabase.__invoke__(connection)
     connection.commit()
     return connection
 

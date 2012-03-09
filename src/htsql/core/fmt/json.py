@@ -12,7 +12,7 @@ This module implements the JSON renderer.
 
 
 from ..util import Printable
-from ..adapter import Adapter, Protocol, adapts, adapts_many, named
+from ..adapter import Adapter, Protocol, adapt, adapt_many, call
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       StringDomain, EnumDomain, DateDomain, TimeDomain,
                       DateTimeDomain, ListDomain, RecordDomain,
@@ -153,8 +153,8 @@ def dump_json(iterator):
 
 class EmitJSONHeaders(EmitHeaders):
 
-    adapts_many(JSONFormat,
-                ObjFormat)
+    adapt_many(JSONFormat,
+               ObjFormat)
 
     def __call__(self):
         filename = None
@@ -172,7 +172,7 @@ class EmitJSONHeaders(EmitHeaders):
 
 class EmitJSON(Emit):
 
-    adapts(JSONFormat)
+    adapt(JSONFormat)
 
     def __call__(self):
         return dump_json(purge_null_keys(self.emit()))
@@ -191,7 +191,7 @@ class EmitJSON(Emit):
 
 class EmitObj(Emit):
 
-    adapts(ObjFormat)
+    adapt(ObjFormat)
 
     def __call__(self):
         return dump_json(purge_null_keys(self.emit()))
@@ -211,7 +211,7 @@ class EmitObj(Emit):
 
 class ToJSON(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain):
         assert isinstance(domain, Domain)
@@ -229,7 +229,7 @@ class ToJSON(Adapter):
 
 class RecordToJSON(ToJSON):
 
-    adapts(RecordDomain)
+    adapt(RecordDomain)
 
     def __init__(self, domain):
         super(RecordToJSON, self).__init__(domain)
@@ -249,7 +249,7 @@ class RecordToJSON(ToJSON):
 
 class ListToJSON(ToJSON):
 
-    adapts(ListDomain)
+    adapt(ListDomain)
 
     def __init__(self, domain):
         super(ListToJSON, self).__init__(domain)
@@ -269,10 +269,10 @@ class ListToJSON(ToJSON):
 
 class NativeToJSON(ToJSON):
 
-    adapts_many(BooleanDomain,
-                NumberDomain,
-                StringDomain,
-                EnumDomain)
+    adapt_many(BooleanDomain,
+               NumberDomain,
+               StringDomain,
+               EnumDomain)
 
     @staticmethod
     def scatter(value):
@@ -281,8 +281,8 @@ class NativeToJSON(ToJSON):
 
 class NativeStringToJSON(ToJSON):
 
-    adapts_many(DateDomain,
-                TimeDomain)
+    adapt_many(DateDomain,
+               TimeDomain)
 
     @staticmethod
     def scatter(value):
@@ -294,7 +294,7 @@ class NativeStringToJSON(ToJSON):
 
 class DateTimeToJSON(ToJSON):
 
-    adapts(DateTimeDomain)
+    adapt(DateTimeDomain)
 
     @staticmethod
     def scatter(value):
@@ -308,7 +308,7 @@ class DateTimeToJSON(ToJSON):
 
 class OpaqueToJSON(ToJSON):
 
-    adapts(OpaqueDomain)
+    adapt(OpaqueDomain)
 
     @staticmethod
     def scatter(value):
@@ -337,7 +337,7 @@ class MetaToJSON(Protocol):
 
 class DomainMetaToJSON(MetaToJSON):
 
-    named('domain')
+    call('domain')
 
     def __call__(self):
         return domain_to_json(self.profile.domain)
@@ -345,7 +345,7 @@ class DomainMetaToJSON(MetaToJSON):
 
 class SyntaxMetaToJSON(MetaToJSON):
 
-    named('syntax')
+    call('syntax')
 
     def __call__(self):
         if self.profile.syntax is None:
@@ -356,7 +356,7 @@ class SyntaxMetaToJSON(MetaToJSON):
 
 class TagMetaToJSON(MetaToJSON):
 
-    named('tag')
+    call('tag')
 
     def __call__(self):
         if self.profile.tag is None:
@@ -367,7 +367,7 @@ class TagMetaToJSON(MetaToJSON):
 
 class HeaderMetaToJSON(MetaToJSON):
 
-    named('header')
+    call('header')
 
     def __call__(self):
         yield self.profile.header
@@ -375,7 +375,7 @@ class HeaderMetaToJSON(MetaToJSON):
 
 class PathMetaToJSON(MetaToJSON):
 
-    named('path')
+    call('path')
 
     def __call__(self):
         # FIXME: circular import?
@@ -395,7 +395,7 @@ class PathMetaToJSON(MetaToJSON):
 
 class DomainToJSON(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain):
         assert isinstance(domain, Domain)
@@ -410,7 +410,7 @@ class DomainToJSON(Adapter):
 
 class VoidDomainToJSON(DomainToJSON):
 
-    adapts(VoidDomain)
+    adapt(VoidDomain)
 
     def __call__(self):
         yield None
@@ -418,7 +418,7 @@ class VoidDomainToJSON(DomainToJSON):
 
 class ListDomainToJSON(DomainToJSON):
 
-    adapts(ListDomain)
+    adapt(ListDomain)
 
     def __call__(self):
         yield JS_MAP
@@ -435,7 +435,7 @@ class ListDomainToJSON(DomainToJSON):
 
 class RecordDomainToJSON(DomainToJSON):
 
-    adapts(RecordDomain)
+    adapt(RecordDomain)
 
     def __call__(self):
         yield JS_MAP
@@ -452,7 +452,7 @@ class RecordDomainToJSON(DomainToJSON):
 
 class ToObj(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain):
         assert isinstance(domain, Domain)
@@ -464,7 +464,7 @@ class ToObj(Adapter):
 
 class RecordToObj(ToObj):
 
-    adapts(RecordDomain)
+    adapt(RecordDomain)
 
     def __init__(self, domain):
         super(RecordToObj, self).__init__(domain)
@@ -497,7 +497,7 @@ class RecordToObj(ToObj):
 
 class ListToObj(ToObj):
 
-    adapts(ListDomain)
+    adapt(ListDomain)
 
     def __init__(self, domain):
         super(ListToObj, self).__init__(domain)
@@ -519,31 +519,23 @@ class ListToObj(ToObj):
 
 
 def profile_to_json(profile):
-    names = set()
-    for component in MetaToJSON.implementations():
-        for name in component.names:
-            names.add(name)
     yield JS_MAP
-    for name in sorted(names):
-        meta_to_json = MetaToJSON(name, profile)
+    for name in MetaToJSON.__catalogue__():
         yield unicode(name)
-        for token in meta_to_json():
+        for token in MetaToJSON.__invoke__(name, profile):
             yield token
     yield JS_END
 
 
 def domain_to_json(domain):
-    domain_to_json = DomainToJSON(domain)
-    return domain_to_json()
+    return DomainToJSON.__invoke__(domain)
 
 
 def to_json(domain):
-    to_json = ToJSON(domain)
-    return to_json()
+    return ToJSON.__invoke__(domain)
 
 
 def to_obj(domain):
-    to_obj = ToObj(domain)
-    return to_obj()
+    return ToObj.__invoke__(domain)
 
 

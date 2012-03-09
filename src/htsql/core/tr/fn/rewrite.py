@@ -3,7 +3,7 @@
 #
 
 
-from ...adapter import adapts, adapts_none
+from ...adapter import adapt, adapt_none
 from ..flow import LiteralCode, FormulaCode
 from ..rewrite import RewriteBySignature
 from .signature import SubstringSig
@@ -11,7 +11,7 @@ from .signature import SubstringSig
 
 class RewriteFunction(RewriteBySignature):
 
-    adapts_none()
+    adapt_none()
     is_null_regular = False
 
     def __call__(self):
@@ -26,7 +26,7 @@ class RewriteFunction(RewriteBySignature):
 
 class RewriteSubstring(RewriteFunction):
 
-    adapts(SubstringSig)
+    adapt(SubstringSig)
     is_null_regular = True
 
 

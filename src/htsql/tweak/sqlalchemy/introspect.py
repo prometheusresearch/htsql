@@ -4,7 +4,7 @@
 
 
 from ...core.context import context
-from ...core.adapter import Adapter, weigh, adapts, adapts_many
+from ...core.adapter import Adapter, rank, adapt, adapt_many
 from ...core.introspect import Introspect
 from ...core.entity import make_catalog
 from ...core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
@@ -28,7 +28,7 @@ def decode(name, quote=None):
 
 class SQLAlchemyIntrospect(Introspect):
 
-    weigh(1.0)
+    rank(1.0)
 
     def __init__(self):
         super(SQLAlchemyIntrospect, self).__init__()
@@ -51,8 +51,7 @@ class SQLAlchemyIntrospect(Introspect):
 
             for column_record in table_record.columns:
                 name = decode(column_record.name, column_record.quote)
-                introspect_domain = IntrospectSADomain(column_record.type)
-                domain = introspect_domain()
+                domain = IntrospectSADomain.__invoke__(column_record.type)
                 is_nullable = column_record.nullable
                 has_default = (column_record.server_default is not None)
                 table.add_column(name, domain, is_nullable, has_default)
@@ -112,7 +111,7 @@ class SQLAlchemyIntrospect(Introspect):
 
 class IntrospectSADomain(Adapter):
 
-    adapts(types.TypeEngine)
+    adapt(types.TypeEngine)
 
     def __init__(self, type):
         self.type = type
@@ -123,7 +122,7 @@ class IntrospectSADomain(Adapter):
 
 class IntrospectSABooleanDomain(IntrospectSADomain):
 
-    adapts(types.Boolean)
+    adapt(types.Boolean)
 
     def __call__(self):
         return BooleanDomain()
@@ -131,7 +130,7 @@ class IntrospectSABooleanDomain(IntrospectSADomain):
 
 class IntrospectSAIntegerDomain(IntrospectSADomain):
 
-    adapts(types.Integer)
+    adapt(types.Integer)
 
     def __call__(self):
         return IntegerDomain()
@@ -139,7 +138,7 @@ class IntrospectSAIntegerDomain(IntrospectSADomain):
 
 class IntrospectSAStringDomain(IntrospectSADomain):
 
-    adapts(types.String)
+    adapt(types.String)
 
     def __call__(self):
         return StringDomain(self.type.length, True)
@@ -147,7 +146,7 @@ class IntrospectSAStringDomain(IntrospectSADomain):
 
 class IntrospectSACharDomain(IntrospectSADomain):
 
-    adapts_many(types.CHAR, types.NCHAR)
+    adapt_many(types.CHAR, types.NCHAR)
 
     def __call__(self):
         return StringDomain(self.type.length, False)
@@ -155,7 +154,7 @@ class IntrospectSACharDomain(IntrospectSADomain):
 
 class IntrospectSAFloatDomain(IntrospectSADomain):
 
-    adapts(types.Float)
+    adapt(types.Float)
 
     def __call__(self):
         return FloatDomain()
@@ -163,7 +162,7 @@ class IntrospectSAFloatDomain(IntrospectSADomain):
 
 class IntrospectSADecimalDomain(IntrospectSADomain):
 
-    adapts(types.Numeric)
+    adapt(types.Numeric)
 
     def __call__(self):
         return DecimalDomain(self.type.precision, self.type.scale)
@@ -171,7 +170,7 @@ class IntrospectSADecimalDomain(IntrospectSADomain):
 
 class IntrospectSADateDomain(IntrospectSADomain):
 
-    adapts(types.Date)
+    adapt(types.Date)
 
     def __call__(self):
         return DateDomain()
@@ -179,7 +178,7 @@ class IntrospectSADateDomain(IntrospectSADomain):
 
 class IntrospectSATimeDomain(IntrospectSADomain):
 
-    adapts(types.Time)
+    adapt(types.Time)
 
     def __call__(self):
         return TimeDomain()
@@ -187,7 +186,7 @@ class IntrospectSATimeDomain(IntrospectSADomain):
 
 class IntrospectSADateTimeDomain(IntrospectSADomain):
 
-    adapts(types.DateTime)
+    adapt(types.DateTime)
 
     def __call__(self):
         return DateTimeDomain()

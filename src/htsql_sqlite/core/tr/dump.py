@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import adapts
+from htsql.core.adapter import adapt
 from htsql.core.domain import BooleanDomain, StringDomain
 from htsql.core.tr.frame import LiteralPhrase
 from htsql.core.tr.dump import (DumpBoolean, DumpDecimal, DumpDate,
@@ -83,7 +83,7 @@ class SQLiteDumpToString(DumpToString):
 
 class SQLiteDumpBooleanToString(SQLiteDumpToString):
 
-    adapts(BooleanDomain, StringDomain)
+    adapt(BooleanDomain, StringDomain)
 
     def __call__(self):
         self.format("(CASE WHEN {base} THEN 'true'"

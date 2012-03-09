@@ -5,7 +5,7 @@
 
 from __future__ import with_statement
 from ...core.context import context
-from ...core.adapter import weigh
+from ...core.adapter import rank
 from ...core.introspect import Introspect
 import threading
 
@@ -23,7 +23,7 @@ class UnusedPatternCache(object):
 
 class OverrideIntrospect(Introspect):
 
-    weigh(2.0)
+    rank(2.0)
 
     def __call__(self):
         addon = context.app.tweak.override

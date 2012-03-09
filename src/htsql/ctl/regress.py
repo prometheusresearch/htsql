@@ -2019,7 +2019,7 @@ class SQLTestCase(SkipTestCase):
         # never use it for executing HTSQL queries.
         from htsql import HTSQL
         from htsql.core.connect import connect, DBError
-        from htsql.core.split_sql import SplitSQL
+        from htsql.core.split_sql import split_sql
         try:
             app = HTSQL(self.input.connect)
         except Exception, exc:
@@ -2032,7 +2032,6 @@ class SQLTestCase(SkipTestCase):
         with app:
             # Realize a splitter and split the input data to individual
             # SQL statements.
-            split_sql = SplitSQL()
             try:
                 statements = list(split_sql(sql))
             except ValueError, exc:

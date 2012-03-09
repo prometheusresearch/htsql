@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import adapts
+from htsql.core.adapter import adapt
 from htsql.core.domain import Domain, IntegerDomain, StringDomain
 from htsql.core.tr.dump import DumpByDomain, DumpToDomain
 from htsql.tweak.inet.domain import INetDomain
@@ -11,7 +11,7 @@ from htsql.tweak.inet.domain import INetDomain
 
 class DumpInet(DumpByDomain):
 
-    adapts(INetDomain)
+    adapt(INetDomain)
 
     def __call__(self):
         self.format("{value:literal}::INET", value=self.value)
@@ -19,7 +19,7 @@ class DumpInet(DumpByDomain):
 
 class DumpToINet(DumpToDomain):
 
-    adapts(Domain, INetDomain)
+    adapt(Domain, INetDomain)
 
     def __call__(self):
         self.format("CAST({base} AS INET)", base=self.base)
@@ -27,7 +27,7 @@ class DumpToINet(DumpToDomain):
 
 class DumpIntegerToINet(DumpToDomain):
 
-    adapts(IntegerDomain, INetDomain)
+    adapt(IntegerDomain, INetDomain)
 
     def __call__(self):
         self.format("('0.0.0.0'::INET + {base})", base=self.base)
@@ -35,7 +35,7 @@ class DumpIntegerToINet(DumpToDomain):
 
 class DumpINetToInteger(DumpToDomain):
 
-    adapts(INetDomain, IntegerDomain)
+    adapt(INetDomain, IntegerDomain)
 
     def __call__(self):
         self.format("({base} - '0.0.0.0'::INET)", base=self.base)
@@ -43,7 +43,7 @@ class DumpINetToInteger(DumpToDomain):
 
 class DumpINetToString(DumpToDomain):
 
-    adapts(INetDomain, StringDomain)
+    adapt(INetDomain, StringDomain)
 
     def __call__(self):
         self.format("HOST({base})", base=self.base)

@@ -12,7 +12,7 @@ This module implements the binding process.
 
 
 from ..util import maybe, listof, tupleof, similar
-from ..adapter import Adapter, Protocol, adapts
+from ..adapter import Adapter, Protocol, adapt
 from ..domain import (BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, UntypedDomain, RecordDomain, ListDomain,
                       VoidDomain)
@@ -171,8 +171,7 @@ class BindingState(object):
         if scope is not None:
             self.push_scope(scope)
         # Realize and apply `BindByRecipe` adapter.
-        bind = BindByRecipe(recipe, syntax, self)
-        binding = bind()
+        binding = BindByRecipe.__invoke__(recipe, syntax, self)
         # Restore the old lookup scope.
         if scope is not None:
             self.pop_scope()
@@ -196,8 +195,7 @@ class BindingState(object):
         if scope is not None:
             self.push_scope(scope)
         # Realize and apply `BindByName` protocol.
-        bind = BindByName(syntax, self)
-        binding = bind()
+        binding = BindByName.__invoke__(syntax, self)
         # Restore the old lookup scope.
         if scope is not None:
             self.pop_scope()
@@ -228,7 +226,7 @@ class Bind(Adapter):
         The current state of the binding process.
     """
 
-    adapts(Syntax)
+    adapt(Syntax)
 
     def __init__(self, syntax, state):
         assert isinstance(syntax, Syntax)
@@ -260,7 +258,7 @@ def hint_choices(choices):
 
 class BindQuery(Bind):
 
-    adapts(QuerySyntax)
+    adapt(QuerySyntax)
 
     def __call__(self):
         # Initialize the lookup scope with a root node.
@@ -286,7 +284,7 @@ class BindQuery(Bind):
 
 class BindSegment(Bind):
 
-    adapts(SegmentSyntax)
+    adapt(SegmentSyntax)
 
     def __call__(self):
         ## FIXME: an empty segment syntax should not be generated.
@@ -332,7 +330,7 @@ class BindSegment(Bind):
 
 class BindSelector(Bind):
 
-    adapts(SelectorSyntax)
+    adapt(SelectorSyntax)
 
     def __call__(self):
         # Determine the base of the selection.
@@ -400,7 +398,7 @@ class BindSelector(Bind):
 
 class BindApplication(Bind):
 
-    adapts(ApplicationSyntax)
+    adapt(ApplicationSyntax)
 
     def __call__(self):
         # Look for the parameterized attribute in the current local scope.
@@ -416,7 +414,7 @@ class BindApplication(Bind):
 
 class BindOperator(Bind):
 
-    adapts(OperatorSyntax)
+    adapt(OperatorSyntax)
 
     def __call__(self):
         # Look for the operator in the global scope.  We skip the local scope
@@ -426,7 +424,7 @@ class BindOperator(Bind):
 
 class BindQuotient(Bind):
 
-    adapts(QuotientSyntax)
+    adapt(QuotientSyntax)
 
     def __call__(self):
         # Get the seed of the quotient.
@@ -474,7 +472,7 @@ class BindQuotient(Bind):
 
 class BindSieve(Bind):
 
-    adapts(SieveSyntax)
+    adapt(SieveSyntax)
 
     def __call__(self):
         # Get the sieve base.
@@ -489,7 +487,7 @@ class BindSieve(Bind):
 
 class BindLink(Bind):
 
-    adapts(LinkSyntax)
+    adapt(LinkSyntax)
 
     def __call__(self):
         # Bind the origin images.
@@ -542,7 +540,7 @@ class BindLink(Bind):
 
 class BindHome(Bind):
 
-    adapts(HomeSyntax)
+    adapt(HomeSyntax)
 
     def __call__(self):
         # Make the home scope.
@@ -553,7 +551,7 @@ class BindHome(Bind):
 
 class BindAssignment(Bind):
 
-    adapts(AssignmentSyntax)
+    adapt(AssignmentSyntax)
 
     def __call__(self):
         # Parse the left side of the assignment.  It takes one of the forms:
@@ -616,7 +614,7 @@ class BindAssignment(Bind):
 
 class BindSpecifier(Bind):
 
-    adapts(SpecifierSyntax)
+    adapt(SpecifierSyntax)
 
     def __call__(self):
         # Expression:
@@ -629,7 +627,7 @@ class BindSpecifier(Bind):
 
 class BindGroup(Bind):
 
-    adapts(GroupSyntax)
+    adapt(GroupSyntax)
 
     def __call__(self):
         # Bind the expression in parenthesis, then wrap the result
@@ -640,7 +638,7 @@ class BindGroup(Bind):
 
 class BindIdentifier(Bind):
 
-    adapts(IdentifierSyntax)
+    adapt(IdentifierSyntax)
 
     def __call__(self):
         # Look for the identifier in the current lookup scope.
@@ -655,7 +653,7 @@ class BindIdentifier(Bind):
 
 class BindWildcard(Bind):
 
-    adapts(WildcardSyntax)
+    adapt(WildcardSyntax)
 
     def __call__(self):
         # Get all public columns in the current lookup scope.
@@ -692,7 +690,7 @@ class BindWildcard(Bind):
 
 class BindReference(Bind):
 
-    adapts(ReferenceSyntax)
+    adapt(ReferenceSyntax)
 
     def __call__(self):
         # Look for a reference, complain if not found.
@@ -712,7 +710,7 @@ class BindReference(Bind):
 
 class BindComplement(Bind):
 
-    adapts(ComplementSyntax)
+    adapt(ComplementSyntax)
 
     def __call__(self):
         # Look for a complement, complain if not found.
@@ -725,7 +723,7 @@ class BindComplement(Bind):
 
 class BindString(Bind):
 
-    adapts(StringSyntax)
+    adapt(StringSyntax)
 
     def __call__(self):
         # Bind a quoted literal.  Note that a quoted literal not necessarily
@@ -739,7 +737,7 @@ class BindString(Bind):
 
 class BindNumber(Bind):
 
-    adapts(NumberSyntax)
+    adapt(NumberSyntax)
 
     def __call__(self):
         # Bind an unquoted (numeric) literal.
@@ -778,7 +776,7 @@ class BindByName(Protocol):
 
     To add an implementation of the interface, define a subclass
     of :class:`BindByName` and specify its name and expected number
-    of arguments using function :func:`named`.
+    of arguments using function :func:`call`.
 
     Class attributes:
 
@@ -793,7 +791,7 @@ class BindByName(Protocol):
     names = []
 
     @classmethod
-    def dominates(component, other):
+    def __dominates__(component, other):
         # Determine if the component dominates another component
         # assuming that they match the same dispatch key.
 
@@ -809,12 +807,12 @@ class BindByName(Protocol):
         # same name, but the former requires a fixed number of
         # arguments while the latter accepts a node with any
         # number of arguments.
-        for name in component.names:
+        for name in component.__names__:
             arity = -1
             if isinstance(name, tuple):
                 name, arity = name
             name = name.lower()
-            for other_name in other.names:
+            for other_name in other.__names__:
                 other_arity = -1
                 if isinstance(other_name, tuple):
                     other_name, other_arity = other_name
@@ -826,7 +824,7 @@ class BindByName(Protocol):
         return False
 
     @classmethod
-    def matches(component, dispatch_key):
+    def __matches__(component, dispatch_key):
         # Check if the component matches the given function name
         # and the number of arguments.
         assert isinstance(dispatch_key, tupleof(unicode, maybe(int)))
@@ -839,7 +837,7 @@ class BindByName(Protocol):
         key_name = key_name.lower()
 
         # Check if any of the component names matches the given name.
-        for name in component.names:
+        for name in component.__names__:
             # `name` could be either a string or a pair of a string
             # and an integer.  The former assumes that the component
             # accepts call nodes with any number of arguments.
@@ -857,7 +855,7 @@ class BindByName(Protocol):
         return False
 
     @classmethod
-    def dispatch(interface, syntax, *args, **kwds):
+    def __dispatch__(interface, syntax, *args, **kwds):
         assert isinstance(syntax, (ApplicationSyntax, IdentifierSyntax))
         # We override `dispatch` since, as opposed to regular protocol
         # interfaces, we also want to take into account not only the
@@ -893,15 +891,14 @@ class BindByName(Protocol):
             arity = len(self.arguments)
         attributes = lookup_attribute_set(self.state.scope)
         global_attributes = set()
-        for component in BindByName.implementations():
-            for component_name in component.names:
-                component_arity = -1
-                if isinstance(component_name, tuple):
-                    component_name, component_arity = component_name
-                if isinstance(component_name, str):
-                    component_name = component_name.decode('utf-8')
-                component_name = component_name.lower()
-                global_attributes.add((component_name, component_arity))
+        for component_name in BindByName.__catalogue__():
+            component_arity = -1
+            if isinstance(component_name, tuple):
+                component_name, component_arity = component_name
+            if isinstance(component_name, str):
+                component_name = component_name.decode('utf-8')
+            component_name = component_name.lower()
+            global_attributes.add((component_name, component_arity))
         all_attributes = sorted(attributes|global_attributes)
         if hint is None and arity is None:
             names = lookup_reference_set(self.state.scope)
@@ -995,7 +992,7 @@ class BindByRecipe(Adapter):
         The current binding state.
     """
 
-    adapts(Recipe)
+    adapt(Recipe)
 
     def __init__(self, recipe, syntax, state):
         assert isinstance(recipe, Recipe)
@@ -1012,7 +1009,7 @@ class BindByRecipe(Adapter):
 
 class BindByLiteral(BindByRecipe):
 
-    adapts(LiteralRecipe)
+    adapt(LiteralRecipe)
 
     def __call__(self):
         return LiteralBinding(self.state.scope,
@@ -1023,7 +1020,7 @@ class BindByLiteral(BindByRecipe):
 
 class BindBySelection(BindByRecipe):
 
-    adapts(SelectionRecipe)
+    adapt(SelectionRecipe)
 
     def __call__(self):
         elements = []
@@ -1037,7 +1034,7 @@ class BindBySelection(BindByRecipe):
 
 class BindByFreeTable(BindByRecipe):
 
-    adapts(FreeTableRecipe)
+    adapt(FreeTableRecipe)
 
     def __call__(self):
         # Produce a free table scope.
@@ -1048,7 +1045,7 @@ class BindByFreeTable(BindByRecipe):
 
 class BindByAttachedTable(BindByRecipe):
 
-    adapts(AttachedTableRecipe)
+    adapt(AttachedTableRecipe)
 
     def __call__(self):
         # Produce a sequence of joined tables.
@@ -1060,7 +1057,7 @@ class BindByAttachedTable(BindByRecipe):
 
 class BindByColumn(BindByRecipe):
 
-    adapts(ColumnRecipe)
+    adapt(ColumnRecipe)
 
     def __call__(self):
         # Generate a link associated with the column.
@@ -1074,7 +1071,7 @@ class BindByColumn(BindByRecipe):
 
 class BindByKernel(BindByRecipe):
 
-    adapts(KernelRecipe)
+    adapt(KernelRecipe)
 
     def __call__(self):
         # Generate a kernel expression of a quotient scope.
@@ -1084,7 +1081,7 @@ class BindByKernel(BindByRecipe):
 
 class BindByComplement(BindByRecipe):
 
-    adapts(ComplementRecipe)
+    adapt(ComplementRecipe)
 
     def __call__(self):
         # Generate a complement link to a quotient scope.
@@ -1094,7 +1091,7 @@ class BindByComplement(BindByRecipe):
 
 class BindBySubstitution(BindByRecipe):
 
-    adapts(SubstitutionRecipe)
+    adapt(SubstitutionRecipe)
 
     def __call__(self):
         # Bind the given syntax node in place of an identifier
@@ -1157,7 +1154,7 @@ class BindBySubstitution(BindByRecipe):
 
 class BindByBinding(BindByRecipe):
 
-    adapts(BindingRecipe)
+    adapt(BindingRecipe)
 
     def __call__(self):
         return self.recipe.binding
@@ -1165,7 +1162,7 @@ class BindByBinding(BindByRecipe):
 
 class BindByClosed(BindByRecipe):
 
-    adapts(ClosedRecipe)
+    adapt(ClosedRecipe)
 
     def __call__(self):
         # Generate a binding from the given recipe.
@@ -1176,7 +1173,7 @@ class BindByClosed(BindByRecipe):
 
 class BindByPinned(BindByRecipe):
 
-    adapts(PinnedRecipe)
+    adapt(PinnedRecipe)
 
     def __call__(self):
         # Bind the given recipe in the specified scope.
@@ -1187,7 +1184,7 @@ class BindByPinned(BindByRecipe):
 
 class BindByAmbiguous(BindByRecipe):
 
-    adapts(AmbiguousRecipe)
+    adapt(AmbiguousRecipe)
 
     def __call__(self):
         syntax = self.syntax
@@ -1231,8 +1228,7 @@ def bind(syntax, state=None, scope=None, environment=None):
     if scope is not None:
         state.push_scope(scope)
     # Realize and apply the `Bind` adapter.
-    bind = Bind(syntax, state)
-    binding = bind()
+    binding = Bind.__invoke__(syntax, state)
     # Restore the old lookup scope.
     if scope is not None:
         state.pop_scope()

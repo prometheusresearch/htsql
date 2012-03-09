@@ -4,7 +4,7 @@
 
 
 from htsql.core.domain import IntegerDomain, FloatDomain
-from htsql.core.tr.fn.bind import (correlates, CorrelateDecimalRoundTo,
+from htsql.core.tr.fn.bind import (match, CorrelateDecimalRoundTo,
                                    CorrelateDecimalTruncTo,
                                    CorrelateDecimalAvg)
 from htsql.core.tr.fn.signature import RoundToSig, TruncToSig
@@ -18,11 +18,11 @@ class SQLiteCorrelateDecimalAvg(CorrelateDecimalAvg):
 
 class SQLiteCorrelateFloatRoundTo(CorrelateDecimalRoundTo):
 
-    correlates(RoundToSig, (FloatDomain, IntegerDomain))
+    match(RoundToSig, (FloatDomain, IntegerDomain))
 
 
 class SQLiteCorrelateFloatTruncTo(CorrelateDecimalTruncTo):
 
-    correlates(TruncToSig, (FloatDomain, IntegerDomain))
+    match(TruncToSig, (FloatDomain, IntegerDomain))
 
 

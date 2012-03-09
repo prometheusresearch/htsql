@@ -4,7 +4,7 @@
 
 
 from htsql.core.connect import Connect, Normalize, NormalizeError, DBError
-from htsql.core.adapter import adapts
+from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, StringDomain, DateDomain,
                                TimeDomain)
@@ -55,7 +55,7 @@ class NormalizeMSSQLError(NormalizeError):
 
 class NormalizeMSSQLBoolean(Normalize):
 
-    adapts(BooleanDomain)
+    adapt(BooleanDomain)
 
     @staticmethod
     def convert(value):
@@ -66,7 +66,7 @@ class NormalizeMSSQLBoolean(Normalize):
 
 class NormalizeMSSQLString(Normalize):
 
-    adapts(StringDomain)
+    adapt(StringDomain)
 
     @staticmethod
     def convert(value):
@@ -77,7 +77,7 @@ class NormalizeMSSQLString(Normalize):
 
 class NormalizeMSSQLDate(Normalize):
 
-    adapts(DateDomain)
+    adapt(DateDomain)
 
     @staticmethod
     def convert(value):
@@ -89,7 +89,7 @@ class NormalizeMSSQLDate(Normalize):
 
 class NormalizeMSSQLTime(Normalize):
 
-    adapts(TimeDomain)
+    adapt(TimeDomain)
 
     @staticmethod
     def convert(value):

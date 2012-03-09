@@ -3,14 +3,14 @@
 #
 
 
-from htsql.core.adapter import named
+from htsql.core.adapter import call
 from ...core.introspect import IntrospectPGSQLDomain
 from htsql.tweak.inet.domain import INetDomain
 
 
 class IntrospectPGSQLINetDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'inet'))
+    call(('pg_catalog', 'inet'))
 
     def __call__(self):
         return INetDomain()

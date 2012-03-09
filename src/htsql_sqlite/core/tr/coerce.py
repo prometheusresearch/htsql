@@ -3,14 +3,14 @@
 #
 
 
-from htsql.core.adapter import adapts
+from htsql.core.adapter import adapt
 from htsql.core.domain import DecimalDomain, FloatDomain
 from htsql.core.tr.coerce import UnaryCoerce
 
 
 class SQLiteUnaryCoerceDecimal(UnaryCoerce):
 
-    adapts(DecimalDomain)
+    adapt(DecimalDomain)
 
     def __call__(self):
         return FloatDomain()

@@ -12,7 +12,7 @@ This module implements name resolution adapters.
 
 
 from ..util import Clonable, Printable, maybe
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..model import (HomeNode, TableNode, Arc, TableArc, ChainArc, ColumnArc,
                      SyntaxArc, InvalidArc, AmbiguousArc)
 from ..classify import classify, relabel, normalize
@@ -216,7 +216,7 @@ class CommandProbe(Probe):
 
 class Prescribe(Adapter):
 
-    adapts(Arc)
+    adapt(Arc)
 
     def __init__(self, arc, binding):
         assert isinstance(arc, Arc)
@@ -230,7 +230,7 @@ class Prescribe(Adapter):
 
 class PrescribeTable(Prescribe):
 
-    adapts(TableArc)
+    adapt(TableArc)
 
     def __call__(self):
         return FreeTableRecipe(self.arc.table)
@@ -238,7 +238,7 @@ class PrescribeTable(Prescribe):
 
 class PrescribeColumn(Prescribe):
 
-    adapts(ColumnArc)
+    adapt(ColumnArc)
 
     def __call__(self):
         link = (prescribe(self.arc.link, self.binding)
@@ -248,7 +248,7 @@ class PrescribeColumn(Prescribe):
 
 class PrescribeChain(Prescribe):
 
-    adapts(ChainArc)
+    adapt(ChainArc)
 
     def __call__(self):
         return AttachedTableRecipe(self.arc.joins)
@@ -256,7 +256,7 @@ class PrescribeChain(Prescribe):
 
 class PrescribeSyntax(Prescribe):
 
-    adapts(SyntaxArc)
+    adapt(SyntaxArc)
 
     def __call__(self):
         recipe = SubstitutionRecipe(self.binding, [], self.arc.parameters,
@@ -266,7 +266,7 @@ class PrescribeSyntax(Prescribe):
 
 class PrescribeAmbiguous(Prescribe):
 
-    adapts(AmbiguousArc)
+    adapt(AmbiguousArc)
 
     def __call__(self):
         alternatives = []
@@ -298,7 +298,7 @@ class Lookup(Adapter):
         The lookup request.
     """
 
-    adapts(Binding, Probe)
+    adapt(Binding, Probe)
 
     def __init__(self, binding, probe):
         assert isinstance(binding, Binding)
@@ -314,7 +314,7 @@ class Lookup(Adapter):
 class LookupAttributeSet(Lookup):
     # Generate a set of all available attributes.
 
-    adapts(Binding, AttributeSetProbe)
+    adapt(Binding, AttributeSetProbe)
 
     def __call__(self):
         # No attributes by default.
@@ -324,7 +324,7 @@ class LookupAttributeSet(Lookup):
 class LookupReferenceSet(Lookup):
     # Generate a set of all available references.
 
-    adapts(Binding, ReferenceSetProbe)
+    adapt(Binding, ReferenceSetProbe)
 
     def __call__(self):
         # No references by default.
@@ -334,7 +334,7 @@ class LookupReferenceSet(Lookup):
 class GuessName(Lookup):
     # Generate an attribute name from a binging node.
 
-    adapts(Binding, GuessNameProbe)
+    adapt(Binding, GuessNameProbe)
 
     def __call__(self):
         # If the binding was induced by an identifier node,
@@ -348,7 +348,7 @@ class GuessName(Lookup):
 class GuessTitle(Lookup):
     # Generate a sequence of headings for a binding node.
 
-    adapts(Binding, GuessTitleProbe)
+    adapt(Binding, GuessTitleProbe)
 
     def __call__(self):
         # Generate a header from the associated syntax node.
@@ -357,7 +357,7 @@ class GuessTitle(Lookup):
 
 class GuessTag(Lookup):
 
-    adapts(Binding, GuessTagProbe)
+    adapt(Binding, GuessTagProbe)
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
@@ -367,7 +367,7 @@ class GuessTag(Lookup):
 
 class GuessHeader(Lookup):
 
-    adapts(Binding, GuessHeaderProbe)
+    adapt(Binding, GuessHeaderProbe)
 
     def __call__(self):
         value = unicode(self.binding.syntax)
@@ -379,7 +379,7 @@ class GuessHeader(Lookup):
 class LookupReferenceInScoping(Lookup):
     # Find a reference in a scoping node.
 
-    adapts(ScopingBinding, ReferenceProbe)
+    adapt(ScopingBinding, ReferenceProbe)
 
     def __call__(self):
         # Delegate reference lookups to the parent binding.
@@ -392,7 +392,7 @@ class LookupReferenceInScoping(Lookup):
 class LookupReferenceSetInScoping(Lookup):
     # Find all available references in a scoping node.
 
-    adapts(ScopingBinding, ReferenceSetProbe)
+    adapt(ScopingBinding, ReferenceSetProbe)
 
     def __call__(self):
         # Delegate reference lookups to the parent binding.
@@ -408,14 +408,14 @@ class LookupInChaining(Lookup):
 
     # Everything but `GuessNameProbe`.  Can't use `Probe`
     # since it causes ambiguous ordering of components.
-    adapts_many((ChainingBinding, AttributeProbe),
-                (ChainingBinding, AttributeSetProbe),
-                (ChainingBinding, ReferenceProbe),
-                (ChainingBinding, ReferenceSetProbe),
-                (ChainingBinding, ComplementProbe),
-                (ChainingBinding, ExpansionProbe),
-                (ChainingBinding, GuessTitleProbe),
-                (ChainingBinding, DirectionProbe))
+    adapt_many((ChainingBinding, AttributeProbe),
+               (ChainingBinding, AttributeSetProbe),
+               (ChainingBinding, ReferenceProbe),
+               (ChainingBinding, ReferenceSetProbe),
+               (ChainingBinding, ComplementProbe),
+               (ChainingBinding, ExpansionProbe),
+               (ChainingBinding, GuessTitleProbe),
+               (ChainingBinding, DirectionProbe))
 
     def __call__(self):
         # Delegate all lookup requests to the parent binding.
@@ -425,7 +425,7 @@ class LookupInChaining(Lookup):
 class GuessNameFromChaining(Lookup):
     # Generate an attribute name from a chaining binding.
 
-    adapts(ChainingBinding, GuessNameProbe)
+    adapt(ChainingBinding, GuessNameProbe)
 
     def __call__(self):
         # If the binding was induced by an identifier node,
@@ -438,7 +438,7 @@ class GuessNameFromChaining(Lookup):
 
 class GuessTagFromChaining(Lookup):
 
-    adapts(ChainingBinding, GuessTagProbe)
+    adapt(ChainingBinding, GuessTagProbe)
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
@@ -448,7 +448,7 @@ class GuessTagFromChaining(Lookup):
 
 class GuessHeaderInChaining(Lookup):
 
-    adapts(ChainingBinding, GuessHeaderProbe)
+    adapt(ChainingBinding, GuessHeaderProbe)
 
     def __call__(self):
         return lookup(self.binding.base, self.probe)
@@ -456,7 +456,7 @@ class GuessHeaderInChaining(Lookup):
 
 class GuessPathFromChaining(Lookup):
 
-    adapts(ChainingBinding, GuessPathProbe)
+    adapt(ChainingBinding, GuessPathProbe)
 
     def __call__(self):
         return lookup(self.binding.base, self.probe)
@@ -464,12 +464,12 @@ class GuessPathFromChaining(Lookup):
 
 class LookupInImplicitCast(Lookup):
 
-    adapts_many((ImplicitCastBinding, GuessNameProbe),
-                (ImplicitCastBinding, GuessTitleProbe),
-                (ImplicitCastBinding, GuessTagProbe),
-                (ImplicitCastBinding, GuessHeaderProbe),
-                (ImplicitCastBinding, GuessPathProbe),
-                (ImplicitCastBinding, DirectionProbe))
+    adapt_many((ImplicitCastBinding, GuessNameProbe),
+               (ImplicitCastBinding, GuessTitleProbe),
+               (ImplicitCastBinding, GuessTagProbe),
+               (ImplicitCastBinding, GuessHeaderProbe),
+               (ImplicitCastBinding, GuessPathProbe),
+               (ImplicitCastBinding, DirectionProbe))
 
     def __call__(self):
         return lookup(self.binding.base, self.probe)
@@ -477,7 +477,7 @@ class LookupInImplicitCast(Lookup):
 
 class LookupCommandInWrapping(Lookup):
 
-    adapts(WrappingBinding, CommandProbe)
+    adapt(WrappingBinding, CommandProbe)
 
     def __call__(self):
         return lookup(self.binding.base, self.probe)
@@ -486,7 +486,7 @@ class LookupCommandInWrapping(Lookup):
 class GuessNameFromSegment(Lookup):
     # Generate an attribute name from a segment binding.
 
-    adapts(SegmentBinding, GuessNameProbe)
+    adapt(SegmentBinding, GuessNameProbe)
 
     def __call__(self):
         # If available, use the name of the segment seed.
@@ -499,7 +499,7 @@ class GuessNameFromSegment(Lookup):
 class GuessTitleFromSegment(Lookup):
     # Generate a heading from a segment binding.
 
-    adapts(SegmentBinding, GuessTitleProbe)
+    adapt(SegmentBinding, GuessTitleProbe)
 
     def __call__(self):
         # If available, use the heading of the segment seed.
@@ -511,9 +511,9 @@ class GuessTitleFromSegment(Lookup):
 
 class GuessFromSegment(Lookup):
 
-    adapts_many((SegmentBinding, GuessTagProbe),
-                (SegmentBinding, GuessHeaderProbe),
-                (SegmentBinding, GuessPathProbe))
+    adapt_many((SegmentBinding, GuessTagProbe),
+               (SegmentBinding, GuessHeaderProbe),
+               (SegmentBinding, GuessPathProbe))
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)
@@ -521,7 +521,7 @@ class GuessFromSegment(Lookup):
 
 class LookupCommandInCommand(Lookup):
 
-    adapts(CommandBinding, CommandProbe)
+    adapt(CommandBinding, CommandProbe)
 
     def __call__(self):
         return self.binding.command
@@ -530,7 +530,7 @@ class LookupCommandInCommand(Lookup):
 class LookupAttributeInHome(Lookup):
     # Attributes of the *home* scope represent database tables.
 
-    adapts(HomeBinding, AttributeProbe)
+    adapt(HomeBinding, AttributeProbe)
 
     def __call__(self):
         labels = classify(HomeNode())
@@ -546,7 +546,7 @@ class LookupAttributeInHome(Lookup):
 class LookupAttributeSetInHome(Lookup):
     # Attributes of the *home* scope represent database tables.
 
-    adapts(HomeBinding, AttributeSetProbe)
+    adapt(HomeBinding, AttributeSetProbe)
 
     def __call__(self):
         attributes = set()
@@ -562,7 +562,7 @@ class LookupAttributeSetInHome(Lookup):
 class ExpandHome(Lookup):
     # The home class contains no public attributes.
 
-    adapts(HomeBinding, ExpansionProbe)
+    adapt(HomeBinding, ExpansionProbe)
 
     def __call__(self):
         # Expand the home class: there should be no public attributes, but try
@@ -584,7 +584,7 @@ class ExpandHome(Lookup):
 class GuessTitleFromHome(Lookup):
     # Generate a title for a home scope.
 
-    adapts(HomeBinding, GuessTitleProbe)
+    adapt(HomeBinding, GuessTitleProbe)
 
     def __call__(self):
         # Produce no headers.
@@ -593,7 +593,7 @@ class GuessTitleFromHome(Lookup):
 
 class GuessHeaderFromHome(Lookup):
 
-    adapts(HomeBinding, GuessHeaderProbe)
+    adapt(HomeBinding, GuessHeaderProbe)
 
     def __call__(self):
         return None
@@ -601,7 +601,7 @@ class GuessHeaderFromHome(Lookup):
 
 class GuessPathFromRoot(Lookup):
 
-    adapts(RootBinding, GuessPathProbe)
+    adapt(RootBinding, GuessPathProbe)
 
     def __call__(self):
         return []
@@ -615,7 +615,7 @@ class LookupAttributeInTable(Lookup):
     # - referencing tables, i.e., tables with a foreign key to the
     #   context table.
 
-    adapts(TableBinding, AttributeProbe)
+    adapt(TableBinding, AttributeProbe)
 
     def __call__(self):
         labels = classify(TableNode(self.binding.table))
@@ -631,7 +631,7 @@ class LookupAttributeInTable(Lookup):
 class LookupAttributeSetInTable(Lookup):
     # Produce a set of all labels available in a table scope.
 
-    adapts(TableBinding, AttributeSetProbe)
+    adapt(TableBinding, AttributeSetProbe)
 
     def __call__(self):
         attributes = set()
@@ -647,7 +647,7 @@ class LookupAttributeSetInTable(Lookup):
 class ExpandTable(Lookup):
     # Extract all the columns of the table.
 
-    adapts(TableBinding, ExpansionProbe)
+    adapt(TableBinding, ExpansionProbe)
 
     def __call__(self):
         # Only expand on a class probe.
@@ -668,7 +668,7 @@ class ExpandTable(Lookup):
 
 class GuessPathForFreeTable(Lookup):
 
-    adapts(FreeTableBinding, GuessPathProbe)
+    adapt(FreeTableBinding, GuessPathProbe)
 
     def __call__(self):
         path = lookup(self.binding.base, self.probe)
@@ -691,7 +691,7 @@ class GuessPathForFreeTable(Lookup):
 
 class GuessPathForAttachedTable(Lookup):
 
-    adapts(AttachedTableBinding, GuessPathProbe)
+    adapt(AttachedTableBinding, GuessPathProbe)
 
     def __call__(self):
         path = lookup(self.binding.base, self.probe)
@@ -716,7 +716,7 @@ class LookupAttributeInColumn(Lookup):
     # with the column; if there is no associated link, the request
     # fails.
 
-    adapts(ColumnBinding, AttributeProbe)
+    adapt(ColumnBinding, AttributeProbe)
 
     def __call__(self):
         # If there is an associated link node, delegate the request to it.
@@ -729,7 +729,7 @@ class LookupAttributeInColumn(Lookup):
 class LookupAttributeSetInColumn(Lookup):
     # Find all available attributes in a column scope.
 
-    adapts(ColumnBinding, AttributeSetProbe)
+    adapt(ColumnBinding, AttributeSetProbe)
 
     def __call__(self):
         if self.binding.link is not None:
@@ -743,7 +743,7 @@ class ExpandColumn(Lookup):
     # The request is delegated to the link associated with the
     # column; if there is no associated link, the request fails.
 
-    adapts(ColumnBinding, ExpansionProbe)
+    adapt(ColumnBinding, ExpansionProbe)
 
     def __call__(self):
         # If there is an associated link node, delegate the request to it.
@@ -755,7 +755,7 @@ class ExpandColumn(Lookup):
 
 class GuessPathForColumn(Lookup):
 
-    adapts(ColumnBinding, GuessPathProbe)
+    adapt(ColumnBinding, GuessPathProbe)
 
     def __call__(self):
         path = lookup(self.binding.base, self.probe)
@@ -775,7 +775,7 @@ class GuessPathForColumn(Lookup):
 class LookupComplementInQuotient(Lookup):
     # Extract a complement from a quotient scope.
 
-    adapts(QuotientBinding, ComplementProbe)
+    adapt(QuotientBinding, ComplementProbe)
 
     def __call__(self):
         return ComplementRecipe(self.binding)
@@ -784,7 +784,7 @@ class LookupComplementInQuotient(Lookup):
 class ExpandQuotient(Lookup):
     # Extract public "columns" from a quotient scope.
 
-    adapts(QuotientBinding, ExpansionProbe)
+    adapt(QuotientBinding, ExpansionProbe)
 
     def __call__(self):
         # Ignore non-class expansion requests.
@@ -803,7 +803,7 @@ class ExpandQuotient(Lookup):
 
 class GuessHeaderFromQuotient(Lookup):
 
-    adapts(QuotientBinding, GuessHeaderProbe)
+    adapt(QuotientBinding, GuessHeaderProbe)
 
     def __call__(self):
         seed_header = lookup(self.binding.seed, self.probe)
@@ -822,9 +822,9 @@ class GuessHeaderFromQuotient(Lookup):
 class LookupAttributeInComplement(Lookup):
     # Find an attribute or a complement link in a complement scope.
 
-    adapts_many((ComplementBinding, AttributeProbe),
-                (ComplementBinding, AttributeSetProbe),
-                (ComplementBinding, ComplementProbe))
+    adapt_many((ComplementBinding, AttributeProbe),
+               (ComplementBinding, AttributeSetProbe),
+               (ComplementBinding, ComplementProbe))
 
     def __call__(self):
         # Delegate all lookup probes to the seed scope.
@@ -834,7 +834,7 @@ class LookupAttributeInComplement(Lookup):
 class ExpandComplement(Lookup):
     # Extract public columns from a complement scope.
 
-    adapts(ComplementBinding, ExpansionProbe)
+    adapt(ComplementBinding, ExpansionProbe)
 
     def __call__(self):
         # Ignore selection expand probes.
@@ -851,8 +851,8 @@ class ExpandComplement(Lookup):
 class LookupAttributeInCover(Lookup):
     # Find an attribute in a cover scope.
 
-    adapts_many((CoverBinding, AttributeProbe),
-                (CoverBinding, AttributeSetProbe))
+    adapt_many((CoverBinding, AttributeProbe),
+               (CoverBinding, AttributeSetProbe))
 
     def __call__(self):
         # Delegate all lookup requests to the seed flow.
@@ -862,7 +862,7 @@ class LookupAttributeInCover(Lookup):
 class ExpandCover(Lookup):
     # Expand public columns from a cover scope.
 
-    adapts(CoverBinding, ExpansionProbe)
+    adapt(CoverBinding, ExpansionProbe)
 
     def __call__(self):
         # Ignore pure selector expansion probes.
@@ -880,9 +880,9 @@ class ExpandCover(Lookup):
 class LookupAttributeInFork(Lookup):
     # Find an attribute or a complement link in a fork scope.
 
-    adapts_many((ForkBinding, AttributeProbe),
-                (ForkBinding, AttributeSetProbe),
-                (ForkBinding, ComplementProbe))
+    adapt_many((ForkBinding, AttributeProbe),
+               (ForkBinding, AttributeSetProbe),
+               (ForkBinding, ComplementProbe))
 
     def __call__(self):
         # Delegate all lookup probes to the parent binding.
@@ -892,7 +892,7 @@ class LookupAttributeInFork(Lookup):
 class ExpandFork(Lookup):
     # Extract public columns from a fork scope.
 
-    adapts(ForkBinding, ExpansionProbe)
+    adapt(ForkBinding, ExpansionProbe)
 
     def __call__(self):
         # Delegate the expansion probe to the parent binding.
@@ -905,9 +905,9 @@ class ExpandFork(Lookup):
 class LookupAttributeInLink(Lookup):
     # Find an attribute in a link scope.
 
-    adapts_many((LinkBinding, AttributeProbe),
-                (LinkBinding, AttributeSetProbe),
-                (LinkBinding, ComplementProbe))
+    adapt_many((LinkBinding, AttributeProbe),
+               (LinkBinding, AttributeSetProbe),
+               (LinkBinding, ComplementProbe))
 
     def __call__(self):
         # Delegate all lookup probes to the seed scope.
@@ -917,7 +917,7 @@ class LookupAttributeInLink(Lookup):
 class ExpandLink(Lookup):
     # Expand public columns in a link scope.
 
-    adapts(LinkBinding, ExpansionProbe)
+    adapt(LinkBinding, ExpansionProbe)
 
     def __call__(self):
         # Ignore selection expand probes.
@@ -933,7 +933,7 @@ class ExpandLink(Lookup):
 class GuessTitleFromLink(Lookup):
     # Extract a heading from a link scope.
 
-    adapts(LinkBinding, GuessTitleProbe)
+    adapt(LinkBinding, GuessTitleProbe)
 
     def __call__(self):
         # Generate a heading from the link target.
@@ -942,7 +942,7 @@ class GuessTitleFromLink(Lookup):
 
 class GuessHeaderFromLink(Lookup):
 
-    adapts(LinkBinding, GuessHeaderProbe)
+    adapt(LinkBinding, GuessHeaderProbe)
 
     def __call__(self):
         return lookup(self.binding.seed, self.probe)
@@ -951,7 +951,7 @@ class GuessHeaderFromLink(Lookup):
 class GuessTitleFromRescoping(Lookup):
     # Generate a title for a rescoping binding.
 
-    adapts(RescopingBinding, GuessTitleProbe)
+    adapt(RescopingBinding, GuessTitleProbe)
 
     def __call__(self):
         # For a fragment:
@@ -969,7 +969,7 @@ class GuessTitleFromRescoping(Lookup):
 class DirectRescoping(Lookup):
     # Extract a direction decorator from a rescoping binding.
 
-    adapts(RescopingBinding, DirectionProbe)
+    adapt(RescopingBinding, DirectionProbe)
 
     def __call__(self):
         # Extract directions from both parts of the fragment:
@@ -987,7 +987,7 @@ class DirectRescoping(Lookup):
 class LookupAttributeInDefinition(Lookup):
     # Find an attribute in a definition binding.
 
-    adapts(DefinitionBinding, AttributeProbe)
+    adapt(DefinitionBinding, AttributeProbe)
 
     def __call__(self):
         # Check if the definition matches the probe.
@@ -1004,7 +1004,7 @@ class LookupAttributeInDefinition(Lookup):
 class LookupAttributeSetInDefinition(Lookup):
     # Find all attributes in a definition binding.
 
-    adapts(DefinitionBinding, AttributeSetProbe)
+    adapt(DefinitionBinding, AttributeSetProbe)
 
     def __call__(self):
         attributes = super(LookupAttributeSetInDefinition, self).__call__()
@@ -1016,7 +1016,7 @@ class LookupAttributeSetInDefinition(Lookup):
 class LookupReferenceInDefinition(Lookup):
     # Find a reference in a definition binding.
 
-    adapts(DefinitionBinding, ReferenceProbe)
+    adapt(DefinitionBinding, ReferenceProbe)
 
     def __call__(self):
         # Check if the definition matches the probe.
@@ -1032,7 +1032,7 @@ class LookupReferenceInDefinition(Lookup):
 class LookupReferenceSetInDefinition(Lookup):
     # Find all references in a definition binding.
 
-    adapts(DefinitionBinding, ReferenceSetProbe)
+    adapt(DefinitionBinding, ReferenceSetProbe)
 
     def __call__(self):
         references = super(LookupReferenceSetInDefinition, self).__call__()
@@ -1044,7 +1044,7 @@ class LookupReferenceSetInDefinition(Lookup):
 class ExpandSelection(Lookup):
     # Expand a selector operation.
 
-    adapts(SelectionBinding, ExpansionProbe)
+    adapt(SelectionBinding, ExpansionProbe)
 
     def __call__(self):
         # Skip class expansion probes.
@@ -1065,7 +1065,7 @@ class ExpandSelection(Lookup):
 class ExpandWildSelection(Lookup):
     # Expand a *-selector.
 
-    adapts(WildSelectionBinding, ExpansionProbe)
+    adapt(WildSelectionBinding, ExpansionProbe)
 
     def __call__(self):
         # Skip class expansion probes.
@@ -1079,7 +1079,7 @@ class ExpandWildSelection(Lookup):
 class DirectDirection(Lookup):
     # Extract a direction indicator from a direction binding.
 
-    adapts(DirectionBinding, DirectionProbe)
+    adapt(DirectionBinding, DirectionProbe)
 
     def __call__(self):
         return self.binding.direction
@@ -1089,12 +1089,12 @@ class LookupInReroute(Lookup):
     # Probe a reroute binding.
 
     # All recipe-generating lookup requests.
-    adapts_many((RerouteBinding, AttributeProbe),
-                (RerouteBinding, AttributeSetProbe),
-                (RerouteBinding, ReferenceProbe),
-                (RerouteBinding, ReferenceSetProbe),
-                (RerouteBinding, ComplementProbe),
-                (RerouteBinding, ExpansionProbe))
+    adapt_many((RerouteBinding, AttributeProbe),
+               (RerouteBinding, AttributeSetProbe),
+               (RerouteBinding, ReferenceProbe),
+               (RerouteBinding, ReferenceSetProbe),
+               (RerouteBinding, ComplementProbe),
+               (RerouteBinding, ExpansionProbe))
 
     def __call__(self):
         # Reroute all probes to the target binding.
@@ -1104,8 +1104,8 @@ class LookupInReroute(Lookup):
 class LookupReferenceInReferenceReroute(Lookup):
     # Probe for a reference in a reference reroute binding.
 
-    adapts_many((ReferenceRerouteBinding, ReferenceProbe),
-                (ReferenceRerouteBinding, ReferenceSetProbe))
+    adapt_many((ReferenceRerouteBinding, ReferenceProbe),
+               (ReferenceRerouteBinding, ReferenceSetProbe))
 
     def __call__(self):
         # Reroute the probe to the target binding.
@@ -1115,7 +1115,7 @@ class LookupReferenceInReferenceReroute(Lookup):
 class GuessTitleFromTitle(Lookup):
     # Extract the title from a title decorator.
 
-    adapts(TitleBinding, GuessTitleProbe)
+    adapt(TitleBinding, GuessTitleProbe)
 
     def __call__(self):
         return [self.binding.title]
@@ -1123,7 +1123,7 @@ class GuessTitleFromTitle(Lookup):
 
 class GuessHeaderFromTitle(Lookup):
 
-    adapts(TitleBinding, GuessHeaderProbe)
+    adapt(TitleBinding, GuessHeaderProbe)
 
     def __call__(self):
         return self.binding.title
@@ -1132,7 +1132,7 @@ class GuessHeaderFromTitle(Lookup):
 class GuessNameFromAlias(Lookup):
     # Extract an attribute name from a syntax decorator.
 
-    adapts(AliasBinding, GuessNameProbe)
+    adapt(AliasBinding, GuessNameProbe)
 
     def __call__(self):
         # If the binding is associated with an identifier node,
@@ -1146,7 +1146,7 @@ class GuessNameFromAlias(Lookup):
 class GuessTitleFromAlias(Lookup):
     # Extract a title from a syntax decorator.
 
-    adapts(AliasBinding, GuessTitleProbe)
+    adapt(AliasBinding, GuessTitleProbe)
 
     def __call__(self):
         return [str(self.binding.syntax)]
@@ -1154,7 +1154,7 @@ class GuessTitleFromAlias(Lookup):
 
 class GuessTagFromAlias(Lookup):
 
-    adapts(AliasBinding, GuessTagProbe)
+    adapt(AliasBinding, GuessTagProbe)
 
     def __call__(self):
         if isinstance(self.binding.syntax, IdentifierSyntax):
@@ -1164,15 +1164,14 @@ class GuessTagFromAlias(Lookup):
 
 class GuessHeaderFromAlias(Lookup):
 
-    adapts(AliasBinding, GuessHeaderProbe)
+    adapt(AliasBinding, GuessHeaderProbe)
 
     def __call__(self):
         return unicode(self.binding.syntax)
 
 
 def prescribe(arc, binding):
-    prescribe = Prescribe(arc, binding)
-    return prescribe()
+    return Prescribe.__invoke__(arc, binding)
 
 
 def lookup(binding, probe):
@@ -1189,8 +1188,7 @@ def lookup(binding, probe):
         A lookup probe.
     """
     # Realize and apply a `Lookup` adapter.
-    lookup = Lookup(binding, probe)
-    return lookup()
+    return Lookup.__invoke__(binding, probe)
 
 
 def lookup_attribute(binding, name, arity=None):

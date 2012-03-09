@@ -444,15 +444,15 @@ class SyntaxArcPattern(ArcPattern):
 
 class BindGlobal(BindByName):
 
-    app = None
+    __app__ = None
     parameters = None
     body = None
 
     @classmethod
-    def active(component):
-        if component.app is None:
-            return super(BindGlobal, component).active()
-        return (component.app() is context.app)
+    def __active__(component):
+        if component.__app__ is None:
+            return super(BindGlobal, component).__active__()
+        return (component.__app__() is context.app)
 
     def __call__(self):
         recipe = SubstitutionRecipe(self.state.scope, [],
@@ -475,8 +475,8 @@ class GlobalPattern(ArcPattern):
             arity = len(parameters)
             parameters = list(parameters)
         namespace = {
-            'app': weakref.ref(app),
-            'names': [(name.encode('utf-8'), arity)],
+            '__app__': weakref.ref(app),
+            '__names__': [(name.encode('utf-8'), arity)],
             'parameters': parameters,
             'body': self.syntax,
         }

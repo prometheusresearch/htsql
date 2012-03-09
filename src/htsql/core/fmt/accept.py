@@ -3,9 +3,10 @@
 #
 
 
-from ..adapter import Protocol, named, adapts
+from ..adapter import Protocol, call, adapt
 from .format import (HTMLFormat, JSONFormat, ObjFormat, CSVFormat, TSVFormat,
-                     XMLFormat, ProxyFormat, TextFormat, Emit, EmitHeaders)
+                     XMLFormat, ProxyFormat, TextFormat, Emit, EmitHeaders,
+                     emit, emit_headers)
 
 
 class Accept(Protocol):
@@ -21,77 +22,75 @@ class Accept(Protocol):
 
 class AcceptAny(Accept):
 
-    named("*/*")
+    call("*/*")
     format = HTMLFormat
 
 
 class AcceptJSON(Accept):
 
-    named("application/javascript",
-          "application/json",
-          "x-htsql/x-json")
+    call("application/javascript",
+         "application/json",
+         "x-htsql/x-json")
     format = JSONFormat
 
 
 class AcceptObj(Accept):
 
-    named("x-htsql/x-obj")
+    call("x-htsql/x-obj")
     format = ObjFormat
 
 
 class AcceptCSV(Accept):
 
-    named("text/csv",
-          "x-htsql/x-csv")
+    call("text/csv",
+         "x-htsql/x-csv")
     format = CSVFormat
 
 
 class AcceptTSV(AcceptCSV):
 
-    named("text/tab-separated-values",
-          "x-htsql/x-tsv")
+    call("text/tab-separated-values",
+         "x-htsql/x-tsv")
     format = TSVFormat
 
 
 class AcceptHTML(Accept):
 
-    named("text/html",
-          "x-htsql/x-html")
+    call("text/html",
+         "x-htsql/x-html")
     format = HTMLFormat
 
 
 class AcceptXML(Accept):
 
-    named("application/xml",
-          "x-htsql/x-xml")
+    call("application/xml",
+         "x-htsql/x-xml")
     format = XMLFormat
 
 
 class AcceptText(Accept):
 
-    named("text/plain",
-          "x-htsql/x-txt")
+    call("text/plain",
+         "x-htsql/x-txt")
     format = TextFormat
 
 
 class EmitProxyHeaders(EmitHeaders):
 
-    adapts(ProxyFormat)
+    adapt(ProxyFormat)
 
     def __call__(self):
-        emit_headers = EmitHeaders(self.format.format, self.product)
-        for header in emit_headers():
+        for header in emit_headers(self.format.format, self.product):
             yield header
         yield ('Vary', 'Accept')
 
 
 class EmitProxy(Emit):
 
-    adapts(ProxyFormat)
+    adapt(ProxyFormat)
 
     def __call__(self):
-        emit = Emit(self.format.format, self.product)
-        return emit()
+        return emit(self.format.format, self.product)
 
 
 def accept(environ):
@@ -105,7 +104,7 @@ def accept(environ):
                 content_type = content_type.strip()
         else:
             content_type = "*/*"
-    accept = Accept(content_type)
-    return ProxyFormat(accept())
+    format = Accept.__invoke__(content_type)
+    return ProxyFormat(format)
 
 

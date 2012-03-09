@@ -6,7 +6,7 @@
 from ... import __version__, __legal__
 from ...core.util import maybe, listof
 from ...core.context import context
-from ...core.adapter import Adapter, adapts, named
+from ...core.adapter import Adapter, adapt, call
 from ...core.error import HTTPError
 from ...core.domain import (Domain, BooleanDomain, NumberDomain, DateTimeDomain,
                             ListDomain, RecordDomain)
@@ -82,7 +82,7 @@ class EvaluateSig(Signature):
 
 class BindShell(BindCommand):
 
-    named('shell')
+    call('shell')
     signature = ShellSig
 
     def expand(self, query):
@@ -99,7 +99,7 @@ class BindShell(BindCommand):
 
 class BindComplete(BindCommand):
 
-    named('complete')
+    call('complete')
     signature = CompleteSig
 
     def expand(self, names):
@@ -115,7 +115,7 @@ class BindComplete(BindCommand):
 
 class BindEvaluate(BindCommand):
 
-    named('evaluate')
+    call('evaluate')
     signature = EvaluateSig
 
     def expand(self, query, action, page):
@@ -139,7 +139,7 @@ class BindEvaluate(BindCommand):
 
 class RenderShell(Act):
 
-    adapts(ShellCmd, RenderAction)
+    adapt(ShellCmd, RenderAction)
 
     def __call__(self):
         query = self.command.query
@@ -188,7 +188,7 @@ class RenderShell(Act):
 
 class RenderComplete(Act):
 
-    adapts(CompleteCmd, RenderAction)
+    adapt(CompleteCmd, RenderAction)
 
     def __call__(self):
         identifiers = self.command.names
@@ -245,7 +245,7 @@ class RenderComplete(Act):
 
 class RenderEvaluate(Act):
 
-    adapts(EvaluateCmd, RenderAction)
+    adapt(EvaluateCmd, RenderAction)
 
     def __call__(self):
         addon = context.app.tweak.shell

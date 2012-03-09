@@ -11,7 +11,7 @@ This module implements the rewriting process.
 """
 
 
-from ..adapter import Utility, Adapter, adapts
+from ..adapter import Utility, Adapter, adapt
 from ..domain import BooleanDomain
 from .error import EncodeError
 from .coerce import coerce
@@ -173,8 +173,7 @@ class RewritingState(object):
         # If the key is not in the cache, apply the `Unmask` adapter and store
         # the result in the cache.
         if key not in self.unmask_cache:
-            unmask = Unmask(expression, self)
-            replacement = unmask()
+            replacement = Unmask.__invoke__(expression, self)
             self.unmask_cache[key] = replacement
         # Otherwise, fetch the result from the cache.
         else:
@@ -195,8 +194,7 @@ class RewritingState(object):
         `expression` (:class:`htsql.core.tr.flow.Expression`)
             The expression to collect units from.
         """
-        collect = Collect(expression, self)
-        collect()
+        Collect.__invoke__(expression, self)
 
     def recombine(self):
         """
@@ -208,8 +206,7 @@ class RewritingState(object):
         Updated units are stored in the replace cache.
         """
         # Apply `Recombine` utility.
-        recombine = Recombine(self)
-        recombine()
+        Recombine.__invoke__(self)
 
     def replace(self, expression):
         """
@@ -225,8 +222,7 @@ class RewritingState(object):
         if expression in self.replace_cache:
             return self.replace_cache[expression]
         # If not, apply the `Replace` adapter.
-        replace = Replace(expression, self)
-        replacement = replace()
+        replacement = Replace.__invoke__(expression, self)
         # Store the result in the cache and return it.
         self.replace_cache[expression] = replacement
         return replacement
@@ -533,7 +529,7 @@ class RewriteBase(Adapter):
         The current state of rewriting process.
     """
 
-    adapts(Expression)
+    adapt(Expression)
 
     def __init__(self, expression, state):
         assert isinstance(expression, Expression)
@@ -579,7 +575,7 @@ class Replace(RewriteBase):
 
 class RewriteQuery(Rewrite):
 
-    adapts(QueryExpr)
+    adapt(QueryExpr)
 
     def __call__(self):
         # Initialize the rewriting state.
@@ -606,7 +602,7 @@ class RewriteQuery(Rewrite):
 
 class RewriteSegment(Rewrite):
 
-    adapts(SegmentExpr)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Rewrite the output flow and output record.
@@ -617,7 +613,7 @@ class RewriteSegment(Rewrite):
 
 class UnmaskSegment(Unmask):
 
-    adapts(SegmentExpr)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Unmask the output record against the output flow.
@@ -631,7 +627,7 @@ class UnmaskSegment(Unmask):
 
 class CollectSegment(Collect):
 
-    adapts(SegmentExpr)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Collect units in the output flow and output columns.
@@ -641,7 +637,7 @@ class CollectSegment(Collect):
 
 class ReplaceSegment(Replace):
 
-    adapts(SegmentExpr)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Rewrite the output flow and output columns.
@@ -652,7 +648,7 @@ class ReplaceSegment(Replace):
 
 class RewriteFlow(Rewrite):
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow, state):
         # Overriden to replace the attribute.
@@ -670,7 +666,7 @@ class RewriteFlow(Rewrite):
 
 class UnmaskFlow(Unmask):
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow, state):
         # Overriden to rename the attribute.
@@ -688,7 +684,7 @@ class UnmaskFlow(Unmask):
 
 class CollectFlow(Collect):
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow, state):
         # Overriden to rename the attribute.
@@ -705,7 +701,7 @@ class CollectFlow(Collect):
 
 class ReplaceFlow(Replace):
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow, state):
         # Overriden to rename the attribute.
@@ -723,7 +719,7 @@ class ReplaceFlow(Replace):
 
 class RewriteQuotient(RewriteFlow):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Apply the adapter to all sub-nodes.
@@ -736,7 +732,7 @@ class RewriteQuotient(RewriteFlow):
 
 class UnmaskQuotient(UnmaskFlow):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Unmask the kernel against the seed flow.
@@ -756,7 +752,7 @@ class UnmaskQuotient(UnmaskFlow):
 
 class ReplaceQuotient(ReplaceFlow):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Replace the parent flow.
@@ -778,7 +774,7 @@ class ReplaceQuotient(ReplaceFlow):
 
 class RewriteMoniker(RewriteFlow):
 
-    adapts(MonikerFlow)
+    adapt(MonikerFlow)
 
     def __call__(self):
         # Apply the adapter to all child nodes.
@@ -789,7 +785,7 @@ class RewriteMoniker(RewriteFlow):
 
 class UnmaskMoniker(UnmaskFlow):
 
-    adapts(MonikerFlow)
+    adapt(MonikerFlow)
 
     def __call__(self):
         # Unmask the seed flow against the parent flow.
@@ -801,7 +797,7 @@ class UnmaskMoniker(UnmaskFlow):
 
 class ReplaceMoniker(Replace):
 
-    adapts(MonikerFlow)
+    adapt(MonikerFlow)
 
     def __call__(self):
         # Replace the parent flow.
@@ -817,7 +813,7 @@ class ReplaceMoniker(Replace):
 
 class RewriteForked(RewriteFlow):
 
-    adapts(ForkedFlow)
+    adapt(ForkedFlow)
 
     def __call__(self):
         # Apply the adapter to all child nodes.
@@ -830,7 +826,7 @@ class RewriteForked(RewriteFlow):
 
 class UnmaskForked(UnmaskFlow):
 
-    adapts(ForkedFlow)
+    adapt(ForkedFlow)
 
     def __call__(self):
         # Prune all but trailing non-axial operations from the seed flow.
@@ -845,7 +841,7 @@ class UnmaskForked(UnmaskFlow):
 
 class CollectForked(Collect):
 
-    adapts(ForkedFlow)
+    adapt(ForkedFlow)
 
     def __call__(self):
         # Collect units in the parent flow.
@@ -859,7 +855,7 @@ class CollectForked(Collect):
 
 class ReplaceForked(Replace):
 
-    adapts(ForkedFlow)
+    adapt(ForkedFlow)
 
     def __call__(self):
         # Replace the parent flow.
@@ -879,7 +875,7 @@ class ReplaceForked(Replace):
 
 class RewriteLinked(RewriteFlow):
 
-    adapts(LinkedFlow)
+    adapt(LinkedFlow)
 
     def __call__(self):
         # Rewrite the child nodes.
@@ -892,7 +888,7 @@ class RewriteLinked(RewriteFlow):
 
 class UnmaskLinked(UnmaskFlow):
 
-    adapts(LinkedFlow)
+    adapt(LinkedFlow)
 
     def __call__(self):
         # Unmask the parent flow.
@@ -909,7 +905,7 @@ class UnmaskLinked(UnmaskFlow):
 
 class CollectLinked(Collect):
 
-    adapts(LinkedFlow)
+    adapt(LinkedFlow)
 
     def __call__(self):
         # Gather units in the parent flow and the parent images.
@@ -920,7 +916,7 @@ class CollectLinked(Collect):
 
 class ReplaceLinked(Replace):
 
-    adapts(LinkedFlow)
+    adapt(LinkedFlow)
 
     def __call__(self):
         # Replace the parent flow and parental images.
@@ -941,7 +937,7 @@ class ReplaceLinked(Replace):
 
 class RewriteFiltered(RewriteFlow):
 
-    adapts(FilteredFlow)
+    adapt(FilteredFlow)
 
     def __call__(self):
         # Rewrite the parent flow and the filter expression.
@@ -957,7 +953,7 @@ class RewriteFiltered(RewriteFlow):
 
 class UnmaskFiltered(UnmaskFlow):
 
-    adapts(FilteredFlow)
+    adapt(FilteredFlow)
 
     def __call__(self):
         # If the filter is already enforced by the mask,
@@ -980,7 +976,7 @@ class UnmaskFiltered(UnmaskFlow):
 
 class CollectFiltered(Collect):
 
-    adapts(FilteredFlow)
+    adapt(FilteredFlow)
 
     def __call__(self):
         # Collect units in all child nodes.
@@ -990,7 +986,7 @@ class CollectFiltered(Collect):
 
 class ReplaceFiltered(Replace):
 
-    adapts(FilteredFlow)
+    adapt(FilteredFlow)
 
     def __call__(self):
         # Replace all child nodes.
@@ -1001,7 +997,7 @@ class ReplaceFiltered(Replace):
 
 class RewriteOrdered(RewriteFlow):
 
-    adapts(OrderedFlow)
+    adapt(OrderedFlow)
 
     def __call__(self):
         # Rewrite child nodes.
@@ -1013,7 +1009,7 @@ class RewriteOrdered(RewriteFlow):
 
 class UnmaskOrdered(UnmaskFlow):
 
-    adapts(OrderedFlow)
+    adapt(OrderedFlow)
 
     def __call__(self):
         # If the ordering operation is already enforced by the mask,
@@ -1042,7 +1038,7 @@ class UnmaskOrdered(UnmaskFlow):
 
 class CollectOrdered(Collect):
 
-    adapts(OrderedFlow)
+    adapt(OrderedFlow)
 
     def __call__(self):
         # Collect units in all child nodes.
@@ -1053,7 +1049,7 @@ class CollectOrdered(Collect):
 
 class ReplaceOrdered(Replace):
 
-    adapts(OrderedFlow)
+    adapt(OrderedFlow)
 
     def __call__(self):
         # Replace units in all child nodes.
@@ -1065,7 +1061,7 @@ class ReplaceOrdered(Replace):
 
 class RewriteCode(Rewrite):
 
-    adapts(Code)
+    adapt(Code)
 
     def __init__(self, code, state):
         # Override to change the attribute name.
@@ -1080,7 +1076,7 @@ class RewriteCode(Rewrite):
 
 class UnmaskCode(Unmask):
 
-    adapts(Code)
+    adapt(Code)
 
     def __init__(self, code, state):
         # Override to change the attribute name.
@@ -1095,7 +1091,7 @@ class UnmaskCode(Unmask):
 
 class CollectCode(Collect):
 
-    adapts(Code)
+    adapt(Code)
 
     def __init__(self, code, state):
         # Override to change the attribute name.
@@ -1110,7 +1106,7 @@ class CollectCode(Collect):
 
 class ReplaceCode(Replace):
 
-    adapts(Code)
+    adapt(Code)
 
     def __init__(self, code, state):
         # Override to change the attribute name.
@@ -1125,7 +1121,7 @@ class ReplaceCode(Replace):
 
 class RewriteCast(RewriteCode):
 
-    adapts(CastCode)
+    adapt(CastCode)
 
     def __call__(self):
         # Rewrite the operand of the cast.
@@ -1135,7 +1131,7 @@ class RewriteCast(RewriteCode):
 
 class UnmaskCast(UnmaskCode):
 
-    adapts(CastCode)
+    adapt(CastCode)
 
     def __call__(self):
         # Unmask the operand of the cast.
@@ -1145,7 +1141,7 @@ class UnmaskCast(UnmaskCode):
 
 class ReplaceCast(ReplaceCode):
 
-    adapts(CastCode)
+    adapt(CastCode)
 
     def __call__(self):
         # Replace units in the operand of the cast.
@@ -1155,17 +1151,16 @@ class ReplaceCast(ReplaceCode):
 
 class RewriteFormula(RewriteCode):
 
-    adapts(FormulaCode)
+    adapt(FormulaCode)
 
     def __call__(self):
         # Delegate to an auxiliary adapter dispatched by the formula signature.
-        rewrite = RewriteBySignature(self.code, self.state)
-        return rewrite()
+        return RewriteBySignature.__invoke__(self.code, self.state)
 
 
 class UnmaskFormula(UnmaskCode):
 
-    adapts(FormulaCode)
+    adapt(FormulaCode)
 
     def __call__(self):
         # Unmask formula arguments.
@@ -1176,7 +1171,7 @@ class UnmaskFormula(UnmaskCode):
 
 class ReplaceFormula(ReplaceCode):
 
-    adapts(FormulaCode)
+    adapt(FormulaCode)
 
     def __call__(self):
         # Replace units in the formula arguments.
@@ -1199,10 +1194,10 @@ class RewriteBySignature(Adapter):
         The current state of rewrite process.
     """
 
-    adapts(Signature)
+    adapt(Signature)
 
     @classmethod
-    def dispatch(interface, code, *args, **kwds):
+    def __dispatch__(interface, code, *args, **kwds):
         # Extract the dispatch key from the arguments.
         assert isinstance(code, FormulaCode)
         return (type(code.signature),)
@@ -1227,7 +1222,7 @@ class RewriteBySignature(Adapter):
 
 class RewriteRecord(Rewrite):
 
-    adapts(RecordCode)
+    adapt(RecordCode)
 
     def __call__(self):
         fields = [self.state.rewrite(field)
@@ -1237,7 +1232,7 @@ class RewriteRecord(Rewrite):
 
 class UnmaskRecord(Unmask):
 
-    adapts(RecordCode)
+    adapt(RecordCode)
 
     def __call__(self):
         fields = [self.state.unmask(field)
@@ -1247,7 +1242,7 @@ class UnmaskRecord(Unmask):
 
 class CollectRecord(Collect):
 
-    adapts(RecordCode)
+    adapt(RecordCode)
 
     def __call__(self):
         for field in self.code.fields:
@@ -1256,7 +1251,7 @@ class CollectRecord(Collect):
 
 class ReplaceRecord(Replace):
 
-    adapts(RecordCode)
+    adapt(RecordCode)
 
     def __call__(self):
         fields = [self.state.replace(field)
@@ -1266,7 +1261,7 @@ class ReplaceRecord(Replace):
 
 class RewriteAnnihilator(Rewrite):
 
-    adapts(AnnihilatorCode)
+    adapt(AnnihilatorCode)
 
     def __call__(self):
         code = self.state.rewrite(self.code.code)
@@ -1276,7 +1271,7 @@ class RewriteAnnihilator(Rewrite):
 
 class UnmaskAnnihilator(Unmask):
 
-    adapts(AnnihilatorCode)
+    adapt(AnnihilatorCode)
 
     def __call__(self):
         code = self.state.unmask(self.code.code)
@@ -1288,7 +1283,7 @@ class UnmaskAnnihilator(Unmask):
 
 class CollectAnnihilator(Collect):
 
-    adapts(AnnihilatorCode)
+    adapt(AnnihilatorCode)
 
     def __call__(self):
         self.state.collect(self.code.code)
@@ -1297,7 +1292,7 @@ class CollectAnnihilator(Collect):
 
 class ReplaceAnnihilator(Replace):
 
-    adapts(AnnihilatorCode)
+    adapt(AnnihilatorCode)
 
     def __call__(self):
         code = self.state.replace(self.code.code)
@@ -1307,7 +1302,7 @@ class ReplaceAnnihilator(Replace):
 
 class RewriteUnit(RewriteCode):
 
-    adapts(Unit)
+    adapt(Unit)
 
     def __init__(self, unit, state):
         # Overriden to rename the attribute.
@@ -1322,7 +1317,7 @@ class RewriteUnit(RewriteCode):
 
 class UnmaskUnit(UnmaskCode):
 
-    adapts(Unit)
+    adapt(Unit)
 
     def __init__(self, unit, state):
         # Overriden to rename the attribute.
@@ -1337,7 +1332,7 @@ class UnmaskUnit(UnmaskCode):
 
 class CollectUnit(CollectCode):
 
-    adapts(Unit)
+    adapt(Unit)
 
     def __init__(self, unit, state):
         # Overriden to rename the attribute.
@@ -1353,7 +1348,7 @@ class CollectUnit(CollectCode):
 
 class ReplaceUnit(ReplaceCode):
 
-    adapts(Unit)
+    adapt(Unit)
 
     def __init__(self, unit, state):
         # Overriden to rename the attribute.
@@ -1371,7 +1366,7 @@ class ReplaceUnit(ReplaceCode):
 
 class RewriteCompound(RewriteUnit):
 
-    adapts(CompoundUnit)
+    adapt(CompoundUnit)
 
     def __call__(self):
         # Rewrite the content of the node.
@@ -1382,7 +1377,7 @@ class RewriteCompound(RewriteUnit):
 
 class ReplaceCompound(ReplaceUnit):
 
-    adapts(CompoundUnit)
+    adapt(CompoundUnit)
 
     def __call__(self):
         # Recombine the content of the unit node against a blank state.
@@ -1397,7 +1392,7 @@ class ReplaceCompound(ReplaceUnit):
 
 class UnmaskScalar(UnmaskUnit):
 
-    adapts(ScalarUnit)
+    adapt(ScalarUnit)
 
     def __call__(self):
         # The unit is redundant if the mask is dominated by the unit flow.
@@ -1419,7 +1414,7 @@ class UnmaskScalar(UnmaskUnit):
 
 class RewriteAggregate(RewriteUnit):
 
-    adapts(AggregateUnitBase)
+    adapt(AggregateUnitBase)
 
     def __call__(self):
         # Rewrite the content of the node.
@@ -1431,7 +1426,7 @@ class RewriteAggregate(RewriteUnit):
 
 class UnmaskAggregate(UnmaskUnit):
 
-    adapts(AggregateUnitBase)
+    adapt(AggregateUnitBase)
 
     def __call__(self):
         # Unmask the argument against the plural flow.
@@ -1450,7 +1445,7 @@ class UnmaskAggregate(UnmaskUnit):
 
 class ReplaceAggregate(ReplaceUnit):
 
-    adapts(AggregateUnitBase)
+    adapt(AggregateUnitBase)
 
     def __call__(self):
         # Recombine the content of the unit node against a blank state.
@@ -1467,7 +1462,7 @@ class ReplaceAggregate(ReplaceUnit):
 
 class RewriteKernel(RewriteUnit):
 
-    adapts(KernelUnit)
+    adapt(KernelUnit)
 
     def __call__(self):
         # At this stage, the kernel code is an element of the family kernel.
@@ -1482,7 +1477,7 @@ class RewriteKernel(RewriteUnit):
 
 class UnmaskKernel(UnmaskUnit):
 
-    adapts(KernelUnit)
+    adapt(KernelUnit)
 
     def __call__(self):
         # At this stage, the kernel code is an element of the family kernel.
@@ -1497,7 +1492,7 @@ class UnmaskKernel(UnmaskUnit):
 
 class ReplaceKernel(ReplaceUnit):
 
-    adapts(KernelUnit)
+    adapt(KernelUnit)
 
     def __call__(self):
         # At this stage, the kernel code is an element of the family kernel.
@@ -1516,7 +1511,7 @@ class ReplaceKernel(ReplaceUnit):
 class UnmaskCovering(UnmaskUnit):
     # FIXME: not used?
 
-    adapts(CoveringUnit)
+    adapt(CoveringUnit)
 
     def __call__(self):
         # The unit expression is evaluated against the seed flow
@@ -1545,8 +1540,6 @@ def rewrite(expression, state=None):
     if state is None:
         state = RewritingState()
     # Apply the `Rewrite` adapter.
-    rewrite = Rewrite(expression, state)
-    expression = rewrite()
-    return expression
+    return Rewrite.__invoke__(expression, state)
 
 

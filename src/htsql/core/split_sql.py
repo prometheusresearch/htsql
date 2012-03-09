@@ -77,8 +77,7 @@ class SplitSQL(Utility):
     Usage::
 
         try:
-            split_sql = SplitSQL()
-            for sql in split_sql(input):
+            for sql in SplitSQL.__invoke__(input):
                 cursor.execute(sql)
         except ValueError:
             ...
@@ -86,21 +85,24 @@ class SplitSQL(Utility):
     This is an abstract utility.  To add a new splitter, create a subclass
     of :class:`SplitSQL` and override the class variable `tokens`:
 
+    Class attributes:
+
     `tokens` (a list of :class:`SQLToken` instances)
         The tokens recognized by the splitter.
+
+    Attributes:
+
+    `input` (a string)
+        A string containing SQL statements separated by ``;``.
     """
 
     tokens = None
 
-    def __call__(self, input):
-        """
-        Splits the input to SQL statements.
+    def __init__(self, input):
+        assert isinstance(input, str)
+        self.input = input
 
-        `input` (a string)
-            A string containing SQL statements separated by ``;``.
-
-        Generates a sequence of SQL statements.
-        """
+    def __call__(self):
         # The current position in `input`.
         start = 0
         # The current level.
@@ -121,7 +123,7 @@ class SplitSQL(Utility):
                 if token.only_level is not None and level != token.only_level:
                     continue
                 # Does the input matches the token pattern?
-                match = token.regexp.match(input, start)
+                match = token.regexp.match(self.input, start)
                 if match is None:
                     continue
                 # The value of the token.
@@ -146,16 +148,19 @@ class SplitSQL(Utility):
             # None of the tokens matched.
             else:
                 # Determine the current position and complain.
-                line = input[:start].count('\n')
+                line = self.input[:start].count('\n')
                 if line:
-                    column = start-input[:start].rindex('\n')-1
+                    column = start-self.input[:start].rindex('\n')-1
                 else:
                     column = start
                 raise ValueError("unable to parse an SQL statement"
                                  " at line %s, column %s" % (line+1, column+1))
 
         # Some sanity checks.
-        assert start == len(input)
+        assert start == len(self.input)
         assert not values
+
+
+split_sql = SplitSQL.__invoke__
 
 

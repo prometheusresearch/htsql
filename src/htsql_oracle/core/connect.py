@@ -4,7 +4,7 @@
 
 
 from htsql.core.connect import Connect, Normalize, NormalizeError, DBError
-from htsql.core.adapter import adapts
+from htsql.core.adapter import adapt
 from htsql.core.context import context
 from htsql.core.domain import (BooleanDomain, DecimalDomain, StringDomain,
                                DateDomain, TimeDomain)
@@ -78,7 +78,7 @@ class NormalizeOracleError(NormalizeError):
 
 class NormalizeOracleBoolean(Normalize):
 
-    adapts(BooleanDomain)
+    adapt(BooleanDomain)
 
     @staticmethod
     def convert(value):
@@ -89,7 +89,7 @@ class NormalizeOracleBoolean(Normalize):
 
 class NormalizeOracleDecimal(Normalize):
 
-    adapts(DecimalDomain)
+    adapt(DecimalDomain)
 
     @staticmethod
     def convert(value):
@@ -100,7 +100,7 @@ class NormalizeOracleDecimal(Normalize):
 
 class NormalizeOracleString(Normalize):
 
-    adapts(StringDomain)
+    adapt(StringDomain)
 
     @staticmethod
     def convert(value):
@@ -117,7 +117,7 @@ class NormalizeOracleString(Normalize):
 
 class NormalizeOracleDate(Normalize):
 
-    adapts(DateDomain)
+    adapt(DateDomain)
 
     @staticmethod
     def convert(value):
@@ -129,7 +129,7 @@ class NormalizeOracleDate(Normalize):
 
 class NormalizeOracleTime(Normalize):
 
-    adapts(TimeDomain)
+    adapt(TimeDomain)
 
     @staticmethod
     def convert(value):

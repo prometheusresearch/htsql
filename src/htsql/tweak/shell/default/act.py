@@ -4,7 +4,7 @@
 
 
 from ....core.context import context
-from ....core.adapter import adapts
+from ....core.adapter import adapt
 from ....core.cmd.act import Act, RenderAction, act
 from ....core.cmd.command import UniversalCmd, DefaultCmd
 from ..command import ShellCmd
@@ -32,7 +32,7 @@ def unquote(query):
 
 class ShellRenderUniversal(Act):
 
-    adapts(UniversalCmd, RenderAction)
+    adapt(UniversalCmd, RenderAction)
 
     def __call__(self):
         addon = context.app.tweak.shell.default

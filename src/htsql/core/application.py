@@ -16,7 +16,7 @@ from .context import context
 from .addon import addon_registry
 from .adapter import ComponentRegistry
 from .util import maybe, oneof, listof, dictof, tupleof
-from .wsgi import WSGI
+from .wsgi import wsgi
 from .cmd.command import UniversalCmd
 from .cmd.act import produce
 
@@ -156,7 +156,6 @@ class Application(object):
         Implements the WSGI entry point.
         """
         with self:
-            wsgi = WSGI()
             body = wsgi(environ, start_response)
             for chunk in body:
                 yield chunk

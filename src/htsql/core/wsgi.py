@@ -25,38 +25,40 @@ class WSGI(Utility):
 
     Usage::
 
-        wsgi = WSGI()
         body = wsgi(environ, start_response)
     """
 
-    def request(self, environ):
-        """
-        Extracts HTSQL request from `environ`.
-        """
-        path_info = environ['PATH_INFO']
-        query_string = environ.get('QUERY_STRING')
+    def __init__(self, environ, start_response):
+        self.environ = environ
+        self.start_response = start_response
+
+    def request(self):
+        # Extract an HTSQL request from `environ`.
+        path_info = self.environ['PATH_INFO']
+        query_string = self.environ.get('QUERY_STRING')
         uri = urllib.quote(path_info)
         if query_string:
             uri += '?'+query_string
         return uri
 
-    def __call__(self, environ, start_response):
-        """
-        Implements the WSGI entry point.
-        """
+    def __call__(self):
         # Pass GET requests only.
-        method = environ['REQUEST_METHOD']
+        method = self.environ['REQUEST_METHOD']
         if method != 'GET':
-            start_response('400 Bad Request', [('Content-Type', 'text/plain')])
+            self.start_response('400 Bad Request',
+                                [('Content-Type', 'text/plain')])
             return ["%s requests are not permitted.\n" % method]
         # Process the query.
-        uri = self.request(environ)
+        uri = self.request()
         try:
             command = UniversalCmd(uri)
-            status, headers, body = render(command, environ)
+            status, headers, body = render(command, self.environ)
         except HTTPError, exc:
-            return exc(environ, start_response)
-        start_response(status, headers)
+            return exc(self.environ, self.start_response)
+        self.start_response(status, headers)
         return body
+
+
+wsgi = WSGI.__invoke__
 
 

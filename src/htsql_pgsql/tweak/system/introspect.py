@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import named
+from htsql.core.adapter import call
 from htsql.core.domain import IntegerDomain, StringDomain
 from ...core.introspect import IntrospectPGSQL, IntrospectPGSQLDomain
 
@@ -344,7 +344,7 @@ class PGCatalogIntrospectPGSQL(IntrospectPGSQL):
 
 class IntrospectPGSQLOIDDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'oid'))
+    call(('pg_catalog', 'oid'))
 
     def __call__(self):
         return IntegerDomain()
@@ -352,7 +352,7 @@ class IntrospectPGSQLOIDDomain(IntrospectPGSQLDomain):
 
 class IntrospectPGSQLNameDomain(IntrospectPGSQLDomain):
 
-    named(('pg_catalog', 'name'))
+    call(('pg_catalog', 'name'))
 
     def __call__(self):
         return StringDomain()

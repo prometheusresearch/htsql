@@ -6,7 +6,7 @@
 from __future__ import with_statement
 from ...core.context import context
 from ...core.cache import once
-from ...core.adapter import adapts, named
+from ...core.adapter import adapt, call
 from ...core.cmd.command import ProducerCmd, DefaultCmd
 from ...core.cmd.act import Act, ProduceAction, act
 from ...core.tr.fn.bind import BindCommand
@@ -36,7 +36,7 @@ class MetaCmd(ProducerCmd):
 
 class BindMeta(BindCommand):
 
-    named('meta')
+    call('meta')
     signature = UnarySig
 
     def expand(self, op):
@@ -49,7 +49,7 @@ class BindMeta(BindCommand):
 
 class ProduceMeta(Act):
 
-    adapts(MetaCmd, ProduceAction)
+    adapt(MetaCmd, ProduceAction)
 
     def __call__(self):
         slave_app = get_slave_app()

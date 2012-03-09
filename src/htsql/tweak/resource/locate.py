@@ -40,16 +40,16 @@ class Resource(object):
 class Locate(Protocol):
 
     @classmethod
-    def matches(component, dispatch_key):
+    def __matches__(component, dispatch_key):
         return any(dispatch_key.startswith(name)
-                   for name in component.names)
+                   for name in component.__names__)
 
     @classmethod
-    def dominates(component, other):
+    def __dominates__(component, other):
         if issubclass(component, other):
             return True
-        for name in component.names:
-            for other_name in other.names:
+        for name in component.__names__:
+            for other_name in other.__names__:
                 if name.startswith(other_name) and name != other_name:
                     return True
         return False
@@ -59,7 +59,7 @@ class Locate(Protocol):
         self.path = path
         self.prefix = None
         self.suffix = None
-        for name in self.names:
+        for name in self.__names__:
             if path.startswith(name):
                 self.prefix = name
                 self.suffix = path[len(name):]
@@ -166,8 +166,6 @@ class LocateRemote(Locate):
         return Resource(name, data, etag=etag)
 
 
-def locate(path):
-    locate = Locate(path)
-    return locate()
+locate = Locate.__invoke__
 
 

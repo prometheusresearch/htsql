@@ -3,7 +3,7 @@
 #
 
 
-from ...core.adapter import Protocol, weigh, named
+from ...core.adapter import Protocol, rank, call
 from ...core.introspect import Introspect
 from ...core.entity import make_catalog
 from ...core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
@@ -13,7 +13,7 @@ from ...core.domain import (BooleanDomain, IntegerDomain, FloatDomain,
 
 class DjangoIntrospect(Introspect):
 
-    weigh(1.0)
+    rank(1.0)
 
     def __call__(self):
         from django.db import connections, models
@@ -45,8 +45,7 @@ class DjangoIntrospect(Introspect):
             table = schema.add_table(name)
             table_by_model[model] = table
             for field in meta.local_fields:
-                introspect_domain = IntrospectDjangoDomain(field)
-                domain = introspect_domain()
+                domain = IntrospectDjangoDomain.__invoke__(field)
                 if domain is None:
                     continue
                 name = field.column
@@ -78,7 +77,7 @@ class DjangoIntrospect(Introspect):
 class IntrospectDjangoDomain(Protocol):
 
     @classmethod
-    def dispatch(cls, field):
+    def __dispatch__(interface, field):
         return field.__class__.__name__
 
     def __init__(self, field):
@@ -90,7 +89,7 @@ class IntrospectDjangoDomain(Protocol):
 
 class IntrospectDjangoBooleanDomain(IntrospectDjangoDomain):
 
-    named('BooleanField', 'NullBooleanField')
+    call('BooleanField', 'NullBooleanField')
 
     def __call__(self):
         return BooleanDomain()
@@ -98,7 +97,7 @@ class IntrospectDjangoBooleanDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoIntegerDomain(IntrospectDjangoDomain):
 
-    named('AutoField', 'IntegerField', 'ForeignKey')
+    call('AutoField', 'IntegerField', 'ForeignKey')
 
     def __call__(self):
         return IntegerDomain()
@@ -106,7 +105,7 @@ class IntrospectDjangoIntegerDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoFloatDomain(IntrospectDjangoDomain):
 
-    named('FloatField')
+    call('FloatField')
 
     def __call__(self):
         return FloatDomain()
@@ -114,7 +113,7 @@ class IntrospectDjangoFloatDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoDecimalDomain(IntrospectDjangoDomain):
 
-    named('DecimalField')
+    call('DecimalField')
 
     def __call__(self):
         return DecimalDomain()
@@ -122,7 +121,7 @@ class IntrospectDjangoDecimalDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoStringDomain(IntrospectDjangoDomain):
 
-    named('CharField', 'FilePathField', 'TextField')
+    call('CharField', 'FilePathField', 'TextField')
 
     def __call__(self):
         return StringDomain()
@@ -130,7 +129,7 @@ class IntrospectDjangoStringDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoDateDomain(IntrospectDjangoDomain):
 
-    named('DateField')
+    call('DateField')
 
     def __call__(self):
         return DateDomain()
@@ -138,7 +137,7 @@ class IntrospectDjangoDateDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoTimeDomain(IntrospectDjangoDomain):
 
-    named('TimeField')
+    call('TimeField')
 
     def __call__(self):
         return TimeDomain()
@@ -146,7 +145,7 @@ class IntrospectDjangoTimeDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoDateTimeDomain(IntrospectDjangoDomain):
 
-    named('DateTimeField')
+    call('DateTimeField')
 
     def __call__(self):
         return DateTimeDomain()
@@ -154,7 +153,7 @@ class IntrospectDjangoDateTimeDomain(IntrospectDjangoDomain):
 
 class IntrospectDjangoNotDomain(IntrospectDjangoDomain):
 
-    named('ManyToManyField')
+    call('ManyToManyField')
 
     def __call__(self):
         return None

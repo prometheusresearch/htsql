@@ -12,7 +12,7 @@ This module implements the assembling process.
 
 
 from ..util import Printable, Comparable, Record, listof, maybe
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain
 from .coerce import coerce
 from .flow import (Code, LiteralCode, FormulaCode, CastCode, RecordCode,
@@ -415,8 +415,7 @@ class AssemblingState(object):
         # Update the gate to use the given dispatcher and router.
         self.push_gate(dispatcher=dispatcher, router=router)
         # Realize and call the `Evaluate` adapter.
-        evaluate = Evaluate(code, self)
-        phrases = list(evaluate())
+        phrases = list(Evaluate.__invoke__(code, self))
         # Restore the original gate.
         self.pop_gate()
         # Return the generated phrase.
@@ -492,7 +491,7 @@ class Assemble(Adapter):
         The current state of the assembling process.
     """
 
-    adapts(PreTerm)
+    adapt(PreTerm)
 
     def __init__(self, term, state):
         assert isinstance(term, PreTerm)
@@ -510,7 +509,7 @@ class AssembleTerm(Assemble):
     """
     Assembles a frame for a proper term node.
 
-    This adapts :class:`Assemble` for proper term nodes (i.e., not a
+    This adapt :class:`Assemble` for proper term nodes (i.e., not a
     :class:`htsql.core.tr.term.QueryTerm`).
 
     Attributes:
@@ -519,7 +518,7 @@ class AssembleTerm(Assemble):
         The claims that are dispatched to the term.
     """
 
-    adapts(Term)
+    adapt(Term)
 
     def __init__(self, term, state):
         super(AssembleTerm, self).__init__(term, state)
@@ -532,7 +531,7 @@ class AssembleScalar(Assemble):
     Assembles a (scalar) frame for a scalar term.
     """
 
-    adapts(ScalarTerm)
+    adapt(ScalarTerm)
 
     def __call__(self):
         # A scalar term cannot export anything and thus should never receive
@@ -547,7 +546,7 @@ class AssembleTable(Assemble):
     Assembles a (table) frame for a table term.
     """
 
-    adapts(TableTerm)
+    adapt(TableTerm)
 
     def __call__(self):
         # The actual table entity.
@@ -588,7 +587,7 @@ class AssembleBranch(Assemble):
     or binary) terms.
     """
 
-    adapts_many(UnaryTerm, BinaryTerm)
+    adapt_many(UnaryTerm, BinaryTerm)
 
     def delegate(self):
         # Review all the given claims.
@@ -752,7 +751,7 @@ class AssembleUnary(AssembleBranch):
     This is a default implementation used by all unary terms.
     """
 
-    adapts(UnaryTerm)
+    adapt(UnaryTerm)
     # Note that `AssembleUnary` is inherited from `AssembleBranch` (not
     # `Assemble`) to indicate relative priority of these two implementations.
 
@@ -778,7 +777,7 @@ class AssembleFilter(Assemble):
     Assembles a frame for a filter term.
     """
 
-    adapts(FilterTerm)
+    adapt(FilterTerm)
 
     def delegate(self):
         # Call the super `delegate()` to review and forward claims.
@@ -806,7 +805,7 @@ class AssembleOrder(Assemble):
     Assembles a frame for an order term.
     """
 
-    adapts(OrderTerm)
+    adapt(OrderTerm)
 
     def delegate(self):
         # Call the super `delegate()` to review and forward claims.
@@ -845,7 +844,7 @@ class AssembleProjection(Assemble):
     Assembles a frame for a projection term.
     """
 
-    adapts(ProjectionTerm)
+    adapt(ProjectionTerm)
 
     def delegate(self):
         # Update the dispatching context to use the routing table
@@ -908,7 +907,7 @@ class AssembleJoin(Assemble):
     Assembles a frame for a join term.
     """
 
-    adapts(JoinTerm)
+    adapt(JoinTerm)
 
     def delegate(self):
         # Call the super `delegate()` to review and forward claims.
@@ -976,7 +975,7 @@ class AssembleEmbedding(Assemble):
     Assembles a frame for an embedding term.
     """
 
-    adapts(EmbeddingTerm)
+    adapt(EmbeddingTerm)
 
     def delegate(self):
         # Call the super `delegate()` to review and forward claims.
@@ -1046,7 +1045,7 @@ class AssembleCorrelation(Assemble):
     Assembles a frame for a correlation term.
     """
 
-    adapts(CorrelationTerm)
+    adapt(CorrelationTerm)
 
     def delegate(self):
         # An embedded frame is special in that its `SELECT` clause could
@@ -1127,7 +1126,7 @@ class AssembleSegment(Assemble):
     Assembles a frame for a segment term.
     """
 
-    adapts(SegmentTerm)
+    adapt(SegmentTerm)
 
     def delegate(self):
         # This is a top-level frame, so it can't have claims.
@@ -1166,7 +1165,7 @@ class AssembleQuery(Assemble):
     Assembles a top-level query frame.
     """
 
-    adapts(QueryTerm)
+    adapt(QueryTerm)
 
     def __call__(self):
         # Compile the segment frame.
@@ -1205,7 +1204,7 @@ class Evaluate(Adapter):
         The current state of the assembling process.
     """
 
-    adapts(Code)
+    adapt(Code)
 
     def __init__(self, code, state):
         assert isinstance(code, Code)
@@ -1224,7 +1223,7 @@ class EvaluateLiteral(Evaluate):
     Evaluates a literal code.
     """
 
-    adapts(LiteralCode)
+    adapt(LiteralCode)
 
     def __call__(self):
         # Keep all attributes, but switch the class.
@@ -1236,7 +1235,7 @@ class EvaluateCast(Evaluate):
     Evaluates a cast code.
     """
 
-    adapts(CastCode)
+    adapt(CastCode)
 
     def __call__(self):
         # Evaluate the operand and generate a phrase node.
@@ -1248,7 +1247,7 @@ class EvaluateCast(Evaluate):
 
 class EvaluateRecord(Evaluate):
 
-    adapts(RecordCode)
+    adapt(RecordCode)
 
     def __call__(self):
         for field in self.code.fields:
@@ -1258,7 +1257,7 @@ class EvaluateRecord(Evaluate):
 
 class EvaluateAnnihilator(Evaluate):
 
-    adapts(AnnihilatorCode)
+    adapt(AnnihilatorCode)
 
     def __call__(self):
         yield self.state.evaluate(self.code.indicator)
@@ -1274,12 +1273,11 @@ class EvaluateFormula(Evaluate):
     implemented by the :class:`EvaluateBySignature` adapter.
     """
 
-    adapts(FormulaCode)
+    adapt(FormulaCode)
 
     def __call__(self):
         # Delegate the evaluation to `EvaluteBySignature`.
-        evaluate = EvaluateBySignature(self.code, self.state)
-        return evaluate()
+        return EvaluateBySignature.__invoke__(self.code, self.state)
 
 
 class EvaluateBySignature(Adapter):
@@ -1311,10 +1309,10 @@ class EvaluateBySignature(Adapter):
         The arguments of the formula.
     """
 
-    adapts(Signature)
+    adapt(Signature)
 
     @classmethod
-    def dispatch(interface, code, *args, **kwds):
+    def __dispatch__(interface, code, *args, **kwds):
         # Override the default dispatch since the adapter is polymorphic
         # on the type of the formula signature, not on the formula itself.
         assert isinstance(code, FormulaCode)
@@ -1346,7 +1344,7 @@ class EvaluateBySignature(Adapter):
 
 class EvaluateIsEqualBase(EvaluateBySignature):
 
-    adapts_many(IsEqualSig, IsInSig, CompareSig)
+    adapt_many(IsEqualSig, IsInSig, CompareSig)
 
     def __call__(self):
         for phrase in super(EvaluateIsEqualBase, self).__call__():
@@ -1358,7 +1356,7 @@ class EvaluateIsTotallyEqualBase(EvaluateBySignature):
     Evaluates the total equality (``==``) operator.
     """
 
-    adapts_many(IsTotallyEqualSig, IsNullSig)
+    adapt_many(IsTotallyEqualSig, IsNullSig)
 
     def __call__(self):
         # Override the default implementation since the total equality
@@ -1374,7 +1372,7 @@ class EvaluateNullIf(EvaluateBySignature):
     Evaluates the ``null_if()`` operator.
     """
 
-    adapts(NullIfSig)
+    adapt(NullIfSig)
 
     def __call__(self):
         # Override the default implementation since the `null_if()`
@@ -1389,7 +1387,7 @@ class EvaluateIfNull(EvaluateBySignature):
     Evaluates the ``if_null()`` operator.
     """
 
-    adapts(IfNullSig)
+    adapt(IfNullSig)
 
     def __call__(self):
         # Override the default implementation since the `null_if()`
@@ -1403,7 +1401,7 @@ class EvaluateIfNull(EvaluateBySignature):
 
 class EvaluateAndOrNot(EvaluateBySignature):
 
-    adapts_many(AndSig, OrSig, NotSig)
+    adapt_many(AndSig, OrSig, NotSig)
 
     def __call__(self):
         arguments = (self.arguments.map(self.state.evaluate)
@@ -1422,7 +1420,7 @@ class EvaluateUnit(Evaluate):
     Evaluates a unit.
     """
 
-    adapts(Unit)
+    adapt(Unit)
 
     def __call__(self):
         # Generate a claim for a unit (for the second time).
@@ -1435,7 +1433,7 @@ class EvaluateUnit(Evaluate):
 
 class Decompose(Adapter):
 
-    adapts(Code)
+    adapt(Code)
 
     def __init__(self, code, indexes, name):
         assert isinstance(code, Code)
@@ -1456,7 +1454,7 @@ class Decompose(Adapter):
 
 class DecomposeCompound(Decompose):
 
-    adapts(CompoundUnit)
+    adapt(CompoundUnit)
 
     def __call__(self):
         return decompose(self.code.code, self.indexes, self.name)
@@ -1464,7 +1462,7 @@ class DecomposeCompound(Decompose):
 
 class DecomposeRecord(Decompose):
 
-    adapts(RecordCode)
+    adapt(RecordCode)
 
     def __call__(self):
         indexes = self.indexes
@@ -1489,7 +1487,7 @@ class DecomposeRecord(Decompose):
 
 class DecomposeAnnihilator(Decompose):
 
-    adapts(AnnihilatorCode)
+    adapt(AnnihilatorCode)
 
     def __call__(self):
         assert len(self.indexes) > 0
@@ -1525,12 +1523,10 @@ def assemble(term, state=None):
     if state is None:
         state = AssemblingState()
     # Realize and apply the `Assemble` adapter; return the generated frame.
-    assemble = Assemble(term, state)
-    return assemble()
+    return Assemble.__invoke__(term, state)
 
 
 def decompose(code, index, name=None):
-    decompose = Decompose(code, index, name)
-    return decompose()
+    return Decompose.__invoke__(code, index, name)
 
 

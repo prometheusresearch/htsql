@@ -11,7 +11,7 @@ This module implements stitching utilities over flow nodes.
 """
 
 
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..classify import normalize
 from .error import CompileError
 from .syntax import IdentifierSyntax
@@ -45,7 +45,7 @@ class Arrange(Adapter):
         If set, include implicit flow ordering.
     """
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow, with_strong=True, with_weak=True):
         assert isinstance(flow, Flow)
@@ -80,7 +80,7 @@ class Spread(Adapter):
         The flow node to spread.
     """
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow):
         assert isinstance(flow, Flow)
@@ -113,7 +113,7 @@ class Sew(Adapter):
         The flow node to sew.
     """
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow):
         assert isinstance(flow, Flow)
@@ -146,7 +146,7 @@ class Tie(Adapter):
         The flow node to sew.
     """
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow):
         assert isinstance(flow, Flow)
@@ -163,7 +163,7 @@ class Tie(Adapter):
 
 class ArrangeScalar(Arrange):
 
-    adapts(ScalarFlow)
+    adapt(ScalarFlow)
 
     def __call__(self):
         # A scalar flow inherits its ordering from the parent flow.
@@ -173,7 +173,7 @@ class ArrangeScalar(Arrange):
 
 class ArrangeTable(Arrange):
 
-    adapts(TableFlow)
+    adapt(TableFlow)
 
     def __call__(self):
         # A table flow complements the ordering of its parent with
@@ -230,7 +230,7 @@ class ArrangeTable(Arrange):
 
 class SpreadTable(Spread):
 
-    adapts(TableFlow)
+    adapt(TableFlow)
 
     def __call__(self):
         # A term representing a table flow exports all columns of the table.
@@ -240,7 +240,7 @@ class SpreadTable(Spread):
 
 class SewTable(Sew):
 
-    adapts(TableFlow)
+    adapt(TableFlow)
 
     def __call__(self):
         # Connect a table axis to itself using the primary key of the table.
@@ -280,7 +280,7 @@ class SewTable(Sew):
 
 class TieFiberTable(Tie):
 
-    adapts(FiberTableFlow)
+    adapt(FiberTableFlow)
 
     def __call__(self):
         # Generate a list of joints corresponding to a connection by
@@ -296,7 +296,7 @@ class TieFiberTable(Tie):
 
 class ArrangeQuotient(Arrange):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Start with the parent ordering.
@@ -317,7 +317,7 @@ class ArrangeQuotient(Arrange):
 
 class SpreadQuotient(Spread):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Expressions attaching the quotient to the parent flow.
@@ -333,7 +333,7 @@ class SpreadQuotient(Spread):
 
 class SewQuotient(Sew):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Use an inflated flow for joints.
@@ -352,7 +352,7 @@ class SewQuotient(Sew):
 
 class TieQuotient(Tie):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Use an inflated flow for joints.
@@ -367,7 +367,7 @@ class TieQuotient(Tie):
 class ArrangeCovering(Arrange):
 
     # The implementation is shared by all covering flows.
-    adapts_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
+    adapt_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
 
     def __call__(self):
         # Start with the parent ordering.
@@ -400,7 +400,7 @@ class ArrangeCovering(Arrange):
 class SpreadCovering(Spread):
 
     # The implementation is shared by all covering flows.
-    adapts_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
+    adapt_many(ComplementFlow, MonikerFlow, ForkedFlow, LinkedFlow)
 
     def __call__(self):
         # Native units of the complement are inherited from the seed flow.
@@ -414,7 +414,7 @@ class SpreadCovering(Spread):
 class SewCovering(Sew):
 
     # The implementation is shared by all covering flows.
-    adapts_many(ComplementFlow, MonikerFlow, LinkedFlow, ForkedFlow)
+    adapt_many(ComplementFlow, MonikerFlow, LinkedFlow, ForkedFlow)
 
     def __call__(self):
         # To sew two terms representing a covering flow, we sew all axial flows
@@ -448,7 +448,7 @@ class SewCovering(Sew):
 
 class TieComplement(Tie):
 
-    adapts(ComplementFlow)
+    adapt(ComplementFlow)
 
     def __call__(self):
         # Use an inflated flow for joints.
@@ -473,7 +473,7 @@ class TieComplement(Tie):
 
 class TieMoniker(Tie):
 
-    adapts(MonikerFlow)
+    adapt(MonikerFlow)
 
     def __call__(self):
         # Use an inflated flow for joints.
@@ -493,7 +493,7 @@ class TieMoniker(Tie):
 
 class TieForked(Tie):
 
-    adapts(ForkedFlow)
+    adapt(ForkedFlow)
 
     def __call__(self):
         # Use an inflated flow for joints.
@@ -512,7 +512,7 @@ class TieForked(Tie):
 
 class TieLinked(Tie):
 
-    adapts(LinkedFlow)
+    adapt(LinkedFlow)
 
     def __call__(self):
         # Use an inflated flow for joints.
@@ -525,7 +525,7 @@ class TieLinked(Tie):
 
 class ArrangeOrdered(Arrange):
 
-    adapts(OrderedFlow)
+    adapt(OrderedFlow)
 
     def __call__(self):
         # Start with strong ordering of the parent flow.
@@ -556,35 +556,21 @@ def arrange(flow, with_strong=True, with_weak=True):
     `with_weak` (Boolean)
         If set, include implicit flow ordering.
     """
-    # Realize an `Arrange` adapter.
-    arrange = Arrange(flow, with_strong, with_weak)
-    # Invoke the adapter and convert the generated iterator to a list.
-    return list(arrange())
+    return list(Arrange.__invoke__(flow, with_strong, with_weak))
 
 
 def spread(flow):
     """
     Returns native units of the given flow.
-
-    Na
     """
-    # Realize a `Spread` adapter.
-    spread = Spread(flow)
-    # Invoke the adapter and convert the generated iterator to a list.
-    return list(spread())
+    return list(Spread.__invoke__(flow))
 
 
 def sew(flow):
-    # Realize a `Sew` adapter.
-    sew = Sew(flow)
-    # Invoke the adapter and convert the generated iterator to a list.
-    return list(sew())
+    return list(Sew.__invoke__(flow))
 
 
 def tie(flow):
-    # Realize a `Tie` adapter.
-    tie = Tie(flow)
-    # Invoke the adapter and convert the generated iterator to a list.
-    return list(tie())
+    return list(Tie.__invoke__(flow))
 
 

@@ -4,7 +4,7 @@
 
 
 from ..util import Printable, listof, tupleof
-from ..adapter import Adapter, Protocol, adapts, adapts_many, named
+from ..adapter import Adapter, Protocol, adapt, adapt_many, call
 from ..domain import (Domain, BooleanDomain, NumberDomain, DecimalDomain,
                       StringDomain, EnumDomain, DateDomain, TimeDomain,
                       DateTimeDomain, ListDomain, RecordDomain,
@@ -139,7 +139,7 @@ def dump_xml(iterator):
 
 class EmitXMLHeaders(EmitHeaders):
 
-    adapts(XMLFormat)
+    adapt(XMLFormat)
 
     def __call__(self):
         filename = None
@@ -154,7 +154,7 @@ class EmitXMLHeaders(EmitHeaders):
 
 class EmitXML(Emit):
 
-    adapts(XMLFormat)
+    adapt(XMLFormat)
 
     def __call__(self):
         return dump_xml(self.emit())
@@ -175,7 +175,7 @@ class EmitXML(Emit):
 
 class ToXML(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain, tag):
         assert isinstance(domain, Domain)
@@ -195,7 +195,7 @@ class ToXML(Adapter):
 
 class RecordToXML(ToXML):
 
-    adapts(RecordDomain)
+    adapt(RecordDomain)
 
     def __init__(self, domain, tag):
         super(RecordToXML, self).__init__(domain, tag)
@@ -222,7 +222,7 @@ class RecordToXML(ToXML):
 
 class ListToXML(ToXML):
 
-    adapts(ListDomain)
+    adapt(ListDomain)
 
     def __init__(self, domain, tag):
         super(ListToXML, self).__init__(domain, tag)
@@ -237,11 +237,11 @@ class ListToXML(ToXML):
 
 class NativeToXML(ToXML):
 
-    adapts_many(StringDomain,
-                EnumDomain,
-                NumberDomain,
-                DateDomain,
-                TimeDomain)
+    adapt_many(StringDomain,
+               EnumDomain,
+               NumberDomain,
+               DateDomain,
+               TimeDomain)
 
     def scatter(self, value):
         if value is not None:
@@ -252,7 +252,7 @@ class NativeToXML(ToXML):
 
 class DecimalToXML(ToXML):
 
-    adapts(DecimalDomain)
+    adapt(DecimalDomain)
 
     def scatter(self, value):
         if value is None:
@@ -274,7 +274,7 @@ class DecimalToXML(ToXML):
 
 class DateTimeToXML(ToXML):
 
-    adapts(DateTimeDomain)
+    adapt(DateTimeDomain)
 
     def dump(self, value):
         if value is None:
@@ -289,7 +289,7 @@ class DateTimeToXML(ToXML):
 
 class OpaqueToXML(ToXML):
 
-    adapts(OpaqueDomain)
+    adapt(OpaqueDomain)
 
     def dump(self, value):
         if value is None:
@@ -304,8 +304,6 @@ class OpaqueToXML(ToXML):
         yield XML_END
 
 
-def to_xml(domain, tag):
-    to_xml = ToXML(domain, tag)
-    return to_xml()
+to_xml = ToXML.__invoke__
 
 

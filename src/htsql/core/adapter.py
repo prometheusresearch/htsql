@@ -64,7 +64,7 @@ class Component(object):
             return type.__new__(mcls, name, bases, content)
 
     @staticmethod
-    def components():
+    def __components__():
         """
         Produce a list of all components of the active application.
         """
@@ -82,7 +82,7 @@ class Component(object):
                 if issubclass(subclass, Realization):
                     continue
                 # Check if the component belongs to the current application.
-                if subclass.active():
+                if subclass.__active__():
                     components.append(subclass)
             idx += 1
         # Cache and return the components.
@@ -90,7 +90,7 @@ class Component(object):
         return components
 
     @classmethod
-    def implementations(interface):
+    def __implementations__(interface):
         """
         Produces a list of all components implementing the interface.
         """
@@ -102,17 +102,17 @@ class Component(object):
         except KeyError:
             pass
         # Get all active components.
-        components = interface.components()
+        components = interface.__components__()
         # Leave only components implementing the interface.
         implementations = [component
                            for component in components
-                           if component.implements(interface)]
+                           if component.__implements__(interface)]
         # Cache and return the implementations.
         registry.implementations[interface] = implementations
         return implementations
 
     @classmethod
-    def realize(interface, dispatch_key):
+    def __realize__(interface, dispatch_key):
         """
         Produces a realization of the interface for the given dispatch key.
         """
@@ -127,11 +127,11 @@ class Component(object):
             pass
 
         # Get the implementations of the interface.
-        implementations = interface.implementations()
+        implementations = interface.__implementations__()
         # Leave only implementations matching the dispatch key.
         implementations = [implementation
                            for implementation in implementations
-                           if implementation.matches(dispatch_key)]
+                           if implementation.__matches__(dispatch_key)]
         # Note: commented out since we force the interface component
         # to match any dispatch keys.
         ## Check that we have at least one matching implementation.
@@ -149,7 +149,7 @@ class Component(object):
             for dominated in implementations:
                 if dominating is dominated:
                     continue
-                if dominating.dominates(dominated):
+                if dominating.__dominates__(dominated):
                     order_graph[dominating].append(dominated)
         order = (lambda implementation: order_graph[implementation])
 
@@ -197,8 +197,8 @@ class Component(object):
         # Class attributes for the realization.
         attributes = {
                 '__module__': module,
-                'interface': interface,
-                'dispatch_key': dispatch_key,
+                '__interface__': interface,
+                '__dispatch_key__': dispatch_key,
         }
         # Generate the realization.
         realization = type(name, bases, attributes)
@@ -208,7 +208,7 @@ class Component(object):
         return realization
 
     @classmethod
-    def active(component):
+    def __active__(component):
         """
         Tests if the component is a part of the current application.
         """
@@ -216,14 +216,14 @@ class Component(object):
         return (component.__module__ in registry.modules)
 
     @classmethod
-    def implements(component, interface):
+    def __implements__(component, interface):
         """
         Tests if the component implements the interface.
         """
         return issubclass(component, interface)
 
     @classmethod
-    def dominates(component, other):
+    def __dominates__(component, other):
         """
         Tests if the component dominates another component.
         """
@@ -231,7 +231,7 @@ class Component(object):
         return issubclass(component, other)
 
     @classmethod
-    def matches(component, dispatch_key):
+    def __matches__(component, dispatch_key):
         """
         Tests if the component matches a dispatch key.
         """
@@ -239,20 +239,38 @@ class Component(object):
         return False
 
     @classmethod
-    def dispatch(interface, *args, **kwds):
+    def __dispatch__(interface, *args, **kwds):
         """
-        Extract the dispatch key from the constructor arguments.
+        Extracts the dispatch key from the constructor arguments.
         """
         # Override in subclasses.
         return None
 
-    def __new__(interface, *args, **kwds):
+    @classmethod
+    def __invoke__(interface, *args, **kwds):
+        """
+        Realizes and applies the interface to the given arguments.
+        """
         # Extract polymorphic parameters.
-        dispatch_key = interface.dispatch(*args, **kwds)
+        dispatch_key = interface.__dispatch__(*args, **kwds)
         # Realize the interface.
-        realization = interface.realize(dispatch_key)
-        # Create an instance of the realization.
-        return super(Component, realization).__new__(realization)
+        realization = interface.__realize__(dispatch_key)
+        # Instantiate and call the realization.
+        instance = realization(*args, **kwds)
+        return instance()
+
+    def __new__(interface, *args, **kwds):
+        # Only realizations are permitted to instantiate.
+        assert False
+
+    @classmethod
+    def __call__(self):
+        """
+        Executes the implementation.
+        """
+        raise NotImplementedError("interface %s is not implemented for: %r"
+                                  % (self.__interface__.__name__,
+                                     self.__dispatch_key__))
 
 
 class Realization(Component):
@@ -260,23 +278,29 @@ class Realization(Component):
     A realization of an interface for some dispatch key.
     """
 
-    interface = None
-    dispatch_key = None
+    __interface__ = None
+    __dispatch_key__ = None
 
     def __new__(cls, *args, **kwds):
-        # Bypass `Component.__new__`.
+        # Allow realizations to instantiate.
         return object.__new__(cls)
 
 
 class Utility(Component):
     """
-    Implements utility interfaces.
+    Provides utility interfaces.
 
     An utility is an interface with a single realization.
 
     This is an abstract class; to declare an utility interface, create
     a subclass of :class:`Utility`.  To add an implementation of the
     interface, create a subclass of the interface class.
+
+    Class attributes:
+
+    `__rank__` (a number)
+        The relative weight of the component relative to the other
+        components implementing the same utility.
 
     The following example declared an interface ``SayHello`` and provide
     an implementation ``PrintHello`` that prints ``'Hello, World!`` to
@@ -290,71 +314,69 @@ class Utility(Component):
             def __call__(self):
                 print "Hello, World!"
 
-        def hello():
-            hello = SayHello()
-            hello()
+        hello = SayHello.__invoke__
 
         >>> hello()
         Hello, World!
     """
 
-    weight = 0.0
+    __rank__ = 0.0
 
     @classmethod
-    def dominates(component, other):
+    def __dominates__(component, other):
         if issubclass(component, other):
             return True
-        if component.weight > other.weight:
+        if component.__rank__ > other.__rank__:
             return True
         return False
 
     @classmethod
-    def matches(component, dispatch_key):
+    def __matches__(component, dispatch_key):
         # For an utility, the dispatch key is always a 0-tuple.
         assert dispatch_key == ()
         return True
 
     @classmethod
-    def dispatch(interface, *args, **kwds):
+    def __dispatch__(interface, *args, **kwds):
         # The dispatch key is always a 0-tuple.
         return ()
 
 
-def weigh(value):
+def rank(value):
     assert isinstance(value, (int, float))
     frame = sys._getframe(1)
-    frame.f_locals['weight'] = value
+    frame.f_locals['__rank__'] = value
 
 
 class Adapter(Component):
     """
-    Implements adapter interfaces.
+    Provides adapter interfaces.
 
     An adapter interface provides mechanism for polymorphic dispatch
     based on the types of the arguments.
 
     This is an abstract class; to declare an adapter interface, create
     a subclass of :class:`Adapter` and indicate the most generic type
-    signature of the polymorphic arguments using function :func:`adapts`.
+    signature of the polymorphic arguments using function :func:`adapt`.
 
     To add an implementation of an adapter interface, create a subclass
     of the interface class and indicate the matching type signatures
-    using functions :func:`adapts`, :func:`adapts_many`, or
-    :func:`adapts_none`.
+    using functions :func:`adapt`, :func:`adapt_many`, or
+    :func:`adapt_none`.
 
     Class attributes:
 
-    `types` (a list of type signatures)
+    `__types__` (a list of type signatures)
         List of signatures that the component matches.
     
-    `arity` (an integer)
+    `__arity__` (an integer)
         Number of polymorphic arguments.
 
     The following example declares an adapter interface ``Format``
     and implements it for several data types::
 
         class Format(Adapter):
-            adapts(object)
+            adapt(object)
             def __init__(self, value):
                 self.value = value
             def __call__(self):
@@ -362,7 +384,7 @@ class Adapter(Component):
                 return str(self.value)
 
         class FormatString(Format):
-            adapts(str)
+            adapt(str)
             def __call__(self):
                 # Display alphanumeric values unquoted, the others quoted.
                 if self.value.isalnum():
@@ -371,14 +393,12 @@ class Adapter(Component):
                     return repr(self.value)
 
         class FormatList(Format):
-            adapts(list)
+            adapt(list)
             def __call__(self):
                 # Apply `format` to the list elements.
                 return "[%s]" % ",".join(format(item) for item in self.value)
 
-        def format(value):
-            format = Format(value)
-            return format()
+        format = Format.__invoke__
 
         >>> print format(123)
         123
@@ -390,11 +410,11 @@ class Adapter(Component):
         [123, ABC, 'Hello, World!']
     """
 
-    types = []
-    arity = 0
+    __types__ = []
+    __arity__ = 0
 
     @classmethod
-    def dominates(component, other):
+    def __dominates__(component, other):
         # A component implementing an adapter interface dominates
         # over another component implementing the same interface
         # if one of the following two conditions holds:
@@ -410,9 +430,9 @@ class Adapter(Component):
         # specific than some signature of the other component.  This
         # rule does not guarantee anti-symmetricity, so ambiguously
         # defined implementations may make the ordering ill defined.
-        # Validness of the ordering is verified in `Component.realize()`.
-        for type_vector in component.types:
-            for other_type_vector in other.types:
+        # Correctness of the ordering is verified in `Component.__realize()__`.
+        for type_vector in component.__types__:
+            for other_type_vector in other.__types__:
                 if aresubclasses(type_vector, other_type_vector):
                     if type_vector != other_type_vector:
                         return True
@@ -420,7 +440,7 @@ class Adapter(Component):
         return False
 
     @classmethod
-    def matches(component, dispatch_key):
+    def __matches__(component, dispatch_key):
         # For an adapter interface, the dispatch key is a signature.
         # A component matches the dispatch key the component signature
         # is equal or less specific than the dispatch key.
@@ -429,18 +449,18 @@ class Adapter(Component):
         # is equal or less specific than the dispatch key.
         assert isinstance(list(dispatch_key), listof(type))
         return any(aresubclasses(dispatch_key, type_vector)
-                   for type_vector in component.types)
+                   for type_vector in component.__types__)
 
     @classmethod
-    def dispatch(interface, *args, **kwds):
+    def __dispatch__(interface, *args, **kwds):
         # The types of the leading arguments of the constructor
         # form a dispatch key.
-        assert interface.arity <= len(args)
-        type_vector = tuple(type(arg) for arg in args[:interface.arity])
+        assert interface.__arity__ <= len(args)
+        type_vector = tuple(type(arg) for arg in args[:interface.__arity__])
         return type_vector
 
 
-def adapts(*type_vector):
+def adapt(*type_vector):
     """
     Specifies the adapter signature.
 
@@ -451,15 +471,15 @@ def adapts(*type_vector):
 
         class DoSmth(Adapter):
 
-            adapts(T1, T2, ...)
+            adapt(T1, T2, ...)
     """
     assert isinstance(list(type_vector), listof(type))
     frame = sys._getframe(1)
-    frame.f_locals['types'] = [type_vector]
-    frame.f_locals['arity'] = len(type_vector)
+    frame.f_locals['__types__'] = [type_vector]
+    frame.f_locals['__arity__'] = len(type_vector)
 
 
-def adapts_none():
+def adapt_none():
     """
     Indicates that the adapter does not match any signatures.
 
@@ -467,13 +487,13 @@ def adapts_none():
 
         class DoSmth(Adapter):
 
-            adapts_none()
+            adapt_none()
     """
     frame = sys._getframe(1)
-    frame.f_locals['types'] = []
+    frame.f_locals['__types__'] = []
 
 
-def adapts_many(*type_vectors):
+def adapt_many(*type_vectors):
     """
     Specifies signatures of the adapter.
 
@@ -484,9 +504,9 @@ def adapts_many(*type_vectors):
 
         class DoSmth(Adapter):
 
-            adapts_many((T11, T12, ...),
-                        (T21, T22, ...),
-                        ...)
+            adapt_many((T11, T12, ...),
+                       (T21, T22, ...),
+                       ...)
     """
     # Normalize the given type vectors.
     type_vectors = [type_vector if isinstance(type_vector, tuple)
@@ -497,8 +517,8 @@ def adapts_many(*type_vectors):
     assert all(len(type_vector) == arity
                for type_vector in type_vectors)
     frame = sys._getframe(1)
-    frame.f_locals['types'] = type_vectors
-    frame.f_locals['arity'] = arity
+    frame.f_locals['__types__'] = type_vectors
+    frame.f_locals['__arity__'] = arity
 
 
 class Protocol(Component):
@@ -511,11 +531,11 @@ class Protocol(Component):
     a subclass of :class:`Protocol`.
 
     To add an implementation of a protocol interface, create a subclass
-    of the interface class and specify its name using function :func:`named`.
+    of the interface class and specify its name using function :func:`call`.
 
     Class attributes:
 
-    `names` (a list of strings)
+    `__names__` (a list of strings)
         List of names that the component matches.
 
     The following example declares a protocol interface ``Weigh``
@@ -529,18 +549,16 @@ class Protocol(Component):
                 return -1
 
         class WeighAlice(Weigh):
-            named("Alice")
+            call("Alice")
             def __call__(self):
                 return 150
 
         class WeighBob(Weigh):
-            named("Bob")
+            call("Bob")
             def __call__(self):
                 return 160
 
-        def weigh(name):
-            weigh = Weigh(name)
-            return weigh()
+        weigh = Weigh.__invoke__
 
         >>> weigh("Alice")
         150
@@ -550,21 +568,36 @@ class Protocol(Component):
         -1
     """
 
-    names = []
+    __names__ = []
 
     @classmethod
-    def dispatch(interface, name, *args, **kwds):
+    def __dispatch__(interface, name, *args, **kwds):
         # The first argument of the constructor is the protocol name.
         return name
 
     @classmethod
-    def matches(component, dispatch_key):
+    def __matches__(component, dispatch_key):
         # The dispatch key is the protocol name.
         assert isinstance(dispatch_key, str)
-        return (dispatch_key in component.names)
+        return (dispatch_key in component.__names__)
+
+    @classmethod
+    def __catalogue__(interface):
+        """
+        Returns all names assigned to protocol implementations.
+        """
+        names = []
+        duplicates = set()
+        for component in interface.__implementations__():
+            for name in component.__names__:
+                if name not in duplicates:
+                    names.append(name)
+                    duplicates.add(name)
+        names.sort()
+        return names
 
 
-def named(*names):
+def call(*names):
     """
     Specifies the names of the protocol.
 
@@ -572,10 +605,10 @@ def named(*names):
 
         class DoSmth(Protocol):
 
-            named("...")
+            call("...")
     """
     frame = sys._getframe(1)
-    frame.f_locals['names'] = list(names)
+    frame.f_locals['__names__'] = list(names)
 
 
 class ComponentRegistry(object):
@@ -611,13 +644,14 @@ class ComponentRegistry(object):
             if package in packages:
                 modules.add(module)
         self.modules = modules
-        # List of active components (populated by `Component.components()`).
+        # List of active components (populated by
+        # `Component.__components__()`).
         self.components = None
         # A mapping: interface -> [components]  (populated by
-        # `Component.implementations()`).
+        # `Component.__implementations__()`).
         self.implementations = {}
         # A mapping: (interface, dispatch_key) -> realization (populated by
-        # `Component.realize()`).
+        # `Component.__realize__()`).
         self.realizations = {}
 
 

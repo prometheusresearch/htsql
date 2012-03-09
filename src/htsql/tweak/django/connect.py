@@ -3,12 +3,12 @@
 #
 
 from ...core.connect import Connect
-from ...core.adapter import weigh
+from ...core.adapter import rank
 
 
 class DjangoConnect(Connect):
 
-    weigh(2.0) # ensure connections here are not pooled
+    rank(2.0) # ensure connections here are not pooled
 
     def open(self):
         from django.db import connections

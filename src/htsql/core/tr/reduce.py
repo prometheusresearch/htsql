@@ -11,7 +11,7 @@ This module implements the reducing process.
 """
 
 
-from ..adapter import Adapter, adapts
+from ..adapter import Adapter, adapt
 from ..domain import BooleanDomain, StringDomain
 from .coerce import coerce
 from .stitch import arrange
@@ -72,8 +72,7 @@ class ReducingState(object):
             The frame to collapse.
         """
         # Realize and apply the `Collapse` adapter.
-        collapse = Collapse(frame, self)
-        return collapse()
+        return Collapse.__invoke__(frame, self)
 
     def to_predicate(self, phrase):
         phrase = FormulaPhrase(ToPredicateSig(), phrase.domain,
@@ -107,7 +106,7 @@ class Reduce(Adapter):
         The current state of the reducing process.
     """
 
-    adapts(Clause)
+    adapt(Clause)
 
     def __init__(self, clause, state):
         assert isinstance(clause, Clause)
@@ -136,7 +135,7 @@ class ReduceFrame(Reduce):
         The current state of the reducing process.
     """
 
-    adapts(Frame)
+    adapt(Frame)
 
     def __init__(self, frame, state):
         super(ReduceFrame, self).__init__(frame, state)
@@ -154,7 +153,7 @@ class ReduceScalar(ReduceFrame):
     Reduces a scalar frame.
     """
 
-    adapts(ScalarFrame)
+    adapt(ScalarFrame)
 
     def __call__(self):
         # The databases we currently support have no notion of a `DUAL`
@@ -173,7 +172,7 @@ class ReduceBranch(ReduceFrame):
     Reduces a top-level or a nested ``SELECT`` statement.
     """
 
-    adapts(BranchFrame)
+    adapt(BranchFrame)
 
     def reduce_include(self):
         # Reduce the anchors of the subframes.  This will also
@@ -286,7 +285,7 @@ class Collapse(Adapter):
         The current state of the reducing process.
     """
 
-    adapts(Frame)
+    adapt(Frame)
 
     def __init__(self, frame, state):
         assert isinstance(frame, Frame)
@@ -304,7 +303,7 @@ class CollapseBranch(Collapse):
     Collapses a branch frame.
     """
 
-    adapts(BranchFrame)
+    adapt(BranchFrame)
 
     def __call__(self):
         # Here we attempt to dismantle the first subframe in the `FROM`
@@ -543,7 +542,7 @@ class ReduceAnchor(Reduce):
     Reduces a ``JOIN`` clause.
     """
 
-    adapts(Anchor)
+    adapt(Anchor)
 
     def __call__(self):
         # Collapse and reduce (in that order!) the subframe.
@@ -560,7 +559,7 @@ class ReduceQuery(Reduce):
     Reduces a top-level query frame.
     """
 
-    adapts(QueryFrame)
+    adapt(QueryFrame)
 
     def __call__(self):
         # If there is no segment frame, there is nothing to reduce.
@@ -581,7 +580,7 @@ class ReducePhrase(Reduce):
     Reduces a SQL phrase.
     """
 
-    adapts(Phrase)
+    adapt(Phrase)
 
     # Note that we do not provide a default no-op implementation: every
     # non-leaf phrase node must at least apply `reduce()` to its subnodes
@@ -597,7 +596,7 @@ class ReduceLiteral(Reduce):
     Reduces a literal phrase.
     """
 
-    adapts(LiteralPhrase)
+    adapt(LiteralPhrase)
 
     def __call__(self):
         # We cannot really simplify a literal value; instead, we encode
@@ -618,7 +617,7 @@ class ReduceCast(Reduce):
     Reduces a ``CAST`` operator.
     """
 
-    adapts(CastPhrase)
+    adapt(CastPhrase)
 
     def __call__(self):
         # Reduce the operand of the cast.  We do not specialize
@@ -635,12 +634,11 @@ class ReduceFormula(Reduce):
     implemented by the :class:`ReduceBySignature` adapter.
     """
 
-    adapts(FormulaPhrase)
+    adapt(FormulaPhrase)
 
     def __call__(self):
         # Delegate the reduction to the `ReduceBySignature` adapter.
-        reduce = ReduceBySignature(self.phrase, self.state)
-        return reduce()
+        return ReduceBySignature.__invoke__(self.phrase, self.state)
 
 
 class ReduceBySignature(Adapter):
@@ -675,10 +673,10 @@ class ReduceBySignature(Adapter):
         Indicates that the formula may produce a ``NULL`` value.
     """
 
-    adapts(Signature)
+    adapt(Signature)
 
     @classmethod
-    def dispatch(interface, phrase, *args, **kwds):
+    def __dispatch__(interface, phrase, *args, **kwds):
         # Override the default dispatch since the adapter is polymorphic
         # not on the type of the formula, but on the type of the formula
         # signature.
@@ -710,7 +708,7 @@ class ReduceIsEqual(ReduceBySignature):
     Reduces an (in)equality operator.
     """
 
-    adapts(IsEqualSig)
+    adapt(IsEqualSig)
 
     def __call__(self):
         # Start with reducing the operands.
@@ -769,7 +767,7 @@ class ReduceIsTotallyEqual(ReduceBySignature):
     Reduces a total (in)equality operator.
     """
 
-    adapts(IsTotallyEqualSig)
+    adapt(IsTotallyEqualSig)
 
     def __call__(self):
         # The polarity of the operator: +1 for `==`, -1 for `!==`.
@@ -851,7 +849,7 @@ class ReduceIsIn(ReduceBySignature):
     Reduces the ``IN`` and ``NOT IN`` clauses.
     """
 
-    adapts(IsInSig)
+    adapt(IsInSig)
 
     def __call__(self):
         # Reduce the left operand.
@@ -902,7 +900,7 @@ class ReduceIsNull(ReduceBySignature):
     Reduces the ``IS NULL`` and ``IS NOT NULL`` clauses.
     """
 
-    adapts(IsNullSig)
+    adapt(IsNullSig)
 
     def __call__(self):
         # Start with reducing the operand.
@@ -938,7 +936,7 @@ class ReduceIfNull(ReduceBySignature):
     Reduces the ``IFNULL`` clause.
     """
 
-    adapts(IfNullSig)
+    adapt(IfNullSig)
 
     def __call__(self):
         # Reduce the operands.
@@ -970,7 +968,7 @@ class ReduceNullIf(ReduceBySignature):
     Reduces the ``NULLIF`` clause.
     """
 
-    adapts(NullIfSig)
+    adapt(NullIfSig)
 
     def __call__(self):
         # Reduce the operands.
@@ -1012,7 +1010,7 @@ class ReduceAnd(ReduceBySignature):
     Reduces "AND" (``&``) operator.
     """
 
-    adapts(AndSig)
+    adapt(AndSig)
 
     def __call__(self):
         # Start with reducing the operands.
@@ -1103,7 +1101,7 @@ class ReduceOr(ReduceBySignature):
     Reduces "OR" (``|``) operator.
     """
 
-    adapts(OrSig)
+    adapt(OrSig)
 
     def __call__(self):
         # Start with reducing the operands.
@@ -1194,7 +1192,7 @@ class ReduceNot(ReduceBySignature):
     Reduces a "NOT" (``!``) operator.
     """
 
-    adapts(NotSig)
+    adapt(NotSig)
 
     def __call__(self):
         # Start with reducing the operand.
@@ -1223,7 +1221,7 @@ class ReduceNot(ReduceBySignature):
 
 class ReduceFromPredicate(ReduceBySignature):
 
-    adapts(FromPredicateSig)
+    adapt(FromPredicateSig)
 
     def __call__(self):
         #op = self.state.reduce(self.phrase.op)
@@ -1235,7 +1233,7 @@ class ReduceFromPredicate(ReduceBySignature):
 
 class ReduceToPredicate(ReduceBySignature):
 
-    adapts(ToPredicateSig)
+    adapt(ToPredicateSig)
 
     def __call__(self):
         #op = self.state.reduce(self.phrase.op)
@@ -1250,7 +1248,7 @@ class ReduceExport(Reduce):
     Reduces an export phrase.
     """
 
-    adapts(ExportPhrase)
+    adapt(ExportPhrase)
 
     def __call__(self):
         # The default implementation (used for columns and embeddings)
@@ -1263,7 +1261,7 @@ class ReduceReference(Reduce):
     Reduce a reference phrase.
     """
 
-    adapts(ReferencePhrase)
+    adapt(ReferencePhrase)
 
     def __call__(self):
         # Reduce an export reference: if the reference points to
@@ -1294,7 +1292,6 @@ def reduce(clause, state=None):
     if state is None:
         state = ReducingState()
     # Realize and apply the `Reduce` adapter.
-    reduce = Reduce(clause, state)
-    return reduce()
+    return Reduce.__invoke__(clause, state)
 
 

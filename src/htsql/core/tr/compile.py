@@ -12,7 +12,7 @@ This module implements the compiling process.
 
 
 from ..util import maybe, listof
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..domain import BooleanDomain
 from .error import CompileError
 from .coerce import coerce
@@ -165,15 +165,14 @@ class CompilingState(object):
             if expression in term.routes:
                 continue
             # Inject the expression into the term.
-            inject = Inject(expression, term, self)
-            term = inject()
+            term = Inject.__invoke__(expression, term, self)
         # Return the augmented term node.
         return term
 
 
 class CompileBase(Adapter):
 
-    adapts(Expression)
+    adapt(Expression)
 
     # Utility functions used by implementations.
 
@@ -545,7 +544,7 @@ class Inject(CompileBase):
 
 class CompileQuery(Compile):
 
-    adapts(QueryExpr)
+    adapt(QueryExpr)
 
     def __call__(self):
         # Initialize the all state flows with a root scalar flow.
@@ -562,7 +561,7 @@ class CompileQuery(Compile):
 
 class CompileSegment(Compile):
 
-    adapts(SegmentExpr)
+    adapt(SegmentExpr)
 
     def __call__(self):
         # Get the ordering of the segment flow.
@@ -622,7 +621,7 @@ class CompileFlow(Compile):
         An alias to `state.baseline`.
     """
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow, state):
         assert isinstance(flow, Flow)
@@ -640,7 +639,7 @@ class CompileFlow(Compile):
 
 class InjectFlow(Inject):
 
-    adapts(Flow)
+    adapt(Flow)
 
     def __init__(self, flow, term, state):
         assert isinstance(flow, Flow)
@@ -719,7 +718,7 @@ class InjectFlow(Inject):
 class CompileScalar(CompileFlow):
 
     # The root flow is a special case of the scalar flow.
-    adapts_many(ScalarFlow, RootFlow)
+    adapt_many(ScalarFlow, RootFlow)
 
     def __call__(self):
         # If we are at the baseline (always the case for the root flow),
@@ -736,7 +735,7 @@ class CompileScalar(CompileFlow):
 class CompileTable(CompileFlow):
 
     # Used for both direct and fiber table flows.
-    adapts(TableFlow)
+    adapt(TableFlow)
 
     def __call__(self):
         # We start with identifying and handling special cases, where
@@ -808,7 +807,7 @@ class CompileTable(CompileFlow):
 
 class CompileQuotient(CompileFlow):
 
-    adapts(QuotientFlow)
+    adapt(QuotientFlow)
 
     def __call__(self):
         # Normally, a quotient flow is represented by a seed term with
@@ -1026,7 +1025,7 @@ class CompileQuotient(CompileFlow):
 
 class CompileComplement(CompileFlow):
 
-    adapts(ComplementFlow)
+    adapt(ComplementFlow)
 
     def __call__(self):
         # A complement term, just like a quotient term is represented
@@ -1217,7 +1216,7 @@ class CompileComplement(CompileFlow):
 class CompileCovering(CompileFlow):
 
     # The implementation is shared by these three covering flows.
-    adapts_many(MonikerFlow, ForkedFlow, LinkedFlow)
+    adapt_many(MonikerFlow, ForkedFlow, LinkedFlow)
 
     def __call__(self):
         # Moniker, forked and linked flows are represented as a seed term
@@ -1362,7 +1361,7 @@ class CompileCovering(CompileFlow):
 
 class CompileFiltered(CompileFlow):
 
-    adapts(FilteredFlow)
+    adapt(FilteredFlow)
 
     def __call__(self):
         # The term corresponding to the parent flow.
@@ -1381,7 +1380,7 @@ class CompileFiltered(CompileFlow):
 
 class CompileOrdered(CompileFlow):
 
-    adapts(OrderedFlow)
+    adapt(OrderedFlow)
 
     def __call__(self):
         # An ordered flow has two functions:
@@ -1427,7 +1426,7 @@ class CompileOrdered(CompileFlow):
 
 class InjectCode(Inject):
 
-    adapts(Code)
+    adapt(Code)
 
     def __call__(self):
         # Inject all the units that compose the expression.
@@ -1436,7 +1435,7 @@ class InjectCode(Inject):
 
 class InjectUnit(Inject):
 
-    adapts(Unit)
+    adapt(Unit)
 
     def __init__(self, unit, term, state):
         assert isinstance(unit, Unit)
@@ -1455,7 +1454,7 @@ class InjectUnit(Inject):
 
 class InjectColumn(Inject):
 
-    adapts(ColumnUnit)
+    adapt(ColumnUnit)
 
     def __call__(self):
         # To avoid an extra `inject()` call, check if the unit flow
@@ -1473,7 +1472,7 @@ class InjectColumn(Inject):
 
 class InjectScalar(Inject):
 
-    adapts(ScalarUnit)
+    adapt(ScalarUnit)
 
     def __call__(self):
         # Injects a batch of scalar units sharing the same flow.
@@ -1548,7 +1547,7 @@ class InjectScalar(Inject):
 
 class InjectAggregate(Inject):
 
-    adapts(AggregateUnit)
+    adapt(AggregateUnit)
 
     def __init__(self, unit, term, state):
         super(InjectAggregate, self).__init__(unit, term, state)
@@ -1691,7 +1690,7 @@ class InjectAggregate(Inject):
 
 class InjectCorrelated(Inject):
 
-    adapts(CorrelatedUnit)
+    adapt(CorrelatedUnit)
 
     def __call__(self):
         # In the term tree, correlated subqueries are represented using
@@ -1762,7 +1761,7 @@ class InjectCorrelated(Inject):
 
 class InjectKernel(Inject):
 
-    adapts(KernelUnit)
+    adapt(KernelUnit)
 
     def __call__(self):
         # Check if the unit is already exported by the term.
@@ -1784,7 +1783,7 @@ class InjectKernel(Inject):
 
 class InjectCovering(Inject):
 
-    adapts(CoveringUnit)
+    adapt(CoveringUnit)
 
     def __call__(self):
         # Check if the unit is already exported by the term.
@@ -1847,8 +1846,7 @@ def compile(expression, state=None, baseline=None):
     if baseline is not None:
         state.push_baseline(baseline)
     # Realize and apply the `Compile` adapter.
-    compile = Compile(expression, state)
-    term = compile()
+    term = Compile.__invoke__(expression, state)
     # Restore old baseline and mask flows.
     if baseline is not None:
         state.pop_baseline()

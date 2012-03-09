@@ -3,7 +3,7 @@
 #
 
 
-from ..adapter import adapts, Utility
+from ..adapter import adapt, Utility
 from ..util import Record
 from ..domain import ListDomain, RecordDomain, Profile
 from .command import RetrieveCmd, SQLCmd
@@ -16,7 +16,7 @@ from ..tr.compile import compile
 from ..tr.assemble import assemble
 from ..tr.reduce import reduce
 from ..tr.dump import serialize
-from ..connect import DBError, Connect, normalize
+from ..connect import DBError, connect, normalize
 from ..error import EngineError
 
 
@@ -39,7 +39,7 @@ class Product(object):
 
 class ProduceRetrieve(Act):
 
-    adapts(RetrieveCmd, ProduceAction)
+    adapt(RetrieveCmd, ProduceAction)
 
     def __call__(self):
         binding = self.command.binding
@@ -60,7 +60,6 @@ class ProduceRetrieve(Act):
                            for domain in plan.statement.domains]
             connection = None
             try:
-                connect = Connect()
                 connection = connect()
                 cursor = connection.cursor()
                 cursor.execute(plan.statement.sql.encode('utf-8'))
@@ -103,7 +102,7 @@ class ProduceRetrieve(Act):
 
 class AnalyzeRetrieve(Act):
 
-    adapts(RetrieveCmd, AnalyzeAction)
+    adapt(RetrieveCmd, AnalyzeAction)
 
     def __call__(self):
         binding = self.command.binding
@@ -118,7 +117,7 @@ class AnalyzeRetrieve(Act):
 
 class RenderSQL(Act):
 
-    adapts(SQLCmd, RenderAction)
+    adapt(SQLCmd, RenderAction)
     def __call__(self):
         plan = analyze(self.command.producer)
         status = '200 OK'

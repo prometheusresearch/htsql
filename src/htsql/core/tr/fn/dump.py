@@ -9,7 +9,7 @@
 """
 
 
-from ...adapter import adapts, adapts_none
+from ...adapter import adapt, adapt_none
 from ..dump import DumpBySignature
 from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
                         DateTimeIncrementSig, SubtractSig, DateDecrementSig,
@@ -27,7 +27,7 @@ from .signature import (AddSig, ConcatenateSig, DateIncrementSig,
 
 class DumpFunction(DumpBySignature):
 
-    adapts_none()
+    adapt_none()
     template = None
 
     def __call__(self):
@@ -39,67 +39,67 @@ class DumpFunction(DumpBySignature):
 
 class DumpAdd(DumpFunction):
 
-    adapts(AddSig)
+    adapt(AddSig)
     template = "({lop} + {rop})"
 
 
 class DumpSubtract(DumpFunction):
 
-    adapts(SubtractSig)
+    adapt(SubtractSig)
     template = "({lop} - {rop})"
 
 
 class DumpMultiply(DumpFunction):
 
-    adapts(MultiplySig)
+    adapt(MultiplySig)
     template = "({lop} * {rop})"
 
 
 class DumpDivide(DumpFunction):
 
-    adapts(DivideSig)
+    adapt(DivideSig)
     template = "({lop} / {rop})"
 
 
 class DumpDateIncrement(DumpFunction):
 
-    adapts(DateIncrementSig)
+    adapt(DateIncrementSig)
     template = "CAST({lop} + {rop} * INTERVAL '1' DAY AS DATE)"
 
 
 class DumpDateTimeIncrement(DumpFunction):
 
-    adapts(DateTimeIncrementSig)
+    adapt(DateTimeIncrementSig)
     template = "({lop} + {rop} * INTERVAL '1' DAY)"
 
 
 class DumpDateDecrement(DumpFunction):
 
-    adapts(DateDecrementSig)
+    adapt(DateDecrementSig)
     template = "CAST({lop} - {rop} * INTERVAL '1' DAY AS DATE)"
 
 
 class DumpDateTimeDecrement(DumpFunction):
 
-    adapts(DateTimeDecrementSig)
+    adapt(DateTimeDecrementSig)
     template = "({lop} - {rop} * INTERVAL '1' DAY)"
 
 
 class DumpDateDifference(DumpFunction):
 
-    adapts(DateDifferenceSig)
+    adapt(DateDifferenceSig)
     template = "EXTRACT(DAY FROM {lop} - {rop})"
 
 
 class DumpConcatenate(DumpFunction):
 
-    adapts(ConcatenateSig)
+    adapt(ConcatenateSig)
     template = "({lop} || {rop})"
 
 
 class DumpIf(DumpFunction):
 
-    adapts(IfSig)
+    adapt(IfSig)
 
     def __call__(self):
         self.format("(CASE")
@@ -115,7 +115,7 @@ class DumpIf(DumpFunction):
 
 class DumpSwitch(DumpFunction):
 
-    adapts(SwitchSig)
+    adapt(SwitchSig)
 
     def __call__(self):
         self.format("(CASE {variable}",
@@ -132,43 +132,43 @@ class DumpSwitch(DumpFunction):
 
 class DumpReversePolarity(DumpFunction):
 
-    adapts(ReversePolaritySig)
+    adapt(ReversePolaritySig)
     template = "(- {op})"
 
 
 class DumpRound(DumpFunction):
 
-    adapts(RoundSig)
+    adapt(RoundSig)
     template = "ROUND({op})"
 
 
 class DumpRoundTo(DumpFunction):
 
-    adapts(RoundToSig)
+    adapt(RoundToSig)
     template = "ROUND({op}, {precision})"
 
 
 class DumpTrunc(DumpFunction):
 
-    adapts(TruncSig)
+    adapt(TruncSig)
     template = "TRUNC({op})"
 
 
 class DumpTruncTo(DumpFunction):
 
-    adapts(TruncToSig)
+    adapt(TruncToSig)
     template = "TRUNC({op}, {precision})"
 
 
 class DumpLength(DumpFunction):
 
-    adapts(LengthSig)
+    adapt(LengthSig)
     template = "CHARACTER_LENGTH({op})"
 
 
 class DumpLike(DumpFunction):
 
-    adapts(LikeSig)
+    adapt(LikeSig)
 
     def __call__(self):
         self.format("({lop} {polarity:not}LIKE {rop} ESCAPE {escape:literal})",
@@ -177,13 +177,13 @@ class DumpLike(DumpFunction):
 
 class DumpReplace(DumpFunction):
 
-    adapts(ReplaceSig)
+    adapt(ReplaceSig)
     template = "REPLACE({op}, {old}, {new})"
 
 
 class DumpSubstring(DumpFunction):
 
-    adapts(SubstringSig)
+    adapt(SubstringSig)
 
     def __call__(self):
         if self.phrase.length is not None:
@@ -195,19 +195,19 @@ class DumpSubstring(DumpFunction):
 
 class DumpUpper(DumpFunction):
 
-    adapts(UpperSig)
+    adapt(UpperSig)
     template = "UPPER({op})"
 
 
 class DumpLower(DumpFunction):
 
-    adapts(LowerSig)
+    adapt(LowerSig)
     template = "LOWER({op})"
 
 
 class DumpTrim(DumpFunction):
 
-    adapts(TrimSig)
+    adapt(TrimSig)
 
     def __call__(self):
         if self.signature.is_left and not self.signature.is_right:
@@ -220,19 +220,19 @@ class DumpTrim(DumpFunction):
 
 class DumpToday(DumpFunction):
 
-    adapts(TodaySig)
+    adapt(TodaySig)
     template = "CURRENT_DATE"
 
 
 class DumpNow(DumpFunction):
 
-    adapts(NowSig)
+    adapt(NowSig)
     template = "LOCALTIMESTAMP"
 
 
 class DumpMakeDate(DumpFunction):
 
-    adapts(MakeDateSig)
+    adapt(MakeDateSig)
     template = ("CAST(DATE '2001-01-01' + ({year} - 2001) * INTERVAL '1' YEAR"
                 " + ({month} - 1) * INTERVAL '1' MONTH"
                 " + ({day} - 1) * INTERVAL '1' DAY AS DATE)")
@@ -240,7 +240,7 @@ class DumpMakeDate(DumpFunction):
 
 class DumpMakeDateTime(DumpFunction):
 
-    adapts(MakeDateTimeSig)
+    adapt(MakeDateTimeSig)
 
     def __call__(self):
         template = ("(TIMESTAMP '2001-01-01 00:00:00'"
@@ -259,61 +259,61 @@ class DumpMakeDateTime(DumpFunction):
 
 class DumpCombineDateTime(DumpFunction):
 
-    adapts(CombineDateTimeSig)
+    adapt(CombineDateTimeSig)
     template = "({date} + {time})"
 
 
 class DumpExtractYear(DumpFunction):
 
-    adapts(ExtractYearSig)
+    adapt(ExtractYearSig)
     template = "EXTRACT(YEAR FROM {op})"
 
 
 class DumpExtractMonth(DumpFunction):
 
-    adapts(ExtractMonthSig)
+    adapt(ExtractMonthSig)
     template = "EXTRACT(MONTH FROM {op})"
 
 
 class DumpExtractDay(DumpFunction):
 
-    adapts(ExtractDaySig)
+    adapt(ExtractDaySig)
     template = "EXTRACT(DAY FROM {op})"
 
 
 class DumpExtractHour(DumpFunction):
 
-    adapts(ExtractHourSig)
+    adapt(ExtractHourSig)
     template = "EXTRACT(HOUR FROM {op})"
 
 
 class DumpExtractMinute(DumpFunction):
 
-    adapts(ExtractMinuteSig)
+    adapt(ExtractMinuteSig)
     template = "EXTRACT(MINUTE FROM {op})"
 
 
 class DumpExtractSecond(DumpFunction):
 
-    adapts(ExtractSecondSig)
+    adapt(ExtractSecondSig)
     template = "EXTRACT(SECOND FROM {op})"
 
 
 class DumpExists(DumpFunction):
 
-    adapts(ExistsSig)
+    adapt(ExistsSig)
     template = "EXISTS{op}"
 
 
 class DumpCount(DumpFunction):
 
-    adapts(CountSig)
+    adapt(CountSig)
     template = "COUNT({op})"
 
 
 class DumpMinMax(DumpFunction):
 
-    adapts(MinMaxSig)
+    adapt(MinMaxSig)
 
     def __call__(self):
         if self.signature.polarity > 0:
@@ -324,13 +324,13 @@ class DumpMinMax(DumpFunction):
 
 class DumpSum(DumpFunction):
 
-    adapts(SumSig)
+    adapt(SumSig)
     template = "SUM({op})"
 
 
 class DumpAvg(DumpFunction):
 
-    adapts(AvgSig)
+    adapt(AvgSig)
     template = "AVG({op})"
 
 

@@ -12,7 +12,7 @@ This module implements the HTML renderer.
 
 
 from ..util import listof, tupleof, maybe, Printable
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from .format import HTMLFormat, EmitHeaders, Emit
 from ..mark import Mark
 from ..error import InternalServerError
@@ -320,7 +320,7 @@ class Template(object):
 
 class EmitHTMLHeaders(EmitHeaders):
 
-    adapts(HTMLFormat)
+    adapt(HTMLFormat)
 
     def __call__(self):
         yield ('Content-Type', 'text/html; charset=UTF-8')
@@ -328,7 +328,7 @@ class EmitHTMLHeaders(EmitHeaders):
 
 class EmitHTML(Emit):
 
-    adapts(HTMLFormat)
+    adapt(HTMLFormat)
 
     def __call__(self):
         product_to_html = profile_to_html(self.meta)
@@ -372,7 +372,7 @@ class EmitHTML(Emit):
 
 class ToHTML(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain):
         assert isinstance(domain, Domain)
@@ -424,7 +424,7 @@ class ToHTML(Adapter):
 
 class VoidToHTML(ToHTML):
 
-    adapts(VoidDomain)
+    adapt(VoidDomain)
 
     def __init__(self, domain):
         super(VoidToHTML, self).__init__(domain)
@@ -436,7 +436,7 @@ class VoidToHTML(ToHTML):
 
 class RecordToHTML(ToHTML):
 
-    adapts(RecordDomain)
+    adapt(RecordDomain)
 
     def __init__(self, domain):
         super(RecordToHTML, self).__init__(domain)
@@ -502,7 +502,7 @@ class RecordToHTML(ToHTML):
 
 class ListToHTML(ToHTML):
 
-    adapts(ListDomain)
+    adapt(ListDomain)
 
     def __init__(self, domain):
         super(ListToHTML, self).__init__(domain)
@@ -574,8 +574,8 @@ class ListToHTML(ToHTML):
 
 class NativeToHTML(ToHTML):
 
-    adapts_many(StringDomain,
-                EnumDomain)
+    adapt_many(StringDomain,
+               EnumDomain)
 
     def dump(self, value):
         return value
@@ -583,9 +583,9 @@ class NativeToHTML(ToHTML):
 
 class NativeStringToHTML(ToHTML):
 
-    adapts_many(NumberDomain,
-                DateDomain,
-                TimeDomain)
+    adapt_many(NumberDomain,
+               DateDomain,
+               TimeDomain)
 
     def dump(self, value):
         if value is None:
@@ -595,7 +595,7 @@ class NativeStringToHTML(ToHTML):
 
 class DecimalToHTML(ToHTML):
 
-    adapts(DecimalDomain)
+    adapt(DecimalDomain)
 
     def dump(self, value):
         if value is None:
@@ -613,7 +613,7 @@ class DecimalToHTML(ToHTML):
 
 class BooleanToHTML(ToHTML):
 
-    adapts(BooleanDomain)
+    adapt(BooleanDomain)
 
     def classes(self, value):
         if value is True:
@@ -632,7 +632,7 @@ class BooleanToHTML(ToHTML):
 
 class DateTimeToHTML(ToHTML):
 
-    adapts(DateTimeDomain)
+    adapt(DateTimeDomain)
 
     def dump(self, value):
         if value is None:
@@ -645,7 +645,7 @@ class DateTimeToHTML(ToHTML):
 
 class OpaqueToHTML(ToHTML):
 
-    adapts(OpaqueDomain)
+    adapt(OpaqueDomain)
 
     def dump(self, value):
         if value is None:
@@ -701,8 +701,8 @@ class MetaToHTML(object):
 
 
 def to_html(domain):
-    to_html = ToHTML(domain)
-    return to_html
+    return ToHTML.__invoke__(domain)
+
 
 def profile_to_html(profile):
     return MetaToHTML(profile)

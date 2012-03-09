@@ -11,7 +11,7 @@ This module implements the encoding process.
 """
 
 
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (Domain, UntypedDomain, EntityDomain, RecordDomain,
                       BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
@@ -130,7 +130,7 @@ class EncodeBase(Adapter):
         The current state of the encoding process.
     """
 
-    adapts(Binding)
+    adapt(Binding)
 
     def __init__(self, binding, state):
         assert isinstance(binding, Binding)
@@ -187,7 +187,7 @@ class Relate(EncodeBase):
 
 class EncodeQuery(Encode):
 
-    adapts(QueryBinding)
+    adapt(QueryBinding)
 
     def __call__(self):
         # Encode the segment node if it is provided.
@@ -200,7 +200,7 @@ class EncodeQuery(Encode):
 
 class EncodeSegment(Encode):
 
-    adapts(SegmentBinding)
+    adapt(SegmentBinding)
 
     def __call__(self):
         code = self.state.encode(self.binding.seed)
@@ -237,7 +237,7 @@ class EncodeSegment(Encode):
 
 class RelateRoot(Relate):
 
-    adapts(RootBinding)
+    adapt(RootBinding)
 
     def __call__(self):
         # The root binding gives rise to a root flow.
@@ -246,7 +246,7 @@ class RelateRoot(Relate):
 
 class RelateHome(Relate):
 
-    adapts(HomeBinding)
+    adapt(HomeBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -257,7 +257,7 @@ class RelateHome(Relate):
 
 class RelateFreeTable(Relate):
 
-    adapts(FreeTableBinding)
+    adapt(FreeTableBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -268,7 +268,7 @@ class RelateFreeTable(Relate):
 
 class RelateAttachedTable(Relate):
 
-    adapts(AttachedTableBinding)
+    adapt(AttachedTableBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -279,7 +279,7 @@ class RelateAttachedTable(Relate):
 
 class RelateSieve(Relate):
 
-    adapts(SieveBinding)
+    adapt(SieveBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -292,7 +292,7 @@ class RelateSieve(Relate):
 
 class RelateSort(Relate):
 
-    adapts(SortBinding)
+    adapt(SortBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -318,7 +318,7 @@ class RelateSort(Relate):
 
 class RelateQuotient(Relate):
 
-    adapts(QuotientBinding)
+    adapt(QuotientBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -343,7 +343,7 @@ class RelateQuotient(Relate):
 
 class RelateComplement(Relate):
 
-    adapts(ComplementBinding)
+    adapt(ComplementBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -354,7 +354,7 @@ class RelateComplement(Relate):
 
 class RelateMoniker(Relate):
 
-    adapts(CoverBinding)
+    adapt(CoverBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -367,7 +367,7 @@ class RelateMoniker(Relate):
 
 class RelateFork(Relate):
 
-    adapts(ForkBinding)
+    adapt(ForkBinding)
 
     def __call__(self):
         # Generate the parent flow.
@@ -389,7 +389,7 @@ class RelateFork(Relate):
 
 class RelateLink(Relate):
 
-    adapts(LinkBinding)
+    adapt(LinkBinding)
 
     def __call__(self):
         # Generate the parent and the seed flows.
@@ -414,7 +414,7 @@ class RelateLink(Relate):
 
 class EncodeColumn(Encode):
 
-    adapts(ColumnBinding)
+    adapt(ColumnBinding)
 
     def __call__(self):
         # Find the flow of the column.
@@ -425,7 +425,7 @@ class EncodeColumn(Encode):
 
 class RelateColumn(Relate):
 
-    adapts(ColumnBinding)
+    adapt(ColumnBinding)
 
     def __call__(self):
         # If the column binding has an associated table binding node,
@@ -438,7 +438,7 @@ class RelateColumn(Relate):
 
 class EncodeKernel(Encode):
 
-    adapts(KernelBinding)
+    adapt(KernelBinding)
 
     def __call__(self):
         # Get the quotient flow of the kernel.
@@ -451,7 +451,7 @@ class EncodeKernel(Encode):
 
 class EncodeLiteral(Encode):
 
-    adapts(LiteralBinding)
+    adapt(LiteralBinding)
 
     def __call__(self):
         # Switch the class from `Binding` to `Code` keeping all attributes.
@@ -461,12 +461,11 @@ class EncodeLiteral(Encode):
 
 class EncodeCast(Encode):
 
-    adapts(CastBinding)
+    adapt(CastBinding)
 
     def __call__(self):
         # Delegate it to the `Convert` adapter.
-        convert = Convert(self.binding, self.state)
-        return convert()
+        return Convert.__invoke__(self.binding, self.state)
 
 
 class Convert(Adapter):
@@ -506,10 +505,10 @@ class Convert(Adapter):
         An alias for `binding.domain`; the target domain.
     """
 
-    adapts(Domain, Domain)
+    adapt(Domain, Domain)
 
     @classmethod
-    def dispatch(interface, binding, *args, **kwds):
+    def __dispatch__(interface, binding, *args, **kwds):
         # We override the standard extract of the dispatch key, which
         # returns the type of the first argument(s).  For `Convert`,
         # the dispatch key is the pair of the origin and the target domains.
@@ -540,7 +539,7 @@ class Convert(Adapter):
 class ConvertUntyped(Convert):
     # Validate and convert untyped literals.
 
-    adapts(UntypedDomain, Domain)
+    adapt(UntypedDomain, Domain)
 
     def __call__(self):
         # The base binding is of untyped domain, however it does not have
@@ -579,14 +578,14 @@ class ConvertUntyped(Convert):
 class ConvertToItself(Convert):
     # Eliminate redundant conversions.
 
-    adapts_many((BooleanDomain, BooleanDomain),
-                (IntegerDomain, IntegerDomain),
-                (FloatDomain, FloatDomain),
-                (DecimalDomain, DecimalDomain),
-                (StringDomain, StringDomain),
-                (DateDomain, DateDomain),
-                (TimeDomain, TimeDomain),
-                (DateTimeDomain, DateTimeDomain))
+    adapt_many((BooleanDomain, BooleanDomain),
+               (IntegerDomain, IntegerDomain),
+               (FloatDomain, FloatDomain),
+               (DecimalDomain, DecimalDomain),
+               (StringDomain, StringDomain),
+               (DateDomain, DateDomain),
+               (TimeDomain, TimeDomain),
+               (DateTimeDomain, DateTimeDomain))
     # FIXME: do we need `EnumDomain` here?
 
     def __call__(self):
@@ -597,8 +596,8 @@ class ConvertToItself(Convert):
 class ConvertEntityToBoolean(Convert):
     # Converts a record expression to a conditional expression.
 
-    adapts_many((EntityDomain, BooleanDomain),
-                (RecordDomain, BooleanDomain))
+    adapt_many((EntityDomain, BooleanDomain),
+               (RecordDomain, BooleanDomain))
 
     def __call__(self):
         # When the binding domain is tuple, we assume that the binding
@@ -622,7 +621,7 @@ class ConvertEntityToBoolean(Convert):
 class ConvertStringToBoolean(Convert):
     # Convert a string expression to a conditional expression.
 
-    adapts(StringDomain, BooleanDomain)
+    adapt(StringDomain, BooleanDomain)
 
     def __call__(self):
         # A `NULL` value and an empty string are converted to `FALSE`,
@@ -645,12 +644,12 @@ class ConvertStringToBoolean(Convert):
 class ConvertToBoolean(Convert):
     # Convert an expression of any type to a conditional expression.
 
-    adapts_many((NumberDomain, BooleanDomain),
-                (EnumDomain, BooleanDomain),
-                (DateDomain, BooleanDomain),
-                (TimeDomain, BooleanDomain),
-                (DateTimeDomain, BooleanDomain),
-                (OpaqueDomain, BooleanDomain))
+    adapt_many((NumberDomain, BooleanDomain),
+               (EnumDomain, BooleanDomain),
+               (DateDomain, BooleanDomain),
+               (TimeDomain, BooleanDomain),
+               (DateTimeDomain, BooleanDomain),
+               (OpaqueDomain, BooleanDomain))
     # Note: we include the opaque domain here to ensure that any
     # data type could be converted to Boolean.  However this may
     # lead to unintuitive results.
@@ -667,13 +666,13 @@ class ConvertToBoolean(Convert):
 class ConvertToString(Convert):
     # Convert an expression to a string.
 
-    adapts_many((BooleanDomain, StringDomain),
-                (NumberDomain, StringDomain),
-                (EnumDomain, StringDomain),
-                (DateDomain, StringDomain),
-                (TimeDomain, StringDomain),
-                (DateTimeDomain, StringDomain),
-                (OpaqueDomain, StringDomain))
+    adapt_many((BooleanDomain, StringDomain),
+               (NumberDomain, StringDomain),
+               (EnumDomain, StringDomain),
+               (DateDomain, StringDomain),
+               (TimeDomain, StringDomain),
+               (DateTimeDomain, StringDomain),
+               (OpaqueDomain, StringDomain))
     # Note: we assume we could convert any opaque data type to string;
     # it is risky but convenient.
 
@@ -687,9 +686,9 @@ class ConvertToString(Convert):
 class ConvertToInteger(Convert):
     # Convert an expression to an integer value.
 
-    adapts_many((DecimalDomain, IntegerDomain),
-                (FloatDomain, IntegerDomain),
-                (StringDomain, IntegerDomain))
+    adapt_many((DecimalDomain, IntegerDomain),
+               (FloatDomain, IntegerDomain),
+               (StringDomain, IntegerDomain))
 
     def __call__(self):
         # We leave conversion from literal values to the database
@@ -702,9 +701,9 @@ class ConvertToInteger(Convert):
 class ConvertToDecimal(Convert):
     # Convert an expression to a decimal value.
 
-    adapts_many((IntegerDomain, DecimalDomain),
-                (FloatDomain, DecimalDomain),
-                (StringDomain, DecimalDomain))
+    adapt_many((IntegerDomain, DecimalDomain),
+               (FloatDomain, DecimalDomain),
+               (StringDomain, DecimalDomain))
 
     def __call__(self):
         # Encode the operand of the cast.
@@ -726,9 +725,9 @@ class ConvertToDecimal(Convert):
 class ConvertToFloat(Convert):
     # Convert an expression to a float value.
 
-    adapts_many((IntegerDomain, FloatDomain),
-                (DecimalDomain, FloatDomain),
-                (StringDomain, FloatDomain))
+    adapt_many((IntegerDomain, FloatDomain),
+               (DecimalDomain, FloatDomain),
+               (StringDomain, FloatDomain))
 
     def __call__(self):
         # Encode the operand of the cast.
@@ -750,8 +749,8 @@ class ConvertToFloat(Convert):
 class ConvertToDate(Convert):
     # Convert an expression to a date value.
 
-    adapts_many((StringDomain, DateDomain),
-                (DateTimeDomain, DateDomain))
+    adapt_many((StringDomain, DateDomain),
+               (DateTimeDomain, DateDomain))
 
     def __call__(self):
         # We leave conversion from literal values to the database
@@ -764,8 +763,8 @@ class ConvertToDate(Convert):
 class ConvertToTime(Convert):
     # Convert an expression to a time value.
 
-    adapts_many((StringDomain, TimeDomain),
-                (DateTimeDomain, TimeDomain))
+    adapt_many((StringDomain, TimeDomain),
+               (DateTimeDomain, TimeDomain))
 
     def __call__(self):
         # Leave conversion to the database engine.
@@ -776,8 +775,8 @@ class ConvertToTime(Convert):
 class ConvertToDateTime(Convert):
     # Convert an expression to a datetime value.
 
-    adapts_many((StringDomain, DateTimeDomain),
-                (DateDomain, DateTimeDomain))
+    adapt_many((StringDomain, DateTimeDomain),
+               (DateDomain, DateTimeDomain))
 
     def __call__(self):
         # Leave conversion to the database engine.
@@ -787,7 +786,7 @@ class ConvertToDateTime(Convert):
 
 class EncodeRescoping(Encode):
 
-    adapts(RescopingBinding)
+    adapt(RescopingBinding)
 
     def __call__(self):
         # Wrap the base expression into a scalar unit.
@@ -798,22 +797,20 @@ class EncodeRescoping(Encode):
 
 class EncodeFormula(Encode):
 
-    adapts(FormulaBinding)
+    adapt(FormulaBinding)
 
     def __call__(self):
         # Delegate the translation to the `EncodeBySignature` adapter.
-        encode = EncodeBySignature(self.binding, self.state)
-        return encode()
+        return EncodeBySignature.__invoke__(self.binding, self.state)
 
 
 class RelateFormula(Relate):
 
-    adapts(FormulaBinding)
+    adapt(FormulaBinding)
 
     def __call__(self):
         # Delegate the translation to the `RelateBySignature` adapter.
-        relate = RelateBySignature(self.binding, self.state)
-        return relate()
+        return RelateBySignature.__invoke__(self.binding, self.state)
 
 
 class EncodeBySignatureBase(Adapter):
@@ -845,10 +842,10 @@ class EncodeBySignatureBase(Adapter):
         The arguments of the formula.
     """
 
-    adapts(Signature)
+    adapt(Signature)
 
     @classmethod
-    def dispatch(interface, binding, *args, **kwds):
+    def __dispatch__(interface, binding, *args, **kwds):
         # We need to override `dispatch` since the adapter is polymorphic
         # not on the type of the node itself, but on the type of the
         # node signature.
@@ -907,7 +904,7 @@ class RelateBySignature(EncodeBySignatureBase):
 
 class EncodeSelection(Encode):
 
-    adapts(SelectionBinding)
+    adapt(SelectionBinding)
 
     def __call__(self):
         flow = self.state.relate(self.binding)
@@ -922,7 +919,7 @@ class EncodeSelection(Encode):
 
 class RelateSelection(Relate):
 
-    adapts(SelectionBinding)
+    adapt(SelectionBinding)
 
     def __call__(self):
         return self.state.relate(self.binding.base)
@@ -930,7 +927,7 @@ class RelateSelection(Relate):
 
 class EncodeWrapping(Encode):
 
-    adapts(WrappingBinding)
+    adapt(WrappingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -942,7 +939,7 @@ class RelateWrapping(Relate):
     Translates a wrapper binding to a flow node.
     """
 
-    adapts(WrappingBinding)
+    adapt(WrappingBinding)
 
     def __call__(self):
         # Delegate the adapter to the wrapped binding.
@@ -967,8 +964,7 @@ def encode(binding, state=None):
     if state is None:
         state = EncodingState()
     # Realize and apply the `Encode` adapter.
-    encode = Encode(binding, state)
-    return encode()
+    return Encode.__invoke__(binding, state)
 
 
 def relate(binding, state=None):
@@ -988,7 +984,6 @@ def relate(binding, state=None):
     if state is None:
         state = EncodingState()
     # Realize and apply the `Relate` adapter.
-    relate = Relate(binding, state)
-    return relate()
+    return Relate.__invoke__(binding, state)
 
 

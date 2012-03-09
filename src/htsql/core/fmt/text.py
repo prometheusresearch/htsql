@@ -11,7 +11,7 @@ This module implements the plain text renderer.
 """
 
 
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..util import maybe, oneof
 from .format import TextFormat, EmitHeaders, Emit
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
@@ -26,7 +26,7 @@ import datetime
 
 class EmitTextHeaders(EmitHeaders):
 
-    adapts(TextFormat)
+    adapt(TextFormat)
 
     def __call__(self):
         yield ('Content-Type', 'text/plain; charset=UTF-8')
@@ -34,7 +34,7 @@ class EmitTextHeaders(EmitHeaders):
 
 class EmitText(Emit):
 
-    adapts(TextFormat)
+    adapt(TextFormat)
 
     def __call__(self):
         product_to_text = profile_to_text(self.meta)
@@ -160,11 +160,14 @@ class EmitText(Emit):
 
 class ToText(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain):
         self.domain = domain
         self.size = 1
+
+    def __call__(self):
+        return self
 
     def head_depth(self):
         return 0
@@ -190,8 +193,8 @@ class ToText(Adapter):
 
 class StringToText(ToText):
 
-    adapts_many(StringDomain,
-                EnumDomain)
+    adapt_many(StringDomain,
+               EnumDomain)
 
     threshold = 32
 
@@ -305,9 +308,9 @@ class StringToText(ToText):
 
 class NativeStringToText(ToText):
 
-    adapts_many(NumberDomain,
-                DateDomain,
-                TimeDomain)
+    adapt_many(NumberDomain,
+               DateDomain,
+               TimeDomain)
 
     def dump(self, value):
         if value is None:
@@ -317,7 +320,7 @@ class NativeStringToText(ToText):
 
 class NumberToText(NativeStringToText):
 
-    adapts(NumberDomain)
+    adapt(NumberDomain)
 
     def body(self, data, widths):
         [width] = widths
@@ -327,7 +330,7 @@ class NumberToText(NativeStringToText):
 
 class DecimalToText(ToText):
 
-    adapts(DecimalDomain)
+    adapt(DecimalDomain)
 
     def dump(self, value):
         if value is None:
@@ -345,7 +348,7 @@ class DecimalToText(ToText):
 
 class DateTimeToText(ToText):
 
-    adapts(DateTimeDomain)
+    adapt(DateTimeDomain)
 
     def dump(self, value):
         if value is None:
@@ -358,7 +361,7 @@ class DateTimeToText(ToText):
 
 class OpaqueToText(ToText):
 
-    adapts(OpaqueDomain)
+    adapt(OpaqueDomain)
 
     def dump(self, value):
         if value is None:
@@ -373,7 +376,7 @@ class OpaqueToText(ToText):
 
 class VoidToText(ToText):
 
-    adapts(VoidDomain)
+    adapt(VoidDomain)
 
     def __init__(self, domain):
         super(VoidToText, self).__init__(domain)
@@ -382,7 +385,7 @@ class VoidToText(ToText):
 
 class RecordToText(ToText):
 
-    adapts(RecordDomain)
+    adapt(RecordDomain)
 
     def __init__(self, domain):
         super(RecordToText, self).__init__(domain)
@@ -453,7 +456,7 @@ class RecordToText(ToText):
 
 class ListToText(ToText):
 
-    adapts(ListDomain)
+    adapt(ListDomain)
 
     def __init__(self, domain):
         self.item_to_text = to_text(domain.item_domain)
@@ -533,8 +536,7 @@ class MetaToText(object):
 
 
 def to_text(domain):
-    to_text = ToText(domain)
-    return to_text
+    return ToText.__invoke__(domain)
 
 
 def profile_to_text(profile):

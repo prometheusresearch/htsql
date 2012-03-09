@@ -3,7 +3,7 @@
 #
 
 
-from ..adapter import Protocol, named
+from ..adapter import Protocol, call
 from ..domain import Profile
 from .lookup import guess_tag, guess_header, guess_path
 from .binding import Binding, VoidBinding
@@ -24,7 +24,7 @@ class Decorate(Protocol):
 
 class DecorateDomain(Decorate):
 
-    named('domain')
+    call('domain')
 
     def __call__(self):
         return self.binding.domain
@@ -32,7 +32,7 @@ class DecorateDomain(Decorate):
 
 class DecorateBinding(Decorate):
 
-    named('binding')
+    call('binding')
 
     def __call__(self):
         if isinstance(self.binding, VoidBinding):
@@ -42,7 +42,7 @@ class DecorateBinding(Decorate):
 
 class DecorateSyntax(Decorate):
 
-    named('syntax')
+    call('syntax')
 
     def __call__(self):
         if isinstance(self.binding.syntax, VoidSyntax):
@@ -52,7 +52,7 @@ class DecorateSyntax(Decorate):
 
 class DecorateTag(Decorate):
 
-    named('tag')
+    call('tag')
 
     def __call__(self):
         return guess_tag(self.binding)
@@ -60,7 +60,7 @@ class DecorateTag(Decorate):
 
 class DecorateHeader(Decorate):
 
-    named('header')
+    call('header')
 
     def __call__(self):
         return guess_header(self.binding)
@@ -68,7 +68,7 @@ class DecorateHeader(Decorate):
 
 class DecoratePath(Decorate):
 
-    named('path')
+    call('path')
 
     def __call__(self):
         return guess_path(self.binding)
@@ -76,21 +76,16 @@ class DecoratePath(Decorate):
 
 class DecoratePlan(Decorate):
 
-    named('plan')
+    call('plan')
 
     def __call__(self):
         return None
 
 
 def decorate(binding):
-    names = set()
-    for component in Decorate.implementations():
-        for name in component.names:
-            names.add(name)
     decorations = {}
-    for name in sorted(names):
-        decorate = Decorate(name, binding)
-        value = decorate()
+    for name in Decorate.__catalogue__():
+        value = Decorate.__invoke__(name, binding)
         decorations[name] = value
     return Profile(**decorations)
 

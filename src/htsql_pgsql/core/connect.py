@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import adapts
+from htsql.core.adapter import adapt
 from htsql.core.domain import StringDomain, EnumDomain
 from htsql.core.connect import Connect, DBError, NormalizeError, Normalize
 from htsql.core.context import context
@@ -69,7 +69,7 @@ class NormalizePGSQLError(NormalizeError):
 
 class NormalizePGSQLString(Normalize):
 
-    adapts(StringDomain)
+    adapt(StringDomain)
 
     @staticmethod
     def convert(value):
@@ -80,7 +80,7 @@ class NormalizePGSQLString(Normalize):
 
 class NormalizePGSQLEnum(Normalize):
 
-    adapts(EnumDomain)
+    adapt(EnumDomain)
 
     @staticmethod
     def convert(value):

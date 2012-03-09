@@ -11,7 +11,7 @@ This module declares the database introspector adapter.
 """
 
 
-from .adapter import Utility, weigh
+from .adapter import Utility, rank
 from .cache import once
 
 
@@ -33,7 +33,7 @@ class Introspect(Utility):
 
 class IntrospectCleanup(Introspect):
 
-    weigh(10.0)
+    rank(10.0)
 
     def __call__(self):
         catalog = super(IntrospectCleanup, self).__call__()
@@ -82,8 +82,7 @@ class IntrospectCleanup(Introspect):
 
 @once
 def introspect():
-    introspect = Introspect()
-    catalog = introspect()
+    catalog = Introspect.__invoke__()
     catalog.freeze()
     return catalog
 

@@ -13,7 +13,7 @@ This module declares the database connection adapter.
 
 from __future__ import with_statement
 from .util import Record
-from .adapter import Adapter, Utility, adapts
+from .adapter import Adapter, Utility, adapt
 from .domain import Domain
 from .context import context
 
@@ -308,7 +308,7 @@ class Connect(Utility):
 
 class Normalize(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     @staticmethod
     def convert(value):
@@ -331,18 +331,8 @@ class NormalizeError(Utility):
         return None
 
 
-def connect(with_autocommit=False):
-    connect = Connect(with_autocommit=with_autocommit)
-    return connect()
-
-
-def normalize(domain):
-    normalize = Normalize(domain)
-    return normalize()
-
-
-def normalize_error(error):
-    normalize = NormalizeError(error)
-    return normalize()
+connect = Connect.__invoke__
+normalize = Normalize.__invoke__
+normalize_error = NormalizeError.__invoke__
 
 

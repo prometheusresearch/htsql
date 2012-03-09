@@ -12,7 +12,7 @@ This module implements the unary and binary coerce adapters.
 
 
 from ..util import listof
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from ..domain import (Domain, VoidDomain, ListDomain, RecordDomain,
                       EntityDomain, UntypedDomain, BooleanDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
@@ -41,7 +41,7 @@ class UnaryCoerce(Adapter):
     The adapter is rarely used directly, use :func:`coerce` instead.
     """
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain):
         self.domain = domain
@@ -76,7 +76,7 @@ class BinaryCoerce(Adapter):
     The adapter is rarely used directly, use :func:`coerce` instead.
     """
 
-    adapts(Domain, Domain)
+    adapt(Domain, Domain)
 
     def __init__(self, ldomain, rdomain):
         self.ldomain = ldomain
@@ -94,10 +94,10 @@ class UnaryCoerceSpecial(UnaryCoerce):
     Disables special domains.
     """
 
-    adapts_many(VoidDomain,
-                ListDomain,
-                RecordDomain,
-                EntityDomain)
+    adapt_many(VoidDomain,
+               ListDomain,
+               RecordDomain,
+               EntityDomain)
 
     def __call__(self):
         # Special domains are not coercable.
@@ -109,7 +109,7 @@ class UnaryCoerceUntyped(UnaryCoerce):
     Specializes untyped values.
     """
 
-    adapts(UntypedDomain)
+    adapt(UntypedDomain)
 
     def __call__(self):
         # Specializes untyped top-level expressions to the string type.
@@ -121,9 +121,9 @@ class BinaryCoerceBoolean(BinaryCoerce):
     Coerces untyped values to :class:`BooleanDomain`.
     """
 
-    adapts_many((BooleanDomain, BooleanDomain),
-                (BooleanDomain, UntypedDomain),
-                (UntypedDomain, BooleanDomain))
+    adapt_many((BooleanDomain, BooleanDomain),
+               (BooleanDomain, UntypedDomain),
+               (UntypedDomain, BooleanDomain))
 
     def __call__(self):
         return BooleanDomain()
@@ -134,9 +134,9 @@ class BinaryCoerceInteger(BinaryCoerce):
     Coerces untyped values to :class:`IntegerDomain`.
     """
 
-    adapts_many((IntegerDomain, IntegerDomain),
-                (IntegerDomain, UntypedDomain),
-                (UntypedDomain, IntegerDomain))
+    adapt_many((IntegerDomain, IntegerDomain),
+               (IntegerDomain, UntypedDomain),
+               (UntypedDomain, IntegerDomain))
 
     def __call__(self):
         # Note that we use the generic version of the domain.  Engine addons
@@ -150,11 +150,11 @@ class BinaryCoerceDecimal(BinaryCoerce):
     Coerces untyped and integer values to :class:`DecimalDomain`.
     """
 
-    adapts_many((DecimalDomain, DecimalDomain),
-                (DecimalDomain, IntegerDomain),
-                (DecimalDomain, UntypedDomain),
-                (IntegerDomain, DecimalDomain),
-                (UntypedDomain, DecimalDomain))
+    adapt_many((DecimalDomain, DecimalDomain),
+               (DecimalDomain, IntegerDomain),
+               (DecimalDomain, UntypedDomain),
+               (IntegerDomain, DecimalDomain),
+               (UntypedDomain, DecimalDomain))
 
     def __call__(self):
         # Note that we use the generic version of the domain.  Engine addons
@@ -168,13 +168,13 @@ class BinaryCoerceFloat(BinaryCoerce):
     Coerces untyped, integer and decimal values to :class:`FloatDomain`.
     """
 
-    adapts_many((FloatDomain, FloatDomain),
-                (FloatDomain, DecimalDomain),
-                (FloatDomain, IntegerDomain),
-                (FloatDomain, UntypedDomain),
-                (DecimalDomain, FloatDomain),
-                (IntegerDomain, FloatDomain),
-                (UntypedDomain, FloatDomain))
+    adapt_many((FloatDomain, FloatDomain),
+               (FloatDomain, DecimalDomain),
+               (FloatDomain, IntegerDomain),
+               (FloatDomain, UntypedDomain),
+               (DecimalDomain, FloatDomain),
+               (IntegerDomain, FloatDomain),
+               (UntypedDomain, FloatDomain))
 
     def __call__(self):
         return FloatDomain()
@@ -185,9 +185,9 @@ class BinaryCoerceString(BinaryCoerce):
     Coerces untyped values to :class:`StringDomain`.
     """
 
-    adapts_many((StringDomain, StringDomain),
-                (StringDomain, UntypedDomain),
-                (UntypedDomain, StringDomain))
+    adapt_many((StringDomain, StringDomain),
+               (StringDomain, UntypedDomain),
+               (UntypedDomain, StringDomain))
 
     def __call__(self):
         # Note that we use the generic version of the domain.  Engine addons
@@ -201,9 +201,9 @@ class BinaryCoerceEnum(BinaryCoerce):
     Validates and coerces to :class:`EnumDomain`.
     """
 
-    adapts_many((EnumDomain, EnumDomain),
-                (EnumDomain, UntypedDomain),
-                (UntypedDomain, EnumDomain))
+    adapt_many((EnumDomain, EnumDomain),
+               (EnumDomain, UntypedDomain),
+               (UntypedDomain, EnumDomain))
 
     def __call__(self):
         # Note that `EnumDomain` represents not a single domain,
@@ -225,9 +225,9 @@ class BinaryCoerceDate(BinaryCoerce):
     Coerce to :class:`DateDomain`.
     """
 
-    adapts_many((DateDomain, DateDomain),
-                (DateDomain, UntypedDomain),
-                (UntypedDomain, DateDomain))
+    adapt_many((DateDomain, DateDomain),
+               (DateDomain, UntypedDomain),
+               (UntypedDomain, DateDomain))
 
     def __call__(self):
         return DateDomain()
@@ -238,9 +238,9 @@ class BinaryCoerceTime(BinaryCoerce):
     Coerce to :class:`TimeDomain`.
     """
 
-    adapts_many((TimeDomain, TimeDomain),
-                (TimeDomain, UntypedDomain),
-                (UntypedDomain, TimeDomain))
+    adapt_many((TimeDomain, TimeDomain),
+               (TimeDomain, UntypedDomain),
+               (UntypedDomain, TimeDomain))
 
     def __call__(self):
         return TimeDomain()
@@ -251,9 +251,9 @@ class BinaryCoerceDateTime(BinaryCoerce):
     Coerce to :class:`DateTimeDomain`.
     """
 
-    adapts_many((DateTimeDomain, DateTimeDomain),
-                (DateTimeDomain, UntypedDomain),
-                (UntypedDomain, DateTimeDomain))
+    adapt_many((DateTimeDomain, DateTimeDomain),
+               (DateTimeDomain, UntypedDomain),
+               (UntypedDomain, DateTimeDomain))
 
     def __call__(self):
         return DateTimeDomain()
@@ -264,7 +264,7 @@ class BinaryCoerceOpaque(BinaryCoerce):
     Validate and coerce to :class:`OpaqueDomain`.
     """
 
-    adapts(OpaqueDomain, OpaqueDomain)
+    adapt(OpaqueDomain, OpaqueDomain)
 
     def __call__(self):
         # This is the default implementation; we duplicate it here
@@ -311,13 +311,11 @@ def coerce(*domains):
         ldomain = domain
         rdomain = domains[idx]
         idx += 1
-        binary_coerce = BinaryCoerce(ldomain, rdomain)
-        domain = binary_coerce()
+        domain = BinaryCoerce.__invoke__(ldomain, rdomain)
         if domain is None:
             break
     if domain is not None:
-        unary_coerce = UnaryCoerce(domain)
-        domain = unary_coerce()
+        domain = UnaryCoerce.__invoke__(domain)
 
     return domain
 

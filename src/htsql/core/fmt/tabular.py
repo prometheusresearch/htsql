@@ -12,7 +12,7 @@ This module implements the CSV and TSV renderers.
 
 
 from ..util import listof
-from ..adapter import Adapter, adapts, adapts_many
+from ..adapter import Adapter, adapt, adapt_many
 from .format import Emit, EmitHeaders, CSVFormat
 from ..domain import (Domain, BooleanDomain, NumberDomain, FloatDomain,
                       DecimalDomain, StringDomain, EnumDomain, DateDomain,
@@ -24,7 +24,7 @@ import cStringIO
 
 class EmitCSVHeaders(EmitHeaders):
 
-    adapts(CSVFormat)
+    adapt(CSVFormat)
 
     content_types = {
             'excel': 'text/csv; charset=UTF-8',
@@ -51,7 +51,7 @@ class EmitCSVHeaders(EmitHeaders):
 
 class EmitCSV(Emit):
 
-    adapts(CSVFormat)
+    adapt(CSVFormat)
 
     def __call__(self):
         product_to_csv = to_csv(self.meta.domain, [self.meta])
@@ -77,7 +77,7 @@ class EmitCSV(Emit):
 
 class ToCSV(Adapter):
 
-    adapts(Domain)
+    adapt(Domain)
 
     def __init__(self, domain, profiles):
         assert isinstance(domain, Domain)
@@ -101,7 +101,7 @@ class ToCSV(Adapter):
 
 class VoidToCSV(ToCSV):
 
-    adapts(VoidDomain)
+    adapt(VoidDomain)
 
     def __init__(self, domain, profiles):
         super(VoidToCSV, self).__init__(domain, profiles)
@@ -117,7 +117,7 @@ class VoidToCSV(ToCSV):
 
 class RecordToCSV(ToCSV):
 
-    adapts(RecordDomain)
+    adapt(RecordDomain)
 
     def __init__(self, domain, profiles):
         super(RecordToCSV, self).__init__(domain, profiles)
@@ -158,7 +158,7 @@ class RecordToCSV(ToCSV):
 
 class ListToCSV(ToCSV):
 
-    adapts(ListDomain)
+    adapt(ListDomain)
 
     def __init__(self, domain, profiles):
         super(ListToCSV, self).__init__(domain, profiles)
@@ -180,7 +180,7 @@ class ListToCSV(ToCSV):
 
 class BooleanToCSV(ToCSV):
 
-    adapts(BooleanDomain)
+    adapt(BooleanDomain)
 
     def cells(self, value):
         if value is None:
@@ -193,7 +193,7 @@ class BooleanToCSV(ToCSV):
 
 class NumberToCSV(ToCSV):
 
-    adapts(NumberDomain)
+    adapt(NumberDomain)
 
     def cells(self, value):
         if value is None:
@@ -204,7 +204,7 @@ class NumberToCSV(ToCSV):
 
 class FloatToCSV(ToCSV):
 
-    adapts(FloatDomain)
+    adapt(FloatDomain)
 
     def cells(self, value):
         if value is None or str(value) in ['inf', '-inf', 'nan']:
@@ -215,7 +215,7 @@ class FloatToCSV(ToCSV):
 
 class DecimalToCSV(ToCSV):
 
-    adapts(DecimalDomain)
+    adapt(DecimalDomain)
 
     def cells(self, value):
         if value is None or not value.is_finite():
@@ -226,8 +226,8 @@ class DecimalToCSV(ToCSV):
 
 class StringToCSV(ToCSV):
 
-    adapts_many(StringDomain,
-                EnumDomain)
+    adapt_many(StringDomain,
+               EnumDomain)
 
     def cells(self, value):
         yield [value]
@@ -235,7 +235,7 @@ class StringToCSV(ToCSV):
 
 class DateToCSV(ToCSV):
 
-    adapts(DateDomain)
+    adapt(DateDomain)
 
     def cells(self, value):
         if value is None:
@@ -246,7 +246,7 @@ class DateToCSV(ToCSV):
 
 class TimeToCSV(ToCSV):
 
-    adapts(TimeDomain)
+    adapt(TimeDomain)
 
     def cells(self, value):
         if value is None:
@@ -257,7 +257,7 @@ class TimeToCSV(ToCSV):
 
 class DateTimeToCSV(ToCSV):
 
-    adapts(DateTimeDomain)
+    adapt(DateTimeDomain)
 
     def cells(self, value):
         if value is None:
@@ -270,7 +270,7 @@ class DateTimeToCSV(ToCSV):
 
 class OpaqueToCSV(ToCSV):
 
-    adapts(OpaqueDomain)
+    adapt(OpaqueDomain)
 
     def cells(self, value):
         if value is None:
@@ -284,8 +284,6 @@ class OpaqueToCSV(ToCSV):
         yield [value]
 
 
-def to_csv(domain, profiles):
-    to_csv = ToCSV(domain, profiles)
-    return to_csv()
+to_csv = ToCSV.__invoke__
 
 

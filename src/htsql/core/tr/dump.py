@@ -12,7 +12,7 @@ This module implements the SQL serialization process.
 
 
 from ..util import listof, maybe, Record
-from ..adapter import Adapter, Protocol, adapts, named
+from ..adapter import Adapter, Protocol, adapt, call
 from ..domain import (Domain, BooleanDomain, IntegerDomain, DecimalDomain,
                       FloatDomain, StringDomain, EnumDomain, DateDomain,
                       TimeDomain, DateTimeDomain, ListDomain, RecordDomain)
@@ -232,9 +232,8 @@ class SerializingState(object):
             The clause to dump.
         """
         # Realize and call the `Dump` adapter.
-        dump = Dump(clause, self)
         # Note: returns `None`.
-        return dump()
+        return Dump.__invoke__(clause, self)
 
     def dub(self, clause):
         """
@@ -244,8 +243,7 @@ class SerializingState(object):
             The clause to generate an alias for.
         """
         # Realize and call the `Dub` adapter.
-        dub = Dub(clause, self)
-        return dub()
+        return Dub.__invoke__(clause, self)
 
 
 class Serialize(Adapter):
@@ -267,7 +265,7 @@ class Serialize(Adapter):
         The current state of the serializing process.
     """
 
-    adapts(Clause)
+    adapt(Clause)
 
     def __init__(self, clause, state):
         assert isinstance(clause, Clause)
@@ -286,7 +284,7 @@ class SerializeQuery(Serialize):
     Serializes an HTSQL query to an execution plan.
     """
 
-    adapts(QueryFrame)
+    adapt(QueryFrame)
 
     def __call__(self):
         # When exists, serialize the query segment.
@@ -312,7 +310,7 @@ class SerializeSegment(Serialize):
         The maximum length of an alias.
     """
 
-    adapts(SegmentFrame)
+    adapt(SegmentFrame)
 
     # The maximum length of an alias.  We could choose an arbitrary
     # value and let the backends override it.  Here we have chosen
@@ -558,8 +556,7 @@ class DumpBase(Adapter):
                 modifier = match.group('modifier')
                 assert name in variables, name
                 value = variables[name]
-                format = Format(kind, value, modifier, self.state)
-                format()
+                Format.__invoke__(kind, value, modifier, self.state)
 
     def write(self, data):
         """
@@ -637,7 +634,7 @@ class FormatDefault(Format):
     instance to serialize.
     """
 
-    named('default')
+    call('default')
 
     def __init__(self, kind, value, modifier, state):
         assert isinstance(value, Clause)
@@ -665,7 +662,7 @@ class FormatUnion(Format):
     * `separator` is a separator between clauses (``', '``, by default).
     """
 
-    named('union')
+    call('union')
 
     def __init__(self, kind, value, modifier, state):
         assert isinstance(value, listof(Clause)) and len(value) > 0
@@ -696,7 +693,7 @@ class FormatName(Format):
     as a quoted SQL identifier.
     """
 
-    named('name')
+    call('name')
 
     def __init__(self, kind, value, modifier, state):
         assert isinstance(value, unicode)
@@ -726,7 +723,7 @@ class FormatLiteral(Format):
     The value of the `value` variable is serialized as a quoted SQL literal.
     """
 
-    named('literal')
+    call('literal')
 
     def __init__(self, kind, value, modifier, state):
         assert isinstance(value, unicode)
@@ -759,7 +756,7 @@ class FormatNot(Format):
     * writes ``NOT`` followed by a space when `polarity` is equal to ``-1``.
     """
 
-    named('not')
+    call('not')
 
     def __init__(self, kind, value, modifier, state):
         assert value in [+1, -1]
@@ -788,7 +785,7 @@ class FormatSwitch(Format):
     * writes the ``N`` clause when `polarity` is equal to ``-1``.
     """
 
-    named('switch')
+    call('switch')
 
     def __init__(self, kind, value, modifier, state):
         assert value in [+1, -1]
@@ -817,7 +814,7 @@ class FormatPass(Format):
     The value of the `string` variable is written directly to the SQL stream.
     """
 
-    named('pass')
+    call('pass')
 
     def __init__(self, kind, value, modifier, state):
         assert isinstance(value, unicode)
@@ -842,7 +839,7 @@ class Dub(Adapter):
         The current state of the serializing process.
     """
 
-    adapts(Clause)
+    adapt(Clause)
 
     def __init__(self, clause, state):
         self.clause = clause
@@ -876,7 +873,7 @@ class Dump(DumpBase):
         The current state of the serializing process.
     """
 
-    adapts(Clause)
+    adapt(Clause)
 
 
 class DubFrame(Dub):
@@ -884,7 +881,7 @@ class DubFrame(Dub):
     Generates a preform alias for a frame node.
     """
 
-    adapts(Frame)
+    adapt(Frame)
 
     def __call__(self):
         # For a frame, a good alias is the name of the table
@@ -907,7 +904,7 @@ class DumpFrame(Dump):
         A frame node to serialize.
     """
 
-    adapts(Frame)
+    adapt(Frame)
 
     def __init__(self, frame, state):
         super(DumpFrame, self).__init__(frame, state)
@@ -919,7 +916,7 @@ class DubPhrase(Dub):
     Generates a preform alias for a phrase node.
     """
 
-    adapts(Phrase)
+    adapt(Phrase)
 
     def __call__(self):
         # Generate a useful alias for a phrase node.  We base the alias
@@ -946,7 +943,7 @@ class DumpPhrase(Dump):
         A phrase node to serialize.
     """
 
-    adapts(Phrase)
+    adapt(Phrase)
 
     def __init__(self, phrase, state):
         super(DumpPhrase, self).__init__(phrase, state)
@@ -958,7 +955,7 @@ class DumpTable(Dump):
     Serializes a table frame.
     """
 
-    adapts(TableFrame)
+    adapt(TableFrame)
 
     def __call__(self):
         # Serialize a table reference in a `FROM` clause.
@@ -994,7 +991,7 @@ class DumpBranch(Dump):
     Serializes a ``SELECT`` frame.
     """
 
-    adapts(BranchFrame)
+    adapt(BranchFrame)
 
     def __call__(self):
         # Sequentially serialize the clauses of the `SELECT` frame.
@@ -1212,7 +1209,7 @@ class DumpNested(Dump):
     Serializes a nested ``SELECT`` frame.
     """
 
-    adapts(NestedFrame)
+    adapt(NestedFrame)
 
     def __call__(self):
         # Dump:
@@ -1230,7 +1227,7 @@ class DumpSegment(Dump):
     Serializes a top-level ``SELECT`` frame.
     """
 
-    adapts(SegmentFrame)
+    adapt(SegmentFrame)
 
     def __call__(self):
         super(DumpSegment, self).__call__()
@@ -1244,7 +1241,7 @@ class DumpLeadingAnchor(Dump):
     Serializes the leading subframe in a ``FROM`` clause.
     """
 
-    adapts(LeadingAnchor)
+    adapt(LeadingAnchor)
 
     def __call__(self):
         # Dump:
@@ -1270,7 +1267,7 @@ class DumpAnchor(Dump):
     Serializes a successive subframe in a ``FROM`` clause.
     """
 
-    adapts(Anchor)
+    adapt(Anchor)
 
     def __call__(self):
         # Dump:
@@ -1314,7 +1311,7 @@ class DubColumn(Dub):
     Generates a preform alias for a column reference.
     """
 
-    adapts(ColumnPhrase)
+    adapt(ColumnPhrase)
 
     def __call__(self):
         # Use the name of the column as an alias.
@@ -1326,7 +1323,7 @@ class DumpColumn(Dump):
     Serializes a reference to a table frame.
     """
 
-    adapts(ColumnPhrase)
+    adapt(ColumnPhrase)
 
     def __call__(self):
         # Dump:
@@ -1342,7 +1339,7 @@ class DubReference(Dub):
     Generates a preform alias for a reference to a nested ``SELECT``.
     """
 
-    adapts(ReferencePhrase)
+    adapt(ReferencePhrase)
 
     def __call__(self):
         # Use the same alias as the target phrase.
@@ -1356,7 +1353,7 @@ class DumpReference(Dump):
     Serializes a reference to a nested subframe.
     """
 
-    adapts(ReferencePhrase)
+    adapt(ReferencePhrase)
 
     def __call__(self):
         # Dump:
@@ -1373,7 +1370,7 @@ class DubEmbedding(Dub):
     Generates a preform alias for a correlated subquery.
     """
 
-    adapts(EmbeddingPhrase)
+    adapt(EmbeddingPhrase)
 
     def __call__(self):
         # Use the same alias as the (only) output column of the subquery.
@@ -1387,7 +1384,7 @@ class DumpEmbedding(Dump):
     Serializes an embedded subquery.
     """
 
-    adapts(EmbeddingPhrase)
+    adapt(EmbeddingPhrase)
 
     def __call__(self):
         # Fetch and serialize the suframe.
@@ -1404,12 +1401,11 @@ class DumpLiteral(Dump):
     Serialiation is delegated to the :class:`DumpByDomain` adapter.
     """
 
-    adapts(LiteralPhrase)
+    adapt(LiteralPhrase)
 
     def __call__(self):
         # Delegate serialization to `DumpByDomain`.
-        dump = DumpByDomain(self.phrase, self.state)
-        return dump()
+        return DumpByDomain.__invoke__(self.phrase, self.state)
 
 
 class DumpNull(Dump):
@@ -1417,7 +1413,7 @@ class DumpNull(Dump):
     Serializes a ``NULL`` value.
     """
 
-    adapts(NullPhrase)
+    adapt(NullPhrase)
 
     def __call__(self):
         # We serialize a `NULL` value here to avoid checking for
@@ -1449,10 +1445,10 @@ class DumpByDomain(DumpBase):
         The domain of the literal.
     """
 
-    adapts(Domain)
+    adapt(Domain)
 
     @classmethod
-    def dispatch(interface, phrase, *args, **kwds):
+    def __dispatch__(interface, phrase, *args, **kwds):
         # Dispatch the adapter on the domain of the literal node.
         assert isinstance(phrase, LiteralPhrase)
         return (type(phrase.domain),)
@@ -1472,7 +1468,7 @@ class DumpBoolean(DumpByDomain):
     Serializes a Boolean literal.
     """
 
-    adapts(BooleanDomain)
+    adapt(BooleanDomain)
 
     def __call__(self):
         # Use the SQL standard constants: `TRUE` and `FALSE`.
@@ -1488,7 +1484,7 @@ class DumpInteger(DumpByDomain):
     Serializes an integer literal.
     """
 
-    adapts(IntegerDomain)
+    adapt(IntegerDomain)
 
     def __call__(self):
         # Dump an integer number.  A backend may override this implementation
@@ -1511,7 +1507,7 @@ class DumpFloat(DumpByDomain):
     Serializes a float literal.
     """
 
-    adapts(FloatDomain)
+    adapt(FloatDomain)
 
     def __call__(self):
         # Dump a floating-point number.  A backend may override this method
@@ -1535,7 +1531,7 @@ class DumpDecimal(DumpByDomain):
     Serializes a decimal literal.
     """
 
-    adapts(DecimalDomain)
+    adapt(DecimalDomain)
 
     def __call__(self):
         # Dump a decimal number.  A backend may override this method
@@ -1558,7 +1554,7 @@ class DumpString(DumpByDomain):
     Serializes a string literal.
     """
 
-    adapts(StringDomain)
+    adapt(StringDomain)
 
     def __call__(self):
         # Dump the value as a quoted literal.
@@ -1570,7 +1566,7 @@ class DumpEnum(DumpByDomain):
     Serializes a value of an enumerated type.
     """
 
-    adapts(EnumDomain)
+    adapt(EnumDomain)
 
     def __call__(self):
         # There is no an enumerated type in the SQL standard, but most
@@ -1583,7 +1579,7 @@ class DumpDate(DumpByDomain):
     Serializes a date literal.
     """
 
-    adapts(DateDomain)
+    adapt(DateDomain)
 
     def __call__(self):
         # Dump:
@@ -1598,7 +1594,7 @@ class DumpTime(DumpByDomain):
     Serializes a time literal.
     """
 
-    adapts(TimeDomain)
+    adapt(TimeDomain)
 
     def __call__(self):
         self.format("TIME {value:literal}", value=unicode(self.value))
@@ -1609,7 +1605,7 @@ class DumpDateTime(DumpByDomain):
     Serializes a datetime literal.
     """
 
-    adapts(DateTimeDomain)
+    adapt(DateTimeDomain)
 
     def __call__(self):
         if self.value.tzinfo is None:
@@ -1626,12 +1622,11 @@ class DumpCast(Dump):
     Serialiation is delegated to the :class:`DumpByDomain` adapter.
     """
 
-    adapts(CastPhrase)
+    adapt(CastPhrase)
 
     def __call__(self):
         # Delegate serialization to `DumpToDomain`.
-        dump = DumpToDomain(self.phrase, self.state)
-        return dump()
+        return DumpToDomain.__invoke__(self.phrase, self.state)
 
 
 class DumpToDomain(DumpBase):
@@ -1657,10 +1652,10 @@ class DumpToDomain(DumpBase):
         The target domain.
     """
 
-    adapts(Domain, Domain)
+    adapt(Domain, Domain)
 
     @classmethod
-    def dispatch(interface, phrase, *args, **kwds):
+    def __dispatch__(interface, phrase, *args, **kwds):
         # Dispatch the adapter on the origin and the target domains
         # of the cast.
         assert isinstance(phrase, CastPhrase)
@@ -1682,7 +1677,7 @@ class DumpToInteger(DumpToDomain):
     Handles conversion from a string and other numeric data types.
     """
 
-    adapts(Domain, IntegerDomain)
+    adapt(Domain, IntegerDomain)
 
     def __call__(self):
         # Dump:
@@ -1699,7 +1694,7 @@ class DumpToFloat(DumpToDomain):
     Handles conversion from a string and other numeric data types.
     """
 
-    adapts(Domain, FloatDomain)
+    adapt(Domain, FloatDomain)
 
     def __call__(self):
         # Dump:
@@ -1717,7 +1712,7 @@ class DumpToDecimal(DumpToDomain):
     Handles conversion from a string and other numeric data types.
     """
 
-    adapts(Domain, DecimalDomain)
+    adapt(Domain, DecimalDomain)
 
     def __call__(self):
         # Dump:
@@ -1734,7 +1729,7 @@ class DumpToString(DumpToDomain):
     Handles conversion from other data types to a string.
     """
 
-    adapts(Domain, StringDomain)
+    adapt(Domain, StringDomain)
 
     def __call__(self):
         # Dump:
@@ -1751,7 +1746,7 @@ class DumpToDate(DumpToDomain):
     Handles conversion from a string and a datetime.
     """
 
-    adapts(Domain, DateDomain)
+    adapt(Domain, DateDomain)
 
     def __call__(self):
         self.format("CAST({base} AS DATE)", base=self.base)
@@ -1764,7 +1759,7 @@ class DumpToTime(DumpToDomain):
     Handles conversion from a string and a datetime.
     """
 
-    adapts(Domain, TimeDomain)
+    adapt(Domain, TimeDomain)
 
     def __call__(self):
         self.format("CAST({base} AS TIME)", base=self.base)
@@ -1777,7 +1772,7 @@ class DumpToDateTime(DumpToDomain):
     Handles conversion from a string.
     """
 
-    adapts(Domain, DateTimeDomain)
+    adapt(Domain, DateTimeDomain)
 
     def __call__(self):
         self.format("CAST({base} AS TIMESTAMP)", base=self.base)
@@ -1790,12 +1785,11 @@ class DumpFormula(Dump):
     Serialiation is delegated to the :class:`DumpBySignature` adapter.
     """
 
-    adapts(FormulaPhrase)
+    adapt(FormulaPhrase)
 
     def __call__(self):
         # Delegate serialization to `DumpBySignature`.
-        dump = DumpBySignature(self.phrase, self.state)
-        return dump()
+        return DumpBySignature.__invoke__(self.phrase, self.state)
 
 
 class DumpBySignature(DumpBase):
@@ -1823,10 +1817,10 @@ class DumpBySignature(DumpBase):
         The arguments of the formula.
     """
 
-    adapts(Signature)
+    adapt(Signature)
 
     @classmethod
-    def dispatch(interface, phrase, *args, **kwds):
+    def __dispatch__(interface, phrase, *args, **kwds):
         # Dispatch the adapter on the signature of the formula.
         assert isinstance(phrase, FormulaPhrase)
         return (type(phrase.signature),)
@@ -1846,7 +1840,7 @@ class DumpIsEqual(DumpBySignature):
     Serializes an (in)equality (``=`` or ``!=``) operator
     """
 
-    adapts(IsEqualSig)
+    adapt(IsEqualSig)
 
     def __call__(self):
         # Dump:
@@ -1860,7 +1854,7 @@ class DumpIsTotallyEqual(DumpBySignature):
     Serializes a total (in)equality (``==`` or ``!==``) operator.
     """
 
-    adapts(IsTotallyEqualSig)
+    adapt(IsTotallyEqualSig)
 
     def __call__(self):
         # Dump:
@@ -1877,7 +1871,7 @@ class DumpIsIn(DumpBySignature):
     Serializes an N-ary equality (``={}``) operator.
     """
 
-    adapts(IsInSig)
+    adapt(IsInSig)
 
     def __call__(self):
         # Dump:
@@ -1891,7 +1885,7 @@ class DumpAnd(DumpBySignature):
     Serializes a logical "AND" (``&``) operator.
     """
 
-    adapts(AndSig)
+    adapt(AndSig)
 
     def __call__(self):
         # Dump:
@@ -1904,7 +1898,7 @@ class DumpOr(DumpBySignature):
     Serializes a logical "OR" (``|``) operator.
     """
 
-    adapts(OrSig)
+    adapt(OrSig)
 
     def __call__(self):
         # Dump:
@@ -1917,7 +1911,7 @@ class DumpNot(DumpBySignature):
     Serializes a logical "NOT" (``!``) operator.
     """
 
-    adapts(NotSig)
+    adapt(NotSig)
 
     def __call__(self):
         # Dump:
@@ -1930,7 +1924,7 @@ class DumpIsNull(DumpBySignature):
     Serializes an ``is_null()`` operator.
     """
 
-    adapts(IsNullSig)
+    adapt(IsNullSig)
 
     def __call__(self):
         # Dump:
@@ -1944,7 +1938,7 @@ class DumpIfNull(DumpBySignature):
     Serializes an ``if_null()`` operator.
     """
 
-    adapts(IfNullSig)
+    adapt(IfNullSig)
 
     def __call__(self):
         # Dump:
@@ -1957,7 +1951,7 @@ class DumpNullIf(DumpBySignature):
     Serializes a ``null_if()`` operator.
     """
 
-    adapts(NullIfSig)
+    adapt(NullIfSig)
 
     def __call__(self):
         # Dump:
@@ -1970,7 +1964,7 @@ class DumpCompare(DumpBySignature):
     Serializes a comparison operator.
     """
 
-    adapts(CompareSig)
+    adapt(CompareSig)
 
     def __call__(self):
         # Dump:
@@ -1981,7 +1975,7 @@ class DumpCompare(DumpBySignature):
 
 class DumpToPredicate(DumpBySignature):
 
-    adapts(ToPredicateSig)
+    adapt(ToPredicateSig)
 
     def __call__(self):
         return self.state.dump(self.phrase.op)
@@ -1989,7 +1983,7 @@ class DumpToPredicate(DumpBySignature):
 
 class DumpFromPredicate(DumpBySignature):
 
-    adapts(FromPredicateSig)
+    adapt(FromPredicateSig)
 
     def __call__(self):
         return self.state.dump(self.phrase.op)
@@ -2010,7 +2004,6 @@ def serialize(clause, state=None):
     if state is None:
         state = SerializingState()
     # Realize and apply the `Serialize` adapter.
-    serialize = Serialize(clause, state)
-    return serialize()
+    return Serialize.__invoke__(clause, state)
 
 

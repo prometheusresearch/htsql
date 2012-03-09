@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import Protocol, named
+from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain,
@@ -81,9 +81,8 @@ class IntrospectMySQL(Introspect):
             scale = row.numeric_scale
             if isinstance(scale, long):
                 scale = int(scale)
-            introspect_domain = IntrospectMySQLDomain(data_type, column_type,
+            domain = IntrospectMySQLDomain.__invoke__(data_type, column_type,
                                                       length, precision, scale)
-            domain = introspect_domain()
             table.add_column(name, domain, is_nullable, has_default)
 
         cursor.execute("""
@@ -155,7 +154,7 @@ class IntrospectMySQL(Introspect):
 class IntrospectMySQLDomain(Protocol):
 
     @classmethod
-    def dispatch(component, data_type, *args, **kwds):
+    def __dispatch__(component, data_type, *args, **kwds):
         return data_type.encode('utf-8')
 
     def __init__(self, data_type, column_type, length, precision, scale):
@@ -171,7 +170,7 @@ class IntrospectMySQLDomain(Protocol):
 
 class IntrospectMySQLCharDomain(IntrospectMySQLDomain):
 
-    named('char')
+    call('char')
 
     def __call__(self):
         return StringDomain(length=self.length, is_varying=False)
@@ -179,7 +178,7 @@ class IntrospectMySQLCharDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLVarCharDomain(IntrospectMySQLDomain):
 
-    named('varchar', 'tinytext', 'text', 'mediumtext', 'longtext')
+    call('varchar', 'tinytext', 'text', 'mediumtext', 'longtext')
 
     def __call__(self):
         return StringDomain(length=self.length, is_varying=True)
@@ -187,7 +186,7 @@ class IntrospectMySQLVarCharDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):
 
-    named('enum')
+    call('enum')
 
     def __call__(self):
         column_type = self.column_type
@@ -200,7 +199,7 @@ class IntrospectMySQLEnumDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLIntegerDomain(IntrospectMySQLDomain):
 
-    named('tinyint', 'smallint', 'mediumint', 'int', 'bigint')
+    call('tinyint', 'smallint', 'mediumint', 'int', 'bigint')
 
     def __call__(self):
         if self.data_type == 'tinyint' and self.column_type == 'tinyint(1)':
@@ -210,7 +209,7 @@ class IntrospectMySQLIntegerDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLDecimalDomain(IntrospectMySQLDomain):
 
-    named('decimal')
+    call('decimal')
 
     def __call__(self):
         return DecimalDomain(precision=self.precision, scale=self.scale)
@@ -218,7 +217,7 @@ class IntrospectMySQLDecimalDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLFloatDomain(IntrospectMySQLDomain):
 
-    named('float', 'double')
+    call('float', 'double')
 
     def __call__(self):
         return FloatDomain()
@@ -226,7 +225,7 @@ class IntrospectMySQLFloatDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLDateDomain(IntrospectMySQLDomain):
 
-    named('date')
+    call('date')
 
     def __call__(self):
         return DateDomain()
@@ -234,7 +233,7 @@ class IntrospectMySQLDateDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLTimeDomain(IntrospectMySQLDomain):
 
-    named('time')
+    call('time')
 
     def __call__(self):
         return TimeDomain()
@@ -242,7 +241,7 @@ class IntrospectMySQLTimeDomain(IntrospectMySQLDomain):
 
 class IntrospectMySQLDateTimeDomain(IntrospectMySQLDomain):
 
-    named('datetime', 'timestamp')
+    call('datetime', 'timestamp')
 
     def __call__(self):
         return DateTimeDomain()

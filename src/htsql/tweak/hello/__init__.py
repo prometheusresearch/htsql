@@ -4,7 +4,7 @@
 
 
 from ...core.context import context
-from ...core.adapter import adapts, named
+from ...core.adapter import adapt, call
 from ...core.addon import Addon, Parameter
 from ...core.tr.fn.bind import BindCommand
 from ...core.tr.binding import CommandBinding
@@ -20,7 +20,7 @@ class HelloCmd(Command):
 
 class BindHello(BindCommand):
 
-    named('hello')
+    call('hello')
     signature = NullarySig
 
     def expand(self):
@@ -30,7 +30,7 @@ class BindHello(BindCommand):
 
 class RenderHello(Act):
 
-    adapts(HelloCmd, RenderAction)
+    adapt(HelloCmd, RenderAction)
 
     def __call__(self):
         status = "200 OK"

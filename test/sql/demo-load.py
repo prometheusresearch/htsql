@@ -7,7 +7,7 @@
 
 from __future__ import with_statement
 from htsql.core.util import listof
-from htsql.core.connect import Connect
+from htsql.core.connect import connect
 import yaml, sys
 
 sys.path.append('test/sql/datagen')
@@ -71,7 +71,6 @@ def insert_table_data(line, cursor):
 
 with state.app:
 
-    connect = Connect()
     connection = connect()
     cursor = connection.cursor()
 

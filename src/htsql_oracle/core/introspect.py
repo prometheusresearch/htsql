@@ -3,7 +3,7 @@
 #
 
 
-from htsql.core.adapter import Protocol, named
+from htsql.core.adapter import Protocol, call
 from htsql.core.introspect import Introspect
 from htsql.core.entity import make_catalog
 from htsql.core.domain import (BooleanDomain, IntegerDomain, DecimalDomain,
@@ -105,12 +105,11 @@ class IntrospectOracle(Introspect):
                         condition.lower().startswith('"'+name.lower()+'" ')):
                         check = condition
                         break
-            introspect_domain = IntrospectOracleDomain(row.data_type,
+            domain = IntrospectOracleDomain.__invoke__(row.data_type,
                                                        row.data_length,
                                                        row.data_precision,
                                                        row.data_scale,
                                                        check)
-            domain = introspect_domain()
             is_nullable = (row.nullable == 'Y')
             has_default = (row.data_default is not None)
             table.add_column(name, domain, is_nullable, has_default)
@@ -185,7 +184,7 @@ class IntrospectOracle(Introspect):
 class IntrospectOracleDomain(Protocol):
 
     @classmethod
-    def dispatch(self, data_type, *args, **kwds):
+    def __dispatch__(self, data_type, *args, **kwds):
         return data_type.encode('utf-8')
 
     def __init__(self, data_type, length, precision, scale, check):
@@ -201,7 +200,7 @@ class IntrospectOracleDomain(Protocol):
 
 class IntrospectOracleCharDomain(IntrospectOracleDomain):
 
-    named('CHAR', 'NCHAR')
+    call('CHAR', 'NCHAR')
 
     def __call__(self):
         return StringDomain(length=self.length, is_varying=False)
@@ -209,7 +208,7 @@ class IntrospectOracleCharDomain(IntrospectOracleDomain):
 
 class IntrospectOracleVarCharDomain(IntrospectOracleDomain):
 
-    named('VARCHAR2', 'NVARCHAR2', 'CLOB', 'NCLOB', 'LONG')
+    call('VARCHAR2', 'NVARCHAR2', 'CLOB', 'NCLOB', 'LONG')
 
     def __call__(self):
         return StringDomain(length=self.length, is_varying=True)
@@ -217,7 +216,7 @@ class IntrospectOracleVarCharDomain(IntrospectOracleDomain):
 
 class IntrospectOracleNumberDomain(IntrospectOracleDomain):
 
-    named('NUMBER')
+    call('NUMBER')
 
     boolean_pattern = r"""
         ^ [\w"]+ \s+ IN \s+ \( (?: 0 \s* , \s* 1 | 1 \s* , \s* 0 ) \) $
@@ -236,7 +235,7 @@ class IntrospectOracleNumberDomain(IntrospectOracleDomain):
 
 class IntrospectOracleFloatDomain(IntrospectOracleDomain):
 
-    named('BINARY_FLOAT', 'BINARY_DOUBLE')
+    call('BINARY_FLOAT', 'BINARY_DOUBLE')
 
     def __call__(self):
         return FloatDomain()
@@ -244,7 +243,7 @@ class IntrospectOracleFloatDomain(IntrospectOracleDomain):
 
 class IntrospectOracleDateTimeDomain(IntrospectOracleDomain):
 
-    named('DATE', 'TIMESTAMP')
+    call('DATE', 'TIMESTAMP')
 
     def __call__(self):
         return DateTimeDomain()
