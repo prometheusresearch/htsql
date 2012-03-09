@@ -28,8 +28,6 @@ tests:
       extension (ext)          : list and describe HTSQL extensions
       server (serve, s)        : start an HTTP server handling HTSQL requests
       shell (sh)               : start an HTSQL shell
-      get                      : execute and render an HTSQL query
-      post                     : execute and render an HTSQL query with POST data
       regress (test)           : run regression tests
 
   exit: 0
@@ -62,8 +60,6 @@ tests:
       extension (ext)          : list and describe HTSQL extensions
       server (serve, s)        : start an HTTP server handling HTSQL requests
       shell (sh)               : start an HTSQL shell
-      get                      : execute and render an HTSQL query
-      post                     : execute and render an HTSQL query with POST data
       regress (test)           : run regression tests
 
   exit: 0
