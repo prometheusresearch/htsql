@@ -23,17 +23,19 @@ class ConnectPGSQL(Connect):
 
     def open(self):
         # Prepare and execute the `psycopg2.connect()` call.
-        db = context.app.htsql.db
+        addon = context.app.htsql
         parameters = {}
-        parameters['database'] = db.database
-        if db.host is not None:
-            parameters['host'] = db.host
-        if db.port is not None:
-            parameters['port'] = db.port
-        if db.username is not None:
-            parameters['user'] = db.username
-        if db.password is not None:
-            parameters['password'] = db.password
+        parameters['database'] = addon.db.database
+        if addon.db.host is not None:
+            parameters['host'] = addon.db.host
+        if addon.db.port is not None:
+            parameters['port'] = addon.db.port
+        if addon.db.username is not None:
+            parameters['user'] = addon.db.username
+        if addon.db.password is not None:
+            parameters['password'] = addon.db.password
+        if addon.password is not None:
+            parameters['password'] = addon.password
         connection = psycopg2.connect(**parameters)
 
         # All queries are UTF-8 encoded strings regardless of the database

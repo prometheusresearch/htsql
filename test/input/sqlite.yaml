@@ -43,10 +43,16 @@ tests:
   tests:
   - define: sqlite
   - db: *connect-sandbox
+    extensions:
+      htsql: {debug: true}
     save: sandbox
   - db: *connect-edge
+    extensions:
+      htsql: {debug: true}
     save: edge
   - db: *connect-demo
+    extensions:
+      htsql: {debug: true}
     save: demo
   # The Regression Schema
   - include: test/input/schema.yaml

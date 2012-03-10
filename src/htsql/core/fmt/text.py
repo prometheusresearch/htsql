@@ -13,6 +13,7 @@ This module implements the plain text renderer.
 
 from ..adapter import Adapter, adapt, adapt_many
 from ..util import maybe, oneof
+from ..context import context
 from .format import TextFormat, EmitHeaders, Emit
 from ..domain import (Domain, BooleanDomain, NumberDomain, IntegerDomain,
                       DecimalDomain, FloatDomain, StringDomain, EnumDomain,
@@ -37,6 +38,7 @@ class EmitText(Emit):
     adapt(TextFormat)
 
     def __call__(self):
+        addon = context.app.htsql
         product_to_text = profile_to_text(self.meta)
         size = product_to_text.size
         if size == 0:
@@ -148,7 +150,7 @@ class EmitText(Emit):
                 line.append(u" :\n")
             yield "".join(line)
         yield u"\n"
-        if (self.meta.plan is not None and
+        if (addon.debug and self.meta.plan is not None and
                 self.meta.plan.statement is not None):
             yield u" ----\n"
             if self.meta.syntax:

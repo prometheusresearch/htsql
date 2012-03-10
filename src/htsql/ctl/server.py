@@ -11,20 +11,12 @@ This module implements the `server` routine.
 """
 
 
-from __future__ import with_statement
-from .error import ScriptError
-from .routine import Argument, Routine
-from .option import (HostOption, PortOption, QuietOption, PasswordOption,
-                     ExtensionsOption, ConfigOption)
-from .request import ConfigYAMLLoader
-from ..core.util import DB
-from ..core.validator import StrVal, IntVal, DBVal
+from .option import HostOption, PortOption, QuietOption
+from .request import DBRoutine
 import socket
 import SocketServer
 import wsgiref.simple_server
 import binascii
-import getpass
-import yaml
 
 
 class HTSQLServer(SocketServer.ThreadingMixIn,
@@ -84,7 +76,7 @@ class HTSQLRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
         stderr.flush()
 
 
-class ServerRoutine(Routine):
+class ServerRoutine(DBRoutine):
     """
     Implements the `server` routine.
 
@@ -94,16 +86,9 @@ class ServerRoutine(Routine):
 
     name = 'server'
     aliases = ['serve', 's']
-    arguments = [
-            Argument('db', DBVal(), None,
-                     hint="""the connection URI"""),
-    ]
-    options = [
+    options = DBRoutine.options + [
             HostOption,
             PortOption,
-            PasswordOption,
-            ExtensionsOption,
-            ConfigOption,
             QuietOption,
     ]
     hint = """start an HTTP server handling HTSQL requests"""
@@ -129,46 +114,14 @@ class ServerRoutine(Routine):
     All parameters except ENGINE and DATABASE are optional.
 
     By default, the HTTP server listens on the port 8080 on all available
-    interfaces.  Use options `--host` and `--port` to override the defalut
+    interfaces.  Use options `--host` and `--port` to override the default
     values.
 
     The HTTP logs are dumped to the standard output in the Apache Common Log
     Format.  Use option `--quiet` to suppress the logs.
     """
 
-    def run(self):
-        # The database URI.
-        db = self.db
-
-        # Ask for the database password if necessary.
-        if self.password and db is not None:
-            db = DB(engine=db.engine,
-                    username=db.username,
-                    password=getpass.getpass(),
-                    host=db.host,
-                    port=db.port,
-                    database=db.database,
-                    options=db.options)
-
-        # Load addon configuration.
-        extensions = self.extensions
-        if self.config is not None:
-            stream = open(self.config, 'rb')
-            loader = ConfigYAMLLoader(stream)
-            try:
-                config_extension = loader.load()
-            except yaml.YAMLError, exc:
-                raise ScriptError("failed to load application configuration:"
-                                  " %s" % exc)
-            extensions = extensions + [config_extension]
-
-        # Create the HTSQL application.
-        from htsql import HTSQL
-        try:
-            app = HTSQL(db, *extensions)
-        except ImportError, exc:
-            raise ScriptError("failed to construct application: %s" % exc)
-
+    def start(self, app):
         # Create the HTTP server.
         httpd = HTSQLServer(self)
         httpd.set_app(app)

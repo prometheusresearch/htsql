@@ -114,6 +114,8 @@ tests:
   # Test Django-generated database
   - db: null
     extensions:
+      htsql:
+        debug: true
       tweak.django:
         settings: test_django_sandbox.settings
   - uri: /polls_poll{question, pub_date, count(polls_choice)}
@@ -522,6 +524,8 @@ tests:
   # Test SQLAlchemy integration with an existing schema
   - db: null
     extensions:
+      htsql:
+        debug: true
       tweak.sqlalchemy:
         engine: test_sqlalchemy_demo.engine
         metadata: test_sqlalchemy_demo.metadata
@@ -548,6 +552,8 @@ tests:
   # Test integration on SQLAlchemy-generated schema
   - db: null
     extensions:
+      htsql:
+        debug: true
       tweak.sqlalchemy:
         engine: test_sqlalchemy_sandbox.engine
         metadata: test_sqlalchemy_sandbox.metadata

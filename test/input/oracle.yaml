@@ -99,14 +99,17 @@ tests:
   - define: oracle
   - db: *connect-sandbox
     extensions:
+      htsql: {debug: true}
       tweak.pool: {}
     save: sandbox
   - db: *connect-edge
     extensions:
+      htsql: {debug: true}
       tweak.pool: {}
     save: edge
   - db: *connect-demo
     extensions:
+      htsql: {debug: true}
       tweak.pool: {}
     save: demo
   # The Regression Schema

@@ -4,12 +4,19 @@
 
 
 from ..core.util import maybe, oneof, listof, tupleof, dictof, filelike
+from .error import ScriptError
+from .routine import Argument, Routine
+from .option import PasswordOption, ExtensionsOption, ConfigOption
+from ..core.util import DB
+from ..core.validator import DBVal
 import sys
+import os.path
 import wsgiref.util
 import urllib
 import StringIO
 import mimetypes
 import re
+import getpass
 import yaml, yaml.constructor
 
 
@@ -289,5 +296,72 @@ class Response(object):
         if self.body and self.body[-1] not in "\r\n":
             if hasattr(stream, 'isatty') and stream.isatty():
                 stream.write("\r\n")
+
+
+class DBRoutine(Routine):
+    """
+    Implements a template for routines that create an HTSQL instance.
+    """
+    arguments = [
+            Argument('db', DBVal(), default=None,
+                     hint="""the connection URI"""),
+    ]
+    options = [
+            PasswordOption,
+            ExtensionsOption,
+            ConfigOption,
+    ]
+
+    # Path to the default configuration file.
+    rc_path = '~/.htsqlrc'
+
+    def run(self):
+        # Determine HTSQL initialization parameters.
+        parameters = [self.db]
+
+        # Ask for the database password if necessary.
+        if self.password:
+            password = getpass.getpass()
+            parameters.append({'htsql': {'password': password}})
+
+        # Load addon configuration.
+        parameters.extend(self.extensions)
+        if self.config is not None:
+            stream = open(self.config, 'rb')
+            loader = ConfigYAMLLoader(stream)
+            try:
+                config_extension = loader.load()
+            except yaml.YAMLError, exc:
+                raise ScriptError("failed to load application configuration:"
+                                  " %s" % exc)
+            if config_extension is not None:
+                parameters.append(config_extension)
+
+        # Load the default configuration from the RC file.
+        path = os.path.abspath(os.path.expanduser(self.rc_path))
+        if os.path.exists(path):
+            stream = open(path, 'rb')
+            loader = ConfigYAMLLoader(stream)
+            try:
+                default_extension = loader.load()
+            except yaml.YAMLError, exc:
+                raise ScriptError("failed to load default configuration: %s"
+                                  % exc)
+            if default_extension is not None:
+                parameters.append(default_extension)
+
+        # Create the HTSQL application.
+        from htsql import HTSQL
+        try:
+            app = HTSQL(*parameters)
+        except ImportError, exc:
+            raise ScriptError("failed to construct application: %s" % exc)
+
+        # Run the routine-specific code.
+        self.start(app)
+
+    def start(self, app):
+        # Override in subclasses.
+        raise NotImplementedError()
 
 

@@ -27,17 +27,19 @@ class ConnectMySQL(Connect):
 
     def open(self):
         # Note: `with_autocommit` is ignored.
-        db = context.app.htsql.db
+        addon = context.app.htsql
         parameters = {}
-        parameters['db'] = db.database
-        if db.host is not None:
-            parameters['host'] = db.host
-        if db.port is not None:
-            parameters['port'] = db.port
-        if db.username is not None:
-            parameters['user'] = db.username
-        if db.password is not None:
-            parameters['passwd'] = db.password
+        parameters['db'] = addon.db.database
+        if addon.db.host is not None:
+            parameters['host'] = addon.db.host
+        if addon.db.port is not None:
+            parameters['port'] = addon.db.port
+        if addon.db.username is not None:
+            parameters['user'] = addon.db.username
+        if addon.db.password is not None:
+            parameters['passwd'] = addon.db.password
+        if addon.password is not None:
+            parameters['passwd'] = addon.password
         parameters['use_unicode'] = True
         parameters['charset'] = 'utf8'
         parameters['cursorclass'] = Cursor

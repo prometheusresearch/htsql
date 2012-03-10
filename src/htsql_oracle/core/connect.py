@@ -41,17 +41,19 @@ class ConnectOracle(Connect):
             return cursor.var(unicode, size, cursor.arraysize)
 
     def open(self):
-        db = context.app.htsql.db
+        addon = context.app.htsql
         parameters = {}
-        parameters['user'] = db.username or ''
-        parameters['password'] = db.password or ''
-        if db.host is not None:
-            host = db.host
-            port = db.port or 1521
-            sid = db.database
+        parameters['user'] = addon.db.username or ''
+        parameters['password'] = addon.db.password or ''
+        if addon.password is not None:
+            parameters['password'] = addon.password
+        if addon.db.host is not None:
+            host = addon.db.host
+            port = addon.db.port or 1521
+            sid = addon.db.database
             dsn = cx_Oracle.makedsn(host, port, sid)
         else:
-            dsn = db.database
+            dsn = addon.db.database
         parameters['dsn'] = dsn
         connection = cx_Oracle.connect(**parameters)
         if self.with_autocommit:

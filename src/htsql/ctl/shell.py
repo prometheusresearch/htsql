@@ -11,13 +11,9 @@ This module implements the `shell` routine.
 """
 
 
-from __future__ import with_statement
 from .error import ScriptError
-from .routine import Argument, Routine
-from .option import PasswordOption, ExtensionsOption, ConfigOption
-from .request import Request, ConfigYAMLLoader
-from ..core.validator import DBVal
-from ..core.util import DB, listof, trim_doc
+from .request import Request, DBRoutine
+from ..core.util import listof, trim_doc
 from ..core.model import (HomeNode, InvalidNode, InvalidArc, TableArc, 
                           ColumnArc, ChainArc, AmbiguousArc)
 from ..core.classify import classify, normalize
@@ -28,12 +24,10 @@ import sys
 import os, os.path
 import re
 import subprocess
-import getpass
 try:
     import readline
 except ImportError:
     readline = None
-import yaml
 
 
 class Cmd(object):
@@ -662,7 +656,6 @@ class RunCmd(Cmd):
     with the response body, use `headers on`.
     """
 
-    # FIXME: duplicates `GetPostBaseCmd.execute()`.
     def execute(self):
         # Check if the argument is suppied and is a valid filename.
         if not self.argument:
@@ -842,22 +835,13 @@ class DescribeCmd(Cmd):
         self.ctl.out()
 
 
-class ShellRoutine(Routine):
+class ShellRoutine(DBRoutine):
     """
     Implements the `shell` routine.
     """
 
     name = 'shell'
     aliases = ['sh']
-    arguments = [
-            Argument('db', DBVal(), default=None,
-                     hint="""the connection URI"""),
-    ]
-    options = [
-            PasswordOption,
-            ExtensionsOption,
-            ConfigOption,
-    ]
     hint = """start an HTSQL shell"""
     help = """
     The routine starts an interactive HTSQL shell over the specified database.
@@ -1034,38 +1018,9 @@ class ShellRoutine(Routine):
             except ValueError:
                 pass
 
-    def run(self):
-        # The database URI.
-        db = self.db
-
-        # Ask for the database password if necessary.
-        if self.password and db is not None:
-            db = DB(engine=db.engine,
-                    username=db.username,
-                    password=getpass.getpass(),
-                    host=db.host,
-                    port=db.port,
-                    database=db.database,
-                    options=db.options)
-
-        # Load addon configuration.
-        extensions = self.extensions
-        if self.config is not None:
-            stream = open(self.config, 'rb')
-            loader = ConfigYAMLLoader(stream)
-            try:
-                config_extension = loader.load()
-            except yaml.YAMLError, exc:
-                raise ScriptError("failed to load application configuration:"
-                                  " %s" % exc)
-            extensions = extensions + [config_extension]
-
-        # Create the HTSQL application.
-        from htsql import HTSQL
-        try:
-            self.state.app = HTSQL(db, *extensions)
-        except ImportError, exc:
-            raise ScriptError("failed to construct application: %s" % exc)
+    def start(self, app):
+        # Set the active HTSQL application.
+        self.state.app = app
 
         # Display the welcome notice; load the history.
         self.setup()

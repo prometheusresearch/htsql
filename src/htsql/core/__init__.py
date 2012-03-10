@@ -6,7 +6,7 @@
 from . import (adapter, addon, application, cache, cmd, connect, context,
                domain, entity, error, introspect, mark, split_sql,
                tr, util, validator, wsgi)
-from .validator import DBVal
+from .validator import DBVal, StrVal, BoolVal
 from .addon import Addon, Parameter, addon_registry
 from .connect import connect, DBError
 from .introspect import introspect
@@ -41,6 +41,10 @@ class HTSQLAddon(Addon):
             Parameter('db', DBVal(),
                       value_name="""engine:database""",
                       hint="""the connection URI"""),
+            Parameter('password', StrVal(),
+                      hint="""override the password"""),
+            Parameter('debug', BoolVal(), default=False,
+                      hint="""dump debug information""")
     ]
 
     packages = ['.', '.cmd', '.fmt', '.tr', '.tr.fn']

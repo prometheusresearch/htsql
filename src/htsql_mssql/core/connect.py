@@ -21,18 +21,20 @@ class MSSQLError(DBError):
 class ConnectMSSQL(Connect):
 
     def open(self):
-        db = context.app.htsql.db
+        addon = context.app.htsql
         parameters = {}
-        parameters['database'] = db.database
-        if db.host is not None:
-            if db.port is not None:
-                parameters['host'] = "%s:%s" % (db.host, db.port)
+        parameters['database'] = addon.db.database
+        if addon.db.host is not None:
+            if addon.db.port is not None:
+                parameters['host'] = "%s:%s" % (addon.db.host, addon.db.port)
             else:
-                parameters['host'] = db.host
-        if db.username is not None:
-            parameters['user'] = db.username
-        if db.password is not None:
-            parameters['password'] = db.password
+                parameters['host'] = addon.db.host
+        if addon.db.username is not None:
+            parameters['user'] = addon.db.username
+        if addon.db.password is not None:
+            parameters['password'] = addon.db.password
+        if addon.password is not None:
+            parameters['password'] = addon.password
         parameters['charset'] = 'utf8'
         connection = pymssql.connect(**parameters)
         if self.with_autocommit:
