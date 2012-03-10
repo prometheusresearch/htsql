@@ -67,8 +67,6 @@ def check_all():
                 % (CTL_DIR+"/ssh_config"))
             errors += trial("hg update && python setup.py install",
                             "installing HTSQL under %s" % client_vm.name)
-            errors += trial("htsql-ctl regress -qi test/regress.yaml routine",
-                            "testing htsql-ctl routines")
             errors += trial("htsql-ctl regress -qi test/regress.yaml sqlite",
                             "testing sqlite backend")
             for server_vm, suite in [(pgsql84_vm, 'pgsql'),
@@ -102,6 +100,8 @@ def check_all():
                           % (suite, server_vm.name)
                 errors += trial(command, message)
                 server_vm.stop()
+            errors += trial("htsql-ctl regress -qi test/regress.yaml routine",
+                            "testing htsql-ctl routines")
             client_vm.stop()
     except:
         for vm in vms:

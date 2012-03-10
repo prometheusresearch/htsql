@@ -43,7 +43,7 @@ tests:
   - uri: /{2+2}
   - uri: /school
 
-  # Merging consecutive limits.
+  # Merging consecutive limits
   - uri: /school.limit(6)
   - uri: /school.limit(5)
   - uri: /school.limit(4)

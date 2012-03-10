@@ -5,95 +5,502 @@
 
 id: routine
 tests:
-- ctl: []
-  stdout: |
-    HTSQL-CTL - HTSQL command-line administrative application
-    Copyright (c) 2006-2012, Prometheus Research, LLC
+- id: htsql-ctl
+  tests:
+  - ctl: []
+    stdout: |
+      HTSQL-CTL - HTSQL command-line administrative application
+      Copyright (c) 2006-2012, Prometheus Research, LLC
 
-    Run `htsql-ctl help` for general usage and list of routines.
-    Run `htsql-ctl help <routine>` for help on a specific routine.
-  exit: 0
-- ctl: [--help]
-  stdout: |+
-    HTSQL-CTL - HTSQL command-line administrative application
-    Copyright (c) 2006-2012, Prometheus Research, LLC
-    Usage: htsql-ctl <routine> [options] [arguments]
+      Run `htsql-ctl help` for general usage and list of routines.
+      Run `htsql-ctl help <routine>` for help on a specific routine.
+    exit: 0
+  - ctl: [--help]
+    stdout: |+
+      HTSQL-CTL - HTSQL command-line administrative application
+      Copyright (c) 2006-2012, Prometheus Research, LLC
+      Usage: htsql-ctl <routine> [options] [arguments]
 
-    Run `htsql-ctl help` for general usage and list of routines.
-    Run `htsql-ctl help <routine>` for help on a specific routine.
+      Run `htsql-ctl help` for general usage and list of routines.
+      Run `htsql-ctl help <routine>` for help on a specific routine.
 
-    Available routines:
-      help (h, ?)              : describe the usage of the application and its routines
-      version                  : display the version of the application
-      extension (ext)          : list and describe HTSQL extensions
-      server (serve, s)        : start an HTTP server handling HTSQL requests
-      shell (sh)               : start an HTSQL shell
-      regress (test)           : run regression tests
+      Available routines:
+        help (h, ?)              : describe the usage of the application and its routines
+        version                  : display the version of the application
+        extension (ext)          : list and describe HTSQL extensions
+        server (serve, s)        : start an HTTP server handling HTSQL requests
+        shell (sh)               : start an HTSQL shell
+        regress (test)           : run regression tests
 
-  exit: 0
-- ctl: [--version]
-  stdout: |+
-    HTSQL 2.3.1.dev
-    Copyright (c) 2006-2012, Prometheus Research, LLC
+    exit: 0
+  - ctl: [--version]
+    stdout: |+
+      HTSQL 2.3.1.dev
+      Copyright (c) 2006-2012, Prometheus Research, LLC
 
-    This is free software: you are free to change and redistribute it.
-    There is NO WARRANTY, to the extent permitted by law.  This software
-    is released under the AGPLv3 as well as a permissive license for use
-    with open source databases.  See http://htsql.org/license/.
+      This is free software: you are free to change and redistribute it.
+      There is NO WARRANTY, to the extent permitted by law.  This software
+      is released under the AGPLv3 as well as a permissive license for use
+      with open source databases.  See http://htsql.org/license/.
 
-    The HTSQL language and implementation were developed by members
-    of the HTSQL Project (http://htsql.org/).
+      The HTSQL language and implementation were developed by members
+      of the HTSQL Project (http://htsql.org/).
 
-  exit: 0
-- ctl: [help]
-  stdout: |+
-    HTSQL-CTL - HTSQL command-line administrative application
-    Copyright (c) 2006-2012, Prometheus Research, LLC
-    Usage: htsql-ctl <routine> [options] [arguments]
+    exit: 0
+- id: htsql-ctl-help
+  tests:
+  - ctl: [help, help]
+    stdout: |+
+      HELP - describe the usage of the application and its routines
+      Usage: htsql-ctl help [ROUTINE [FEATURE]]
 
-    Run `htsql-ctl help` for general usage and list of routines.
-    Run `htsql-ctl help <routine>` for help on a specific routine.
+      Run 'htsql-ctl help' to describe the usage of the application and
+      get the list of available routines.
 
-    Available routines:
-      help (h, ?)              : describe the usage of the application and its routines
-      version                  : display the version of the application
-      extension (ext)          : list and describe HTSQL extensions
-      server (serve, s)        : start an HTTP server handling HTSQL requests
-      shell (sh)               : start an HTSQL shell
-      regress (test)           : run regression tests
+      Run 'htsql-ctl help <routine>' to describe the usage of the
+      specified routine.
 
-  exit: 0
-- ctl: [help, help]
-  stdout: |+
-    HELP - describe the usage of the application and its routines
-    Usage: htsql-ctl help [ROUTINE [FEATURE]]
+      Some routines may contain separate descriptions of some features.
+      Run 'htsql-ctl help <routine> <feature>' to describe a specific
+      feature.
 
-    Run 'htsql-ctl help' to describe the usage of the application and
-    get the list of available routines.
+      Arguments:
+        ROUTINE                  : the name of the routine to describe
+        FEATURE                  : the feature to describe
 
-    Run 'htsql-ctl help <routine>' to describe the usage of the
-    specified routine.
+    exit: 0
+  - ctl: [help]
+    stdout: |+
+      HTSQL-CTL - HTSQL command-line administrative application
+      Copyright (c) 2006-2012, Prometheus Research, LLC
+      Usage: htsql-ctl <routine> [options] [arguments]
 
-    Some routines may contain separate descriptions of some features.
-    Run 'htsql-ctl help <routine> <feature>' to describe a specific
-    feature.
+      Run `htsql-ctl help` for general usage and list of routines.
+      Run `htsql-ctl help <routine>` for help on a specific routine.
 
-    Arguments:
-      ROUTINE                  : the name of the routine to describe
-      FEATURE                  : the feature to describe
+      Available routines:
+        help (h, ?)              : describe the usage of the application and its routines
+        version                  : display the version of the application
+        extension (ext)          : list and describe HTSQL extensions
+        server (serve, s)        : start an HTTP server handling HTSQL requests
+        shell (sh)               : start an HTSQL shell
+        regress (test)           : run regression tests
 
-  exit: 0
-- ctl: [version]
-  stdout: |+
-    HTSQL 2.3.1.dev
-    Copyright (c) 2006-2012, Prometheus Research, LLC
+    exit: 0
+- id: htsql-ctl-version
+  tests:
+  - ctl: [help, version]
+    stdout: |+
+      VERSION - display the version of the application
+      Usage: htsql-ctl version
 
-    This is free software: you are free to change and redistribute it.
-    There is NO WARRANTY, to the extent permitted by law.  This software
-    is released under the AGPLv3 as well as a permissive license for use
-    with open source databases.  See http://htsql.org/license/.
+      Run 'htsql-ctl version' to display the version of HTSQL.
 
-    The HTSQL language and implementation were developed by members
-    of the HTSQL Project (http://htsql.org/).
+    exit: 0
+  - ctl: [version]
+    stdout: |+
+      HTSQL 2.3.1.dev
+      Copyright (c) 2006-2012, Prometheus Research, LLC
 
-  exit: 0
+      This is free software: you are free to change and redistribute it.
+      There is NO WARRANTY, to the extent permitted by law.  This software
+      is released under the AGPLv3 as well as a permissive license for use
+      with open source databases.  See http://htsql.org/license/.
+
+      The HTSQL language and implementation were developed by members
+      of the HTSQL Project (http://htsql.org/).
+
+    exit: 0
+- id: htsql-ctl-shell
+  tests:
+  - ctl: [help, shell]
+    stdout: |+
+      SHELL - start an HTSQL shell
+      Usage: htsql-ctl shell [DB]
+
+      The routine starts an interactive HTSQL shell over the specified database.
+
+      The DB argument specifies database connection parameters; must have the
+      form:
+
+          engine://username:password@host:port/database
+
+      Here,
+
+        - ENGINE is the type of the database server; supported values are
+          `sqlite`, `pgsql`, `mysql`, `mssql` and `oracle`.
+        - The parameters USERNAME:PASSWORD are used for authentication.
+        - The parameters HOST:PORT indicate the address of the database
+          server.
+        - DATABASE is the name of the database; for SQLite, the path to the
+          database file.
+
+      All parameters except ENGINE and DATABASE are optional.
+
+      When the shell is started, you will see the shell prompt with the
+      database name followed by `$`.  Type an HTSQL query and press ENTER to
+      execute it.  Type a command with any arguments and press ENTER to
+      execute the command.  In particular, use `help` to get a list of shell
+      commands, `help <command>` to describe a command.
+
+      Type `exit` or Ctrl-D to exit the shell.
+
+      Shell commands: (run 'htsql-ctl help shell <command>' for more help)
+        help [command]           : describe the shell or a shell command
+        version                  : print version and license information
+        exit                     : quit the shell
+        user [remote_user]       : set the remote user for HTTP requests
+        describe [table]         : list tables, or slots for a given table
+        headers on|off           : display HTTP status line and headers
+        pager on|off             : pipe long output to a pager
+        [get] /query             : execute an HTSQL query
+        post /query              : execute an HTSQL query with POST data
+        run filename.htsql       : run an HTSQL query from a file
+
+      Arguments:
+        DB                       : the connection URI
+
+      Valid options:
+        -p [--password]          : ask for the database password
+        -E [--extension] EXT [+] : include extra extensions
+        -C [--config] FILE       : read HTSQL configuration from FILE
+
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |+
+      /count(school)
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+    exit: 0
+  - ctl: [shell, -E, 'htsql:db=''sqlite:build/regress/sqlite/htsql_demo.sqlite''']
+    stdout: |+
+      /count(school)
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+    exit: 0
+  - ctl: [shell, -C, build/regress/sqlite/htsql_demo.yaml]
+    stdout: |+
+      /count(school)
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', -E, 'htsql:debug=true',
+      -E, tweak.meta]
+    stdout: |
+      /meta(/count(table))
+       | count(table) |
+      -+--------------+-
+       |           15 |
+
+       ----
+       /count(table)
+       SELECT "table"."count"
+       FROM (SELECT COUNT(1) AS "count"
+             FROM "table") AS "table"
+       WHERE ("table"."count" IS NOT NULL)
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', -E, 'htsql:debug=false',
+      -E, 'htsql:debug=true']
+    stdout: |+
+      /count(school)
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |
+      help help
+      HELP - describe the shell or a shell command
+      Usage: help [command]
+
+      Type `help` to learn how to use the shell and to get a list of available
+      commands.
+
+      Type `help <command>` to learn how to use the specified command.
+
+      help
+      To execute an HTSQL query, type
+
+          /query
+
+      To execute a shell command, type
+
+          command [arguments...]
+
+      Available commands:
+        help [command]           : describe the shell or a shell command
+        version                  : print version and license information
+        exit                     : quit the shell
+        user [remote_user]       : set the remote user for HTTP requests
+        describe [table]         : list tables, or slots for a given table
+        headers on|off           : display HTTP status line and headers
+        pager on|off             : pipe long output to a pager
+        [get] /query             : execute an HTSQL query
+        post /query              : execute an HTSQL query with POST data
+        run filename.htsql       : run an HTSQL query from a file
+
+      help error
+      ** unknown command 'error'
+      error
+      ** unknown command 'error'
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |+
+      help version
+      VERSION - print version and license information
+      Usage: version
+
+      Type `version` to list the current software version and
+      license information.
+
+      version
+      HTSQL 2.3.1.dev
+      Copyright (c) 2006-2012, Prometheus Research, LLC
+
+      This is free software: you are free to change and redistribute it.
+      There is NO WARRANTY, to the extent permitted by law.  This software
+      is released under the AGPLv3 as well as a permissive license for use
+      with open source databases.  See http://htsql.org/license/.
+
+      The HTSQL language and implementation were developed by members
+      of the HTSQL Project (http://htsql.org/).
+
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |
+      help exit
+      EXIT - quit the shell
+      Usage: exit
+
+      Type `exit` or Ctrl-D to quit the shell.
+
+      exit
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |
+      help user
+      USER - set the remote user for HTTP requests
+      Usage: user [remote_user]
+
+      To set the remote user for HTTP requests, type `user <name>`.
+
+      To unset the remote user for HTTP requests, type `user`.
+
+      user
+      ** remote user is unset
+      user htsql_demo
+      ** remote user is set to 'htsql_demo'
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: "help describe\nDESCRIBE - list tables, or slots for a given table\nUsage:
+      describe [table]\n\nType `describe` to list all tables or `describe <table>`
+      to list\nall columns and links for a given table.\n\ndescribe\nTables introspected
+      for this database are:\n\tappointment\n\tclass\n\tclassification\n\tconfidential\n\tcourse\n\tcourse_classification\n\tdepartment\n\tenrollment\n\tinstructor\n\tprerequisite\n\tprogram\n\tprogram_requirement\n\tschool\n\tsemester\n\tstudent\n\ndescribe
+      school\nSlots for `school` are:\n\t code       string\n\t name       string\n\t
+      campus     string\n\t department PLURAL(department)\n\t program    PLURAL(program)\n\ndescribe
+      school.code\nUnable to find table: school.code\n\ndescribe error\nUnable to
+      find table: error\n\n"
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: "help headers\nHEADERS - display HTTP status line and headers\nUsage:
+      headers on|off\n\nType `headers on` to enable output of HTTP status line and
+      headers along\nwith any HTTP response body.\n\nType `headers off` to disable
+      output of HTTP status line and headers.\nOnly HTTP response body will be displayed.\n\nheaders\n**
+      expected 'on' or 'off'\nheaders on\n** headers are turned on\n/count(school)\n200
+      OK\r\nContent-Type: text/plain; charset=UTF-8\r\nVary: Accept\r\n\r\n | count(school)
+      |\n-+---------------+-\n |             9 |\n\nheaders off\n** headers are turned
+      off\n/count(school)\n | count(school) |\n-+---------------+-\n |             9
+      |\n\n"
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |
+      help pager
+      PAGER - pipe long output to a pager
+      Usage: pager on|off
+
+      Type `pager on` or `pager off` to enable or disable the pager
+      respectively.
+
+      If the pager is enabled, and the number of lines in the HTTP response
+      exceeds the height of the terminal, the response is displayed via the
+      pager.
+
+      The pager is a command which allows you to scroll and search in the
+      output.  The pager application is determined by the environment variable
+      $PAGER.  When $PAGER is not set, one of the common pagers such as
+      `/usr/bin/more` is used if available.  The pager could only be enabled
+      when the shell is running in a terminal.
+
+      pager
+      ** expected 'on' or 'off'
+      pager on
+      ** pager cannot be enabled in the non-interactive mode
+      pager off
+      ** pager is disabled
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |
+      help get
+      GET - execute an HTSQL query
+      Usage: [get] /query
+
+      Type `get /query` or just `/query` to execute an HTSQL query.
+
+      The output of the query is dumped to the console.  When the pager is
+      enabled and the number of lines in the response body exceeds the height
+      of the terminal, the output is displayed via the pager.  Use `pager off`
+      to disable the pager.
+
+      By default, the command does not dump the response status line and the
+      headers.  To enable displaying the status line and the headers along
+      with the response body, use `headers on`.
+
+      get
+      ** a query is expected
+      get /count(school)
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+      /count(school)
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+      /error
+      bind error: unrecognized attribute 'error':
+          /error
+           ^^^^^
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |
+      help post
+      POST - execute an HTSQL query with POST data
+      Usage: post /query
+
+      Type `post /query` to execute an HTSQL query with POST data.
+
+      You will be asked to provide a file containing the POST data and to
+      indicate the content type of the data.
+
+      The output of the query is dumped to the console.  When the pager is
+      enabled and the number of lines in the response body exceeds the height
+      of the terminal, the output is displayed via the pager.  Use `pager off`
+      to disable the pager.
+
+      By default, the command does not dump the response status line and the
+      headers.  To enable displaying the status line and the headers along
+      with the response body, use `headers on`.
+
+      post
+      ** a query is expected
+      post /school
+      build/regress/post.data
+      application/x-www-form-urlencoded
+      POST requests are not permitted.
+      post /school
+      error
+      ** file 'error' does not exist
+    exit: 0
+  - ctl: [shell, 'sqlite:build/regress/sqlite/htsql_demo.sqlite']
+    stdout: |
+      help run
+      RUN - run an HTSQL query from a file
+      Usage: run filename.htsql
+
+      Type `run filename.htsql` to load and execute an HTSQL query from a file.
+
+      The command reads an HTSQL query from the given file and executes it as
+      a GET request.
+
+      The output of the query is dumped to the console.  When the pager is
+      enabled and the number of lines in the response body exceeds the height
+      of the terminal, the output is displayed via the pager.  Use `pager off`
+      to disable the pager.
+
+      By default, the command does not dump the response status line and the
+      headers.  To enable displaying the status line and the headers along
+      with the response body, use `headers on`.
+
+      run
+      ** a file name is expected
+      run build/regress/run.htsql
+       | count(school) | count(program) | count(department) |
+      -+---------------+----------------+-------------------+-
+       |             9 |             40 |                27 |
+
+      run error
+      ** file 'error' does not exist
+    exit: 0
+- id: htsql-ctl-server
+  tests:
+  - ctl: [help, server]
+    stdout: |+
+      SERVER - start an HTTP server handling HTSQL requests
+      Usage: htsql-ctl server [DB]
+
+      The routine starts an HTTP server that serves HTSQL requests over the
+      specified database.
+
+      The DB argument specifies database connection parameters; must have the
+      form:
+
+          engine://username:password@host:port/database
+
+      Here,
+
+        - ENGINE is the type of the database server; supported values are
+          `sqlite`, `pgsql`, `mysql`, `mssql` and `oracle`.
+        - The parameters USERNAME:PASSWORD are used for authentication.
+        - The parameters HOST:PORT indicate the address of the database
+          server.
+        - DATABASE is the name of the database; for SQLite, the path to the
+          database file.
+
+      All parameters except ENGINE and DATABASE are optional.
+
+      By default, the HTTP server listens on the port 8080 on all available
+      interfaces.  Use options `--host` and `--port` to override the default
+      values.
+
+      The HTTP logs are dumped to the standard output in the Apache Common Log
+      Format.  Use option `--quiet` to suppress the logs.
+
+      Arguments:
+        DB                       : the connection URI
+
+      Valid options:
+        -p [--password]          : ask for the database password
+        -E [--extension] EXT [+] : include extra extensions
+        -C [--config] FILE       : read HTSQL configuration from FILE
+        --host HOST              : host to listen for incoming connections
+        --port PORT              : port to listen for incoming connections
+        -q [--quiet]             : display as little as possible
+
+    exit: 0
+  - py: GET-1
+    stdout: |2+
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+
+  - end-ctl: [server, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', -q]
+    stdout: ''
+  - py: GET-2
+    stdout: |2+
+       | count(school) |
+      -+---------------+-
+       |             9 |
+
+
+  - end-ctl: [server, 'sqlite:build/regress/sqlite/htsql_demo.sqlite', --host, 127.0.0.1,
+      --port, '8088', -q]
+    stdout: ''

@@ -532,6 +532,8 @@ class TestCase(object):
         attribute = self.input.fields[0].attribute
         value = getattr(self.input, attribute)
         if value is not None:
+            if isinstance(value, list):
+                value = " ".join(str(item) for item in value)
             self.out("%s %s" % (self.name.upper(), value), indent=2)
         if self.input.location is not None:
             self.out("(%s)" % self.input.location, indent=2)
@@ -1581,7 +1583,7 @@ class CtlTestCase(RunAndCompareTestCase):
         # Prepare the standard streams and the script instance.
         stdout = StringIO.StringIO()
         stderr = stdout
-        stdin = TermStringIO(stdout, stderr)
+        stdin = TermStringIO(self.input.stdin, stdout)
         command_line = [self.routine.executable]+self.input.ctl
 
         # The script class.
@@ -1798,7 +1800,7 @@ class EndCtlTestCase(RunAndCompareTestCase):
                 Field('end_ctl', SeqVal(StrVal()),
                       hint="""a list of command-line parameters"""),
                 Field('stdout', StrVal(),
-                      hint="""ignore the standard output"""),
+                      hint="""the standard output"""),
         ]
 
     def differs(self, old_output, new_output):
@@ -2214,7 +2216,7 @@ class ReadFromFileTestCase(RunAndCompareTestCase):
         return new_output
 
 
-class RemoveFilesTestCase(TestCase):
+class RemoveFilesTestCase(SkipTestCase):
     """
     Removes the specified files.
     """

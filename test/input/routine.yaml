@@ -6,11 +6,184 @@ title: HTSQL-CTL Command-Line Tool
 id: routine
 output: test/output/routine.yaml
 tests:
-- ctl: []
-- ctl: [--help]
-- ctl: [--version]
-- ctl: [help]
-- ctl: [help, help]
-- ctl: [version]
-# FIXME: need comprehensive tests for each routine.
+
+# Default routine
+- title: htsql-ctl
+  tests:
+  - ctl: []
+  - ctl: [--help]
+  - ctl: [--version]
+
+# Help routine
+- title: htsql-ctl help
+  tests:
+  - ctl: [help, help]
+  - ctl: [help]
+
+# Version routine
+- title: htsql-ctl version
+  tests:
+  - ctl: [help, version]
+  - ctl: [version]
+
+# Shell routine
+- title: htsql-ctl shell
+  tests:
+  # Routine description
+  - ctl: [help, shell]
+
+  # Invocation
+
+  # Pass the connection URI as an argument
+  - ctl: [shell, &db "sqlite:build/regress/sqlite/htsql_demo.sqlite"]
+    stdin: |
+      /count(school)
+  # ... as an extension option
+  - ctl: [shell, -E, "htsql:db='sqlite:build/regress/sqlite/htsql_demo.sqlite'"]
+    stdin: |
+      /count(school)
+  # ... in the configuration file
+  - write: build/regress/sqlite/htsql_demo.yaml
+    data: |
+      htsql:
+        db: { engine: sqlite, database: build/regress/sqlite/htsql_demo.sqlite }
+  - ctl: [shell, -C, "build/regress/sqlite/htsql_demo.yaml"]
+    stdin: |
+      /count(school)
+  - remove: [build/regress/sqlite/htsql_demo.yaml]
+  # Multiple extension options
+  - ctl: [shell, *db, -E, "htsql:debug=true", -E, "tweak.meta"]
+    stdin: |
+      /meta(/count(table))
+  # Application of extension options
+  - ctl: [shell, *db, -E, "htsql:debug=false", -E, "htsql:debug=true"]
+    stdin: |
+      /count(school)
+
+  # Shell utility commands
+
+  # Help
+  - ctl: [shell, *db]
+    stdin: |
+      help help
+      help
+      help error
+      error
+  # Version
+  - ctl: [shell, *db]
+    stdin: |
+      help version
+      version
+  # Exit
+  - ctl: [shell, *db]
+    stdin: |
+      help exit
+      exit
+      /count(school)
+  # User
+  - ctl: [shell, *db]
+    stdin: |
+      help user
+      user
+      user htsql_demo
+  # Describe
+  - ctl: [shell, *db]
+    stdin: |
+      help describe
+      describe
+      describe school
+      describe school.code
+      describe error
+  # Headers
+  - ctl: [shell, *db]
+    stdin: |
+      help headers
+      headers
+      headers on
+      /count(school)
+      headers off
+      /count(school)
+  # Pager
+  - ctl: [shell, *db]
+    stdin: |
+      help pager
+      pager
+      pager on
+      pager off
+
+  # Shell query commands
+
+  # Get
+  - ctl: [shell, *db]
+    stdin: |
+      help get
+      get
+      get /count(school)
+      /count(school)
+      /error
+  # Post
+  - write: build/regress/post.data
+    data: "school_code=art"
+  - ctl: [shell, *db]
+    stdin: |
+      help post
+      post
+      post /school
+      build/regress/post.data
+      application/x-www-form-urlencoded
+      post /school
+      error
+  - remove: [build/regress/post.data]
+  # Run
+  - write: build/regress/run.htsql
+    data: |
+      /{count(school),
+        count(program),
+        count(department)}
+  - ctl: [shell, *db]
+    stdin: |
+      help run
+      run
+      run build/regress/run.htsql
+      run error
+  - remove: [build/regress/run.htsql]
+
+# Server routine
+- title: htsql-ctl server
+  tests:
+  # Routine description
+  - ctl: [help, server]
+
+  # Invocation
+
+  # Default address
+  - start-ctl: &server-1 [server, *db, -q]
+  - py: GET-1
+    code: |
+      import time, urllib
+      tries = 0
+      while tries < 5:
+          try:
+              print urllib.urlopen("http://127.0.0.1:8080/count(school)").read()
+              break
+          except:
+              tries += 1
+              time.sleep(0.5)
+  - end-ctl: *server-1
+
+  # Custom address
+  - start-ctl: &server-2 [server, *db, --host, "127.0.0.1", --port, "8088", -q]
+  - py: GET-2
+    code: |
+      import time, urllib
+      tries = 0
+      while tries < 5:
+          try:
+              print urllib.urlopen("http://127.0.0.1:8088/count(school)").read()
+              break
+          except:
+              tries += 1
+              time.sleep(0.5)
+  - end-ctl: *server-2
+
 

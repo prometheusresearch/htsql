@@ -11,6 +11,7 @@ This module implements the `shell` routine.
 """
 
 
+from __future__ import with_statement
 from .error import ScriptError
 from .request import Request, DBRoutine
 from ..core.util import listof, trim_doc
@@ -744,7 +745,7 @@ class VersionCmd(Cmd):
 
     name = 'version'
     signature = """version"""
-    hint = """prints version and license information"""
+    hint = """print version and license information"""
     help = """
     Type `version` to list the current software version and
     license information.
@@ -875,6 +876,7 @@ class ShellRoutine(DBRoutine):
     # List of supported shell commands.
     commands = [
             HelpCmd,
+            VersionCmd,
             ExitCmd,
             UserCmd,
             DescribeCmd,
@@ -883,7 +885,6 @@ class ShellRoutine(DBRoutine):
             GetCmd,
             PostCmd,
             RunCmd,
-            VersionCmd,
     ]
 
     # A notice displayed when the shell is started.
