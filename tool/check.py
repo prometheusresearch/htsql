@@ -8,7 +8,6 @@ from vm import LinuxBenchVM, WindowsBenchVM, CTL_DIR
 import sys, subprocess
 
 
-py25_vm = LinuxBenchVM('py25', 'debian', 22)
 py26_vm = LinuxBenchVM('py26', 'debian', 22)
 py27_vm = LinuxBenchVM('py27', 'debian', 22)
 pgsql84_vm = LinuxBenchVM('pgsql84', 'debian', 5432)
@@ -49,7 +48,7 @@ def check_all():
     This job runs HTSQL regression tests on all combinations of client
     and server platforms.
     """
-    vms = [py25_vm, py26_vm, py27_vm, pgsql84_vm, pgsql90_vm, pgsql91_vm,
+    vms = [py26_vm, py27_vm, pgsql84_vm, pgsql90_vm, pgsql91_vm,
            mysql51_vm, oracle10g_vm, mssql2005_vm, mssql2008_vm]
     for vm in vms:
         if vm.missing():
@@ -59,7 +58,7 @@ def check_all():
             vm.stop()
     errors = 0
     try:
-        for client_vm in [py25_vm, py26_vm, py27_vm]:
+        for client_vm in [py26_vm, py27_vm]:
             if client_vm.missing():
                 continue
             client_vm.start()
