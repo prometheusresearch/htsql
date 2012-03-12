@@ -108,7 +108,7 @@ $(document).ready(function() {
         else {
             message = message+' ['+config.databaseName+']';
         }
-        $('title').text(message);
+        document.title = message;
     }
 
     function setQuery(query) {
