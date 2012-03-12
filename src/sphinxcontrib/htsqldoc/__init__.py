@@ -86,7 +86,6 @@ class HTSQLDirective(Directive):
     def run(self):
         doc = self.state.document
         env = doc.settings.env
-
         if self.arguments:
             if self.content:
                 return [doc.reporter.error("directive cannot have both"
@@ -99,7 +98,6 @@ class HTSQLDirective(Directive):
         else:
             return [doc.reporter.error("directive must have either content"
                                        " or an argument", lineno=self.lineno)]
-        output = []
         query_node = htsql_block(query, query)
         query_node['language'] = 'htsql'
         if not hasattr(env, 'htsql_server') or not env.htsql_server:
@@ -120,21 +118,21 @@ class HTSQLDirective(Directive):
                 return [doc.reporter.error("failed to load: %s" % uri,
                                            line=self.lineno)]
             env.htsql_uris[uri] = result
+        htsql_container = nodes.container(classes=['htsql-io'])
         query_container = nodes.container('', query_node,
                                           classes=['htsql-input'])
-        output.append(query_container)
+        htsql_container += query_container
         if 'hide' in self.options:
-            return output
+            return [htsql_container]
         content_type, content = env.htsql_uris[uri]
         if 'plain' in self.options:
             content_type = 'text/plain'
         result_node = build_result(self.content_offset, content_type, content,
                                    self.options.get('cut'))
-        if result_node is not None:
-            result_container = nodes.container('', result_node,
-                                               classes=['htsql-output'])
-            output.append(result_container)
-        return output
+        result_container = nodes.container('', result_node,
+                                           classes=['htsql-output'])
+        htsql_container += result_container
+        return [htsql_container]
 
 
 class VSplitDirective(Directive):
