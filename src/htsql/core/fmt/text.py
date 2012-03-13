@@ -156,6 +156,7 @@ class EmitText(Emit):
             if self.meta.syntax:
                 yield u" %s\n" % self.meta.syntax
             sql = self.meta.plan.statement.sql
+            sql = re.sub(ur'[\0-\x09\x0b-\x1f\x7f]', u'\ufffd', sql)
             for line in sql.splitlines():
                 yield u" %s\n" % line
 
